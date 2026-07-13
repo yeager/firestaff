@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0231 action-hand icon ordering: compact combat now applies
+  Diamond Edge's quarter and Hardcleave's eighth defense reductions only after
+  the F0231 defense roll, then applies Vorpal Blade's material-target late
+  damage halving. Source: ReDMCSB `PROJEXPL.C F0231:1491-1496,1526-1527`.
+  Verification: isolated Ninja build and 41/41 assertions in
+  `test_dm1_v1_combat_pc34_compat_integration`.
+
 - 2026-07-13 CSB PC34 package consumption receipt: the real-asset launch
   probe now proves that the hash-verified PC34 package is consumed by one
   source-owned C001 PRESENTS/CHAOS/STRIKES and C017/C040 HUD session. The
@@ -12484,6 +12491,16 @@ record payload and never reads `GenericRecord::w0`. Real map 0 admits 22 direct
 roots; map 16 admits its raw span while retaining 11 DB3, 2 DB4, and 3 blocked
 DB8/DB10 roots. Verification: new real-data test against hash-verified PC G1
 `DUNGEON.DAT` passed; focused loader gate passed 87/87.
+
+# ✅ 2026-07-13 DM2 G1 direct DB0 Door runtime receipt
+
+Runtime-admitted G1 maps now consume direct DB0 `Door::w2` records through
+the source-defined `c_map.cpp` root route. The read-only receipt retains only
+the `DME.h` button, door-type, button-state, opening-direction, ornament,
+fireball, and chopping bits; `GenericRecord::w0` is neither read nor followed.
+The real PC G1 map 9 receipt locks three direct doors, including the active
+button at `(7,3)` with ObjectID `0x0006`. Verification: real-data DB0 test,
+runtime-map admission test, and focused loader gate all passed.
 
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 

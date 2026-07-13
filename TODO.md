@@ -2552,6 +2552,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     incomplete with its three blocked roots. Remaining work is still original
     loader/layout proof for DB8/DB10 and separately source-bounded record
     semantics, not a guessed chain walk.
+  - 2026-07-13 update: runtime-admitted maps can now consume direct DB0
+    `Door::w2` payloads from `DME.h` as read-only receipts. Button, type,
+    state, opening direction, ornament, fireball, and chopping bits are
+    source-locked; no route reads `w0` or follows a record link. Remaining
+    work is another independently proven root family and the DB8/DB10 layout,
+    never a promoted chain based on these direct records.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
@@ -2831,6 +2837,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hit RNG roll. This matches `PROJEXPL.C F0231:1454-1456` and prevents an
     impossible high-dexterity hit or a changed RNG/Luck sequence. Remaining
     melee work is broader runtime aftermath proof, not a fallback combat path.
+  - 2026-07-13 update: the compact F0231 path now also keeps the original
+    action-hand icon ordering: Diamond Edge and Hardcleave reduce only the
+    rolled defense, then Vorpal Blade halves only final damage against material
+    creatures. The remaining work is broader runtime aftermath proof, not a
+    generic weapon modifier or a replacement melee formula.
   - 2026-07-13 update: the live F0407 completion path now retains its
     G0494/M005 stamina receipt until after F0402/F0231. This preserves the
     pre-action F0312 strength state required by `MENU.C F0407:1613-1628` and

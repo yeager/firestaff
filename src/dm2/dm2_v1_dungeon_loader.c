@@ -1417,6 +1417,83 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out) {
+    DM2_V1_G1RuntimeMapValidationReceipt validation;
+    DM2_V1_G1RuntimeMapDoorReceipt candidate;
+    int column_index = 0;
+
+    /* skproject SKULLWIN/c_map.cpp DM2_GET_TILE_RECORD_LINK selects the
+     * root. SKWIN/DME.h::Door fixes the six w2 fields below. c_record.cpp
+     * DM2_GET_NEXT_RECORD_LINK reads w0, which this source-bounded route
+     * deliberately never calls. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
+        !validation.committed || !validation.incomplete_world) {
+        return 0;
+    }
+    for (int level = 0; level < map; ++level)
+        column_index += d->level_widths[level];
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            uint16_t root;
+            const uint8_t *record;
+            uint16_t attributes;
+            DM2_V1_G1DirectDoorRoot *door;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            if (((root >> 10) & 0x0fu) == 0u) {
+                if (!dm2_v1_g1_link_has_declared_shape(d, root) ||
+                    candidate.door_root_count >=
+                        DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS) {
+                    return 0;
+                }
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, root, NULL, NULL, NULL);
+                if (!record) return 0;
+                attributes = RD16(record + 2);
+                door = &candidate.doors[candidate.door_root_count++];
+                door->x = x;
+                door->y = y;
+                door->object_id = root;
+                door->index = root & 0x03ff;
+                door->direction = (uint8_t)(root >> 14);
+                door->button = (uint8_t)((attributes >> 6) & 1u);
+                door->door_type = (uint8_t)(attributes & 1u);
+                door->button_state = (uint8_t)((attributes >> 11) & 1u);
+                door->opening_dir = (uint8_t)((attributes >> 5) & 1u);
+                door->ornate_index = (uint8_t)((attributes >> 1) & 0x0fu);
+                door->destroyable_by_fireball =
+                    (uint8_t)((attributes >> 7) & 1u);
+                door->bashable_by_chopping =
+                    (uint8_t)((attributes >> 8) & 1u);
+                ++candidate.door_record_reads;
+            }
+            ++stack;
+        }
+    }
+    if (candidate.door_record_reads != candidate.door_root_count ||
+        candidate.generic_record_reads != 0 ||
+        candidate.blocked_record_reads != 0) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out) {
