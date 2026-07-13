@@ -1256,6 +1256,12 @@
   the loaded value and all controller or subroutine semantics remain pending
   live capture.
 
+- 2026-07-13 Theron System Card `$ea27` call receipt: hash-verified `BSR
+  $ea35`, then `TST #$40,$1800 / BNE $ea29`, followed by raw `LDA #$80; TRB
+  $1802; RTS`; the direct `$ea35` target is `LDA #$80; TSB $1802; RTS`. These
+  are byte/address receipts only. The poll result and all controller, command,
+  or subroutine semantics remain pending live capture.
+
 - 2026-07-12 CSB F0115 native Ghost group front: type 8 now resolves only
   through `G0243 -> G0219 -> M618` to PC CSB `GRAPHICS.DAT` 607. Its G0219
   offset 23 and `0x04` coordinate/transparency byte are consumed by the
