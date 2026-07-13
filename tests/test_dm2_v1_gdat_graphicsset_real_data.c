@@ -215,6 +215,8 @@ int main(void)
         DM2_ImageFormat decoded_ceiling_format = DM2_IMG_FMT_UNKNOWN;
         uint8_t *decoded_floor = NULL;
         uint8_t *decoded_ceiling = NULL;
+        uint16_t ambient_darkness = 0u;
+        int has_ambient_darkness;
         int complete = dm2_v1_asset_load_image_metadata(
                 &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
                 DM2_GDAT_GFXSET_FLOOR, &floor) &&
@@ -230,6 +232,9 @@ int main(void)
                                                DM2_GDAT_CATEGORY_GRAPHICSSET,
                                                style, DM2_GDAT_GFXSET_CEIL,
                                                &ceiling_size);
+        has_ambient_darkness = dm2_v1_asset_load_word_value(
+            &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
+            DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &ambient_darkness);
         for (uint16_t entry = 0u; entry < loader.entry_count; ++entry) {
             const DM2_V1_GdatEntry *candidate = &loader.entries[entry];
             if (candidate->cls1 != DM2_GDAT_CATEGORY_GRAPHICSSET ||
@@ -286,7 +291,9 @@ int main(void)
                 command_plan.commands[1].field != DM2_GDAT_GFXSET_CEIL ||
                 !command_plan.commands[0].pixels || !command_plan.commands[1].pixels ||
                 command_plan.commands[0].palette_hash == 0u ||
-                command_plan.commands[1].palette_hash == 0u) {
+                command_plan.commands[1].palette_hash == 0u ||
+                !has_ambient_darkness || ambient_darkness > 8u ||
+                command_plan.ambient_darkness != ambient_darkness) {
                 ++failures;
             }
             dm2_v1_gdat_scene_m11_command_plan_free(&command_plan);

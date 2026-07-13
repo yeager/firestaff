@@ -4207,6 +4207,23 @@ int dm2_v1_boot_graphicsset_scene_control(
         out_ambient_darkness);
 }
 
+int dm2_v1_boot_gdat_scene_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    DM2_V1_GdatSceneM11CommandPlan *out_plan)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!profile || !profile->graphics_dat || !out_plan ||
+        graphicsset_index < 0 || graphicsset_index > 0xff) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_gdat_scene_m11_command_plan_build(
+        &gfx->loader, (uint8_t)graphicsset_index, out_plan);
+}
+
 int dm2_v1_boot_weather_gdat_receipt(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,

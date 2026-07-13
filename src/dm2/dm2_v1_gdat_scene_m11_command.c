@@ -29,10 +29,12 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_COLORKEY, &candidate.scene_colorkey) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level)) return 0;
-    /* These are the complete scene controls observed for every live G1
-     * graphics set. AMBIANT_LIGHT and AMBIANT_DARKNESS are absent there, so
-     * admitting them would invent a source requirement. */
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level) ||
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness) ||
+        candidate.ambient_darkness > 8u) return 0;
+    /* skproject CHECK_RECOMPUTE_LIGHT clamps this exact GRAPHICSSET field at
+     * eight. Every live G1 set carries it; AMBIANT_LIGHT does not, so it is
+     * intentionally outside this fail-closed scene/light command family. */
     candidate.graphicsset = graphicsset;
     for (int i = 0; i < 2; ++i) {
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
@@ -61,6 +63,7 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     hash ^= candidate.scene_colorkey; hash *= 16777619u;
     hash ^= candidate.scene_flags; hash *= 16777619u;
     hash ^= candidate.highest_light_level; hash *= 16777619u;
+    hash ^= candidate.ambient_darkness; hash *= 16777619u;
     if (!hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }
     candidate.command_hash = hash; candidate.valid = 1; *out_plan = candidate;
     return 1;
