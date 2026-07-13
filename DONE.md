@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB native-save runtime handoff: `csb_v1_boot` now exposes a
+  source-locked receipt for an original CSB save. It verifies the native
+  `CSB_SAVE_HEADER`, loads through ReDMCSB `LOADSAVE.C F0435` into the already
+  verified live dungeon, and rejects the CSBWin/roster fallback routes. The
+  focused assertion in `test_csb_v1_boot_runtime_handoff` passes; broader
+  original-media corpus coverage remains in TODO.
+
 - 2026-07-13 DM1 TITLE first-zoom palette latch: the M11 C001 title route
   now presents the cleared indexed surface with C13_DUNGEON+C14_MASTER before
   the first zoom VBlank, instead of selecting it after the wait. This follows
@@ -12674,3 +12681,14 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   importer/exporter fallback was added. Source: ReDMCSB `LOADSAVE.C`
   F0433:1586-1589/F0435:2781-2796. Verification: focused native-PC34
    handoff CTest.
+# ✅ 2026-07-13 DM1 PC34 original-save snapshot-bound corpus handoff
+
+`dm1_v1_original_save_pc34_roundtrip_world_file()`, its reload sibling, and
+the recursive corpus verifier now perform provenance, manifest rejection, and
+F0435 import over one immutable in-memory file snapshot. Corpus rows are
+reclassified after their byte read and fail closed when the path changed after
+discovery, so stale F7057 envelope offsets cannot be attached to replacement
+bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
+`F0433` export order. Verification: focused
+`test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
+explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.

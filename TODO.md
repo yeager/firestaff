@@ -37,6 +37,11 @@
   observed save for that exact media branch. Independent evidence: one
   original save and round trip per claimed media/version, plus CSBWin only
   where its importer explicitly supports that media.
+  - 2026-07-13 update: the native CSB runtime handoff now first requires the
+    original `CSB_SAVE_HEADER` magic and then a successful `LOADSAVE.C F0435`
+    runtime load against the already verified dungeon. It cannot fall through
+    to CSBWin or roster import. The missing evidence remains external
+    per-media original-save corpus, not a synthetic substitute.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
@@ -263,6 +268,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     exact rollback provenance instead of silently losing the timer. Remaining
     evidence is still a provenance-recorded real PC34 corpus and original
     executable load results.
+  - 2026-07-13 update: corpus discovery and F0435 import now bind to the
+    same reclassified byte snapshot. A DMSAVE.DAT replaced after recursive
+    discovery is rejected with a diagnostic instead of inheriting stale
+    header/envelope provenance. This is transaction hardening only; it does
+    not replace the required original PC34 corpus.
 
 - REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
   F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
