@@ -1131,6 +1131,8 @@ typedef struct {
     uint8_t material_id;
     int animated_texture_declared;
     uint8_t animated_texture_id;
+    int animated_texture_structure1g_entry_index;
+    uint16_t animated_texture_structure1g_sequence_word_offset;
     uint16_t animated_texture_first_image_index;
     uint16_t animated_texture_structure2_image_id;
     int animated_texture_structure2_image_valid;
@@ -1175,6 +1177,8 @@ typedef struct {
  * so this receipt cannot authorize a draw. */
 typedef struct {
     int command_index;
+    int structure1g_entry_index;
+    uint16_t structure1g_sequence_word_offset;
     uint16_t image_id;
     uint16_t encoding;
     uint16_t palette_id;
@@ -1189,8 +1193,10 @@ typedef struct {
 
 typedef struct {
     int animated_floor_command_count;
+    int structure1g_provenance_count;
     int source_command_count;
     int blocked_invalid_command_count;
+    int blocked_structure1g_provenance_count;
     int blocked_missing_descriptor_count;
     int blocked_source_envelope_count;
     int complete;

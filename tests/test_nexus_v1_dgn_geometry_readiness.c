@@ -2028,6 +2028,8 @@ static void test_structure1g_animated_floor_material_handoff(void) {
     CHECK(receipt.animated_material_command_count == 1,
           "animated floor declaration reaches one host material command");
     CHECK(commands[0].animated_texture_structure2_image_valid &&
+          commands[0].animated_texture_structure1g_entry_index == 0 &&
+          commands[0].animated_texture_structure1g_sequence_word_offset == 0U &&
           commands[0].animated_texture_structure2_image_id == 10U &&
           commands[0].animated_texture_host_route ==
               NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR,
@@ -2040,14 +2042,27 @@ static void test_structure1g_animated_floor_material_handoff(void) {
               &level, commands, receipt.command_count, sources, 2,
               &source_receipt) == 0 &&
           source_receipt.animated_floor_command_count == 1 &&
+          source_receipt.structure1g_provenance_count == 1 &&
           source_receipt.source_command_count == 1 && source_receipt.complete &&
           !source_receipt.fallback_visuals_permitted &&
-          sources[0].command_index == 0 && sources[0].image_id == 10U &&
+          sources[0].command_index == 0 &&
+          sources[0].structure1g_entry_index == 0 &&
+          sources[0].structure1g_sequence_word_offset == 0U &&
+          sources[0].image_id == 10U &&
           sources[0].encoding == 8U && sources[0].palette_id == 0U &&
           sources[0].width == 16U && sources[0].height == 16U &&
           sources[0].structure2_source_envelope_valid &&
           !sources[0].payload_decoder_proven && !sources[0].draw_authorized,
           "Structure1G/Structure2 binds raw original descriptor provenance to its exact floor command only");
+    commands[0].animated_texture_structure1g_entry_index = 1;
+    CHECK(nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, commands, receipt.command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.source_command_count == 0 &&
+          source_receipt.blocked_structure1g_provenance_count == 1 &&
+          !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
+          "a Structure2 descriptor cannot be detached from its original Structure1G entry");
+    memcpy(commands, source_commands, sizeof(commands));
     CHECK(receipt.unresolved_animated_material_count == 1,
           "animated floor declaration remains unresolved without Structure2 handoff");
     CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
