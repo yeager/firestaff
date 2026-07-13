@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1 host/runtime consumer: champion-to-runtime DGN
+  handoff now consumes a dedicated Structure1F/Structure1A provenance receipt
+  before any material plan or viewport route can run. Verified direct-cell
+  records remain provenance only, while a malformed declared Structure1F or
+  any alcove/wall record still bound only by Structure1A blocks with stable
+  no-fallback statuses. This does not decode Structure1A or infer a cell,
+  object, trigger, model, or Saturn visual. Verification: Ninja and CTest
+  `nexus_v1_structure1_host_provenance`.
 - 2026-07-13 Nexus Structure1A/Structure1F host boundary: typed alcove,
   wall-decoration, and wall-sensor records now publish their original
   big-endian `Structure1A` indexes as a fail-closed provenance receipt.

@@ -285,6 +285,7 @@ typedef struct {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_V1_DgnStructure1HostProvenanceReceipt structure1_host_provenance;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
     Nexus_V1_DgnStructure2SourceReceipt structure2_source;
     Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
@@ -294,6 +295,7 @@ typedef struct {
     int dgn_viewport_render_ready;
     int hud_ready;
     int dgn_render_blocked;
+    int structure1_host_provenance_consumed;
     int script_runtime_ready;
     int script_runtime_blocked;
     int level_loaded;

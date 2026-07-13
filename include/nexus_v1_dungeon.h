@@ -180,6 +180,30 @@ typedef struct {
     uint16_t highest_index;
 } Nexus_V1_DgnStructure1ABoundaryReceipt;
 
+/* The runtime host consumes Structure1F only through this receipt. Direct
+ * records retain their documented source cells, while records indexed through
+ * Structure1A block before any viewport/material work: Structure1A has not
+ * yet been decoded into an original cell, draw, or trigger relationship. */
+typedef enum {
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_MISSING = 0,
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT = 1,
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT = 2,
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT = 3,
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION = 4
+} Nexus_V1_DgnStructure1HostProvenanceStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure1HostProvenanceStatus status;
+    int structure1f_declared;
+    int structure1f_valid;
+    int structure1f_typed_entry_count;
+    Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
+    Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
+    int can_prepare_runtime_dgn;
+    int blocks_real_dgn_mesh_render;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1HostProvenanceReceipt;
+
 /* DMWeb DGN files, Structure1G: optional animated-texture declarations.
  * A present table has a counted descriptor prefix and four-byte instruction
  * streams. Image instructions, backward FF FE gotos, and FF FF terminators
@@ -618,6 +642,11 @@ int nexus_v1_level_structure1f_spatial_receipt(
 int nexus_v1_level_structure1a_boundary_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ABoundaryReceipt *out_receipt);
+int nexus_v1_level_dgn_structure1_host_provenance_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);
+const char *nexus_v1_dgn_structure1_host_provenance_status_name(
+    Nexus_V1_DgnStructure1HostProvenanceStatus status);
 /* Returns non-zero only when the DGN target cell and its collision sector
  * admit a center-to-center party step. */
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,

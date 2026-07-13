@@ -1060,6 +1060,9 @@ int main(void)
                runtime_handoff_receipt.dgn_render_ready == 1 &&
                runtime_handoff_receipt.hud_ready == 1 &&
                runtime_handoff_receipt.dgn_render_blocked == 0 &&
+               runtime_handoff_receipt.structure1_host_provenance_consumed == 1 &&
+               runtime_handoff_receipt.structure1_host_provenance
+                       .can_prepare_runtime_dgn == 1 &&
                runtime_handoff_receipt.dgn_viewport_host_route_status ==
                    NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
                runtime_handoff_receipt.dgn_viewport_host_route_ready == 1 &&
