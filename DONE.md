@@ -8,6 +8,11 @@
   closed receipt paths plus a real `GRAPHICS.DAT` draw of graphics 91, 87, and
   248; no synthetic bitmap or asset cache is used.
 
+- 2026-07-13 Nexus Structure1F wall-sensor model/rotation handoff: raw
+  Structure1A-owned pairs now reach DGN host, render-plan, and LEV00-15 corpus
+  receipts. They remain fail-closed provenance, with no model, orientation,
+  trigger, mesh, material, texture, palette, pixel, or draw semantics.
+
 - 2026-07-13 DM1 F0115 projectile host materialization: M11 now publishes a
   completed C2900 receipt only after its real PC34 asset blit succeeds. It
   distinguishes the native M613 projectile material from ReDMCSB DUNGEON.C
