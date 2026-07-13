@@ -24623,6 +24623,36 @@ static void m11_draw_dm1_d4_far_projectile_pass(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight)
+{
+    M11_ViewportCell cell;
+    int sourceZoneRow;
+
+    if (!state || !framebuffer ||
+        !m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid ||
+        !cell.dm1MaterializationDecisionReady ||
+        !cell.dm1MaterializationDecision.drawRuntimeProjectiles ||
+        !m11_viewport_cell_has_renderable_projectile(&cell)) {
+        return;
+    }
+    sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(0, 0);
+    if (sourceZoneRow < 0) {
+        return;
+    }
+    /* ReDMCSB DUNVIEW.C F0127:8301 calls F0115 for M609_D0C with
+     * CELL_ORDER_BACKLEFT_BACKRIGHT.  F0115:5668-5900 then selects
+     * G2028[0] / C2900 row 11 and, for positive F0142 aspects, re-enters
+     * T0115015 with the original G0209/M612 material.  Do not substitute a
+     * marker when the source row or bitmap cannot draw. */
+    (void)m11_draw_viewport_projectile_sprite(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H,
+        &cell, 0, sourceZoneRow);
+}
+
 static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
                                                    int framebufferWidth,
                                                    int framebufferHeight,
@@ -34759,6 +34789,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+    m11_draw_dm1_d0c_projectile_pass(state, framebuffer,
+                                     framebufferWidth, framebufferHeight);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);

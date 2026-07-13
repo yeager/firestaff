@@ -90,6 +90,14 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 F0127 D0C projectile materialization: M11 now maps
+  `M609_VIEW_SQUARE_D0C` to ReDMCSB `G2028[0]` / C2900 row 11 and consumes
+  its live original material in a dedicated F0127-order pass before deferred
+  explosions. The route admits only C2900 cells present in the original row;
+  unavailable source cells/material remain no-draw with no marker or
+  replacement sprite. Focused D0C mapping, runtime-decision, and thrown
+  object geometry regressions pass, along with Ninja and CTest.
+
 - 2026-07-13 DM1 F0115 thrown-object C2900 lane materialization: G0209
   `FLIP_ON_RIGHT` now follows ReDMCSB `DUNVIEW.C F0115:4862-4865` after the
   F0142 object handoff at :5891-5900. Right side lanes mirror the original
