@@ -10812,6 +10812,13 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                     world->magic.magicalLightAmount, lr.magicalLightAmountDelta, &newAmt);
                 world->magic.magicalLightAmount = newAmt;
                 if (lr.followupScheduled) {
+                    /* ReDMCSB TIMELINE.C F0257:1761-1765 makes the next
+                     * event another native C70. Preserve the original-save
+                     * receipt so F0802 can export this source-owned chain. */
+                    if (ev.aux1 == DM1_EVENT_LIGHT && ev.aux4 == 0) {
+                        lr.followupEvent.aux1 = DM1_EVENT_LIGHT;
+                        lr.followupEvent.aux4 = 0;
+                    }
                     F0721_TIMELINE_Schedule_Compat(&world->timeline, &lr.followupEvent);
                 }
             }

@@ -62,6 +62,15 @@
   `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM1 original PC34 C70 light-event roundtrip: authenticated
+  original-save handoff now materializes only Priority-0, nonzero signed
+  `B.LightPower` values in ReDMCSB's complete G0039 0..15 range. The live
+  F0257 decay chain retains a native C70 receipt, and world export writes only
+  that signed B union while rejecting generic host light events. No C union
+  member is invented. Source: ReDMCSB `TIMELINE.C` F0257:1747-1765, `DEFS.H`
+  EVENT `B.LightPower`, `DATA.C` G0039. Verification: Ninja target and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - ✅ 2026-07-13 DM2 skproject wall/door local-palette consumer: source-required
   GDAT wall panels plus door panel, overlay, frame, and button paths now bind
   each decoded image to its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave
