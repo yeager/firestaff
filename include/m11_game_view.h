@@ -1847,6 +1847,10 @@ int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     int framebufferWidth,
     int framebufferHeight);
 
+/* Test-only read-only count for the production V2 effect seed scan. */
+int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
+    const M11_GameViewState* state);
+
 typedef struct M11_Dm1InscriptionHostPresentationReceipt {
     int valid;
     int textStringIndex;
