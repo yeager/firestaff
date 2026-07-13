@@ -719,6 +719,18 @@ int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
     const CSB_V1_CSBWin512TimerSummary *timer,
     CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
 
+/* Prepare only the source-selected pure-stack action for a restored
+ * TT_FALSEWALL -> ProcessDSATimer7 timer.  This mirrors the source timer
+ * handoff without promoting fake-wall state mutation, parameter payloads,
+ * or the unproven LocalState 2/3 paths. */
+int csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* Consume one restored TT_STONEROOM receipt into the existing authenticated
  * pure-stack runner.  The returned action is the exact source-owned item
  * selected by ProcessDSATimer6; callers cannot substitute compatible-looking

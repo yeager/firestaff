@@ -15905,6 +15905,47 @@ int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
         (int)timer->ubyte8, out_resolution);
 }
 
+int csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action)
+{
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
+    const CSB_V1_DSAImportedAction *action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+
+    /* CSBWin Timer.cpp::ProcessTT_FALSEWALL passes function-7 records to
+     * DSA.cpp::ProcessDSATimer7, which selects the same authenticated
+     * ProcessDSATimer6 action receipt.  Retain that exact selection rather
+     * than allowing a caller to substitute equivalent-looking DSA words. */
+    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
+        !out_action) {
+        return 0;
+    }
+    memset(&resolution, 0, sizeof(resolution));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
+            profile, dungeon, slave_location, timer, &resolution)) {
+        return 0;
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
+        resolution.state_index, resolution.action_ordinal);
+    if (!action || action->column != resolution.input_column ||
+        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+            profile, &resolution.master, resolution.state_index,
+            resolution.action_ordinal, resolution.master_location,
+            &candidate)) {
+        return 0;
+    }
+    *out_runner = candidate;
+    *out_action = action;
+    return 1;
+}
+
 int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
