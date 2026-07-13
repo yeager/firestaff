@@ -15440,6 +15440,22 @@ int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
         parameter_count, flgs_inout);
 }
 
+static void csb_v1_runtime_init_csbwin_filter_candidate(
+    CSB_V1_DSAFilterRuntime *filter)
+{
+    int level;
+
+    memset(filter, 0, sizeof(*filter));
+    filter->attack_filter_dsa_id = -1;
+    filter->attack_filter_action = -1;
+    for (level = 0; level < (int)(sizeof(filter->movement_filter_dsa_id) /
+                                  sizeof(filter->movement_filter_dsa_id[0]));
+         ++level) {
+        filter->movement_filter_dsa_id[level] = -1;
+        filter->movement_filter_action[level] = -1;
+    }
+}
+
 int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeDSAFilterBinding *binding,
@@ -15469,7 +15485,7 @@ int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
             &adapter_candidate)) {
         return 0;
     }
-    memset(&filter_candidate, 0, sizeof(filter_candidate));
+    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
     filter_candidate.programs = &profile->csbwin_extended_dsa_state;
     filter_candidate.runner =
         csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
@@ -15481,6 +15497,57 @@ int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
 
     *out_adapter = adapter_candidate;
     /* runner_user must refer to the published adapter, never its staged copy. */
+    filter_candidate.runner_user = out_adapter;
+    *out_filter = filter_candidate;
+    return 1;
+}
+
+int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
+{
+    CSB_V1_DSAFilterRuntime filter_candidate;
+    CSB_V1_RuntimeDSAFilterStackAdapter adapter_candidate;
+    int filter_level;
+
+    if (!profile || !binding || !out_filter || !out_adapter ||
+        loaded_level < 0) {
+        return 0;
+    }
+    filter_level = binding->location.level;
+    if (filter_level < 0 || filter_level >=
+        (int)(sizeof(filter_candidate.movement_filter_dsa_id) /
+              sizeof(filter_candidate.movement_filter_dsa_id[0]))) {
+        return 0;
+    }
+
+    /* CSBWin Monster.cpp:3079-3176 resolves one type-47 movement filter for
+     * a loaded level, then 3222-3370 enters ProcessDSAFilter with its seven
+     * movement parameters. As with attacks, install nothing until the exact
+     * save-owned action has passed the existing authentication boundary. */
+    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
+    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
+            profile, binding, state_index, action_ordinal, master_location,
+            &adapter_candidate)) {
+        return 0;
+    }
+    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
+    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
+    filter_candidate.runner =
+        csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
+    filter_candidate.runner_user = &adapter_candidate;
+    filter_candidate.loaded_level = loaded_level;
+    filter_candidate.movement_filter_dsa_id[filter_level] = binding->dsa_id;
+    filter_candidate.movement_filter_state[filter_level] = state_index;
+    filter_candidate.movement_filter_action[filter_level] = action_ordinal;
+
+    *out_adapter = adapter_candidate;
     filter_candidate.runner_user = out_adapter;
     *out_filter = filter_candidate;
     return 1;

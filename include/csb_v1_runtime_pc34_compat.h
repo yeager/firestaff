@@ -698,6 +698,19 @@ int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
     CSB_V1_DSAFilterRuntime *out_filter,
     CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
 
+/* Install one resolved CSBWin Monster.cpp movement filter in its source level
+ * slot. Unbound levels remain explicitly disabled; this admits only the
+ * existing authenticated pure-stack/transfer action subset. */
+int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
+
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
