@@ -710,6 +710,162 @@ int dm2_v1_inventory_panel_consume_hand_slot_backdrop(
     return 1;
 }
 
+int dm2_v1_inventory_panel_survey_frame_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_InventoryPanelSurveyFrameReceipt *out_receipt)
+{
+    uint8_t *pixels;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    uint32_t pixels_hash = 2166136261u;
+    uint32_t hash = 2166136261u;
+    size_t pixel_count;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_SURVEY:13962-14019 begins the
+     * item-description path with DRAW_STATIC_PIC(INTERFACE_CHARSHEET, 0, 1,
+     * 0x1ee, -1). It has no alternate frame when that exact material is
+     * absent; the item preview is a later optional operation. */
+    if (!loader ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0u, 1u,
+            &out_receipt->image_metadata) ||
+        out_receipt->image_metadata.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0u, 1u,
+            out_receipt->local_palette16, &out_receipt->local_palette_hash) ||
+        out_receipt->local_palette_hash == 0u) {
+        return 0;
+    }
+    pixels = dm2_v1_asset_load_image_field(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0u, 1u,
+        &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 ||
+        width != (int)out_receipt->image_metadata.width ||
+        height != (int)out_receipt->image_metadata.height ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i) {
+        pixels_hash = inventory_panel_hash_step(pixels_hash, pixels[i]);
+    }
+    dm2_v1_asset_free_pixels(pixels);
+    if (pixels_hash == 0u) return 0;
+    out_receipt->expanded_rect_index = DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT;
+    out_receipt->image_field = 1u;
+    out_receipt->decoded_width = (uint16_t)width;
+    out_receipt->decoded_height = (uint16_t)height;
+    out_receipt->decoded_format = format;
+    out_receipt->decoded_pixels_hash = pixels_hash;
+    hash = inventory_panel_hash_step(hash, out_receipt->expanded_rect_index);
+    hash = inventory_panel_hash_step(hash, out_receipt->image_field);
+    hash = inventory_panel_hash_step(hash, out_receipt->image_metadata.metadata_hash);
+    hash = inventory_panel_hash_step(hash, out_receipt->local_palette_hash);
+    hash = inventory_panel_hash_step(hash, pixels_hash);
+    if (hash == 0u) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->receipt_hash = hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_inventory_panel_consume_survey_frame(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelSurveyFrameReceipt *frame,
+    const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt)
+{
+    uint8_t palette16[16];
+    uint8_t *source_pixels;
+    uint32_t palette_hash = 0u;
+    uint32_t pixels_hash = 2166136261u;
+    uint32_t blit_hash = 2166136261u;
+    int source_width = 0;
+    int source_height = 0;
+    DM2_ImageFormat source_format = DM2_IMG_FMT_UNKNOWN;
+    size_t pixel_count;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !frame || !frame->valid || frame->receipt_hash == 0u ||
+        frame->image_field != 1u || !blit || !surface || !surface->pixels ||
+        surface->width <= 0 || surface->height <= 0 ||
+        surface->stride < surface->width ||
+        blit->rect_number != frame->expanded_rect_index ||
+        blit->transparent_index != UINT8_MAX || blit->source_x < 0 ||
+        blit->source_y < 0 || blit->destination_x < 0 ||
+        blit->destination_y < 0 || blit->width == 0u || blit->height == 0u) {
+        return 0;
+    }
+    if (!dm2_v1_asset_load_image_local_palette(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0u,
+            frame->image_field, palette16, &palette_hash) ||
+        palette_hash == 0u || palette_hash != frame->local_palette_hash ||
+        memcmp(palette16, frame->local_palette16, sizeof(palette16)) != 0) {
+        return 0;
+    }
+    source_pixels = dm2_v1_asset_load_image_field(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0u, frame->image_field,
+        &source_width, &source_height, &source_format);
+    if (!source_pixels || source_width != (int)frame->decoded_width ||
+        source_height != (int)frame->decoded_height ||
+        source_format != frame->decoded_format ||
+        (source_format != DM2_IMG_FMT_IMG3 && source_format != DM2_IMG_FMT_U4) ||
+        blit->source_x + (int)blit->width > source_width ||
+        blit->source_y + (int)blit->height > source_height ||
+        blit->destination_x + (int)blit->width > surface->width ||
+        blit->destination_y + (int)blit->height > surface->height) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    pixel_count = (size_t)source_width * (size_t)source_height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i) {
+        pixels_hash = inventory_panel_hash_step(pixels_hash, source_pixels[i]);
+    }
+    if (pixels_hash != frame->decoded_pixels_hash) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    for (uint16_t y = 0u; y < blit->height; ++y) {
+        for (uint16_t x = 0u; x < blit->width; ++x) {
+            uint8_t source = source_pixels[
+                (size_t)(blit->source_y + (int)y) * (size_t)source_width +
+                (size_t)(blit->source_x + (int)x)];
+            uint8_t destination = palette16[source & 0x0fu];
+            surface->pixels[(size_t)(blit->destination_y + (int)y) *
+                                (size_t)surface->stride +
+                            (size_t)(blit->destination_x + (int)x)] = destination;
+            blit_hash = inventory_panel_hash_step(blit_hash, source);
+            blit_hash = inventory_panel_hash_step(blit_hash, destination);
+        }
+    }
+    dm2_v1_asset_free_pixels(source_pixels);
+    if (blit_hash == 0u) return 0;
+    out_receipt->rect_number = blit->rect_number;
+    out_receipt->width = blit->width;
+    out_receipt->height = blit->height;
+    out_receipt->drawn_pixel_count = (uint32_t)blit->width * (uint32_t)blit->height;
+    out_receipt->transparent_pixel_count = 0u;
+    out_receipt->blit_hash = blit_hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
 const char *dm2_v1_inventory_panel_source_evidence(void)
 {
     return

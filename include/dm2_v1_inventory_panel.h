@@ -156,6 +156,22 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_InventoryPanelHandSlotBackdropReceipt;
 
+/* DRAW_ITEM_SURVEY opens the description panel with this static original
+ * character-sheet image before it optionally draws an item-specific preview. */
+typedef struct {
+    int valid;
+    uint16_t expanded_rect_index;
+    uint8_t image_field;
+    DM2_V1_GdatImageMetadata image_metadata;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
+    uint16_t decoded_width;
+    uint16_t decoded_height;
+    DM2_ImageFormat decoded_format;
+    uint32_t decoded_pixels_hash;
+    uint32_t receipt_hash;
+} DM2_V1_InventoryPanelSurveyFrameReceipt;
+
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
@@ -227,6 +243,17 @@ int dm2_v1_inventory_panel_hand_slot_backdrop_receipt(
 int dm2_v1_inventory_panel_consume_hand_slot_backdrop(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_InventoryPanelHandSlotBackdropReceipt *backdrop,
+    const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_survey_frame_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_InventoryPanelSurveyFrameReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_consume_survey_frame(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelSurveyFrameReceipt *frame,
     const DM2_V1_InventoryPanelHudBlit *blit,
     DM2_V1_InventoryPanelHudSurface *surface,
     DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
