@@ -51,6 +51,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     decision.projectileZone = -1;
     decision.liveProjectileSlot = -1;
     decision.liveProjectileSubtype = -1;
+    decision.liveProjectileAssociatedThing = THING_NONE;
     decision.liveProjectileCell = -1;
     decision.liveProjectileDirection = -1;
     decision.liveExplosionSlot = -1;
@@ -88,6 +89,8 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
             if (decision.liveProjectileSlot < 0) {
                 decision.liveProjectileSlot = projectile->slotIndex;
                 decision.liveProjectileSubtype = projectile->projectileSubtype;
+                decision.liveProjectileAssociatedThing =
+                    (unsigned short)projectile->reserved1;
                 decision.liveProjectileCell = projectile->cell;
                 decision.liveProjectileDirection = projectile->direction;
             }
