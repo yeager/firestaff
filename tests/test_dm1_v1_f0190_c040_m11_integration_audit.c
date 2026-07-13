@@ -208,7 +208,7 @@ static int verify_invalid_attacks_rejected(void)
     return ok;
 }
 
-static int verify_shared_tile_effect_order_after_f0738(void)
+static int verify_same_square_expiry_and_afterplay_order(void)
 {
     DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApply;
     DM1_MeleeF0190KilledAllAfterplayReceiptPc34 afterplay;
@@ -220,7 +220,7 @@ static int verify_shared_tile_effect_order_after_f0738(void)
     struct ExplosionList_Compat effects;
     struct TimelineEvent_Compat advance;
     int outcome = -1;
-    int slot = -1;
+    int c040Slot = -1;
     int ok = 1;
 
     /* Complete the mutation before F0190 appends its source C040 afterplay. */
@@ -234,7 +234,6 @@ static int verify_shared_tile_effect_order_after_f0738(void)
                  "F0738 completes before same-square afterplay effects");
     ok &= build_killed_all_afterplay(DM1_SIZE_QUARTER_SQUARE, &aftermathApply,
                                      &afterplay);
-
     memset(&effects, 0, sizeof(effects));
     memset(&firstEffect, 0, sizeof(firstEffect));
     firstEffect.explosionType = C000_EXPLOSION_FIREBALL;
@@ -247,17 +246,17 @@ static int verify_shared_tile_effect_order_after_f0738(void)
     firstEffect.currentTick = 77;
     firstEffect.creatorProjectileSlot = -1;
     memset(&advance, 0, sizeof(advance));
-    ok &= expect(F0821_EXPLOSION_Create_Compat(&firstEffect, &effects, &slot,
-                                                &advance) &&
-                     slot == 0,
-                 "existing same-square effect occupies the first list slot");
-    slot = -1;
+    ok &= expect(F0821_EXPLOSION_Create_Compat(&firstEffect, &effects,
+                                                &c040Slot, &advance) &&
+                     c040Slot == 0,
+                 "first same-square effect occupies slot zero");
+    c040Slot = -1;
     memset(&advance, 0, sizeof(advance));
     ok &= expect(F0821_EXPLOSION_Create_Compat(
-                     &afterplay.sourceSmokeCreateInput, &effects, &slot,
+                     &afterplay.sourceSmokeCreateInput, &effects, &c040Slot,
                      &advance) &&
-                     slot == 1,
-                 "F0190 C040 follows the existing same-square effect");
+                     c040Slot == 1,
+                 "F0190 C040 follows the first same-square effect");
 
     memset(&viewportInput, 0, sizeof(viewportInput));
     viewportInput.relativeForward = 1;
@@ -269,13 +268,34 @@ static int verify_shared_tile_effect_order_after_f0738(void)
     viewportInput.liveExplosions = &effects;
     ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
                      &viewportInput, &viewportDecision) &&
-                     viewportDecision.liveExplosionSourceCount == 2 &&
-                     viewportDecision.liveExplosionSourceSlots[0] == 0 &&
-                     viewportDecision.liveExplosionSourceTypes[0] ==
+                     viewportDecision.liveRenderableExplosionCount == 2 &&
+                     viewportDecision.liveRenderableExplosionTypes[0] ==
                          C000_EXPLOSION_FIREBALL &&
-                     viewportDecision.liveExplosionSourceSlots[1] == 1 &&
-                     viewportDecision.liveExplosionSourceTypes[1] ==
-                         C040_EXPLOSION_SMOKE &&
+                     viewportDecision.liveRenderableExplosionTypes[1] ==
+                         C040_EXPLOSION_SMOKE,
+                 "F0115 admits both same-square effects in list order");
+
+    ok &= expect(F0824_EXPLOSION_Despawn_Compat(&effects, c040Slot) &&
+                     effects.count == 1 &&
+                     !effects.entries[c040Slot].reserved0,
+                 "expired C040 is removed without changing the leading effect");
+    ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
+                     &viewportInput, &viewportDecision) &&
+                     viewportDecision.liveRenderableExplosionCount == 1 &&
+                     viewportDecision.liveRenderableExplosionSlots[0] == 0 &&
+                     viewportDecision.liveRenderableExplosionTypes[0] ==
+                         C000_EXPLOSION_FIREBALL,
+                 "F0115 omits expired C040 while retaining the leading effect");
+
+    c040Slot = -1;
+    memset(&advance, 0, sizeof(advance));
+    ok &= expect(F0821_EXPLOSION_Create_Compat(
+                     &afterplay.sourceSmokeCreateInput, &effects, &c040Slot,
+                     &advance) &&
+                     c040Slot == 1,
+                 "source C040 reuses only its expired slot");
+    ok &= expect(dm1_v1_viewport_runtime_materialization_decide_pc34(
+                     &viewportInput, &viewportDecision) &&
                      viewportDecision.liveRenderableExplosionCount == 2 &&
                      viewportDecision.liveRenderableExplosionSlots[0] == 0 &&
                      viewportDecision.liveRenderableExplosionTypes[0] ==
@@ -285,7 +305,7 @@ static int verify_shared_tile_effect_order_after_f0738(void)
                      viewportDecision.liveRenderableExplosionTypes[1] ==
                          C040_EXPLOSION_SMOKE &&
                      viewportDecision.liveRenderableExplosionAttacks[1] == 110,
-                 "F0115 preserves both same-square effects in source order");
+                 "F0115 restores source order after C040 rematerialization");
     return ok;
 }
 
@@ -298,7 +318,7 @@ int main(void)
     ok &= verify_valid_attack_route(DM1_SIZE_HALF_SQUARE, 190);
     ok &= verify_valid_attack_route(DM1_SIZE_FULL_SQUARE, 255);
     ok &= verify_invalid_attacks_rejected();
-    ok &= verify_shared_tile_effect_order_after_f0738();
+    ok &= verify_same_square_expiry_and_afterplay_order();
     ok &= audit_m11_live_explosion_handoff();
 
     if (!ok) return 1;
