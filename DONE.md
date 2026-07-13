@@ -9800,6 +9800,15 @@ or partial commands reject; raw `dtText` is not decoded or rendered until
 `QUERY_CMDSTR_TEXT` and its encoding state are source-proven. Verification:
 Ninja and `dm2_v1_weather_gdat_receipt` passed.
 
+# ✅ 2026-07-13 DM2 dialogue GDAT material receipt
+
+`dm2_v1_dialogue_gdat_receipt()` binds the exact skproject `c_gui_vp.cpp`
+`GRAPHICSSET` dialogue shell fields `-4..-2` and glyph field `3` to source
+IMG3 metadata and their `QUERY_GDAT_IMAGE_LOCALPAL` tails. A missing image,
+wrong graphics set, non-4bpp record, or absent palette rejects before any
+dialogue draw. This is material provenance only: it does not synthesize text,
+layout, or pixels. Verification: Ninja and `dm2_v1_dialogue_gdat_receipt`.
+
 # ✅ 2026-07-13 DM1 F0218 projectile-impact aftermath for C38/F0266
 
 The shared M10 projectile-cell pass now runs ReDMCSB `PROJEXPL.C F0217`'s
