@@ -14761,6 +14761,7 @@ static int m11_dm1_hoc_menu_route_blocks_normal_input(
 static int m11_dm1_hoc_c040_input_material_ready(
     const M11_GameViewState* state)
 {
+    const M11_AssetSlot* backdrop;
     const M11_AssetSlot* panel;
     DM1_V1_LayoutZoneRectPc34 panelRect;
 
@@ -14770,6 +14771,18 @@ static int m11_dm1_hoc_c040_input_material_ready(
     }
     panelRect = dm1_v1_inventory_panel_rect_pc34();
     if (!dm1_v1_inventory_panel_zone_id_pc34()) {
+        return 0;
+    }
+    /* ReDMCSB PANEL.C F0347 installs C017 as the inventory view before
+     * F0346 overlays C040 at C101.  C040 alone is not a complete visible
+     * command surface, so host C160/C161/C162 must not mutate the candidate
+     * while the original backdrop is unavailable. */
+    backdrop = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    (unsigned int)
+                                        dm1_v1_graphic_inventory_backdrop_pc34());
+    if (!backdrop || !backdrop->pixels ||
+        backdrop->width != M11_VIEWPORT_W ||
+        backdrop->height != M11_VIEWPORT_H) {
         return 0;
     }
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40);

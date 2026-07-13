@@ -9,6 +9,14 @@
   its dynamic CPU/controller/palette evidence is captured. Verification:
   macOS window capture, rebuilt instrumented Mednafen, and authentic capture.
 
+- 2026-07-13 DM1 HoC C040 complete-panel host gate: C160/C161/C162 host
+  input now requires both the PC34 C017 224x136 inventory backdrop from
+  `PANEL.C F0347` and F0346's C040 overlay. This prevents a loaded overlay
+  from authorizing resurrection, reincarnation, or cancellation over a
+  missing source panel; direct save/model APIs remain separate. Verification:
+   focused Ninja build and `m11_dm1_hoc_no_fallback_panel` CTest verifying
+   the real C017/C040 route and no-asset rejection.
+
 - 2026-07-13 DM1 HoC C161/C027 host-input gate: the ReDMCSB `REVIVE.C
   F0282` reincarnate route now opens and edits F0281 rename only when the
   original PC34 C027 panel and M653 interface font are present. C040 stays
