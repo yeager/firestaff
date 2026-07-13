@@ -475,6 +475,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               loaded_level.structure2_payload.opaque_payload_zero_byte_count +
                       loaded_level.structure2_payload.opaque_payload_nonzero_byte_count ==
                   loaded_level.structure2_payload.opaque_payload_size &&
+              loaded_level.structure2_payload.opaque_payload_complete_pair_count ==
+                  loaded_level.structure2_payload.opaque_payload_size / 2 &&
+              loaded_level.structure2_payload.opaque_payload_trailing_byte_count ==
+                  loaded_level.structure2_payload.opaque_payload_size % 2 &&
+              loaded_level.structure2_payload.opaque_payload_zero_pair_count +
+                      loaded_level.structure2_payload.opaque_payload_nonzero_pair_count ==
+                  loaded_level.structure2_payload.opaque_payload_complete_pair_count &&
               loaded_level.structure2_payload.local_payload_offset_pattern_observed &&
               loaded_level.structure2_payload
                   .local_payload_word_aligned_offset_pattern_observed &&
@@ -773,6 +780,10 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           level.structure2_payload.opaque_payload_size == 18 &&
           level.structure2_payload.opaque_payload_zero_byte_count == 18 &&
           level.structure2_payload.opaque_payload_nonzero_byte_count == 0 &&
+          level.structure2_payload.opaque_payload_complete_pair_count == 9 &&
+          level.structure2_payload.opaque_payload_trailing_byte_count == 0 &&
+          level.structure2_payload.opaque_payload_zero_pair_count == 9 &&
+          level.structure2_payload.opaque_payload_nonzero_pair_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offset_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offsets_unaligned_count == 0 &&
           level.structure2_payload.nonzero_descriptor_offsets_word_bounded_count == 0 &&
@@ -791,6 +802,10 @@ static void test_structure1g_animated_floor_material_handoff(void) {
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
           level.structure2_payload.opaque_payload_zero_byte_count == 17 &&
           level.structure2_payload.opaque_payload_nonzero_byte_count == 1 &&
+          level.structure2_payload.opaque_payload_complete_pair_count == 9 &&
+          level.structure2_payload.opaque_payload_trailing_byte_count == 0 &&
+          level.structure2_payload.opaque_payload_zero_pair_count == 8 &&
+          level.structure2_payload.opaque_payload_nonzero_pair_count == 1 &&
           level.structure2_payload.nonzero_descriptor_offset_count == 2 &&
           level.structure2_payload
               .nonzero_descriptor_offsets_in_opaque_payload_count == 2 &&

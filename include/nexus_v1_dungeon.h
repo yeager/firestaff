@@ -222,6 +222,13 @@ typedef struct {
      * intentionally not a codec, record, image, or palette interpretation. */
     int opaque_payload_zero_byte_count;
     int opaque_payload_nonzero_byte_count;
+    /* Pair composition of the same opaque byte span. These are raw bounded
+     * two-byte windows only: they do not assert a word grammar, endianness,
+     * pixel layout, palette layout, or record format. */
+    int opaque_payload_complete_pair_count;
+    int opaque_payload_trailing_byte_count;
+    int opaque_payload_zero_pair_count;
+    int opaque_payload_nonzero_pair_count;
     /* Read-only descriptor-offset correlation. These counters only compare
      * the already parsed numeric fields with the bounded post-FFFF span;
      * they do not assign an offset base, record grammar, pixel codec, or

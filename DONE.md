@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure2 opaque-pair composition receipt: the bounded
+  parser now retains complete raw two-byte pair, trailing-byte, zero-pair,
+  and nonzero-pair counts for the already verified post-`FFFF` span. This is
+  byte-span composition only, not a word grammar, byte order, record,
+  palette, image, codec, or material claim. Verification:
+  `test_nexus_v1_dgn_geometry_readiness` against the hash-verified
+  LEV00-LEV15 corpus and synthetic boundary fixtures.
+
 - 2026-07-13 Theron post-`$e96a` controller resume receipt: the authenticated
   US raw-CUE Mednafen trace proves `$e96a` `AND #$B8` -> `$e96c` `CMP #$98` ->
   `$e96e` `BEQ $E98A` -> executed `$e98a` `LDA $22A4`. The trace hook now also

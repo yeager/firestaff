@@ -73,6 +73,19 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                     ++level->structure2_payload.opaque_payload_nonzero_byte_count;
                 }
             }
+            for (opaque_index = opaque_offset;
+                 opaque_index + 1 < (int)structure2_useful;
+                 opaque_index += 2) {
+                ++level->structure2_payload.opaque_payload_complete_pair_count;
+                if (data[structure2_offset + opaque_index] == 0U &&
+                    data[structure2_offset + opaque_index + 1] == 0U) {
+                    ++level->structure2_payload.opaque_payload_zero_pair_count;
+                } else {
+                    ++level->structure2_payload.opaque_payload_nonzero_pair_count;
+                }
+            }
+            level->structure2_payload.opaque_payload_trailing_byte_count =
+                level->structure2_payload.opaque_payload_size & 1;
             for (descriptor_index = 0;
                  descriptor_index < level->structure2_texture_count;
                  ++descriptor_index) {
