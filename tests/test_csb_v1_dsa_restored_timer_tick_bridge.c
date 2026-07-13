@@ -176,6 +176,12 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x10u,
           "restored falsewall CLEAR applies only its source-owned cell action");
 
+    profile.csbwin_timers[0].ubyte9 = 2u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x14u,
+          "restored falsewall TOGGLE uses its source-owned SET arm");
+
     put_le16(raw, 92u, 0x012fu);
 
     profile.csbwin_timers[0].source_index = 0u;
