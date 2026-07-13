@@ -159,6 +159,25 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x10u,
           "stale falsewall SET timer cannot mutate a source cell flag");
 
+    /* No type-47 DSA or portrait actuator owns this square, so the source
+     * timerTypeModifier[1] mapping remains CSBWin's canonical CLEAR action. */
+    raw[80] = 0x14u;
+    put_le16(raw, 92u, 0u);
+    profile.csbwin_timers[0].function = 7u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 1u;
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x10u,
+          "restored falsewall CLEAR applies only its source-owned cell action");
+
+    put_le16(raw, 92u, 0x012fu);
+
     profile.csbwin_timers[0].source_index = 0u;
     profile.csbwin_timers[0].function = 8u;
     profile.csbwin_timers[0].time = profile.game_time;

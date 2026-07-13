@@ -34,9 +34,10 @@
   historical restart work remain unavailable; do not infer a C22 action.
 
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
-  updates the original falsewall cell flag. CLEAR/TOGGLE party and
-  nonmaterial-group deferral, source successor ownership, portrait handling,
-  and parameter-message payloads remain fail-closed.
+  and DSA-free CLEAR now update the original falsewall cell flag. TOGGLE,
+  portrait/DSA-owned squares, and parameter-message payloads remain
+  fail-closed. CLEAR deferral is source-owned only where the saved timer's
+  party/nonmaterial-group owner can be retained.
 
 - 2026-07-13 CSBWin restored `TT_24` follow-up: exact saved-object removal
   and free are live only for a validated source Thing chain. Timer-owned
