@@ -383,6 +383,23 @@ typedef struct {
     int pair_semantics_proven;
 } Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt;
 
+/* Structure1A-bound wall decorations retain their raw model/aspect and
+ * rotation bytes as one pair after ownership validation. This is not a model
+ * binding, orientation, mesh, material, texture, palette, pixel, or draw
+ * instruction. */
+typedef struct {
+    int structure1a_relation_complete;
+    int wall_decoration_entry_count;
+    int resolved_pair_count;
+    int unique_pair_count;
+    int duplicate_pair_count;
+    int zero_pair_count;
+    int nonzero_pair_count;
+    uint16_t highest_pair;
+    int complete;
+    int pair_semantics_proven;
+} Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt;
+
 /* Alcove records retain one raw payload-selector byte. It is measured only as
  * original byte reuse after Structure1A ownership, not as an item, inventory
  * slot, object, aspect, model, texture, palette, or pixel mapping. */
@@ -985,6 +1002,8 @@ typedef struct {
         structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
         structure1f_wall_sensor_model_rotation_pairs;
+    Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
+        structure1f_wall_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
         structure1f_alcove_payload_selectors;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
@@ -1112,6 +1131,8 @@ typedef struct {
         structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
         structure1f_wall_sensor_model_rotation_pairs;
+    Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
+        structure1f_wall_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
         structure1f_alcove_payload_selectors;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
@@ -1216,6 +1237,9 @@ int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
 int nexus_v1_level_structure1f_wall_sensor_model_rotation_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt *out_receipt);
+int nexus_v1_level_structure1f_wall_decoration_model_rotation_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt *out_receipt);
 int nexus_v1_level_structure1f_alcove_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt *out_receipt);

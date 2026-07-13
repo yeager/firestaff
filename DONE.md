@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F wall-decoration model/rotation handoff: raw
+  Structure1A-owned pairs now reach DGN host, render-plan, and LEV00-15 corpus
+  receipts. They remain fail-closed provenance, with no model, orientation,
+  mesh, material, texture, palette, pixel, or draw semantics.
+
 - 2026-07-13 DM1 F0111 center-door host materialization: the DM1/M10
   receipt now owns ReDMCSB `DUNVIEW.C F0111` frame-before-panel ordering and
   carries the current-map F0095 panel graphic to M11 without host-side bitmap

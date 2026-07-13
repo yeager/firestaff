@@ -191,6 +191,7 @@ int main(int argc, char **argv) {
            "complete-wall-sensor-destinations=%d "
            "complete-wall-sensor-controls=%d "
            "complete-wall-sensor-model-rotation-pairs=%d "
+           "complete-wall-decoration-model-rotation-pairs=%d "
            "complete-alcove-payload-selectors=%d "
            "complete-floor-sensor-controls=%d "
            "complete-floor-sensor-destinations=%d "
@@ -229,6 +230,7 @@ int main(int argc, char **argv) {
            receipt.structure1f_wall_sensor_destination_complete_level_count,
            receipt.structure1f_wall_sensor_control_selector_complete_level_count,
            receipt.structure1f_wall_sensor_model_rotation_pair_complete_level_count,
+           receipt.structure1f_wall_decoration_model_rotation_pair_complete_level_count,
            receipt.structure1f_alcove_payload_selector_complete_level_count,
            receipt.structure1f_floor_sensor_control_selector_complete_level_count,
            receipt.structure1f_floor_sensor_destination_complete_level_count,
