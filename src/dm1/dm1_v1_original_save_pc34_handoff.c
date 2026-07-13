@@ -675,6 +675,20 @@ static int import_original_pc34_timeline_part(
 static int timeline_kind_from_original_pc34_event_type(int type)
 {
     switch (type) {
+    case DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE:
+    case DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE:
+    case DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT:
+    case DM1_EVENT_UPDATE_ASPECT_GROUP:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_0:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_1:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_2:
+    case DM1_EVENT_UPDATE_ASPECT_CREATURE_3:
+    case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2:
+    case DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3:
+        return TIMELINE_EVENT_CREATURE_REACTION;
     case DM1_EVENT_DOOR_ANIMATION:
         return TIMELINE_EVENT_DOOR_ANIMATE;
     case DM1_EVENT_DOOR_DESTRUCTION:
@@ -717,6 +731,68 @@ static int timeline_kind_from_original_pc34_event_type(int type)
     default:
         return TIMELINE_EVENT_INVALID;
     }
+}
+
+static int original_pc34_event_type_is_group_reaction(int type)
+{
+    return type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+           type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
+}
+
+static uint16_t original_pc34_next_thing(
+    const struct DungeonThings_Compat *things,
+    uint16_t thing)
+{
+    int type;
+    int index;
+    const unsigned char *raw;
+    int byte_count;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (type < 0 || type >= 16 || index < 0 ||
+        index >= things->thingCounts[type]) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type];
+    byte_count = s_thingDataByteCount[type];
+    if (!raw || byte_count < 2) {
+        return THING_ENDOFLIST;
+    }
+    return read_u16_le(raw + (size_t)index * (size_t)byte_count);
+}
+
+static int original_pc34_group_on_square(
+    const struct GameWorld_Compat *world,
+    int map_index,
+    int map_x,
+    int map_y,
+    int *out_group_index)
+{
+    uint16_t thing;
+    int safety = 0;
+
+    if (out_group_index) *out_group_index = -1;
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->groups) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, map_index, map_x, map_y);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = (int)THING_GET_TYPE(thing);
+        int index = (int)THING_GET_INDEX(thing);
+        if (type == THING_TYPE_GROUP && index >= 0 &&
+            index < world->things->groupCount) {
+            if (out_group_index) *out_group_index = index;
+            return 1;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    return 0;
 }
 
 static int original_pc34_event_type_is_status_timeout(int type)
@@ -858,6 +934,41 @@ static int materialize_original_pc34_projectile_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_group_reaction_event(
+    const struct DM1_Event_V1 *src,
+    struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    int group_index;
+
+    if (!src || !world || !out_event ||
+        !original_pc34_event_type_is_group_reaction(src->type) ||
+        !original_pc34_group_on_square(world,
+                                       (int)((src->map_time >> 24) & 0xffu),
+                                       (int)src->b_mapX, (int)src->b_mapY,
+                                       &group_index)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    /* ReDMCSB TIMELINE.C F0261:1858-1863 extracts C29..C41 and calls
+     * GROUP.C F0209 with B.Location and C.Ticks.  Resolve the group from
+     * the original SFT chain rather than inventing an M10 group identity. */
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_CREATURE_REACTION;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = (int)((src->map_time >> 24) & 0xffu);
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->aux0 = group_index;
+    out_event->aux1 = world->things->groups[group_index].creatureType;
+    out_event->aux2 = src->type;
+    out_event->aux3 = (int)read_u16_le(&src->c_cell);
+    /* Keep the source byte while marking aux3 as an original C.Ticks
+     * payload; M10-generated reactions retain their legacy tick route. */
+    out_event->aux4 = (int)src->priority | 0x100;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world,
@@ -909,6 +1020,14 @@ static int materialize_original_pc34_timeline(
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (original_pc34_event_type_is_group_reaction(src->type)) {
+            if (materialize_original_pc34_group_reaction_event(
+                    src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             continue;
@@ -2047,6 +2166,16 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
         load_path = backup_path;
         resumed_from_backup = 1;
     }
+    /* ReDMCSB LOADSAVE.C F0435 restores EVENTS/TIMELINE before exposing
+     * the resumed game, but a tail-less PC34 save still owns its original
+     * start DUNGEON.DAT backing.  Bind that backing before materializing
+     * source event unions: C29-C41 resolve B.Location through the real SFT
+     * chain and C48/C49 resolve their C14 records. */
+    if (start_world) {
+        candidate_world.dungeon = start_world->dungeon;
+        candidate_world.things = start_world->things;
+        candidate_world.ownsDungeon = 0;
+    }
     result = dm1_v1_original_save_pc34_handoff_load_world_from_file(
         load_path, &candidate_world, event_queue ? &candidate_queue : NULL,
         &candidate_report);
@@ -2059,11 +2188,6 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
      * A PC34 stream without that optional tail is therefore resumed against
      * the already materialized DM1 start dungeon, never a host-made HoC
      * substitute. */
-    if (!candidate_world.dungeon && start_world) {
-        candidate_world.dungeon = start_world->dungeon;
-        candidate_world.things = start_world->things;
-        candidate_world.ownsDungeon = 0;
-    }
     if (!candidate_world.dungeon || !candidate_world.things) {
         F0883_WORLD_Free_Compat(&candidate_world);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;

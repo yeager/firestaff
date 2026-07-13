@@ -1204,6 +1204,91 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     F0883_WORLD_Free_Compat(&start_world);
 }
 
+static void test_runtime_materializer_binds_original_group_reaction(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int rc;
+    int i;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    struct DungeonGroup_Compat groups[1];
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "group reaction fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(
+              bytes, (size_t)written, 0,
+              DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE),
+          "fixture rewrites an authenticated source C29 event");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    /* The fixture's event 0 is B.Location=(11,12) on map 2.  This is
+     * the exact original SFT lookup used by TIMELINE.C -> GROUP.C F0209. */
+    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = (unsigned short)(THING_TYPE_GROUP << 10);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 15;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.loaded = 1;
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "group reaction fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "source C29 materializes through the original SFT group chain");
+    CHECK(loaded_world.timeline.count == ORIGINAL_PC34_EVENT_COUNT,
+          "source C29 remains in the staged runtime timeline");
+    CHECK(loaded_world.timeline.events[2].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+              loaded_world.timeline.events[2].mapIndex == 2 &&
+              loaded_world.timeline.events[2].mapX == 11 &&
+              loaded_world.timeline.events[2].mapY == 12 &&
+              loaded_world.timeline.events[2].aux0 == 0 &&
+              loaded_world.timeline.events[2].aux1 == 15 &&
+              loaded_world.timeline.events[2].aux2 ==
+                  DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
+              loaded_world.timeline.events[2].aux3 == 3 &&
+              (loaded_world.timeline.events[2].aux4 & 0x100) != 0,
+          "C29 preserves F0209 group identity, C.Ticks, and priority provenance");
+}
+
 static void test_runtime_materializer_recovers_missing_primary_from_backup(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -1927,7 +2012,7 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));
     world.party.championCount = 1;
-    world.timeline.count = 2;
+    world.timeline.count = 3;
     world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
     world.timeline.events[0].fireAtTick = 100u;
     world.timeline.events[0].aux0 = 5;
@@ -1936,6 +2021,16 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     world.timeline.events[1].fireAtTick = 101u;
     world.timeline.events[1].aux0 = 6;
     world.timeline.events[1].aux4 = 3;
+    world.timeline.events[2].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    world.timeline.events[2].fireAtTick = 102u;
+    world.timeline.events[2].mapIndex = 2;
+    world.timeline.events[2].mapX = 14;
+    world.timeline.events[2].mapY = 7;
+    world.timeline.events[2].aux0 = 3;
+    world.timeline.events[2].aux1 = 15;
+    world.timeline.events[2].aux2 = DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE;
+    world.timeline.events[2].aux3 = 9;
+    world.timeline.events[2].aux4 = 0x104;
     world.projectiles.count = 7;
 
     world.projectiles.entries[5].slotIndex = 5;
@@ -1965,10 +2060,11 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
         bytes, (size_t)written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "exported C48/C49 envelope imports");
-    CHECK(report.original_event_count == 2 &&
+    CHECK(report.original_event_count == 3 &&
               report.events[0].type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
-              report.events[1].type == DM1_EVENT_MOVE_PROJECTILE,
-          "world export retains C48 first-move and C49 impact event ids");
+              report.events[1].type == DM1_EVENT_MOVE_PROJECTILE &&
+              report.events[2].type == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE,
+          "world export retains C48/C49 and C29 source event ids");
 
     expected_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
                                 (2u << 14));
@@ -1984,6 +2080,10 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
               rd16le(&report.events[1].c_cell) == expected_motion &&
               ((report.events[1].map_time >> 24) & 0xffu) == 3u,
           "C49 export writes original B.Slot and C.Projectile fields");
+    CHECK(report.events[2].b_mapX == 14 && report.events[2].b_mapY == 7 &&
+              rd16le(&report.events[2].c_cell) == 9u &&
+              report.events[2].priority == 4,
+          "C29 export restores B.Location, C.Ticks, and source priority");
 
     world.projectiles.entries[6].reserved3 = 0;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
@@ -1998,6 +2098,7 @@ int main(void)
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
+    test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
     test_runtime_handoff_rejects_unmaterialized_source_event();
