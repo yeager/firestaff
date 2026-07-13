@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1119 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1131 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -984,6 +984,18 @@ index 347482c4..61d4758e 100644
 +    const uint32 raw_fb = CurGame->Debugger->MemPeek(0x00fb, 1, true, true) & 0xff;
 +    const uint32 raw_ff = CurGame->Debugger->MemPeek(0x00ff, 1, true, true) & 0xff;
 +    TheronIrq2Trace->print_format("stage2_system_card_call pc=%04x return_pc=%04x target=%04x fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc + 3, logical_pc == 0x40cd ? 0xe009 : 0xe00f, raw_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
++    FlushTheronIrq2Trace();
++   }
++   if(logical_pc == 0x40d0 || logical_pc == 0x40a7)
++   {
++    const uint32 raw_fc = CurGame->Debugger->MemPeek(0x00fc, 1, true, true) & 0xff;
++    const uint32 raw_fd = CurGame->Debugger->MemPeek(0x00fd, 1, true, true) & 0xff;
++    const uint32 raw_fe = CurGame->Debugger->MemPeek(0x00fe, 1, true, true) & 0xff;
++    const uint32 raw_f8 = CurGame->Debugger->MemPeek(0x00f8, 1, true, true) & 0xff;
++    const uint32 raw_fa = CurGame->Debugger->MemPeek(0x00fa, 1, true, true) & 0xff;
++    const uint32 raw_fb = CurGame->Debugger->MemPeek(0x00fb, 1, true, true) & 0xff;
++    const uint32 raw_ff = CurGame->Debugger->MemPeek(0x00ff, 1, true, true) & 0xff;
++    TheronIrq2Trace->print_format("stage2_system_card_return pc=%04x call_pc=%04x fc=%02x fd=%02x fe=%02x f8=%02x fa=%02x fb=%02x ff=%02x\n", logical_pc, logical_pc == 0x40d0 ? 0x40cd : 0x40a4, raw_fc, raw_fd, raw_fe, raw_f8, raw_fa, raw_fb, raw_ff);
 +    FlushTheronIrq2Trace();
 +   }
 +   if(logical_pc < 0x4100)

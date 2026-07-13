@@ -501,10 +501,11 @@ reaches loaded RAM and disassembles `$40cd` as `JSR $e009` and `$40a4` as
 System Card call. Retain these as raw execution facts only; capture the exact
 register/result/sector relationship for the two actual calls before assigning
 CD_READ, record, destination, bitmap, palette, object, or level semantics.
-The trace patch now emits one raw `stage2_system_card_call` receipt at each of
-those exact PCs, including the return PC, target, and `$fc/$fd/$fe/$f8/$fa/$fb/$ff`
-registers. It deliberately still does not label a call as a CD read or assign
-any data role until a live post-call sector/result relationship is observed.
+The trace patch now emits one raw `stage2_system_card_call` and matching
+`stage2_system_card_return` receipt at each exact call/return PC, including
+the target and `$fc/$fd/$fe/$f8/$fa/$fb/$ff` registers. It deliberately still
+does not label a call as a CD read or assign any data role until a live
+post-call sector/result relationship is observed.
 
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
