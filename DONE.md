@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron positive raw-capture boot handoff: the opt-in raw
+  Track 02/System Card/Mednafen probe now passes its complete hash-bound
+  receipt to `theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace`.
+  The production consumer must retain the same variant, MD5, bitmap-route
+  mask, atlas checksum, CD_READ proof, and no-fallback flag; a mismatch blocks
+  before presentation. The local corpus has no authentic triple and therefore
+  skip-passes, while a valid future capture reports the positive handoff only.
+  Palette provenance remains independently required for RGBA output.
+  Verification: Ninja target plus no-root/local-corpus direct runs and focused
+  CTest `theron_v1_raw_media_cd_read_bitmap_chain_probe` passed 1/1.
+
 - ✅ 2026-07-13 Theron hash-gated local capture-artifact intake: the raw
   bitmap-chain probe can now discover an authentic 2352-byte Track 02, exact
   System Card, and variant-matched Mednafen loader trace beneath an explicit

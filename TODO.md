@@ -676,6 +676,11 @@ images are counted only as diagnostics and are never promoted to raw media.
 The locally inspected US/JP corpus contains two such ISO candidates but no
 authenticated raw-Track02/System-Card/trace triple, so the positive bitmap
 record route remains legitimately skipped and open.
+2026-07-13 boot-handoff update: a complete authentic triple now reaches the
+real Theron boot raw-media consumer and must retain the same Track 02 identity,
+bitmap-route mask, atlas checksum, and no-fallback flag. It can acknowledge
+the raw capture handoff, but remains unable to submit RGBA pixels until an
+original palette-byte relation is captured.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no
