@@ -1675,6 +1675,35 @@ static void test_runtime_materializer_binds_original_sound_union(void)
           "C20 export rejects a host sound event without the receipt");
 }
 
+static void test_original_c60_deferred_group_move_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE], exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char squares[3][32 * 32]; unsigned short first_things[1]; char path[512];
+    int written = 0, exported_size = 0, rc, i, index = -1;
+    struct GameWorld_Compat start_world, loaded_world; struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3]; struct DungeonMapTiles_Compat tiles[3];
+    struct DungeonThings_Compat things; struct DungeonGroup_Compat groups[2];
+    struct SaveGame_Compat imported; struct PartyState_Compat party;
+    struct TimelineEvent_Compat event; DM1OriginalSavePC34HandoffReport report;
+    uint16_t group_thing = (uint16_t)((THING_TYPE_GROUP << 10) | 1);
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written, 2, 3, 9, 10, 2, 1, ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK && rewrite_fixture_event_type(bytes, (size_t)written, 0, DM1_EVENT_MOVE_GROUP_SILENT) && rewrite_fixture_event_priority(bytes, (size_t)written, 0, 0) && rewrite_fixture_event_c_union(bytes, (size_t)written, 0, group_thing), "C60 fixture writes B.Location and C.Slot");
+    memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world)); memset(&dungeon, 0, sizeof(dungeon)); memset(maps, 0, sizeof(maps)); memset(tiles, 0, sizeof(tiles)); memset(squares, 0, sizeof(squares)); memset(&things, 0, sizeof(things)); memset(groups, 0, sizeof(groups)); memset(&report, 0, sizeof(report));
+    for (i = 0; i < 3; ++i) { maps[i].width = 32; maps[i].height = 32; tiles[i].squareData = squares[i]; tiles[i].squareCount = 32 * 32; }
+    squares[2][11 * 32 + 12] = DUNGEON_SQUARE_MASK_THING_LIST; first_things[0] = THING_ENDOFLIST;
+    dungeon.header.mapCount = 3; dungeon.maps = maps; dungeon.tiles = tiles; dungeon.tilesLoaded = 1;
+    things.groups = groups; things.groupCount = 2; things.squareFirstThings = first_things; things.squareFirstThingCount = 1; groups[1].creatureType = 1; groups[1].next = THING_ENDOFLIST;
+    start_world.dungeon = &dungeon; start_world.things = &things; make_temp_save_path(path, sizeof(path)); remove(path); CHECK(write_fixture_file(path, bytes, written), "C60 fixture writes");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path, &start_world, &loaded_world, NULL, &report); remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C60 materializes typed group-slot receipt");
+    for (i = 0; i < loaded_world.timeline.count; ++i) if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_MOVE_GROUP_SILENT) { index = i; break; }
+    CHECK(index >= 0 && loaded_world.timeline.events[index].aux0 == 1 && loaded_world.timeline.events[index].aux1 == group_thing && loaded_world.timeline.events[index].mapX == 11 && loaded_world.timeline.events[index].mapY == 12, "C60 retains Location and C04 Slot");
+    event = loaded_world.timeline.events[index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick); CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event), "C60 schedules for its existing F0252 runtime owner");
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event); rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_size); CHECK(rc == SAVEGAME_PC34_OK, "C60 exports natively");
+    memset(&imported, 0, sizeof(imported)); memset(&party, 0, sizeof(party)); imported.party = &party; rc = dm1_v1_original_save_pc34_handoff_bytes(exported, (size_t)exported_size, &imported, &report); index = -1; for (i = 0; i < report.original_event_count; ++i) if (report.events[i].type == DM1_EVENT_MOVE_GROUP_SILENT) { index = i; break; }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index >= 0 && report.events[index].priority == 0 && report.events[index].b_mapX == 11 && report.events[index].b_mapY == 12 && rd16le(&report.events[index].c_cell) == group_thing, "C60 native roundtrip preserves Location and Slot");
+}
+
 static void test_runtime_materializer_binds_original_c12_damage_hide(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -3668,6 +3697,7 @@ int main(void)
     test_runtime_handoff_is_transactional_on_rejected_tail();
     test_runtime_handoff_rejects_unmaterialized_source_event();
     test_runtime_materializer_binds_original_sound_union();
+    test_original_c60_deferred_group_move_roundtrip();
     test_runtime_materializer_binds_original_c12_damage_hide();
     test_original_c72_champion_shield_roundtrip();
     test_original_c71_invisibility_roundtrip();

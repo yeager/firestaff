@@ -1206,6 +1206,42 @@ static int materialize_original_pc34_light_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_deferred_group_move_event(
+    const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    uint16_t group_thing;
+    int map_index;
+    int group_index;
+    if (!src || !world || !world->dungeon || !world->dungeon->maps ||
+        !world->things || !world->things->groups || !out_event ||
+        src->type != DM1_EVENT_MOVE_GROUP_SILENT || src->priority != 0u) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    group_thing = read_u16_le(&src->c_cell);
+    group_index = (int)THING_GET_INDEX(group_thing);
+    /* ReDMCSB MOVESENS.C F0265:169-192 owns C60/C61 as B.Location plus
+     * C.Slot. Bind the raw C04 thing before publishing M10 state. */
+    if (map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        group_index >= world->things->groupCount) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->aux0 = group_index;
+    out_event->aux1 = (int)group_thing;
+    out_event->aux2 = src->type;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_generator_reenable_event(
     const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
     struct TimelineEvent_Compat *out_event)
@@ -1338,6 +1374,14 @@ static int materialize_original_pc34_timeline(
         if (src->type == DM1_EVENT_LIGHT) {
             if (materialize_original_pc34_light_event(src, &ev) !=
                     DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (src->type == DM1_EVENT_MOVE_GROUP_SILENT) {
+            if (materialize_original_pc34_deferred_group_move_event(
+                    src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
                 !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
