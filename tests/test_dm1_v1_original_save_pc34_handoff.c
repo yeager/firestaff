@@ -1752,6 +1752,65 @@ static void test_original_c72_champion_shield_roundtrip(void)
     CHECK(loaded_world.lifecycle.champions[2].shieldDefense == 8, "C72 runtime subtracts B.Defense from selected champion");
 }
 
+static void test_original_c71_invisibility_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE], exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0, exported_size = 0, rc, i, index = -1, c71_index = -1;
+    struct GameWorld_Compat start_world, loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written, 3, 3, 9, 10, 2, 1, ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 2, DM1_EVENT_INVISIBILITY) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 5, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 6, 0xa5) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 7, 0x5a) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 8, 0x3c) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 9, 0xc3),
+          "C71 fixture gives no ownership to B/C union bytes");
+    memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon)); memset(&things, 0, sizeof(things)); memset(&report, 0, sizeof(report));
+    start_world.dungeon = &dungeon; start_world.things = &things;
+    make_temp_save_path(path, sizeof(path)); remove(path); CHECK(write_fixture_file(path, bytes, written), "C71 fixture writes");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path, &start_world, &loaded_world, NULL, &report); remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C71 materializes typed invisibility expiry");
+    for (i = 0; i < loaded_world.timeline.count; ++i) if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_INVISIBILITY) { index = i; break; }
+    c71_index = index;
+    CHECK(index >= 0 && loaded_world.timeline.events[index].aux0 == DM1_EVENT_INVISIBILITY &&
+              loaded_world.timeline.events[index].aux1 == 0 && loaded_world.timeline.events[index].aux4 == 0,
+          "C71 retains only its typed no-union receipt");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_size);
+    CHECK(rc == SAVEGAME_PC34_OK, "C71 exports natively");
+    memset(&imported, 0, sizeof(imported)); memset(&party, 0, sizeof(party)); imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(exported, (size_t)exported_size, &imported, &report);
+    for (i = 0; i < report.original_event_count; ++i) if (report.events[i].type == DM1_EVENT_INVISIBILITY) { index = i; break; }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index >= 0 && report.events[index].priority == 0 &&
+              report.events[index].b_mapX == 0 && report.events[index].b_mapY == 0 &&
+              report.events[index].c_cell == 0 && report.events[index].c_effect == 0,
+          "C71 native roundtrip preserves no B/C union arm");
+    loaded_world.magic.event71CountInvisibility = 1;
+    loaded_world.lifecycle.status.invisibilityCount = 1;
+    event = loaded_world.timeline.events[c71_index];
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event);
+    loaded_world.gameTick = event.fireAtTick;
+    memset(&result, 0, sizeof(result)); F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result);
+    CHECK(loaded_world.magic.event71CountInvisibility == 0 && loaded_world.lifecycle.status.invisibilityCount == 0,
+          "C71 runtime decrements both invisibility mirrors");
+    event.aux2 = 0;
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event);
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_size);
+    CHECK(rc != SAVEGAME_PC34_OK, "C71 export rejects an unproven host timeout");
+}
+
 static void test_original_c13_vi_altar_event_plan(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -3092,6 +3151,7 @@ int main(void)
     test_runtime_materializer_binds_original_sound_union();
     test_runtime_materializer_binds_original_c12_damage_hide();
     test_original_c72_champion_shield_roundtrip();
+    test_original_c71_invisibility_roundtrip();
     test_original_c13_vi_altar_event_plan();
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
