@@ -530,6 +530,36 @@ typedef struct {
     DM2_V1_G1DirectChainNode nodes[DM2_V1_G1_DIRECT_CHAIN_MAX];
 } DM2_V1_G1DirectRootChainReceipt;
 
+/* skproject SKWIN/DME.h::tileTypeIndex fixes the terrain class encoded in a
+ * G1 byte square.  Other terrain classes remain outside this scene handoff. */
+typedef enum {
+    DM2_V1_G1_SCENE_TILE_NONE = 0,
+    DM2_V1_G1_SCENE_TILE_WALL,
+    DM2_V1_G1_SCENE_TILE_FLOOR,
+    DM2_V1_G1_SCENE_TILE_DOOR
+} DM2_V1_G1SceneTileClass;
+
+/* skproject SKWIN/DME.h::dbIndex identifies only these two record-root
+ * classes as scene-bearing here.  All other already-proven DB roots remain
+ * generic; no record payload is inspected to refine them. */
+typedef enum {
+    DM2_V1_G1_SCENE_ROOT_GENERIC = 0,
+    DM2_V1_G1_SCENE_ROOT_DOOR,
+    DM2_V1_G1_SCENE_ROOT_CREATURE
+} DM2_V1_G1SceneRootClass;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    uint8_t raw_tile;
+    DM2_V1_G1SceneTileClass tile_class;
+    DM2_V1_G1SceneRootClass root_class;
+    DM2_V1_G1DirectRootChainReceipt chain;
+} DM2_V1_G1DungeonSceneClassificationReceipt;
+
 #define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
 
 /* Read-only direct DB0 payload from skproject SKWIN/DME.h::Door.  `w0` is
@@ -874,6 +904,16 @@ int dm2_v1_dungeon_collect_g1_direct_root_chain(
     int x,
     int y,
     DM2_V1_G1DirectRootChainReceipt *out);
+/* Bind a bounded direct G1 chain to the source-defined wall/floor/door tile
+ * classes and generic/door/creature root classes. This is an address-only
+ * runtime admission receipt: no DB payload is decoded. Unsupported terrain,
+ * malformed chains, loops, and non-direct roots fail closed. */
+int dm2_v1_dungeon_classify_g1_direct_root_scene(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DungeonSceneClassificationReceipt *out);
 /* Consume only direct DB0 roots on a runtime-admitted G1 map.  The payload is
  * limited to DME.h::Door w2; it never reads GenericRecord::w0 or follows a
  * map/record link.  The output is unchanged when any source gate fails. */

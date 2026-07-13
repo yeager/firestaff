@@ -1547,6 +1547,66 @@ int dm2_v1_dungeon_collect_g1_direct_root_chain(
     return 1;
 }
 
+int dm2_v1_dungeon_classify_g1_direct_root_scene(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DungeonSceneClassificationReceipt *out) {
+    DM2_V1_G1DungeonSceneClassificationReceipt candidate;
+    DM2_V1_G1DirectRootChainReceipt chain;
+    int raw_tile;
+
+    if (!out || !d ||
+        !dm2_v1_dungeon_collect_g1_direct_root_chain(
+            d, level, x, y, &chain)) {
+        return 0;
+    }
+    raw_tile = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw_tile < 0 || chain.node_count <= 0) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.chain = chain;
+    candidate.incomplete_world = 1;
+    candidate.level = level;
+    candidate.x = x;
+    candidate.y = y;
+    candidate.raw_tile = (uint8_t)raw_tile;
+
+    /* skproject c_map.cpp obtains the byte square before c_record.cpp gets
+     * its root. DME.h::tileTypeIndex makes only these three scene classes
+     * explicit; no substitute is assigned to pit/stair/teleporter classes. */
+    switch ((candidate.raw_tile >> 5) & 0x07u) {
+    case 0:
+        candidate.tile_class = DM2_V1_G1_SCENE_TILE_WALL;
+        break;
+    case 1:
+        candidate.tile_class = DM2_V1_G1_SCENE_TILE_FLOOR;
+        break;
+    case 4:
+        candidate.tile_class = DM2_V1_G1_SCENE_TILE_DOOR;
+        break;
+    default:
+        return 0;
+    }
+    /* DME.h::dbIndex calls DB0 Door and DB4 Creature. This maps only the
+     * root ObjectID type; it never consumes a record payload or a later node. */
+    switch (candidate.chain.nodes[0].type) {
+    case 0:
+        candidate.root_class = DM2_V1_G1_SCENE_ROOT_DOOR;
+        break;
+    case 4:
+        candidate.root_class = DM2_V1_G1_SCENE_ROOT_CREATURE;
+        break;
+    default:
+        candidate.root_class = DM2_V1_G1_SCENE_ROOT_GENERIC;
+        break;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     const DM2_V1_DungeonData *d,
     int map,
