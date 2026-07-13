@@ -36,6 +36,7 @@ int main(void) {
     profile.track02_runtime_trace_handoff.valid = 1;
     profile.track02_runtime_trace_handoff.variant = THERON_TRACK02_VARIANT_US_BIN;
     profile.track02_runtime_trace_handoff.stage3_track02_record = 0x4e0u;
+    profile.track02_runtime_trace_handoff.stage3_user_data_hash = 1u;
     profile.track02_runtime_trace_handoff.handler_address = 0xe736u;
     profile.track02_runtime_trace_handoff.cd_state_address = 0xe742u;
     profile.track02_runtime_trace_handoff.cd_state_branch_address = 0xe74cu;

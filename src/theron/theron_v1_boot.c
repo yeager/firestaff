@@ -208,6 +208,7 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                profile->track02_runtime_trace_md5) &&
            handoff->valid && handoff->variant == expected_variant &&
            handoff->stage3_track02_record != 0u &&
+           handoff->stage3_user_data_hash != 0u &&
            handoff->handler_address != 0u &&
            handoff->cd_state_address != 0u &&
            handoff->cd_state_branch_address != 0u && handoff->branch.valid;
