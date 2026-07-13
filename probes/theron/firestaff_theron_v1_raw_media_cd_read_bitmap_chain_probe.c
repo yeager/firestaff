@@ -34,9 +34,11 @@
 
 typedef struct {
     char raw_track02_path[THERON_CHAIN_PATH_CAPACITY];
+    char raw_track02_md5[33];
     char system_card_path[THERON_CHAIN_PATH_CAPACITY];
     char loader_trace_path[THERON_CHAIN_PATH_CAPACITY];
     unsigned int known_track02_iso_count;
+    int trace_scan_only;
 } Theron_ChainLocalArtifacts;
 
 static Theron_ChainLocalArtifacts *g_local_artifacts;
@@ -119,26 +121,29 @@ static int scan_local_artifact(const char *path, const struct stat *status,
         status->st_size <= 0 || (uintmax_t)status->st_size > SIZE_MAX) {
         return 0;
     }
-    if (!g_local_artifacts->raw_track02_path[0] &&
-        raw_track02_md5(path, (size_t)status->st_size, md5)) {
-        copy_artifact_path(g_local_artifacts->raw_track02_path, path);
-        return 0;
-    }
-    if (!g_local_artifacts->system_card_path[0] &&
-        system_card_md5(path, (size_t)status->st_size, md5)) {
-        copy_artifact_path(g_local_artifacts->system_card_path, path);
-        return 0;
-    }
-    if (known_track02_iso(path, (size_t)status->st_size)) {
-        ++g_local_artifacts->known_track02_iso_count;
-        return 0;
+    if (!g_local_artifacts->trace_scan_only) {
+        if (!g_local_artifacts->raw_track02_path[0] &&
+            raw_track02_md5(path, (size_t)status->st_size, md5)) {
+            copy_artifact_path(g_local_artifacts->raw_track02_path, path);
+            snprintf(g_local_artifacts->raw_track02_md5,
+                     sizeof(g_local_artifacts->raw_track02_md5), "%s", md5);
+            return 0;
+        }
+        if (!g_local_artifacts->system_card_path[0] &&
+            system_card_md5(path, (size_t)status->st_size, md5)) {
+            copy_artifact_path(g_local_artifacts->system_card_path, path);
+            return 0;
+        }
+        if (known_track02_iso(path, (size_t)status->st_size)) {
+            ++g_local_artifacts->known_track02_iso_count;
+            return 0;
+        }
     }
     if (g_local_artifacts->raw_track02_path[0] &&
         !g_local_artifacts->loader_trace_path[0] &&
         (size_t)status->st_size <= THERON_CHAIN_TRACE_MAX_BYTES &&
-        m12_file_md5_hex(g_local_artifacts->raw_track02_path, md5) &&
         theron_v1_raw_loader_trace_import_mednafen_capture_file(
-            path, md5, &trace)) {
+            path, g_local_artifacts->raw_track02_md5, &trace)) {
         copy_artifact_path(g_local_artifacts->loader_trace_path, path);
     }
     return 0;
@@ -158,6 +163,18 @@ static int find_local_artifacts(const char *root,
     if (nftw(root, scan_local_artifact, 16, FTW_PHYS) != 0) {
         g_local_artifacts = NULL;
         return 0;
+    }
+    /* The trace can sort before the raw BIN.  Repeat the bounded walk after
+     * Track 02 identity is known so discovery never depends on directory
+     * order.  This still imports a trace only through its variant-matched
+     * Mednafen schema and never treats arbitrary text as capture evidence. */
+    if (out_artifacts->raw_track02_path[0] &&
+        !out_artifacts->loader_trace_path[0]) {
+        out_artifacts->trace_scan_only = 1;
+        if (nftw(root, scan_local_artifact, 16, FTW_PHYS) != 0) {
+            g_local_artifacts = NULL;
+            return 0;
+        }
     }
     g_local_artifacts = NULL;
     return 1;

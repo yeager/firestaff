@@ -681,6 +681,11 @@ real Theron boot raw-media consumer and must retain the same Track 02 identity,
 bitmap-route mask, atlas checksum, and no-fallback flag. It can acknowledge
 the raw capture handoff, but remains unable to submit RGBA pixels until an
 original palette-byte relation is captured.
+2026-07-13 corpus-search update: capture-root discovery now makes a second,
+trace-only bounded pass after it has hashed a raw Track 02 BIN, so trace
+discovery is independent of filesystem order. The current local corpus still
+contains only the two known 2048-byte ISO variants and no authentic triple;
+the positive bitmap/palette receipt remains open.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no

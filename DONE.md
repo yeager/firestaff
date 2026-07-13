@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron order-independent raw-capture corpus discovery: the
+  explicit capture-root probe now retains a hash-verified raw Track 02 MD5
+  during its first walk and performs a bounded trace-only second walk when
+  needed. A Mednafen trace encountered before the raw BIN is consequently
+  still validated against the exact discovered variant, without filename
+  trust, ISO promotion, or a fallback. The inspected local corpus still has
+  only two known 2048-byte ISO candidates, so it correctly produces no raw
+  capture receipt. Verification: Ninja, direct no-root and corpus runs, and
+  CTest `theron_v1_raw_media_cd_read_bitmap_chain_probe` passed 1/1.
+
 - ✅ 2026-07-13 Theron positive raw-capture boot handoff: the opt-in raw
   Track 02/System Card/Mednafen probe now passes its complete hash-bound
   receipt to `theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace`.
