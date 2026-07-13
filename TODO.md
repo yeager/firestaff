@@ -28,12 +28,12 @@
   blocked until its original live inventory/object route is bound. Do not coerce
   its native bytes into substitute Firestaff state.
 
-- 🔧 2026-07-13 Nexus Structure1A follow-up: Structure1A now has a validated
-  header-counted 24-byte model table, and a Structure1F alcove/wall index is
-  structurally resolved only through a unique Structure1B bit-7 `XXY` owner.
-  The host receipt retains this no-draw provenance, but face attachment and
-  Structure3 mesh consumption remain unproved and blocked. Do not infer faces,
-  attachment positions, geometry, pixels, palettes, triggers, or fallback art.
+- 🔧 2026-07-13 Nexus Structure1A follow-up: a complete validated
+  Structure1A/Structure1F owner-model receipt now passes the champion-to-runtime
+  provenance gate, but the next Structure1F face/Structure3 mesh-semantics gate
+  still blocks rendering. Prove original face attachment and mesh consumption
+  before any draw route; do not infer positions, geometry, textures, pixels,
+  palettes, triggers, or fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 

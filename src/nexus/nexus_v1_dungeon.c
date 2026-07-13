@@ -1422,6 +1422,8 @@ int nexus_v1_level_dgn_structure1_host_provenance_receipt(
         level, &receipt.structure1f_spatial);
     (void)nexus_v1_level_structure1a_boundary_receipt(
         level, &receipt.structure1a_boundary);
+    (void)nexus_v1_level_structure1a_relation_receipt(
+        level, &receipt.structure1a_relation);
 
     if (!receipt.structure1f_declared) {
         receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT;
@@ -1433,8 +1435,14 @@ int nexus_v1_level_dgn_structure1_host_provenance_receipt(
             NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT;
     } else if (receipt.structure1f_spatial.structure1a_bound_entry_count > 0 ||
                receipt.structure1a_boundary.entry_count > 0) {
-        receipt.status =
-            NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION;
+        if (receipt.structure1a_relation.complete) {
+            receipt.status =
+                NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_RESOLVED_STRUCTURE1A;
+            receipt.can_prepare_runtime_dgn = 1;
+        } else {
+            receipt.status =
+                NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION;
+        }
     } else {
         receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT;
         receipt.can_prepare_runtime_dgn = 1;
@@ -1453,6 +1461,8 @@ const char *nexus_v1_dgn_structure1_host_provenance_status_name(
         return "ready-no-structure1f";
     case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT:
         return "ready-direct-structure1f";
+    case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_RESOLVED_STRUCTURE1A:
+        return "ready-resolved-structure1a";
     case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT:
         return "blocked-structure1f-layout";
     case NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION:

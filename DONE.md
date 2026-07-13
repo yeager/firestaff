@@ -10,7 +10,17 @@
   `test_dm2_v1_graphicsset_wall_material_gate`, and
   `test_dm2_v1_g1_wall_button_material_gate`; matching CTest run passed 3/3;
   `git diff --check` passed.
-
+ 
+- 2026-07-13 Nexus Structure1A resolved host gate: champion-to-runtime DGN
+  handoff now consumes the complete parser-owned Structure1A owner/model
+  relation receipt. Only a valid table with every indexed alcove/wall record
+  uniquely resolved advances beyond the former blanket provenance block; an
+  incomplete, missing, duplicate, or out-of-range relation stays no-draw at
+  `blocked-structure1a-relation`. The next existing Structure1F semantics gate
+  still blocks mesh rendering, so this adds no geometry, texture, or pixel
+  interpretation. Verification: Ninja and CTests
+  `nexus_v1_structure1_host_provenance`,
+  `nexus_v1_startup_menu_pc34_compat`.
 - 2026-07-13 DM2 scene-material local-palette binding: indoor ceiling/floor
   and outdoor sky/ground now fetch, bind, and blit each decoded `GRAPHICSSET`
   IMG3 before the next material query can replace its `QUERY_GDAT_IMAGE_LOCALPAL`

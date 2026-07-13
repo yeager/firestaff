@@ -2921,6 +2921,74 @@ int main(void)
                strcmp(runtime_handoff_receipt.status,
                       "ready-render-state") == 0,
            "Nexus startup footer pointer routes menu directly to first DGN render state");
+    synthetic_engine.current_level.geometry_info.structure1f_declared = 1;
+    synthetic_engine.current_level.geometry_info.structure1f_valid = 1;
+    synthetic_engine.current_level.geometry_info.structure1f_total_entry_count = 1;
+    synthetic_engine.current_level.structure1f_entry_count = 1;
+    synthetic_engine.current_level.structure1f_entries[0].family =
+        NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+    synthetic_engine.current_level.structure1f_entries[0].structure1a_index = 0;
+    synthetic_engine.current_level.structure1f_entries[0].structure1a_relation_valid = 1;
+    synthetic_engine.current_level.structure1f_entries[0].structure1a_owner_x = 3;
+    synthetic_engine.current_level.structure1f_entries[0].structure1a_owner_y = 4;
+    synthetic_engine.current_level.structure1f_entries[0]
+        .structure1a_structure3_model_index = 2;
+    synthetic_engine.current_level.structure1a_table_valid = 1;
+    synthetic_engine.current_level.structure1a_model_count = 1;
+    synthetic_engine.current_level.structure1a_owner_ref_valid[4][3] = 1;
+    synthetic_engine.current_level.structure1a_owner_refs[4][3] = 0;
+    nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
+    memset(dgn_commands, 0x5a, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
+               runtime_handoff_receipt.structure1_host_provenance.status ==
+                   NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_RESOLVED_STRUCTURE1A &&
+               runtime_handoff_receipt.structure1_host_provenance
+                       .structure1a_relation.complete == 1 &&
+               runtime_handoff_receipt.dgn_handoff.status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+               strcmp(runtime_handoff_receipt.status,
+                      "blocked-structure1a-relation") != 0 &&
+               dgn_commands[0].kind == 0,
+           "Nexus champion handoff advances complete Structure1A provenance only to the next no-draw mesh gate");
+    synthetic_engine.current_level.structure1f_entries[0].structure1a_relation_valid = 0;
+    nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
+    memset(dgn_commands, 0x5a, sizeof(dgn_commands));
+    expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
+               &runtime_state,
+               &champion_execution,
+               NULL,
+               dgn_commands,
+               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+               &runtime_handoff_receipt) &&
+               runtime_handoff_receipt.route ==
+                   NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED &&
+               runtime_handoff_receipt.structure1_host_provenance.status ==
+                   NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION &&
+               strcmp(runtime_handoff_receipt.status,
+                      "blocked-structure1a-relation") == 0 &&
+               dgn_commands[0].kind == 0,
+           "Nexus champion handoff keeps incomplete Structure1A provenance fail closed");
+    memset(synthetic_engine.current_level.structure1f_entries,
+           0,
+           sizeof(synthetic_engine.current_level.structure1f_entries));
+    synthetic_engine.current_level.structure1f_entry_count = 0;
+    synthetic_engine.current_level.geometry_info.structure1f_declared = 0;
+    synthetic_engine.current_level.geometry_info.structure1f_valid = 0;
+    synthetic_engine.current_level.geometry_info.structure1f_total_entry_count = 0;
+    memset(synthetic_engine.current_level.structure1a_owner_ref_valid,
+           0,
+           sizeof(synthetic_engine.current_level.structure1a_owner_ref_valid));
+    synthetic_engine.current_level.structure1a_table_valid = 0;
+    synthetic_engine.current_level.structure1a_model_count = 0;
+    nexus_v1_invalidate_dgn_material_plan(&synthetic_engine);
     champion_execution.kind = NEXUS_V1_STARTUP_CHAMPION_EXEC_REDRAW;
     expect(nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                &runtime_state,

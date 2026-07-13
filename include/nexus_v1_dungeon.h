@@ -212,15 +212,17 @@ typedef struct {
 } Nexus_V1_DgnStructure1ARelationReceipt;
 
 /* The runtime host consumes Structure1F only through this receipt. Direct
- * records retain their documented source cells, while records indexed through
- * Structure1A block before any viewport/material work: Structure1A has not
- * yet been decoded into an original cell, draw, or trigger relationship. */
+ * records retain their documented source cells. Structure1A-indexed records
+ * may proceed beyond this provenance gate only when the parser's complete
+ * owner/model relation receipt proves each original relation; this still
+ * grants no face, draw, trigger, mesh, or pixel semantics. */
 typedef enum {
     NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_MISSING = 0,
     NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT = 1,
     NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_DIRECT = 2,
     NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT = 3,
-    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION = 4
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION = 4,
+    NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_RESOLVED_STRUCTURE1A = 5
 } Nexus_V1_DgnStructure1HostProvenanceStatus;
 
 typedef struct {
@@ -230,6 +232,7 @@ typedef struct {
     int structure1f_typed_entry_count;
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
+    Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     int can_prepare_runtime_dgn;
     int blocks_real_dgn_mesh_render;
     int fallback_visuals_permitted;
