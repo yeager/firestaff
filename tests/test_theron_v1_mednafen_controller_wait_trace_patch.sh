@@ -16,6 +16,7 @@ if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x addre
    ! grep -Fq 'cd_interface_raw_sector_read lba=%d bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=%08x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x' "$patch_file" ||
    ! grep -Fq 'TheronIrq2TraceWatchedPC' "$patch_file" ||
+   ! grep -Fq 'stage2_4090=%02x%02x%02x stage2_fc=%02x' "$patch_file" ||
    ! grep -Fq 'distort CD timing' "$patch_file" ||
    ! grep -Fq 'address == 0x2241' "$patch_file"; then
     printf 'FAIL: Mednafen patch no longer retains bounded controller-state evidence\n' >&2

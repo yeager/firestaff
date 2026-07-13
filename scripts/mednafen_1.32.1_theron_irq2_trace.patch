@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1096 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1098 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -992,10 +992,6 @@ index 347482c4..61d4758e 100644
 +  }
 + }
 +
-+ /* The stage-two source invokes the System Card at $4090 after setting
-+  * AL/DH/BX. CL/DL/CH are left live by that setup (theron-us-stage2-
-+  * huc6280.asm:163-187), so record their actual zero-page bytes before the
-+  * JSR and emit them only after the observed $4093 return. */
 + if(logical_pc == 0x4090 && !TheronIrq2TraceDynamicTransactionSeen &&
 +    !TheronIrq2TraceDynamicReadPending &&
 +    (CurGame->Debugger->MemPeek(0x4090, 1, true, true) & 0xff) == 0x20 &&
@@ -1092,8 +1088,14 @@ index 347482c4..61d4758e 100644
 +  const uint32 status_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
 +  const uint32 status_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
 +
-+  TheronIrq2Trace->print_format("pc=%04x physical_pc=%08x f5=%02x f2=%02x status_1802=%02x status_1803=%02x\n",
-+                                logical_pc, PC, f5, f2, status_1802, status_1803);
++  const uint32 opcode_4090 = CurGame->Debugger->MemPeek(0x4090, 1, true, true) & 0xff;
++  const uint32 opcode_4091 = CurGame->Debugger->MemPeek(0x4091, 1, true, true) & 0xff;
++  const uint32 opcode_4092 = CurGame->Debugger->MemPeek(0x4092, 1, true, true) & 0xff;
++  const uint32 stage2_record_low = CurGame->Debugger->MemPeek(0x00fc, 1, true, true) & 0xff;
++
++  TheronIrq2Trace->print_format("pc=%04x physical_pc=%08x f5=%02x f2=%02x status_1802=%02x status_1803=%02x stage2_4090=%02x%02x%02x stage2_fc=%02x\n",
++                                logical_pc, PC, f5, f2, status_1802, status_1803,
++                                opcode_4090, opcode_4091, opcode_4092, stage2_record_low);
 +  FlushTheronIrq2Trace();
 + }
 +}
