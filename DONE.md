@@ -7,6 +7,12 @@
   stale source mirror. Source: ReDMCSB `REVIVE.C` F0280/F0281/F0282.
   Verification: focused CTest against installed PC34 data.
 
+- 2026-07-13 DM1 HoC missing-leader C127/C160: real-PC34 coverage now starts
+  with two living champions and no active leader, then proves C127 elects the
+  first living slot before tail materialization and C160 preserves all source
+  portrait/name ordering. Source: ReDMCSB `CHAMPION.C` F0319:1662-1681 and
+  `REVIVE.C` F0280/F0282. Verification: all-front-mirror focused CTest.
+
 - 2026-07-13 DM1 HoC C161 disabled-source cancellation: real-PC34 coverage
   now disables the active C127 source after F0281 starts and before C162.
   C162 clears only the tail candidate/modal state, retains the slot-1 leader
