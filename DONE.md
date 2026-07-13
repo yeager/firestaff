@@ -1206,6 +1206,16 @@
   rain, or timer data from generic state. Verification: Ninja and CTest
   `dm2_v1_weather_gdat_receipt` passed; `git diff --check` passed.
 
+- ✅ 2026-07-13 DM2 door/wall GDAT material receipts: `DRAW_DOOR` now owns
+  its caller-selected `DOORS` image only with the original non-zero colour-key
+  word, decoded image, metadata, and local palette. `DRAW_WALL_ORNATE` now
+  does the same for its exact caller-selected `WALL_GFX` image field while
+  retaining source scalar inputs. Missing material is a no-draw rejection;
+  neither route synthesizes pixels or substitutes another image. Source:
+  skproject `SKWIN/SkWinCore.cpp` `DRAW_DOOR` 46405-46577 and
+  `DRAW_WALL_ORNATE` 23307-23422. Verification: Ninja and CTest
+  `dm2_v1_wall_ornament_receipt` passed; `git diff --check` passed.
+
 - 2026-07-13 DM2 weather timer corpus absence receipt: the skip-safe scan now
   records verified payload bytes and zero matching timer records when no
   skproject-proven save offset exists; no heuristic match or runtime promotion.
