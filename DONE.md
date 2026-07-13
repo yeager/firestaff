@@ -1468,6 +1468,18 @@
   Verification: `dm1_v1_f0407_swing_c11_receipt_pc34_compat` drives real M11
   idle ticks to C11 expiry; related F0330/F0407 focused CTests pass.
 
+- 2026-07-13 DM1 PC34 F0407 SWING delayed-C11 state gate: the local M11
+  SWING lock is now strictly a pending-receipt gate. If ReDMCSB `F0330`
+  moves the replacement C11 behind an existing owner, expiry of the local
+  G0491-duration mirror cannot clear `ActionDefense`, `ActionIndex`, or the
+  action-disable state. Only the later C11 -> `F0253` route can perform those
+  mutations; a missing receipt remains locked fail-closed. THROW/F0328 and
+  F0402 are untouched. Source: ReDMCSB `CHAMPION.C F0330:2233-2251`,
+  `TIMELINE.C F0253:1590-1611`, and `MENU.C F0407:1620-1629`.
+  Verification: `dm1_v1_f0407_swing_c11_receipt_pc34_compat` stages a real
+  prior C11 owner and proves both delayed lock retention and final F0253
+  consumption; related F0330/F0407 focused CTests pass.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15

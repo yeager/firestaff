@@ -44,6 +44,7 @@ int main(void)
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapon;
     struct DungeonDoor_Compat door;
+    struct TimelineEvent_Compat earlierC11;
     unsigned char squareData[9];
     unsigned short squareFirstThing[1];
     unsigned char actions[3];
@@ -51,6 +52,7 @@ int main(void)
     int swingRow = -1;
     int actionDefenseAfterBegin;
     unsigned int c11Tick;
+    unsigned int localLockExpiryTick;
     int i;
 
     memset(&state, 0, sizeof(state));
@@ -117,6 +119,18 @@ int main(void)
     state.world.dungeon = &dungeon;
     state.world.things = &things;
 
+    /* A prior source-shaped C11 makes F0330 apply its exact existing-owner
+     * delay rule.  The SWING lock's ordinary duration now expires before
+     * the replacement C11; only that replacement receipt may run F0253. */
+    memset(&earlierC11, 0, sizeof(earlierC11));
+    earlierC11.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    earlierC11.fireAtTick = state.world.gameTick + 20u;
+    earlierC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    earlierC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    earlierC11.aux4 = 0;
+    assert(F0721_TIMELINE_Schedule_Compat(
+        &state.world.timeline, &earlierC11));
+
     assert(M11_GameView_SetActingChampion(&state, 0));
     assert(M11_GameView_GetActingActionIndices(&state, actions));
     for (i = 0; i < 3; ++i) {
@@ -128,17 +142,27 @@ int main(void)
     assert(event != NULL);
     assert(state.actionDisabledTicks[0] > 0);
     assert(event->aux1 == 0);
-    assert(event->fireAtTick == state.world.gameTick +
-           state.actionDisabledTicks[0]);
     actionDefenseAfterBegin = state.world.party.champions[0].actionDefense;
     c11Tick = event->fireAtTick;
+    localLockExpiryTick = state.world.gameTick + state.actionDisabledTicks[0];
     assert(actionDefenseAfterBegin != 0);
+    assert(c11Tick > localLockExpiryTick);
+
+    while (state.world.gameTick < localLockExpiryTick) {
+        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.world.party.champions[0].actionDefense == actionDefenseAfterBegin);
+    assert(state.world.party.champions[0].actionIndex == DM1_ACTION_SWING);
+    assert(state.actionDisabledTicks[0] > 0u);
+    assert(state.actionDisabledIndex[0] == DM1_ACTION_SWING);
 
     /* The real F0330 C11 owner reaches TIMELINE.C F0253 through the normal
      * M11 idle tick.  Its ordinal-zero SWING receipt must restore the action
      * state once and retire the host cooldown mirror, not let that mirror
      * replay F0253 after the emission. */
-    while (state.world.gameTick < c11Tick) {
+    /* F0884 dispatches due timeline entries at the next tick boundary, so
+     * advance through the recorded C11 time before observing F0253 state. */
+    while (state.world.gameTick <= c11Tick) {
         assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
     }
     assert(state.world.party.champions[0].actionDefense == 0);
