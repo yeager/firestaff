@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0209 C38 occupied-cell correction: quarter-square melee
+  movement now retains ReDMCSB `GROUP.C F0209:2424-2432`'s selected
+  opposite cell when the direct candidate is occupied. The old route tested
+  the free opposite cell but still wrote the occupied direct cell. Regression
+  coverage proves a two-creature group moves creature zero from C0 to C3
+  while creature one remains in C1. Verification: Ninja-built and ran
+  `test_dm1_v1_creature_ai_behavior_pc34_compat`.
+
+- 2026-07-13 Nexus PRS3 asset-bound capture receipt: external SH-2 PRS3
+  traces now require exact FNV-1a matches for their supplied `MENU.BPK` and
+  `DM.BIN`, plus an exact original BPK entry stream offset, size, and declared
+  output-size match. A changed source byte or entry window invalidates the
+  capture; valid evidence still cannot promote a decoder or fallback route.
+  Verification: `test_nexus_v1_prs3_capture_trace_schema`.
+
 - 2026-07-13 DM2 DB2 Text -> GDAT ornament materialization: the boot-owned
   map-5 DB2 `Text` route now probes and records the exact nonzero
   `WALL_GFX dtImage/1` front ornate surface selected by skproject
@@ -845,6 +860,16 @@
   Verification: direct strict-C11 probe build against locked Japanese `DM.BIN`
   PASS; shared CMake regeneration is currently blocked by unrelated missing
   Theron probe sources.
+
+- 2026-07-13 Theron V1 verified post-return continuation: a fresh Mednafen
+  1.32.1 debugger build from a clean source tree, authenticated US CUE, and
+  System Card 3.0 trace now proves `$cbef -> $cb2f -> $e109`. The `$cb2f`
+  snapshot records `$1800..$1804 = 00 00 00 02 00` and `$f5 = 00`; it is an
+  RTS continuation with no observed new `CD_READ`, record, destination,
+  payload, bitmap, palette, object, or level semantic. Added
+  `scripts/verify_theron_cb20_post_return_trace.sh` to require the ordered
+  trace receipt. Verification: clean-tree patch dry-run, targeted Mednafen
+  debugger rebuild, 20-second real US-CUE capture, and verifier PASS.
 
 - 2026-07-12 Theron V1 IRQ2 live-trace gate: a fail-closed receipt now
   requires an end-to-end Mednafen PCE observation from `$4093` through IRQ2
