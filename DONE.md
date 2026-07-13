@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F wall-sensor control/destination handoff: the
+  adjacent raw four-byte tuples now reach DGN host, render-plan, and LEV00-15
+  corpus receipts. This assigns no trigger, target, route, operation, mesh,
+  material, texture, palette, pixel, or draw semantics.
+
 - 2026-07-13 Nexus Structure1F alcove payload/rotation handoff: raw
   Structure1A-owned pairs now reach DGN host, render-plan, and LEV00-15 corpus
   receipts. They remain fail-closed provenance, with no item, orientation,

@@ -366,6 +366,23 @@ typedef struct {
     int control_semantics_proven;
 } Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt;
 
+/* Structure1A-bound wall sensors retain their adjacent control and
+ * destination bytes as one raw four-byte tuple. The tuple is not a trigger,
+ * destination, route, operation, mesh, material, texture, palette, pixel, or
+ * draw instruction. */
+typedef struct {
+    int structure1a_relation_complete;
+    int wall_sensor_entry_count;
+    int resolved_tuple_count;
+    int unique_tuple_count;
+    int duplicate_tuple_count;
+    int zero_tuple_count;
+    int nonzero_tuple_count;
+    uint32_t highest_tuple;
+    int complete;
+    int tuple_semantics_proven;
+} Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt;
+
 /* Structure1A-bound wall sensors retain their raw model/aspect and rotation
  * bytes as one pair after ownership is complete. This is not a model binding,
  * orientation, trigger, mesh, material, texture, palette, pixel, or draw
@@ -1016,6 +1033,8 @@ typedef struct {
         structure1f_wall_sensor_destinations;
     Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
         structure1f_wall_sensor_control_selectors;
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt
+        structure1f_wall_sensor_control_destination_tuples;
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
         structure1f_wall_sensor_model_rotation_pairs;
     Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
@@ -1147,6 +1166,8 @@ typedef struct {
         structure1f_wall_sensor_destinations;
     Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
         structure1f_wall_sensor_control_selectors;
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt
+        structure1f_wall_sensor_control_destination_tuples;
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
         structure1f_wall_sensor_model_rotation_pairs;
     Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
@@ -1254,6 +1275,9 @@ int nexus_v1_level_structure1f_wall_sensor_destination_receipt(
 int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_wall_sensor_control_destination_tuple_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt *out_receipt);
 int nexus_v1_level_structure1f_wall_sensor_model_rotation_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt *out_receipt);

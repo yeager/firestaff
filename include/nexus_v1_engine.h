@@ -227,6 +227,7 @@ typedef struct {
     int structure1f_wall_payload_selector_complete_level_count;
     int structure1f_wall_sensor_destination_complete_level_count;
     int structure1f_wall_sensor_control_selector_complete_level_count;
+    int structure1f_wall_sensor_control_destination_tuple_complete_level_count;
     int structure1f_wall_sensor_model_rotation_pair_complete_level_count;
     int structure1f_wall_decoration_model_rotation_pair_complete_level_count;
     int structure1f_alcove_payload_selector_complete_level_count;
@@ -269,6 +270,8 @@ typedef struct {
         structure1f_wall_sensor_destinations[16];
     Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
         structure1f_wall_sensor_control_selectors[16];
+    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt
+        structure1f_wall_sensor_control_destination_tuples[16];
     Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
         structure1f_wall_sensor_model_rotation_pairs[16];
     Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
