@@ -1488,6 +1488,30 @@ static int materialize_original_pc34_timeline(
             }
             continue;
         }
+        if (src->type == DM1_EVENT_PLAY_SOUND) {
+            int sound_index = (int)(int16_t)read_u16_le(&src->c_cell);
+
+            /* ReDMCSB SOUND.C F0064:1523-1543 rejects negative SoundIndex
+             * before it can schedule C20.  The delayed event owns Priority,
+             * B.Location and signed C.SoundIndex; C.Cell/Effect is not a
+             * separate union arm for this family. */
+            if (sound_index < 0) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            memset(&ev, 0, sizeof(ev));
+            ev.kind = TIMELINE_EVENT_PLAY_SOUND;
+            ev.fireAtTick = src->map_time & 0x00ffffffu;
+            ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
+            ev.mapX = src->b_mapX;
+            ev.mapY = src->b_mapY;
+            ev.aux0 = sound_index;
+            ev.aux2 = DM1_EVENT_PLAY_SOUND;
+            ev.aux4 = src->priority;
+            if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
         if (src->type == DM1_EVENT_CHAMPION_SHIELD) {
             int defense = (int)(int16_t)read_u16_le(&src->b_mapX);
             if (src->priority >= CHAMPION_MAX_PARTY ||
@@ -1551,13 +1575,6 @@ static int materialize_original_pc34_timeline(
         } else if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
-        } else if (src->type == DM1_EVENT_PLAY_SOUND) {
-            /* ReDMCSB SOUND.C:1536-1543 writes B.Location and the signed
-             * C.SoundIndex union member; TIMELINE.C:1903-1905 passes those
-             * three values directly to F0064_SOUND_RequestPlay. */
-            ev.mapX = src->b_mapX;
-            ev.mapY = src->b_mapY;
-            ev.aux0 = (int)(int16_t)read_u16_le(&src->c_cell);
         } else {
             ev.mapX = src->b_mapX;
             ev.mapY = src->b_mapY;

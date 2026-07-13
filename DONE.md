@@ -9,6 +9,13 @@
   `CHAMPION.C F0322` lines 1946-1960. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 DM1 original PC34 C20 delayed-sound roundtrip: typed handoff
+  retains source Priority, B.Location and non-negative C.SoundIndex, runtime
+  emits only a coherent claimed receipt, and native export rejects host-only
+  sound events. Source: ReDMCSB `SOUND.C` F0064:1523-1543 and `TIMELINE.C`
+  C20:1903-1905. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored `TT_77` Spell Shield bridge: the live queue now
   subtracts an exact signed `timerWord6` defense delta from the imported
   SpellShield tail only after queue-slot, timer, and event identity validation.

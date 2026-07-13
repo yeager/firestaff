@@ -1569,15 +1569,23 @@ static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
 static void test_runtime_materializer_binds_original_sound_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
     char path[512];
     int written = 0;
+    int exported_size = 0;
     struct GameWorld_Compat start_world;
     struct GameWorld_Compat loaded_world;
     struct DungeonDatState_Compat start_dungeon;
     struct DungeonThings_Compat start_things;
     struct DungeonGroup_Compat groups[4];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
     DM1OriginalSavePC34HandoffReport report;
     int rc;
+    int i;
+    int c20_index = -1;
 
     rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
                                      2, 3, 9, 10, 2, 1,
@@ -1585,8 +1593,7 @@ static void test_runtime_materializer_binds_original_sound_union(void)
     CHECK(rc == SAVEGAME_PC34_OK, "C20 materializer fixture build succeeds");
     CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
                                      DM1_EVENT_PLAY_SOUND) &&
-              rewrite_fixture_event_c_union(bytes, (size_t)written, 0,
-                                            (uint16_t)(int16_t)-23),
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0, 23u),
           "C20 fixture preserves authenticated SoundIndex union bytes");
 
     memset(&start_world, 0, sizeof(start_world));
@@ -1615,9 +1622,57 @@ static void test_runtime_materializer_binds_original_sound_union(void)
               loaded_world.timeline.events[2].mapIndex == 2 &&
               loaded_world.timeline.events[2].mapX == 11 &&
               loaded_world.timeline.events[2].mapY == 12 &&
-              loaded_world.timeline.events[2].aux0 == -23 &&
+              loaded_world.timeline.events[2].aux0 == 23 &&
+              loaded_world.timeline.events[2].aux2 == DM1_EVENT_PLAY_SOUND &&
               loaded_world.timeline.events[2].aux4 == 7,
           "C20 materialization binds original Location, SoundIndex, priority");
+    event = loaded_world.timeline.events[2];
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "C20 receipt schedules for native export");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc == SAVEGAME_PC34_OK, "C20 exports only its typed receipt");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_size, &imported, &report);
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_PLAY_SOUND) {
+            c20_index = i;
+            break;
+        }
+    }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && c20_index >= 0 &&
+              report.events[c20_index].priority == 7 &&
+              report.events[c20_index].b_mapX == 11 &&
+              report.events[c20_index].b_mapY == 12 &&
+              rd16le(&report.events[c20_index].c_cell) == 23u,
+          "C20 native roundtrip preserves Priority Location SoundIndex");
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "C20 receipt schedules for runtime playback");
+    loaded_world.gameTick = event.fireAtTick;
+    memset(&result, 0, sizeof(result));
+    F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result);
+    CHECK(result.emissionCount == 1 &&
+              result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+              result.emissions[0].payload[0] == 23 &&
+              result.emissions[0].payload[1] == 11 &&
+              result.emissions[0].payload[2] == 12 &&
+              result.emissions[0].payload[3] == 2,
+          "C20 runtime emits the source sound request");
+    event.aux2 = 0;
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "host C20 schedules for export rejection");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc != SAVEGAME_PC34_OK,
+          "C20 export rejects a host sound event without the receipt");
 }
 
 static void test_runtime_materializer_binds_original_c12_damage_hide(void)
@@ -3270,7 +3325,8 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     world.timeline.events[3].mapIndex = 2;
     world.timeline.events[3].mapX = 19;
     world.timeline.events[3].mapY = 8;
-    world.timeline.events[3].aux0 = -23;
+    world.timeline.events[3].aux0 = 23;
+    world.timeline.events[3].aux2 = DM1_EVENT_PLAY_SOUND;
     world.timeline.events[3].aux4 = 6;
     world.projectiles.count = 7;
 
@@ -3327,7 +3383,7 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
               report.events[2].priority == 4,
           "C29 export restores B.Location, C.Ticks, and source priority");
     CHECK(report.events[3].b_mapX == 19 && report.events[3].b_mapY == 8 &&
-              (int16_t)rd16le(&report.events[3].c_cell) == -23 &&
+              (int16_t)rd16le(&report.events[3].c_cell) == 23 &&
               report.events[3].priority == 6,
           "C20 export restores B.Location, C.SoundIndex, and source priority");
 
