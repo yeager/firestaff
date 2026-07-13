@@ -872,6 +872,13 @@
   only as a blocked pre-Track02 controller decision; it has no payload,
   palette, bitmap, RGB, or runtime-handoff meaning.
 
+- ✅ 2026-07-13 Theron no-Arcade Card live capture: the bounded authentic US
+  CUE plus System Card 3.0 Mednafen run now explicitly passes
+  `-pce.arcadecard 0`, verified by Mednafen's `Arcade Card Emulation:
+  Disabled` output. It reproduces the identical `$c897/$c8cd` wait and no
+  dynamic CD-read; disabling unrelated memory hardware therefore does not
+  authorize a Track02 handoff or any graphics interpretation.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
