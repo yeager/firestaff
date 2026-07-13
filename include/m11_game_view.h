@@ -3,6 +3,7 @@
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
+#include "dm1_v1_inscription_host_material_pc34_compat.h"
 
 #include <stdint.h>
 #include "menu_startup_m12.h"
@@ -1812,6 +1813,19 @@ int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
+
+typedef struct M11_Dm1InscriptionHostPresentationReceipt {
+    int valid;
+    int textStringIndex;
+    int fontGraphicIndex;
+    int transparentColor;
+    int glyphByteCount;
+    int lineCount;
+    unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
+} M11_Dm1InscriptionHostPresentationReceipt;
+
+void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
+    M11_Dm1InscriptionHostPresentationReceipt* outReceipt);
 
 #ifdef __cplusplus
 }

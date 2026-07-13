@@ -310,6 +310,25 @@ static int capture_active_m648_inscription(M11_GameViewState* state,
     state->world.things->textStrings[text_index].visible = 1;
     memset(framebuffer, 0, FB_W * FB_H);
     M11_GameView_Draw(state, framebuffer, FB_W, FB_H);
+    {
+        M11_Dm1InscriptionHostPresentationReceipt receipt;
+        M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
+        CHECK(receipt.valid && receipt.textStringIndex == text_index &&
+                  receipt.fontGraphicIndex ==
+                      DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 &&
+                  receipt.transparentColor ==
+                      DM1_V1_INSCRIPTION_TRANSPARENT_COLOR &&
+                  receipt.glyphByteCount > 0 && receipt.lineCount > 0,
+              "M10-to-M11 M648 receipt consumes real TextString index=%d",
+              text_index);
+        if (!receipt.valid || receipt.textStringIndex != text_index ||
+            receipt.fontGraphicIndex !=
+                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
+            receipt.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
+            receipt.glyphByteCount <= 0 || receipt.lineCount <= 0) {
+            return 0;
+        }
+    }
     return check_rendered_lines(framebuffer, (char*)decoded) &&
         check_source_glyph_capture(framebuffer, without_text_fb, font,
                                    state->world.things->textData,

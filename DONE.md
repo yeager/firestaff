@@ -36,6 +36,14 @@
   Structure1A-owned pairs now reach DGN host, render-plan, and LEV00-15 corpus
   receipts. They remain fail-closed provenance, with no item, orientation,
   mesh, material, texture, palette, pixel, or draw semantics.
+- 2026-07-13 DM1 F0107 readable-inscription host materialization: the
+  source-owned receipt now selects the visible PC34 TextString through
+  `DUNGEON.C F0168`, carries its raw glyph bytes and F0107 line plans, and
+  permits M11 to consume only original M648 graphic 258 with C10
+  transparency. The real-corpus probe verifies the M10-to-M11 receipt and
+  exact source pixels for all 56 readable wall-inscription poses, including
+  Hall of Champions and the Vi altar. No host text, font, or wall patch is
+  substituted.
 
 - 2026-07-13 Nexus Structure1F wall-decoration model/rotation handoff: raw
   Structure1A-owned pairs now reach DGN host, render-plan, and LEV00-15 corpus
