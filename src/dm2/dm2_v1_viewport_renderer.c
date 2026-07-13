@@ -3060,14 +3060,6 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                     &ceiling_h_src,
                                     &ceiling_stride) == 0 &&
         ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
-    int floor_asset =
-        dm2_v1_fetch_viewport_asset(s,
-                                    floor_gdat_index,
-                                    &floor_pixels,
-                                    &floor_w,
-                                    &floor_h_src,
-                                    &floor_stride) == 0 &&
-        floor_pixels && floor_w > 0 && floor_h_src > 0;
 
     /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as DM1.
      * Source: DUNVIEW.C:126-127 (G2108_Floor=-1, G2109_Ceiling=-2).
@@ -3110,6 +3102,19 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
+    /* QUERY_GDAT_IMAGE_LOCALPAL belongs to the decoded IMG3 being drawn.
+     * Fetch the floor only after the ceiling blit: the viewport intentionally
+     * keeps one active palette binding, so prefetching both would present the
+     * ceiling through the floor's palette.  skproject DRAW_DUNGEON executes
+     * the image/local-palette query immediately before each material blit. */
+    int floor_asset =
+        dm2_v1_fetch_viewport_asset(s,
+                                    floor_gdat_index,
+                                    &floor_pixels,
+                                    &floor_w,
+                                    &floor_h_src,
+                                    &floor_stride) == 0 &&
+        floor_pixels && floor_w > 0 && floor_h_src > 0;
     if (floor_asset) {
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
@@ -4739,13 +4744,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         uint8_t *vp = s->framebuffer;
         int stride = s->fb_stride;
         const uint8_t *sky_pixels = NULL;
-        const uint8_t *ground_pixels = NULL;
         int sky_w = 0;
         int sky_h_src = 0;
         int sky_stride = 0;
-        int ground_w = 0;
-        int ground_h_src = 0;
-        int ground_stride = 0;
         int sky_h = DM2_VP_HEIGHT / 2;
         int sky_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
@@ -4761,15 +4762,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                                         &sky_h_src,
                                         &sky_stride) == 0 &&
             sky_pixels && sky_w > 0 && sky_h_src > 0;
-        int ground_asset =
-            dm2_v1_fetch_viewport_asset(s,
-                                        ground_gdat_index,
-                                        &ground_pixels,
-                                        &ground_w,
-                                        &ground_h_src,
-                                        &ground_stride) == 0 &&
-            ground_pixels && ground_w > 0 && ground_h_src > 0;
-
         if (sky_asset) {
             dm2_v1_blit_tiled_material_bitmap(
                 s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
@@ -4779,7 +4771,25 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+        } else if (s->source_materials_required) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
         }
+        /* Keep the ground query after the sky draw for the same reason as
+         * indoor ceiling/floor: its local IMG3 palette must not replace the
+         * palette paired with already-decoded sky pixels. */
+        const uint8_t *ground_pixels = NULL;
+        int ground_w = 0;
+        int ground_h_src = 0;
+        int ground_stride = 0;
+        int ground_asset =
+            dm2_v1_fetch_viewport_asset(s,
+                                        ground_gdat_index,
+                                        &ground_pixels,
+                                        &ground_w,
+                                        &ground_h_src,
+                                        &ground_stride) == 0 &&
+            ground_pixels && ground_w > 0 && ground_h_src > 0;
         if (ground_asset) {
             dm2_v1_blit_tiled_material_bitmap(
                 s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
@@ -4790,6 +4800,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+        } else if (s->source_materials_required) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
         }
     } else {
         /* DM2 indoor dungeon rendering:

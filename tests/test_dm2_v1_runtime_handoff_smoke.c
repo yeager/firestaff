@@ -63,6 +63,53 @@ static uint8_t s_hud_core_pixels[16 * 8];
 static uint8_t s_hud_portrait_pixels[16 * 8];
 static int s_last_door_panel_index;
 
+static int paired_scene_asset_fetch(void *user, int gdat_index,
+                                    const uint8_t **out_pixels,
+                                    int *out_w, int *out_h, int *out_stride)
+{
+    static const uint8_t ceiling_pixels[1] = { 1u };
+    static const uint8_t floor_pixels[1] = { 2u };
+    int graphicsset = 0;
+    int field = 0;
+    int *allow = (int *)user;
+
+    if (!allow || !*allow ||
+        !dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, &graphicsset, &field) || graphicsset != 0) {
+        return -1;
+    }
+    if (out_pixels) *out_pixels = field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING
+        ? ceiling_pixels : floor_pixels;
+    if (out_w) *out_w = 1;
+    if (out_h) *out_h = 1;
+    if (out_stride) *out_stride = 1;
+    return 0;
+}
+
+static int paired_scene_palette_fetch(void *user, int gdat_index,
+                                      uint8_t out_palette16[16],
+                                      uint32_t *out_hash)
+{
+    int graphicsset = 0;
+    int field = 0;
+    int *allow = (int *)user;
+
+    if (!allow || !*allow || !out_palette16 || !out_hash ||
+        !dm2_v1_viewport_scene_material_graphic_address(
+            gdat_index, &graphicsset, &field) || graphicsset != 0) {
+        return -1;
+    }
+    memset(out_palette16, 0, 16u);
+    if (field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING) {
+        out_palette16[1] = 0x21u;
+        *out_hash = 0x4345494cu;
+    } else {
+        out_palette16[2] = 0x42u;
+        *out_hash = 0x464c4f52u;
+    }
+    return 0;
+}
+
 #define CHECK(cond, msg) do { \
     if (cond) { passed++; printf("  PASS: %s\n", msg); } \
     else { failed++; printf("  FAIL: %s\n", msg); } \
@@ -341,6 +388,64 @@ static void test_source_material_missing_is_blocked_without_paint(void)
               viewport.fallback_carried_item_drawn_count == 0 &&
               viewport.fallback_projectile_drawn_count == 0,
           "mandatory GDAT failure leaves door and map-chip fallback pixels unpainted");
+}
+
+static void test_scene_materials_keep_their_own_local_palettes(void)
+{
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    int allow = 1;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
+                                       &allow);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, paired_scene_palette_fetch, &allow);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK(framebuffer[0] == 0x21u &&
+              framebuffer[100 * DM2_VP_WIDTH] == 0x42u &&
+              viewport.gdat_local_palette_consumed_count > 0 &&
+              viewport.blocked_material_draw_count == 0,
+          "indoor ceiling and floor each consume their decoded IMG3 local palette");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
+                                       &allow);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, paired_scene_palette_fetch, &allow);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_viewport_render(&viewport);
+    CHECK(framebuffer[40 * DM2_VP_WIDTH + 100] == 0x21u &&
+              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x42u &&
+              viewport.asset_outdoor_sky_drawn_count == 1 &&
+              viewport.asset_outdoor_ground_drawn_count == 1,
+          "outdoor sky and ground retain their own source-local palette bindings");
+
+    allow = 0;
+    memset(framebuffer, 0x7eu, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, paired_scene_asset_fetch,
+                                       &allow);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, paired_scene_palette_fetch, &allow);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 0, 0x53434e45u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_viewport_render(&viewport);
+    CHECK(framebuffer[40 * DM2_VP_WIDTH + 100] == 0x7eu &&
+              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x7eu &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) != 0u,
+          "missing outdoor source material is blocked without a synthetic scene fill");
 }
 
 static void put16le(uint8_t *p, uint16_t v)
@@ -2070,6 +2175,7 @@ int main(void)
 {
     printf("=== DM2 V1 Runtime Handoff Smoke Gate ===\n\n");
     test_source_material_missing_is_blocked_without_paint();
+    test_scene_materials_keep_their_own_local_palettes();
     test_first_tick_after_boot_profile_handoff();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

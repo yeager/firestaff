@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 scene-material local-palette binding: indoor ceiling/floor
+  and outdoor sky/ground now fetch, bind, and blit each decoded `GRAPHICSSET`
+  IMG3 before the next material query can replace its `QUERY_GDAT_IMAGE_LOCALPAL`
+  table. This prevents the first plane from being colored through the second
+  plane's palette. Missing source outdoor planes now emit the existing blocked
+  no-draw material receipt rather than silently accepting an existing
+  framebuffer fill as source-backed. Source-locked to skproject `DRAW_DUNGEON`/outdoor `GRAPHICSSET`
+  image and local-palette query ordering. Verification: Ninja and CTest
+  `dm2_v1_runtime_handoff_smoke`.
+
 - 2026-07-13 Nexus Structure1 host/runtime consumer: champion-to-runtime DGN
   handoff now consumes a dedicated Structure1F/Structure1A provenance receipt
   before any material plan or viewport route can run. Verified direct-cell

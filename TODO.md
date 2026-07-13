@@ -174,6 +174,13 @@ frame; absent pixels or palettes remain absent. Remaining V2.0
 work is real packaged Mac capture and wider GDAT/save corpus coverage, not a
 new fallback HUD or menu.
 
+DM2 V1 scene planes now bind and consume each decoded `GRAPHICSSET` IMG3 with
+its own `QUERY_GDAT_IMAGE_LOCALPAL` result before the next material fetch.
+Ceiling/sky can no longer inherit floor/ground palette entries, and a missing
+source outdoor plane records a blocked no-draw receipt rather than silently
+accepting an existing framebuffer fill as source-backed. Remaining scene work is the separately
+unproven weather `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` destination path.
+
 DM2 V2.1 now keeps its internal per-surface pipeline in lockstep with M11:
 the selected upscaled mode enables source-preserving EPX while retaining the
 original palette. Remaining V2.1 work is real packaged capture and broader
