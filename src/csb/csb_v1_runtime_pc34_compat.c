@@ -16524,6 +16524,12 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
         prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
             profile, dungeon, slave_location, timer, &runner, &action);
         break;
+    case 10u:
+        /* CSBWin Timer.cpp ProcessTT_DOOR enters ActivateDSA before it
+         * changes function to TT_1 and requeues a door timer. */
+        prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
     default:
         return 0;
     }
@@ -16557,7 +16563,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     if (timer_index >= profile->csbwin_timer_summary_count) return;
     timer = &profile->csbwin_timers[timer_index];
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
-        timer->function < 5u || timer->function > 9u ||
+        timer->function < 5u || timer->function > 10u ||
         record->eventType != timer->function ||
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||

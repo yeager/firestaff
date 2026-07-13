@@ -163,5 +163,21 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "unsupported pit action cannot reach the live DSA dispatcher");
+
+    profile.csbwin_timers[0].function = 10u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "restored door timer reaches ActivateDSA before blocked requeue effects");
+
+    profile.csbwin_global_variables[1] = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_timers[0].ubyte9 = 3u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "unsupported door action cannot reach the live DSA dispatcher");
     return failures == 0 ? 0 : 1;
 }
