@@ -4782,13 +4782,15 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int ground_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
+        /* T600 resolves each GRAPHICSSET IMG3 with its own local palette;
+         * source-required outdoor frames must not borrow an interface palette. */
         int sky_asset =
-            dm2_v1_fetch_viewport_asset(s,
-                                        sky_gdat_index,
-                                        &sky_pixels,
-                                        &sky_w,
-                                        &sky_h_src,
-                                        &sky_stride) == 0 &&
+            dm2_v1_fetch_viewport_local_material(s,
+                                                  sky_gdat_index,
+                                                  &sky_pixels,
+                                                  &sky_w,
+                                                  &sky_h_src,
+                                                  &sky_stride) == 0 &&
             sky_pixels && sky_w > 0 && sky_h_src > 0;
         if (sky_asset) {
             dm2_v1_blit_tiled_material_bitmap(
@@ -4811,12 +4813,12 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int ground_h_src = 0;
         int ground_stride = 0;
         int ground_asset =
-            dm2_v1_fetch_viewport_asset(s,
-                                        ground_gdat_index,
-                                        &ground_pixels,
-                                        &ground_w,
-                                        &ground_h_src,
-                                        &ground_stride) == 0 &&
+            dm2_v1_fetch_viewport_local_material(s,
+                                                  ground_gdat_index,
+                                                  &ground_pixels,
+                                                  &ground_w,
+                                                  &ground_h_src,
+                                                  &ground_stride) == 0 &&
             ground_pixels && ground_w > 0 && ground_h_src > 0;
         if (ground_asset) {
             dm2_v1_blit_tiled_material_bitmap(

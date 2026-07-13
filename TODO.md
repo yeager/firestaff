@@ -8,10 +8,10 @@
 
 - 2026-07-13 DM2 viewport material follow-up: source-required creature,
   floor-object, projectile, carried-item, possession, and CHAMPIONS portrait
-  GDAT drawing now require decoded IMG3 pixels and their exact local-palette
-  receipts. Weather remains no-draw until skproject and decoded GDAT prove its
-  concrete image identity and local palette; do not borrow interface colors or
-  synthesize replacement art.
+  GDAT drawing, plus T600 outdoor sky and ground planes, now require decoded
+  IMG3 pixels and their exact local-palette receipts. Weather remains no-draw
+  until skproject and decoded GDAT prove its concrete image identity and local
+  palette; do not borrow interface colors or synthesize replacement art.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads

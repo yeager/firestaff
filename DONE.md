@@ -9,6 +9,16 @@
   `Timer.cpp:1445-1451`, `SaveGame.cpp:1844-1858`. Verification: Ninja and
   CTest `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 skproject T600 outdoor scene local-palette consumer:
+  source-required outdoor sky and ground planes now accept each GRAPHICSSET
+  GDAT IMG3 only with its own `QUERY_GDAT_IMAGE_LOCALPAL` receipt and leave the
+  plane unpainted instead of borrowing interface colors when that receipt is
+  absent. The focused source-data gate proves distinct local palettes reach the
+  sky and ground bands and that no palette provider fails closed. Verification:
+  Ninja built `test_dm2_v1_outdoor_scene_local_palette_gate` and
+  `test_dm2_v1_hud_portrait_local_palette_gate`; matching CTest passed 2/2;
+   `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored TT_ParameterMessage DSA tick bridge: verified
   function-101 queue entries now reach the source parameter-message route
   through the restored live timer queue only after exact queue-slot, timer,
