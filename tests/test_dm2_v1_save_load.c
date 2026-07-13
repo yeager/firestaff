@@ -1685,6 +1685,63 @@ static int test_sksave_corpus_scan_receipt(void)
     return 1;
 }
 
+static int test_sksave_receipted_candidate_hash_gate(void)
+{
+    char tmpdir[256];
+    char path[320];
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    uint8_t loaded[DM2_SESSION_MAX_SIZE];
+    size_t payload_size;
+    size_t loaded_size = 0u;
+    DM2_V1_SessionState session;
+    DM2_SKSaveCorpusReceipt corpus;
+    const DM2_SKSaveCandidateReceipt *candidate = NULL;
+    FILE *file;
+
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_hash_%d",
+             FS_GETPID());
+    FS_MKDIR(tmpdir);
+    dm2_v1_session_new(&session);
+    session.game_tick = 0x5a5au;
+    payload_size = (size_t)dm2_v1_session_serialize(
+        &session, payload, sizeof(payload));
+    if (payload_size == 0u ||
+        dm2_sl_save(tmpdir, 4u, "HashGate", payload, payload_size) != 0 ||
+        !dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
+        corpus.candidate_receipt_count != 1u ||
+        corpus.candidate_receipts[0].source_file_hash == 0u) {
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    candidate = &corpus.candidate_receipts[0];
+    if (!dm2_v1_sksave_corpus_load_receipted_candidate(
+            candidate, loaded, sizeof(loaded), &loaded_size) ||
+        loaded_size != payload_size || memcmp(loaded, payload, payload_size) != 0) {
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    snprintf(path, sizeof(path), "%s/SKSave04.dat", tmpdir);
+    file = fopen(path, "ab");
+    if (!file) {
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    if (fputc(0xA5, file) == EOF || fclose(file) != 0) {
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    loaded_size = 99u;
+    if (dm2_v1_sksave_corpus_load_receipted_candidate(
+            candidate, loaded, sizeof(loaded), &loaded_size) ||
+        loaded_size != 0u) {
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    cleanup_slot_dir(tmpdir);
+    printf("    PASS: receipted corpus candidate rejects changed original bytes\n");
+    return 1;
+}
+
 static int same_dead_champion_persistence_fields(const DM2_ChampionRecord *expected,
                                                  const DM2_ChampionRecord *actual,
                                                  const char *label)
@@ -2281,6 +2338,7 @@ int main(void)
     RUN(19, test_live_runtime_state_roundtrip);
     RUN(20, test_original_save_candidate_live_restore);
     RUN(21, test_sksave_corpus_runtime_import);
+    RUN(22, test_sksave_receipted_candidate_hash_gate);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

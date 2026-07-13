@@ -100,6 +100,9 @@ typedef struct {
     int import_rejected;
     size_t payload_size;
     uint32_t payload_hash;
+    /* FNV-1a receipt over the complete original file, including the 42-byte
+     * SKSave header. It detects a changed corpus artifact before import. */
+    uint32_t source_file_hash;
     char path[256];
 } DM2_SKSaveCandidateReceipt;
 
@@ -239,6 +242,14 @@ bool dm2_v1_sksave_corpus_load_first_importable(
     size_t out_capacity,
     size_t *out_payload_size,
     DM2_SKSaveCorpusReceipt *out_receipt);
+/* Read one previously scanned candidate only when its complete SKSave file
+ * still matches the recorded hash and its parsed payload receipt. This reads
+ * data but never applies it to runtime state. */
+bool dm2_v1_sksave_corpus_load_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *candidate_receipt,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);

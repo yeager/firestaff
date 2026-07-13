@@ -366,6 +366,27 @@ static uint32_t dm2_sksave_corpus_payload_hash(const uint8_t *payload,
     return hash;
 }
 
+static uint32_t dm2_sksave_corpus_file_hash(const char *path)
+{
+    FILE *file;
+    uint8_t buffer[4096];
+    uint32_t hash = 2166136261u;
+    size_t read_count;
+
+    if (!path || !path[0] || !(file = fopen(path, "rb"))) {
+        return 0u;
+    }
+    while ((read_count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
+        hash = dm2_sksave_corpus_payload_hash(buffer, read_count, hash);
+    }
+    if (ferror(file)) {
+        fclose(file);
+        return 0u;
+    }
+    fclose(file);
+    return hash;
+}
+
 static void dm2_sksave_corpus_classify_payload(
     DM2_SKSaveCorpusReceipt *receipt,
     const char *path,
@@ -376,6 +397,7 @@ static void dm2_sksave_corpus_classify_payload(
     DM2_V1_SaveCandidate candidate;
     int status = 0;
     int importable_kind_ok = 0;
+    uint32_t source_file_hash;
 
     if (!receipt || !path || payload_size == 0u ||
         payload_size > (size_t)DM2_SESSION_MAX_SIZE) {
@@ -397,6 +419,13 @@ static void dm2_sksave_corpus_classify_payload(
     if (fread(payload, 1, payload_size, f) != payload_size ||
         dm2_v1_session_parse_save_candidate(&candidate, payload,
                                             payload_size) != 0) {
+        free(payload);
+        fclose(f);
+        receipt->import_rejected_candidate_count++;
+        return;
+    }
+    source_file_hash = dm2_sksave_corpus_file_hash(path);
+    if (source_file_hash == 0u) {
         free(payload);
         fclose(f);
         receipt->import_rejected_candidate_count++;
@@ -439,6 +468,7 @@ static void dm2_sksave_corpus_classify_payload(
             entry->payload_size = payload_size;
             entry->payload_hash = dm2_sksave_corpus_payload_hash(
                 payload, payload_size, 2166136261u);
+            entry->source_file_hash = source_file_hash;
             snprintf(entry->path, sizeof(entry->path), "%s", path);
         }
         receipt->importable_kind_mask |=
@@ -1059,12 +1089,44 @@ bool dm2_v1_sksave_corpus_load_first_importable(
         receipt->first_importable_path[0] == '\0') {
         return false;
     }
-    if (dm2_sksave_read_valid_payload(receipt->first_importable_path,
-                                      out_payload,
-                                      out_capacity,
-                                      out_payload_size) != 0) {
+    for (uint8_t i = 0u; i < receipt->candidate_receipt_count; ++i) {
+        if (strcmp(receipt->candidate_receipts[i].path,
+                   receipt->first_importable_path) == 0) {
+            return dm2_v1_sksave_corpus_load_receipted_candidate(
+                &receipt->candidate_receipts[i], out_payload, out_capacity,
+                out_payload_size);
+        }
+    }
+    return false;
+}
+
+bool dm2_v1_sksave_corpus_load_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *candidate_receipt,
+    uint8_t *out_payload,
+    size_t out_capacity,
+    size_t *out_payload_size)
+{
+    DM2_V1_SaveCandidate candidate;
+    size_t payload_size = 0u;
+
+    if (out_payload_size) *out_payload_size = 0u;
+    if (!candidate_receipt || !candidate_receipt->path[0] ||
+        !candidate_receipt->source_file_hash || !out_payload ||
+        out_capacity == 0u || !out_payload_size ||
+        dm2_sksave_corpus_file_hash(candidate_receipt->path) !=
+            candidate_receipt->source_file_hash ||
+        dm2_sksave_read_valid_payload(candidate_receipt->path, out_payload,
+                                      out_capacity, &payload_size) != 0 ||
+        payload_size != candidate_receipt->payload_size ||
+        dm2_sksave_corpus_payload_hash(out_payload, payload_size,
+                                       2166136261u) !=
+            candidate_receipt->payload_hash ||
+        dm2_v1_session_parse_save_candidate(&candidate, out_payload,
+                                             payload_size) != 0 ||
+        (int)candidate.kind != candidate_receipt->kind) {
         return false;
     }
+    *out_payload_size = payload_size;
     return true;
 }
 
