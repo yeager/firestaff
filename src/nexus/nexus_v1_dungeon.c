@@ -3975,3 +3975,68 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_dgn_consume_structure1f_item_floor_materials(
+    const Nexus_V1_DgnStructure1FItemMaterialBinding *bindings,
+    int binding_count, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnCommandPacked4BppMaterial *out_materials,
+    int max_materials, Nexus_V1_DgnCommandPacked4BppMaterialReceipt *out_receipt)
+{
+    Nexus_V1_DgnCommandPacked4BppMaterialReceipt receipt;
+    int i;
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!bindings || binding_count < 0 || !commands || command_count < 0 ||
+        !out_materials || max_materials < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    for (i = 0; i < binding_count; ++i) {
+        const Nexus_V1_DgnStructure1FItemMaterialBinding *binding =
+            &bindings[i];
+        const Nexus_V1_ItemIbsFloorImage *floor =
+            binding->special_floor_image;
+        Nexus_V1_DgnCommandPacked4BppMaterial *material;
+        uint32_t expected_bytes;
+        if (!floor) continue;
+        ++receipt.special_floor_binding_count;
+        if (binding->command_index < 0 || binding->command_index >= command_count ||
+            commands[binding->command_index].kind !=
+                NEXUS_V1_DGN_RENDER_COMMAND_FLOOR) {
+            ++receipt.blocked_invalid_command_count;
+            continue;
+        }
+        expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+        if (!floor->palette_bound || !floor->packed_4bpp_valid ||
+            floor->encoding != 8U || !floor->width || !floor->height ||
+            expected_bytes == 0U || floor->packed_4bpp_bytes != expected_bytes ||
+            receipt.command_material_count >= max_materials) {
+            ++receipt.blocked_invalid_binding_count;
+            continue;
+        }
+        material = &out_materials[receipt.command_material_count++];
+        memset(material, 0, sizeof(*material));
+        material->command_index = binding->command_index;
+        material->image_id = floor->image_id;
+        material->encoding = floor->encoding;
+        material->width = floor->width;
+        material->height = floor->height;
+        material->packed_4bpp_bytes = floor->packed_4bpp_bytes;
+        material->palette_bgr555 = floor->palette_bgr555;
+        material->packed_4bpp_texels = floor->packed_4bpp_texels;
+        /* The parser can only be reached through a hash-verified bank.
+         * Retain that provenance at the DGN command boundary. */
+        material->source_hash_verified = 1;
+        material->packed_4bpp_valid = 1;
+        material->texel_order_proven = 0;
+        material->draw_authorized = 0;
+    }
+    receipt.source_hash_verified = receipt.command_material_count > 0;
+    receipt.complete = receipt.special_floor_binding_count > 0 &&
+        receipt.command_material_count == receipt.special_floor_binding_count &&
+        receipt.blocked_invalid_binding_count == 0 &&
+        receipt.blocked_invalid_command_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}

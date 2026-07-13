@@ -1194,6 +1194,26 @@ typedef struct {
     const Nexus_V1_ItemIbsFloorImage *special_floor_image;
 } Nexus_V1_DgnStructure1FItemMaterialBinding;
 
+/* A command-indexed source-material handoff for ITEM.IBS descriptor 0008.
+ * It deliberately retains the original packed 4bpp bytes: the retail
+ * descriptor proves their size and local palette, but not their nibble order
+ * or their world-space placement.  Therefore this is a no-draw material
+ * consumer, never a renderer fallback. */
+typedef struct {
+    int command_index;
+    uint16_t image_id;
+    uint16_t encoding;
+    uint16_t width;
+    uint16_t height;
+    uint32_t packed_4bpp_bytes;
+    const uint16_t *palette_bgr555;
+    const uint8_t *packed_4bpp_texels;
+    int source_hash_verified;
+    int packed_4bpp_valid;
+    int texel_order_proven;
+    int draw_authorized;
+} Nexus_V1_DgnCommandPacked4BppMaterial;
+
 typedef struct {
     int source_hash_verified;
     int item_entry_count;
@@ -1207,6 +1227,16 @@ typedef struct {
     int complete;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FItemMaterialReceipt;
+
+typedef struct {
+    int source_hash_verified;
+    int special_floor_binding_count;
+    int command_material_count;
+    int blocked_invalid_binding_count;
+    int blocked_invalid_command_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnCommandPacked4BppMaterialReceipt;
 
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
@@ -1459,5 +1489,14 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
     const Nexus_V1_DgnRenderCommand *commands, int command_count,
     Nexus_V1_DgnStructure1FItemMaterialBinding *out_bindings,
     int max_bindings, Nexus_V1_DgnStructure1FItemMaterialReceipt *out_receipt);
+/* Consumes authenticated descriptor-0008 bindings into their exact DGN floor
+ * command material slots.  It fails closed on every missing source fact and
+ * never declares a draw because nibble ordering and item placement are not
+ * yet source-proven. */
+int nexus_v1_dgn_consume_structure1f_item_floor_materials(
+    const Nexus_V1_DgnStructure1FItemMaterialBinding *bindings,
+    int binding_count, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnCommandPacked4BppMaterial *out_materials,
+    int max_materials, Nexus_V1_DgnCommandPacked4BppMaterialReceipt *out_receipt);
 
 #endif
