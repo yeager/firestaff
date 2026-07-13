@@ -85,6 +85,8 @@ typedef struct {
     int gdat_weather_destination_ready;
     uint32_t gdat_weather_destination_hash;
     uint32_t gdat_weather_destination_mask;
+    int gdat_dialogue_shell_receipt_ready;
+    uint32_t gdat_dialogue_shell_receipt_hash;
     int gdat_scene_light_consumed;
     int gdat_scene_weather_consumed;
     int gdat_sprite_palette_consumed;
