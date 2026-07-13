@@ -1563,6 +1563,15 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));
         } else if (type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
                    type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            if (src->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+                src->aux2 != type || (src->aux4 & 0x100) == 0 ||
+                src->aux0 < 0 || !things || !things->groups ||
+                src->aux0 >= things->groupCount ||
+                src->aux1 != things->groups[src->aux0].creatureType ||
+                src->aux3 < 0 || src->aux3 > 0xffff ||
+                src->mapIndex < 0 || src->mapIndex > 0xff ||
+                src->mapX < 0 || src->mapX > 0xff || src->mapY < 0 ||
+                src->mapY > 0xff) return 0;
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux3 & 0xffff));

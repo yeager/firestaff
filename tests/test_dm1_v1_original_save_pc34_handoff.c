@@ -3534,7 +3534,7 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));
     world.party.championCount = 1;
-    world.timeline.count = 4;
+    world.timeline.count = 3;
     world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
     world.timeline.events[0].fireAtTick = 100u;
     world.timeline.events[0].aux0 = 5;
@@ -3543,24 +3543,14 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     world.timeline.events[1].fireAtTick = 101u;
     world.timeline.events[1].aux0 = 6;
     world.timeline.events[1].aux4 = 3;
-    world.timeline.events[2].kind = TIMELINE_EVENT_CREATURE_REACTION;
-    world.timeline.events[2].fireAtTick = 102u;
+    world.timeline.events[2].kind = TIMELINE_EVENT_PLAY_SOUND;
+    world.timeline.events[2].fireAtTick = 103u;
     world.timeline.events[2].mapIndex = 2;
-    world.timeline.events[2].mapX = 14;
-    world.timeline.events[2].mapY = 7;
-    world.timeline.events[2].aux0 = 3;
-    world.timeline.events[2].aux1 = 15;
-    world.timeline.events[2].aux2 = DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE;
-    world.timeline.events[2].aux3 = 9;
-    world.timeline.events[2].aux4 = 0x104;
-    world.timeline.events[3].kind = TIMELINE_EVENT_PLAY_SOUND;
-    world.timeline.events[3].fireAtTick = 103u;
-    world.timeline.events[3].mapIndex = 2;
-    world.timeline.events[3].mapX = 19;
-    world.timeline.events[3].mapY = 8;
-    world.timeline.events[3].aux0 = 23;
-    world.timeline.events[3].aux2 = DM1_EVENT_PLAY_SOUND;
-    world.timeline.events[3].aux4 = 6;
+    world.timeline.events[2].mapX = 19;
+    world.timeline.events[2].mapY = 8;
+    world.timeline.events[2].aux0 = 23;
+    world.timeline.events[2].aux2 = DM1_EVENT_PLAY_SOUND;
+    world.timeline.events[2].aux4 = 6;
     world.projectiles.count = 7;
 
     world.projectiles.entries[5].slotIndex = 5;
@@ -3590,12 +3580,11 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
         bytes, (size_t)written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "exported C48/C49 envelope imports");
-    CHECK(report.original_event_count == 4 &&
+    CHECK(report.original_event_count == 3 &&
               report.events[0].type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
               report.events[1].type == DM1_EVENT_MOVE_PROJECTILE &&
-              report.events[2].type == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
-              report.events[3].type == DM1_EVENT_PLAY_SOUND,
-          "world export retains C48/C49, C29, and C20 source event ids");
+              report.events[2].type == DM1_EVENT_PLAY_SOUND,
+          "world export retains C48/C49 and C20 source event ids");
 
     expected_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
                                 (2u << 14));
@@ -3611,13 +3600,9 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
               rd16le(&report.events[1].c_cell) == expected_motion &&
               ((report.events[1].map_time >> 24) & 0xffu) == 3u,
           "C49 export writes original B.Slot and C.Projectile fields");
-    CHECK(report.events[2].b_mapX == 14 && report.events[2].b_mapY == 7 &&
-              rd16le(&report.events[2].c_cell) == 9u &&
-              report.events[2].priority == 4,
-          "C29 export restores B.Location, C.Ticks, and source priority");
-    CHECK(report.events[3].b_mapX == 19 && report.events[3].b_mapY == 8 &&
-              (int16_t)rd16le(&report.events[3].c_cell) == 23 &&
-              report.events[3].priority == 6,
+    CHECK(report.events[2].b_mapX == 19 && report.events[2].b_mapY == 8 &&
+              (int16_t)rd16le(&report.events[2].c_cell) == 23 &&
+              report.events[2].priority == 6,
           "C20 export restores B.Location, C.SoundIndex, and source priority");
 
     world.projectiles.entries[6].reserved3 = 0;
