@@ -1230,6 +1230,14 @@ and real community-save corpus round-trip evidence.
     transient exported hash commits them. This follows ReDMCSB `LOADSAVE.C`
     F0433/F0435's whole-save staging contract. Remaining work is authentic
     community-save coverage, not a partial-receipt fallback.
+  - 2026-07-13 update: rejected external PC34 rows now retain their local
+    F0435 staging boundary: handoff result, importer result, and the number
+    of checksum-qualified parts. The probe uses only candidate-local
+    `SaveGame`/party/timeline objects and does not publish a rejected import.
+    This distinguishes malformed post-portrait tail bytes after all five
+    source parts from a later roundtrip mismatch while keeping C13/C24/C25
+    evidence uncommitted. Remaining work
+    is authentic community-save coverage, not a fallback import path.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
