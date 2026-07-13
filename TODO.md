@@ -654,14 +654,14 @@ until original PC34 capture or a verified disassembly resolves the row-7..11
 behavior. It cannot borrow C101/M636, F0114, a marker, host geometry, or the
 adjacent mutable globals as scale values.
 
-F0115's deferred C15 receipt now preserves every ordinary same-square PC34
-explosion record in source list order and M11 consumes each record's own
-F0114 type/frame/attack material after all object, creature, and projectile
-passes, including F0127/D0C's M636 pattern lane. Fluxcage remains on its F0113
-field route and rebirth remains no-draw here until its distinct C3000/C3007
-coordinates are consumed; neither can borrow a generic sprite. Remaining
-explosion work is real-media multi-effect capture plus the separate rebirth
-geometry route.
+F0115's deferred C15 receipt preserves each active same-square PC34 record in
+source-list order before material filtering, with explicit ordinary F0114/D0C
+M636, C100 C3000-blocked, C101 C3007-blocked/D0C-M636, and Fluxcage F0113
+routes. M11 consumes only each admitted ordinary record's own type/frame/attack
+material after object, creature, and projectile passes. C100's separate scale
+gate is unchanged; blocked rebirth records cannot borrow a generic sprite.
+Remaining explosion work is real-media multi-effect capture plus the separate
+rebirth geometry route.
 
 F0128's D4L/D4R/D4C `C0x0001` calls retain their real early F0115 object-pass
 ordering, but D4 has no G2028/C2900 projectile row and F0115 exits before the

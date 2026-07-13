@@ -11872,3 +11872,11 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   `test_dm1_v1_spell_casting_pc34_compat` and
   `test_dm1_v1_throw_shoot_pc34_compat` PASS. Source: ReDMCSB `MENU.C
   F0412:1861-1870`, `CHAMPION.C F0327:2091-2102`.
+- 2026-07-13 DM1 F0115/F0127 C15 source-order receipt: active same-square
+  explosion records now retain their original M10 list order before M11's
+  material gate, including separate ordinary F0114/D0C-M636, C100 C3000,
+  C101 C3007/D0C-M636, and Fluxcage F0113 routes. The ordinary render list
+  remains filtered and C100's separate scale gate is unchanged; no fallback
+  material was introduced. Source: ReDMCSB `DUNVIEW.C` F0115:5915-6220.
+  Verification: Ninja and CTest `dm1_v1_viewport_runtime_materialization_pc34_compat`,
+  `dm1_v1_projectile_explosion_render_source_lock`.
