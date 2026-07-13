@@ -5219,6 +5219,12 @@ int dm1_v1_startup_title_presentation_command_pc34(
     command.present_frame = plan.kind != V1_TITLE_FRONTEND_C001_BLIT_NONE;
     command.clear_before_present = plan.clearBeforeBlit ? 1 : 0;
     command.special_palette = palette;
+    /* ReDMCSB TITLE.C F0437:362-367 installs the C13_DUNGEON and
+     * C14_MASTER colors before TITLE.C:385 waits for the first zoom
+     * VBlank. PRESENTS has no preceding VBlank in this sequence. */
+    command.palette_before_pre_present_delay =
+        step.kind == V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT &&
+        step.zoomSourceIndex == 17U;
     command.pre_present_delay_ms = step.vblankBeforeEvent
         ? media_receipt->title_zoom_frame_delay_ms : 0U;
     command.post_present_delay_ms =

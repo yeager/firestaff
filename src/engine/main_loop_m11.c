@@ -1364,6 +1364,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     unsigned char* framebuffer;
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
+    int titlePalette = -1;
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
@@ -1455,6 +1456,20 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (command.clear_before_present) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
         }
+        /* ReDMCSB TITLE.C F0437:362-387: the C13/C14 palette is live
+         * before the first zoom VBlank, not after it.  Present the
+         * cleared indexed surface to make the hardware-equivalent palette
+         * latch visible before waiting. */
+        if (command.palette_before_pre_present_delay &&
+            titlePalette != command.special_palette) {
+            if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
+                                                            M11_FB_WIDTH,
+                                                            M11_FB_HEIGHT,
+                                                            command.special_palette) != M11_RENDER_OK) {
+                break;
+            }
+            titlePalette = command.special_palette;
+        }
         /* ReDMCSB TITLE.C F0437:385-387 waits before each prepared
          * zoom bitmap is blitted. Steps 20, 21, and 23 model the two
          * post-zoom waits and the final guard individually, so do not add
@@ -1508,6 +1523,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
                                                         command.special_palette) != M11_RENDER_OK) {
             break;
         }
+        titlePalette = command.special_palette;
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
