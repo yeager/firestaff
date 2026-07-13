@@ -24,6 +24,8 @@ mkdir -p "$build_root"
 cp -R "$source_root/." "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch"
 
 cd "$build_root/source"
 # The Firestaff hook reads PCE registers through Mednafen's debugger API.

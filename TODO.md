@@ -1367,6 +1367,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     transaction. The same authentic trace has two raw pre-wait direct CD
     register stores (`$e8f7 -> $1804` and `$cb57 -> $1802`), but they do not
     identify a command or payload and cannot promote a transaction. It observes
+    PCECD physical register writes separately on the next authentic capture,
+    including indirect caller paths; only observed writes may explain the
+    controller wait or justify a later CD-read receipt.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
