@@ -4112,6 +4112,22 @@ int nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
         candidate->structure3_byte_size = level->structure3_payload.byte_size;
         candidate->structure3_raw_payload_hash =
             level->structure3_payload.raw_payload_hash;
+        candidate->model_index_exceeds_block_count =
+            (int)candidate->structure3_model_index >=
+                level->structure3_payload.block_count;
+        candidate->model_index_exceeds_nonzero_byte_run_count =
+            (int)candidate->structure3_model_index >=
+                level->structure3_payload.nonzero_byte_run_count;
+        candidate->model_index_exceeds_nonzero_block_run_count =
+            (int)candidate->structure3_model_index >=
+                level->structure3_payload.nonzero_block_run_count;
+        candidate->direct_ordinal_mapping_disproven =
+            candidate->model_index_exceeds_block_count &&
+            candidate->model_index_exceeds_nonzero_byte_run_count &&
+            candidate->model_index_exceeds_nonzero_block_run_count;
+        if (candidate->direct_ordinal_mapping_disproven) {
+            ++receipt.direct_ordinal_mapping_disproven_count;
+        }
         candidate->model_ordinal_proven = 0;
         candidate->face_semantics_proven = 0;
         candidate->draw_authorized = 0;

@@ -1041,6 +1041,7 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_candidate_receipt.complete &&
           structure3_candidate_receipt.owner_cell_source_count == 2 &&
           structure3_candidate_receipt.topology_candidate_count == 2 &&
+          structure3_candidate_receipt.direct_ordinal_mapping_disproven_count == 2 &&
           structure3_candidates[0].command_index == 0 &&
           structure3_candidates[0].owner_x == 11 &&
           structure3_candidates[0].owner_y == 10 &&
@@ -1050,6 +1051,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_candidates[0].structure3_byte_size ==
               NEXUS_DGN_BLOCK_SIZE * 4 &&
           structure3_candidates[0].structure3_raw_payload_hash != 0U &&
+          structure3_candidates[0].model_index_exceeds_block_count &&
+          structure3_candidates[0].model_index_exceeds_nonzero_byte_run_count &&
+          structure3_candidates[0].model_index_exceeds_nonzero_block_run_count &&
+          structure3_candidates[0].direct_ordinal_mapping_disproven &&
           !structure3_candidates[0].model_ordinal_proven &&
           !structure3_candidates[0].face_semantics_proven &&
           !structure3_candidates[0].draw_authorized &&
