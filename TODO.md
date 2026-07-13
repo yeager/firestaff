@@ -53,6 +53,10 @@
   receipt into live frame ownership, but remains no-draw until skproject proves
   the destination clip; do not borrow interface colors or synthesize
   replacement art.
+  - 2026-07-13 update: PC G1 DB4 creature map-chip receipts now bind the
+    exact `CREATURES/type/F9` local palette alongside the decoded image. The
+    viewport rejects a palette-hash mismatch; this does not infer animation,
+    clipping, or a new draw route.
   - 2026-07-13 update: weather ENVIRONMENT commands now additionally require
     a bounded decoded IMG3 pixel receipt that matches their metadata and local
     palette. The decoded material remains no-draw until its complete source

@@ -17,6 +17,7 @@
 typedef struct {
     int raw_calls;
     int metadata_calls;
+    int palette_calls;
 } Calls;
 
 static int passed;
@@ -67,6 +68,21 @@ static int read_metadata(void *userdata, int category, int entry, int field,
     return 1;
 }
 
+static int read_local_palette(void *userdata, int category, int entry,
+                              int field, uint8_t out_palette16[16],
+                              uint32_t *out_hash)
+{
+    Calls *calls = (Calls *)userdata;
+
+    ++calls->palette_calls;
+    if (category != 0x0f || entry != 7 || field != 0xf9 ||
+        !out_palette16 || !out_hash) return 0;
+    memset(out_palette16, 0, 16u);
+    out_palette16[1] = 0x5au;
+    *out_hash = 0x47314d50u;
+    return 1;
+}
+
 int main(void)
 {
     uint8_t raw[21];
@@ -100,22 +116,31 @@ int main(void)
     memset(&calls, 0, sizeof(calls));
     memset(&receipt, 0xa5, sizeof(receipt));
     CHECK(dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
-              &dungeon, 0, read_raw, read_metadata, &calls, &receipt) == 0,
+              &dungeon, 0, read_raw, read_metadata, read_local_palette,
+              &calls, &receipt) == 0,
           "incomplete G1 graph rejects DB4-to-GDAT map-chip materialization");
-    CHECK(calls.raw_calls == 0 && calls.metadata_calls == 0,
+    CHECK(calls.raw_calls == 0 && calls.metadata_calls == 0 &&
+              calls.palette_calls == 0,
           "incomplete G1 graph does not issue any GDAT material request");
     CHECK(receipt.valid == 0 && receipt.material_count == 0,
           "rejected DB4 materialization leaves an invalid receipt");
 
     dungeon.record_graph_complete = 1;
     CHECK(dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
-              &dungeon, 0, read_raw, read_metadata, &calls, &receipt) == 1 &&
+              &dungeon, 0, read_raw, read_metadata, read_local_palette,
+              &calls, &receipt) == 1 &&
               receipt.valid && receipt.material_count == 1,
           "complete G1 graph materializes the source-owned DB4 map-chip receipt");
     CHECK(calls.raw_calls == 1 && calls.metadata_calls == 1 &&
+              calls.palette_calls == 1 &&
               receipt.materials[0].creature_type == 7 &&
-              receipt.materials[0].raw_byte_count == 1,
-          "complete graph retains the verified F9 request and provenance");
+              receipt.materials[0].raw_byte_count == 1 &&
+              receipt.materials[0].local_palette_hash == 0x47314d50u &&
+              dm2_v1_g1_creature_map_chip_matches_decoded_material(
+                  &receipt, 7, 1, 1, 0x47314d50u) &&
+              !dm2_v1_g1_creature_map_chip_matches_decoded_material(
+                  &receipt, 7, 1, 1, 0x12345678u),
+          "complete graph retains the exact F9 palette ownership receipt");
 
     printf("%d passed, %d failed\n", passed, failed);
     return failed != 0;

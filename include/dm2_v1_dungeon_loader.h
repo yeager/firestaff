@@ -260,6 +260,8 @@ typedef struct {
     int image_width;
     int image_height;
     int image_format;
+    uint8_t local_palette16[16];
+    uint32_t local_palette_hash;
 } DM2_V1_G1CreatureMapChipMaterial;
 
 typedef struct {
@@ -296,6 +298,13 @@ typedef int (*DM2_V1_G1GdatImageMetadataRead)(void *userdata,
                                                int *out_width,
                                                int *out_height,
                                                int *out_format);
+
+typedef int (*DM2_V1_G1GdatImageLocalPaletteRead)(void *userdata,
+                                                   int category,
+                                                   int index,
+                                                   int field,
+                                                   uint8_t out_palette16[16],
+                                                   uint32_t *out_hash);
 
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
@@ -594,6 +603,7 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     int map,
     DM2_V1_G1GdatRawRead read_raw,
     DM2_V1_G1GdatImageMetadataRead read_image_metadata,
+    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
     void *read_userdata,
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
 
@@ -604,7 +614,8 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_material(
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
     int creature_type,
     int image_width,
-    int image_height);
+    int image_height,
+    uint32_t local_palette_hash);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

@@ -70,6 +70,7 @@ static void setup_creature(DM2_V1_ViewportState *viewport,
     dm2_v1_viewport_init(viewport, framebuffer, DM2_VP_WIDTH);
     viewport->creature_count = 1;
     viewport->creatures[0].creature_type = 7;
+    viewport->creatures[0].source_kind = 2;
     viewport->creatures[0].frame_index = 0;
     viewport->creatures[0].screen_x = 96;
     viewport->creatures[0].screen_y = 88;
@@ -86,6 +87,7 @@ static void setup_creature(DM2_V1_ViewportState *viewport,
 int main(void)
 {
     DM2_V1_ViewportState viewport;
+    DM2_V1_G1CreatureMapChipRuntimeReceipt g1_receipt;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     FetchTrace trace;
     int expected_index = dm2_v1_viewport_creature_graphic_index(7, 0);
@@ -93,6 +95,15 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     memset(&trace, 0, sizeof(trace));
     setup_creature(&viewport, framebuffer, &trace, 1);
+    memset(&g1_receipt, 0, sizeof(g1_receipt));
+    g1_receipt.valid = 1;
+    g1_receipt.material_count = 1;
+    g1_receipt.materials[0].creature_type = 7u;
+    g1_receipt.materials[0].image_width = 2;
+    g1_receipt.materials[0].image_height = 2;
+    g1_receipt.materials[0].local_palette_hash = 0x43524550u;
+    dm2_v1_viewport_set_g1_creature_map_chip_materials(&viewport,
+                                                        &g1_receipt);
     dm2_v1_render_creatures(&viewport);
     CHECK("creature map-chip consumes its matching source IMG3 palette",
           trace.asset_fetches == 1 && trace.palette_fetches == 1 &&
@@ -111,6 +122,21 @@ int main(void)
     dm2_v1_render_creatures(&viewport);
     CHECK("source-required creature map-chip fails closed without its palette",
           trace.asset_fetches == 1 && trace.palette_fetches == 0 &&
+              viewport.asset_creature_drawn_count == 0 &&
+              viewport.fallback_creature_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE) != 0u &&
+              framebuffer[88 * DM2_VP_WIDTH + 96] == 0x7eu);
+
+    memset(framebuffer, 0x7e, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    setup_creature(&viewport, framebuffer, &trace, 1);
+    g1_receipt.materials[0].local_palette_hash = 0x12345678u;
+    dm2_v1_viewport_set_g1_creature_map_chip_materials(&viewport,
+                                                        &g1_receipt);
+    dm2_v1_render_creatures(&viewport);
+    CHECK("G1 DB4 creature rejects a mismatched source local palette",
+          trace.asset_fetches == 1 && trace.palette_fetches == 1 &&
               viewport.asset_creature_drawn_count == 0 &&
               viewport.fallback_creature_drawn_count == 0 &&
               (viewport.blocked_material_mask &
