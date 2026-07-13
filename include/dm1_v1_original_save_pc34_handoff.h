@@ -172,6 +172,15 @@ typedef struct {
     int source_active_group_count;
     int exported_active_group_count;
     int reloaded_active_group_count;
+    /* ReDMCSB DEFS.H EVENT is the ten-byte on-disk record that F0433
+     * writes and F0435 reads.  C13 owns every B/C union byte, unlike
+     * several timer types with source-uninitialised union arms. */
+    int c13_byte_receipt_available;
+    int source_c13_event_count;
+    int exported_c13_event_count;
+    int c13_byte_preserved_count;
+    int c13_byte_mismatch_count;
+    int c13_byte_preservation_ok;
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
@@ -193,6 +202,11 @@ typedef struct {
     uint32_t source_hash;
     uint32_t exported_byte_count;
     uint32_t exported_hash;
+    int source_c13_event_count;
+    int exported_c13_event_count;
+    int c13_byte_preserved_count;
+    int c13_byte_mismatch_count;
+    int c13_byte_preservation_ok;
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusReceipt;
 

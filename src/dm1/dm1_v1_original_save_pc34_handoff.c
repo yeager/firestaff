@@ -3043,6 +3043,13 @@ static void fill_roundtrip_core_report(
     const struct DM1_EventQueue_V1 *reloaded_queue,
     DM1OriginalSavePC34RoundtripReport *out_report)
 {
+    int source_c13_indices[DM1_EVENT_MAX_COUNT];
+    int export_c13_indices[DM1_EVENT_MAX_COUNT];
+    int export_c13_used[DM1_EVENT_MAX_COUNT];
+    int source_c13_count = 0;
+    int export_c13_count = 0;
+    int i;
+
     if (!out_report) {
         return;
     }
@@ -3084,6 +3091,74 @@ static void fill_roundtrip_core_report(
     }
     if (reloaded_queue) {
         out_report->reloaded_event_count = reloaded_queue->eventCount;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0433:1586-1589 writes the complete EVENT and
+     * TIMELINE arrays; F0435:2781-2799 restores those exact arrays before
+     * F0651 rebuilds its runtime ordering. C13's Location/Cell/Effect and
+     * Priority are all source-owned (CLIKVIEW.C F0374, TIMELINE.C F0255),
+     * so compare the full ten-byte logical record rather than accepting a
+     * semantic-only event-plan match. Event storage can be reordered by the
+     * timeline heap, hence the deliberately order-independent matching. */
+    if (!source_report || !export_report ||
+        source_report->event_decode_truncated_count != 0 ||
+        export_report->event_decode_truncated_count != 0) {
+        out_report->c13_byte_receipt_available = 0;
+    } else {
+        out_report->c13_byte_receipt_available = 1;
+        for (i = 0; i < source_report->decoded_event_count; ++i) {
+            if (source_report->events[i].type == DM1_EVENT_VI_ALTAR_REBIRTH) {
+                source_c13_indices[source_c13_count++] = i;
+            }
+        }
+        for (i = 0; i < export_report->decoded_event_count; ++i) {
+            if (export_report->events[i].type == DM1_EVENT_VI_ALTAR_REBIRTH) {
+                export_c13_indices[export_c13_count++] = i;
+            }
+        }
+        out_report->source_c13_event_count = source_c13_count;
+        out_report->exported_c13_event_count = export_c13_count;
+        memset(export_c13_used, 0, sizeof(export_c13_used));
+        for (i = 0; i < source_c13_count; ++i) {
+            const struct DM1_Event_V1 *source_event =
+                &source_report->events[source_c13_indices[i]];
+            int export_index;
+            int found = 0;
+
+            for (export_index = 0; export_index < export_c13_count;
+                 ++export_index) {
+                const struct DM1_Event_V1 *export_event;
+
+                if (export_c13_used[export_index]) {
+                    continue;
+                }
+                export_event = &export_report->events[
+                    export_c13_indices[export_index]];
+                if (source_event->map_time == export_event->map_time &&
+                    source_event->type == export_event->type &&
+                    source_event->priority == export_event->priority &&
+                    source_event->b_mapX == export_event->b_mapX &&
+                    source_event->b_mapY == export_event->b_mapY &&
+                    source_event->c_cell == export_event->c_cell &&
+                    source_event->c_effect == export_event->c_effect) {
+                    export_c13_used[export_index] = 1;
+                    ++out_report->c13_byte_preserved_count;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) {
+                ++out_report->c13_byte_mismatch_count;
+            }
+        }
+        /* Extra F0433 C13 records are equally a byte-preservation failure. */
+        if (export_c13_count > source_c13_count) {
+            out_report->c13_byte_mismatch_count +=
+                export_c13_count - source_c13_count;
+        }
+        out_report->c13_byte_preservation_ok =
+            out_report->c13_byte_mismatch_count == 0 &&
+            source_c13_count == export_c13_count;
     }
 
     out_report->core_state_matches =
@@ -3152,7 +3227,12 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
                                &reloaded_world, &reloaded_queue,
                                out_report);
     F0883_WORLD_Free_Compat(&reloaded_world);
-    if (out_report && !out_report->core_state_matches) {
+    if (out_report &&
+        (!out_report->core_state_matches ||
+         (!out_report->c13_byte_receipt_available &&
+          import_report.original_event_count > 0) ||
+         (out_report->source_c13_event_count > 0 &&
+          !out_report->c13_byte_preservation_ok))) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -3350,6 +3430,14 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             &roundtrip);
         receipt->roundtrip_result = result;
         receipt->core_state_matches = roundtrip.core_state_matches;
+        receipt->source_c13_event_count = roundtrip.source_c13_event_count;
+        receipt->exported_c13_event_count = roundtrip.exported_c13_event_count;
+        receipt->c13_byte_preserved_count =
+            roundtrip.c13_byte_preserved_count;
+        receipt->c13_byte_mismatch_count =
+            roundtrip.c13_byte_mismatch_count;
+        receipt->c13_byte_preservation_ok =
+            roundtrip.c13_byte_preservation_ok;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;

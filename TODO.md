@@ -1149,6 +1149,14 @@ and real community-save corpus round-trip evidence.
     Firestaff manifests and nonoriginal envelopes remain explicit rejected
     rows and never enter import/export. Remaining work is broader original
     dungeon-tail import breadth and independently collected community saves.
+  - 2026-07-13 update: C13 Vi Altar records now receive a byte-preservation
+    receipt during the F0435 -> F0433 -> F0435 verification path. ReDMCSB
+    `LOADSAVE.C` saves and reloads the whole ten-byte EVENT part; Firestaff
+    therefore matches `Map_Time`, Type, Priority, `B.Location`, and
+    `C.Cell/Effect` as an order-independent raw-record set after timeline
+    rebuilding. A truncated EVENT part or any C13 byte mismatch fails the
+    round trip; no generic timer substitution is permitted. Remaining work
+    is authentic community-save coverage and broader dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
