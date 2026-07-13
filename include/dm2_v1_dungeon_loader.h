@@ -490,6 +490,37 @@ typedef struct {
     int blocked_record_reads;
 } DM2_V1_G1RuntimeMapValidationReceipt;
 
+#define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
+
+/* Read-only direct DB0 payload from skproject SKWIN/DME.h::Door.  `w0` is
+ * intentionally absent: it is GenericRecord::next and remains unavailable
+ * until the complete G1 graph is independently proven. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t button;
+    uint8_t door_type;
+    uint8_t button_state;
+    uint8_t opening_dir;
+    uint8_t ornate_index;
+    uint8_t destroyable_by_fireball;
+    uint8_t bashable_by_chopping;
+} DM2_V1_G1DirectDoorRoot;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int door_root_count;
+    int door_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectDoorRoot doors[DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS];
+} DM2_V1_G1RuntimeMapDoorReceipt;
+
 /* First-map runtime handoff for the transactional PC G1 boot. This carries
  * source-proven root-address classes only; it deliberately contains no
  * decoded c_record payload or inferred object. */
@@ -668,6 +699,13 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapValidationReceipt *out);
+/* Consume only direct DB0 roots on a runtime-admitted G1 map.  The payload is
+ * limited to DME.h::Door w2; it never reads GenericRecord::w0 or follows a
+ * map/record link.  The output is unchanged when any source gate fails. */
+int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out);
 /* Consume the transactional receipt for map 0 only. This repeats c_map's
  * ground-stack root lookup and classifies source-proven addresses. It may read
  * only a direct DB1 teleporter's independently verified fields; it never reads
