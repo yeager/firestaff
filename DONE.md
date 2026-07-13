@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 F0435 dungeon-tail span validation: save handoff now
+  rejects a checksum-valid tail before receipt publication when any map's
+  raw data span lies outside its saved raw-map block, matching the source
+  F0434 materializer boundary. Verification: Ninja-built
+  `test_dm1_v1_original_save_pc34_handoff` passed against the local original
+  DUNGEON.DAT -> F0802 -> F0435 route and its out-of-range map regression.
+
 - 2026-07-13 Nexus startup package host gate: title capture now requires M11
   and M12 admission, and command export additionally requires the final
   package/host receipt. A blocked Track 02 host route therefore leaves the

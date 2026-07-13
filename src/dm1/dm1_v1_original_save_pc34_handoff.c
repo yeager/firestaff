@@ -849,6 +849,42 @@ static uint16_t original_pc34_byte_checksum(const uint8_t *bytes,
     return checksum;
 }
 
+/* ReDMCSB LOADSAVE.C F0435:2826 calls F0434 after the five save parts.
+ * F0434's dungeon loader rejects map descriptors whose raw-map span falls
+ * outside the saved raw-map block. Keep the receipt fail-closed before it
+ * can describe a tail that the actual F0434/F0504 materialization rejects. */
+static int validate_original_pc34_dungeon_tail_map_spans(
+    const uint8_t *tail,
+    int map_count,
+    size_t map_descriptors_offset,
+    size_t raw_map_offset,
+    size_t raw_map_byte_count)
+{
+    int map_index;
+
+    if (!tail || map_count <= 0 || map_count > DUNGEON_MAX_MAPS) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    for (map_index = 0; map_index < map_count; ++map_index) {
+        const uint8_t *map = tail + map_descriptors_offset +
+            (size_t)map_index * DUNGEON_MAP_DESC_SIZE;
+        uint16_t raw_bitfield_a = read_u16_le(map + 8u);
+        uint16_t raw_bitfield_c = read_u16_le(map + 12u);
+        size_t raw_map_data_offset = (size_t)read_u16_le(map);
+        size_t width = (size_t)((raw_bitfield_a >> 6) & 0x1fu) + 1u;
+        size_t height = (size_t)((raw_bitfield_a >> 11) & 0x1fu) + 1u;
+        size_t creature_type_count = (size_t)((raw_bitfield_c >> 4) & 0x0fu);
+        size_t map_span = width * height + creature_type_count;
+
+        if (raw_map_offset > SIZE_MAX - raw_map_data_offset ||
+            raw_map_data_offset > raw_map_byte_count ||
+            map_span > raw_map_byte_count - raw_map_data_offset) {
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+    }
+    return SAVEGAME_PC34_OK;
+}
+
 static int decode_original_pc34_dungeon_tail(
     const uint8_t *bytes,
     size_t size,
@@ -861,6 +897,7 @@ static int decode_original_pc34_dungeon_tail(
     int map_count;
     int column_count = 0;
     int thing_data_bytes = 0;
+    size_t map_descriptors_offset;
     int type;
 
     if (!bytes || !out_report || cursor >= size) {
@@ -876,7 +913,8 @@ static int decode_original_pc34_dungeon_tail(
     if (map_count <= 0 || map_count > DUNGEON_MAX_MAPS) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
-    off = DUNGEON_HEADER_SIZE;
+    map_descriptors_offset = DUNGEON_HEADER_SIZE;
+    off = map_descriptors_offset;
     if (off + (size_t)map_count * DUNGEON_MAP_DESC_SIZE + 2u > tail_size) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
@@ -921,6 +959,11 @@ static int decode_original_pc34_dungeon_tail(
         }
         off += (size_t)thing_data_bytes;
         if (off + (size_t)raw_map_bytes + 2u != tail_size) {
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+        if (validate_original_pc34_dungeon_tail_map_spans(
+                tail, map_count, map_descriptors_offset, off,
+                (size_t)raw_map_bytes) != SAVEGAME_PC34_OK) {
             return SAVEGAME_PC34_ERROR_BAD_SIZE;
         }
         off += (size_t)raw_map_bytes;
