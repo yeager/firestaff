@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure2 target-alias receipt: the bounded parser now
+  records unique and reused nonzero descriptor target addresses. Reused
+  in-span addresses remain opaque layout provenance and cannot establish a
+  shared palette, image record, texture, or renderable surface. Verification:
+  `test_nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 CSBWin `ProcessDSATimer6` saved-state receipt: added the
   authenticated timer resolver that retains both source slave/master identity,
   uses CSBWin's only implemented `FindMaster` self-master branch, computes

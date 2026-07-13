@@ -55,6 +55,8 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
         if (image_id == 0xffffU) {
             int descriptor_index;
             int opaque_offset = cursor + 2;
+            uint32_t observed_offsets[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES * 2];
+            int observed_offset_count = 0;
             level->structure2_texture_table_valid = 1;
             level->structure2_payload.descriptor_bytes = cursor;
             level->structure2_payload.terminator_offset = cursor;
@@ -73,8 +75,26 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                 offsets[1] = descriptor->palette_relative_offset;
                 for (offset_index = 0; offset_index < 2; ++offset_index) {
                     uint32_t relative_offset = offsets[offset_index];
+                    int observed_index;
+                    int already_observed = 0;
                     if (relative_offset == 0U) continue;
                     ++level->structure2_payload.nonzero_descriptor_offset_count;
+                    for (observed_index = 0;
+                         observed_index < observed_offset_count;
+                         ++observed_index) {
+                        if (observed_offsets[observed_index] == relative_offset) {
+                            already_observed = 1;
+                            break;
+                        }
+                    }
+                    if (already_observed) {
+                        ++level->structure2_payload
+                              .nonzero_descriptor_offset_reused_count;
+                    } else {
+                        observed_offsets[observed_offset_count++] = relative_offset;
+                        ++level->structure2_payload
+                              .nonzero_descriptor_offset_unique_count;
+                    }
                     if (relative_offset >= (uint32_t)opaque_offset &&
                         relative_offset < structure2_useful) {
                         ++level->structure2_payload

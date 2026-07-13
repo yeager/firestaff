@@ -384,6 +384,10 @@ measurement for every nonzero descriptor target. A nonzero in-span odd target
 is explicitly distinguishable from the observed aligned corpus shape, but it
 does not reject parsing, establish a record size, or promote source material.
 
+2026-07-13 update: descriptor targets now retain unique/reused numeric-address
+counts as opaque layout provenance. This records local target aliasing without
+calling an alias an image, palette, record, shared surface, or render route.
+
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
 sensors) from Structure1A-bound alcove/wall records without assigning the
