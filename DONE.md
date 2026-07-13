@@ -28,6 +28,13 @@
   or pixel semantics is inferred. Verification: Ninja and CTest
   `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
+- 2026-07-13 CSBWin saved `TT_53` watchdog runtime: a materialized watchdog
+  timer now validates its exact queue/event identity and reuses that same
+  source timer summary and queue slot for CSBWin's zero-payload, level-zero
+  `d.Time + 300` successor. Invalid/stale receipts are consumed and cannot
+  enter a generic watchdog route. Source: `CSBCode.cpp:6504`,
+  `Timer.cpp:2770-2782`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
 - 2026-07-13 DM2 DistantEnvironment raw receipt: source-valid ENVIRONMENT
   commands can now retain one exact ten-byte skproject `DistantEnvironment`
