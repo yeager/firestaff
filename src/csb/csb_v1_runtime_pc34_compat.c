@@ -16170,6 +16170,114 @@ int csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
     return 1;
 }
 
+static int csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    uint8_t source_function,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
+        !timer->valid || timer->truncated || timer->function != source_function ||
+        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y) {
+        return 0;
+    }
+    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+        profile, dungeon, slave_location, (int)timer->ubyte9,
+        (int)timer->ubyte8, out_resolution);
+}
+
+static int csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    uint8_t source_function,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action)
+{
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
+    const CSB_V1_DSAImportedAction *action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+
+    if (!out_runner || !out_action) return 0;
+    memset(&resolution, 0, sizeof(resolution));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
+            profile, dungeon, slave_location, timer, source_function,
+            &resolution)) {
+        return 0;
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
+        resolution.state_index, resolution.action_ordinal);
+    if (!action || action->column != resolution.input_column ||
+        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+            profile, &resolution.master, resolution.state_index,
+            resolution.action_ordinal, resolution.master_location,
+            &candidate)) {
+        return 0;
+    }
+    *out_runner = candidate;
+    *out_action = action;
+    return 1;
+}
+
+int csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    /* CSBWin Timer.cpp::ProcessTT_TELEPORTER lines 2343-2367 invokes
+     * ActivateDSA first. Its exact source input is function 8 and the normal
+     * per-tick timerTypeModifier 0/1/2 mapping. */
+    return csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
+        profile, dungeon, slave_location, timer, 8u, out_resolution);
+}
+
+int csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action)
+{
+    return csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
+        profile, dungeon, slave_location, timer, 8u, out_runner, out_action);
+}
+
+int csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    /* CSBWin Timer.cpp::ProcessTT_PITROOM lines 2473-2508 has the identical
+     * pre-mutation ActivateDSA handoff, with saved function 9. */
+    return csb_v1_runtime_resolve_csbwin_activate_dsa_timer_action(
+        profile, dungeon, slave_location, timer, 9u, out_resolution);
+}
+
+int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action)
+{
+    return csb_v1_runtime_prepare_csbwin_activate_dsa_timer_stack_runner(
+        profile, dungeon, slave_location, timer, 9u, out_runner, out_action);
+}
+
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
