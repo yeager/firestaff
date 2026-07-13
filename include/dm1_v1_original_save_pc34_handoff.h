@@ -175,6 +175,27 @@ typedef struct {
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
 
+#define DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP \
+    DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP
+
+/* One classifier-qualified corpus row. Its source and transient-export
+ * hashes bind a round trip to an external PC34 file without retaining or
+ * promoting unowned save bytes. */
+typedef struct {
+    int classified_loader_envelope;
+    int external_original;
+    int firestaff_manifest;
+    int roundtrip_attempted;
+    int roundtrip_result;
+    int core_state_matches;
+    uint32_t game_id;
+    uint32_t source_byte_count;
+    uint32_t source_hash;
+    uint32_t exported_byte_count;
+    uint32_t exported_hash;
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+} DM1OriginalSavePC34CorpusReceipt;
+
 /* Corpus proof is deliberately separate from the header-only classifier.
  * It never writes an export beside a user save: each eligible file is
  * imported, exported into transient memory, and reloaded from that buffer. */
@@ -195,6 +216,9 @@ typedef struct {
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
     int first_failure_result;
+    int receipt_count;
+    DM1OriginalSavePC34CorpusReceipt
+        receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];
     char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
     char first_roundtrip_path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusRoundtripReport;

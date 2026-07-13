@@ -72,6 +72,28 @@ static int dm1_original_save_corpus_external_pc34_file(
     return 0;
 }
 
+static uint32_t dm1_original_save_corpus_hash_bytes(const uint8_t *bytes,
+                                                     size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
+                                                    uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
 #define DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT 128u
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
@@ -3250,6 +3272,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     for (i = 0; i < corpus.present_count &&
                 i < (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP; ++i) {
         DM1OriginalSavePC34RoundtripReport roundtrip;
+        DM1OriginalSavePC34CorpusReceipt *receipt;
+        uint8_t *source_bytes = NULL;
+        size_t source_size = 0u;
         size_t exported_size = 0u;
         int result;
         int firestaff_manifest = 0;
@@ -3257,8 +3282,44 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         if (!corpus.results[i].pc34_loader_part_envelope_candidate) {
             continue;
         }
+        if (report.receipt_count >=
+            DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP) {
+            report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            break;
+        }
+        receipt = &report.receipts[report.receipt_count++];
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->classified_loader_envelope = 1;
+        receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        receipt->game_id = corpus.results[i].game_id;
+        snprintf(receipt->path, sizeof(receipt->path), "%s", corpus.paths[i]);
+        result = read_original_pc34_file_bytes(
+            corpus.paths[i], &source_bytes, &source_size);
+        if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+            source_size == 0u || source_size > UINT32_MAX) {
+            free(source_bytes);
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result =
+                    result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK
+                        ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE : result;
+            }
+            continue;
+        }
+        receipt->source_byte_count = (uint32_t)source_size;
+        receipt->source_hash = dm1_original_save_corpus_hash_bytes(
+            source_bytes, source_size);
+        free(source_bytes);
+        if (receipt->source_hash == 0u) {
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            }
+            continue;
+        }
         if (!dm1_original_save_corpus_external_pc34_file(
                 corpus.paths[i], &firestaff_manifest)) {
+            receipt->firestaff_manifest = firestaff_manifest;
             if (firestaff_manifest) {
                 ++report.firestaff_manifest_rejected_count;
             } else {
@@ -3271,6 +3332,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             }
             continue;
         }
+        receipt->external_original = 1;
         ++report.pc34_candidate_count;
         if (!report.first_pc34_path[0]) {
             snprintf(report.first_pc34_path, sizeof(report.first_pc34_path),
@@ -3278,6 +3340,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         }
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;
+        receipt->roundtrip_attempted = 1;
         result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
             corpus.paths[i],
             corpus.results[i].game_id,
@@ -3285,15 +3348,35 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             SAVEGAME_PC34_MAX_FILE_SIZE,
             &exported_size,
             &roundtrip);
+        receipt->roundtrip_result = result;
+        receipt->core_state_matches = roundtrip.core_state_matches;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
-            size_t byte_index;
+            receipt->exported_byte_count = (uint32_t)exported_size;
+            receipt->exported_hash = dm1_original_save_corpus_hash_bytes(
+                exported_bytes, exported_size);
+            if (receipt->exported_hash == 0u) {
+                receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+                receipt->core_state_matches = 0;
+                ++report.roundtrip_failed_count;
+                if (report.first_failure_result ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                    report.first_failure_result = receipt->roundtrip_result;
+                }
+                continue;
+            }
             ++report.roundtrip_succeeded_count;
             ++report.core_state_match_count;
-            for (byte_index = 0u; byte_index < exported_size; ++byte_index) {
-                report.roundtrip_hash ^= exported_bytes[byte_index];
-                report.roundtrip_hash *= 16777619u;
-            }
+            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
+                report.roundtrip_hash, receipt->game_id);
+            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
+                report.roundtrip_hash, receipt->source_hash);
+            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
+                report.roundtrip_hash, receipt->source_byte_count);
+            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
+                report.roundtrip_hash, receipt->exported_hash);
+            report.roundtrip_hash = dm1_original_save_corpus_hash_step(
+                report.roundtrip_hash, receipt->exported_byte_count);
             if (!report.first_roundtrip_path[0]) {
                 snprintf(report.first_roundtrip_path,
                          sizeof(report.first_roundtrip_path), "%s",
@@ -3304,6 +3387,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
+            receipt->roundtrip_result = result;
+            receipt->core_state_matches = 0;
             if (report.first_failure_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 report.first_failure_result = result;
