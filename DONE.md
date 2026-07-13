@@ -51,6 +51,14 @@
   source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
   F0280 and F0282:744-845. Verification: focused CTest against installed
    PC34 data.
+- 2026-07-13 DM1 HoC C160 non-inscription redraw audit: a real-PC34
+  regression establishes M648/C10 from a visible inscription, opens C040 on
+  an authentic C127 mirror, resolves C160, then makes the first ordinary
+  F0128 redraw a corpus-backed clear corridor. Both readable and side/depth
+  inscription receipts are fully zeroed and the original font pixels are
+  unchanged, proving no stale material reaches M11. Source: ReDMCSB
+  `REVIVE.C` F0282:785-845 and `DUNVIEW.C` F0107/F0128. Verification:
+   focused CTest against installed PC34 data.
 - 2026-07-13 DM1 HoC C127 normal-close M648/C10 audit: a real-PC34
   regression opens C040 at an authentic C127 mirror, redraws the live panel,
   resolves C160, then redraws directly to a distinct authentic inscription
