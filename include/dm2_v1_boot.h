@@ -5,6 +5,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
 #include <stddef.h>
 
@@ -1654,6 +1655,14 @@ int dm2_v1_boot_graphicsset_scene_control(
     uint32_t *out_misty_map,
     uint32_t *out_thunder_position,
     uint32_t *out_ambient_darkness);
+
+/* Loads the complete live GRAPHICSSET scene/light command family directly
+ * from boot-owned canonical GDAT. Missing source pixels, palettes, or control
+ * words fail closed before a dungeon frame is admitted. */
+int dm2_v1_boot_gdat_scene_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    DM2_V1_GdatSceneM11CommandPlan *out_plan);
 
 /* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
  * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;

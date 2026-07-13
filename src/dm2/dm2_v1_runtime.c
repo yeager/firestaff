@@ -497,17 +497,8 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
 static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dd;
+    DM2_V1_GdatSceneM11CommandPlan scene_plan;
     DM2_V1_InterfacePalette palette;
-    uint32_t scene_flags = 0u;
-    uint32_t scene_colorkey = 0u;
-    uint32_t ambient_light = 0u;
-    uint32_t highest_light_level = 0u;
-    uint32_t void_random_fall = 0u;
-    uint32_t animated_floor = 0u;
-    uint32_t scene_rain = 0u;
-    uint32_t misty_map = 0u;
-    uint32_t thunder_position = 0u;
-    uint32_t ambient_darkness = 0u;
     DM2_V1_WeatherGdatReceipt weather_receipt;
     DM2_V1_BootWeatherDestinationReceipt weather_destination;
     DM2_V1_DialogueGdatReceipt dialogue_shell;
@@ -547,41 +538,29 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         dd, rt->dungeon_level);
     if (rt->map_graphics_style < 0) return;
 
-    /* skproject/SKWIN/SkWinCore.cpp refreshes glbMapGraphicsSet from
-     * Map_definitions::MapGraphicsStyle(), then reads GRAPHICSSET dtWordValue
-     * 0x64/0x65/0x67/0x68/0x6A/0x6B for live dungeon rendering. */
-    if (!dm2_v1_boot_graphicsset_scene_control(
-            rt->boot,
-            rt->map_graphics_style,
-            &rt->gdat_scene_control_hash,
-            &rt->gdat_scene_control_present_mask,
-            &rt->gdat_scene_control_query_count,
-            &scene_flags,
-            &scene_colorkey,
-            &ambient_light,
-            &highest_light_level,
-            &void_random_fall,
-            &animated_floor,
-            &scene_rain,
-            &misty_map,
-            &thunder_position,
-            &ambient_darkness)) {
-        if (rt->gdat_scene_control_hash == 0u ||
-            rt->gdat_scene_control_present_mask == 0u) {
-            return;
-        }
+    /* skproject UPDATE_GFXSET loads the selected GRAPHICSSET image pair and
+     * CHECK_RECOMPUTE_LIGHT consumes its darkness word before dungeon draw.
+     * Admit only this exact map's complete source family, never a nearby set. */
+    memset(&scene_plan, 0, sizeof(scene_plan));
+    if (!dm2_v1_boot_gdat_scene_m11_command_plan(
+            rt->boot, rt->map_graphics_style, &scene_plan) ||
+        !scene_plan.valid ||
+        scene_plan.graphicsset != (uint8_t)rt->map_graphics_style) {
+        return;
     }
+
+    /* The old control receipt could fall through to another graphics set.
+     * These four source fields are the complete G1 family and must remain
+     * paired with the decoded floor/ceiling pixels from the selected map. */
     rt->gdat_scene_control_ready = 1;
-    rt->gdat_scene_flags = (uint16_t)scene_flags;
-    rt->gdat_scene_colorkey = (uint16_t)scene_colorkey;
-    rt->gdat_scene_ambient_light = (uint16_t)ambient_light;
-    rt->gdat_scene_highest_light_level = (uint16_t)highest_light_level;
-    rt->gdat_scene_void_random_fall = (uint16_t)void_random_fall;
-    rt->gdat_scene_animated_floor = (uint16_t)animated_floor;
-    rt->gdat_scene_rain = (uint16_t)scene_rain;
-    rt->gdat_misty_map = (uint16_t)misty_map;
-    rt->gdat_thunder_position = (uint16_t)thunder_position;
-    rt->gdat_ambient_darkness = (uint16_t)ambient_darkness;
+    rt->gdat_scene_control_hash = scene_plan.command_hash;
+    rt->gdat_scene_control_present_mask = 0x0fu;
+    rt->gdat_scene_control_query_count = 4u;
+    rt->gdat_scene_flags = scene_plan.scene_flags;
+    rt->gdat_scene_colorkey = scene_plan.scene_colorkey;
+    rt->gdat_scene_highest_light_level = scene_plan.highest_light_level;
+    rt->gdat_ambient_darkness = scene_plan.ambient_darkness;
+    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
     /* c_weather.cpp consumes the active MapGraphicsStyle after GRAPHICSSET
      * control resolution. Preserve the verified environment image/palette
      * receipt in the live frame boundary, but do not turn it into pixels: the

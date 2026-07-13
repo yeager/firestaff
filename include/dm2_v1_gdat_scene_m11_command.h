@@ -20,6 +20,7 @@ typedef struct {
     uint16_t scene_colorkey;
     uint16_t scene_flags;
     uint16_t highest_light_level;
+    uint16_t ambient_darkness;
     uint32_t command_hash;
     DM2_V1_GdatSceneM11Command commands[2];
 } DM2_V1_GdatSceneM11CommandPlan;
