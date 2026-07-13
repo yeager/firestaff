@@ -362,6 +362,8 @@ static M11_Dm1CreatureHostPresentationReceipt
     s_m11_dm1_creature_host_presentation_receipt;
 static M11_Dm1ProjectileHostPresentationReceipt
     s_m11_dm1_projectile_host_presentation_receipt;
+static M11_Dm1DoorHostPresentationReceipt
+    s_m11_dm1_door_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -22536,6 +22538,49 @@ static M11_DM1ZoneBlit m11_dm1_center_door_blit_from_plan(
     return blit;
 }
 
+static int m11_draw_dm1_center_door_material_receipt(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    const DM1_CenterDoorHostMaterialReceiptPc34* receipt)
+{
+    int i;
+    int drawn = 0;
+    if (!state || !receipt || !receipt->valid ||
+        receipt->blitCount < receipt->frameCount ||
+        receipt->blitCount > DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS) {
+        return 0;
+    }
+    memset(&s_m11_dm1_door_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_door_host_presentation_receipt));
+    for (i = 0; i < receipt->blitCount; ++i) {
+        M11_DM1ZoneBlit blit =
+            m11_dm1_center_door_blit_from_plan(&receipt->blits[i]);
+        if (!m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10)) {
+            return 0;
+        }
+        s_m11_dm1_door_host_presentation_receipt.graphicsId[drawn] =
+            receipt->blits[i].graphicIndex;
+        s_m11_dm1_door_host_presentation_receipt.destinationX[drawn] =
+            M11_VIEWPORT_X + receipt->blits[i].dstX;
+        s_m11_dm1_door_host_presentation_receipt.destinationY[drawn] =
+            M11_VIEWPORT_Y + receipt->blits[i].dstY;
+        s_m11_dm1_door_host_presentation_receipt.width[drawn] =
+            receipt->blits[i].width;
+        s_m11_dm1_door_host_presentation_receipt.height[drawn] =
+            receipt->blits[i].height;
+        ++drawn;
+    }
+    s_m11_dm1_door_host_presentation_receipt.valid = 1;
+    s_m11_dm1_door_host_presentation_receipt.depthIndex = receipt->depthIndex;
+    s_m11_dm1_door_host_presentation_receipt.doorState = receipt->doorState;
+    s_m11_dm1_door_host_presentation_receipt.panelVisible = receipt->panelVisible;
+    s_m11_dm1_door_host_presentation_receipt.frameCount = receipt->frameCount;
+    s_m11_dm1_door_host_presentation_receipt.blitCount = drawn;
+    return 1;
+}
+
 static int m11_dm1_center_door_panel_blits_for_cell(int depth,
                                                     const M11_ViewportCell* cell,
                                                     M11_DM1ZoneBlit outBlits[2]) {
@@ -22569,13 +22614,9 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
         return;
     }
     for (depth = 0; depth < 3; ++depth) {
-        int i;
-        DM1_CenterDoorRenderPlanPc34 plan;
+        DM1_CenterDoorHostMaterialReceiptPc34 material;
         const M11_ViewportCell* cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR) {
-            continue;
-        }
-        if (!dm1_v1_center_door_render_plan_for_depth_pc34(depth, &plan)) {
             continue;
         }
         /* ReDMCSB DUNVIEW.C F0111/F0128: the door FRAME (top lintel,
@@ -22584,32 +22625,13 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
          * when the door is fully open.  Previous code skipped the
          * entire rendering for open doors, causing the frame to
          * disappear when portcullis gates opened. */
-        for (i = 0; i < plan.frameCount; ++i) {
-            M11_DM1ZoneBlit frame;
-            const DM1_CenterDoorBlitPc34* framePlan =
-                i == 0 ? &plan.frameA : (i == 1 ? &plan.frameB : &plan.frameC);
-            frame = m11_dm1_center_door_blit_from_plan(framePlan);
-            (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                         &frame, 10);
+        if (!dm1_v1_center_door_host_material_receipt_pc34(
+                depth, cell->doorState, cell->doorVertical,
+                m11_dm1_door_panel_graphic(state, cell, depth), &material)) {
+            continue;
         }
-        if (!m11_viewport_cell_is_open(cell)) {
-            M11_DM1ZoneBlit panels[2];
-            int panelGraphic = m11_dm1_door_panel_graphic(state, cell, depth);
-            int panelCount = m11_dm1_center_door_panel_blits_for_cell(depth,
-                                                                      cell,
-                                                                      panels);
-            int panelIndex;
-            if (panelCount <= 0) {
-                continue;
-            }
-            for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
-                if (panelGraphic >= 0) {
-                    panels[panelIndex].graphicIndex = panelGraphic;
-                }
-                (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH,
-                                             &panels[panelIndex], 10);
-            }
-        }
+        (void)m11_draw_dm1_center_door_material_receipt(
+            state, framebuffer, fbW, fbH, &material);
         break;
     }
 }
@@ -37722,6 +37744,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_creature_host_presentation_receipt));
     memset(&s_m11_dm1_projectile_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_projectile_host_presentation_receipt));
+    memset(&s_m11_dm1_door_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_door_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -39575,4 +39599,27 @@ int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
     return m11_draw_thrown_object_projectile_sprite(
         state, framebuffer, framebufferWidth, framebufferHeight,
         537, 38, 1, 2, 2);
+}
+
+void M11_GameView_GetDm1DoorHostPresentationReceipt(
+    M11_Dm1DoorHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_door_host_presentation_receipt;
+    }
+}
+
+int M11_GameView_ProbeDrawDm1CenterDoorHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM1_CenterDoorHostMaterialReceiptPc34 material;
+    if (!state || !dm1_v1_center_door_host_material_receipt_pc34(
+            0, 4, 1, 248, &material)) {
+        return 0;
+    }
+    return m11_draw_dm1_center_door_material_receipt(
+        state, framebuffer, framebufferWidth, framebufferHeight, &material);
 }

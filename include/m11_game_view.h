@@ -2,6 +2,7 @@
 #define FIRESTAFF_M11_GAME_VIEW_H
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_center_door_render_pc34_compat.h"
 
 #include <stdint.h>
 #include "menu_startup_m12.h"
@@ -1756,6 +1757,31 @@ void M11_GameView_GetDm1ProjectileHostPresentationReceipt(
 /* Test-only entry to the production F0115 thrown-object projectile route.
  * The caller must provide a real initialized GRAPHICS.DAT asset loader. */
 int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
+typedef struct M11_Dm1DoorHostPresentationReceipt {
+    int valid;
+    int depthIndex;
+    int doorState;
+    int panelVisible;
+    int frameCount;
+    int blitCount;
+    int graphicsId[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+    int destinationX[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+    int destinationY[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+    int width[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+    int height[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+} M11_Dm1DoorHostPresentationReceipt;
+
+void M11_GameView_GetDm1DoorHostPresentationReceipt(
+    M11_Dm1DoorHostPresentationReceipt* outReceipt);
+
+/* Test-only entry to the production F0111 center-door material route.
+ * It consumes a DM1 receipt and requires real GRAPHICS.DAT assets. */
+int M11_GameView_ProbeDrawDm1CenterDoorHostReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,

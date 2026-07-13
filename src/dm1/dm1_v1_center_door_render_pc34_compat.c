@@ -4,6 +4,8 @@
 #include "firestaff/dm1/v1/G0183_pc34_compat.h"
 #include "firestaff/dm1/v1/G0186_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     DM1_GFX_DOOR_SIDE_D1_PC34 = 87,
     DM1_GFX_DOOR_SIDE_D2_PC34 = 88,
@@ -187,6 +189,54 @@ int dm1_v1_center_door_panel_blits_for_cell_pc34(
         return 1;
     }
     outBlits[0] = plan.closedPanel;
+    return 1;
+}
+
+int dm1_v1_center_door_host_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphicIndex,
+    DM1_CenterDoorHostMaterialReceiptPc34* outReceipt)
+{
+    DM1_CenterDoorRenderPlanPc34 plan;
+    DM1_CenterDoorBlitPc34 panels[2];
+    int panelCount = 0;
+    int i;
+
+    if (!outReceipt || doorState < 0 || doorState > 7 ||
+        !dm1_v1_center_door_render_plan_for_depth_pc34(depthIndex, &plan)) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    outReceipt->depthIndex = depthIndex;
+    outReceipt->doorState = doorState;
+    outReceipt->doorVertical = doorVertical ? 1 : 0;
+    outReceipt->frameCount = plan.frameCount;
+    for (i = 0; i < plan.frameCount; ++i) {
+        outReceipt->blits[outReceipt->blitCount++] =
+            i == 0 ? plan.frameA : (i == 1 ? plan.frameB : plan.frameC);
+    }
+    /* ReDMCSB DUNVIEW.C F0111:4218-4337 draws door frames for every state,
+     * then omits the panel only for C0_DOOR_STATE_OPEN. The map-resolved
+     * F0095 bitmap may replace the plan's set-0 panel, never its geometry. */
+    if (doorState != 0) {
+        panelCount = dm1_v1_center_door_panel_blits_for_cell_pc34(
+            depthIndex, doorState, doorVertical, panels);
+        if (panelCount < 1 || panelCount > 2 ||
+            outReceipt->blitCount + panelCount >
+                DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS) {
+            return 0;
+        }
+        for (i = 0; i < panelCount; ++i) {
+            if (panelGraphicIndex >= 0) {
+                panels[i].graphicIndex = panelGraphicIndex;
+            }
+            outReceipt->blits[outReceipt->blitCount++] = panels[i];
+        }
+        outReceipt->panelVisible = 1;
+    }
+    outReceipt->valid = 1;
     return 1;
 }
 

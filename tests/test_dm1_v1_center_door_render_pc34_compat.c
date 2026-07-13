@@ -50,6 +50,7 @@ int main(void)
 {
     DM1_CenterDoorRenderPlanPc34 plan;
     DM1_CenterDoorBlitPc34 blits[2];
+    DM1_CenterDoorHostMaterialReceiptPc34 material;
 
     expect_int("plan.count", dm1_v1_center_door_render_plan_count_pc34(), 3);
 
@@ -93,6 +94,24 @@ int main(void)
     expect_int("doorSet2.d3.graphic",
                dm1_v1_door_panel_graphic_for_set_depth_pc34(2, 2), 252);
 
+    expect_int("material.closed",
+               dm1_v1_center_door_host_material_receipt_pc34(
+                   0, 4, 1, 248, &material), 1);
+    expect_int("material.closed.valid", material.valid, 1);
+    expect_int("material.closed.frames", material.frameCount, 3);
+    expect_int("material.closed.panel", material.panelVisible, 1);
+    expect_int("material.closed.count", material.blitCount, 4);
+    expect_int("material.closed.frame", material.blits[0].graphicIndex, 91);
+    expect_int("material.closed.panelGraphic", material.blits[3].graphicIndex, 248);
+    expect_int("material.closed.panelWidth", material.blits[3].width, 96);
+    expect_int("material.closed.panelHeight", material.blits[3].height, 86);
+
+    expect_int("material.open",
+               dm1_v1_center_door_host_material_receipt_pc34(
+                   0, 0, 1, 248, &material), 1);
+    expect_int("material.open.panel", material.panelVisible, 0);
+    expect_int("material.open.count", material.blitCount, 3);
+
     expect_int("bad.depth", dm1_v1_center_door_render_plan_for_depth_pc34(3, &plan), 0);
     expect_int("bad.index", dm1_v1_center_door_render_plan_at_pc34(-1, &plan), 0);
     expect_int("bad.null", dm1_v1_center_door_render_plan_for_depth_pc34(0, 0), 0);
@@ -103,6 +122,12 @@ int main(void)
                dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 3), -1);
     expect_int("bad.graphic.set",
                dm1_v1_door_panel_graphic_for_set_depth_pc34(-1, 0), -1);
+    expect_int("bad.material.state",
+               dm1_v1_center_door_host_material_receipt_pc34(
+                   0, 8, 1, 248, &material), 0);
+    expect_int("bad.material.null",
+               dm1_v1_center_door_host_material_receipt_pc34(
+                   0, 4, 1, 248, 0), 0);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;
