@@ -64,6 +64,10 @@ typedef struct {
     uint8_t cd_read_record_cl;
     uint8_t cd_read_record_dl;
     uint8_t cd_read_record_ch;
+    /* Physical location of the same one-sector Stage 2 payload. These are
+     * coordinate facts from the authenticated corpus, not content layout. */
+    size_t stage3_raw_sector;
+    size_t stage3_user_data_offset;
     uint16_t handler_address;
     uint16_t cd_state_address;
     uint16_t cd_state_branch_address;

@@ -40,6 +40,9 @@ int main(void) {
     profile.track02_runtime_trace_handoff.cd_read_record_cl = 0xe0u;
     profile.track02_runtime_trace_handoff.cd_read_record_dl = 0x04u;
     profile.track02_runtime_trace_handoff.cd_read_record_ch = 0x00u;
+    profile.track02_runtime_trace_handoff.stage3_raw_sector = 1u;
+    profile.track02_runtime_trace_handoff.stage3_user_data_offset =
+        THERON_TRACK02_RAW_SECTOR_BYTES + THERON_TRACK02_RAW_USER_DATA_OFFSET;
     profile.track02_runtime_trace_handoff.handler_address = 0xe736u;
     profile.track02_runtime_trace_handoff.cd_state_address = 0xe742u;
     profile.track02_runtime_trace_handoff.cd_state_branch_address = 0xe74cu;
