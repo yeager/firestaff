@@ -40,6 +40,15 @@
   ReDMCSB `TIMELINE.C` F0256:1710-1715 and C53 dispatch:1938-1945.
   Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 Nexus Structure1F raw face-selector receipt: complete
+  Structure1A-owned alcove/wall records now retain counts and reuse of their
+  original Structure1F face-selector byte through the DGN corpus, host handoff,
+  and render-plan receipts. The selector is deliberately not mapped to a
+  direction, Structure3 face, vertex, mesh, texture, palette, or pixel;
+  rendering remains fail-closed at face semantics. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 DM1 original PC34 C79 Footprints roundtrip: typed handoff
   accepts zero Priority, retains no B/C union arm, expires both Footprints
   mirrors at runtime, and exports only its authenticated source receipt.
