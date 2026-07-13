@@ -25,6 +25,58 @@ if [[ ! -x "$mednafen_bin" || ! -f "$cue" || ! -f "$system_card" ]]; then
     printf '%s\n' 'FAIL: Mednafen, US CUE, or System Card path is unavailable' >&2
     exit 1
 fi
+
+md5_file() {
+    if command -v md5 >/dev/null 2>&1; then
+        md5 -q "$1"
+    elif command -v md5sum >/dev/null 2>&1; then
+        md5sum "$1" | awk '{print $1}'
+    else
+        return 1
+    fi
+}
+
+track02_member=$(awk '
+    /^FILE "/ {
+        line = $0
+        sub(/^FILE "/, "", line)
+        sub(/" BINARY[[:space:]]*$/, "", line)
+        file = line
+        next
+    }
+    /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/2352[[:space:]]*$/ {
+        print file
+        exit
+    }
+' "$cue")
+if [[ -z "$track02_member" || "$track02_member" == */* || "$track02_member" == *\\* ]]; then
+    printf '%s\n' 'FAIL: CUE has no safe TRACK 02 MODE1/2352 member' >&2
+    exit 1
+fi
+track02_path="$(dirname -- "$cue")/$track02_member"
+if [[ ! -f "$track02_path" ]]; then
+    printf '%s\n' 'FAIL: CUE TRACK 02 payload is unavailable' >&2
+    exit 1
+fi
+system_card_md5=$(md5_file "$system_card") || {
+    printf '%s\n' 'FAIL: md5 or md5sum is required for authentic media capture' >&2
+    exit 1
+}
+track02_md5=$(md5_file "$track02_path") || {
+    printf '%s\n' 'FAIL: could not hash CUE TRACK 02 payload' >&2
+    exit 1
+}
+if [[ "$system_card_md5" != ff1a674273fe3540ccef576376407d1d ]]; then
+    printf '%s\n' 'FAIL: System Card 3.0 MD5 mismatch' >&2
+    exit 1
+fi
+case "$track02_md5" in
+    b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76) ;;
+    *)
+        printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US raw BIN' >&2
+        exit 1
+        ;;
+esac
 if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SECONDS must be a positive integer' >&2
     exit 1
@@ -201,6 +253,8 @@ transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-
 transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'track02_md5=%s\n' "$track02_md5"
+    printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
