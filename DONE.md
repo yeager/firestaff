@@ -31,6 +31,15 @@
   `test_dm2_v1_weather_no_synthetic_overlay`; matching CTest passed 2/2;
    `git diff --check` passed.
 
+- 2026-07-13 Nexus Structure3 block-occupancy receipt: the corpus profile now
+  retains contiguous runs of nonempty documented `0x800`-byte Structure3
+  blocks, including each level's longest run. This is a raw layout search aid
+  for later record-boundary work only. It does not claim that a run is a
+  record, face, vertex span, mesh, texture, palette, or pixel source; the
+  renderer remains fail-closed at face semantics. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored TT_BASH_DOOR timer bridge: verified function-2
   queue entries now alter only their exact loaded byte-map door receipt after
   queue-slot, timer, and full event identity validation. The shared DM1

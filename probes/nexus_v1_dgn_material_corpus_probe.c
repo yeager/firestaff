@@ -180,7 +180,8 @@ int main(int argc, char **argv) {
            receipt.structure2_descriptor_offsets_outside_opaque_payload_count,
            receipt.structure2_local_payload_offset_pattern_level_count);
     printf("Structure3: declared=%d valid=%d bytes=%d nonzero=%d transitions=%d "
-           "zero-blocks=%d nonzero-blocks=%d complete-model-relations=%d\n",
+           "zero-blocks=%d nonzero-blocks=%d runs=%d longest-run=%d "
+           "complete-model-relations=%d\n",
            receipt.structure3_payload_declared_level_count,
            receipt.structure3_payload_valid_level_count,
            receipt.structure3_payload_byte_count,
@@ -188,6 +189,8 @@ int main(int argc, char **argv) {
            receipt.structure3_payload_transition_count,
            receipt.structure3_zero_block_count,
            receipt.structure3_nonzero_block_count,
+           receipt.structure3_nonzero_block_run_count,
+           receipt.structure3_longest_nonzero_block_run,
            receipt.structure3_model_reference_complete_level_count);
     printf("Coverage: floor=%d ceiling=%d wall=%d mns-host=%d bpk-host=%d complete=%d\n",
            receipt.floor_coverage.covered, receipt.ceiling_coverage.covered,

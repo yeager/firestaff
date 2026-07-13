@@ -38,6 +38,7 @@ static int nexus_v1_level_copy_structure3_payload(
     unsigned char seen[UINT8_MAX + 1U];
     uint32_t hash = 2166136261u;
     int block_index;
+    int nonzero_block_run_length = 0;
     int byte_index;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -92,12 +93,22 @@ static int nexus_v1_level_copy_structure3_payload(
         }
         if (block_nonzero == 0) {
             ++level->structure3_payload.zero_block_count;
+            nonzero_block_run_length = 0;
         } else {
             ++level->structure3_payload.nonzero_block_count;
             if (level->structure3_payload.first_nonzero_block_index < 0) {
                 level->structure3_payload.first_nonzero_block_index = block_index;
             }
             level->structure3_payload.last_nonzero_block_index = block_index;
+            if (nonzero_block_run_length == 0) {
+                ++level->structure3_payload.nonzero_block_run_count;
+            }
+            ++nonzero_block_run_length;
+            if (nonzero_block_run_length >
+                level->structure3_payload.longest_nonzero_block_run) {
+                level->structure3_payload.longest_nonzero_block_run =
+                    nonzero_block_run_length;
+            }
         }
     }
     level->structure3_payload.raw_payload_hash = hash ? hash : 1U;

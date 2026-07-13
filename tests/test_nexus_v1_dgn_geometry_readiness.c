@@ -377,6 +377,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
     int structure3_nonzero_block_total = 0;
+    int structure3_nonzero_block_run_total = 0;
+    int structure3_longest_nonzero_block_run = 0;
     int level;
     int checked = 0;
     if (!data_dir || !data_dir[0]) return;
@@ -520,11 +522,17 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       loaded_level.structure3_payload.complete_block_count &&
                   ((loaded_level.structure3_payload.nonzero_block_count == 0 &&
                     loaded_level.structure3_payload.first_nonzero_block_index == -1 &&
-                    loaded_level.structure3_payload.last_nonzero_block_index == -1) ||
+                    loaded_level.structure3_payload.last_nonzero_block_index == -1 &&
+                    loaded_level.structure3_payload.nonzero_block_run_count == 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_block_run == 0) ||
                    (loaded_level.structure3_payload.nonzero_block_count > 0 &&
                     loaded_level.structure3_payload.first_nonzero_block_index >= 0 &&
                     loaded_level.structure3_payload.last_nonzero_block_index >=
-                        loaded_level.structure3_payload.first_nonzero_block_index)) &&
+                        loaded_level.structure3_payload.first_nonzero_block_index &&
+                    loaded_level.structure3_payload.nonzero_block_run_count > 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_block_run > 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_block_run <=
+                        loaded_level.structure3_payload.nonzero_block_count)) &&
                   loaded_level.structure3_payload.distinct_byte_value_count > 0 &&
                   loaded_level.structure3_payload.first_nonzero_byte_offset >= -1 &&
                   loaded_level.structure3_payload.last_nonzero_byte_offset >=
@@ -547,6 +555,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                 loaded_level.structure3_payload.zero_block_count;
             structure3_nonzero_block_total +=
                 loaded_level.structure3_payload.nonzero_block_count;
+            structure3_nonzero_block_run_total +=
+                loaded_level.structure3_payload.nonzero_block_run_count;
+            if (loaded_level.structure3_payload.longest_nonzero_block_run >
+                structure3_longest_nonzero_block_run) {
+                structure3_longest_nonzero_block_run =
+                    loaded_level.structure3_payload.longest_nonzero_block_run;
+            }
         }
         CHECK(loaded_level.structure2_payload.valid &&
               loaded_level.structure2_payload.opaque_payload_zero_byte_count +
@@ -617,8 +632,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
           structure3_byte_total >= structure3_nonzero_byte_total &&
           structure3_zero_block_total + structure3_nonzero_block_total ==
               structure3_complete_block_total &&
+          structure3_nonzero_block_run_total <= structure3_nonzero_block_total &&
+          structure3_longest_nonzero_block_run <= structure3_nonzero_block_total &&
           structure3_transition_total >= 0,
-          "retail Structure3 corpus retains only documented block-boundary correlations");
+          "retail Structure3 corpus retains only documented block-occupancy runs");
 }
 
 static void test_structure1c_record_table_bounds(void) {
@@ -648,7 +665,7 @@ static void test_structure1c_record_table_bounds(void) {
 }
 
 static void test_structure1f_semantics_and_bounds(void) {
-    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 23];
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 24];
     const int structure1b_rel = 0x200;
     uint8_t *structure1;
     Nexus_V1_DgnStructure1Layout layout;
@@ -669,10 +686,11 @@ static void test_structure1f_semantics_and_bounds(void) {
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
     /* DMWeb DGN container Structure3 block envelope: opaque payload only. */
     wb16(dgn + 0x1c, 20U);
-    wb16(dgn + 0x1e, 3U);
+    wb16(dgn + 0x1e, 4U);
     dgn[NEXUS_DGN_BLOCK_SIZE * 20 + 1] = 0x7fU;
     dgn[NEXUS_DGN_BLOCK_SIZE * 20 + 2] = 0x7fU;
-    dgn[NEXUS_DGN_BLOCK_SIZE * 22 + 7] = 0x42U;
+    dgn[NEXUS_DGN_BLOCK_SIZE * 21] = 0x33U;
+    dgn[NEXUS_DGN_BLOCK_SIZE * 23 + 7] = 0x42U;
     wb32(structure1 + 0x0c, 9U);
     for (int index = 0; index < 9; ++index) {
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
@@ -758,21 +776,23 @@ static void test_structure1f_semantics_and_bounds(void) {
               &level, &structure3_payload) == 0 &&
           structure3_payload.declared && structure3_payload.valid &&
           structure3_payload.block_offset == 20 &&
-          structure3_payload.block_count == 3 &&
+          structure3_payload.block_count == 4 &&
           structure3_payload.byte_offset == NEXUS_DGN_BLOCK_SIZE * 20 &&
-          structure3_payload.byte_size == NEXUS_DGN_BLOCK_SIZE * 3 &&
-          structure3_payload.zero_byte_count == NEXUS_DGN_BLOCK_SIZE * 3 - 3 &&
-          structure3_payload.nonzero_byte_count == 3 &&
-          structure3_payload.distinct_byte_value_count == 3 &&
-          structure3_payload.byte_transition_count == 4 &&
+          structure3_payload.byte_size == NEXUS_DGN_BLOCK_SIZE * 4 &&
+          structure3_payload.zero_byte_count == NEXUS_DGN_BLOCK_SIZE * 4 - 4 &&
+          structure3_payload.nonzero_byte_count == 4 &&
+          structure3_payload.distinct_byte_value_count == 4 &&
+          structure3_payload.byte_transition_count == 6 &&
           structure3_payload.first_nonzero_byte_offset == 1 &&
           structure3_payload.last_nonzero_byte_offset ==
-              NEXUS_DGN_BLOCK_SIZE * 2 + 7 &&
-          structure3_payload.complete_block_count == 3 &&
+              NEXUS_DGN_BLOCK_SIZE * 3 + 7 &&
+          structure3_payload.complete_block_count == 4 &&
           structure3_payload.zero_block_count == 1 &&
-          structure3_payload.nonzero_block_count == 2 &&
+          structure3_payload.nonzero_block_count == 3 &&
           structure3_payload.first_nonzero_block_index == 0 &&
-          structure3_payload.last_nonzero_block_index == 2 &&
+          structure3_payload.last_nonzero_block_index == 3 &&
+          structure3_payload.nonzero_block_run_count == 2 &&
+          structure3_payload.longest_nonzero_block_run == 2 &&
           structure3_payload.raw_payload_hash != 0U &&
           !structure3_payload.face_semantics_proven,
           "Structure3 payload retains documented block boundaries without face semantics");
@@ -817,14 +837,14 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
           "DGN render planning consumes the bounded Structure3 receipt without a mesh draw");
-    wb16(dgn + 0x1c, 23U);
+    wb16(dgn + 0x1c, 24U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
           "out-of-file Structure3 payload envelopes fail closed during DGN load");
     wb16(dgn + 0x1c, 20U);
     wb16(dgn + 0x1e, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
           "partial Structure3 payload headers fail closed during DGN load");
-    wb16(dgn + 0x1e, 3U);
+    wb16(dgn + 0x1e, 4U);
     structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 +
                NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = 64U;
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&

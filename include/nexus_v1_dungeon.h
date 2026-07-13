@@ -251,6 +251,8 @@ typedef struct {
     int nonzero_block_count;
     int first_nonzero_block_index;
     int last_nonzero_block_index;
+    int nonzero_block_run_count;
+    int longest_nonzero_block_run;
     int valid;
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;
