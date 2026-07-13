@@ -1671,10 +1671,16 @@ static int m11_draw_csb_v1_inventory_surface(
         CSB_C017_VIEWPORT_X_PC34 = 48,
         CSB_C017_VIEWPORT_Y_PC34 = 33,
         CSB_C017_VIEWPORT_WIDTH_PC34 = 224,
-        CSB_C017_VIEWPORT_HEIGHT_PC34 = 136
+        CSB_C017_VIEWPORT_HEIGHT_PC34 = 136,
+        CSB_C040_PANEL_X_PC34 = 80,
+        CSB_C040_PANEL_Y_PC34 = 52,
+        CSB_C040_PANEL_WIDTH_PC34 = 144,
+        CSB_C040_PANEL_HEIGHT_PC34 = 73,
+        CSB_C040_TRANSPARENT_COLOR_PC34 = 6
     };
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c040;
     int row;
 
     if (!state || !framebuffer || !state->csbStartupRuntimeAssetSession ||
@@ -1705,6 +1711,35 @@ static int m11_draw_csb_v1_inventory_surface(
                c017->pixels + (size_t)row *
                    (size_t)CSB_C017_VIEWPORT_WIDTH_PC34,
                (size_t)CSB_C017_VIEWPORT_WIDTH_PC34);
+    }
+    if (!state->candidateMirrorPanelActive) {
+        return 1;
+    }
+    c040 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    /* ReDMCSB PANEL.C F0347 expands C017 first, then F0346 overlays C040
+     * at C101 with C06 transparency.  Keep both source bitmaps owned by the
+     * same terminal session so a generic M11 candidate panel cannot appear. */
+    if (!c040->valid || !c040->pixels || c040->source_asset_id != 40 ||
+        c040->width != CSB_C040_PANEL_WIDTH_PC34 ||
+        c040->height != CSB_C040_PANEL_HEIGHT_PC34 ||
+        c040->transparent_color != CSB_C040_TRANSPARENT_COLOR_PC34) {
+        return 0;
+    }
+    for (row = 0; row < CSB_C040_PANEL_HEIGHT_PC34; ++row) {
+        int column;
+        for (column = 0; column < CSB_C040_PANEL_WIDTH_PC34; ++column) {
+            unsigned char pixel = c040->pixels[
+                (size_t)row * (size_t)CSB_C040_PANEL_WIDTH_PC34 +
+                (size_t)column];
+            if (pixel != CSB_C040_TRANSPARENT_COLOR_PC34) {
+                framebuffer[(size_t)(CSB_C017_VIEWPORT_Y_PC34 +
+                                     CSB_C040_PANEL_Y_PC34 + row) *
+                                (size_t)framebufferWidth +
+                            (size_t)(CSB_C017_VIEWPORT_X_PC34 +
+                                     CSB_C040_PANEL_X_PC34 + column)] = pixel;
+            }
+        }
     }
     return 1;
 }
