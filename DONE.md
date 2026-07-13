@@ -20,6 +20,17 @@
   `COMMAND.C F0359:1988-1990`. Verification: Ninja and skip-safe CTest
   `csb_v1_f0282_live_champion_panel`.
 
+- ✅ 2026-07-13 DM2 skproject projectile local-palette consumer:
+  source-required `QUERY_DUNGEON_MAP_CHIP_PICT` projectile rendering now
+  accepts decoded GDAT IMG3 pixels only with the matching
+  `QUERY_GDAT_IMAGE_LOCALPAL` receipt and blocks the material rather than
+  painting fallback streak art when either source component is absent. The
+  focused source-data gate covers both the bound projectile material and the
+  fail-closed missing-palette path. Verification: Ninja built
+  `test_dm2_v1_projectile_local_palette_gate` and
+  `test_dm2_v1_item_local_palette_gate`; matching CTest passed 2/2; `git diff
+   --check` passed.
+
 - 2026-07-13 CSBWin restored TT_TELEPORTER DSA tick bridge: verified
   function-8 queue entries now reach the source-ordered ActivateDSA receipt
   through the live restored timer queue, using the existing exact queue-slot,
