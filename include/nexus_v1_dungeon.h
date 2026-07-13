@@ -464,6 +464,23 @@ typedef struct {
     int rotation_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt;
 
+/* Direct floor-decoration records retain the adjacent raw model/aspect and
+ * rotation bytes as one pair. Their original grammar is unproved: this is not
+ * a model binding, orientation, mesh, material, texture, palette, pixel, or
+ * draw instruction. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_decoration_entry_count;
+    int resolved_pair_count;
+    int unique_pair_count;
+    int duplicate_pair_count;
+    int zero_pair_count;
+    int nonzero_pair_count;
+    uint16_t highest_pair;
+    int complete;
+    int pair_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt;
+
 /* Direct floor-decoration records preserve their final three documented bytes
  * as a raw tuple. Their original control and extent grammar is unproved, so
  * this is never a placement, size, mesh, texture, palette, pixel, or draw
@@ -929,6 +946,8 @@ typedef struct {
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
         structure1f_floor_decoration_rotation_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt
+        structure1f_floor_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
         structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
@@ -1048,6 +1067,8 @@ typedef struct {
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
         structure1f_floor_decoration_rotation_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt
+        structure1f_floor_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
         structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
@@ -1149,6 +1170,9 @@ int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
 int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_decoration_model_rotation_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt *out_receipt);
 int nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt *out_receipt);

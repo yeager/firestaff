@@ -834,6 +834,8 @@ static void test_structure1f_semantics_and_bounds(void) {
         floor_sensor_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt floor_decoration_payloads;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt floor_decoration_rotations;
+    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt
+        floor_decoration_model_rotation_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
         floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt item_attribute_pairs;
@@ -1138,6 +1140,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           floor_decoration_rotations.complete &&
           !floor_decoration_rotations.rotation_semantics_proven,
           "Structure1F floor-decoration rotations remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_floor_decoration_model_rotation_pair_receipt(
+              &level, &floor_decoration_model_rotation_pairs) == 0 &&
+          floor_decoration_model_rotation_pairs.structure1f_spatial_valid &&
+          floor_decoration_model_rotation_pairs.floor_decoration_entry_count == 2 &&
+          floor_decoration_model_rotation_pairs.resolved_pair_count == 2 &&
+          floor_decoration_model_rotation_pairs.unique_pair_count == 2 &&
+          floor_decoration_model_rotation_pairs.duplicate_pair_count == 0 &&
+          floor_decoration_model_rotation_pairs.zero_pair_count == 1 &&
+          floor_decoration_model_rotation_pairs.nonzero_pair_count == 1 &&
+          floor_decoration_model_rotation_pairs.highest_pair == 0x2800U &&
+          floor_decoration_model_rotation_pairs.complete &&
+          !floor_decoration_model_rotation_pairs.pair_semantics_proven,
+          "Structure1F floor-decoration model/rotation pairs remain no-draw provenance");
     CHECK(nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
               &level, &floor_decoration_control_extents) == 0 &&
           floor_decoration_control_extents.structure1f_spatial_valid &&
@@ -1310,6 +1325,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           !handoff.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           handoff.structure1f_floor_decoration_rotation_selectors.complete &&
           !handoff.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          handoff.structure1f_floor_decoration_model_rotation_pairs.complete &&
+          handoff.structure1f_floor_decoration_model_rotation_pairs.unique_pair_count == 2 &&
+          !handoff.structure1f_floor_decoration_model_rotation_pairs.pair_semantics_proven &&
           handoff.structure1f_floor_decoration_control_extents.complete &&
           handoff.structure1f_floor_decoration_control_extents.unique_tuple_count == 2 &&
           !handoff.structure1f_floor_decoration_control_extents.tuple_semantics_proven &&
@@ -1366,6 +1384,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           render_plan.structure1f_floor_decoration_rotation_selectors.complete &&
           !render_plan.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          render_plan.structure1f_floor_decoration_model_rotation_pairs.complete &&
+          !render_plan.structure1f_floor_decoration_model_rotation_pairs.pair_semantics_proven &&
           render_plan.structure1f_floor_decoration_control_extents.complete &&
           render_plan.structure1f_floor_decoration_control_extents.unique_tuple_count == 2 &&
           !render_plan.structure1f_floor_decoration_control_extents.tuple_semantics_proven &&

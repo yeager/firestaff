@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
            "complete-floor-sensor-model-rotation-pairs=%d "
            "complete-floor-decoration-payload-selectors=%d "
            "complete-floor-decoration-rotation-selectors=%d "
+           "complete-floor-decoration-model-rotation-pairs=%d "
            "complete-floor-decoration-offset-pairs=%d "
            "complete-floor-decoration-control-extents=%d "
            "complete-item-attribute-pairs=%d "
@@ -230,6 +231,7 @@ int main(int argc, char **argv) {
            receipt.structure1f_floor_sensor_model_rotation_pair_complete_level_count,
            receipt.structure1f_floor_decoration_payload_selector_complete_level_count,
            receipt.structure1f_floor_decoration_rotation_selector_complete_level_count,
+           receipt.structure1f_floor_decoration_model_rotation_pair_complete_level_count,
            receipt.structure1f_floor_decoration_offset_pair_complete_level_count,
            receipt.structure1f_floor_decoration_control_extent_complete_level_count,
            receipt.structure1f_item_attribute_pair_complete_level_count,
