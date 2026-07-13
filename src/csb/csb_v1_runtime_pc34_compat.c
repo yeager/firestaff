@@ -2074,6 +2074,10 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile);
+static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t event_index,
+    uint16_t queue_slot);
 static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
@@ -2107,6 +2111,15 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
             ? profile->csbwin_timeline_event_queue_slot[event_index]
             : CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
         if (!dm1v1_event_extract_first(&queue_snapshot, &ignored)) break;
+    }
+    for (i = 0; i < source_count; ++i) {
+        if (csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
+                profile, source_event_indices[i], source_queue_slots[i])) {
+            /* CSBWin owns TT_60/TT_61 before the shared M10 C60/C61 group
+             * dispatch can reinterpret timerObj8 as generic event payload. */
+            profile->timeline_queue.events[source_event_indices[i]].type =
+                DM1_EVENT_NONE;
+        }
     }
     memset(&profile->last_timeline_dispatch, 0,
            sizeof(profile->last_timeline_dispatch));
@@ -17227,6 +17240,83 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
     return 0;
+}
+
+static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t event_index,
+    uint16_t queue_slot)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const struct DM1_Event_V1 *event;
+    CSB_V1_CSBWin512TimerSummary *timer;
+    const uint8_t *group_record;
+    uint16_t timer_index;
+    uint16_t group_thing;
+    int thing_type;
+    int thing_size;
+    struct DM1_Event_V1 next;
+    int successor_index;
+
+    /* CSBWin CSBCode.cpp:6471-6472 dispatches the TIMER directly to
+     * Timer.cpp ProcessTimer60and61:2519-2584. This must run before M10
+     * classifies C60/C61 as a generic group move, because timerObj8 is a
+     * CSBWin Thing handle, not M10's cell/effect payload. */
+    if (!profile || event_index >= DM1_EVENT_MAX_COUNT ||
+        queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE ||
+        queue_slot >= profile->csbwin_timer_queue_summary_count ||
+        !profile->csbwin_body_runtime_summary_valid || !profile->dungeon_handle) {
+        return 0;
+    }
+    timer_index = profile->csbwin_timer_queue[queue_slot];
+    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+    timer = &profile->csbwin_timers[timer_index];
+    event = &profile->timeline_queue.events[event_index];
+    if ((timer->function != 60u && timer->function != 61u) ||
+        !timer->valid || timer->truncated ||
+        timer->source_index != timer_index ||
+        event->type != timer->function ||
+        DM1_MAP_TIME_MAP(event->map_time) != timer->level ||
+        DM1_MAP_TIME_TIME(event->map_time) != timer->time ||
+        event->priority != timer->ubyte5 || event->b_mapX != timer->ubyte6 ||
+        event->b_mapY != timer->ubyte7 || event->c_cell != timer->ubyte8 ||
+        event->c_effect != timer->ubyte9) {
+        return 0;
+    }
+
+    /* ProcessTimer60and61 only reaches this deterministic requeue when the
+     * target is the party square and the exact DB4 object is not Lord Chaos.
+     * Moving the object, the sound branch, occupied-square detection, and
+     * Lord Chaos random detour require source state not retained here. */
+    if (profile->current_level != timer->level ||
+        profile->party_x != timer->ubyte6 || profile->party_y != timer->ubyte7) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    group_thing = (uint16_t)timer->ubyte8 | ((uint16_t)timer->ubyte9 << 8);
+    group_record = csb_v1_dungeon_get_thing_record(
+        dungeon, group_thing, &thing_type, NULL, &thing_size);
+    if (!group_record || thing_type != CSB_V1_THING_TYPE_GROUP ||
+        thing_size < 16 || group_record[4] == 0x17u ||
+        timer->time > 0x00fffffau) {
+        return 0;
+    }
+
+    memset(&next, 0, sizeof(next));
+    next.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time + 5u);
+    next.type = timer->function;
+    next.priority = timer->ubyte5;
+    next.b_mapX = timer->ubyte6;
+    next.b_mapY = timer->ubyte7;
+    next.c_cell = timer->ubyte8;
+    next.c_effect = timer->ubyte9;
+    successor_index = csb_v1_runtime_add_timeline_event(profile, &next);
+    if (successor_index < 0 || successor_index >= DM1_EVENT_MAX_COUNT) return 0;
+
+    /* Commit only after the source successor owns a live M10 queue slot. */
+    timer->time += 5u;
+    profile->csbwin_timeline_event_queue_slot[successor_index] = queue_slot;
+    return 1;
 }
 
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(

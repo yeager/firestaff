@@ -765,5 +765,37 @@ int main(void)
               profile.timeline_queue.eventCount == 0 &&
               profile.csbwin_timers[0].time == profile.game_time - 1u,
           "stale watchdog identity cannot enter a generic recurring path");
+
+    /* CSBWin Timer.cpp ProcessTimer60and61 reads timerObj8 before the shared
+     * C60/C61 movement path. The party-square, non-Lord-Chaos branch has an
+     * exact source +5 requeue and does not need the unretained move/RNG data. */
+    put_le16(raw, 100u, 0xfffeu);
+    raw[104u] = 0u; /* DB4 monsterType: Scorpion, not mon_LordChaos (0x17). */
+    dungeon.thing_data_bases[CSB_V1_THING_TYPE_GROUP] = 100;
+    dungeon.thing_type_counts[CSB_V1_THING_TYPE_GROUP] = 1;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 0;
+    profile.csbwin_timers[0].function = 60u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 =
+        (uint8_t)(CSB_V1_THING_TYPE_GROUP << 2);
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_timers[0].time == profile.game_time + 4u &&
+              profile.timeline_queue.eventCount == 1,
+          "restored TT_60 preserves its CSBWin payload before M10 group mutation");
+
+    profile.game_time = profile.csbwin_timers[0].time;
+    check(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_timers[0].time == profile.game_time + 4u &&
+              profile.timeline_queue.eventCount == 1,
+          "requeued TT_60 retains its original CSBWin timer queue owner");
     return failures == 0 ? 0 : 1;
 }

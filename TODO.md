@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_60`/`TT_61` follow-up: only the exact
+  party-square, non-Lord-Chaos `+5` successor is live before M10 can mutate
+  `timerObj8`. Object movement, TT_61 sound, occupied-square checks, and the
+  Lord Chaos random detour remain fail-closed without their CSBWin owners.
+
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
   updates the original falsewall cell flag. CLEAR/TOGGLE party and
   nonmaterial-group deferral, source successor ownership, portrait handling,
