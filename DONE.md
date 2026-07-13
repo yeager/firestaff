@@ -1221,6 +1221,12 @@
   not a claim about caller identity, game behavior, or payload semantics.
   Verification: capture-script and Mednafen patch regressions.
 
+- ✅ 2026-07-13 Theron transition diagnostic: fail-closed capture results now
+  report raw counts for input, CDIRQ, and PCECD caller-PC-under-C000 evidence.
+  The counts expose which observation is absent without interpreting inputs,
+  callers, sectors, or payloads. Verification: capture-script and Mednafen
+  patch regressions.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
