@@ -16614,6 +16614,46 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * timer cannot be allowed to enter a generic watchdog path. */
         return 1;
     }
+    if (timer->function == 13u) {
+        CSB_V1_Champion *champion;
+        int champion_index;
+        int maximum_health;
+
+        /* CSBWin CSBCode.cpp:6469 dispatches TT_ViAltar to Timer.cpp:
+         * 2663-2763. Retain only ProcessTT_ViAltar's final packedState()==0
+         * step, which calls Character.cpp:804-825 BringCharacterToLife.
+         * State 2 needs CreateCloud and state 1 needs exact DB10 bones/
+         * EXPOOL ownership, neither of which this restored timer summary owns.
+         * The source stores packed position in timerUByte5 bits 2..3. */
+        champion_index = (int)((timer->ubyte5 >> 2) & 3u);
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            (timer->ubyte5 & 3u) == 0u && profile->party_state_valid &&
+            profile->champion_count > 0 &&
+            profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
+            profile->party_state.ChampionCount == profile->champion_count &&
+            champion_index < profile->party_state.ChampionCount) {
+            champion = &profile->party_state.Champions[champion_index];
+            maximum_health = champion->MaximumHealth;
+            if (champion->CurrentHealth == 0 && maximum_health > 0) {
+                maximum_health -= maximum_health / 64 + 1;
+                if (maximum_health < 25) maximum_health = 25;
+                champion->MaximumHealth = (int16_t)maximum_health;
+                champion->CurrentHealth = (int16_t)(maximum_health / 2);
+                champion->Direction = (uint8_t)(profile->party_dir & 3);
+                champion->Attributes &=
+                    ~(uint16_t)CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+            }
+        }
+        /* TT_13 overlaps the generic M10 Vi Altar event. Even a malformed
+         * restored receipt remains source-owned and cannot enter that route. */
+        return 1;
+    }
     if (timer->function == 65u) {
         CSB_V1_DungeonData *saved_dungeon;
         uint16_t generator_thing;

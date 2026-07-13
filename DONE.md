@@ -6,6 +6,14 @@
   as a trigger, operation, object, script, route, or runtime behavior.
   Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
+- 2026-07-13 CSBWin saved `TT_13` Vi Altar final runtime: an exact saved
+  queue/event identity with `packedState()==0` now applies only CSBWin's
+  `BringCharacterToLife` max-HP penalty, half-HP recovery, party-facing, and
+  dead-flag clear to the authenticated dead party champion. Cloud, DB10 bones,
+  EXPOOL, Wings, and HUD branches remain unavailable. Source:
+  `CSBCode.cpp:6469`, `Timer.cpp:2663-2763`, `Character.cpp:804-825`,
+  `CSB.h:2019-2022`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
 - 2026-07-13 Nexus Structure1F raw wall-sensor destination receipt: complete
   Structure1A-owned wall-sensor records now retain exact destination-byte tuple
