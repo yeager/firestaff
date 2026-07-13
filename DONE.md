@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0209 C38 pending-projectile cell ordering: deferred
+  quarter-square changes now run ReDMCSB `GROUP.C F0209:2402-2408`'s F0218
+  scan against the original packed cells before C04 writeback. Pending
+  projectiles therefore retain F0190 compaction/removal rather than being
+  skipped or restoring the old creature layout. Verification: Ninja-built and
+  ran `test_dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - 2026-07-13 DM1 F0209 C38 occupied-cell correction: quarter-square melee
   movement now retains ReDMCSB `GROUP.C F0209:2424-2432`'s selected
   opposite cell when the direct candidate is occupied. The old route tested

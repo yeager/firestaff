@@ -8936,6 +8936,8 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1BehaviorResult_Compat behavior;
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
     struct TimelineEvent_Compat next;
+    int cellsBeforeBehavior;
+    int creatureCountBeforeBehavior;
 
     (void)result;
     if (!world || !ev || !world->things || !world->things->groups) return 0;
@@ -9002,6 +9004,8 @@ static int orch_handle_creature_reaction_event_compat(
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
     memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+    cellsBeforeBehavior = activeGroup.cells;
+    creatureCountBeforeBehavior = (int)group->count;
 
     if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
@@ -9065,14 +9069,45 @@ static int orch_handle_creature_reaction_event_compat(
         }
     }
 
-    /* ReDMCSB GROUP.C F0209 lines 2368-2410 changes an eligible quarter-
-     * square creature's ACTIVE_GROUP::Cells before its next C38 attempt.
-     * The DM1 resolver already produces that typed plan; M10 must commit it
-     * to both the live C04 record and its active-group analogue before the
-     * common F0209 next-event plan snapshots group cells. */
+    /* ReDMCSB GROUP.C F0209 lines 2402-2408 calls F0218 against the old
+     * packed cells before it writes a quarter-square creature's new cell.
+     * A projectile can kill or compact the group in that interval.  Do not
+     * let the later cell write resurrect the old slot layout. */
     if (behavior.actionKind == DM1_ACTION_ADJUST_CELL &&
         behavior.meleeCellAdjustment) {
-        group->cells = (unsigned char)(behavior.updatedGroupCells & 0xff);
+        int killedAllByPendingProjectile = 0;
+        int cellsChangedByPendingProjectile = 0;
+        unsigned char ordinalInCell[4];
+
+        if (behavior.adjustedCreatureCell >= 0) {
+            group->cells = (unsigned char)(cellsBeforeBehavior & 0xff);
+            orch_build_group_projectile_impact_cells_compat(
+                group, ordinalInCell);
+            if (!orch_process_group_projectile_impacts_on_square_compat(
+                    world, group, ev->mapIndex, ev->mapX, ev->mapY,
+                    ordinalInCell, &killedAllByPendingProjectile)) {
+                return 0;
+            }
+            cellsChangedByPendingProjectile =
+                ((int)group->count != creatureCountBeforeBehavior);
+            if (killedAllByPendingProjectile) {
+                /* C38 has no subsequent F0267 move to consume the F0218
+                 * outcome, so perform F0190's group/active-state removal
+                 * here.  It must not apply its deferred cell write after the
+                 * last creature is killed. */
+                (void)orch_unlink_thing_from_square_compat(
+                    world, ev->mapIndex, ev->mapX, ev->mapY,
+                    orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
+                group->next = THING_NONE;
+                orch_write_raw_group_compat(world->things, groupIndex);
+                orch_remove_active_group_state_compat(world, groupIndex);
+                return 1;
+            }
+        }
+
+        if (!cellsChangedByPendingProjectile) {
+            group->cells = (unsigned char)(behavior.updatedGroupCells & 0xff);
+        }
         activeGroup.cells = group->cells;
         ai->groupCells = group->cells;
         orch_write_raw_group_compat(world->things, groupIndex);
