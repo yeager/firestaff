@@ -7,6 +7,12 @@
   Source: ReDMCSB `REVIVE.C` F0281 and F0282:744-783. Verification: focused
   CTest against installed PC34 data.
 
+- 2026-07-13 DM1 HoC stale leader repair: C127/C160 now repair only a dead or
+  invalid active leader to the first living compact-party slot, preserving a
+  valid leader and append/ordinal order. Source: ReDMCSB `CHAMPION.C`
+  F0319:1662-1681 and `REVIVE.C` F0280/F0282. Verification: focused HoC
+  resurrection-leader CTest.
+
 - 2026-07-13 Theron live-trace media rehash: the explicit runtime intake now
   rehashes the Track 02 and System Card files it reads and rejects a known MD5
   label paired with changed bytes. Verification: capture-manifest unit test

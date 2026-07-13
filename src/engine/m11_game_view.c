@@ -14791,6 +14791,33 @@ static int m11_party_has_pc34_candidate_layout(
     return 1;
 }
 
+/* ReDMCSB CHAMPION.C F0319:1662-1681 replaces a dead leader with the first
+ * living champion in G0305 order. Imported/resumed M11 state can reach C127
+ * or C160 after that source-side death transition, so repair only an invalid
+ * or dead active index; a valid existing leader remains untouched. */
+static void m11_repair_dead_party_leader(M11_GameViewState* state) {
+    int slot;
+    int leader;
+
+    if (!state) {
+        return;
+    }
+    leader = state->world.party.activeChampionIndex;
+    if (leader >= 0 && leader < state->world.party.championCount &&
+        state->world.party.champions[leader].present &&
+        state->world.party.champions[leader].hp.current > 0) {
+        return;
+    }
+    for (slot = 0; slot < state->world.party.championCount; ++slot) {
+        if (state->world.party.champions[slot].present &&
+            state->world.party.champions[slot].hp.current > 0) {
+            state->world.party.activeChampionIndex = slot;
+            return;
+        }
+    }
+    state->world.party.activeChampionIndex = -1;
+}
+
 int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
                                                 int mirrorOrdinal) {
     int previousPartyCount;
@@ -15126,6 +15153,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
         return 0;
     }
     if (mirrorOrdinal < 0) return 0;
+    m11_repair_dead_party_leader(state);
     if (!m11_party_has_pc34_candidate_layout(&state->world.party)) {
         m11_set_status(state, "MIRROR", "PARTY STATE INVALID");
         m11_set_inspect_readout(state, "CHAMPION MIRROR",
@@ -15222,6 +15250,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         champ->wounds = 0;
         champ->poisonDose = 0;
     }
+    m11_repair_dead_party_leader(state);
     /* ReDMCSB REVIVE.C F0280:272-283 assigns the leader only when the
      * first C127 candidate enters the party. F0282:837-845 repeats that
      * first-party assignment after C160/C161 finalization; later C160
