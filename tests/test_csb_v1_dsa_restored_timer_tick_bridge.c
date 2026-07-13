@@ -642,7 +642,45 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[92u] == 0u,
           "stale generator timer cannot enter generic C65 mutation");
 
+    profile.party_dir = 3;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].CurrentHealth = 0;
+    profile.party_state.Champions[0].Attributes =
+        CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+    profile.csbwin_timers[0].function = 13u;
+    profile.csbwin_timers[0].ubyte5 = 0u; /* packed position 0, state 0 */
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].MaximumHealth == 98 &&
+              profile.party_state.Champions[0].CurrentHealth == 49 &&
+              profile.party_state.Champions[0].Direction == 3u &&
+              (profile.party_state.Champions[0].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD) == 0u,
+          "restored Vi Altar final stage applies exact source life penalty");
+
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].CurrentHealth = 0;
+    profile.party_state.Champions[0].Attributes =
+        CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].MaximumHealth == 100 &&
+              profile.party_state.Champions[0].CurrentHealth == 0 &&
+              (profile.party_state.Champions[0].Attributes &
+               CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0u,
+          "stale Vi Altar receipt cannot enter generic rebirth handling");
+
     put_le16(raw, 92u, 0u);
+    profile.csbwin_timers[0].function = 65u;
     profile.csbwin_timers[0].source_index = 0u;
     profile.csbwin_timers[0].ubyte8 = 1u;
     profile.csbwin_timers[0].time = profile.game_time;
