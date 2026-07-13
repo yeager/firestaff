@@ -2350,6 +2350,8 @@ static void test_structure1f_item_ibs_material_binding(void) {
     Nexus_V1_DgnRenderCommand commands[2];
     Nexus_V1_DgnStructure1FItemMaterialBinding bindings[2];
     Nexus_V1_DgnStructure1FItemMaterialReceipt receipt;
+    Nexus_V1_DgnCommandPacked4BppMaterial materials[2];
+    Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
     int i;
 
     CHECK(ibs != NULL, "ITEM.IBS material fixture allocates");
@@ -2376,6 +2378,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
     wb16(ibs + 0xa800 + 20, 0xffffU);
     wb32(ibs + 0xa800 + 20 + 12, 0x1100U);
     wb16(ibs + 0xa800 + 0x0900, 0x03e0U);
+    ibs[0xa800 + 0x1000] = 0x6cU;
 
     CHECK(nexus_v1_item_ibs_parse_verified(ibs, NEXUS_V1_ITEM_IBS_BYTES,
                                              0, &bank) != 0,
@@ -2421,6 +2424,29 @@ static void test_structure1f_item_ibs_material_binding(void) {
           bindings[1].special_floor_image->packed_4bpp_valid &&
           bindings[1].packed_4bpp_texels == NULL,
           "special floor binding preserves bounded original payload and palette only");
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          material_receipt.complete &&
+          material_receipt.special_floor_binding_count == 1 &&
+          material_receipt.command_material_count == 1 &&
+          !material_receipt.fallback_visuals_permitted,
+          "descriptor-0008 is consumed by its matching DGN floor command only");
+    CHECK(materials[0].command_index == 1 && materials[0].image_id == 266U &&
+          materials[0].encoding == 8U && materials[0].width == 16U &&
+          materials[0].height == 16U && materials[0].packed_4bpp_bytes == 128U &&
+          materials[0].palette_bgr555[0] == 0x03e0U &&
+          materials[0].packed_4bpp_texels[0] == 0x6cU &&
+          materials[0].source_hash_verified && materials[0].packed_4bpp_valid &&
+          !materials[0].texel_order_proven && !materials[0].draw_authorized,
+          "command material keeps exact authenticated 4bpp bytes no-draw");
+    bindings[1].command_index = 2;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
+          !material_receipt.complete &&
+          material_receipt.blocked_invalid_command_count == 1 &&
+          material_receipt.command_material_count == 0 &&
+          !material_receipt.fallback_visuals_permitted,
+          "out-of-range DGN command cannot promote a descriptor-0008 surface");
     free(ibs);
 }
 
@@ -2430,6 +2456,10 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     uint8_t *data;
     FILE *file;
     Nexus_V1_ItemIbsBank bank;
+    Nexus_V1_DgnStructure1FItemMaterialBinding binding;
+    Nexus_V1_DgnRenderCommand command;
+    Nexus_V1_DgnCommandPacked4BppMaterial material;
+    Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
 
     if (!data_dir || !data_dir[0]) return;
     snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
@@ -2455,6 +2485,21 @@ static void test_real_item_ibs_special_floor_corpus(void) {
               (uint32_t)bank.floor_images[43].width *
               (uint32_t)bank.floor_images[43].height / 2U,
           "real ITEM.IBS combines regular and floor-image indices without a fallback");
+    memset(&binding, 0, sizeof(binding));
+    memset(&command, 0, sizeof(command));
+    binding.command_index = 0;
+    binding.special_floor_image = &bank.floor_images[43];
+    command.kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
+    CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
+              &binding, 1, &command, 1, &material, 1, &material_receipt) == 0 &&
+          material_receipt.complete && material.source_hash_verified &&
+          material.image_id == bank.floor_images[43].image_id &&
+          material.width == bank.floor_images[43].width &&
+          material.height == bank.floor_images[43].height &&
+          material.packed_4bpp_texels == bank.floor_images[43].packed_4bpp_texels &&
+          material.palette_bgr555 == bank.floor_images[43].palette_bgr555 &&
+          !material.draw_authorized,
+          "real Saturn descriptor-0008 payload reaches a DGN command no-draw");
     free(data);
 }
 
