@@ -133,13 +133,29 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     explosion->maxFrames > 0 ? explosion->maxFrames : 1;
                 decision.liveExplosionAttack = explosion->attack;
             }
+            /* ReDMCSB DUNVIEW.C F0115:5965-6000 sends C100 to the original
+             * lightning projectile material plus C3000 geometry. Its PC34
+             * scale/coordinate decoder is not yet recovered here, so retain
+             * the live record as no-draw rather than borrowing M636/F0114.
+             * C101 instead follows :5955 then the D0C M636 fire branch. */
+            if (explosion->explosionType == C100_EXPLOSION_REBIRTH_STEP1) {
+                /* decision.viewSquare is the ReDMCSB MEDIA720 square id:
+                 * M609/D0C is 0, not Firestaff's presentation enum value. */
+                if (decision.viewSquare == 0) {
+                    ++decision.liveD0cRebirthStep1Count;
+                    decision.liveD0cRebirthStep1GeometryBlocked = 1;
+                }
+                continue;
+            }
             /* ReDMCSB DUNVIEW.C F0115:5915-6200 restarts the C15 walk and
              * draws every ordinary explosion through F0114. Fluxcages are
              * deferred to the F0113 field route, while C100/C101 rebirth
              * effects require their own C3000/C3007 geometry. Do not let
              * either class borrow the ordinary F0114 material path. */
             if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE &&
-                explosion->explosionType < C100_EXPLOSION_REBIRTH_STEP1 &&
+                (explosion->explosionType < C100_EXPLOSION_REBIRTH_STEP1 ||
+                 (explosion->explosionType == C101_EXPLOSION_REBIRTH_STEP2 &&
+                  decision.viewSquare == 0)) &&
                 decision.liveRenderableExplosionCount <
                     DM1_V1_VIEWPORT_RUNTIME_MAX_EXPLOSIONS_PC34) {
                 int index = decision.liveRenderableExplosionCount++;

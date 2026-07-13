@@ -161,7 +161,7 @@ int main(void)
         input.relativeSide = 0;
         seed_live_effects(&input, &projectiles, &explosions);
         projectiles.entries[0].cell = 0; /* D0C row 11 C2900 cell. */
-        explosions.count = 3;
+        explosions.count = 5;
         explosions.entries[1] = explosions.entries[0];
         explosions.entries[1].slotIndex = 5;
         explosions.entries[1].explosionType = C002_EXPLOSION_LIGHTNING_BOLT;
@@ -170,17 +170,29 @@ int main(void)
         explosions.entries[2] = explosions.entries[0];
         explosions.entries[2].slotIndex = 6;
         explosions.entries[2].explosionType = C050_EXPLOSION_FLUXCAGE;
+        explosions.entries[3] = explosions.entries[0];
+        explosions.entries[3].slotIndex = 7;
+        explosions.entries[3].explosionType = C100_EXPLOSION_REBIRTH_STEP1;
+        explosions.entries[4] = explosions.entries[0];
+        explosions.entries[4].slotIndex = 8;
+        explosions.entries[4].explosionType = C101_EXPLOSION_REBIRTH_STEP2;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "F0127 D0C runtime decision is built");
         CHECK(d1c.valid && d1c.viewSquare == 0 && d1c.row == 11 &&
               d1c.liveProjectileCount == 1 && d1c.projectileZone >= 0 &&
-              d1c.liveExplosionCount == 3 &&
-              d1c.liveRenderableExplosionCount == 2 &&
+              d1c.drawDeferredSpellEffects,
+              "F0127 D0C retains its source-owned projectile/thing-pass receipt");
+        CHECK(d1c.liveExplosionCount == 5 &&
+              d1c.liveRenderableExplosionCount == 3 &&
               d1c.liveRenderableExplosionSlots[0] == 4 &&
               d1c.liveRenderableExplosionSlots[1] == 5 &&
               d1c.liveRenderableExplosionTypes[1] == C002_EXPLOSION_LIGHTNING_BOLT &&
-              d1c.drawDeferredSpellEffects,
-              "D0C retains every ordinary C15 record and rejects the fluxcage route");
+              d1c.liveRenderableExplosionSlots[2] == 8 &&
+              d1c.liveRenderableExplosionTypes[2] == C101_EXPLOSION_REBIRTH_STEP2,
+              "D0C routes C101 through its original M636 fire material");
+        CHECK(d1c.liveD0cRebirthStep1Count == 1 &&
+              d1c.liveD0cRebirthStep1GeometryBlocked,
+              "D0C keeps C100 in an explicit no-draw geometry receipt");
     }
 
     {

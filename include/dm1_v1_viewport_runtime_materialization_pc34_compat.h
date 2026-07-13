@@ -74,6 +74,11 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveExplosionFrame;
     int liveExplosionMaxFrames;
     int liveExplosionAttack;
+    /* ReDMCSB F0115 routes C101 through D0C's native M636 fire pattern, but
+     * C100 jumps to C3000/lightning geometry. Retain the latter as an
+     * explicit no-draw receipt until its PC34 zone/scale decoder is proven. */
+    int liveD0cRebirthStep1Count;
+    int liveD0cRebirthStep1GeometryBlocked;
     /* Only ordinary F0114-scaled explosions are admitted here.  Fluxcages
      * use F0113's field route and rebirth has distinct C3000/C3007 geometry,
      * so neither may borrow this material path. */
