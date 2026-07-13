@@ -752,8 +752,8 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           cell.post_grid_0x30_ref == level.post_grid_0x30_refs[4][3] &&
           cell.post_grid_0x30_row_prefix_valid &&
           cell.floor_material_ref == 21 && cell.floor_height[1] == 12 &&
-          cell.collision_sector.valid == 1 && cell.collision_sector.x1 == -20,
-          "movement and viewport share one decoded DGN cell and bounded opaque record reference");
+          !cell.collision_sector.valid,
+          "movement and viewport retain a bounded opaque Structure1C reference");
     memset(commands, 0, sizeof(commands));
     memset(&receipt, 0, sizeof(receipt));
     CHECK(nexus_v1_level_build_dgn_view_render_plan(
@@ -805,8 +805,7 @@ static void test_dgn_view_render_plan_from_structure1b(void) {
           commands[0].quad_y[1] == 688 &&
           commands[0].quad_y[2] == 496 &&
           commands[0].quad_y[3] == 603 &&
-          commands[0].collision_sector.valid == 1 &&
-          commands[0].collision_sector.x1 == -20 &&
+          !commands[0].collision_sector.valid &&
           commands[0].palette_index == 21 &&
           commands[0].quad_y[0] > commands[0].quad_y[2],
           "DGN plan projects Structure1B floor heights instead of a flat host quad");
@@ -893,7 +892,7 @@ static void test_post_grid_0x30_row_prefix_rejection(void) {
           "0x30 row prefix rejects an unobserved ordinal bit");
 }
 
-static void test_collision_sector_blocks_entry(void) {
+static void test_structure1c_bytes_do_not_invent_collision_geometry(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     const int structure1b_rel = 0x40;
     Nexus_V1_Level level;
@@ -902,7 +901,7 @@ static void test_collision_sector_blocks_entry(void) {
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 2048) == 0,
-          "collision movement fixture builds");
+          "Structure1C movement fixture builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
     set_collision_ref(structure1, structure1b_rel, 8, 8, 1);
     set_collision_ref(structure1, structure1b_rel, 8, 9, 1);
@@ -917,11 +916,11 @@ static void test_collision_sector_blocks_entry(void) {
     sector[7] = 40;
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 5) == 0,
-          "collision movement level loads");
-    CHECK(!nexus_v1_level_move_allowed(&level, 8, 9, 8, 8),
-          "DGN collision sector blocks a party entering through its segment");
+          "Structure1C movement level loads");
+    CHECK(nexus_v1_level_move_allowed(&level, 8, 9, 8, 8),
+          "opaque Structure1C bytes do not invent a blocking segment");
     CHECK(nexus_v1_level_move_allowed(&level, 7, 8, 8, 8),
-          "same DGN sector permits entry that does not cross its segment");
+          "documented Structure1B passability remains usable");
 }
 
 static void test_bounds_and_legacy_non_promotion(void) {
@@ -974,7 +973,7 @@ int main(void) {
     test_dgn_view_render_plan_from_structure1b();
     test_descriptor_budget_blocks_mesh_ready();
     test_post_grid_0x30_row_prefix_rejection();
-    test_collision_sector_blocks_entry();
+    test_structure1c_bytes_do_not_invent_collision_geometry();
     test_bounds_and_legacy_non_promotion();
     test_determinism();
     test_structure1c_record_table_bounds();

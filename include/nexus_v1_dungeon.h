@@ -284,9 +284,10 @@ typedef struct {
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
-/* One bounded Structure1C record as used by the existing collision route.
- * This table proof establishes only the count and four-byte record form;
- * individual byte semantics are not inferred here. */
+/* One bounded Structure1C record placeholder. The table proof establishes
+ * only the count and four-byte record form; individual byte semantics are
+ * not inferred. These fields deliberately stay clear for retail DGN data
+ * until a Saturn executable or capture proves their geometry grammar. */
 typedef struct {
     int valid;
     int circle;
@@ -296,9 +297,9 @@ typedef struct {
     int8_t y2;
 } Nexus_V1_DgnCollisionSector;
 
-/* Runtime-facing view of one Structure1B cell. Movement and rendering must
- * consume this same decoded record so a resumed party cannot collide against
- * a stale square map while the viewport uses newer mesh/material data. */
+/* Runtime-facing view of one Structure1B cell. Movement and rendering consume
+ * the same documented cell/reference data. Structure1C record bytes are not
+ * promoted to collision geometry until their Saturn grammar is evidenced. */
 typedef struct {
     int square_type;
     uint16_t collision_ref;

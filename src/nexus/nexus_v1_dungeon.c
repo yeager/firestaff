@@ -835,25 +835,10 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                         nexus_v1_decode_structure1b_post_grid_0x30_ref(data + off);
                 }
             }
-            {
-                const uint8_t *sectors = data + info.structure1c_offset;
-                int sector_count = info.structure1c_indexed_record_count;
-                if (!info.collision_records_valid) {
-                    sectors = NULL;
-                    sector_count = 0;
-                } else if (sector_count > NEXUS_DGN_MAX_COLLISION_SECTORS - 1) {
-                    sector_count = NEXUS_DGN_MAX_COLLISION_SECTORS - 1;
-                }
-                for (int sector = 1; sectors && sector <= sector_count; ++sector) {
-                    const uint8_t *src = sectors + sector * 4;
-                    Nexus_V1_DgnCollisionSector *dst =
-                        &level->collision_sectors[sector];
-                    dst->valid = 1;
-                    dst->x1 = (int8_t)src[0]; dst->y1 = (int8_t)src[1];
-                    dst->x2 = (int8_t)src[2]; dst->y2 = (int8_t)src[3];
-                    dst->circle = src[3] == 0x80U;
-                }
-            }
+            /* DMWeb proves Structure1B's 12-bit reference into a bounded
+             * Structure1C record table, but not the four record bytes as
+             * line/circle coordinates. Keep those original references for
+             * later evidence; never turn opaque bytes into collision shapes. */
             level->has_3d_geometry = 1;
             level->geometry_offset = info.geometry_offset;
             level->geometry_size = size - info.geometry_offset;
@@ -1022,68 +1007,18 @@ int nexus_v1_level_structure1f_spatial_receipt(
     return 0;
 }
 
-static int nexus_v1_dgn_sign(int value) {
-    return (value > 0) - (value < 0);
-}
-
-static int nexus_v1_dgn_segments_intersect(int ax, int ay, int bx, int by,
-                                           int cx, int cy, int dx, int dy) {
-    int ab_c = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
-    int ab_d = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
-    int cd_a = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx);
-    int cd_b = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
-    return nexus_v1_dgn_sign(ab_c) != nexus_v1_dgn_sign(ab_d) &&
-           nexus_v1_dgn_sign(cd_a) != nexus_v1_dgn_sign(cd_b);
-}
-
-static int nexus_v1_dgn_circle_blocks_step(const Nexus_V1_DgnCollisionSector *sector,
-                                           int start_x, int start_y) {
-    int radius = sector->x2 < 0 ? -sector->x2 : sector->x2;
-    int dx = -start_x;
-    int dy = -start_y;
-    int length_sq = dx * dx + dy * dy;
-    int t_num = (sector->x1 - start_x) * dx + (sector->y1 - start_y) * dy;
-    int closest_x;
-    int closest_y;
-    if (radius == 0) return 0;
-    if (t_num <= 0) {
-        closest_x = start_x;
-        closest_y = start_y;
-    } else if (t_num >= length_sq) {
-        closest_x = 0;
-        closest_y = 0;
-    } else {
-        closest_x = start_x + (dx * t_num) / length_sq;
-        closest_y = start_y + (dy * t_num) / length_sq;
-    }
-    dx = sector->x1 - closest_x;
-    dy = sector->y1 - closest_y;
-    return dx * dx + dy * dy <= radius * radius;
-}
-
 int nexus_v1_level_move_allowed(const Nexus_V1_Level *level,
                                 int from_x, int from_y,
                                 int to_x, int to_y) {
     Nexus_V1_DgnCellGeometry cell;
-    int start_x;
-    int start_y;
+
+    (void)from_x;
+    (void)from_y;
 
     if (nexus_v1_level_get_cell_geometry(level, to_x, to_y, &cell) != 0 ||
         cell.square_type == 0 || cell.collision_ref == 0x0fffU)
         return 0;
-    if (!level->geometry_info.dmweb_container || !cell.collision_sector.valid)
-        return 1;
-
-    start_x = (from_x - to_x) * 128;
-    start_y = (from_y - to_y) * 128;
-    if (cell.collision_sector.circle)
-        return !nexus_v1_dgn_circle_blocks_step(&cell.collision_sector,
-                                                start_x, start_y);
-    return !nexus_v1_dgn_segments_intersect(start_x, start_y, 0, 0,
-                                             cell.collision_sector.x1,
-                                             cell.collision_sector.y1,
-                                             cell.collision_sector.x2,
-                                             cell.collision_sector.y2);
+    return 1;
 }
 
 int nexus_v1_level_dgn_renderer_handoff_receipt(
