@@ -39,6 +39,8 @@
   pre-requeue ActivateDSA receipt; door cell changes and the TT_1 requeue
   path remain blocked. TT_DESSAGE reaches only its zero-parameter type-47
   OPENROOM receipt; text/cell/other-actuator effects remain blocked.
+  TT_ParameterMessage now reaches its authenticated EXPOOL payload route;
+  missing/altered payloads and non-DSA source effects remain blocked.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are

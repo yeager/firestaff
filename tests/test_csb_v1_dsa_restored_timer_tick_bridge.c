@@ -46,9 +46,12 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
 int main(void)
 {
     uint8_t raw[128] = { 0 };
-    uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
+    uint8_t tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
     uint16_t store_global[] = { 0x0686u, 0x55aau, 0x0054u };
+    const uint32_t message_record_id = (1u << 24);
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
+    const uint32_t message_bucket = 32u +
+        ((message_record_id * 0xbb40e62du) >> 27);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
     CSB_V1_DungeonData dungeon;
@@ -80,10 +83,18 @@ int main(void)
     put_le16(raw, 92u, 0x012fu);
     put_le16(raw, 96u, 1u);
 
-    put_le16(tail, 2u, 18u);
-    put_le32(tail, (size_t)global_bucket * 4u, 1u);
+    /* CSBWin EXPOOL records: a source-index-0 parameter message followed
+     * by the global store record used by the authenticated DSA program. */
+    put_le16(tail, 2u, 3u);
+    put_le32(tail, (size_t)message_bucket * 4u, 1u);
     put_le32(tail, 1u * 4u, 0u);
-    put_le32(tail, 2u * 4u, global_record_id);
+    put_le32(tail, 2u * 4u, message_record_id);
+    put_le32(tail, 3u * 4u, 0x12345678u);
+    put_le16(tail, 64u * 4u + 2u, 18u);
+    put_le32(tail, (size_t)global_bucket * 4u, 65u);
+    put_le32(tail, 65u * 4u,
+             global_bucket == message_bucket ? 1u : 0u);
+    put_le32(tail, 66u * 4u, global_record_id);
 
     csb_v1_runtime_init(&profile, NULL);
     profile.dungeon_handle = &dungeon;
@@ -195,5 +206,21 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "unsupported DSA message action cannot reach the live dispatcher");
+
+    profile.csbwin_timers[0].function = 101u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "restored parameter message reaches authenticated EXPOOL DSA dispatch");
+
+    profile.csbwin_global_variables[1] = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    profile.csbwin_appended_tail_fnv1a ^= 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "altered parameter EXPOOL receipt cannot reach the live dispatcher");
     return failures == 0 ? 0 : 1;
 }
