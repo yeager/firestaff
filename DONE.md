@@ -1163,6 +1163,13 @@
   Verification: clean Mednafen 1.32.1 patch dry-run and capture-script
   regression.
 
+- ✅ 2026-07-13 Theron raw-sector span receipt: future successful SCSICD raw
+  sector reads now emit LBA, 2352-byte sector size, a fixed offset-zero
+  32-byte span declaration, and its FNV-1a fingerprint. This is provenance
+  only: it exports no original bytes and assigns no record, destination,
+  payload, or graphics meaning. Verification: clean Mednafen patch dry-run
+  and capture-script regression.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

@@ -1643,6 +1643,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     host key meaning. A valid transition requires an observed port transaction,
     then a non-peek 1800 change or CDIRQ change, then the existing raw sector
     receipt; all earlier states remain pre-Track02 and blocked.
+    2026-07-13 raw-span update: a future successful sector receipt now carries
+    LBA, 2352-byte sector size, offset zero, 32-byte span length, and FNV-1a
+    of that raw span. It assigns no record, destination, payload, or graphics
+    meaning; only an observed dynamic read may later correlate it with the
+    existing CPU-side record/destination receipt.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
