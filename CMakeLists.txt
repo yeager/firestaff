@@ -7554,6 +7554,21 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # This local-chain proof accepts only canonical user media; it is built
+    # in CI but cannot run in a data-free CTest environment.
+    add_executable(test_dm2_v1_g1_direct_root_chain_real_data
+        tests/test_dm2_v1_g1_direct_root_chain_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_direct_root_chain_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_direct_root_chain_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c

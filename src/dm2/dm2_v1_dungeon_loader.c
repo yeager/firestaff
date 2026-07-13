@@ -1476,6 +1476,77 @@ int dm2_v1_dungeon_resolve_g1_direct_root_record(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_g1_direct_root_chain(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DirectRootChainReceipt *out) {
+    DM2_V1_G1DirectRootRecordAddressReceipt address;
+    DM2_V1_G1DirectRootChainReceipt candidate;
+    uint16_t thing;
+
+    if (!out || !dm2_v1_dungeon_resolve_g1_direct_root_record(
+                    d, level, x, y, &address)) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.level = level;
+    candidate.x = x;
+    candidate.y = y;
+    thing = address.object_id;
+
+    /* skproject c_record.cpp GET_NEXT_RECORD_LINK is the only record-word
+     * read here. Do not decode node payloads or widen the direct DB set. */
+    for (;;) {
+        const uint8_t *record;
+        uint16_t next;
+        int type;
+        int index;
+        int record_size;
+        int record_offset;
+        DM2_V1_G1DirectChainNode *node;
+
+        if (thing == DM2_THING_END_MARKER || thing == DM2_THING_NULL_MARKER ||
+            !dm2_v1_g1_link_has_declared_shape(d, thing) ||
+            candidate.node_count >= DM2_V1_G1_DIRECT_CHAIN_MAX) {
+            return 0;
+        }
+        type = (thing >> 10) & 0x0f;
+        index = thing & 0x03ff;
+        if (!((type >= 0 && type <= 5) || type == 9) ||
+            index < 0 || index >= d->thing_type_counts[type] ||
+            d->thing_data_bases[type] < 0) {
+            return 0;
+        }
+        record_size = (int)s_dm2_db_record_size[type];
+        record_offset = d->thing_data_bases[type] + index * record_size;
+        if (record_size < 2 || record_offset < d->thing_data_bases[type] ||
+            record_offset + record_size > d->g1_extension_base ||
+            record_offset + record_size > d->raw_size) {
+            return 0;
+        }
+        for (int i = 0; i < candidate.node_count; ++i) {
+            if (candidate.nodes[i].object_id == thing) return 0;
+        }
+        record = d->raw_data + record_offset;
+        node = &candidate.nodes[candidate.node_count++];
+        node->object_id = thing;
+        node->type = (uint8_t)type;
+        node->index = (uint16_t)index;
+        node->record_offset = record_offset;
+        node->record_size = record_size;
+        next = RD16(record);
+        ++candidate.link_word_reads;
+        if (next == DM2_THING_END_MARKER) break;
+        thing = next;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     const DM2_V1_DungeonData *d,
     int map,
