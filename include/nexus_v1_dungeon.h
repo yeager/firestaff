@@ -236,6 +236,13 @@ typedef struct {
     int block_count;
     int byte_offset;
     int byte_size;
+    int zero_byte_count;
+    int nonzero_byte_count;
+    int distinct_byte_value_count;
+    int byte_transition_count;
+    int first_nonzero_byte_offset;
+    int last_nonzero_byte_offset;
+    uint32_t raw_payload_hash;
     int valid;
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;

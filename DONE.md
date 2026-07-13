@@ -42,6 +42,17 @@
   `test_dm2_v1_projectile_local_palette_gate`; matching CTest passed 2/2;
    `git diff --check` passed.
 
+- 2026-07-13 Nexus Structure3 raw corpus receipt: the already bounded
+  Structure3 envelope now records raw byte composition (zero/nonzero counts,
+  distinct values, transitions, nonzero extent, and a content fingerprint)
+  and carries it alongside complete Structure1A owner/model receipts in the
+  DGN corpus inspector and host handoff. The focused fixture and optional
+  retail `LEV00`-`LEV15` corpus test prove only span integrity
+  and provenance correlation; no byte is decoded as a face, vertex, mesh,
+  texture, palette, or pixel, and the renderer remains fail-closed at face
+  semantics. Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored TT_PITROOM DSA tick bridge: verified function-9
   queue entries now reach the source-ordered ActivateDSA receipt through the
   restored live timer queue, retaining the exact queue-slot, timer, event,

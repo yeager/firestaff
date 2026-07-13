@@ -203,6 +203,19 @@ typedef struct {
     int structure2_material_or_image_data_proven_level_count;
     int structure2_canonical_source_verified_level_count;
     int structure2_materialization_bound_level_count;
+    /* Per-level raw Structure3 payload observations. These only correlate the
+     * documented bounded container span with Structure1A model references;
+     * they do not assign any byte a face, vertex, mesh, texture, or pixel
+     * meaning. */
+    int structure3_payload_declared_level_count;
+    int structure3_payload_valid_level_count;
+    int structure3_payload_byte_count;
+    int structure3_payload_nonzero_byte_count;
+    int structure3_payload_transition_count;
+    int structure3_model_reference_complete_level_count;
+    Nexus_V1_DgnStructure3PayloadReceipt structure3_payloads[16];
+    Nexus_V1_DgnStructure3ModelReferenceReceipt
+        structure3_model_references[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;

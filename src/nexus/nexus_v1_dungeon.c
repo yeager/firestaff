@@ -35,6 +35,9 @@ static int nexus_v1_level_copy_structure3_payload(
     uint16_t block_count;
     int byte_offset;
     int byte_size;
+    unsigned char seen[UINT8_MAX + 1U];
+    uint32_t hash = 2166136261u;
+    int byte_index;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -53,6 +56,31 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.block_count = (int)block_count;
     level->structure3_payload.byte_offset = byte_offset;
     level->structure3_payload.byte_size = byte_size;
+    level->structure3_payload.first_nonzero_byte_offset = -1;
+    level->structure3_payload.last_nonzero_byte_offset = -1;
+    memset(seen, 0, sizeof(seen));
+    for (byte_index = 0; byte_index < byte_size; ++byte_index) {
+        uint8_t value = data[byte_offset + byte_index];
+        hash ^= value;
+        hash *= 16777619u;
+        if (value == 0U) {
+            ++level->structure3_payload.zero_byte_count;
+        } else {
+            ++level->structure3_payload.nonzero_byte_count;
+            if (level->structure3_payload.first_nonzero_byte_offset < 0) {
+                level->structure3_payload.first_nonzero_byte_offset = byte_index;
+            }
+            level->structure3_payload.last_nonzero_byte_offset = byte_index;
+        }
+        if (!seen[value]) {
+            seen[value] = 1U;
+            ++level->structure3_payload.distinct_byte_value_count;
+        }
+        if (byte_index > 0 && value != data[byte_offset + byte_index - 1]) {
+            ++level->structure3_payload.byte_transition_count;
+        }
+    }
+    level->structure3_payload.raw_payload_hash = hash ? hash : 1U;
     level->structure3_payload.valid = 1;
     level->structure3_payload.face_semantics_proven = 0;
     return 0;
