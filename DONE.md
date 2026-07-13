@@ -9497,6 +9497,15 @@ source-owned exact-size DB11 free node for a resized column. Altered or
 truncated tails, malformed DB11 links, and writes requiring `EXPOOL::enlarge`
 still reject with no mutation. Verification: Ninja plus
 `csb_v1_saved_skin_expool_writeback`.
+
+# ✅ 2026-07-13 CSB EXPOOL DB11 node validation
+
+The CSBWin `EXPOOL::Read`/`Write` bridge now proves every saved DB11 node is
+an original `data.cpp EXPOOL::enlarge()` slot: its block header size matches,
+the node starts at `block + 1 + n * size`, and the complete node stays inside
+that 64-word DB11 block. A malformed free-list pointer cannot overwrite a
+DB11 header during DSA `SETSKIN`; the candidate tail is discarded unchanged.
+Verified by Ninja and `csb_v1_saved_skin_expool_writeback`.
 # Nexus MNS TEXT Atomic Material Route (2026-07-13)
 
 - `nexus_v1_dmdf_decode_text_material_bank()` now fails closed for the whole

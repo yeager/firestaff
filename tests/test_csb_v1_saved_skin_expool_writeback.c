@@ -156,6 +156,23 @@ int main(void)
           "SETSKIN consumes an original larger DB11 free node for expansion");
     csb_v1_runtime_cleanup(&profile);
 
+    prepare_profile_with_larger_free_node(&profile, skins);
+    /* A DB11 free-list node must start at word 1 + n * size.  Word 66 is
+     * inside the second block's header/padding, not its four-word node; a
+     * corrupted saved free-list must fail before EXPOOL::Write can modify
+     * the header. */
+    put_le32(profile.csbwin_appended_tail, 4u * 4u, 66u);
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(
+        profile.csbwin_appended_tail,
+        profile.csbwin_appended_tail_preserved_size);
+    memcpy(before, profile.csbwin_appended_tail,
+           profile.csbwin_appended_tail_preserved_size);
+    check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 0, 2, 9u) == 0 &&
+              memcmp(before, profile.csbwin_appended_tail,
+                     profile.csbwin_appended_tail_preserved_size) == 0,
+          "SETSKIN rejects a malformed DB11 free-list node without mutation");
+    csb_v1_runtime_cleanup(&profile);
+
     prepare_profile(&profile, single_skin);
     check(csb_v1_runtime_set_csbwin_saved_skin(&profile, 0, 1, 1, 0u) == 1 &&
               csb_v1_runtime_locate_csbwin_appended_expool_record(
