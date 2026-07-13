@@ -502,16 +502,18 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
     return rewrite_fixture_event_byte(bytes, size, event_index, 4, event_type);
 }
 
-static int rewrite_fixture_first_unused_event_index(unsigned char *bytes,
-                                                    size_t size,
-                                                    uint16_t first_unused)
+static int rewrite_fixture_global_u16(unsigned char *bytes,
+                                      size_t size,
+                                      size_t global_offset,
+                                      uint16_t value)
 {
     unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
     uint16_t key;
     uint16_t checksum;
     size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
 
-    if (!bytes || size < sizeof(header) || cursor + 2u > size ||
+    if (!bytes || global_offset + 2u > SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT ||
+        size < sizeof(header) || cursor + 2u > size ||
         rd16le(bytes + cursor) != SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT) {
         return 0;
     }
@@ -524,7 +526,7 @@ static int rewrite_fixture_first_unused_event_index(unsigned char *bytes,
     key = rd16le(header + 310u +
                  (size_t)SAVEGAME_PC34_PART_GLOBAL_DATA * 2u);
     xor_words(bytes + cursor, SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT / 2u, key);
-    wr16le(bytes + cursor + 26u, first_unused);
+    wr16le(bytes + cursor + global_offset, value);
     checksum = checksum_and_xor_words(
         bytes + cursor, SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT / 2u, key);
     wr16le(header + 342u +
@@ -538,6 +540,13 @@ static int rewrite_fixture_first_unused_event_index(unsigned char *bytes,
         rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
     memcpy(bytes, header, sizeof(header));
     return 1;
+}
+
+static int rewrite_fixture_first_unused_event_index(unsigned char *bytes,
+                                                    size_t size,
+                                                    uint16_t first_unused)
+{
+    return rewrite_fixture_global_u16(bytes, size, 26u, first_unused);
 }
 
 /* Edit only the source-owned C2 PARTY_INFO tail, then rebuild that part's
@@ -1140,6 +1149,83 @@ static void test_pc34_timeline_rebuild_ignores_raw_tombstone_link(void)
               event_queue.events[event_queue.timeline[0]].type ==
                   DM1_EVENT_DOOR,
           "valid C4 owner remains active after free-list rebuild");
+}
+
+static void test_pc34_timeline_rebuild_ignores_chained_tombstone_links(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int event_one_timeline_count = 0;
+    int i;
+    int rc;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct DM1_EventQueue_V1 event_queue;
+    struct DM1_Event_V1 added_event;
+    DM1OriginalSavePC34HandoffReport report;
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 2,
+                                          DM1_EVENT_NONE) &&
+              rewrite_fixture_global_u16(bytes, (size_t)written, 24u, 2u) &&
+              rewrite_fixture_first_unused_event_index(
+                  bytes, (size_t)written, 2u) &&
+              rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 0u) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 0, 3) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 1, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 0, 1) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 3, 1, 0),
+          "chained tombstone-link fixture remains checksum-authenticated");
+
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_event_count == 2 &&
+              report.original_first_unused_event_index == 2 &&
+              !report.first_unused_event_index_points_to_active &&
+              report.events[1].type == DM1_EVENT_DOOR &&
+              report.events[2].type == DM1_EVENT_NONE &&
+              report.events[3].type == DM1_EVENT_NONE,
+          "F0651-shaped handoff ignores chained raw tombstone links");
+
+    memset(&event_queue, 0, sizeof(event_queue));
+    CHECK(dm1v1_event_queue_init(&event_queue, 0u),
+          "initialize queue for chained tombstone-link import");
+    rc = dm1_v1_original_save_pc34_handoff_apply_event_queue(
+        &report, &event_queue);
+    CHECK(rc == 2 && event_queue.firstUnusedIndex == 2 &&
+              event_queue.events[2].type == DM1_EVENT_NONE &&
+              event_queue.events[3].type == DM1_EVENT_NONE,
+          "chained tombstones remain free after queue import");
+
+    memset(&added_event, 0, sizeof(added_event));
+    added_event.map_time = DM1_MAP_TIME_MAKE(0, 123600u);
+    added_event.type = DM1_EVENT_WALL;
+    added_event.b_mapX = 31u;
+    added_event.b_mapY = 30u;
+    CHECK(dm1v1_event_add(&event_queue, &added_event) == 2 &&
+              event_queue.firstUnusedIndex == 3,
+          "first queue insertion consumes the first tombstone");
+    added_event.b_mapX = 32u;
+    CHECK(dm1v1_event_add(&event_queue, &added_event) == 3 &&
+              event_queue.firstUnusedIndex == 4,
+          "queue rebuild scans tombstones instead of following raw links");
+    for (i = 0; i < event_queue.eventCount; ++i) {
+        if (event_queue.timeline[i] == 1u) {
+            ++event_one_timeline_count;
+        }
+    }
+    CHECK(event_one_timeline_count == 1 &&
+              event_queue.events[1].type == DM1_EVENT_DOOR,
+          "chained tombstone link cannot free the active C4 owner");
 }
 
 static void test_rejects_non_pc34_and_truncated_parts(void)
@@ -4596,6 +4682,7 @@ int main(void)
 {
     test_pc34_handoff_imports_party_state();
     test_pc34_timeline_rebuild_ignores_raw_tombstone_link();
+    test_pc34_timeline_rebuild_ignores_chained_tombstone_links();
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();

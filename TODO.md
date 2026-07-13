@@ -1277,6 +1277,9 @@ and real community-save corpus round-trip evidence.
     event leaves the Door scheduled and the tombstone free, matching
     `TIMELINE.C` F0651's post-F0435 free-list rebuild. Remaining work is
     authentic community-save coverage, not raw free-list-link import.
+    A two-slot raw chain whose final saved link names a valid active C4 event
+    is also covered: queue insertion consumes the two `EVENT_NONE` slots in
+    order and never follows the stale raw link into the active owner.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
