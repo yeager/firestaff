@@ -225,11 +225,6 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         correlation.stage3_track02_record != payload.track02_record ||
         !correlation.self_reference_proven ||
         !correlation.self_resolved_record_in_bounds ||
-        correlation.resolved_selector_count == 0u ||
-        correlation.out_of_bounds_selector_count != 0u ||
-        correlation.resolved_selector_count !=
-            correlation.nonzero_selector_count ||
-        correlation.resolved_selector_hash == 0u ||
         !theron_v1_stage2_runtime_handoff_from_dynamic_payload(
             &payload, out_handoff) ||
         !theron_v1_stage3_mode1_header_from_original_media(
@@ -342,13 +337,6 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->stage3_self_resolved_record = correlation.self_resolved_record;
     out_handoff->stage3_nonzero_descriptor_selector_count =
         correlation.nonzero_selector_count;
-    out_handoff->stage3_selector_catalog_complete = 1;
-    out_handoff->stage3_resolved_descriptor_selector_count =
-        correlation.resolved_selector_count;
-    out_handoff->stage3_out_of_bounds_descriptor_selector_count =
-        correlation.out_of_bounds_selector_count;
-    out_handoff->stage3_resolved_descriptor_selector_hash =
-        correlation.resolved_selector_hash;
     out_handoff->ipl_preload_user_data_bytes =
         THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
     theron_v1_mode1_user_data_summary(
