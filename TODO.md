@@ -1229,6 +1229,11 @@ and real community-save corpus round-trip evidence.
     empty candidate set. It neither searches game-data roots nor opens other
     games. Remaining work is independently collected external PC34 saves,
     not broader filesystem discovery or a synthetic corpus.
+  - 2026-07-13 update: discovery now receipts ReDMCSB save `FormatID`,
+    `Platform`, `DungeonID`, and `GameID` per external candidate. Only
+    checksum-valid PC34 DM `(5,9,10)` identities can enter F0435; all other
+    decoded save-version/platform combinations remain hard rejected. Remaining
+    work is external PC34 corpus coverage, not a compatibility fallback.
   - 2026-07-13 update: corpus verification now compares the optional F0433/
     F0435 dungeon tail as raw original bytes after the four portrait payloads.
     A source tail must retain checksum-qualified size, fingerprint, and exact

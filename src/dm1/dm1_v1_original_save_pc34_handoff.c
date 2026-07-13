@@ -3981,12 +3981,29 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         discovery->header_prefix_fingerprint = classified->prefix_checksum32;
         discovery->shape = (int)classified->shape;
         discovery->readiness = (int)classified->readiness;
+        discovery->save_format_id = classified->format_id;
+        discovery->save_platform = classified->platform;
+        discovery->save_dungeon_id = classified->dungeon_id;
+        discovery->save_game_id = classified->game_id;
+        discovery->pc34_version_platform_identity_ok =
+            classified->header_checksum_ok &&
+            classified->format_id == 5u &&
+            classified->platform == 9u &&
+            classified->dungeon_id == 10u;
+        if (classified->header_checksum_ok) {
+            if (discovery->pc34_version_platform_identity_ok) {
+                ++report.discovery_pc34_version_platform_identity_count;
+            } else {
+                ++report.discovery_pc34_version_platform_rejected_count;
+            }
+        }
         discovery->pc34_importer_candidate =
             classified->pc34_importer_candidate;
         discovery->pc34_loader_part_envelope_candidate =
             classified->pc34_loader_part_envelope_candidate;
         discovery->roundtrip_eligible =
-            classified->pc34_loader_part_envelope_candidate;
+            classified->pc34_loader_part_envelope_candidate &&
+            discovery->pc34_version_platform_identity_ok;
         discovery->result = discovery->roundtrip_eligible
             ? DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE
             : DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
