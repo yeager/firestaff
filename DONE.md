@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C161 disabled-source accept: a real-PC34 C127 candidate
+  now proves F0281 rename completion accepts its already materialized C026
+  portrait after the source sensor is disabled. The final party member keeps
+  the captured portrait and new name, clears modal state, and does not need a
+  stale source mirror. Source: ReDMCSB `REVIVE.C` F0280/F0281/F0282.
+  Verification: focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC C161 disabled-source cancellation: real-PC34 coverage
   now disables the active C127 source after F0281 starts and before C162.
   C162 clears only the tail candidate/modal state, retains the slot-1 leader

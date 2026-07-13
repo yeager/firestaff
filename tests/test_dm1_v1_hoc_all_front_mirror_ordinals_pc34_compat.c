@@ -866,6 +866,73 @@ int main(int argc, char** argv)
         M11_GameView_Shutdown(&disabledGame);
     }
 
+    /* In REVIVE.C F0282, C161 enters F0281 after the candidate was already
+     * materialized by F0280. The final accept must consume that owned C026
+     * material, not require a still-enabled C127 source. Disable the real
+     * source between rename start and F0281's OK completion, then prove the
+     * renamed candidate retains the captured portrait and closes cleanly. */
+    if (firstOrdinal >= 0) {
+        M12_StartupMenuState acceptMenu;
+        M11_GameViewState acceptGame;
+        unsigned char sourcePortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char sourceName[16];
+        int candidateIndex;
+
+        sourceName[0] = '\0';
+        if (!open_game(dataDir, &acceptMenu, &acceptGame)) {
+            fprintf(stderr, "FAIL could not open disabled-source accept game\n");
+            ok = 0;
+        } else {
+            acceptGame.world.party.mapIndex = 0;
+            acceptGame.world.party.mapX = firstPartyX;
+            acceptGame.world.party.mapY = firstPartyY;
+            acceptGame.world.party.direction = firstDirection;
+            if (!M11_GameView_GetMirrorNameByOrdinal(&acceptGame, firstOrdinal,
+                                                      sourceName, (int)sizeof(sourceName)) ||
+                !M11_GameView_SelectFrontMirrorCandidate(&acceptGame)) {
+                fprintf(stderr, "FAIL HoC disabled-source C160 accept setup\n");
+                ok = 0;
+            } else {
+                candidateIndex = acceptGame.candidateMirrorPartyIndex;
+                if (candidateIndex != 0 ||
+                    !acceptGame.world.party.champions[candidateIndex].portraitBitmapValid) {
+                    fprintf(stderr, "FAIL HoC disabled-source C160 source material missing\n");
+                    ok = 0;
+                } else {
+                    memcpy(sourcePortrait,
+                           acceptGame.world.party.champions[candidateIndex].portraitBitmap,
+                           sizeof(sourcePortrait));
+                    if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&acceptGame) ||
+                        !disable_front_mirror_sensor(&acceptGame, firstOrdinal) ||
+                        M11_GameView_GetFrontMirrorOrdinal(&acceptGame) != -1 ||
+                        !M11_GameView_ApplyMirrorCandidateRenameAscii(&acceptGame, 'A') ||
+                        !M11_GameView_ApplyMirrorCandidateRenameAscii(&acceptGame, '\r') ||
+                        !M11_GameView_ApplyMirrorCandidateRenameCommand(
+                            &acceptGame,
+                            DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT) ||
+                        acceptGame.candidateMirrorPanelActive ||
+                        acceptGame.candidateMirrorRenameActive ||
+                        acceptGame.candidateMirrorOrdinal != -1 ||
+                        acceptGame.candidateMirrorPartyIndex != -1 ||
+                        acceptGame.world.party.championCount != 1 ||
+                        acceptGame.world.party.activeChampionIndex != 0 ||
+                        !champion_name_matches(
+                            &acceptGame.world.party.champions[candidateIndex], "A") ||
+                        memcmp(acceptGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sourcePortrait, sizeof(sourcePortrait)) != 0 ||
+                        M11_GameView_GetFrontMirrorOrdinal(&acceptGame) != -1 ||
+                        strstr(acceptGame.inspectTitle, sourceName) == NULL ||
+                        strstr(acceptGame.inspectDetail, sourceName) == NULL) {
+                        fprintf(stderr,
+                                "FAIL HoC disabled-source C161 accept lost owned portrait/material\n");
+                        ok = 0;
+                    }
+                }
+            }
+        }
+        M11_GameView_Shutdown(&acceptGame);
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
