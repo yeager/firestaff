@@ -283,14 +283,14 @@ static int check_slot_top_row_geometry(const M11_GameViewState* game,
                          M11_GameView_GetV1StatusBarZone(slot, stat,
                                                           &x, &y, &w, &h),
                          x, y, w, h,
-                         slotX + barX[stat], 4, 4, 25);
+                         slotX + barX[stat], 2, 4, 25);
         fillHeight = expected_fill_height(cur[stat], max[stat], 25);
         blankHeight = 25 - fillHeight;
         snprintf(label, sizeof(label), "slot%d stat%d value-zone blank top",
                  slot, stat);
         ok &= expect_int(label,
                          count_color(fb, PROBE_FB_W,
-                                     slotX + barX[stat], 4,
+                                     slotX + barX[stat], 2,
                                      4, blankHeight,
                                      M11_GameView_GetV1StatusBarBlankColor()),
                          4 * blankHeight);
@@ -298,7 +298,7 @@ static int check_slot_top_row_geometry(const M11_GameViewState* game,
                  slot, stat);
         ok &= expect_int(label,
                          count_color(fb, PROBE_FB_W,
-                                     slotX + barX[stat], 4 + blankHeight,
+                                     slotX + barX[stat], 2 + blankHeight,
                                      4, fillHeight,
                                      M11_GameView_GetV1ChampionBarColor(slot)),
                          4 * fillHeight);

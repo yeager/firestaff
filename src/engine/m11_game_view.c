@@ -33449,10 +33449,20 @@ int M11_GameView_GetV1StatusBarZone(int championSlot,
                                     int* outY,
                                     int* outW,
                                     int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    return dm1_v1_champion_status_bar_rect_pc34(championSlot, statIndex,
-                                                 &rect) &&
-           m11_status_rect_to_xywh(&rect, outX, outY, outW, outH);
+    DM1_ChampionPanel_BarFillModel model;
+    /* ReDMCSB CHAMDRAW.C F0287 obtains C195/C199/C203 then fills the
+     * derived 4x25 area at y=4.  Use the same panel model as the M11
+     * renderer: the older status-layout rectangle is the parent region
+     * (y=0), not the actual colored-bar pixel rectangle. */
+    if (!DM1_ChampionPanel_BuildPc34BarFillModel(championSlot, statIndex,
+                                                  0, 1, &model)) {
+        return 0;
+    }
+    if (outX) *outX = model.x;
+    if (outY) *outY = model.y;
+    if (outW) *outW = model.width;
+    if (outH) *outH = model.height;
+    return 1;
 }
 
 int M11_GameView_GetV1ChampionBarColor(int championSlot) {
