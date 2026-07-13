@@ -24,6 +24,8 @@ static const char valid_trace[] =
     "last_opcode_pc=102\n"
     "opcode_first_sequence=10\n"
     "opcode_last_sequence=11\n"
+    "decoder_return_sequence=12\n"
+    "capture_completion_sequence=13\n"
     "opcode_fetch_count=2\n"
     "payload_read_bytes=4\n"
     "output_write_bytes=8\n"
@@ -58,6 +60,20 @@ int main(void) {
     expect(!nexus_v1_prs3_capture_trace_schema_parse(
                malformed, strlen(malformed), &receipt) && !receipt.valid,
            "non-increasing opcode fetch sequence is rejected");
+
+    snprintf(malformed, sizeof(malformed), "%s", valid_trace);
+    memcpy(strstr(malformed, "decoder_return_sequence=12"),
+           "decoder_return_sequence=11", 26U);
+    expect(!nexus_v1_prs3_capture_trace_schema_parse(
+               malformed, strlen(malformed), &receipt) && !receipt.valid,
+           "decoder return before the final opcode fetch is rejected");
+
+    snprintf(malformed, sizeof(malformed), "%s", valid_trace);
+    memcpy(strstr(malformed, "capture_completion_sequence=13"),
+           "capture_completion_sequence=12", 30U);
+    expect(!nexus_v1_prs3_capture_trace_schema_parse(
+               malformed, strlen(malformed), &receipt) && !receipt.valid,
+           "capture completion at decoder return is rejected");
 
     snprintf(malformed, sizeof(malformed), "%s", valid_trace);
     memcpy(strstr(malformed, "opcode_first_sequence=10"),
