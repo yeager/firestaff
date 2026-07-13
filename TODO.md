@@ -406,6 +406,11 @@ full two-byte window from one that merely reaches the final opaque byte. This
 is an exact byte-boundary observation only; it proves neither a payload word
 grammar nor image/palette semantics, and cannot enable drawing.
 
+2026-07-13 update: the parser also retains a strict zero/nonzero byte count
+for the already bounded post-`FFFF` span. This makes truncation or payload
+replacement observable at the envelope boundary, but assigns no byte a
+record, palette, image, codec, or render meaning.
+
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
 sensors) from Structure1A-bound alcove/wall records without assigning the
