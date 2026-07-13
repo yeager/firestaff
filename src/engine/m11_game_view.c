@@ -423,6 +423,7 @@ static void m11_dm2_configure_v2_presentation(
     dm2_v2_touch_runtime_set_gate_config(&g_m11_dm2_v2_gate);
     dm2_v2_hud_runtime_set_gdat_source(
         dm2_v1_boot_viewport_asset_fetch,
+        dm2_v1_boot_viewport_asset_palette_fetch,
         profile,
         profile->assets_verified && profile->graphics_dat != NULL);
 }

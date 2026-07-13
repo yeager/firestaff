@@ -8,6 +8,7 @@ static int s_initialized;
 static const DM2_V2_PhaseGateConfig *s_gate_config;
 static int s_force_active;
 static DM2_V2_HudGdatFetch s_gdat_fetch;
+static DM2_V2_HudGdatPaletteFetch s_gdat_palette_fetch;
 static void *s_gdat_user;
 static int s_original_data_mounted;
 
@@ -29,7 +30,8 @@ static int render_allowed(void)
 
 static void blit_source(uint8_t *fb, int fb_w, int fb_h, int x, int y,
                         int dst_w, int dst_h, const uint8_t *pixels,
-                        int src_w, int src_h, int src_stride)
+                        int src_w, int src_h, int src_stride,
+                        const uint8_t palette16[16])
 {
     for (int dy = 0; dy < dst_h; ++dy) {
         int sy = dy * src_h / dst_h;
@@ -39,7 +41,7 @@ static void blit_source(uint8_t *fb, int fb_w, int fb_h, int x, int y,
             uint8_t pixel;
             if (x + dx < 0 || x + dx >= fb_w) continue;
             pixel = pixels[sy * src_stride + sx];
-            if (pixel != 0) fb[(y + dy) * fb_w + x + dx] = pixel;
+            if (pixel != 0) fb[(y + dy) * fb_w + x + dx] = palette16[pixel & 15u];
         }
     }
 }
@@ -49,10 +51,15 @@ static int render_gdat_image(uint8_t *fb, int fb_w, int fb_h,
 {
     const uint8_t *pixels = NULL;
     int src_w = 0, src_h = 0, stride = 0;
-    if (!s_gdat_fetch || key == 0 ||
+    uint8_t palette16[16];
+    uint32_t palette_hash = 0u;
+    if (!s_gdat_fetch || !s_gdat_palette_fetch || key == 0 ||
         s_gdat_fetch(s_gdat_user, key, &pixels, &src_w, &src_h, &stride) != 0 ||
+        s_gdat_palette_fetch(s_gdat_user, key, palette16, &palette_hash) != 0 ||
+        palette_hash == 0u ||
         !pixels || src_w <= 0 || src_h <= 0 || stride < src_w) return 0;
-    blit_source(fb, fb_w, fb_h, x, y, dst_w, dst_h, pixels, src_w, src_h, stride);
+    blit_source(fb, fb_w, fb_h, x, y, dst_w, dst_h, pixels, src_w, src_h, stride,
+                palette16);
     return 1;
 }
 
@@ -91,11 +98,13 @@ void dm2_v2_hud_runtime_shutdown(void)
 {
     if (s_initialized) dm2_v2_hud_reset(&s_hud);
     s_initialized = 0; s_gate_config = NULL; s_force_active = 0;
-    s_gdat_fetch = NULL; s_gdat_user = NULL; s_original_data_mounted = 0;
+    s_gdat_fetch = NULL; s_gdat_palette_fetch = NULL; s_gdat_user = NULL; s_original_data_mounted = 0;
 }
 void dm2_v2_hud_runtime_set_gate_config(const DM2_V2_PhaseGateConfig *config) { s_gate_config = config; }
-void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch, void *user, int mounted)
-{ s_gdat_fetch = fetch; s_gdat_user = user; s_original_data_mounted = mounted ? 1 : 0; }
+void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch,
+                                         DM2_V2_HudGdatPaletteFetch palette_fetch,
+                                         void *user, int mounted)
+{ s_gdat_fetch = fetch; s_gdat_palette_fetch = palette_fetch; s_gdat_user = user; s_original_data_mounted = mounted ? 1 : 0; }
 void dm2_v2_hud_runtime_set_party_gold(int v) { ensure_init(); dm2_v2_hud_set_gold(&s_hud, v); }
 void dm2_v2_hud_runtime_set_direction(int v) { ensure_init(); dm2_v2_hud_set_direction(&s_hud, v); }
 void dm2_v2_hud_runtime_set_level(int a, int b) { ensure_init(); dm2_v2_hud_set_level(&s_hud, a, b); }
@@ -109,9 +118,9 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h)
     if (!fb || w <= 0 || h <= 0 || !render_allowed()) return;
     /* skproject c_gui_vp.cpp uses INTERFACE_GENERAL / CHAMPIONS images.
      * A missing source image is simply absent: no procedural replacement. */
-    if (s_original_data_mounted && s_gdat_fetch) render_original_hud(fb, w, h);
+    if (s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch) render_original_hud(fb, w, h);
 }
-int dm2_v2_hud_runtime_is_active(void) { return render_allowed() && s_original_data_mounted && s_gdat_fetch; }
+int dm2_v2_hud_runtime_is_active(void) { return render_allowed() && s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch; }
 void dm2_v2_hud_runtime_force_active_for_test(int active) { s_force_active = active ? 1 : 0; }
 const char *dm2_v2_hud_runtime_source_evidence(void)
 {
@@ -119,5 +128,6 @@ const char *dm2_v2_hud_runtime_source_evidence(void)
         "skproject/SKWIN/c_gui_vp.cpp DRAW_CHAMPION_PICTURE and UI chrome\n"
         "INTERFACE_GENERAL image fields: top bar, action strip, gold, panel, icons\n"
         "CHAMPIONS image field 0: portrait pixels\n"
-        "Rule: mounted original data draws decoded GDAT pixels only; missing pixels are not synthesized.\n";
+        "Each IMG3 draw maps logical pixels through its paired dtPalette16 table.\n"
+        "Rule: mounted original data draws decoded GDAT pixels only; missing pixels or palettes are not synthesized.\n";
 }

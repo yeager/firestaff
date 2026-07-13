@@ -57,7 +57,12 @@ void dm2_v2_hud_runtime_set_gate_config(const DM2_V2_PhaseGateConfig *config);
  * pixels on a mounted original-data profile; it only consumes this source. */
 typedef int (*DM2_V2_HudGdatFetch)(void *user, int gdat_index,
     const uint8_t **out_pixels, int *out_w, int *out_h, int *out_stride);
+/* Each decoded IMG3 uses its own dtPalette16 mapping.  V2 HUD pixels must
+ * not be presented as raw logical indices or through a generated palette. */
+typedef int (*DM2_V2_HudGdatPaletteFetch)(void *user, int gdat_index,
+    uint8_t out_palette16[16], uint32_t *out_hash);
 void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch,
+                                        DM2_V2_HudGdatPaletteFetch palette_fetch,
                                         void *user,
                                         int original_data_mounted);
 

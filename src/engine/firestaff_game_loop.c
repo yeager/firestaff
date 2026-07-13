@@ -202,7 +202,8 @@ static void fs_game_render_viewport(FS_GameState *state) {
              * composites decoded INTERFACE_GENERAL/CHAMPIONS pixels; a
              * missing original image has no generated replacement. */
             dm2_v2_hud_runtime_set_gdat_source(
-                dm2_v1_boot_viewport_asset_fetch, boot,
+                dm2_v1_boot_viewport_asset_fetch,
+                dm2_v1_boot_viewport_asset_palette_fetch, boot,
                 boot->graphics_dat != NULL);
             dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
             /* Phase 4: V2 lighting tick (gated on phase gate).

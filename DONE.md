@@ -8,6 +8,16 @@
   no-fallback statuses. This does not decode Structure1A or infer a cell,
   object, trigger, model, or Saturn visual. Verification: Ninja and CTest
   `nexus_v1_structure1_host_provenance`.
+- 2026-07-13 DM2 V2 HUD local-palette GDAT consumer: `dm2_v2_hud_runtime`
+  now requires the boot-owned local-palette provider beside the decoded HUD
+  image provider, mapping every non-transparent IMG3 logical pixel through
+  that image's `dtPalette16` entry before writing the V2 HUD. A missing
+  palette is a no-draw result, never a raw-index or generated-colour
+  fallback. M11 and the V1 game loop bind
+  `dm2_v1_boot_viewport_asset_palette_fetch` with the existing verified GDAT
+  provider. Source-locked to skproject `QUERY_GDAT_IMAGE_LOCALPAL` use in the
+  HUD/image path. Verification: Ninja `firestaff_dm2_v2_hud_runtime_probe`.
+
 - 2026-07-13 Nexus Structure1A/Structure1F host boundary: typed alcove,
   wall-decoration, and wall-sensor records now publish their original
   big-endian `Structure1A` indexes as a fail-closed provenance receipt.
