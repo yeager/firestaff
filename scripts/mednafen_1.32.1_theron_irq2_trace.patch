@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,586 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,638 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -68,6 +68,12 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceE100TransferSourcePC;
 +static uint32 TheronIrq2TraceE100TransferPhysicalPC;
 +static char TheronIrq2TraceE100TransferInstruction[256];
++static bool TheronIrq2TraceC860WindowSeen[0x1a0];
++static bool TheronIrq2TraceC860TransferPending;
++static bool TheronIrq2TraceC860TransferSeen[0x1a0];
++static uint32 TheronIrq2TraceC860TransferSourcePC;
++static uint32 TheronIrq2TraceC860TransferPhysicalPC;
++static char TheronIrq2TraceC860TransferInstruction[256];
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -189,6 +195,18 @@ index 347482c4..61d4758e 100644
 +   FlushTheronIrq2Trace();
 +  }
 +  TheronIrq2TraceE100TransferPending = false;
++ }
++
++ if(TheronIrq2TraceC860TransferPending)
++ {
++  if(logical_pc < 0xc860 || logical_pc >= 0xca00)
++  {
++   TheronIrq2TraceC860TransferSeen[TheronIrq2TraceC860TransferSourcePC - 0xc860] = true;
++   TheronIrq2Trace->print_format("c860_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
++                                 TheronIrq2TraceC860TransferSourcePC, TheronIrq2TraceC860TransferPhysicalPC, TheronIrq2TraceC860TransferInstruction, logical_pc, PC);
++   FlushTheronIrq2Trace();
++  }
++  TheronIrq2TraceC860TransferPending = false;
 + }
 +
 + if(TheronIrq2TraceCallbackCount < 128)
@@ -372,7 +390,41 @@ index 347482c4..61d4758e 100644
 +  }
 + }
 +
-+ if(logical_pc >= 0xe3a0 && logical_pc < 0xe400 && !TheronIrq2TraceE3A0WindowSeen[logical_pc - 0xe3a0])
++if(logical_pc >= 0xc860 && logical_pc < 0xca00 && !TheronIrq2TraceC860WindowSeen[logical_pc - 0xc860])
++{
++ uint32 disassembly_pc = logical_pc;
++ char disassembly[256];
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++ const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++ const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++ const uint32 ram_00e7 = CurGame->Debugger->MemPeek(0x00e7, 1, true, true) & 0xff;
++ const uint32 ram_00f5 = CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
++ const uint32 ram_00f6 = CurGame->Debugger->MemPeek(0x00f6, 1, true, true) & 0xff;
++ const uint32 ram_00f7 = CurGame->Debugger->MemPeek(0x00f7, 1, true, true) & 0xff;
++
++ TheronIrq2TraceC860WindowSeen[logical_pc - 0xc860] = true;
++ CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++ TheronIrq2Trace->print_format("c860_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x ram_00e7=%02x ram_00f5=%02x ram_00f6=%02x ram_00f7=%02x\n",
++                               logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, ram_00e7, ram_00f5, ram_00f6, ram_00f7);
++ FlushTheronIrq2Trace();
++}
++if(logical_pc >= 0xc860 && logical_pc < 0xca00 && !TheronIrq2TraceC860TransferPending && !TheronIrq2TraceC860TransferSeen[logical_pc - 0xc860])
++{
++ const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
++ if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
++ {
++  uint32 disassembly_pc = logical_pc;
++
++  TheronIrq2TraceC860TransferPending = true;
++  TheronIrq2TraceC860TransferSourcePC = logical_pc;
++  TheronIrq2TraceC860TransferPhysicalPC = PC;
++  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceC860TransferInstruction);
++ }
++}
++
++if(logical_pc >= 0xe3a0 && logical_pc < 0xe400 && !TheronIrq2TraceE3A0WindowSeen[logical_pc - 0xe3a0])
 + {
 +  uint32 disassembly_pc = logical_pc;
 +  char disassembly[256];

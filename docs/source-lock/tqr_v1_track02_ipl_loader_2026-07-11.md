@@ -112,3 +112,13 @@ This is a control-flow and register-state receipt only. It does not identify
 `$c860`, issue or complete a `CD_READ`, or bind a Track 02 record, payload,
 bitmap, palette, object, or level. `scripts/verify_theron_e109_post_return_trace.sh`
 checks the ordered rows and rejects traces that omit either transfer.
+
+The next authenticated US-CUE capture extends that same receipt through
+`$c860`. The observed instructions are `LDA #$7B` at `$c860`, `JSR $c950` at
+`$c868`, and `JSR $fe92` at `$c86b`; the transfer recorder proves the last
+call enters `$fe92`. The captured CD register snapshot at the new window
+starts as `$1800..$1804 = 00 00 00 02 00`. This proves only execution order
+and observed registers. It does not classify `$c950` or `$fe92`, identify a
+CD request, or bind a Track 02 record, payload, bitmap, palette, object, or
+level. `scripts/verify_theron_c860_post_return_trace.sh` requires the ordered
+`$e109 -> $c860 -> $fe92` rows and rejects the preceding trace format.

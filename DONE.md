@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 post-return `$c860` trace: a clean-source,
+  instrumented Mednafen 1.32.1 build and authenticated US CUE/System Card 3.0
+  capture now prove `$e109 -> $c860 -> $fe92`. The observed route executes
+  `LDA #$7B`, `JSR $C950`, and `JSR $FE92`; the last transfer enters `$fe92`.
+  This remains a control-flow/register receipt only: no CD record, payload,
+  bitmap, palette, object, or level semantics are assigned. Verification:
+  clean patch dry-run, incremental instrumented build, 25-second real-media
+  trace, and `scripts/verify_theron_c860_post_return_trace.sh` PASS.
+
 - 2026-07-13 Nexus SDDRVS identity receipt: every SFX runtime receipt now
   carries the separate canonical `SDDRVS.TSK` expected identity (26,610 bytes
   and the verified SHA-256), while engine-owned MD5 discovery remains the
