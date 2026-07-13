@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB DSA skin transaction: source-backed EXPOOL skin updates
+  now stage the complete write and publish only after successful DSA
+  completion. Failed or malformed routes preserve the original record.
+  Verification: Ninja-built and CTest-passed the DSA trigger, EXPOOL writeback,
+  and Phase 7 checks.
+
 - 2026-07-13 Nexus Structure1F prefix references: DGN mesh readiness now
   requires every Structure1F prefix reference to resolve inside the verified
   post-grid record table. Invalid references block rendering with no fallback.

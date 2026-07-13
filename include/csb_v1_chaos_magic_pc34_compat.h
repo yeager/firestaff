@@ -341,11 +341,14 @@ csb_v1_csbwin_dsa_execute_authenticated_load_store_action(
  * creates a fresh 100-cell DSAVARS bank for each ProcessDSATimer6 invocation;
  * this boundary does the same and does not expose it after a successful
  * execution. Global access requires the caller-owned source-sized bank above,
- * and both parameter and global writes commit together only on success. Every
- * source word must be consumed. Unsupported DSA words, AMPERSAND2, filter, or
- * world paths, malformed extensions, stack faults, and
- * source-illegal LOAD_ABS32 reject without changing the caller's parameter
- * surface. */
+ * and both parameter and global writes commit together only on success.
+ * Admitted AMPERSAND2 GETSKIN/SETSKIN work against the runtime-owned,
+ * save-backed SKIN_CACHE; SETSKIN callbacks are deferred until the complete
+ * action has consumed every source word, while later GETSKIN observes the
+ * action-local pending value. Every source word must be consumed.
+ * Unsupported DSA words, filter/world paths, malformed extensions, stack
+ * faults, and source-illegal LOAD_ABS32 reject without changing the caller's
+ * parameter surface. */
 CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
