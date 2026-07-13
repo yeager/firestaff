@@ -797,5 +797,25 @@ int main(void)
               profile.csbwin_timers[0].time == profile.game_time + 4u &&
               profile.timeline_queue.eventCount == 1,
           "requeued TT_60 retains its original CSBWin timer queue owner");
+
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    profile.csbwin_timers[0].function = DM1_EVENT_CPSE;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.last_timeline_dispatch.count == 1 &&
+              profile.last_timeline_dispatch.records[0].eventType ==
+                  DM1_EVENT_NONE &&
+              profile.timeline_queue.eventCount == 0,
+          "restored TT_22 keeps CSBWin's queue-owned restart no-op");
     return failures == 0 ? 0 : 1;
 }

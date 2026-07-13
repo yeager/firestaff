@@ -16983,6 +16983,23 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * Invalid receipts remain source-owned and cannot fall through. */
         return 1;
     }
+    if (timer->function == DM1_EVENT_CPSE) {
+        /* CSBWin CSBCode.cpp:6564-6569 documents TT_22 as a timer restored
+         * with a saved game whose original handler is intentionally a no-op.
+         * Consume it only when its imported TIMER and materialized event are
+         * still the same queue-owned record; C22 must not become a synthetic
+         * generic runtime action. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5) {
+            return 1;
+        }
+        return 0;
+    }
     if (timer->function == 1u) {
         uint8_t *square;
         int square_type;

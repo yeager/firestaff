@@ -5,6 +5,10 @@
   `timerObj8`. Object movement, TT_61 sound, occupied-square checks, and the
   Lord Chaos random detour remain fail-closed without their CSBWin owners.
 
+- 2026-07-13 CSBWin restored `TT_22` follow-up: the imported restart timer's
+  exact source no-op is live. Its original creation context and the removed
+  historical restart work remain unavailable; do not infer a C22 action.
+
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
   updates the original falsewall cell flag. CLEAR/TOGGLE party and
   nonmaterial-group deferral, source successor ownership, portrait handling,
