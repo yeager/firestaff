@@ -59,6 +59,10 @@ equivalent fresh US/JP capture through the new post-`$e98a` transfer hook.
 That hook records only the first live branch/call/return source and target in
 the immediate `$e98a..$ea3f` window; its verifier rejects static disassembly,
 fixtures, and captures that do not first execute the original `$e98a` load.
+The hook now gates directly on that live program-counter receipt rather than
+on earlier diagnostic markers. A fresh hash-verified US-CUE/System-Card run
+with this build reached the original `$c860..$c96f` wait loop but not `$e98a`
+before timeout; it is a negative capture result, not a branch selection.
 Neither capture can promote a controller transfer into a CD transaction. A
 later independently observable data transaction is still required.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
