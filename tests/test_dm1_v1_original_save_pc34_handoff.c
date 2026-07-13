@@ -2060,6 +2060,114 @@ static void test_original_c79_footprints_roundtrip(void)
     loaded_world.magic.event79CountFootprints=1; loaded_world.magic.magicFootprintsActive=1; loaded_world.lifecycle.status.footprintsCount=1; event=loaded_world.timeline.events[c79_index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline,event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline,&event); loaded_world.gameTick=event.fireAtTick; memset(&result,0,sizeof(result)); F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world,&result); CHECK(loaded_world.magic.event79CountFootprints==0 && !loaded_world.magic.magicFootprintsActive && loaded_world.lifecycle.status.footprintsCount==0,"C79 runtime mirrors"); event.aux2=0; F0720_TIMELINE_Init_Compat(&loaded_world.timeline,event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline,&event); rc=F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world,0x43313445u,exported,(int)sizeof(exported),&exported_size); CHECK(rc!=SAVEGAME_PC34_OK,"C79 rejects host timeout");
 }
 
+static void test_original_c53_watchdog_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int exported_size = 0;
+    int rc;
+    int i;
+    int index = -1;
+    int c53_index = -1;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 2,
+                                         DM1_EVENT_WATCHDOG) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 3, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 5, 0xa5) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 6, 0x5a) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 7, 0xc3) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 8, 0x3c) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 2, 9, 0x96),
+          "C53 fixture keeps unowned Priority and union bytes");
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(&report, 0, sizeof(report));
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written), "C53 fixture writes");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C53 materializes its typed watchdog receipt");
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_WATCHDOG) {
+            index = i;
+            break;
+        }
+    }
+    c53_index = index;
+    CHECK(index >= 0 && loaded_world.timeline.events[index].mapIndex == 0 &&
+              loaded_world.timeline.events[index].aux0 == DM1_EVENT_WATCHDOG &&
+              loaded_world.timeline.events[index].aux1 == 0 &&
+              loaded_world.timeline.events[index].aux4 == 0,
+          "C53 receipt retains only source-owned fields");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc == SAVEGAME_PC34_OK, "C53 exports natively");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_size, &imported, &report);
+    index = -1;
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_WATCHDOG) {
+            index = i;
+            break;
+        }
+    }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index >= 0 &&
+              report.events[index].priority == 0 &&
+              report.events[index].b_mapX == 0 &&
+              report.events[index].b_mapY == 0 &&
+              report.events[index].c_cell == 0 &&
+              report.events[index].c_effect == 0,
+          "C53 native roundtrip canonicalizes unowned union bytes");
+    event = loaded_world.timeline.events[c53_index];
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "C53 receipt schedules for runtime expiry");
+    loaded_world.gameTick = event.fireAtTick;
+    memset(&result, 0, sizeof(result));
+    F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result);
+    CHECK(loaded_world.timeline.count == 1 &&
+              loaded_world.timeline.events[0].kind == TIMELINE_EVENT_WATCHDOG &&
+              loaded_world.timeline.events[0].fireAtTick ==
+                  ((event.fireAtTick + 300u) & 0x00ffffffu) &&
+              loaded_world.timeline.events[0].aux2 == DM1_EVENT_WATCHDOG,
+          "C53 runtime re-arms the source watchdog interval");
+    event.aux2 = 0;
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "host watchdog schedules for export rejection");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc != SAVEGAME_PC34_OK,
+          "C53 export rejects a watchdog without the source receipt");
+}
+
 static void test_original_c13_vi_altar_event_plan(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -3407,6 +3515,7 @@ int main(void)
     test_original_c77_spell_shield_roundtrip();
     test_original_c78_fire_shield_roundtrip();
     test_original_c79_footprints_roundtrip();
+    test_original_c53_watchdog_roundtrip();
     test_original_c13_vi_altar_event_plan();
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();

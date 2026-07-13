@@ -10790,7 +10790,23 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);
             break;
         case TIMELINE_EVENT_WATCHDOG:
-            /* NOCOPYPROTECTION: no-op. */
+            /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 exactly
+             * 300 ticks later.  The original event owns no B/C/Priority
+             * fields, so only an imported C53 receipt may continue it. */
+            if (ev.aux0 == DM1_EVENT_WATCHDOG &&
+                ev.aux1 == 0 && ev.aux2 == DM1_EVENT_WATCHDOG &&
+                ev.aux3 == 0 && ev.aux4 == 0 && ev.mapIndex == 0 &&
+                ev.mapX == 0 && ev.mapY == 0 && ev.cell == 0) {
+                struct TimelineEvent_Compat next;
+
+                memset(&next, 0, sizeof(next));
+                next.kind = TIMELINE_EVENT_WATCHDOG;
+                next.fireAtTick = (world->gameTick + 300u) & 0x00ffffffu;
+                next.aux0 = DM1_EVENT_WATCHDOG;
+                next.aux2 = DM1_EVENT_WATCHDOG;
+                (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
+                                                      &next);
+            }
             break;
         case TIMELINE_EVENT_HUNGER_THIRST: {
             /* Advance RNG deterministically + schedule next. */
