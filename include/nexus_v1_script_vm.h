@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "nexus_v1_world.h"  /* for Nexus_WorldOpcode enum */
 
-/* Nexus V1 provisional trigger VM + dispatcher.
+/* Nexus V1 SLEV task receipt and future dispatcher boundary.
  * Source: docs/nexus_triggers.md (unresolved trigger owner),
  * docs/nexus_sensors.md (Nexus trigger model vs DM1/DM2).
  *
@@ -13,9 +13,10 @@
  * owners. Canonical SLEV bytes have one bounded, corpus-evidenced SH-2 task
  * entry parser and otherwise remain blocked from dispatch.
  *
- * Provisional format: [WHEN condition] THEN [action] rules.
- * Unlike DM1 (tile-type hardwired) or DM2 (actuator enum dispatch), this API
- * models a declarative condition -> action dispatcher for future Nexus proof.
+ * The public condition/action structures remain for isolated regression
+ * fixtures and a future source-backed dispatcher. They cannot execute at
+ * runtime: no SLEV task-body opcode or Saturn host callback has a proven
+ * semantic binding yet.
  *
  * Opcode constants are defined in nexus_v1_world.h (Nexus_WorldOpcode).
  * Current status: task-header receipts only; no SLEV task opcode or record is
@@ -189,7 +190,8 @@ const char *nexus_script_runtime_status_name(
 /* Unload scripts for current level */
 void nexus_script_vm_unload(Nexus_ScriptVM *vm);
 
-/* Trigger evaluation — call these from game logic */
+/* Trigger observation boundaries. They stay inert until a hash-bound Saturn
+ * task dispatcher proves the original condition/action ABI. */
 void nexus_script_on_party_move(Nexus_ScriptVM *vm, int x, int y, int level);
 void nexus_script_on_champion_item(Nexus_ScriptVM *vm, int champ_idx, int item_id);
 void nexus_script_on_creature_dead(Nexus_ScriptVM *vm, int creature_type);
@@ -201,7 +203,7 @@ void nexus_script_vm_set_handler(Nexus_ScriptVM *vm,
                                    Nexus_ScriptActionHandler handler,
                                    void *user_data);
 
-/* Manually fire a rule (for testing) */
+/* Manual fixture firing is inert until source-backed SLEV dispatch exists. */
 int nexus_script_vm_fire_rule(Nexus_ScriptVM *vm, int rule_id);
 
 /* Debug: dump all rules */

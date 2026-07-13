@@ -3,9 +3,9 @@
  *
  * Data-free Nexus V1 provisional trigger-dispatch regression.
  * Source: docs/nexus_triggers.md and docs/nexus_sensors.md classify
- * SDDRVS.TSK as Saturn sound-driver data. Synthetic manual rules lock runtime
- * operand matching; canonical SLEV files are parsed only as bounded SH-2 task
- * headers and never enable fallback dispatch.
+ * SDDRVS.TSK as Saturn sound-driver data. Manual condition/action fixtures
+ * must remain inert; canonical SLEV files are parsed only as bounded SH-2
+ * task headers and never enable fallback dispatch.
  */
 
 #include "nexus_v1_script_vm.h"
@@ -70,7 +70,7 @@ static Nexus_ScriptRule *append_rule(Nexus_ScriptVM *vm,
     return r;
 }
 
-static void test_vm_local_handlers(void) {
+static void test_manual_rules_cannot_enable_runtime_dispatch(void) {
     Nexus_ScriptVM a;
     Nexus_ScriptVM b;
     Receipt ra;
@@ -89,18 +89,14 @@ static void test_vm_local_handlers(void) {
                       0, 0, 7, NEXUS_OP_SOUND);
 
     nexus_script_on_level_load(&a, 3);
-    CHECK(ra.count == 1, "vm A fires its own level-load rule");
+    CHECK(ra.count == 0, "manual level-load rule stays inert");
     CHECK(rb.count == 0, "vm B handler is not called by vm A");
-    CHECK(ra.last_opcode == NEXUS_OP_DISPLAY_MESSAGE,
-          "vm A dispatches its configured action");
 
     nexus_script_on_level_load(&b, 3);
     CHECK(rb.count == 0, "vm B ignores wrong level operand");
 
     nexus_script_on_level_load(&b, 7);
-    CHECK(rb.count == 1, "vm B fires matching level operand");
-    CHECK(rb.last_opcode == NEXUS_OP_SOUND,
-          "vm B dispatches its configured action");
+    CHECK(rb.count == 0, "matching manual rule cannot dispatch audio");
 }
 
 static void test_event_operand_matching(void) {
@@ -126,33 +122,28 @@ static void test_event_operand_matching(void) {
     nexus_script_on_party_move(&vm, 4, 6, 2);
     CHECK(r.count == 0, "party XY rule rejects wrong level and y");
     nexus_script_on_party_move(&vm, 4, 5, 2);
-    CHECK(r.count == 1 && r.last_opcode == NEXUS_OP_TELEPORT,
-          "party XY rule matches x/y/level");
+    CHECK(r.count == 0, "party XY fixture cannot teleport at runtime");
 
     nexus_script_on_champion_item(&vm, 0, 43);
-    CHECK(r.count == 1, "champion item rule rejects wrong item");
+    CHECK(r.count == 0, "champion item rule rejects wrong item");
     nexus_script_on_champion_item(&vm, 0, 44);
-    CHECK(r.count == 2 && r.last_opcode == NEXUS_OP_GIVE_ITEM,
-          "champion item rule matches item id");
+    CHECK(r.count == 0, "item fixture cannot grant an unproven item");
 
     nexus_script_on_creature_dead(&vm, 8);
-    CHECK(r.count == 2, "creature-dead rule rejects wrong type");
+    CHECK(r.count == 0, "creature-dead rule rejects wrong type");
     nexus_script_on_creature_dead(&vm, 9);
-    CHECK(r.count == 3 && r.last_opcode == NEXUS_OP_AWARD_XP,
-          "creature-dead rule matches creature type");
+    CHECK(r.count == 0, "creature fixture cannot award unproven XP");
 
     nexus_script_on_door_change(&vm, 8, 9, 0);
     nexus_script_on_door_change(&vm, 8, 8, 1);
-    CHECK(r.count == 3, "door-open rule rejects closed or wrong position");
+    CHECK(r.count == 0, "door-open rule rejects closed or wrong position");
     nexus_script_on_door_change(&vm, 8, 9, 1);
-    CHECK(r.count == 4 && r.last_opcode == NEXUS_OP_TRIGGER_DOOR,
-          "door-open rule matches open state and x/y");
+    CHECK(r.count == 0, "door fixture cannot change a square at runtime");
 
     nexus_script_on_item_used(&vm, 11);
-    CHECK(r.count == 4, "item-used rule rejects wrong item");
+    CHECK(r.count == 0, "item-used rule rejects wrong item");
     nexus_script_on_item_used(&vm, 12);
-    CHECK(r.count == 5 && r.last_opcode == NEXUS_OP_SET_FLAG,
-          "item-used rule matches item id");
+    CHECK(r.count == 0, "item fixture cannot set an unproven flag");
 }
 
 static void test_once_only_manual_fire_and_unload(void) {
@@ -170,12 +161,12 @@ static void test_once_only_manual_fire_and_unload(void) {
     if (!r0) return;
 
     r0->once_only = 1;
-    CHECK(nexus_script_vm_fire_rule(&vm, 99) == 1,
-          "manual fire bypasses condition and dispatches");
-    CHECK(receipt.count == 1 && receipt.last_opcode == NEXUS_OP_END_GAME,
-          "manual fire records action");
     CHECK(nexus_script_vm_fire_rule(&vm, 99) == 0,
-          "manual fire honors once-only after first dispatch");
+          "manual fire cannot bypass missing Saturn dispatch proof");
+    CHECK(receipt.count == 0,
+          "manual fire does not record a synthetic action");
+    CHECK(nexus_script_vm_fire_rule(&vm, 99) == 0,
+          "manual fire remains inert after an attempted dispatch");
 
     r0->enabled = 0;
     r0->once_only = 0;
@@ -397,7 +388,7 @@ static void test_optional_real_slev_corpus_profile(void) {
 }
 
 int main(void) {
-    test_vm_local_handlers();
+    test_manual_rules_cannot_enable_runtime_dispatch();
     test_event_operand_matching();
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();

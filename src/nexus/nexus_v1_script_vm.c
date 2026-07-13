@@ -377,6 +377,16 @@ const char *nexus_script_runtime_status_name(
  * Condition evaluation helpers
  * ═══════════════════════════════════════════════════════════════════ */
 
+/* No SLEV task-body opcode, entry point, action ABI, or host callback has
+ * source evidence yet. Keep this separate from the public receipt fields:
+ * tests and callers may construct a Nexus_ScriptVM, but cannot turn a manual
+ * condition/action fixture into a Saturn runtime route by setting a flag.
+ * Replace this only with a hash-bound SH-2 dispatch proof. */
+static int nexus_script_dispatch_is_source_backed(const Nexus_ScriptVM *vm) {
+    (void)vm;
+    return 0;
+}
+
 static void nexus_dispatch_action(Nexus_ScriptVM *vm,
                                   const Nexus_ScriptAction *action) {
     if (!action) return;
@@ -460,6 +470,7 @@ static int nexus_condition_matches_door_open(const Nexus_ScriptCondition *cond,
 
 static int nexus_fire_rule_action(Nexus_ScriptVM *vm, Nexus_ScriptRule *r) {
     if (!vm || !r) return 0;
+    if (!nexus_script_dispatch_is_source_backed(vm)) return 0;
     if (!r->enabled) return 0;
     if (r->once_only && r->fired_count > 0) return 0;
 
