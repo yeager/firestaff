@@ -502,6 +502,44 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
     return rewrite_fixture_event_byte(bytes, size, event_index, 4, event_type);
 }
 
+static int rewrite_fixture_first_unused_event_index(unsigned char *bytes,
+                                                    size_t size,
+                                                    uint16_t first_unused)
+{
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint16_t key;
+    uint16_t checksum;
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+
+    if (!bytes || size < sizeof(header) || cursor + 2u > size ||
+        rd16le(bytes + cursor) != SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT) {
+        return 0;
+    }
+    cursor += 2u;
+    if (SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT > size - cursor) return 0;
+    memcpy(header, bytes, sizeof(header));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    key = rd16le(header + 310u +
+                 (size_t)SAVEGAME_PC34_PART_GLOBAL_DATA * 2u);
+    xor_words(bytes + cursor, SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT / 2u, key);
+    wr16le(bytes + cursor + 26u, first_unused);
+    checksum = checksum_and_xor_words(
+        bytes + cursor, SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT / 2u, key);
+    wr16le(header + 342u +
+           (size_t)SAVEGAME_PC34_PART_GLOBAL_DATA * 2u, checksum);
+    wr16le(header + 254u, 0u);
+    wr16le(header + 254u,
+           (uint16_t)(checksum_first_half(header) ^
+                      checksum_second_half_plain(header)));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(bytes, header, sizeof(header));
+    return 1;
+}
+
 /* Edit only the source-owned C2 PARTY_INFO tail, then rebuild that part's
  * F0417 checksum and the F0430 header checksum. This remains an original
  * PC34 envelope; it does not create a Firestaff-specific save layout. */
@@ -1260,6 +1298,28 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
     CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
           "C4 EVENT_NONE reference rolls back staged party import");
 
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_first_unused_event_index(
+              bytes, (size_t)written, 1u),
+          "active FirstUnusedEventIndex fixture remains checksum-authenticated");
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE &&
+          report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
+          report.original_first_unused_event_index == 1 &&
+          report.first_unused_event_index_points_to_active &&
+          report.first_unused_event_index_event_type == DM1_EVENT_DOOR,
+          "active free-list owner has exact F0435/F0651 provenance");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "active free-list owner rolls back staged party import");
+
     memset(&report, 0, sizeof(report));
     memset(&world, 0, sizeof(world));
     report.reported_active_group_count =
@@ -1721,6 +1781,22 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
           event_queue.eventCount == 1 && report.original_game_time == 999u,
           "C4 EVENTNONE reference preserves world queue and receipt");
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_first_unused_event_index(
+              bytes, (size_t)written, 1u),
+          "active FirstUnusedEventIndex runtime fixture remains authenticated");
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "active free-list owner rejects the complete runtime handoff");
+    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
+          world.party.mapIndex == 6 && event_queue.gameTick == 888u &&
+          event_queue.eventCount == 1 && report.original_game_time == 999u,
+          "active free-list owner preserves world queue and receipt");
 
     make_temp_save_path(path, sizeof(path));
     snprintf(backup_path, sizeof(backup_path), "%s.bak", path);

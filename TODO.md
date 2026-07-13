@@ -1264,6 +1264,10 @@ and real community-save corpus round-trip evidence.
     now has separate exact provenance (`slot`, `index`, `is_none`) from an
     out-of-range index. It fails before party/timeline commit; the runtime
     candidate and caller receipt retain their prior state.
+  - 2026-07-13 update: `GLOBAL_DATA.FirstUnusedEventIndex` now rejects an
+    active C3 owner. ReDMCSB `TIMELINE.C` F0651 rebuilds that free-list only
+    from `EVENT_NONE` tombstones after F0435; Firestaff records the active
+    owner index and type and refuses to publish the malformed candidate.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
