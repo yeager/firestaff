@@ -4228,7 +4228,7 @@ if(BUILD_TESTING)
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
         )
-        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE firestaff_v2 firestaff_nexus)
+        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE firestaff_v2 firestaff_nexus firestaff_theron)
         target_include_directories(test_asset_status_iso_cache_materialization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_compile_definitions(test_asset_status_iso_cache_materialization PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
         if(NOT MSVC)
@@ -10378,6 +10378,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_dm1_pc34_archive_media_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10408,6 +10409,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_asset_status_dm1_zip_required_materialization PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10440,6 +10442,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_csb_archive_required_split PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_csb_archive_required_split PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10469,6 +10472,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10495,6 +10499,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_dm1_pc34_multilanguage_required_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10512,6 +10517,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10537,6 +10543,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_nexus_v1_availability_profile_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -22237,7 +22244,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
     )
-    target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
+    target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2 firestaff_theron)
     target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -22263,7 +22270,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
     )
-    target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2)
+    target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2 firestaff_theron)
     target_include_directories(test_firestaff_asset_pipeline_hash_scan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
@@ -22291,7 +22298,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_boot.c
         src/theron/theron_v1_raw_loader_trace.c
     )
-    target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
+    target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2 firestaff_theron)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live
     # in firestaff_m12; the lib is needed to close the local-symbol link gap.
     if(TARGET firestaff_m12)
@@ -23853,6 +23860,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_asset_status_scan_metrics PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_asset_status_scan_metrics PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -23893,6 +23901,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
+        firestaff_theron
     )
     target_include_directories(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

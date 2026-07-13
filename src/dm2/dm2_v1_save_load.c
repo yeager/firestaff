@@ -219,7 +219,6 @@ typedef enum {
 
 #define DM2_SK_CORPUS_RECURSE_DEPTH 4
 #define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64
-#define DM2_SK_CORPUS_RECURSE_FILE_PROBE_CAP 256
 
 static int dm2_ascii_tolower(int c)
 {
@@ -327,20 +326,6 @@ static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
         *out_payload_size = (size_t)end_pos - sizeof(hdr);
     }
     return DM2_SK_CORPUS_VALID;
-}
-
-static int dm2_sksave_path_has_valid_header(const char *path)
-{
-    FILE *f;
-    uint8_t hdr[42];
-
-    if (!path || !path[0] || !(f = fopen(path, "rb"))) return 0;
-    if (fread(hdr, sizeof(hdr), 1, f) != 1) {
-        fclose(f);
-        return 0;
-    }
-    fclose(f);
-    return dm2_sl_header_valid(hdr) ? 1 : 0;
 }
 
 static void dm2_sksave_corpus_accept(DM2_SKSaveCorpusReceipt *receipt,
@@ -543,13 +528,12 @@ static void dm2_sksave_corpus_scan_recursive_impl(
     const char *dir,
     int depth,
     DM2_SKSaveCorpusReceipt *receipt,
-    unsigned int *candidate_count,
-    unsigned int *file_probe_count)
+    unsigned int *candidate_count)
 {
     DIR *d;
     struct dirent *ent;
 
-    if (!root || !dir || !receipt || !candidate_count || !file_probe_count ||
+    if (!root || !dir || !receipt || !candidate_count ||
         *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
         if (receipt && candidate_count &&
             *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
@@ -564,8 +548,7 @@ static void dm2_sksave_corpus_scan_recursive_impl(
     d = opendir(dir);
     if (!d) return;
     while ((ent = readdir(d)) != NULL &&
-           *candidate_count < DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP &&
-           *file_probe_count < DM2_SK_CORPUS_RECURSE_FILE_PROBE_CAP) {
+           *candidate_count < DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
         char path[512];
         struct stat st;
         int is_root_exact_canonical;
@@ -579,12 +562,12 @@ static void dm2_sksave_corpus_scan_recursive_impl(
                 receipt->recursive_scan_truncated = 1u;
             } else {
                 dm2_sksave_corpus_scan_recursive_impl(root, path, depth + 1,
-                                                      receipt, candidate_count,
-                                                      file_probe_count);
+                                                      receipt, candidate_count);
             }
             continue;
         }
-        if (!S_ISREG(st.st_mode)) {
+        if (!S_ISREG(st.st_mode) ||
+            !dm2_sksave_basename_is_candidate_ci(ent->d_name)) {
             continue;
         }
         /* Direct canonical names were already scanned in exact SKProject
@@ -595,18 +578,10 @@ static void dm2_sksave_corpus_scan_recursive_impl(
             strcmp(dir, root) == 0 &&
             dm2_sksave_basename_is_canonical_direct(ent->d_name);
         if (is_root_exact_canonical) continue;
-        (*file_probe_count)++;
-        if (!dm2_sksave_path_has_valid_header(path)) continue;
         alternate_name = !dm2_sksave_basename_is_canonical_direct(ent->d_name);
         (*candidate_count)++;
-        if (!dm2_sksave_basename_is_candidate_ci(ent->d_name)) {
-            receipt->header_discovered_candidate_count++;
-        }
         dm2_sksave_corpus_probe_candidate(receipt, path, ent->d_name,
                                           1, alternate_name);
-    }
-    if (*file_probe_count >= DM2_SK_CORPUS_RECURSE_FILE_PROBE_CAP) {
-        receipt->recursive_scan_truncated = 1u;
     }
     closedir(d);
 }
@@ -936,8 +911,6 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         (uint16_t)DM2_SK_CORPUS_RECURSE_DEPTH;
     out_receipt->recursive_scan_candidate_cap =
         (uint16_t)DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP;
-    out_receipt->recursive_scan_file_probe_cap =
-        (uint16_t)DM2_SK_CORPUS_RECURSE_FILE_PROBE_CAP;
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.
@@ -984,13 +957,9 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 #if !defined(_WIN32)
     {
         unsigned int recursive_candidate_count = 0u;
-        unsigned int recursive_file_probe_count = 0u;
         dm2_sksave_corpus_scan_recursive_impl(save_base, save_base, 0,
                                               out_receipt,
-                                              &recursive_candidate_count,
-                                              &recursive_file_probe_count);
-        out_receipt->recursive_scanned_file_count =
-            (uint16_t)recursive_file_probe_count;
+                                              &recursive_candidate_count);
     }
 #endif
 

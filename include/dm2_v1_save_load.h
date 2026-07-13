@@ -121,15 +121,9 @@ typedef struct {
     uint16_t recursive_candidate_count;
     uint16_t recursive_importable_candidate_count;
     uint16_t alternate_name_candidate_count;
-    /* Header-valid corpus artifacts found under an arbitrary filename. The
-     * scanner never trusts the name: these still need the original 42-byte
-     * SKSave header and a parser/hash receipt before import. */
-    uint16_t header_discovered_candidate_count;
     uint16_t extra_valid_candidate_count;
     uint16_t recursive_scan_depth_limit;
     uint16_t recursive_scan_candidate_cap;
-    uint16_t recursive_scan_file_probe_cap;
-    uint16_t recursive_scanned_file_count;
     uint8_t  recursive_scan_truncated;
     size_t   largest_payload_size;
     size_t   total_payload_size;
@@ -227,11 +221,11 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot);
 /* True if SKSave.dat or SKSave.bak has a valid 0xBEEF/0xDEAD header. */
 bool dm2_v1_save_has_valid_last_session(const char *save_base);
 
-/* Scan an explicit save root for original-style SKSave.dat/SKSave.bak and
- * SKSave%02u.dat files, plus bounded nested files whose actual 42-byte
- * SKSave header is valid. Every discovered artifact is classified through
- * the same Firestaff/original/raw importer and recorded with hashes; no
- * filename alone authorizes import or runtime mutation. */
+/* Scan a directory containing original-style SKSave.dat/SKSave.bak and
+ * SKSave%02u.dat files. This is a lightweight real-save corpus hook: it
+ * validates the DM2 42-byte slot header, classifies payloads through the
+ * same Firestaff/original/raw importer used by runtime resume, and reports
+ * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
 bool dm2_v1_distant_environment_timer_corpus_probe(
