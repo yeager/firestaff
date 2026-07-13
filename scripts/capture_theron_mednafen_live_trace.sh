@@ -30,18 +30,20 @@ else
 fi
 
 trace_dir=$(dirname -- "$trace")
+memory_trace="${trace}.memory"
 home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
-rm -f "$trace"
+rm -f "$trace" "$memory_trace"
 trap 'rm -rf "$home_dir"' EXIT
 
 set +e
 "${timeout_command[@]}" env \
     MEDNAFEN_HOME="$home_dir" \
     FIRESTAFF_THERON_IRQ2_TRACE="$trace" \
+    FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     SDL_VIDEODRIVER=dummy \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
