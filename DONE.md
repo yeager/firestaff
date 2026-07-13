@@ -2,6 +2,13 @@
 
 - 2026-07-13 DM1 original PC34 C2 door-destruction handoff: typed receipt binds B.Location to F0243 and exports only validated source state. Source: ReDMCSB `TIMELINE.C` F0243:872-882.
 
+- 2026-07-13 Nexus Structure1F raw floor-sensor control-selector receipt:
+  complete. Direct-coordinate floor sensors retain raw control-selector reuse
+  through the DGN corpus, host handoff, and render plan. It is not promoted to
+  a trigger, operation, script, destination, route, or runtime behavior.
+  Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw alcove-payload-selector receipt: complete.
   Structure1A-owned alcoves retain raw payload-selector reuse through the DGN
   corpus, host handoff, and render plan. No item, inventory, object, model,

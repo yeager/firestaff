@@ -382,6 +382,22 @@ typedef struct {
     int payload_semantics_proven;
 } Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt;
 
+/* Direct-coordinate floor-sensor records retain a raw control-selector byte.
+ * This receipt records source-byte reuse only; it does not assign a trigger,
+ * operation, script, destination, route, or runtime behavior. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_sensor_entry_count;
+    int resolved_control_selector_count;
+    int unique_control_selector_count;
+    int duplicate_control_selector_count;
+    int zero_control_selector_count;
+    int nonzero_control_selector_count;
+    uint8_t highest_control_selector;
+    int complete;
+    int control_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -814,6 +830,8 @@ typedef struct {
         structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
         structure1f_alcove_payload_selectors;
+    Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
+        structure1f_floor_sensor_control_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -918,6 +936,8 @@ typedef struct {
         structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
         structure1f_alcove_payload_selectors;
+    Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
+        structure1f_floor_sensor_control_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -998,6 +1018,9 @@ int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
 int nexus_v1_level_structure1f_alcove_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
