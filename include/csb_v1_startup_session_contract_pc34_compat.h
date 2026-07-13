@@ -14,6 +14,23 @@ typedef struct CSB_V1_StartupSessionTerminalReceipt_PC34 {
     unsigned int session_generation;
 } CSB_V1_StartupSessionTerminalReceipt_PC34;
 
+/* The terminal F0807 handoff is only usable when the complete C001 title and
+ * C017/C040 HUD package was consumed from the same hash-verified session. */
+typedef struct CSB_V1_StartupSessionTerminalPackageReceipt_PC34 {
+    int valid;
+    int real_package_matched;
+    int c001_title_consumed;
+    int c017_hud_consumed;
+    int c040_hud_consumed;
+    int terminal_f0807_complete;
+    int no_legacy_wrappers;
+    int no_fallback_routes;
+    unsigned int source_tick;
+    unsigned int session_generation;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupSessionTerminalPackageReceipt_PC34;
+
 /* TITLE.C F0437 retains one C001 bitmap for PRESENTS, CHAOS and STRIKES
  * BACK. This receipt pins those real regions to the package identity that
  * later reaches the terminal C017/C040 HUD session. */
@@ -161,6 +178,13 @@ typedef struct CSB_V1_StartupSessionSelectionReceipt_PC34 {
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt);
+
+/* ReDMCSB TITLE.C F0437, ENTRANCE.C F0807 and PANEL.C F0347: retain the
+ * hash-verified C001/C017/C040 package through the terminal entrance edge. */
+int csb_v1_startup_session_terminal_package_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 *out_receipt);
 
 int csb_v1_startup_session_package_title_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
