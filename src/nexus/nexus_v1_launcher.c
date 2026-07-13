@@ -24,6 +24,22 @@
 static Nexus_V1_Engine s_engine;
 static int s_initialized = 0;
 
+static uint32_t nexus_v1_launcher_dgn_command_buffer_hash(
+    const Nexus_V1_DgnRenderCommand *commands, int count)
+{
+    const uint8_t *bytes = (const uint8_t *)commands;
+    uint32_t hash = 2166136261u;
+    size_t byte_count;
+    if (!commands || count <= 0 ||
+        count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) return 0u;
+    byte_count = (size_t)count * sizeof(*commands);
+    for (size_t i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 /* ── Public API ─────────────────────────────────────────────────────── */
 
 int nexus_v1_launcher_init(const char *data_dir) {
@@ -2727,6 +2743,30 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     memcpy(out_commands, material_plan->commands,
            (size_t)render_plan.command_count * sizeof(*out_commands));
 
+    /* The startup host owns a copied plan, not a second geometry evaluation.
+     * Keep the exact source/host command bytes bound before the route can
+     * claim a real DGN handoff. */
+    out_receipt->dgn_command_buffer_hash =
+        nexus_v1_launcher_dgn_command_buffer_hash(
+            material_plan->commands, render_plan.command_count);
+    out_receipt->dgn_command_buffer_exact =
+        out_receipt->dgn_command_buffer_hash != 0u &&
+        out_receipt->dgn_command_buffer_hash ==
+            nexus_v1_launcher_dgn_command_buffer_hash(
+                out_commands, render_plan.command_count) &&
+        memcmp(out_commands, material_plan->commands,
+               (size_t)render_plan.command_count * sizeof(*out_commands)) == 0;
+    if (!out_receipt->dgn_command_buffer_exact) {
+        memset(out_commands, 0,
+               (size_t)render_plan.command_count * sizeof(*out_commands));
+        out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+        out_receipt->render_plan = render_plan;
+        out_receipt->dgn_render_blocked = 1;
+        out_receipt->status_scope = "DGN";
+        out_receipt->status = "blocked-dgn-command-copy";
+        return 1;
+    }
+
     out_receipt->route =
         NEXUS_V1_STARTUP_RUNTIME_HANDOFF_READY_RENDER_STATE;
     out_receipt->render_plan = render_plan;
@@ -2784,7 +2824,7 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         viewport_receipt.frame_hash;
     out_receipt->dgn_material_plan_consumed = 1;
     out_receipt->dgn_commands_copied_from_material_plan =
-        render_plan.command_count > 0;
+        render_plan.command_count > 0 && out_receipt->dgn_command_buffer_exact;
     out_receipt->dgn_material_viewport_consumed =
         viewport_receipt.rasterized_command_count ==
             render_plan.command_count &&
@@ -3018,6 +3058,9 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         handoff->dgn_material_plan_consumed ? 1 : 0;
     out_receipt->dgn_commands_copied_from_material_plan =
         handoff->dgn_commands_copied_from_material_plan ? 1 : 0;
+    out_receipt->dgn_command_buffer_exact =
+        handoff->dgn_command_buffer_exact ? 1 : 0;
+    out_receipt->dgn_command_buffer_hash = handoff->dgn_command_buffer_hash;
     out_receipt->dgn_material_viewport_consumed =
         handoff->dgn_material_viewport_consumed ? 1 : 0;
     out_receipt->bpk_material_path_consumed =
@@ -3030,7 +3073,9 @@ static void nexus_v1_launcher_fill_runtime_route_receipt(
         !handoff->dgn_viewport_host_route_ready ||
         handoff->dgn_viewport_host_route_blocks_runtime ||
         !handoff->dgn_viewport_capture_ready ||
-        handoff->dgn_viewport_frame_hash == 0u;
+        handoff->dgn_viewport_frame_hash == 0u ||
+        !handoff->dgn_command_buffer_exact ||
+        handoff->dgn_command_buffer_hash == 0u;
     if (commands && handoff->render_plan.command_count > 0) {
         out_receipt->first_dgn_render_command_kind = commands[0].kind;
     }

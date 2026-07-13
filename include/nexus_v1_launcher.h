@@ -329,6 +329,8 @@ typedef struct {
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
+    int dgn_command_buffer_exact;
+    uint32_t dgn_command_buffer_hash;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int viewport_written_pixels;
@@ -384,6 +386,8 @@ typedef struct {
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
+    int dgn_command_buffer_exact;
+    uint32_t dgn_command_buffer_hash;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int dgn_viewport_written_pixels;

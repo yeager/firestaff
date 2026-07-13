@@ -2686,6 +2686,8 @@ int main(void)
                runtime_route_receipt.dgn_material_plan_consumed == 1 &&
                runtime_route_receipt
                        .dgn_commands_copied_from_material_plan == 1 &&
+               runtime_route_receipt.dgn_command_buffer_exact == 1 &&
+               runtime_route_receipt.dgn_command_buffer_hash != 0u &&
                runtime_route_receipt.dgn_material_viewport_consumed == 1 &&
                runtime_route_receipt.bpk_material_path_consumed == 1 &&
                runtime_route_receipt.dgn_viewport_written_pixels > 0 &&
