@@ -19,6 +19,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
@@ -4955,6 +4956,157 @@ static int orch_unlink_thing_from_square_compat(
         thing = nextThing;
     }
     return 0;
+}
+
+static int orch_c13_find_vi_altar_bones_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    unsigned short* out_thing)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (out_thing) *out_thing = THING_NONE;
+    if (!world || !world->dungeon || !world->things || !ev ||
+        ev->aux4 < 0 || ev->aux4 >= CHAMPION_MAX_PARTY || ev->cell < 0 ||
+        ev->cell > 3 || ev->mapIndex < 0 ||
+        ev->mapIndex >= (int)world->dungeon->header.mapCount ||
+        ev->mapX < 0 || ev->mapY < 0 ||
+        ev->mapX >= (int)world->dungeon->maps[ev->mapIndex].width ||
+        ev->mapY >= (int)world->dungeon->maps[ev->mapIndex].height) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_JUNK &&
+            (int)THING_GET_CELL(thing) == ev->cell &&
+            index >= 0 && index < world->things->junkCount &&
+            world->things->junks &&
+            world->things->junks[index].type == DM1_JUNK_TYPE_BONES &&
+            world->things->junks[index].chargeCount == ev->aux4) {
+            if (out_thing) *out_thing = thing;
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return 0;
+}
+
+static int orch_c13_apply_vi_altar_rebirth_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    struct TimelineEvent_Compat next;
+    struct ChampionState_Compat* champion;
+    unsigned short bones;
+    int i;
+
+    if (!world || !ev || ev->aux0 != DM1_EVENT_VI_ALTAR_REBIRTH ||
+        ev->aux4 < 0 || ev->aux4 >= CHAMPION_MAX_PARTY || ev->aux1 < 0 ||
+        ev->aux1 > 2) {
+        return 0;
+    }
+    champion = &world->party.champions[ev->aux4];
+    if (!champion->present) return 0;
+
+    /* ReDMCSB TIMELINE.C F0255:1665-1699 has three separate transitions.
+     * Each successor is staged before this handler reports success, so a
+     * full queue cannot publish a partial C13 sequence. */
+    if (ev->aux1 == 2) {
+        struct ExplosionCreateInput_Compat input;
+        struct TimelineEvent_Compat explosion_advance;
+        int explosion_slot = -1;
+
+        if (world->timeline.count > TIMELINE_QUEUE_CAPACITY - 2) return 0;
+        memset(&input, 0, sizeof(input));
+        input.explosionType = C100_EXPLOSION_REBIRTH_STEP1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = ev->mapX;
+        input.mapY = ev->mapY;
+        input.cell = ev->cell;
+        input.currentTick = (int)world->gameTick;
+        input.ownerKind = -1;
+        input.ownerIndex = ev->aux4;
+        input.creatorProjectileSlot = -1;
+        if (!F0821_EXPLOSION_Create_Compat(&input, &world->explosions,
+                                            &explosion_slot,
+                                            &explosion_advance)) {
+            return 0;
+        }
+        next = *ev;
+        next.fireAtTick = world->gameTick + 5u;
+        next.aux1 = 1;
+        if (!F0721_TIMELINE_Schedule_Compat(&world->timeline,
+                                             &explosion_advance) ||
+            !F0721_TIMELINE_Schedule_Compat(&world->timeline, &next)) {
+            return 0;
+        }
+        return 1;
+    }
+
+    if (ev->aux1 == 1) {
+        /* The original ends this branch if the matching bones have gone;
+         * it does not revive a champion without the exact square-chain hit. */
+        if (!orch_c13_find_vi_altar_bones_compat(world, ev, &bones)) return 1;
+        if (world->timeline.count >= TIMELINE_QUEUE_CAPACITY ||
+            !orch_unlink_thing_from_square_compat(world, ev->mapIndex,
+                                                   ev->mapX, ev->mapY, bones)) {
+            return 0;
+        }
+        next = *ev;
+        next.fireAtTick = world->gameTick + 1u;
+        next.aux1 = 0;
+        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &next);
+    }
+
+    /* ReDMCSB REVIVE.C F0283:915-937: relocate only if the old cell is
+     * occupied by a living champion, clear slots/load, reduce health, and
+     * align direction with the party. The M10 state has no UI attribute mask;
+     * M11 redraw remains the presentation owner. */
+    if (champion->cell <= 3) {
+        int occupied = 0;
+        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+            if (i != ev->aux4 && world->party.champions[i].present &&
+                world->party.champions[i].hp.current > 0 &&
+                world->party.champions[i].cell == champion->cell) {
+                occupied = 1;
+                break;
+            }
+        }
+        if (occupied) {
+            for (i = 0; i < 4; ++i) {
+                int used = 0;
+                int j;
+                for (j = 0; j < CHAMPION_MAX_PARTY; ++j) {
+                    if (j != ev->aux4 && world->party.champions[j].present &&
+                        world->party.champions[j].hp.current > 0 &&
+                        world->party.champions[j].cell == i) {
+                        used = 1;
+                        break;
+                    }
+                }
+                if (!used) {
+                    champion->cell = (unsigned char)i;
+                    break;
+                }
+            }
+            if (i == 4) return 0;
+        }
+    }
+    champion->load = 0;
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) champion->inventory[i] = THING_NONE;
+    {
+        RebirthHealthResult_Compat health =
+            F0863_RESURRECTION_ComputeRebirthHealth_Compat(
+                (int16_t)champion->hp.maximum);
+        champion->hp.maximum = (unsigned short)health.newMaxHealth;
+        champion->hp.current = (unsigned short)health.newCurrentHealth;
+        champion->hp.shifted = (unsigned short)(champion->hp.maximum << 1);
+    }
+    champion->direction = (unsigned char)world->party.direction;
+    return 1;
 }
 
 static int orch_delete_projectile_move_events_compat(
@@ -10575,6 +10727,9 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 ev.cell == 0) {
                 emit(result, EMIT_ACTION_ENABLED, ev.aux4, 0, 0, 0);
             }
+            break;
+        case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
+            (void)orch_c13_apply_vi_altar_rebirth_compat(world, &ev);
             break;
         case TIMELINE_EVENT_PLAY_SOUND:
             emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);

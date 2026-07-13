@@ -1741,6 +1741,77 @@ static void test_original_c13_vi_altar_event_plan(void)
           "C13 plan fails closed outside source steps 2, 1, and 0");
 }
 
+static void test_original_c13_vi_altar_runtime_sequence(void)
+{
+    struct GameWorld_Compat world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonThings_Compat things;
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int i;
+    int found_step1 = 0;
+
+    memset(&world, 0, sizeof(world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(&things, 0, sizeof(things));
+    maps[1].width = 32;
+    maps[1].height = 32;
+    dungeon.header.mapCount = 2;
+    dungeon.maps = maps;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.party.championCount = 3;
+    world.party.direction = 3;
+    world.party.champions[2].present = 1;
+    world.party.champions[2].cell = 1;
+    world.party.champions[2].hp.maximum = 100;
+    world.party.champions[2].inventory[0] = 0x1234u;
+    CHECK(F0720_TIMELINE_Init_Compat(&world.timeline, 50u),
+          "C13 runtime timeline initializes");
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
+    event.fireAtTick = 50u;
+    event.mapIndex = 1;
+    event.mapX = 2;
+    event.mapY = 3;
+    event.cell = 1;
+    event.aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
+    event.aux1 = 2;
+    event.aux4 = 2;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
+          "C13 step-2 event schedules");
+    world.gameTick = 50u;
+    memset(&result, 0, sizeof(result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) > 0 &&
+              world.explosions.count == 1,
+          "C13 step 2 materializes the source rebirth explosion");
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_VI_ALTAR_REBIRTH &&
+            world.timeline.events[i].aux1 == 1 &&
+            world.timeline.events[i].fireAtTick == 55u) {
+            found_step1 = 1;
+        }
+    }
+    CHECK(found_step1, "C13 step 2 stages its five-tick bones transition");
+
+    memset(&world.timeline, 0, sizeof(world.timeline));
+    CHECK(F0720_TIMELINE_Init_Compat(&world.timeline, 56u),
+          "C13 rebirth terminal timeline initializes");
+    event.fireAtTick = 56u;
+    event.aux1 = 0;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
+          "C13 terminal event schedules");
+    world.gameTick = 56u;
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    CHECK(world.party.champions[2].hp.maximum == 98 &&
+              world.party.champions[2].hp.current == 49 &&
+              world.party.champions[2].direction == 3 &&
+              world.party.champions[2].inventory[0] == THING_NONE,
+          "C13 step 0 applies the source F0283 rebirth state");
+}
+
 static void test_runtime_materializer_binds_original_explosion_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2572,6 +2643,7 @@ int main(void)
     test_runtime_materializer_binds_original_sound_union();
     test_runtime_materializer_binds_original_c12_damage_hide();
     test_original_c13_vi_altar_event_plan();
+    test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();

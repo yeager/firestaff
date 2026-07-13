@@ -10113,5 +10113,14 @@ Only source steps 2, 1, and 0 are accepted; malformed authenticated saves do
 not become generic square events. Source: ReDMCSB `CLIKVIEW.C F0374` lines
 179-186 and `TIMELINE.C F0255` lines 1665-1699. Verification:
 `test_dm1_v1_original_save_pc34_handoff` covers a checksum-authenticated C13
-fixture and rejects an out-of-range step. Full runtime C13 materialization
-remains listed in `TODO.md`.
+fixture and rejects an out-of-range step.
+
+# ✅ 2026-07-13 DM1 original-save C13 runtime materialization
+
+Authenticated C13 saves now materialize into a dedicated runtime event rather
+than a generic square event. ReDMCSB `TIMELINE.C F0255` is followed in three
+bounded transitions: step 2 creates the rebirth effect and stages step 1 five
+ticks later; step 1 unlinks only matching bones before staging step 0; step 0
+applies the `REVIVE.C F0283` inventory, health, cell, and direction state.
+Invalid source plans, maps, champions, or queue capacity fail closed before
+publication. Verification: `test_dm1_v1_original_save_pc34_handoff`.
