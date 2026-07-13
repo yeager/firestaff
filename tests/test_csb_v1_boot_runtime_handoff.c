@@ -866,6 +866,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     size_t csbwin_save_size = 0u;
     FILE *csbwin_save_file = NULL;
     CSB_V1_BootRuntimeSaveImportReceipt_PC34 save_import_receipt;
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
     uint32_t adapter_game_time = 0U;
@@ -1030,6 +1031,18 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               strstr(save_import_receipt.source_evidence,
                      "LOADSAVE.C F0433/F0435") != NULL,
           "boot save/import receipt owns runtime save, resume, DM1 import, and CSBWin CSBGAME gates");
+    CHECK(csb_v1_boot_runtime_load_original_save_receipt_pc34(
+              &p, save_path, &original_save_receipt) == 1 &&
+              original_save_receipt.valid &&
+              original_save_receipt.native_csb_header_valid &&
+              original_save_receipt.runtime_load_succeeded &&
+              original_save_receipt.runtime_dungeon_ready &&
+              original_save_receipt.runtime_party_ready &&
+              original_save_receipt.runtime_champion_count_after >= 0 &&
+              strcmp(original_save_receipt.save_path, save_path) == 0 &&
+              strstr(original_save_receipt.source_evidence,
+                     "LOADSAVE.C F0435") != NULL,
+          "native CSB save handoff is source-owned and cannot use CSBWin fallback");
     CHECK(csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
               &p,
               csbwin_save_path,

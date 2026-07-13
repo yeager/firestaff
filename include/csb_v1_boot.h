@@ -1166,6 +1166,24 @@ typedef struct CSB_V1_BootRuntimeSaveImportReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_BootRuntimeSaveImportReceipt_PC34;
 
+/* ReDMCSB LOADSAVE.C F0435 owns the native CSB save load.  Keep this
+ * separate from CSBWin/roster fallbacks so a package capture can only claim
+ * an original-save runtime handoff after the native header and live runtime
+ * both agree. */
+typedef struct CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 {
+    int valid;
+    int boot_profile_ready;
+    int native_csb_header_valid;
+    int runtime_load_succeeded;
+    int runtime_dungeon_ready;
+    int runtime_party_ready;
+    char save_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
+    int runtime_current_level_after;
+    int runtime_champion_count_after;
+    uint32_t runtime_game_time_after;
+    const char *source_evidence;
+} CSB_V1_BootOriginalSaveRuntimeReceipt_PC34;
+
 typedef struct CSB_V1_BootStartupHostViewDrawReceipt_PC34 {
     int valid;
     int host_view_valid;
@@ -1526,6 +1544,10 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
     CSB_V1_BootProfile *profile,
     const char *path,
     uint32_t *out_game_time);
+int csb_v1_boot_runtime_load_original_save_receipt_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *path,
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt);
 int csb_v1_boot_runtime_save_import_receipt_pc34(
     const CSB_V1_BootProfile *profile,
     const char *dm1_import_path,
