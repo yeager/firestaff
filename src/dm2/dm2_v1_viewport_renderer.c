@@ -3062,8 +3062,24 @@ void dm2_v1_render_background(DM2_V1_ViewportState *s)
 
 /* ── Floor and ceiling ───────────────────────────────────────────── */
 
+static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
+                                         uint32_t material_mask);
+
 void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 {
+    typedef struct {
+        const uint8_t *pixels;
+        int width;
+        int height;
+        int stride;
+        uint8_t palette16[16];
+        uint32_t palette_hash;
+        int ready;
+    } DM2_V1_ScenePlaneMaterial;
+    enum {
+        DM2_SCENE_PLANE_FLOOR = 1u << 0,
+        DM2_SCENE_PLANE_CEILING = 1u << 1
+    };
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -3081,14 +3097,77 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
         s->gdat_scene_material_index,
         DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
-    int ceiling_asset =
-        dm2_v1_fetch_viewport_asset(s,
-                                    ceiling_gdat_index,
-                                    &ceiling_pixels,
-                                    &ceiling_w,
-                                    &ceiling_h_src,
-                                    &ceiling_stride) == 0 &&
-        ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
+    DM2_V1_ScenePlaneMaterial ceiling_material = { 0 };
+    DM2_V1_ScenePlaneMaterial floor_material = { 0 };
+    int ceiling_asset;
+    int floor_asset;
+
+    s->last_floor_ceiling_material_required_mask = 0u;
+    s->last_floor_ceiling_material_consumed_mask = 0u;
+    if (s->source_materials_required) {
+        int graphicsset_index = 0;
+        int material_field = 0;
+
+        s->last_floor_ceiling_material_required_mask =
+            DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
+        /* skproject/SKULLWIN/c_gui_vp.cpp resolves GRAPHICSSET ceiling and
+         * floor images with QUERY_GDAT_IMAGE_LOCALPAL immediately before the
+         * matching plane draw. Cache both proven source surfaces first so a
+         * missing floor cannot leave a ceiling-only synthetic-looking frame. */
+        if (!dm2_v1_viewport_scene_material_graphic_address(
+                ceiling_gdat_index, &graphicsset_index, &material_field) ||
+            graphicsset_index != s->gdat_scene_material_index ||
+            material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING ||
+            dm2_v1_fetch_viewport_local_material(
+                s, ceiling_gdat_index, &ceiling_material.pixels,
+                &ceiling_material.width, &ceiling_material.height,
+                &ceiling_material.stride) != 0 ||
+            !ceiling_material.pixels || ceiling_material.width <= 0 ||
+            ceiling_material.height <= 0 || !s->active_asset_palette_ready ||
+            s->active_asset_palette_hash == 0u) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+            return;
+        }
+        memcpy(ceiling_material.palette16, s->active_asset_palette16,
+               sizeof(ceiling_material.palette16));
+        ceiling_material.palette_hash = s->active_asset_palette_hash;
+        ceiling_material.ready = 1;
+
+        if (!dm2_v1_viewport_scene_material_graphic_address(
+                floor_gdat_index, &graphicsset_index, &material_field) ||
+            graphicsset_index != s->gdat_scene_material_index ||
+            material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR ||
+            dm2_v1_fetch_viewport_local_material(
+                s, floor_gdat_index, &floor_material.pixels,
+                &floor_material.width, &floor_material.height,
+                &floor_material.stride) != 0 ||
+            !floor_material.pixels || floor_material.width <= 0 ||
+            floor_material.height <= 0 || !s->active_asset_palette_ready ||
+            s->active_asset_palette_hash == 0u) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+            return;
+        }
+        memcpy(floor_material.palette16, s->active_asset_palette16,
+               sizeof(floor_material.palette16));
+        floor_material.palette_hash = s->active_asset_palette_hash;
+        floor_material.ready = 1;
+        ceiling_pixels = ceiling_material.pixels;
+        ceiling_w = ceiling_material.width;
+        ceiling_h_src = ceiling_material.height;
+        ceiling_stride = ceiling_material.stride;
+        memcpy(s->active_asset_palette16, ceiling_material.palette16,
+               sizeof(s->active_asset_palette16));
+        s->active_asset_palette_hash = ceiling_material.palette_hash;
+        s->active_asset_palette_ready = ceiling_material.ready;
+        ceiling_asset = 1;
+    } else {
+        ceiling_asset = dm2_v1_fetch_viewport_asset(
+                            s, ceiling_gdat_index, &ceiling_pixels,
+                            &ceiling_w, &ceiling_h_src, &ceiling_stride) == 0 &&
+            ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
+    }
 
     /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as DM1.
      * Source: DUNVIEW.C:126-127 (G2108_Floor=-1, G2109_Ceiling=-2).
@@ -3113,6 +3192,10 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
+        if (s->source_materials_required) {
+            s->last_floor_ceiling_material_consumed_mask |=
+                DM2_SCENE_PLANE_CEILING;
+        }
     } else {
         if (s->source_materials_required) {
             ++s->blocked_material_draw_count;
@@ -3136,14 +3219,22 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
      * keeps one active palette binding, so prefetching both would present the
      * ceiling through the floor's palette.  skproject DRAW_DUNGEON executes
      * the image/local-palette query immediately before each material blit. */
-    int floor_asset =
-        dm2_v1_fetch_viewport_asset(s,
-                                    floor_gdat_index,
-                                    &floor_pixels,
-                                    &floor_w,
-                                    &floor_h_src,
-                                    &floor_stride) == 0 &&
-        floor_pixels && floor_w > 0 && floor_h_src > 0;
+    if (s->source_materials_required) {
+        floor_pixels = floor_material.pixels;
+        floor_w = floor_material.width;
+        floor_h_src = floor_material.height;
+        floor_stride = floor_material.stride;
+        memcpy(s->active_asset_palette16, floor_material.palette16,
+               sizeof(s->active_asset_palette16));
+        s->active_asset_palette_hash = floor_material.palette_hash;
+        s->active_asset_palette_ready = floor_material.ready;
+        floor_asset = 1;
+    } else {
+        floor_asset = dm2_v1_fetch_viewport_asset(
+                          s, floor_gdat_index, &floor_pixels, &floor_w,
+                          &floor_h_src, &floor_stride) == 0 &&
+            floor_pixels && floor_w > 0 && floor_h_src > 0;
+    }
     if (floor_asset) {
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
@@ -3160,6 +3251,10 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
+        if (s->source_materials_required) {
+            s->last_floor_ceiling_material_consumed_mask |=
+                DM2_SCENE_PLANE_FLOOR;
+        }
     } else {
         if (s->source_materials_required) {
             ++s->blocked_material_draw_count;
@@ -3175,6 +3270,13 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
             }
             ++s->fallback_floor_ceiling_drawn_count;
         }
+    }
+
+    if (s->source_materials_required &&
+        s->last_floor_ceiling_material_required_mask !=
+            s->last_floor_ceiling_material_consumed_mask) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
     }
 
     /* DM2 distinctive: vertical wall frame area between ceiling and floor.
