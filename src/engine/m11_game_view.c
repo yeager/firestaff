@@ -14770,11 +14770,33 @@ static int m11_pack_recruited_champion_portrait(M11_GameViewState* state,
     return 1;
 }
 
+/* ReDMCSB REVIVE.C F0280:133 and F0280:272-276 select M516_CHAMPIONS at
+ * G0305, then increment G0305. The live party is therefore a contiguous
+ * prefix; an absent middle slot is corrupt/non-PC34 state, not an invitation
+ * to recruit into that slot. */
+static int m11_party_has_pc34_candidate_layout(
+    const struct PartyState_Compat* party) {
+    int slot;
+
+    if (!party || party->championCount < 0 ||
+        party->championCount > CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        int shouldBePresent = slot < party->championCount;
+        if ((party->champions[slot].present != 0) != shouldBePresent) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
                                                 int mirrorOrdinal) {
     int previousPartyCount;
     int result;
-    if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
+    if (!state || !state->active || !state->mirrorCatalogAvailable ||
+        !m11_party_has_pc34_candidate_layout(&state->world.party)) return 0;
     previousPartyCount = state->world.party.championCount;
     result = F0673_CHAMPION_MirrorCatalogRecruitOrdinalIfAbsent_Compat(
         &state->mirrorCatalog, mirrorOrdinal, &state->world.party);
@@ -14791,7 +14813,8 @@ int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
     int catalogIndex;
     int mirrorOrdinal;
     int result;
-    if (!state || !state->active || !state->mirrorCatalogAvailable) return 0;
+    if (!state || !state->active || !state->mirrorCatalogAvailable ||
+        !m11_party_has_pc34_candidate_layout(&state->world.party)) return 0;
     catalogIndex = F0654_CHAMPION_MirrorCatalogFindByName_Compat(
         &state->mirrorCatalog, name);
     if (catalogIndex < 0) return 0;
@@ -15103,6 +15126,12 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
         return 0;
     }
     if (mirrorOrdinal < 0) return 0;
+    if (!m11_party_has_pc34_candidate_layout(&state->world.party)) {
+        m11_set_status(state, "MIRROR", "PARTY STATE INVALID");
+        m11_set_inspect_readout(state, "CHAMPION MIRROR",
+                                "CANNOT ADD TO A NON-PC34 PARTY LAYOUT");
+        return 0;
+    }
     if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "MIRROR", "PARTY FULL");
         m11_set_inspect_readout(state, "CHAMPION MIRROR",
