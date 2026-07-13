@@ -189,6 +189,7 @@ int main(int argc, char **argv) {
            "complete-offset-pairs=%d "
            "complete-wall-payload-selectors=%d "
            "complete-wall-sensor-destinations=%d "
+           "complete-wall-sensor-controls=%d "
            "ordinal-block-disproven=%d "
            "ordinal-byte-run-disproven=%d "
            "ordinal-run-disproven=%d ordinal-zero=%d/%d/%d "
@@ -212,6 +213,7 @@ int main(int argc, char **argv) {
            receipt.structure1f_offset_pair_complete_level_count,
            receipt.structure1f_wall_payload_selector_complete_level_count,
            receipt.structure1f_wall_sensor_destination_complete_level_count,
+           receipt.structure1f_wall_sensor_control_selector_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_run_ordinal_mapping_disproven_level_count,

@@ -230,6 +230,10 @@ static void build_structure1f_fixture(uint8_t *structure1,
     structure1f[184 + 13] = 30U;
     structure1f[184 + 14] = 31U;
     structure1f[184 + 15] = 2U;
+    structure1f[136 + 12] = 1U;
+    structure1f[152 + 12] = 1U;
+    structure1f[168 + 12] = 2U;
+    structure1f[184 + 12] = 2U;
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -817,6 +821,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FOffsetPairReceipt offset_pairs;
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt wall_payload_selectors;
     Nexus_V1_DgnStructure1FWallSensorDestinationReceipt wall_sensor_destinations;
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt wall_sensor_controls;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -1002,6 +1007,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           wall_sensor_destinations.complete &&
           !wall_sensor_destinations.destination_semantics_proven,
           "Structure1F wall-sensor destination tuples remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
+              &level, &wall_sensor_controls) == 0 &&
+          wall_sensor_controls.structure1a_relation_complete &&
+          wall_sensor_controls.wall_sensor_entry_count == 4 &&
+          wall_sensor_controls.resolved_control_selector_count == 4 &&
+          wall_sensor_controls.unique_control_selector_count == 2 &&
+          wall_sensor_controls.duplicate_control_selector_count == 2 &&
+          wall_sensor_controls.zero_control_selector_count == 0 &&
+          wall_sensor_controls.nonzero_control_selector_count == 4 &&
+          wall_sensor_controls.highest_control_selector == 2U &&
+          wall_sensor_controls.complete &&
+          !wall_sensor_controls.control_semantics_proven,
+          "Structure1F wall-sensor controls remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -1139,6 +1157,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_wall_sensor_destinations.complete &&
           handoff.structure1f_wall_sensor_destinations.unique_destination_count == 2 &&
           !handoff.structure1f_wall_sensor_destinations.destination_semantics_proven &&
+          handoff.structure1f_wall_sensor_control_selectors.complete &&
+          handoff.structure1f_wall_sensor_control_selectors.unique_control_selector_count == 2 &&
+          !handoff.structure1f_wall_sensor_control_selectors.control_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -1168,6 +1189,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_wall_payload_selectors.payload_semantics_proven &&
           render_plan.structure1f_wall_sensor_destinations.complete &&
           !render_plan.structure1f_wall_sensor_destinations.destination_semantics_proven &&
+          render_plan.structure1f_wall_sensor_control_selectors.complete &&
+          !render_plan.structure1f_wall_sensor_control_selectors.control_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,

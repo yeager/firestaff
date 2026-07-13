@@ -350,6 +350,22 @@ typedef struct {
     int destination_semantics_proven;
 } Nexus_V1_DgnStructure1FWallSensorDestinationReceipt;
 
+/* Wall-sensor records retain a separate raw control-selector byte. This is
+ * source provenance only: it is not a trigger type, operation, object, script,
+ * route, or runtime behavior without original Saturn semantic evidence. */
+typedef struct {
+    int structure1a_relation_complete;
+    int wall_sensor_entry_count;
+    int resolved_control_selector_count;
+    int unique_control_selector_count;
+    int duplicate_control_selector_count;
+    int zero_control_selector_count;
+    int nonzero_control_selector_count;
+    uint8_t highest_control_selector;
+    int complete;
+    int control_semantics_proven;
+} Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -778,6 +794,8 @@ typedef struct {
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
     Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
         structure1f_wall_sensor_destinations;
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
+        structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -878,6 +896,8 @@ typedef struct {
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
     Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
         structure1f_wall_sensor_destinations;
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
+        structure1f_wall_sensor_control_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -952,6 +972,9 @@ int nexus_v1_level_structure1f_wall_payload_selector_receipt(
 int nexus_v1_level_structure1f_wall_sensor_destination_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallSensorDestinationReceipt *out_receipt);
+int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);

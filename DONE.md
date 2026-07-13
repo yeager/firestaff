@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw wall-sensor control-selector receipt:
+  complete. Structure1A-owned wall sensors retain raw control-selector reuse
+  through the DGN corpus, host handoff, and render plan. It is not interpreted
+  as a trigger, operation, object, script, route, or runtime behavior.
+  Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw wall-sensor destination receipt: complete
   Structure1A-owned wall-sensor records now retain exact destination-byte tuple
   reuse through the DGN corpus, host handoff, and render plan. The tuple is not

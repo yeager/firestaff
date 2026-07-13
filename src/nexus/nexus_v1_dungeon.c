@@ -1952,6 +1952,49 @@ int nexus_v1_level_structure1f_wall_sensor_destination_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    unsigned char seen[UINT8_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.structure1a_relation_complete = relation.complete;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint8_t selector;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS) continue;
+        ++receipt.wall_sensor_entry_count;
+        if (!record->structure1a_relation_valid) continue;
+        ++receipt.resolved_control_selector_count;
+        selector = record->type_or_control;
+        if (selector == 0U) ++receipt.zero_control_selector_count;
+        else ++receipt.nonzero_control_selector_count;
+        if (selector > receipt.highest_control_selector)
+            receipt.highest_control_selector = selector;
+        if (seen[selector]) ++receipt.duplicate_control_selector_count;
+        else { seen[selector] = 1U; ++receipt.unique_control_selector_count; }
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.resolved_control_selector_count == receipt.wall_sensor_entry_count;
+    receipt.control_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt)
@@ -2220,6 +2263,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_wall_payload_selectors);
     (void)nexus_v1_level_structure1f_wall_sensor_destination_receipt(
         level, &out_receipt->structure1f_wall_sensor_destinations);
+    (void)nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
+        level, &out_receipt->structure1f_wall_sensor_control_selectors);
     (void)nexus_v1_level_structure3_payload_receipt(
         level, &out_receipt->structure3_payload);
     out_receipt->structure1g_present = info->structure1g_present;
@@ -2688,6 +2733,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_wall_payload_selectors;
     receipt.structure1f_wall_sensor_destinations =
         handoff.structure1f_wall_sensor_destinations;
+    receipt.structure1f_wall_sensor_control_selectors =
+        handoff.structure1f_wall_sensor_control_selectors;
     receipt.structure3_payload = handoff.structure3_payload;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;
