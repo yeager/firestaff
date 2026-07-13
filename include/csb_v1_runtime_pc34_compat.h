@@ -758,6 +758,26 @@ int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* CSBWin Timer.cpp::ProcessTT_DOOR invokes ActivateDSA with the decoded
+ * SET/CLEAR/TOGGLE action, which constructs a source-shaped timer and calls
+ * ProcessDSATimer5 for every type-47 actuator on the door square.  This
+ * receipt covers only that saved function-10 -> DSA path; door cell flags,
+ * TT_1 rescheduling, and unsupported LocalState 2/3 remain outside it. */
+int csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
+int csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

@@ -656,6 +656,28 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.dsa_id == 7 && runner.state_index == 4u &&
               runner.action_ordinal == 0,
           "CSBWin saved TT_OPENROOM timer prepares only its selected DSA action");
+    openroom_timer.function = 10u;
+    CHECK(csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
+              &profile, &dungeon, &location, &openroom_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin saved TT_DOOR timer reaches ActivateDSA/ProcessDSATimer5 receipt");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &openroom_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin saved TT_DOOR timer prepares only its selected DSA action");
+    openroom_timer.ubyte9 = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
+              &profile, &dungeon, &location, &openroom_timer, &timer6) == 0,
+          "CSBWin TT_DOOR rejects disabled action before DSA dispatch");
+    openroom_timer.ubyte9 = 0u;
+    openroom_timer.function = 101u;
+    CHECK(csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
+              &profile, &dungeon, &location, &openroom_timer, &timer6) == 0,
+          "CSBWin parameter-message timer is not promoted to TT_DOOR");
+    openroom_timer.function = 5u;
     openroom_timer.function = 101u;
     CHECK(csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
               &profile, &dungeon, &location, &openroom_timer, &timer6) == 0,

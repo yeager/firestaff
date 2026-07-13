@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `TT_DOOR` DSA receipt: restored function-10 timers now
+  follow `Timer.cpp::ProcessTT_DOOR` through `ActivateDSA` and
+  `DSA.cpp::ProcessDSATimer5` to the existing authenticated
+  `ProcessDSATimer6` resolver. Only the source 0/1/2 action mapping, exact
+  target, and timer position may prepare the selected pure-stack runner;
+  disabled actions, parameter-message timers, `LocalState=2/3`, door-cell
+  mutation, and rescheduling remain rejected/outside this bounded route.
+  Verification: Ninja and CTest `csb_v1_phase7_verification`.
+
 - 2026-07-13 CSBWin `TT_FALSEWALL` DSA receipt: restored function-7 timers
   now bind their original target and SET/CLEAR/TOGGLE action through
   `ProcessDSATimer7` to the existing authenticated `ProcessDSATimer6`
