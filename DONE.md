@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_DESSAGE DSA tick bridge: verified
+  function-102 queue entries now reach the source `ProcessTT_OPENROOM`
+  zero-parameter type-47 DSA receipt through the restored live timer queue,
+  retaining exact queue-slot, timer, event, square, and actuator checks. No
+  broad function range is admitted; unsupported actions, text/cell effects,
+  non-DSA actuator effects, and malformed saved identity remain blocked.
+  Source: CSBWin `CSBCode.cpp:6430-6438`, `Timer.cpp:1641-1711`,
+  `DSA.cpp:5329-5441`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_DOOR DSA tick bridge: verified function-10
   queue entries now reach the source-ordered ActivateDSA receipt through the
   restored live timer queue, retaining the exact queue-slot, timer, event,
