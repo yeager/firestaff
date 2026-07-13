@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_24` follow-up: exact saved-object removal
+  and free are live only for a validated source Thing chain. Timer-owned
+  clouds, source sound/party effects, malformed chains, and all broader
+  object-lifetime routes remain fail-closed until their CSBWin owners exist.
+
 - 2026-07-13 CSBWin restored `TT_13` follow-up: only the exact final Vi
   Altar life stage is live. The `packedState` 2 cloud and state 1 DB10 bones,
   EXPOOL and Wings branches remain fail-closed until those original owners are

@@ -689,6 +689,36 @@ int main(void)
               (raw[92u] & 0x7fu) == 6u,
           "old-save generator timer uses CSBWin first-disabled fallback");
 
+    raw[80u] = 0x10u;
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 90u, 0xfffeu);
+    put_le16(raw, 92u, 0x012fu);
+    profile.csbwin_timers[0].function = 24u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 =
+        (uint8_t)(CSB_V1_THING_TYPE_ACTUATOR << 2);
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[62u] == 0xfeu &&
+              raw[63u] == 0xffu && raw[90u] == 0xffu && raw[91u] == 0xffu,
+          "restored TT_24 removes and frees its exact saved object");
+
+    raw[80u] = 0x10u;
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 90u, 0xfffeu);
+    put_le16(raw, 92u, 0x012fu);
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[62u] == 0x00u &&
+              raw[63u] == 0x0cu && raw[90u] == 0xfeu && raw[91u] == 0xffu,
+          "stale TT_24 receipt cannot unlink or free a saved object");
+
     profile.csbwin_timers[0].function = 53u;
     profile.csbwin_timers[0].ubyte5 = 0u;
     profile.csbwin_timers[0].ubyte6 = 0u;

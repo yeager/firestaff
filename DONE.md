@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin saved `TT_24` runtime: an authenticated timer now removes
+  only its exact `timerObj8` Thing from the saved square and writes `RNfree`
+  after a complete source-chain unlink. Invalid receipts stay inert. Source:
+  `CSBCode.cpp:6490-6502`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 Nexus Structure1F raw floor-decoration rotation receipt: complete.
   Direct floor decorations retain raw rotation-selector reuse through the DGN
   corpus, host handoff, and render plan. It is not a direction, transform,
