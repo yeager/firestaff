@@ -257,6 +257,25 @@ typedef struct {
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;
 
+/* Correlates only documented Structure1A model-index bytes with documented
+ * Structure3 block/run counts. A value larger than the count rules out a
+ * direct zero- or one-based ordinal mapping; it does not establish any other
+ * mapping or decode a record, face, vertex, mesh, texture, or pixel. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure3_payload_valid;
+    int resolved_model_reference_count;
+    int highest_model_index;
+    int structure3_block_count;
+    int structure3_nonzero_block_run_count;
+    int model_index_exceeds_block_count;
+    int model_index_exceeds_nonzero_block_run_count;
+    int direct_block_ordinal_mapping_disproven;
+    int direct_run_ordinal_mapping_disproven;
+    int face_semantics_proven;
+    int valid;
+} Nexus_V1_DgnStructure3OrdinalCorrelationReceipt;
+
 /* The runtime host consumes Structure1F only through this receipt. Direct
  * records retain their documented source cells. Structure1A-indexed records
  * may proceed beyond this provenance gate only when the parser's complete
@@ -751,6 +770,9 @@ int nexus_v1_level_structure3_model_reference_receipt(
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
+int nexus_v1_level_structure3_ordinal_correlation_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);

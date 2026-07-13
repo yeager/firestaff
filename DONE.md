@@ -18,6 +18,16 @@
   C73:1972-1974. Verification: Ninja and CTest
   `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 Nexus Structure3 ordinal-correlation receipt: complete
+  Structure1A owner/model references are now compared only with the documented
+  Structure3 block and nonempty-run counts. Any model index beyond a count
+  rules out a direct zero- or one-based ordinal mapping, which prevents that
+  tempting but unsupported shortcut. No alternative mapping, record, face,
+  vertex, mesh, texture, palette, or pixel semantics is inferred; rendering
+  remains fail-closed at face semantics. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored TT_12 hide-damage timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the saved
   hide-damage event index through the live queue. Malformed function-12
