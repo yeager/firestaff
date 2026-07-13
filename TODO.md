@@ -1244,6 +1244,8 @@ and real community-save corpus round-trip evidence.
     parts may be checksum-valid, so this is separate from byte corruption.
     Remaining work is authentic community-save coverage, not duplicate-event
     normalization.
+    The runtime entry regression additionally proves its candidate world,
+    queue, and caller receipt all remain unchanged on this rejection.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.

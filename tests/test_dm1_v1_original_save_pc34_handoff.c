@@ -1631,6 +1631,24 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
     CHECK(report.original_game_time == 999u,
           "rejected byte handoff leaves receipt untouched");
 
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 1u),
+          "duplicate C4 runtime fixture remains checksum-authenticated");
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "duplicate C4 reference rejects the complete runtime handoff");
+    CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
+          world.party.mapIndex == 6,
+          "duplicate C4 reference leaves live world untouched");
+    CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
+          "duplicate C4 reference leaves live queue untouched");
+    CHECK(report.original_game_time == 999u,
+          "duplicate C4 reference leaves caller receipt untouched");
+
     make_temp_save_path(path, sizeof(path));
     snprintf(backup_path, sizeof(backup_path), "%s.bak", path);
     remove(path);

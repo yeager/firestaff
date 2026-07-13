@@ -38,9 +38,10 @@
 - 2026-07-13 DM1 PC34 duplicate C4 rejection: checksum-valid external C4
   TIMELINE bytes now fail closed when two active heap slots name the same
   EVENT. The handoff receipt retains the first slot, duplicate slot, and raw
-  event index while staged party/timeline state rolls back. Source: ReDMCSB
-  `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0238/F0651. Verification:
-  focused native-PC34 handoff CTest.
+  event index while staged party/timeline state rolls back. The runtime entry
+  regression also keeps the caller's world, queue, and prior receipt intact.
+  Source: ReDMCSB `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0238/F0651.
+  Verification: focused native-PC34 handoff CTest.
 
 - 2026-07-13 DM1 PC34 corpus failure provenance: rejected external-envelope
   rows now retain the F0435 staging result, importer error, and count of
