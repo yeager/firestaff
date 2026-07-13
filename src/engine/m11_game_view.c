@@ -6296,6 +6296,12 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
         int championIndex = advancePlan.expiredChampionIndex[i];
         int actionIndex = advancePlan.expiredActionIndex[i];
         if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) continue;
+        /* The F0407 SWING path owns an authenticated F0330 C11 receipt.
+         * Its host lock is only a gate while that event is pending: it must
+         * never synthesize TIMELINE.C F0253 if F0330 moved C11 behind an
+         * earlier owner.  Missing/malformed C11 therefore remains locked
+         * rather than releasing defense/action state from a local timeout. */
+        if (actionIndex == DM1_ACTION_SWING) continue;
         state->actionDisabledTicks[championIndex] = 0u;
         if (championIndex < state->world.party.championCount &&
             actionIndex >= 0 && actionIndex < 44) {
