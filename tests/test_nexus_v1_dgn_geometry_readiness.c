@@ -112,15 +112,6 @@ static void set_post_grid_0x30_ref(uint8_t *structure1,
     cell[6] = (uint8_t)((cell[6] & 0x0fU) | ((ref & 0x0f) << 4));
 }
 
-static void set_structure1a_owner_ref(uint8_t *structure1,
-                                       int structure1b_rel,
-                                       int x, int y, int ref) {
-    uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
-    cell[4] = (uint8_t)(cell[4] | 0x80U);
-    cell[5] = (uint8_t)((ref >> 4) & 0xff);
-    cell[6] = (uint8_t)((cell[6] & 0x0fU) | ((ref & 0x0f) << 4));
-}
-
 static void set_floor_flags(uint8_t *structure1, int structure1b_rel,
                             int x, int y, uint16_t flags) {
     uint8_t *cell = cell_at(structure1, structure1b_rel, x, y);
@@ -585,7 +576,7 @@ static void test_structure1c_record_table_bounds(void) {
 
 static void test_structure1f_semantics_and_bounds(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
-    const int structure1b_rel = 0x200;
+    const int structure1b_rel = 0x40;
     uint8_t *structure1;
     Nexus_V1_DgnStructure1Layout layout;
     Nexus_V1_DgnGeometryInfo info;
@@ -593,24 +584,11 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_DgnStructure1FSpatialReceipt spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
-    Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
           "Structure1F fixture builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
-    wb32(structure1 + 0x0c, 9U);
-    for (int index = 0; index < 9; ++index) {
-        structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
-            (uint8_t)(0x20 + index);
-    }
-    set_structure1a_owner_ref(structure1, structure1b_rel, 10, 10, 0);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 11, 10, 3);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 12, 10, 4);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 13, 10, 5);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 14, 10, 6);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 15, 10, 7);
-    set_structure1a_owner_ref(structure1, structure1b_rel, 16, 10, 8);
     build_structure1f_fixture(structure1, structure1b_rel);
     CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
           layout.structure1f.valid && layout.structure1f.relative_offset ==
@@ -657,27 +635,6 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure1a_boundary.duplicate_index_count == 1 &&
           structure1a_boundary.highest_index == 8U,
           "Structure1A indexes reach the host boundary as raw provenance only");
-    CHECK(nexus_v1_level_structure1a_relation_receipt(&level,
-                                                       &structure1a_relation) == 0 &&
-          structure1a_relation.table_valid &&
-          structure1a_relation.table_entry_count == 9 &&
-          structure1a_relation.structure1f_bound_entry_count == 8 &&
-          structure1a_relation.resolved_entry_count == 8 &&
-          structure1a_relation.complete &&
-          level.structure1f_entries[7].structure1a_relation_valid &&
-          level.structure1f_entries[7].structure1a_owner_x == 11 &&
-          level.structure1f_entries[7].structure1a_owner_y == 10 &&
-          level.structure1f_entries[7].structure1a_structure3_model_index == 0x23,
-          "Structure1F references resolve only through unique Structure1B owners");
-    level.structure1f_entries[7].structure1a_index = 9U;
-    level.structure1f_entries[7].structure1a_relation_valid = 0;
-    CHECK(nexus_v1_level_structure1a_relation_receipt(&level,
-                                                       &structure1a_relation) == 0 &&
-          !structure1a_relation.complete &&
-          structure1a_relation.out_of_range_index_count == 1,
-          "out-of-range Structure1F references remain fail-closed");
-    level.structure1f_entries[7].structure1a_index = 3U;
-    level.structure1f_entries[7].structure1a_relation_valid = 1;
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure1f_valid && handoff.structure1f_total_entry_count == 14 &&
           handoff.structure1f_typed_entry_count == level.structure1f_entry_count &&
@@ -687,8 +644,6 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1a_boundary.valid &&
           handoff.structure1a_boundary.entry_count == 8 &&
           handoff.structure1a_boundary.duplicate_index_count == 1 &&
-          handoff.structure1a_relation.complete &&
-          handoff.structure1a_relation.resolved_entry_count == 8 &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==

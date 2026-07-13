@@ -1247,56 +1247,6 @@ int nexus_v1_level_structure1a_boundary_receipt(
     return 0;
 }
 
-int nexus_v1_level_structure1a_relation_receipt(
-    const Nexus_V1_Level *level,
-    Nexus_V1_DgnStructure1ARelationReceipt *out_receipt)
-{
-    Nexus_V1_DgnStructure1ARelationReceipt receipt;
-    int entry;
-
-    if (!out_receipt) return -1;
-    memset(&receipt, 0, sizeof(receipt));
-    if (!level || !level->geometry_info.structure1f_valid) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    receipt.table_entry_count = level->structure1a_model_count;
-    receipt.table_valid = level->structure1a_table_valid &&
-        receipt.table_entry_count >= 0 &&
-        receipt.table_entry_count <= NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES;
-    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
-        const Nexus_V1_DgnStructure1FEntry *record =
-            &level->structure1f_entries[entry];
-        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) continue;
-        ++receipt.structure1f_bound_entry_count;
-        if (!receipt.table_valid ||
-            record->structure1a_index >= (uint16_t)receipt.table_entry_count) {
-            ++receipt.out_of_range_index_count;
-        } else if (record->structure1a_relation_valid) {
-            ++receipt.resolved_entry_count;
-        } else {
-            int x;
-            int y;
-            int owners = 0;
-            for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
-                for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
-                    if (level->structure1a_owner_ref_valid[y][x] &&
-                        level->structure1a_owner_refs[y][x] ==
-                            record->structure1a_index) {
-                        ++owners;
-                    }
-                }
-            }
-            if (owners == 0) ++receipt.missing_owner_entry_count;
-            else ++receipt.ambiguous_owner_entry_count;
-        }
-    }
-    receipt.complete = receipt.table_valid &&
-        receipt.structure1f_bound_entry_count == receipt.resolved_entry_count;
-    *out_receipt = receipt;
-    return 0;
-}
-
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt)
@@ -1318,8 +1268,6 @@ int nexus_v1_level_dgn_structure1_host_provenance_receipt(
         level, &receipt.structure1f_spatial);
     (void)nexus_v1_level_structure1a_boundary_receipt(
         level, &receipt.structure1a_boundary);
-    (void)nexus_v1_level_structure1a_relation_receipt(
-        level, &receipt.structure1a_relation);
 
     if (!receipt.structure1f_declared) {
         receipt.status = NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_READY_ABSENT;
@@ -1329,9 +1277,8 @@ int nexus_v1_level_dgn_structure1_host_provenance_receipt(
                !receipt.structure1a_boundary.valid) {
         receipt.status =
             NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1F_LAYOUT;
-    } else if ((receipt.structure1f_spatial.structure1a_bound_entry_count > 0 ||
-                receipt.structure1a_boundary.entry_count > 0) &&
-               !receipt.structure1a_relation.complete) {
+    } else if (receipt.structure1f_spatial.structure1a_bound_entry_count > 0 ||
+               receipt.structure1a_boundary.entry_count > 0) {
         receipt.status =
             NEXUS_V1_DGN_STRUCTURE1_HOST_PROVENANCE_BLOCKED_STRUCTURE1A_RELATION;
     } else {
