@@ -919,9 +919,15 @@ static int f0407_projectile_base_for_action(int actionIndex,
             return 1;
         case DM1_ACTION_INVOKE:
             family = invokeFamilyRoll;
-            if (family < 0) family = 0;
-            if (family >= 6) family %= 6;
-            *outKinetic = (invokeEnergyRoll < 0 ? 0 : invokeEnergyRoll) + 100;
+            /* ReDMCSB MENU.C F0407:1480-1493 uses exactly
+             * M003_RANDOM(128) + 100, followed by M002_RANDOM(6).
+             * Reject an unbounded runtime request instead of folding it into
+             * a different spell family or allowing non-source kinetic energy. */
+            if (invokeEnergyRoll < 0 || invokeEnergyRoll >= 128 ||
+                family < 0 || family >= 6) {
+                return 0;
+            }
+            *outKinetic = invokeEnergyRoll + 100;
             switch (family) {
                 case 0:
                     *outSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
