@@ -512,6 +512,10 @@ The trace patch now emits one raw `stage2_system_card_call` and matching
 the target, HuC6280 `A/X/Y/P`, and `$fc/$fd/$fe/$f8/$fa/$fb/$ff` registers. It
 deliberately still does not label a call as a CD read or assign any data role
 until a live post-call sector/result relationship is observed.
+The authenticated US-CUE capture observes call/return register tuples
+`40cd: A=01 X=03 Y=03 P=00 -> 40d0: A=00 X=01 Y=ff P=03` and
+`40a4: A=01 X=03 Y=ff P=01 -> 40a7: A=78 X=00 Y=03 P=00`. The currently
+sampled zero-page bytes are not assigned loader semantics by this receipt.
 
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
