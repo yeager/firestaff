@@ -669,6 +669,13 @@ before it consumes a real startup bitmap route. It binds the trace span and
 the complete raw bitmap-route receipt to the same media identity, while still
 blocking palette output and record-to-bitmap semantics. A positive authentic
 three-artifact run is still required; absent inputs skip without fallback.
+2026-07-13 local-capture intake update: the same probe can now discover the
+raw 2352-byte Track 02, System Card, and a variant-matched Mednafen trace by
+hash beneath an explicit `THERON_CAPTURE_ROOT`. Known 2048-byte Track 02 ISO
+images are counted only as diagnostics and are never promoted to raw media.
+The locally inspected US/JP corpus contains two such ISO candidates but no
+authenticated raw-Track02/System-Card/trace triple, so the positive bitmap
+record route remains legitimately skipped and open.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no

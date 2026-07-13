@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron hash-gated local capture-artifact intake: the raw
+  bitmap-chain probe can now discover an authentic 2352-byte Track 02, exact
+  System Card, and variant-matched Mednafen loader trace beneath an explicit
+  `THERON_CAPTURE_ROOT`, all by hash and trace import rather than filename.
+  Recognized 2048-byte ISO candidates are diagnostic-only and cannot be
+  converted or promoted into raw Track 02 input. The local US/JP corpus
+  reported two recognized ISO candidates and correctly skipped because the
+  raw Track 02/System Card/trace triple is absent. Verification: direct
+  no-root and local-corpus probe runs passed with fail-closed skips; focused
+  CTest `theron_v1_raw_media_cd_read_bitmap_chain_probe` passed 1/1.
+
 - ✅ 2026-07-13 Theron Track 02 runtime bitmap-chain gate: the opt-in raw
   media probe now requires one authenticated Mednafen loader trace alongside
   the original Track 02 and System Card before consuming a real startup
