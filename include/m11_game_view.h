@@ -1647,6 +1647,7 @@ int m11_point_in_source_box(int px, int py, const int box[4]);
  * final destination geometry. */
 typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int valid;
+    int floorItemLane;
     int graphicsId;
     int transparentColor;
     int usesF0791Blit;
@@ -1670,6 +1671,11 @@ int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
 /* Test probes for the actual F0115 item and projectile blitters. They do not
  * synthesize a receipt; callers must provide an M11 asset-loader cache slot. */
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
