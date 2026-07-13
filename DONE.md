@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw floor-sensor destination receipt: complete.
+  Direct floor sensors retain raw destination tuple reuse through the DGN
+  corpus, host handoff, and render plan. It is not promoted to a cell,
+  orientation, trigger, route, teleport, or command. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 DM1 original PC34 C2 door-destruction handoff: typed receipt binds B.Location to F0243 and exports only validated source state. Source: ReDMCSB `TIMELINE.C` F0243:872-882.
 
 - 2026-07-13 Nexus Structure1F raw floor-sensor control-selector receipt:

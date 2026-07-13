@@ -398,6 +398,24 @@ typedef struct {
     int control_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt;
 
+/* Direct floor-sensor records retain raw three-byte destination tuples. The
+ * tuple remains provenance only, never a cell, orientation, trigger, route,
+ * teleport, or runtime command without original Saturn semantic evidence. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_sensor_entry_count;
+    int resolved_destination_count;
+    int unique_destination_count;
+    int duplicate_destination_count;
+    int zero_destination_count;
+    int nonzero_destination_count;
+    uint8_t highest_destination_x;
+    uint8_t highest_destination_y;
+    uint8_t highest_destination_orientation;
+    int complete;
+    int destination_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -832,6 +850,8 @@ typedef struct {
         structure1f_alcove_payload_selectors;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
         structure1f_floor_sensor_control_selectors;
+    Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
+        structure1f_floor_sensor_destinations;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -938,6 +958,8 @@ typedef struct {
         structure1f_alcove_payload_selectors;
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
         structure1f_floor_sensor_control_selectors;
+    Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
+        structure1f_floor_sensor_destinations;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -1021,6 +1043,9 @@ int nexus_v1_level_structure1f_alcove_payload_selector_receipt(
 int nexus_v1_level_structure1f_floor_sensor_control_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_sensor_destination_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
