@@ -524,6 +524,24 @@ static void run_real_launcher_handoff_if_available(void) {
                             count_nonzero_pixels_in_rows(framebuffer, 169,
                                                          200) > 0,
                         "M11 CSB clears C040 once into same-session neutral live HUD");
+            {
+                unsigned int clear_tick = session->source_tick;
+                unsigned int saved_generation = session->generation;
+                session->generation = saved_generation + 1u;
+                expect_true(M11_GameView_HandleInput(
+                                &view, M12_MENU_INPUT_TURN_RIGHT) ==
+                                M11_GAME_INPUT_IGNORED &&
+                                session->source_tick == clear_tick &&
+                                view.csbState.c040_clear_live_hud_ready,
+                            "M11 CSB rejects a stale terminal session before first post-C040 turn");
+                session->generation = saved_generation;
+                expect_true(M11_GameView_HandleInput(
+                                &view, M12_MENU_INPUT_TURN_RIGHT) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                session->source_tick == clear_tick + 1u &&
+                                !view.csbState.c040_clear_live_hud_ready,
+                            "M11 CSB first post-C040 turn consumes the same terminal session tick");
+            }
         }
     }
     {

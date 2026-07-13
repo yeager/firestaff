@@ -1690,6 +1690,10 @@ static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
     state->csbState.c040_panel_session_active = 0;
     state->csbState.c040_panel_source_tick = 0u;
     state->csbState.c040_panel_session_generation = 0u;
+    state->csbState.c040_clear_live_hud_ready = 1;
+    state->csbState.c040_clear_source_tick = live_hud.source_tick;
+    state->csbState.c040_clear_session_generation =
+        live_hud.session_generation;
     return 1;
 }
 
@@ -34743,6 +34747,81 @@ static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* 
     return M11_GAME_INPUT_REDRAW;
 }
 
+static CSB_V1_StartupSessionMovementCommand_PC34
+m11_csb_first_post_c040_movement_command(M12_MenuInput input)
+{
+    switch (input) {
+    case M12_MENU_INPUT_UP:
+        return CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34;
+    case M12_MENU_INPUT_DOWN:
+        return CSB_V1_STARTUP_SESSION_MOVEMENT_BACKWARD_PC34;
+    case M12_MENU_INPUT_TURN_LEFT:
+        return CSB_V1_STARTUP_SESSION_MOVEMENT_TURN_LEFT_PC34;
+    case M12_MENU_INPUT_TURN_RIGHT:
+        return CSB_V1_STARTUP_SESSION_MOVEMENT_TURN_RIGHT_PC34;
+    default:
+        return CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34;
+    }
+}
+
+static int m11_csb_preflight_first_post_c040_input(
+    M11_GameViewState *state,
+    M12_MenuInput input,
+    unsigned int *out_source_tick)
+{
+    CSB_V1_StartupSessionMovementCommand_PC34 command;
+    CSB_V1_StartupRuntimeAssetSession_PC34 candidate;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
+    CSB_V1_StartupSessionInputReceipt_PC34 input_receipt;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    unsigned int next_tick;
+
+    if (out_source_tick) {
+        *out_source_tick = 0u;
+    }
+    if (!state || !state->csbState.c040_clear_live_hud_ready) {
+        return 1;
+    }
+    command = m11_csb_first_post_c040_movement_command(input);
+    if (command == CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34 ||
+        !state->csbStartupRuntimeAssetSession) {
+        return command == CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34;
+    }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    if (session->generation !=
+            state->csbState.c040_clear_session_generation ||
+        session->source_tick != state->csbState.c040_clear_source_tick ||
+        state->csbState.c040_clear_source_tick == (unsigned int)-1) {
+        return 0;
+    }
+    next_tick = state->csbState.c040_clear_source_tick + 1u;
+    candidate = *session;
+    candidate.source_tick = next_tick;
+    memset(&live_hud, 0, sizeof(live_hud));
+    live_hud.valid = 1;
+    live_hud.c040_cleared_once = 1;
+    live_hud.c017_live_base_only = 1;
+    live_hud.c017_source_asset_id = 17;
+    live_hud.source_tick = state->csbState.c040_clear_source_tick;
+    live_hud.session_generation =
+        state->csbState.c040_clear_session_generation;
+    /* ReDMCSB COMMAND.C F0361/F0380 dispatches the first movement only
+     * after PANEL.C F0346/F0347 has restored C017.  CSBWin consumes the
+     * same post-panel command stream; validate it before the bridge can
+     * mutate the source runtime. */
+    if (!csb_v1_startup_session_first_input_receipt_pc34(
+            &candidate, &live_hud, command, next_tick,
+            candidate.generation, &input_receipt) ||
+        !input_receipt.valid || !input_receipt.first_post_c040_input) {
+        return 0;
+    }
+    if (out_source_tick) {
+        *out_source_tick = next_tick;
+    }
+    return 1;
+}
+
 static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* state,
                                                           M12_MenuInput input) {
     int championIndex = -1;
@@ -34802,6 +34881,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        unsigned int first_post_c040_tick = 0u;
         if (!state->csbBootProfile) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -34813,6 +34893,11 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
          * F0365/F0284; C003..C006 movement commands are consumed and
          * reported by the bridge until the dungeon-aware movement boundary
          * is widened separately. */
+        if (!m11_csb_preflight_first_post_c040_input(
+                state, input, &first_post_c040_tick)) {
+            m11_set_status(state, "CSB", "STALE HUD SESSION");
+            return M11_GAME_INPUT_IGNORED;
+        }
         memset(&bridge, 0, sizeof(bridge));
         if (CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
                 state->csbBootProfile,
@@ -34827,6 +34912,15 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
             return M11_GAME_INPUT_IGNORED;
         }
         if (bridge.mapped) {
+            if (first_post_c040_tick != 0u) {
+                CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+                    (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                        state->csbStartupRuntimeAssetSession;
+                session->source_tick = first_post_c040_tick;
+                state->csbState.c040_clear_live_hud_ready = 0;
+                state->csbState.c040_clear_source_tick = 0u;
+                state->csbState.c040_clear_session_generation = 0u;
+            }
             m11_decrement_action_disabled_ticks(state);
             m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
             if (bridge.is_turn && bridge.runtime_state_changed) {

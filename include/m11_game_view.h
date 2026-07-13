@@ -854,6 +854,9 @@ typedef struct {
         int c040_panel_session_active;
         unsigned int c040_panel_source_tick;
         unsigned int c040_panel_session_generation;
+        int c040_clear_live_hud_ready;
+        unsigned int c040_clear_source_tick;
+        unsigned int c040_clear_session_generation;
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
