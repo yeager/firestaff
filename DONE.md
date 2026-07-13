@@ -10,6 +10,17 @@
   `CSBCode.cpp:6457-6466`, `Timer.cpp:2591-2642`. Verification: Ninja and
   CTest `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 skproject weather IMG3/local-palette evidence gate:
+  `c_weather.cpp` environment commands now require the exact same GRAPHICSSET
+  ENVIRONMENT IMG3's `QUERY_GDAT_IMAGE_LOCALPAL` tail before the command is
+  considered material-valid. The receipt retains the 16-byte palette and its
+  hash, while the viewport remains intentionally no-draw because the live
+  destination clip/handoff is not yet source-proven. The focused fixture proves
+  matching command/image/palette evidence and rejects a truncated palette tail.
+  Verification: Ninja built `test_dm2_v1_weather_gdat_receipt` and
+  `test_dm2_v1_weather_no_synthetic_overlay`; matching CTest passed 2/2;
+   `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored TT_BASH_DOOR timer bridge: verified function-2
   queue entries now alter only their exact loaded byte-map door receipt after
   queue-slot, timer, and full event identity validation. The shared DM1

@@ -57,13 +57,17 @@ int main(void)
         uint16_t width = (uint16_t)(32 + i);
         uint16_t height = (uint16_t)(48 + i);
         offsets[6 + i] = (uint32_t)cursor;
-        sizes[6 + i] = 10u;
+        sizes[6 + i] = 26u;
         raw[cursor + 0u] = (uint8_t)width;
         raw[cursor + 1u] = (uint8_t)(width >> 8);
         raw[cursor + 2u] = (uint8_t)height;
         raw[cursor + 3u] = (uint8_t)(height >> 8);
         raw[cursor + 4u] = 4u;
-        cursor += 10u;
+        for (int palette = 0; palette < 16; ++palette) {
+            raw[cursor + 10u + (size_t)palette] =
+                (uint8_t)(0x20u + (unsigned int)i + (unsigned int)palette);
+        }
+        cursor += 26u;
         entries[6 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[6 + i].cls2 = 3u;
         entries[6 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -117,8 +121,12 @@ int main(void)
               receipt.commands[3].query_metadata.graphicsset_offset_present &&
               receipt.commands[3].query_metadata.image_offset_present &&
               receipt.commands[3].query_metadata.query_offset_x == 1 &&
-              receipt.commands[3].query_metadata.query_offset_y == 0,
-          "weather receipt binds original CMDSTR, image dimensions and offsets");
+              receipt.commands[3].query_metadata.query_offset_y == 0 &&
+              receipt.commands[3].local_palette_valid &&
+              receipt.commands[3].local_palette16[0] == 0x23u &&
+              receipt.commands[3].local_palette16[15] == 0x32u &&
+              receipt.commands[3].local_palette_hash != 0u,
+          "weather receipt binds CMDSTR, IMG3 bounds, and local palette");
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6cu,
                                                &command) &&
               command.raw_text == raw + offsets[5] &&
@@ -220,6 +228,14 @@ int main(void)
                                          &draw_plan),
           "weather draw plan refuses an unverified image material");
     receipt.commands[3].material_valid = 1;
+
+    sizes[9] = 10u;
+    check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
+                                               &command) &&
+              command.image_present && command.query_metadata_valid &&
+              !command.local_palette_valid && !command.material_valid,
+          "weather command rejects an IMG3 without its local palette tail");
+    sizes[9] = 26u;
 
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     check(!dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt),
