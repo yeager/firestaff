@@ -17085,6 +17085,10 @@ typedef struct M11_ViewportCell {
     int doorOrnamentOrdinal;
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
+    /* Set only after the live F0142/F0115 record has resolved its exact
+     * PC34 material.  A live object Slot with unavailable thing data must
+     * not inherit an older spell graphic or a procedural marker. */
+    int firstProjectileMaterialReady;
     int firstProjectileSubtype;
     int firstProjectileUsesObjectMaterial;
     int firstProjectileObjectAspectIndex;
@@ -17140,6 +17144,7 @@ static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
 static int m11_viewport_cell_has_renderable_projectile(
     const M11_ViewportCell* cell) {
     return cell &&
+           cell->firstProjectileMaterialReady &&
            dm1_v1_projectile_renderable_pc34(cell->summary.projectiles,
                                              cell->firstProjectileGfxIndex);
 }
@@ -17265,6 +17270,20 @@ static int m11_build_dm1_viewport_materialization_decision(
         int thingType = -1;
         int thingSubtype = -1;
         int weaponProjectileAspectOrdinal = 0;
+        int hasAssociatedThing;
+        int associatedThingResolved;
+
+        /* F0142 either owns a spell aspect (THING_NONE) or transfers the
+         * associated object to G0209.  Reset every previous sample before
+         * resolving it: a broken PC34 object record must be a no-draw, not a
+         * stale M613 spell/projectile sprite.  ReDMCSB DUNVIEW.C F0115:
+         * 5891-5900 takes the positive object-aspect branch directly to the
+         * C2900 object blitter. */
+        cell->firstProjectileGfxIndex = -1;
+        cell->firstProjectileMaterialReady = 0;
+        cell->firstProjectileUsesObjectMaterial = 0;
+        cell->firstProjectileObjectAspectIndex = -1;
+        cell->firstProjectileFlipFlags = 0;
         cell->summary.projectiles = outDecision->liveProjectileCount;
         cell->summary.total += outDecision->liveProjectileCount;
         cell->firstProjectileSubtype = outDecision->liveProjectileSubtype;
@@ -17272,10 +17291,14 @@ static int m11_build_dm1_viewport_materialization_decision(
             (outDecision->liveProjectileDirection - state->world.party.direction) & 3;
         cell->firstProjectileCell =
             (outDecision->liveProjectileCell - state->world.party.direction) & 3;
-        (void)m11_projectile_associated_thing_material(
+        hasAssociatedThing =
+            outDecision->liveProjectileAssociatedThing != THING_NONE &&
+            outDecision->liveProjectileAssociatedThing != THING_ENDOFLIST;
+        associatedThingResolved = m11_projectile_associated_thing_material(
             state, outDecision->liveProjectileAssociatedThing,
             &thingType, &thingSubtype, &weaponProjectileAspectOrdinal);
-        if (dm1_v1_projectile_material_resolve_pc34(
+        if ((!hasAssociatedThing || associatedThingResolved) &&
+            dm1_v1_projectile_material_resolve_pc34(
                 outDecision->liveProjectileSubtype, thingType, thingSubtype,
                 weaponProjectileAspectOrdinal, &material)) {
             cell->firstProjectileGfxIndex = material.graphic_index;
@@ -17288,6 +17311,7 @@ static int m11_build_dm1_viewport_materialization_decision(
                     material.aspect_index, cell->firstProjectileRelDir,
                     cell->firstProjectileCell, cell->mapX, cell->mapY);
             }
+            cell->firstProjectileMaterialReady = 1;
         }
     }
     if (outDecision->liveExplosionCount > 0) {
@@ -18144,11 +18168,14 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
             !m11_draw_viewport_projectile_sprite(
                 g_drawState, framebuffer, framebufferWidth, framebufferHeight,
                 x, y, w, h, cell, depthIndex, sourceZoneRow)) {
-            /* Fallback: cyan crosshair */
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+            /* PC34 F0115 has no marker substitute for an unavailable source
+             * bitmap.  Retain the cue solely for asset-free fixtures. */
+            if (!g_drawState || !g_drawState->assetsAvailable) {
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
+                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
+            }
         }
     }
     /* Teleporter fields are source bitmap overlays, not procedural cue art.
@@ -18546,6 +18573,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.championPortraitWallCell = -1;
     cell.doorOrnamentOrdinal = -1;
     cell.firstProjectileGfxIndex = -1;
+    cell.firstProjectileMaterialReady = 0;
     cell.firstProjectileSubtype = -1;
     cell.firstProjectileRelDir = -1;
     cell.firstProjectileCell = -1;
@@ -24356,12 +24384,14 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                     g_drawState, framebuffer, framebufferWidth, framebufferHeight,
                     paneX + 1, projY, paneW - 2, projArea, cell,
                     depthIndex + 1, sourceZoneRow)) {
-                int pcx = paneX + paneW / 2;
-                int pcy = paneY + paneH / 2;
-                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                               pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
-                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                               pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+                if (!g_drawState || !g_drawState->assetsAvailable) {
+                    int pcx = paneX + paneW / 2;
+                    int pcy = paneY + paneH / 2;
+                    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                                   pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
+                    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                                   pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+                }
             }
         }
         if (m11_viewport_cell_has_renderable_explosion(cell) &&
@@ -24525,12 +24555,14 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                         g_drawState, framebuffer, framebufferWidth,
                         framebufferHeight, paneX + 1, projY, paneW - 2,
                         projArea, cell, depth + 1, sourceZoneRow)) {
-                    int pcx = paneX + paneW / 2;
-                    int pcy = paneY + paneH / 2;
-                    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                                   pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
-                    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                                   pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+                    if (!g_drawState || !g_drawState->assetsAvailable) {
+                        int pcx = paneX + paneW / 2;
+                        int pcy = paneY + paneH / 2;
+                        m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                                       pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
+                        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                                       pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
+                    }
                 }
             }
 
@@ -24574,12 +24606,14 @@ static void m11_draw_dm1_d4_far_projectile_pass(const M11_GameViewState* state,
                 g_drawState, framebuffer, framebufferWidth, framebufferHeight,
                 M11_VIEWPORT_X + x, M11_VIEWPORT_Y + y, w, h, &cell, 3,
                 dm1_viewport_3d_f0115_c2500_c2900_row(4, kRelSides[i]))) {
-            int cx = M11_VIEWPORT_X + x + w / 2;
-            int cy = M11_VIEWPORT_Y + y + h / 2;
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx - 1, cx + 1, cy, M11_COLOR_LIGHT_CYAN);
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           cx, cy - 1, cy + 1, M11_COLOR_LIGHT_CYAN);
+            if (!g_drawState || !g_drawState->assetsAvailable) {
+                int cx = M11_VIEWPORT_X + x + w / 2;
+                int cy = M11_VIEWPORT_Y + y + h / 2;
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx - 1, cx + 1, cy, M11_COLOR_LIGHT_CYAN);
+                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                               cx, cy - 1, cy + 1, M11_COLOR_LIGHT_CYAN);
+            }
         }
     }
 }

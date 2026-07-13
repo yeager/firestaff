@@ -49,6 +49,15 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 live projectile material fail-closed: M11 now resets
+  each live F0142/F0115 sample before resolving it and requires a decoded
+  non-empty PC34 `Projectile.Slot` before entering the G0209/M612 C2900
+  object route. An absent object record cannot inherit M613 spell art, and
+  asset-backed F0115 lanes do not draw cyan marker fallbacks. An empty Slot
+  remains the original native M613 spell-projectile route. The focused
+  regression covers unresolved carried material and native spell material;
+  Ninja, CTest, and the direct material test pass.
+
 - 2026-07-13 DM1 F0115 D0C explosion material consumption: M11 now resolves
   ReDMCSB DUNVIEW.C F0115:6038-6074's original PC34 M636 small/medium/large
   pattern graphics (489..497) for the D0C deferred explosion pass before the
