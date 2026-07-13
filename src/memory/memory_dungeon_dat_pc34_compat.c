@@ -1683,3 +1683,16 @@ void F0506_DUNGEON_FreeTextTable_Compat(
         }
         table->count = 0;
 }
+unsigned short F0512_DUNGEON_GetThingNext_Compat(
+    const struct DungeonThings_Compat* things, unsigned short thing)
+{
+    int type;
+    int index;
+    const unsigned char* raw;
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) return THING_ENDOFLIST;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (type < 0 || type >= DUNGEON_THING_TYPE_COUNT || !things->rawThingData[type] || index < 0 || index >= things->thingCounts[type]) return THING_ENDOFLIST;
+    raw = things->rawThingData[type] + index * s_thingDataByteCount[type];
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
