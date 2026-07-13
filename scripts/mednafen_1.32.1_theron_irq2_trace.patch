@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1150 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1166 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -1073,6 +1073,22 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TraceDynamicReadPending = false;
 +  TheronIrq2TraceDynamicF5AfterRead =
 +   CurGame->Debugger->MemPeek(0x00f5, 1, true, true) & 0xff;
++  {
++   uint32 destination_hash = 2166136261U;
++   unsigned int destination_offset;
++
++   /* The System Card has returned from the authenticated dynamic CD_READ.
++    * This bounded RAM receipt proves the original transfer reached $3800;
++    * it intentionally does not infer any later VCE/VDC source relation. */
++   for(destination_offset = 0; destination_offset < 32; destination_offset++)
++   {
++    destination_hash ^= CurGame->Debugger->MemPeek(0x3800 + destination_offset,
++                                                    1, true, true) & 0xff;
++    destination_hash *= 16777619U;
++   }
++   TheronIrq2Trace->print_format("dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=%08x\\n",
++                                 destination_hash);
++  }
 +  FlushTheronIrq2Trace();
 + }
 + if(logical_pc == 0xe736 && TheronIrq2TraceDynamicReadReturnSeen &&

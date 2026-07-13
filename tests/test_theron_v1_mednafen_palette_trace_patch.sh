@@ -15,6 +15,12 @@ if ! grep -Fq 'dynamic_huc6260_palette_store pc=%04x physical_pc=%08x opcode=8d 
     printf 'FAIL: patch no longer records bounded, post-controller HuC6260 stores\n' >&2
     exit 1
 fi
+if ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=%08x' "$patch_file" ||
+   ! grep -Fq 'CurGame->Debugger->MemPeek(0x3800 + destination_offset' "$patch_file" ||
+   ! grep -Fq 'destination_hash *= 16777619U' "$patch_file"; then
+    printf 'FAIL: patch no longer records the bounded dynamic CD_READ RAM receipt\n' >&2
+    exit 1
+fi
 
 if [[ -z "$source_tree" || ! -d "$source_tree" ]]; then
     printf 'SKIP: MEDNAFEN_SOURCE is required for patch dry-run\n'
@@ -22,4 +28,4 @@ if [[ -z "$source_tree" || ! -d "$source_tree" ]]; then
 fi
 
 patch --dry-run --forward -p1 -d "$source_tree" < "$patch_file"
-printf 'PASS: Mednafen patch dry-runs and retains raw HuC6260 store receipts\n'
+printf 'PASS: Mednafen patch dry-runs and retains dynamic CD_READ RAM and HuC6260 store receipts\n'

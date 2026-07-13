@@ -4250,6 +4250,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   bounded dataflow from this loader's record table through one complete read
   setup to a verified VDC/VCE destination; generated rendering remains
   fail-closed meanwhile.
+- 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
+  Mednafen route now requires a 32-byte FNV-1a receipt from System Card
+  destination `$3800` immediately after the authenticated dynamic `CD_READ`
+  returns. This proves record-to-RAM transfer but does not identify a Track 02
+  source byte, decompressor, palette, VCE word, VDC transfer, level, or object
+  family. Next evidence must tie that exact destination span to a hash-verified
+  source sector and follow its bytes through one original VCE/VDC operation.
 - 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds; remaining work is real-asset gameplay traces and broader cross-route runtime evidence.
 - 🔧 Startup presentation hardening: stage/Soul Room render rows, enriched startup layout labels, and Track 02 descriptor-role receipt summaries are now test-visible; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - 🔧 2026-07-08 follow-up: Theron boot owns runtime tick/turn/move wrappers for M11 idle and in-dungeon input. Remaining boot cleanup is to move the next render/session adapter calls out of M11 and into Theron-owned facades.
