@@ -129,6 +129,14 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 PC34 SWSH command receipt: M10 now emits one verified
+  `SWSH.C` command per original source event, retaining logo-load, sound-start,
+  palette word, VBlank count/delay, and `START.PRG` termination evidence. M11
+  uses that receipt only for DM1 and fails closed if its PC34 media/event
+  contract differs, rather than deriving a generic V1 palette program or
+  cadence. ReDMCSB: `SWSH.C` lines 10-47 and 2999-3002. Verification:
+   `test_title_frontend_c001_fallback_gate_pc34_compat` against local PC34
+   `GRAPHICS.DAT` (397 checks), plus four focused startup/palette CTests.
 
 - 2026-07-13 DM1 entrance C005 credits receipt: M11 now presents credits only
   when decoded PC34 C005 pixels pass the DM1-owned F0442 receipt. The receipt

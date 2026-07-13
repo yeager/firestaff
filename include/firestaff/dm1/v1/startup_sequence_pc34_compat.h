@@ -124,6 +124,25 @@ typedef struct DM1_V1_StartupTitlePresentationCommand_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupTitlePresentationCommand_PC34;
 
+/* One source-visible SWSH.C event retained by the DM1 PC34 startup route.
+ * M11 may execute only these verified commands for DM1; it must not derive a
+ * replacement palette program or cadence from a generic V1 intro path. */
+typedef struct DM1_V1_StartupSwooshPresentationCommand_PC34 {
+    int handled;
+    unsigned int source_step;
+    unsigned int source_event_kind;
+    int load_logo_bitmap;
+    int start_sound;
+    int set_palette_color;
+    unsigned int palette_color_index;
+    unsigned int palette_color_value;
+    int wait_vblanks;
+    unsigned int vblank_count;
+    unsigned int delay_ms;
+    int run_start_program;
+    const char* source_evidence;
+} DM1_V1_StartupSwooshPresentationCommand_PC34;
+
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
     DM1_V1_STARTUP_ENTRANCE_RENDER_DUNGEON_FRAME_PC34 = 1,
@@ -1823,6 +1842,10 @@ int dm1_v1_startup_title_presentation_command_pc34(
     const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
     unsigned int source_step,
     DM1_V1_StartupTitlePresentationCommand_PC34* out_command);
+int dm1_v1_startup_swoosh_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    unsigned int source_step,
+    DM1_V1_StartupSwooshPresentationCommand_PC34* out_command);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
