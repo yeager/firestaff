@@ -3519,7 +3519,7 @@ static void test_corpus_roundtrip_proof(void)
     int written = 0;
     int i;
     int receipts_valid = 1;
-    int eligible_discoveries = 0;
+    int failed_eligible_discoveries = 0;
     int rejected_discoveries = 0;
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int rc;
@@ -3570,8 +3570,8 @@ static void test_corpus_roundtrip_proof(void)
                 discovery->save_platform == SAVEGAME_PC34_PLATFORM_PC &&
                 discovery->save_dungeon_id == SAVEGAME_PC34_DUNGEON_ID_DM &&
                 discovery->external_original && discovery->result ==
-                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                ++eligible_discoveries;
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT) {
+                ++failed_eligible_discoveries;
             }
         } else if (discovery->result ==
                        DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34 &&
@@ -3579,29 +3579,29 @@ static void test_corpus_roundtrip_proof(void)
             ++rejected_discoveries;
         }
     }
-    CHECK(eligible_discoveries == 2,
-          "eligible discovery receipts retain header bytes and results");
+    CHECK(failed_eligible_discoveries == 2,
+          "empty-subtype candidates retain explicit corpus failure receipts");
     CHECK(rejected_discoveries == 1,
           "rejected discovery receipt retains explicit reason");
     CHECK(report.pc34_candidate_count == 2, "corpus selects only PC34 files");
     CHECK(report.roundtrip_attempted_count == 2,
           "corpus roundtrips every eligible file");
-    CHECK(report.roundtrip_succeeded_count == 2,
-          "corpus roundtrips both PC34 files");
-    CHECK(report.core_state_match_count == 2,
-          "corpus preserves core state for every PC34 file");
-    CHECK(report.roundtrip_failed_count == 0,
-          "corpus has no failed PC34 roundtrip");
+    CHECK(report.roundtrip_succeeded_count == 0,
+          "corpus does not certify raw C3/C4 mismatch");
+    CHECK(report.core_state_match_count == 0,
+          "rejected corpus rows do not publish a passing core receipt");
+    CHECK(report.roundtrip_failed_count == 2,
+          "corpus records both empty-subtype candidates as failed");
     CHECK(report.receipt_count == 2,
           "corpus retains one provenance receipt per classified PC34 envelope");
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
         if (!receipt->classified_loader_envelope || !receipt->external_original ||
             !receipt->roundtrip_attempted ||
-            receipt->roundtrip_result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
-            !receipt->core_state_matches || receipt->source_byte_count == 0u ||
-            receipt->source_hash == 0u || receipt->exported_byte_count == 0u ||
-            receipt->exported_hash == 0u || !receipt->path[0] ||
+            receipt->roundtrip_result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT ||
+            receipt->core_state_matches || receipt->source_byte_count == 0u ||
+            receipt->source_hash == 0u || receipt->exported_byte_count != 0u ||
+            receipt->exported_hash != 0u || !receipt->path[0] ||
             !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
             !receipt->c4_timeline_layout_receipt_available ||
@@ -3620,6 +3620,15 @@ static void test_corpus_roundtrip_proof(void)
                 receipt->source_c3_event_record_count * 10u ||
             receipt->exported_c3_event_byte_count !=
                 receipt->exported_c3_event_record_count * 10u ||
+            !receipt->c4_timeline_layout_receipt_available ||
+            (receipt->c3_event_byte_preservation_ok &&
+             receipt->c4_timeline_byte_preservation_ok) ||
+            receipt->source_c13_event_count != 0 ||
+            receipt->exported_c13_event_count != 0 ||
+            receipt->source_c24_event_count != 0 ||
+            receipt->exported_c24_event_count != 0 ||
+            receipt->source_c25_event_count != 0 ||
+            receipt->exported_c25_event_count != 0 ||
             receipt->source_c13_event_byte_count !=
                 (uint32_t)receipt->source_c13_event_count * 10u ||
             receipt->exported_c13_event_byte_count !=
@@ -3635,12 +3644,12 @@ static void test_corpus_roundtrip_proof(void)
             receipts_valid = 0;
         }
     }
-    CHECK(receipts_valid && report.roundtrip_hash != 0u,
-          "corpus receipts bind every external source hash to its transient export hash");
+    CHECK(receipts_valid && report.roundtrip_hash == 0u,
+          "empty-subtype corpus rows expose raw C3/C4 failure without promotion");
     CHECK(strstr(report.first_pc34_path, "first-original.bin") != NULL,
           "corpus records first eligible path");
-    CHECK(strstr(report.first_roundtrip_path, "first-original.bin") != NULL,
-          "corpus records first verified path");
+    CHECK(!report.first_roundtrip_path[0],
+          "corpus has no verified path after raw C3/C4 rejection");
     CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(NULL, &report) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "corpus helper rejects null root");

@@ -4501,6 +4501,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             SAVEGAME_PC34_MAX_FILE_SIZE,
             &exported_size,
             &roundtrip);
+        /* ReDMCSB LOADSAVE.C F0435 reads C2, C3, and C4 as independent
+         * authenticated parts. A corpus candidate must not pass merely
+         * because no C13/C24/C25 subtype gives it an additional receipt:
+         * raw C3 EVENT and C4 TIMELINE identity remain mandatory evidence. */
+        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            (!roundtrip.c3_event_layout_receipt_available ||
+             !roundtrip.c3_event_byte_preservation_ok ||
+             !roundtrip.c4_timeline_layout_receipt_available ||
+             !roundtrip.c4_timeline_byte_preservation_ok)) {
+            result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
         receipt->roundtrip_result = result;
         if (discovery) {
             discovery->result = result;
