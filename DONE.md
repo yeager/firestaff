@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron IRQ2 capture harness: restored the source-locked Trace
+  V3 and stage-two CD-read provenance modules and linked the capture harness
+  to its manifest/correlation dependencies. Verification: Ninja
+  `firestaff_theron` build passed; the harness compiles against authenticated
+  US Track 02/System Card media and rejects an invalid trace.
+
 - 2026-07-13 Theron Track 02 runtime gate: the host-runtime regression now
   requires authenticated stage-three loader bytes and verifies that a
   synthetic Track 02 fixture is blocked without media identity, state receipt,

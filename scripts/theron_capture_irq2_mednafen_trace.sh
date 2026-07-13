@@ -42,10 +42,13 @@ out=${TMPDIR:-/tmp}/firestaff_theron_irq2_trace_harness
 cc -std=c11 -Wall -Wextra -Werror -I"$repo/include" -I"$repo/src" \
   "$repo/src/theron/theron_v1_track02.c" \
   "$repo/src/theron/theron_v1_stage2_runtime_handoff.c" \
+  "$repo/src/theron/theron_v1_stage3_manifest_evidence.c" \
+  "$repo/src/theron/theron_v1_later_record_correlation.c" \
   "$repo/src/theron/theron_v1_stage3_irq2_dispatch.c" \
   "$repo/src/theron/theron_v1_stage3_mode1_header.c" \
   "$repo/src/theron/theron_v1_system_card_irq2_cd_state_gate.c" \
   "$repo/src/theron/theron_v1_irq2_live_trace_gate.c" \
+  "$repo/src/theron/theron_v1_trace_v3_schema.c" \
   "$repo/probes/theron/firestaff_theron_v1_mednafen_irq2_trace_harness.c" \
   -o "$out"
 "$out" "$track02" "$track_md5" "$syscard" "$trace"
