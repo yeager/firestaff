@@ -1238,6 +1238,12 @@ and real community-save corpus round-trip evidence.
     source parts from a later roundtrip mismatch while keeping C13/C24/C25
     evidence uncommitted. Remaining work
     is authentic community-save coverage, not a fallback import path.
+  - 2026-07-13 update: C4 TIMELINE now rejects a duplicate active EVENT
+    index before a candidate party or timeline can commit. The failure receipt
+    names both C4 slots and their repeated raw EVENT index; all five F0435
+    parts may be checksum-valid, so this is separate from byte corruption.
+    Remaining work is authentic community-save coverage, not duplicate-event
+    normalization.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.

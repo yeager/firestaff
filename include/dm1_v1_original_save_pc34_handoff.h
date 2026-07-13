@@ -110,6 +110,12 @@ typedef struct {
     int decoded_event_count;
     int decoded_timeline_index_count;
     int event_decode_truncated_count;
+    /* C4 TIMELINE is a one-index-per-live-EVENT heap in the F0238/F0433
+     * path. Retain the first duplicate relation so rejected external saves
+     * have stable source provenance without publishing a candidate world. */
+    int timeline_duplicate_first_slot;
+    int timeline_duplicate_slot;
+    int timeline_duplicate_event_index;
     uint32_t external_portrait_byte_count;
     uint32_t external_portrait_byte_offset;
     uint32_t external_portrait_fingerprint;
