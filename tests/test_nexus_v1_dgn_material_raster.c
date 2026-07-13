@@ -339,6 +339,8 @@ int main(void) {
         .structure1a_structure3_model_index = 5U;
     engine.current_level.structure1a_table_valid = 1;
     engine.current_level.structure1a_model_count = 1;
+    engine.current_level.structure1a_models[0].kind = 0x6aU;
+    engine.current_level.structure1a_models[0].structure3_model_index = 5U;
     engine.current_level.structure3_payload.declared = 1;
     engine.current_level.structure3_payload.valid = 1;
     engine.current_level.structure3_payload.block_offset = 20;
@@ -367,6 +369,14 @@ int main(void) {
                    .structure1a_structure3_topology_structure1f_binding_count == 1 &&
                !engine.dgn_material_plan.receipt
                     .structure1a_structure3_topology_structure1f_face_selector_semantics_proven &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_structure1a_row_binding_count == 1 &&
+               !engine.dgn_material_plan.receipt
+                    .structure1a_structure3_topology_structure1a_kind_semantics_proven &&
+               engine.dgn_material_plan.receipt
+                   .structure1a_structure3_topology_structure1a_model_rotation_binding_count == 1 &&
+               !engine.dgn_material_plan.receipt
+                    .structure1a_structure3_topology_structure1a_model_rotation_semantics_proven &&
                engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
                    .structure1f_binding_proven &&
                engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
@@ -379,6 +389,20 @@ int main(void) {
                    .structure1f_structure1a_index == 0U &&
                !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
                     .structure1f_face_selector_semantics_proven &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1a_kind == 0x6aU &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1a_row_binding_proven &&
+               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                    .structure1a_kind_semantics_proven &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1a_structure3_model_index == 5U &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1a_z_rotation == 0U &&
+               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                   .structure1a_model_rotation_binding_proven &&
+               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
+                    .structure1a_model_rotation_semantics_proven &&
                engine.dgn_material_plan.receipt
                    .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count ==
                        1 &&
