@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0107 non-HoC inscription host consumption: M11 now
+  publishes the completed F0168/F0107 line destinations only after it draws
+  the real PC34 M648 glyph material. The new real-data regression selects a
+  visible map-1 wall TextString, establishes its legal D1C party direction,
+  and verifies the original decoded bytes, ReDMCSB-centred line positions,
+  every opaque M648 pixel, and C10 wall-pixel preservation. No host text,
+  replacement font, synthetic bitmap, or HoC-only assumption is used.
+  Verification: focused Ninja build and CTest inscription capture suite.
+
 - 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
   transition sidecar now records the first observed host-key position and
   emulated PCE input transactions before and after it. A host event after the

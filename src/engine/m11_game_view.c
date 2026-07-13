@@ -21897,6 +21897,19 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
         material.lineCount;
     memcpy(s_m11_dm1_inscription_host_presentation_receipt.glyphBytes,
            material.glyphBytes, sizeof(material.glyphBytes));
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
+            &material.lines[line];
+        if (drawPlan->glyphCount <= 0) {
+            continue;
+        }
+        s_m11_dm1_inscription_host_presentation_receipt.lineDestinationX[line] =
+            M11_VIEWPORT_X + drawPlan->textX;
+        s_m11_dm1_inscription_host_presentation_receipt.lineDestinationY[line] =
+            M11_VIEWPORT_Y + drawPlan->textY;
+        s_m11_dm1_inscription_host_presentation_receipt.lineGlyphCount[line] =
+            drawPlan->glyphCount;
+    }
 }
 
 static int m11_build_dm1_front_champion_portrait_receipt(
