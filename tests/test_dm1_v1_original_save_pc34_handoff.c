@@ -1303,6 +1303,20 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
           "real F0433 dungeon tail passes F0435 preflight");
     CHECK(report.dungeon_tail_present && report.dungeon_tail_checksum_ok,
           "real DUNGEON.DAT tail receipt is checksum-qualified");
+    CHECK(report.dungeon_tail_fingerprint != 0u,
+          "real DUNGEON.DAT tail receipt has provenance fingerprint");
+
+    {
+        DM1OriginalSavePC34HandoffReport repeat_report;
+        memset(&repeat_report, 0, sizeof(repeat_report));
+        rc = dm1_v1_original_save_pc34_handoff_bytes(
+            bytes, (size_t)written, &imported, &repeat_report);
+        CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+              "same real F0433 dungeon tail repeats through F0435");
+        CHECK(repeat_report.dungeon_tail_fingerprint ==
+                  report.dungeon_tail_fingerprint,
+              "same real F0433 dungeon tail keeps provenance fingerprint");
+    }
 
     /* ReDMCSB F0434/F0504 rejects a map whose raw data begins past the
      * saved raw-map block. Recompute only the source F0422 byte checksum. */

@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 dungeon-tail provenance: successful F0435 handoffs
+  now record a stable fingerprint of the fully validated F0433 dungeon tail.
+  Verification: Ninja-built `test_dm1_v1_original_save_pc34_handoff` passed
+  against repeated local original DUNGEON.DAT -> F0802 -> F0435 exports.
+
 - 2026-07-13 CSB C017 live-HUD identity: M11 now requires the C017 surface
   decoded for live rendering to be byte-identical to the original C017
   material held by the terminal startup session; divergent data is rejected

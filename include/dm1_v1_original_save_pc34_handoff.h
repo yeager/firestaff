@@ -78,6 +78,7 @@ typedef struct {
     int external_portrait_imported_count;
     int dungeon_tail_present;
     uint32_t dungeon_tail_byte_count;
+    uint32_t dungeon_tail_fingerprint;
     uint16_t dungeon_tail_expected_checksum;
     uint16_t dungeon_tail_actual_checksum;
     int dungeon_tail_checksum_ok;

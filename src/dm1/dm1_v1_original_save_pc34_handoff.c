@@ -849,6 +849,19 @@ static uint16_t original_pc34_byte_checksum(const uint8_t *bytes,
     return checksum;
 }
 
+static uint32_t original_pc34_tail_fingerprint(const uint8_t *bytes,
+                                               size_t count)
+{
+    uint32_t fingerprint = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < count; ++i) {
+        fingerprint ^= bytes[i];
+        fingerprint *= 16777619u;
+    }
+    return fingerprint;
+}
+
 /* ReDMCSB LOADSAVE.C F0435:2826 calls F0434 after the five save parts.
  * F0434's dungeon loader rejects map descriptors whose raw-map span falls
  * outside the saved raw-map block. Keep the receipt fail-closed before it
@@ -971,6 +984,8 @@ static int decode_original_pc34_dungeon_tail(
         actual_checksum = original_pc34_byte_checksum(tail, off);
         out_report->dungeon_tail_present = 1;
         out_report->dungeon_tail_byte_count = (uint32_t)tail_size;
+        out_report->dungeon_tail_fingerprint =
+            original_pc34_tail_fingerprint(tail, tail_size);
         out_report->dungeon_tail_expected_checksum = expected_checksum;
         out_report->dungeon_tail_actual_checksum = actual_checksum;
         out_report->dungeon_tail_checksum_ok =
