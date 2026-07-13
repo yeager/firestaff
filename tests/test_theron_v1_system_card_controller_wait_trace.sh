@@ -10,6 +10,9 @@ cat >"$trace" <<'EOF'
 source=mednafen-pce-instrumented
 post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00
 c860_window_pc=c8c4 physical_pc=0000c8c4 instruction=LDA $222D  @ $222D = $00
+c860_window_pc=c8c7 physical_pc=0000c8c7 instruction=CMP #$08
+c860_window_pc=c8cb physical_pc=0000c8cb instruction=CMP #$04
+c860_window_pc=c8cd physical_pc=0000c8cd instruction=BNE $C897
 EOF
 "$script" "$trace"
 
