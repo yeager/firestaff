@@ -111,6 +111,9 @@ typedef enum {
 typedef struct {
     int relative_offset;
     int size;
+    /* The final post-grid span has a complete Structure1F six-family header
+     * and matching source tags. It can still fail direct 64x64 validation. */
+    int declared;
     uint16_t wall_sensor_first_texture_index;
     uint16_t wall_sensor_first_model_index;
     int family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
@@ -315,6 +318,7 @@ typedef struct {
     int first_invalid_post_grid_0x30_ref;
     int post_grid_0x30_record_zero_referenced;
     int post_grid_0x30_ref_value_count;
+    int structure1f_declared;
     int structure1f_valid;
     int structure1f_total_entry_count;
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
@@ -419,7 +423,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE = 8,
     /* A Structure1G local descriptor exists, but one of its original
      * Structure2 targets escapes the bounded opaque envelope. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE = 9
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE = 9,
+    /* A span identifies itself as Structure1F but violates its documented
+     * direct-coordinate contract, so host code must not omit it. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT = 10
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -452,6 +459,7 @@ typedef struct {
     int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
     int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    int structure1f_declared;
     int structure1f_valid;
     int structure1f_total_entry_count;
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];
@@ -539,6 +547,7 @@ typedef struct {
     int post_grid_0x30_row_ordinal_flagged_prefix_record_count;
     int post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     int post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    int structure1f_declared;
     int structure1f_valid;
     int structure1f_total_entry_count;
     int structure1f_family_count[NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT];

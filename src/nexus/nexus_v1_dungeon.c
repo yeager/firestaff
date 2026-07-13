@@ -336,11 +336,25 @@ static int nexus_v1_dgn_parse_structure1f(
         for (record = 0; record < table.family_count[family]; ++record) {
             const uint8_t *entry = records + record * record_sizes[family];
             if (entry[0] != tags[family]) return -1;
+        }
+    }
+    /* Exact final-span counts and the six source tags are enough to retain
+     * a Structure1F declaration.  Keep it even when direct-cell validation
+     * below fails so host handoff cannot silently lose an original record. */
+    table.declared = 1;
+    for (family = 0; family < NEXUS_DGN_STRUCTURE1F_FAMILY_COUNT; ++family) {
+        int record;
+        const uint8_t *records = data + layout->structure1_offset +
+            table.family_offset[family];
+        for (record = 0; record < table.family_count[family]; ++record) {
+            const uint8_t *entry = records + record * record_sizes[family];
             /* Structure1Fa through Structure1Fc carry documented 64x64
              * coordinates. Alcove and wall records bind through Structure1A. */
             if (family <= NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS &&
-                (entry[1] >= NEXUS_MAX_MAP_SIZE || entry[2] >= NEXUS_MAX_MAP_SIZE))
-                return -1;
+                (entry[1] >= NEXUS_MAX_MAP_SIZE || entry[2] >= NEXUS_MAX_MAP_SIZE)) {
+                *out_table = table;
+                return 0;
+            }
         }
     }
     table.valid = 1;
@@ -751,6 +765,7 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
     info.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         layout.post_grid_0x30_records.last_row_ordinal_flagged_prefix_record;
     info.post_grid_0x30_ref_value_count = info.post_grid_0x30_ref_count;
+    info.structure1f_declared = layout.structure1f.declared;
     info.structure1f_valid = layout.structure1f.valid;
     info.structure1f_total_entry_count = layout.structure1f.total_entry_count;
     memcpy(info.structure1f_family_count, layout.structure1f.family_count,
@@ -1244,6 +1259,7 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         info->post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     out_receipt->post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         info->post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    out_receipt->structure1f_declared = info->structure1f_declared;
     out_receipt->structure1f_valid = info->structure1f_valid;
     out_receipt->structure1f_total_entry_count =
         info->structure1f_total_entry_count;
@@ -1299,6 +1315,9 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
          * promoted when any real image instruction misses Structure2. */
         out_receipt->status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+    } else if (info->structure1f_declared && !info->structure1f_valid) {
+        out_receipt->status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT;
     } else if (info->structure1f_valid &&
                out_receipt->structure1f_spatial.valid &&
                out_receipt->structure1f_spatial.structure1a_bound_entry_count > 0) {
@@ -1351,6 +1370,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure1f-reference";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_ENVELOPE:
         return "blocked-structure2-envelope";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT:
+        return "blocked-structure1f-layout";
     default: return "unknown";
     }
 }
@@ -1684,6 +1705,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.post_grid_0x30_first_row_ordinal_flagged_prefix_record;
     receipt.post_grid_0x30_last_row_ordinal_flagged_prefix_record =
         handoff.post_grid_0x30_last_row_ordinal_flagged_prefix_record;
+    receipt.structure1f_declared = handoff.structure1f_declared;
     receipt.structure1f_valid = handoff.structure1f_valid;
     receipt.structure1f_total_entry_count = handoff.structure1f_total_entry_count;
     memcpy(receipt.structure1f_family_count, handoff.structure1f_family_count,
