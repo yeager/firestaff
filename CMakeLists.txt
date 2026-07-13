@@ -15826,6 +15826,18 @@ if(BUILD_TESTING)
         COMMAND test_m10_c006_generator_reenable_dispatch_pc34_compat
     )
 
+    add_executable(test_dm1_v1_group_los_move_rollback_pc34_compat
+        tests/test_dm1_v1_group_los_move_rollback_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_group_los_move_rollback_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_group_los_move_rollback_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_group_los_move_rollback_pc34_compat
+        COMMAND test_dm1_v1_group_los_move_rollback_pc34_compat
+    )
+
     add_test(
         NAME c006_event60_61_defer_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/verify_c006_event60_61_defer_source_lock.py

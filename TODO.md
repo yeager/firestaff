@@ -2220,6 +2220,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     F0267 unlink/link/projectile-precheck route. C37 retains its existing
     retry owner. The unrelated Thieves' Eye timeline-count failure remains
     present before and after this change; it is not part of F0209.
+  - 2026-07-13 update: both the C37 and C29-C36/C38-C41 F0209 -> F0267
+    record-mutation routes now retain the original source predecessor and
+    successor before unlinking C04. If a real destination thing-list entry
+    cannot be written, they restore the exact raw source chain and leave raw
+    direction plus active-group coordinates uncommitted. The focused
+    `dm1_v1_group_los_move_rollback_pc34_compat` regression covers a valid
+    F0202 east LoS step whose destination flag has no decoded record slot.
+    Remaining work is broader C38 projectile-impact behavior and retirement
+    of the M11 scan-era creature adapter.
   - 2026-07-13 update: original PC34 C48/C49 save events now bind their
     ReDMCSB `EVENT.B.Slot` C14 Thing and packed `EVENT.C.Projectile` motion
     fields to the matching live projectile record before M10 dispatch. A
