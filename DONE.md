@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_PITROOM DSA tick bridge: verified function-9
+  queue entries now reach the source-ordered ActivateDSA receipt through the
+  restored live timer queue, retaining the exact queue-slot, timer, event,
+  square, and type-47 actuator checks. This admits only the authenticated
+  pure-stack DSA action before CSBWin's pit toggle/set/clear and occupant
+  movement; unsupported actions, pit-cell mutation, WiggleEverything, and
+  malformed saved identity remain blocked. Source: CSBWin
+  `CSBCode.cpp:6400-6435`, `Timer.cpp:2473-2508`, `DSA.cpp:5329-5441`.
+  Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSB F0282 fullbuild probe repair: the live champion-panel probe
   now carries its source-locked local C040 gate rather than calling the
   intentionally removed `M11_GameView_CsbF0282ChampionPanelGateActive`
