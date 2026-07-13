@@ -140,6 +140,37 @@ static void check_selection_contract(void) {
                  strstr(c001BeatsFallback.sourceLineEvidence, "F0437") != 0);
 }
 
+static void check_runtime_asset_receipt(void) {
+    unsigned char c001[320u * 200u];
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
+
+    memset(c001, 0, sizeof(c001));
+    c001[0] = 1u;
+    c001[80u * 320u] = 2u;
+    c001[137u * 320u] = 3u;
+    memset(&receipt, 0, sizeof(receipt));
+    expect_i("C001 asset receipt accepts complete PC34 source regions",
+             dm1_v1_startup_title_runtime_asset_receipt_pc34(
+                 "dm1", c001, 320u, 200u, &receipt) &&
+                 receipt.handled && receipt.graphics_c001_dimensions_valid &&
+                 receipt.dungeon_source_pixels_present &&
+                 receipt.master_source_pixels_present &&
+                 receipt.presents_source_pixels_present &&
+                 receipt.graphics_c001_pixel_fingerprint != 0u &&
+                 receipt.release_c001_ready,
+             1);
+    c001[137u * 320u] = 0u;
+    expect_i("C001 asset receipt rejects missing PRESENTS source pixels",
+             dm1_v1_startup_title_runtime_asset_receipt_pc34(
+                 "dm1", c001, 320u, 200u, &receipt) &&
+                 !receipt.release_c001_ready,
+             1);
+    expect_i("C001 asset receipt remains DM1-only",
+             dm1_v1_startup_title_runtime_asset_receipt_pc34(
+                 "csb", c001, 320u, 200u, &receipt) && !receipt.handled,
+             1);
+}
+
 static void check_palette_cross_source_contract(void) {
     V1_TitleFrontendSourceAnimationStep presentsStep;
     V1_TitleFrontendSourceAnimationStep zoomStep;
@@ -608,6 +639,14 @@ static void check_real_pc34_c001(const char* graphics_path) {
     }
     expect_u("real C001: width", c001->width, 320u);
     expect_u("real C001: height", c001->height, 200u);
+    {
+        DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        expect_truth("real C001: source regions satisfy startup asset receipt",
+                     dm1_v1_startup_title_runtime_asset_receipt_pc34(
+                         "dm1", c001->pixels, c001->width, c001->height,
+                         &receipt) && receipt.release_c001_ready);
+    }
     expect_truth("real C001: PRESENTS source strip has original pixels",
                  count_non_black(c001->pixels, c001->width,
                                  0u, 137u, 320u, 16u) > 0u);
@@ -667,6 +706,7 @@ static void check_real_pc34_c001(const char* graphics_path) {
 
 int main(int argc, char** argv) {
     check_selection_contract();
+    check_runtime_asset_receipt();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
     check_entrance_credits_runtime_boundary();

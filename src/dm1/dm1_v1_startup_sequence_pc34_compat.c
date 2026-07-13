@@ -5016,6 +5016,84 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     return 1;
 }
 
+static int dm1_v1_startup_title_region_has_pixels_pc34(
+    const unsigned char* pixels,
+    unsigned int width,
+    unsigned int source_y,
+    unsigned int source_height) {
+    unsigned int y;
+    unsigned int x;
+
+    for (y = source_y; y < source_y + source_height; ++y) {
+        for (x = 0U; x < width; ++x) {
+            if (pixels[y * width + x] != 0U) return 1;
+        }
+    }
+    return 0;
+}
+
+int dm1_v1_startup_title_runtime_asset_receipt_pc34(
+    const char* source_id,
+    const unsigned char* graphics_c001_pixels,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 source;
+    unsigned int hash = 2166136261u;
+    unsigned int index;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&source, 0, sizeof(source));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    if (!dm1_v1_startup_title_runtime_source_receipt_pc34(
+            source_id, graphics_c001_pixels != NULL, graphics_c001_width,
+            graphics_c001_height, 0, &source) ||
+        !source.handled ||
+        source.selected_runtime_source !=
+            (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001) {
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.handled = 1;
+    receipt.graphics_c001_dimensions_valid =
+        graphics_c001_width == 320U && graphics_c001_height == 200U;
+    if (!receipt.graphics_c001_dimensions_valid) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    /* TITLE.C F0437:319-324, 333-340, and 340-360 respectively. */
+    receipt.dungeon_source_pixels_present =
+        dm1_v1_startup_title_region_has_pixels_pc34(
+            graphics_c001_pixels, graphics_c001_width, 0U, 80U);
+    receipt.master_source_pixels_present =
+        dm1_v1_startup_title_region_has_pixels_pc34(
+            graphics_c001_pixels, graphics_c001_width, 80U, 57U);
+    receipt.presents_source_pixels_present =
+        dm1_v1_startup_title_region_has_pixels_pc34(
+            graphics_c001_pixels, graphics_c001_width, 137U, 16U);
+    for (index = 0U; index < graphics_c001_width * graphics_c001_height;
+         ++index) {
+        hash ^= graphics_c001_pixels[index];
+        hash *= 16777619u;
+    }
+    receipt.graphics_c001_pixel_fingerprint = hash ? hash : 1U;
+    receipt.release_c001_ready =
+        receipt.dungeon_source_pixels_present &&
+        receipt.master_source_pixels_present &&
+        receipt.presents_source_pixels_present &&
+        receipt.graphics_c001_pixel_fingerprint != 0U;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437:309-310,319-324,333-340,340-360";
+    *out_receipt = receipt;
+    return 1;
+}
+
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
