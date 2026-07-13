@@ -418,6 +418,7 @@ int theron_v1_irq2_live_branch_from_full_track02_media(
     out_receipt->stage3_raw_sector = handoff.stage3_cd_read_raw_sector;
     out_receipt->stage3_user_data_offset =
         handoff.stage3_cd_read_user_data_offset;
+    out_receipt->stage3_user_data_bytes = handoff.user_data_bytes;
     out_receipt->handler_address = state_gate.handler_address;
     out_receipt->cd_state_address = state_gate.clear_path_address;
     out_receipt->cd_state_branch_address = trace->cd_state_branch_pc;
