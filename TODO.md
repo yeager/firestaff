@@ -1514,6 +1514,12 @@ and real community-save corpus round-trip evidence.
     it neither reads nor emits a host explosion-list index. The existing C15
     square-chain validators remain the only runtime owner. Remaining work is
     authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: the C24/C25 runtime handoff is now regression-locked
+    as one F0435 candidate stage. A valid C25 followed by an authenticated C24
+    `C.Slot` on the wrong `B.Location` rejects before publication, preserving
+    the destination world, prior report, borrowed start-world explosion list,
+    and raw PC34 source bytes. Remaining work is authentic community-save
+    coverage and broader dungeon-tail import.
   - 2026-07-13 update: the opt-in corpus now also retains an atomic decrypted
     C3 EVENT-array receipt from the F0433/F0435 part boundary: record count,
     byte count, and fingerprint cover every raw EVENT slot, including C13,
