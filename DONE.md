@@ -35,6 +35,17 @@
   action-disable event. Verification: Ninja-built and ran
   `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
   `test_dm1_v1_spell_casting_pc34_compat`.
+- 2026-07-13 CSBWin multi-level DSA movement handoff: added a bounded,
+  transactional callback adapter for distinct source-resolved movement-filter
+  levels. It stages every authenticated action first, dispatches only the
+  exact imported action pointer, and rejects duplicate level/action ownership
+  without replacing the live callback. The focused regression runs two
+  level-specific seven-word callbacks and verifies their independent original
+  EXPOOL global writes. No new DSA opcode, movement-gate/flag, master-state,
+  or world semantics was added. Source: CSBWin `Monster.cpp:3079-3370`,
+  `DSA.cpp:1244-1312`, and `SaveGame.cpp` EXPOOL globals. Verification:
+  `csb_v1_dsa_multilevel_filter_save_handoff` CTest passed 1/1.
+
 - 2026-07-13 CSBWin DSA movement-filter save handoff: added the atomic runtime
   binder for one resolved type-47 movement filter at its source level. Both
   attack and movement binders now explicitly disable every unbound DSA slot,

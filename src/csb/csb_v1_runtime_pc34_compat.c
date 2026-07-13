@@ -15553,6 +15553,108 @@ int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
     return 1;
 }
 
+int csb_v1_runtime_csbwin_movement_filter_stack_runner_callback(
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2],
+    void *user)
+{
+    CSB_V1_RuntimeDSAMovementFilterStackAdapter *adapter =
+        (CSB_V1_RuntimeDSAMovementFilterStackAdapter *)user;
+    int i;
+
+    if (!adapter || !adapter->profile || !action ||
+        adapter->runner_count < 1 || adapter->runner_count >
+            CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP) {
+        return 0;
+    }
+    for (i = 0; i < adapter->runner_count; ++i) {
+        CSB_V1_CSBWinDSAFilterStackRunnerContext *runner =
+            &adapter->runners[i];
+        const CSB_V1_DSAImportedAction *expected =
+            csb_v1_chaos_find_imported_action(
+                &adapter->profile->csbwin_extended_dsa_state,
+                runner->dsa_id, runner->state_index, runner->action_ordinal);
+
+        if (expected == action) {
+            return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                adapter->profile, runner, action, parameters,
+                parameter_count, flgs_inout);
+        }
+    }
+    return 0;
+}
+
+int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime_multi(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAMovementFilterRequest *requests,
+    size_t request_count,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAMovementFilterStackAdapter *out_adapter)
+{
+    CSB_V1_DSAFilterRuntime filter_candidate;
+    CSB_V1_RuntimeDSAMovementFilterStackAdapter adapter_candidate;
+    const CSB_V1_DSAImportedAction *selected[
+        CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP];
+    size_t i;
+
+    if (!profile || !requests || request_count == 0u ||
+        request_count > CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP ||
+        loaded_level < 0 || !out_filter || !out_adapter) {
+        return 0;
+    }
+    csb_v1_runtime_init_csbwin_filter_candidate(&filter_candidate);
+    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
+    memset(selected, 0, sizeof(selected));
+    adapter_candidate.profile = profile;
+
+    /* CSBWin Monster.cpp:3079-3176 caches a separate source filter for each
+     * level. Stage every request before publishing so duplicate level slots,
+     * unauthenticated actions, or ambiguous action ownership cannot expose a
+     * partial callback surface. */
+    for (i = 0u; i < request_count; ++i) {
+        const CSB_V1_RuntimeDSAMovementFilterRequest *request = &requests[i];
+        CSB_V1_CSBWinDSAFilterStackRunnerContext *runner =
+            &adapter_candidate.runners[i];
+        const CSB_V1_DSAImportedAction *action;
+        int level = request->binding.location.level;
+        size_t prior;
+
+        if (level < 0 || level >=
+            CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP ||
+            filter_candidate.movement_filter_dsa_id[level] != -1 ||
+            !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+                profile, &request->binding, request->state_index,
+                request->action_ordinal, request->master_location, runner)) {
+            return 0;
+        }
+        action = csb_v1_chaos_find_imported_action(
+            &profile->csbwin_extended_dsa_state, runner->dsa_id,
+            runner->state_index, runner->action_ordinal);
+        if (!action) return 0;
+        for (prior = 0u; prior < i; ++prior) {
+            if (selected[prior] == action) return 0;
+        }
+        selected[i] = action;
+        filter_candidate.movement_filter_dsa_id[level] = request->binding.dsa_id;
+        filter_candidate.movement_filter_state[level] = request->state_index;
+        filter_candidate.movement_filter_action[level] = request->action_ordinal;
+    }
+
+    adapter_candidate.runner_count = (int)request_count;
+    filter_candidate.programs = &profile->csbwin_extended_dsa_state;
+    filter_candidate.runner =
+        csb_v1_runtime_csbwin_movement_filter_stack_runner_callback;
+    filter_candidate.runner_user = &adapter_candidate;
+    filter_candidate.loaded_level = loaded_level;
+    *out_adapter = adapter_candidate;
+    filter_candidate.runner_user = out_adapter;
+    *out_filter = filter_candidate;
+    return 1;
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,
