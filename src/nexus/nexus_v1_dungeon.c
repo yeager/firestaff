@@ -2374,6 +2374,51 @@ int nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
 int nexus_v1_level_structure1f_item_attribute_pair_receipt(const Nexus_V1_Level *l, Nexus_V1_DgnStructure1FItemAttributePairReceipt *o) { Nexus_V1_DgnStructure1FItemAttributePairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i; if (!o) return -1; memset(&r,0,sizeof(r)); memset(&s,0,sizeof(s)); memset(seen,0,sizeof(seen)); if (!l || nexus_v1_level_structure1f_spatial_receipt(l,&s)) {*o=r;return 0;} r.spatial_valid=s.valid; for(i=0;i<l->structure1f_entry_count;i++){const Nexus_V1_DgnStructure1FEntry *e=&l->structure1f_entries[i];uint16_t p;if(e->family!=NEXUS_V1_DGN_STRUCTURE1F_ITEMS)continue;++r.item_count;if(!s.valid)continue;++r.resolved_pair_count;p=((uint16_t)e->attribute1<<8)|e->attribute2;if(seen[p])++r.duplicate_pair_count;else{seen[p]=1;++r.unique_pair_count;}}r.complete=r.spatial_valid&&r.item_count==r.resolved_pair_count;*o=r;return 0;}
 int nexus_v1_level_structure1f_item_location_pair_receipt(const Nexus_V1_Level *l, Nexus_V1_DgnStructure1FItemLocationPairReceipt *o) { Nexus_V1_DgnStructure1FItemLocationPairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i; if (!o) return -1; memset(&r,0,sizeof(r)); memset(&s,0,sizeof(s)); memset(seen,0,sizeof(seen)); if (!l || nexus_v1_level_structure1f_spatial_receipt(l,&s)) {*o=r;return 0;} r.spatial_valid=s.valid; for(i=0;i<l->structure1f_entry_count;i++){const Nexus_V1_DgnStructure1FEntry *e=&l->structure1f_entries[i];uint16_t p;if(e->family!=NEXUS_V1_DGN_STRUCTURE1F_ITEMS)continue;++r.item_count;if(!s.valid)continue;++r.resolved_pair_count;p=((uint16_t)e->location<<8)|e->item_id;if(seen[p])++r.duplicate_pair_count;else{seen[p]=1;++r.unique_pair_count;}}r.complete=r.spatial_valid&&r.item_count==r.resolved_pair_count;*o=r;return 0;}
 
+int nexus_v1_level_structure1f_item_coordinate_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt receipt;
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    unsigned char seen[UINT16_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&spatial, 0, sizeof(spatial));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1f_spatial_receipt(level, &spatial) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.spatial_valid = spatial.valid;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint16_t pair;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+        ++receipt.item_count;
+        if (!spatial.valid) continue;
+        ++receipt.resolved_pair_count;
+        pair = (uint16_t)(((uint16_t)record->x << 8) | record->y);
+        if (pair == 0U) ++receipt.zero_pair_count;
+        else ++receipt.nonzero_pair_count;
+        if (pair > receipt.highest_pair) receipt.highest_pair = pair;
+        if (seen[pair]) ++receipt.duplicate_pair_count;
+        else {
+            seen[pair] = 1U;
+            ++receipt.unique_pair_count;
+        }
+    }
+    receipt.complete = receipt.spatial_valid &&
+        receipt.resolved_pair_count == receipt.item_count;
+    receipt.semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out)
 {
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i;
@@ -2677,6 +2722,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_item_attribute_pairs);
     (void)nexus_v1_level_structure1f_item_location_pair_receipt(
         level, &out_receipt->structure1f_item_location_pairs);
+    (void)nexus_v1_level_structure1f_item_coordinate_pair_receipt(
+        level, &out_receipt->structure1f_item_coordinate_pairs);
     (void)nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(
         level, &out_receipt->structure1f_floor_decoration_offset_pairs);
     (void)nexus_v1_level_structure3_payload_receipt(
@@ -3167,6 +3214,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_floor_decoration_control_extents;
     receipt.structure1f_item_attribute_pairs = handoff.structure1f_item_attribute_pairs;
     receipt.structure1f_item_location_pairs = handoff.structure1f_item_location_pairs;
+    receipt.structure1f_item_coordinate_pairs =
+        handoff.structure1f_item_coordinate_pairs;
     receipt.structure1f_floor_decoration_offset_pairs =
         handoff.structure1f_floor_decoration_offset_pairs;
     receipt.structure3_payload = handoff.structure3_payload;

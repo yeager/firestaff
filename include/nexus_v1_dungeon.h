@@ -502,6 +502,21 @@ typedef struct {
 
 typedef struct { int spatial_valid; int item_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int complete; int semantics_proven; } Nexus_V1_DgnStructure1FItemAttributePairReceipt;
 typedef struct { int spatial_valid; int item_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int complete; int semantics_proven; } Nexus_V1_DgnStructure1FItemLocationPairReceipt;
+/* Item records retain their two documented coordinate bytes as an opaque pair.
+ * This preserves raw source distribution only, never an item placement,
+ * object, mesh, material, texture, palette, pixel, or draw instruction. */
+typedef struct {
+    int spatial_valid;
+    int item_count;
+    int resolved_pair_count;
+    int unique_pair_count;
+    int duplicate_pair_count;
+    int zero_pair_count;
+    int nonzero_pair_count;
+    uint16_t highest_pair;
+    int complete;
+    int semantics_proven;
+} Nexus_V1_DgnStructure1FItemCoordinatePairReceipt;
 typedef struct { int structure1f_spatial_valid; int entry_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int zero_pair_count; int nonzero_pair_count; int complete; int offset_semantics_proven; } Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt;
 
 /* DMWeb DGN files: the container header names Structure3 with a block offset
@@ -952,6 +967,8 @@ typedef struct {
         structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
     Nexus_V1_DgnStructure1FItemLocationPairReceipt structure1f_item_location_pairs;
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
+        structure1f_item_coordinate_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt structure1f_floor_decoration_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
@@ -1073,6 +1090,8 @@ typedef struct {
         structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
     Nexus_V1_DgnStructure1FItemLocationPairReceipt structure1f_item_location_pairs;
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
+        structure1f_item_coordinate_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
         structure1f_floor_decoration_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
@@ -1178,6 +1197,9 @@ int nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
     Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt *out_receipt);
 int nexus_v1_level_structure1f_item_attribute_pair_receipt(const Nexus_V1_Level *, Nexus_V1_DgnStructure1FItemAttributePairReceipt *);
 int nexus_v1_level_structure1f_item_location_pair_receipt(const Nexus_V1_Level *, Nexus_V1_DgnStructure1FItemLocationPairReceipt *);
+int nexus_v1_level_structure1f_item_coordinate_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt *out_receipt);
 int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,

@@ -8,6 +8,11 @@
   focused real-media regression loads PC34 `GRAPHICS.DAT` and covers graphic
   454 plus the weapon-0 aspect-38 graphic 537 route without a synthetic cache.
 
+- 2026-07-13 Nexus Structure1F item-coordinate handoff: raw item coordinate
+  byte pairs now reach DGN host, render-plan, and LEV00-15 corpus receipts.
+  This remains fail-closed provenance, not item placement, object, mesh,
+  material, texture, palette, pixel, or draw semantics.
+
 - 2026-07-13 Nexus Structure1F floor-decoration model/rotation handoff: raw
   source pairs now reach DGN host, render-plan, and LEV00-15 corpus receipts.
   Their grammar remains unproved, so this assigns no model, orientation, mesh,
