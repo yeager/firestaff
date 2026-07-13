@@ -806,6 +806,10 @@ typedef struct {
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
     int asset_door_button_drawn_count;
+    /* skproject DM2_DRAW_DOOR resolves every visible component before the
+     * first door blit. Bits are panel, ornate, destroyed mask, frame, button. */
+    uint8_t last_door_material_required_mask;
+    uint8_t last_door_material_consumed_mask;
     int fallback_door_drawn_count;
     int last_door_panel_asset_blit_valid;
     int last_door_panel_asset_src_w;

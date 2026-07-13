@@ -3607,6 +3607,24 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 {
+    typedef struct {
+        const uint8_t *pixels;
+        int width;
+        int height;
+        int stride;
+        uint8_t palette16[16];
+        uint32_t palette_hash;
+        int required;
+        int consumed;
+    } DM2_V1_DoorMaterial;
+    enum {
+        DM2_DOOR_MATERIAL_PANEL = 0,
+        DM2_DOOR_MATERIAL_ORNATE,
+        DM2_DOOR_MATERIAL_DESTROYED_MASK,
+        DM2_DOOR_MATERIAL_FRAME,
+        DM2_DOOR_MATERIAL_BUTTON,
+        DM2_DOOR_MATERIAL_COUNT
+    };
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -3616,6 +3634,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     int door_button_asset_count = 0;
     int door_fallback_count = 0;
     DM2_V1_DoorRenderPlan plan;
+    DM2_V1_DoorMaterial materials[DM2_V1_DOOR_RENDER_MAX]
+                                   [DM2_DOOR_MATERIAL_COUNT];
 
     /* DM2 door rendering: overlays on wall squares.
      * Source: DUNVIEW.C:3082-3095 F0102_DrawDoorBitmap,
@@ -3629,6 +3649,65 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
         return;
+    }
+    memset(materials, 0, sizeof(materials));
+    s->last_door_material_required_mask = 0u;
+    s->last_door_material_consumed_mask = 0u;
+
+    /* skproject/SKWIN/SkWinCore.cpp DM2_DRAW_DOOR resolves the selected
+     * panel, overlays, frame, and button IMG3s before submitting its door
+     * blits. Keep the complete transaction renderer-owned: a later missing
+     * local palette must not leave a partly invented door on the scene. */
+    if (s->source_materials_required) {
+        for (int i = 0; i < plan.door_count; ++i) {
+            const DM2_V1_DoorRender *door = &plan.doors[i];
+            const int gdat_indices[DM2_DOOR_MATERIAL_COUNT] = {
+                door->panel_gdat_index,
+                door->ornate_gdat_index,
+                door->destroyed_mask_gdat_index,
+                door->frame_gdat_index,
+                door->button_gdat_index
+            };
+            const int required[DM2_DOOR_MATERIAL_COUNT] = {
+                door->panel_visible_rect.w > 0 && door->panel_visible_rect.h > 0,
+                door->ornate_gdat_index != 0 &&
+                    door->panel_rect.w > 0 && door->panel_rect.h > 0,
+                door->destroyed_mask_gdat_index != 0 &&
+                    door->panel_rect.w > 0 && door->panel_rect.h > 0,
+                door->frame_rect.w > 0 && door->frame_rect.h > 0,
+                door->button_gdat_index != 0 &&
+                    door->button_rect.w > 0 && door->button_rect.h > 0
+            };
+
+            for (int kind = 0; kind < DM2_DOOR_MATERIAL_COUNT; ++kind) {
+                DM2_V1_DoorMaterial *material = &materials[i][kind];
+
+                if (!required[kind]) {
+                    continue;
+                }
+                material->required = 1;
+                s->last_door_material_required_mask |=
+                    (uint8_t)(1u << (unsigned)kind);
+                if (gdat_indices[kind] == 0 ||
+                    dm2_v1_fetch_viewport_local_material(
+                        s, gdat_indices[kind], &material->pixels,
+                        &material->width, &material->height,
+                        &material->stride) != 0 ||
+                    !material->pixels || material->width <= 0 ||
+                    material->height <= 0 || !s->active_asset_palette_ready ||
+                    s->active_asset_palette_hash == 0u ||
+                    (kind == DM2_DOOR_MATERIAL_BUTTON &&
+                     door->button_source_kind == 2 &&
+                     !dm2_v1_wall_button_receipt_matches(s, door))) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                memcpy(material->palette16, s->active_asset_palette16,
+                       sizeof(material->palette16));
+                material->palette_hash = s->active_asset_palette_hash;
+            }
+        }
     }
     s->last_door_panel_asset_blit_valid = 0;
     s->last_door_ornate_asset_blit_valid = 0;
@@ -3675,14 +3754,28 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int panel_h = 0;
             int panel_stride = 0;
             int panel_drawn_asset = 0;
-            if (door->panel_gdat_index != 0 &&
+            if (s->source_materials_required) {
+                const DM2_V1_DoorMaterial *material =
+                    &materials[i][DM2_DOOR_MATERIAL_PANEL];
+                panel_pixels = material->pixels;
+                panel_w = material->width;
+                panel_h = material->height;
+                panel_stride = material->stride;
+                memcpy(s->active_asset_palette16, material->palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash = material->palette_hash;
+                s->active_asset_palette_ready = material->palette_hash != 0u;
+            }
+            if (((s->source_materials_required && panel_pixels &&
+                  panel_w > 0 && panel_h > 0) ||
+                 (!s->source_materials_required && door->panel_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_local_material(s,
                                                       door->panel_gdat_index,
                                                       &panel_pixels,
                                                       &panel_w,
                                                       &panel_h,
                                                       &panel_stride) == 0 &&
-                panel_pixels && panel_w > 0 && panel_h > 0) {
+                  panel_pixels && panel_w > 0 && panel_h > 0))) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
                  * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
@@ -3717,6 +3810,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_panel_asset_src_stride =
                         panel_stride > 0 ? panel_stride : panel_w;
                     panel_drawn_asset = 1;
+                    if (s->source_materials_required) {
+                        materials[i][DM2_DOOR_MATERIAL_PANEL].consumed = 1;
+                    }
                 }
             }
             if (!panel_drawn_asset) {
@@ -3743,12 +3839,30 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 int overlay_w = 0;
                 int overlay_h = 0;
                 int overlay_stride = 0;
-                if (overlay_indices[overlay_i] != 0 &&
+                const int material_kind = overlay_i == 0
+                    ? DM2_DOOR_MATERIAL_ORNATE
+                    : DM2_DOOR_MATERIAL_DESTROYED_MASK;
+                if (s->source_materials_required &&
+                    materials[i][material_kind].required) {
+                    const DM2_V1_DoorMaterial *material =
+                        &materials[i][material_kind];
+                    overlay_pixels = material->pixels;
+                    overlay_w = material->width;
+                    overlay_h = material->height;
+                    overlay_stride = material->stride;
+                    memcpy(s->active_asset_palette16, material->palette16,
+                           sizeof(s->active_asset_palette16));
+                    s->active_asset_palette_hash = material->palette_hash;
+                    s->active_asset_palette_ready = material->palette_hash != 0u;
+                }
+                if (((s->source_materials_required && overlay_pixels &&
+                      overlay_w > 0 && overlay_h > 0) ||
+                     (!s->source_materials_required && overlay_indices[overlay_i] != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0 &&
                     dm2_v1_fetch_viewport_local_material(
                         s, overlay_indices[overlay_i], &overlay_pixels,
                         &overlay_w, &overlay_h, &overlay_stride) == 0 &&
-                    overlay_pixels && overlay_w > 0 && overlay_h > 0) {
+                      overlay_pixels && overlay_w > 0 && overlay_h > 0))) {
                     DM2_V1_DoorAssetBlit blit;
                     if (dm2_v1_viewport_full_rect_asset_blit(
                             overlay_indices[overlay_i],
@@ -3778,6 +3892,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             blit.transparent_color,
                             &s->gdat_sprite_palette_consumed_count);
                         ++door_overlay_asset_count;
+                        if (s->source_materials_required) {
+                            materials[i][material_kind].consumed = 1;
+                        }
                         if (overlay_i == 0) {
                             ornate_drawn_asset = 1;
                             s->last_door_ornate_asset_blit_valid = 1;
@@ -3818,14 +3935,28 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int door_h = 0;
             int door_stride = 0;
 
-            if (door->frame_gdat_index != 0 &&
+            if (s->source_materials_required) {
+                const DM2_V1_DoorMaterial *material =
+                    &materials[i][DM2_DOOR_MATERIAL_FRAME];
+                door_pixels = material->pixels;
+                door_w = material->width;
+                door_h = material->height;
+                door_stride = material->stride;
+                memcpy(s->active_asset_palette16, material->palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash = material->palette_hash;
+                s->active_asset_palette_ready = material->palette_hash != 0u;
+            }
+            if (((s->source_materials_required && door_pixels && door_w > 0 &&
+                  door_h > 0) ||
+                 (!s->source_materials_required && door->frame_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_local_material(s,
                                                       door->frame_gdat_index,
                                                       &door_pixels,
                                                       &door_w,
                                                       &door_h,
                                                       &door_stride) == 0 &&
-                door_pixels && door_w > 0 && door_h > 0) {
+                  door_pixels && door_w > 0 && door_h > 0))) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
                  * first boot-bound door-frame images for front, D1C and D2C.
@@ -3859,6 +3990,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_frame_asset_src_stride =
                         door_stride > 0 ? door_stride : door_w;
                     frame_drawn_asset = 1;
+                    if (s->source_materials_required) {
+                        materials[i][DM2_DOOR_MATERIAL_FRAME].consumed = 1;
+                    }
                 }
             }
             if (s->source_materials_required &&
@@ -3880,13 +4014,28 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
              * through the current WALL_GFX owner. Do not let the generic
              * view-square helper pick a same-numbered GDAT image unless the
              * direct DB2/DB3 receipt proves that ownership. */
-            if (dm2_v1_fetch_viewport_local_material(s,
+            if (s->source_materials_required) {
+                const DM2_V1_DoorMaterial *material =
+                    &materials[i][DM2_DOOR_MATERIAL_BUTTON];
+                button_pixels = material->pixels;
+                button_w = material->width;
+                button_h = material->height;
+                button_stride = material->stride;
+                memcpy(s->active_asset_palette16, material->palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash = material->palette_hash;
+                s->active_asset_palette_ready = material->palette_hash != 0u;
+            }
+            if (((s->source_materials_required && button_pixels && button_w > 0 &&
+                  button_h > 0) ||
+                 (!s->source_materials_required &&
+                  dm2_v1_fetch_viewport_local_material(s,
                                                       door->button_gdat_index,
                                                       &button_pixels,
                                                       &button_w,
                                                       &button_h,
                                                       &button_stride) == 0 &&
-                button_pixels && button_w > 0 && button_h > 0) {
+                  button_pixels && button_w > 0 && button_h > 0))) {
                 DM2_V1_DoorAssetBlit blit;
                 if (door->button_source_kind == 2) {
                     /* The palette query belongs to this exact image fetch,
@@ -3931,6 +4080,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_button_asset_src_stride =
                         button_stride > 0 ? button_stride : button_w;
                     button_drawn_asset = 1;
+                    if (s->source_materials_required) {
+                        materials[i][DM2_DOOR_MATERIAL_BUTTON].consumed = 1;
+                    }
                 }
             }
             if (s->source_materials_required &&
@@ -3938,6 +4090,29 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }
+        }
+    }
+    if (s->source_materials_required) {
+        for (int kind = 0; kind < DM2_DOOR_MATERIAL_COUNT; ++kind) {
+            int complete = 1;
+            for (int i = 0; i < plan.door_count; ++i) {
+                const DM2_V1_DoorMaterial *material = &materials[i][kind];
+                if (material->required && !material->consumed) {
+                    complete = 0;
+                    break;
+                }
+            }
+            if ((s->last_door_material_required_mask &
+                 (uint8_t)(1u << (unsigned)kind)) != 0u && complete) {
+                s->last_door_material_consumed_mask |=
+                    (uint8_t)(1u << (unsigned)kind);
+            }
+        }
+        if (s->last_door_material_required_mask !=
+            s->last_door_material_consumed_mask) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+            return;
         }
     }
     s->asset_door_panel_drawn_count += door_panel_asset_count;
