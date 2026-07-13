@@ -11305,6 +11305,16 @@ source slot rather than writing a host explosion index. Source: ReDMCSB
 `PROJEXPL.C F0224` lines 983-994 and `TIMELINE.C F0261` lines 1906-1916.
 Verification: `test_dm1_v1_original_save_pc34_handoff` drives authenticated
 import, runtime expiry, native export, and reimport of the C24 union.
+
+# ✅ 2026-07-13 DM1 HoC resurrection/rename no-fallback M11 consumer
+
+M11 now draws ReDMCSB `REVIVE.C F0282` C040 and `F0281` C027 only from the
+loaded PC34 `GRAPHICS.DAT` panels. If either panel is unavailable or has the
+wrong geometry, the C017-backed viewport remains no-draw; the old host-made
+green/orange panel, labels, and rename cursor are not rendered. This keeps
+dynamic rename text behind real C027 ownership and does not synthesize art.
+The focused M11 overlay regression verifies that a no-asset HoC rename
+fixture writes no substitute pixels. Source: `REVIVE.C:357-455,704-840`.
 - ✅ 2026-07-13 DM2 weather decoded-material receipt: each source ENVIRONMENT
   weather command now proves a decodable IMG3 pixel plane together with its
   own local palette before it can reach the no-draw weather handoff.
