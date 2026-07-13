@@ -7,6 +7,7 @@
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -278,35 +279,17 @@ static void test_projectile_scale(void) {
               "front >= back scale D2");
 }
 
-static void test_projectile_d4_far_box(void) {
-    int lx = 0, ly = 0, lw = 0, lh = 0;
-    int cx = 0, cy = 0, cw = 0, ch = 0;
-    int rx = 0, ry = 0, rw = 0, rh = 0;
-    printf("  projectile D4 far boxes...\n");
-
-    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-2, &lx, &ly, &lw, &lh), 0,
-              "D4 rejects outside left lane");
-    ASSERT_EQ(dm1_v1_projectile_d4_far_box(2, &rx, &ry, &rw, &rh), 0,
-              "D4 rejects outside right lane");
-    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh), 1,
-              "D4 left box exists");
-    ASSERT_EQ(dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch), 1,
-              "D4 center box exists");
-    ASSERT_EQ(dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh), 1,
-              "D4 right box exists");
-    ASSERT_EQ(lx, 78, "D4 left x");
-    ASSERT_EQ(cx, 108, "D4 center x");
-    ASSERT_EQ(rx, 138, "D4 right x");
-    ASSERT_EQ(ly, 42, "D4 left y");
-    ASSERT_EQ(cy, 42, "D4 center y");
-    ASSERT_EQ(ry, 42, "D4 right y");
-    ASSERT_EQ(lw, 10, "D4 width");
-    ASSERT_EQ(cw, 10, "D4 center width");
-    ASSERT_EQ(rw, 10, "D4 right width");
-    ASSERT_EQ(lh, 8, "D4 height");
-    ASSERT_EQ(ch, 8, "D4 center height");
-    ASSERT_EQ(rh, 8, "D4 right height");
-    ASSERT_TRUE(lx < cx && cx < rx, "D4 boxes stay left-center-right");
+static void test_projectile_d4_is_source_nodraw(void) {
+    printf("  projectile D4 source no-draw...\n");
+    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                    DM1_VIEW_SQUARE_D4L) == NULL,
+                "D4L has no ReDMCSB G2028/C2900 projectile material row");
+    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                    DM1_VIEW_SQUARE_D4C) == NULL,
+                "D4C has no ReDMCSB G2028/C2900 projectile material row");
+    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
+                    DM1_VIEW_SQUARE_D4R) == NULL,
+                "D4R has no ReDMCSB G2028/C2900 projectile material row");
 }
 
 static void test_projectile_renderable_and_effect_particle(void) {
@@ -1482,7 +1465,7 @@ int main(void) {
     test_projectile_subtype_mapping();
     test_thrown_object_material_resolution();
     test_projectile_scale();
-    test_projectile_d4_far_box();
+    test_projectile_d4_is_source_nodraw();
     test_projectile_renderable_and_effect_particle();
     test_f0115_thing_layer_receipt();
     test_f0115_runtime_summary();

@@ -24704,50 +24704,6 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
     }
 }
 
-static void m11_draw_dm1_d4_far_projectile_pass(const M11_GameViewState* state,
-                                                unsigned char* framebuffer,
-                                                int framebufferWidth,
-                                                int framebufferHeight) {
-    static const int kRelSides[3] = { -1, 1, 0 };
-    int i;
-    if (!state || !framebuffer) {
-        return;
-    }
-    /* ReDMCSB DUNVIEW.C F0128 lines 8466-8477 calls F0115 for D4L,
-     * D4R, then D4C before D3L2/D3R2/D3L/D3R/D3C can overpaint it.
-     * D4 is outside the normal C2500/C2900 row table in Firestaff's
-     * M11 helper, so this pass uses a small far-distance viewport box
-     * and still lets every nearer source wall/door layer occlude it. */
-    for (i = 0; i < 3; ++i) {
-        M11_ViewportCell cell;
-        int x = 0;
-        int y = 0;
-        int w = 0;
-        int h = 0;
-        if (!m11_sample_viewport_cell(state, 4, kRelSides[i], &cell) ||
-            !cell.valid ||
-            !m11_viewport_cell_is_open(&cell) ||
-            !m11_viewport_cell_has_renderable_projectile(&cell) ||
-            !dm1_v1_projectile_d4_far_box(kRelSides[i], &x, &y, &w, &h)) {
-            continue;
-        }
-        if (!g_drawState ||
-            !m11_draw_viewport_projectile_sprite(
-                g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-                M11_VIEWPORT_X + x, M11_VIEWPORT_Y + y, w, h, &cell, 3,
-                dm1_viewport_3d_f0115_c2500_c2900_row(4, kRelSides[i]))) {
-            if (!g_drawState || !g_drawState->assetsAvailable) {
-                int cx = M11_VIEWPORT_X + x + w / 2;
-                int cy = M11_VIEWPORT_Y + y + h / 2;
-                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx - 1, cx + 1, cy, M11_COLOR_LIGHT_CYAN);
-                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx, cy - 1, cy + 1, M11_COLOR_LIGHT_CYAN);
-            }
-        }
-    }
-}
-
 static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
                                               unsigned char* framebuffer,
                                               int framebufferWidth,
@@ -34900,8 +34856,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                       viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_LIGHT_CYAN);
     }
 
-    m11_draw_dm1_d4_far_projectile_pass(state, framebuffer,
-                                        framebufferWidth, framebufferHeight);
+    /* ReDMCSB DUNVIEW.C F0128:8466-8477 invokes F0115 for D4L/R/C, but
+     * C0x0001 reaches F0115's depth>3 break at :5110 before projectile
+     * handling. G2028 has no D4 C2900 row, so D4 stays no-draw instead of
+     * receiving a host-defined small sprite or marker. */
     /* First source-bound wall passes: draw blocked side/front square
      * panels using original wall-set bitmaps and original layout-696
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
