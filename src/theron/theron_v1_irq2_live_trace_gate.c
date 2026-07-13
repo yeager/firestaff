@@ -412,6 +412,9 @@ int theron_v1_irq2_live_branch_from_full_track02_media(
     out_receipt->variant = handoff.variant;
     out_receipt->stage3_track02_record = handoff.track02_record;
     out_receipt->stage3_user_data_hash = handoff.user_data_hash;
+    out_receipt->cd_read_record_cl = trace->cd_read_record_cl;
+    out_receipt->cd_read_record_dl = trace->cd_read_record_dl;
+    out_receipt->cd_read_record_ch = trace->cd_read_record_ch;
     out_receipt->handler_address = state_gate.handler_address;
     out_receipt->cd_state_address = state_gate.clear_path_address;
     out_receipt->cd_state_branch_address = trace->cd_state_branch_pc;
