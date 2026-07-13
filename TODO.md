@@ -1143,6 +1143,12 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-13 update: every classifier-qualified external PC34 corpus file
+    now emits a separate source path/hash/size, game-id, transient export
+    hash/size, and result receipt for the F0435 -> F0433 -> F0435 handoff.
+    Firestaff manifests and nonoriginal envelopes remain explicit rejected
+    rows and never enter import/export. Remaining work is broader original
+    dungeon-tail import breadth and independently collected community saves.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live

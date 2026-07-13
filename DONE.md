@@ -21,6 +21,12 @@
   synthetic material or explosion type semantics were added. Verification:
   focused Ninja build and projectile/explosion CTest.
 
+- 2026-07-13 DM1 PC34 external-save corpus provenance: each classifier-
+  qualified save now retains its path, source hash/size, game id, transient
+  export hash/size, and F0435 -> F0433 -> F0435 result. Firestaff manifests
+   and nonoriginal envelopes remain rejected and never become import evidence.
+   Verification: focused original-save handoff CTest.
+
 - 2026-07-13 Nexus Structure1F wall-sensor control/destination handoff: the
   adjacent raw four-byte tuples now reach DGN host, render-plan, and LEV00-15
   corpus receipts. This assigns no trigger, target, route, operation, mesh,

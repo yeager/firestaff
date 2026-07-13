@@ -3378,6 +3378,8 @@ static void test_corpus_roundtrip_proof(void)
     char rejected_path[512];
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
+    int i;
+    int receipts_valid = 1;
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int rc;
 
@@ -3417,6 +3419,21 @@ static void test_corpus_roundtrip_proof(void)
           "corpus preserves core state for every PC34 file");
     CHECK(report.roundtrip_failed_count == 0,
           "corpus has no failed PC34 roundtrip");
+    CHECK(report.receipt_count == 2,
+          "corpus retains one provenance receipt per classified PC34 envelope");
+    for (i = 0; i < report.receipt_count; ++i) {
+        const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        if (!receipt->classified_loader_envelope || !receipt->external_original ||
+            !receipt->roundtrip_attempted ||
+            receipt->roundtrip_result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+            !receipt->core_state_matches || receipt->source_byte_count == 0u ||
+            receipt->source_hash == 0u || receipt->exported_byte_count == 0u ||
+            receipt->exported_hash == 0u || !receipt->path[0]) {
+            receipts_valid = 0;
+        }
+    }
+    CHECK(receipts_valid && report.roundtrip_hash != 0u,
+          "corpus receipts bind every external source hash to its transient export hash");
     CHECK(strstr(report.first_pc34_path, "first-original.bin") != NULL,
           "corpus records first eligible path");
     CHECK(strstr(report.first_roundtrip_path, "first-original.bin") != NULL,
