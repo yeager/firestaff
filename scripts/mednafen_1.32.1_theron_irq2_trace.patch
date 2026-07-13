@@ -1260,7 +1260,7 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 +  {
 +   for(unsigned i = 0; i < 32; i++)
 +    span_fnv1a = (span_fnv1a ^ buffer[i]) * 16777619U;
-+   fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=%08x\\n", lba, span_fnv1a);
++   fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=%08x\n", lba, span_fnv1a);
 +   fflush(trace);
 +   trace_count++;
 +  }
