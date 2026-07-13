@@ -425,6 +425,122 @@ int dm2_v1_inventory_panel_consume_survey_preview(
         loader, &preview->hud, blit, surface, out_receipt);
 }
 
+int dm2_v1_inventory_panel_hand_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelItemView *item,
+    uint8_t gdat_category,
+    uint8_t gdat_index,
+    uint8_t image_field,
+    DM2_V1_InventoryPanelHandReceipt *out_receipt)
+{
+    DM2_V1_InventoryPanelGdatMaterialReceipt material;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_IN_HAND:15778-15812 obtains
+     * the record-selected field, copies QUERY_GDAT_IMAGE_LOCALPAL into the
+     * hand picture, and FIRE_BLIT_PICTUREs the whole image at origin with
+     * color key -1. The caller therefore supplies the original selected
+     * field; no default hand icon can substitute for an absent record. */
+    if (!item || !item->has_object || item->object_id == 0u ||
+        !dm2_v1_inventory_panel_gdat_material_receipt(
+            loader, item->object_id, gdat_category, gdat_index, image_field,
+            &material) ||
+        !dm2_v1_inventory_panel_hud_receipt(item, &material,
+                                             &out_receipt->hud)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->origin_width = material.decoded_width;
+    out_receipt->origin_height = material.decoded_height;
+    hash = inventory_panel_hash_step(hash, out_receipt->origin_width);
+    hash = inventory_panel_hash_step(hash, out_receipt->origin_height);
+    hash = inventory_panel_hash_step(hash, out_receipt->hud.receipt_hash);
+    if (hash == 0u) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->receipt_hash = hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_inventory_panel_consume_hand_item(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelHandReceipt *hand,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt)
+{
+    const DM2_V1_InventoryPanelGdatMaterialReceipt *material;
+    uint8_t palette16[16];
+    uint8_t *source_pixels;
+    uint32_t palette_hash = 0u;
+    uint32_t pixels_hash = 2166136261u;
+    uint32_t blit_hash = 2166136261u;
+    int source_width = 0;
+    int source_height = 0;
+    DM2_ImageFormat source_format = DM2_IMG_FMT_UNKNOWN;
+    size_t pixel_count;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !hand || !hand->valid || hand->receipt_hash == 0u ||
+        !surface || !surface->pixels || surface->width != hand->origin_width ||
+        surface->height != hand->origin_height || surface->stride < surface->width) {
+        return 0;
+    }
+    material = &hand->hud.material;
+    if (!hand->hud.valid || !material->valid ||
+        material->object_id != hand->hud.object_id ||
+        !dm2_v1_asset_load_image_local_palette(
+            loader, material->gdat_category, material->gdat_index,
+            material->image_field, palette16, &palette_hash) ||
+        palette_hash == 0u || palette_hash != material->local_palette_hash ||
+        memcmp(palette16, material->local_palette16, sizeof(palette16)) != 0) {
+        return 0;
+    }
+    source_pixels = dm2_v1_asset_load_image_field(
+        loader, material->gdat_category, material->gdat_index,
+        material->image_field, &source_width, &source_height, &source_format);
+    if (!source_pixels || source_width != (int)hand->origin_width ||
+        source_height != (int)hand->origin_height ||
+        source_format != material->decoded_format ||
+        (source_format != DM2_IMG_FMT_IMG3 && source_format != DM2_IMG_FMT_U4)) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    pixel_count = (size_t)source_width * (size_t)source_height;
+    if (pixel_count == 0u || pixel_count > UINT32_MAX) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i) {
+        pixels_hash = inventory_panel_hash_step(pixels_hash, source_pixels[i]);
+    }
+    if (pixels_hash != material->decoded_pixels_hash) {
+        dm2_v1_asset_free_pixels(source_pixels);
+        return 0;
+    }
+    for (size_t i = 0u; i < pixel_count; ++i) {
+        uint8_t source = source_pixels[i];
+        uint8_t destination = palette16[source & 0x0fu];
+        surface->pixels[(i / (size_t)source_width) * (size_t)surface->stride +
+                        (i % (size_t)source_width)] = destination;
+        blit_hash = inventory_panel_hash_step(blit_hash, source);
+        blit_hash = inventory_panel_hash_step(blit_hash, destination);
+    }
+    dm2_v1_asset_free_pixels(source_pixels);
+    if (blit_hash == 0u) return 0;
+    out_receipt->width = hand->origin_width;
+    out_receipt->height = hand->origin_height;
+    out_receipt->drawn_pixel_count = (uint32_t)pixel_count;
+    out_receipt->transparent_pixel_count = 0u;
+    out_receipt->blit_hash = blit_hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
 const char *dm2_v1_inventory_panel_source_evidence(void)
 {
     return

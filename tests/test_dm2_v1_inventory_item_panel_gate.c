@@ -213,6 +213,7 @@ static void test_source_selected_item_gdat_material(void)
     DM2_V1_InventoryPanelHudSurface surface;
     DM2_V1_InventoryPanelHudConsumptionReceipt consumption;
     DM2_V1_InventoryPanelSurveyPreviewReceipt preview;
+    DM2_V1_InventoryPanelHandReceipt hand;
     uint8_t hud_pixels[16];
     uint32_t powerblade;
     int palette;
@@ -295,6 +296,30 @@ static void test_source_selected_item_gdat_material(void)
               hud_pixels[2 * 4 + 1] == 0x21u &&
               hud_pixels[2 * 4 + 2] == 0x7eu,
           "live HUD consumption blits exact item palette with source key 12");
+    {
+        uint8_t hand_pixels[2] = {0u, 0u};
+        DM2_V1_InventoryPanelHudSurface hand_surface;
+
+        hand_surface.pixels = hand_pixels;
+        hand_surface.width = 2;
+        hand_surface.height = 1;
+        hand_surface.stride = 2;
+        CHECK(dm2_v1_inventory_panel_hand_receipt(
+                  &loader, &item, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x18u,
+                  &hand) && hand.valid && hand.origin_width == 2u &&
+                  hand.origin_height == 1u,
+              "held selected item binds its exact record-selected GDAT field");
+        CHECK(dm2_v1_inventory_panel_consume_hand_item(
+                  &loader, &hand, &hand_surface, &consumption) &&
+                  consumption.valid && consumption.drawn_pixel_count == 2u &&
+                  consumption.transparent_pixel_count == 0u &&
+                  hand_pixels[0] == 0x21u && hand_pixels[1] == 0x2cu,
+              "held selected item copies the complete local-palette image");
+        hand_surface.width = 1;
+        CHECK(!dm2_v1_inventory_panel_consume_hand_item(
+                  &loader, &hand, &hand_surface, &consumption),
+              "held item rejects a non-origin destination surface");
+    }
     blit.transparent_index = 0u;
     CHECK(!dm2_v1_inventory_panel_consume_hud_material(
               &loader, &hud, &blit, &surface, &consumption),

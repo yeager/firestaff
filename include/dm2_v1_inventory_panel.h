@@ -127,6 +127,16 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_InventoryPanelSurveyPreviewReceipt;
 
+/* DRAW_ITEM_IN_HAND copies one selected item's exact local palette into the
+ * leader-hand picture, then blits the entire decoded image at its origin. */
+typedef struct {
+    int valid;
+    uint16_t origin_width;
+    uint16_t origin_height;
+    DM2_V1_InventoryPanelHudReceipt hud;
+    uint32_t receipt_hash;
+} DM2_V1_InventoryPanelHandReceipt;
+
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
@@ -170,6 +180,20 @@ int dm2_v1_inventory_panel_consume_survey_preview(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_InventoryPanelSurveyPreviewReceipt *preview,
     const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_hand_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelItemView *item,
+    uint8_t gdat_category,
+    uint8_t gdat_index,
+    uint8_t image_field,
+    DM2_V1_InventoryPanelHandReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_consume_hand_item(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelHandReceipt *hand,
     DM2_V1_InventoryPanelHudSurface *surface,
     DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
 
