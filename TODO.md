@@ -466,6 +466,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     with its local palette before the first door blit. A missing component
     blocks the complete door pass instead of leaving partial or fallback door
     pixels. Remaining door work is exact source placement/clipping breadth.
+  - 2026-07-13 update: source-required skproject T600 now prebinds both
+    active `GRAPHICSSET` sky and ground IMG3s with their own local palettes
+    before either outdoor scene plane is drawn. Weather stays no-draw because
+    its real `DRAW_TEMP_PICST` image/destination route remains unproven.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
@@ -2607,6 +2611,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     DB6/DB7/DB8 and DB10..DB15 have zero direct roots. Their record payloads
     remain unavailable without a separately proven non-direct route; no
     extension or `w0` traversal may fill that gap.
+  - 2026-07-13 update: selected level/tile coordinates can now resolve only
+    direct DB0..DB5/DB9 roots through the exact `c_map.cpp` ground-stack and
+    `c_record.cpp` base-plus-stride transform. DB6..DB8/DB10..DB15, extensions,
+    `w0`, and possession routes still reject before any record payload read.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.

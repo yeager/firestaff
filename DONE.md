@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 atomic T600 GDAT scene transaction: source-required
+  outdoor rendering now resolves both active `GRAPHICSSET` sky and ground
+  IMG3s plus their exact local palettes before drawing either half of the
+  scene. A missing ground blocks before sky pixels are presented; complete
+  frames publish independent required/consumed sky-ground masks. No gradient,
+  interface palette, or weather fallback is introduced. Source: skproject
+  `SKWIN/SkWinCore.cpp` T600 GRAPHICSSET material route. Verification: direct
+  `test_dm2_v1_outdoor_scene_material_gate` 2/2 and Ninja runtime smoke
+  161/161.
+
 - ✅ 2026-07-13 DM2 selected leader-hand GDAT consumption: the inventory
   panel now consumes skproject `DRAW_ITEM_IN_HAND`'s caller-selected `dtImage`
   through its exact local palette into an origin surface matching the decoded
@@ -12646,6 +12656,18 @@ so no later family can be materialized without a separately proven route.
 This reads no record payload or `GenericRecord::w0`. Verification: explicit
 build-only real-data census target and focused 87-check dungeon-loader gate
 passed.
+
+# ✅ 2026-07-13 DM2 G1 direct tile-to-c_record address receipt
+
+The loader now resolves a runtime-admitted G1 `(level,x,y)` tile through the
+skproject `c_map.cpp` ground-stack lookup into the exact direct
+`c_record.cpp` `base + record_size * index` address. It accepts only already
+proven DB0 through DB5 and DB9 records, validates every resulting offset and
+size before the G1 extension boundary, and returns no payload pointer. The
+canonical real-data test locks direct DB0, DB1, DB2, DB3, DB4, DB5, and DB9
+addresses; all other types, extensions, `w0`, and possession routes reject.
+Verification: build-only real-data address target and focused 87-check
+dungeon-loader gate passed.
 
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
