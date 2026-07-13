@@ -1233,6 +1233,12 @@
   callers, sectors, or payloads. Verification: capture-script and Mednafen
   patch regressions.
 
+- ✅ 2026-07-13 Theron transition sidecar receipt: each authentic capture now
+  writes observed raw counts for input, CDIRQ, caller PC, and raw-sector spans,
+  then reports only transition=observed or transition=missing. It does not
+  fabricate an input or infer behavior. Verification: capture-script and
+  Mednafen patch regressions.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

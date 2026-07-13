@@ -37,6 +37,12 @@ if ! grep -Fq 'System Card wait; input=%s irq=%s non_system_card_pcecd=%s' "$scr
     printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
     exit 1
 fi
+if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
+   ! grep -Fq 'transition=missing' "$script" ||
+   ! grep -Fq 'transition=observed' "$script"; then
+    printf 'FAIL: capture script must publish an observed-or-missing transition receipt\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")
