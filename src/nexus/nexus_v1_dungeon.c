@@ -3970,6 +3970,83 @@ int nexus_v1_dgn_bind_direct_structure1f_floor_sources(
     return 0;
 }
 
+int nexus_v1_dgn_bind_structure1a_owned_cell_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count,
+    Nexus_V1_DgnStructure1FStructure1ACommandSource *out_sources,
+    int max_sources,
+    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt receipt;
+    int entry_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !commands || command_count < 0 || !out_sources ||
+        max_sources < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    for (entry_index = 0; entry_index < level->structure1f_entry_count;
+         ++entry_index) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &level->structure1f_entries[entry_index];
+        int command_index;
+
+        if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ALCOVES &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS &&
+            entry->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS) {
+            continue;
+        }
+        if (!entry->structure1a_relation_valid) {
+            ++receipt.blocked_missing_relation_count;
+            continue;
+        }
+        for (command_index = 0; command_index < command_count;
+             ++command_index) {
+            Nexus_V1_DgnStructure1FStructure1ACommandSource *source;
+
+            if (commands[command_index].kind !=
+                    NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+                commands[command_index].x != entry->structure1a_owner_x ||
+                commands[command_index].y != entry->structure1a_owner_y) {
+                continue;
+            }
+            ++receipt.visible_owned_entry_count;
+            if (receipt.floor_command_source_count >= max_sources) {
+                ++receipt.blocked_capacity_count;
+                continue;
+            }
+            source = &out_sources[receipt.floor_command_source_count++];
+            memset(source, 0, sizeof(*source));
+            source->command_index = command_index;
+            source->entry_index = entry_index;
+            source->entry = *entry;
+            source->owner_x = entry->structure1a_owner_x;
+            source->owner_y = entry->structure1a_owner_y;
+            source->structure3_model_index =
+                entry->structure1a_structure3_model_index;
+            source->z_rotation = entry->structure1a_z_rotation;
+            source->draw_authorized = 0;
+            if (entry->family == NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) {
+                ++receipt.alcove_floor_command_source_count;
+            } else if (entry->family ==
+                       NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS) {
+                ++receipt.wall_decoration_floor_command_source_count;
+            } else {
+                ++receipt.wall_sensor_floor_command_source_count;
+            }
+        }
+    }
+    receipt.complete = receipt.visible_owned_entry_count > 0 &&
+        receipt.floor_command_source_count == receipt.visible_owned_entry_count &&
+        receipt.blocked_missing_relation_count == 0 &&
+        receipt.blocked_capacity_count == 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
                                      int source_hash_verified,
                                      Nexus_V1_ItemIbsBank *out_bank)

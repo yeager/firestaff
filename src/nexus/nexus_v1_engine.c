@@ -885,6 +885,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     memset(&plan->structure1f_direct_floor_source_receipt, 0,
            sizeof(plan->structure1f_direct_floor_source_receipt));
     plan->structure1f_direct_floor_sources_consumed = 0;
+    memset(plan->structure1a_owned_cell_sources, 0,
+           sizeof(plan->structure1a_owned_cell_sources));
+    memset(&plan->structure1a_owned_cell_source_receipt, 0,
+           sizeof(plan->structure1a_owned_cell_source_receipt));
+    plan->structure1a_owned_cell_sources_consumed = 0;
     plan->level = engine->game.current_level;
     plan->party_x = party_x;
     plan->party_y = party_y;
@@ -995,6 +1000,22 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->structure1f_direct_floor_sources_consumed =
         plan->structure1f_direct_floor_source_receipt.complete &&
         !plan->structure1f_direct_floor_source_receipt
+             .fallback_visuals_permitted;
+    /* Structure1A-bound rows have a verified owner cell and model record,
+     * but no face/material/pixel semantics. Keep their cell anchor in the
+     * host plan as source evidence only. */
+    if (nexus_v1_dgn_bind_structure1a_owned_cell_sources(
+            &engine->current_level, plan->commands,
+            plan->receipt.command_count, plan->structure1a_owned_cell_sources,
+            NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
+            &plan->structure1a_owned_cell_source_receipt) != 0) {
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    plan->structure1a_owned_cell_sources_consumed =
+        plan->structure1a_owned_cell_source_receipt.complete &&
+        !plan->structure1a_owned_cell_source_receipt
              .fallback_visuals_permitted;
     /* Direct Structure1Fa records get the same one-way host consumption.
      * The binder returns only original ITEM.IBS descriptor references for
