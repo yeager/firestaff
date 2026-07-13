@@ -67,6 +67,8 @@ static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
+static int csb_v1_runtime_stage_csbwin_overlay_palette(
+    CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_write_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_save_policy(
@@ -14694,6 +14696,7 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         return -1;
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0 ||
         csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
         csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
@@ -14817,6 +14820,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
     }
     if (csb_v1_runtime_stage_csbwin_global_variables(&candidate) != 0 ||
+        csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0 ||
         csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0 ||
         csb_v1_runtime_stage_csbwin_save_policy(&candidate) != 0) {
         csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
@@ -15319,6 +15323,74 @@ static int csb_v1_runtime_stage_csbwin_global_variables(
     return 0;
 }
 
+static int csb_v1_runtime_stage_csbwin_overlay_palette(
+    CSB_V1_RuntimeProfile *candidate)
+{
+    enum {
+        CSBWIN_EDT_PALETTE = 7u,
+        CSBWIN_PALETTE_RECORD_COUNT = 24u,
+        CSBWIN_PALETTE_RECORD_BYTES = 64u
+    };
+    uint8_t staged[CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
+    uint32_t record_index;
+
+    if (!candidate) return -1;
+
+    /* CSBWin SaveGame.cpp:1948-1970 calls EXPOOL::Locate for every record
+     * before publishing overlayPaletteRed/Green/Blue. Firestaff is stricter
+     * at the host boundary: an incomplete or stale save-tail receipt has no
+     * palette surface, rather than reusing pixels from a prior save. */
+    if (!candidate->csbwin_appended_tail_valid ||
+        candidate->csbwin_appended_tail_size == 0u) {
+        candidate->csbwin_overlay_palette_valid = 0;
+        candidate->csbwin_overlay_palette_tail_fnv1a = 0u;
+        memset(candidate->csbwin_overlay_palette, 0,
+               sizeof(candidate->csbwin_overlay_palette));
+        return 0;
+    }
+    if (candidate->csbwin_appended_tail_truncated ||
+        candidate->csbwin_appended_tail_size !=
+            candidate->csbwin_appended_tail_preserved_size ||
+        candidate->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        candidate->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(
+                candidate->csbwin_appended_tail,
+                candidate->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+
+    for (record_index = 0u;
+         record_index < CSBWIN_PALETTE_RECORD_COUNT;
+         ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+
+        if (!csb_v1_runtime_locate_appended_expool_record_internal(
+                candidate, (CSBWIN_EDT_PALETTE << 24) | record_index,
+                &payload, &payload_size) ||
+            !payload || payload_size < CSBWIN_PALETTE_RECORD_BYTES) {
+            /* SaveGame.cpp simply retains its current overlay when a save
+             * does not carry the entire 24-record bundle. Firestaff has no
+             * hidden fallback surface here: invalidate this profile's receipt
+             * and let the caller continue restoring other authentic records. */
+            candidate->csbwin_overlay_palette_valid = 0;
+            candidate->csbwin_overlay_palette_tail_fnv1a = 0u;
+            memset(candidate->csbwin_overlay_palette, 0,
+                   sizeof(candidate->csbwin_overlay_palette));
+            return 0;
+        }
+        memcpy(staged + (size_t)record_index * CSBWIN_PALETTE_RECORD_BYTES,
+               payload, CSBWIN_PALETTE_RECORD_BYTES);
+    }
+
+    memcpy(candidate->csbwin_overlay_palette, staged, sizeof(staged));
+    candidate->csbwin_overlay_palette_valid = 1;
+    candidate->csbwin_overlay_palette_tail_fnv1a =
+        candidate->csbwin_appended_tail_fnv1a;
+    return 0;
+}
+
 static int csb_v1_runtime_write_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate)
 {
@@ -15497,6 +15569,52 @@ int csb_v1_runtime_restore_csbwin_expool_global_variables(
            candidate.csbwin_global_variables,
            sizeof(profile->csbwin_global_variables));
     return 0;
+}
+
+int csb_v1_runtime_restore_csbwin_expool_overlay_palette(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_RuntimeProfile candidate;
+
+    if (!profile) return -1;
+    candidate = *profile;
+    if (csb_v1_runtime_stage_csbwin_overlay_palette(&candidate) != 0) {
+        return -1;
+    }
+    profile->csbwin_overlay_palette_valid =
+        candidate.csbwin_overlay_palette_valid;
+    profile->csbwin_overlay_palette_tail_fnv1a =
+        candidate.csbwin_overlay_palette_tail_fnv1a;
+    memcpy(profile->csbwin_overlay_palette,
+           candidate.csbwin_overlay_palette,
+           sizeof(profile->csbwin_overlay_palette));
+    return 0;
+}
+
+int csb_v1_runtime_get_csbwin_expool_overlay_palette(
+    const CSB_V1_RuntimeProfile *profile,
+    const uint8_t **out_palette,
+    size_t *out_size)
+{
+    if (out_palette) *out_palette = NULL;
+    if (out_size) *out_size = 0u;
+    if (!profile || !out_palette || !out_size ||
+        !profile->csbwin_overlay_palette_valid ||
+        !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_overlay_palette_tail_fnv1a !=
+            profile->csbwin_appended_tail_fnv1a ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(
+                profile->csbwin_appended_tail,
+                profile->csbwin_appended_tail_preserved_size)) {
+        return 0;
+    }
+    *out_palette = profile->csbwin_overlay_palette;
+    *out_size = sizeof(profile->csbwin_overlay_palette);
+    return 1;
 }
 
 int csb_v1_runtime_csbwin_saves_disabled(

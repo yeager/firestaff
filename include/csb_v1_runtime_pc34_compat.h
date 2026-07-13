@@ -75,6 +75,9 @@ extern "C" {
 #define CSB_V1_MAX_PARTY_X  32
 #define CSB_V1_MAX_PARTY_Y  32
 #define CSB_V1_RUNTIME_ACTIVE_GROUP_CAP 110
+/* CSBWin SaveGame.cpp serializes the active overlay palette as twenty-four
+ * consecutive EDT_Palette EXPOOL records: 3 channels * 512 entries. */
+#define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
 
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
@@ -343,6 +346,13 @@ typedef struct {
     int                     csbwin_global_variables_valid;
     uint16_t                csbwin_global_variable_count;
     uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
+    /* CSBWin SaveGame.cpp restores all 24 EDT_Palette records atomically.
+     * This byte-exact RGB lookup table remains unavailable to the renderer
+     * until every source record and the appended-tail receipt verify. */
+    int                     csbwin_overlay_palette_valid;
+    uint32_t                csbwin_overlay_palette_tail_fnv1a;
+    uint8_t                 csbwin_overlay_palette[
+        CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
     /* CSBWin SaveGame.cpp reads EDBT_DisableSaves from EXPOOL. It is a
      * source save-policy gate, not a Firestaff preference. */
     int                     csbwin_saves_disabled;
@@ -620,6 +630,17 @@ int csb_v1_runtime_get_csbwin_dsa_tracing(
  * malformed present record leaves the prior profile bank unchanged. */
 int csb_v1_runtime_restore_csbwin_expool_global_variables(
     CSB_V1_RuntimeProfile *profile);
+/* Restore CSBWin's complete 24-record EDT_Palette bundle from a verified
+ * appended EXPOOL tail. A partial, altered, or absent bundle is not exposed
+ * as a renderer palette. */
+int csb_v1_runtime_restore_csbwin_expool_overlay_palette(
+    CSB_V1_RuntimeProfile *profile);
+/* Return the byte-exact CSBWin overlay palette only when the complete source
+ * bundle was restored from the current appended-tail receipt. */
+int csb_v1_runtime_get_csbwin_expool_overlay_palette(
+    const CSB_V1_RuntimeProfile *profile,
+    const uint8_t **out_palette,
+    size_t *out_size);
 int csb_v1_runtime_csbwin_saves_disabled(
     const CSB_V1_RuntimeProfile *profile);
 

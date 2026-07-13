@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `EDT_Palette` runtime restore: the 24 original
+  `7 << 24 | 0..23` EXPOOL records now stage into CSB's three byte-exact
+  512-entry RGB channels following `SaveGame.cpp:1218-1238,1945-1970`.
+  Every source record must provide 16 words and retain the appended-tail FNV
+  receipt; partial or altered data is unavailable to the HUD/viewport.
+  Verification: Ninja and `csb_v1_expool_palette_restore`.
+
 - 2026-07-13 DM2 weather distant-environment plan: selected real GDAT
   weather commands now retain the complete source-initialized
   `DistantEnvironment` transform (`CD`, `FW`, zero offsets and 0x40 scales),
