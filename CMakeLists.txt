@@ -7082,6 +7082,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_m11_runtime_frame_receipt_gate_watermark_identity
     )
 
+    add_executable(test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition
+        tests/test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition.c
+        src/engine/m11_dm2_runtime_frame_receipt_gate.c
+    )
+    target_include_directories(test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_m11_runtime_frame_receipt_gate_map_transition
+        COMMAND test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition
+    )
+
     add_executable(test_csb_v1_m11_startup_resume_gate
         tests/test_csb_v1_m11_startup_resume_gate.c
         tests/csbwin_resume_fixture.c
