@@ -5030,18 +5030,21 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     receipt.graphics_c001_usable = decision.graphicsC001Usable ? 1 : 0;
     receipt.title_dat_fallback_usable =
         decision.titleDatFallbackUsable ? 1 : 0;
+    /* ReDMCSB TITLE.C F0437 PC/F20 loads C001 itself. TITLE.DAT is a
+     * different file-format route and cannot stand in for the source-visible
+     * PC34 startup animation when C001 is absent or malformed. */
+    if (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK) {
+        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
+    }
     receipt.selected_runtime_source = (int)decision.source;
     receipt.require_graphics_c001_for_release_start =
         (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001)
             ? 1
             : 0;
-    receipt.fallback_is_visible_last_resort =
-        (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK)
-            ? 1
-            : 0;
+    receipt.fallback_is_visible_last_resort = 0;
     receipt.source_evidence =
         "ReDMCSB TITLE.C F0437 lines 309-324 loads C001_GRAPHIC_TITLE "
-        "before PRESENTS; TITLE.DAT is Firestaff's visible fallback only "
+        "before PRESENTS; DM1 PC34 startup rejects TITLE.DAT substitution "
         "when C001 is unavailable or too small.";
     *out_receipt = receipt;
     return 1;

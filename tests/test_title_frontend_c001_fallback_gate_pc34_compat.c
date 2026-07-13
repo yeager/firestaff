@@ -143,6 +143,7 @@ static void check_selection_contract(void) {
 static void check_runtime_asset_receipt(void) {
     unsigned char c001[320u * 200u];
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 receipt;
+    DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 source_receipt;
 
     memset(c001, 0, sizeof(c001));
     c001[0] = 1u;
@@ -168,6 +169,16 @@ static void check_runtime_asset_receipt(void) {
     expect_i("C001 asset receipt remains DM1-only",
              dm1_v1_startup_title_runtime_asset_receipt_pc34(
                  "csb", c001, 320u, 200u, &receipt) && !receipt.handled,
+             1);
+    memset(&source_receipt, 0, sizeof(source_receipt));
+    expect_i("DM1 startup rejects TITLE.DAT when C001 is unavailable",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 0, 0u, 0u, 1, &source_receipt) &&
+                 source_receipt.handled &&
+                 source_receipt.title_dat_fallback_usable &&
+                 source_receipt.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP &&
+                 !source_receipt.fallback_is_visible_last_resort,
              1);
 }
 

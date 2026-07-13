@@ -1958,6 +1958,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     credits-dismissal input is discarded, and M11 waits for a fresh entrance
     command. It no longer replays title/fade/micro-dungeon steps after credits.
     Remaining startup work is packaged Mac/app capture only.
+  - 2026-07-13 update: the production DM1 PC34 title path is now fail-closed
+    on decoded C001. `TITLE.DAT` remains inspectable by its own tooling but
+    cannot present an alternate runtime title sequence when C001 is missing or
+    malformed. The C12 then C13/C14 palette/timing path remains C001-only.
+    Remaining startup work is packaged Mac/app capture only.
   - 2026-07-11 update: DM1 C001 TITLE zoom now follows F0437's actual bitmap direction: the complete `320x80` DUNGEON MASTER source is scaled down into each centred `48x12` through `320x80` destination box. It no longer crops a tiny source rectangle and magnifies it full-screen. The title handoff probe now consumes this production blit plan after an RGBA SWSH-like present and verifies palette-index-to-RGB readback. Remaining title work is real packaged Mac/release capture breadth and any source-proven presentation defect, not synthetic title replacement.
   - 2026-07-11 update: the local DM1 capture blockers in pass610 viewport crop capture, pass623 input capture readiness, original-capture live-row determinism, and capture runbook consistency are green after the capture-determinism repair in DONE.md. Remaining DM1 capture work is real packaged Mac/release/app capture promotion and any later active runtime ownership cleanup outside this verified gate cluster.
   - 2026-07-11 update: M12 DM1 HoC presented-capture receipt import now goes through `dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34`, so M12 no longer owns the consumer-mask/chain-hash validation for app/Mac presented capture. Remaining DM1 work is real packaged Mac/release/app capture promotion and broader runtime/API ownership outside this active M12 import path.
