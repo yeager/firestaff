@@ -1738,6 +1738,15 @@
   focused C04/C11 regression stages a populated out-of-party slot and proves
   it creates neither a closed-door receipt nor an action-enable emission.
 
+- 2026-07-13 DM1 PC34 F0407 C04/C11 champion-owner gate: F0391/F0407 now
+  reject a populated `Champion[]` slot when its index is outside the live
+  `Party.ChampionCount`. F0330 cannot schedule C11 for that slot, F0407's
+  throw ordinal mutation cannot claim it, and TIMELINE.C C11 consumes no
+  stale imported owner beyond the party boundary. Source: ReDMCSB `MENU.C`
+  `F0391/F0407`, `CHAMPION.C F0330`, and `TIMELINE.C` C11. Verification:
+  focused C04/C11 regression stages a populated out-of-party slot and proves
+  it creates neither a closed-door receipt nor an action-enable emission.
+
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
   typed projectile move and F0330's C11 enable-action record. It no longer
