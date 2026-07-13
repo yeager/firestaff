@@ -283,6 +283,39 @@ static int nexus_v1_dgn_parse_structure1g(
     return 0;
 }
 
+static int nexus_v1_dgn_parse_structure1a(
+    Nexus_V1_DgnStructure1ATable *out_table,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    const uint8_t *src;
+    Nexus_V1_DgnStructure1ATable table;
+    uint32_t count;
+    uint32_t relative_offset;
+
+    if (out_table) memset(out_table, 0, sizeof(*out_table));
+    if (!out_table || !data || !layout) return -1;
+    src = data + layout->structure1_offset;
+    count = rb32(src + 0x0c);
+    relative_offset = rb32(src + 0x10);
+    if (relative_offset != 0x38U ||
+        count > NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES ||
+        count > (uint32_t)(INT_MAX / NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES)) {
+        return -1;
+    }
+    memset(&table, 0, sizeof(table));
+    table.relative_offset = (int)relative_offset;
+    table.entry_count = (int)count;
+    table.size = table.entry_count * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES;
+    if (table.relative_offset > layout->structure1b_relative_offset ||
+        table.size > layout->structure1b_relative_offset - table.relative_offset) {
+        return -1;
+    }
+    table.valid = 1;
+    *out_table = table;
+    return 0;
+}
+
 static int nexus_v1_dgn_parse_structure1f(
     Nexus_V1_DgnStructure1FTable *out_table,
     const uint8_t *data,
@@ -381,6 +414,15 @@ static uint16_t nexus_v1_decode_structure1b_post_grid_0x30_ref(
     const uint8_t *cell) {
     return (uint16_t)((((unsigned)cell[5] << 4) |
                        ((unsigned)cell[6] >> 4)) & 0x0fffU);
+}
+
+static int nexus_v1_decode_structure1b_structure1a_ref(
+    const uint8_t *cell, uint16_t *out_ref)
+{
+    if (!cell || !out_ref || (cell[4] & 0x80U) == 0U) return 0;
+    *out_ref = (uint16_t)((((unsigned)cell[5] << 4) |
+                           ((unsigned)cell[6] >> 4)) & 0x0fffU);
+    return 1;
 }
 
 static int nexus_v1_post_grid_0x30_ref_is_bounded(
@@ -604,6 +646,7 @@ int nexus_v1_dgn_structure1_layout(Nexus_V1_DgnStructure1Layout *out_layout,
     /* DMWeb DGN files: pointer 0x34 is Structure1F, not an opaque tail.
      * Its counted families are decoded only when the entire final useful span
      * has an exact, source-backed layout. */
+    (void)nexus_v1_dgn_parse_structure1a(&layout.structure1a, data, &layout);
     (void)nexus_v1_dgn_parse_structure1f(&layout.structure1f, data, &layout);
     (void)nexus_v1_dgn_parse_structure1g(&layout.structure1g, data, &layout);
     layout.valid = 1;
@@ -945,6 +988,64 @@ static void nexus_v1_level_copy_structure1f_entries(
     level->structure1f_entry_count = output;
 }
 
+static void nexus_v1_level_copy_structure1a_models(
+    Nexus_V1_Level *level,
+    const uint8_t *data,
+    const Nexus_V1_DgnStructure1Layout *layout)
+{
+    int index;
+
+    if (!level || !data || !layout || !layout->structure1a.valid) return;
+    for (index = 0; index < layout->structure1a.entry_count; ++index) {
+        const uint8_t *src = data + layout->structure1_offset +
+            layout->structure1a.relative_offset +
+            index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES;
+        level->structure1a_models[index].kind = src[0];
+        level->structure1a_models[index].structure3_model_index = src[1];
+        level->structure1a_models[index].z_rotation = src[2];
+    }
+    level->structure1a_model_count = layout->structure1a.entry_count;
+    level->structure1a_table_valid = 1;
+}
+
+static void nexus_v1_level_resolve_structure1a_relations(Nexus_V1_Level *level)
+{
+    int owner_count[NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES];
+    int owner_x[NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES];
+    int owner_y[NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES];
+    int x;
+    int y;
+    int entry;
+
+    if (!level || !level->structure1a_table_valid) return;
+    memset(owner_count, 0, sizeof(owner_count));
+    memset(owner_x, 0, sizeof(owner_x));
+    memset(owner_y, 0, sizeof(owner_y));
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+            uint16_t ref;
+            if (!level->structure1a_owner_ref_valid[y][x]) continue;
+            ref = level->structure1a_owner_refs[y][x];
+            if (ref >= (uint16_t)level->structure1a_model_count) continue;
+            ++owner_count[ref];
+            owner_x[ref] = x;
+            owner_y[ref] = y;
+        }
+    }
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        Nexus_V1_DgnStructure1FEntry *record = &level->structure1f_entries[entry];
+        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+            record->structure1a_index >= (uint16_t)level->structure1a_model_count ||
+            owner_count[record->structure1a_index] != 1) continue;
+        record->structure1a_relation_valid = 1;
+        record->structure1a_owner_x = owner_x[record->structure1a_index];
+        record->structure1a_owner_y = owner_y[record->structure1a_index];
+        record->structure1a_structure3_model_index =
+            level->structure1a_models[record->structure1a_index]
+                .structure3_model_index;
+    }
+}
+
 int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, int level_index) {
     if (!level || !data || size < 64) return -1;
     memset(level, 0, sizeof(*level));
@@ -1006,6 +1107,9 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                         (uint8_t)(rb16(data + off) >> 14);
                     level->post_grid_0x30_refs[y][x] =
                         nexus_v1_decode_structure1b_post_grid_0x30_ref(data + off);
+                    level->structure1a_owner_ref_valid[y][x] =
+                        nexus_v1_decode_structure1b_structure1a_ref(
+                            data + off, &level->structure1a_owner_refs[y][x]) ? 1U : 0U;
                 }
             }
             /* DMWeb proves Structure1B's 12-bit reference into a bounded
@@ -1021,7 +1125,9 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     level->structure2_texture_count = 0;
                     level->structure2_texture_table_valid = 0;
                 }
+                nexus_v1_level_copy_structure1a_models(level, data, &layout);
                 nexus_v1_level_copy_structure1f_entries(level, data, &layout);
+                nexus_v1_level_resolve_structure1a_relations(level);
                 nexus_v1_level_copy_structure1g_entries(level, data, &layout);
                 nexus_v1_level_finalize_structure1g_structure2_bindings(level);
                 level->structure1g_floor_animation_bound_count = 0;
@@ -1247,6 +1353,54 @@ int nexus_v1_level_structure1a_boundary_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1a_relation_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ARelationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1ARelationReceipt receipt;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!level || !level->geometry_info.structure1f_valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.table_entry_count = level->structure1a_model_count;
+    receipt.table_valid = level->structure1a_table_valid &&
+        receipt.table_entry_count >= 0 &&
+        receipt.table_entry_count <= NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) continue;
+        ++receipt.structure1f_bound_entry_count;
+        if (!receipt.table_valid ||
+            record->structure1a_index >= (uint16_t)receipt.table_entry_count) {
+            ++receipt.out_of_range_index_count;
+        } else if (record->structure1a_relation_valid) {
+            ++receipt.resolved_entry_count;
+        } else {
+            int x;
+            int y;
+            int owners = 0;
+            for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+                for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+                    if (level->structure1a_owner_ref_valid[y][x] &&
+                        level->structure1a_owner_refs[y][x] ==
+                            record->structure1a_index) ++owners;
+                }
+            }
+            if (owners == 0) ++receipt.missing_owner_entry_count;
+            else ++receipt.ambiguous_owner_entry_count;
+        }
+    }
+    receipt.complete = receipt.table_valid &&
+        receipt.structure1f_bound_entry_count == receipt.resolved_entry_count;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt)
@@ -1394,6 +1548,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_spatial);
     (void)nexus_v1_level_structure1a_boundary_receipt(
         level, &out_receipt->structure1a_boundary);
+    (void)nexus_v1_level_structure1a_relation_receipt(
+        level, &out_receipt->structure1a_relation);
     out_receipt->structure1g_present = info->structure1g_present;
     out_receipt->structure1g_valid = info->structure1g_valid;
     out_receipt->structure1g_animated_texture_count =
