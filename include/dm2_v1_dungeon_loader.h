@@ -611,6 +611,32 @@ typedef struct {
         weapons[DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS];
 } DM2_V1_G1RuntimeMapWeaponReceipt;
 
+#define DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS 32
+
+/* Read-only direct DB9 payload from skproject SKWIN/DME.h::Container. The
+ * w0 next link and w2 contained-object ObjectID are deliberately excluded. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    int index;
+    uint8_t direction;
+    uint8_t opened;
+    uint8_t container_type;
+} DM2_V1_G1DirectContainerRoot;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int container_root_count;
+    int container_record_reads;
+    int generic_record_reads;
+    int blocked_record_reads;
+    DM2_V1_G1DirectContainerRoot
+        containers[DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS];
+} DM2_V1_G1RuntimeMapContainerReceipt;
+
 /* First-map runtime handoff for the transactional PC G1 boot. This carries
  * source-proven root-address classes only; it deliberately contains no
  * decoded c_record payload or inferred object. */
@@ -817,6 +843,13 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapWeaponReceipt *out);
+/* Consume only declared direct DB9 roots on a runtime-admitted G1 map. It
+ * reads source-defined Container::b4 fields and never the w0 next link, w2
+ * contained-object ObjectID, or an inferred object traversal. */
+int dm2_v1_dungeon_materialize_g1_runtime_map_containers(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapContainerReceipt *out);
 /* Consume the transactional receipt for map 0 only. This repeats c_map's
  * ground-stack root lookup and classifies source-proven addresses. It may read
  * only a direct DB1 teleporter's independently verified fields; it never reads
