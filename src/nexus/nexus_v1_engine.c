@@ -866,6 +866,9 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
            sizeof(plan->structure2_floor_command_sources));
     memset(&plan->structure2_floor_command_source_receipt, 0,
            sizeof(plan->structure2_floor_command_source_receipt));
+    plan->structure2_source_level_index = -1;
+    plan->structure2_source_canonical_hash_verified = 0;
+    plan->structure2_source_envelope_valid = 0;
     plan->structure2_floor_command_sources_consumed = 0;
     memset(plan->structure1f_item_command_bindings, 0,
            sizeof(plan->structure1f_item_command_bindings));
@@ -912,8 +915,19 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     structure2_source_bound =
         engine->current_level_structure2_source.level_index ==
             engine->game.current_level &&
+        engine->current_level_structure2_source.canonical_hash_verified &&
+        engine->current_level_structure2_source
+            .structure2_payload_envelope_valid &&
         engine->current_level_structure2_source.materialization_bound &&
         !engine->current_level_structure2_source.fallback_visuals_permitted;
+    if (engine->current_level_structure2_source.canonical_hash_verified) {
+        plan->structure2_source_level_index =
+            engine->current_level_structure2_source.level_index;
+        plan->structure2_source_canonical_hash_verified = 1;
+        plan->structure2_source_envelope_valid =
+            engine->current_level_structure2_source
+                .structure2_payload_envelope_valid;
+    }
     plan->receipt.structure2_source_materialization_bound =
         structure2_source_bound;
     plan->receipt.static_mns_source_pair_bound =
