@@ -2009,6 +2009,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Its 17 register writes, 20 VBlank waits, and terminator are validated;
     M11 cannot replace it with SND3 or a procedural marker. Remaining audio
     work is backend capture/PSG playback proof on a packaged app.
+  - 2026-07-13 update: DM1 entrance F0438 door-rattle now requires the
+    decoded original PC34 SND3 entry at the active source sound index. M11
+    rejects a missing source buffer instead of falling back to a procedural
+    door marker. Remaining startup audio work is the independent packaged
+    Mac capture/PSG waveform proof, not a substitute entrance effect.
   - 2026-07-11 update: DM1 C001 TITLE zoom now follows F0437's actual bitmap direction: the complete `320x80` DUNGEON MASTER source is scaled down into each centred `48x12` through `320x80` destination box. It no longer crops a tiny source rectangle and magnifies it full-screen. The title handoff probe now consumes this production blit plan after an RGBA SWSH-like present and verifies palette-index-to-RGB readback. Remaining title work is real packaged Mac/release capture breadth and any source-proven presentation defect, not synthetic title replacement.
   - 2026-07-11 update: the local DM1 capture blockers in pass610 viewport crop capture, pass623 input capture readiness, original-capture live-row determinism, and capture runbook consistency are green after the capture-determinism repair in DONE.md. Remaining DM1 capture work is real packaged Mac/release/app capture promotion and any later active runtime ownership cleanup outside this verified gate cluster.
   - 2026-07-11 update: M12 DM1 HoC presented-capture receipt import now goes through `dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34`, so M12 no longer owns the consumer-mask/chain-hash validation for app/Mac presented capture. Remaining DM1 work is real packaged Mac/release/app capture promotion and broader runtime/API ownership outside this active M12 import path.

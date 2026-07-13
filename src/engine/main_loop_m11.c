@@ -836,8 +836,14 @@ static int m11_play_redmcsb_entrance_transition(
                 door.leftSourceX = command.door_left_source_x;
                 door.rightSourceX = command.door_right_source_x;
                 if (command.audio_request_ready) {
-                    (void)M11_Audio_EmitSourceSoundIndex(
-                        &gameView->audioState, command.audio_sound_index);
+                    /* ReDMCSB ENTRANCE.C F0438 uses the PC34 door-rattle
+                     * sound. A startup sequence with authoritative graphics
+                     * must not silently replace it with an M11 marker. */
+                    if (!M11_Audio_EmitOriginalSoundIndexOnly(
+                            &gameView->audioState, command.audio_sound_index)) {
+                        free(dungeonFrame);
+                        return 0;
+                    }
                 }
                 if (!m11_draw_entrance_opening_doors_asset(
                         gameView,

@@ -100,6 +100,7 @@ int  M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker);
 M11_AudioMarker M11_Audio_FallbackMarkerForSoundIndex(int soundIndex);
 int  M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMarker fallbackMarker);
 int  M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
+int  M11_Audio_EmitOriginalSoundIndexOnly(M11_AudioState* state, int soundIndex);
 int  M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
                                          const unsigned char* program,
                                          int programBytes,

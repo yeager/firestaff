@@ -19436,7 +19436,10 @@ if(BUILD_TESTING)
         src/frontend/title_frontend_v1.c
         src/frontend/title_dat_loader_v1.c
     )
-    target_link_libraries(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE firestaff_m10)
+    target_link_libraries(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE
+        firestaff_m11
+        firestaff_m10
+    )
     if(NOT MSVC)
         target_compile_options(test_title_frontend_c001_fallback_gate_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()

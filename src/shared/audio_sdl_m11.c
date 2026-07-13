@@ -937,6 +937,32 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
 }
 
+int M11_Audio_EmitOriginalSoundIndexOnly(M11_AudioState* state, int soundIndex) {
+    if (!state || !state->initialized || soundIndex < 0 ||
+        soundIndex >= M11_AUDIO_ORIGINAL_SOUND_COUNT ||
+        !state->originalSnd3Available ||
+        state->originalSounds[soundIndex].sampleCount <= 0) {
+        return 0;
+    }
+    /* Startup/entrance playback has a decoded PC34 SND3 requirement. Do not
+     * route an absent source sample through the procedural marker seam. */
+    state->lastSoundIndex = soundIndex;
+    state->lastMarker = M11_AUDIO_MARKER_NONE;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        const M11_SoundBuffer* snd = &state->originalSounds[soundIndex];
+        if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                                    snd->samples,
+                                    snd->sampleCount * (int)sizeof(float))) {
+            return 0;
+        }
+        state->queuedSampleCount += snd->sampleCount;
+        state->playedMarkerCount += 1;
+    }
+#endif
+    return 1;
+}
+
 int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
                                         const unsigned char* program,
                                         int programBytes,
