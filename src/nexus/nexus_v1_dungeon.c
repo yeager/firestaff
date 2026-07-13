@@ -3181,6 +3181,7 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
     int wall_dir) {
     Nexus_V1_DgnRenderCommand command;
     memset(&command, 0, sizeof(command));
+    command.animated_texture_structure1g_entry_index = -1;
     command.kind = kind;
     command.x = x;
     command.y = y;
@@ -3210,6 +3211,9 @@ static Nexus_V1_DgnRenderCommand nexus_v1_dgn_plan_command(
         for (entry = 0; entry < level->structure1g_entry_count; ++entry) {
             if (level->structure1g_entries[entry].animation_id ==
                 command.animated_texture_id) {
+                command.animated_texture_structure1g_entry_index = entry;
+                command.animated_texture_structure1g_sequence_word_offset =
+                    level->structure1g_entries[entry].sequence_word_offset;
                 command.animated_texture_first_image_index =
                     level->structure1g_entries[entry].first_image_index;
                 command.animated_texture_structure2_image_id =
@@ -3755,6 +3759,7 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
     }
     for (command_index = 0; command_index < command_count; ++command_index) {
         const Nexus_V1_DgnRenderCommand *command = &commands[command_index];
+        const Nexus_V1_DgnStructure1GEntry *structure1g;
         const Nexus_V1_DgnStructure2Texture *texture;
         Nexus_V1_DgnStructure2FloorCommandSource *source;
 
@@ -3767,6 +3772,26 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             ++receipt.blocked_invalid_command_count;
             continue;
         }
+        if (command->animated_texture_structure1g_entry_index < 0 ||
+            command->animated_texture_structure1g_entry_index >=
+                level->structure1g_entry_count) {
+            ++receipt.blocked_structure1g_provenance_count;
+            continue;
+        }
+        structure1g = &level->structure1g_entries[
+            command->animated_texture_structure1g_entry_index];
+        if (structure1g->animation_id != command->animated_texture_id ||
+            structure1g->sequence_word_offset !=
+                command->animated_texture_structure1g_sequence_word_offset ||
+            structure1g->first_image_index !=
+                command->animated_texture_first_image_index ||
+            !structure1g->first_structure2_image_valid ||
+            structure1g->first_structure2_image_id !=
+                command->animated_texture_structure2_image_id) {
+            ++receipt.blocked_structure1g_provenance_count;
+            continue;
+        }
+        ++receipt.structure1g_provenance_count;
         if (!nexus_v1_level_structure2_source_envelope_valid(level) ||
             !level->structure1g_structure2_bindings_complete) {
             ++receipt.blocked_source_envelope_count;
@@ -3785,6 +3810,10 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
         source = &out_sources[receipt.source_command_count++];
         memset(source, 0, sizeof(*source));
         source->command_index = command_index;
+        source->structure1g_entry_index =
+            command->animated_texture_structure1g_entry_index;
+        source->structure1g_sequence_word_offset =
+            command->animated_texture_structure1g_sequence_word_offset;
         source->image_id = texture->image_id;
         source->encoding = texture->encoding;
         source->palette_id = texture->palette_id;
@@ -3797,8 +3826,11 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
         source->draw_authorized = 0;
     }
     receipt.complete = receipt.animated_floor_command_count > 0 &&
+        receipt.structure1g_provenance_count ==
+            receipt.animated_floor_command_count &&
         receipt.source_command_count == receipt.animated_floor_command_count &&
         receipt.blocked_invalid_command_count == 0 &&
+        receipt.blocked_structure1g_provenance_count == 0 &&
         receipt.blocked_missing_descriptor_count == 0 &&
         receipt.blocked_source_envelope_count == 0;
     *out_receipt = receipt;
