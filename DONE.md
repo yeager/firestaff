@@ -60,6 +60,14 @@
   available for model proof. Verification: focused Ninja build and
   `m11_dm1_hoc_no_fallback_panel` CTest with a real C026/C346 route plus the
   no-asset rejection.
+- 2026-07-13 DM1 F0128/F0107 side/depth inscription redraw: M11 now clears
+  the unreadable-original-ornament receipt before each complete F0128 party
+  tuple. A real PC34 map-1 regression selects an F0107 side/depth
+  TextString, verifies its original G0194/G0205 material and C10 route,
+  turns until that TextString leaves the tuple, and rejects a retained
+  receipt. No readable side text, host font, replacement art, or synthetic
+   data is used. Verification: focused Ninja build and PC34 inscription
+   CTest suite.
 
 - 2026-07-13 DM1 F0128/F0107 inscription repaint: M11 now defers readable
   D1C M648 material until one final F0128 current-party-tuple repaint after
