@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 original PC34 C79 Footprints roundtrip: typed handoff
+  accepts zero Priority, retains no B/C union arm, expires both Footprints
+  mirrors at runtime, and exports only its authenticated source receipt.
+  Source: ReDMCSB `MENU.C` F0412:1979-1992 and `TIMELINE.C` C79:1998-2000.
+  Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 DM1 original PC34 C78 Fire Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both fire-shield mirrors at runtime, and exports no invented C union.

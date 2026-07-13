@@ -10897,6 +10897,14 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 world->lifecycle.status.partyFireShieldDefense -= (int16_t)ev.aux1;
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_FOOTPRINTS &&
+                ev.aux2 == DM1_EVENT_FOOTPRINTS && ev.aux1 == 0 && ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C79:1998-2000 decrements only count. */
+                world->magic.event79CountFootprints--;
+                if (world->magic.event79CountFootprints <= 0) world->magic.magicFootprintsActive = 0;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(&world->lifecycle, LIFECYCLE_STATUS_FOOTPRINTS);
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);
