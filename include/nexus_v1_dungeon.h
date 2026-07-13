@@ -1153,6 +1153,7 @@ typedef struct {
 #define NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT 223
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT 109
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES 2048
+#define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS 4096
 
 typedef struct {
     uint16_t image_id;
@@ -1168,6 +1169,28 @@ typedef struct {
     int palette_bound;
     int packed_4bpp_valid;
 } Nexus_V1_ItemIbsFloorImage;
+
+/* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
+ * has not yet been tied to an original VDP1 command stream.  This receipt
+ * keeps those two facts separate so a caller cannot mistake generic Saturn
+ * knowledge for a game-specific image decode. */
+typedef struct {
+    int item_ibs_hash_verified;
+    int original_vdp1_command_stream_verified;
+    int vdp1_16_colour_mode_verified;
+    int vdp1_high_nibble_first_verified;
+} Nexus_V1_ItemIbs0008Vdp1Provenance;
+
+typedef struct {
+    int source_hash_verified;
+    int descriptor_0008_verified;
+    int packed_span_verified;
+    int palette_bound;
+    int blocked_missing_vdp1_command_provenance;
+    int decoded_texel_count;
+    int decode_authorized;
+    int fallback_visuals_permitted;
+} Nexus_V1_ItemIbs0008CodecReceipt;
 
 typedef struct {
     int valid;
@@ -1520,5 +1543,13 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
 int nexus_v1_dgn_structure1f_item_ibs_coverage(
     const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
     Nexus_V1_DgnStructure1FItemIbsCoverageReceipt *out_receipt);
+/* Expands descriptor-0008 bytes only after an original Nexus VDP1 command
+ * stream has positively established the colour mode and byte/nibble route.
+ * The VDP1 high-nibble rule alone never authorizes an ITEM.IBS decode. */
+int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
+    const Nexus_V1_ItemIbsFloorImage *floor,
+    const Nexus_V1_ItemIbs0008Vdp1Provenance *provenance,
+    uint8_t *out_texels, int max_texels,
+    Nexus_V1_ItemIbs0008CodecReceipt *out_receipt);
 
 #endif
