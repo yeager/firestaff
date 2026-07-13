@@ -124,9 +124,13 @@ static int test_dm2_asset_fetch(void *user,
     if (s_fail_asset_index != 0 && gdat_index == s_fail_asset_index) {
         return -1;
     }
-    if (gdat_index == -2) {
+    if (gdat_index == -2 ||
+        gdat_index == dm2_v1_viewport_scene_material_graphic_index(
+            0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING)) {
         if (out_pixels) *out_pixels = ceiling;
-    } else if (gdat_index == -1) {
+    } else if (gdat_index == -1 ||
+               gdat_index == dm2_v1_viewport_scene_material_graphic_index(
+                   0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR)) {
         if (out_pixels) *out_pixels = floor;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
