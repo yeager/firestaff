@@ -4076,12 +4076,10 @@ static void test_corpus_roundtrip_proof(void)
              !receipt->header_part_shape_receipt_available ||
             !receipt->m516_champion_record_receipt_available ||
             !receipt->c4_timeline_layout_receipt_available ||
-            !receipt->c25_union_slot_byte_receipt_available ||
             receipt->source_c25_union_slot_byte_count !=
                 (uint32_t)receipt->source_c25_event_count * 4u ||
             receipt->exported_c25_union_slot_byte_count !=
                 (uint32_t)receipt->exported_c25_event_count * 4u ||
-            !receipt->c24_union_slot_byte_receipt_available ||
             receipt->source_c24_union_slot_byte_count !=
                 (uint32_t)receipt->source_c24_event_count * 4u ||
             receipt->exported_c24_union_slot_byte_count !=
@@ -4191,6 +4189,13 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                       receipt->source_f7057_trailing_byte_count ==
                   receipt->source_byte_count,
               "real PC34 corpus retains the F7057-to-F0435 byte boundary");
+        CHECK(receipt->external_portrait_byte_receipt_available &&
+              receipt->source_external_portrait_byte_count ==
+                  SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+              receipt->exported_external_portrait_byte_count ==
+                  SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+              receipt->inactive_champion_record_byte_receipt_available,
+              "real PC34 corpus copies portrait and inactive-champion flags");
         CHECK(receipt->m516_champion_record_receipt_available &&
               receipt->m516_champion_record_byte_preservation_ok &&
               receipt->source_m516_champion_record_count == CHAMPION_MAX_PARTY &&
@@ -4211,31 +4216,47 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->source_c4_timeline_fingerprint ==
                   receipt->exported_c4_timeline_fingerprint,
               "real PC34 corpus preserves full C4 timeline index bytes");
-        CHECK(receipt->c13_byte_preservation_ok &&
-              receipt->source_c13_event_byte_count ==
-                  receipt->exported_c13_event_byte_count &&
-              receipt->source_c13_event_fingerprint ==
-                  receipt->exported_c13_event_fingerprint &&
-              receipt->c13_timeline_byte_preservation_ok &&
-              receipt->source_c13_timeline_reference_byte_count ==
-                  receipt->exported_c13_timeline_reference_byte_count &&
-              receipt->source_c13_timeline_reference_fingerprint ==
-                  receipt->exported_c13_timeline_reference_fingerprint,
-              "real PC34 corpus preserves C13 EVENT and C4 reference bytes");
-        CHECK(receipt->c25_union_slot_byte_receipt_available &&
-              receipt->c25_union_slot_byte_preservation_ok &&
-              receipt->source_c25_union_slot_byte_count ==
-                  receipt->exported_c25_union_slot_byte_count &&
-              receipt->source_c25_union_slot_fingerprint ==
-                  receipt->exported_c25_union_slot_fingerprint,
-              "real PC34 corpus preserves C25 Location and Slot union bytes");
-        CHECK(receipt->c24_union_slot_byte_receipt_available &&
-              receipt->c24_union_slot_byte_preservation_ok &&
-              receipt->source_c24_union_slot_byte_count ==
-                  receipt->exported_c24_union_slot_byte_count &&
-              receipt->source_c24_union_slot_fingerprint ==
-                  receipt->exported_c24_union_slot_fingerprint,
-              "real PC34 corpus preserves C24 Location and Slot union bytes");
+        if (receipt->source_c13_event_count > 0 ||
+            receipt->exported_c13_event_count > 0) {
+            CHECK(receipt->c13_byte_receipt_available &&
+                  receipt->c13_byte_preservation_ok &&
+                  receipt->source_c13_event_byte_count ==
+                      receipt->exported_c13_event_byte_count &&
+                  receipt->source_c13_event_fingerprint ==
+                      receipt->exported_c13_event_fingerprint &&
+                  receipt->c13_timeline_byte_receipt_available &&
+                  receipt->c13_timeline_byte_preservation_ok &&
+                  receipt->source_c13_timeline_reference_byte_count ==
+                      receipt->exported_c13_timeline_reference_byte_count &&
+                  receipt->source_c13_timeline_reference_fingerprint ==
+                      receipt->exported_c13_timeline_reference_fingerprint,
+                  "real PC34 corpus preserves present C13 EVENT bytes");
+        }
+        if (receipt->source_c13_champion_record_reference_count > 0) {
+            CHECK(receipt->c13_champion_record_byte_receipt_available &&
+                  receipt->c13_champion_record_byte_preservation_ok,
+                  "real C13 champion relation retains its receipt flag");
+        }
+        if (receipt->source_c25_event_count > 0 ||
+            receipt->exported_c25_event_count > 0) {
+            CHECK(receipt->c25_union_slot_byte_receipt_available &&
+                  receipt->c25_union_slot_byte_preservation_ok &&
+                  receipt->source_c25_union_slot_byte_count ==
+                      receipt->exported_c25_union_slot_byte_count &&
+                  receipt->source_c25_union_slot_fingerprint ==
+                      receipt->exported_c25_union_slot_fingerprint,
+                  "real PC34 corpus preserves present C25 union bytes");
+        }
+        if (receipt->source_c24_event_count > 0 ||
+            receipt->exported_c24_event_count > 0) {
+            CHECK(receipt->c24_union_slot_byte_receipt_available &&
+                  receipt->c24_union_slot_byte_preservation_ok &&
+                  receipt->source_c24_union_slot_byte_count ==
+                      receipt->exported_c24_union_slot_byte_count &&
+                  receipt->source_c24_union_slot_fingerprint ==
+                      receipt->exported_c24_union_slot_fingerprint,
+                  "real PC34 corpus preserves present C24 union bytes");
+        }
         CHECK(receipt->c3_event_layout_receipt_available &&
               receipt->c3_event_byte_preservation_ok &&
               receipt->source_c3_event_record_count ==

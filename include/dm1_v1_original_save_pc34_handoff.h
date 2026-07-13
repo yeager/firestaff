@@ -414,6 +414,7 @@ typedef struct {
     uint32_t exported_c4_timeline_fingerprint;
     int c4_timeline_byte_preservation_ok;
     int source_c13_champion_record_reference_count;
+    int c13_champion_record_byte_receipt_available;
     int c13_champion_record_byte_preserved_count;
     int c13_champion_record_byte_mismatch_count;
     int c13_champion_record_byte_preservation_ok;
@@ -422,9 +423,13 @@ typedef struct {
     uint32_t exported_party_info_byte_count;
     uint32_t exported_party_info_fingerprint;
     int party_info_byte_preservation_ok;
+    int external_portrait_byte_receipt_available;
+    uint32_t source_external_portrait_byte_count;
     uint32_t source_external_portrait_fingerprint;
+    uint32_t exported_external_portrait_byte_count;
     uint32_t exported_external_portrait_fingerprint;
     int external_portrait_byte_preservation_ok;
+    int inactive_champion_record_byte_receipt_available;
     int inactive_champion_record_count;
     int inactive_champion_record_byte_preserved_count;
     int inactive_champion_record_byte_preservation_ok;

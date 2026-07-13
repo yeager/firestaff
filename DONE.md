@@ -196,6 +196,12 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 corpus core receipt audit: corpus certification now
+  validates copied header/F7057, C3 EVENT, C4 TIMELINE, and dungeon-tail
+  fields before committing a roundtrip. C13/C24/C25 are optional subtype
+  receipts, while portrait and champion receipt flags/counts are copied into
+  each corpus row. Source: ReDMCSB `LOADSAVE.C` F0433/F0435 and
+  `CEDTINCD.C` F7057. Verification: focused native-PC34 handoff CTest.
 - 2026-07-13 DM1 PC34 F7057/F0435 corpus-boundary provenance: each
   classifier-qualified corpus file and import receipt now records the exact
   end of ReDMCSB F7057's five authenticated save parts and the raw trailing

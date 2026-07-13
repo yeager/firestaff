@@ -126,6 +126,40 @@ static void dm1_original_save_corpus_receipt_source_handoff(
         handoff_report.part_checksum_ok_count;
 }
 
+/* C13/C24/C25 are subtype receipts. Core corpus proof instead requires the
+ * complete C3 EVENT and C4 TIMELINE parts plus the optional raw F0433 tail. */
+static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
+    const DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    if (!receipt || !receipt->header_part_shape_receipt_available ||
+        !receipt->header_identity_preservation_ok ||
+        !receipt->part_byte_count_preservation_ok ||
+        !receipt->c3_event_layout_receipt_available ||
+        !receipt->c3_event_byte_preservation_ok ||
+        !receipt->c4_timeline_layout_receipt_available ||
+        !receipt->c4_timeline_byte_preservation_ok ||
+        !receipt->dungeon_tail_byte_receipt_available ||
+        !receipt->dungeon_tail_byte_preservation_ok ||
+        receipt->source_f7057_envelope_end_offset <=
+            SAVEGAME_PC34_DM_SAVE_HEADER_SIZE ||
+        receipt->source_f7057_envelope_end_offset +
+                receipt->source_f7057_trailing_byte_count !=
+            receipt->source_byte_count ||
+        receipt->source_c3_event_byte_count !=
+            receipt->source_c3_event_record_count *
+                10u ||
+        receipt->exported_c3_event_byte_count !=
+            receipt->exported_c3_event_record_count *
+                10u ||
+        receipt->source_c4_timeline_byte_count !=
+            receipt->source_c4_timeline_index_count * sizeof(uint16_t) ||
+        receipt->exported_c4_timeline_byte_count !=
+            receipt->exported_c4_timeline_index_count * sizeof(uint16_t)) {
+        return 0;
+    }
+    return 1;
+}
+
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
 #define DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT 128u
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
@@ -4772,6 +4806,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c4_timeline_byte_preservation_ok;
         receipt->source_c13_champion_record_reference_count =
             roundtrip.source_c13_champion_record_reference_count;
+        receipt->c13_champion_record_byte_receipt_available =
+            roundtrip.c13_champion_record_byte_receipt_available;
         receipt->c13_champion_record_byte_preserved_count =
             roundtrip.c13_champion_record_byte_preserved_count;
         receipt->c13_champion_record_byte_mismatch_count =
@@ -4788,12 +4824,20 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_party_info_fingerprint;
         receipt->party_info_byte_preservation_ok =
             roundtrip.party_info_byte_preservation_ok;
+        receipt->external_portrait_byte_receipt_available =
+            roundtrip.external_portrait_byte_receipt_available;
+        receipt->source_external_portrait_byte_count =
+            roundtrip.source_external_portrait_byte_count;
         receipt->source_external_portrait_fingerprint =
             roundtrip.source_external_portrait_fingerprint;
+        receipt->exported_external_portrait_byte_count =
+            roundtrip.exported_external_portrait_byte_count;
         receipt->exported_external_portrait_fingerprint =
             roundtrip.exported_external_portrait_fingerprint;
         receipt->external_portrait_byte_preservation_ok =
             roundtrip.external_portrait_byte_preservation_ok;
+        receipt->inactive_champion_record_byte_receipt_available =
+            roundtrip.inactive_champion_record_byte_receipt_available;
         receipt->inactive_champion_record_count =
             roundtrip.inactive_champion_record_count;
         receipt->inactive_champion_record_byte_preserved_count =
@@ -4828,6 +4872,15 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_dungeon_tail_fingerprint;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
+        if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+            !dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
+                receipt)) {
+            result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        receipt->roundtrip_result = result;
+        if (discovery) {
+            discovery->result = result;
+        }
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;
