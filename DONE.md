@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0407/F0231 melee XP correction: removed the non-source
+  base-health kill-XP mutation from the DM1 F0231 defeat receipt. ReDMCSB
+  `PROJEXPL.C F0231:1531-1539` grants only damage-derived F0304 skill XP;
+  M11 still consumes the same receipt for a defeat notification but cannot
+  double-award experience. Verification: Ninja-built
+  `test_dm1_v1_action_f0407_tail_pc34_compat` passed and `firestaff_m11`
+  built.
+
 - 2026-07-13 DM1 F0328/F0811 thrown-object projectile material: the live
   F0115 viewport receipt now preserves `Projectile.Slot` and M11 resolves it
   through ReDMCSB `DUNGEON.C F0142`. Non-projectile-aspect thrown objects use

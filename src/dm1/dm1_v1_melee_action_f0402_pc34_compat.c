@@ -165,7 +165,6 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
 int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     const DM1_MeleeKillNotifyInputPc34* in,
     DM1_MeleeKillNotifyPlanPc34* out) {
-    int xp;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!in) return 0;
@@ -177,17 +176,14 @@ int dm1_v1_melee_kill_notify_plan_f0231_pc34(
     out->valid = 1;
     out->shouldLogDefeated = 1;
     out->creatureType = in->creatureType;
-    if (in->activeChampionIndex < 0 ||
-        in->activeChampionIndex >= CHAMPION_MAX_PARTY ||
-        !in->activeChampionPresent) {
-        return 1;
-    }
-
-    xp = in->creatureBaseHealth > 0 ? in->creatureBaseHealth / 2 : 10;
-    if (xp < 5) xp = 5;
-    out->shouldAwardKillXp = 1;
-    out->championIndex = in->activeChampionIndex;
-    out->xpBonus = xp;
+    /* ReDMCSB PROJEXPL.C F0231:1531-1539 only awards F0304 skill XP
+     * from the damage amount before the F0190 outcome/notification path.
+     * A group death does not add a second base-health kill bonus.  Keep the
+     * presentation receipt source-owned and fail closed so M11's existing
+     * consumer can never double-award XP after a melee kill. */
+    out->shouldAwardKillXp = 0;
+    out->championIndex = -1;
+    out->xpBonus = 0;
     return 1;
 }
 
