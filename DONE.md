@@ -295,6 +295,15 @@
   can promote them. Verification: receipt-schema/rejection regression and
   clean patch dry-run against the cached Mednafen 1.32.1 source tree.
 
+- 2026-07-13 Theron combined dynamic trace runtime gate: Firestaff now owns a
+  strict parser for the emitted Mednafen E98A, dynamic `$4090 -> $4093`, and
+  `$e74c` rows. It creates a `Theron_V1Irq2LiveTrace` only when the captured
+  JP/US record, controller state, and original merge satisfy the existing live
+  branch gate, then exposes a concrete parser-plus-authenticated-media Track 02
+  handoff. Missing, duplicate, malformed, or unrecognized captures clear the
+  candidate receipt and remain blocked. Verification:
+  `theron_v1_irq2_live_trace_gate` CTest.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step

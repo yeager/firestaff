@@ -1,6 +1,7 @@
 #include "theron_v1_irq2_live_trace_gate.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #define THERON_V1_IRQ2_TRACE_MAGIC 0x54514932u /* TQI2 */
@@ -159,6 +160,151 @@ int theron_v1_irq2_live_branch_from_trace(
     return 1;
 }
 
+static int theron_v1_capture_line(const char *capture, const char *prefix,
+                                  const char **out_line, size_t *out_length) {
+    const char *cursor = capture;
+    const char *found = NULL;
+    size_t prefix_length;
+    size_t found_length = 0u;
+
+    if (!capture || !prefix || !out_line || !out_length) return 0;
+    prefix_length = strlen(prefix);
+    while (*cursor) {
+        const char *end = strchr(cursor, '\n');
+        size_t length = end ? (size_t)(end - cursor) : strlen(cursor);
+
+        if (length >= prefix_length &&
+            memcmp(cursor, prefix, prefix_length) == 0) {
+            if (found) return 0;
+            found = cursor;
+            found_length = length;
+        }
+        if (!end) break;
+        cursor = end + 1;
+    }
+    if (!found) return 0;
+    *out_line = found;
+    *out_length = found_length;
+    return 1;
+}
+
+static int theron_v1_capture_exact_line(const char *capture, const char *line) {
+    const char *found;
+    size_t length;
+
+    return theron_v1_capture_line(capture, line, &found, &length) &&
+        length == strlen(line);
+}
+
+static int theron_v1_capture_hex4(const char *text) {
+    size_t index;
+
+    if (!text) return 0;
+    for (index = 0u; index < 4u; ++index) {
+        if (!((text[index] >= '0' && text[index] <= '9') ||
+              (text[index] >= 'a' && text[index] <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+static int theron_v1_capture_has_post_e98a_transfer(const char *capture) {
+    const char *boot;
+    const char *transfer;
+    const char *next_pc;
+    size_t boot_length;
+    size_t transfer_length;
+    const char *boot_instruction;
+
+    if (!theron_v1_capture_line(capture, "boot_pc=e98a ", &boot,
+                                &boot_length) ||
+        !theron_v1_capture_line(capture,
+            "post_e98a_controller_transfer_source_pc=", &transfer,
+            &transfer_length) ||
+        boot_length < strlen("boot_pc=e98a ") ||
+        transfer_length < strlen(
+            "post_e98a_controller_transfer_source_pc=e800")) {
+        return 0;
+    }
+    boot_instruction = strstr(boot, "instruction=LDA $22A4");
+    if (!boot_instruction || boot_instruction + strlen("instruction=LDA $22A4") >
+            boot + boot_length ||
+        transfer[strlen("post_e98a_controller_transfer_source_pc=")] != 'e' ||
+        (transfer[strlen("post_e98a_controller_transfer_source_pc=") + 1u] != '8' &&
+         transfer[strlen("post_e98a_controller_transfer_source_pc=") + 1u] != '9' &&
+         transfer[strlen("post_e98a_controller_transfer_source_pc=") + 1u] != 'a') ||
+        !theron_v1_capture_hex4(transfer +
+            strlen("post_e98a_controller_transfer_source_pc="))) {
+        return 0;
+    }
+    next_pc = strstr(transfer, "next_pc=");
+    return next_pc && next_pc + strlen("next_pc=") + 4u <=
+            transfer + transfer_length &&
+        theron_v1_capture_hex4(next_pc + strlen("next_pc="));
+}
+
+int theron_v1_irq2_live_trace_from_mednafen_capture(
+    const char *capture,
+    Theron_V1Irq2LiveTrace *out_trace) {
+    const char *transaction;
+    const char *state;
+    size_t transaction_length;
+    size_t state_length;
+    unsigned int pc, return_pc, sector_count, destination, register_mask;
+    unsigned int record, state_pc, f5_after, f5_entry, status_1802;
+    unsigned int status_1803, f2_before, f2_branch;
+    char variant[16];
+    int consumed = 0;
+
+    if (!out_trace) return 0;
+    memset(out_trace, 0, sizeof(*out_trace));
+    if (!theron_v1_capture_exact_line(capture,
+            "source=mednafen-pce-instrumented") ||
+        !theron_v1_capture_has_post_e98a_transfer(capture) ||
+        !theron_v1_capture_line(capture, "dynamic_cd_read_transaction ",
+                                &transaction, &transaction_length) ||
+        !theron_v1_capture_line(capture,
+            "dynamic_cd_read_controller_state ", &state, &state_length) ||
+        sscanf(transaction,
+               "dynamic_cd_read_transaction pc=%x return_pc=%x sector_count=%x destination=%x record_register_mask=%x variant=%15[a-z_] record=%x%n",
+               &pc, &return_pc, &sector_count, &destination, &register_mask,
+               variant, &record, &consumed) != 7 ||
+        consumed != (int)transaction_length ||
+        sscanf(state,
+               "dynamic_cd_read_controller_state pc=%x f5_after_cd_read=%x f5_at_irq2_entry=%x status_1802=%x status_1803=%x f2_before_merge=%x f2_at_branch=%x%n",
+               &state_pc, &f5_after, &f5_entry, &status_1802, &status_1803,
+               &f2_before, &f2_branch, &consumed) != 7 ||
+        consumed != (int)state_length || pc != 0x4090u ||
+        return_pc != 0x4093u || sector_count != 1u || destination != 0x3800u ||
+        register_mask != 0x07u || state_pc != 0xe74cu || record > 0xffffffu ||
+        f5_after > 0xffu || f5_entry > 0xffu || status_1802 > 0xffu ||
+        status_1803 > 0xffu || f2_before > 0xffu || f2_branch > 0xffu) {
+        return 0;
+    }
+    if (strcmp(variant, "jp_bin") == 0 && record == 0x0004dfu) {
+        out_trace->variant = THERON_TRACK02_VARIANT_JP_BIN;
+    } else if (strcmp(variant, "us_bin") == 0 && record == 0x0004e0u) {
+        out_trace->variant = THERON_TRACK02_VARIANT_US_BIN;
+    } else {
+        return 0;
+    }
+    out_trace->magic = THERON_V1_IRQ2_TRACE_MAGIC;
+    out_trace->version = THERON_V1_IRQ2_TRACE_VERSION;
+    out_trace->source = THERON_V1_IRQ2_TRACE_SOURCE_MEDNAFEN_PCE;
+    out_trace->stage3_track02_record = record;
+    out_trace->cd_read_return_pc = (uint16_t)return_pc;
+    out_trace->irq2_entry_pc = 0xe736u;
+    out_trace->cd_state_pc = 0xe742u;
+    out_trace->cd_state_branch_pc = (uint16_t)state_pc;
+    out_trace->f5_after_cd_read = (uint8_t)f5_after;
+    out_trace->f5_at_irq2_entry = (uint8_t)f5_entry;
+    out_trace->cd_status_1802 = (uint8_t)status_1802;
+    out_trace->cd_status_1803 = (uint8_t)status_1803;
+    out_trace->f2_before_merge = (uint8_t)f2_before;
+    out_trace->f2_at_branch = (uint8_t)f2_branch;
+    return theron_v1_irq2_live_branch_from_trace(out_trace,
+                                                  &(Theron_V1Irq2LiveBranchReceipt){0});
+}
+
 int theron_v1_irq2_live_branch_from_full_track02_media(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -211,4 +357,24 @@ int theron_v1_irq2_live_branch_from_full_track02_media(
     out_receipt->f2_at_branch = trace->f2_at_branch;
     out_receipt->branch = branch;
     return 1;
+}
+
+int theron_v1_irq2_live_branch_from_mednafen_capture_and_full_track02_media(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5_hex,
+    const uint8_t *system_card_rom,
+    size_t system_card_rom_size,
+    const char *system_card_rom_md5_hex,
+    const char *capture,
+    Theron_V1Irq2FullMediaTraceReceipt *out_receipt) {
+    Theron_V1Irq2LiveTrace trace;
+
+    if (!theron_v1_irq2_live_trace_from_mednafen_capture(capture, &trace)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return theron_v1_irq2_live_branch_from_full_track02_media(
+        track02_data, track02_size, track02_md5_hex, system_card_rom,
+        system_card_rom_size, system_card_rom_md5_hex, &trace, out_receipt);
 }
