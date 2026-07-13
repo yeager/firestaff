@@ -978,6 +978,15 @@
   `test_theron_v1_mednafen_controller_wait_trace_patch.sh`, alongside the
   existing HuC6260 receipt-patch regression.
 
+- ✅ 2026-07-13 Theron pre-wait CD-register store receipts: the authenticated
+  US CUE/System Card 3.0 capture now retains two bounded raw direct CD-register
+  stores before the existing controller wait: `$e8f7` to `$1804` and `$cb57`
+  to `$1802`. They are opcode/address/before-value observations only, not a
+  command, payload, sector, or Track 02 transaction. The trace still lacks the
+  required dynamic `$4090 -> $4093` and IRQ2 combined receipt, so all runtime,
+  palette, bitmap, and RGB paths remain blocked. Verification: clean Mednafen
+  1.32.1 patch dry-run plus the authentic bounded capture.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

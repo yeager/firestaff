@@ -1357,7 +1357,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     live result. The Mednafen patch now also retains bounded direct `$2241`
     controller-state stores and one late wait-state sample; these are
     diagnostic-only and cannot stand in for a completed `$4090 -> $4093`
-    transaction. It observes
+    transaction. The same authentic trace has two raw pre-wait direct CD
+    register stores (`$e8f7 -> $1804` and `$cb57 -> $1802`), but they do not
+    identify a command or payload and cannot promote a transaction. It observes
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
