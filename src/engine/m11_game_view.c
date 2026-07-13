@@ -366,6 +366,8 @@ static M11_Dm1DoorHostPresentationReceipt
     s_m11_dm1_door_host_presentation_receipt;
 static M11_Dm1WallOrnamentHostPresentationReceipt
     s_m11_dm1_wall_ornament_host_presentation_receipt;
+static M11_Dm1InscriptionHostPresentationReceipt
+    s_m11_dm1_inscription_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -21735,32 +21737,39 @@ static int m11_dm1_visible_wall_text_line_count(const M11_GameViewState* state,
     return DM1_V1_InscriptionDecodedLineCountPc34(decoded);
 }
 
-static unsigned short m11_dm1_inscription_next_thing(void* user,
-                                                     unsigned short thing) {
-    return m11_raw_next_thing((const struct DungeonThings_Compat*)user, thing);
+static int m11_dm1_visible_wall_inscription_material(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    DM1_V1_InscriptionHostMaterialReceiptPc34* outMaterial)
+{
+    if (!state || !cell || !state->world.things) {
+        return 0;
+    }
+    return dm1_v1_inscription_host_material_from_world_pc34(
+        state->world.things, cell->inscriptionTextIndex, cell->firstThing,
+        outMaterial);
 }
 
 static int m11_decode_visible_wall_text_raw_glyphs(const M11_GameViewState* state,
                                                    const M11_ViewportCell* cell,
                                                    unsigned char* outGlyphs,
                                                    int outGlyphCapacity) {
-    if (!state || !cell || !outGlyphs || outGlyphCapacity < 2 ||
-        !state->world.things || !state->world.things->textStrings ||
-        !state->world.things->textData ||
-        state->world.things->textDataWordCount <= 0) {
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    int copyCount;
+    if (!outGlyphs || outGlyphCapacity < 2 ||
+        !m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
         if (outGlyphs && outGlyphCapacity > 0) {
             outGlyphs[0] = 0x81U;
         }
         return 0;
     }
-    return DM1_V1_InscriptionDecodeVisibleRawGlyphsPc34(
-        state->world.things,
-        cell->inscriptionTextIndex,
-        cell->firstThing,
-        m11_dm1_inscription_next_thing,
-        state->world.things,
-        outGlyphs,
-        outGlyphCapacity);
+    copyCount = material.glyphByteCount;
+    if (copyCount > outGlyphCapacity - 1) {
+        copyCount = outGlyphCapacity - 1;
+    }
+    memcpy(outGlyphs, material.glyphBytes, (size_t)copyCount);
+    outGlyphs[copyCount] = 0x81U;
+    return 1;
 }
 
 static int m11_dm1_unreadable_inscription_box_height(int relForward,
@@ -21837,43 +21846,55 @@ static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* st
                                                      unsigned char* framebuffer,
                                                      int fbW,
                                                      int fbH) {
-    unsigned char decoded[128];
-    int cursor = 0;
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
     int line = 0;
-    if (!m11_decode_visible_wall_text_raw_glyphs(state, cell, decoded,
-                                                 (int)sizeof(decoded))) {
+    if (!m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
         return;
     }
-    while (cursor < (int)sizeof(decoded) && line < 4) {
-        DM1_V1_InscriptionFrontWallLineDrawPlanPc34 drawPlan;
-        if (!DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
-                decoded, (int)sizeof(decoded), cursor, line, 160, 111,
-                &drawPlan)) {
-            break;
-        }
-        if (drawPlan.glyphCount > 0) {
-            int textX = M11_VIEWPORT_X + drawPlan.textX;
-            int textY = M11_VIEWPORT_Y + drawPlan.textY;
-            if (m11_dm1_inscription_font_slot_for_glyphs(state,
-                                                         decoded + drawPlan.glyphStart,
-                                                         drawPlan.glyphCount)) {
-                /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
-                 * negative D1C bitmap before M648.  This M11 path already
-                 * skipped the unreadable-inscription ornament, leaving the
-                 * original wall pixels intact.  Drawing a made-up patch here
-                 * would overwrite them with the wrong source coordinates. */
-                (void)m11_draw_dm1_inscription_glyph_line(state, framebuffer,
-                                                          fbW, fbH, textX, textY,
-                                                          decoded + drawPlan.glyphStart,
-                                                          drawPlan.glyphCount);
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
+            &material.lines[line];
+        if (drawPlan->glyphCount > 0) {
+            int textX = M11_VIEWPORT_X + drawPlan->textX;
+            int textY = M11_VIEWPORT_Y + drawPlan->textY;
+            if (!m11_dm1_inscription_font_slot_for_glyphs(state,
+                    material.glyphBytes + drawPlan->glyphStart,
+                    drawPlan->glyphCount)) {
+                return;
+            }
+            /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
+             * negative D1C bitmap before M648.  This M11 path already
+             * skipped the unreadable-inscription ornament, leaving the
+             * original wall pixels intact.  Drawing a made-up patch here
+             * would overwrite them with the wrong source coordinates. */
+            if (!m11_draw_dm1_inscription_glyph_line(
+                    state, framebuffer, fbW, fbH, textX, textY,
+                    material.glyphBytes + drawPlan->glyphStart,
+                    drawPlan->glyphCount)) {
+                return;
             }
         }
-        if (drawPlan.done) {
+        if (drawPlan->done) {
             break;
         }
-        cursor = drawPlan.nextCursor;
-        ++line;
     }
+    /* Publish only after the real M648 source slots were accepted and the
+     * completed M10 receipt was consumed. No host text/font fallback exists. */
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
+    s_m11_dm1_inscription_host_presentation_receipt.valid = 1;
+    s_m11_dm1_inscription_host_presentation_receipt.textStringIndex =
+        material.textStringIndex;
+    s_m11_dm1_inscription_host_presentation_receipt.fontGraphicIndex =
+        material.fontGraphicIndex;
+    s_m11_dm1_inscription_host_presentation_receipt.transparentColor =
+        material.transparentColor;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphByteCount =
+        material.glyphByteCount;
+    s_m11_dm1_inscription_host_presentation_receipt.lineCount =
+        material.lineCount;
+    memcpy(s_m11_dm1_inscription_host_presentation_receipt.glyphBytes,
+           material.glyphBytes, sizeof(material.glyphBytes));
 }
 
 static int m11_build_dm1_front_champion_portrait_receipt(
@@ -37828,6 +37849,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_door_host_presentation_receipt));
     memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -39711,6 +39734,14 @@ void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_wall_ornament_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
+    M11_Dm1InscriptionHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_inscription_host_presentation_receipt;
     }
 }
 
