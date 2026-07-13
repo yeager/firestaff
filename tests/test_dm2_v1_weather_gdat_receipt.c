@@ -31,6 +31,8 @@ int main(void)
     DM2_V1_WeatherGdatReceipt receipt;
     DM2_V1_WeatherCommandReceipt command;
     DM2_V1_WeatherOverlayPlan plan;
+    DM2_V1_WeatherDrawContext draw_context;
+    DM2_V1_WeatherDrawPlan draw_plan;
     static const uint8_t source_commands[6] = {
         0x67u, 0x68u, 0x69u, 0x6au, 0x6bu, 0x6cu
     };
@@ -175,6 +177,46 @@ int main(void)
               plan.valid && plan.command_count == 0u &&
               plan.required_mask == 0u && plan.material_mask == 0u,
           "clear weather has an explicit empty source command plan");
+
+    memset(&draw_context, 0, sizeof(draw_context));
+    draw_context.direction = 3u;
+    draw_context.map_x = 1;
+    draw_context.map_y = 2;
+    draw_context.map_offset_x = 4;
+    draw_context.map_offset_y = 5;
+    draw_context.map_level = 6;
+    draw_context.scene_flags = 2u;
+    draw_context.player_moving = 1;
+    draw_context.movement_offset_x = 7;
+    draw_context.movement_offset_y = 9;
+    draw_context.moving_horizon_offset_y = 11;
+    check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[1], &draw_context,
+                                        &draw_plan) &&
+              draw_plan.valid && draw_plan.command == 0x68u &&
+              draw_plan.rect_number == 6001u &&
+              draw_plan.image_field == 0x68u && !draw_plan.mirror_flip &&
+              draw_plan.scale_x == 0x34u && draw_plan.scale_y == 0x34u &&
+              draw_plan.draw_offset_x == 7 && draw_plan.draw_offset_y == 11 &&
+              draw_plan.material_hash == receipt.commands[1].material_hash,
+          "weather draw plan follows skproject moving horizon transform");
+    draw_context.map_x = 2;
+    check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[1], &draw_context,
+                                        &draw_plan) && draw_plan.mirror_flip,
+          "weather draw plan follows source FW=2 parity flip");
+    draw_context.player_moving = 0;
+    draw_context.scene_flags = 0x20u;
+    draw_context.player_direction = 1u;
+    check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[3], &draw_context,
+                                        &draw_plan) && draw_plan.mirror_flip &&
+              draw_plan.rect_number == 6004u &&
+              draw_plan.scale_x == 0x40u && draw_plan.scale_y == 0x40u &&
+              draw_plan.draw_offset_x == 0 && draw_plan.draw_offset_y == 0,
+          "weather draw plan follows source FW=32 direction flip");
+    receipt.commands[3].material_valid = 0;
+    check(!dm2_v1_weather_gdat_draw_plan(&receipt.commands[3], &draw_context,
+                                         &draw_plan),
+          "weather draw plan refuses an unverified image material");
+    receipt.commands[3].material_valid = 1;
 
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     check(!dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt),
