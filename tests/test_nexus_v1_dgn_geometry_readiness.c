@@ -184,6 +184,14 @@ static void build_structure1f_fixture(uint8_t *structure1,
     wb16(structure1f + 152 + 2, 6U);
     wb16(structure1f + 168 + 2, 7U);
     wb16(structure1f + 184 + 2, 8U);
+    structure1f[88 + 1] = 1U;
+    structure1f[100 + 1] = 1U;
+    structure1f[112 + 1] = 2U;
+    structure1f[124 + 1] = 3U;
+    structure1f[136 + 1] = 3U;
+    structure1f[152 + 1] = 4U;
+    structure1f[168 + 1] = 4U;
+    structure1f[184 + 1] = 4U;
 }
 
 static void build_structure1g_fixture(uint8_t *structure1,
@@ -509,10 +517,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.valid &&
               handoff.structure3_payload.raw_payload_hash ==
                   loaded_level.structure3_payload.raw_payload_hash &&
+              handoff.structure1f_face_selectors.structure1a_relation_complete ==
+                  handoff.structure3_model_references.complete &&
+              handoff.structure1f_face_selectors.resolved_face_selector_count ==
+                  handoff.structure3_model_references.resolved_model_reference_count &&
+              !handoff.structure1f_face_selectors.face_semantics_proven &&
               handoff.structure3_model_references.structure1f_bound_entry_count ==
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
-              "real Structure3 payload and owner-model provenance reach the host unchanged");
+              "real Structure3 payload, owner-model, and raw face-selector provenance reach the host unchanged");
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==
@@ -760,6 +773,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
+    Nexus_V1_DgnStructure1FFaceSelectorReceipt face_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -862,6 +876,18 @@ static void test_structure1f_semantics_and_bounds(void) {
           transform_selectors.complete &&
           !transform_selectors.transform_semantics_proven,
           "resolved Structure1A transform selectors remain no-draw provenance");
+    CHECK(nexus_v1_level_structure1f_face_selector_receipt(
+              &level, &face_selectors) == 0 &&
+          face_selectors.structure1a_relation_complete &&
+          face_selectors.structure1f_bound_entry_count == 8 &&
+          face_selectors.resolved_face_selector_count == 8 &&
+          face_selectors.unique_face_selector_count == 4 &&
+          face_selectors.duplicate_face_selector_count == 4 &&
+          face_selectors.zero_face_selector_count == 0 &&
+          face_selectors.nonzero_face_selector_count == 8 &&
+          face_selectors.highest_face_selector == 4U &&
+          face_selectors.complete && !face_selectors.face_semantics_proven,
+          "resolved Structure1F face selectors remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -981,6 +1007,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1a_transform_selectors.complete &&
           handoff.structure1a_transform_selectors.unique_selector_count == 4 &&
           !handoff.structure1a_transform_selectors.transform_semantics_proven &&
+          handoff.structure1f_face_selectors.complete &&
+          handoff.structure1f_face_selectors.unique_face_selector_count == 4 &&
+          !handoff.structure1f_face_selectors.face_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -998,6 +1027,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.structure3_model_references.complete &&
           render_plan.structure1a_transform_selectors.complete &&
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
+          render_plan.structure1f_face_selectors.complete &&
+          !render_plan.structure1f_face_selectors.face_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
