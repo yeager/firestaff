@@ -69,5 +69,7 @@ surfaces: hash-identified original executable and data files, provenance
 recorded save bytes, decoded asset/palette offsets, and frame/audio/input
 captures from the original plus the packaged host application. The open
 reference limits are tracked in `TODO.md` as `REDMCSB-DM1-GAP-001` through
-`REDMCSB-DM1-GAP-012`. They are audit boundaries, not defects attributed to
-ReDMCSB.
+`REDMCSB-DM1-GAP-014`. They are audit boundaries, not defects attributed to
+ReDMCSB. The added boundaries cover original-bug policy and physical-media
+copy protection alongside reconstructed source, compiler, platform, asset,
+input, save, and startup evidence.

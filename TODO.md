@@ -93,6 +93,33 @@
   original disk image plus emulator/real-machine trace; otherwise keep the
   branch explicitly unavailable rather than simulating protection state.
 
+- REDMCSB-CSB-GAP-011 — **The ReDMCSB rebuild is not a binary oracle for
+  original CSB releases.** `Documentation/Readme.htm` explains that the
+  available Megamax 1.1 compiler and linker differ from FTL's unavailable
+  toolchain, while the project is rooted in Atari ST reconstruction. Firestaff
+  risk: treating source control flow or a rebuilt executable as proof of PC
+  3.4 code layout, timing, checksums, or compiler-dependent expression
+  behavior. Required independent evidence: hash-identified original release
+  executable plus an emulator trace for every PC-specific binary claim.
+
+- REDMCSB-CSB-GAP-012 — **ReDMCSB has no complete PC-CSB boot-media
+  specification.** Its common source describes game control flow, but it does
+  not supply a canonical DOS loader, verified title/entrance asset directory,
+  or frame/audio capture for each PC CSB disk variant. Firestaff risk: a
+  title/PRESENTS/CHAOS/STRIKES sequence can be source-shaped yet select wrong
+  bitmaps, palette latches, cadence, or audio. Required independent evidence:
+  hash-indexed PC CSB media, decoded asset-offset receipts, and frame-numbered
+  original startup captures; do not manufacture a missing startup frame.
+
+- REDMCSB-CSB-GAP-013 — **Annotated original bugs are not a portability
+  policy.** `Documentation/BugsAndChanges.htm` describes historical faults and
+  version changes, but does not say whether a modern engine should emulate,
+  guard, or reject malformed/custom data that reaches them. Firestaff risk:
+  either silently changing an original route or copying memory corruption into
+  a host runtime. Required evidence: a version-specific original reproduction
+  and an explicit per-route policy with a regression test; absent that, retain
+  bounds checks and report the route unavailable.
+
 ## Skproject Audit (DM2)
 
 - SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
@@ -250,6 +277,28 @@ ReDMCSB WIP 2021-02-06 source tree.
   independent evidence:** frame-numbered, audio-synchronised PC34 startup
   captures and raw title/animation asset corpus, compared against the packaged
   Firestaff frame stream.
+
+- REDMCSB-DM1-GAP-013 — **ReDMCSB's documented bugs are observations, not a
+  modern-engine policy.** `Documentation/BugsAndChanges.htm` records original
+  behaviors such as object cloning, timeline exhaustion, and malformed custom
+  dungeon crashes, but does not establish whether a safe host should emulate,
+  contain, or reject each failure. **Firestaff risk:** either erasing a
+  source-visible PC34 behavior or reproducing memory corruption under C11.
+  **Required independent evidence:** a PC34 reproduction for the claimed
+  release and an explicit per-route emulate/guard/reject decision backed by a
+  regression; without it, keep the input bounded and mark the route
+  unavailable rather than synthesising a result.
+
+- REDMCSB-DM1-GAP-014 — **Copy-protection and physical-media behavior is not
+  a portable game contract.** `CopyProtection.htm`, `GRAPH21.C`, and platform
+  disk/I/O paths expose fuzzy-sector and protection control flow, but do not
+  provide an authentic PC disk signal, DOS driver timing, or a normalised
+  failure contract for a modern filesystem. **Firestaff risk:** a fabricated
+  success/failure result can alter startup, free memory, event scheduling, or
+  endgame presentation. **Required independent evidence:** an archived
+  original PC media image with emulator/real-machine trace; otherwise the
+  protection branch remains explicitly unavailable and cannot be replaced by
+  synthetic state.
 
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
   and DSA-free CLEAR/TOGGLE now update the original falsewall cell flag.
