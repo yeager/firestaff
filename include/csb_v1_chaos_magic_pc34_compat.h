@@ -91,6 +91,18 @@ typedef struct {
     int program_word_count;
 } CSB_V1_DSAImportedAction;
 
+/* CSBWin DSA.cpp:5637-5672 serializes this DSA header before its state
+ * table.  ProcessDSATimer6 later selects state through LocalState(): only
+ * local state 0 is the actuator-owned DSAstate nibble.  Keep the complete
+ * source header identity so runtime handoffs never invent a state selector. */
+typedef struct {
+    int valid;
+    uint32_t persistent_state;
+    uint32_t local_state;
+    uint32_t group_id;
+    uint32_t state_slot_count;
+} CSB_V1_CSBWinDSAImportedHeader;
+
 typedef enum {
     CSB_V1_CSBWIN_DSA_LOAD_OK = 0,
     CSB_V1_CSBWIN_DSA_LOAD_NOT_LOAD = 1,
@@ -202,6 +214,8 @@ typedef struct {
     uint32_t loaded_bytecode_magic;
     CSB_V1_DSAImportedAction *imported_actions;
     int imported_action_count;
+    CSB_V1_CSBWinDSAImportedHeader
+        imported_headers[CSB_V1_MAX_DSA_SCRIPTS];
 } CSB_V1_ChaosMagicState;
 
 void csb_v1_chaos_init(CSB_V1_ChaosMagicState *state);
@@ -230,6 +244,15 @@ const CSB_V1_DSAImportedAction *csb_v1_chaos_find_imported_action(
 const CSB_V1_DSAImportedAction *csb_v1_chaos_find_imported_action_column(
     const CSB_V1_ChaosMagicState *state, int dsa_id, uint32_t state_index,
     uint32_t column);
+
+/* Resolve the exact ProcessDSATimer6 state/column selected by a type-47
+ * master actuator.  CSBWin DSA.cpp:534-575, 5363-5416 uses LocalState 0 and
+ * DB3::DSAstate for these filters; LocalState 1/2 and slave DSAs need their
+ * distinct original ownership paths and therefore reject here. */
+const CSB_V1_DSAImportedAction *
+csb_v1_chaos_resolve_imported_master_filter_action(
+    const CSB_V1_ChaosMagicState *state, int dsa_id, uint16_t actuator_word2,
+    uint32_t input_column, uint32_t *out_state_index, int *out_action_ordinal);
 
 typedef enum {
     CSB_V1_CSBWIN_DSA_JUMP_OK = 0,

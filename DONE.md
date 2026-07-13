@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin DSA master-filter selection: Firestaff now consumes the
+  authentic `DSA::Read` header layout (`u16 m_state`, `u8 m_localState`,
+  `u8 m_groupID`) rather than three host-width fields. A type-47 master
+  actuator may resolve only the save-authenticated action selected by its
+  original `DB3::DSAstate` nibble and Monster.cpp's timer function/position
+  zero column. LocalState 1/2 and unimplemented slave state 3 remain blocked.
+  Sources: CSBWin `DSA.cpp:534-575,5363-5416,5637-5672` and
+  `Monster.cpp:1125-1168`. Verification: Ninja plus
+  `test_csb_v1_csbwin_512_xor_pad_classify` and
+  `test_csb_v1_phase7_verification`.
+
 - 2026-07-13 Nexus V1 Structure1G complete-binding gate: DGN handoff now
   requires every valid Structure1G declaration's first image and every
   non-control sequence image instruction to resolve through the local
