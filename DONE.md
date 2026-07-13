@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron post-latch controller dispatch receipt: extended the
+  clean-source Mednafen instrumentation after the verified `$c897 -> $e900`
+  exchange. It records the first ordered `$e97a -> $e981` controller-dispatch
+  visit only after the original `$ea34` exchange-complete state, including raw
+  `$224c` and `$1800..$1804` snapshots. The receipt assigns no command,
+  `CD_READ`, record, destination, size, payload, graphics, palette, object, or
+  level semantics. The dedicated verifier requires the exact ordering.
+
 - 2026-07-13 DM1 C38/F0218 active-group compaction: when a projectile kills
   one creature but leaves its group alive, M10 now shifts the live packed
   direction and aspect entries with F0190's health/cell compaction, passes
