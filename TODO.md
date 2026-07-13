@@ -388,6 +388,11 @@ does not reject parsing, establish a record size, or promote source material.
 counts as opaque layout provenance. This records local target aliasing without
 calling an alias an image, palette, record, shared surface, or render route.
 
+2026-07-13 update: the same receipt distinguishes an in-span target with a
+full two-byte window from one that merely reaches the final opaque byte. This
+is an exact byte-boundary observation only; it proves neither a payload word
+grammar nor image/palette semantics, and cannot enable drawing.
+
 The Structure1F handoff and DGN render-plan receipt now separate the six
 documented direct-coordinate records (items, floor decorations, floor
 sensors) from Structure1A-bound alcove/wall records without assigning the
