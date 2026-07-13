@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored TT_ParameterMessage DSA tick bridge: verified
+  function-101 queue entries now reach the source parameter-message route
+  through the restored live timer queue only after exact queue-slot, timer,
+  event, square, type-47 actuator, and EXPOOL payload authentication. Missing
+  or altered EXPOOL records, unsupported actions, text/cell/non-DSA effects,
+  and malformed saved identity remain blocked. Source: CSBWin
+  `CSBCode.cpp:6436-6454`, `Timer.cpp:1641-1711,2118-2185`,
+  `data.cpp:1542-1568`, `DSA.cpp:5329-5441`. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored TT_DESSAGE DSA tick bridge: verified
   function-102 queue entries now reach the source `ProcessTT_OPENROOM`
   zero-parameter type-47 DSA receipt through the restored live timer queue,

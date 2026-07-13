@@ -16570,7 +16570,7 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer = &profile->csbwin_timers[timer_index];
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
         ((timer->function < 5u || timer->function > 10u) &&
-         timer->function != 102u) ||
+         timer->function != 101u && timer->function != 102u) ||
         record->eventType != timer->function ||
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
@@ -16598,8 +16598,13 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             location.y = record->mapY;
             location.position = (thing >> 14) & 3;
             location.actuator_thing = (uint16_t)thing;
-            (void)csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-                profile, dungeon, &location, queue_slot);
+            if (timer->function == 101u) {
+                (void)csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+                    profile, dungeon, &location, timer);
+            } else {
+                (void)csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+                    profile, dungeon, &location, queue_slot);
+            }
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
