@@ -6,12 +6,24 @@
 
 static int g_failures;
 
+#define NEXUS_SAL_EXB_SHARED_PREFIX_BYTES 0x45bb5u
+#define NEXUS_DM_BIN_IMAGE_BASE 0x06010000u
+#define NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET 0x3bd94u
+#define NEXUS_DM_BIN_SNDLEV_FIRST_STRING_ADDRESS 0x06048f34u
+
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
         printf("FAIL: %s\n", msg); \
         ++g_failures; \
     } \
 } while (0)
+
+static unsigned int read_u32_be(const unsigned char *p) {
+    return ((unsigned int)p[0] << 24) |
+           ((unsigned int)p[1] << 16) |
+           ((unsigned int)p[2] << 8) |
+           (unsigned int)p[3];
+}
 
 static void test_missing_assets_block_playback(void) {
     Nexus_SoundEngine eng;
@@ -532,6 +544,114 @@ static void test_optional_real_sal_corpus_profile(void) {
     }
 }
 
+static void test_optional_real_sal_layout_provenance(void) {
+    const char *home = getenv("HOME");
+    unsigned char *base = NULL;
+    size_t base_size = 0;
+    size_t shared_prefix = 0;
+    long file_size;
+    int level;
+    int banks = 0;
+    char base_path[512];
+    char dm_path[512];
+    FILE *fp;
+
+    if (!home || home[0] == '\0') return;
+    snprintf(base_path, sizeof(base_path),
+             "%s/.firestaff/data/nexus/SNDLEV00.SAL", home);
+    fp = fopen(base_path, "rb");
+    if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+        (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+        if (fp) fclose(fp);
+        return;
+    }
+    base_size = (size_t)file_size;
+    base = (unsigned char *)malloc(base_size);
+    if (!base || fread(base, 1, base_size, fp) != base_size) {
+        free(base);
+        fclose(fp);
+        return;
+    }
+    fclose(fp);
+    shared_prefix = base_size;
+
+    for (level = 0; level < 16; ++level) {
+        char sal_path[512];
+        unsigned char *data;
+        size_t size;
+        size_t limit;
+        size_t offset;
+
+        snprintf(sal_path, sizeof(sal_path),
+                 "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
+        fp = fopen(sal_path, "rb");
+        if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+            (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+            if (fp) fclose(fp);
+            free(base);
+            return;
+        }
+        size = (size_t)file_size;
+        data = (unsigned char *)malloc(size);
+        if (!data || fread(data, 1, size, fp) != size) {
+            free(data);
+            fclose(fp);
+            free(base);
+            return;
+        }
+        fclose(fp);
+        limit = size < base_size ? size : base_size;
+        for (offset = 0; offset < limit && data[offset] == base[offset]; ++offset) {
+        }
+        if (offset < shared_prefix) shared_prefix = offset;
+        ++banks;
+        free(data);
+    }
+
+    CHECK(banks == 16 && shared_prefix == NEXUS_SAL_EXB_SHARED_PREFIX_BYTES,
+          "all real SAL banks share the bounded EXB prefix before level variation");
+    free(base);
+
+    /* DM.BIN's original SNDLEV pointer table starts at file offset 0x3bd94.
+     * Each big-endian pointer names SNDLEV01 through SNDLEV15 in the image's
+     * 0x06010000 address space. This proves the level-bank lookup provenance,
+     * not any sample frame or codec field. */
+    snprintf(dm_path, sizeof(dm_path), "%s/.firestaff/data/nexus/DM.BIN", home);
+    fp = fopen(dm_path, "rb");
+    if (!fp || fseek(fp, NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET, SEEK_SET) != 0) {
+        if (fp) fclose(fp);
+        return;
+    }
+    for (level = 1; level <= 15; ++level) {
+        unsigned char pointer_bytes[4];
+        unsigned int address;
+        unsigned int file_offset;
+        char expected[16];
+        char actual[10];
+
+        if (fread(pointer_bytes, 1, sizeof(pointer_bytes), fp) !=
+            sizeof(pointer_bytes)) {
+            fclose(fp);
+            return;
+        }
+        address = read_u32_be(pointer_bytes);
+        file_offset = address - NEXUS_DM_BIN_IMAGE_BASE;
+        snprintf(expected, sizeof(expected), "SNDLEV%02d", level);
+        CHECK(address == NEXUS_DM_BIN_SNDLEV_FIRST_STRING_ADDRESS +
+                         (unsigned int)(level - 1) * 12u &&
+              fseek(fp, (long)file_offset, SEEK_SET) == 0 &&
+              fread(actual, 1, 9, fp) == 9 &&
+              memcmp(actual, expected, 9) == 0,
+              "DM.BIN SNDLEV table resolves the original level-bank name");
+        if (fseek(fp, NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET +
+                      (long)level * 4L, SEEK_SET) != 0) {
+            fclose(fp);
+            return;
+        }
+    }
+    fclose(fp);
+}
+
 static void test_mismatched_assets_block_playback(void) {
     Nexus_SoundEngine eng;
     Nexus_SfxRuntimeReceipt receipt;
@@ -570,6 +690,7 @@ int main(void) {
     test_mismatched_assets_block_playback();
     test_canonical_source_handoff_stays_decode_blocked();
     test_optional_real_sal_corpus_profile();
+    test_optional_real_sal_layout_provenance();
     if (g_failures) {
         printf("test_nexus_v1_sound_runtime_receipt: %d failure(s)\n",
                g_failures);
