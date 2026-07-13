@@ -6,6 +6,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "firestaff/dm1/v1/G0491_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 
@@ -129,6 +130,7 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     DM1_MeleeRuntimeOutcomePlanPc34* out) {
     DM1_MeleeDamageEmissionInputPc34 damageIn;
     DM1_MeleeDamageEmissionPlanPc34 damagePlan;
+    int sourceDisabledTicks;
     int ticks;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -141,9 +143,10 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
         return 0;
     }
 
-    ticks = in->defaultDisabledTicks;
-    if (ticks < 0) ticks = 0;
-    if (ticks > 255) ticks = 255;
+    sourceDisabledTicks = dm1_v1_graphic560_action_disabled_ticks_get_pc34(
+        in->actionIndex);
+    if (sourceDisabledTicks < 0) return 0;
+    ticks = sourceDisabledTicks;
 
     memset(&damageIn, 0, sizeof(damageIn));
     damageIn.damage = in->observedAttackDamage;
@@ -161,13 +164,14 @@ int dm1_v1_melee_runtime_outcome_plan_f0407_f0231_pc34(
     out->showDamageFeedback = damagePlan.showDamageFeedback;
     out->damage = damagePlan.damage;
 
-    /* ReDMCSB: MENU.C F0407 lines 1308-1342 treat the closed-door
+    /* ReDMCSB: MENU.C F0407 lines 1270-1275 takes G0491's source graphic
+     * table entry before dispatch, then lines 1308-1342 treat the closed-door
      * BASH/HACK/BERZERK/KICK/SWING/CHOP branch as performed before F0402 and
-     * override ActionDisabledTicks to 6.  Other failed F0402 melee actions
-     * enter the halved XP/tick tail at lines 1331-1337. */
-    if (in->closedDoorBranchPerformed && in->closedDoorDisabledTicks > 0) {
-        ticks = in->closedDoorDisabledTicks;
-        if (ticks > 255) ticks = 255;
+     * override ActionDisabledTicks to the literal source value 6.  The host
+     * input fields do not supply either cooldown value. Other failed F0402
+     * melee actions enter the halved XP/tick tail at lines 1331-1337. */
+    if (in->closedDoorBranchPerformed) {
+        ticks = 6;
     }
     out->disabledTicks = ticks;
     out->meleeFailureTail = !out->performed;
@@ -257,6 +261,7 @@ int dm1_v1_melee_reach_gate_plan_f0402_pc34(
 int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     const DM1_MeleeWeaponProfileInputPc34* in,
     DM1_MeleeWeaponProfilePlanPc34* out) {
+    DM1_ActionXpRoute route;
     int actionIndex;
     int hitProbability;
     int damageFactor;
@@ -265,17 +270,15 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
     if (!in) return 0;
 
     actionIndex = in->actionIndex;
+    if (!dm1_v1_action_is_melee_contact_f0407_pc34(actionIndex) ||
+        !dm1_v1_action_xp_route(actionIndex, &route) || !route.valid ||
+        in->actionSkillIndex != route.skillIndex) {
+        return 0;
+    }
     hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
         actionIndex);
     damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
         actionIndex);
-    if (hitProbability < 0 || damageFactor < 0) {
-        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-        hitProbability = dm1_v1_graphic560_action_hit_probability_get_pc34(
-            actionIndex);
-        damageFactor = dm1_v1_graphic560_action_damage_factor_get_pc34(
-            actionIndex);
-    }
     if (hitProbability < 0 || damageFactor < 0) {
         return 0;
     }
@@ -290,17 +293,19 @@ int dm1_v1_melee_weapon_profile_plan_f0402_f0231_pc34(
         out->hitNonMaterialFlagSet = 1;
     }
 
-    /* ReDMCSB: MENU.C F0402 lines 1045-1056 reads G0493 hit probability
-     * and G0492 damage factor, sets MASK0x8000_HIT_NON_MATERIAL_CREATURES
-     * for Vorpal Blade or DISRUPT, then calls PROJEXPL.C F0231 with those
-     * action parameters. */
+    /* ReDMCSB: MENU.C F0407 lines 1269-1273 selects the real G0496 skill
+     * route, then F0402 lines 1045-1056 reads G0493 hit probability and
+     * G0492 damage factor, sets MASK0x8000_HIT_NON_MATERIAL_CREATURES for
+     * Vorpal Blade or DISRUPT, and calls PROJEXPL.C F0231 with those exact
+     * action parameters. Invalid or mismatched host inputs have no source
+     * default action and are therefore rejected. */
     out->weaponProfile.weaponType = in->weaponType;
     out->weaponProfile.weaponClass = in->weaponClass;
     out->weaponProfile.weaponStrength = in->weaponStrength;
     out->weaponProfile.kineticEnergy = in->kineticEnergy;
     out->weaponProfile.hitProbability = hitProbability;
     out->weaponProfile.damageFactor = damageFactor;
-    out->weaponProfile.skillIndex = in->actionSkillIndex;
+    out->weaponProfile.skillIndex = route.skillIndex;
     out->weaponProfile.attributes = in->weaponAttributes;
     return 1;
 }

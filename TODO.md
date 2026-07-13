@@ -2695,6 +2695,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     missing action/direction fields, and the legacy marker fail closed; a
     missing resolved target is the source no-op. Remaining work is M10's
     broader runtime consumption/real-data evidence, not a host default path.
+  - 2026-07-13 update: F0402 outcome now derives its base cooldown from
+    G0491 and the closed-door override from the source literal 6, rather than
+    host-supplied values. Its F0231 profile admits only the same contact
+    action's G0492/G0493 values and exact G0496 skill route; invalid or
+    mismatched action/skill input fails closed. Remaining work is broader
+    M10 runtime consumption evidence, not fallback action/profile behavior.
   - 2026-07-09 update: DM1 F0231 melee compat now owns damage-emission performed/feedback decisions for zero-damage, positive-damage, and invalid-outcome melee emissions. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 action-XP compat now owns F0407 action-defense apply/remove and final disable-slot/refill plans. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns the combined runtime outcome receipt for attack damage, closed-door branch success, PARRY empty-front failure, failure-tail selection, feedback, and disabled-tick override. Remaining runtime coding work is deeper F0231 damage math ownership and reducing M11 mutation adapters plus packaged full-graphics proof.
