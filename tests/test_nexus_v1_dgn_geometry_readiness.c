@@ -880,6 +880,10 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FStructure1ACommandSource structure1a_sources[8];
     Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt
         structure1a_source_receipt;
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate
+        structure3_candidates[8];
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt
+        structure3_candidate_receipt;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
@@ -1027,6 +1031,30 @@ static void test_structure1f_semantics_and_bounds(void) {
           !structure1a_sources[0].draw_authorized &&
           !structure1a_source_receipt.fallback_visuals_permitted,
           "Structure1A-owned rows reach only their verified visible cell anchor without a draw claim");
+    memset(structure3_candidates, 0, sizeof(structure3_candidates));
+    memset(&structure3_candidate_receipt, 0,
+           sizeof(structure3_candidate_receipt));
+    CHECK(nexus_v1_dgn_bind_structure1a_structure3_topology_candidates(
+              &level, structure1a_sources,
+              structure1a_source_receipt.floor_command_source_count,
+              structure3_candidates, 8, &structure3_candidate_receipt) == 0 &&
+          structure3_candidate_receipt.complete &&
+          structure3_candidate_receipt.owner_cell_source_count == 2 &&
+          structure3_candidate_receipt.topology_candidate_count == 2 &&
+          structure3_candidates[0].command_index == 0 &&
+          structure3_candidates[0].owner_x == 11 &&
+          structure3_candidates[0].owner_y == 10 &&
+          structure3_candidates[0].structure3_model_index == 0x23U &&
+          structure3_candidates[0].structure3_block_offset == 20 &&
+          structure3_candidates[0].structure3_block_count == 4 &&
+          structure3_candidates[0].structure3_byte_size ==
+              NEXUS_DGN_BLOCK_SIZE * 4 &&
+          structure3_candidates[0].structure3_raw_payload_hash != 0U &&
+          !structure3_candidates[0].model_ordinal_proven &&
+          !structure3_candidates[0].face_semantics_proven &&
+          !structure3_candidates[0].draw_authorized &&
+          !structure3_candidate_receipt.fallback_visuals_permitted,
+          "Structure1A owner cells retain only bounded Structure3 topology candidates without ordinal or draw claims");
     CHECK(nexus_v1_level_structure1a_transform_selector_receipt(
               &level, &transform_selectors) == 0 &&
           transform_selectors.structure1a_relation_complete &&

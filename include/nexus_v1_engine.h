@@ -113,6 +113,12 @@ typedef struct {
     Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt
         structure1a_owned_cell_source_receipt;
     int structure1a_owned_cell_sources_consumed;
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate
+        structure1a_structure3_topology_candidates[
+            NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt
+        structure1a_structure3_topology_candidate_receipt;
+    int structure1a_structure3_topology_candidates_consumed;
     int level;
     int party_x;
     int party_y;
