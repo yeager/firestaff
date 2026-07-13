@@ -1,4 +1,5 @@
 #include "theron_v1_stage2_runtime_handoff.h"
+#include "theron_v1_later_record_correlation.h"
 #include "theron_v1_stage3_irq2_dispatch.h"
 #include "theron_v1_stage3_mode1_header.h"
 
@@ -15,6 +16,7 @@
 #define THERON_V1_IPL_PRELOAD_TABLE_USER_OFFSET 0xdcu
 #define THERON_V1_STAGE2_CD_EXEC_TABLE_USER_OFFSET 0xd5u
 #define THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET 0x80u
+#define THERON_V1_STAGE2_CD_READ_REGISTER_SEED_USER_OFFSET 0xaeu
 #define THERON_V1_IPL_PRELOAD_SETUP_USER_OFFSET 0xc1u
 #define THERON_V1_IPL_PRELOAD_CALL_DELTA 12u
 #define THERON_V1_IPL_PRELOAD_RECORD 0x0003e3u
@@ -130,12 +132,15 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage3Irq2DispatchReceipt dispatch;
     Theron_V1Stage3Mode1HeaderReceipt mode1_header;
+    Theron_V1Stage3ManifestEvidence manifest;
+    Theron_V1LaterRecordCorrelation correlation;
     size_t preload_raw_sector;
     size_t preload_table_offset;
     size_t preload_raw_offset;
     size_t preload_call_offset;
     size_t stage2_exec_table_offset;
     size_t stage2_read_setup_offset;
+    size_t stage2_register_seed_offset;
     static const uint8_t preload_return_sequence[] = {
         0x20u, 0x09u, 0xe0u, /* JSR $e009 */
         0xc9u, 0x00u,       /* CMP #$00 */
@@ -148,6 +153,11 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         0xa9u, 0x00u, 0x85u, 0xfau,
         0xa9u, 0x38u, 0x85u, 0xfbu, /* BX = $3800 */
         0x20u, 0x09u, 0xe0u        /* JSR $e009 */
+    };
+    static const uint8_t stage2_register_seed[] = {
+        0xa9u, 0x02u, 0x85u, 0xfeu, /* FE = 2 */
+        0x64u, 0xfdu, 0x64u, 0xfcu, /* FD/FC = 0 */
+        0x60u                      /* RTS */
     };
     static const uint8_t stage2_post_read_transfer[] = {
         0xc9u, 0x00u, 0xd0u, 0xe7u, /* retry on nonzero status */
@@ -171,6 +181,8 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     memset(&payload, 0, sizeof(payload));
     memset(&dispatch, 0, sizeof(dispatch));
     memset(&mode1_header, 0, sizeof(mode1_header));
+    memset(&manifest, 0, sizeof(manifest));
+    memset(&correlation, 0, sizeof(correlation));
     if (theron_v1_track02_find_ipl_loader(
             track02_data, track02_size, md5_hex, &loader) !=
             THERON_TRACK02_SIGNAL_OK || !loader.valid ||
@@ -205,6 +217,14 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
             THERON_TRACK02_SIGNAL_OK ||
         payload.track02_record != loader.stage2_cd_read_record ||
         payload.raw_sector != loader.stage2_cd_read_raw_sector ||
+        !theron_v1_stage3_manifest_evidence_from_payload(
+            track02_data, track02_size, &payload, &manifest) ||
+        !theron_v1_later_record_correlation_from_manifest(
+            &manifest, track02_size, &correlation) ||
+        !correlation.valid || correlation.variant != variant ||
+        correlation.stage3_track02_record != payload.track02_record ||
+        !correlation.self_reference_proven ||
+        !correlation.self_resolved_record_in_bounds ||
         !theron_v1_stage2_runtime_handoff_from_dynamic_payload(
             &payload, out_handoff) ||
         !theron_v1_stage3_mode1_header_from_original_media(
@@ -231,6 +251,10 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
                 loader.executable_raw_sector * THERON_V1_RAW_SECTOR_BYTES ||
         THERON_V1_MODE1_USER_DATA_OFFSET + THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET +
             sizeof(stage2_read_setup) + sizeof(stage2_post_read_transfer) >
+            track02_size - loader.stage2_raw_sector * THERON_V1_RAW_SECTOR_BYTES ||
+        THERON_V1_MODE1_USER_DATA_OFFSET +
+            THERON_V1_STAGE2_CD_READ_REGISTER_SEED_USER_OFFSET +
+            sizeof(stage2_register_seed) >
             track02_size - loader.stage2_raw_sector * THERON_V1_RAW_SECTOR_BYTES) {
         memset(out_handoff, 0, sizeof(*out_handoff));
         return 0;
@@ -256,12 +280,17 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     stage2_read_setup_offset = loader.stage2_raw_sector *
         THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
         THERON_V1_STAGE2_CD_READ_SETUP_USER_OFFSET;
+    stage2_register_seed_offset = loader.stage2_raw_sector *
+        THERON_V1_RAW_SECTOR_BYTES + THERON_V1_MODE1_USER_DATA_OFFSET +
+        THERON_V1_STAGE2_CD_READ_REGISTER_SEED_USER_OFFSET;
     if (memcmp(track02_data + preload_table_offset,
                "\x00\xe3\x03\x02", 4u) != 0 ||
         memcmp(track02_data + stage2_exec_table_offset,
                "\x00\xe7\x03\x11", 4u) != 0 ||
         memcmp(track02_data + stage2_read_setup_offset, stage2_read_setup,
                sizeof(stage2_read_setup)) != 0 ||
+        memcmp(track02_data + stage2_register_seed_offset,
+               stage2_register_seed, sizeof(stage2_register_seed)) != 0 ||
         memcmp(track02_data + stage2_read_setup_offset +
                    sizeof(stage2_read_setup), stage2_post_read_transfer,
                sizeof(stage2_post_read_transfer)) != 0 ||
@@ -288,6 +317,26 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     out_handoff->stage2_cd_exec_table_verified = 1;
     out_handoff->stage2_cd_read_setup_verified = 1;
     out_handoff->stage2_post_read_transfer_verified = 1;
+    out_handoff->stage3_cd_read_record_proven = 1;
+    out_handoff->stage3_cd_read_cpu_address =
+        loader.stage2_cd_read_cpu_address;
+    out_handoff->stage3_cd_read_sector_count =
+        loader.stage2_cd_read_sector_count;
+    out_handoff->stage3_cd_read_record = payload.track02_record;
+    out_handoff->stage3_cd_read_raw_sector = payload.raw_sector;
+    out_handoff->stage3_cd_read_user_data_offset = payload.user_data_offset;
+    out_handoff->stage3_cd_read_register_seed_verified = 1;
+    out_handoff->stage3_cd_read_seed_fc = 0u;
+    out_handoff->stage3_cd_read_seed_fd = 0u;
+    out_handoff->stage3_cd_read_seed_fe = 2u;
+    out_handoff->stage3_first_descriptor_self_reference_proven =
+        correlation.self_reference_proven;
+    out_handoff->stage3_first_descriptor_selector =
+        correlation.first_descriptor_selector;
+    out_handoff->stage3_derived_record_base = correlation.derived_record_base;
+    out_handoff->stage3_self_resolved_record = correlation.self_resolved_record;
+    out_handoff->stage3_nonzero_descriptor_selector_count =
+        correlation.nonzero_selector_count;
     out_handoff->ipl_preload_user_data_bytes =
         THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
     theron_v1_mode1_user_data_summary(

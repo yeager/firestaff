@@ -44,6 +44,22 @@ typedef struct {
     int stage2_cd_exec_table_verified;
     int stage2_cd_read_setup_verified;
     int stage2_post_read_transfer_verified;
+    /* The authenticated $4090 CD_READ setup plus the original-CUE trace bind
+     * this one-sector local-RAM transfer to the Stage3 Track 02 record. This
+     * is media provenance only: it does not classify the loaded manifest. */
+    int stage3_cd_read_record_proven;
+    uint16_t stage3_cd_read_cpu_address;
+    uint8_t stage3_cd_read_sector_count;
+    uint32_t stage3_cd_read_record;
+    size_t stage3_cd_read_raw_sector;
+    size_t stage3_cd_read_user_data_offset;
+    /* L40AE seeds the three CD-address zero-page bytes immediately before
+     * the $4090 retry loop. These are raw setup bytes, not a decoded record
+     * or an assertion about any later Stage3 batch. */
+    int stage3_cd_read_register_seed_verified;
+    uint8_t stage3_cd_read_seed_fc;
+    uint8_t stage3_cd_read_seed_fd;
+    uint8_t stage3_cd_read_seed_fe;
     uint16_t cleared_work_ram_start;
     size_t cleared_work_ram_bytes;
     uint16_t cleared_work_ram_end;
@@ -62,6 +78,14 @@ typedef struct {
     uint8_t stage3_minute_bcd;
     uint8_t stage3_second_bcd;
     uint8_t stage3_frame_bcd;
+    /* Original-media coordinate fact only: descriptor 0's opaque selector
+     * resolves back to the authenticated stage-three record. This does not
+     * classify any descriptor or authorize a subsequent CD read. */
+    int stage3_first_descriptor_self_reference_proven;
+    uint16_t stage3_first_descriptor_selector;
+    uint32_t stage3_derived_record_base;
+    uint32_t stage3_self_resolved_record;
+    size_t stage3_nonzero_descriptor_selector_count;
 } Theron_V1Stage2RuntimeHandoff;
 
 /* Converts an already hash-gated, structurally validated dynamic-payload
