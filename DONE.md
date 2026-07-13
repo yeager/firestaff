@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored `TT_77` Spell Shield bridge: the live queue now
+  subtracts an exact signed `timerWord6` defense delta from the imported
+  SpellShield tail only after queue-slot, timer, and event identity validation.
+  Stale, nonpositive, and underflowing receipts leave saved defense unchanged;
+  the source all-portrait redraw remains blocked without a restored HUD owner.
+  Source: CSBWin `CSBCode.cpp:6556-6558`; ReDMCSB `TIMELINE.C F0261` lines
+  1985-1989. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM1 original PC34 C79 Footprints roundtrip: typed handoff
   accepts zero Priority, retains no B/C union arm, expires both Footprints
   mirrors at runtime, and exports only its authenticated source receipt.

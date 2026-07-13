@@ -16573,6 +16573,32 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 77u) {
+        int16_t shield_delta;
+
+        /* CSBWin CSBCode.cpp:6556-6558 and ReDMCSB TIMELINE.C F0261 lines
+         * 1985-1989 expire C77 by subtracting B.Defense from SpellShield.
+         * The restored TIMER owns that little-endian signed word and the
+         * restored character tail owns the signed defense total. Require a
+         * complete queue/timer/event identity, a positive source defense, and
+         * a non-underflowing tail value; no source HUD redraw is inferred. */
+        shield_delta = (int16_t)((uint16_t)timer->ubyte6 |
+            ((uint16_t)timer->ubyte7 << 8));
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && shield_delta > 0 &&
+            profile->csbwin_character_tail_spell_shield >= shield_delta) {
+            profile->csbwin_character_tail_spell_shield = (int16_t)(
+                profile->csbwin_character_tail_spell_shield - shield_delta);
+        }
+        /* C77 remains source-owned even when malformed, preventing a future
+         * generic event path from bypassing saved CSBWin identity checks. */
+        return 1;
+    }
     if (timer->function == 74u) {
         int16_t shield_delta;
 
