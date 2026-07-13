@@ -3740,6 +3740,11 @@ static void nexus_v1_launcher_fill_full_start_package_capture(
     receipt->capture_valid = 1;
     receipt->capture_route = NEXUS_V1_STARTUP_CAPTURE_BLOCKED;
     receipt->first_capture_draw_kind = NEXUS_V1_STARTUP_DRAW_NONE;
+    if (!receipt->consumer.m11_ready || !receipt->consumer.m12_ready ||
+        receipt->fallback_visuals_permitted) {
+        receipt->blocked_draw_suppressed = 1;
+        return;
+    }
     if (state->title_active &&
         receipt->consumer.full_start.title_status_ready) {
         command_count = nexus_v1_startup_presentation_build_title(
@@ -4025,6 +4030,8 @@ static int nexus_v1_launcher_build_full_start_package_commands(
     }
     if (!state || !package || !out_commands || max_commands <= 0 ||
         !package->capture_route_ready ||
+        !package->full_start_package_receipt_ready ||
+        !package->host_display_caller_expected ||
         package->blocked_draw_suppressed ||
         package->fallback_visuals_permitted) {
         return 0;

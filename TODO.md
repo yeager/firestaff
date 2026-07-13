@@ -486,6 +486,11 @@ real-data-present synthetic fallback candidate.
   menu widgets beyond the complete `TITLE/0 dt07/4` surface.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
+
+- 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
+  presentation remains blocked until the full original startup package and
+  host receipt are valid; remaining work is Saturn presentation parity, not
+  fallback capture commands.
 - 🔧 2026-07-11 Nexus FACE.BIN codec follow-up: canonical `FACE.BIN`
   (45,104 bytes, SHA-256
   `d733f50096098b5a2d15f2d355a89decd7b3777f82e515f60fee2e9ca4921e22`,
