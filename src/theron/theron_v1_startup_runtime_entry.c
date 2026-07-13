@@ -386,13 +386,13 @@ static int theron_v1_startup_runtime_publish_track02_route(
     return 1;
 }
 
+/* A known Track 02 identity is authoritative even when its bytes have gone
+ * missing by runtime entry. The later loader records that absence; it must
+ * not downgrade the request into a fallback-room route. */
 static int theron_v1_startup_runtime_has_verified_track02_request(
-    const uint8_t *hucard_rom,
-    size_t hucard_rom_size,
     const char *md5_hex) {
 
-    if (!hucard_rom || hucard_rom_size == 0u ||
-        !md5_hex || md5_hex[0] == '\0') {
+    if (!md5_hex || md5_hex[0] == '\0') {
         return 0;
     }
     return theron_v1_track02_variant_for_md5(md5_hex) !=
@@ -426,8 +426,7 @@ int theron_v1_startup_runtime_load_initial_level(
     }
     dungeon_index = (int)dungeon_id - 1;
     verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(
-            hucard_rom, hucard_rom_size, md5_hex);
+        theron_v1_startup_runtime_has_verified_track02_request(md5_hex);
     /* A real Track 02 route may validate its level and object records in
      * several steps.  Keep every tentative write in a candidate world so a
      * rejected later object/media check cannot leak a partial dungeon into
@@ -1038,8 +1037,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         return 0;
     }
     theron_v1_startup_all_dungeon_route_receipt_init(out_receipt);
-    if (!theron_v1_startup_runtime_has_verified_track02_request(
-            hucard_rom, hucard_rom_size, md5_hex) ||
+    if (!theron_v1_startup_runtime_has_verified_track02_request(md5_hex) ||
         !media_receipt ||
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             media_receipt)) {
@@ -1235,8 +1233,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     level_load_context.md5_hex = request->md5_hex;
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
-            request->hucard_rom,
-            request->hucard_rom_size,
             request->md5_hex);
     theron_v1_startup_media_capture_track02_state_receipt(
         request->hucard_rom, request->hucard_rom_size, request->md5_hex,
@@ -1711,10 +1707,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     }
 
     verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(
-            hucard_rom,
-            hucard_rom_size,
-            md5_hex);
+        theron_v1_startup_runtime_has_verified_track02_request(md5_hex);
     theron_v1_startup_media_capture_track02_state_receipt(
         hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
     if (!theron_v1_startup_runtime_load_initial_level(world,

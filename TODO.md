@@ -136,6 +136,12 @@ to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no
 missing or unrecognised trace can open the dungeon route. A fresh combined
 capture is still required to demonstrate the positive path.
+The generic startup-flow probe no longer treats its own rectangles or
+fabricated Track 02 bytes as title/runtime evidence. The title plan remains
+empty until an authenticated Track 02 bitmap route exists, while a known
+Track 02 identity with no raw bytes now blocks the level handoff explicitly.
+Authentic media and a combined live capture remain necessary for either
+positive route.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
 $ea1d -> $ea26` status loop is now independently verified from the same US
 capture. It clears `$227b`, samples `$1801`, then completes two `$1800`

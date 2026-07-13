@@ -487,6 +487,15 @@
   blocked host receipt. Verification: `theron_v1_runtime_trace_intake` CTest
   proves the unopened route using no synthetic trace.
 
+- 2026-07-13 Theron startup-flow evidence repair: the startup-flow probe now
+  verifies that title emits no substitute graphics until its authenticated
+  Track 02 bitmap route exists, and removes its fabricated Track 02 bitmap
+  corpus. A recognised Track 02 identity with absent raw bytes now remains a
+  fail-closed runtime request, carrying `no raw Track 02 bytes` through the
+  existing no-fallback host receipt rather than falling back to a generated
+  room. Verification: `theron_v1_startup_flow_probe` passed 642/642 without
+  synthetic Track 02 media.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step
