@@ -1634,6 +1634,8 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
 {
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+    const M11_AssetSlot *live_c017;
 
     if (!state || !state->csbStartupRuntimeAssetSession) {
         return 0;
@@ -1643,8 +1645,20 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
     /* ReDMCSB PANEL.C F0346/F0347 reaches C017 only after ENTRANCE.C F0806
      * completes.  C017/C040 must remain the same verified session that
      * carried C001-C005, never a late asset-loader substitute. */
-    return csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) &&
-        terminal.valid && terminal.c017_ready && terminal.c040_ready;
+    if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready ||
+        !state->assetsAvailable) {
+        return 0;
+    }
+    c017 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    live_c017 = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
+                                     17u);
+    return live_c017 && live_c017->pixels && c017->pixels &&
+        live_c017->width == (unsigned int)c017->width &&
+        live_c017->height == (unsigned int)c017->height &&
+        memcmp(live_c017->pixels, c017->pixels,
+               (size_t)c017->width * (size_t)c017->height) == 0;
 }
 
 static void m11_apply_csb_runtime_m11_mirror_receipt(

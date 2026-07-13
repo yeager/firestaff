@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB C017 live-HUD identity: M11 now requires the C017 surface
+  decoded for live rendering to be byte-identical to the original C017
+  material held by the terminal startup session; divergent data is rejected
+  before a live viewport or HUD pixel can be drawn. Verification:
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 Nexus startup SFX gate: Track 02 now requires a decoded,
   unblocked SFX runtime receipt before it can satisfy the launcher audio
   handoff. Verification: `test_nexus_v1_startup_menu_pc34_compat` PASS.
