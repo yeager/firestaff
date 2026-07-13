@@ -1,13 +1,10 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-13 DM1 D0C ordinary-C15 receipt audit: a focused negative
-  regression now documents current HEAD rather than claiming a missing
-  presenter. It proves that M10 has no D0C F0115 receipt (the row mapper stops
-  at D1..D3) and that the generic pattern selector maps C101 to fire art.
-  ReDMCSB `DUNVIEW.C` F0115:5932-6074 requires all three to stay outside D0C's
-  ordinary M636 lane. The resulting implementation gap remains open in TODO;
-  no M11 production or F0190 cue path changed. Verification: direct focused
-  C11 audit build.
+- 2026-07-13 DM1 D0C ordinary-C15 receipt audit: a focused regression locks
+  the current F0115 source order for C100, C101, C050, and C000. C100 remains
+  C3000-blocked, C050 stays F0113-owned, and only C101/C000 enter D0C M636;
+  suppressing fluxcages must not change those renderable rows. Source:
+  ReDMCSB `DUNVIEW.C` F0115:5932-6074. Verification: focused CTest.
 
 - 2026-07-13 DM1 F0190 C040 M10-to-M11 integration audit: a focused test now
   drives the existing killed-all afterplay receipt through `F0821` into the
