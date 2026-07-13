@@ -1701,6 +1701,15 @@
   Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 Nexus Structure1A/Structure3 no-draw plan handoff: verified
+  owner-cell topology candidates now retain their bounded Structure3 envelope
+  block range, nonzero run counts, and payload hash in the engine receipt.
+  The resulting command plan is explicitly non-renderable and rejects host
+  fallback while the original face grammar remains unknown. Verification:
+  focused Ninja build and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_dgn_material_raster`, and
+  `nexus_v1_structure2_no_draw_receipt`.
+
 - 2026-07-13 DM1 original PC34 C78 Fire Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both fire-shield mirrors at runtime, and exports no invented C union.
