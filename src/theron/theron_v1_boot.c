@@ -3661,10 +3661,18 @@ int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
     const Theron_V1RawLoaderTraceReceipt *trace_receipt,
     Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
 {
+    if (!startup_media_receipt) {
+        return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
+            NULL, 0, 0, out_receipt);
+    }
     return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
         startup_media_receipt,
-        trace_receipt && trace_receipt->valid,
-        trace_receipt && trace_receipt->palette_descriptor_relation_verified,
+        trace_receipt && trace_receipt->valid &&
+            trace_receipt->bitmap_route_mask == startup_media_receipt->startup_bitmap_raw_route_mask &&
+            trace_receipt->bitmap_atlas_checksum == startup_media_receipt->startup_bitmap_atlas_checksum,
+        trace_receipt && trace_receipt->palette_descriptor_relation_verified &&
+            trace_receipt->bitmap_route_mask == startup_media_receipt->startup_bitmap_raw_route_mask &&
+            trace_receipt->bitmap_atlas_checksum == startup_media_receipt->startup_bitmap_atlas_checksum,
         out_receipt);
 }
 
