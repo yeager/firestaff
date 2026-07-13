@@ -17945,8 +17945,7 @@ static int m11_draw_viewport_projectile_sprite(
  * NAVY); all other indices are identity.  We implement those two
  * remaps via BlitScaledReplace's two replacement slots.
  *
- * Returns 1 if a real bitmap was blit, 0 if the loader is not ready
- * (in which case callers draw the fallback palette-rect cue). */
+ * Returns 1 only when a real PC34 bitmap was blit. */
 static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
@@ -18142,154 +18141,46 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_draw_explosion_cue(unsigned char* framebuffer,
-                                   int framebufferWidth,
-                                   int framebufferHeight,
-                                   int x,
-                                   int y,
-                                   int w,
-                                   int h,
-                                   const M11_ViewportCell* cell,
-                                   int depthIndex,
-                                   int isD0c) {
-    int cx = x + w / 2;
-    int cy = y + h / 2;
+static int m11_draw_explosion_material(unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight,
+                                       int x,
+                                       int y,
+                                       int w,
+                                       int h,
+                                       const M11_ViewportCell* cell,
+                                       int depthIndex,
+                                       int isD0c) {
+    int drewBitmap = 0;
+    int expType;
+    int frame;
+    int maxFrames;
+    int attack;
+
     if (!m11_viewport_cell_has_renderable_explosion(cell)) {
-        return;
+        return 0;
     }
-    /* DM1 explosion-type-specific viewport visual effects.
-     *
-     * Primary path: load the real DM1 explosion bitmap from
-     * GRAPHICS.DAT at index 486 (fire), 487 (spell) or 488 (poison /
-     * smoke) and blit it with depth-scaled, frame-modulated size so
-     * the post-detonation aftermath looks like the classic DM1 burst
-     * rather than a palette-rect cue.  This replaces pass 25's cue-
-     * style fill with source-backed bitmap frames while preserving
-     * the F0822 advance/fade/despawn lifecycle from pass 25.
-     *
-     * Ref: ReDMCSB DUNVIEW.C F0136 F0675_DUNGEONVIEW_GetScaledBitmap
-     *      and F0141 explosion draw loop (lines 1842-1878) selecting
-     *      EXPLOSION_ASPECT {FIRE, SPELL, POISON, SMOKE} from the
-     *      explosion Type.
-     *
-     * Fallback: when no GRAPHICS.DAT loader is available (headless
-     * probes using synthetic worlds) we keep the palette-rect cue so
-     * probes keep asserting visible content at the cell. */
-    {
-        unsigned char expColor;
-        int expType = cell->firstExplosionType;
-        int baseR   = 5 + (depthIndex == 0 ? 2 : 0);
-        int expR    = baseR;
-        int frame   = cell->firstExplosionFrame;
-        int maxF    = cell->firstExplosionMaxFrames;
-        int atk     = cell->firstExplosionAttack;
-        int drewBitmap = 0;
-        if (g_drawState) {
-            if (isD0c) {
-                drewBitmap = m11_draw_d0c_explosion_pattern(
-                    g_drawState, framebuffer, framebufferWidth,
-                    framebufferHeight, x, y, w, h, expType, atk);
-            }
-            if (!drewBitmap) {
-                drewBitmap = m11_draw_explosion_sprite(
-                    g_drawState, framebuffer, framebufferWidth,
-                    framebufferHeight, x, y, w, h,
-                    expType, frame, maxF, atk, depthIndex);
-            }
-        }
-        /* Cue-style palette-rect fallback for probes / headless
-         * environments without a GRAPHICS.DAT loader.  Real builds
-         * take the bitmap path above, matching classic DM1. */
-        if (!drewBitmap) {
-            /* Multi-frame aftermath progression (DM1-style bloom-then-fade):
-             *   - Fireball / lightning / dispell: short ~3-frame bloom that
-             *     peaks at frame 1 and fades by frame 2+ (radius 120/90/60%
-             *     of base).
-             *   - Poison cloud / smoke: large cloud whose radius tracks the
-             *     residual attack (larger when thick, smaller as it decays).
-             *   - Other types: single frame at base radius. */
-            if (frame >= 0 && maxF > 0) {
-                if (expType == C000_EXPLOSION_FIREBALL
-                        || expType == C002_EXPLOSION_LIGHTNING_BOLT
-                        || expType == C003_EXPLOSION_HARM_NON_MATERIAL) {
-                    if (frame == 0)      expR = (baseR * 6) / 5;  /* 120% */
-                    else if (frame == 1) expR = baseR;            /* 100% */
-                    else                 expR = (baseR * 3) / 5;  /* 60%  */
-                    if (expR < 2) expR = 2;
-                } else if (expType == C007_EXPLOSION_POISON_CLOUD
-                        || expType == C040_EXPLOSION_SMOKE) {
-                    /* Radius tracks residual attack: full at spawn, shrinks
-                     * as F0822 decays the cloud.  Attack starts up to 255
-                     * and decays by 3 (poison) or 40 (smoke) per frame;
-                     * normalise to baseR range. */
-                    if (atk > 0) {
-                        int num = (baseR * (atk > 128 ? 128 : atk)) / 64;
-                        expR = baseR / 2 + num / 2;
-                        if (expR < baseR / 2) expR = baseR / 2;
-                        if (expR > baseR + 2) expR = baseR + 2;
-                    }
-                }
-            }
-            if (expType == C002_EXPLOSION_LIGHTNING_BOLT) {
-                /* Lightning/energy: cyan-white flash that dims on fade. */
-                unsigned char cross = (frame >= 1) ? M11_COLOR_LIGHT_CYAN
-                                                   : M11_COLOR_WHITE;
-                expColor = M11_COLOR_LIGHT_CYAN;
-                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx - expR, cx + expR, cy, cross);
-                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx, cy - expR, cy + expR, cross);
-                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            } else if (expType == C007_EXPLOSION_POISON_CLOUD) {
-                /* Poison cloud: green haze that thins as the cloud decays. */
-                int coreR = expR / 2;
-                int thinning = (atk >= 0 && atk < 40);
-                expColor = thinning ? M11_COLOR_DARK_GRAY : M11_COLOR_GREEN;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-                if (!thinning && coreR > 0) {
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  cx - coreR, cy - coreR,
-                                  coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_LIGHT_GREEN);
-                }
-            } else if (expType == C040_EXPLOSION_SMOKE) {
-                /* Smoke: dark-gray cloud that thins and fades. */
-                expColor = (atk >= 0 && atk < 80) ? M11_COLOR_DARK_GRAY
-                                                  : M11_COLOR_LIGHT_GRAY;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR, cy - expR,
-                              expR * 2 + 1, expR * 2 + 1, expColor);
-            } else if (expType >= 0 && expType <= 7) {
-                /* Fire/fireball explosions: orange-red burst with yellow core
-                 * that shrinks on fade frames. */
-                int coreR = expR / 2;
-                if (frame >= 0 && maxF > 0 && frame >= maxF - 1) coreR = 0;
-                expColor = (frame >= 2) ? M11_COLOR_BROWN : M11_COLOR_LIGHT_RED;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-                if (coreR > 0) {
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  cx - coreR, cy - coreR,
-                                  coreR * 2 + 1, coreR * 2 + 1, M11_COLOR_YELLOW);
-                }
-            } else {
-                /* All other explosion types: generic magenta burst */
-                expColor = M11_COLOR_MAGENTA;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR / 2, cy - expR / 2,
-                              expR + 1, expR + 1, expColor);
-                m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              cx - expR, cy - expR, expR * 2 + 1, expR * 2 + 1, expColor);
-            }
-        } else {
-            /* Silence unused-variable warnings: baseR / expR / expColor
-             * only matter in the cue-fallback branch; the bitmap path
-             * already draws the explosion. */
-            (void)baseR; (void)expR; (void)expColor;
-            (void)frame; (void)maxF; (void)atk; (void)expType;
-        }
+    if (!g_drawState || !g_drawState->assetsAvailable) {
+        return 0;
     }
+    /* ReDMCSB DUNVIEW.C F0115:5915-6137 selects F0114/M636 material for
+     * each ordinary C15 record. Missing PC34 graphics remain no-draw; there
+     * is no palette-rect, crosshair, or host-defined explosion substitute. */
+    expType = cell->firstExplosionType;
+    frame = cell->firstExplosionFrame;
+    maxFrames = cell->firstExplosionMaxFrames;
+    attack = cell->firstExplosionAttack;
+    if (isD0c) {
+        drewBitmap = m11_draw_d0c_explosion_pattern(
+            g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+            x, y, w, h, expType, attack);
+    }
+    if (!drewBitmap) {
+        drewBitmap = m11_draw_explosion_sprite(
+            g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+            x, y, w, h, expType, frame, maxFrames, attack, depthIndex);
+    }
+    return drewBitmap;
 }
 
 static void m11_draw_effect_cue(unsigned char* framebuffer,
@@ -18307,20 +18198,12 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     if (!cell) {
         return;
     }
-    /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
+    /* ReDMCSB F0115 draws the resolved C2900 projectile bitmap only. */
     if (m11_viewport_cell_has_renderable_projectile(cell)) {
-        if (!g_drawState ||
-            !m11_draw_viewport_projectile_sprite(
+        if (g_drawState && g_drawState->assetsAvailable) {
+            (void)m11_draw_viewport_projectile_sprite(
                 g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-                x, y, w, h, cell, depthIndex, sourceZoneRow)) {
-            /* PC34 F0115 has no marker substitute for an unavailable source
-             * bitmap.  Retain the cue solely for asset-free fixtures. */
-            if (!g_drawState || !g_drawState->assetsAvailable) {
-                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
-                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                               cx, cy - 3, cy + 3, M11_COLOR_LIGHT_CYAN);
-            }
+                x, y, w, h, cell, depthIndex, sourceZoneRow);
         }
     }
     /* Teleporter fields are source bitmap overlays, not procedural cue art.
@@ -24539,28 +24422,15 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             int projArea = paneH / 3;
             int projY = paneY + (paneH - projArea) / 2;
             if (projArea < 6) projArea = 6;
-            if (!g_drawState ||
-                !m11_draw_viewport_projectile_sprite(
+            if (g_drawState && g_drawState->assetsAvailable) {
+                (void)m11_draw_viewport_projectile_sprite(
                     g_drawState, framebuffer, framebufferWidth, framebufferHeight,
                     paneX + 1, projY, paneW - 2, projArea, cell,
-                    depthIndex + 1, sourceZoneRow)) {
-                if (!g_drawState || !g_drawState->assetsAvailable) {
-                    int pcx = paneX + paneW / 2;
-                    int pcy = paneY + paneH / 2;
-                    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                                   pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
-                    m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                                   pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
-                }
+                    depthIndex + 1, sourceZoneRow);
             }
         }
-        if (m11_viewport_cell_has_renderable_explosion(cell) &&
-            !m11_viewport_cell_has_renderable_projectile(cell)) {
-            int ecx = paneX + paneW / 2;
-            int ecy = paneY + paneH / 2;
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          ecx - 1, ecy - 1, 3, 3, M11_COLOR_LIGHT_RED);
-        }
+        /* ReDMCSB F0115 draws C15 records only in the final deferred pass.
+         * A side-pane indicator would be a second, synthetic explosion. */
     }
 }
 
@@ -24710,19 +24580,11 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 int projY;
                 if (projArea < 6) projArea = 6;
                 projY = paneY + (paneH - projArea) / 2;
-                if (!g_drawState ||
-                    !m11_draw_viewport_projectile_sprite(
+                if (g_drawState && g_drawState->assetsAvailable) {
+                    (void)m11_draw_viewport_projectile_sprite(
                         g_drawState, framebuffer, framebufferWidth,
                         framebufferHeight, paneX + 1, projY, paneW - 2,
-                        projArea, cell, depth + 1, sourceZoneRow)) {
-                    if (!g_drawState || !g_drawState->assetsAvailable) {
-                        int pcx = paneX + paneW / 2;
-                        int pcy = paneY + paneH / 2;
-                        m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                                       pcx - 2, pcx + 2, pcy, M11_COLOR_LIGHT_CYAN);
-                        m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                                       pcx, pcy - 2, pcy + 2, M11_COLOR_LIGHT_CYAN);
-                    }
+                        projArea, cell, depth + 1, sourceZoneRow);
                 }
             }
 
@@ -24805,9 +24667,10 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
                                                        &material)) {
                 continue;
             }
-            m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                   faceX + 3, faceY + 3, faceW - 6, faceH - 6,
-                                   &material, depthIndex, 0);
+            (void)m11_draw_explosion_material(
+                framebuffer, framebufferWidth, framebufferHeight,
+                faceX + 3, faceY + 3, faceW - 6, faceH - 6,
+                &material, depthIndex, 0);
         }
     }
 }
@@ -24860,9 +24723,10 @@ static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
                                                        &material)) {
                 continue;
             }
-            m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
-                                   paneX + 1, expY, paneW - 2, expArea,
-                                   &material, depthIndex + 1, 0);
+            (void)m11_draw_explosion_material(
+                framebuffer, framebufferWidth, framebufferHeight,
+                paneX + 1, expY, paneW - 2, expArea,
+                &material, depthIndex + 1, 0);
         }
     }
 }
@@ -24882,15 +24746,22 @@ static void m11_draw_dm1_d0c_deferred_explosion_pass(
         !m11_viewport_cell_has_renderable_explosion(&cell)) {
         return;
     }
-    /* ReDMCSB DUNVIEW.C F0127 calls F0115 for M609_D0C. Its restarted
-     * explosion loop at :5915-6074 selects M636's native 48x32 pattern
-     * material at the D0C pattern origin. Keep it after the D1-D3 deferred
-     * passes, then after the matching D0C projectile pass, exactly as F0128
-     * reaches F0127 after its earlier visible squares. No cue replaces a
-     * missing source bitmap in an asset-backed session. */
-    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
-                           M11_VIEWPORT_X + 87, M11_VIEWPORT_Y,
-                           48, 32, &cell, 0, 1);
+    /* ReDMCSB DUNVIEW.C F0127 calls F0115 for M609_D0C. Its restarted C15
+     * loop at :5915-6074 consumes every ordinary explosion record through
+     * M636 at the D0C pattern origin, after the matching projectile pass. */
+    for (int effectIndex = 0;
+         effectIndex < cell.dm1MaterializationDecision.liveRenderableExplosionCount;
+         ++effectIndex) {
+        M11_ViewportCell material;
+        if (!m11_viewport_cell_explosion_material(&cell, effectIndex,
+                                                   &material)) {
+            continue;
+        }
+        (void)m11_draw_explosion_material(
+            framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X + 87, M11_VIEWPORT_Y, 48, 32,
+            &material, 0, 1);
+    }
 }
 
 static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state,
