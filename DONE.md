@@ -28,6 +28,13 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 duplicate C4 rejection: checksum-valid external C4
+  TIMELINE bytes now fail closed when two active heap slots name the same
+  EVENT. The handoff receipt retains the first slot, duplicate slot, and raw
+  event index while staged party/timeline state rolls back. Source: ReDMCSB
+  `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0238/F0651. Verification:
+  focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 corpus failure provenance: rejected external-envelope
   rows now retain the F0435 staging result, importer error, and count of
   checksum-qualified parts in local-only candidate state. A malformed-tail

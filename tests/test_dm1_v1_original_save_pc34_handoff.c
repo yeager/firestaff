@@ -623,6 +623,62 @@ static int rewrite_fixture_event_c_union(unsigned char *bytes,
     return 1;
 }
 
+static int rewrite_fixture_timeline_index(unsigned char *bytes,
+                                          size_t size,
+                                          int timeline_slot,
+                                          uint16_t event_index)
+{
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t checksum;
+    int part;
+    int i;
+
+    if (!bytes || size < sizeof(header) || timeline_slot < 0 ||
+        timeline_slot >= ORIGINAL_PC34_EVENT_MAXIMUM_COUNT) {
+        return 0;
+    }
+    memcpy(header, bytes, sizeof(header));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = rd16le(header + 310u + (size_t)i * 2u);
+    }
+    for (part = 0; part < SAVEGAME_PC34_PART_TIMELINE; ++part) {
+        uint16_t part_size;
+        if (cursor + 2u > size) return 0;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (part_size > size - cursor) return 0;
+        cursor += part_size;
+    }
+    if (cursor + 2u > size ||
+        rd16le(bytes + cursor) != ORIGINAL_PC34_TIMELINE_PART_BYTES) {
+        return 0;
+    }
+    cursor += 2u;
+    if (ORIGINAL_PC34_TIMELINE_PART_BYTES > size - cursor) return 0;
+    xor_words(bytes + cursor, ORIGINAL_PC34_TIMELINE_PART_BYTES / 2u,
+              keys[SAVEGAME_PC34_PART_TIMELINE]);
+    wr16le(bytes + cursor + (size_t)timeline_slot * 2u, event_index);
+    checksum = checksum_and_xor_words(
+        bytes + cursor, ORIGINAL_PC34_TIMELINE_PART_BYTES / 2u,
+        keys[SAVEGAME_PC34_PART_TIMELINE]);
+    wr16le(header + 342u +
+           (size_t)SAVEGAME_PC34_PART_TIMELINE * 2u, checksum);
+    wr16le(header + 254u, 0u);
+    wr16le(header + 254u,
+           (uint16_t)(checksum_first_half(header) ^
+                      checksum_second_half_plain(header)));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(bytes, header, sizeof(header));
+    return 1;
+}
+
 static void make_temp_save_path(char *out, size_t out_size)
 {
     const char *root = getenv("FIRESTAFF_TEST_TMPDIR");
@@ -1002,6 +1058,7 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
     struct GameWorld_Compat world;
     struct DM1_EventQueue_V1 event_queue;
     DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34HandoffReport duplicate_report;
     int rc;
 
     memset(&imported, 0, sizeof(imported));
@@ -1124,6 +1181,41 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
           "active group size importer result preserved");
     CHECK(report.part_checksum_ok_count == 2,
           "active group size failure records checksum-valid part");
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+          rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 1u),
+          "duplicate C4 timeline fixture remains checksum-authenticated");
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE &&
+          report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
+          report.timeline_duplicate_first_slot == 0 &&
+          report.timeline_duplicate_slot == 1 &&
+          report.timeline_duplicate_event_index == 1,
+          "duplicate C4 EVENT index has stable F0435 provenance");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "duplicate C4 index rolls back staged party import");
+    memset(&duplicate_report, 0, sizeof(duplicate_report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &duplicate_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+          duplicate_report.importer_result == report.importer_result &&
+          duplicate_report.part_checksum_ok_count ==
+              report.part_checksum_ok_count &&
+          duplicate_report.timeline_duplicate_first_slot ==
+              report.timeline_duplicate_first_slot &&
+          duplicate_report.timeline_duplicate_slot ==
+              report.timeline_duplicate_slot &&
+          duplicate_report.timeline_duplicate_event_index ==
+              report.timeline_duplicate_event_index,
+          "duplicate C4 failure provenance is repeatable");
 
     memset(&report, 0, sizeof(report));
     memset(&world, 0, sizeof(world));
