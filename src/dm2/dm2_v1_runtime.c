@@ -140,6 +140,7 @@ static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
+static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
 static int g_dm2_runtime_restore_in_progress = 0;
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
@@ -2654,6 +2655,24 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
         g_dm2_frame_ownership.full_gdat_frame_valid;
+    memset(&g_dm2_last_m11_frame, 0, sizeof(g_dm2_last_m11_frame));
+    g_dm2_last_m11_frame.source_materials_required =
+        viewport.source_materials_required ? 1 : 0;
+    g_dm2_last_m11_frame.map_load_token =
+        (uint32_t)(rt->dungeon_level + 1) |
+        (rt->outdoor ? UINT32_C(0x80000000) : 0u);
+    g_dm2_last_m11_frame.scene_control_hash =
+        g_dm2_frame_ownership.gdat_scene_control_hash;
+    g_dm2_last_m11_frame.palette_hash =
+        g_dm2_frame_ownership.gdat_interface_palette_hash;
+    g_dm2_last_m11_frame.valid =
+        g_dm2_frame_ownership.valid &&
+        g_dm2_last_m11_frame.source_materials_required &&
+        g_dm2_last_m11_frame.map_load_token != 0u &&
+        g_dm2_last_m11_frame.scene_control_hash != 0u &&
+        g_dm2_last_m11_frame.palette_hash != 0u;
+    g_dm2_last_m11_frame.m11_consume_frame =
+        g_dm2_last_m11_frame.valid;
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
@@ -2675,6 +2694,14 @@ int dm2_v1_runtime_last_frame_ownership(
         return 0;
     }
     *out_receipt = g_dm2_frame_ownership;
+    return out_receipt->valid;
+}
+
+int dm2_v1_runtime_last_m11_frame_receipt(
+    DM2_V1_ViewportM11FrameReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_last_m11_frame;
     return out_receipt->valid;
 }
 

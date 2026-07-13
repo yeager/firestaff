@@ -108,6 +108,18 @@ typedef struct {
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
 
+/* Atomic identity for the exact source-required viewport frame M11 is about
+ * to present. The values come from the live GDAT scene and interface palette
+ * receipts, never from a fallback frame. */
+typedef struct {
+    int valid;
+    int m11_consume_frame;
+    int source_materials_required;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t palette_hash;
+} DM2_V1_ViewportM11FrameReceipt;
+
 typedef struct {
     int ready;
     int map_graphics_style;
@@ -199,6 +211,8 @@ void dm2_v1_runtime_note_startup_frame_consumption(
     int title_gdat_blits, int menu_gdat_blits);
 int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
+int dm2_v1_runtime_last_m11_frame_receipt(
+    DM2_V1_ViewportM11FrameReceipt *out_receipt);
 int dm2_v1_runtime_graphicsset_scene_receipt(
     DM2_V1_RuntimeGraphicsSetSceneReceipt *out_receipt);
 void dm2_v1_runtime_set_viewport_asset_provider(

@@ -6081,6 +6081,7 @@ int dm2_v1_boot_runtime_render_frame(
 {
     DM2_V1_BootRuntimeReceipt runtime;
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
+    DM2_V1_ViewportM11FrameReceipt m11_frame;
     int rendered = -1;
     dm2_v1_boot_runtime_render_receipt_clear(out_receipt);
     if (!profile || !profile->dm2_state || !framebuffer) {
@@ -6131,7 +6132,9 @@ int dm2_v1_boot_runtime_render_frame(
      * The later raw/decoded HUD probes render independent sample frames and
      * must not replace this frame's no-fallback/no-block decision. */
     memset(&frame_ownership, 0, sizeof(frame_ownership));
+    memset(&m11_frame, 0, sizeof(m11_frame));
     (void)dm2_v1_runtime_last_frame_ownership(&frame_ownership);
+    (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_frame);
     if (out_receipt) {
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
@@ -6241,6 +6244,17 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;
+        out_receipt->runtime_m11_frame_receipt_consumed =
+            m11_frame.valid && m11_frame.m11_consume_frame;
+        out_receipt->runtime_m11_frame_map_load_token =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.map_load_token : 0u;
+        out_receipt->runtime_m11_frame_scene_control_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.scene_control_hash : 0u;
+        out_receipt->runtime_m11_frame_palette_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.palette_hash : 0u;
     }
     return rendered == 0;
 }
