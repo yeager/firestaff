@@ -209,11 +209,105 @@ static int test_m10_c38_turns_before_attack(void)
     return ok ? 0 : 1;
 }
 
+/* ReDMCSB GROUP.C F0209:2402-2408 checks F0218 against the old packed
+ * C04 cells before committing the deferred quarter-square cell change. */
+static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
+{
+    int seed;
+    int lastCount = -1;
+    int lastCells = -1;
+    int lastProjectileNext = -1;
+
+    for (seed = 1; seed <= 512; ++seed) {
+        struct GameWorld_Compat world;
+        struct TickInput_Compat input;
+        struct TickResult_Compat result;
+        struct TimelineEvent_Compat event;
+        struct DungeonGroup_Compat* group;
+
+        if (!build_world(&world)) return 1;
+        world.things->projectiles = (struct DungeonProjectile_Compat*)calloc(
+            1, sizeof(*world.things->projectiles));
+        if (!world.things->projectiles) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+        world.things->projectileCount = 1;
+        world.things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+        group = &world.things->groups[0];
+        group->next = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 0);
+        group->slot = THING_ENDOFLIST;
+        group->creatureType = CREATURE_TYPE_SCREAMER;
+        group->count = 1;
+        group->cells = 0x04; /* creature 0 north, creature 1 east */
+        group->direction = 2;
+        group->behavior = DM1_BEHAVIOR_ATTACK;
+        group->health[0] = 200;
+        group->health[1] = 200;
+        world.things->projectiles[0].next = THING_ENDOFLIST;
+        world.things->projectiles[0].slot = THING_ENDOFLIST;
+        world.things->projectiles[0].attack = 255;
+        world.things->projectiles[0].kineticEnergy = 255;
+        world.things->projectiles[0].eventIndex = 77;
+        world.things->squareFirstThings[0] =
+            (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+        world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+        world.creatureAI[0].creatureType = CREATURE_TYPE_SCREAMER;
+        world.creatureAI[0].groupCells = group->cells;
+        world.creatureAI[0].groupDirection = 0x0A; /* both face south */
+        F0730_COMBAT_RngInit_Compat(&world.masterRng, (uint32_t)seed);
+
+        memset(&input, 0, sizeof(input));
+        memset(&result, 0, sizeof(result));
+        memset(&event, 0, sizeof(event));
+        event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+        event.fireAtTick = world.gameTick + 100u;
+        event.mapIndex = 0;
+        event.mapX = 1;
+        event.mapY = 1;
+        event.cell = 0;
+        event.aux0 = 0;
+        if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &event)) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+        memset(&event, 0, sizeof(event));
+        event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+        event.fireAtTick = world.gameTick;
+        event.mapIndex = 0;
+        event.mapX = 1;
+        event.mapY = 1;
+        event.aux0 = 0;
+        event.aux1 = CREATURE_TYPE_SCREAMER;
+        event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) ||
+            F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) != ORCH_OK) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+
+        if (group->count == 0 && group->health[0] == 200 &&
+            group->cells == 5 && world.creatureAI[0].groupCells == 5 &&
+            world.things->projectiles[0].next == THING_NONE) {
+            F0883_WORLD_Free_Compat(&world);
+            return 0;
+        }
+        lastCount = (int)group->count;
+        lastCells = (int)group->cells;
+        lastProjectileNext = (int)world.things->projectiles[0].next;
+        F0883_WORLD_Free_Compat(&world);
+    }
+    fprintf(stderr, "FAIL: C38 pending projectile cell-write ordering (count=%d cells=%d projectile-next=%d)\n",
+            lastCount, lastCells, lastProjectileNext);
+    return 1;
+}
+
 int main(void)
 {
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
+    if (test_m10_c38_checks_pending_projectile_before_cell_write() != 0) return 1;
     puts("PASS: DM1 F0205/F0206 packed active-group directions");
     return 0;
 }
