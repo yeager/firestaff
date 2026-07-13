@@ -552,6 +552,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_CSBWin512TimerSummary stoneroom_timer;
     CSB_V1_CSBWin512TimerSummary falsewall_timer;
     CSB_V1_CSBWin512TimerSummary openroom_timer;
+    CSB_V1_CSBWin512TimerSummary map_timer;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_RuntimeCSBWinDSATimer6Resolution timer6;
@@ -566,6 +567,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     memset(&stoneroom_timer, 0, sizeof(stoneroom_timer));
     memset(&falsewall_timer, 0, sizeof(falsewall_timer));
     memset(&openroom_timer, 0, sizeof(openroom_timer));
+    memset(&map_timer, 0, sizeof(map_timer));
     memset(&binding, 0, sizeof(binding));
     memset(&timer6, 0, sizeof(timer6));
     memset(&runner, 0, sizeof(runner));
@@ -680,6 +682,45 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.dsa_id == 7 && runner.state_index == 4u &&
               runner.action_ordinal == 0,
           "CSBWin saved TT_DOOR timer prepares only its selected DSA action");
+    map_timer.valid = 1;
+    map_timer.function = 8u;
+    map_timer.ubyte6 = (uint8_t)location.x;
+    map_timer.ubyte7 = (uint8_t)location.y;
+    map_timer.ubyte8 = 0u;
+    map_timer.ubyte9 = 0u;
+    map_timer.level = (uint8_t)location.level;
+    CHECK(csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
+              &profile, &dungeon, &location, &map_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin TT_TELEPORTER reaches ActivateDSA/ProcessDSATimer5 receipt");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &map_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin TT_TELEPORTER prepares only its selected DSA action");
+    map_timer.function = 9u;
+    CHECK(csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
+              &profile, &dungeon, &location, &map_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin TT_PITROOM reaches ActivateDSA/ProcessDSATimer5 receipt");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &map_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin TT_PITROOM prepares only its selected DSA action");
+    map_timer.ubyte9 = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
+              &profile, &dungeon, &location, &map_timer, &timer6) == 0,
+          "CSBWin TT_PITROOM rejects disabled action before DSA dispatch");
+    map_timer.ubyte9 = 0u;
+    map_timer.function = 101u;
+    CHECK(csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
+              &profile, &dungeon, &location, &map_timer, &timer6) == 0,
+          "CSBWin parameter-message timer is not promoted to TT_TELEPORTER");
     openroom_timer.ubyte9 = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
               &profile, &dungeon, &location, &openroom_timer, &timer6) == 0,

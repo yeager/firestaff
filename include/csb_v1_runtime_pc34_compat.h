@@ -810,6 +810,42 @@ int csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* CSBWin Timer.cpp::ProcessTT_TELEPORTER and ProcessTT_PITROOM each invoke
+ * ActivateDSA before changing the square's bit-3 state. ActivateDSA creates
+ * the same type-47 ProcessDSATimer5 input as TT_DOOR. These receipts bind
+ * only that original DSA handoff: the later teleporter/pit state mutation,
+ * WiggleEverything, parameter messages, and LocalState 2/3 stay out of this
+ * bounded saved-timer path. */
+int csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
+int csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
+int csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
+int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

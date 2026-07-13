@@ -7,6 +7,14 @@
   uppercased edit rule, backspace/return handling, and cancel/accept receipts;
   it does not invent pointer rectangles, keyscancodes, labels, glyphs, or
   dialog UI. Verification: Ninja and CTest `dm2_v1_dialogue_gdat_receipt`.
+- 2026-07-13 CSBWin map-timer DSA handoff: restored `TT_TELEPORTER` and
+  `TT_PITROOM` timers now follow their exact `Timer.cpp` pre-mutation
+  `ActivateDSA` call to the authenticated `ProcessDSATimer5`/`6` pure-stack
+  receipt. Both validate the saved function, target, position, level, and
+  source 0/1/2 action mapping. Disabled actions, parameter-message payloads,
+  teleporter/pit mutation, `WiggleEverything`, world opcodes, and
+  `LocalState=2/3` remain fail-closed. Verification: Ninja and CTest
+  `csb_v1_phase7_verification`.
 
 - 2026-07-13 CSBWin `TT_FALSEWALL` DSA runner: the restored function-7
   `Timer.cpp::ProcessTT_FALSEWALL` route now prepares only the exact
