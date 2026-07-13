@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_73` follow-up: live dispatch now expires an
+  exact saved Thieves' Eye receipt only while its imported party count is
+  positive. Timer families requiring unpreserved object-word identity remain
+  blocked pending a source-backed timer-record expansion.
+
 - 2026-07-13 CSBWin restored `TT_72` follow-up: live dispatch now applies an
   exact saved champion-shield expiry only when its imported champion and
   unsigned defense delta are coherent. Underflowing records and the source

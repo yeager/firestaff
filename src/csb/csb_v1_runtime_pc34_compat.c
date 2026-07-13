@@ -16573,6 +16573,26 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 73u) {
+        /* CSBWin CSBCode.cpp:6540 and ReDMCSB TIMELINE.C F0261 lines
+         * 1972-1974 expire C73 by decrementing the party's Thieves' Eye
+         * count. The restored character tail owns that count. Require the
+         * complete queue/timer/event identity and a positive count so a stale
+         * or malformed saved timer cannot underflow runtime visibility state. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            profile->csbwin_character_tail_see_thru_walls > 0u) {
+            --profile->csbwin_character_tail_see_thru_walls;
+        }
+        /* C73 remains source-owned even when malformed, preventing a future
+         * generic event path from bypassing saved CSBWin identity checks. */
+        return 1;
+    }
     if (timer->function == 72u) {
         CSB_V1_Champion *champion;
         uint16_t shield_delta;
