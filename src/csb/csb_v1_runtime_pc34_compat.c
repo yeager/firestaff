@@ -15859,6 +15859,31 @@ int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
     return 0;
 }
 
+int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    /* CSBWin Timer.cpp ProcessTT_STONEROOM (lines 2180-2260) visits every
+     * type-47 actuator on the timer target square, then hands its raw action
+     * and position to DSA.cpp ProcessDSATimer6.  A restored summary is safe
+     * to use only when it is the original function-6 form and its target
+     * still names this concrete loaded-square actuator. */
+    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
+        !timer->valid || timer->truncated || timer->function != 6u ||
+        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y) {
+        return 0;
+    }
+    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+        profile, dungeon, slave_location, (int)timer->ubyte9,
+        (int)timer->ubyte8, out_resolution);
+}
+
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,

@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin saved `TT_STONEROOM` DSA receipt: restored function-6
+  timers now bind their exact level/x/y target, timer position, and
+  SET/CLEAR/TOGGLE message to the authenticated `ProcessDSATimer6` resolver
+  for a concrete type-47 actuator. Invalid actions/positions, target
+  mismatches, and `TT_ParameterMessage` reject before dispatch; no EXPOOL
+  parameter payload, world opcode, or fallback execution was inferred.
+  Sources: CSBWin `Timer.cpp::ProcessTT_STONEROOM`, `DSA.cpp`
+  `ProcessDSATimer6`. Verification: Ninja and CTest-passed
+  `csb_v1_phase7_verification`.
+
 - 2026-07-13 DM1 F0219 live C14 motion writeback: a non-grace C49 flight
   step now carries ReDMCSB `PROJECTILE.KineticEnergy` and `PROJECTILE.Attack`
   back to the decoded original C14 record before it relinks and queues the
