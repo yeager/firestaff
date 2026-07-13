@@ -1,5 +1,6 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
 - 2026-07-13 DM2 runtime corpus receipt consumption: the selected per-file
   corpus row now supplies runtime path, type, size, and hash. Original
   envelope/raw rows return an explicit fail-closed rejection.
