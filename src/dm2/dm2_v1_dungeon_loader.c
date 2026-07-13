@@ -719,6 +719,12 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     if (size <= 0 || index < 0)
         return NULL;
     if (index < d->thing_type_counts[type]) {
+        /* skproject/SKULLWIN/c_record.cpp init_global_records lines 33-38
+         * initializes every recordptr[] to NULL before the loader commits a
+         * pool. Do not let Firestaff's -1 sentinel become a positive byte
+         * address after index times table_recordsizes[type]. */
+        if (d->thing_data_bases[type] < 0)
+            return NULL;
         offset = d->thing_data_bases[type] + index * size;
     } else if (!dm2_v1_g1_extension_record_offset(d, type, index, &offset)) {
         return NULL;
