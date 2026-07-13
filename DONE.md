@@ -5,6 +5,9 @@
   after a complete source-chain unlink. Invalid receipts stay inert. Source:
   `CSBCode.cpp:6490-6502`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
+- 2026-07-13 DM1 original PC34 C29 group-reaction export now requires the
+  existing typed SFT-chain receipt. Source: ReDMCSB `TIMELINE.C` F0261 and
+  `GROUP.C` F0209. Verification: Ninja and CTest handoff gate.
 
 - 2026-07-13 Nexus Structure1F raw floor-decoration rotation receipt: complete.
   Direct floor decorations retain raw rotation-selector reuse through the DGN
