@@ -10067,3 +10067,13 @@ unlink or relink an already-dead group. Verification: Ninja and
   materialization now retain that exact union, including signed sound ids,
   rather than treating the bytes as generic Cell/Effect data. The original
   save handoff regression roundtrips a delayed negative sound index.
+# ✅ 2026-07-13 DM1 original-save C13 Vi Altar event-plan boundary
+
+The original-save reader now exposes a fail-closed typed C13 plan that keeps
+the source-owned `Priority`, `B.Location`, `C.Cell`, and `C.Effect` fields.
+Only source steps 2, 1, and 0 are accepted; malformed authenticated saves do
+not become generic square events. Source: ReDMCSB `CLIKVIEW.C F0374` lines
+179-186 and `TIMELINE.C F0255` lines 1665-1699. Verification:
+`test_dm1_v1_original_save_pc34_handoff` covers a checksum-authenticated C13
+fixture and rejects an out-of-range step. Full runtime C13 materialization
+remains listed in `TODO.md`.

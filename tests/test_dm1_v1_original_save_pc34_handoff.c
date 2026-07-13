@@ -1694,6 +1694,53 @@ static void test_runtime_materializer_binds_original_c12_damage_hide(void)
           "C12 export retains priority and zeroes unowned union bytes");
 }
 
+static void test_original_c13_vi_altar_event_plan(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34ViAltarRebirthEventPlan plan;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     3, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C13 plan fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 2,
+                                     DM1_EVENT_VI_ALTAR_REBIRTH) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 2,
+                                            0x0203u),
+          "C13 fixture preserves authenticated Location/Cell/Effect bytes");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C13 authenticated save reaches the bounded parser");
+    memset(&plan, 0, sizeof(plan));
+    CHECK(dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+              &report.events[2], 2, &plan) && plan.valid &&
+              plan.champion_index == 2 && plan.map_index == 1 &&
+              plan.map_x == 0 && plan.map_y == 0 && plan.cell == 3 &&
+              plan.step == 2 && plan.fire_at_tick == 123490u,
+          "C13 plan retains the exact F0255 source union ownership");
+
+    CHECK(rewrite_fixture_event_c_union(bytes, (size_t)written, 2, 0x0303u),
+          "C13 malformed-step fixture remains checksum-authenticated");
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              !dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+                  &report.events[2], 2, &plan),
+          "C13 plan fails closed outside source steps 2, 1, and 0");
+}
+
 static void test_runtime_materializer_binds_original_explosion_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2524,6 +2571,7 @@ int main(void)
     test_runtime_handoff_rejects_unmaterialized_source_event();
     test_runtime_materializer_binds_original_sound_union();
     test_runtime_materializer_binds_original_c12_damage_hide();
+    test_original_c13_vi_altar_event_plan();
     test_runtime_materializer_binds_original_explosion_union();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
