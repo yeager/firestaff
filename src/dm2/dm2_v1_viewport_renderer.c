@@ -3930,8 +3930,9 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (it->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
-                                            &src_w, &src_h, &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_local_material(
+                    s, it->gdat_index, &pixels, &src_w, &src_h,
+                    &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
                 if (dm2_v1_viewport_item_asset_blit(it,
