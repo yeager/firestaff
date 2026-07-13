@@ -18,6 +18,15 @@
   native-PC34 portrait/save CTest with four nonzero M516 records and a
   two-member party.
 
+- 2026-07-13 DM1 HoC C127 host-input material gate: visible front-mirror
+  pointer and inspect input now enter resurrection only when the shared
+  ReDMCSB `DUNGEON.C F0172` receipt resolves a real PC34 C026 atlas cell and
+  the paired `DUNVIEW.C:3913-3928` C346 backing. Missing, incomplete, or
+  undersized graphics fail closed, while direct M10/save selection APIs stay
+  available for model proof. Verification: focused Ninja build and
+  `m11_dm1_hoc_no_fallback_panel` CTest with a real C026/C346 route plus the
+  no-asset rejection.
+
 - 2026-07-13 Theron sparse authentic-trace instrumentation: the Mednafen
   debugger callback now filters to bounded System Card/loader windows before
   any debugger-memory inspection, preserving pending-transfer observations.
