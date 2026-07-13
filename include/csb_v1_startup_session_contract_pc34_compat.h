@@ -33,6 +33,24 @@ typedef struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 {
     uint64_t consumed_surface_hash;
 } CSB_V1_StartupSessionPackageTitleReceipt_PC34;
 
+/* ReDMCSB ENTRANCE.C F0806 keeps C004 behind the moving C002/C003 door
+ * strips. This receipt proves that the opening frame still belongs to the
+ * same verified C001 package session rather than a replacement raster. */
+typedef struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34 {
+    int valid;
+    int real_package_matched;
+    int c004_entrance_ready;
+    int c002_left_door_ready;
+    int c003_right_door_ready;
+    int opening_to_title_same_session;
+    int no_legacy_wrappers;
+    int no_fallback_routes;
+    unsigned int source_tick;
+    unsigned int session_generation;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupSessionOpeningDoorReceipt_PC34;
+
 typedef struct CSB_V1_StartupSessionLiveHudReceipt_PC34 {
     int valid;
     int c040_cleared_once;
@@ -109,6 +127,12 @@ int csb_v1_startup_session_package_title_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
     CSB_V1_StartupSessionPackageTitleReceipt_PC34 *out_receipt);
+
+int csb_v1_startup_session_opening_door_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 *out_receipt);
 
 /* ReDMCSB PANEL.C F0346/F0347: one C040 clear returns to neutral C017. */
 int csb_v1_startup_session_live_hud_receipt_pc34(

@@ -8194,16 +8194,74 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
     return 1;
 }
 
+static void orch_apply_moving_killed_all_afterplay_f0190_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int sourceSquareKnown,
+    int sourceMapIndex,
+    int sourceMapX,
+    int sourceMapY,
+    int sourceCell,
+    int destinationMapIndex,
+    int destinationMapX,
+    int destinationMapY)
+{
+    struct DM1CreatureInfo_Compat creatureInfo;
+    DM1_MeleeF0190MovingKilledAllAfterplayInputPc34 input;
+    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
+    struct TimelineEvent_Compat advance;
+    int slotIndex = -1;
+
+    if (!world || !group || !sourceSquareKnown) return;
+    if (!orch_get_dm1_creature_info_pc34_compat(
+            (int)group->creatureType, &creatureInfo)) {
+        return;
+    }
+    memset(&input, 0, sizeof(input));
+    memset(&plan, 0, sizeof(plan));
+    input.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    input.groupIndex = groupIndex;
+    input.creatureAttributes = creatureInfo.attributes;
+    input.sourceMapIndex = sourceMapIndex;
+    input.sourceMapX = sourceMapX;
+    input.sourceMapY = sourceMapY;
+    input.sourceCell = sourceCell;
+    input.destinationMapIndex = destinationMapIndex;
+    input.destinationMapX = destinationMapX;
+    input.destinationMapY = destinationMapY;
+    input.currentTick = world->gameTick;
+
+    /* ReDMCSB GROUP.C F0190:834-839 defers F0188/F0189 for a moving
+     * final creature, while lines 907-917 still call F0213 at P0371/P0372.
+     * MOVESENS.C F0267:656-663 owns the later destination drops/delete.
+     * Do not invent a source coordinate for C60/C61 or C006 routes. */
+    if (!dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+            &input, &plan) || !plan.valid ||
+        !plan.shouldPresentSourceSmoke ||
+        !plan.requiresDeferredDestinationCleanup) {
+        return;
+    }
+    memset(&advance, 0, sizeof(advance));
+    if (F0821_EXPLOSION_Create_Compat(&plan.sourceSmokeCreateInput,
+                                      &world->explosions, &slotIndex,
+                                      &advance)) {
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
+    }
+}
+
 static int orch_damage_group_by_pit_fall_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     unsigned char movingFixedDropCells[4],
-    int* movingFixedDropCellCount)
+    int* movingFixedDropCellCount,
+    int* outFinalKillCell)
 {
     int originalCount;
     int creatureIndex;
     int killedAny = 0;
 
+    if (outFinalKillCell) *outFinalKillCell = EXPLOSION_CELL_CENTERED;
     if (!world || !group) return 0;
     if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
     originalCount = group->count;
@@ -8225,6 +8283,7 @@ static int orch_damage_group_by_pit_fall_compat(
             killedAny = 1;
             if (currentCount <= 0) {
                 group->health[0] = 0;
+                if (outFinalKillCell) *outFinalKillCell = killedCell;
                 return 2;
             }
             if (movingFixedDropCells && movingFixedDropCellCount &&
@@ -8620,12 +8679,14 @@ static int orch_resolve_group_f0267_pit_destination_compat(
     int* inOutMapY,
     int* outFallKilledGroup,
     unsigned char movingFixedDropCells[4],
-    int* movingFixedDropCellCount)
+    int* movingFixedDropCellCount,
+    int* outFinalKillCell)
 {
     int remaining;
 
     if (outFallKilledGroup) *outFallKilledGroup = 0;
     if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
+    if (outFinalKillCell) *outFinalKillCell = EXPLOSION_CELL_CENTERED;
     if (!world || !world->dungeon || !group || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
 
     /* ReDMCSB MOVESENS.C:F0267:538-574 follows open, non-imaginary pits
@@ -8666,8 +8727,10 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         {
             unsigned char fallDropCells[4];
             int fallDropCellCount = 0;
+            int finalKillCell = EXPLOSION_CELL_CENTERED;
             int fallOutcome = orch_damage_group_by_pit_fall_compat(
-                world, group, fallDropCells, &fallDropCellCount);
+                world, group, fallDropCells, &fallDropCellCount,
+                &finalKillCell);
             int i;
             for (i = 0; movingFixedDropCells && movingFixedDropCellCount &&
                         i < fallDropCellCount && *movingFixedDropCellCount < 4; ++i) {
@@ -8675,6 +8738,7 @@ static int orch_resolve_group_f0267_pit_destination_compat(
             }
             if (fallOutcome == 2) {
                 if (outFallKilledGroup) *outFallKilledGroup = 1;
+                if (outFinalKillCell) *outFinalKillCell = finalKillCell;
                 return 1;
             }
         }
@@ -8977,7 +9041,7 @@ static int orch_materialize_generated_group_compat(
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
                 &fallKilledGroup, movingFixedDropCells,
-                &movingFixedDropCellCount)) {
+                &movingFixedDropCellCount, NULL)) {
             return 0;
         }
         resolvedEvent.mapIndex = destMapIndex;
@@ -9042,7 +9106,8 @@ static int orch_materialize_generated_group_compat(
 static int orch_handle_deferred_group_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
-    struct TickResult_Compat* result)
+    struct TickResult_Compat* result,
+    int sourceSquareKnown)
 {
     int groupIndex;
     int targetMapX;
@@ -9075,6 +9140,7 @@ static int orch_handle_deferred_group_move_event_compat(
         int fallKilledGroup = 0;
         int creatureAllowed = 0;
         int destinationBlocked = 0;
+        int finalKillCell = EXPLOSION_CELL_CENTERED;
         int chaosAdjacentAvailable = 0;
         int chaosAdjacentMapX = targetMapX;
         int chaosAdjacentMapY = targetMapY;
@@ -9084,7 +9150,7 @@ static int orch_handle_deferred_group_move_event_compat(
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &retry.mapIndex, &targetMapX, &targetMapY,
                 &fallKilledGroup, movingFixedDropCells,
-                &movingFixedDropCellCount)) {
+                &movingFixedDropCellCount, &finalKillCell)) {
             return 0;
         }
         creatureAllowed =
@@ -9123,6 +9189,12 @@ static int orch_handle_deferred_group_move_event_compat(
                      routePlan.mapX, routePlan.mapY, retry.mapIndex);
             }
             orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
+            if (fallKilledGroup) {
+                orch_apply_moving_killed_all_afterplay_f0190_compat(
+                    world, groupIndex, group, sourceSquareKnown,
+                    ev->mapIndex, ev->mapX, ev->mapY, finalKillCell,
+                    retry.mapIndex, routePlan.mapX, routePlan.mapY);
+            }
             return orch_apply_group_move_removal_plan_f0267_compat(
                 world, group,
                 fallKilledGroup ? movingFixedDropCells : NULL,
@@ -9248,7 +9320,7 @@ static int orch_f0249_move_group_first_square_thing_compat(
     groupMove.mapY = mapY;
     groupMove.aux0 = groupIndex;
     return orch_handle_deferred_group_move_event_compat(
-        world, &groupMove, result);
+        world, &groupMove, result, 1);
 }
 
 static int orch_handle_creature_reaction_event_compat(
@@ -11403,7 +11475,8 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             break;
         case TIMELINE_EVENT_MOVE_GROUP_SILENT:
         case TIMELINE_EVENT_MOVE_GROUP_AUDIBLE:
-            (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
+            (void)orch_handle_deferred_group_move_event_compat(
+                world, &ev, result, 0);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
             (void)orch_dispatch_square_state_event_compat(world, &ev, result);
