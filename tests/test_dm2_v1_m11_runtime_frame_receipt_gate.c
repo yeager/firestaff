@@ -27,6 +27,10 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_map_load_token = 42u;
     receipt.runtime_m11_frame_scene_control_hash = 0x53434e45u;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
+    receipt.runtime_render_asset_floor_ceiling_count = 2;
+    receipt.runtime_render_fallback_floor_ceiling_count = 0;
+    receipt.runtime_render_blocked_material_draw_count = 0;
+    receipt.runtime_render_no_core_fallbacks = 1;
     return receipt;
 }
 
@@ -84,6 +88,16 @@ int main(void)
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a frame without source-owned wall materials");
     runtime = make_runtime_receipt();
+
+    boot.runtime_render_asset_floor_ceiling_count = 1;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a receipt without both real GDAT planes");
+    boot = make_boot_receipt();
+
+    boot.runtime_render_blocked_material_draw_count = 1;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a blocked floor or ceiling material pass");
+    boot = make_boot_receipt();
 
     boot.runtime_m11_frame_receipt_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,

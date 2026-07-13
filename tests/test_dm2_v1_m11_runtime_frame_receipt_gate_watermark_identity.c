@@ -30,6 +30,8 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot(uint32_t map,
     receipt.runtime_m11_frame_map_load_token = map;
     receipt.runtime_m11_frame_scene_control_hash = scene;
     receipt.runtime_m11_frame_palette_hash = palette;
+    receipt.runtime_render_asset_floor_ceiling_count = 2;
+    receipt.runtime_render_no_core_fallbacks = 1;
     return receipt;
 }
 

@@ -12,6 +12,14 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         boot_receipt->runtime_m11_frame_map_load_token == 0u ||
         boot_receipt->runtime_m11_frame_scene_control_hash == 0u ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
+        /* skproject DRAW_DUNGEON resolves both GRAPHICSSET ceiling and floor
+         * before M11 owns the frame.  A zero-fallback identity alone is not
+         * evidence: both real planes must have been consumed and no source
+         * material pass may have blocked. */
+        boot_receipt->runtime_render_asset_floor_ceiling_count < 2 ||
+        boot_receipt->runtime_render_fallback_floor_ceiling_count != 0 ||
+        boot_receipt->runtime_render_blocked_material_draw_count != 0 ||
+        !boot_receipt->runtime_render_no_core_fallbacks ||
         !runtime_receipt) {
         return 0;
     }

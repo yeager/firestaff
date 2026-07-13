@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 M11 complete GDAT floor/ceiling gate: M11 now rejects a
+  runtime frame unless the boot-owned receipt proves both GRAPHICSSET planes
+  were drawn from real assets, with zero plane fallbacks and zero blocked
+  source-material passes, in addition to the existing atomic map/scene/palette
+  identity. This consumes the renderer's fail-closed plane transaction and
+  creates no synthetic M11 surface. Source: skproject `SKWIN/c_gui_vp.cpp`
+  `DM2_DRAW_DUNGEON` plane sequence. Verification: the three dedicated M11
+  receipt-gate tests passed with strict `-Wall -Wextra -Werror` compilation.
+
 - ✅ 2026-07-13 DM2 inventory HUD GDAT material receipt: a selected DM2 item
   can now bind to a no-draw receipt only through its source-provided item
   category/index/image-field triple, the exact decoded four-bit `dtImage`,
