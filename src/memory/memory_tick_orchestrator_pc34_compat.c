@@ -10959,10 +10959,15 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             /* ReDMCSB SOUND.C F0064:1536-1543 produces delayed C20 only
              * with a non-negative SoundIndex and its native receipt.  Keep
              * the older generic sound path for non-save callers, but do not
-             * let a malformed claimed C20 reach the emission surface. */
+             * let a malformed claimed C20 reach the emission surface.
+             * In particular, F0407's C04 uses SOUND_DATA.Priority (70),
+             * never a champion owner: a C11 owner encoded there is stale
+             * imported data, not a second source C04. */
             if (ev.aux2 != DM1_EVENT_PLAY_SOUND ||
                 (ev.aux0 >= 0 && ev.aux1 == 0 && ev.aux3 == 0 &&
-                 ev.cell == 0 && ev.aux4 >= 0 && ev.aux4 <= 0xff)) {
+                 ev.cell == 0 && ev.aux4 >= 0 && ev.aux4 <= 0xff &&
+                 (ev.aux0 != ORCH_SOUND_WOODEN_THUD_PC34 ||
+                  ev.aux4 == ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34))) {
                 emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY,
                      ev.mapIndex);
             }
