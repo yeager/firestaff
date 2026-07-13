@@ -117,11 +117,12 @@ now retains the real self-master receipt and supports serialized `LocalState=1`
 (`DSA::m_state`) as well as the DB3 state-nibble route. Verified restored
 `TT_STONEROOM`, `TT_FALSEWALL`, `TT_OPENROOM`, `TT_DESSAGE`, `TT_DOOR`,
 `TT_TELEPORTER`, and `TT_PITROOM` timers now bind their saved
-target/action/position to that receipt and can prepare only its selected
-authenticated pure-stack runner. Remaining CSB DSA work is authenticating
-widened `LocalState=2` ParameterB records, a real slave-master route, full
-timer execution, and a real-save corpus. Do not promote unsupported world or
-text opcodes from fixtures.
+target/action/position to that receipt. The exact zero-parameter
+`TT_DESSAGE`/`TT_DOOR`/`TT_TELEPORTER`/`TT_PITROOM` handoffs also execute the
+already admitted authenticated pure-stack action. Remaining CSB DSA work is
+authenticating widened `LocalState=2` ParameterB records, a real slave-master
+route, source master-state/world effects, and a real-save corpus. Do not
+promote unsupported world or text opcodes from fixtures.
 
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel

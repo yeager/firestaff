@@ -9,6 +9,16 @@
   infer a cell, object, trigger, model, Saturn pixel, palette, PRS3 route,
   or visual fallback. Verification: Ninja and CTests
   `nexus_v1_dgn_geometry_readiness`, `nexus_v1_structure2_no_draw_receipt`.
+- 2026-07-13 CSBWin saved-timer DSA execution: the authenticated pure-stack
+  action selected from restored `TT_DESSAGE`, `TT_DOOR`, `TT_TELEPORTER`, or
+  `TT_PITROOM` now executes with the exact zero-parameter surface created by
+  `Timer.cpp::ActivateDSA` (`NEWDSAPARAMETERS`). `AMPERSAND2 NUMPARAM` proves
+  that zero is retained rather than a placeholder being invented. The bridge
+  still commits no master DSA state or cell mutation, and rejects
+  `LocalState=2/3`, parameter-message timers, world opcodes, and all other
+  timer kinds. Source: CSBWin `Timer.cpp:1453-1491,1509-1541,2343-2508`,
+  `DSA.cpp:5296-5456`. Verification: Ninja and CTest
+  `csb_v1_phase7_verification`.
 
 - 2026-07-13 DM1 PC34 original-save C11 enable-action handoff: a saved
   `C11_EVENT_ENABLE_CHAMPION_ACTION` with `SlotOrdinal == 0` now imports,

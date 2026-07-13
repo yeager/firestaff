@@ -16278,6 +16278,51 @@ int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
         profile, dungeon, slave_location, timer, 9u, out_runner, out_action);
 }
 
+int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer)
+{
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *action = NULL;
+    int prepared = 0;
+
+    if (!profile || !dungeon || !slave_location || !timer) return 0;
+    memset(&runner, 0, sizeof(runner));
+
+    /* CSBWin Timer.cpp:1453-1491 constructs a new TIMER and a
+     * NEWDSAPARAMETERS object before ProcessDSATimer5.  The latter sets the
+     * source parameter count to zero.  These four saved timer kinds are the
+     * only routes here whose source parameter surface is fully proven.  The
+     * existing runner admits only authenticated pure-stack actions, so this
+     * does not commit a DSA master state, mutate a cell, or run an unbounded
+     * ProcessDSATimer6 program. */
+    switch (timer->function) {
+    case 102u: /* TT_DESSAGE -> ProcessTT_OPENROOM -> ProcessDSATimer5. */
+        prepared = csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    case 10u: /* TT_DOOR -> ActivateDSA -> ProcessDSATimer5. */
+        prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    case 8u: /* TT_TELEPORTER -> ActivateDSA -> ProcessDSATimer5. */
+        prepared = csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    case 9u: /* TT_PITROOM -> ActivateDSA -> ProcessDSATimer5. */
+        prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
+    default:
+        return 0;
+    }
+    if (!prepared || !action) return 0;
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        profile, &runner, action, NULL, 0, NULL);
+}
+
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -16363,8 +16408,9 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int expool_changed;
     int i;
 
-    if (!profile || !runner || !action || !parameters ||
-        parameter_count < 1 || parameter_count > 26 ||
+    if (!profile || !runner || !action ||
+        (parameter_count > 0 && !parameters) || parameter_count < 0 ||
+        parameter_count > 26 ||
         runner->programs != &profile->csbwin_extended_dsa_state ||
         !profile->csbwin_extended_features_valid) {
         return 0;

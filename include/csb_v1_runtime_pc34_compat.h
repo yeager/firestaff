@@ -846,6 +846,18 @@ int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* Execute the fully proven, parameter-free ProcessDSATimer5 action for one
+ * restored TT_DESSAGE, TT_DOOR, TT_TELEPORTER, or TT_PITROOM timer.  CSBWin
+ * Timer.cpp's ActivateDSA constructs NEWDSAPARAMETERS with count zero before
+ * entering ProcessDSATimer5.  Only the existing authenticated pure-stack
+ * subset runs here; LocalState 2/3, master-state writes, cell mutation, and
+ * all unsupported world opcodes fail closed. */
+int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an
