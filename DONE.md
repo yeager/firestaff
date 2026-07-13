@@ -8,6 +8,12 @@
   `REVIVE.C` F0282:785-805 and `DUNVIEW.C`:3913-3928. Verification: focused
   CTest against the installed PC34 corpus.
 
+- 2026-07-13 DM1 HoC resurrection party-leader edge: after a C160/C161
+  candidate confirmation, M11 now assigns leader slot 0 only when the party
+  contains exactly one champion. Confirming a later mirror preserves the
+  existing leader instead of selecting the appended candidate. Source:
+   ReDMCSB `REVIVE.C` F0282:837-845. Verification: focused CTest.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109
