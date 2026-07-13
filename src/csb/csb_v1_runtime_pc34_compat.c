@@ -15771,6 +15771,94 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     return 0;
 }
 
+int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    int timer_function,
+    int timer_position,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution candidate;
+    const CSB_V1_CSBWinDSAImportedHeader *header;
+    const CSB_V1_DSAImportedAction *action;
+    const uint8_t *record;
+    uint16_t word2;
+    int type;
+    int index;
+    int size;
+    int ordinal = 0;
+    int i;
+
+    if (!profile || !dungeon || !slave_location || !out_resolution ||
+        timer_function < 0 || timer_function > 2 ||
+        timer_position < 0 || timer_position > 3 ||
+        !profile->csbwin_extended_features_valid) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    if (!csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+            profile, dungeon, slave_location, &candidate.slave)) {
+        return 0;
+    }
+    header = &profile->csbwin_extended_dsa_state.imported_headers[
+        candidate.slave.dsa_id];
+    if (!header->valid || header->state_slot_count == 0u) return 0;
+
+    /* CSBWin DSA.cpp FindMaster (534-547) supports only IsMaster(), which
+     * is exactly LocalState != 3. Its slave branch calls "not implemented"
+     * and returns the input object, so accepting it would invent ownership.
+     * The supported branch has the slave itself as the authenticated master. */
+    if (header->local_state == 3u) return 0;
+    candidate.master = candidate.slave;
+    candidate.master_location =
+        ((uint32_t)(slave_location->position & 3) << 16) |
+        ((uint32_t)(slave_location->level & 0x3f) << 10) |
+        ((uint32_t)(slave_location->x & 0x1f) << 5) |
+        (uint32_t)(slave_location->y & 0x1f);
+    candidate.input_column = (uint32_t)(3 * timer_position + timer_function);
+
+    record = csb_v1_dungeon_get_thing_record(dungeon,
+        slave_location->actuator_thing, &type, &index, &size);
+    (void)index;
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) return 0;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
+
+    /* DSA.cpp GetState: LocalState 0 is DB3::DSAstate, while LocalState 1
+     * is serialized DSA::m_state. LocalState 2 reads DB3::ParameterB(), a
+     * widened record whose word8 high bits are not yet an authenticated
+     * Firestaff input, and must therefore remain blocked. */
+    if (header->local_state == 0u) {
+        candidate.state_index = (uint32_t)((word2 >> 12) & 0x0fu);
+    } else if (header->local_state == 1u) {
+        candidate.state_index = header->persistent_state;
+    } else {
+        return 0;
+    }
+    if (candidate.state_index >= header->state_slot_count) return 0;
+
+    action = csb_v1_chaos_find_imported_action_column(
+        &profile->csbwin_extended_dsa_state, candidate.master.dsa_id,
+        candidate.state_index, candidate.input_column);
+    if (!action) return 0;
+    for (i = 0; i < profile->csbwin_extended_dsa_state.imported_action_count;
+         ++i) {
+        const CSB_V1_DSAImportedAction *item =
+            &profile->csbwin_extended_dsa_state.imported_actions[i];
+        if (item->dsa_id == candidate.master.dsa_id &&
+            item->state_index == candidate.state_index) {
+            if (item == action) {
+                candidate.action_ordinal = ordinal;
+                *out_resolution = candidate;
+                return 1;
+            }
+            ++ordinal;
+        }
+    }
+    return 0;
+}
+
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -15780,46 +15868,23 @@ int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     uint32_t *out_master_location)
 {
     CSB_V1_DSAFilterLocation location;
-    CSB_V1_RuntimeDSAFilterBinding binding;
-    const CSB_V1_DSAImportedAction *action;
-    const uint8_t *record;
-    uint16_t word2;
-    int type;
-    int index;
-    int size;
-    uint32_t state_index;
-    int action_ordinal;
-    uint32_t master_location;
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
 
     if (!profile || !dungeon || !out_binding || !out_state_index ||
         !out_action_ordinal || !out_master_location ||
         !profile->csbwin_extended_features_valid) return 0;
     memset(&location, 0, sizeof(location));
-    memset(&binding, 0, sizeof(binding));
+    memset(&resolution, 0, sizeof(resolution));
     if (!csb_v1_dungeon_resolve_dsa_filter_location(
-            dungeon, 0, 0, &location) ||
-        !csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
-            profile, dungeon, &location, &binding)) return 0;
-    record = csb_v1_dungeon_get_thing_record(dungeon, location.actuator_thing,
-        &type, &index, &size);
-    (void)index;
-    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) return 0;
-    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
+            dungeon, 0, 0, &location)) return 0;
     /* Monster.cpp:1154-1166 builds timer function/position 0/0.  DSA.cpp
      * ProcessDSATimer6 derives inputMsgType = 3 * position + function. */
-    action = csb_v1_chaos_resolve_imported_master_filter_action(
-        &profile->csbwin_extended_dsa_state, binding.dsa_id, word2, 0u,
-        &state_index, &action_ordinal);
-    if (!action) return 0;
-    master_location = ((uint32_t)(location.position & 3) << 16) |
-        ((uint32_t)(location.level & 0x3f) << 10) |
-        ((uint32_t)(location.x & 0x1f) << 5) |
-        (uint32_t)(location.y & 0x1f);
-    *out_binding = binding;
-    *out_state_index = state_index;
-    *out_action_ordinal = action_ordinal;
-    *out_master_location = master_location;
+    if (!csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+            profile, dungeon, &location, 0, 0, &resolution)) return 0;
+    *out_binding = resolution.master;
+    *out_state_index = resolution.state_index;
+    *out_action_ordinal = resolution.action_ordinal;
+    *out_master_location = resolution.master_location;
     return 1;
 }
 

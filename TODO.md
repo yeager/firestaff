@@ -69,12 +69,13 @@ regression repair and packaged Mac/app capture, not a substitute HUD.
 
 CSBWin's admitted DSA `SETSKIN` route is now action-transactional: it stages
 original DB11/EXPOOL skin writes until every authenticated source word has
-been consumed, while a later `GETSKIN` sees the staged byte. Master type-47
-attack filters now select the real serialized `LocalState=0`/`DB3::DSAstate`
-and Monster.cpp timer-column-zero action; remaining CSB DSA work is binding
-that selected action into live monster attack/movement ownership, LocalState
-1/2 semantics, and a real-save corpus. Do not promote unsupported world or
-text opcodes from fixtures.
+been consumed, while a later `GETSKIN` sees the staged byte. `ProcessDSATimer6`
+now retains the real self-master receipt and supports serialized `LocalState=1`
+(`DSA::m_state`) as well as the DB3 state-nibble route. Remaining CSB DSA work
+is binding selected actions into live monster attack/movement ownership,
+authenticating widened `LocalState=2` ParameterB records, a real slave-master
+route, and a real-save corpus. Do not promote unsupported world or text
+opcodes from fixtures.
 
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel

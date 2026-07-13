@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin `ProcessDSATimer6` saved-state receipt: added the
+  authenticated timer resolver that retains both source slave/master identity,
+  uses CSBWin's only implemented `FindMaster` self-master branch, computes
+  `3 * timerPosition + timerFunction`, and selects the imported action from
+  the source-owned master state. `LocalState=0` reads DB3 `DSAstate`; saved
+  `LocalState=1` reads serialized `DSA::m_state`. `LocalState=2` remains
+  blocked pending widened DB3 `ParameterB` provenance and `LocalState=3`
+  remains blocked because CSBWin itself reports slave DSAs unimplemented.
+  The existing attack bridge now consumes this common receipt. Sources:
+  CSBWin `DSA.cpp:534-575,5363-5416,5637-5672`. Verification: Ninja and
+  `csb_v1_phase7_verification`.
+
 - 2026-07-13 DM2 GDAT weather destination plan: source-backed environment
   commands now produce a fail-closed `QUERY_TEMP_PICST` draw receipt with the
   original `CD` rectangle, `FW`-selected mirror mode, 0x40/0x34 movement
