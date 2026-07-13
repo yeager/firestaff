@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
 
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -3741,8 +3742,10 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
     unsigned char square_data[32 * 32];
     unsigned short square_first_things[32 * 32];
+    unsigned char raw_junk[4];
     int written = 0;
     size_t reexported_size = 0u;
     int rc;
@@ -3757,7 +3760,9 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
     memset(square_data, 0, sizeof(square_data));
+    memset(raw_junk, 0, sizeof(raw_junk));
     for (i = 0; i < (int)(sizeof(square_first_things) /
                           sizeof(square_first_things[0])); ++i) {
         square_first_things[i] = THING_ENDOFLIST;
@@ -3776,6 +3781,23 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
     dungeon.tilesLoaded = 1;
     things.squareFirstThings = square_first_things;
     things.squareFirstThingCount = 32 * 32;
+    /* ReDMCSB CLIKVIEW.C F0374: C13's Priority is the matching bones
+     * JUNK.ChargeCount, not a free-standing C2 champion selector. */
+    square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    square_first_things[0] = (unsigned short)((1u << 14) |
+                                               (THING_TYPE_JUNK << 10));
+    wr16le(raw_junk, THING_ENDOFLIST);
+    raw_junk[2] = (unsigned char)(DM1_JUNK_TYPE_BONES | 0x80u);
+    raw_junk[3] = 0x80u; /* ChargeCount 2 in the PC34 two-bit field. */
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = DM1_JUNK_TYPE_BONES;
+    junks[0].doNotDiscard = 1u;
+    junks[0].chargeCount = 2u;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = raw_junk;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    dungeon.header.thingCounts[THING_TYPE_JUNK] = 1;
     things.loaded = 1;
     world.dungeon = &dungeon;
     world.things = &things;
@@ -3824,6 +3846,23 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               roundtrip.c13_timeline_byte_mismatch_count == 0 &&
               roundtrip.c13_timeline_byte_preservation_ok,
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
+
+    /* C13 has no independent live meaning: removing its source-owned bones
+     * must fail the F0435 materializer rather than revive a C2 record. */
+    square_data[11 * 32 + 12] &= (unsigned char)~DUNGEON_SQUARE_MASK_THING_LIST;
+    square_first_things[0] = THING_ENDOFLIST;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "native F0433 can expose a C13 candidate for F0435 validation");
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x43313445u, reexported,
+        sizeof(reexported), &reexported_size, &roundtrip);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "C13 handoff rejects a save whose original bones owner is absent");
+    square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    square_first_things[0] = (unsigned short)((1u << 14) |
+                                               (THING_TYPE_JUNK << 10));
 
     /* This uses F0802's native PC34 output, not a fixture save. The C13
      * record begins in EVENT slot 0 while its later fire time places its

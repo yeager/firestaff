@@ -1,5 +1,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 
+#include "dm1_v1_resurrection_pc34_compat.h"
+
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -855,6 +857,43 @@ static int original_pc34_explosion_on_square(
                 return 0;
             }
             if (out_explosion_index) *out_explosion_index = index;
+            return 1;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    return 0;
+}
+
+/* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 only after the dropped
+ * champion bones are linked at B.Location/C.A.Cell. F0435 must not publish
+ * that saved timer merely because its union bytes look plausible: the C2
+ * champion selector is owned by the original JUNK record's ChargeCount. */
+static int original_pc34_vi_altar_bones_on_square(
+    const struct GameWorld_Compat *world,
+    int map_index,
+    int map_x,
+    int map_y,
+    int cell,
+    int champion_index)
+{
+    uint16_t thing;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->junks ||
+        champion_index < 0 || champion_index >= CHAMPION_MAX_PARTY ||
+        cell < 0 || cell > 3) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, map_index, map_x, map_y);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_JUNK &&
+            (int)THING_GET_CELL(thing) == cell && index >= 0 &&
+            index < world->things->junkCount &&
+            world->things->junks[index].type == DM1_JUNK_TYPE_BONES &&
+            world->things->junks[index].chargeCount == champion_index) {
             return 1;
         }
         thing = original_pc34_next_thing(world->things, thing);
@@ -1746,7 +1785,10 @@ static int materialize_original_pc34_timeline(
                 plan.map_index >= (int)world->dungeon->header.mapCount ||
                 plan.map_x >= (int)world->dungeon->maps[plan.map_index].width ||
                 plan.map_y >= (int)world->dungeon->maps[plan.map_index].height ||
-                !world->party.champions[plan.champion_index].present) {
+                !world->party.champions[plan.champion_index].present ||
+                !original_pc34_vi_altar_bones_on_square(
+                    world, plan.map_index, plan.map_x, plan.map_y,
+                    plan.cell, plan.champion_index)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             ev.mapX = plan.map_x;

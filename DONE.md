@@ -9,6 +9,15 @@
   or Track 02 sector. Verification: capture-script contract test and bounded
   live macOS capture.
 
+- 2026-07-13 DM1 PC34 C13 bones-owner handoff: F0435 now materializes a
+  saved Vi Altar C13 only when `B.Location` and `C.A.Cell` resolve through
+  the original dungeon tail to a PC34 JUNK bones record (`type=5`) whose
+  two-bit `ChargeCount` equals `EVENT.Priority`. Missing or mismatched bones
+  reject import; Priority is never promoted as a free C2 champion selector.
+   Source: ReDMCSB `CLIKVIEW.C` F0374:179-186 and `TIMELINE.C` F0255.
+   Verification: focused native-PC34 handoff CTest with positive raw JUNK
+   bytes and a missing-owner rejection case.
+
 - 2026-07-13 DM1 PC34 C2 inactive champion-record preservation: F0435 now
   retains the source-owned inactive `M516_CHAMPIONS` 319-byte records without
   promoting them to live party members, and F0433 writes them only from that

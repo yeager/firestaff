@@ -1199,6 +1199,13 @@ and real community-save corpus round-trip evidence.
     inactive slot byte-for-byte. No inactive record creates a live champion;
     missing, malformed, or changed records fail closed. Remaining work is
     authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: C13 materialization now consumes its original
+    `CLIKVIEW.C F0374` owner relation: the saved `B.Location`/`C.Cell` must
+    resolve to a live PC34 JUNK bones record (`type=5`) whose two-bit
+    `ChargeCount` equals `EVENT.Priority`. An absent or different record
+    rejects the import; C13 can no longer reinterpret Priority as a free
+    champion selector. Remaining work is authentic community-save coverage
+    and broader dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
