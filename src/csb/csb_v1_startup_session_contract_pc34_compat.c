@@ -187,3 +187,48 @@ int csb_v1_startup_session_first_action_receipt_pc34(
     out_receipt->session_generation = session_generation;
     return 1;
 }
+
+int csb_v1_startup_session_selection_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    const CSB_V1_StartupSessionActionReceipt_PC34 *action_receipt,
+    CSB_V1_StartupSessionSelectionKind_PC34 kind,
+    int selection_index,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionSelectionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 current;
+    int action_slot;
+    int spell_rune;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    action_slot = kind == CSB_V1_STARTUP_SESSION_SELECTION_ACTION_SLOT_PC34 &&
+        selection_index >= 0 && selection_index < 4 &&
+        (action_receipt &&
+         (action_receipt->command == CSB_V1_STARTUP_SESSION_ACTION_LEFT_HAND_PC34 ||
+          action_receipt->command == CSB_V1_STARTUP_SESSION_ACTION_RIGHT_HAND_PC34));
+    spell_rune = kind == CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34 &&
+        selection_index >= 1 && selection_index <= 6 && action_receipt &&
+        action_receipt->command == CSB_V1_STARTUP_SESSION_ACTION_CAST_PC34;
+    /* ReDMCSB COMMAND.C resolves spell/action selection after the action
+     * command. A selection cannot borrow an earlier action or a later C017
+     * session merely because its visual panel remains present. */
+    if (!session || !live_hud_receipt || !action_receipt || !out_receipt ||
+        !live_hud_receipt->valid || !action_receipt->valid ||
+        (!action_slot && !spell_rune) ||
+        action_receipt->source_tick != live_hud_receipt->source_tick + 1u ||
+        action_receipt->session_generation != live_hud_receipt->session_generation ||
+        source_tick != action_receipt->source_tick + 1u ||
+        session_generation != action_receipt->session_generation ||
+        session->source_tick != source_tick ||
+        session->generation != session_generation ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &current) ||
+        current.session_generation != session_generation) return 0;
+    out_receipt->valid = 1;
+    out_receipt->kind = kind;
+    out_receipt->selection_index = selection_index;
+    out_receipt->source_tick = source_tick;
+    out_receipt->session_generation = session_generation;
+    return 1;
+}

@@ -56,6 +56,8 @@ int main(void)
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 door_tick;
     CSB_V1_StartupSessionInputReceipt_PC34 input;
     CSB_V1_StartupSessionActionReceipt_PC34 action;
+    CSB_V1_StartupSessionActionReceipt_PC34 cast_action;
+    CSB_V1_StartupSessionSelectionReceipt_PC34 selection;
     unsigned int tick;
     unsigned int generation;
 
@@ -115,6 +117,42 @@ int main(void)
                session.source_tick, session.generation, &action),
           "stale post-live-HUD action generation cannot cross the C040 handoff");
     --session.generation;
+    check(csb_v1_startup_session_first_action_receipt_pc34(
+              &session, &live_hud, CSB_V1_STARTUP_SESSION_ACTION_CAST_PC34,
+              session.source_tick, session.generation, &cast_action),
+          "first post-live-HUD CAST action is source-session bound");
+    ++session.source_tick;
+    check(csb_v1_startup_session_selection_receipt_pc34(
+              &session, &live_hud, &cast_action,
+              CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34, 1,
+              session.source_tick, session.generation, &selection) &&
+              selection.valid &&
+              selection.kind == CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34 &&
+              selection.selection_index == 1,
+          "first post-live-HUD spell selection follows CAST on the next source tick");
+    check(!csb_v1_startup_session_selection_receipt_pc34(
+               &session, &live_hud, &cast_action,
+               CSB_V1_STARTUP_SESSION_SELECTION_ACTION_SLOT_PC34, 0,
+               session.source_tick, session.generation, &selection),
+          "CAST cannot select a hand action slot");
+    check(!csb_v1_startup_session_selection_receipt_pc34(
+               &session, &live_hud, &cast_action,
+               CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34, 7,
+               session.source_tick, session.generation, &selection),
+          "out-of-range spell rune cannot cross the live HUD gate");
+    check(!csb_v1_startup_session_selection_receipt_pc34(
+               &session, &live_hud, &cast_action,
+               CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34, 1,
+               cast_action.source_tick, session.generation, &selection),
+          "stale spell-selection tick cannot cross the live HUD gate");
+    ++session.generation;
+    check(!csb_v1_startup_session_selection_receipt_pc34(
+               &session, &live_hud, &cast_action,
+               CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34, 1,
+               session.source_tick, session.generation, &selection),
+          "stale spell-selection generation cannot cross the live HUD gate");
+    --session.generation;
+    session.source_tick = live_hud.source_tick + 1u;
     check(csb_v1_startup_session_first_input_receipt_pc34(
               &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
               session.source_tick, session.generation, &input) && input.valid &&
