@@ -1910,6 +1910,88 @@ static void test_original_projectile_event_plan_preserves_c48_bits(void)
           "mismatched original EventIndex rejects projectile materialization");
 }
 
+static void test_world_export_rebuilds_c48_c49_projectile_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int rc;
+    uint16_t expected_thing;
+    uint16_t expected_motion;
+
+    memset(&world, 0, sizeof(world));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    world.party.championCount = 1;
+    world.timeline.count = 2;
+    world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[0].fireAtTick = 100u;
+    world.timeline.events[0].aux0 = 5;
+    world.timeline.events[0].aux4 = 7;
+    world.timeline.events[1].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[1].fireAtTick = 101u;
+    world.timeline.events[1].aux0 = 6;
+    world.timeline.events[1].aux4 = 3;
+    world.projectiles.count = 7;
+
+    world.projectiles.entries[5].slotIndex = 5;
+    world.projectiles.entries[5].reserved3 = 1;
+    world.projectiles.entries[5].firstMoveGraceFlag = 1;
+    world.projectiles.entries[5].mapIndex = 2;
+    world.projectiles.entries[5].mapX = 17;
+    world.projectiles.entries[5].mapY = 9;
+    world.projectiles.entries[5].cell = 2;
+    world.projectiles.entries[5].direction = 3;
+    world.projectiles.entries[5].stepEnergy = 6;
+    world.projectiles.entries[6].slotIndex = 6;
+    world.projectiles.entries[6].reserved3 = 1;
+    world.projectiles.entries[6].mapIndex = 3;
+    world.projectiles.entries[6].mapX = 1;
+    world.projectiles.entries[6].mapY = 31;
+    world.projectiles.entries[6].cell = 1;
+    world.projectiles.entries[6].direction = 0;
+    world.projectiles.entries[6].stepEnergy = 15;
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
+          "world export writes C48/C49 projectile events");
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "exported C48/C49 envelope imports");
+    CHECK(report.original_event_count == 2 &&
+              report.events[0].type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
+              report.events[1].type == DM1_EVENT_MOVE_PROJECTILE,
+          "world export retains C48 first-move and C49 impact event ids");
+
+    expected_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
+                                (2u << 14));
+    expected_motion = (uint16_t)(17u | (9u << 5) | (3u << 10) | (6u << 12));
+    CHECK(rd16le(&report.events[0].b_mapX) == expected_thing &&
+              rd16le(&report.events[0].c_cell) == expected_motion &&
+              ((report.events[0].map_time >> 24) & 0xffu) == 2u,
+          "C48 export writes original B.Slot and C.Projectile fields");
+    expected_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 6u |
+                                (1u << 14));
+    expected_motion = (uint16_t)(1u | (31u << 5) | (15u << 12));
+    CHECK(rd16le(&report.events[1].b_mapX) == expected_thing &&
+              rd16le(&report.events[1].c_cell) == expected_motion &&
+              ((report.events[1].map_time >> 24) & 0xffu) == 3u,
+          "C49 export writes original B.Slot and C.Projectile fields");
+
+    world.projectiles.entries[6].reserved3 = 0;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
+              SAVEGAME_PC34_ERROR_INTERNAL,
+          "world export rejects an unbound projectile event instead of guessing");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -1925,6 +2007,7 @@ int main(void)
     test_corpus_roundtrip_proof();
     test_optional_real_pc34_corpus_roundtrip();
     test_original_projectile_event_plan_preserves_c48_bits();
+    test_world_export_rebuilds_c48_c49_projectile_union();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
