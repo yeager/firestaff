@@ -491,6 +491,22 @@ typedef struct {
     int blocked_record_reads;
 } DM2_V1_G1RuntimeMapValidationReceipt;
 
+/* Address-only receipt for one direct, runtime-admitted G1 root. It exposes
+ * c_record.cpp's verified DB offset transform but never reads a payload word,
+ * GenericRecord::w0, a possession, or a G1 extension record. */
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int level;
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t type;
+    uint16_t index;
+    int record_offset;
+    int record_size;
+} DM2_V1_G1DirectRootRecordAddressReceipt;
+
 #define DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS 32
 
 /* Read-only direct DB0 payload from skproject SKWIN/DME.h::Door.  `w0` is
@@ -816,6 +832,15 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapValidationReceipt *out);
+/* Resolve a selected tile through c_map.cpp's ground-stack lookup to a
+ * declared direct DB0..DB5/DB9 record address. Other types, extensions, and
+ * tiles without a root fail closed without mutating out. */
+int dm2_v1_dungeon_resolve_g1_direct_root_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DirectRootRecordAddressReceipt *out);
 /* Consume only direct DB0 roots on a runtime-admitted G1 map.  The payload is
  * limited to DME.h::Door w2; it never reads GenericRecord::w0 or follows a
  * map/record link.  The output is unchanged when any source gate fails. */

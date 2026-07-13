@@ -1418,6 +1418,64 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     return 1;
 }
 
+int dm2_v1_dungeon_resolve_g1_direct_root_record(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int x,
+    int y,
+    DM2_V1_G1DirectRootRecordAddressReceipt *out) {
+    DM2_V1_G1RuntimeMapValidationReceipt validation;
+    DM2_V1_G1DirectRootRecordAddressReceipt candidate;
+    uint16_t root;
+    int type;
+    int index;
+    int record_size;
+    int record_offset;
+
+    /* skproject SKULLWIN/c_map.cpp selects dunGroundStacks for a tile, then
+     * c_record.cpp computes recordptr[type] + size[type] * index. Stop at
+     * that address: GET_NEXT_RECORD_LINK's w0 read is not part of this path. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_g1_runtime_map(d, level, &validation) ||
+        !validation.committed || !validation.incomplete_world ||
+        x < 0 || x >= validation.width || y < 0 || y >= validation.height) {
+        return 0;
+    }
+    if (dm2_v1_dungeon_get_tile_raw(d, level, x, y) < 0) return 0;
+    root = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
+    if (root == DM2_THING_END_MARKER || root == DM2_THING_NULL_MARKER ||
+        !dm2_v1_g1_link_has_declared_shape(d, root)) {
+        return 0;
+    }
+    type = (root >> 10) & 0x0f;
+    index = root & 0x03ff;
+    if (!((type >= 0 && type <= 5) || type == 9) ||
+        index < 0 || index >= d->thing_type_counts[type] ||
+        d->thing_data_bases[type] < 0) {
+        return 0;
+    }
+    record_size = (int)s_dm2_db_record_size[type];
+    record_offset = d->thing_data_bases[type] + index * record_size;
+    if (record_size <= 0 || record_offset < d->thing_data_bases[type] ||
+        record_offset + record_size > d->g1_extension_base ||
+        record_offset + record_size > d->raw_size) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.level = level;
+    candidate.x = x;
+    candidate.y = y;
+    candidate.object_id = root;
+    candidate.type = (uint8_t)type;
+    candidate.index = (uint16_t)index;
+    candidate.record_offset = record_offset;
+    candidate.record_size = record_size;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     const DM2_V1_DungeonData *d,
     int map,
