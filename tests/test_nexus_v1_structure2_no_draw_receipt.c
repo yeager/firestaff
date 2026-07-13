@@ -22,6 +22,9 @@ int main(void) {
         engine.dgn_material_plan.receipt.plan_ready ||
         engine.dgn_material_plan.receipt.command_count != 0 ||
         engine.dgn_material_plan.receipt.structure2_source_materialization_bound ||
+        engine.dgn_material_plan.structure2_source_level_index != -1 ||
+        engine.dgn_material_plan.structure2_source_canonical_hash_verified ||
+        engine.dgn_material_plan.structure2_source_envelope_valid ||
         engine.dgn_material_plan.structure2_floor_command_source_receipt
             .source_command_count != 0 ||
         engine.dgn_material_plan.structure2_floor_command_sources_consumed ||

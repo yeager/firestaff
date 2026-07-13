@@ -82,6 +82,11 @@ typedef struct {
         structure2_floor_command_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnStructure2FloorCommandSourceReceipt
         structure2_floor_command_source_receipt;
+    /* Exact authenticated LEVxx.DGN facts that admitted the Structure2
+     * command-source receipt. They remain source ownership only. */
+    int structure2_source_level_index;
+    int structure2_source_canonical_hash_verified;
+    int structure2_source_envelope_valid;
     int structure2_floor_command_sources_consumed;
     Nexus_V1_DgnStructure1FItemMaterialBinding
         structure1f_item_command_bindings[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
