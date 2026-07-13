@@ -1465,6 +1465,37 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
     CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
           "active free-list owner rolls back staged party import");
 
+    /* F0433/F0238 persist each active EVENT through both C3 and C4. Keep a
+     * valid C13 record in C3 but replace its C4 slot with another active
+     * event: F0435 must reject this before the runtime can silently lose the
+     * rebirth timer. */
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     1, 0, 1, 2, 3, 0,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 2,
+                                          DM1_EVENT_VI_ALTAR_REBIRTH) &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 3,
+                                          DM1_EVENT_DOOR) &&
+              rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 3u) &&
+              rewrite_fixture_first_unused_event_index(
+                  bytes, (size_t)written, 4u),
+          "orphan C13/C4 fixture remains checksum-authenticated");
+    memset(&party, 0xa5, sizeof(party));
+    party_before = party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+              report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE &&
+              report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
+              report.timeline_orphan_active_event_index == 2 &&
+              report.timeline_orphan_active_event_type ==
+                  DM1_EVENT_VI_ALTAR_REBIRTH,
+          "C13 missing from C4 has stable F0433/F0435 provenance");
+    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
+          "orphan C13/C4 rolls back staged party import");
+
     memset(&report, 0, sizeof(report));
     memset(&world, 0, sizeof(world));
     report.reported_active_group_count =
