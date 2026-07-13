@@ -627,6 +627,13 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 1 &&
               timer6.input_column == 0u && timer6.state_index == 4u,
           "CSBWin saved TT_STONEROOM timer reaches the verified DSA dispatch receipt");
+    selected_action = NULL;
+    CHECK(csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &stoneroom_timer, &runner,
+              &selected_action) == 1 && selected_action == &action &&
+              runner.dsa_id == 7 && runner.state_index == 4u &&
+              runner.action_ordinal == 0,
+          "CSBWin saved TT_STONEROOM timer prepares only its selected DSA action");
     stoneroom_timer.ubyte9 = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
               &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
@@ -659,6 +666,10 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
               &profile, &dungeon, &location, 0, 0, &timer6) == 0,
           "CSBWin ParameterB state route stays blocked without authenticated widened DB3 data");
+    CHECK(csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
+              &profile, &dungeon, &location, &stoneroom_timer, &runner,
+              &selected_action) == 0,
+          "CSBWin TT_STONEROOM runner keeps ParameterB LocalState blocked");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
               &profile, &dungeon, &location, 0, 0, &timer6) == 0,

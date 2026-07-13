@@ -712,6 +712,20 @@ int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
     const CSB_V1_CSBWin512TimerSummary *timer,
     CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
 
+/* Consume one restored TT_STONEROOM receipt into the existing authenticated
+ * pure-stack runner.  The returned action is the exact source-owned item
+ * selected by ProcessDSATimer6; callers cannot substitute compatible-looking
+ * DSA words.  This deliberately does not persist a resulting master state or
+ * execute world/filter opcodes.  LocalState 2/3 remain rejected by the
+ * receipt resolver. */
+int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

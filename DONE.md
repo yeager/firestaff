@@ -9767,6 +9767,19 @@ fixture; production remains blocked without a Saturn executable/capture route.
 Verification: Ninja build plus `test_nexus_v1_dgn_material_raster` and
 `test_nexus_v1_dmdf_embedded_blocks` against the real local MNS asset.
 
+# ✅ 2026-07-13 CSB saved TT_STONEROOM DSA runner preparation
+
+`csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner()` now
+consumes a validated CSBWin `Timer.cpp::ProcessTT_STONEROOM` function-6
+receipt into the existing profile-owned pure-stack runner and returns only the
+exact imported `DSAAction` selected by `ProcessDSATimer6`. The bridge checks
+the source `(dsa, state, column)` identity again before publishing the runner.
+It neither persists a master state nor enables world/filter opcodes;
+unproven `LocalState=2` ParameterB and source-unimplemented `LocalState=3`
+routes remain blocked. Verified by Ninja and `csb_v1_phase7_verification`.
+Source: CSBWin `Timer.cpp::ProcessTT_STONEROOM`, `DSA.cpp::ProcessDSATimer6`
+lines 5329-5450.
+
 # ✅ 2026-07-13 CSB saved EXPOOL SETSKIN writeback
 
 `csb_v1_runtime_set_csbwin_saved_skin()` now follows CSBWin `DSA.cpp`

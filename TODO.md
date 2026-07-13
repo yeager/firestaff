@@ -89,10 +89,10 @@ been consumed, while a later `GETSKIN` sees the staged byte. `ProcessDSATimer6`
 now retains the real self-master receipt and supports serialized `LocalState=1`
 (`DSA::m_state`) as well as the DB3 state-nibble route. Verified restored
 `TT_STONEROOM` timers now bind their saved target/action/position to that
-receipt. Remaining CSB DSA work is authenticating widened `LocalState=2`
-ParameterB records, a real slave-master route, full timer execution, and a
-real-save corpus. Do not promote unsupported world or text opcodes from
-fixtures.
+receipt and can prepare only its selected authenticated pure-stack runner.
+Remaining CSB DSA work is authenticating widened `LocalState=2` ParameterB
+records, a real slave-master route, full timer execution, and a real-save
+corpus. Do not promote unsupported world or text opcodes from fixtures.
 
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
@@ -928,6 +928,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       actions/positions, and mismatched targets remain blocked because their
       parameter payload or source target is not yet proven. This is a dispatch
       receipt, not a general timer executor.
+    - 2026-07-13 saved timer runner: a valid `TT_STONEROOM` receipt can now
+      prepare the existing exact-action pure-stack runner, retaining pointer
+      identity with the selected `(dsa,state,column)` source action. It does
+      not persist master state or run world/filter opcodes; `LocalState=2/3`
+      still reject before any runner is exposed.
   - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted; core export and every runtime EXPOOL lookup reject a marked-truncated tail or one whose stored FNV receipt no longer matches its bytes, rather than re-emitting or consuming incomplete/altered source data. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. `SETSKIN` now follows CSBWin's actual `EXPOOL::Read`/`Write` contract against a complete FNV-authenticated tail: it deletes all-zero columns and consumes an original exact-size DB11 free node for a resized column, but refuses to call `EXPOOL::enlarge` or invent new tail blocks. Every DB11 node is now structurally proven to begin at `block + 1 + n * size` before it can be read, freed, or reused, so a corrupted saved free-list cannot redirect a DSA write into a DB11 header. Other EXPOOL record restore/writeback paths remain open.
     - 2026-07-13 palette restore: all 24 CSBWin `EDT_Palette` records now
       stage atomically from the FNV-authenticated EXPOOL tail and become
