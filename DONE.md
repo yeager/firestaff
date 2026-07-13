@@ -225,6 +225,16 @@
   `verify_theron_post_latch_resume_branch_trace.sh` and a clean Mednafen 1.32.1
   patch dry-run.
 
+- 2026-07-13 Theron post-`$e98a` Track 02 runtime consumer: the Theron-owned
+  verifier now fails closed unless one combined instrumented capture contains
+  the original `$e98a` transfer receipt, a captured `$4090 -> $4093` one-sector
+  local-RAM `$3800` transaction with its live record-register mask and
+  variant-matched record, plus the original System Card IRQ2 `$e74c` controller
+  state merge. It binds that captured provenance to the existing Track 02
+  runtime handoff without deriving a record from control flow or media bytes;
+  manifest semantics remain unbound. Verification: rejection regression
+  `tests/test_verify_theron_post_e98a_track02_runtime_handoff_trace.sh`.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step

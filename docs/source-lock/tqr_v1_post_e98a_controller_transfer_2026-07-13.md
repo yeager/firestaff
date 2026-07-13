@@ -26,3 +26,21 @@ surrounding controller loop.
 The captured source and target are control-flow facts only. No CD command,
 CD_READ, sector, record, destination, payload, bitmap, palette, object, or
 level meaning is assigned until an independent original observation proves it.
+
+## Runtime-handoff consumer
+
+`scripts/verify_theron_post_e98a_track02_runtime_handoff_trace.sh` is the
+single fail-closed consumer for a combined live capture. It first requires the
+post-`$e98a` transfer receipt above, then requires exactly one separately
+captured stage-two transaction at `$4090 -> $4093`: one sector, local-RAM
+destination `$3800`, and all live `CL/DL/CH` record registers. It also requires
+the original System Card 3.0 IRQ2 state receipt at `$e74c`, including the
+observed `$f5`, `$1802`, `$1803`, and `$f2` merge.
+
+The record is never derived from controller flow. The consumer accepts only a
+captured JP `0004df` or US `0004e0` value paired with its matching variant;
+these are the existing `$4090` runtime-handoff records established by the real
+HuC6280 stage-two loader (`theron-us-stage2-huc6280.asm:163-187`) and the
+Track 02 IPL receipt. A missing, duplicated, reordered, or mismatched capture
+blocks the handoff. This binds provenance only: the loaded manifest remains
+semantically unbound.
