@@ -67,6 +67,12 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 invalid C4 reference rejection: a checksum-valid C4
+  slot outside the decoded F0433 EVENT array now fails closed with stable
+  slot/index provenance. Valid sparse EVENT indexes remain source-faithful;
+  no candidate world, queue, or caller receipt is committed on failure.
+  Source: ReDMCSB `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0238/F0651.
+  Verification: focused native-PC34 handoff CTest.
 - 2026-07-13 DM1 PC34 duplicate C4 rejection: checksum-valid external C4
   TIMELINE bytes now fail closed when two active heap slots name the same
   EVENT. The handoff receipt retains the first slot, duplicate slot, and raw
