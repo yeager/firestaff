@@ -1636,10 +1636,12 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
      * champion/control surfaces after the dungeon view.  Use the V1 draw
      * lane already backed by the selected CSB GRAPHICS.DAT; do not insert
      * diagnostic labels or substitute generated HUD artwork. */
-    m11_draw_party_panel(state, framebuffer, framebufferWidth,
-                         framebufferHeight);
     m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
                                framebufferHeight);
+    /* ReDMCSB CHAMDRAW.C F0292 prepares champion icons before F0287
+     * draws the three bottom-anchored stat bars. */
+    m11_draw_party_panel(state, framebuffer, framebufferWidth,
+                         framebufferHeight);
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
                                    framebufferHeight);
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
