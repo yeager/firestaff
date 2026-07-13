@@ -1039,6 +1039,8 @@ static int pc34_event_type_from_timeline_kind(int kind, int aux0)
         return DM1_EVENT_REMOVE_FLUXCAGE;
     case TIMELINE_EVENT_PLAY_SOUND:
         return DM1_EVENT_PLAY_SOUND;
+    case TIMELINE_EVENT_CPSE_CHECK:
+        return DM1_EVENT_CPSE;
     case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
         return DM1_EVENT_VI_ALTAR_REBIRTH;
     case TIMELINE_EVENT_WATCHDOG:
@@ -1177,6 +1179,8 @@ static int timeline_kind_from_pc34_event_type(int type)
         return TIMELINE_EVENT_REMOVE_FLUXCAGE;
     case DM1_EVENT_PLAY_SOUND:
         return TIMELINE_EVENT_PLAY_SOUND;
+    case DM1_EVENT_CPSE:
+        return TIMELINE_EVENT_CPSE_CHECK;
     case DM1_EVENT_WATCHDOG:
         return TIMELINE_EVENT_WATCHDOG;
     case DM1_EVENT_MOVE_GROUP_SILENT:
@@ -1606,6 +1610,18 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux0 & 0xffff));
+        } else if (type == DM1_EVENT_CPSE) {
+            /* ReDMCSB NEWMAP.C schedules C22 with Map_Time alone.  The
+             * copy-protection branch is compiled out here, so retain only
+             * a verified imported receipt and canonicalize all unowned
+             * Priority/B/C bytes rather than inventing a sector result. */
+            if (src->kind != TIMELINE_EVENT_CPSE_CHECK ||
+                src->aux0 != DM1_EVENT_CPSE || src->aux1 != 0 ||
+                src->aux2 != DM1_EVENT_CPSE || src->aux3 != 0 ||
+                src->aux4 != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
+                src->mapX != 0 || src->mapY != 0 || src->cell != 0) {
+                return 0;
+            }
         } else if (type == DM1_EVENT_WATCHDOG) {
             /* ReDMCSB TIMELINE.C F0256:1710-1715 owns only Type and
              * Map_Time for C53.  Native export may canonicalize the
@@ -1737,6 +1753,11 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
             dst->mapY = src[7u];
             dst->aux0 = (int)(int16_t)read_u16_le(src + 8u);
             dst->aux4 = src[5u];
+            continue;
+        } else if (src[4u] == DM1_EVENT_CPSE) {
+            /* C22 has no initialized union or priority member. */
+            dst->aux0 = DM1_EVENT_CPSE;
+            dst->aux2 = DM1_EVENT_CPSE;
             continue;
         } else {
             dst->mapX = src[6u];

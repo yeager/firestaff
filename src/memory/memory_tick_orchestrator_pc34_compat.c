@@ -10798,6 +10798,12 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                      ev.mapIndex);
             }
             break;
+        case TIMELINE_EVENT_CPSE_CHECK:
+            /* ReDMCSB TIMELINE.C:1920-1925 dispatches C22 only inside the
+             * optional copy-protection path.  Firestaff deliberately has
+             * no synthetic fuzzy-sector result: a typed original C22 is
+             * consumed as the NOCOPYPROTECTION build does. */
+            break;
         case TIMELINE_EVENT_WATCHDOG:
             /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 exactly
              * 300 ticks later.  The original event owns no B/C/Priority

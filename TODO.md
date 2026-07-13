@@ -120,7 +120,7 @@
   decay, C71 invisibility expiry, C72 champion-shield expiry, C73 Thieves'
   Eye expiry, C74 party-shield expiry, C75 poison expiry, C77 spell-shield
   expiry, C78 fire-shield expiry, C79 Footprints expiry, C53 Watchdog re-arm,
-  and C20 delayed sound playback are complete.
+  C20 delayed sound playback, and C22 CPSE typed no-op handling are complete.
   The non-zero-slot
   `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
   blocked until its original live inventory/object route is bound. Do not coerce
@@ -807,6 +807,11 @@ and real community-save corpus round-trip evidence.
     native PC34 export/import and F0435 materialization. Remaining save
     breadth is other source union families, never generic Cell/Effect
     substitution.
+  - 2026-07-13 update: C22 CPSE events now preserve only their source-owned
+    `Map_Time` through F0435 materialization and F0802 export. Firestaff
+    consumes the typed receipt through the ReDMCSB `NOCOPYPROTECTION` no-op
+    path; priority and B/C union bytes are unowned and therefore canonicalized
+    rather than used to invent a fuzzy-sector result.
   - 2026-07-13 update: C25 explosion events now preserve ReDMCSB
     `B.Location` plus `C.Slot` through F0435 materialization and F0802
     export. The C15 Thing must resolve in the original square chain and a

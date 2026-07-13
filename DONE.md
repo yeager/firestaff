@@ -14,6 +14,13 @@
   `dm2_v1_g1_wall_button_material_gate`,
   `dm2_v1_g1_text_wall_gfx_runtime` passed 2/2.
 
+- 2026-07-13 DM1 original PC34 C22 CPSE roundtrip: typed handoff retains
+  source `Map_Time` only, runtime consumes the authenticated receipt through
+  ReDMCSB's `NOCOPYPROTECTION` no-op path, and native export rejects host-only
+  C22 records while canonicalizing its unowned Priority/B/C bytes. Source:
+  ReDMCSB `NEWMAP.C`:45-77 and `TIMELINE.C` C22:1920-1925. Verification:
+  Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored `TT_75` poison bridge: an exact saved queue
   receipt now maps its champion priority and bounded 8-bit `timerWord6` attack
   into the existing ReDMCSB C75 damage, dose, and `+36` requeue chain. Stale

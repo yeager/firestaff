@@ -712,6 +712,8 @@ static int timeline_kind_from_original_pc34_event_type(int type)
         return TIMELINE_EVENT_REMOVE_FLUXCAGE;
     case DM1_EVENT_PLAY_SOUND:
         return TIMELINE_EVENT_PLAY_SOUND;
+    case DM1_EVENT_CPSE:
+        return TIMELINE_EVENT_CPSE_CHECK;
     case DM1_EVENT_WATCHDOG:
         return TIMELINE_EVENT_WATCHDOG;
     case DM1_EVENT_MOVE_GROUP_SILENT:
@@ -1507,6 +1509,23 @@ static int materialize_original_pc34_timeline(
             ev.aux0 = sound_index;
             ev.aux2 = DM1_EVENT_PLAY_SOUND;
             ev.aux4 = src->priority;
+            if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (src->type == DM1_EVENT_CPSE) {
+            /* ReDMCSB NEWMAP.C:45-77 schedules C22 with Map_Time only.
+             * TIMELINE.C:1920-1925 has no game-side action in a
+             * NOCOPYPROTECTION build.  Keep its typed receipt so an
+             * original save survives the handoff, but never interpret the
+             * unowned Priority/B/C bytes as dungeon data. */
+            memset(&ev, 0, sizeof(ev));
+            ev.kind = TIMELINE_EVENT_CPSE_CHECK;
+            ev.fireAtTick = src->map_time & 0x00ffffffu;
+            ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
+            ev.aux0 = DM1_EVENT_CPSE;
+            ev.aux2 = DM1_EVENT_CPSE;
             if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
