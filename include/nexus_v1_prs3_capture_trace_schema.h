@@ -7,6 +7,7 @@
 /* Standalone schema gate for externally captured SH-2 PRS3 traces. It does
  * not read assets, decode a stream, or authorize a runtime route. */
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_TRACE_V1"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
 
 typedef enum {
@@ -83,6 +84,53 @@ typedef struct {
     int opcode_grammar_proven;
     int decoder_promoted;
 } Nexus_V1_Prs3Sh2V1ExecutionReceipt;
+
+/* A future emulator capture may prove one concrete PRS3 frame's path from a
+ * verified MENU.BPK span through the selected SH-2 V1 loader into an observed
+ * VDP1 texture source. This schema deliberately captures addresses, counts,
+ * ordering, and output fingerprint only; it does not encode a PRS3 grammar. */
+typedef struct {
+    int valid;
+    int complete_capture;
+    uint64_t menu_bpk_fnv1a64;
+    uint64_t dm_bin_fnv1a64;
+    uint32_t entry_index;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint32_t expected_output_bytes;
+    uint32_t payload_ram_address;
+    uint32_t first_input_read_address;
+    uint32_t last_input_read_address;
+    uint32_t input_read_bytes;
+    uint32_t output_ram_address;
+    uint32_t first_output_write_address;
+    uint32_t last_output_write_address;
+    uint32_t output_write_bytes;
+    uint64_t output_fnv1a64;
+    uint64_t first_opcode_sequence;
+    uint64_t last_input_read_sequence;
+    uint64_t last_output_write_sequence;
+    uint64_t decoder_return_sequence;
+    uint64_t vdp1_command_sequence;
+    uint32_t vdp1_command_address;
+    uint32_t vdp1_texture_source_address;
+    uint32_t vdp1_texture_source_bytes;
+    int exact_vdp1_handoff_observed;
+    int opcode_grammar_proven;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Vdp1CaptureReceipt;
+
+typedef struct {
+    int valid;
+    int trace_valid;
+    int menu_bpk_matches;
+    int dm_bin_matches;
+    int entry_plan_matches;
+    int exact_vdp1_handoff_observed;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Vdp1CaptureBindingReceipt;
 
 typedef struct {
     int valid;
@@ -163,5 +211,20 @@ int nexus_v1_prs3_cross_asset_frame_receipt_verified(
 int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3Sh2V1ExecutionReceipt *out_receipt);
+
+/* Parse one complete SH-2-to-VDP1 capture for a single frame. The parser
+ * rejects incomplete ranges or invalid ordering. A valid capture remains
+ * evidence-only until an independently reviewed opcode grammar exists. */
+int nexus_v1_prs3_vdp1_capture_schema_parse(
+    const char *text, size_t text_size,
+    Nexus_V1_Prs3Vdp1CaptureReceipt *out_receipt);
+
+/* Bind a parsed capture to exact MENU.BPK/DM.BIN bytes and its bounded PRS3
+ * stream plan. This does not enable generic decompression or fallback art. */
+int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size,
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt *out_receipt);
 
 #endif

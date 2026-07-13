@@ -119,6 +119,7 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
     Nexus_V1_Prs3CaptureAssetBindingReceipt receipt;
 
     if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!trace || !trace->valid || !trace->complete_evidence ||
         !menu_bpk || menu_bpk_size == 0U || !dm_bin || dm_bin_size == 0U) {
@@ -322,4 +323,115 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     *out_receipt = receipt;
     return receipt.sh2_control_path_verified && receipt.sh2_stream_read_verified &&
         receipt.sh2_output_store_verified;
+}
+
+int nexus_v1_prs3_vdp1_capture_schema_parse(
+    const char *text, size_t text_size,
+    Nexus_V1_Prs3Vdp1CaptureReceipt *out_receipt) {
+    Nexus_V1_Prs3Vdp1CaptureReceipt receipt;
+    uint32_t decoder_returned_success;
+    uint32_t capture_complete;
+    const char *cursor;
+    const size_t magic_size =
+        sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC) - 1U;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!text || text_size <= magic_size ||
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC, magic_size) != 0 ||
+        text[magic_size] != '\n') return 0;
+    cursor = text + magic_size + 1U;
+    if (!read_u64(&cursor, "menu_bpk_fnv1a64=", &receipt.menu_bpk_fnv1a64) ||
+        !read_u64(&cursor, "dm_bin_fnv1a64=", &receipt.dm_bin_fnv1a64) ||
+        !read_u32(&cursor, "entry_index=", &receipt.entry_index) ||
+        !read_u32(&cursor, "stream_offset=", &receipt.stream_offset) ||
+        !read_u32(&cursor, "stream_size=", &receipt.stream_size) ||
+        !read_u32(&cursor, "expected_output_bytes=", &receipt.expected_output_bytes) ||
+        !read_u32(&cursor, "payload_ram_address=", &receipt.payload_ram_address) ||
+        !read_u32(&cursor, "first_input_read_address=", &receipt.first_input_read_address) ||
+        !read_u32(&cursor, "last_input_read_address=", &receipt.last_input_read_address) ||
+        !read_u32(&cursor, "input_read_bytes=", &receipt.input_read_bytes) ||
+        !read_u32(&cursor, "output_ram_address=", &receipt.output_ram_address) ||
+        !read_u32(&cursor, "first_output_write_address=", &receipt.first_output_write_address) ||
+        !read_u32(&cursor, "last_output_write_address=", &receipt.last_output_write_address) ||
+        !read_u32(&cursor, "output_write_bytes=", &receipt.output_write_bytes) ||
+        !read_u64(&cursor, "output_fnv1a64=", &receipt.output_fnv1a64) ||
+        !read_u64(&cursor, "first_opcode_sequence=", &receipt.first_opcode_sequence) ||
+        !read_u64(&cursor, "last_input_read_sequence=", &receipt.last_input_read_sequence) ||
+        !read_u64(&cursor, "last_output_write_sequence=", &receipt.last_output_write_sequence) ||
+        !read_u64(&cursor, "decoder_return_sequence=", &receipt.decoder_return_sequence) ||
+        !read_u64(&cursor, "vdp1_command_sequence=", &receipt.vdp1_command_sequence) ||
+        !read_u32(&cursor, "vdp1_command_address=", &receipt.vdp1_command_address) ||
+        !read_u32(&cursor, "vdp1_texture_source_address=", &receipt.vdp1_texture_source_address) ||
+        !read_u32(&cursor, "vdp1_texture_source_bytes=", &receipt.vdp1_texture_source_bytes) ||
+        !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
+        !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
+    if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
+        !receipt.stream_size || !receipt.expected_output_bytes ||
+        !receipt.payload_ram_address ||
+        receipt.first_input_read_address != receipt.payload_ram_address ||
+        !receipt.input_read_bytes || receipt.input_read_bytes > receipt.stream_size ||
+        receipt.last_input_read_address != receipt.payload_ram_address +
+            receipt.input_read_bytes - 1U ||
+        !receipt.output_ram_address ||
+        receipt.first_output_write_address != receipt.output_ram_address ||
+        receipt.output_write_bytes != receipt.expected_output_bytes ||
+        receipt.last_output_write_address != receipt.output_ram_address +
+            receipt.output_write_bytes - 1U || !receipt.output_fnv1a64 ||
+        !receipt.first_opcode_sequence ||
+        receipt.last_input_read_sequence < receipt.first_opcode_sequence ||
+        receipt.last_output_write_sequence < receipt.first_opcode_sequence ||
+        receipt.last_input_read_sequence >= receipt.decoder_return_sequence ||
+        receipt.last_output_write_sequence >= receipt.decoder_return_sequence ||
+        receipt.vdp1_command_sequence <= receipt.decoder_return_sequence ||
+        !receipt.vdp1_command_address ||
+        receipt.vdp1_texture_source_address != receipt.output_ram_address ||
+        receipt.vdp1_texture_source_bytes != receipt.expected_output_bytes ||
+        decoder_returned_success != 1U || capture_complete != 1U) return 0;
+    receipt.valid = 1;
+    receipt.complete_capture = 1;
+    receipt.exact_vdp1_handoff_observed = 1;
+    receipt.opcode_grammar_proven = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size,
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt *out_receipt) {
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt receipt;
+    Nexus_V1_BpkPrs3StreamPlan plan;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!trace || !trace->valid || !trace->complete_capture || !menu_bpk ||
+        !menu_bpk_size || !dm_bin || !dm_bin_size) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.trace_valid = 1;
+    receipt.menu_bpk_matches = fnv1a64(menu_bpk, menu_bpk_size) ==
+        trace->menu_bpk_fnv1a64;
+    receipt.dm_bin_matches = fnv1a64(dm_bin, dm_bin_size) ==
+        trace->dm_bin_fnv1a64;
+    if (nexus_v1_bpk_archive_prs3_stream_plan(
+            menu_bpk, menu_bpk_size, trace->entry_index, &plan) ==
+        NEXUS_V1_BPK_PRS3_STREAM_OK) {
+        receipt.entry_plan_matches = plan.stream_offset == trace->stream_offset &&
+            plan.stream_size == trace->stream_size &&
+            plan.expected_output_bytes == trace->expected_output_bytes;
+    }
+    receipt.exact_vdp1_handoff_observed = receipt.menu_bpk_matches &&
+        receipt.dm_bin_matches && receipt.entry_plan_matches &&
+        trace->exact_vdp1_handoff_observed;
+    receipt.valid = receipt.exact_vdp1_handoff_observed;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
 }
