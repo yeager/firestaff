@@ -7,6 +7,16 @@
   trace rows, proving the removed generic tracing was not the CD handoff
   cause. Verification: patch dry-run, rebuild, and bounded US-CUE capture.
 
+- 2026-07-13 DM1 F0107 side/depth inscription presentation: the unreadable
+  wall-inscription path now has a DM1/M10 receipt for the selected real PC34
+  TextString and its F0168 line count. M11 consumes it only to choose the
+  F0107:3864-3901 unreadable original-ornament box height, then records the
+  completed source-asset host blit. The real-data regression reaches map 1
+  D3C, verifies the source TextString, line count, view placement, G0194/G0205
+  material, C10 key, and hash-verified GRAPHICS.DAT asset. No readable side
+   text, host font, synthetic bitmap, or HoC-only route is added.
+   Verification: focused Ninja build and four-test PC34 inscription CTest set.
+
 - 2026-07-13 DM1 F0107 non-HoC inscription host consumption: M11 now
   publishes the completed F0168/F0107 line destinations only after it draws
   the real PC34 M648 glyph material. The new real-data regression selects a

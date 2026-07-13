@@ -1806,6 +1806,25 @@ typedef struct M11_Dm1WallOrnamentHostPresentationReceipt {
 void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
     M11_Dm1WallOrnamentHostPresentationReceipt* outReceipt);
 
+typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
+    int valid;
+    int textStringIndex;
+    int viewWallIndex;
+    int relativeForward;
+    int relativeSide;
+    int lineCount;
+    int boxHeight;
+    int graphicIndex;
+    int destinationX;
+    int destinationY;
+    int width;
+    int height;
+    int transparentColor;
+} M11_Dm1UnreadableInscriptionHostPresentationReceipt;
+
+void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
+    M11_Dm1UnreadableInscriptionHostPresentationReceipt* outReceipt);
+
 /* Test-only entry to the production F0107 side-wall ornament route.
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
