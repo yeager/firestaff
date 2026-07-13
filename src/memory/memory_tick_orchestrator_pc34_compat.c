@@ -10848,6 +10848,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 world->lifecycle.champions[ev.aux4].shieldDefense -= (int16_t)ev.aux1;
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_INVISIBILITY &&
+                ev.aux2 == DM1_EVENT_INVISIBILITY && ev.aux1 == 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C71:1953-1964 decrements only the
+                 * party invisibility count; B/C and Priority are not a
+                 * runtime input beyond F0412's required zero Priority. */
+                world->magic.event71CountInvisibility--;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(
+                    &world->lifecycle, LIFECYCLE_STATUS_INVISIBILITY);
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);

@@ -1452,6 +1452,17 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
              * preserve no invented Location/Cell/Effect bytes. */
+        } else if (type == DM1_EVENT_INVISIBILITY) {
+            /* ReDMCSB MENU.C F0412:1922-1964 creates C71 with zero
+             * Priority. TIMELINE.C C71:1953-1964 reads no B/C union arm,
+             * so native export must require the typed receipt and leave
+             * both union words zero. */
+            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                src->aux0 != DM1_EVENT_INVISIBILITY ||
+                src->aux1 != 0 ||
+                src->aux2 != DM1_EVENT_INVISIBILITY || src->aux4 != 0) {
+                return 0;
+            }
         } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
             if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
                 src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||

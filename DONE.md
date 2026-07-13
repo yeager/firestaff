@@ -40,6 +40,13 @@
   CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM1 original PC34 C71 Invisibility roundtrip: typed handoff
+  accepts only F0412's zero Priority, retains no B/C union arm, decrements
+  the native and lifecycle invisibility mirrors at runtime, and exports only
+  its authenticated source receipt with zeroed union bytes. Source: ReDMCSB
+  `MENU.C` F0412:1922-1964 and `TIMELINE.C` C71:1953-1964. Verification:
+  Ninja and CTest `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored TT_BASH_DOOR timer bridge: verified function-2
   queue entries now alter only their exact loaded byte-map door receipt after
   queue-slot, timer, and full event identity validation. The shared DM1
