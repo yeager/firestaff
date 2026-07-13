@@ -4090,6 +4090,8 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
                 receipt.bound_special_floor_palette_count;
             out_bindings[j].entry_index = i;
             out_bindings[j].command_index = command_index;
+            out_bindings[j].source_x = entry->x;
+            out_bindings[j].source_y = entry->y;
             out_bindings[j].item_id = entry->item_id;
             out_bindings[j].palette_index = 0xffU;
             out_bindings[j].image_index = 0xffU;
@@ -4118,6 +4120,8 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
         out_bindings[j].entry_index = i;
         out_bindings[j].command_index =
             command_index;
+        out_bindings[j].source_x = entry->x;
+        out_bindings[j].source_y = entry->y;
         out_bindings[j].item_id =
             entry->item_id;
         out_bindings[j].palette_index =
@@ -4169,6 +4173,12 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
             ++receipt.blocked_invalid_command_count;
             continue;
         }
+        if (commands[binding->command_index].x != binding->source_x ||
+            commands[binding->command_index].y != binding->source_y) {
+            ++receipt.blocked_source_cell_mismatch_count;
+            continue;
+        }
+        ++receipt.source_cell_match_count;
         expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
         if (!floor->palette_bound || !floor->packed_4bpp_valid ||
             floor->encoding != 8U || !floor->width || !floor->height ||
@@ -4180,6 +4190,10 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
         material = &out_materials[receipt.command_material_count++];
         memset(material, 0, sizeof(*material));
         material->command_index = binding->command_index;
+        material->source_entry_index = binding->entry_index;
+        material->source_x = binding->source_x;
+        material->source_y = binding->source_y;
+        material->item_id = binding->item_id;
         material->image_id = floor->image_id;
         material->encoding = floor->encoding;
         material->width = floor->width;
@@ -4196,9 +4210,11 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
     }
     receipt.source_hash_verified = receipt.command_material_count > 0;
     receipt.complete = receipt.special_floor_binding_count > 0 &&
+        receipt.source_cell_match_count == receipt.special_floor_binding_count &&
         receipt.command_material_count == receipt.special_floor_binding_count &&
         receipt.blocked_invalid_binding_count == 0 &&
-        receipt.blocked_invalid_command_count == 0;
+        receipt.blocked_invalid_command_count == 0 &&
+        receipt.blocked_source_cell_mismatch_count == 0;
     *out_receipt = receipt;
     return 0;
 }
