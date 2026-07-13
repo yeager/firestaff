@@ -848,6 +848,10 @@ canonical lower-case MD5 values, control-free paths, exact field order, and no
 unbound trailing data. This strengthens provenance but is deliberately not a
 runtime handoff; only the complete dynamic Mednafen CD transaction can open
 that route.
+The runtime intake also rehashes the exact Track 02 and System Card files it
+reads before parsing capture text, closing the caller-label/time-of-check gap.
+It still needs a real complete dynamic transaction; the existing wait capture
+does not qualify.
 The completed stage-three record also now has physical MODE1/2352 provenance:
 JP record `$4df` carries BCD MSF `01:03:38`, US `$4e0` carries `00:58:57`,
 and both have the sync/mode-1/user-data envelope at byte 16. This identifies

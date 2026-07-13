@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron live-trace media rehash: the explicit runtime intake now
+  rehashes the Track 02 and System Card files it reads and rejects a known MD5
+  label paired with changed bytes. Verification: capture-manifest unit test
+  covers matching and mismatched files; runtime-intake probe remains
+  fail-closed without a complete Mednafen transaction.
+
 - 2026-07-13 Theron Track 02 capture-manifest hardening: rewrote the
   provenance parser as an exact five-field format that rejects malformed or
   non-canonical MD5s, control bytes in paths, reordered data, and trailing

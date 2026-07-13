@@ -234,6 +234,15 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     const char *trace_path,
     Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt);
 
+/* Rehashes the two explicit files consumed by the live Mednafen handoff.
+ * This closes the path/MD5 time-of-check gap before the capture parser sees
+ * their contents. It is intentionally independent of game-data discovery. */
+int theron_v1_boot_runtime_trace_files_match_declared_hashes(
+    const char *track02_path,
+    const char *track02_md5_hex,
+    const char *system_card_path,
+    const char *system_card_md5_hex);
+
 /* The production Soul Room/forcefield runtime transition calls this gate
  * before it mutates startup flow or world state. */
 int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
