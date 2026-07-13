@@ -2044,12 +2044,18 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           source_receipt.animated_floor_command_count == 1 &&
           source_receipt.structure1g_provenance_count == 1 &&
           source_receipt.global_image_index_binding_count == 1 &&
+          source_receipt.complete_sequence_provenance_count == 1 &&
           source_receipt.source_command_count == 1 && source_receipt.complete &&
           !source_receipt.fallback_visuals_permitted &&
           sources[0].command_index == 0 &&
           sources[0].structure1g_entry_index == 0 &&
           sources[0].structure1g_sequence_word_offset == 0U &&
           sources[0].structure1g_global_image_index == 0x0156U &&
+          sources[0].structure1g_sequence_instruction_count == 2 &&
+          sources[0].structure1g_sequence_image_instruction_count == 1 &&
+          sources[0].structure1g_sequence_goto_instruction_count == 0 &&
+          sources[0].structure1g_sequence_bound_image_count == 1 &&
+          sources[0].structure1g_sequence_unbound_image_count == 0 &&
           sources[0].image_id == 10U &&
           sources[0].encoding == 8U && sources[0].palette_id == 0U &&
           sources[0].width == 16U && sources[0].height == 16U &&
@@ -2076,6 +2082,15 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           "a Structure1G global image index must resolve to the declared local Structure2 id");
     level.structure1g_entries[0].first_image_index = 0x0156U;
     memcpy(commands, source_commands, sizeof(commands));
+    level.structure1g_entries[0].structure2_image_instruction_unbound_count = 1;
+    CHECK(nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, commands, receipt.command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.source_command_count == 0 &&
+          source_receipt.blocked_sequence_provenance_count == 1 &&
+          !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
+          "an incompletely bound Structure1G sequence cannot reach a DGN floor command");
+    level.structure1g_entries[0].structure2_image_instruction_unbound_count = 0;
     CHECK(receipt.unresolved_animated_material_count == 1,
           "animated floor declaration remains unresolved without Structure2 handoff");
     CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
