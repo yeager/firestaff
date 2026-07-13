@@ -16,6 +16,13 @@
   `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM2 DistantEnvironment raw receipt: source-valid ENVIRONMENT
+  commands can now retain one exact ten-byte skproject `DistantEnvironment`
+  live slot with its command, cloud/rain slot order, and hash. Unknown or
+  non-material commands reject. This is provenance only: there is no pixel
+  blit, generic-weather bridge, or inferred timer state. Verification: Ninja
+  and CTest `dm2_v1_weather_gdat_receipt` passed 1/1.
+
 - 2026-07-13 Nexus Structure1F raw face/rotation-pair receipt: complete
   The corpus, host handoff, and render plan retain exact original face and
   rotation byte pairs from Structure1A-owned alcove/wall records. The pair
