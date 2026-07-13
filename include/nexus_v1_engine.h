@@ -223,6 +223,7 @@ typedef struct {
     int structure1f_face_selector_complete_level_count;
     int structure1f_rotation_selector_complete_level_count;
     int structure1f_face_rotation_pair_complete_level_count;
+    int structure1f_offset_pair_complete_level_count;
     int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
     int structure3_one_based_block_ordinal_mapping_disproven_level_count;
     int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
@@ -242,6 +243,7 @@ typedef struct {
         structure1f_rotation_selectors[16];
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt
         structure1f_face_rotation_pairs[16];
+    Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs[16];
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
         structure3_ordinal_correlations[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;

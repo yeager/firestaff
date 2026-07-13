@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw signed-offset-pair receipt: complete
+  Structure1A-owned alcove/wall records now retain exact signed offset-byte
+  pairs, ranges, and reuse through the DGN corpus, host handoff, and render
+  plan. No coordinate, origin, scale, transform, geometry, texture, palette,
+  or pixel semantics is inferred. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw face/rotation-pair receipt: complete
   The corpus, host handoff, and render plan retain exact original face and
   rotation byte pairs from Structure1A-owned alcove/wall records. The pair
