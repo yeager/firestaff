@@ -238,6 +238,11 @@
   controller state, CD register, asset, or level semantics are synthesised.
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
+- 2026-07-13 DM1 F0115/F0127 D0C multi-explosion materialization: the D0C
+  deferred C15 pass now consumes every ordinary live PC34 record in source
+  list order through its own M636 pattern material. Removed the synthetic
+  palette-rect/crosshair explosion cue: a missing original bitmap is no-draw.
+  ReDMCSB: `DUNVIEW.C` F0115:5915-6137 and F0127 D0C call.
 - 2026-07-13 DM1 F0115/F0128 D4 projectile fail-closed correction: removed
   the host-defined far-distance projectile box. ReDMCSB `DUNVIEW.C
   F0128:8466-8477` invokes F0115 with `C0x0001`, but D4 has no G2028/C2900

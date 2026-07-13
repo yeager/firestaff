@@ -158,12 +158,26 @@ int main(void)
         input.relativeSide = 0;
         seed_live_effects(&input, &projectiles, &explosions);
         projectiles.entries[0].cell = 0; /* D0C row 11 C2900 cell. */
+        explosions.count = 3;
+        explosions.entries[1] = explosions.entries[0];
+        explosions.entries[1].slotIndex = 5;
+        explosions.entries[1].explosionType = C002_EXPLOSION_LIGHTNING_BOLT;
+        explosions.entries[1].currentFrame = 1;
+        explosions.entries[1].attack = 64;
+        explosions.entries[2] = explosions.entries[0];
+        explosions.entries[2].slotIndex = 6;
+        explosions.entries[2].explosionType = C050_EXPLOSION_FLUXCAGE;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "F0127 D0C runtime decision is built");
         CHECK(d1c.valid && d1c.viewSquare == 0 && d1c.row == 11 &&
               d1c.liveProjectileCount == 1 && d1c.projectileZone >= 0 &&
-              d1c.liveExplosionCount == 1 && d1c.drawDeferredSpellEffects,
-              "D0C consumes live projectile and deferred explosion material");
+              d1c.liveExplosionCount == 3 &&
+              d1c.liveRenderableExplosionCount == 2 &&
+              d1c.liveRenderableExplosionSlots[0] == 4 &&
+              d1c.liveRenderableExplosionSlots[1] == 5 &&
+              d1c.liveRenderableExplosionTypes[1] == C002_EXPLOSION_LIGHTNING_BOLT &&
+              d1c.drawDeferredSpellEffects,
+              "D0C retains every ordinary C15 record and rejects the fluxcage route");
     }
 
     {

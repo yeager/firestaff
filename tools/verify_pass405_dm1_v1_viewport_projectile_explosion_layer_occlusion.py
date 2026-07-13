@@ -157,8 +157,8 @@ def verify_renderer(view: str) -> None:
     ], "center contents object/creature/projectile stack")
 
     effect = function_body(view, "static void m11_draw_effect_cue(")
-    require_contains(effect, "cell->summary.projectiles > 0", "center effect cue")
-    require_contains(effect, "m11_draw_projectile_sprite", "center effect cue")
+    require_contains(effect, "m11_viewport_cell_has_renderable_projectile(cell)", "center effect cue")
+    require_contains(effect, "m11_draw_viewport_projectile_sprite", "center effect cue")
     require_contains(effect, "Explosions are intentionally not drawn here", "center effect cue")
     if "m11_draw_explosion_sprite" in effect or "cell->summary.explosions > 0" in effect:
         raise AssertionError("center effect cue must not draw explosions inline")
@@ -168,10 +168,10 @@ def verify_renderer(view: str) -> None:
         "m11_draw_floor_ornament(",
         "cell->floorItemCount > 0",
         "cell->creatureGroupCount > 0",
-        "cell->summary.projectiles > 0",
+        "m11_viewport_cell_has_renderable_projectile(cell)",
         "Explosions are deferred to m11_draw_dm1_deferred_explosion_pass()",
     ], "side contents object/creature/projectile/defer stack")
-    if "m11_draw_explosion_sprite" in side or "m11_draw_explosion_cue" in side:
+    if "m11_draw_explosion_sprite" in side or "m11_draw_explosion_material" in side:
         raise AssertionError("side contents must not draw explosions inline")
 
     deferred = function_body(view, "static void m11_draw_dm1_deferred_explosion_pass(")
@@ -179,10 +179,10 @@ def verify_renderer(view: str) -> None:
         "DUNVIEW.C:5915 exits the packed-cell",
         "DUNVIEW.C:5916-5933 starts",
         "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        "m11_dm1_center_line_clear_before_depth(cells, depth)",
+        "dm1_viewport_3d_center_line_clear_from_visibility_pc34(&visibility,",
         "m11_draw_dm1_deferred_center_explosion",
         "blockingCenterDepth >= 0 && depth >= blockingCenterDepth",
-        "m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)",
+        "m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)",
         "m11_draw_dm1_deferred_side_explosion",
     ], "deferred explosion pass occlusion guards")
 
