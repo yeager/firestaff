@@ -389,6 +389,11 @@ typedef struct {
     int championDamageTimer[4];  /* per-slot countdown */
     int championDamageAmount[4]; /* last damage dealt */
 
+    /* ReDMCSB CHAMPION.C F0319 turns a zero-health champion into a single
+     * bones record.  M11 can observe that zero over more than one host tick,
+     * so retain the completed source transition per party slot. */
+    unsigned char championDeathHandledMask;
+
     /* Front-cell attack indicator timer.  Set to M11_ATTACK_CUE_DURATION
      * when a creature in the front cell (depth 0) attacks.  Decremented
      * each tick.  While > 0, draw slash-mark overlay on the viewport. */

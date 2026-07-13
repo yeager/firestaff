@@ -7914,6 +7914,24 @@ static int m11_link_fixed_possession_thing_to_square(
     return 1;
 }
 
+/* A saved PC34 party can already contain the source-created bones record
+ * before M11 sees the zero-health champion for the first time.  Treat that
+ * record as the completed F0319 transition instead of dropping its inventory
+ * and manufacturing a second bones record after load. */
+static int m11_has_champion_bones_f0319(const struct DungeonThings_Compat* things,
+                                        int championIndex) {
+    int i;
+    if (!things || !things->junks || championIndex < 0) return 0;
+    for (i = 0; i < things->junkCount; ++i) {
+        const struct DungeonJunk_Compat* junk = &things->junks[i];
+        if (junk->type == DM1_JUNK_TYPE_BONES && junk->doNotDiscard &&
+            junk->chargeCount == (unsigned char)championIndex) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* ReDMCSB CHAMPION.C F0318:1527-1550 and F0319:1552-1687. */
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex) {
     struct ChampionState_Compat* champion;
@@ -7923,6 +7941,13 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
         championIndex >= state->world.party.championCount) return;
     champion = &state->world.party.champions[championIndex];
     if (!champion->present) return;
+    if (state->championDeathHandledMask & (unsigned char)(1u << championIndex)) {
+        return;
+    }
+    if (m11_has_champion_bones_f0319(state->world.things, championIndex)) {
+        state->championDeathHandledMask |= (unsigned char)(1u << championIndex);
+        return;
+    }
 
     champion->hp.current = 0;
     if (state->inventoryPanelActive &&
@@ -7976,6 +8001,9 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     }
     champion->wounds = 0;
     champion->poisonDose = 0;
+    champion->direction = (unsigned char)(state->world.party.direction & 3);
+    state->world.lifecycle.champions[championIndex].poisonEventCount = 0;
+    state->championDeathHandledMask |= (unsigned char)(1u << championIndex);
     for (slot = 0; slot < state->world.party.championCount; ++slot) {
         if (state->world.party.champions[slot].present &&
             state->world.party.champions[slot].hp.current > 0) {
@@ -9088,10 +9116,13 @@ static void m11_check_party_death(M11_GameViewState* state) {
             anyAlive = 1;
         } else if (state->world.party.champions[i].present &&
                    state->world.party.champions[i].hp.current == 0) {
-            /* Individual champion death: log once per transition.
-             * ReDMCSB: dead champion becomes bones on the floor.
-             * We mark present=0 to prevent re-triggering and log. */
+            /* Individual champion death: ReDMCSB F0319 runs once per
+             * zero-health transition.  The F0319 receipt prevents repeated
+             * host ticks from duplicating source records or messages. */
             char dName[16];
+            if (state->championDeathHandledMask & (unsigned char)(1u << i)) {
+                continue;
+            }
             m11_format_champion_name(state->world.party.champions[i].name,
                                      dName, sizeof(dName));
             m11_log_event(state, M11_COLOR_LIGHT_RED,
@@ -9738,6 +9769,12 @@ static void m11_creature_attack_party(
             champ->hp.current = 0;
         }
         champ->wounds |= (unsigned short)result.woundMaskAdded;
+
+        /* ReDMCSB CHAMPION.C F0320:1718-1779 applies the F0321 pending
+         * result to the champion state, then immediately draws C015/C016.
+         * M11 owns that real GRAPHICS.DAT-backed panel through this receipt;
+         * creature melee used to change HP/wounds without publishing it. */
+        M11_GameView_NotifyChampionDamage(state, targetChamp, damage);
 
         /* ReDMCSB: PROJEXPL.C F0230 lines 1404-1408 calls F0322 with the
          * raw poison attack after the 50% F0230 poison gate; F0736 exposes
@@ -14863,6 +14900,8 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
     if (result == 1) {
         (void)m11_pack_recruited_champion_portrait(state, previousPartyCount,
                                                    mirrorOrdinal);
+        state->championDeathHandledMask &=
+            (unsigned char)~(1u << previousPartyCount);
     }
     return result;
 }
@@ -14885,6 +14924,8 @@ int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
     if (result == 1) {
         (void)m11_pack_recruited_champion_portrait(state, previousPartyCount,
                                                    mirrorOrdinal);
+        state->championDeathHandledMask &=
+            (unsigned char)~(1u << previousPartyCount);
     }
     return result;
 }
@@ -15283,6 +15324,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         champ->wounds = 0;
         champ->poisonDose = 0;
     }
+    state->championDeathHandledMask &= (unsigned char)~(1u << championIndex);
     m11_repair_dead_party_leader(state);
     /* ReDMCSB REVIVE.C F0280:272-283 assigns the leader only when the
      * first C127 candidate enters the party. F0282:837-845 repeats that

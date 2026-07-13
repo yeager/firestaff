@@ -6170,6 +6170,21 @@
   `firestaff_dm1_v1_champion_death_resurrection_gate`; focused CTest passed
   both gates (2/2).
 
+- ✅ 2026-07-13 DM1 GAP-005 CHAMPION.C F0319/F0320/F0321 live lifecycle
+  receipt: M11 now latches each completed F0319 transition and recognizes an
+  existing original-PC34 bones record on load, preventing repeated host ticks
+  from duplicating inventory drops or bones. The death route clears the live
+  poison-event record through the F0323-equivalent cleanup and writes the
+  current party direction into the champion record; C026 portrait bytes remain
+  intact for the renderer. Creature melee now publishes its already
+  source-scaled F0321 damage through M11's GRAPHICS.DAT C015/C016 F0320 damage
+  receipt. A real-data regression recruits an actual mirror catalogue record,
+  verifies its decoded portrait, forces the runtime transition, and proves one
+  bones record, poison cleanup, direction ownership, portrait preservation,
+  and idempotence. Source anchors: ReDMCSB `CHAMPION.C`
+  F0319:1552-1687, F0320:1718-1779, F0321:1803-1944. Remaining work is an
+  original-PC34 death/save/reload/resurrection byte-and-frame corpus.
+
 - ✅ 2026-07-11 CSB-004 live mutable Thing-chain primitives: M10 now reads
   `Generic.Next` and Thing-data words from the loaded decoded original
   `DUNGEON.DAT`, and its F0267 list primitive unlinks, appends, removes and
