@@ -15,6 +15,7 @@
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 
 #include <stdio.h>
@@ -337,6 +338,84 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
               "death/drop chain terminates after generated steaks");
 }
 
+static void test_dead_group_afterplay_creates_source_smoke_after_cleanup(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[1];
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[12][4];
+    unsigned char groupRaw[1][16];
+    unsigned short groupThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int smokeSlot = -1;
+    int i;
+
+    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+                    weapons, armours, junks, squareFirstThings,
+                    weaponRaw, armourRaw, junkRaw);
+    memset(groups, 0, sizeof(groups));
+    memset(groupRaw, 0, sizeof(groupRaw));
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].slot = THING_ENDOFLIST;
+    groups[0].creatureType = 10; /* Mummy: no generated fixed possessions. */
+    groups[0].cells = 0xFF;
+    groups[0].count = 0;
+    groups[0].health[0] = 0;
+    groupRaw[0][0] = 0xFEu;
+    groupRaw[0][1] = 0xFFu;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
+    things.squareFirstThings[0] = groupThing;
+    state.world.gameTick = 41u;
+
+    profile = CREATURE_GetProfile_Compat((int)groups[0].creatureType);
+    ASSERT_TRUE(profile != NULL, "mummy profile exists for F0190 C040 size");
+    ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDropWithF0190Afterplay(
+                  &state, groupThing, 0, 0, 0, EXPLOSION_CELL_CENTERED),
+              1, "F0190 final-group afterplay route accepts dead group");
+    ASSERT_EQ(groups[0].next, THING_NONE,
+              "F0189 cleanup runs before F0190 source smoke");
+    ASSERT_EQ(things.squareFirstThings[0], THING_ENDOFLIST,
+              "F0188/F0189 leave no group on the source square");
+    ASSERT_EQ(state.world.explosions.count, 1,
+              "F0190 creates exactly one source C040 after cleanup");
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        if (state.world.explosions.entries[i].reserved0 &&
+            state.world.explosions.entries[i].explosionType ==
+                C040_EXPLOSION_SMOKE) {
+            smokeSlot = i;
+            break;
+        }
+    }
+    ASSERT_TRUE(smokeSlot >= 0, "F0190 C040 enters the live explosion list");
+    if (smokeSlot >= 0 && profile) {
+        ASSERT_EQ(state.world.explosions.entries[smokeSlot].attack,
+                  dm1_v1_melee_death_smoke_attack_f0190_pc34(
+                      profile->attributes),
+                  "F0190 C040 attack remains profile-size derived");
+        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapIndex, 0,
+                  "F0190 C040 keeps the source map");
+        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapX, 0,
+                  "F0190 C040 keeps the source X");
+        ASSERT_EQ(state.world.explosions.entries[smokeSlot].mapY, 0,
+                  "F0190 C040 keeps the source Y");
+        ASSERT_EQ(state.world.explosions.entries[smokeSlot].cell,
+                  EXPLOSION_CELL_CENTERED,
+                  "F0190 C040 preserves the source killed cell");
+    }
+}
+
 static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -595,6 +674,7 @@ int main(void) {
     test_animated_armour_materializes_cursed_armour_and_weapons();
     test_fixed_drops_do_not_append_when_pool_exhausted();
     test_dead_group_runtime_materializes_and_removes_group();
+    test_dead_group_afterplay_creates_source_smoke_after_cleanup();
     test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();
     test_dead_mummy_preserves_carried_tail_and_floor_chain();
     test_f0189_keeps_non_party_map_ai_state();

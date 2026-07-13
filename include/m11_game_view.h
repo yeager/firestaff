@@ -1307,6 +1307,15 @@ int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
     int mapIndex,
     int mapX,
     int mapY);
+/* Probe-only F0190 final-group route. Retains the production ordering:
+ * F0188 drops, F0189 deletes, then GROUP.C F0190 creates source C040 smoke. */
+int M11_GameView_ProbeCheckCreatureGroupDeathAndDropWithF0190Afterplay(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int killedCell);
 
 /* Drives the production CHAMPION.C F0319 death check without advancing an
  * unrelated timeline tick.  Probe-only: callers must provide the live M11

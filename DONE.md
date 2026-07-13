@@ -7,6 +7,13 @@
   below half, and verifies the documented pre-shift scaled result. Source:
   ReDMCSB `CHAMPION.C` F0306:1078-1100 and BUGX_XX. The independent original
   executable/save capture remains listed in TODO.
+- 2026-07-13 DM1 F0190 final-group runtime afterplay: the generic F0822
+  explosion damage route now completes source-ordered F0188 possessions and
+  F0189 group cleanup before creating the existing profile-size-derived C040
+  smoke record. Projectile F0231 remains receipt-owned and cannot duplicate
+  the smoke. Verification: focused M11 group-drop CTest covers cleanup,
+  source C040 allocation, map/cell retention, and size-derived attack.
+   Source: ReDMCSB `GROUP.C` F0188/F0189/F0190:834-839,907-916.
 
 - 2026-07-13 DM1 HoC disabled-peer C161 view transition: real-PC34 coverage
   now draws the source wall, C161 rename panel, and accepted dungeon view
