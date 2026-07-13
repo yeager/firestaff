@@ -21,6 +21,10 @@ int main(void)
         !receipt.decoded || !receipt.checksum_ok) {
         return 1;
     }
+    if (receipt.platform != SAVEGAME_PC34_PLATFORM_PC ||
+        receipt.dungeon_id != SAVEGAME_PC34_DUNGEON_ID_DM) {
+        return 1;
+    }
     bytes[0] ^= 1u;
     if (dm1_v1_original_save_pc34_decode_header_receipt(
             bytes, size, &receipt) || receipt.checksum_ok) {
