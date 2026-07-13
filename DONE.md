@@ -35,6 +35,15 @@
   action-disable event. Verification: Ninja-built and ran
   `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
   `test_dm1_v1_spell_casting_pc34_compat`.
+- 2026-07-13 CSBWin core-resume Extended Features lifecycle: a core-only
+  resume now clears the complete prior extended-save owner, including DSA
+  version/flags, cell-array size, game-info allocation/hash, and every
+  DSALevelIndex slot, before it commits the new GAMEBLOCK state. This prevents
+  stale save metadata from crossing a source boundary without enabling any
+  opcode or fallback. Source: CSBWin `SaveGame.cpp` extended-feature/DSA read
+  path followed by the core GAMEBLOCK load. Verification:
+  `csb_v1_core_resume_extended_state_clear` CTest passed 1/1.
+
 - 2026-07-13 CSBWin multi-level DSA movement handoff: added a bounded,
   transactional callback adapter for distinct source-resolved movement-filter
   levels. It stages every authenticated action first, dispatches only the
