@@ -793,6 +793,21 @@ set_tests_properties(theron_v1_raw_media_cd_read_bitmap_chain_probe PROPERTIES
     LABELS "theron;track02;system-card;cd-read;bitmap"
 )
 
+add_executable(firestaff_theron_v1_raw_track02_host_startup_smoke
+    probes/theron/firestaff_theron_v1_raw_track02_host_startup_smoke.c
+)
+target_include_directories(firestaff_theron_v1_raw_track02_host_startup_smoke PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_theron_v1_raw_track02_host_startup_smoke
+    PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_v1_raw_track02_host_startup_smoke PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME theron_v1_raw_track02_host_startup_smoke
+    COMMAND firestaff_theron_v1_raw_track02_host_startup_smoke --selftest
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c"
    AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
     add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
