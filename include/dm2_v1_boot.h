@@ -5,6 +5,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_weather_gdat.h"
 #include <stddef.h>
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
@@ -1641,6 +1642,14 @@ int dm2_v1_boot_graphicsset_scene_control(
     uint32_t *out_misty_map,
     uint32_t *out_thunder_position,
     uint32_t *out_ambient_darkness);
+
+/* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
+ * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;
+ * callers must not infer a viewport destination from it. */
+int dm2_v1_boot_weather_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    DM2_V1_WeatherGdatReceipt *out_receipt);
 
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */

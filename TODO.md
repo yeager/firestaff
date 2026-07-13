@@ -10,9 +10,10 @@
   floor-object, projectile, carried-item, possession, and CHAMPIONS portrait
   GDAT drawing, plus T600 outdoor sky and ground planes, now require decoded
   IMG3 pixels and their exact local-palette receipts. Weather now verifies its
-  GRAPHICSSET environment IMG3 address and local palette, but remains no-draw
-  until skproject proves the destination clip and live viewport handoff; do
-  not borrow interface colors or synthesize replacement art.
+  GRAPHICSSET environment IMG3 address and local palette and carries its
+  receipt into live frame ownership, but remains no-draw until skproject proves
+  the destination clip; do not borrow interface colors or synthesize
+  replacement art.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads

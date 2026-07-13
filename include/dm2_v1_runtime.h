@@ -79,6 +79,9 @@ typedef struct {
     uint32_t gdat_misty_map;
     uint32_t gdat_thunder_position;
     uint32_t gdat_ambient_darkness;
+    int gdat_weather_receipt_ready;
+    uint32_t gdat_weather_receipt_hash;
+    uint32_t gdat_weather_material_mask;
     int gdat_scene_light_consumed;
     int gdat_scene_weather_consumed;
     int gdat_sprite_palette_consumed;

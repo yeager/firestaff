@@ -102,6 +102,9 @@ typedef struct {
     uint16_t gdat_misty_map;
     uint16_t gdat_thunder_position;
     uint16_t gdat_ambient_darkness;
+    int gdat_weather_receipt_ready;
+    uint32_t gdat_weather_receipt_hash;
+    uint32_t gdat_weather_material_mask;
     int gdat_interface_palette_ready;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
@@ -450,6 +453,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     uint32_t misty_map = 0u;
     uint32_t thunder_position = 0u;
     uint32_t ambient_darkness = 0u;
+    DM2_V1_WeatherGdatReceipt weather_receipt;
 
     if (!rt) return;
     rt->map_graphics_style = -1;
@@ -467,6 +471,9 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_misty_map = 0u;
     rt->gdat_thunder_position = 0u;
     rt->gdat_ambient_darkness = 0u;
+    rt->gdat_weather_receipt_ready = 0;
+    rt->gdat_weather_receipt_hash = 0u;
+    rt->gdat_weather_material_mask = 0u;
     rt->gdat_interface_palette_ready = 0;
     rt->gdat_interface_palette_hash = 0u;
     memset(rt->gdat_interface_palette16, 0,
@@ -513,6 +520,19 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_misty_map = (uint16_t)misty_map;
     rt->gdat_thunder_position = (uint16_t)thunder_position;
     rt->gdat_ambient_darkness = (uint16_t)ambient_darkness;
+    /* c_weather.cpp consumes the active MapGraphicsStyle after GRAPHICSSET
+     * control resolution. Preserve the verified environment image/palette
+     * receipt in the live frame boundary, but do not turn it into pixels: the
+     * source destination clip is still intentionally unproven. */
+    memset(&weather_receipt, 0, sizeof(weather_receipt));
+    if (dm2_v1_boot_weather_gdat_receipt(rt->boot,
+                                         rt->map_graphics_style,
+                                         &weather_receipt) &&
+        weather_receipt.valid && weather_receipt.receipt_hash != 0u) {
+        rt->gdat_weather_receipt_ready = 1;
+        rt->gdat_weather_receipt_hash = weather_receipt.receipt_hash;
+        rt->gdat_weather_material_mask = weather_receipt.material_mask;
+    }
     if (dm2_v1_boot_interface_palette(rt->boot, &palette)) {
         rt->gdat_interface_palette_ready = 1;
         rt->gdat_interface_palette_hash = palette.hash;
@@ -2614,6 +2634,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_thunder_position;
     g_dm2_frame_ownership.gdat_ambient_darkness =
         rt->gdat_ambient_darkness;
+    g_dm2_frame_ownership.gdat_weather_receipt_ready =
+        rt->gdat_weather_receipt_ready;
+    g_dm2_frame_ownership.gdat_weather_receipt_hash =
+        rt->gdat_weather_receipt_hash;
+    g_dm2_frame_ownership.gdat_weather_material_mask =
+        rt->gdat_weather_material_mask;
     g_dm2_frame_ownership.gdat_scene_light_consumed =
         viewport.gdat_scene_light_consumed_count;
     g_dm2_frame_ownership.gdat_scene_weather_consumed =
