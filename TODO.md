@@ -260,10 +260,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   clouds, source sound/party effects, malformed chains, and all broader
   object-lifetime routes remain fail-closed until their CSBWin owners exist.
 
-- 2026-07-13 CSBWin restored `TT_13` follow-up: only the exact final Vi
-  Altar life stage is live. The `packedState` 2 cloud and state 1 DB10 bones,
-  EXPOOL and Wings branches remain fail-closed until those original owners are
-  retained by the imported runtime record.
+- 2026-07-13 CSBWin restored `TT_13` follow-up: the exact final Vi Altar life
+  stage and the old-save no-EXPOOL DB10-bones state-1 handoff are live. The
+  `packedState` 2 cloud plus EXPOOL and Wings state-1 branches remain
+  fail-closed until those original owners are retained by the imported runtime
+  record.
 
 - 2026-07-13 CSBWin restored `TT_53` follow-up: live runtime now retains the
   exact saved watchdog TIMER/queue owner while requeueing its source `+300`

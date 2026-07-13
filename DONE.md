@@ -193,13 +193,15 @@
   as a trigger, operation, object, script, route, or runtime behavior.
   Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
-- 2026-07-13 CSBWin saved `TT_13` Vi Altar final runtime: an exact saved
-  queue/event identity with `packedState()==0` now applies only CSBWin's
+- 2026-07-13 CSBWin saved `TT_13` Vi Altar runtime: an exact saved
+  queue/event identity now applies CSBWin's `packedState()==0`
   `BringCharacterToLife` max-HP penalty, half-HP recovery, party-facing, and
-  dead-flag clear to the authenticated dead party champion. Cloud, DB10 bones,
-  EXPOOL, Wings, and HUD branches remain unavailable. Source:
-  `CSBCode.cpp:6469`, `Timer.cpp:2663-2763`, `Character.cpp:804-825`,
-  `CSB.h:2019-2022`. Verification:
+  dead-flag clear to the authenticated dead party champion. It also retains
+  the old-save no-EXPOOL state-1 branch: only the matching DB10 Bones Thing at
+  the saved position is unlinked/cleared, then the same TIMER and queue slot
+  advance one tick to state 0. Cloud, EXPOOL, Wings, and HUD branches remain
+  unavailable. Source: `CSBCode.cpp:6469`, `Timer.cpp:2663-2763`,
+  `Character.cpp:804-825`, `CSB.h:1250-1273,2019-2022`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 - 2026-07-13 DM2 source-backed corpus import receipt: header-verified
   Firestaff-session candidates now deserialize through the existing session
