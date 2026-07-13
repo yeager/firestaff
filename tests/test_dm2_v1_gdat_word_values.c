@@ -253,10 +253,56 @@ static void test_interface_palette_decoder_fixture(void)
     }
 }
 
+static void test_img3_local_palette_fixture(void)
+{
+    uint8_t raw[10 + 2 + 16];
+    uint32_t offsets[1] = { 0u };
+    uint32_t sizes[1] = { sizeof(raw) };
+    DM2_V1_GdatEntry entry;
+    DM2_V1_AssetLoader loader;
+    uint8_t palette16[16];
+    uint32_t hash = 0u;
+
+    memset(raw, 0, sizeof(raw));
+    /* IMG3: 2x1, four-bit image.  The final 16 bytes are exactly what
+     * skproject QUERY_GDAT_IMAGE_LOCALPAL returns to map-chip drawing. */
+    raw[0] = 2u;
+    raw[4] = 4u;
+    raw[10] = 0x12u;
+    for (int i = 0; i < 16; ++i) raw[12 + i] = (uint8_t)(0xe0u + i);
+    memset(&loader, 0, sizeof(loader));
+    memset(&entry, 0, sizeof(entry));
+    loader.data = raw;
+    loader.data_size = sizeof(raw);
+    loader.loaded = 1;
+    loader.raw_data_count = 1;
+    loader.raw_offsets = offsets;
+    loader.raw_sizes = sizes;
+    loader.entries = &entry;
+    loader.entry_count = 1;
+    entry.cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entry.cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entry.cls4 = 0x22u;
+    entry.data_index = 0u;
+
+    CHECK(dm2_v1_asset_load_image_local_palette(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
+              palette16, &hash) == 1,
+          "IMG3 local palette comes from the final sixteen raw bytes");
+    CHECK(palette16[0] == 0xe0u && palette16[15] == 0xefu && hash != 0u,
+          "IMG3 local palette has a deterministic nonzero receipt hash");
+    raw[4] = 8u;
+    CHECK(dm2_v1_asset_load_image_local_palette(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
+              palette16, &hash) == 0,
+          "non-four-bit IMG3 image cannot claim a source local palette");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
     test_interface_palette_decoder_fixture();
+    test_img3_local_palette_fixture();
     test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

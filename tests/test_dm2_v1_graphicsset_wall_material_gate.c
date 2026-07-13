@@ -48,6 +48,18 @@ static int fetch_wall(void *user,
     return 0;
 }
 
+static int fetch_wall_local_palette(void *user,
+                                    int gdat_index,
+                                    uint8_t out_palette16[16],
+                                    uint32_t *out_hash)
+{
+    (void)user;
+    (void)gdat_index;
+    for (int i = 0; i < 16; ++i) out_palette16[i] = (uint8_t)(0xa0 + i);
+    if (out_hash) *out_hash = 0x324c5041u;
+    return 0;
+}
+
 int main(void)
 {
     DM2_V1_ViewportState viewport;
@@ -85,6 +97,32 @@ int main(void)
               viewport.fallback_wall_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    trace.expected_graphicsset = 0x2a;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_wall, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, fetch_wall_local_palette, NULL);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 0x2a, 0x6d324741u,
+        10, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_render_walls(&viewport);
+    {
+        int local_pixel_seen = 0;
+        for (size_t i = 0; i < sizeof(framebuffer); ++i) {
+            if (framebuffer[i] == 0xa1u) {
+                local_pixel_seen = 1;
+                break;
+            }
+        }
+        CHECK("wall pixels consume the source IMG3 local palette",
+              trace.wall_fetches > 0 && local_pixel_seen &&
+                  viewport.gdat_local_palette_consumed_count > 0 &&
+                  viewport.blocked_material_draw_count == 0);
+    }
 
     printf("DM2 GRAPHICSSET wall material gate: %d/%d passed\n",
            passed, checks);

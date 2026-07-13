@@ -867,6 +867,21 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_asset_palette_provider(
+    DM2_V1_ViewportState *s,
+    DM2_V1_ViewportAssetPaletteFetch fetch,
+    void *user)
+{
+    if (!s) return;
+    s->asset_palette_fetch = fetch;
+    s->asset_palette_user = user;
+    s->active_asset_palette_ready = 0;
+    s->active_asset_palette_hash = 0u;
+    memset(s->active_asset_palette16, 0,
+           sizeof(s->active_asset_palette16));
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_source_materials_required(
     DM2_V1_ViewportState *s, int required)
 {
@@ -1931,13 +1946,28 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     if (out_w) *out_w = 0;
     if (out_h) *out_h = 0;
     if (out_stride) *out_stride = 0;
+    if (s) {
+        s->active_asset_palette_ready = 0;
+        s->active_asset_palette_hash = 0u;
+        memset(s->active_asset_palette16, 0,
+               sizeof(s->active_asset_palette16));
+    }
     if (s && s->asset_fetch &&
-        s->asset_fetch(s->asset_user,
-                       gdat_index,
-                       out_pixels,
-                       out_w,
-                       out_h,
+        s->asset_fetch(s->asset_user, gdat_index, out_pixels, out_w, out_h,
                        out_stride) == 0) {
+        if (s->asset_palette_fetch) {
+            if (s->asset_palette_fetch(s->asset_palette_user, gdat_index,
+                                       s->active_asset_palette16,
+                                       &s->active_asset_palette_hash) != 0 ||
+                s->active_asset_palette_hash == 0u) {
+                memset(s->active_asset_palette16, 0,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash = 0u;
+                if (s->source_materials_required) return -1;
+            } else {
+                s->active_asset_palette_ready = 1;
+            }
+        }
         return 0;
     }
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
@@ -2019,14 +2049,14 @@ static void __attribute__((unused)) dm2_v1_blit_scaled_bitmap(uint8_t *dst,
     }
 }
 
-/* skproject/SKWIN initializes dtPalIRGB and dtPalette16 before indexed GDAT
- * material is drawn. Material pixels below 16 are logical colours and must
- * reach the framebuffer through that real logical-to-IRGB index table. */
+/* skproject QUERY_GDAT_IMAGE_LOCALPAL supplies the per-IMG3 16-byte palette
+ * to every dungeon map-chip blit.  The global interface table is only the
+ * compatibility fallback used by non-source test providers. */
 static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
                                              uint8_t logical_color,
                                              int *consumed_count)
 {
-    if (!s || !s->gdat_interface_palette_ready || logical_color >= 16u) {
+    if (!s || logical_color >= 16u) {
         return logical_color;
     }
     if (consumed_count) ++*consumed_count;
@@ -2035,6 +2065,13 @@ static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
          s->gdat_highest_light_level != 0u ||
          s->gdat_ambient_darkness != 0u)) {
         ++s->gdat_scene_light_consumed_count;
+    }
+    if (s->active_asset_palette_ready) {
+        ++s->gdat_local_palette_consumed_count;
+        return s->active_asset_palette16[logical_color];
+    }
+    if (!s->gdat_interface_palette_ready) {
+        return logical_color;
     }
     return s->gdat_interface_palette16[logical_color];
 }
@@ -4678,6 +4715,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->gdat_scene_material_consumed_count = 0;
     s->gdat_scene_weather_consumed_count = 0;
     s->gdat_sprite_palette_consumed_count = 0;
+    s->gdat_local_palette_consumed_count = 0;
     s->last_hud_core_gdat_hash = 2166136261u;
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT local image palettes: boot/runtime/viewport receipts
+  now carry source-local indexed palettes from real GDAT images into wall
+  materialization. Palette metadata without a verified image remains
+  non-renderable; no generated colour fallback is used. Verification:
+  Ninja-built and CTest-passed `dm2_v1_gdat_word_values`,
+  `dm2_v1_graphicsset_wall_material_gate`, and
+  `dm2_v1_runtime_handoff_smoke`.
+
 - 2026-07-13 Nexus SNDLEV runtime boundary: the sound receipt now consumes
   only the hash-verified 16-bank `SNDLEVxx.MAP`/`.SAL` corpus and fails closed
   for unproven event routes. No guessed Saturn event semantics or fallback

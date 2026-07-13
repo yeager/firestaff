@@ -1775,14 +1775,18 @@ static void test_first_tick_after_boot_profile_handoff(void)
 
     {
         int tick_before = dm2_v1_runtime_get_tick_count();
+        char message_before[160];
+        const char *message = dm2_v1_runtime_get_last_target_message();
+        snprintf(message_before, sizeof(message_before), "%s",
+                 message ? message : "");
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_tick_count() == tick_before + 1,
               "deterministic DM2 V1 runtime tick advances by one");
+        CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
+              strcmp(dm2_v1_runtime_get_last_target_message(),
+                     message_before) == 0,
+              "runtime tick does not invent a timeline message without an original corpus");
     }
-    CHECK(dm2_v1_runtime_get_last_target_message() != NULL &&
-          strstr(dm2_v1_runtime_get_last_target_message(),
-                 "dungeon awakens") != NULL,
-          "runtime tick applies timeline display-message target");
     CHECK(dm2_v1_runtime_get_party_x() >= 0 &&
           dm2_v1_runtime_get_party_y() >= 0 &&
           dm2_v1_runtime_get_party_dir() == 0,
