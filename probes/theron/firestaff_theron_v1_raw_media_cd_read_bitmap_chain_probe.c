@@ -220,7 +220,7 @@ int main(void)
     if (!theron_v1_startup_media_consume_raw_bitmap_route(
             &bitmap, route_bit, &raw_bitmap) || !raw_bitmap.valid ||
         !raw_bitmap.raw_source_verified ||
-        raw_bitmap.variant != bitmap.track02_variant ||
+        raw_bitmap.variant != (Theron_Track02Variant)bitmap.track02_variant ||
         raw_bitmap.route_bit != route_bit ||
         raw_bitmap.checksum != route->checksum ||
         raw_bitmap.first_raw_offset != route->first_raw_offset ||

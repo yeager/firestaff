@@ -55,3 +55,22 @@ write or a palette-to-menu binding. The consumer therefore cannot publish RGB
 pixels and must not select a default palette. The corpus probe uses only an
 operator-provided, hash-recognised Track 02 BIN plus System Card; it verifies
 the raw-byte receipt and expects the palette/RGB gate to remain blocked.
+
+## Live Trace Result
+
+The locally available US E98A trace is provenance-marked but does not contain
+the dynamic CD-read or controller-state receipts required by the Track 02
+runtime gate, nor an observed write to the VCE palette-data ports. It is
+therefore insufficient to authenticate a HuC6260 palette. A future capture
+must contain the authenticated Track 02 transaction and record the original
+hardware writes, including the selected colour-table indices and both bytes of
+each 9-bit entry. Until that capture exists, no code may infer a palette window
+from matching bytes in the disc image or open RGB output for a raw bitmap route.
+
+The Mednafen instrumentation records only raw, pre-execution `STA abs` receipts
+to `$0402..$0405` after the controller receipt: PC, physical PC, opcode,
+address, and accumulator. These rows preserve the observed control/data store
+sequence without claiming a completed write, selected palette, entry count, or
+bitmap binding. Indirect and block-transfer instructions remain unrecognised;
+their presence keeps the RGB gate closed until a complete, authenticated receipt
+format is implemented.

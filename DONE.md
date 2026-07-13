@@ -658,6 +658,14 @@
   Card, then expects the missing palette binding to block RGB output. The
   shell regression accepts only that fail-closed corpus result.
 
+- ✅ 2026-07-13 Theron raw-media probe warning and live-palette evidence
+  boundary: fixed the raw Track 02 probe's enum/int comparison under strict
+  warnings. The locally staged E98A US capture was checked directly: it has
+  only the Mednafen provenance row, without the dynamic CD/controller rows or
+  HuC6260 palette-data stores needed to open RGB. The instrumentation patch
+  now records bounded raw HuC6260 control/data store receipts after a future
+  controller receipt; no synthetic palette trace or default palette was added.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
