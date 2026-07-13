@@ -30,6 +30,13 @@
   Verification: strict C11 regression and the main Ninja
   `nexus_v1_dgn_geometry_readiness` test.
 
+- 2026-07-13 Nexus Structure1F reference receipt: an out-of-prefix packed
+  Structure1B reference now reports `blocked-structure1f-reference`, rather
+  than the ambiguous descriptor-budget state. The DGN host therefore retains
+  the exact fail-closed reason and cannot substitute a mesh or fallback
+  visual. Verification: Ninja-built and CTest-passed
+  `nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-13 DM2 GDAT weather CMDSTR boundary: skproject `CD`/`FW` command
   strings now decode only from proven original GDAT material; malformed or
   unsupported input blocks the weather route without generated commands.

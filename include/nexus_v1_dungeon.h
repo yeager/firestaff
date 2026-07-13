@@ -367,7 +367,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE = 6,
     /* Visible direct Structure1F decorations/sensors have source cells but
      * no Saturn draw/trigger semantics yet. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS = 7
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS = 7,
+    /* A packed Structure1B reference reached the opaque Structure1F tail or
+     * lies outside the observed typed prefix. It is not drawable geometry. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE = 8
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {

@@ -939,12 +939,16 @@ static void test_structure1f_out_of_prefix_ref_blocks_mesh(void) {
           "an opaque Structure1F tail reference blocks mesh promotion");
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
           nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
-          handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_DESCRIPTOR_BUDGET &&
+          handoff.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_REFERENCE &&
           !handoff.post_grid_0x30_references_valid &&
           handoff.first_invalid_post_grid_0x30_ref == 5 &&
           handoff.blocks_real_dgn_mesh_render &&
           !handoff.fallback_visuals_permitted,
-          "DGN handoff fails closed for an unproven Structure1F reference");
+          "DGN handoff identifies and fails closed for an unproven Structure1F reference");
+    CHECK(strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
+                 "blocked-structure1f-reference") == 0,
+          "unproven Structure1F reference keeps a stable no-fallback receipt name");
     CHECK(nexus_v1_level_build_dgn_view_render_plan(
               &level, 3, 3, 0, commands,
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0 &&
