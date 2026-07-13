@@ -1292,6 +1292,7 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
                 index = root & 0x03ff;
                 if (dm2_v1_g1_link_has_declared_shape(d, root)) {
                     ++candidate.direct_root_count;
+                    ++candidate.direct_root_count_by_type[type];
                     ++candidate.materialized_root_count;
                 } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
                     if (type == 3) ++candidate.db3_root_count;

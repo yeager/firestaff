@@ -456,6 +456,7 @@ typedef struct {
     int level_count;
     int map_root_count;
     int direct_root_count;
+    int direct_root_count_by_type[16];
     int db3_root_count;
     int db4_root_count;
     int materialized_root_count;
