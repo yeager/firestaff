@@ -18951,6 +18951,21 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_bpk_prs3_payload_evidence
     )
 
+    add_executable(test_nexus_v1_prs3_capture_trace_schema
+        tests/test_nexus_v1_prs3_capture_trace_schema.c
+        src/nexus/nexus_v1_prs3_capture_trace_schema.c
+    )
+    target_include_directories(test_nexus_v1_prs3_capture_trace_schema PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_capture_trace_schema PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_capture_trace_schema
+        COMMAND test_nexus_v1_prs3_capture_trace_schema
+    )
+
     # ── Nexus V1 DGN actor slot bounds ────────────────────────────
     # Data-free regression: malformed Nexus DGN actor records must clamp
     # spatial fields into the 64x64 grid and normalize the 0..3 facing
