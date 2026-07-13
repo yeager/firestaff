@@ -117,6 +117,10 @@ combined JP/US capture is still required before this receipt can reach the
 runtime handoff. Firestaff now parses only that exact combined receipt into
 the existing Track 02/System Card runtime gate; missing, duplicated,
 malformed, mismatched, or unrecognized rows cannot construct a live branch.
+The boot/runtime intake now accepts an explicit trace-file path alongside the
+authenticated Track 02 and System Card paths, but no authenticated combined
+capture is staged. A missing, unreadable, oversized, or rejected trace keeps
+the existing launch route blocked and does not synthesize a receipt.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
 $ea1d -> $ea26` status loop is now independently verified from the same US
 capture. It clears `$227b`, samples `$1801`, then completes two `$1800`

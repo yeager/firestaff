@@ -41,6 +41,7 @@
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -52,6 +53,78 @@
 #else
 #define TRV_PATH_SEP '/'
 #endif
+
+#define THERON_V1_RUNTIME_TRACE_MAX_BYTES (1024u * 1024u)
+#define THERON_V1_RUNTIME_MEDIA_MAX_BYTES (512u * 1024u * 1024u)
+
+static unsigned char *theron_v1_boot_read_evidence_file(
+    const char *path, size_t maximum_bytes, size_t *out_size) {
+    struct stat st;
+    FILE *file = NULL;
+    unsigned char *bytes;
+
+    if (!path || !path[0] || !out_size || stat(path, &st) != 0 ||
+        !S_ISREG(st.st_mode) || st.st_size <= 0 ||
+        (uintmax_t)st.st_size > maximum_bytes ||
+        !(file = fopen(path, "rb")) ||
+        !(bytes = (unsigned char *)malloc((size_t)st.st_size + 1u))) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    if (fread(bytes, 1u, (size_t)st.st_size, file) != (size_t)st.st_size) {
+        fclose(file);
+        free(bytes);
+        return NULL;
+    }
+    fclose(file);
+    bytes[st.st_size] = '\0';
+    *out_size = (size_t)st.st_size;
+    return bytes;
+}
+
+int theron_v1_boot_track02_runtime_trace_intake_from_files(
+    const char *track02_path,
+    const char *track02_md5_hex,
+    const char *system_card_path,
+    const char *system_card_md5_hex,
+    const char *trace_path,
+    Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt) {
+    unsigned char *trace = NULL;
+    unsigned char *track02 = NULL;
+    unsigned char *system_card = NULL;
+    size_t trace_size = 0u;
+    size_t track02_size = 0u;
+    size_t system_card_size = 0u;
+    int accepted = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    trace = theron_v1_boot_read_evidence_file(
+        trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
+    if (!trace || trace_size == 0u) goto done;
+    track02 = theron_v1_boot_read_evidence_file(
+        track02_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES, &track02_size);
+    system_card = theron_v1_boot_read_evidence_file(
+        system_card_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES,
+        &system_card_size);
+    if (!track02 || !system_card ||
+        !theron_v1_irq2_live_branch_from_mednafen_capture_and_full_track02_media(
+            track02, track02_size, track02_md5_hex, system_card,
+            system_card_size, system_card_md5_hex, (const char *)trace,
+            &out_receipt->runtime_handoff)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        goto done;
+    }
+    out_receipt->valid = 1;
+    out_receipt->trace_file_consumed = 1;
+    accepted = 1;
+
+done:
+    free(trace);
+    free(track02);
+    free(system_card);
+    return accepted;
+}
 
 /* ── PC Engine file candidates ───────────────────────────────────── */
 

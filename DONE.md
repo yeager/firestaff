@@ -348,6 +348,14 @@
   candidate receipt and remain blocked. Verification:
   `theron_v1_irq2_live_trace_gate` CTest.
 
+- 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
+  intake now reads a bounded Mednafen trace path plus caller-supplied
+  hash-authenticated Track 02 and System Card paths, then invokes the concrete
+  parser-plus-media Track 02 handoff. Any missing, unreadable, oversized, or
+  invalid input clears the receipt and preserves the existing fail-closed
+  launch behavior. Verification: `theron_v1_runtime_trace_intake` CTest uses
+  only absent paths and does not manufacture a live capture.
+
 - 2026-07-13 DM1 original-save C48/C49 projectile export: F0802 now writes
   ReDMCSB `EVENT.B.Slot` as the live C14 projectile Thing and rebuilds packed
   `EVENT.C.Projectile` from the active map, square, direction, and step

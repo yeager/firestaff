@@ -154,6 +154,14 @@ typedef struct {
     void   *graphics_dat;    /* graphics data handle */
 } Theron_V1_BootProfile;
 
+/* Explicit runtime-evidence intake for an instrumented Mednafen capture. The
+ * caller owns every path; missing or invalid files leave this receipt empty. */
+typedef struct Theron_V1_BootTrack02RuntimeTraceIntakeReceipt {
+    int valid;
+    int trace_file_consumed;
+    Theron_V1Irq2FullMediaTraceReceipt runtime_handoff;
+} Theron_V1_BootTrack02RuntimeTraceIntakeReceipt;
+
 /* ── Boot API ──────────────────────────────────────────────────────── */
 
 /* Initialize a boot profile with Theron V1 defaults.
@@ -209,6 +217,14 @@ int theron_v1_boot_probe_available(const char *data_dir);
 int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
                                        const char *track02_path,
                                        const char *expected_md5);
+
+int theron_v1_boot_track02_runtime_trace_intake_from_files(
+    const char *track02_path,
+    const char *track02_md5_hex,
+    const char *system_card_path,
+    const char *system_card_md5_hex,
+    const char *trace_path,
+    Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt);
 
 typedef enum {
     THERON_V1_BOOT_STARTUP_PREPARE_OK = 0,
