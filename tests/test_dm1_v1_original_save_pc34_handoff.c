@@ -1602,6 +1602,98 @@ static void test_runtime_materializer_binds_original_sound_union(void)
           "C20 materialization binds original Location, SoundIndex, priority");
 }
 
+static void test_runtime_materializer_binds_original_c12_damage_hide(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int exported_size = 0;
+    int rc;
+    int i;
+    int found_hide = 0;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct TickResult_Compat tick_result;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     3, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C12 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 2,
+                                     DM1_EVENT_HIDE_DAMAGE_RECEIVED),
+          "C12 fixture preserves the authenticated PC34 envelope");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(&report, 0, sizeof(report));
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "C12 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C12 materializes without consuming undefined B/C union bytes");
+    CHECK(loaded_world.timeline.count == ORIGINAL_PC34_EVENT_COUNT &&
+              loaded_world.timeline.events[1].kind ==
+                  TIMELINE_EVENT_STATUS_TIMEOUT &&
+              loaded_world.timeline.events[1].mapIndex == 1 &&
+              loaded_world.timeline.events[1].aux0 ==
+                  DM1_EVENT_HIDE_DAMAGE_RECEIVED &&
+              loaded_world.timeline.events[1].aux4 == 2,
+          "C12 materialization preserves only Map_Time and Priority");
+
+    loaded_world.gameTick = 123490u;
+    memset(&tick_result, 0, sizeof(tick_result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world,
+                                                    &tick_result);
+    for (i = 0; i < tick_result.emissionCount; ++i) {
+        if (tick_result.emissions[i].kind == EMIT_CHAMPION_DAMAGE_HIDDEN &&
+            tick_result.emissions[i].payload[0] == 2) {
+            found_hide = 1;
+        }
+    }
+    CHECK(found_hide,
+          "C12 dispatch reaches the source champion-panel hide receipt");
+
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    loaded_world.timeline.count = 1;
+    memset(&loaded_world.timeline.events[0], 0,
+           sizeof(loaded_world.timeline.events[0]));
+    loaded_world.timeline.events[0].kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    loaded_world.timeline.events[0].fireAtTick = 123495u;
+    loaded_world.timeline.events[0].mapIndex = 1;
+    loaded_world.timeline.events[0].aux0 = DM1_EVENT_HIDE_DAMAGE_RECEIVED;
+    loaded_world.timeline.events[0].aux4 = 1;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc == SAVEGAME_PC34_OK && exported_size > 0,
+          "C12 runtime event exports without inventing B/C union fields");
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_size, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_event_count == 1 &&
+              report.events[0].type == DM1_EVENT_HIDE_DAMAGE_RECEIVED &&
+              report.events[0].priority == 1 &&
+              report.events[0].b_mapX == 0 && report.events[0].b_mapY == 0 &&
+              report.events[0].c_cell == 0 && report.events[0].c_effect == 0,
+          "C12 export retains priority and zeroes unowned union bytes");
+}
+
 static void test_runtime_materializer_binds_original_explosion_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2431,6 +2523,7 @@ int main(void)
     test_runtime_handoff_is_transactional_on_rejected_tail();
     test_runtime_handoff_rejects_unmaterialized_source_event();
     test_runtime_materializer_binds_original_sound_union();
+    test_runtime_materializer_binds_original_c12_damage_hide();
     test_runtime_materializer_binds_original_explosion_union();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();

@@ -19,6 +19,15 @@
   timer kinds. Source: CSBWin `Timer.cpp:1453-1491,1509-1541,2343-2508`,
   `DSA.cpp:5296-5456`. Verification: Ninja and CTest
   `csb_v1_phase7_verification`.
+- 2026-07-13 DM1 PC34 C12 hide-damage handoff: saved
+  `C12_EVENT_HIDE_DAMAGE_RECEIVED` now imports through F0435, materializes
+  with only its source-owned `Map_Time` and `Priority`, clears the matching
+  M11 champion-damage overlay when TIMELINE.C F0254 expires, and exports as
+  C12 with zeroed unowned B/C union bytes. Invalid or absent champion
+  priorities reject; C13 remains blocked because its three-step altar/object
+  chain is not yet fully source-owned. Source: ReDMCSB `CHAMPION.C F0320`,
+  `TIMELINE.C F0254/F0261`, and `DEFS.H` C12. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` pass.
 
 - 2026-07-13 DM1 PC34 original-save C11 enable-action handoff: a saved
   `C11_EVENT_ENABLE_CHAMPION_ACTION` with `SlotOrdinal == 0` now imports,

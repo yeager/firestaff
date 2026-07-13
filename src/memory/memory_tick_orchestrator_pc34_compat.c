@@ -18,6 +18,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
@@ -10609,6 +10610,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_STATUS_TIMEOUT: {
             struct TimelineEvent_Compat resched;
             struct TimelineEvent_Compat statusEvent;
+            /* ReDMCSB TIMELINE.C F0254 consumes C12 through Priority only:
+             * clear the source damage indicator in M11 and do not route its
+             * undefined B/C union bytes through spell-status lifecycle. */
+            if (ev.aux0 == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
+                if (ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                    world->party.champions[ev.aux4].present) {
+                    emit(result, EMIT_CHAMPION_DAMAGE_HIDDEN,
+                         ev.aux4, 0, 0, 0);
+                }
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);

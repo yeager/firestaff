@@ -147,6 +147,9 @@
 #define EMIT_CHAMPION_DAMAGED 0x10  /* payload: champion, party cell, damage, wound mask */
 #define EMIT_TEXT_MESSAGE     0x11  /* F0245: TextString index, map, x, y */
 #define EMIT_ACTION_ENABLED   0x12  /* payload: champion, source slot ordinal */
+/* ReDMCSB TIMELINE.C F0254: C12 hides the saved champion damage graphic.
+ * payload[0] is EVENT.Priority, the original champion index. */
+#define EMIT_CHAMPION_DAMAGE_HIDDEN 0x13
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the

@@ -1,11 +1,11 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
-  `SlotOrdinal` action-enable route is complete. The non-zero-slot
-  `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch,
-  C12 hide-damage overlay removal, and C13 Vi Altar rebirth remain blocked
-  until their original live inventory and UI routes are bound. Do not coerce
-  their native bytes into substitute Firestaff state.
+  `SlotOrdinal` action-enable route and C12 hide-damage removal are complete.
+  The non-zero-slot `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot`
+  branch and C13 Vi Altar rebirth remain blocked until their original live
+  inventory/object routes are bound. Do not coerce their native bytes into
+  substitute Firestaff state.
 
 - 🔧 2026-07-13 Nexus Structure1F runtime follow-up: any typed alcove or
   wall-family record that remains bound only through Structure1A now blocks
