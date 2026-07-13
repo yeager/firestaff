@@ -359,6 +359,7 @@ int dm1_v1_original_save_pc34_decode_header_receipt(
     receipt.header_size_ok = bytes && size >= DM1_ORIGINAL_SAVE_HEADER_BYTES;
     if (!receipt.header_size_ok) { if (out_receipt) *out_receipt = receipt; return 0; }
     memset(&classified, 0, sizeof(classified));
+    /* ReDMCSB SAVEHEAD.C F0429 reads PC header words little-endian. */
     (void)classify_original_header_with_endian(bytes, size, DM1OS_ENDIAN_LE, &classified);
     receipt.expected_checksum = classified.header_expected_checksum;
     receipt.actual_checksum = classified.header_actual_checksum;
