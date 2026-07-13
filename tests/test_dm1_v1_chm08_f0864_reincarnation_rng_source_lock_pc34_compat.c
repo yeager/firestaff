@@ -14,9 +14,8 @@
  *  T1  All vitals (health, stamina, mana) are halved (max & current)
  *  T2  With rngValues all 0, statIncrements[0] = 12 (all 12 picks
  *      go to stat 0)
- *  T3  With rngValues {0..11}, each statIncrements[i] = 1
- *      (each stat picked once) -- but only for stats 0..6.  Stats
- *      7..11 contribute nothing (rng % 7 wraps).
+ *  T3  Out-of-domain values are rejected and cannot wrap into another
+ *      statistic selection.
  *  T4  With deterministic rng, the result is deterministic
  *      (call N times with same rng => same result)
  *  T5  Loop runs exactly 12 times (sum of statIncrements == 12)
@@ -46,6 +45,7 @@ int main(void) {
     memset(rng, 0, sizeof(rng));
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         200, 100, 400, 200, 100, 50, rng);
+    CHECK(r.valid == 1, "T1: valid source draws publish a plan");
     CHECK(r.newMaxHealth == 100,       "T1: maxHealth halved (200->100)");
     CHECK(r.newCurrentHealth == 50,    "T1: currentHealth halved (100->50)");
     CHECK(r.newMaxStamina == 200,      "T1: maxStamina halved (400->200)");
@@ -57,31 +57,23 @@ int main(void) {
     memset(rng, 0, sizeof(rng));
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         100, 50, 200, 100, 50, 25, rng);
+    CHECK(r.valid == 1, "T2: all-zero source draws are valid");
     CHECK(r.statIncrements[0] == 12, "T2: rng all 0 -> stat 0 gets all 12");
     sum = 0;
     for (i = 0; i < 7; ++i) sum += r.statIncrements[i];
     CHECK(sum == 12, "T2: total increments == 12");
 
-    /* T3: rng {0,1,2,3,4,5,6,7,8,9,10,11} -> stat 0..6 picked
-     * once each (7 picks), then 5 picks wrap (7%7=0, 8%7=1, ...
-     * 11%7=4) -> stat 0 gets +2, stat 1 gets +2, stat 2 gets +2,
-     * stat 3 gets +2, stat 4 gets +2, stat 5 gets +1, stat 6 gets +1. */
+    /* T3: M002_RANDOM(7) cannot produce 7, so no wrap is source-valid. */
     for (i = 0; i < 12; ++i) rng[i] = (uint8_t)i;
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         100, 50, 200, 100, 50, 25, rng);
-    CHECK(r.statIncrements[0] == 2, "T3: stat 0 gets 2 picks (0+7)");
-    CHECK(r.statIncrements[1] == 2, "T3: stat 1 gets 2 picks (1+8)");
-    CHECK(r.statIncrements[2] == 2, "T3: stat 2 gets 2 picks (2+9)");
-    CHECK(r.statIncrements[3] == 2, "T3: stat 3 gets 2 picks (3+10)");
-    CHECK(r.statIncrements[4] == 2, "T3: stat 4 gets 2 picks (4+11)");
-    CHECK(r.statIncrements[5] == 1, "T3: stat 5 gets 1 pick (5)");
-    CHECK(r.statIncrements[6] == 1, "T3: stat 6 gets 1 pick (6)");
+    CHECK(r.valid == 0, "T3: out-of-domain draw rejects the plan");
     sum = 0;
     for (i = 0; i < 7; ++i) sum += r.statIncrements[i];
-    CHECK(sum == 12, "T3: total increments == 12");
+    CHECK(sum == 0, "T3: rejected plan has no stat mutations");
 
     /* T4: Deterministic for same rng. */
-    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)((i * 31 + 7) & 0xFF);
+    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)((i * 3 + 1) % 7);
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         100, 50, 200, 100, 50, 25, rng);
     ReincarnationResult_Compat r2 = F0864_RESURRECTION_ComputeReincarnation_Compat(
@@ -93,7 +85,7 @@ int main(void) {
     CHECK(r.newMaxHealth == r2.newMaxHealth, "T4: deterministic maxHealth");
 
     /* T5: Sum across all 7 stat increments is exactly 12. */
-    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)((i * 13 + 3) & 0x07);
+    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)((i * 13 + 3) % 7);
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         100, 50, 200, 100, 50, 25, rng);
     sum = 0;
@@ -101,7 +93,7 @@ int main(void) {
     CHECK(sum == 12, "T5: sum of statIncrements == 12");
 
     /* T6: All stat indices in 0..6 (never out of range). */
-    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)(i * 7 + 1);  /* arbitrary */
+    for (i = 0; i < 12; ++i) rng[i] = (uint8_t)(i % 7);
     r = F0864_RESURRECTION_ComputeReincarnation_Compat(
         100, 50, 200, 100, 50, 25, rng);
     for (i = 0; i < 7; ++i) {

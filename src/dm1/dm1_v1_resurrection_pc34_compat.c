@@ -134,6 +134,24 @@ ReincarnationResult_Compat F0864_RESURRECTION_ComputeReincarnation_Compat(
     ReincarnationResult_Compat result;
     int i;
 
+    /* ReDMCSB: REVIVE.C F0282 lines 832-835 applies each of the twelve
+     * M002_RANDOM(7) results directly as a statistic index.  Do not fold an
+     * unbounded host byte into a different reincarnation stat mutation. */
+    result.valid = 0;
+    result.newMaxHealth = maxHealth;
+    result.newCurrentHealth = currentHealth;
+    result.newMaxStamina = maxStamina;
+    result.newCurrentStamina = currentStamina;
+    result.newMaxMana = maxMana;
+    result.newCurrentMana = currentMana;
+    for (i = 0; i < 7; ++i) {
+        result.statIncrements[i] = 0;
+    }
+    if (!rngValues) return result;
+    for (i = 0; i < 12; ++i) {
+        if (rngValues[i] >= 7u) return result;
+    }
+
     /* Halve all vitals (DM1 V1 / MEDIA265_S20E) */
     result.newMaxHealth = maxHealth >> 1;
     result.newCurrentHealth = currentHealth >> 1;
@@ -142,18 +160,14 @@ ReincarnationResult_Compat F0864_RESURRECTION_ComputeReincarnation_Compat(
     result.newMaxMana = maxMana >> 1;
     result.newCurrentMana = currentMana >> 1;
 
-    /* Clear stat increments */
-    for (i = 0; i < 7; i++) {
-        result.statIncrements[i] = 0;
-    }
-
     /* 12 random stat increments: each rngValues[i] is pre-rolled RANDOM(7)
      * yielding a stat index 0..6. Both current and maximum are incremented. */
     for (i = 0; i < 12; i++) {
-        uint8_t statIdx = rngValues[i] % 7;
+        uint8_t statIdx = rngValues[i];
         result.statIncrements[statIdx]++;
     }
 
+    result.valid = 1;
     return result;
 }
 
