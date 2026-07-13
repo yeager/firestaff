@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw wall-payload-selector receipt: complete
+  Structure1A-owned wall-decoration and wall-sensor records now retain their
+  raw payload-selector byte reuse through the DGN corpus, host handoff, and
+  render plan. The byte is not mapped to an object, model, aspect, material,
+  trigger, texture, palette, or pixel. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 Nexus Structure1F raw signed-offset-pair receipt: complete
   Structure1A-owned alcove/wall records now retain exact signed offset-byte
   pairs, ranges, and reuse through the DGN corpus, host handoff, and render
