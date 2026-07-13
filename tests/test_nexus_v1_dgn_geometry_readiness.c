@@ -759,6 +759,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -779,6 +780,8 @@ static void test_structure1f_semantics_and_bounds(void) {
     for (int index = 0; index < 9; ++index) {
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
             (uint8_t)(0x20 + index);
+        structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 2] =
+            (uint8_t)(index % 4);
     }
     set_structure1a_owner_ref(structure1, structure1b_rel, 10, 10, 0);
     set_structure1a_owner_ref(structure1, structure1b_rel, 11, 10, 3);
@@ -843,8 +846,22 @@ static void test_structure1f_semantics_and_bounds(void) {
           level.structure1f_entries[7].structure1a_relation_valid &&
           level.structure1f_entries[7].structure1a_owner_x == 11 &&
           level.structure1f_entries[7].structure1a_owner_y == 10 &&
-          level.structure1f_entries[7].structure1a_structure3_model_index == 0x23,
+          level.structure1f_entries[7].structure1a_structure3_model_index == 0x23 &&
+          level.structure1f_entries[7].structure1a_z_rotation == 3U,
           "Structure1F references resolve only through unique Structure1B owners");
+    CHECK(nexus_v1_level_structure1a_transform_selector_receipt(
+              &level, &transform_selectors) == 0 &&
+          transform_selectors.structure1a_relation_complete &&
+          transform_selectors.structure1f_bound_entry_count == 8 &&
+          transform_selectors.resolved_selector_count == 8 &&
+          transform_selectors.unique_selector_count == 4 &&
+          transform_selectors.duplicate_selector_count == 4 &&
+          transform_selectors.zero_selector_count == 3 &&
+          transform_selectors.nonzero_selector_count == 5 &&
+          transform_selectors.highest_selector == 3U &&
+          transform_selectors.complete &&
+          !transform_selectors.transform_semantics_proven,
+          "resolved Structure1A transform selectors remain no-draw provenance");
     CHECK(nexus_v1_level_structure3_model_reference_receipt(
               &level, &structure3_model_references) == 0 &&
           structure3_model_references.structure1a_relation_complete &&
@@ -961,6 +978,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1a_relation.resolved_entry_count == 8 &&
           handoff.structure3_model_references.complete &&
           handoff.structure3_model_references.unique_model_index_count == 7 &&
+          handoff.structure1a_transform_selectors.complete &&
+          handoff.structure1a_transform_selectors.unique_selector_count == 4 &&
+          !handoff.structure1a_transform_selectors.transform_semantics_proven &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
@@ -976,6 +996,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.status ==
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
           render_plan.structure3_model_references.complete &&
+          render_plan.structure1a_transform_selectors.complete &&
+          !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
           render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,

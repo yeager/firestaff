@@ -16,6 +16,15 @@
   C20:1903-1905. Verification: Ninja and CTest
   `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 Nexus Structure1A raw transform-selector receipt: complete
+  Structure1A-owned Structure1F records now carry original byte-2 selector
+  reuse into the DGN corpus, host handoff, and render-plan receipts. Its
+  transform grammar remains unproved: no rotation unit, face, vertex, mesh,
+  texture, palette, or pixel semantics is inferred, and rendering remains
+  fail-closed. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored `TT_77` Spell Shield bridge: the live queue now
   subtracts an exact signed `timerWord6` defense delta from the imported
   SpellShield tail only after queue-slot, timer, and event identity validation.

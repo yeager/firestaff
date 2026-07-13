@@ -162,6 +162,7 @@ typedef struct {
     int structure1a_owner_x;
     int structure1a_owner_y;
     uint8_t structure1a_structure3_model_index;
+    uint8_t structure1a_z_rotation;
     uint8_t face;
     uint8_t destination_x;
     uint8_t destination_y;
@@ -225,6 +226,22 @@ typedef struct {
     int nonzero_model_index_count;
     int complete;
 } Nexus_V1_DgnStructure3ModelReferenceReceipt;
+
+/* Structure1A byte 2 reaches a Structure1F record only through the complete
+ * owner relation. Its original transform grammar is not decoded: this records
+ * raw selector reuse only, never a rotation, face, mesh, or draw command. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_selector_count;
+    int unique_selector_count;
+    int duplicate_selector_count;
+    int zero_selector_count;
+    int nonzero_selector_count;
+    uint8_t highest_selector;
+    int complete;
+    int transform_semantics_proven;
+} Nexus_V1_DgnStructure1ATransformSelectorReceipt;
 
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
@@ -646,6 +663,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -738,6 +756,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -791,6 +810,9 @@ int nexus_v1_level_structure1a_relation_receipt(
 int nexus_v1_level_structure3_model_reference_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3ModelReferenceReceipt *out_receipt);
+int nexus_v1_level_structure1a_transform_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
