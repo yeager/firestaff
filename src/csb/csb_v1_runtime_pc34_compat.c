@@ -16936,6 +16936,40 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * acquire a future generic event path without saved identity checks. */
         return 1;
     }
+    if (timer->function == 24u) {
+        CSB_V1_DungeonData *saved_dungeon;
+        uint16_t timer_object;
+        uint8_t *object_record;
+        int object_size;
+
+        /* CSBWin CSBCode.cpp:6490-6502 removes timerObj8 from its saved
+         * square, then writes RNfree to its common record. Preserve that
+         * exact two-part ownership only when the complete timer receipt and
+         * original Thing chain both validate. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && profile->dungeon_handle) {
+            timer_object = (uint16_t)timer->ubyte8 |
+                ((uint16_t)timer->ubyte9 << 8);
+            if (timer_object == 0xfffeu || timer_object == 0xffffu) return 1;
+            saved_dungeon = profile->dungeon_handle;
+            object_record = csb_v1_runtime_mutable_thing_record(
+                saved_dungeon, timer_object, NULL, &object_size);
+            if (!object_record || object_size < 2) return 1;
+            if (csb_v1_runtime_unlink_thing_from_square(
+                    saved_dungeon, timer_object, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_write_u16(object_record, 0xffffu);
+            }
+        }
+        /* TT_24 has no generic timeline equivalent with this object lifetime.
+         * Invalid receipts remain source-owned and cannot fall through. */
+        return 1;
+    }
     if (timer->function == 1u) {
         uint8_t *square;
         int square_type;
