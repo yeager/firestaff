@@ -14912,6 +14912,63 @@ static void csb_v1_runtime_cleanup_csbwin_extended_state(
     csb_v1_runtime_reset_csbwin_extended_metadata(profile);
 }
 
+static int csb_v1_runtime_csbwin_inventory_thing_is_null(uint16_t thing)
+{
+    /* RNnul is 0xffff in CSBWin. Older Firestaff summaries also used zero
+     * for an empty slot, so accept both representations at this boundary. */
+    return thing == 0u || thing == THING_NONE;
+}
+
+static int csb_v1_runtime_validate_csbwin_inventory_ownership(
+    const CSB_V1_CSBWin512BodyReport *summary)
+{
+    uint16_t champion_index;
+    uint16_t slot_index;
+
+    if (!summary || summary->num_character > CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+
+    /* CSBWin SaveGame.cpp:1023-1032 removes the cursor RN's weight from
+     * d.CH16482[d.HandChar] before serializing GAMEBLOCK2. On restore,
+     * SaveGame.cpp:1802-1808 restores that same RN and CSBCode.cpp:6830-6865
+     * puts it back on the cursor owner. A non-null cursor RN without a
+     * declared saved champion owner is therefore not a usable save atom. */
+    if (!csb_v1_runtime_csbwin_inventory_thing_is_null(
+            summary->object_in_hand)) {
+        if (summary->hand_char >= summary->num_character ||
+            !summary->champions[summary->hand_char].valid ||
+            summary->object_in_hand == THING_ENDOFLIST) {
+            return -1;
+        }
+    }
+
+    /* CHARDESC::possessions is the source-owned C00..C29 inventory. Keep
+     * each raw RN intact here; its dungeon-record identity is resolved only
+     * after the matching original dungeon is live. This gate must not invent
+     * a separate object database from a save summary, but an end-of-list
+     * sentinel is never a serializable inventory object. */
+    for (champion_index = 0u;
+         champion_index < summary->num_character;
+         ++champion_index) {
+        const CSB_V1_CSBWin512ChampionSummary *champion =
+            &summary->champions[champion_index];
+
+        if (!champion->valid) return -1;
+        for (slot_index = 0u;
+             slot_index < CSB_V1_SLOT_COUNT;
+             ++slot_index) {
+            uint16_t thing = champion->possessions[slot_index];
+
+            if (csb_v1_runtime_csbwin_inventory_thing_is_null(thing)) {
+                continue;
+            }
+            if (thing == THING_ENDOFLIST) return -1;
+        }
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_stage_csbwin_resume_report(
     CSB_V1_RuntimeProfile *candidate,
     const CSB_V1_CSBWin512BodyReport *summary)
@@ -14951,6 +15008,9 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
             summary->timer_summary_count) {
             return -1;
         }
+    }
+    if (csb_v1_runtime_validate_csbwin_inventory_ownership(summary) != 0) {
+        return -1;
     }
 
     /* CSBWin SaveGame.cpp:1768-1855 loads GAMEBLOCK2, ITEM16,
