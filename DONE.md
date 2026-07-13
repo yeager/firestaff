@@ -39,10 +39,11 @@
    PC34 data.
 - 2026-07-13 DM1 HoC C127 normal-close M648/C10 audit: a real-PC34
   regression opens C040 at an authentic C127 mirror, redraws the live panel,
-  resolves C160, and redraws the ordinary viewport without C162. The panel
-  clears the preceding M648/C10 tuple. The post-C160 wall then proves a fresh,
-  distinct visible PC34 TextString decode rather than stale material, and
-  returning restores the original graphic-258 glyph bytes unchanged. The C160
+  resolves C160, then redraws directly to a distinct authentic inscription
+  without C162. The panel clears the preceding M648/C10 tuple, and F0107
+  decodes the new TextString's exact graphic-258 glyph bytes instead of
+  retaining the old material. The post-C160 source wall is also independently
+  redrawn, and returning restores the original glyph bytes unchanged. The C160
   champion remains the one candidate added by F0280. Source: ReDMCSB
   `REVIVE.C` F0280/F0282:745-845, `DUNGEON.C` F0172:2585-2616, and
   `DUNVIEW.C` F0107:3592-3706,3913-3928, F0128. Verification: focused CTest

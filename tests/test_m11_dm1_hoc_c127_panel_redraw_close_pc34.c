@@ -66,7 +66,8 @@ static uint32_t hash_pixels(const unsigned char *pixels, int byteCount)
 
 static int find_text_pose(M11_GameViewState *state, HocPosePc34 *out,
                           unsigned char *framebuffer,
-                          M11_Dm1InscriptionHostPresentationReceipt *receipt)
+                          M11_Dm1InscriptionHostPresentationReceipt *receipt,
+                          int excludedTextStringIndex)
 {
     const struct DungeonMapDesc_Compat *map = &state->world.dungeon->maps[0];
     int y;
@@ -79,7 +80,8 @@ static int find_text_pose(M11_GameViewState *state, HocPosePc34 *out,
                 out->x = x; out->y = y; out->direction = direction;
                 draw_at(state, out, framebuffer);
                 M11_GameView_GetDm1InscriptionHostPresentationReceipt(receipt);
-                if (is_real_m648(receipt)) {
+                if (is_real_m648(receipt) &&
+                    receipt->textStringIndex != excludedTextStringIndex) {
                     out->ordinal = -1;
                     out->textIndex = receipt->textStringIndex;
                     return 1;
@@ -132,8 +134,9 @@ int main(void)
     const char *home;
     char defaultDataDir[1024];
     M11_GameViewState state;
-    HocPosePc34 text, mirror;
-    M11_Dm1InscriptionHostPresentationReceipt before, receipt, postClose, restored;
+    HocPosePc34 text, nextText, mirror;
+    M11_Dm1InscriptionHostPresentationReceipt before, nextExpected, receipt,
+        postClose, restored;
     const M11_AssetSlot *font;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
     uint32_t fontHash;
@@ -158,7 +161,9 @@ int main(void)
     if (!font || !font->loaded || !font->pixels ||
         font->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
         font->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34 ||
-        !find_text_pose(&state, &text, framebuffer, &before) ||
+        !find_text_pose(&state, &text, framebuffer, &before, -1) ||
+        !find_text_pose(&state, &nextText, framebuffer, &nextExpected,
+                        text.textIndex) ||
         !find_mirror_pose(&state, &mirror)) goto unavailable;
     fontHash = hash_pixels(font->pixels, (int)font->width * (int)font->height);
     partyCount = state.world.party.championCount;
@@ -184,6 +189,19 @@ int main(void)
         state.candidateMirrorPartyIndex != -1 ||
         state.world.party.championCount != partyCount + 1 ||
         !state.world.party.champions[candidateIndex].present) goto fail_close;
+    /* This is the first ordinary DUNVIEW redraw after C160: it goes straight
+     * to another corpus-backed inscription. F0107 must decode this current
+     * TextString with M648/C10 rather than retain the pre-panel glyph run. */
+    draw_at(&state, &nextText, framebuffer);
+    M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
+    if (!is_real_m648(&receipt) || receipt.textStringIndex != nextText.textIndex ||
+        receipt.textStringIndex == text.textIndex ||
+        receipt.glyphByteCount != nextExpected.glyphByteCount ||
+        memcmp(receipt.glyphBytes, nextExpected.glyphBytes,
+               (size_t)nextExpected.glyphByteCount) != 0 ||
+        fontHash != hash_pixels(font->pixels, (int)font->width * (int)font->height)) {
+        goto fail_direct;
+    }
     /* The next viewport redraw is not C162: it is the post-C160 normal DUNVIEW
      * frame. F0172 may reveal a real visible TextString on this now-disabled
      * portrait wall, but it must be freshly decoded, never retained M648. */
@@ -211,6 +229,7 @@ int main(void)
 unavailable: fprintf(stderr, "authentic PC34 HoC C127/M648 corpus route unavailable\\n"); goto fail;
 fail_panel: fprintf(stderr, "C127 panel redraw retained or replaced M648/C10 material\\n"); goto fail;
 fail_close: fprintf(stderr, "ordinary C160 close did not rebuild M648/C10 from a distinct PC34 TextString\\n"); goto fail;
+fail_direct: fprintf(stderr, "direct post-C160 inscription redraw retained old M648/C10 glyph material\\n"); goto fail;
 fail_restore: fprintf(stderr, "M648/C10 did not restore after ordinary close redraw\\n");
 fail: M11_GameView_Shutdown(&state); return 1;
 }
