@@ -670,15 +670,17 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 
 static CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
-    int *depth, int *forced_state, int parameter_count)
+    int *depth, int *forced_state, int parameter_count,
+    const CSB_V1_CSBWinDSAStackContext *context)
 {
     uint32_t v;
     uint32_t w;
     uint32_t count;
+    uint8_t skin;
     int32_t sv;
     int32_t sw;
 
-    if (!stack || !depth || !forced_state || parameter_count < 0 ||
+    if (!stack || !depth || !forced_state || !context || parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
     case 1u: /* STKOP_Plus */
@@ -830,6 +832,27 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
                                            (uint32_t)parameter_count)) {
             goto underflow;
+        }
+        break;
+    case 131u: /* STKOP_GetSkin, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:3107-3120 pops the packed five/five/six-bit
+         * location, reads the loaded SKIN_CACHE, then pushes its byte. */
+        if (!context->get_skin ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !context->get_skin(context->skin_user, v, &skin) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, skin)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
+    case 132u: /* STKOP_SetSkin, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:3122-3135 pops location first, then the skin byte.
+         * The runtime hook stages the original EXPOOL write and leaves this
+         * action rejected until a complete authentic record is present. */
+        if (!context->set_skin ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !context->set_skin(context->skin_user, v, (uint8_t)w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         break;
     default:
@@ -991,7 +1014,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             }
             rc = csb_v1_csbwin_dsa_execute_stack_subcode(
                 subcode, stack, &depth, &candidate.forced_state,
-                context->parameter_count);
+                context->parameter_count, context);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1064,6 +1087,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.parameter_count = parameter_count;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
+    context.get_skin = runner->get_skin;
+    context.set_skin = runner->set_skin;
+    context.skin_user = runner->skin_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
             runner->action_ordinal, &context, &execution) !=

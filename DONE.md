@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin DSA GETSKIN/SETSKIN EXPOOL bridge: authenticated
+  `AMPERSAND2` slots 3/4 now execute `STKOP_GetSkin` and `STKOP_SetSkin`
+  through the current level's original `EDT_Skins` route. The runtime stages
+  DSA action and EXPOOL writeback together, publishing only on success;
+  missing, cross-level, malformed, or failed later actions leave parameters
+  and saved bytes unchanged. Source: CSBWin `Data.h:1843-1844`,
+  `DSA.cpp:3107-3135`, and `data.cpp:2130-2167`. Verification: Ninja-built
+  `test_csb_v1_phase7_verification` and `test_csb_v1_saved_skin_expool_writeback`.
+
+- 2026-07-13 CSBWin global EXPOOL restore integrity: the contiguous
+  `EDBT_GlobalVariables` importer rejects a stale FNV receipt before it can
+  reinterpret a missing first record as an empty valid bank. The Phase 7
+  fixture supplies its authentic receipt and proves altered bytes leave the
+  published DSA bank intact.
+
 - 2026-07-13 DM1 F0209 C38 pending-projectile cell ordering: deferred
   quarter-square changes now run ReDMCSB `GROUP.C F0209:2402-2408`'s F0218
   scan against the original packed cells before C04 writeback. Pending

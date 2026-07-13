@@ -155,6 +155,17 @@ typedef struct {
 #define CSB_V1_CSBWIN_DSA_STACK_CAPACITY 100
 #define CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY 100
 
+/* CSBWin DSA.cpp:3107-3135 routes the two skin operators through the
+ * currently loaded SKIN_CACHE.  The bytecode module deliberately owns no
+ * dungeon or EXPOOL storage, so a runtime owner supplies this narrow,
+ * transactional bridge.  A missing hook keeps the opcode unsupported. */
+typedef int (*CSB_V1_CSBWinDSAGetSkinFn)(void *user,
+                                         uint32_t location,
+                                         uint8_t *out_skin);
+typedef int (*CSB_V1_CSBWinDSASetSkinFn)(void *user,
+                                         uint32_t location,
+                                         uint8_t skin);
+
 typedef struct {
     uint32_t master_location;
     uint32_t *parameters;
@@ -165,6 +176,9 @@ typedef struct {
      * fully consumed authenticated action succeeds. */
     uint32_t *global_variables;
     int global_variable_count;
+    CSB_V1_CSBWinDSAGetSkinFn get_skin;
+    CSB_V1_CSBWinDSASetSkinFn set_skin;
+    void *skin_user;
 } CSB_V1_CSBWinDSAStackContext;
 
 typedef struct {
@@ -358,6 +372,9 @@ typedef struct {
     uint32_t master_location;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
+    CSB_V1_CSBWinDSAGetSkinFn get_skin;
+    CSB_V1_CSBWinDSASetSkinFn set_skin;
+    void *skin_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
     int execution_count;

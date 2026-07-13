@@ -136,6 +136,8 @@ static void put_le32(uint8_t *buf, int off, uint32_t value)
     buf[off + 3] = (uint8_t)(value >> 24);
 }
 
+static uint32_t phase7_fnv1a32(const uint8_t *bytes, size_t size);
+
 static uint16_t pack3_codes(int a, int b, int c)
 {
     return (uint16_t)(((a & 31) << 10) | ((b & 31) << 5) | (c & 31));
@@ -584,6 +586,8 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     profile.csbwin_appended_tail_size = sizeof(appended_tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
     memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(
+        profile.csbwin_appended_tail, sizeof(appended_tail));
     action.dsa_id = 7u;
     action.state_index = 4u;
     action.program_words = program;
@@ -681,6 +685,105 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     csb_v1_runtime_cleanup(&profile);
 }
 
+static uint32_t phase7_fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static void test_runtime_csbwin_dsa_skin_expool_bridge(void)
+{
+    /* CSBWin Data.h:1843-1844 assigns AMPERSAND2 slots 3/4 to GetSkin and
+     * SetSkin.  This is a structurally valid DB11 fixture, not game data. */
+    uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    const uint32_t record_id = CSB_V1_SKIN_CACHE_EDT_SKINS << 24;
+    const uint32_t bucket = 32u + ((record_id * 0xbb40e62du) >> 27);
+    const uint32_t packed_location = (1u << 5) | 1u;
+    uint16_t program[] = {
+        0x0686u, 42u,              /* LOAD INTEGER skin */
+        0x0686u, packed_location,  /* LOAD INTEGER location */
+        0x0115u,                   /* AMPERSAND2 SetSkin */
+        0x0686u, packed_location,  /* LOAD INTEGER location */
+        0x00d5u,                   /* AMPERSAND2 GetSkin */
+        0x000du                    /* STORE parameter 0 */
+    };
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData *dungeon;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    uint8_t grid[4];
+    uint8_t before[sizeof(tail)];
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    int parameters[1] = { 0 };
+
+    memset(tail, 0, sizeof(tail));
+    put_le16(tail, 2, 3u);
+    put_le32(tail, (int)bucket * 4, 1u);
+    put_le32(tail, 1 * 4, 0u);
+    put_le32(tail, 2 * 4, record_id);
+    tail[3 * 4 + 0] = 1u;
+    tail[3 * 4 + 1] = 2u;
+    tail[3 * 4 + 2] = 3u;
+    tail[3 * 4 + 3] = 4u;
+    dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(*dungeon));
+    CHECK(dungeon != NULL, "CSBWin DSA skin fixture allocates a runtime-owned dungeon");
+    if (!dungeon) return;
+    dungeon->level_count = 1;
+    dungeon->level_widths[0] = 2;
+    dungeon->level_heights[0] = 2;
+    memset(&action, 0, sizeof(action));
+    action.dsa_id = 23u;
+    action.state_index = 7u;
+    action.program_words = program;
+    action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.current_level = 0;
+    profile.dungeon_handle = dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(tail);
+    memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(tail, sizeof(tail));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = 23;
+    runner.state_index = 7u;
+    runner.action_ordinal = 0;
+
+    CHECK(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 1 &&
+              parameters[0] == 42 &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &profile, record_id, &payload, &payload_size) == 1 &&
+              payload_size == 4u && payload[3] == 42u &&
+              csb_v1_runtime_custom_background_skin_grid(
+                  &profile, grid, (int)sizeof(grid), NULL, NULL, NULL,
+                  NULL) == 1 && grid[3] == 42u,
+          "CSBWin DSA GETSKIN/SETSKIN consume the authenticated EXPOOL skin column");
+
+    memcpy(before, profile.csbwin_appended_tail, sizeof(before));
+    profile.csbwin_appended_tail_valid = 0;
+    parameters[0] = 99;
+    CHECK(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 0 &&
+              parameters[0] == 99 &&
+              memcmp(before, profile.csbwin_appended_tail, sizeof(before)) == 0,
+          "missing CSBWin EXPOOL skin receipt rejects DSA mutation transactionally");
+    profile.csbwin_extended_dsa_state.imported_actions = NULL;
+    profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_runtime_cleanup(&profile);
+}
+
 static void test_runtime_csbwin_expool_global_variable_handoff(void)
 {
     uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES * 2u];
@@ -717,6 +820,7 @@ static void test_runtime_csbwin_expool_global_variable_handoff(void)
     profile.csbwin_appended_tail_size = sizeof(tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(tail);
     memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(tail, sizeof(tail));
     CHECK(csb_v1_runtime_restore_csbwin_expool_global_variables(&profile) == 0 &&
               profile.csbwin_global_variables_valid == 1 &&
               profile.csbwin_global_variable_count == 32u &&
@@ -775,6 +879,7 @@ static void test_runtime_csbwin_disable_saves_expool_policy(void)
     profile.csbwin_appended_tail_size = sizeof(tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(tail);
     memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(tail, sizeof(tail));
     csb_v1_runtime_init(&loaded, NULL);
     CHECK(csb_v1_runtime_save_game_to_path(&profile, source_path) == 0 &&
               csb_v1_runtime_load_game_from_path(&loaded, source_path) == 0 &&
@@ -936,6 +1041,8 @@ static void test_runtime_custom_background_skin_grid_from_csbwin_tail(void)
     profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
     profile.csbwin_appended_tail_truncated = 0;
     memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(
+        appended_tail, sizeof(appended_tail));
     memset(skins, 0xff, sizeof(skins));
 
     CHECK(csb_v1_runtime_custom_background_skin_grid(
@@ -1957,6 +2064,7 @@ int main(void)
     test_dungeon_real_format_expool_db11_skin_lookup();
     test_dungeon_decode_dsa_filter_location();
     test_runtime_csbwin_dsa_filter_binding();
+    test_runtime_csbwin_dsa_skin_expool_bridge();
     test_runtime_csbwin_expool_global_variable_handoff();
     test_runtime_csbwin_disable_saves_expool_policy();
     test_runtime_custom_background_skin_grid_from_expool();
