@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 real-corpus dungeon-tail receipt: F0435 -> F0433 ->
+  F0435 corpus verification now compares every observed original dungeon tail
+  byte-for-byte after the four external portraits, using the ReDMCSB F0433/
+  F0435 cursor. Tail-less external saves are recorded as explicitly tail-less;
+  a new tail, a missing tail, invalid checksum, size change, or raw-byte
+  change fails closed. The opt-in real-corpus test requires at least one
+  external PC34 candidate and never constructs a save. Verification: focused
+  native-PC34 handoff CTest; real-corpus path remains opt-in via
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
+
 - 2026-07-13 DM1 PC34 PARTY_INFO runtime handoff: F0435 now applies the
   source-owned signed light, party-shield, fire-shield, and spell-shield words
   from the leading C2 `PARTY_INFO` bytes to existing M10 magic/lifecycle
