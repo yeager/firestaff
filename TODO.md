@@ -109,7 +109,11 @@
   can diverge. Required: original executable trace and sound corpus.
 - SKPROJECT-GAP-004 — `SKULLWIN/c_map.cpp` marks map globals and ground-stack
   table meanings unresolved. Risk: over-promoted G1 record/tile ownership.
-  Required: multi-map original DUNGEON.DAT corpus plus debugger traces.
+  A raw-only G1 receipt now preserves verified column-index, ground-stack,
+  and trailing map-data bounds, counts, and hashes from hash-verified corpus.
+  It intentionally reports both table semantics absent. Required: multi-map
+  original DUNGEON.DAT corpus plus debugger traces that define `v1e03f4`,
+  `dunGroundStacks`, and bit `0x10` beyond their observed indexing contract.
 - SKPROJECT-GAP-005 — `SKWIN/DME.h` labels CCM `0x32..0x34` unknown. Risk:
   fabricated creature behaviour. Required: original opcode streams and
   instruction-level traces.
