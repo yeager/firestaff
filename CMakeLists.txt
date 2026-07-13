@@ -17585,6 +17585,20 @@ if(NOT TARGET test_dm1_v1_f0407_throw_c11_receipt_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_f0407_c04_receipt_pc34_compat)
+    add_executable(test_dm1_v1_f0407_c04_receipt_pc34_compat
+        tests/test_dm1_v1_f0407_c04_receipt_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0407_c04_receipt_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0407_c04_receipt_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0407_c04_receipt_pc34_compat
+        COMMAND test_dm1_v1_f0407_c04_receipt_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_f0407_swing_c11_receipt_pc34_compat)
     add_executable(test_dm1_v1_f0407_swing_c11_receipt_pc34_compat
         tests/test_dm1_v1_f0407_swing_c11_receipt_pc34_compat.c

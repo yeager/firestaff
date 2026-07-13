@@ -37,6 +37,8 @@
 enum {
     ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
     ORCH_SOUND_WOODEN_THUD_PC34 = 4,
+    /* ReDMCSB DATA.C G0060 I34E C04_SOUND_WOODEN_THUD priority. */
+    ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34 = 70,
     ORCH_POTION_EMPTY_FLASK_PC34 = 20,
     ORCH_JUNK_ZOKATHRA_PC34 = 51,
     ORCH_WEAPON_TORCH_PC34 = 2,
@@ -2699,23 +2701,18 @@ static void orch_cmd_attack_target_square_compat(
     int mapX = 0;
     int mapY = 0;
     if (world) {
-        DM1_MeleeF0402CommandDecodeInputPc34 in;
-        DM1_MeleeF0402CommandDecodePlanPc34 plan;
-        memset(&in, 0, sizeof(in));
-        memset(&plan, 0, sizeof(plan));
-        in.reserved2 = CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-            (((unsigned int)(direction & 3)
-              << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) &
-             CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK);
-        in.partyMapIndex = world->party.mapIndex;
-        in.partyMapX = world->party.mapX;
-        in.partyMapY = world->party.mapY;
-        in.partyDirection = world->party.direction;
-        if (dm1_v1_melee_command_decode_plan_f0402_pc34(&in, &plan) &&
-            plan.valid) {
-            mapIndex = plan.targetMapIndex;
-            mapX = plan.targetMapX;
-            mapY = plan.targetMapY;
+        /* ReDMCSB MENU.C F0407:1266-1272 derives L1251/L1252 from the
+         * champion-facing direction before it invokes F0402.  This helper
+         * needs that coordinate only; rebuilding a F0402 receipt here lost
+         * its action-owner fields and fail-closed to (0,0). */
+        mapIndex = world->party.mapIndex;
+        mapX = world->party.mapX;
+        mapY = world->party.mapY;
+        switch (direction & 3) {
+        case DIR_NORTH: --mapY; break;
+        case DIR_EAST:  ++mapX; break;
+        case DIR_SOUTH: ++mapY; break;
+        case DIR_WEST:  --mapX; break;
         }
     }
     if (outMapIndex) *outMapIndex = mapIndex;
@@ -4573,6 +4570,12 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         thud.mapX = mapX;
         thud.mapY = mapY;
         thud.aux0 = ORCH_SOUND_WOODEN_THUD_PC34;
+        /* ReDMCSB SOUND.C F0064:1536-1543 schedules the delayed thud as
+         * native C20 with B.Location, C.SoundIndex and Sound->Priority.
+         * Keep the full receipt so M11 cannot confuse another sound-4
+         * producer with F0407's closed-door branch. */
+        thud.aux2 = DM1_EVENT_PLAY_SOUND;
+        thud.aux4 = ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34;
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &thud);
     }
 
