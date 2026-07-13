@@ -22,6 +22,8 @@
 #include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
@@ -42,6 +44,16 @@ extern "C" {
 #define M11_DM1_MOUSE_MASK_LEFT DM1_V1_MOUSE_MASK_LEFT_PC34
 #define M11_DM1_MOUSE_LIST_INVENTORY DM1_V1_MOUSE_LIST_INVENTORY_PC34
 #define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
+#define M11_GameView_SetV1LeaderHandObject \
+    DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat
+#define M11_GameView_ClearV1LeaderHandObject \
+    DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat
+#define M11_GameView_GetV1LeaderHandThing \
+    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat
+#define M11_GameView_OpenV1ActionHandChest \
+    DM1_V1_M11Runtime_OpenActionHandChestPc34Compat
+#define M11_GameView_GetV1OpenChestThing \
+    DM1_V1_M11Runtime_GetOpenChestThingPc34Compat
 
 static inline int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
     return dm1_v1_graphic_champion_damage_small_pc34();
@@ -53,6 +65,63 @@ static inline int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
 
 static inline int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
     return dm1_v1_graphic_champion_portraits_pc34();
+}
+
+static inline int M11_GameView_GetV1ObjectIconSourceZone(
+    int iconIndex, int* outGraphic, int* outX, int* outY, int* outW,
+    int* outH) {
+    DM1_V1_ObjectIconSourceZonePc34 zone;
+    if (!outGraphic || !outX || !outY || !outW || !outH ||
+        !dm1_v1_object_icon_source_zone_pc34(iconIndex, &zone)) return 0;
+    *outGraphic = zone.graphic_index;
+    *outX = zone.x; *outY = zone.y; *outW = zone.w; *outH = zone.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1StatusHandSlotBoxZone(
+    int championSlot, int handIndex, int* outX, int* outY, int* outW,
+    int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_champion_status_hand_slot_box_rect_pc34(
+            championSlot, handIndex, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1StatusHandIconZone(
+    int championSlot, int handIndex, int* outX, int* outY, int* outW,
+    int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_champion_status_hand_icon_rect_pc34(
+            championSlot, handIndex, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1InventorySourceSlotBoxZone(
+    int sourceSlotBoxIndex, int* outX, int* outY, int* outW, int* outH) {
+    return dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
+        sourceSlotBoxIndex, outX, outY, outW, outH);
+}
+
+static inline int M11_GameView_GetV1InventoryPanelZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!outX || !outY || !outW || !outH) return 0;
+    rect = dm1_v1_inventory_panel_rect_pc34();
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1MouseCommandForPoint(
+    int mouseInputList, int screenX, int screenY, int buttonMask,
+    int* outCoordinateSpace, int* outZoneId) {
+    return DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        mouseInputList, screenX, screenY, buttonMask, outCoordinateSpace,
+        outZoneId);
 }
 
 static inline int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
