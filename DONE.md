@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0412 potion receipt publication: table-index potion
+  receipts now require the exact `Champion.Symbols[0] - '_'` power domain
+  `1..6` and `M003_RANDOM(16)` power result from ReDMCSB
+  `MENU.C F0412:1804-1807,1851-1854`. Invalid facts publish an explicit
+  failure receipt rather than retaining a prior successful flask mutation.
+  Verification: Ninja-built `firestaff_m10` and
+  `test_dm1_v1_spell_casting_pc34_compat`; direct focused
+  `test_dm1_v1_f0412_potion_receipt_domain_pc34_compat` and CTest
+  `dm1_v1_spell_casting_source_lock` passed.
+
 - 2026-07-13 DM1 F0401/F0407 action random-domain gate: WINDOW, fright
   actions, and FLIP now reject malformed random facts instead of folding them
   into source outcomes. ReDMCSB `MENU.C F0401:969-976` and

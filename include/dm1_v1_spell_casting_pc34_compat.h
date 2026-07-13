@@ -437,6 +437,7 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     int champIdx,
     const DM1_ChampionSpellStats* stats,
     uint16_t experienceRng16,
+    /* Exact ReDMCSB M003_RANDOM(16) result, not an unbounded RNG word. */
     uint16_t potionPowerRng16,
     int hasEmptyFlask,
     DM1_SpellF0412RuntimeReceipt* outReceipt);
