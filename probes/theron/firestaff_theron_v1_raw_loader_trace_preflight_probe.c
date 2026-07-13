@@ -10,10 +10,13 @@
 int main(void)
 {
     const char *raw = getenv("THERON_RAW_TRACK02");
+    const char *system_card = getenv("THERON_RAW_SYSTEM_CARD");
     const char *trace = getenv("THERON_RAW_LOADER_TRACE");
     const char *manifest = getenv("THERON_CAPTURE_MANIFEST");
     struct stat st;
     char md5[33];
+    char system_card_md5[33];
+    char trace_md5[33];
     char text[1024];
     uint8_t *raw_bytes;
     FILE *file;
@@ -21,8 +24,9 @@ int main(void)
     Theron_V1RawLoaderTraceReceipt trace_receipt;
     Theron_V1RawLoaderTraceReceipt bound_receipt;
 
-    if (!raw || !trace || stat(raw, &st) != 0 || st.st_size <= 0) {
-        printf("status=skip reason=explicit_raw_track02_and_trace_required\n");
+    if (!raw || !system_card || !trace || stat(raw, &st) != 0 ||
+        st.st_size <= 0) {
+        printf("status=skip reason=explicit_raw_track02_system_card_and_trace_required\n");
         return 0;
     }
     if ((size_t)st.st_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
@@ -30,6 +34,11 @@ int main(void)
         (strcmp(md5, THERON_TRACK02_MD5_US_BIN) != 0 &&
          strcmp(md5, THERON_TRACK02_MD5_JP_BIN) != 0)) {
         printf("status=blocked reason=raw_track02_unverified\n");
+        return 1;
+    }
+    if (!m12_file_md5_hex(system_card, system_card_md5) ||
+        !m12_file_md5_hex(trace, trace_md5)) {
+        printf("status=blocked reason=system_card_or_loader_trace_unhashed\n");
         return 1;
     }
     if (manifest) {
@@ -43,8 +52,8 @@ int main(void)
         text[sizeof(text) - 1u] = '\0';
         if (!theron_v1_capture_manifest_parse(text, &capture_manifest) ||
             !theron_v1_capture_manifest_matches_preflight_inputs(
-                &capture_manifest, raw, md5, capture_manifest.system_card_path,
-                capture_manifest.system_card_md5, trace)) {
+                &capture_manifest, raw, md5, system_card, system_card_md5,
+                trace, trace_md5)) {
             printf("status=blocked reason=capture_manifest_mismatch\n");
             return 1;
         }

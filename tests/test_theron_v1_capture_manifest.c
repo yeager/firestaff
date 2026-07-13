@@ -17,12 +17,13 @@ static void check(int condition, const char *name) {
 
 int main(void) {
     static const char valid[] =
-        "THERON_CAPTURE_MANIFEST_V1\n"
+        "THERON_CAPTURE_MANIFEST_V2\n"
         "track02_path=/media/track02.bin\n"
         "track02_md5=f23601102138f87c33025877767ebf76\n"
         "system_card_path=/bios/syscard3.pce\n"
         "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
-        "loader_trace_path=/captures/live.trace";
+        "loader_trace_path=/captures/live.trace\n"
+        "loader_trace_md5=35d3b8fae88a3864d12d0e4d62e4bcfa";
     Theron_V1CaptureManifest manifest;
     Theron_V1CaptureManifest copy;
     char written[1024];
@@ -36,36 +37,61 @@ int main(void) {
     check(theron_v1_capture_manifest_matches(
               &manifest, "/media/track02.bin",
               "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
-              "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace"),
+              "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace",
+              "35d3b8fae88a3864d12d0e4d62e4bcfa"),
           "matches every bound capture input");
     check(theron_v1_capture_manifest_write(&manifest, written, sizeof(written)) &&
               strcmp(written, valid) == 0 &&
               theron_v1_capture_manifest_parse(written, &copy),
           "round trips canonical manifest text");
     check(!theron_v1_capture_manifest_parse(
-              "THERON_CAPTURE_MANIFEST_V1\n"
+              "THERON_CAPTURE_MANIFEST_V2\n"
               "track02_path=/media/track02.bin\n"
               "track02_md5=F23601102138F87C33025877767EBF76\n"
               "system_card_path=/bios/syscard3.pce\n"
               "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
-              "loader_trace_path=/captures/live.trace", &manifest),
+              "loader_trace_path=/captures/live.trace\n"
+              "loader_trace_md5=35d3b8fae88a3864d12d0e4d62e4bcfa", &manifest),
           "rejects non-canonical MD5 text");
     check(!theron_v1_capture_manifest_parse(
-              "THERON_CAPTURE_MANIFEST_V1\n"
+              "THERON_CAPTURE_MANIFEST_V2\n"
               "track02_path=/media/track02.bin\n"
               "track02_md5=f23601102138f87c33025877767ebf76\n"
               "system_card_path=/bios/syscard3.pce\n"
               "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
-              "loader_trace_path=/captures/live.trace\nextra=forbidden", &manifest),
+              "loader_trace_path=/captures/live.trace\n"
+              "loader_trace_md5=35d3b8fae88a3864d12d0e4d62e4bcfa\n"
+              "extra=forbidden", &manifest),
           "rejects unbound trailing fields");
+    check(!theron_v1_capture_manifest_parse(
+              "THERON_CAPTURE_MANIFEST_V2\n"
+              "track02_path=/media/track02.bin\n"
+              "track02_md5=f23601102138f87c33025877767ebf76\n"
+              "system_card_path=/bios/syscard3.pce\n"
+              "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
+              "loader_trace_path=/captures/live\ttrace\n"
+              "loader_trace_md5=35d3b8fae88a3864d12d0e4d62e4bcfa", &manifest),
+          "rejects control bytes in capture paths");
+    check(!theron_v1_capture_manifest_matches_preflight_inputs(
+              &copy, "/media/track02.bin",
+              "F23601102138F87C33025877767EBF76", "/bios/syscard3.pce",
+              "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace",
+              "35d3b8fae88a3864d12d0e4d62e4bcfa"),
+          "rejects non-canonical caller provenance hashes");
+    check(!theron_v1_capture_manifest_matches_preflight_inputs(
+              &copy, "/media/track02.bin",
+              "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
+              "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace",
+              "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+          "rejects a trace file whose measured hash changed");
     check(!theron_v1_capture_manifest_parse(
               "THERON_CAPTURE_MANIFEST_V1\n"
               "track02_path=/media/track02.bin\n"
               "track02_md5=f23601102138f87c33025877767ebf76\n"
               "system_card_path=/bios/syscard3.pce\n"
               "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
-              "loader_trace_path=/captures/live\ttrace", &manifest),
-          "rejects control bytes in capture paths");
+              "loader_trace_path=/captures/live.trace", &manifest),
+          "rejects legacy trace-unbound manifest format");
 
     track02_fd = mkstemp(track02_path);
     system_card_fd = mkstemp(system_card_path);
