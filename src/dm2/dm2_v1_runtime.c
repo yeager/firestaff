@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_game.h"
+#include "dm2_v1_g1_scene_runtime_bridge.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
@@ -121,6 +122,7 @@ typedef struct {
     DM2_V1_G1TextWallGfxRuntimeReceipt g1_map5_text_wall_gfx_runtime;
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt g1_actuator_wall_gfx_runtime;
     DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
+    DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
 } DM2_V1_RuntimeState;
@@ -154,6 +156,53 @@ static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
 static int g_dm2_runtime_restore_in_progress = 0;
+
+static int dm2_runtime_resolve_g1_scene_gdat(
+    void *user,
+    DM2_V1_G1SceneTileClass tile_class,
+    DM2_V1_G1SceneRootClass root_class,
+    int *out_gdat_index)
+{
+    const DM2_V1_RuntimeState *rt = (const DM2_V1_RuntimeState *)user;
+
+    if (!rt || !out_gdat_index || !rt->gdat_scene_control_ready ||
+        rt->map_graphics_style < 0 || rt->map_graphics_style > 0xff ||
+        root_class == DM2_V1_G1_SCENE_ROOT_DOOR ||
+        root_class == DM2_V1_G1_SCENE_ROOT_CREATURE) {
+        return 0;
+    }
+    if (tile_class == DM2_V1_G1_SCENE_TILE_FLOOR) {
+        *out_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
+            rt->map_graphics_style,
+            DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
+        return *out_gdat_index > 0;
+    }
+    if (tile_class == DM2_V1_G1_SCENE_TILE_WALL) {
+        *out_gdat_index = dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+            rt->map_graphics_style, DM2_SQ_D0L);
+        return *out_gdat_index > 0;
+    }
+    /* A door tile can begin with DB1 and needs the later DB0 payload route.
+     * Do not turn its terrain tag into a guessed GDAT panel index. */
+    return 0;
+}
+
+static void dm2_runtime_refresh_g1_scene_handoff(
+    DM2_V1_RuntimeState *rt, int level, int x, int y)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!rt) return;
+    memset(&rt->g1_scene_runtime_handoff, 0,
+           sizeof(rt->g1_scene_runtime_handoff));
+    if (!rt->boot || !rt->boot->dungeon_data || rt->outdoor) return;
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    (void)dm2_v1_g1_scene_runtime_handoff(
+        dungeon, level, x, y, dm2_runtime_resolve_g1_scene_gdat, rt,
+        rt->viewport_asset_fetch, rt->viewport_asset_user,
+        rt->viewport_asset_palette_fetch, rt->viewport_asset_palette_user,
+        &rt->g1_scene_runtime_handoff);
+}
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
 #define DM2_RUNTIME_SAVE_VERSION 3u
@@ -1388,6 +1437,14 @@ int dm2_v1_runtime_g1_creature_map_chip_receipt(
     return 1;
 }
 
+int dm2_v1_runtime_g1_scene_handoff_receipt(
+    DM2_V1_G1SceneRuntimeHandoffReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.g1_scene_runtime_handoff;
+    return out_receipt->valid;
+}
+
 int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
     if (!boot_profile || !boot_profile->dm2_state) return 0;
     dm2_v1_runtime_init(boot_profile);
@@ -2398,6 +2455,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_misty_map,
         rt->gdat_thunder_position,
         rt->gdat_ambient_darkness);
+    dm2_runtime_refresh_g1_scene_handoff(
+        rt, rt->dungeon_level, party_x, party_y);
+    if (rt->g1_scene_runtime_handoff.blocked) {
+        /* A classified source tile has no verified GDAT material. Never let
+         * the renderer turn this into a fallback dungeon frame. */
+        return -1;
+    }
     dm2_v1_viewport_set_gdat_interface_palette(
         &viewport,
         rt->gdat_interface_palette_ready,

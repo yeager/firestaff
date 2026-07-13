@@ -30,6 +30,7 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_g1_scene_runtime_bridge.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -208,6 +209,11 @@ int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_creature_map_chip_receipt(
     DM2_V1_G1CreatureMapChipRuntimeReceipt *out_receipt);
+/* Source-classified G1 tile/root handoff used by the live dungeon frame.
+ * A direct class without a source material is reported blocked, never drawn
+ * through a generic material. */
+int dm2_v1_runtime_g1_scene_handoff_receipt(
+    DM2_V1_G1SceneRuntimeHandoffReceipt *out_receipt);
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);
