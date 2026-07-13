@@ -322,6 +322,12 @@ typedef struct {
      * succeeds. Failed rows can retain raw diagnostic evidence below, but
      * must never present it as a committed C13/C24/C25 corpus receipt. */
     int roundtrip_receipts_committed;
+    /* A corpus-only staging receipt for the original source bytes. It records
+     * which F0435 validation boundary rejected a candidate without exposing a
+     * partially imported runtime world or promoting optional-event evidence. */
+    int source_handoff_result;
+    int source_importer_result;
+    int source_part_checksum_ok_count;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;

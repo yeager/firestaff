@@ -14,6 +14,12 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 corpus failure provenance: rejected external-envelope
+  rows now retain the F0435 staging result, importer error, and count of
+  checksum-qualified parts in local-only candidate state. A malformed-tail
+  row proves all five accepted source parts then a fail-closed rollback with no
+  exported hash or committed C13/C24/C25 receipt. Source: ReDMCSB
+  `LOADSAVE.C` F0433/F0435. Verification: focused native-PC34 handoff CTest.
 
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in

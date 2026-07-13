@@ -96,6 +96,36 @@ static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
     return hash;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 authenticates each length-prefixed part before it
+ * reaches later runtime materializers. A corpus failure needs that boundary
+ * for diagnosis, but this probe owns only local staging objects. */
+static void dm1_original_save_corpus_receipt_source_handoff(
+    const uint8_t *bytes,
+    size_t size,
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    struct SaveGame_Compat staged_state;
+    struct PartyState_Compat staged_party;
+    struct TimelineQueue_Compat staged_timeline;
+    DM1OriginalSavePC34HandoffReport handoff_report;
+
+    if (!bytes || !receipt) {
+        return;
+    }
+    memset(&staged_state, 0, sizeof(staged_state));
+    memset(&staged_party, 0, sizeof(staged_party));
+    memset(&staged_timeline, 0, sizeof(staged_timeline));
+    memset(&handoff_report, 0, sizeof(handoff_report));
+    staged_state.party = &staged_party;
+    staged_state.timeline = &staged_timeline;
+    receipt->source_handoff_result =
+        dm1_v1_original_save_pc34_handoff_bytes(
+            bytes, size, &staged_state, &handoff_report);
+    receipt->source_importer_result = handoff_report.importer_result;
+    receipt->source_part_checksum_ok_count =
+        handoff_report.part_checksum_ok_count;
+}
+
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
 #define DM1_PC34_ORIGINAL_PARTY_INFO_BYTE_COUNT 128u
 #define DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT \
@@ -4437,6 +4467,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         memset(receipt, 0, sizeof(*receipt));
         receipt->classified_loader_envelope = 1;
         receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        receipt->source_handoff_result =
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        receipt->source_importer_result = SAVEGAME_PC34_ERROR_INTERNAL;
         receipt->game_id = corpus.results[i].game_id;
         snprintf(receipt->path, sizeof(receipt->path), "%s", corpus.paths[i]);
         result = read_original_pc34_file_bytes(
@@ -4459,8 +4492,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->source_byte_count = (uint32_t)source_size;
         receipt->source_hash = dm1_original_save_hash_bytes(
             source_bytes, source_size);
-        free(source_bytes);
         if (receipt->source_hash == 0u) {
+            free(source_bytes);
             if (discovery) {
                 discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
             }
@@ -4472,6 +4505,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         }
         if (!dm1_original_save_corpus_external_pc34_file(
                 corpus.paths[i], &firestaff_manifest)) {
+            free(source_bytes);
             receipt->firestaff_manifest = firestaff_manifest;
             if (discovery) {
                 discovery->result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
@@ -4501,16 +4535,19 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             snprintf(report.first_pc34_path, sizeof(report.first_pc34_path),
                      "%s", corpus.paths[i]);
         }
+        dm1_original_save_corpus_receipt_source_handoff(
+            source_bytes, source_size, receipt);
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;
         receipt->roundtrip_attempted = 1;
-        result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
-            corpus.paths[i],
+        result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+            source_bytes, source_size,
             corpus.results[i].game_id,
             exported_bytes,
             SAVEGAME_PC34_MAX_FILE_SIZE,
             &exported_size,
             &roundtrip);
+        free(source_bytes);
         /* ReDMCSB LOADSAVE.C F0435 reads C2, C3, and C4 as independent
          * authenticated parts. A corpus candidate must not pass merely
          * because no C13/C24/C25 subtype gives it an additional receipt:
