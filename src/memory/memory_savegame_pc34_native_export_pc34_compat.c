@@ -1593,6 +1593,20 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, thing);
+        } else if (type == DM1_EVENT_MOVE_GROUP_SILENT) {
+            uint16_t group_thing = (uint16_t)src->aux1;
+            int expected_kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+            /* ReDMCSB MOVESENS.C F0265 owns C60/C61's C04 group Slot. */
+            if (src->kind != expected_kind || src->aux0 < 0 || !things ||
+                !things->groups || src->aux0 >= things->groupCount ||
+                THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+                (int)THING_GET_INDEX(group_thing) != src->aux0 ||
+                src->aux2 != type || src->aux3 != 0 || src->aux4 != 0 ||
+                src->cell != 0 || src->mapIndex < 0 || src->mapIndex > 0xff ||
+                src->mapX < 0 || src->mapX > 0xff || src->mapY < 0 || src->mapY > 0xff) return 0;
+            dst[6] = (uint8_t)src->mapX;
+            dst[7] = (uint8_t)src->mapY;
+            write_u16_le(dst + 8u, group_thing);
         } else if (type == DM1_EVENT_PLAY_SOUND) {
             /* ReDMCSB SOUND.C:1536-1543 schedules C20 with B.Location
              * and the signed C.SoundIndex union member.  C.Cell/Effect is

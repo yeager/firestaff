@@ -7,6 +7,12 @@
   vertex, mesh, texture, palette, or pixel semantics. Verification: Ninja and
   CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
+- 2026-07-13 DM1 original PC34 C60 silent group-move roundtrip: typed handoff
+  binds zero-priority `B.Location` plus the original C04 `C.Slot`, enters the
+  existing F0252 deferred-move runtime owner, and native export rejects a
+  host-only group index. Source: ReDMCSB `MOVESENS.C` F0265:169-192 and
+  `TIMELINE.C` F0252:1505-1567. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
 - 2026-07-13 DM2 G1 WALL_GFX local-palette ownership: source DB2 Text and DB3
   Actuator wall graphics now retain `dtImage/1` dimensions, format, and the
