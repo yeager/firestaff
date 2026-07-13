@@ -1,7 +1,9 @@
 /* Canonical PC G1 GRAPHICS.DAT proof for the complete M11 HUD command plan. */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_boot.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "dm2_v1_save_load.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,12 +41,19 @@ int main(void)
     const char *home = getenv("HOME");
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     char path[1024];
+    char boot_root[1024];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
+    DM2_V1_BootProfile boot;
     DM2_V1_GdatHudM11CommandPlan plan;
     DM2_V1_HudPartyState party;
     int failures = 0;
+    uint8_t champion_mask[261];
+    uint8_t encoded_champion[261];
+    uint8_t decoded_champion[261];
+    uint8_t source_champion[261];
+    int encoded_champion_size;
     int expected_kind[DM2_V1_GDAT_HUD_M11_COMMAND_MAX] = {
         DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP,
@@ -63,8 +72,11 @@ int main(void)
 
     if (root && root[0]) {
         snprintf(path, sizeof(path), "%s/graphics.dat", root);
+        snprintf(boot_root, sizeof(boot_root), "%s/..", root);
     } else if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/data/graphics.dat",
+                 home);
+        snprintf(boot_root, sizeof(boot_root), "%s/.firestaff/data/dm2",
                  home);
     } else {
         puts("SKIP: no DM2 data root");
@@ -75,6 +87,7 @@ int main(void)
         return 0;
     }
     memset(&loader, 0, sizeof(loader));
+    dm2_v1_boot_profile_init(&boot);
     memset(&plan, 0, sizeof(plan));
     memset(&party, 0, sizeof(party));
     party.champion_count = DM2_V1_HUD_CHAMPION_SLOT_COUNT;
@@ -91,6 +104,35 @@ int main(void)
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         return 1;
+    }
+    if (dm2_v1_boot_scan_assets(&boot, boot_root) != 0 ||
+        dm2_v1_boot_enter_game(&boot) != 0) {
+        fputs("FAIL: canonical DM2 boot profile was not entered\n", stderr);
+        dm2_v1_boot_cleanup(&boot);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
+    for (int i = 0; i < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++i) {
+        char first_name[8];
+        if (!dm2_v1_boot_champion_hero_type_source_ready(
+                &boot, (uint8_t)i, first_name) || first_name[0] == '\0') {
+            ++failures;
+        }
+    }
+    memset(source_champion, 0, sizeof(source_champion));
+    source_champion[255] = 3u;
+    dm2_suppress_champion_mask(champion_mask);
+    encoded_champion_size = dm2_suppress_encode(
+        source_champion, champion_mask, sizeof(source_champion),
+        encoded_champion, sizeof(encoded_champion));
+    memset(decoded_champion, 0, sizeof(decoded_champion));
+    if (encoded_champion_size <= 0 || champion_mask[255] != 0xffu ||
+        dm2_suppress_decode(encoded_champion, (size_t)encoded_champion_size,
+                            champion_mask, sizeof(decoded_champion),
+                            decoded_champion, 0u) < 0 ||
+        decoded_champion[255] != source_champion[255]) {
+        ++failures;
     }
     if (!plan.valid || plan.command_count != DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         plan.command_hash == 0u) {
@@ -116,6 +158,7 @@ int main(void)
                command->destination.w, command->destination.h);
     }
     dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+    dm2_v1_boot_cleanup(&boot);
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
     if (failures != 0) {

@@ -1639,6 +1639,15 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
+/* Validate one skproject Champion::HeroType against its complete original
+ * GDAT family and return the first-name spelling REVIVE_PLAYER copies from
+ * CHAMPIONS[type]/dtText/0x18.  This is deliberately a source gate: a
+ * renderer may not turn a Firestaff-local portrait ordinal into HeroType. */
+int dm2_v1_boot_champion_hero_type_source_ready(
+    DM2_V1_BootProfile *profile,
+    uint8_t hero_type,
+    char out_first_name[8]);
+
 int dm2_v1_boot_graphicsset_scene_control(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,
