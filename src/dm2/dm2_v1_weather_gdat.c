@@ -132,10 +132,16 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     out->image_present = dm2_weather_has_environment_image(
         loader, graphicsset, out->image_field);
     if (!out->image_present) return 0;
+    out->query_metadata_valid = dm2_v1_asset_load_image_metadata(
+        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
+        out->image_field, &out->query_metadata);
+    if (!out->query_metadata_valid) return 0;
     hash = out->raw_hash;
     hash ^= out->rect_number;
     hash *= 16777619u;
     hash ^= out->flip_mode;
+    hash *= 16777619u;
+    hash ^= out->query_metadata.metadata_hash;
     hash *= 16777619u;
     out->material_hash = hash;
     out->material_valid = 1;
@@ -189,6 +195,7 @@ static int dm2_weather_overlay_append(
      * ten-byte command slot.  Do not turn a bare CMDSTR record into pixels. */
     if (source->command != command || !source->material_valid ||
         source->rect_number == 0u ||
+        !source->query_metadata_valid ||
         (receipt->material_mask & DM2_V1_WEATHER_COMMAND_MASK(command)) == 0u) {
         return 0;
     }
@@ -205,6 +212,14 @@ static int dm2_weather_overlay_append(
     out->commands[out->command_count].source_offset_y = 0;
     out->commands[out->command_count].source_scale_x = 0x40u;
     out->commands[out->command_count].source_scale_y = 0x40u;
+    out->commands[out->command_count].image_width =
+        source->query_metadata.width;
+    out->commands[out->command_count].image_height =
+        source->query_metadata.height;
+    out->commands[out->command_count].query_offset_x =
+        source->query_metadata.query_offset_x;
+    out->commands[out->command_count].query_offset_y =
+        source->query_metadata.query_offset_y;
     out->commands[out->command_count].material_hash = source->material_hash;
     ++out->command_count;
     out->required_mask |= DM2_V1_WEATHER_COMMAND_MASK(command);
@@ -213,6 +228,7 @@ static int dm2_weather_overlay_append(
     *hash = dm2_weather_hash_step(*hash, source->material_hash);
     *hash = dm2_weather_hash_step(*hash, source->rect_number);
     *hash = dm2_weather_hash_step(*hash, source->flip_mode);
+    *hash = dm2_weather_hash_step(*hash, source->query_metadata.metadata_hash);
     *hash = dm2_weather_hash_step(*hash, 0x40400000u);
     return 1;
 }

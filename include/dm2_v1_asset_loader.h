@@ -172,6 +172,25 @@ typedef struct {
     uint32_t hash;
 } DM2_V1_InterfacePalette;
 
+/* Exact non-pixel portion of the original IMG3 record consumed by
+ * QUERY_GDAT_SUMMARY_IMAGE/QUERY_TEMP_PICST.  Width and height come from
+ * the IMG3 header; the two offsets are the category-wide field 0xfe and the
+ * image-specific field.  No image decoder or generated surface is involved. */
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    uint16_t bits_per_pixel;
+    int graphicsset_offset_present;
+    int image_offset_present;
+    int8_t graphicsset_offset_x;
+    int8_t graphicsset_offset_y;
+    int8_t image_offset_x;
+    int8_t image_offset_y;
+    int16_t query_offset_x;
+    int16_t query_offset_y;
+    uint32_t metadata_hash;
+} DM2_V1_GdatImageMetadata;
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -235,6 +254,16 @@ int dm2_v1_asset_load_image_offset(
     int index,
     int field,
     uint16_t *out_value);
+
+/* Read only the source metadata that QUERY_TEMP_PICST receives before image
+ * realization. Returns zero unless the exact dtImage record is present;
+ * absent original dtImageOffset fields retain the source's zero offset. */
+int dm2_v1_asset_load_image_metadata(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    DM2_V1_GdatImageMetadata *out_metadata);
 
 /* Decode INTERFACE_GENERAL's paired dtPalIRGB/dtPalette16 entries.  The
  * original stores 256 four-byte IRGB rows and 16 one-byte palette indices;

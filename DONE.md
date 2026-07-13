@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 `QUERY_TEMP_PICST` weather metadata: each source-backed
+  environment command now retains the exact IMG3 dimensions/bpp and the
+  category-wide plus image-specific `dtImageOffset` coordinates before a
+  weather plan can consume it. This follows skproject
+  `QUERY_GDAT_SUMMARY_IMAGE`/`QUERY_TEMP_PICST`; absent source offset fields
+  preserve original zero displacement. No pixels, rectangle geometry, or
+  fallback placement is generated. Verification: Ninja-built and
+  CTest-passed `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 Theron post-latch controller dispatch receipt: extended the
   clean-source Mednafen instrumentation after the verified `$c897 -> $e900`
   exchange. It records the first ordered `$e97a -> $e981` controller-dispatch
