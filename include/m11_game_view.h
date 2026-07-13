@@ -116,6 +116,18 @@ static inline int M11_GameView_GetV1InventoryPanelZone(
     return 1;
 }
 
+/* ReDMCSB: DUNVIEW.C inventory-view backdrop is the viewport rectangle.
+ * Keep the legacy probe export source-owned by the DM1 layout helper. */
+static inline int M11_GameView_GetV1InventoryBackdropZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!outX || !outY || !outW || !outH) return 0;
+    rect = dm1_v1_inventory_backdrop_rect_pc34();
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
 static inline int M11_GameView_GetV1MouseCommandForPoint(
     int mouseInputList, int screenX, int screenY, int buttonMask,
     int* outCoordinateSpace, int* outZoneId) {
