@@ -503,6 +503,10 @@ int nexus_v1_inspect_dgn_material_corpus(
             ++receipt.structure3_direct_block_ordinal_mapping_disproven_level_count;
         }
         if (receipt.structure3_ordinal_correlations[level_index]
+                .direct_byte_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
                 .direct_run_ordinal_mapping_disproven) {
             ++receipt.structure3_direct_run_ordinal_mapping_disproven_level_count;
         }

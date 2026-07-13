@@ -273,7 +273,7 @@ typedef struct {
 } Nexus_V1_DgnStructure3PayloadReceipt;
 
 /* Correlates only documented Structure1A model-index bytes with documented
- * Structure3 block/run counts. A value larger than the count rules out a
+ * Structure3 byte/block-run counts. A value larger than a count rules out a
  * direct zero- or one-based ordinal mapping; it does not establish any other
  * mapping or decode a record, face, vertex, mesh, texture, or pixel. */
 typedef struct {
@@ -282,10 +282,13 @@ typedef struct {
     int resolved_model_reference_count;
     int highest_model_index;
     int structure3_block_count;
+    int structure3_nonzero_byte_run_count;
     int structure3_nonzero_block_run_count;
     int model_index_exceeds_block_count;
+    int model_index_exceeds_nonzero_byte_run_count;
     int model_index_exceeds_nonzero_block_run_count;
     int direct_block_ordinal_mapping_disproven;
+    int direct_byte_run_ordinal_mapping_disproven;
     int direct_run_ordinal_mapping_disproven;
     int face_semantics_proven;
     int valid;

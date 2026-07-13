@@ -521,10 +521,14 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.valid &&
               correlation.structure3_block_count ==
                   loaded_level.structure3_payload.block_count &&
+              correlation.structure3_nonzero_byte_run_count ==
+                  loaded_level.structure3_payload.nonzero_byte_run_count &&
               correlation.structure3_nonzero_block_run_count ==
                   loaded_level.structure3_payload.nonzero_block_run_count &&
               correlation.direct_block_ordinal_mapping_disproven ==
                   (correlation.model_index_exceeds_block_count > 0) &&
+              correlation.direct_byte_run_ordinal_mapping_disproven ==
+                  (correlation.model_index_exceeds_nonzero_byte_run_count > 0) &&
               correlation.direct_run_ordinal_mapping_disproven ==
                   (correlation.model_index_exceeds_nonzero_block_run_count > 0) &&
               !correlation.face_semantics_proven,
@@ -892,13 +896,16 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_correlation.resolved_model_reference_count == 8 &&
           structure3_correlation.highest_model_index == 0x28 &&
           structure3_correlation.structure3_block_count == 4 &&
+          structure3_correlation.structure3_nonzero_byte_run_count == 3 &&
           structure3_correlation.structure3_nonzero_block_run_count == 2 &&
           structure3_correlation.model_index_exceeds_block_count == 8 &&
+          structure3_correlation.model_index_exceeds_nonzero_byte_run_count == 8 &&
           structure3_correlation.model_index_exceeds_nonzero_block_run_count == 8 &&
           structure3_correlation.direct_block_ordinal_mapping_disproven &&
+          structure3_correlation.direct_byte_run_ordinal_mapping_disproven &&
           structure3_correlation.direct_run_ordinal_mapping_disproven &&
           !structure3_correlation.face_semantics_proven,
-          "Structure1A model indexes cannot become direct Structure3 block or run ordinals");
+          "Structure1A model indexes cannot become direct Structure3 byte, block, or run ordinals");
     level.structure1f_entries[7].structure1a_index = 9U;
     level.structure1f_entries[7].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_structure1a_relation_receipt(&level,
