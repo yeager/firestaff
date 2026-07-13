@@ -1,6 +1,10 @@
 # Firestaff DONE - Completed Work
 
 - 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
+- 2026-07-13 DM2 weather timer transaction receipt: a weather handoff is
+  proven only when authenticated timer bytes, a ten-byte DistantEnvironment
+  slot, and verified ENVIRONMENT material agree. Missing links reject.
+
 - 2026-07-13 DM2 runtime corpus receipt consumption: the selected per-file
   corpus row now supplies runtime path, type, size, and hash. Original
   envelope/raw rows return an explicit fail-closed rejection.
