@@ -94,6 +94,15 @@ typedef struct {
     bool    initialized;
 } DM2_SL_State;
 
+#define DM2_SK_CORPUS_RECEIPT_MAX 16u
+typedef struct {
+    int kind;
+    int import_rejected;
+    size_t payload_size;
+    uint32_t payload_hash;
+    char path[256];
+} DM2_SKSaveCandidateReceipt;
+
 typedef struct {
     uint8_t  valid_slot_count;
     uint16_t valid_slot_mask;
@@ -119,6 +128,8 @@ typedef struct {
     size_t   total_importable_payload_size;
     uint32_t importable_kind_mask;
     uint32_t importable_payload_hash;
+    uint8_t candidate_receipt_count;
+    DM2_SKSaveCandidateReceipt candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
     char     first_valid_path[256];
     char     first_importable_path[256];
 } DM2_SKSaveCorpusReceipt;

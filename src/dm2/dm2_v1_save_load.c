@@ -430,6 +430,17 @@ static void dm2_sksave_corpus_classify_payload(
             break;
     }
     if (importable_kind_ok) {
+        if (receipt->candidate_receipt_count < DM2_SK_CORPUS_RECEIPT_MAX) {
+            DM2_SKSaveCandidateReceipt *entry =
+                &receipt->candidate_receipts[receipt->candidate_receipt_count++];
+            entry->kind = candidate.kind;
+            entry->import_rejected =
+                candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION;
+            entry->payload_size = payload_size;
+            entry->payload_hash = dm2_sksave_corpus_payload_hash(
+                payload, payload_size, 2166136261u);
+            snprintf(entry->path, sizeof(entry->path), "%s", path);
+        }
         receipt->importable_kind_mask |=
             1u << ((unsigned int)candidate.kind & 31u);
         receipt->importable_payload_hash =
