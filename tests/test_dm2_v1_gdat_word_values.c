@@ -255,10 +255,10 @@ static void test_interface_palette_decoder_fixture(void)
 
 static void test_img3_local_palette_fixture(void)
 {
-    uint8_t raw[10 + 2 + 16];
-    uint32_t offsets[1] = { 0u };
-    uint32_t sizes[1] = { sizeof(raw) };
-    DM2_V1_GdatEntry entry;
+    uint8_t raw[2 * (10 + 2 + 16)];
+    uint32_t offsets[2] = { 0u, 28u };
+    uint32_t sizes[2] = { 28u, 28u };
+    DM2_V1_GdatEntry entries[2];
     DM2_V1_AssetLoader loader;
     uint8_t palette16[16];
     uint32_t hash = 0u;
@@ -271,19 +271,19 @@ static void test_img3_local_palette_fixture(void)
     raw[10] = 0x12u;
     for (int i = 0; i < 16; ++i) raw[12 + i] = (uint8_t)(0xe0u + i);
     memset(&loader, 0, sizeof(loader));
-    memset(&entry, 0, sizeof(entry));
+    memset(entries, 0, sizeof(entries));
     loader.data = raw;
     loader.data_size = sizeof(raw);
     loader.loaded = 1;
-    loader.raw_data_count = 1;
+    loader.raw_data_count = 2;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
-    loader.entries = &entry;
-    loader.entry_count = 1;
-    entry.cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
-    entry.cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entry.cls4 = 0x22u;
-    entry.data_index = 0u;
+    loader.entries = entries;
+    loader.entry_count = 2;
+    entries[0].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[0].cls4 = 0x22u;
+    entries[0].data_index = 0u;
 
     CHECK(dm2_v1_asset_load_image_local_palette(
               &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
@@ -296,6 +296,22 @@ static void test_img3_local_palette_fixture(void)
               &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
               palette16, &hash) == 0,
           "non-four-bit IMG3 image cannot claim a source local palette");
+
+    /* QUERY_GDAT_IMAGE_LOCALPAL falls back to MISCELLANEOUS/FE/FE. */
+    raw[28] = 2u;
+    raw[32] = 4u;
+    raw[38] = 0x12u;
+    for (int i = 0; i < 16; ++i) raw[40 + i] = (uint8_t)(0xa0u + i);
+    entries[1].cls1 = DM2_GDAT_CATEGORY_MISCELLANEOUS;
+    entries[1].cls2 = 0xfeu;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
+    entries[1].cls4 = 0xfeu;
+    entries[1].data_index = 1u;
+    CHECK(dm2_v1_asset_load_image_local_palette(
+              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
+              palette16, &hash) == 1 && palette16[0] == 0xa0u &&
+              palette16[15] == 0xafu && hash != 0u,
+          "non-four-bit image consumes skproject's real GDAT default palette");
 }
 
 int main(void)

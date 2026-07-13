@@ -75,8 +75,8 @@ int main(void)
     setup_custom_button(&viewport, framebuffer);
     custom_button_fetches = 0;
     dm2_v1_render_doors(&viewport);
-    CHECK("unbound custom WALL_GFX button blocks before asset fetch",
-          custom_button_fetches == 0 &&
+    CHECK("unbound custom WALL_GFX button blocks after exact image lookup",
+          custom_button_fetches == 1 &&
               viewport.asset_door_button_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
@@ -92,6 +92,7 @@ int main(void)
     text_receipt.materials[0].front_image_ready = 1;
     text_receipt.materials[0].front_image_width = 2;
     text_receipt.materials[0].front_image_height = 2;
+    text_receipt.materials[0].local_palette_hash = 0x47443150u;
     CHECK("text receipt accepts source WALL_GFX field one",
           dm2_v1_g1_text_wall_gfx_allows_button_material(
               &text_receipt, 0x2a, 1) &&
@@ -105,7 +106,7 @@ int main(void)
     custom_button_fetches = 0;
     dm2_v1_render_doors(&viewport);
     CHECK("other-map text receipt cannot authorize a WALL_GFX button",
-          custom_button_fetches == 0 &&
+          custom_button_fetches == 1 &&
               viewport.asset_door_button_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
@@ -119,7 +120,7 @@ int main(void)
     custom_button_fetches = 0;
     dm2_v1_render_doors(&viewport);
     CHECK("same-index receipt from another record cannot authorize a button",
-          custom_button_fetches == 0 &&
+          custom_button_fetches == 1 &&
               viewport.asset_door_button_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
@@ -135,6 +136,21 @@ int main(void)
     CHECK("verified text WALL_GFX receipt reaches the button asset consumer",
           custom_button_fetches == 1 &&
               viewport.asset_door_button_drawn_count == 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    setup_custom_button(&viewport, framebuffer);
+    dm2_v1_viewport_set_level(&viewport, 5);
+    text_receipt.materials[0].local_palette_hash = 0x12345678u;
+    dm2_v1_viewport_set_g1_wall_gfx_materials(
+        &viewport, &text_receipt, NULL);
+    custom_button_fetches = 0;
+    dm2_v1_render_doors(&viewport);
+    CHECK("mismatched WALL_GFX local palette blocks the custom button",
+          custom_button_fetches == 1 &&
+              viewport.asset_door_button_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
+    text_receipt.materials[0].local_palette_hash = 0x47443150u;
 
     memset(&actuator_receipt, 0, sizeof(actuator_receipt));
     actuator_receipt.valid = 1;

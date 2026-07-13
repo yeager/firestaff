@@ -4951,9 +4951,10 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
+    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
         texts, dm2_v1_boot_g1_wall_gfx_scalar_read,
-        dm2_v1_boot_g1_image_metadata_read, gfx, out);
+        dm2_v1_boot_g1_image_metadata_read,
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
 }
 
 int dm2_v1_boot_g1_actuator_wall_gfx_materials(
@@ -4967,9 +4968,11 @@ int dm2_v1_boot_g1_actuator_wall_gfx_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
+    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
         (const DM2_V1_DungeonData *)profile->dungeon_data, map,
-        dm2_v1_boot_g1_wall_gfx_scalar_read, gfx, out);
+        dm2_v1_boot_g1_wall_gfx_scalar_read,
+        dm2_v1_boot_g1_image_metadata_read,
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
 }
 
 int dm2_v1_boot_g1_creature_map_chip_materials(

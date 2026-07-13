@@ -952,6 +952,7 @@ int dm2_v1_asset_load_image_local_palette(
     uint32_t *out_hash)
 {
     const DM2_V1_GdatEntry *entry;
+    const DM2_V1_GdatEntry *fallback_entry;
     const uint8_t *raw;
     size_t raw_size = 0u;
     uint32_t hash = 2166136261u;
@@ -963,13 +964,34 @@ int dm2_v1_asset_load_image_local_palette(
     entry = dm2_gdat_find_entry(loader, category, index,
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
-    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u ||
-        rd16le(raw + 4) != 4u) {
+    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u) {
         return 0;
     }
 
+    /* skproject/SKULLWIN/c_querydb.cpp QUERY_GDAT_IMAGE_LOCALPAL returns
+     * MISCELLANEOUS/FE/FE when the selected image has no four-bit local
+     * palette. This is source GDAT data, not an interface-palette or
+     * Firestaff fallback. Keep the same bounded lookup so U8/IMG9 wall
+     * ornaments do not become falsely undrawable while malformed/missing
+     * default data still fails closed. */
+    if (rd16le(raw + 4) != 4u) {
+        if (category == DM2_GDAT_CATEGORY_MISCELLANEOUS &&
+            index == 0xfe && field == 0xfe) {
+            return 0;
+        }
+        fallback_entry = dm2_gdat_find_entry(
+            loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
+            DM2_GDAT_ENTRY_TYPE_IMAGE, 0xfe);
+        raw = dm2_gdat_raw_from_entry(loader, fallback_entry, &raw_size);
+        if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u ||
+            rd16le(raw + 4) != 4u) {
+            return 0;
+        }
+    }
+
     /* skproject/SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_LOCALPAL (3E74:521A)
-     * returns PTR_PADA(IMG3, QUERY_GDAT_RAW_DATA_LENGTH(index) - 16). */
+     * returns PTR_PADA(image, QUERY_GDAT_RAW_DATA_LENGTH(index) - 16), after
+     * the exact MISCELLANEOUS/FE/FE fallback above when required. */
     memcpy(out_palette16, raw + raw_size - 16u, 16u);
     for (i = 0; i < 16; ++i) {
         hash = (hash ^ out_palette16[i]) * 16777619u;
