@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC F0282 reincarnation state gate: the twelve champion
+  statistic increments now accept only direct `M002_RANDOM(7)` values from
+  ReDMCSB `REVIVE.C F0282:832-835`. Invalid or absent draw arrays publish a
+  non-mutating plan, while valid draws retain the source vital-halving and
+  exact per-stat increment state. Verification: Ninja-built `firestaff_m10`,
+  `test_dm1_v1_resurrection_pc34_compat`, and
+  `test_dm1_v1_chm08_f0864_reincarnation_rng_source_lock_pc34_compat`; direct
+  focused `test_dm1_v1_f0282_reincarnation_state_domain_pc34_compat` and
+  CTest `dm1_v1_chm08_f0864_reincarnation_rng_source_lock` passed.
+
 - 2026-07-13 DM1 F0412 potion receipt publication: table-index potion
   receipts now require the exact `Champion.Symbols[0] - '_'` power domain
   `1..6` and `M003_RANDOM(16)` power result from ReDMCSB

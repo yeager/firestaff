@@ -145,6 +145,7 @@ RebirthHealthResult_Compat F0863_RESURRECTION_ComputeRebirthHealth_Compat(
  *   Skills cleared; Health/Stamina/Mana halved;
  *   12 random stat increments distributed. */
 typedef struct {
+    int valid;
     int16_t newMaxHealth;
     int16_t newCurrentHealth;
     int16_t newMaxStamina;
@@ -159,7 +160,8 @@ typedef struct {
  * Source: REVIVE.C F0282, MEDIA265 branch:
  *   CurrentHealth >>= 1; MaximumHealth >>= 1; (same for Stamina, Mana)
  *   Skills cleared; 12 random increments to random stats.
- * rngValues: array of 12 values, each pre-rolled as RANDOM(7) (0..6). */
+ * rngValues: array of 12 values, each pre-rolled as RANDOM(7) (0..6).
+ * Invalid or absent source draws return a non-mutating result with valid=0. */
 ReincarnationResult_Compat F0864_RESURRECTION_ComputeReincarnation_Compat(
     int16_t maxHealth, int16_t currentHealth,
     int16_t maxStamina, int16_t currentStamina,
