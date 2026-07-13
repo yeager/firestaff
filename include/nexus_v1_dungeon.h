@@ -242,6 +242,15 @@ typedef struct {
     int byte_transition_count;
     int first_nonzero_byte_offset;
     int last_nonzero_byte_offset;
+    /* Zero-separated nonempty byte spans inside the documented envelope.
+     * These are raw candidate search regions, never inferred record, face,
+     * or vertex boundaries. */
+    int nonzero_byte_run_count;
+    int longest_nonzero_byte_run;
+    int first_nonzero_byte_run_offset;
+    int first_nonzero_byte_run_byte_count;
+    int last_nonzero_byte_run_offset;
+    int last_nonzero_byte_run_byte_count;
     uint32_t raw_payload_hash;
     /* Structure3 is declared in complete 0x800-byte DGN blocks. These are
      * raw block-boundary observations only, not record, face, or vertex

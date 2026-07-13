@@ -374,6 +374,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_byte_total = 0;
     int structure3_nonzero_byte_total = 0;
     int structure3_transition_total = 0;
+    int structure3_nonzero_byte_run_total = 0;
+    int structure3_longest_nonzero_byte_run = 0;
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
     int structure3_nonzero_block_total = 0;
@@ -532,6 +534,28 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.zero_byte_count +
                           loaded_level.structure3_payload.nonzero_byte_count ==
                       loaded_level.structure3_payload.byte_size &&
+                  ((loaded_level.structure3_payload.nonzero_byte_count == 0 &&
+                    loaded_level.structure3_payload.nonzero_byte_run_count == 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_byte_run == 0 &&
+                    loaded_level.structure3_payload.first_nonzero_byte_run_offset == -1 &&
+                    loaded_level.structure3_payload.first_nonzero_byte_run_byte_count == 0 &&
+                    loaded_level.structure3_payload.last_nonzero_byte_run_offset == -1 &&
+                    loaded_level.structure3_payload.last_nonzero_byte_run_byte_count == 0) ||
+                   (loaded_level.structure3_payload.nonzero_byte_count > 0 &&
+                    loaded_level.structure3_payload.nonzero_byte_run_count > 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_byte_run > 0 &&
+                    loaded_level.structure3_payload.longest_nonzero_byte_run <=
+                        loaded_level.structure3_payload.nonzero_byte_count &&
+                    loaded_level.structure3_payload.first_nonzero_byte_run_offset >= 0 &&
+                    loaded_level.structure3_payload.first_nonzero_byte_run_byte_count > 0 &&
+                    loaded_level.structure3_payload.first_nonzero_byte_run_offset +
+                        loaded_level.structure3_payload.first_nonzero_byte_run_byte_count <=
+                        loaded_level.structure3_payload.byte_size &&
+                    loaded_level.structure3_payload.last_nonzero_byte_run_offset >= 0 &&
+                    loaded_level.structure3_payload.last_nonzero_byte_run_byte_count > 0 &&
+                    loaded_level.structure3_payload.last_nonzero_byte_run_offset +
+                        loaded_level.structure3_payload.last_nonzero_byte_run_byte_count <=
+                        loaded_level.structure3_payload.byte_size)) &&
                   loaded_level.structure3_payload.complete_block_count ==
                       loaded_level.structure3_payload.block_count &&
                   loaded_level.structure3_payload.zero_block_count +
@@ -592,6 +616,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                 loaded_level.structure3_payload.nonzero_byte_count;
             structure3_transition_total +=
                 loaded_level.structure3_payload.byte_transition_count;
+            structure3_nonzero_byte_run_total +=
+                loaded_level.structure3_payload.nonzero_byte_run_count;
+            if (loaded_level.structure3_payload.longest_nonzero_byte_run >
+                structure3_longest_nonzero_byte_run) {
+                structure3_longest_nonzero_byte_run =
+                    loaded_level.structure3_payload.longest_nonzero_byte_run;
+            }
             structure3_complete_block_total +=
                 loaded_level.structure3_payload.complete_block_count;
             structure3_zero_block_total +=
@@ -677,8 +708,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               structure3_complete_block_total &&
           structure3_nonzero_block_run_total <= structure3_nonzero_block_total &&
           structure3_longest_nonzero_block_run <= structure3_nonzero_block_total &&
+          structure3_nonzero_byte_run_total <= structure3_nonzero_byte_total &&
+          structure3_longest_nonzero_byte_run <= structure3_nonzero_byte_total &&
           structure3_transition_total >= 0,
-          "retail Structure3 corpus retains only documented block-occupancy runs");
+          "retail Structure3 corpus retains only raw zero-separated byte and block spans");
 }
 
 static void test_structure1c_record_table_bounds(void) {
@@ -830,6 +863,13 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_payload.first_nonzero_byte_offset == 1 &&
           structure3_payload.last_nonzero_byte_offset ==
               NEXUS_DGN_BLOCK_SIZE * 3 + 7 &&
+          structure3_payload.nonzero_byte_run_count == 3 &&
+          structure3_payload.longest_nonzero_byte_run == 2 &&
+          structure3_payload.first_nonzero_byte_run_offset == 1 &&
+          structure3_payload.first_nonzero_byte_run_byte_count == 2 &&
+          structure3_payload.last_nonzero_byte_run_offset ==
+              NEXUS_DGN_BLOCK_SIZE * 3 + 7 &&
+          structure3_payload.last_nonzero_byte_run_byte_count == 1 &&
           structure3_payload.complete_block_count == 4 &&
           structure3_payload.zero_block_count == 1 &&
           structure3_payload.nonzero_block_count == 3 &&

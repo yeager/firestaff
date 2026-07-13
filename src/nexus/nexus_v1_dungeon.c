@@ -40,6 +40,8 @@ static int nexus_v1_level_copy_structure3_payload(
     int block_index;
     int nonzero_block_run_start = -1;
     int nonzero_block_run_length = 0;
+    int nonzero_byte_run_start = -1;
+    int nonzero_byte_run_length = 0;
     int byte_index;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -61,6 +63,8 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.byte_size = byte_size;
     level->structure3_payload.first_nonzero_byte_offset = -1;
     level->structure3_payload.last_nonzero_byte_offset = -1;
+    level->structure3_payload.first_nonzero_byte_run_offset = -1;
+    level->structure3_payload.last_nonzero_byte_run_offset = -1;
     level->structure3_payload.first_nonzero_block_index = -1;
     level->structure3_payload.last_nonzero_block_index = -1;
     level->structure3_payload.first_nonzero_block_run_start_block_index = -1;
@@ -78,6 +82,20 @@ static int nexus_v1_level_copy_structure3_payload(
             hash *= 16777619u;
             if (value == 0U) {
                 ++level->structure3_payload.zero_byte_count;
+                if (nonzero_byte_run_length > 0) {
+                    if (level->structure3_payload
+                            .first_nonzero_byte_run_byte_count == 0) {
+                        level->structure3_payload
+                            .first_nonzero_byte_run_byte_count =
+                            nonzero_byte_run_length;
+                    }
+                    level->structure3_payload.last_nonzero_byte_run_offset =
+                        nonzero_byte_run_start;
+                    level->structure3_payload.last_nonzero_byte_run_byte_count =
+                        nonzero_byte_run_length;
+                }
+                nonzero_byte_run_start = -1;
+                nonzero_byte_run_length = 0;
             } else {
                 ++block_nonzero;
                 ++level->structure3_payload.nonzero_byte_count;
@@ -85,6 +103,21 @@ static int nexus_v1_level_copy_structure3_payload(
                     level->structure3_payload.first_nonzero_byte_offset = byte_index;
                 }
                 level->structure3_payload.last_nonzero_byte_offset = byte_index;
+                if (nonzero_byte_run_length == 0) {
+                    ++level->structure3_payload.nonzero_byte_run_count;
+                    nonzero_byte_run_start = byte_index;
+                    if (level->structure3_payload
+                            .first_nonzero_byte_run_offset < 0) {
+                        level->structure3_payload.first_nonzero_byte_run_offset =
+                            byte_index;
+                    }
+                }
+                ++nonzero_byte_run_length;
+                if (nonzero_byte_run_length >
+                    level->structure3_payload.longest_nonzero_byte_run) {
+                    level->structure3_payload.longest_nonzero_byte_run =
+                        nonzero_byte_run_length;
+                }
             }
             if (!seen[value]) {
                 seen[value] = 1U;
@@ -132,6 +165,16 @@ static int nexus_v1_level_copy_structure3_payload(
                     nonzero_block_run_length;
             }
         }
+    }
+    if (nonzero_byte_run_length > 0) {
+        if (level->structure3_payload.first_nonzero_byte_run_byte_count == 0) {
+            level->structure3_payload.first_nonzero_byte_run_byte_count =
+                nonzero_byte_run_length;
+        }
+        level->structure3_payload.last_nonzero_byte_run_offset =
+            nonzero_byte_run_start;
+        level->structure3_payload.last_nonzero_byte_run_byte_count =
+            nonzero_byte_run_length;
     }
     if (nonzero_block_run_length > 0) {
         if (level->structure3_payload.first_nonzero_block_run_block_count == 0) {

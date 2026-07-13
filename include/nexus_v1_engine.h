@@ -212,6 +212,8 @@ typedef struct {
     int structure3_payload_byte_count;
     int structure3_payload_nonzero_byte_count;
     int structure3_payload_transition_count;
+    int structure3_nonzero_byte_run_count;
+    int structure3_longest_nonzero_byte_run;
     int structure3_zero_block_count;
     int structure3_nonzero_block_count;
     int structure3_nonzero_block_run_count;
