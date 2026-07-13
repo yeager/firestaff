@@ -115,6 +115,9 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TraceDynamicReadPending;
 +static bool TheronIrq2TraceDynamicTransactionSeen;
 +static uint32 TheronIrq2TraceDynamicReadRecord;
++static uint32 TheronIrq2TraceDynamicReadCL;
++static uint32 TheronIrq2TraceDynamicReadDL;
++static uint32 TheronIrq2TraceDynamicReadCH;
 +static bool TheronIrq2TraceDynamicReadReturnSeen;
 +static uint32 TheronIrq2TraceDynamicF5AfterRead;
 +static bool TheronIrq2TraceDynamicIrq2EntrySeen;
@@ -1055,6 +1058,9 @@ index 347482c4..61d4758e 100644
 +  const uint32 ch = CurGame->Debugger->MemPeek(0x00fe, 1, true, true) & 0xff;
 +
 +  TheronIrq2TraceDynamicReadRecord = cl | (dl << 8) | (ch << 16);
++  TheronIrq2TraceDynamicReadCL = cl;
++  TheronIrq2TraceDynamicReadDL = dl;
++  TheronIrq2TraceDynamicReadCH = ch;
 +  TheronIrq2TraceDynamicReadPending = true;
 + }
 + if(logical_pc == 0x4093 && TheronIrq2TraceDynamicReadPending &&
@@ -1066,8 +1072,11 @@ index 347482c4..61d4758e 100644
 +   variant = "jp_bin";
 +  else if(TheronIrq2TraceDynamicReadRecord == 0x0004e0)
 +   variant = "us_bin";
-+  TheronIrq2Trace->print_format("dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3800 record_register_mask=07 variant=%s record=%06x\\n",
-+                                variant, TheronIrq2TraceDynamicReadRecord);
++  TheronIrq2Trace->print_format("dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3800 record_register_mask=07 record_cl=%02x record_dl=%02x record_ch=%02x variant=%s record=%06x\\n",
++                                TheronIrq2TraceDynamicReadCL,
++                                TheronIrq2TraceDynamicReadDL,
++                                TheronIrq2TraceDynamicReadCH, variant,
++                                TheronIrq2TraceDynamicReadRecord);
 +  TheronIrq2TraceDynamicReadReturnSeen = true;
 +  TheronIrq2TraceDynamicTransactionSeen = true;
 +  TheronIrq2TraceDynamicReadPending = false;
@@ -1236,6 +1245,9 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceDynamicReadPending = false;
 +	  TheronIrq2TraceDynamicTransactionSeen = false;
 +	  TheronIrq2TraceDynamicReadRecord = 0;
++	  TheronIrq2TraceDynamicReadCL = 0;
++	  TheronIrq2TraceDynamicReadDL = 0;
++	  TheronIrq2TraceDynamicReadCH = 0;
 +	  TheronIrq2TraceDynamicReadReturnSeen = false;
 +	  TheronIrq2TraceDynamicF5AfterRead = 0;
 +	  TheronIrq2TraceDynamicIrq2EntrySeen = false;
