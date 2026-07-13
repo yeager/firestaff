@@ -238,6 +238,7 @@ typedef struct {
     int structure1f_floor_decoration_control_extent_complete_level_count;
     int structure1f_item_attribute_pair_complete_level_count;
     int structure1f_item_location_pair_complete_level_count;
+    int structure1f_item_coordinate_pair_complete_level_count;
     int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
     int structure3_one_based_block_ordinal_mapping_disproven_level_count;
     int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
@@ -286,6 +287,8 @@ typedef struct {
         structure1f_item_attribute_pairs[16];
     Nexus_V1_DgnStructure1FItemLocationPairReceipt
         structure1f_item_location_pairs[16];
+    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
+        structure1f_item_coordinate_pairs[16];
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
         structure3_ordinal_correlations[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;

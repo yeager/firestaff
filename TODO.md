@@ -1221,7 +1221,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   render plan, viewport, and host receipt; prefix references also require a
   verified post-grid record target before mesh readiness, with a distinct
   `blocked-structure1f-reference` receipt for opaque-tail or out-of-prefix
-  addresses. Direct item `attribute1/attribute2` and `location/item_id` pairs
+  addresses. Direct item coordinate, `attribute1/attribute2`, and
+  `location/item_id` pairs
   plus floor-decoration signed offset pairs and raw control/extent tuples reach
   the host receipt, render plan, and LEV00-15 corpus aggregate as provenance
   only; the same is true of raw floor-sensor and floor-decoration
