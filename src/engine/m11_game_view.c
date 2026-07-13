@@ -21050,19 +21050,16 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
         }
         return;
     }
-    /* Fallback: solid fills.
-     *
-     * Classic DM1 draws the ceiling strip as black (it is simply unlit
-     * space above the visible corridor) and the floor strip as the
-     * darkest stone gray when no asset is available.  The pre-correction
-     * behaviour filled the ceiling with NAVY (slot 14 = 0,0,255 pure
-     * blue) which read as a neon sky band, far from DM's unlit black
-     * ceilings.  Ref: ReDMCSB DUNVIEW.C ceiling/floor strip zones. */
-    m11_fill_rect(framebuffer, fbW, fbH,
-                  vpX + 2, vpY + 2, vpW - 4, vpH / 2, M11_COLOR_BLACK);
-    m11_fill_rect(framebuffer, fbW, fbH,
-                  vpX + 2, vpY + vpH / 2, vpW - 4, vpH / 2 - 2,
-                  M11_COLOR_DARK_GRAY);
+    /* F0098 consumes the real current-map floor/ceiling pair. The viewport
+     * was cleared to black by F0128's host entry; a gray host corridor is
+     * not an original-PC34 substitute when either material is unavailable. */
+    (void)framebuffer;
+    (void)fbW;
+    (void)fbH;
+    (void)vpX;
+    (void)vpY;
+    (void)vpW;
+    (void)vpH;
 }
 
 typedef struct M11_DM1WallFrontBlit {
@@ -21112,28 +21109,36 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
                                           const M11_DM1WallFrontBlit* blit,
                                           int transparentColor) {
     const M11_AssetSlot* slot;
-    unsigned int graphicIndex;
+    DM1_ViewportWallHostMaterialReceiptPc34 material;
     int y;
     if (!state || !state->assetsAvailable || !blit || !framebuffer) {
         return 0;
     }
-    graphicIndex = m11_wallset_graphic_index_for_state(state,
-                                                       (unsigned int)blit->graphicIndex);
+    if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
+            state->world.dungeon && state->world.party.mapIndex >= 0 &&
+                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
+                ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
+                : 0,
+            blit->graphicIndex, transparentColor, true, blit->width,
+            blit->height, &material)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                graphicIndex);
+                                (unsigned int)material.graphic_index);
     if (!slot || !slot->loaded || !slot->pixels ||
-        slot->width == 0 || slot->height == 0) {
+        slot->width != (unsigned int)material.expected_width ||
+        slot->height != (unsigned int)material.expected_height) {
         return 0;
     }
     for (y = 0; y < blit->height; ++y) {
         int x;
         int fbY = M11_VIEWPORT_Y + blit->dstY + y;
-        int sy = (slot->height == blit->height) ? y : (y * (int)slot->height / blit->height);
+        int sy = y;
         if (fbY < 0 || fbY >= fbH) continue;
         for (x = 0; x < blit->width; ++x) {
             int fbX = M11_VIEWPORT_X + blit->dstX + x;
             int sx_flipped = blit->width - 1 - x;
-            int sx = (slot->width == blit->width) ? sx_flipped : (sx_flipped * (int)slot->width / blit->width);
+            int sx = sx_flipped;
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW) continue;
             pixel = slot->pixels[sy * (int)slot->width + sx];
@@ -21175,35 +21180,32 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
                                                     const M11_DM1WallFrontBlit* blit,
                                                     int transparentColor) {
     const M11_AssetSlot* slot;
-    unsigned int graphicIndex;
+    DM1_ViewportWallHostMaterialReceiptPc34 material;
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
-    graphicIndex = m11_wallset_graphic_index_for_state(state,
-                                                       (unsigned int)blit->graphicIndex);
-    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                graphicIndex);
-    if (!slot || slot->width == 0 || slot->height == 0) {
+    if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
+            state->world.dungeon && state->world.party.mapIndex >= 0 &&
+                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
+                ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
+                : 0,
+            blit->graphicIndex, transparentColor, false, blit->width,
+            blit->height, &material)) {
         return 0;
     }
-    /* If the loaded asset matches the expected dimensions, blit directly.
-     * Otherwise scale to fit the wall panel rect so the wall is never
-     * invisible.  Dimension mismatches can occur when the wall set graphic
-     * is packed differently or a fallback asset is used. */
-    if (slot->width != blit->width || slot->height != blit->height) {
-        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + blit->dstX,
-                                   M11_VIEWPORT_Y + blit->dstY,
-                                   blit->width, blit->height,
-                                   transparentColor);
-    } else {
-        M11_AssetLoader_BlitRegion(slot,
-                                   0, 0, blit->width, blit->height,
-                                   framebuffer, fbW, fbH,
-                                   M11_VIEWPORT_X + blit->dstX,
-                                   M11_VIEWPORT_Y + blit->dstY,
-                                   transparentColor);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)material.graphic_index);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != (unsigned int)material.expected_width ||
+        slot->height != (unsigned int)material.expected_height) {
+        return 0;
     }
+    M11_AssetLoader_BlitRegion(slot,
+                               0, 0, blit->width, blit->height,
+                               framebuffer, fbW, fbH,
+                               M11_VIEWPORT_X + blit->dstX,
+                               M11_VIEWPORT_Y + blit->dstY,
+                               transparentColor);
     return 1;
 }
 
@@ -34958,7 +34960,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
-    /* Real viewport background from GRAPHICS.DAT, or solid fallback */
+    /* Real viewport background from GRAPHICS.DAT; missing material remains
+     * the F0128-cleared black viewport. */
     m11_draw_viewport_background(state, framebuffer, framebufferWidth, framebufferHeight,
                                  viewport.x, viewport.y, viewport.w, viewport.h);
     if (state->showDebugHUD) {

@@ -203,6 +203,18 @@ typedef enum {
     DM1_WALL_SET_COUNT           /* 15 entries */
 } DM1_WallSetIndex;
 
+/* Final PC34 wall material consumed by the host after DUNVIEW.C F0096 has
+ * materialized the current map's wall set. Geometry comes from the selected
+ * F0116..F0124 wall zone; M11 may only blit this exact graphic or no-draw. */
+typedef struct DM1_ViewportWallHostMaterialReceiptPc34 {
+    int valid;
+    int graphic_index;
+    int transparent_color;
+    bool flip_horizontally;
+    int expected_width;
+    int expected_height;
+} DM1_ViewportWallHostMaterialReceiptPc34;
+
 /* Door frame indices — from DUNVIEW.C G2110-G2122 (I34E) */
 typedef enum {
     DM1_DOOR_FRAME_TOP_D1R = 0,
@@ -1124,6 +1136,14 @@ const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_wall_draw_spec_for_square(DM
 const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_side_wall_draw_spec_for_rel(int rel_forward,
                                                                                 int rel_side);
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
+int dm1_viewport_3d_wall_host_material_receipt_pc34(
+    int map_wall_set,
+    int wallset0_graphic_index,
+    int transparent_color,
+    bool flip_horizontally,
+    int expected_width,
+    int expected_height,
+    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt);
 bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
