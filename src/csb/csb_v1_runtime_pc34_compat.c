@@ -17262,7 +17262,8 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
-    if (timer->function == 7u && timer->ubyte9 == 1u) {
+    if (timer->function == 7u &&
+        (timer->ubyte9 == 1u || timer->ubyte9 == 2u)) {
         return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
             profile, record, timer, timer_index, queue_slot);
     }
@@ -17287,10 +17288,11 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
 
     /* CSBWin Timer.cpp ProcessTT_FALSEWALL:1343-1442 clears bit 0x04 only
      * after DSA/portrait processing. With neither owner on the saved square,
-     * timerTypeModifier[1] remains the canonical CLEAR mapping established
-     * by CSBCode.cpp ProcessTimers:6403-6405. */
+     * timerTypeModifier[1/2] remains the canonical CLEAR/TOGGLE mapping
+     * established by CSBCode.cpp ProcessTimers:6403-6405. */
     if (!profile || !record || !timer || !profile->dungeon_handle ||
-        timer->function != 7u || timer->ubyte9 != 1u ||
+        timer->function != 7u ||
+        (timer->ubyte9 != 1u && timer->ubyte9 != 2u) ||
         !timer->valid || timer->truncated ||
         timer->source_index != timer_index ||
         record->eventType != timer->function ||
@@ -17332,6 +17334,14 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
     if (guard >= 128) return 0;
+
+    /* ProcessTT_FALSEWALL resolves TOGGLE from the current bit before the
+     * CLEAR deferral branch. A closed falsewall therefore takes the exact
+     * unconditional SET arm; an open one shares the original CLEAR path. */
+    if (timer->ubyte9 == 2u && (*square & 0x04u) == 0u) {
+        *square |= 0x04u;
+        return 1;
+    }
 
     if (profile->current_level == timer->level &&
         profile->party_x == timer->ubyte6 && profile->party_y == timer->ubyte7) {

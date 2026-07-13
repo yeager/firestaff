@@ -248,9 +248,9 @@ ReDMCSB WIP 2021-02-06 source tree.
   Firestaff frame stream.
 
 - 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
-  and DSA-free CLEAR now update the original falsewall cell flag. TOGGLE,
-  portrait/DSA-owned squares, and parameter-message payloads remain
-  fail-closed. CLEAR deferral is source-owned only where the saved timer's
+  and DSA-free CLEAR/TOGGLE now update the original falsewall cell flag.
+  Portrait/DSA-owned squares and parameter-message payloads remain fail-closed.
+  CLEAR and the open-wall TOGGLE branch defer only where the saved timer's
   party/nonmaterial-group owner can be retained.
 
 - 2026-07-13 CSBWin restored `TT_24` follow-up: exact saved-object removal
