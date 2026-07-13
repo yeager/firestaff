@@ -5348,8 +5348,6 @@
   `blocked-prs3`. Verification: Ninja
   `firestaff_nexus_v1_prs3_loader_media_probe` and the direct real-media
   probe receipt.
-=======
-
 - ✅ 2026-07-11 CSB-006 CSBWin extended-save runtime handoff: validated plain
   `Extended Features` prefixes now stage `ReadDSAs`, `ReadGameInfo`,
   `ReadDSALevelIndex`, and the encrypted core body in one candidate runtime
