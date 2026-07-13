@@ -2550,6 +2550,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the real delayed aftereffect: F0330's ordinal-zero receipt reaches F0253,
     clears only the spell lock, and cannot enter F0259 or move a quiver weapon.
     Remaining spell work is broader projectile-family receipt proof.
+  - 2026-07-13 Open Door C11 timeline-order boundary: the authentic F0412
+    receipts are non-simultaneous (`F0327` projectile move before F0330 C11),
+    now covered by the focused gate. Exact PC34 same-tick C11 ordering remains
+    blocked outside this route: ReDMCSB `TIMELINE.C F0234` compares time, then
+    packed Type/Priority, then native EVENT address, while Firestaff's shared
+    `F0721_TIMELINE_Schedule_Compat` retains only time ordering and has no
+    imported EVENT-slot identity. Do not inject a synthetic same-tick receipt
+    or add an Open Door-specific ordering fallback; resolve only with a
+    source-backed generic native-event queue representation.
   - 2026-07-09 update: DM1 entrance full-start render receipts now own the ReDMCSB F0797 5x5 micro-dungeon, C255 entrance map, door frame index, rattle cadence, and entrance music request. Remaining startup work is wiring M11 full-graphics startup renderers to consume that receipt.
   - 2026-07-09 update: DM1 post-launch startup plans now carry title/menu eligibility plus the entrance full-start receipt to the M11/M12 handoff boundary. Remaining startup work is consuming those plan fields in the production full-graphics title/HoC render path.
   - 2026-07-09 update: DM1 HoC champion menu route receipts now own hall/live/dead/party-full/enter-dungeon routing for champion mirrors. Remaining startup/menu work is wiring M11/M12 HoC render/input adapters to consume this receipt directly.

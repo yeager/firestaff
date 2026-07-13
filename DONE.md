@@ -1557,6 +1557,15 @@
   `F0259:1793-1815`, C11:1927-1932. Verification:
   `test_m11_open_door_spell_runtime_pc34_compat` (84 passed).
 
+- 2026-07-13 DM1 PC34 Open Door C11 timeline ordering: the focused F0412
+  gate now verifies the two authentic receipts are non-simultaneous: F0327's
+  projectile move precedes F0330's later ordinal-zero C11 by source time.
+  Thus F0253 runs only after the projectile route has entered the timeline;
+  no synthetic same-tick event is admitted to pretend that F0259 applies.
+  Source: ReDMCSB `MENU.C F0412:1867-1870,2034-2040`, `CHAMPION.C
+  F0327/F0330`, and `TIMELINE.C F0240/F0261`. Verification:
+  `test_m11_open_door_spell_runtime_pc34_compat`.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15

@@ -258,6 +258,10 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
         ASSERT_EQ(projectileMove->aux3, PROJECTILE_SUBTYPE_OPEN_DOOR,
                   "projectile receipt carries Open Door subtype");
     }
+    if (projectileMove != NULL && enableAction != NULL) {
+        ASSERT_EQ(projectileMove->fireAtTick < c11Tick, 1,
+                  "F0327 move precedes the later F0330 C11 by source time");
+    }
     ASSERT_EQ(state.actionDisabledTicks[0], 15,
               "F0412 materializes the source spell-disable duration");
     ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
