@@ -342,7 +342,7 @@ static int build_original_pc34_fixture(unsigned char *out,
                          DM1_EFFECT_TOGGLE);
     write_original_event(events + 2 * ORIGINAL_PC34_EVENT_BYTES,
                          DM1_MAP_TIME_MAKE(1, 123490u),
-                         DM1_EVENT_LIGHT, 2, 0, 0, 0, 9);
+                         DM1_EVENT_ENABLE_CHAMPION_ACTION, 2, 0, 0, 0, 0);
     write_original_event(events + 3 * ORIGINAL_PC34_EVENT_BYTES,
                          0u, DM1_EVENT_NONE, 0, 0, 0, 0, 0);
     wr16le(timeline + 0u, 1u);
@@ -1095,6 +1095,8 @@ static void test_file_runtime_world_loader(void)
     struct DungeonGroup_Compat groups[4];
     struct DM1_EventQueue_V1 event_queue;
     DM1OriginalSavePC34HandoffReport report;
+    int i;
+    int found_enable_action = 0;
     int rc;
 
     rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
@@ -1126,6 +1128,18 @@ static void test_file_runtime_world_loader(void)
           "world game tick imported from original GameTime");
     CHECK(world.timeline.nowTick == 123456u,
           "world M10 timeline tick follows original GameTime");
+    for (i = 0; i < world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat *event = &world.timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION) {
+            CHECK(event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION,
+                  "C11 source type survives runtime materialization");
+            CHECK(event->aux4 == 2 && event->cell == 0,
+                  "C11 priority and zero SlotOrdinal survive runtime materialization");
+            found_enable_action = 1;
+        }
+    }
+    CHECK(found_enable_action,
+          "C11 enable-action event materializes into the live timeline");
     CHECK(world.partyMapIndex == 3,
           "world party map index imported");
     CHECK(world.newPartyMapIndex == 3,

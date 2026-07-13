@@ -10565,6 +10565,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 world, ev.mapIndex, ev.mapX, ev.mapY, 5);
             emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, 5, ev.mapIndex);
             break;
+        case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
+            /* ReDMCSB TIMELINE.C:1927-1932 invokes F0253 for the champion
+             * stored in EVENT.Priority.  C11 with a non-zero SlotOrdinal is
+             * rejected at original-save import until F0259's quiver transfer
+             * has a complete native inventory handoff. */
+            if (ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                ev.cell == 0) {
+                emit(result, EMIT_ACTION_ENABLED, ev.aux4, 0, 0, 0);
+            }
+            break;
         case TIMELINE_EVENT_PLAY_SOUND:
             emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);
             break;

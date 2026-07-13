@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 original-save C11 enable-action handoff: a saved
+  `C11_EVENT_ENABLE_CHAMPION_ACTION` with `SlotOrdinal == 0` now imports,
+  materializes as an M10 timeline event, clears the matching M11 action lock
+  on expiry, and exports as the same C11 event. Non-zero slot ordinals remain
+  fail-closed pending ReDMCSB F0259 quiver-transfer ownership. Source:
+  ReDMCSB `TIMELINE.C` C11 dispatch lines 1927-1932 and `CHAMPION.C F0330`.
+  Verification: Ninja and `dm1_v1_original_save_pc34_handoff` CTest pass.
+
 - 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
   `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
   `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
