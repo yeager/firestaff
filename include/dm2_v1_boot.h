@@ -1651,6 +1651,23 @@ int dm2_v1_boot_weather_gdat_receipt(
     int graphicsset_index,
     DM2_V1_WeatherGdatReceipt *out_receipt);
 
+/* Source-only weather destination evidence. c_bkgrnd.cpp passes CD into
+ * QUERY_TEMP_PICST, which resolves the original INTERFACE_GENERAL dt04
+ * rectangle route before DRAW_TEMP_PICST. This receipt does not draw. */
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t destination_mask;
+    uint32_t rect_table_hash;
+    uint32_t receipt_hash;
+    DM2_V1_WeatherDestinationClip clips[6];
+} DM2_V1_BootWeatherDestinationReceipt;
+
+int dm2_v1_boot_weather_gdat_destination_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    DM2_V1_BootWeatherDestinationReceipt *out_receipt);
+
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */
 typedef struct {

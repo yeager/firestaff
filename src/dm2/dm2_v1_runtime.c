@@ -105,6 +105,9 @@ typedef struct {
     int gdat_weather_receipt_ready;
     uint32_t gdat_weather_receipt_hash;
     uint32_t gdat_weather_material_mask;
+    int gdat_weather_destination_ready;
+    uint32_t gdat_weather_destination_hash;
+    uint32_t gdat_weather_destination_mask;
     int gdat_interface_palette_ready;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
@@ -454,6 +457,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     uint32_t thunder_position = 0u;
     uint32_t ambient_darkness = 0u;
     DM2_V1_WeatherGdatReceipt weather_receipt;
+    DM2_V1_BootWeatherDestinationReceipt weather_destination;
 
     if (!rt) return;
     rt->map_graphics_style = -1;
@@ -474,6 +478,9 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_weather_receipt_ready = 0;
     rt->gdat_weather_receipt_hash = 0u;
     rt->gdat_weather_material_mask = 0u;
+    rt->gdat_weather_destination_ready = 0;
+    rt->gdat_weather_destination_hash = 0u;
+    rt->gdat_weather_destination_mask = 0u;
     rt->gdat_interface_palette_ready = 0;
     rt->gdat_interface_palette_hash = 0u;
     memset(rt->gdat_interface_palette16, 0,
@@ -532,6 +539,18 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         rt->gdat_weather_receipt_ready = 1;
         rt->gdat_weather_receipt_hash = weather_receipt.receipt_hash;
         rt->gdat_weather_material_mask = weather_receipt.material_mask;
+    }
+    /* QUERY_TEMP_PICST resolves CD through the source dt04 rect table. Keep
+     * that live destination proof separate from the material receipt; the
+     * renderer remains no-draw until the complete weather execution route is
+     * available. */
+    memset(&weather_destination, 0, sizeof(weather_destination));
+    if (dm2_v1_boot_weather_gdat_destination_receipt(
+            rt->boot, rt->map_graphics_style, &weather_destination) &&
+        weather_destination.valid && weather_destination.receipt_hash != 0u) {
+        rt->gdat_weather_destination_ready = 1;
+        rt->gdat_weather_destination_hash = weather_destination.receipt_hash;
+        rt->gdat_weather_destination_mask = weather_destination.destination_mask;
     }
     if (dm2_v1_boot_interface_palette(rt->boot, &palette)) {
         rt->gdat_interface_palette_ready = 1;
@@ -2640,6 +2659,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_weather_receipt_hash;
     g_dm2_frame_ownership.gdat_weather_material_mask =
         rt->gdat_weather_material_mask;
+    g_dm2_frame_ownership.gdat_weather_destination_ready =
+        rt->gdat_weather_destination_ready;
+    g_dm2_frame_ownership.gdat_weather_destination_hash =
+        rt->gdat_weather_destination_hash;
+    g_dm2_frame_ownership.gdat_weather_destination_mask =
+        rt->gdat_weather_destination_mask;
     g_dm2_frame_ownership.gdat_scene_light_consumed =
         viewport.gdat_scene_light_consumed_count;
     g_dm2_frame_ownership.gdat_scene_weather_consumed =

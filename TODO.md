@@ -3106,6 +3106,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     offset fields remain the original zero offset; no rect coordinates or
     pixels are inferred. Remaining weather work is still source timer/light
     behavior, actual original rect expansion, and real-data capture.
+  - 2026-07-13 update: `CD` now reaches a bounded source-only
+    `INTERFACE_GENERAL/0/dt04/0` destination-clip receipt through
+    `QUERY_TEMP_PICST`/`QUERY_BLIT_RECT`, and the active runtime carries its
+    all-material clip hash and mask. Unsupported compressed rect forms, a
+    missing exact IMG3/local palette, or any missing rect route fail closed;
+    the viewport still draws no weather pixels. Remaining weather work is the
+    complete compressed-rect grammar, timer/light/cloud execution, and
+    original runtime capture.
   - 2026-07-13 update: the separate `c_gui_vp.cpp` dialogue path now has a
     source-only `GRAPHICSSET` receipt for its selected shell (`-4..-2`) and
     glyph field `3`, including each exact IMG3 local palette. It is not a
