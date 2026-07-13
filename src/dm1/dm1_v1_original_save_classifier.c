@@ -349,6 +349,28 @@ static int classify_original_header_with_endian(
     return 1;
 }
 
+int dm1_v1_original_save_pc34_decode_header_receipt(
+    const uint8_t *bytes, size_t size,
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt *out_receipt)
+{
+    DM1OriginalSaveClassifyResult classified;
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.header_size_ok = bytes && size >= DM1_ORIGINAL_SAVE_HEADER_BYTES;
+    if (!receipt.header_size_ok) { if (out_receipt) *out_receipt = receipt; return 0; }
+    memset(&classified, 0, sizeof(classified));
+    (void)classify_original_header_with_endian(bytes, size, DM1OS_ENDIAN_LITTLE, &classified);
+    receipt.expected_checksum = classified.header_expected_checksum;
+    receipt.actual_checksum = classified.header_actual_checksum;
+    receipt.checksum_ok = classified.header_checksum_ok;
+    receipt.decoded = classified.header_checksum_ok;
+    receipt.format_id = classified.format_id;
+    receipt.platform = classified.platform;
+    receipt.dungeon_id = classified.dungeon_id;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.decoded;
+}
+
 int dm1_v1_original_save_default_root(char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]) {
     const char *env_root;
     const char *home;
