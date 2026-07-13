@@ -39,11 +39,12 @@ trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
+transition_receipt="${trace}.transition"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$transition_receipt"
 if [[ -n "$configured_home" ]]; then
     home_dir=$configured_home
     cleanup_home=0
@@ -80,6 +81,20 @@ fi
 transition_input_count=$(grep -Ec '^pce_input_(read|write) ' "$input_trace" 2>/dev/null || true)
 transition_irq_count=$(grep -Ec '^pce_cd_irq cpu_pc=' "$cd_trace" 2>/dev/null || true)
 transition_non_system_card_count=$(grep -Ec '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace" 2>/dev/null || true)
+transition_sector_count=$(grep -Ec '^cd_interface_raw_sector_read ' "$cd_trace" 2>/dev/null || true)
+{
+    printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'input_transactions=%s\n' "$transition_input_count"
+    printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
+    printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
+    printf 'raw_sector_spans=%s\n' "$transition_sector_count"
+    if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
+          "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
+        printf '%s\n' 'transition=observed'
+    else
+        printf '%s\n' 'transition=missing'
+    fi
+} >"$transition_receipt"
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then

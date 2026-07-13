@@ -1669,6 +1669,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     2026-07-13 diagnostic update: failed authentic captures now report counts
     for observed input transactions, CDIRQ callbacks, and PCECD reads below
     C000. Counts identify absent evidence only and cannot promote a route.
+    2026-07-13 transition-receipt update: every authentic capture now writes a
+    sidecar with raw input, CDIRQ, caller-PC, and raw-sector counts plus an
+    observed or missing result. It records observation only and remains
+    fail-closed when any condition is absent.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
