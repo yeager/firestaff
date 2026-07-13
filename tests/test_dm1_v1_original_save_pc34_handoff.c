@@ -3731,26 +3731,54 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
 static void test_world_export_roundtrips_c13_vi_altar_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char reexported[SAVEGAME_PC34_MAX_FILE_SIZE];
     struct GameWorld_Compat world;
     struct SaveGame_Compat imported;
     struct PartyState_Compat imported_party;
     DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34RoundtripReport roundtrip;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    struct DungeonThings_Compat things;
+    unsigned char square_data[32 * 32];
+    unsigned short square_first_things[32 * 32];
     int written = 0;
+    size_t reexported_size = 0u;
     int rc;
+    int i;
 
     memset(&world, 0, sizeof(world));
     memset(&imported, 0, sizeof(imported));
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));
+    memset(&roundtrip, 0, sizeof(roundtrip));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(square_data, 0, sizeof(square_data));
+    for (i = 0; i < (int)(sizeof(square_first_things) /
+                          sizeof(square_first_things[0])); ++i) {
+        square_first_things[i] = THING_ENDOFLIST;
+    }
     maps[0].width = 32;
     maps[0].height = 32;
+    maps[0].rawMapDataByteOffset = 0;
+    tiles[0].squareData = square_data;
+    tiles[0].squareCount = 32 * 32;
     dungeon.header.mapCount = 1;
+    dungeon.header.rawMapDataByteCount = 32 * 32;
+    dungeon.header.squareFirstThingCount = 32 * 32;
     dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    things.squareFirstThings = square_first_things;
+    things.squareFirstThingCount = 32 * 32;
+    things.loaded = 1;
     world.dungeon = &dungeon;
+    world.things = &things;
     world.party.championCount = 3;
     world.party.champions[2].present = 1;
     world.timeline.count = 1;
@@ -3778,6 +3806,18 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
               report.events[0].b_mapX == 11 && report.events[0].b_mapY == 12 &&
               report.events[0].c_cell == 1 && report.events[0].c_effect == 2,
           "C13 export roundtrips original Priority Location Cell Effect union");
+
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x43313445u, reexported,
+        sizeof(reexported), &reexported_size, &roundtrip);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && reexported_size > 0u &&
+              roundtrip.c13_byte_receipt_available &&
+              roundtrip.source_c13_event_count == 1 &&
+              roundtrip.exported_c13_event_count == 1 &&
+              roundtrip.c13_byte_preserved_count == 1 &&
+              roundtrip.c13_byte_mismatch_count == 0 &&
+              roundtrip.c13_byte_preservation_ok,
+          "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
     world.timeline.events[0].aux1 = 3;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(

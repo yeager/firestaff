@@ -17,6 +17,16 @@
   hash-verified PC34 `GRAPHICS.DAT`; no TITLE.DAT, CSB art, or synthetic title
   frame is promoted.
 
+- 2026-07-13 DM1 PC34 C13 original-save byte-preservation receipt:
+  F0435 -> F0433 -> F0435 now compares every source-owned ten-byte Vi Altar
+  EVENT record (`Map_Time`, Type, Priority, B.Location, C.Cell/Effect) with
+  the transient native export after timeline ordering is rebuilt. Truncated
+  EVENT data and a missing, extra, or changed C13 record fail closed. Each
+  external-corpus receipt retains the C13 comparison counts. Source:
+  ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799; `DEFS.H`
+  C13_EVENT_VI_ALTAR_REBIRTH. Verification: focused original-save handoff
+  CTest with a native F0433 dungeon-tail save.
+
 - 2026-07-13 Theron authenticated macOS controller-capture hardening: the
   Mednafen live harness now performs an opt-in, focused macOS SDL key press
   and retains numeric-zero receipts when a trace sidecar is absent. It accepts
