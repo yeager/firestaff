@@ -715,8 +715,12 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           "Structure1B animated-floor flag binds only a declared Structure1G id");
     CHECK(level.structure2_texture_table_valid && level.structure2_texture_count == 11 &&
           level.structure1g_entries[0].first_structure2_image_valid &&
-          level.structure1g_entries[0].first_structure2_image_id == 10U,
-          "Structure1G global image ID binds the canonical local Structure2 descriptor");
+          level.structure1g_entries[0].first_structure2_image_id == 10U &&
+          level.structure1g_entries[0]
+              .structure2_image_instruction_bound_count == 1 &&
+          level.structure1g_entries[0]
+              .structure2_image_instruction_unbound_count == 0,
+          "Structure1G global image instructions bind only through local Structure2 descriptors");
     CHECK(level.structure2_payload.valid &&
           level.structure2_payload.descriptor_bytes == 220 &&
           level.structure2_payload.terminator_offset == 220 &&

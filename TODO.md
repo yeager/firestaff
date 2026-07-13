@@ -555,6 +555,12 @@ real-data-present synthetic fallback candidate.
 
 This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
+- 🔧 2026-07-13 Nexus Structure1G follow-up: every validated original
+  Structure1G image instruction now reaches a bounded local Structure2
+  descriptor receipt. Missing local descriptors remain explicitly blocked;
+  this numeric relation does not prove payload offsets, pixel decoding,
+  palette semantics, animation stepping, or a Saturn draw route.
+
 - 🔧 2026-07-13 Nexus Structure1F follow-up: visible direct items,
   floor-decoration, and floor-sensor records now fail closed through the DGN
   render plan, viewport, and host receipt; prefix references also require a

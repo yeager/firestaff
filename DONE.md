@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus: propagated every validated Structure1G image instruction
+  through an explicit local Structure2 descriptor-bound/unbound receipt. The
+  DGN parser and renderer still fail closed for unknown descriptors and make
+  no payload, texture, palette, animation, or draw-semantic claim.
+
 - 2026-07-13 CSBWin `EDT_Palette` writeback: the complete 24-record source
   bundle now persists transactionally through existing 16-word EXPOOL records
   only. A short, stale, or incomplete tail rejects before any bytes change;
