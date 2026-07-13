@@ -8662,6 +8662,107 @@ static int orch_handle_creature_reaction_event_compat(
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
 
+/* ReDMCSB GROUP.C F0209 reaches MOVESENS.C F0267 after C29-C36 and
+ * C38-C41 select an ordinary one-square move.  C37 already has its own
+ * tick route below; keep these reaction branches in M10 so their source
+ * event plan, rather than the C37 retry owner, controls the next event. */
+static int orch_apply_f0209_reaction_move_f0267_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    int groupIndex,
+    const struct DM1BehaviorResult_Compat* behavior,
+    int* outHandled,
+    int* outGroupRemoved)
+{
+    int activeIndex;
+    int direction;
+    int destMapX;
+    int destMapY;
+    int killedByProjectile = 0;
+    int destinationPassable;
+    int destinationBlocked;
+    struct DungeonGroup_Compat* group;
+    DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
+    DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
+
+    if (outHandled) *outHandled = 0;
+    if (outGroupRemoved) *outGroupRemoved = 0;
+    if (!world || !ev || !behavior || !world->things || !world->dungeon) return 0;
+    if (behavior->actionKind != DM1_ACTION_MOVE &&
+        behavior->actionKind != DM1_ACTION_FLEE_MOVE) return 1;
+    /* C37 owns normal and archenemy movement via its established retry
+     * path.  This bridge only owns reaction/aspect branches. */
+    if (ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+        behavior->archenemyDoubleMove || behavior->moveDirection < 0 ||
+        behavior->moveDirection > 3) return 1;
+    if (outHandled) *outHandled = 1;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount ||
+        !world->things->groups) return 0;
+    activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (activeIndex < 0) return 1;
+    group = &world->things->groups[groupIndex];
+    direction = behavior->moveDirection & 3;
+
+    memset(&movePlan, 0, sizeof(movePlan));
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+            ev->mapX, ev->mapY, direction, 1, 0, 0,
+            world->gameTick, &movePlan) || !movePlan.valid) return 0;
+    destMapX = movePlan.destinationMapX;
+    destMapY = movePlan.destinationMapY;
+    /* Do not turn an incomplete F0209 decision into a different world
+     * mutation.  The source-selected target must be the F0267 target. */
+    if (behavior->moveDestMapX != destMapX ||
+        behavior->moveDestMapY != destMapY) return 1;
+
+    destinationPassable = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+        world->dungeon, ev->mapIndex, destMapX, destMapY,
+        MOVEMENT_PASS_CTX_CREATURE);
+    destinationBlocked = orch_square_has_group_or_party_compat(
+        world, ev->mapIndex, destMapX, destMapY);
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+            ev->mapX, ev->mapY, direction, destinationPassable,
+            destinationBlocked, 0, world->gameTick, &movePlan) ||
+        !movePlan.valid) return 0;
+    if (movePlan.route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) return 1;
+
+    if (!orch_apply_f0266_group_projectile_precheck_compat(
+            world, groupIndex, ev->mapIndex, ev->mapX, ev->mapY,
+            destMapX, destMapY, &killedByProjectile)) return 0;
+    if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+            ev->mapX, ev->mapY, direction, destinationPassable,
+            destinationBlocked, killedByProjectile, world->gameTick,
+            &movePlan) || !movePlan.valid) return 0;
+    memset(&applyPlan, 0, sizeof(applyPlan));
+    if (!DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
+            &movePlan, ev->mapIndex, ev->mapX, ev->mapY, direction,
+            group->cells, world->gameTick, &applyPlan) || !applyPlan.valid) return 0;
+    if (applyPlan.shouldRemoveActiveGroup) {
+        (void)orch_unlink_thing_from_square_compat(
+            world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
+            applyPlan.sourceMapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex));
+        group->next = THING_NONE;
+        orch_remove_active_group_state_compat(world, groupIndex);
+        if (outGroupRemoved) *outGroupRemoved = 1;
+        return 1;
+    }
+    if (applyPlan.shouldUnlinkSource &&
+        !orch_unlink_thing_from_square_compat(
+            world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
+            applyPlan.sourceMapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) return 0;
+    group->direction = (unsigned char)applyPlan.groupDirection;
+    if (applyPlan.shouldLinkDestination &&
+        !orch_link_existing_group_to_square_head_only_compat(
+            world, groupIndex, applyPlan.activeMapIndex,
+            applyPlan.activeMapX, applyPlan.activeMapY)) return 0;
+    world->creatureAI[activeIndex].groupMapIndex = applyPlan.activeMapIndex;
+    world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
+    world->creatureAI[activeIndex].groupMapY = applyPlan.activeMapY;
+    world->creatureAI[activeIndex].groupCells = applyPlan.activeCells;
+    return 1;
+}
+
 /* ReDMCSB GROUP.C F0209 lines 2173-2185 selects a direction through the
  * visibility/behavior chain, then enters MOVESENS.C F0267 from the source
  * square.  Keep the physical half separate from timeline routing so C37 can
@@ -8938,6 +9039,7 @@ static int orch_handle_creature_reaction_event_compat(
     struct TimelineEvent_Compat next;
     int cellsBeforeBehavior;
     int creatureCountBeforeBehavior;
+    int reactionMoveHandled = 0;
 
     (void)result;
     if (!world || !ev || !world->things || !world->things->groups) return 0;
@@ -8989,6 +9091,25 @@ static int orch_handle_creature_reaction_event_compat(
     else ctx.currentGroupPrimaryDirToParty = 0;
     ctx.currentGroupSecondaryDirToParty =
         (ctx.currentGroupPrimaryDirToParty + 1) & 3;
+    {
+        static const int directionDeltaX[4] = { 0, 1, 0, -1 };
+        static const int directionDeltaY[4] = { -1, 0, 1, 0 };
+        int direction;
+
+        /* GROUP.C F0209 calls F0202 before choosing a reaction move.  The
+         * pure decision receives the same loaded-tile and occupancy facts
+         * which its later F0267 application will consume. */
+        for (direction = 0; direction < 4; ++direction) {
+            int destX = ev->mapX + directionDeltaX[direction];
+            int destY = ev->mapY + directionDeltaY[direction];
+            ctx.groupMovementTestedDirs[direction] =
+                !F0707_MOVEMENT_IsSquarePassableForContext_Compat(
+                    world->dungeon, ev->mapIndex, destX, destY,
+                    MOVEMENT_PASS_CTX_CREATURE) ||
+                orch_square_has_group_or_party_compat(
+                    world, ev->mapIndex, destX, destY);
+        }
+    }
     ctx.ticksSinceLastMove = (int)world->gameTick - ai->lastSeenPartyTick;
     if (ctx.ticksSinceLastMove < 0) ctx.ticksSinceLastMove = 0;
     ctx.currentTickLow = (int)world->gameTick;
@@ -9069,6 +9190,23 @@ static int orch_handle_creature_reaction_event_compat(
         }
     }
 
+    {
+        int groupRemoved = 0;
+
+        if (!orch_apply_f0209_reaction_move_f0267_compat(
+                world, ev, groupIndex, &behavior, &reactionMoveHandled,
+                &groupRemoved)) {
+            return 0;
+        }
+        if (groupRemoved) return 1;
+        if (reactionMoveHandled) {
+            activeIndex = orch_find_active_group_state_index_compat(
+                world, groupIndex);
+            if (activeIndex < 0) return 1;
+            group = &world->things->groups[groupIndex];
+        }
+    }
+
     /* ReDMCSB GROUP.C F0209 lines 2402-2408 calls F0218 against the old
      * packed cells before it writes a quarter-square creature's new cell.
      * A projectile can kill or compact the group in that interval.  Do not
@@ -9138,7 +9276,9 @@ static int orch_handle_creature_reaction_event_compat(
 
     if (!F0810b_DM1_GROUP_PlanReactionApply_Compat(
             &behavior, &activeGroup, groupIndex, group->creatureType,
-            ev->mapIndex, ev->mapX, ev->mapY, group->cells,
+            world->creatureAI[activeIndex].groupMapIndex,
+            world->creatureAI[activeIndex].groupMapX,
+            world->creatureAI[activeIndex].groupMapY, group->cells,
             AI_STATE_WANDER, AI_STATE_ATTACK, AI_STATE_APPROACH,
             AI_STATE_FLEE, world->gameTick, &applyPlan) ||
         !applyPlan.valid) {
@@ -9158,6 +9298,11 @@ static int orch_handle_creature_reaction_event_compat(
 
     if (behavior.actionKind == DM1_ACTION_MOVE ||
         behavior.actionKind == DM1_ACTION_FLEE_MOVE) {
+        if (reactionMoveHandled) {
+            /* C29-C36/C38-C41 already used F0267 above; their source-shaped
+             * reaction plan remains responsible for the next event. */
+            goto schedule_next;
+        }
         /* ReDMCSB GROUP.C F0209 lines 2173-2185: the F0200/F0199 visibility
          * decision supplies this direction, then F0267 commits the move or
          * retains the source square for the next C37 retry. */
@@ -9171,6 +9316,7 @@ static int orch_handle_creature_reaction_event_compat(
             world, ev, result);
     }
 
+schedule_next:
     if (applyPlan.shouldScheduleNextEvent) {
         memset(&next, 0, sizeof(next));
         next.kind = TIMELINE_EVENT_CREATURE_REACTION;

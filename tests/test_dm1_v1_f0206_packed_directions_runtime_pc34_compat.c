@@ -157,6 +157,102 @@ static int test_m10_c38_preserves_packed_active_group_directions(void)
     return ok ? 0 : 1;
 }
 
+/* ReDMCSB GROUP.C F0209 sends a danger reaction through F0267 after its
+ * direction decision.  C37 has a separate tick path; this locks the missing
+ * C29 physical relink without involving spell or action-menu state. */
+static int test_m10_c29_reaction_moves_group_through_f0267(void)
+{
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    struct DungeonGroup_Compat groups[1];
+    struct TimelineEvent_Compat reaction;
+    struct TickResult_Compat result;
+    unsigned char squareData[9];
+    unsigned short squareFirstThings[2];
+    int i;
+
+    memset(&world, 0, sizeof(world));
+    memset(&things, 0, sizeof(things));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(groups, 0, sizeof(groups));
+    memset(squareFirstThings, 0xff, sizeof(squareFirstThings));
+    for (i = 0; i < 9; ++i) {
+        squareData[i] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    }
+    /* List ordinals are north square first, then source square. */
+    squareData[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                    DUNGEON_SQUARE_MASK_THING_LIST);
+    squareData[4] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                    DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = THING_ENDOFLIST;
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_GROUP << 10);
+
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    maps[0].width = 3;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 9;
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 2;
+    things.groups = groups;
+    things.groupCount = 1;
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = CREATURE_TYPE_WIZARD_EYE;
+    groups[0].count = 0;
+    groups[0].health[0] = 100;
+    groups[0].cells = 0xff;
+    groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.newPartyMapIndex = -1;
+    world.gameTick = 101;
+    world.timeline.nowTick = 101;
+    world.party.mapIndex = 0;
+    world.partyMapIndex = 0;
+    world.party.mapX = 2;
+    world.party.mapY = 2;
+    world.creatureAICount = 1;
+    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.creatureAI[0].creatureType = groups[0].creatureType;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 1;
+    world.creatureAI[0].groupMapY = 1;
+    world.creatureAI[0].groupCells = groups[0].cells;
+    world.creatureAI[0].lastSeenPartyTick = 0;
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
+
+    memset(&reaction, 0, sizeof(reaction));
+    reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    reaction.fireAtTick = world.gameTick;
+    reaction.mapIndex = 0;
+    reaction.mapX = 1;
+    reaction.mapY = 1;
+    reaction.aux0 = 0;
+    reaction.aux2 = DM1_EVENT_REACTION_DANGER_ON_SQUARE;
+    if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &reaction)) return 1;
+    memset(&result, 0, sizeof(result));
+    if (!F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result)) return 1;
+
+    return expect(world.creatureAI[0].groupMapX == 1 &&
+                  world.creatureAI[0].groupMapY == 0,
+                  "C29 moves the live group through F0267") &&
+           expect(groups[0].behavior == DM1_BEHAVIOR_APPROACH,
+                  "C29 keeps the source-selected approach behavior") &&
+           expect(squareFirstThings[0] == (unsigned short)(THING_TYPE_GROUP << 10) &&
+                  squareFirstThings[1] == THING_ENDOFLIST,
+                  "C29 relinks source and destination square chains") ? 0 : 1;
+}
+
 static int test_m10_c38_turns_before_attack(void)
 {
     struct GameWorld_Compat world;
@@ -306,6 +402,7 @@ int main(void)
 {
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
+    if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c38_checks_pending_projectile_before_cell_write() != 0) return 1;
     puts("PASS: DM1 F0205/F0206 packed active-group directions");
