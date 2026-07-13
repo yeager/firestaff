@@ -9783,3 +9783,9 @@ source C30 reaction through the same F0209 scheduler. `F0249`, F0267, and the
 C38 deferred-cell branch consume the completed aftermath instead of trying to
 unlink or relink an already-dead group. Verification: Ninja and
 `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passed.
+- 2026-07-13 Nexus Structure2 raw-span composition receipt: the bounded DGN
+  parser now counts zero and nonzero bytes in its verified post-`FFFF` span,
+  with a fixture that proves the count changes without promoting payload
+  semantics. This is raw envelope provenance only, not a decoder, palette,
+  image, record, or render route. Verification:
+  `nexus_v1_dgn_geometry_readiness`.

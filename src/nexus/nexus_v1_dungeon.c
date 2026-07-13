@@ -55,6 +55,7 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
         if (image_id == 0xffffU) {
             int descriptor_index;
             int opaque_offset = cursor + 2;
+            int opaque_index;
             uint32_t observed_offsets[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES * 2];
             int observed_offset_count = 0;
             level->structure2_texture_table_valid = 1;
@@ -63,6 +64,15 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
             level->structure2_payload.opaque_payload_offset = opaque_offset;
             level->structure2_payload.opaque_payload_size =
                 (int)structure2_useful - opaque_offset;
+            for (opaque_index = opaque_offset;
+                 opaque_index < (int)structure2_useful;
+                 ++opaque_index) {
+                if (data[structure2_offset + opaque_index] == 0U) {
+                    ++level->structure2_payload.opaque_payload_zero_byte_count;
+                } else {
+                    ++level->structure2_payload.opaque_payload_nonzero_byte_count;
+                }
+            }
             for (descriptor_index = 0;
                  descriptor_index < level->structure2_texture_count;
                  ++descriptor_index) {

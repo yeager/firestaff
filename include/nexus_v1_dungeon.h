@@ -218,6 +218,10 @@ typedef struct {
     int terminator_offset;
     int opaque_payload_offset;
     int opaque_payload_size;
+    /* Raw byte composition of the bounded post-FFFF span. These counts are
+     * intentionally not a codec, record, image, or palette interpretation. */
+    int opaque_payload_zero_byte_count;
+    int opaque_payload_nonzero_byte_count;
     /* Read-only descriptor-offset correlation. These counters only compare
      * the already parsed numeric fields with the bounded post-FFFF span;
      * they do not assign an offset base, record grammar, pixel codec, or
