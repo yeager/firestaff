@@ -1452,6 +1452,15 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         if (type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB CHAMPION.C F0320 leaves B/C outside C12's contract;
              * preserve no invented Location/Cell/Effect bytes. */
+        } else if (type == DM1_EVENT_CHAMPION_SHIELD) {
+            if (src->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                src->aux0 != DM1_EVENT_CHAMPION_SHIELD ||
+                src->aux2 != DM1_EVENT_CHAMPION_SHIELD ||
+                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
+                !state->party || !state->party->champions[src->aux4].present) {
+                return 0;
+            }
+            write_u16_le(dst + 6u, (uint16_t)(int16_t)src->aux1);
         } else if (type == DM1_EVENT_LIGHT) {
             int light_power = src->aux0;
             int abs_power = light_power < 0 ? -light_power : light_power;
