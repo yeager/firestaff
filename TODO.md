@@ -36,6 +36,8 @@ At `$e95a`, the System Card masks `$1800` into `$227a` and branches on its
 raw values; a live trace must establish which, if any, of those branches runs.
 The `$d0` branch target `$e97a` loads `$224c,X`, increments X, writes `$1801`,
 calls `$ea27`, and returns to `$e95e`; its bytes and call semantics remain unbound.
+`$ea27` first branches to `$ea35`, then polls `$1800` bit 6 before its raw
+`$1802` update; the live trace must establish whether and how that poll exits.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 

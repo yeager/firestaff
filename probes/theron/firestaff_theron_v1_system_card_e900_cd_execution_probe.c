@@ -23,6 +23,8 @@
 #define SYSCARD3_E944_WINDOW_OFFSET 0x0944u
 #define SYSCARD3_E95A_WINDOW_OFFSET 0x095au
 #define SYSCARD3_E97A_WINDOW_OFFSET 0x097au
+#define SYSCARD3_EA27_WINDOW_OFFSET 0x0a27u
+#define SYSCARD3_EA35_WINDOW_OFFSET 0x0a35u
 
 static const unsigned char g_post_delay_execution_bytes[] = {
     0xadu, 0xa4u, 0x22u, 0xd0u, 0xfbu, /* LDA $22a4 / BNE $e900 */
@@ -57,6 +59,18 @@ static const unsigned char g_e97a_d0_branch_bytes[] = {
     0xeau, 0xeau, 0xeau, 0xeau,      /* NOP x4 */
     0x20u, 0x27u, 0xeau,             /* JSR $ea27 */
     0x80u, 0xd4u                      /* BRA $e95e */
+};
+
+static const unsigned char g_ea27_wait_bytes[] = {
+    0x44u, 0x0cu,                     /* BSR $ea35 */
+    0x93u, 0x40u, 0x00u, 0x18u,       /* TST #$40,$1800 */
+    0xd0u, 0xfau,                     /* BNE $ea29 */
+    0xa9u, 0x80u, 0x1cu, 0x02u, 0x18u, /* LDA #$80 / TRB $1802 */
+    0x60u                              /* RTS */
+};
+
+static const unsigned char g_ea35_bsr_target_bytes[] = {
+    0xa9u, 0x80u, 0x0cu, 0x02u, 0x18u, 0x60u /* LDA/TSB $1802/RTS */
 };
 
 static int g_failures;
@@ -132,6 +146,10 @@ int main(void) {
         SYSCARD3_E95A_WINDOW_OFFSET;
     const size_t e97a_offset = SYSCARD3_HEADER_BYTES +
         SYSCARD3_E97A_WINDOW_OFFSET;
+    const size_t ea27_offset = SYSCARD3_HEADER_BYTES +
+        SYSCARD3_EA27_WINDOW_OFFSET;
+    const size_t ea35_offset = SYSCARD3_HEADER_BYTES +
+        SYSCARD3_EA35_WINDOW_OFFSET;
 
     if (!system_card_path || !track02_path || !cue_path) {
         printf("SKIP set System Card, US raw Track02, and 19-track CUE paths\n");
@@ -167,6 +185,16 @@ int main(void) {
               memcmp(system_card + e97a_offset, g_e97a_d0_branch_bytes,
                      sizeof(g_e97a_d0_branch_bytes)) == 0,
           "$e97a loads $224c,X, increments X, writes $1801, calls $ea27, then returns to $e95e");
+    check(system_card && ea27_offset + sizeof(g_ea27_wait_bytes) <=
+              system_card_size &&
+              memcmp(system_card + ea27_offset, g_ea27_wait_bytes,
+                     sizeof(g_ea27_wait_bytes)) == 0,
+          "$ea27 branches to $ea35 then polls $1800 bit 6 before TRB $1802");
+    check(system_card && ea35_offset + sizeof(g_ea35_bsr_target_bytes) <=
+              system_card_size &&
+              memcmp(system_card + ea35_offset, g_ea35_bsr_target_bytes,
+                     sizeof(g_ea35_bsr_target_bytes)) == 0,
+          "$ea35 target writes raw $80 through TSB $1802 and returns");
     printf("receipt: e900_wait_address=22a4 first_port_write=1801 "
            "port_value=81 tst_address=1800 tst_mask=80 zero_branch=e944 "
            "e944_write_address=1800 e944_tst_mask=40 e944_set_branch=e95a "
@@ -174,6 +202,8 @@ int main(void) {
            "e95a_raw_branches=d0:e97a,98:e98a,88:e988,80:e986 "
            "e97a_load_address=224c e97a_index_increment=1 "
            "e97a_write_address=1801 e97a_call=ea27 e97a_return=e95e "
+           "ea27_bsr_target=ea35 ea27_tst_address=1800 ea27_tst_mask=40 "
+           "ea27_set_branch=ea29 ea27_trb_address=1802 ea35_tsb_address=1802 "
            "controller_semantics_unproven=1 cue_track02_binding_unproven=1\n");
     free(system_card);
     return g_failures ? 1 : 0;
