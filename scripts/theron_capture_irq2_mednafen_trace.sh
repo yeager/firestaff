@@ -12,11 +12,17 @@ syscard=$3
 trace=$4
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 mednafen=${MEDNAFEN:-/opt/homebrew/bin/mednafen}
+video_driver=${FIRESTAFF_MEDNAFEN_VIDEO_DRIVER:-softfb}
 
 if [ ! -x "$mednafen" ]; then
     printf 'FAIL: Mednafen executable is unavailable: %s\n' "$mednafen" >&2
     exit 1
 fi
+
+case "$video_driver" in
+    default|opengl|softfb) ;;
+    *) printf 'FAIL: unsupported Mednafen video driver: %s\n' "$video_driver" >&2; exit 1 ;;
+esac
 
 track_md5=$(md5 -q "$track02")
 syscard_md5=$(md5 -q "$syscard")
@@ -34,7 +40,7 @@ if [ ! -s "$trace" ]; then
     printf 'Stock Mednafen trace logs (debugger key l) include CPU registers only, not RAM $f5, $f2, $1802, or $1803.\n' >&2
     printf 'Use scripts/build_mednafen_theron_irq2_trace.sh, then set MEDNAFEN to its output and rerun.\n' >&2
     printf 'The harness therefore rejects stock trace logs and does not invent register values.\n' >&2
-    exec env FIRESTAFF_THERON_IRQ2_TRACE="$trace" "$mednafen" -sound 0 \
+    exec env FIRESTAFF_THERON_IRQ2_TRACE="$trace" "$mednafen" -video.driver "$video_driver" -sound 0 \
         -debugger.autostepmode 0 -pce.arcadecard 0 -pce.cdbios "$syscard" "$cue"
 fi
 
