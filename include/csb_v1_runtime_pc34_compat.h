@@ -669,6 +669,24 @@ typedef struct {
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
 } CSB_V1_RuntimeDSAFilterStackAdapter;
 
+#define CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP 12
+
+typedef struct {
+    CSB_V1_RuntimeDSAFilterBinding binding;
+    uint32_t state_index;
+    int action_ordinal;
+    uint32_t master_location;
+} CSB_V1_RuntimeDSAMovementFilterRequest;
+
+/* A single Monster.cpp movement callback can service multiple source levels
+ * only when every selected DSAAction was independently authenticated. */
+typedef struct {
+    CSB_V1_RuntimeProfile *profile;
+    int runner_count;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext
+        runners[CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP];
+} CSB_V1_RuntimeDSAMovementFilterStackAdapter;
+
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeDSAFilterBinding *binding,
@@ -710,6 +728,21 @@ int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
     int loaded_level,
     CSB_V1_DSAFilterRuntime *out_filter,
     CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
+
+int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime_multi(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAMovementFilterRequest *requests,
+    size_t request_count,
+    int loaded_level,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAMovementFilterStackAdapter *out_adapter);
+
+int csb_v1_runtime_csbwin_movement_filter_stack_runner_callback(
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2],
+    void *user);
 
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
