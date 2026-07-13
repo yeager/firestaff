@@ -17,11 +17,30 @@ typedef struct DM1_V1_WallInscriptionPresentationReceiptPc34 {
     int lineCount;
 } DM1_V1_WallInscriptionPresentationReceiptPc34;
 
+/* One F0128 viewport tuple's readable-M648 decision. F0128 rebuilds the
+ * viewport before F0107 selects its ornament/text branch, so each tuple first
+ * clears the prior M648/C10 presentation and may then carry one current D1C
+ * material receipt. A C127 mirror or non-front wall intentionally receives
+ * clear-only; no host text or substitute glyph bitmap is permitted. */
+typedef struct DM1_V1_ViewportInscriptionReceiptPc34 {
+    int valid;
+    int clearPreviousMaterial;
+    int drawFrontMaterial;
+    DM1_V1_InscriptionHostMaterialReceiptPc34 frontMaterial;
+} DM1_V1_ViewportInscriptionReceiptPc34;
+
 int dm1_v1_wall_inscription_presentation_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
     unsigned short firstThing,
     DM1_V1_WallInscriptionPresentationReceiptPc34* outReceipt);
+int dm1_v1_viewport_inscription_receipt_from_world_pc34(
+    const struct DungeonThings_Compat* things,
+    int preferredTextIndex,
+    unsigned short firstThing,
+    int d1cWallLike,
+    int championMirror,
+    DM1_V1_ViewportInscriptionReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }
