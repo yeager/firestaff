@@ -179,6 +179,56 @@ int csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
+    const CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34
+        *consumption_receipt,
+    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
+    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34 *out_receipt)
+{
+    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34 receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!consumption_receipt || !runtime_receipt || !consumption_receipt->valid ||
+        !runtime_receipt->valid) return 0;
+
+    receipt.real_title_opening_consumption =
+        consumption_receipt->real_package_matched &&
+        consumption_receipt->presents_consumed &&
+        consumption_receipt->chaos_consumed &&
+        consumption_receipt->strikes_back_consumed &&
+        consumption_receipt->c004_c002_c003_consumed &&
+        runtime_receipt->real_package_matched &&
+        runtime_receipt->door_opening_transition &&
+        runtime_receipt->input_runtime_transition_ready;
+    receipt.same_session_generation = consumption_receipt->session_generation != 0u &&
+        consumption_receipt->session_generation == runtime_receipt->session_generation;
+    receipt.no_legacy_wrappers = consumption_receipt->no_legacy_wrappers &&
+        runtime_receipt->no_legacy_wrappers;
+    receipt.no_synthetic_surface = consumption_receipt->no_synthetic_surface &&
+        runtime_receipt->no_synthetic_surface;
+    receipt.session_generation = consumption_receipt->session_generation;
+    receipt.opening_host_surface_hash =
+        consumption_receipt->opening_host_surface_hash;
+    receipt.real_asset_receipt_hash = consumption_receipt->real_asset_receipt_hash;
+    receipt.consumed_surface_hash = consumption_receipt->consumed_surface_hash;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "
+        "775-826";
+    receipt.valid = receipt.real_title_opening_consumption &&
+        receipt.same_session_generation && receipt.no_legacy_wrappers &&
+        receipt.no_synthetic_surface && receipt.opening_host_surface_hash != 0u &&
+        receipt.real_asset_receipt_hash != 0u &&
+        receipt.consumed_surface_hash != 0u &&
+        receipt.opening_host_surface_hash == runtime_receipt->host_surface_hash &&
+        receipt.real_asset_receipt_hash == runtime_receipt->real_asset_receipt_hash &&
+        receipt.consumed_surface_hash == runtime_receipt->consumed_surface_hash;
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

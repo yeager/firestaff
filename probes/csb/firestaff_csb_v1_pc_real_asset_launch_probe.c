@@ -305,6 +305,9 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 presents_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 chaos_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
     CSB_V1_StartupFullRuntimeReceipt_PC34 receipt;
     CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 handoff_receipt;
@@ -313,6 +316,9 @@ static void verify_real_indexed_startup(
     CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 title_handoff_receipt;
     CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door_receipt;
     CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34 title_door_handoff_receipt;
+    CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 consumption_receipt;
+    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34
+        consumption_handoff_receipt;
     CSB_V1_StartupEntranceInputOutcome_PC34 input_outcome;
     CSB_V1_StartupRuntimeApplyReceipt_PC34 runtime_apply;
     CSB_V1_StartupCommandStateReceipt_PC34 state_receipt;
@@ -359,6 +365,12 @@ static void verify_real_indexed_startup(
               raster.real_asset_matched,
           "C001 PRESENTS reaches a 320x200 indexed runtime raster");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              &session, &plan, 1u, &presents_host) == 1 && presents_host.valid &&
+              presents_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
+              presents_host.raster.title_composited,
+          "runtime host consumes the real C001 PRESENTS surface");
 
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     plan.title_dest_x = 136;
@@ -372,6 +384,12 @@ static void verify_real_indexed_startup(
               raster.title_composited && raster.pixel_hash != 0u,
           "C001 CHAOS zoom reaches the indexed runtime raster");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              &session, &plan, 2u, &chaos_host) == 1 && chaos_host.valid &&
+              chaos_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
+              chaos_host.raster.title_composited,
+          "runtime host consumes the real C001 CHAOS surface");
 
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     plan.title_dest_x = 0;
@@ -386,6 +404,12 @@ static void verify_real_indexed_startup(
               raster.title_composited && raster.pixel_hash != 0u,
           "C001 STRIKES BACK reaches the indexed runtime raster");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              &session, &plan, 3u, &strikes_host) == 1 && strikes_host.valid &&
+              strikes_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
+              strikes_host.raster.title_composited,
+          "runtime host consumes the real C001 STRIKES BACK surface");
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
@@ -464,8 +488,27 @@ static void verify_real_indexed_startup(
               opening_door_receipt.c002_left_door_ready &&
               opening_door_receipt.c003_right_door_ready,
           "C004/C002/C003 opening frame remains in the verified C001 package session");
+    CHECK(csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &host_surface, &consumption_receipt) == 1 &&
+              consumption_receipt.valid && consumption_receipt.presents_consumed &&
+              consumption_receipt.chaos_consumed &&
+              consumption_receipt.strikes_back_consumed &&
+              consumption_receipt.c004_c002_c003_consumed,
+          "real C001 title hosts and C004/C002/C003 opening host share one package session");
+    CHECK(csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
+              &consumption_receipt, &handoff_receipt,
+              &consumption_handoff_receipt) == 1 && consumption_handoff_receipt.valid &&
+              consumption_handoff_receipt.real_title_opening_consumption &&
+              consumption_handoff_receipt.same_session_generation &&
+              consumption_handoff_receipt.no_legacy_wrappers &&
+              consumption_handoff_receipt.no_synthetic_surface,
+          "runtime bridge retains real C001 and C004/C002/C003 host consumption");
     door_handoff_receipt = handoff_receipt;
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&presents_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&chaos_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&strikes_host);
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
