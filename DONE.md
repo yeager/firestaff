@@ -1269,6 +1269,11 @@
   fabricate an input or infer behavior. Verification: capture-script and
   Mednafen patch regressions.
 
+- ✅ 2026-07-13 Theron caller-PC build repair: added the required Mednafen PCE
+  declaration include to the caller-PC patch, fixing the HuCPU compile
+  dependency without changing receipt fields or semantics. Verification:
+  clean full patch dry-run.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
