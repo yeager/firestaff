@@ -32,6 +32,7 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_WeatherGdatReceipt receipt;
     DM2_V1_WeatherCommandReceipt command;
+    DM2_V1_WeatherOverlayPlan plan;
     static const uint8_t source_commands[6] = {
         0x67u, 0x68u, 0x69u, 0x6au, 0x6bu, 0x6cu
     };
@@ -107,10 +108,30 @@ int main(void)
               dm2_v1_weather_gdat_rain_command_for_level(0x80u) == 0x6bu &&
               dm2_v1_weather_gdat_rain_command_for_level(0xc0u) == 0x6cu,
           "rain thresholds match c_weather branch ordering");
+    check(dm2_v1_weather_gdat_overlay_plan(&receipt, 0x40u, 0x80u, &plan) &&
+              plan.valid && plan.command_count == 2u &&
+              plan.required_mask ==
+                  (DM2_V1_WEATHER_COMMAND_MASK(0x68u) |
+                   DM2_V1_WEATHER_COMMAND_MASK(0x6bu)) &&
+              plan.material_mask == plan.required_mask &&
+              plan.commands[0].command == 0x68u &&
+              plan.commands[0].slot_index == 0u &&
+              plan.commands[0].rect_number == 6001u &&
+              plan.commands[1].command == 0x6bu &&
+              plan.commands[1].slot_index == 1u &&
+              plan.commands[1].rect_number == 6005u &&
+              plan.plan_hash != 0u,
+          "weather plan preserves source cloud then rain material order");
+    check(dm2_v1_weather_gdat_overlay_plan(&receipt, 0u, 0u, &plan) &&
+              plan.valid && plan.command_count == 0u &&
+              plan.required_mask == 0u && plan.material_mask == 0u,
+          "clear weather has an explicit empty source command plan");
 
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
     check(!dm2_v1_weather_gdat_receipt(&loader, 3u, &receipt),
           "image record cannot masquerade as weather command text");
+    check(!dm2_v1_weather_gdat_overlay_plan(&receipt, 0u, 0x80u, &plan),
+          "weather plan refuses a receipt invalidated by wrong GDAT type");
 
     fprintf(stderr, "DM2 weather GDAT command receipt: %d failure(s)\n",
             failures);

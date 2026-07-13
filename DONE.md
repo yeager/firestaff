@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT weather command plan: the source order from skproject
+  `c_weather.cpp::DM2_UPDATE_WEATHER` now carries cloud and rain CMDSTR
+  materials through an explicit no-fallback runtime plan. A selected command
+  must retain its original `dtText` receipt, nonzero `CD`, and bounded `FW`;
+  missing or mistyped material produces no plan and no substitute image.
+  Verification: Ninja-built and CTest-passed
+  `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 CSB DSA skin transaction: source-backed EXPOOL skin updates
   now stage the complete write and publish only after successful DSA
   completion. Failed or malformed routes preserve the original record.
