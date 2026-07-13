@@ -230,6 +230,10 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
         return 0;
     }
+    /* ReDMCSB PANEL.C F0346/F0347 blits C040 with C06 transparency before
+     * returning the C017 panel.  This is distinct from C017's opaque base. */
+    surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+        .transparent_color = 6;
     surfaces->title_regions_ready = 1;
     surfaces->opening_frame_ready = 1;
     surfaces->entrance_screen_ready = 1;
