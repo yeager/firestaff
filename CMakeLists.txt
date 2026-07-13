@@ -18102,6 +18102,20 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_floor_ceiling_items_pc34_co
     )
 endif()
 
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_f0115_alcove_item_material_pc34_compat)
+    add_executable(test_dm1_v1_f0115_alcove_item_material_pc34_compat
+        tests/test_dm1_v1_f0115_alcove_item_material_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0115_alcove_item_material_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_alcove_item_material_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0115_alcove_item_material_pc34_compat
+        COMMAND test_dm1_v1_f0115_alcove_item_material_pc34_compat
+    )
+endif()
+
 # ── DM1 V1 Viewport 3D source-lock gate ─────────────────────────────
 if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_executable(test_dm1_v1_viewport_3d_pc34_compat
