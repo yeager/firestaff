@@ -432,6 +432,22 @@ typedef struct {
     int payload_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt;
 
+/* Direct floor decorations retain a separate raw rotation-selector byte. Its
+ * transform grammar remains unproved: this is never a direction, angle, mesh,
+ * texture, palette, pixel, or draw instruction. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_decoration_entry_count;
+    int resolved_rotation_selector_count;
+    int unique_rotation_selector_count;
+    int duplicate_rotation_selector_count;
+    int zero_rotation_selector_count;
+    int nonzero_rotation_selector_count;
+    uint8_t highest_rotation_selector;
+    int complete;
+    int rotation_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -870,6 +886,8 @@ typedef struct {
         structure1f_floor_sensor_destinations;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
         structure1f_floor_decoration_payload_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
+        structure1f_floor_decoration_rotation_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -980,6 +998,8 @@ typedef struct {
         structure1f_floor_sensor_destinations;
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
         structure1f_floor_decoration_payload_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
+        structure1f_floor_decoration_rotation_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -1069,6 +1089,9 @@ int nexus_v1_level_structure1f_floor_sensor_destination_receipt(
 int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);

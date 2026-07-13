@@ -155,7 +155,7 @@
   rotation, face/rotation, signed-offset pair, and wall-payload-selector
   receipts plus raw wall-sensor destination tuples/control selectors and alcove
   payload selectors plus direct floor-sensor control/destination and floor-
-  decoration payload receipts now reach the optional retail DGN corpus. The
+  decoration payload/rotation receipts now reach the optional retail DGN corpus. The
   receipt can separately rule out zero- and one-based direct model-index
   byte/block/run ordinals, but Structure3 record and face grammar remain
   unparsed. Prove original record boundaries and face attachment before any
