@@ -42,6 +42,9 @@
 /* ReDMCSB TIMELINE.C C11_EVENT_ENABLE_CHAMPION_ACTION.  The source
  * event carries a champion priority and optionally a quiver slot ordinal. */
 #define TIMELINE_EVENT_ENABLE_CHAMPION_ACTION 20
+/* ReDMCSB TIMELINE.C F0255: C13 Vi Altar rebirth retains its own
+ * Location/Cell/Effect union; never fold it into generic square state. */
+#define TIMELINE_EVENT_VI_ALTAR_REBIRTH 21
 
 #define TIMELINE_QUEUE_CAPACITY 256
 #define TIMELINE_EVENT_SERIALIZED_SIZE 44

@@ -697,6 +697,8 @@ static int timeline_kind_from_original_pc34_event_type(int type)
         return TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
     case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
         return TIMELINE_EVENT_STATUS_TIMEOUT;
+    case DM1_EVENT_VI_ALTAR_REBIRTH:
+        return TIMELINE_EVENT_VI_ALTAR_REBIRTH;
     case DM1_EVENT_MOVE_PROJECTILE:
     case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
         return TIMELINE_EVENT_PROJECTILE_MOVE;
@@ -1197,6 +1199,21 @@ static int materialize_original_pc34_timeline(
                 !world->party.champions[src->priority].present) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
+        } else if (src->type == DM1_EVENT_VI_ALTAR_REBIRTH) {
+            DM1OriginalSavePC34ViAltarRebirthEventPlan plan;
+
+            if (!dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
+                    src, (int)source_index, &plan) || !world->dungeon ||
+                plan.map_index >= (int)world->dungeon->header.mapCount ||
+                plan.map_x >= (int)world->dungeon->maps[plan.map_index].width ||
+                plan.map_y >= (int)world->dungeon->maps[plan.map_index].height ||
+                !world->party.champions[plan.champion_index].present) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            ev.mapX = plan.map_x;
+            ev.mapY = plan.map_y;
+            ev.cell = plan.cell;
+            ev.aux1 = plan.step;
         } else if (original_pc34_event_type_is_status_timeout(src->type)) {
             ev.aux1 = (int)read_u16_le(&src->b_mapX);
             ev.cell = src->c_cell;
