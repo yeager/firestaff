@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC disabled-peer C161 accept: real-PC34 coverage now keeps
+  mirror B disabled while A's C127 candidate enters C161, A's source is
+  disabled before acceptance, and F0281 completes from A's captured C026
+  portrait. The acceptance does not reopen or consume B. Source: ReDMCSB
+  `REVIVE.C` F0280/F0281/F0282. Verification: focused CTest against installed
+  PC34 data.
+
 - 2026-07-13 DM1 HoC C161 disabled-source accept: a real-PC34 C127 candidate
   now proves F0281 rename completion accepts its already materialized C026
   portrait after the source sensor is disabled. The final party member keeps
