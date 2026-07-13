@@ -17862,6 +17862,12 @@ static int m11_count_dm1_v2_visible_effect_seeds_from_viewport(
     return count;
 }
 
+int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
+    const M11_GameViewState* state)
+{
+    return m11_count_dm1_v2_visible_effect_seeds_from_viewport(state);
+}
+
 static int m11_seed_dm1_v2_visible_effects_from_viewport(
     const M11_GameViewState* state,
     int seedDynamicLights)

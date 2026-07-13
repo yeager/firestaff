@@ -13769,6 +13769,7 @@ if(BUILD_TESTING)
         src/dm1v2/m11_v22_shape_cache_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_m11_v22_inplace_draw_pc34 PRIVATE firestaff_m12 firestaff_v2 firestaff_m11)
@@ -13840,6 +13841,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v22_shapes.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_texture_upscale_pc34.c
         src/shared/fs_portable_compat.c
