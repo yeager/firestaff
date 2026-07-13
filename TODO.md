@@ -6,6 +6,13 @@
   map-chip consumers only with proven skproject lookup and palette evidence;
   do not borrow `INTERFACE_GENERAL` colors or fabricate a fallback plane.
 
+- 2026-07-13 DM2 viewport map-chip follow-up: source-required creature GDAT
+  map-chip drawing now requires the decoded IMG3 pixels and their exact local
+  palette receipt. Extend the same per-image rule to remaining object,
+  possession, carried-item, and projectile consumers only with proven
+  skproject lookup and palette evidence; do not borrow interface colors or
+  synthesize replacement art.
+
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
   through the 26-word stack ABI for source stone/open-room dispatch. Larger

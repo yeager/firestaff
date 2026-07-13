@@ -33,6 +33,17 @@
   `SaveGame.cpp:1844-1858`, `CSBCode.cpp:6430-6470`,
   `Timer.cpp:2118-2185`. Verification: Ninja and CTest
    `csb_v1_dsa_restored_timer_tick_bridge`.
+
+- ✅ 2026-07-13 DM2 skproject creature local-palette consumer: source-required
+  `QUERY_DUNGEON_MAP_CHIP_PICT` creature rendering now accepts a decoded GDAT
+  IMG3 only with the matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and blocks
+  the material with no fallback art when that palette is absent. Added a
+  focused source-data gate proving the image/palette use the same GDAT index,
+  local palette output reaches the framebuffer, and missing palette metadata
+  remains unpainted. Verification: Ninja targets
+  `test_dm2_v1_creature_local_palette_gate` and
+  `test_dm2_v1_g1_creature_material_graph_gate`; matching CTest run passed
+   2/2; `git diff --check` passed.
 - 2026-07-13 DM2 scene-material local-palette binding: indoor ceiling/floor
   and outdoor sky/ground now fetch, bind, and blit each decoded `GRAPHICSSET`
   IMG3 before the next material query can replace its `QUERY_GDAT_IMAGE_LOCALPAL`

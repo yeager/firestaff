@@ -1973,10 +1973,11 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
 }
 
-/* skproject SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_LOCALPAL is part of the
- * material lookup, not an optional presentation transform.  A source-owned
- * wall or door image without that receipt must remain unpainted instead of
- * borrowing INTERFACE_GENERAL's synthetic compatibility palette. */
+/* skproject SKWIN/SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT resolves the
+ * decoded map-chip image together with QUERY_GDAT_IMAGE_LOCALPAL before
+ * DRAW_CHIP_OF_MAGIC_MAP. It is part of material lookup, not an optional
+ * presentation transform: source-owned walls, doors, and creatures must not
+ * borrow INTERFACE_GENERAL when their per-IMG3 receipt is unavailable. */
 static int dm2_v1_fetch_viewport_local_material(
     DM2_V1_ViewportState *s,
     int gdat_index,
@@ -3798,8 +3799,9 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (c->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_asset(s, c->gdat_index, &pixels,
-                                            &src_w, &src_h, &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_local_material(
+                    s, c->gdat_index, &pixels, &src_w, &src_h,
+                    &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
                 if (c->source_kind == 2 &&
