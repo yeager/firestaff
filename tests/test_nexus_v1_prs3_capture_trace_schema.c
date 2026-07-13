@@ -36,6 +36,21 @@ static const char valid_trace[] =
     "decoder_returned_success=1\n"
     "capture_complete=1\n";
 
+static const char valid_vdp1_trace[] =
+    "NEXUS_PRS3_SH2_VDP1_TRACE_V1\n"
+    "menu_bpk_fnv1a64=%llx\n"
+    "dm_bin_fnv1a64=%llx\n"
+    "entry_index=0\nstream_offset=40\nstream_size=4\nexpected_output_bytes=4\n"
+    "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
+    "last_input_read_address=6010003\ninput_read_bytes=4\n"
+    "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
+    "last_output_write_address=6020003\noutput_write_bytes=4\noutput_fnv1a64=3\n"
+    "first_opcode_sequence=10\nlast_input_read_sequence=11\n"
+    "last_output_write_sequence=12\ndecoder_return_sequence=13\n"
+    "vdp1_command_sequence=14\nvdp1_command_address=5c00000\n"
+    "vdp1_texture_source_address=6020000\nvdp1_texture_source_bytes=4\n"
+    "decoder_returned_success=1\ncapture_complete=1\n";
+
 static void put_be32(unsigned char *p, unsigned int value) {
     p[0] = (unsigned char)(value >> 24);
     p[1] = (unsigned char)(value >> 16);
@@ -257,7 +272,10 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
+    Nexus_V1_Prs3Vdp1CaptureReceipt vdp1_receipt;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt vdp1_binding;
     char malformed[sizeof(valid_trace)];
+    char vdp1_malformed[sizeof(valid_vdp1_trace) + 64U];
     char bound_trace[1024];
     unsigned char bpk[68];
     static const unsigned char dm_bin[] = {0x53, 0x48, 0x32, 0x21};
@@ -354,6 +372,30 @@ int main(void) {
                &receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
                &binding) && !binding.valid && !binding.menu_bpk_matches,
            "one BPK byte invalidates an otherwise complete capture");
+
+    make_bpk(bpk);
+    snprintf(bound_trace, sizeof(bound_trace), valid_vdp1_trace,
+             fnv1a64(bpk, sizeof(bpk)), fnv1a64(dm_bin, sizeof(dm_bin)));
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               bound_trace, strlen(bound_trace), &vdp1_receipt) &&
+               nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+                   &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+                   &vdp1_binding) && vdp1_binding.valid &&
+               vdp1_binding.exact_vdp1_handoff_observed &&
+               !vdp1_receipt.opcode_grammar_proven &&
+               !vdp1_binding.decoder_promoted &&
+               !vdp1_binding.fallback_visuals_permitted,
+           "complete SH-2 to VDP1 capture binds one exact frame without a decoder");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    {
+        char *expected_bytes =
+            strstr(vdp1_malformed, "expected_output_bytes=4");
+        expected_bytes[strlen("expected_output_bytes=")] = '3';
+    }
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "VDP1 source range mismatch rejects a supposedly complete capture");
 
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
