@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC D2C/D3C door-button host handoff: M11 now executes
+  the DM1-owned ReDMCSB `DUNVIEW.C F0110` material plan for the center
+  door-button depths. DM1 supplies the G0208 frame, D2/D3 palette remap, and
+  C10 transparency; M11 only executes the supplied plan. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat` and `firestaff_m11` passed.
+
 - 2026-07-13 CSB terminal HUD handoff: M11 now refuses the first live CSB
   viewport/HUD frame unless the same terminal C001-C005/C017/C040 session
   reaches HUD after the source entrance finish. C040 now retains PANEL.C's

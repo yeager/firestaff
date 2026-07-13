@@ -2317,6 +2317,27 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     return 1;
 }
 
+int dm1_viewport_3d_center_door_button_host_plan_pc34(
+    int depth_index,
+    DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan)
+{
+    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
+    if (!out_plan || depth_index < 0 || depth_index > 2) return 0;
+    memset(&plan, 0, sizeof(plan));
+    plan.view_index = depth_index == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
+        (depth_index == 1 ? DM1_VIEW_DOOR_BUTTON_D2C : DM1_VIEW_DOOR_BUTTON_D3C);
+    plan.frame = dm1_v1_viewport_get_door_button_frame_pc34(1, plan.view_index);
+    if (!plan.frame) return 0;
+    /* ReDMCSB DUNVIEW.C F0110:4163,4204-4210: G0208 selects the view
+     * frame, then F0132/F0791 blit it with C10 and D2/D3 palette changes. */
+    plan.palette_remap =
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(plan.view_index);
+    plan.transparent_color = 10;
+    plan.valid = true;
+    *out_plan = plan;
+    return 1;
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_set_wall_frame_bitmaps
  *

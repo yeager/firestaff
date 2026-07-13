@@ -22477,8 +22477,7 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     int depth;
     const M11_ViewportCell* cell;
     const M11_AssetSlot* slot;
-    DM1_ViewDoorButtonIndex viewIndex;
-    const DM1_WallFrame* frame;
+    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -22506,10 +22505,7 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return;
     }
-    viewIndex = depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
-        (depth == 1 ? DM1_VIEW_DOOR_BUTTON_D2C : DM1_VIEW_DOOR_BUTTON_D3C);
-    frame = dm1_v1_viewport_get_door_button_frame_pc34(1, viewIndex);
-    if (!frame) {
+    if (!dm1_viewport_3d_center_door_button_host_plan_pc34(depth, &plan)) {
         return;
     }
     /* ReDMCSB DUNVIEW.C F0110 line 4163 selects G0208[button][view],
@@ -22517,13 +22513,12 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
      * Geometry and derived D2/D3 remaps are owned by dm1_v1_viewport_3d. */
     m11_blit_scaled_palette_map(slot,
                                 framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + frame->left_x,
-                                M11_VIEWPORT_Y + frame->top_y,
-                                (int)frame->right_x - (int)frame->left_x + 1,
-                                (int)frame->bottom_y - (int)frame->top_y + 1,
-                                10,
-                                dm1_v1_viewport_get_door_button_palette_remap_pc34(
-                                    viewIndex));
+                                M11_VIEWPORT_X + plan.frame->left_x,
+                                M11_VIEWPORT_Y + plan.frame->top_y,
+                                (int)plan.frame->right_x - (int)plan.frame->left_x + 1,
+                                (int)plan.frame->bottom_y - (int)plan.frame->top_y + 1,
+                                plan.transparent_color,
+                                plan.palette_remap);
 }
 
 static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
