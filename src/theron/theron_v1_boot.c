@@ -126,6 +126,26 @@ done:
     return accepted;
 }
 
+int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+    const Theron_V1_BootProfile *profile) {
+    Theron_Track02Variant expected_variant;
+    const Theron_V1Irq2FullMediaTraceReceipt *handoff;
+
+    if (!profile || !profile->track02_runtime_trace_handoff_ready) {
+        return 0;
+    }
+    expected_variant = theron_v1_track02_variant_for_md5(
+        profile->graphics_md5);
+    handoff = &profile->track02_runtime_trace_handoff;
+    return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
+            expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
+           handoff->valid && handoff->variant == expected_variant &&
+           handoff->stage3_track02_record != 0u &&
+           handoff->handler_address != 0u &&
+           handoff->cd_state_address != 0u &&
+           handoff->cd_state_branch_address != 0u && handoff->branch.valid;
+}
+
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
 /* Theron's Quest data files — Phase 0 locked (2026-05-27).
@@ -5596,6 +5616,45 @@ int theron_v1_boot_startup_launch_apply_irq2_preflight_receipt(
              launch->launch_host_receipt.status);
     launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
     return 1;
+}
+
+int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *system_card_path,
+    const char *system_card_md5_hex,
+    const char *trace_path) {
+    Theron_V1_BootTrack02RuntimeTraceIntakeReceipt intake;
+    Theron_Track02Variant expected_variant;
+
+    if (!launch || !launch->profile || !launch->assets ||
+        !launch->assets->hucard_rom || !launch->profile->graphics_path[0] ||
+        !launch->profile->graphics_md5[0]) {
+        return 0;
+    }
+    memset(&intake, 0, sizeof(intake));
+    launch->profile->track02_runtime_trace_handoff_ready = 0;
+    memset(&launch->profile->track02_runtime_trace_handoff,
+           0,
+           sizeof(launch->profile->track02_runtime_trace_handoff));
+    if (!theron_v1_boot_track02_runtime_trace_intake_from_files(
+            launch->profile->graphics_path,
+            launch->profile->graphics_md5,
+            system_card_path,
+            system_card_md5_hex,
+            trace_path,
+            &intake)) {
+        return 0;
+    }
+    expected_variant = theron_v1_track02_variant_for_md5(
+        launch->profile->graphics_md5);
+    if (!intake.valid || !intake.trace_file_consumed ||
+        intake.runtime_handoff.variant != expected_variant) {
+        return 0;
+    }
+    launch->profile->track02_runtime_trace_handoff = intake.runtime_handoff;
+    launch->profile->track02_runtime_trace_handoff_ready = 1;
+    return theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+        launch->profile);
 }
 
 void theron_v1_boot_startup_launch_cleanup(

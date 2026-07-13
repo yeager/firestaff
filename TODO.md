@@ -129,6 +129,11 @@ The boot/runtime intake now accepts an explicit trace-file path alongside the
 authenticated Track 02 and System Card paths, but no authenticated combined
 capture is staged. A missing, unreadable, oversized, or rejected trace keeps
 the existing launch route blocked and does not synthesize a receipt.
+The explicit intake can now bind only a variant-matched authenticated receipt
+to a prepared boot profile. The production Soul Room forcefield transition
+checks that receipt before it mutates startup flow or world state, so no
+missing or unrecognised trace can open the dungeon route. A fresh combined
+capture is still required to demonstrate the positive path.
 The subsequent observed `$e9d3 -> $e9dc -> $e9eb -> $e9f3 -> $ea15 ->
 $ea1d -> $ea26` status loop is now independently verified from the same US
 capture. It clears `$227b`, samples `$1801`, then completes two `$1800`

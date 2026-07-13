@@ -152,6 +152,11 @@ typedef struct {
     void   *theron_state;     /* Theron_V1_GameState* — set post boot */
     void   *dungeon_data;     /* Theron_V1_DungeonData* — parsed TQ data */
     void   *graphics_dat;    /* graphics data handle */
+
+    /* The Soul Room forcefield route may enter the Track 02 runtime only
+     * after a live Mednafen receipt has been authenticated for this media. */
+    int track02_runtime_trace_handoff_ready;
+    Theron_V1Irq2FullMediaTraceReceipt track02_runtime_trace_handoff;
 } Theron_V1_BootProfile;
 
 /* Explicit runtime-evidence intake for an instrumented Mednafen capture. The
@@ -226,6 +231,11 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     const char *trace_path,
     Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt);
 
+/* The production Soul Room/forcefield runtime transition calls this gate
+ * before it mutates startup flow or world state. */
+int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+    const Theron_V1_BootProfile *profile);
+
 typedef enum {
     THERON_V1_BOOT_STARTUP_PREPARE_OK = 0,
     THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT = -1,
@@ -253,6 +263,14 @@ typedef struct Theron_V1_BootStartupLaunch {
     Theron_V1Irq2PreflightLauncherReceipt irq2_preflight_receipt;
     Theron_V1BootStartupPrepareResult prepare_result;
 } Theron_V1_BootStartupLaunch;
+
+/* Binds an explicit authenticated capture to this prepared launch. It never
+ * accepts a receipt whose Track 02 variant differs from the boot profile. */
+int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *system_card_path,
+    const char *system_card_md5_hex,
+    const char *trace_path);
 
 typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_V1_BootProfile *profile;
