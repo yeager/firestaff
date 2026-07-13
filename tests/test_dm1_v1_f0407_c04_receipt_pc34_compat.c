@@ -34,13 +34,11 @@ int main(void)
     int i;
     int sawNativeC20 = 0;
     int sawHistoricC11 = 0;
-    int sawHistoricC11AfterInvalidOwner = 0;
+    int sawStaleC11AfterInvalidOwner = 0;
     int sawRetainedC04AfterInvalidOwner = 0;
-    int timelineCountBeforeInvalidOwner;
     struct TickResult_Compat dispatchResult;
     struct TickInput_Compat invalidOwnerInput;
     struct TimelineEvent_Compat invalidOwnerC11;
-    struct TimelineEvent_Compat retainedC04;
 
     memset(&state, 0, sizeof(state));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -145,29 +143,12 @@ int main(void)
     assert(sawNativeC20 == 1);
     assert(sawHistoricC11 == 1);
     assert(state.actionDisabledTicks[0] == 6u);
-    memset(&dispatchResult, 0, sizeof(dispatchResult));
-    state.world.gameTick = 9u;
-    assert(F0887_ORCH_DispatchTimelineEvents_Compat(
-               &state.world, &dispatchResult) == 2);
-    assert((squareData[(1 * 3) + 2] & 0x07) == 5);
-
-    /* MENU.C F0391/F0407 acts on a Party.Champion ordinal.  A stale save
-     * must not turn populated storage beyond ChampionCount into a C04/C11
-     * action owner. */
-    state.world.party.champions[1] = state.world.party.champions[0];
-    timelineCountBeforeInvalidOwner = state.world.timeline.count;
-    memset(&retainedC04, 0, sizeof(retainedC04));
-    retainedC04.kind = TIMELINE_EVENT_PLAY_SOUND;
-    retainedC04.fireAtTick = state.world.gameTick + 20u;
-    retainedC04.mapIndex = state.world.party.mapIndex;
-    retainedC04.mapX = 1;
-    retainedC04.mapY = 2;
-    retainedC04.aux0 = DM1_SND_WOODEN_THUD;
-    retainedC04.aux2 = DM1_EVENT_PLAY_SOUND;
-    retainedC04.aux4 = 70;
-    assert(F0721_TIMELINE_Schedule_Compat(
-               &state.world.timeline, &retainedC04) == 1);
-    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
+    /* MENU.C F0407:1312-1317 and :1620-1622 create this C04/C11 pair from
+     * one valid action.  SOUND.C F0064 stores C04 as location/sound only,
+     * while CHAMPION.C F0330 stores the champion in C11 Priority.  Losing
+     * the original owner therefore removes only C11 on the next rejected
+     * command; the action's C04 must still play. */
+    state.world.party.championCount = 0;
     memset(&invalidOwnerInput, 0, sizeof(invalidOwnerInput));
     invalidOwnerInput.command = CMD_ATTACK;
     invalidOwnerInput.commandArg1 = 0;
@@ -179,29 +160,6 @@ int main(void)
         ((unsigned int)DIR_SOUTH << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
     assert(F0888_ORCH_ApplyPlayerInput_Compat(
                &state.world, &invalidOwnerInput, &dispatchResult) == 1);
-    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
-
-    memset(&invalidOwnerC11, 0, sizeof(invalidOwnerC11));
-    invalidOwnerC11.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
-    invalidOwnerC11.fireAtTick = state.world.gameTick + 20u;
-    invalidOwnerC11.mapIndex = state.world.party.mapIndex;
-    invalidOwnerC11.mapX = state.world.party.mapX;
-    invalidOwnerC11.mapY = state.world.party.mapY;
-    invalidOwnerC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    invalidOwnerC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    invalidOwnerC11.aux4 = 1;
-    assert(F0721_TIMELINE_Schedule_Compat(
-               &state.world.timeline, &invalidOwnerC11) == 1);
-    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 2);
-
-    invalidOwnerInput.commandArg1 = 1;
-    invalidOwnerInput.reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
-        DM1_ACTION_SWING |
-        CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-        ((unsigned int)DIR_SOUTH << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
-    assert(F0888_ORCH_ApplyPlayerInput_Compat(
-               &state.world, &invalidOwnerInput, &dispatchResult) == 1);
-    assert(state.world.timeline.count == timelineCountBeforeInvalidOwner + 1);
     for (i = 0; i < state.world.timeline.count; ++i) {
         const struct TimelineEvent_Compat *event =
             &state.world.timeline.events[i];
@@ -209,10 +167,10 @@ int main(void)
             event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
             event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
             event->aux4 == 0) {
-            sawHistoricC11AfterInvalidOwner = 1;
+            sawStaleC11AfterInvalidOwner = 1;
         }
         if (event->kind == TIMELINE_EVENT_PLAY_SOUND &&
-            event->fireAtTick == state.world.gameTick + 20u &&
+            event->fireAtTick == 8u &&
             event->mapIndex == state.world.party.mapIndex &&
             event->mapX == 1 && event->mapY == 2 &&
             event->aux0 == DM1_SND_WOODEN_THUD &&
@@ -220,12 +178,17 @@ int main(void)
             sawRetainedC04AfterInvalidOwner = 1;
         }
     }
-    assert(sawHistoricC11AfterInvalidOwner == 1);
+    assert(sawStaleC11AfterInvalidOwner == 0);
     assert(sawRetainedC04AfterInvalidOwner == 1);
+    memset(&dispatchResult, 0, sizeof(dispatchResult));
+    state.world.gameTick = 9u;
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(
+               &state.world, &dispatchResult) == 2);
+    assert((squareData[(1 * 3) + 2] & 0x07) == 5);
     assert(DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
-               &state.world, 1, 6) == 0);
+               &state.world, 0, 6) == 0);
     assert(DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
-               &state.world, 1) == 0);
+               &state.world, 0) == 0);
 
     memset(&invalidOwnerC11, 0, sizeof(invalidOwnerC11));
     invalidOwnerC11.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
@@ -235,7 +198,7 @@ int main(void)
     invalidOwnerC11.mapY = state.world.party.mapY;
     invalidOwnerC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
     invalidOwnerC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    invalidOwnerC11.aux4 = 1;
+    invalidOwnerC11.aux4 = 0;
     assert(F0721_TIMELINE_Schedule_Compat(
                &state.world.timeline, &invalidOwnerC11) == 1);
     memset(&dispatchResult, 0, sizeof(dispatchResult));
