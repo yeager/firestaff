@@ -1151,6 +1151,19 @@ typedef struct {
 #define NEXUS_V1_ITEM_IBS_DECLARATION_COUNT 243
 #define NEXUS_V1_ITEM_IBS_PALETTE_COUNT 8
 #define NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT 223
+#define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT 109
+
+typedef struct {
+    uint16_t image_id;
+    uint16_t encoding;
+    uint16_t palette_id;
+    uint16_t width;
+    uint16_t height;
+    uint32_t image_offset;
+    uint32_t image_bytes;
+    uint16_t palette_bgr555[16];
+    int palette_bound;
+} Nexus_V1_ItemIbsFloorImage;
 
 typedef struct {
     int valid;
@@ -1161,6 +1174,9 @@ typedef struct {
     uint8_t association_palette[256];
     uint8_t association_image[256];
     uint8_t regular_image_texels[NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT][128];
+    Nexus_V1_ItemIbsFloorImage
+        floor_images[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT];
+    int floor_image_count;
 } Nexus_V1_ItemIbsBank;
 
 typedef struct {
@@ -1171,6 +1187,7 @@ typedef struct {
     uint8_t image_index;
     const uint16_t *palette_bgr555;
     const uint8_t *packed_4bpp_texels;
+    const Nexus_V1_ItemIbsFloorImage *special_floor_image;
 } Nexus_V1_DgnStructure1FItemMaterialBinding;
 
 typedef struct {
@@ -1178,6 +1195,7 @@ typedef struct {
     int item_entry_count;
     int command_candidate_count;
     int bound_regular_inventory_count;
+    int bound_special_floor_palette_count;
     int blocked_special_floor_image_count;
     int blocked_missing_command_count;
     int blocked_invalid_item_count;
