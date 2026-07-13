@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 original-save to world-state restore: valid SKSave envelopes
+  now strip only after the 0xBEEF/0xDEAD gate and run their complete `D2RS` or
+  raw candidate parser before a `DM2_WorldState` is allocated. The resulting
+  state copies only direct source fields: party location, champion HP/mana,
+  food/water, tick, level, rain and preserved raw bytes. Rejected candidates
+  cannot publish partial state. Source: skproject `c_savegame.cpp`
+  `DM2_SELECT_LOAD_GAME` restore ordering. Verification: 33/33 assertions in
+  `test_dm2_v1_world_state_minimap_level_transition`, including a valid slot
+  header plus original SUPPRESS envelope fixture.
+
 - 2026-07-13 CSB native-save runtime handoff: `csb_v1_boot` now exposes a
   source-locked receipt for an original CSB save. It verifies the native
   `CSB_SAVE_HEADER`, loads through ReDMCSB `LOADSAVE.C F0435` into the already

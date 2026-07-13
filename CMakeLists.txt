@@ -7733,7 +7733,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
-    target_link_libraries(test_dm2_v1_world_state_minimap_level_transition PRIVATE firestaff_m10 m)
+    target_link_libraries(test_dm2_v1_world_state_minimap_level_transition PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_world_state_minimap_level_transition PRIVATE -Wall -Wextra -O2)
     endif()
@@ -8620,7 +8620,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
-    target_link_libraries(probe_dm2_v1_world_state PRIVATE firestaff_m10 m)
+    target_link_libraries(probe_dm2_v1_world_state PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(probe_dm2_v1_world_state PRIVATE -Wall -Wextra -O2)
     endif()

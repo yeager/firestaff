@@ -37,6 +37,8 @@ extern "C" {
 #define DM2_WORLD_STATE_EXPLORED_BYTES \
     ((DM2_WORLD_STATE_MAP_EDGE * DM2_WORLD_STATE_MAP_EDGE) / 8)
 
+/* This is the older world-model presentation classification, not the
+ * DM2_ChampionClass used by dm2_v1_new_game.h for original portrait classes. */
 typedef enum {
     DM2_QUEST_PHASE_PROLOGUE  = 0,
     DM2_QUEST_PHASE_MAIN      = 1,
@@ -66,7 +68,7 @@ typedef enum {
     DM2_CHAMP_CLASS_ROBED   = 3,
     DM2_CHAMP_CLASS_MYSTIC  = 4,
     DM2_CHAMP_CLASS_NINJA   = 5,
-} DM2_ChampionClass;
+} DM2_WorldChampionClass;
 
 typedef enum {
     DM2_CHAMP_CONDITION_HEALTHY   = 0,
