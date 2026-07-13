@@ -1213,6 +1213,13 @@ typedef struct {
     int structure3_block_count;
     int structure3_byte_size;
     uint32_t structure3_raw_payload_hash;
+    /* Per-candidate exclusions against the only measured Structure3 ordinal
+     * domains. They prevent a common but unproved model-index-to-block/run
+     * shortcut; they do not identify a mesh span. */
+    int model_index_exceeds_block_count;
+    int model_index_exceeds_nonzero_byte_run_count;
+    int model_index_exceeds_nonzero_block_run_count;
+    int direct_ordinal_mapping_disproven;
     int model_ordinal_proven;
     int face_semantics_proven;
     int draw_authorized;
@@ -1223,6 +1230,7 @@ typedef struct {
     int topology_candidate_count;
     int blocked_invalid_source_count;
     int blocked_payload_count;
+    int direct_ordinal_mapping_disproven_count;
     int complete;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt;
