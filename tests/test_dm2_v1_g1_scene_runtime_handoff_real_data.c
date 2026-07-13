@@ -11,6 +11,7 @@ typedef struct {
     int fetch_calls;
     int palette_calls;
     int missing_material;
+    int last_index;
 } Calls;
 
 static unsigned char *read_file(const char *path, int *out_size)
@@ -54,7 +55,8 @@ static int fetch_material(void *user, int index, const uint8_t **out_pixels,
     static const uint8_t receipt_only_pixel[] = { 0x2a };
     Calls *calls = (Calls *)user;
     ++calls->fetch_calls;
-    if (calls->missing_material || (index != 901 && index != 902)) return -1;
+    if (calls->missing_material || index == 0) return -1;
+    calls->last_index = index;
     *out_pixels = receipt_only_pixel;
     *out_width = 1;
     *out_height = 1;
@@ -67,7 +69,7 @@ static int fetch_palette(void *user, int index, uint8_t out_palette16[16],
 {
     Calls *calls = (Calls *)user;
     ++calls->palette_calls;
-    if (calls->missing_material || (index != 901 && index != 902)) return -1;
+    if (calls->missing_material || index == 0) return -1;
     memset(out_palette16, 0, 16u);
     out_palette16[1] = 0x2a;
     *out_hash = (uint32_t)(0x47315300u + (unsigned)index);
@@ -118,12 +120,16 @@ int main(int argc, char **argv)
         fputs("FAIL: door route did not fail closed without DB0 material proof\n", stderr);
         return 1;
     }
-    if (dm2_v1_g1_scene_runtime_handoff(
+    if (!dm2_v1_g1_scene_runtime_handoff(
             &dungeon, 5, 10, 5, resolve_material, &calls, fetch_material,
-            &calls, fetch_palette, &calls, &receipt) != 0 || !receipt.blocked ||
-        receipt.scene.root_class != DM2_V1_G1_SCENE_ROOT_CREATURE) {
+            &calls, fetch_palette, &calls, &receipt) || !receipt.valid ||
+        receipt.scene.root_class != DM2_V1_G1_SCENE_ROOT_CREATURE ||
+        receipt.creature_type != 192 ||
+        receipt.gdat_index != DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_BASE -
+            (192 << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT) ||
+        calls.last_index != receipt.gdat_index) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: creature route did not fail closed without payload proof\n", stderr);
+        fputs("FAIL: creature route did not bind DB4 b4 to CREATURES/F9\n", stderr);
         return 1;
     }
     calls.missing_material = 1;

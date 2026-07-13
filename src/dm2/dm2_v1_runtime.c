@@ -175,12 +175,12 @@ static int dm2_runtime_resolve_g1_scene_gdat(
         *out_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             rt->map_graphics_style,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
-        return *out_gdat_index > 0;
+        return *out_gdat_index != 0;
     }
     if (tile_class == DM2_V1_G1_SCENE_TILE_WALL) {
         *out_gdat_index = dm2_v1_viewport_wall_graphic_index_for_graphicsset(
             rt->map_graphics_style, DM2_SQ_D0L);
-        return *out_gdat_index > 0;
+        return *out_gdat_index != 0;
     }
     /* A door tile can begin with DB1 and needs the later DB0 payload route.
      * Do not turn its terrain tag into a guessed GDAT panel index. */
