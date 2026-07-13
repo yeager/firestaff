@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB terminal HUD handoff: M11 now refuses the first live CSB
+  viewport/HUD frame unless the same terminal C001-C005/C017/C040 session
+  reaches HUD after the source entrance finish. C040 now retains PANEL.C's
+  transparent index 6, distinct from opaque C017. Verification: real local-CSB
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 DM1 HoC D3L2/D3R2 wall host handoff: extended the M11 D3
   material consumer to the ReDMCSB `DUNVIEW.C` F0676/F0677 C702/C703 side
   wall routes. DM1 supplies wallset selection, C10 transparency, geometry,

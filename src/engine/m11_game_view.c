@@ -19,6 +19,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
@@ -1627,6 +1628,23 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                 framebufferHeight);
     m11_draw_v1_message_area(state, framebuffer, framebufferWidth,
                              framebufferHeight);
+}
+
+static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    /* ReDMCSB PANEL.C F0346/F0347 reaches C017 only after ENTRANCE.C F0806
+     * completes.  C017/C040 must remain the same verified session that
+     * carried C001-C005, never a late asset-loader substitute. */
+    return csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) &&
+        terminal.valid && terminal.c017_ready && terminal.c040_ready;
 }
 
 static void m11_apply_csb_runtime_m11_mirror_receipt(
@@ -37373,7 +37391,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        if (!m11_render_csb_boot_viewport(state, framebuffer,
+        if (!m11_csb_live_hud_session_ready(state) ||
+            !m11_render_csb_boot_viewport(state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
             /* A verified CSB launch must not exchange missing source

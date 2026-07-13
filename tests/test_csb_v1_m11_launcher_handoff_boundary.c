@@ -439,6 +439,15 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB post-entrance handoff retains the loaded source dungeon");
     expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
                 "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
+    {
+        void *saved_session = view.csbStartupRuntimeAssetSession;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        view.csbStartupRuntimeAssetSession = NULL;
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB live HUD rejects a missing terminal source session");
+        view.csbStartupRuntimeAssetSession = saved_session;
+    }
     expect_true(view.csbState.runtime_object_marker_drawn_count == 0 &&
                     view.csbState.runtime_group_marker_drawn_count == 0 &&
                     view.csbState.runtime_projectile_marker_drawn_count == 0 &&
