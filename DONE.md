@@ -47,6 +47,10 @@
   direct D3L2/D3R2 source-lock test passed 135/135 assertions and
   `firestaff_m11` built.
 
+- 2026-07-13 Nexus SLEV runtime gate: launcher script readiness now requires
+  `READY_PARSED` plus the explicit enabled dispatch receipt. Verification:
+  `test_nexus_v1_startup_menu_pc34_compat` PASS.
+
 - 2026-07-13 CSB startup playback-to-HUD ownership: M11 now advances skipped
   ReDMCSB `TITLE.C F0437` cadence through the verified startup session before
   entrance presentation, then accepts `ENTRANCE.C F0806` completion only by

@@ -2723,7 +2723,8 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
             script_receipt.blocks_real_script_dispatch ? 1 : 0;
         out_receipt->script_runtime_ready =
             !out_receipt->script_runtime_blocked &&
-            script_receipt.status != NEXUS_SCRIPT_RUNTIME_MISSING;
+            script_receipt.status == NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
+            script_receipt.dispatch_enabled;
     }
     out_receipt->runtime_ready = 1;
     out_receipt->dgn_render_ready = 1;
