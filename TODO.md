@@ -2811,6 +2811,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-10 update: DM1 HoC release/app capture ownership now requires all named production host consumers (host-render, M11 boot-probe, and M12 startup capture) before publishing the packaged route. Remaining startup work is broader real Mac/app capture coverage and deleting older host-only adapters once tests move.
   - 2026-07-09 update: DM1 F0231 side-effect plans now carry XP call context toward M10 writeback. Remaining melee coding work is reducing the last M10 assembly/apply fragments around F0407/F0231 and broad runtime proof.
   - 2026-07-13 update: DM1 F0231 kill-notify receipts no longer publish the old base-health “kill XP” bonus. ReDMCSB `PROJEXPL.C F0231:1531-1539` awards only damage-derived F0304 skill XP before its F0190 outcome path; M11 retains the defeat notification but cannot double-award XP. Remaining melee work is deeper runtime aftermath proof, not synthetic kill rewards.
+  - 2026-07-13 update: the remaining compact F0231 combat entry now takes
+    the original `CreatureInfo.Dexterity == 255` early return before its first
+    hit RNG roll. This matches `PROJEXPL.C F0231:1454-1456` and prevents an
+    impossible high-dexterity hit or a changed RNG/Luck sequence. Remaining
+    melee work is broader runtime aftermath proof, not a fallback combat path.
   - 2026-07-13 update: the live F0407 completion path now retains its
     G0494/M005 stamina receipt until after F0402/F0231. This preserves the
     pre-action F0312 strength state required by `MENU.C F0407:1613-1628` and
