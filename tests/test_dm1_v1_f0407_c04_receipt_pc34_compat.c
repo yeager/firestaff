@@ -151,7 +151,8 @@ int main(void)
      * one valid action.  SOUND.C F0064 stores C04 as location/sound only,
      * while CHAMPION.C F0330 stores the champion in C11 Priority.  Losing
      * the original owner after C11's due tick consumes only C11 in
-     * TIMELINE.C; the action's already-due C04 must still play. */
+     * TIMELINE.C; the action's already-due C04 must still play.  Use the
+     * real F0643 party-slot rollback rather than mutating count directly. */
     /* A second C04 due beside C11 cannot carry a champion owner: C20's
      * aux4 is SOUND_DATA.Priority.  This forged receipt substitutes owner
      * zero for F0407's source priority 70, and must be consumed silently. */
@@ -194,7 +195,10 @@ int main(void)
         (int)historicC11FireAtTick - 1;
     state.world.projectiles.entries[1].scheduledAtTick =
         (int)historicC11FireAtTick + 2;
-    state.world.party.championCount = 0;
+    assert(F0643_PARTY_ClearChampionSlot_Compat(&state.world.party, 0) == 1);
+    assert(state.world.party.championCount == 0);
+    assert(state.world.party.champions[0].present == 0);
+    assert(state.world.party.activeChampionIndex == -1);
     memset(&dispatchResult, 0, sizeof(dispatchResult));
     state.world.gameTick = historicC11FireAtTick + 1u;
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(
