@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus Structure1F raw face/rotation-pair receipt: complete
+  The corpus, host handoff, and render plan retain exact original face and
+  rotation byte pairs from Structure1A-owned alcove/wall records. The pair
+  remains no-draw provenance: it establishes no direction, transform, face,
+  vertex, mesh, texture, palette, or pixel semantics. Verification: Ninja and
+  CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 DM2 G1 WALL_GFX local-palette ownership: source DB2 Text and DB3
   Actuator wall graphics now retain `dtImage/1` dimensions, format, and the
   exact `QUERY_GDAT_IMAGE_LOCALPAL` hash before a source-required

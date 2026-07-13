@@ -185,6 +185,7 @@ int main(int argc, char **argv) {
            "complete-model-relations=%d complete-transform-selectors=%d "
            "complete-face-selectors=%d "
            "complete-rotation-selectors=%d "
+           "complete-face-rotation-pairs=%d "
            "ordinal-block-disproven=%d "
            "ordinal-byte-run-disproven=%d "
            "ordinal-run-disproven=%d ordinal-zero=%d/%d/%d "
@@ -204,6 +205,7 @@ int main(int argc, char **argv) {
            receipt.structure1a_transform_selector_complete_level_count,
            receipt.structure1f_face_selector_complete_level_count,
            receipt.structure1f_rotation_selector_complete_level_count,
+           receipt.structure1f_face_rotation_pair_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_run_ordinal_mapping_disproven_level_count,
