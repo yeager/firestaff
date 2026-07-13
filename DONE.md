@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus SNDLEV runtime boundary: the sound receipt now consumes
+  only the hash-verified 16-bank `SNDLEVxx.MAP`/`.SAL` corpus and fails closed
+  for unproven event routes. No guessed Saturn event semantics or fallback
+  audio is published. Verification: Ninja-built
+  `test_nexus_v1_sound_runtime_receipt` against the real 16-bank corpus.
+
 - 2026-07-13 CSBWin DSA GETSKIN/SETSKIN EXPOOL bridge: authenticated
   `AMPERSAND2` slots 3/4 now execute `STKOP_GetSkin` and `STKOP_SetSkin`
   through the current level's original `EDT_Skins` route. The runtime stages

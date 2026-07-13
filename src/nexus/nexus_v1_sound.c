@@ -50,10 +50,6 @@ static int read_u32_be(const uint8_t *p) {
                      (uint32_t)p[3]) : 0;
 }
 
-static int optional_u16_to_int(uint16_t value) {
-    return value == 0xffffU ? -1 : (int)value;
-}
-
 static void sal_window_profile(const uint8_t *data,
                                int data_size,
                                int offset,
@@ -169,22 +165,6 @@ static void clear_map_route(Nexus_SoundEngine *eng) {
     eng->last_event_window_last_nonzero_relative_offset = -1;
     eng->last_event_window_distinct_byte_count = 0;
     eng->last_event_window_transition_count = 0;
-    memset(eng->event_sample_index, 0, sizeof(eng->event_sample_index));
-    memset(eng->event_sal_offset, 0, sizeof(eng->event_sal_offset));
-    memset(eng->event_sal_size, 0, sizeof(eng->event_sal_size));
-    memset(eng->event_sal_checksum16, 0, sizeof(eng->event_sal_checksum16));
-    memset(eng->event_sal_nonzero_byte_count, 0,
-           sizeof(eng->event_sal_nonzero_byte_count));
-    memset(eng->event_sal_high_bit_byte_count, 0,
-           sizeof(eng->event_sal_high_bit_byte_count));
-    memset(eng->event_sal_first_nonzero_relative_offset, 0,
-           sizeof(eng->event_sal_first_nonzero_relative_offset));
-    memset(eng->event_sal_last_nonzero_relative_offset, 0,
-           sizeof(eng->event_sal_last_nonzero_relative_offset));
-    memset(eng->event_sal_distinct_byte_count, 0,
-           sizeof(eng->event_sal_distinct_byte_count));
-    memset(eng->event_sal_transition_count, 0,
-           sizeof(eng->event_sal_transition_count));
 }
 
 static void parse_map_record_table(Nexus_SoundEngine *eng) {
@@ -293,28 +273,6 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
         eng->map_last_window_last_nonzero_relative_offset = last_nonzero;
         eng->map_last_window_distinct_byte_count = distinct;
         eng->map_last_window_transition_count = transitions;
-        if (event_id >= 0 &&
-            event_id < (int)(sizeof(eng->event_sal_size) /
-                             sizeof(eng->event_sal_size[0])) &&
-            size > 0 &&
-            sal_offset >= 0 &&
-            end >= sal_offset &&
-            eng->sal_data &&
-            end <= eng->sal_size) {
-            eng->event_sal_offset[event_id] = (uint32_t)sal_offset;
-            eng->event_sal_size[event_id] = (uint16_t)size;
-            eng->event_sal_checksum16[event_id] = (uint16_t)checksum16;
-            eng->event_sal_nonzero_byte_count[event_id] = (uint16_t)nonzero;
-            eng->event_sal_high_bit_byte_count[event_id] = (uint16_t)high;
-            eng->event_sal_first_nonzero_relative_offset[event_id] =
-                (uint16_t)first_nonzero;
-            eng->event_sal_last_nonzero_relative_offset[event_id] =
-                (uint16_t)last_nonzero;
-            eng->event_sal_distinct_byte_count[event_id] =
-                (uint16_t)distinct;
-            eng->event_sal_transition_count[event_id] =
-                (uint16_t)transitions;
-        }
         if (end > eng->map_max_record_end) {
             eng->map_max_record_end = end;
         }
@@ -404,43 +362,6 @@ static void parse_sal_profile(Nexus_SoundEngine *eng) {
     }
 }
 
-static void parse_map_route(Nexus_SoundEngine *eng) {
-    int i;
-    int limit;
-
-    if (!eng) return;
-    clear_map_route(eng);
-    if (!eng->map_data || eng->map_size <= 0) return;
-
-    limit = eng->map_size;
-    if (limit > (int)EVENT_COUNT) limit = (int)EVENT_COUNT;
-    if (limit > (int)(sizeof(eng->event_sample_index) /
-                      sizeof(eng->event_sample_index[0]))) {
-        limit = (int)(sizeof(eng->event_sample_index) /
-                      sizeof(eng->event_sample_index[0]));
-    }
-    eng->map_event_count = limit;
-
-    /* The verified MAP assets are compact per-level event tables. Until the
-     * SAL sample payload is decoded, Firestaff consumes the bounded event
-     * index route only: byte N maps event N to a sample index, zero means no
-     * level-local sample route. */
-    for (i = 1; i < limit; ++i) {
-        int sample = eng->map_data[i];
-        eng->event_sample_index[i] = (uint16_t)sample;
-        if (sample > 0) {
-            if (eng->map_mapped_event_count == 0 ||
-                sample < eng->map_first_sample_index) {
-                eng->map_first_sample_index = sample;
-            }
-            if (sample > eng->map_last_sample_index) {
-                eng->map_last_sample_index = sample;
-            }
-            ++eng->map_mapped_event_count;
-        }
-    }
-}
-
 /* ═══════════════════════════════════════════════════════════════════
  * Init
  * ═══════════════════════════════════════════════════════════════════ */
@@ -520,7 +441,6 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
             eng->map_size = map_size;
         }
     }
-    parse_map_route(eng);
     parse_map_record_table(eng);
     parse_sal_profile(eng);
 
@@ -725,11 +645,9 @@ const char *nexus_sound_sfx_runtime_status_name(
     }
 }
 
-/* Play sound event — STUB logs the request.
- * Real implementation: look up event_id in MAP, get sample offset/size
- * from SAL, decode (if needed), play via SDL_mixer or platform audio.
- * TODO: SDL_mixer integration, SAL decode (unknown format).
- * Source: docs/nexus_audio_format.md (SAL format unknown). */
+/* Play sound event — request only. The bounded MAP record grammar identifies
+ * raw records and SAL windows, but no Saturn source binds those record IDs to
+ * these host requests. Do not select a record, sample, or fallback sound. */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     const char *name;
     Nexus_SfxRuntimeReceipt receipt;
@@ -738,10 +656,6 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
-    if ((int)event < eng->map_event_count) {
-        sample_index = eng->event_sample_index[event];
-        if (sample_index == 0) sample_index = -1;
-    }
     eng->last_event = event;
     eng->last_sample_index = sample_index;
     eng->last_event_record_found = 0;
@@ -754,30 +668,6 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     eng->last_event_window_last_nonzero_relative_offset = -1;
     eng->last_event_window_distinct_byte_count = 0;
     eng->last_event_window_transition_count = 0;
-    if ((int)event >= 0 &&
-        (int)event < (int)(sizeof(eng->event_sal_size) /
-                           sizeof(eng->event_sal_size[0])) &&
-        eng->event_sal_size[event] > 0) {
-        eng->last_event_record_found = 1;
-        eng->last_event_sal_offset = (int)eng->event_sal_offset[event];
-        eng->last_event_sal_size = (int)eng->event_sal_size[event];
-        eng->last_event_window_checksum16 =
-            (int)eng->event_sal_checksum16[event];
-        eng->last_event_window_nonzero_byte_count =
-            (int)eng->event_sal_nonzero_byte_count[event];
-        eng->last_event_window_high_bit_byte_count =
-            (int)eng->event_sal_high_bit_byte_count[event];
-        eng->last_event_window_first_nonzero_relative_offset =
-            optional_u16_to_int(
-                eng->event_sal_first_nonzero_relative_offset[event]);
-        eng->last_event_window_last_nonzero_relative_offset =
-            optional_u16_to_int(
-                eng->event_sal_last_nonzero_relative_offset[event]);
-        eng->last_event_window_distinct_byte_count =
-            (int)eng->event_sal_distinct_byte_count[event];
-        eng->last_event_window_transition_count =
-            (int)eng->event_sal_transition_count[event];
-    }
     if (nexus_sound_level_runtime_receipt(eng, &receipt) == 0 &&
         receipt.blocks_real_sfx_playback) {
         printf("Nexus SFX blocked: %s\n",

@@ -15,7 +15,8 @@
  * Status: STUB. SAL/MAP format unknown, no actual SFX playback.
  * Stub provides API surface and future hook points. */
 
-/* Sound event types (matching SNDLEV*.MAP event IDs) */
+/* Firestaff sound requests. These numeric values are not claimed to be
+ * SNDLEV*.MAP event IDs: the original event-dispatch ABI is still unproven. */
 typedef enum {
     NEXUS_SFX_NONE = 0,
     NEXUS_SFX_FOOTSTEP       = 1,   /* party footstep */
@@ -63,6 +64,9 @@ typedef struct {
     int map_size;
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
+    /* Direct byte-to-event routing is deliberately unavailable. MAP records
+     * are retained as bounded opaque windows until Saturn dispatch evidence
+     * proves their event-ID semantics. */
     int map_event_count;
     int map_mapped_event_count;
     int map_first_sample_index;
@@ -125,16 +129,6 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
-    uint16_t event_sample_index[32];
-    uint32_t event_sal_offset[32];
-    uint16_t event_sal_size[32];
-    uint16_t event_sal_checksum16[32];
-    uint16_t event_sal_nonzero_byte_count[32];
-    uint16_t event_sal_high_bit_byte_count[32];
-    uint16_t event_sal_first_nonzero_relative_offset[32];
-    uint16_t event_sal_last_nonzero_relative_offset[32];
-    uint16_t event_sal_distinct_byte_count[32];
-    uint16_t event_sal_transition_count[32];
 } Nexus_SoundEngine;
 
 typedef enum {

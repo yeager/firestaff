@@ -408,10 +408,13 @@ spine (`2fe6`, `e2ii`, `d3dd`, fixed body, `d0dd`) with two bounded in-file
 PC-relative 32-bit literals in the observed `0x0020xxxx` range. Firestaff
 records those header/literal fields and task-shape counts only; it creates no
 rules and dispatches no task bytes. No SLEV task-body opcode, MAP event ID,
-SAL sample window, or CD playback route is semantically promoted. Remaining
-work requires a source-backed Saturn dispatcher/audio-driver path and proof of
-literal ownership, task-body record grammar, sample encoding, and host
-playback. Keep unknown or merely readable bytes no-op with no fallback.
+SAL sample window, or CD playback route is semantically promoted. The old
+host byte-N-to-event-N route and last-duplicate MAP selection have been
+removed: a MAP record is retained only as an opaque bounded record/window,
+and a named host SFX request cannot select it. Remaining work requires a
+source-backed Saturn dispatcher/audio-driver path and proof of literal
+ownership, task-body record grammar, event dispatch, sample encoding, and
+host playback. Keep unknown or merely readable bytes no-op with no fallback.
 
 2026-07-12 update: the bounded entry receipt now classifies `e2ii` as the
 SH-2 `MOV #imm,R2` setup operand, `d3dd` as `MOV.L @(disp,PC),R3`, and the
