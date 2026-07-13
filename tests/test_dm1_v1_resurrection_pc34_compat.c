@@ -294,6 +294,45 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
+static void test_nonzero_leader_candidate_selection(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat panel;
+
+    printf("[nonzero_leader_candidate_selection]\n");
+
+    /* ReDMCSB REVIVE.C F0280:272-277 appends at the prior G0305 count and
+     * calls SetLeader only when the incremented count is one. F0282:837-845
+     * likewise assigns champion 0 only for a one-member accepted party.
+     * Thus a valid leader in slot 1 is not a C127 selection input and must
+     * survive the C160 confirmation of the tail candidate. */
+    in = base_portrait_click_input();
+    in.partyChampionCount = 2;
+    in.leaderIndex = 1;
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    CHECK(add.triggersCandidateAdd == 1, "C127 accepts a multi-party nonzero leader");
+    CHECK(add.candidateChampionIndex == 2, "C127 appends after two existing champions");
+    CHECK(add.candidateChampionOrdinal == 3, "C127 records tail candidate ordinal");
+    CHECK(add.nextPartyChampionCount == 3, "C127 opens a three-member candidate panel");
+    CHECK(add.setLeaderToFirstChampion == 0,
+          "C127 does not replace a nonzero multi-party leader");
+
+    st.partyChampionCount = add.nextPartyChampionCount;
+    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        st, DM1_COMMAND_RESURRECT);
+    CHECK(panel.valid == 1 && panel.resurrected == 1,
+          "C160 accepts the candidate selected with a nonzero leader");
+    CHECK(panel.candidateChampionIndex == 2,
+          "C160 operates on the appended tail rather than the leader slot");
+    CHECK(panel.nextPartyChampionCount == 3,
+          "C160 retains both existing champions and the candidate");
+    CHECK(panel.nextCandidateChampionOrdinal == 0,
+          "C160 clears the transient candidate ordinal");
+    CHECK(panel.disablesMirrorSensor == 1, "C160 consumes the selected mirror");
+}
+
 static void test_candidate_append_clear_cycles(void) {
     ChampionPortraitClickInput_Compat in;
     CandidateChampionAddResult_Compat add;
@@ -602,6 +641,7 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
+    test_nonzero_leader_candidate_selection();
     test_candidate_append_clear_cycles();
     test_candidate_slot_reuse_before_accept();
     test_two_champion_candidate_slot_reuse();
