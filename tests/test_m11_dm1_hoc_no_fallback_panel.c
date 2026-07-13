@@ -2,6 +2,7 @@
  * Missing PC34 art must not produce an M11 substitute panel. */
 
 #include "m11_game_view.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -312,6 +313,7 @@ static int test_c040_host_input_requires_real_panel(void)
     const char* graphicsPath = pc34_graphics_path();
     M11_GameViewState noAssetState;
     M11_GameViewState realAssetState;
+    const M11_AssetSlot* backdrop;
 
     /* ReDMCSB PANEL.C F0346 must have installed C040 before COMMAND.C
      * dispatches C160/C161/C162.  An invisible panel may not accept host
@@ -342,8 +344,17 @@ static int test_c040_host_input_requires_real_panel(void)
         return 1;
     }
     realAssetState.assetsAvailable = 1;
+    backdrop = M11_AssetLoader_Load(
+        &realAssetState.assetLoader,
+        (unsigned int)dm1_v1_graphic_inventory_backdrop_pc34());
+    if (!backdrop || !backdrop->pixels ||
+        backdrop->width != 224 || backdrop->height != 136) {
+        fprintf(stderr, "FAIL PC34 C017 backdrop missing for C040\n");
+        M11_GameView_Shutdown(&realAssetState);
+        return 0;
+    }
     /* C162 at the source cancel row must now consume the C040-backed panel
-     * and remove only the appended candidate champion. */
+     * and its C017 base, then remove only the appended candidate champion. */
     if (M11_GameView_HandlePointer(&realAssetState, 110, 150, 1) !=
             M11_GAME_INPUT_REDRAW ||
         realAssetState.candidateMirrorPanelActive ||
