@@ -2565,6 +2565,9 @@ static unsigned short orch_make_thing_ref_compat(int type, int index);
 static int orch_group_creature_cell_compat(
     const struct DungeonGroup_Compat* group,
     int creatureIndex);
+static int orch_find_active_group_state_index_compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex);
 static int orch_pack_group_directions_compat(int direction, int creatureCount);
 static int orch_active_group_directions_compat(
     const struct CreatureAIState_Compat* ai,
@@ -4684,7 +4687,8 @@ static int orch_find_teleporter_on_square_compat(
 }
 
 static int orch_resolve_group_f0267_teleporter_destination_compat(
-    const struct GameWorld_Compat* world,
+    struct GameWorld_Compat* world,
+    int groupIndex,
     int* inOutMapIndex,
     int* inOutMapX,
     int* inOutMapY,
@@ -4705,7 +4709,8 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      * group-teleporter destination subcase. GROUP.C:F0185:543 and
      * TIMELINE.C:F0252:1534 pass CM1_MAPX_NOT_ON_A_SQUARE, so the
      * MOVESENS.C:F0267:432-435 projectile-impact precheck is not entered
-     * for generated/deferred insertion; group rotation remains outside it. */
+     * for generated/deferred insertion. F0262 still rotates every C04
+     * creature as each admitted teleporter hop is consumed. */
     for (remaining = 100; remaining > 0; --remaining) {
         const struct DungeonMapDesc_Compat* map;
         unsigned char squareByte;
@@ -4736,6 +4741,46 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
                 (int)world->dungeon->header.mapCount, &plan) ||
             !plan.valid || !plan.shouldTeleport) {
             break;
+        }
+
+        if (groupIndex >= 0 && world->things && world->things->groups &&
+            groupIndex < world->things->groupCount) {
+            struct DungeonGroup_Compat* group = &world->things->groups[groupIndex];
+            const struct CreatureBehaviorProfile_Compat* profile =
+                CREATURE_GetProfile_Compat((int)group->creatureType);
+            DM1_V1_TeleporterDefPc34 rotationTeleporter;
+            unsigned int rotatedDirections;
+            unsigned int rotatedCells;
+            unsigned int directions;
+            int activeIndex = orch_find_active_group_state_index_compat(
+                world, groupIndex);
+            int creatureSize = profile
+                ? (profile->attributes & DM1_ATTR_SIZE_MASK)
+                : DM1_SIZE_QUARTER_SQUARE;
+
+            memset(&rotationTeleporter, 0, sizeof(rotationTeleporter));
+            rotationTeleporter.destFacing = (int)tp.rotation;
+            rotationTeleporter.absoluteRotation = tp.absoluteRotation ? 1 : 0;
+            directions = (unsigned int)(activeIndex >= 0
+                ? orch_active_group_directions_compat(
+                      &world->creatureAI[activeIndex], group)
+                : orch_pack_group_directions_compat(
+                      (int)group->direction, (int)group->count));
+            if (!DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(
+                    &rotationTeleporter, (int)group->count, creatureSize,
+                    directions, (unsigned int)group->cells,
+                    &rotatedDirections, &rotatedCells)) {
+                return 0;
+            }
+            group->direction = (unsigned char)(rotatedDirections & 0x03u);
+            group->cells = (unsigned char)(rotatedCells & 0xffu);
+            if (activeIndex >= 0) {
+                world->creatureAI[activeIndex].groupDirection =
+                    (int)(rotatedDirections & 0xffu);
+                world->creatureAI[activeIndex].groupCells =
+                    (int)(rotatedCells & 0xffu);
+            }
+            orch_write_raw_group_compat(world->things, groupIndex);
         }
 
         *inOutMapIndex = plan.targetMapIndex;
@@ -8325,7 +8370,7 @@ static int orch_materialize_generated_group_compat(
         DM1_V1_GroupMoveRoutePlanPc34 routePlan;
 
         (void)orch_resolve_group_f0267_teleporter_destination_compat(
-            world, &destMapIndex, &destMapX, &destMapY,
+            world, groupIndex, &destMapIndex, &destMapX, &destMapY,
             outTeleporterBuzzes);
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
@@ -8422,7 +8467,7 @@ static int orch_handle_deferred_group_move_event_compat(
      * helper above covers the narrow C006 group teleporter/cross-map subcase
      * before the final insertion. */
     (void)orch_resolve_group_f0267_teleporter_destination_compat(
-        world, &retry.mapIndex, &targetMapX, &targetMapY,
+        world, groupIndex, &retry.mapIndex, &targetMapX, &targetMapY,
         &teleporterBuzzes);
     {
         int fallKilledGroup = 0;

@@ -27,6 +27,13 @@
   F0267 destination/retry path. Verification: Ninja-built and CTest-passed
   `dm1_v1_square_state_dispatch_pc34_compat`.
 
+- 2026-07-13 DM1 F0249 C04 teleporter rotation: every F0267 creature-scope
+  teleporter hop now consumes ReDMCSB `MOVESENS.C F0262:33-111` before the
+  C04 group is linked at its destination. The runtime updates packed group
+  directions/cells, preserves the single-centred case, updates active-group
+  state when present, and writes the original raw group record. Verification:
+  Ninja-built and CTest-passed `dm1_v1_square_state_dispatch_pc34_compat`.
+
 - 2026-07-13 DM1 HoC F0282 reincarnation state gate: the twelve champion
   statistic increments now accept only direct `M002_RANDOM(7)` values from
   ReDMCSB `REVIVE.C F0282:832-835`. Invalid or absent draw arrays publish a
