@@ -624,6 +624,20 @@ static void test_structure1f_semantics_and_bounds(void) {
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
           handoff.blocks_real_dgn_mesh_render && !handoff.fallback_visuals_permitted,
           "unresolved Structure1A-bound Structure1F records block host rendering");
+    structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 +
+               NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = 64U;
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.structure1f_declared && !handoff.structure1f_valid &&
+          handoff.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT &&
+          handoff.blocks_real_dgn_mesh_render &&
+          !handoff.fallback_visuals_permitted &&
+          strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
+                 "blocked-structure1f-layout") == 0,
+          "declared malformed Structure1F coordinates block host handoff");
+    structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 +
+               NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = 10U;
     structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 + 16] = 0x13U;
     CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
           !layout.structure1f.valid,

@@ -8,6 +8,15 @@
   all text/counter/generator or world-mutation behavior. Verification: Ninja
   and CTest `csb_v1_phase7_verification`, plus `git diff --check`.
 
+- 2026-07-13 Nexus declared-Structure1F host gate: a final post-grid span
+  reaches the DGN host as Structure1F only after its six exact original
+  counts and family tags are established. If that declared table then fails
+  its documented direct 64x64 coordinate validation, handoff blocks with
+  `blocked-structure1f-layout`; arbitrary unknown post-grid spans still do
+  not masquerade as Structure1F. No object, trigger, draw, pixel, palette,
+  PRS3, or animation semantics were inferred. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_structure2_no_draw_receipt`.
 - 2026-07-13 CSBWin `TT_DOOR` DSA receipt: restored function-10 timers now
   follow `Timer.cpp::ProcessTT_DOOR` through `ActivateDSA` and
   `DSA.cpp::ProcessDSATimer5` to the existing authenticated
