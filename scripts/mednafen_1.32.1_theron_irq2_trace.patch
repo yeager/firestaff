@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,111 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,125 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -71,6 +71,20 @@ index 347482c4..61d4758e 100644
 +   TheronIrq2Trace->print_format("boot_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x work_22a4=%02x\n",
 +                                 logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, work_22a4);
 +   FlushTheronIrq2Trace();
++   if(logical_pc == 0xe8e2)
++   {
++    const RegGroupType *regs = (*CurGame->Debugger->RegGroups)[0];
++    const uint32 stack_pointer = regs->GetRegister(regs->Regs[4].id, NULL, 0) & 0xff;
++    const uint32 stack_status = CurGame->Debugger->MemPeek(0x2100 | ((stack_pointer + 1) & 0xff), 1, true, true) & 0xff;
++    const uint32 return_low = CurGame->Debugger->MemPeek(0x2100 | ((stack_pointer + 2) & 0xff), 1, true, true) & 0xff;
++    const uint32 return_high = CurGame->Debugger->MemPeek(0x2100 | ((stack_pointer + 3) & 0xff), 1, true, true) & 0xff;
++    const uint32 vector_low = CurGame->Debugger->MemPeek(0xfff6, 1, true, true) & 0xff;
++    const uint32 vector_high = CurGame->Debugger->MemPeek(0xfff7, 1, true, true) & 0xff;
++
++    TheronIrq2Trace->print_format("rti_stack_pc=%04x stack_sp=%02x stack_status=%02x return_low=%02x return_high=%02x return_pc=%04x vector_low=%02x vector_high=%02x\n",
++                                  logical_pc, stack_pointer, stack_status, return_low, return_high, return_low | (return_high << 8), vector_low, vector_high);
++    FlushTheronIrq2Trace();
++   }
 +  }
 + }
 +
@@ -114,7 +128,7 @@ index 347482c4..61d4758e 100644
  
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
-@@ -162,10 +267,10 @@ static void UpdateCoreHooks(void)
+@@ -162,10 +281,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
@@ -128,7 +142,7 @@ index 347482c4..61d4758e 100644
  }
  
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +1472,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +1486,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -137,7 +151,7 @@ index 347482c4..61d4758e 100644
  }
  
  
-@@ -1873,6 +1978,20 @@ void Debugger_Init(void)
+@@ -1873,6 +1992,20 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -158,11 +172,11 @@ index 347482c4..61d4758e 100644
  
  	NeedInit = true;
  	WatchLogical = true;
-@@ -1896,0 +2015,3 @@ void Debugger_Init(void)
+@@ -1896,0 +2029,3 @@ void Debugger_Init(void)
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,6 +2038,8 @@ void Debugger_Kill(void)
+@@ -1916,6 +2052,8 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
