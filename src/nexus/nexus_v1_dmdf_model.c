@@ -535,6 +535,10 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
      * Reject it before allocation; never overwrite an original surface. */
     if (!section.material_ids_unique) return 0;
     nexus_v1_dmdf_free_material_bank(out);
+    /* The two retail MNS TEXT sections are a single source bank.  A partial
+     * decode would make a malformed or unsupported original descriptor look
+     * like a usable material route, so commit no surface unless every
+     * descriptor has one unambiguous, rasterizable bank slot. */
     for (i = 0; i < section.descriptor_count; ++i) {
         const Nexus_DMDFTextureDescriptor *descriptor = &section.descriptors[i];
         Nexus_DMDFTextureSurface *surface;
@@ -543,13 +547,18 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
         int pixel_count;
         int p;
 
-        if (!descriptor->valid || descriptor->material_id >= NEXUS_DMDF_MATERIAL_COUNT) {
-            continue;
+        if (!descriptor->valid ||
+            descriptor->material_id >= NEXUS_DMDF_MATERIAL_COUNT) {
+            nexus_v1_dmdf_free_material_bank(out);
+            return 0;
         }
         surface = &out->surfaces[descriptor->material_id];
         pixel_count = (int)descriptor->width * descriptor->height;
         surface->pixels = (uint8_t *)malloc((size_t)pixel_count);
-        if (!surface->pixels) continue;
+        if (!surface->pixels) {
+            nexus_v1_dmdf_free_material_bank(out);
+            return 0;
+        }
         for (p = 0; p < pixel_count; ++p) {
             const uint8_t *source = data + section.offset + descriptor->pixel_offset +
                 (size_t)p * 2U;
@@ -559,17 +568,15 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
                 ++palette_index;
             }
             if (palette_index == color_count) {
-                if (color_count == 256) break;
+                if (color_count == 256) {
+                    nexus_v1_dmdf_free_material_bank(out);
+                    return 0;
+                }
                 colors[color_count] = bgr555;
                 surface->palette[color_count] = dmdf_bgr555_rgba(bgr555);
                 ++color_count;
             }
             surface->pixels[p] = (uint8_t)palette_index;
-        }
-        if (p != pixel_count) {
-            free(surface->pixels);
-            memset(surface, 0, sizeof(*surface));
-            continue;
         }
         surface->width = descriptor->width;
         surface->height = descriptor->height;
@@ -577,8 +584,12 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
         surface->valid = 1;
         ++out->surface_count;
     }
-    out->valid = out->surface_count > 0;
-    return out->valid;
+    out->valid = out->surface_count == (int)section.descriptor_count;
+    if (!out->valid) {
+        nexus_v1_dmdf_free_material_bank(out);
+        return 0;
+    }
+    return 1;
 }
 
 static uint32_t dmdf_bgr555_rgba(uint16_t value) {
