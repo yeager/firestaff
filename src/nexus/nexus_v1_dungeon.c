@@ -28,6 +28,36 @@ int nexus_v1_level_structure2_source_envelope_valid(
            level->structure2_payload.descriptor_offset_envelope_valid;
 }
 
+static int nexus_v1_level_copy_structure3_payload(
+    Nexus_V1_Level *level, const uint8_t *data, int size)
+{
+    uint16_t block_offset;
+    uint16_t block_count;
+    int byte_offset;
+    int byte_size;
+
+    if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
+    /* DMWeb DGN container: Structure3's block offset/count follow the
+     * Structure2 header pair. No field inside the resulting span is decoded. */
+    block_offset = rb16(data + 0x1c);
+    block_count = rb16(data + 0x1e);
+    if (block_offset == 0U && block_count == 0U) return 0;
+    if (block_offset == 0U || block_count == 0U ||
+        block_offset > (uint16_t)(INT_MAX / NEXUS_DGN_BLOCK_SIZE) ||
+        block_count > (uint16_t)(INT_MAX / NEXUS_DGN_BLOCK_SIZE)) return -1;
+    byte_offset = (int)block_offset * NEXUS_DGN_BLOCK_SIZE;
+    byte_size = (int)block_count * NEXUS_DGN_BLOCK_SIZE;
+    if (byte_offset > size || byte_size > size - byte_offset) return -1;
+    level->structure3_payload.declared = 1;
+    level->structure3_payload.block_offset = (int)block_offset;
+    level->structure3_payload.block_count = (int)block_count;
+    level->structure3_payload.byte_offset = byte_offset;
+    level->structure3_payload.byte_size = byte_size;
+    level->structure3_payload.valid = 1;
+    level->structure3_payload.face_semantics_proven = 0;
+    return 0;
+}
+
 static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                                                     const uint8_t *data,
                                                     int size)
@@ -1125,6 +1155,9 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                     level->structure2_texture_count = 0;
                     level->structure2_texture_table_valid = 0;
                 }
+                if (nexus_v1_level_copy_structure3_payload(level, data, size) != 0) {
+                    return -1;
+                }
                 nexus_v1_level_copy_structure1a_models(level, data, &layout);
                 nexus_v1_level_copy_structure1f_entries(level, data, &layout);
                 nexus_v1_level_resolve_structure1a_relations(level);
@@ -1446,6 +1479,16 @@ int nexus_v1_level_structure3_model_reference_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_payload_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3PayloadReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_payload;
+    return 0;
+}
+
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt)
@@ -1607,6 +1650,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1a_relation);
     (void)nexus_v1_level_structure3_model_reference_receipt(
         level, &out_receipt->structure3_model_references);
+    (void)nexus_v1_level_structure3_payload_receipt(
+        level, &out_receipt->structure3_payload);
     out_receipt->structure1g_present = info->structure1g_present;
     out_receipt->structure1g_valid = info->structure1g_valid;
     out_receipt->structure1g_animated_texture_count =
@@ -1662,10 +1707,16 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         /* A resolved Structure1A owner names only a Structure3 model index.
          * Structure3's mesh/face payload grammar is still unparsed, so do
          * not convert this receipt into a draw or omit it from the scene. */
-        out_receipt->status =
-            out_receipt->structure3_model_references.complete
-                ? NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH
-                : NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS;
+        if (!out_receipt->structure3_model_references.complete) {
+            out_receipt->status =
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS;
+        } else if (!out_receipt->structure3_payload.valid) {
+            out_receipt->status =
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH;
+        } else {
+            out_receipt->status =
+                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS;
+        }
     } else if (info->mesh_ready) {
         out_receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH;
         out_receipt->can_render_dgn_mesh = 1;
@@ -1713,6 +1764,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure1f-layout";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH:
         return "blocked-structure3-mesh";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS:
+        return "blocked-structure3-face-semantics";
     default: return "unknown";
     }
 }
@@ -2056,6 +2109,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure1a_boundary = handoff.structure1a_boundary;
     receipt.structure1a_relation = handoff.structure1a_relation;
     receipt.structure3_model_references = handoff.structure3_model_references;
+    receipt.structure3_payload = handoff.structure3_payload;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;
     receipt.structure1g_animated_texture_count =

@@ -31,6 +31,16 @@
   `test_dm2_v1_item_local_palette_gate`; matching CTest passed 2/2; `git diff
    --check` passed.
 
+- 2026-07-13 Nexus Structure3 payload envelope: DGN loading now retains only
+  the documented Structure3 header block offset/count when the entire span is
+  inside the original file. Missing pairs remain absent, while partial or
+  out-of-file pairs fail closed. Complete Structure1A/Structure1F references
+  now advance to `blocked-structure3-face-semantics`, but the payload remains
+  opaque and no face, vertex, mesh, texture, palette, or pixel is decoded or
+  drawn. Verification: Ninja and CTests
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 CSBWin restored TT_TELEPORTER DSA tick bridge: verified
   function-8 queue entries now reach the source-ordered ActivateDSA receipt
   through the live restored timer queue, using the existing exact queue-slot,

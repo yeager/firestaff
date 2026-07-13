@@ -226,6 +226,20 @@ typedef struct {
     int complete;
 } Nexus_V1_DgnStructure3ModelReferenceReceipt;
 
+/* DMWeb DGN files: the container header names Structure3 with a block offset
+ * and block count. The enclosed bytes have no established Saturn payload,
+ * vertex, face, texture, palette, or draw grammar, so this is an envelope
+ * receipt only. */
+typedef struct {
+    int declared;
+    int block_offset;
+    int block_count;
+    int byte_offset;
+    int byte_size;
+    int valid;
+    int face_semantics_proven;
+} Nexus_V1_DgnStructure3PayloadReceipt;
+
 /* The runtime host consumes Structure1F only through this receipt. Direct
  * records retain their documented source cells. Structure1A-indexed records
  * may proceed beyond this provenance gate only when the parser's complete
@@ -494,6 +508,7 @@ typedef struct {
     int structure2_texture_count;
     int structure2_texture_table_valid;
     Nexus_V1_DgnStructure2Payload structure2_payload;
+    Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -526,7 +541,10 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_LAYOUT = 10,
     /* Structure1A's proven owner/model relation reaches a Structure3 model
      * index, but Structure3 mesh payload/face semantics are still absent. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH = 11
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH = 11,
+    /* Structure3's declared block envelope is bounded, but its original
+     * face grammar has not yet been decoded. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS = 12
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
@@ -568,6 +586,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
@@ -659,6 +678,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
      * interpreted as an object, sensor, trigger, or draw command. */
@@ -711,6 +731,9 @@ int nexus_v1_level_structure1a_relation_receipt(
 int nexus_v1_level_structure3_model_reference_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3ModelReferenceReceipt *out_receipt);
+int nexus_v1_level_structure3_payload_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt);
