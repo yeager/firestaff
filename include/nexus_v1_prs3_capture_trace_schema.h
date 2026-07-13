@@ -7,6 +7,37 @@
 /* Standalone schema gate for externally captured SH-2 PRS3 traces. It does
  * not read assets, decode a stream, or authorize a runtime route. */
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_TRACE_V1"
+#define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
+
+typedef enum {
+    NEXUS_V1_PRS3_DM_BIN_MARKER_UNCLASSIFIED = 0,
+    NEXUS_V1_PRS3_DM_BIN_MARKER_EXECUTABLE_BYTES = 1,
+    NEXUS_V1_PRS3_DM_BIN_MARKER_V1_RECORD = 2
+} Nexus_V1_Prs3DmBinMarkerKind;
+
+/* A bounded catalog of literal `PRS3` marker locations in verified DM.BIN
+ * bytes. A V1 record is only recognized when its observed BE header is fully
+ * present: magic, version, declared target byte count, and first frame word.
+ * This is framing evidence only, never a compression decoder. */
+typedef struct {
+    uint32_t offset;
+    Nexus_V1_Prs3DmBinMarkerKind kind;
+    uint32_t version;
+    uint32_t declared_target_bytes;
+    uint32_t first_frame_word;
+    int header_complete;
+} Nexus_V1_Prs3DmBinMarker;
+
+typedef struct {
+    int source_hash_verified;
+    uint32_t marker_count;
+    uint32_t executable_marker_count;
+    uint32_t v1_record_count;
+    uint32_t truncated_marker_count;
+    int complete;
+    int decoder_promoted;
+    Nexus_V1_Prs3DmBinMarker markers[NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS];
+} Nexus_V1_Prs3DmBinCatalogReceipt;
 
 typedef struct {
     int valid;
@@ -61,5 +92,12 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
     const uint8_t *menu_bpk, size_t menu_bpk_size,
     const uint8_t *dm_bin, size_t dm_bin_size,
     Nexus_V1_Prs3CaptureAssetBindingReceipt *out_receipt);
+
+/* Catalogs only literal PRS3 framing markers in hash-verified original
+ * DM.BIN bytes. Unknown executable occurrences and truncated records remain
+ * unclassified; no catalog result may authorize PRS3 decompression. */
+int nexus_v1_prs3_dm_bin_catalog_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt);
 
 #endif

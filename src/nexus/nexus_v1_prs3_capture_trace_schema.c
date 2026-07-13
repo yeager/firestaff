@@ -29,6 +29,11 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static uint32_t read_be32(const uint8_t *p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+        ((uint32_t)p[2] << 8) | (uint32_t)p[3];
+}
+
 static int read_u32(const char **cursor, const char *label, uint32_t *out) {
     uint64_t value;
     if (!read_u64(cursor, label, &value) || value > UINT32_MAX) return 0;
@@ -138,4 +143,50 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
     receipt.decoder_promotion_eligible = 0;
     *out_receipt = receipt;
     return receipt.valid;
+}
+
+int nexus_v1_prs3_dm_bin_catalog_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt) {
+    Nexus_V1_Prs3DmBinCatalogReceipt receipt;
+    size_t offset;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm_bin || !source_hash_verified || dm_bin_size < 4U) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    receipt.source_hash_verified = 1;
+    for (offset = 0U; offset + 4U <= dm_bin_size; ++offset) {
+        Nexus_V1_Prs3DmBinMarker *marker;
+        if (memcmp(dm_bin + offset, "PRS3", 4U) != 0) continue;
+        if (receipt.marker_count >= NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS) {
+            *out_receipt = receipt;
+            return -1;
+        }
+        marker = &receipt.markers[receipt.marker_count++];
+        marker->offset = (uint32_t)offset;
+        if (dm_bin_size - offset < 16U) {
+            ++receipt.truncated_marker_count;
+            continue;
+        }
+        marker->header_complete = 1;
+        marker->version = read_be32(dm_bin + offset + 4U);
+        marker->declared_target_bytes = read_be32(dm_bin + offset + 8U);
+        marker->first_frame_word = read_be32(dm_bin + offset + 12U);
+        if (marker->version == 1U && marker->declared_target_bytes != 0U) {
+            marker->kind = NEXUS_V1_PRS3_DM_BIN_MARKER_V1_RECORD;
+            ++receipt.v1_record_count;
+        } else {
+            marker->kind = NEXUS_V1_PRS3_DM_BIN_MARKER_EXECUTABLE_BYTES;
+            ++receipt.executable_marker_count;
+        }
+    }
+    receipt.complete = receipt.marker_count > 0U &&
+        receipt.truncated_marker_count == 0U;
+    /* Framing cannot establish PRS3 opcodes or termination. */
+    receipt.decoder_promoted = 0;
+    *out_receipt = receipt;
+    return 0;
 }

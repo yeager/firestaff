@@ -1,6 +1,7 @@
 #include "nexus_v1_prs3_capture_trace_schema.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failures;
@@ -66,6 +67,70 @@ static void make_bpk(unsigned char data[68]) {
     put_be32(data + 56U, 1U);
     put_be32(data + 60U, 4U);
     put_be32(data + 64U, 4U);
+}
+
+static void test_dm_bin_prs3_catalog(void) {
+    unsigned char fixture[48];
+    Nexus_V1_Prs3DmBinCatalogReceipt receipt;
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    unsigned char *data;
+
+    memset(fixture, 0, sizeof(fixture));
+    memcpy(fixture + 4U, "PRS3", 4U);
+    put_be32(fixture + 8U, 1U);
+    put_be32(fixture + 12U, 4096U);
+    put_be32(fixture + 16U, 997U);
+    memcpy(fixture + 36U, "PRS3", 4U);
+    expect(nexus_v1_prs3_dm_bin_catalog_verified(
+               fixture, sizeof(fixture), 0, &receipt) != 0 &&
+               !receipt.source_hash_verified,
+           "unverified DM.BIN bytes never produce a PRS3 catalog");
+    expect(nexus_v1_prs3_dm_bin_catalog_verified(
+               fixture, sizeof(fixture), 1, &receipt) == 0 &&
+               receipt.source_hash_verified && receipt.marker_count == 2U &&
+               receipt.v1_record_count == 1U &&
+               receipt.truncated_marker_count == 1U && !receipt.complete &&
+               receipt.markers[0].kind == NEXUS_V1_PRS3_DM_BIN_MARKER_V1_RECORD &&
+               receipt.markers[0].declared_target_bytes == 4096U &&
+               receipt.markers[0].first_frame_word == 997U &&
+               !receipt.decoder_promoted,
+           "bounded PRS3 V1 framing is cataloged without a decoder");
+
+    if (!data_dir || !data_dir[0]) return;
+    snprintf(path, sizeof(path), "%s/DM.BIN", data_dir);
+    file = fopen(path, "rb");
+    if (!file) return;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return;
+    }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data) {
+        fclose(file);
+        return;
+    }
+    if (fread(data, 1, (size_t)size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return;
+    }
+    fclose(file);
+    expect(nexus_v1_prs3_dm_bin_catalog_verified(
+               data, (size_t)size, 1, &receipt) == 0 &&
+               receipt.complete && receipt.marker_count == 2U &&
+               receipt.executable_marker_count == 1U && receipt.v1_record_count == 1U &&
+               receipt.truncated_marker_count == 0U &&
+               receipt.markers[1].kind == NEXUS_V1_PRS3_DM_BIN_MARKER_V1_RECORD &&
+               receipt.markers[1].version == 1U &&
+               receipt.markers[1].declared_target_bytes == 4096U &&
+               receipt.markers[1].first_frame_word == 997U &&
+               !receipt.decoder_promoted,
+           "retail DM.BIN has one executable marker and one bounded PRS3 V1 record");
+    free(data);
 }
 
 int main(void) {
@@ -168,6 +233,8 @@ int main(void) {
                &receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
                &binding) && !binding.valid && !binding.menu_bpk_matches,
            "one BPK byte invalidates an otherwise complete capture");
+
+    test_dm_bin_prs3_catalog();
 
     return failures ? 1 : 0;
 }
