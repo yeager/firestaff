@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1098 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1107 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -974,6 +974,15 @@ index 347482c4..61d4758e 100644
 +  {
 +   TheronIrq2TraceSeen[probe_index] = true;
 +   TheronIrq2Trace->print_format("probe_pc=%04x physical_pc=%08x\n", logical_pc, PC);
++   if(logical_pc < 0x4100)
++   {
++    uint32 stage2_disassembly_pc = logical_pc;
++    char stage2_disassembly[256];
++
++    CurGame->Debugger->Disassemble(stage2_disassembly_pc, logical_pc, stage2_disassembly);
++    TheronIrq2Trace->print_format("stage2_disassembly_pc=%04x instruction=%s\n",
++                                  logical_pc, stage2_disassembly);
++   }
 +   FlushTheronIrq2Trace();
 +   if(logical_pc == 0xe8ec || logical_pc == 0xe8ed)
 +   {
