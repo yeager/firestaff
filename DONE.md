@@ -10,6 +10,17 @@
   `DSA.cpp:5329-5441`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 skproject possession local-palette consumer:
+  source-required `DRAW_MAP_CHIP` creature-possession overlays now accept GDAT
+  IMG3 pixels only with the matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and
+  block the overlay rather than drawing fallback art when that receipt is
+  absent. The focused source-data gate proves image and palette use one GDAT
+  index, the local palette reaches the framebuffer, and a missing palette
+  leaves the possession surface unpainted. Verification: Ninja built
+  `test_dm2_v1_possession_local_palette_gate` and
+  `test_dm2_v1_carried_item_local_palette_gate`; matching CTest passed 2/2;
+   `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored TT_DOOR DSA tick bridge: verified function-10
   queue entries now reach the source-ordered ActivateDSA receipt through the
   restored live timer queue, retaining the exact queue-slot, timer, event,
