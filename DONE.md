@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C4 TIMELINE corpus receipt: opt-in external corpus
+  rows now retain the full decrypted C4 index layout, including index count,
+  byte count, and raw fingerprint. Real-corpus verification requires exact
+  C4 byte identity, not only the prior C13 subset. Source: ReDMCSB
+  `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0651/F0236. Verification:
+  focused native-PC34 handoff CTest.
+
 - 2026-07-13 DM1 PC34 corpus version/platform identity: opt-in discovery now
   receipts each candidate's ReDMCSB header FormatID, Platform, DungeonID, and
   GameID. Only checksum-valid `(5, 9, 10)` DM1 PC34 identities are eligible

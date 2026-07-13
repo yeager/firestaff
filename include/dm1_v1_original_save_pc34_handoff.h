@@ -208,6 +208,14 @@ typedef struct {
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    int c4_timeline_layout_receipt_available;
+    uint32_t source_c4_timeline_index_count;
+    uint32_t source_c4_timeline_byte_count;
+    uint32_t source_c4_timeline_fingerprint;
+    uint32_t exported_c4_timeline_index_count;
+    uint32_t exported_c4_timeline_byte_count;
+    uint32_t exported_c4_timeline_fingerprint;
+    int c4_timeline_byte_preservation_ok;
     /* CLIKVIEW.C F0374 writes C13.Priority from the dropped bones'
      * ChargeCount, which names an active M516_CHAMPIONS slot. Keep that
      * C13 -> C2 relation as an independent raw-record receipt. */
@@ -291,6 +299,14 @@ typedef struct {
     int c13_timeline_byte_preserved_count;
     int c13_timeline_byte_mismatch_count;
     int c13_timeline_byte_preservation_ok;
+    int c4_timeline_layout_receipt_available;
+    uint32_t source_c4_timeline_index_count;
+    uint32_t source_c4_timeline_byte_count;
+    uint32_t source_c4_timeline_fingerprint;
+    uint32_t exported_c4_timeline_index_count;
+    uint32_t exported_c4_timeline_byte_count;
+    uint32_t exported_c4_timeline_fingerprint;
+    int c4_timeline_byte_preservation_ok;
     int source_c13_champion_record_reference_count;
     int c13_champion_record_byte_preserved_count;
     int c13_champion_record_byte_mismatch_count;
