@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_72` follow-up: live dispatch now applies an
+  exact saved champion-shield expiry only when its imported champion and
+  unsigned defense delta are coherent. Underflowing records and the source
+  status-panel redraw remain blocked; timers requiring omitted `timerWord8`
+  object identity remain blocked as well.
+
 - 2026-07-13 CSBWin restored `TT_71` follow-up: live dispatch now expires an
   exact saved invisibility receipt only while its imported party count is
   positive. The source inventory/status redraw has no restored UI owner, and

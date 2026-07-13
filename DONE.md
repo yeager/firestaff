@@ -7,6 +7,14 @@
   C75:1991-1993. Verification: Ninja and CTest
   `dm1_v1_original_save_pc34_handoff` passed 1/1.
 
+- 2026-07-13 CSBWin restored `TT_72` champion-shield bridge: an exact live
+  queue-slot/timer/event/champion receipt now subtracts the saved little-endian
+  `timerUWord6` defense delta from imported `ShieldStrength`. Stale identities,
+  absent champions, and underflowing deltas do not alter runtime state; source
+  status-panel redraw remains blocked without its restored UI owner. Source:
+  CSBWin `CSBCode.cpp:6511-6538`; ReDMCSB `TIMELINE.C F0261` lines 1966-1971.
+  Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 DM1 original PC34 C74 Party Shield roundtrip: typed handoff
   accepts only zero Priority and positive signed `B.Defense`, subtracts it
   from both party-shield mirrors at runtime, and exports no invented C union.
