@@ -10879,6 +10879,15 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 world->lifecycle.status.partyShieldDefense -= (int16_t)ev.aux1;
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_SPELLSHIELD &&
+                ev.aux2 == DM1_EVENT_SPELLSHIELD && ev.aux1 > 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C77:1985-1986 subtracts signed
+                 * B.Defense from spell shield with no C union payload. */
+                world->magic.spellShieldDefense -= (int16_t)ev.aux1;
+                world->lifecycle.status.partySpellShieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);

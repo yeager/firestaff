@@ -1419,6 +1419,26 @@ static int materialize_original_pc34_timeline(
             }
             continue;
         }
+        if (src->type == DM1_EVENT_SPELLSHIELD) {
+            int defense = (int)(int16_t)read_u16_le(&src->b_mapX);
+            /* ReDMCSB MENU.C F0403:1099-1115 creates C77 with zero
+             * Priority and positive B.Defense. TIMELINE.C C77:1985-1986
+             * consumes only that defense; C has no event union arm. */
+            if (src->priority != 0u || defense <= 0) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            memset(&ev, 0, sizeof(ev));
+            ev.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+            ev.fireAtTick = src->map_time & 0x00ffffffu;
+            ev.mapIndex = (int)((src->map_time >> 24) & 0xffu);
+            ev.aux0 = DM1_EVENT_SPELLSHIELD;
+            ev.aux1 = defense;
+            ev.aux2 = DM1_EVENT_SPELLSHIELD;
+            if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
         if (src->type == DM1_EVENT_CHAMPION_SHIELD) {
             int defense = (int)(int16_t)read_u16_le(&src->b_mapX);
             if (src->priority >= CHAMPION_MAX_PARTY ||
