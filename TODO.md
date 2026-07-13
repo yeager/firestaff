@@ -36,6 +36,11 @@
   TT_TELEPORTER now reaches only its pre-cell-mutation ActivateDSA receipt;
   its cell mutation and WiggleEverything path remain blocked.
 
+- 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
+  candidate-panel receipt fail-closed as additional real-save variants are
+  staged. Do not reintroduce the removed M11 diagnostic export or admit any
+  state beyond source-proven F0280/F0282 panel facts.
+
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route, C12 hide-damage removal, C13 Vi Altar
   rebirth, and C24 fluxcage removal are complete. The non-zero-slot
