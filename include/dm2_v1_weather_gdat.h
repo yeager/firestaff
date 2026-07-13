@@ -123,6 +123,14 @@ typedef struct {
     uint8_t scale_y;
     int16_t draw_offset_x;
     int16_t draw_offset_y;
+    /* QUERY_GDAT_SUMMARY_IMAGE applies the two dtImageOffset values before
+     * QUERY_TEMP_PICST. These are source-image bounds, not an invented
+     * viewport clip: right/bottom are exclusive like the IMG3 dimensions. */
+    int source_bounds_valid;
+    int16_t source_left;
+    int16_t source_top;
+    int16_t source_right;
+    int16_t source_bottom;
     uint32_t material_hash;
 } DM2_V1_WeatherDrawPlan;
 

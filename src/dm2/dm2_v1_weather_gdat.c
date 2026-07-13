@@ -300,6 +300,30 @@ static int dm2_weather_add_i16(int16_t left, int16_t right,
     return 1;
 }
 
+static int dm2_weather_image_bounds(const DM2_V1_GdatImageMetadata *metadata,
+                                    int16_t *out_left, int16_t *out_top,
+                                    int16_t *out_right, int16_t *out_bottom)
+{
+    int32_t right;
+    int32_t bottom;
+
+    if (!metadata || !out_left || !out_top || !out_right || !out_bottom ||
+        metadata->width == 0u || metadata->height == 0u) {
+        return 0;
+    }
+    right = (int32_t)metadata->query_offset_x + metadata->width;
+    bottom = (int32_t)metadata->query_offset_y + metadata->height;
+    if (right < INT16_MIN || right > INT16_MAX ||
+        bottom < INT16_MIN || bottom > INT16_MAX) {
+        return 0;
+    }
+    *out_left = metadata->query_offset_x;
+    *out_top = metadata->query_offset_y;
+    *out_right = (int16_t)right;
+    *out_bottom = (int16_t)bottom;
+    return 1;
+}
+
 static int dm2_weather_flip_from_position(uint8_t kind,
                                           const DM2_V1_WeatherDrawContext *ctx)
 {
@@ -396,6 +420,16 @@ int dm2_v1_weather_gdat_draw_plan(
             }
         }
     }
+    /* skproject c_querydb.cpp::DM2_QUERY_TEMP_PICST first realizes the
+     * selected IMG3 through QUERY_GDAT_SUMMARY_IMAGE, which applies the
+     * category 0xfe and image-field offsets. Retain that exact renderable
+     * source extent; destination clipping stays unproven and is not guessed. */
+    if (!dm2_weather_image_bounds(&command->query_metadata,
+                                  &out->source_left, &out->source_top,
+                                  &out->source_right, &out->source_bottom)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     out->command = command->command;
     out->rect_number = command->rect_number;
     out->image_field = command->image_field;
@@ -405,6 +439,7 @@ int dm2_v1_weather_gdat_draw_plan(
     out->scale_y = (uint8_t)scale_y;
     out->draw_offset_x = offset_x;
     out->draw_offset_y = offset_y;
+    out->source_bounds_valid = 1;
     out->material_hash = command->material_hash;
     out->valid = 1;
     return 1;

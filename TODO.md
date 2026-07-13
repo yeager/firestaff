@@ -133,9 +133,12 @@ placeholder or partial assets must never be promoted.
 
 DM2 V1 weather CMDSTR receipts now require the matching original
 `ENVIRONMENT` `dtImage` in the active graphics set, so `CD/FW` metadata
-cannot authorize a draw by itself. Remaining weather work is to bind real
-original rain/cloud state and `QUERY_TEMP_PICST` placement to that verified
-image route; do not derive overlays from Firestaff weather enums or intensity.
+cannot authorize a draw by itself. The selected IMG3 now has a strict
+source-bounds receipt after its real `dtImageOffset` pair, but destination
+clipping is still unproven. Remaining weather work is to bind real original
+rain/cloud state and final `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` placement to
+that verified image route; do not derive overlays from Firestaff weather
+enums or intensity.
 
 ## DM1 V2.2 Finished-Art Follow-up (2026-07-12)
 

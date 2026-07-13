@@ -197,8 +197,11 @@ int main(void)
               draw_plan.image_field == 0x68u && !draw_plan.mirror_flip &&
               draw_plan.scale_x == 0x34u && draw_plan.scale_y == 0x34u &&
               draw_plan.draw_offset_x == 7 && draw_plan.draw_offset_y == 11 &&
+              draw_plan.source_bounds_valid &&
+              draw_plan.source_left == 1 && draw_plan.source_top == -2 &&
+              draw_plan.source_right == 34 && draw_plan.source_bottom == 47 &&
               draw_plan.material_hash == receipt.commands[1].material_hash,
-          "weather draw plan follows skproject moving horizon transform");
+          "weather draw plan retains source IMG3 bounds and moving horizon transform");
     draw_context.map_x = 2;
     check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[1], &draw_context,
                                         &draw_plan) && draw_plan.mirror_flip,
