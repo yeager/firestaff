@@ -1465,6 +1465,19 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                 return 0;
             }
             write_u16_le(dst + 6u, (uint16_t)(int16_t)light_power);
+        } else if (type == DM1_EVENT_ENABLE_GROUP_GENERATOR) {
+            if (src->kind != TIMELINE_EVENT_GROUP_GENERATOR ||
+                src->aux0 != GENERATOR_EVENT_AUX0_REENABLE ||
+                src->aux2 != DM1_EVENT_ENABLE_GROUP_GENERATOR || src->aux4 != 0 ||
+                !dungeon || !things || !things->sensors || src->aux1 < 0 ||
+                src->aux1 >= things->sensorCount ||
+                things->sensors[src->aux1].sensorType != RUNTIME_SENSOR_TYPE_DISABLED ||
+                src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount ||
+                src->mapX < 0 || src->mapY < 0 ||
+                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
+                src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
+            dst[6] = (uint8_t)src->mapX;
+            dst[7] = (uint8_t)src->mapY;
         } else if (pc34_event_type_is_status_timeout(type)) {
             int defense = pc34_status_event_defense_from_timeline(src, type);
             write_u16_le(dst + 6u, (uint16_t)(defense & 0xffff));

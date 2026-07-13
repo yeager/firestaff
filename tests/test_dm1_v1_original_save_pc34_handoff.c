@@ -2180,6 +2180,80 @@ static void test_original_c70_light_import_runtime_export_roundtrip(void)
           "C70 export rejects an unproven host light event");
 }
 
+static void test_original_c65_generator_import_runtime_export_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0, exported_written = 0, rc, i, c65_index = -1, exported_c65 = -1;
+    struct GameWorld_Compat start_world, loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    unsigned char raw_sensor[8];
+    struct DungeonSensor_Compat sensors[1];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    struct TickResult_Compat result;
+    uint16_t sensor_thing = (uint16_t)(THING_TYPE_SENSOR << 10);
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C65 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_ENABLE_GROUP_GENERATOR) &&
+              rewrite_fixture_event_priority(bytes, (size_t)written, 0, 0) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0, 0x7f3du),
+          "C65 fixture preserves Priority-0 Location and irrelevant C bytes");
+    memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon)); memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles)); memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things)); memset(raw_sensor, 0, sizeof(raw_sensor));
+    memset(sensors, 0, sizeof(sensors)); memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party)); memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3; dungeon.maps = maps; dungeon.tiles = tiles; dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) { maps[i].width = 32; maps[i].height = 32; tiles[i].squareData = square_data[i]; tiles[i].squareCount = 32 * 32; }
+    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = sensor_thing; wr16le(raw_sensor, THING_ENDOFLIST);
+    sensors[0].next = THING_ENDOFLIST; sensors[0].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
+    things.squareFirstThings = first_things; things.squareFirstThingCount = 1;
+    things.sensors = sensors; things.sensorCount = 1; things.rawThingData[THING_TYPE_SENSOR] = raw_sensor;
+    things.thingCounts[THING_TYPE_SENSOR] = 1; things.loaded = 1;
+    start_world.dungeon = &dungeon; start_world.things = &things;
+    make_temp_save_path(path, sizeof(path)); remove(path);
+    CHECK(write_fixture_file(path, bytes, written), "C65 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C65 materializes only with a disabled source sensor");
+    for (i = 0; i < loaded_world.timeline.count; ++i) if (loaded_world.timeline.events[i].kind == TIMELINE_EVENT_GROUP_GENERATOR) { c65_index = i; break; }
+    CHECK(c65_index >= 0 && loaded_world.timeline.events[c65_index].aux0 == GENERATOR_EVENT_AUX0_REENABLE &&
+              loaded_world.timeline.events[c65_index].aux1 == 0 &&
+              loaded_world.timeline.events[c65_index].aux2 == DM1_EVENT_ENABLE_GROUP_GENERATOR,
+          "C65 binds the first disabled sensor as its live receipt");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world, 0x43313445u, exported, (int)sizeof(exported), &exported_written);
+    CHECK(rc == SAVEGAME_PC34_OK && exported_written > 0, "C65 materialized state exports natively");
+    imported.party = &imported_party; memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(exported, (size_t)exported_written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C65 exported state reimports");
+    for (i = 0; i < report.original_event_count; ++i) if (report.events[i].type == DM1_EVENT_ENABLE_GROUP_GENERATOR) { exported_c65 = i; break; }
+    CHECK(exported_c65 >= 0 && report.events[exported_c65].priority == 0 &&
+              report.events[exported_c65].b_mapX == 11 && report.events[exported_c65].b_mapY == 12 &&
+              rd16le(&report.events[exported_c65].c_cell) == 0,
+          "C65 roundtrip preserves Location and invents no C union arm");
+    { struct TimelineEvent_Compat c65 = loaded_world.timeline.events[c65_index];
+      CHECK(F0720_TIMELINE_Init_Compat(&loaded_world.timeline, c65.fireAtTick), "C65 runtime timeline initializes");
+      CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &c65), "C65 runtime event schedules"); loaded_world.gameTick = c65.fireAtTick; }
+    memset(&result, 0, sizeof(result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result) > 0 &&
+              sensors[0].sensorType == RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR,
+          "C65 runtime re-enables its exact source sensor");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2982,6 +3056,7 @@ int main(void)
     test_runtime_materializer_binds_original_explosion_union();
     test_original_c24_fluxcage_import_runtime_export_roundtrip();
     test_original_c70_light_import_runtime_export_roundtrip();
+    test_original_c65_generator_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();

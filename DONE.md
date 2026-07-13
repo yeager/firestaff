@@ -63,6 +63,15 @@
   semantics. Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM1 original PC34 C65 generator re-enable roundtrip:
+  authenticated handoff accepts only Priority-0 `B.Location` events whose
+  exact square contains a disabled source sensor. The live event binds that
+  first sensor, runtime restores its C006 generator type, and native export
+  writes only B.Location while rejecting unproven host events. Source:
+  ReDMCSB `TIMELINE.C` F0246:1020-1027 and C65 creation:994-999.
+  Verification: Ninja target and CTest `dm1_v1_original_save_pc34_handoff`
+  passed 1/1.
+
 - 2026-07-13 CSBWin restored TT_PITROOM DSA tick bridge: verified function-9
   queue entries now reach the source-ordered ActivateDSA receipt through the
   restored live timer queue, retaining the exact queue-slot, timer, event,
