@@ -505,5 +505,44 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_character_tail_spell_shield == 10,
           "underflowing Spell Shield expiry remains fail-closed");
+
+    profile.party_state.Champions[0].CurrentHealth = 10;
+    profile.party_state.Champions[0].PoisonDose = 0u;
+    profile.party_state.Champions[0].PoisonEventCount = 1u;
+    profile.csbwin_timers[0].function = 75u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 3u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].CurrentHealth == 9 &&
+              profile.party_state.Champions[0].PoisonDose == 3u &&
+              profile.party_state.Champions[0].PoisonEventCount == 1u,
+          "restored poison timer applies its exact C75 tick and requeue");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].CurrentHealth == 9 &&
+              profile.party_state.Champions[0].PoisonDose == 3u &&
+              profile.party_state.Champions[0].PoisonEventCount == 1u,
+          "stale poison identity cannot enter the C75 runtime chain");
+
+    profile.party_state.Champions[0].PoisonEventCount = 1u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.party_state.Champions[0].CurrentHealth == 9 &&
+              profile.party_state.Champions[0].PoisonDose == 3u &&
+              profile.party_state.Champions[0].PoisonEventCount == 1u,
+          "wide saved poison attack remains fail-closed without truncation");
     return failures == 0 ? 0 : 1;
 }

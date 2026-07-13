@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin restored `TT_75` poison bridge: an exact saved queue
+  receipt now maps its champion priority and bounded 8-bit `timerWord6` attack
+  into the existing ReDMCSB C75 damage, dose, and `+36` requeue chain. Stale
+  identities, absent pending counts, and wider attack words cannot mutate or
+  truncate the restored state. Source: CSBWin `CSBCode.cpp:6545-6555`,
+  `CSBCode.cpp:7202-7229`; ReDMCSB `TIMELINE.C F0261` lines 1991-1993 and
+  `CHAMPION.C F0322` lines 1946-1960. Verification: Ninja and CTest
+  `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin restored `TT_77` Spell Shield bridge: the live queue now
   subtracts an exact signed `timerWord6` defense delta from the imported
   SpellShield tail only after queue-slot, timer, and event identity validation.

@@ -1,10 +1,15 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin restored `TT_75` follow-up: exact saved 8-bit poison
+  attacks now enter the existing source C75 damage and `+36` requeue chain.
+  Wider `timerWord6` attacks remain blocked until the live continuation owns
+  the complete 16-bit attack word; do not truncate them. Source panel redraws
+  and candidate-champion UI effects remain blocked without a restored HUD owner.
+
 - 2026-07-13 CSBWin restored `TT_77` follow-up: live dispatch now expires an
   exact saved Spell Shield receipt only for a positive, non-underflowing
   signed defense delta. The source all-portrait redraw remains blocked without
-  a restored M11 HUD owner. `TT_75` remains blocked because its saved poison
-  path requires a source-owned damage and requeue handoff.
+  a restored M11 HUD owner.
 
 - 2026-07-13 CSBWin restored `TT_74` follow-up: live dispatch now expires an
   exact saved Party Shield receipt only for a positive, non-underflowing
