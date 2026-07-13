@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron authenticated input-order receipt: the live Mednafen
+  transition sidecar now records the first observed host-key position and
+  emulated PCE input transactions before and after it. A host event after the
+  final observed PCE poll remains explicitly blocked from System Card or
+  Track 02 interpretation. Verification: capture-script syntax/contract test.
+
 - 2026-07-13 Theron authenticated macOS controller-capture hardening: the
   Mednafen live harness now performs an opt-in, focused macOS SDL key press
   and retains numeric-zero receipts when a trace sidecar is absent. It accepts

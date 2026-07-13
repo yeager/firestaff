@@ -17943,6 +17943,8 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
                                           int explosionType,
                                           int attack)
 {
+    /* ReDMCSB DEFS.H:2088 C10_COLOR_FLESH, F0115 bitmap transparency. */
+    enum { M11_DM1_PC34_COLOR_FLESH = 10 };
     const M11_AssetSlot* slot;
     int graphicIndex;
     if (!state || !state->assetsAvailable || w <= 0 || h <= 0) {
@@ -17961,13 +17963,13 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
     if (dm1_v1_explosion_is_smoke(explosionType)) {
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
-            x, y, w, h, M11_COLOR_FLESH,
+            x, y, w, h, M11_DM1_PC34_COLOR_FLESH,
             DM1_SMOKE_RECOLOR_SRC_A, DM1_SMOKE_RECOLOR_DST_A,
             DM1_SMOKE_RECOLOR_SRC_B, DM1_SMOKE_RECOLOR_DST_B);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight, x, y, w, h,
-                                   M11_COLOR_FLESH);
+                                   M11_DM1_PC34_COLOR_FLESH);
     }
     return 1;
 }
