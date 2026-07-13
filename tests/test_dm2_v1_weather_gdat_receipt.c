@@ -106,6 +106,11 @@ int main(void)
               receipt.command_mask == 0x3fu && receipt.material_mask == 0x3fu &&
               receipt.receipt_hash != 0u,
           "weather receipt binds all six source dtText commands");
+    check(receipt.graphicsset == 3u && receipt.receipt_hash != 0u &&
+              receipt.material_mask == 0x3fu &&
+              receipt.commands[0].local_palette_valid &&
+              receipt.commands[5].local_palette_valid,
+          "weather receipt exposes the bounded live-handoff identity");
     check(receipt.commands[3].command == 0x6au &&
               receipt.commands[3].raw_text == raw + offsets[3] &&
               receipt.commands[3].byte_count == sizes[3] &&

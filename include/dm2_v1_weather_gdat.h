@@ -83,7 +83,7 @@ typedef struct {
     int16_t query_offset_x;
     int16_t query_offset_y;
     uint32_t material_hash;
-} DM2_V1_WeatherOverlayCommand;
+} DM2_V1_WeatherGdatOverlayCommand;
 
 typedef struct {
     int valid;
@@ -93,7 +93,7 @@ typedef struct {
     uint32_t material_mask;
     uint32_t plan_hash;
     unsigned int command_count;
-    DM2_V1_WeatherOverlayCommand commands[2];
+    DM2_V1_WeatherGdatOverlayCommand commands[2];
 } DM2_V1_WeatherOverlayPlan;
 
 /* Source inputs to skproject's ENVIRONMENT_DRAW_DISTANT_ELEMENT.  The

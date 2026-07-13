@@ -10,6 +10,15 @@
   `CSBCode.cpp:6468`, `Timer.cpp:2644-2664`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- ✅ 2026-07-13 DM2 weather live receipt handoff: the active runtime
+  `MapGraphicsStyle` now carries the boot-owned `c_weather.cpp` ENVIRONMENT
+  IMG3/local-palette receipt hash and material mask into frame ownership. This
+  is evidence-only: the renderer still performs no weather blit and consumes
+  no weather pixels until skproject proves the destination clip. Verification:
+  Ninja built `test_dm2_v1_weather_gdat_receipt` and
+  `test_dm2_v1_weather_no_synthetic_overlay`; matching CTest passed 2/2;
+  `git diff --check` passed.
+
 - 2026-07-13 CSBWin restored TT_11 action-enable timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the source busy
   timer, disable-action bit, action-defense word, and action index for the
