@@ -1246,6 +1246,12 @@ void dm2_suppress_champion_mask(uint8_t mask[261])
         mask[base + 2] = 0xFF;
         mask[base + 3] = 0xFF;
     }
+
+    /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the exact
+     * 261-byte saved record. DRAW_CHAMPION_PICTURE uses it as CHAMPIONS
+     * GDAT index, so an original save import must retain this byte even
+     * while the rest of the late record layout is still being catalogued. */
+    mask[255] = 0xFF;
 }
 
 int dm2_suppress_encode_champion(const DM2_ChampionRecord *c,
