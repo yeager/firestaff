@@ -91,8 +91,14 @@ typedef struct {
     /* The save/load panel is source-bound for this runtime, but not counted
      * as drawn until the M11 dialogue owner opens it and expands RECT_453. */
     int gdat_save_dialogue_material_bound;
+    int gdat_save_dialogue_host_command_ready;
     uint32_t gdat_save_dialogue_material_hash;
+    uint32_t gdat_save_dialogue_host_command_hash;
     uint32_t gdat_save_dialogue_rect_index;
+    int gdat_save_dialogue_x;
+    int gdat_save_dialogue_y;
+    int gdat_save_dialogue_w;
+    int gdat_save_dialogue_h;
     int gdat_interface_hud_layout_ready;
     uint32_t gdat_interface_hud_layout_hash;
     int gdat_interface_rect14_host_ready;

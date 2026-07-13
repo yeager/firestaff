@@ -4978,6 +4978,50 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
     out_layout->table_hash = hash; out_layout->valid = 1; return 1;
 }
 
+int dm2_v1_boot_dialogue_box_host_command(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueBoxHostCommand *out_command)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!profile || !profile->graphics_dat ||
+        !dm2_v1_boot_dialogue_box_draw_plan(profile, &out_command->draw)) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u ||
+        !dm2_v1_boot_expand_hud_rect(
+            raw, raw_size, out_command->draw.expanded_rect_index,
+            &out_command->rect)) {
+        memset(out_command, 0, sizeof(*out_command));
+        return 0;
+    }
+
+    /* skproject/SKULLWIN/c_dialog.cpp:57-64 expands RECT_453, then blits
+     * DIALOG_BOXES/0x81/0 at exactly that origin with its local palette. */
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_command->draw.plan_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_command->rect.x);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_command->rect.y);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_command->rect.w);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_command->rect.h);
+    out_command->command_hash = hash ? hash : 1u;
+    out_command->valid = 1;
+    return 1;
+}
+
 int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout)
