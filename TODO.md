@@ -1322,6 +1322,13 @@ and real community-save corpus round-trip evidence.
     back with signed-16-bit range rejection. The C73/C79 counters, scent,
     freeze-life, and unreferenced bytes remain opaque pending their own
     source-backed runtime owners and authentic community-save coverage.
+  - 2026-07-13 update: the atomic C2 `PARTY_INFO` receipt now records the
+    full 128-byte source/export fingerprints after each save's own F0417
+    decode key. The existing C3 receipt already fingerprints every raw EVENT
+    byte at the F0433/F0435 boundary, so C2 and C3 identity can now be audited
+    together without interpreting opaque PARTY_INFO bytes. Remaining work is
+    authentic community-save coverage and source-backed owners for the opaque
+    PARTY_INFO fields.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live

@@ -12005,3 +12005,11 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   material was introduced. Source: ReDMCSB `DUNVIEW.C` F0115:5915-6220.
   Verification: Ninja and CTest `dm1_v1_viewport_runtime_materialization_pc34_compat`,
   `dm1_v1_projectile_explosion_render_source_lock`.
+- 2026-07-13 DM1 PC34 atomic C2/C3 receipt audit: C3 already retained the
+  full decrypted EVENT-array fingerprint at the `F0433`/`F0435` boundary.
+  C2 now retains matching source/export fingerprints for the complete opaque
+  128-byte `PARTY_INFO` tail after each file's own F0417 decode key. This is
+  receipt-only: it neither interprets PARTY_INFO nor changes importer,
+  exporter, or runtime behavior. Source: ReDMCSB `LOADSAVE.C`
+  F0433:1583-1584/F0435:2762-2777 and `DEFS.H` `PARTY_INFO`. Verification:
+  focused native-PC34 handoff CTest, including the opt-in real-corpus path.

@@ -3412,7 +3412,11 @@ static int dm1_original_save_party_info_bytes_match(
                                    exported_report->pc34_party_part_key);
     out_report->party_info_byte_receipt_available = 1;
     out_report->source_party_info_byte_count = PARTY_PC34_SAVE_INFO_BYTE_COUNT;
+    out_report->source_party_info_fingerprint = dm1_original_save_hash_bytes(
+        source_part + party_info_offset, PARTY_PC34_SAVE_INFO_BYTE_COUNT);
     out_report->exported_party_info_byte_count = PARTY_PC34_SAVE_INFO_BYTE_COUNT;
+    out_report->exported_party_info_fingerprint = dm1_original_save_hash_bytes(
+        exported_part + party_info_offset, PARTY_PC34_SAVE_INFO_BYTE_COUNT);
     out_report->party_info_byte_preservation_ok = memcmp(
         source_part + party_info_offset, exported_part + party_info_offset,
         PARTY_PC34_SAVE_INFO_BYTE_COUNT) == 0;
@@ -4637,8 +4641,12 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_champion_record_byte_preservation_ok;
         receipt->source_party_info_byte_count =
             roundtrip.source_party_info_byte_count;
+        receipt->source_party_info_fingerprint =
+            roundtrip.source_party_info_fingerprint;
         receipt->exported_party_info_byte_count =
             roundtrip.exported_party_info_byte_count;
+        receipt->exported_party_info_fingerprint =
+            roundtrip.exported_party_info_fingerprint;
         receipt->party_info_byte_preservation_ok =
             roundtrip.party_info_byte_preservation_ok;
         receipt->source_external_portrait_fingerprint =
