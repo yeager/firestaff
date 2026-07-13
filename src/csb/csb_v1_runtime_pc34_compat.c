@@ -15108,6 +15108,39 @@ static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+/* CSBWin data.cpp EXPOOL::enlarge() lays a DB11 block out as equal-sized
+ * nodes beginning at word 1.  The source assumes a trusted save buffer; the
+ * runtime must prove that a saved free-list pointer still denotes one of
+ * those nodes before using it.  In particular, a pointer into the DB11
+ * header must never become an EXPOOL record or free-list link. */
+static int csb_v1_runtime_expool_node_is_valid(const uint8_t *bytes,
+                                               uint32_t total_words,
+                                               uint32_t node,
+                                               uint32_t size_words)
+{
+    uint32_t block_base;
+    uint32_t node_offset;
+    uint32_t stored_size;
+
+    if (!bytes || size_words < 2u || size_words > 31u ||
+        node >= total_words) {
+        return 0;
+    }
+    block_base = node & 0xffffffc0u;
+    node_offset = node & 0x3fu;
+    if (block_base >= total_words || node_offset == 0u ||
+        node_offset + size_words > 64u ||
+        node + size_words > total_words) {
+        return 0;
+    }
+    stored_size = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
+        ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
+    if (stored_size != size_words) {
+        return 0;
+    }
+    return ((node_offset - 1u) % size_words) == 0u;
+}
+
 /* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
  * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
  * a new save block and has no authenticated source-tail receipt here. The
@@ -15166,7 +15199,8 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
         if (block_base >= total_words) return 0;
         old_size_words = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
             ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
-        if (old_size_words < 2u || bucket + old_size_words > total_words) {
+        if (!csb_v1_runtime_expool_node_is_valid(
+                bytes, total_words, bucket, old_size_words)) {
             return 0;
         }
         if (csb_v1_runtime_read_le32(bytes + (size_t)(bucket + 1u) * 4u) ==
@@ -15199,9 +15233,13 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
     /* SetSkin returns after Read when the trimmed column is empty. */
     if (payload_size == 0u) return old_node != 0u;
     write_words = (uint32_t)(payload_size / 4u) + 2u;
-    if (write_words + 2u >= total_words) return 0;
+    if (write_words < 2u || write_words > 31u ||
+        write_words + 2u >= total_words) return 0;
     bucket = csb_v1_runtime_read_le32(bytes + (size_t)write_words * 4u);
-    if (bucket == 0u || bucket + write_words > total_words) return 0;
+    if (bucket == 0u || !csb_v1_runtime_expool_node_is_valid(
+            bytes, total_words, bucket, write_words)) {
+        return 0;
+    }
     csb_v1_runtime_write_le32(bytes + (size_t)write_words * 4u,
         csb_v1_runtime_read_le32(bytes + (size_t)bucket * 4u));
     csb_v1_runtime_write_le32(bytes + (size_t)bucket * 4u,
