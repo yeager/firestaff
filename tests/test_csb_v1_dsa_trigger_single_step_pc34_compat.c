@@ -71,6 +71,20 @@ static void check(int cond, const char *anchor, const char *msg)
     }
 }
 
+static void put_le16(uint8_t *bytes, size_t offset, uint16_t value)
+{
+    bytes[offset] = (uint8_t)value;
+    bytes[offset + 1u] = (uint8_t)(value >> 8);
+}
+
+static void put_le32(uint8_t *bytes, size_t offset, uint32_t value)
+{
+    bytes[offset] = (uint8_t)value;
+    bytes[offset + 1u] = (uint8_t)(value >> 8);
+    bytes[offset + 2u] = (uint8_t)(value >> 16);
+    bytes[offset + 3u] = (uint8_t)(value >> 24);
+}
+
 static void install_single_script(CSB_V1_ChaosMagicState *chaos,
     uint16_t *bytecode, int bytecode_words)
 {
@@ -891,41 +905,70 @@ static void test_csbwin_authenticated_filter_stack_runner(void)
 static void test_csbwin_runtime_filter_adapter(void)
 {
     uint16_t store_monster_id[] = { 0x0686u, 0x1234u, 0x000du };
-    CSB_V1_DSAImportedAction action;
+    uint16_t store_global[] = { 0x0686u, 0x55aau, 0x0054u };
+    CSB_V1_DSAImportedAction actions[2];
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_RuntimeDSAFilterStackAdapter adapter;
+    CSB_V1_RuntimeDSAFilterStackAdapter save_adapter;
     CSB_V1_DSAFilterRuntime filter;
+    CSB_V1_DSAFilterRuntime save_filter;
     CSB_V1_AttackParameters parameters;
+    uint8_t appended_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    const uint8_t *global_payload = NULL;
+    size_t global_payload_size = 0u;
+    const uint32_t global_record_id = (5u << 24) | (4u << 16);
+    const uint32_t global_bucket = 32u +
+        ((global_record_id * 0xbb40e62du) >> 27);
 
-    memset(&action, 0, sizeof(action));
+    memset(actions, 0, sizeof(actions));
     memset(&profile, 0, sizeof(profile));
     memset(&binding, 0, sizeof(binding));
     memset(&adapter, 0, sizeof(adapter));
+    memset(&save_adapter, 0, sizeof(save_adapter));
     memset(&filter, 0, sizeof(filter));
+    memset(&save_filter, 0, sizeof(save_filter));
     memset(&parameters, 0, sizeof(parameters));
+    memset(appended_tail, 0, sizeof(appended_tail));
     csb_v1_chaos_init(&profile.csbwin_extended_dsa_state);
-    action.dsa_id = 9u;
-    action.state_index = 4u;
-    action.program_words = store_monster_id;
-    action.program_word_count = (int)(sizeof(store_monster_id) /
-                                      sizeof(store_monster_id[0]));
+    actions[0].dsa_id = 9u;
+    actions[0].state_index = 4u;
+    actions[0].program_words = store_monster_id;
+    actions[0].program_word_count = (int)(sizeof(store_monster_id) /
+                                          sizeof(store_monster_id[0]));
     profile.csbwin_extended_features_valid = 1;
-    profile.csbwin_extended_dsa_state.imported_actions = &action;
-    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    actions[1].dsa_id = 9u;
+    actions[1].state_index = 4u;
+    actions[1].program_words = store_global;
+    actions[1].program_word_count = (int)(sizeof(store_global) /
+                                           sizeof(store_global[0]));
+    profile.csbwin_extended_dsa_state.imported_actions = actions;
+    profile.csbwin_extended_dsa_state.imported_action_count = 2;
+    /* CSBWin SaveGame.cpp stores sixteen ui32 globals in each EXPOOL global
+     * record. This is a local format regression, not a corpus fixture. */
+    put_le16(appended_tail, 2u, 18u);
+    put_le32(appended_tail, (size_t)global_bucket * 4u, 1u);
+    put_le32(appended_tail, 1u * 4u, 0u);
+    put_le32(appended_tail, 2u * 4u, global_record_id);
+    profile.csbwin_global_variables_valid = 1;
+    profile.csbwin_global_variable_count = 16u;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(appended_tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
+    memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
     binding.dsa_id = 9u;
 
-    check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
-              &profile, &binding, 4u, 0, 0x12345u, &adapter) == 1,
+    check(csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+              &profile, &binding, 4u, 0, 0x12345u, 6, &filter,
+              &adapter) == 1 &&
+              filter.programs == &profile.csbwin_extended_dsa_state &&
+              filter.runner == csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback &&
+              filter.runner_user == &adapter && filter.loaded_level == 6 &&
+              filter.attack_filter_dsa_id == 9 &&
+              filter.attack_filter_state == 4u &&
+              filter.attack_filter_action == 0,
           "CSBWin/Monster.cpp:1134-1180 ProcessDSAFilter",
-          "runtime prepares a profile-owned authenticated monster-filter adapter");
-    filter.programs = &profile.csbwin_extended_dsa_state;
-    filter.runner = csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback;
-    filter.runner_user = &adapter;
-    filter.loaded_level = 6;
-    filter.attack_filter_dsa_id = 9;
-    filter.attack_filter_state = 4u;
-    filter.attack_filter_action = 0;
+          "runtime atomically installs the authenticated type-47 attack filter");
     parameters.monsterID = 77;
     parameters.monsterIndex = 13;
 
@@ -935,6 +978,19 @@ static void test_csbwin_runtime_filter_adapter(void)
               filter.loaded_level == 6,
           "CSBWin/DSA.cpp:5315-5460 + Monster.cpp:1164-1167",
           "live monster-filter callback runs only the profile-authenticated stack action");
+
+    check(csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+              &profile, &binding, 4u, 1, 0x12345u, 6, &save_filter,
+              &save_adapter) == 1 &&
+              csb_v1_dsa_filter_attack_preprocess_live(
+                  &parameters, &save_filter) == 1 &&
+              profile.csbwin_global_variables[1] == 0x55aau &&
+              csb_v1_runtime_locate_csbwin_appended_expool_record(
+                  &profile, global_record_id, &global_payload,
+                  &global_payload_size) == 1 && global_payload_size == 64u &&
+              global_payload[4] == 0xaau && global_payload[5] == 0x55u,
+          "CSBWin/Monster.cpp:1134-1180 + SaveGame.cpp EXPOOL globals",
+          "bound attack callback atomically publishes GLOBALSTORE to save-owned EXPOOL");
 
     profile.csbwin_extended_dsa_state.imported_actions = NULL;
     profile.csbwin_extended_dsa_state.imported_action_count = 0;
