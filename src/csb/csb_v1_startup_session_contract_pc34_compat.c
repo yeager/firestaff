@@ -50,6 +50,52 @@ int csb_v1_startup_session_terminal_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_terminal_package_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    /* ReDMCSB TITLE.C F0437 lines 424-464 consumes C001 before ENTRANCE.C
+     * F0807 lines 85-90 completes the entrance. PANEL.C F0347 line 2376 may
+     * expose C017/C040 only from that same hash-verified package, never from
+     * a wrapper-owned replacement. */
+    if (!session || !package_receipt || !out_receipt ||
+        !package_receipt->valid || !package_receipt->real_package_matched ||
+        !package_receipt->c001_title_consumed ||
+        !package_receipt->c001_presents_consumed ||
+        !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_strikes_back_consumed ||
+        !package_receipt->c017_hud_consumed ||
+        !package_receipt->c040_hud_consumed ||
+        !package_receipt->title_to_hud_same_session ||
+        !package_receipt->no_legacy_wrappers ||
+        !package_receipt->no_fallback_routes ||
+        package_receipt->real_asset_receipt_hash == 0u ||
+        package_receipt->consumed_surface_hash == 0u ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        package_receipt->source_tick != terminal.source_tick ||
+        package_receipt->session_generation != terminal.session_generation) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->real_package_matched = 1;
+    out_receipt->c001_title_consumed = 1;
+    out_receipt->c017_hud_consumed = 1;
+    out_receipt->c040_hud_consumed = 1;
+    out_receipt->terminal_f0807_complete = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_fallback_routes = 1;
+    out_receipt->source_tick = terminal.source_tick;
+    out_receipt->session_generation = terminal.session_generation;
+    out_receipt->real_asset_receipt_hash = package_receipt->real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = package_receipt->consumed_surface_hash;
+    return 1;
+}
+
 int csb_v1_startup_session_package_title_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,

@@ -320,6 +320,7 @@ static void verify_real_indexed_startup(
     CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34
         consumption_handoff_receipt;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal_receipt;
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package_receipt;
     CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud_receipt;
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 first_door_receipt;
     CSB_V1_StartupSessionInputReceipt_PC34 first_input_receipt;
@@ -548,6 +549,18 @@ static void verify_real_indexed_startup(
               &session, &terminal_receipt) == 1 && terminal_receipt.valid &&
               terminal_receipt.c017_ready && terminal_receipt.c040_ready,
           "terminal C017/C040 HUD session has an owned PC34 receipt");
+    CHECK(csb_v1_startup_session_terminal_package_receipt_pc34(
+              &session, &package_receipt, &terminal_package_receipt) == 1 &&
+              terminal_package_receipt.valid &&
+              terminal_package_receipt.c001_title_consumed &&
+              terminal_package_receipt.c017_hud_consumed &&
+              terminal_package_receipt.c040_hud_consumed &&
+              terminal_package_receipt.terminal_f0807_complete &&
+              terminal_package_receipt.real_asset_receipt_hash ==
+                  real_asset_receipt->receipt_hash &&
+              terminal_package_receipt.consumed_surface_hash ==
+                  package_receipt.consumed_surface_hash,
+          "terminal F0807 retains hash-verified C001/C017/C040 package pixels");
     CHECK(csb_v1_startup_session_live_hud_receipt_pc34(
               &session, &terminal_receipt, 1u, terminal_receipt.source_tick,
               terminal_receipt.session_generation, &live_hud_receipt) == 1 &&

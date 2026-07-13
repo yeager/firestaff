@@ -52,6 +52,8 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_StartupSessionTerminalReceipt_PC34 receipt;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    CSB_V1_StartupSessionTerminalPackageReceipt_PC34 terminal_package;
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
     CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 door_tick;
     CSB_V1_StartupSessionInputReceipt_PC34 input;
@@ -79,11 +81,48 @@ int main(void)
           "C001 CHAOS retains source-owned zoom geometry and palette");
 
     make_terminal_session(&session);
+    memset(&package_receipt, 0, sizeof(package_receipt));
+    package_receipt.valid = package_receipt.real_package_matched = 1;
+    package_receipt.c001_title_consumed = 1;
+    package_receipt.c001_presents_consumed = 1;
+    package_receipt.c001_chaos_consumed = 1;
+    package_receipt.c001_strikes_back_consumed = 1;
+    package_receipt.c017_hud_consumed = package_receipt.c040_hud_consumed = 1;
+    package_receipt.title_to_hud_same_session = 1;
+    package_receipt.no_legacy_wrappers = package_receipt.no_fallback_routes = 1;
+    package_receipt.source_tick = session.source_tick;
+    package_receipt.session_generation = session.generation;
+    package_receipt.real_asset_receipt_hash = 0x12345678u;
+    package_receipt.consumed_surface_hash = 0x87654321u;
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.valid && receipt.c001_complete &&
               receipt.terminal_f0807_complete && receipt.c017_ready &&
               receipt.c040_ready,
           "terminal F0807 authorizes C017/C040 only in the terminal session");
+    check(csb_v1_startup_session_terminal_package_receipt_pc34(
+              &session, &package_receipt, &terminal_package) &&
+              terminal_package.valid && terminal_package.real_package_matched &&
+              terminal_package.c001_title_consumed &&
+              terminal_package.c017_hud_consumed &&
+              terminal_package.c040_hud_consumed &&
+              terminal_package.terminal_f0807_complete &&
+              terminal_package.source_tick == session.source_tick &&
+              terminal_package.session_generation == session.generation &&
+              terminal_package.real_asset_receipt_hash ==
+                  package_receipt.real_asset_receipt_hash &&
+              terminal_package.consumed_surface_hash ==
+                  package_receipt.consumed_surface_hash,
+          "terminal F0807 retains the hash-verified C001/C017/C040 package");
+    ++package_receipt.source_tick;
+    check(!csb_v1_startup_session_terminal_package_receipt_pc34(
+               &session, &package_receipt, &terminal_package),
+          "stale package tick cannot authorize the terminal HUD session");
+    --package_receipt.source_tick;
+    package_receipt.consumed_surface_hash = 0u;
+    check(!csb_v1_startup_session_terminal_package_receipt_pc34(
+               &session, &package_receipt, &terminal_package),
+          "missing package surface hash cannot authorize the terminal HUD session");
+    package_receipt.consumed_surface_hash = 0x87654321u;
     tick = receipt.source_tick;
     generation = receipt.session_generation;
     terminal = receipt;
