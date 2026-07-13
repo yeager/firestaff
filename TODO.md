@@ -4218,6 +4218,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the viewport still draws no weather pixels. Remaining weather work is the
     complete compressed-rect grammar, timer/light/cloud execution, and
     original runtime capture.
+  - 2026-07-13 update: a validated post-save `WeatherState` now has a
+    fail-closed renderer receipt only when every source-owned ten-byte
+    `DistantEnvironment` slot still names its exact `0x67..0x6c` command,
+    owns decoded GDAT material, and resolves through the original `dt04`
+    destination clip. The receipt does not infer cloud/rain selection from
+    generic state and does not inspect or invent timer bytes. Remaining work
+    is still the original timer/reseed/light/cloud dispatcher and real-corpus
+    runtime capture.
   - 2026-07-13 update: the separate `c_gui_vp.cpp` dialogue path now has a
     source-only `GRAPHICSSET` receipt for its selected shell (`-4..-2`) and
     glyph field `3`, including each exact IMG3 local palette. It is not a
