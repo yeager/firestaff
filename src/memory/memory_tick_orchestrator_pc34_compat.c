@@ -9897,6 +9897,10 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             &creatureSnapshot, combatResult.damageApplied,
                             result);
                     }
+                    /* ReDMCSB: PROJEXPL.C F0231 line 1534 obtains F0190's
+                     * outcome before any F0190/F0231 aftermath. The source
+                     * GROUP.Count is an input to the F0190 fear roll, so do
+                     * not construct a provisional receipt with an unset count. */
                     memset(&aftermathIn, 0, sizeof(aftermathIn));
                     aftermathIn.groupIndex = groupIndex;
                     aftermathIn.creatureIndex = creatureIndex;
@@ -9905,7 +9909,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.creatureProperties = creatureSnapshot.properties;
                     aftermathIn.groupBehavior =
                         world->things->groups[groupIndex].behavior;
-                    aftermathIn.originalGroupCount = originalGroupCount;
                     aftermathIn.partyMapIndex = world->partyMapIndex;
                     aftermathIn.partyMapX = world->party.mapX;
                     aftermathIn.partyMapY = world->party.mapY;
@@ -9915,12 +9918,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &aftermathIn.targetMapX,
                         &aftermathIn.targetMapY);
                     aftermathIn.currentTick = world->gameTick;
-                    aftermathIn.killedCell = killedCell;
-                    aftermathIn.damageOutcome = applyOutcome;
                     aftermathIn.fallbackCombatOutcome = combatResult.outcome;
-                    aftermathIn.fearTriggered = fearTriggered;
-                    (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
-                        &aftermathIn, &aftermathPlan);
                     if (runtimeApplyPlan.shouldApplyGroupDamage) {
                         memset(&groupDamageResult, 0, sizeof(groupDamageResult));
                         groupDamageResult.outcome =
@@ -9937,6 +9935,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         originalGroupCount = damageApplyPlan.originalGroupCount;
                         killedCell = damageApplyPlan.killedCell;
                         applyOutcome = damageApplyPlan.outcome;
+                        aftermathIn.originalGroupCount = originalGroupCount;
                         aftermathIn.killedCell = killedCell;
                         aftermathIn.damageOutcome = applyOutcome;
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(

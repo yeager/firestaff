@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0231/F0190 live aftermath count handoff: the M10
+  `CMD_ATTACK` route now waits for F0190's real group-damage receipt before it
+  builds F0231 aftermath, then carries the original pre-compaction
+  `GROUP.Count` into the killed-some fear dispatch. This matches ReDMCSB
+  `PROJEXPL.C F0231:1534` and `GROUP.C F0190`'s fear input, with no synthetic
+  group-size fallback. Verification: Ninja plus
+  `dm1_v1_action_f0407_tail_pc34_compat`.
+
 - 2026-07-13 Theron Track 02 post-latch controller trace: a clean-source,
   instrumented Mednafen 1.32.1 capture from the authenticated US CUE/System
   Card 3.0 now proves the first Run-driven System Card register exchange after

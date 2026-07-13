@@ -2113,6 +2113,8 @@ static void test_melee_f0231_aftermath_plan(void) {
     CHECK_EQ(out.shouldCreateDeathSmoke, 1, "F0231 killed-some smoke");
     CHECK_EQ(out.shouldApplyKilledSomeState, 1,
              "F0231 killed-some state/fear");
+    CHECK_EQ(out.mutationOriginalGroupCount, 3,
+             "F0231 killed-some retains original group count");
     CHECK_EQ(out.mutationKilledCreatureIndex, 2,
              "F0231 killed-some mutation creature");
     CHECK_EQ(out.mutationCreatureProperties, 0x0230,
@@ -2137,6 +2139,12 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-some reaction creature type");
     CHECK_EQ(out.reactionEventKind, DM1_EVENT_REACTION_PARTY_IS_ADJACENT,
              "F0231 reaction event kind");
+    CHECK_EQ(dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
+                 &out, &applyOut), 1,
+             "F0231 killed-some aftermath apply receipt builds");
+    CHECK_EQ(applyOut.mutationDispatchPlan.killedSomeStatePlan
+                 .originalGroupCount, 3,
+             "F0190 fear receipt retains F0231 original group count");
 
     in.fearTriggered = 1;
     CHECK_EQ(dm1_v1_melee_aftermath_plan_f0231_pc34(&in, &out), 1,
