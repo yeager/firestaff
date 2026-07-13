@@ -506,6 +506,74 @@ int main(void)
               profile.csbwin_character_tail_spell_shield == 10,
           "underflowing Spell Shield expiry remains fail-closed");
 
+    profile.csbwin_character_tail_fire_shield = 100;
+    profile.csbwin_timers[0].function = 78u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 30u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_fire_shield == 70,
+          "restored Fire Shield timer applies its signed saved defense delta");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_fire_shield == 70,
+          "stale Fire Shield identity cannot change saved defense");
+
+    profile.csbwin_character_tail_fire_shield = 10;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0xffu;
+    profile.csbwin_timers[0].ubyte7 = 0xffu;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_fire_shield == 10,
+          "nonpositive Fire Shield expiry remains fail-closed");
+
+    profile.csbwin_timers[0].ubyte6 = 11u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_fire_shield == 10,
+          "underflowing Fire Shield expiry remains fail-closed");
+
+    profile.csbwin_character_tail_magic_footprints_active = 2u;
+    profile.csbwin_timers[0].function = 79u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_magic_footprints_active == 1u,
+          "restored Magic Footprints timer expires one source effect");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_magic_footprints_active == 1u,
+          "stale Magic Footprints identity cannot change saved effect count");
+
+    profile.csbwin_character_tail_magic_footprints_active = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_magic_footprints_active == 0u,
+          "underflowing Magic Footprints expiry remains fail-closed");
+
     profile.party_state.Champions[0].CurrentHealth = 10;
     profile.party_state.Champions[0].PoisonDose = 0u;
     profile.party_state.Champions[0].PoisonEventCount = 1u;

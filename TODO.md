@@ -6,6 +6,12 @@
   the complete 16-bit attack word; do not truncate them. Source panel redraws
   and candidate-champion UI effects remain blocked without a restored HUD owner.
 
+- 2026-07-13 CSBWin restored `TT_78`/`TT_79` follow-up: Fire Shield and
+  Magic Footprints now consume exact saved timer queue/event identities and
+  update only their authenticated character-tail counters. Portrait redraw,
+  footprint cleanup, and visual footprint material stay blocked without their
+  corresponding CSBWin runtime/HUD owners.
+
 - 2026-07-13 CSBWin restored `TT_77` follow-up: live dispatch now expires an
   exact saved Spell Shield receipt only for a positive, non-underflowing
   signed defense delta. The source all-portrait redraw remains blocked without
