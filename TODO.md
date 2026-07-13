@@ -216,9 +216,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   compiler-dependent operand evaluation; Turbo C++ 1.01, the PC 3.4 compiler,
   takes the unexpected order. **Firestaff risk:** directly translating the C
   expression into C11 yields neither a portable nor automatically PC34-correct
-  strength/maximum-load result. **Required independent evidence:** PC34
-  executable trace or save-driven capture at below-half stamina, with known
-  strength/load inputs and observed result.
+  strength/maximum-load result. Firestaff M11 now pins the documented DM1
+  PC 3.4 Turbo C++ second-operand order in its F0312 defender path, rather
+  than inheriting the cross-media test toggle. **Still required independent
+  evidence:** PC34 executable trace or save-driven capture at below-half
+  stamina, with known strength/load inputs and observed result.
 
 - REDMCSB-DM1-GAP-006 — **ReDMCSB `DUNGEON.C` thing allocation, around line
   2099 (`BUG0_10`).** The reserved champion-bones type uses bit 15 and the

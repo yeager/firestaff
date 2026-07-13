@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 GAP-005 F0306 PC34 runtime: M11 defender-strength now uses
+  an explicit Turbo C++ 1.01 second-operand F0306 implementation, isolated
+  from the cross-media compiler-order test switch. A real-PC34 runtime test
+  materializes a mirror champion from installed data, lowers live stamina
+  below half, and verifies the documented pre-shift scaled result. Source:
+  ReDMCSB `CHAMPION.C` F0306:1078-1100 and BUGX_XX. The independent original
+  executable/save capture remains listed in TODO.
+
 - 2026-07-13 DM1 HoC disabled-peer C161 view transition: real-PC34 coverage
   now draws the source wall, C161 rename panel, and accepted dungeon view
   while peer B is disabled and source A is disabled before accept. C026 cannot

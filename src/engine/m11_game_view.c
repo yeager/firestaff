@@ -67,6 +67,7 @@
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "champion_status_slotbox_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
+#include "memory_champion_stamina_adjusted_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -29443,19 +29444,13 @@ static int m11_f0312_stamina_adjusted_value(
 {
     int currentStamina;
     int halfMaximumStamina;
-    int halfValue;
-
     if (!champion) return value;
     currentStamina = (int)champion->stamina.current;
     halfMaximumStamina = (int)champion->stamina.maximum >> 1;
-    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
-        /* ReDMCSB CHAMPION.C F0306 lines 1094-1095: the first operand
-         * halves P0641 before the second operand reuses that halved value. */
-        halfValue = value >> 1;
-        value = halfValue + (int)(((long)halfValue * (long)currentStamina) /
-                                  (long)halfMaximumStamina);
-    }
-    return value;
+    /* ReDMCSB CHAMPION.C F0306:1078-1100 BUGX_XX. DM1 PC 3.4's Turbo
+     * C++ 1.01 evaluates the scaled operand from the pre-shift value. */
+    return F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
+        currentStamina, halfMaximumStamina, value);
 }
 
 static int m11_f0312_hand_strength_baseline(

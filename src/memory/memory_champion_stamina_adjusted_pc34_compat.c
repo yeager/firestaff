@@ -65,3 +65,20 @@ int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
     }
     return halfValue + scaledStam;
 }
+
+int F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
+    int currentStamina,
+    int halfMaxStamina,
+    int value)
+{
+    int halfValue;
+
+    if (halfMaxStamina <= 0 || currentStamina >= halfMaxStamina) {
+        return value;
+    }
+    halfValue = value >> 1;
+    /* ReDMCSB CHAMPION.C F0306 BUGX_XX: Turbo C++ 1.01 (DM 3.4 PC)
+     * evaluates the scaled operand from the pre-shift value. */
+    return halfValue + (int)(((long)value * (long)currentStamina) /
+                             (long)halfMaxStamina);
+}
