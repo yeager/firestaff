@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0209/F0267 LoS group-move record rollback: M10 now treats
+  C37 and C29-C36/C38-C41 ordinary group relocation as a source-record
+  transaction. If the destination SFT record cannot be linked after a valid
+  `GROUP.C F0202` move choice, it restores the C04 group at its original
+  predecessor/successor position, retains raw direction, and leaves
+  active-group coordinates unchanged. Source: ReDMCSB `GROUP.C`
+  F0209:2173-2185 and `DUNGEON.C` F0161/F0163. Verification:
+  `dm1_v1_group_los_move_rollback_pc34_compat`.
+
 - 2026-07-13 DM1 F0190 projectile killed-all ordering: the live M11
   projectile route defers C040 until F0188 possessions, F0189 unlink, and
   F0181 queued-event deletion complete. A full timeline queue with one

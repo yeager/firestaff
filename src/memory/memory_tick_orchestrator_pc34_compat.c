@@ -66,6 +66,10 @@ static int orch_square_first_thing_list_index_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static int orch_set_next_thing_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned short nextThing);
 static int orch_cmd_attack_find_door_on_square_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -2862,6 +2866,91 @@ static int orch_cmd_attack_find_group_on_square_compat(
         thing = orch_next_thing_compat(world->things, thing);
     }
     return 0;
+}
+
+/* ReDMCSB GROUP.C F0209:2173-2185 reaches MOVESENS.C F0267 only after
+ * F0202 has selected a legal LoS/target step.  A Firestaff-side record
+ * capacity failure must therefore leave that source C04 chain untouched:
+ * F0267 did not complete, so F0209 does not commit its active-group move.
+ * Keep the exact predecessor/successor pair so rollback preserves record
+ * order instead of reinserting the group at the square head. */
+struct OrchThingUnlinkReceipt_Compat {
+    int valid;
+    int sourceFirstThingIndex;
+    unsigned short thing;
+    unsigned short previousThing;
+    unsigned short nextThing;
+};
+
+static int orch_unlink_thing_from_square_with_receipt_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thingToUnlink,
+    struct OrchThingUnlinkReceipt_Compat* outReceipt)
+{
+    int sftIndex;
+    unsigned short thing;
+    unsigned short previous = THING_NONE;
+    unsigned short target = (unsigned short)(thingToUnlink & 0x3FFFu);
+    int safety = 0;
+
+    if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!world || !world->dungeon || !world->things || !outReceipt ||
+        thingToUnlink == THING_NONE || thingToUnlink == THING_ENDOFLIST) {
+        return 0;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+        if ((unsigned short)(thing & 0x3FFFu) == target) {
+            if (previous == THING_NONE) {
+                world->things->squareFirstThings[sftIndex] = nextThing;
+            } else if (!orch_set_next_thing_compat(world->things, previous, nextThing)) {
+                return 0;
+            }
+            if (!orch_set_next_thing_compat(world->things, thingToUnlink,
+                                            THING_ENDOFLIST)) {
+                return 0;
+            }
+            outReceipt->valid = 1;
+            outReceipt->sourceFirstThingIndex = sftIndex;
+            outReceipt->thing = thingToUnlink;
+            outReceipt->previousThing = previous;
+            outReceipt->nextThing = nextThing;
+            return 1;
+        }
+        previous = thing;
+        thing = nextThing;
+    }
+    return 0;
+}
+
+static int orch_restore_unlinked_thing_receipt_compat(
+    struct GameWorld_Compat* world,
+    const struct OrchThingUnlinkReceipt_Compat* receipt)
+{
+    if (!world || !world->things || !receipt || !receipt->valid ||
+        receipt->sourceFirstThingIndex < 0 ||
+        receipt->sourceFirstThingIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    if (!orch_set_next_thing_compat(
+            world->things, receipt->thing, receipt->nextThing)) {
+        return 0;
+    }
+    if (receipt->previousThing == THING_NONE) {
+        world->things->squareFirstThings[receipt->sourceFirstThingIndex] =
+            receipt->thing;
+        return 1;
+    }
+    return orch_set_next_thing_compat(
+        world->things, receipt->previousThing, receipt->thing);
 }
 
 static int orch_cmd_attack_first_living_creature_compat(
@@ -9189,6 +9278,7 @@ static int orch_apply_f0209_reaction_move_f0267_compat(
     struct DungeonGroup_Compat* group;
     DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
+    struct OrchThingUnlinkReceipt_Compat unlinkReceipt;
 
     if (outHandled) *outHandled = 0;
     if (outGroupRemoved) *outGroupRemoved = 0;
@@ -9255,16 +9345,24 @@ static int orch_apply_f0209_reaction_move_f0267_compat(
         if (outGroupRemoved) *outGroupRemoved = 1;
         return 1;
     }
+    memset(&unlinkReceipt, 0, sizeof(unlinkReceipt));
     if (applyPlan.shouldUnlinkSource &&
-        !orch_unlink_thing_from_square_compat(
+        !orch_unlink_thing_from_square_with_receipt_compat(
             world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
             applyPlan.sourceMapY,
-            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) return 0;
-    group->direction = (unsigned char)applyPlan.groupDirection;
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex),
+            &unlinkReceipt)) return 0;
     if (applyPlan.shouldLinkDestination &&
         !orch_link_existing_group_to_square_head_only_compat(
             world, groupIndex, applyPlan.activeMapIndex,
-            applyPlan.activeMapX, applyPlan.activeMapY)) return 0;
+            applyPlan.activeMapX, applyPlan.activeMapY)) {
+        if (applyPlan.shouldUnlinkSource &&
+            !orch_restore_unlinked_thing_receipt_compat(world, &unlinkReceipt)) {
+            return 0;
+        }
+        return 1;
+    }
+    group->direction = (unsigned char)applyPlan.groupDirection;
     world->creatureAI[activeIndex].groupMapIndex = applyPlan.activeMapIndex;
     world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
     world->creatureAI[activeIndex].groupMapY = applyPlan.activeMapY;
@@ -9293,6 +9391,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     struct TimelineEvent_Compat nextEvent;
     DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
+    struct OrchThingUnlinkReceipt_Compat unlinkReceipt;
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
@@ -9358,20 +9457,26 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
         return 1;
     }
 
+    memset(&unlinkReceipt, 0, sizeof(unlinkReceipt));
     if (applyPlan.shouldUnlinkSource &&
-        !orch_unlink_thing_from_square_compat(
+        !orch_unlink_thing_from_square_with_receipt_compat(
                 world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
                 applyPlan.sourceMapY,
-                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex),
+                &unlinkReceipt)) {
         return 0;
     }
-    group->direction = (unsigned char)applyPlan.groupDirection;
     if (applyPlan.shouldLinkDestination &&
         !orch_link_existing_group_to_square_head_only_compat(
-                world, groupIndex, applyPlan.activeMapIndex,
-                applyPlan.activeMapX, applyPlan.activeMapY)) {
-        return 0;
+            world, groupIndex, applyPlan.activeMapIndex,
+            applyPlan.activeMapX, applyPlan.activeMapY)) {
+        if (applyPlan.shouldUnlinkSource &&
+            !orch_restore_unlinked_thing_receipt_compat(world, &unlinkReceipt)) {
+            return 0;
+        }
+        return 1;
     }
+    group->direction = (unsigned char)applyPlan.groupDirection;
 
     world->creatureAI[activeIndex].groupMapIndex = applyPlan.activeMapIndex;
     world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
