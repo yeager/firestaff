@@ -14740,6 +14740,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     if (profile->csbwin_appended_tail_valid) {
         if (profile->csbwin_appended_tail_preserved_size >
                 CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+            profile->csbwin_appended_tail_truncated ||
             profile->csbwin_appended_tail_size !=
                 profile->csbwin_appended_tail_preserved_size ||
             profile->csbwin_appended_tail_fnv1a !=
