@@ -32,6 +32,8 @@ The next source-locked point is `$e900`: wait for `$22a4 == 0`, then capture
 the raw `$1801` write and `$1800` bit-7 outcome without assigning semantics.
 Its zero branch reaches `$e944`, which writes `$1800` and branches only on
 bit 6 to `$e95a`; the next capture must observe that raw branch outcome.
+At `$e95a`, the System Card masks `$1800` into `$227a` and branches on its
+raw values; a live trace must establish which, if any, of those branches runs.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
