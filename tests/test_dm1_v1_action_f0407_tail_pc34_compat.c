@@ -627,10 +627,8 @@ static void test_light_and_window_plans(void) {
     memset(&in, 0, sizeof(in));
     in.earthSkillLevel = 1;
     in.randomDraw = 100;
-    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 1,
-             "window plan clamps draw");
-    CHECK_EQ(out.randomRange, 9, "window clamp range");
-    CHECK_EQ(out.durationTicks, 6, "window clamped duration");
+    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 0,
+             "window rejects out-of-domain draw");
 }
 
 static void test_shield_plan(void) {
