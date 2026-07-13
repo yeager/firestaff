@@ -491,6 +491,8 @@ int nexus_v1_inspect_dgn_material_corpus(
             &level, &receipt.structure1f_floor_decoration_rotation_selectors[level_index]);
         (void)nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(
             &level, &receipt.structure1f_floor_decoration_offset_pairs[level_index]);
+        (void)nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
+            &level, &receipt.structure1f_floor_decoration_control_extents[level_index]);
         (void)nexus_v1_level_structure1f_item_attribute_pair_receipt(
             &level, &receipt.structure1f_item_attribute_pairs[level_index]);
         (void)nexus_v1_level_structure1f_item_location_pair_receipt(
@@ -571,6 +573,9 @@ int nexus_v1_inspect_dgn_material_corpus(
         }
         if (receipt.structure1f_floor_decoration_offset_pairs[level_index].complete) {
             ++receipt.structure1f_floor_decoration_offset_pair_complete_level_count;
+        }
+        if (receipt.structure1f_floor_decoration_control_extents[level_index].complete) {
+            ++receipt.structure1f_floor_decoration_control_extent_complete_level_count;
         }
         if (receipt.structure1f_item_attribute_pairs[level_index].complete) {
             ++receipt.structure1f_item_attribute_pair_complete_level_count;

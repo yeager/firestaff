@@ -447,6 +447,26 @@ typedef struct {
     int complete;
     int rotation_semantics_proven;
 } Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt;
+
+/* Direct floor-decoration records preserve their final three documented bytes
+ * as a raw tuple. Their original control and extent grammar is unproved, so
+ * this is never a placement, size, mesh, texture, palette, pixel, or draw
+ * instruction. */
+typedef struct {
+    int structure1f_spatial_valid;
+    int floor_decoration_entry_count;
+    int resolved_tuple_count;
+    int unique_tuple_count;
+    int duplicate_tuple_count;
+    int zero_tuple_count;
+    int nonzero_tuple_count;
+    uint8_t highest_type_or_control;
+    uint8_t highest_width;
+    uint8_t highest_height;
+    int complete;
+    int tuple_semantics_proven;
+} Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt;
+
 typedef struct { int spatial_valid; int item_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int complete; int semantics_proven; } Nexus_V1_DgnStructure1FItemAttributePairReceipt;
 typedef struct { int spatial_valid; int item_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int complete; int semantics_proven; } Nexus_V1_DgnStructure1FItemLocationPairReceipt;
 typedef struct { int structure1f_spatial_valid; int entry_count; int resolved_pair_count; int unique_pair_count; int duplicate_pair_count; int zero_pair_count; int nonzero_pair_count; int complete; int offset_semantics_proven; } Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt;
@@ -891,6 +911,8 @@ typedef struct {
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
         structure1f_floor_decoration_rotation_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
+        structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
     Nexus_V1_DgnStructure1FItemLocationPairReceipt structure1f_item_location_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt structure1f_floor_decoration_offset_pairs;
@@ -1006,6 +1028,8 @@ typedef struct {
         structure1f_floor_decoration_payload_selectors;
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
         structure1f_floor_decoration_rotation_selectors;
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
+        structure1f_floor_decoration_control_extents;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
     Nexus_V1_DgnStructure1FItemLocationPairReceipt structure1f_item_location_pairs;
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
@@ -1102,6 +1126,9 @@ int nexus_v1_level_structure1f_floor_decoration_payload_selector_receipt(
 int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt *out_receipt);
 int nexus_v1_level_structure1f_item_attribute_pair_receipt(const Nexus_V1_Level *, Nexus_V1_DgnStructure1FItemAttributePairReceipt *);
 int nexus_v1_level_structure1f_item_location_pair_receipt(const Nexus_V1_Level *, Nexus_V1_DgnStructure1FItemLocationPairReceipt *);
 int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out_receipt);
