@@ -163,7 +163,11 @@ typedef struct {
  * caller owns every path; missing or invalid files leave this receipt empty. */
 typedef struct Theron_V1_BootTrack02RuntimeTraceIntakeReceipt {
     int valid;
+    /* Set only after the exact trace file consumed by this intake has been
+     * rehashed against the caller's explicit provenance receipt. */
+    int trace_file_hash_verified;
     int trace_file_consumed;
+    char trace_md5[33];
     /* A real trace can prove the pre-Track02 controller wait without
      * authorizing runtime entry. */
     Theron_V1SystemCardControllerWaitReceipt controller_wait;
@@ -232,16 +236,19 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     const char *system_card_path,
     const char *system_card_md5_hex,
     const char *trace_path,
+    const char *trace_md5_hex,
     Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt);
 
-/* Rehashes the two explicit files consumed by the live Mednafen handoff.
+/* Rehashes the three explicit files consumed by the live Mednafen handoff.
  * This closes the path/MD5 time-of-check gap before the capture parser sees
  * their contents. It is intentionally independent of game-data discovery. */
 int theron_v1_boot_runtime_trace_files_match_declared_hashes(
     const char *track02_path,
     const char *track02_md5_hex,
     const char *system_card_path,
-    const char *system_card_md5_hex);
+    const char *system_card_md5_hex,
+    const char *trace_path,
+    const char *trace_md5_hex);
 
 /* The production Soul Room/forcefield runtime transition calls this gate
  * before it mutates startup flow or world state. */
@@ -282,7 +289,8 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     Theron_V1_BootStartupLaunch *launch,
     const char *system_card_path,
     const char *system_card_md5_hex,
-    const char *trace_path);
+    const char *trace_path,
+    const char *trace_md5_hex);
 
 typedef struct Theron_V1_BootStartupRuntimeReceipt {
     Theron_V1_BootProfile *profile;
