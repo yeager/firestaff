@@ -233,6 +233,7 @@ typedef struct {
     int structure1f_floor_decoration_payload_selector_complete_level_count;
     int structure1f_floor_decoration_rotation_selector_complete_level_count;
     int structure1f_floor_decoration_offset_pair_complete_level_count;
+    int structure1f_floor_decoration_control_extent_complete_level_count;
     int structure1f_item_attribute_pair_complete_level_count;
     int structure1f_item_location_pair_complete_level_count;
     int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
@@ -273,6 +274,8 @@ typedef struct {
         structure1f_floor_decoration_rotation_selectors[16];
     Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
         structure1f_floor_decoration_offset_pairs[16];
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
+        structure1f_floor_decoration_control_extents[16];
     Nexus_V1_DgnStructure1FItemAttributePairReceipt
         structure1f_item_attribute_pairs[16];
     Nexus_V1_DgnStructure1FItemLocationPairReceipt

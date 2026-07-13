@@ -2210,6 +2210,71 @@ int nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt receipt;
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&spatial, 0, sizeof(spatial));
+    if (!level || nexus_v1_level_structure1f_spatial_receipt(level, &spatial) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1f_spatial_valid = spatial.valid;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        int previous;
+        int duplicate = 0;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) {
+            continue;
+        }
+        ++receipt.floor_decoration_entry_count;
+        if (!spatial.valid) continue;
+        ++receipt.resolved_tuple_count;
+        if (record->type_or_control == 0U && record->width == 0U &&
+            record->height == 0U) {
+            ++receipt.zero_tuple_count;
+        } else {
+            ++receipt.nonzero_tuple_count;
+        }
+        if (record->type_or_control > receipt.highest_type_or_control) {
+            receipt.highest_type_or_control = record->type_or_control;
+        }
+        if (record->width > receipt.highest_width) {
+            receipt.highest_width = record->width;
+        }
+        if (record->height > receipt.highest_height) {
+            receipt.highest_height = record->height;
+        }
+        for (previous = 0; previous < entry; ++previous) {
+            const Nexus_V1_DgnStructure1FEntry *prior =
+                &level->structure1f_entries[previous];
+            if (prior->family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS &&
+                prior->type_or_control == record->type_or_control &&
+                prior->width == record->width && prior->height == record->height) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) ++receipt.duplicate_tuple_count;
+        else ++receipt.unique_tuple_count;
+    }
+    receipt.complete = receipt.structure1f_spatial_valid &&
+        receipt.resolved_tuple_count == receipt.floor_decoration_entry_count;
+    receipt.tuple_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure1f_item_attribute_pair_receipt(const Nexus_V1_Level *l, Nexus_V1_DgnStructure1FItemAttributePairReceipt *o) { Nexus_V1_DgnStructure1FItemAttributePairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i; if (!o) return -1; memset(&r,0,sizeof(r)); memset(&s,0,sizeof(s)); memset(seen,0,sizeof(seen)); if (!l || nexus_v1_level_structure1f_spatial_receipt(l,&s)) {*o=r;return 0;} r.spatial_valid=s.valid; for(i=0;i<l->structure1f_entry_count;i++){const Nexus_V1_DgnStructure1FEntry *e=&l->structure1f_entries[i];uint16_t p;if(e->family!=NEXUS_V1_DGN_STRUCTURE1F_ITEMS)continue;++r.item_count;if(!s.valid)continue;++r.resolved_pair_count;p=((uint16_t)e->attribute1<<8)|e->attribute2;if(seen[p])++r.duplicate_pair_count;else{seen[p]=1;++r.unique_pair_count;}}r.complete=r.spatial_valid&&r.item_count==r.resolved_pair_count;*o=r;return 0;}
 int nexus_v1_level_structure1f_item_location_pair_receipt(const Nexus_V1_Level *l, Nexus_V1_DgnStructure1FItemLocationPairReceipt *o) { Nexus_V1_DgnStructure1FItemLocationPairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i; if (!o) return -1; memset(&r,0,sizeof(r)); memset(&s,0,sizeof(s)); memset(seen,0,sizeof(seen)); if (!l || nexus_v1_level_structure1f_spatial_receipt(l,&s)) {*o=r;return 0;} r.spatial_valid=s.valid; for(i=0;i<l->structure1f_entry_count;i++){const Nexus_V1_DgnStructure1FEntry *e=&l->structure1f_entries[i];uint16_t p;if(e->family!=NEXUS_V1_DGN_STRUCTURE1F_ITEMS)continue;++r.item_count;if(!s.valid)continue;++r.resolved_pair_count;p=((uint16_t)e->location<<8)|e->item_id;if(seen[p])++r.duplicate_pair_count;else{seen[p]=1;++r.unique_pair_count;}}r.complete=r.spatial_valid&&r.item_count==r.resolved_pair_count;*o=r;return 0;}
 
@@ -2506,6 +2571,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_floor_decoration_payload_selectors);
     (void)nexus_v1_level_structure1f_floor_decoration_rotation_selector_receipt(
         level, &out_receipt->structure1f_floor_decoration_rotation_selectors);
+    (void)nexus_v1_level_structure1f_floor_decoration_control_extent_receipt(
+        level, &out_receipt->structure1f_floor_decoration_control_extents);
     (void)nexus_v1_level_structure1f_item_attribute_pair_receipt(
         level, &out_receipt->structure1f_item_attribute_pairs);
     (void)nexus_v1_level_structure1f_item_location_pair_receipt(
@@ -2992,6 +3059,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1f_floor_decoration_payload_selectors;
     receipt.structure1f_floor_decoration_rotation_selectors =
         handoff.structure1f_floor_decoration_rotation_selectors;
+    receipt.structure1f_floor_decoration_control_extents =
+        handoff.structure1f_floor_decoration_control_extents;
     receipt.structure1f_item_attribute_pairs = handoff.structure1f_item_attribute_pairs;
     receipt.structure1f_item_location_pairs = handoff.structure1f_item_location_pairs;
     receipt.structure1f_floor_decoration_offset_pairs =

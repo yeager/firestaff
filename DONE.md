@@ -7,6 +7,12 @@
   runtime promotion is added. Verification: focused loader CTest and the
   skip-safe hash-verified real-data probe.
 
+- 2026-07-13 Nexus Structure1F floor-decoration control/extent handoff: the
+  documented raw `type_or_control/width/height` triples now reach DGN host,
+  render-plan, and LEV00-15 corpus receipts. Their original grammar remains
+  unproved; no placement, size, mesh, texture, palette, pixel, or draw meaning
+  is inferred.
+
 - 2026-07-13 Nexus Structure1F item corpus handoff: raw direct-item
   `attribute1/attribute2` and `location/item_id` pair receipts now also flow
   through the per-level LEV00-15 aggregate. This remains fail-closed
