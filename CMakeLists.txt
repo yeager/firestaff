@@ -8288,6 +8288,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
     )
@@ -8319,6 +8320,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
     )
@@ -8350,6 +8352,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_sound.c
         src/dm2/dm2_v1_drops.c
     )
