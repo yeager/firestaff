@@ -119,6 +119,22 @@ static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
     return 1;
 }
 
+/* This probe keeps independent source-locked oracles for the status-panel
+ * helpers.  M11 now exports the same API names, so give the local oracle
+ * copies probe-private names without changing their assertions or M11. */
+#define M11_GameView_GetV1StatusBoxFillColor probe_v1_status_box_fill_color
+#define M11_GameView_GetV1StatusNameClearColor probe_v1_status_name_clear_color
+#define M11_GameView_GetV1StatusNameColor probe_v1_status_name_color
+#define M11_GameView_GetV1StatusBoxZone probe_v1_status_box_zone
+#define M11_GameView_GetV1StatusNameZone probe_v1_status_name_zone
+#define M11_GameView_GetV1StatusNameTextZone probe_v1_status_name_text_zone
+#define M11_GameView_GetV1StatusBarZone probe_v1_status_bar_zone
+#define M11_GameView_GetV1StatusHandSlotBoxZone probe_v1_status_hand_slot_box_zone
+#define M11_GameView_GetV1StatusHandIconZone probe_v1_status_hand_icon_zone
+#define M11_GameView_GetV1ChampionBarColor probe_v1_champion_bar_color
+#define M11_GameView_GetV1StatusBarBlankColor probe_v1_status_bar_blank_color
+#define M11_GameView_GetV1ObjectIconSourceZone probe_v1_object_icon_source_zone
+
 static int M11_GameView_GetV1StatusBoxFillColor(void) {
     return dm1_v1_champion_status_box_fill_color_pc34();
 }
@@ -276,7 +292,8 @@ static int M11_GameView_GetV1StatusHandSlotGraphic(
         hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
 }
 
-static int M11_GameView_GetV1StatusHandIconIndex(
+/* Local pixel-oracle helper; keep it distinct from the public M11 API. */
+static int probe_v1_status_hand_icon_index(
     const M11_GameViewState* game,
     int slot,
     int hand) {
@@ -641,7 +658,7 @@ static int check_hand_slot_icon_pixels(const M11_GameViewState* game,
                                        const unsigned char* fb,
                                        int slot,
                                        int hand) {
-    int iconIndex = M11_GameView_GetV1StatusHandIconIndex(game, slot, hand);
+    int iconIndex = probe_v1_status_hand_icon_index(game, slot, hand);
     int graphicIndex;
     int srcX, srcY, srcW, srcH;
     const M11_AssetSlot* asset;

@@ -379,7 +379,9 @@ static int probe_m11_object_icon_index_for_thing(
     return iconIndex;
 }
 
-static int M11_GameView_GetV1StatusHandIconIndex(
+/* Kept as an independent probe oracle.  The public M11 helper now has the
+ * same name, so this local source-lock implementation must not shadow it. */
+static int probe_v1_status_hand_icon_index(
     const M11_GameViewState* state,
     int championSlot,
     int handIndex) {
@@ -3940,28 +3942,28 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_15K",
-                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
-                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
+                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 212 &&
+                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 214,
                  "V1 champion HUD empty normal hands use source icons 212/214");
 
     syntheticView.world.party.champions[0].wounds = 0x0001u;
     probe_record(&tally,
                  "INV_GV_15L",
-                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 213 &&
-                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
+                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 213 &&
+                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 214,
                  "V1 champion HUD ready-hand wound advances empty icon to 213 only");
 
     syntheticView.world.party.champions[0].wounds = 0x0002u;
     probe_record(&tally,
                  "INV_GV_15M",
-                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
-                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
+                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 212 &&
+                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 215,
                  "V1 champion HUD action-hand wound advances empty icon to 215 only");
 
     syntheticView.actingChampionOrdinal = 1;
     probe_record(&tally,
                  "INV_GV_15N",
-                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
+                 probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 215,
                  "V1 champion HUD acting hand changes the box graphic but keeps the source wounded empty icon");
     syntheticView.actingChampionOrdinal = 0;
     syntheticView.world.party.champions[0].wounds = 0;
@@ -3971,7 +3973,7 @@ int main(int argc, char** argv) {
     syntheticView.world.party.champions[0].wounds = 0x0001u;
     probe_record(&tally,
                  "INV_GV_15O",
-                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 16,
+                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 16,
                  "V1 champion HUD occupied wounded hand uses F0033 object icon instead of empty-hand icon");
     syntheticView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
     syntheticView.world.party.champions[0].wounds = 0;
