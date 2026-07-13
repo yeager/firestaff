@@ -9920,3 +9920,10 @@ unlink or relink an already-dead group. Verification: Ninja and
   semantics. This is raw envelope provenance only, not a decoder, palette,
   image, record, or render route. Verification:
   `nexus_v1_dgn_geometry_readiness`.
+## 2026-07-13 - DM1 PC34 C20 sound-event union roundtrip
+
+- `SOUND.C:1536-1543` and `TIMELINE.C:1903-1905` define delayed C20 as
+  `B.Location + C.SoundIndex`. Native export/import and original-save
+  materialization now retain that exact union, including signed sound ids,
+  rather than treating the bytes as generic Cell/Effect data. The original
+  save handoff regression roundtrips a delayed negative sound index.

@@ -491,6 +491,64 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
     return 1;
 }
 
+static int rewrite_fixture_event_c_union(unsigned char *bytes,
+                                         size_t size,
+                                         int event_index,
+                                         uint16_t c_union)
+{
+    unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
+    uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    uint16_t checksum;
+    int part;
+    int i;
+
+    if (!bytes || size < sizeof(header) || event_index < 0 ||
+        event_index >= ORIGINAL_PC34_EVENT_MAXIMUM_COUNT) {
+        return 0;
+    }
+    memcpy(header, bytes, sizeof(header));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
+        keys[i] = rd16le(header + 310u + (size_t)i * 2u);
+    }
+    for (part = 0; part < SAVEGAME_PC34_PART_EVENTS; ++part) {
+        uint16_t part_size;
+        if (cursor + 2u > size) return 0;
+        part_size = rd16le(bytes + cursor);
+        cursor += 2u;
+        if (part_size > size - cursor) return 0;
+        cursor += part_size;
+    }
+    if (cursor + 2u > size ||
+        rd16le(bytes + cursor) != ORIGINAL_PC34_EVENTS_PART_BYTES) {
+        return 0;
+    }
+    cursor += 2u;
+    if (ORIGINAL_PC34_EVENTS_PART_BYTES > size - cursor) return 0;
+
+    xor_words(bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
+              keys[SAVEGAME_PC34_PART_EVENTS]);
+    wr16le(bytes + cursor + (size_t)event_index * ORIGINAL_PC34_EVENT_BYTES + 8u,
+           c_union);
+    checksum = checksum_and_xor_words(
+        bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
+        keys[SAVEGAME_PC34_PART_EVENTS]);
+    wr16le(header + 342u +
+           (size_t)SAVEGAME_PC34_PART_EVENTS * 2u, checksum);
+    wr16le(header + 254u, 0u);
+    wr16le(header + 254u,
+           (uint16_t)(checksum_first_half(header) ^
+                      checksum_second_half_plain(header)));
+    xor_obfuscate_second_half(
+        header,
+        rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
+    memcpy(bytes, header, sizeof(header));
+    return 1;
+}
+
 static void make_temp_save_path(char *out, size_t out_size)
 {
     const char *root = getenv("FIRESTAFF_TEST_TMPDIR");
@@ -1476,6 +1534,60 @@ static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
           "unmaterialized source event leaves receipt untouched");
 }
 
+static void test_runtime_materializer_binds_original_sound_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct DungeonGroup_Compat groups[4];
+    DM1OriginalSavePC34HandoffReport report;
+    int rc;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C20 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_PLAY_SOUND) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0,
+                                            (uint16_t)(int16_t)-23),
+          "C20 fixture preserves authenticated SoundIndex union bytes");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(groups, 0, sizeof(groups));
+    memset(&report, 0, sizeof(report));
+    groups[1].creatureType = 15;
+    groups[2].creatureType = 16;
+    start_things.groups = groups;
+    start_things.groupCount = 4;
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "C20 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C20 materializes without generic Cell/Effect substitution");
+    CHECK(loaded_world.timeline.count == ORIGINAL_PC34_EVENT_COUNT &&
+              loaded_world.timeline.events[2].kind == TIMELINE_EVENT_PLAY_SOUND &&
+              loaded_world.timeline.events[2].mapIndex == 2 &&
+              loaded_world.timeline.events[2].mapX == 11 &&
+              loaded_world.timeline.events[2].mapY == 12 &&
+              loaded_world.timeline.events[2].aux0 == -23 &&
+              loaded_world.timeline.events[2].aux4 == 7,
+          "C20 materialization binds original Location, SoundIndex, priority");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2012,7 +2124,7 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     memset(&imported_party, 0, sizeof(imported_party));
     memset(&report, 0, sizeof(report));
     world.party.championCount = 1;
-    world.timeline.count = 3;
+    world.timeline.count = 4;
     world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
     world.timeline.events[0].fireAtTick = 100u;
     world.timeline.events[0].aux0 = 5;
@@ -2031,6 +2143,13 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
     world.timeline.events[2].aux2 = DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE;
     world.timeline.events[2].aux3 = 9;
     world.timeline.events[2].aux4 = 0x104;
+    world.timeline.events[3].kind = TIMELINE_EVENT_PLAY_SOUND;
+    world.timeline.events[3].fireAtTick = 103u;
+    world.timeline.events[3].mapIndex = 2;
+    world.timeline.events[3].mapX = 19;
+    world.timeline.events[3].mapY = 8;
+    world.timeline.events[3].aux0 = -23;
+    world.timeline.events[3].aux4 = 6;
     world.projectiles.count = 7;
 
     world.projectiles.entries[5].slotIndex = 5;
@@ -2060,11 +2179,12 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
         bytes, (size_t)written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "exported C48/C49 envelope imports");
-    CHECK(report.original_event_count == 3 &&
+    CHECK(report.original_event_count == 4 &&
               report.events[0].type == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
               report.events[1].type == DM1_EVENT_MOVE_PROJECTILE &&
-              report.events[2].type == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE,
-          "world export retains C48/C49 and C29 source event ids");
+              report.events[2].type == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
+              report.events[3].type == DM1_EVENT_PLAY_SOUND,
+          "world export retains C48/C49, C29, and C20 source event ids");
 
     expected_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
                                 (2u << 14));
@@ -2084,6 +2204,10 @@ static void test_world_export_rebuilds_c48_c49_projectile_union(void)
               rd16le(&report.events[2].c_cell) == 9u &&
               report.events[2].priority == 4,
           "C29 export restores B.Location, C.Ticks, and source priority");
+    CHECK(report.events[3].b_mapX == 19 && report.events[3].b_mapY == 8 &&
+              (int16_t)rd16le(&report.events[3].c_cell) == -23 &&
+              report.events[3].priority == 6,
+          "C20 export restores B.Location, C.SoundIndex, and source priority");
 
     world.projectiles.entries[6].reserved3 = 0;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
@@ -2102,6 +2226,7 @@ int main(void)
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
     test_runtime_handoff_rejects_unmaterialized_source_event();
+    test_runtime_materializer_binds_original_sound_union();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
