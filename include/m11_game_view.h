@@ -1730,6 +1730,37 @@ int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
     int framebufferWidth,
     int framebufferHeight);
 
+/* Read-only evidence from a completed DM1 F0115 C2900 projectile blit.
+ * `objectMaterial` distinguishes the F0142 -> G0209 thrown-object branch
+ * from the native M613 projectile bitmap branch. */
+typedef struct M11_Dm1ProjectileHostPresentationReceipt {
+    int valid;
+    int projectileLane;
+    int objectMaterial;
+    int graphicsId;
+    int objectAspectIndex;
+    int transparentColor;
+    int flipFlags;
+    int sourceZoneRow;
+    int destinationX;
+    int destinationY;
+    int destinationW;
+    int destinationH;
+    int assetWidth;
+    int assetHeight;
+} M11_Dm1ProjectileHostPresentationReceipt;
+
+void M11_GameView_GetDm1ProjectileHostPresentationReceipt(
+    M11_Dm1ProjectileHostPresentationReceipt* outReceipt);
+
+/* Test-only entry to the production F0115 thrown-object projectile route.
+ * The caller must provide a real initialized GRAPHICS.DAT asset loader. */
+int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
 #ifdef __cplusplus
 }
 #endif
