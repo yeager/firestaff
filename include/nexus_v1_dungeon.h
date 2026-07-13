@@ -1152,6 +1152,7 @@ typedef struct {
 #define NEXUS_V1_ITEM_IBS_PALETTE_COUNT 8
 #define NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT 223
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT 109
+#define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES 2048
 
 typedef struct {
     uint16_t image_id;
@@ -1161,8 +1162,11 @@ typedef struct {
     uint16_t height;
     uint32_t image_offset;
     uint32_t image_bytes;
+    uint32_t packed_4bpp_bytes;
     uint16_t palette_bgr555[16];
+    uint8_t packed_4bpp_texels[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES];
     int palette_bound;
+    int packed_4bpp_valid;
 } Nexus_V1_ItemIbsFloorImage;
 
 typedef struct {
@@ -1196,6 +1200,7 @@ typedef struct {
     int command_candidate_count;
     int bound_regular_inventory_count;
     int bound_special_floor_palette_count;
+    int bound_special_floor_texture_count;
     int blocked_special_floor_image_count;
     int blocked_missing_command_count;
     int blocked_invalid_item_count;

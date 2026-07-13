@@ -2367,7 +2367,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
     ibs[0x3100 + 3 * 2] = 1;
     ibs[0x3100 + 3 * 2 + 1] = 7;
     ibs[0x3300 + 7 * 128] = 0x2fU;
-    wb16(ibs + 0xa800, 266U);
+    wb16(ibs + 0xa800, 43U); /* 223 regular images + ordinal 43 = 266 */
     wb16(ibs + 0xa802, 8U);
     wb16(ibs + 0xa806, 16U);
     wb16(ibs + 0xa808, 16U);
@@ -2416,10 +2416,46 @@ static void test_structure1f_item_ibs_material_binding(void) {
     CHECK(bindings[1].special_floor_image != NULL &&
           bindings[1].special_floor_image->encoding == 8U &&
           bindings[1].special_floor_image->palette_bgr555[0] == 0x03e0U &&
-          bindings[1].special_floor_image->image_bytes == 0x100U &&
+          bindings[1].special_floor_image->image_id == 266U &&
+          bindings[1].special_floor_image->packed_4bpp_bytes == 128U &&
+          bindings[1].special_floor_image->packed_4bpp_valid &&
           bindings[1].packed_4bpp_texels == NULL,
           "special floor binding preserves bounded original payload and palette only");
     free(ibs);
+}
+
+static void test_real_item_ibs_special_floor_corpus(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    uint8_t *data;
+    FILE *file;
+    Nexus_V1_ItemIbsBank bank;
+
+    if (!data_dir || !data_dir[0]) return;
+    snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
+    file = fopen(path, "rb");
+    if (!file) return;
+    data = (uint8_t *)malloc(NEXUS_V1_ITEM_IBS_BYTES);
+    CHECK(data != NULL, "real ITEM.IBS corpus buffer allocates");
+    if (!data) {
+        fclose(file);
+        return;
+    }
+    CHECK(fread(data, 1, NEXUS_V1_ITEM_IBS_BYTES, file) ==
+              NEXUS_V1_ITEM_IBS_BYTES,
+          "real ITEM.IBS corpus reads completely");
+    fclose(file);
+    CHECK(nexus_v1_item_ibs_parse_verified(data, NEXUS_V1_ITEM_IBS_BYTES,
+                                             1, &bank) == 0,
+          "real ITEM.IBS proves the special-floor packed-4bpp layout");
+    CHECK(bank.floor_image_count == NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT &&
+          bank.floor_images[43].image_id == 266U &&
+          bank.floor_images[43].packed_4bpp_valid &&
+          bank.floor_images[43].packed_4bpp_bytes ==
+              (uint32_t)bank.floor_images[43].width *
+              (uint32_t)bank.floor_images[43].height / 2U,
+          "real ITEM.IBS combines regular and floor-image indices without a fallback");
+    free(data);
 }
 
 int main(void) {
@@ -2432,6 +2468,7 @@ int main(void) {
     test_bounds_and_legacy_non_promotion();
     test_determinism();
     test_structure1f_item_ibs_material_binding();
+    test_real_item_ibs_special_floor_corpus();
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
     test_visible_structure1f_semantics_block_render_plan();
