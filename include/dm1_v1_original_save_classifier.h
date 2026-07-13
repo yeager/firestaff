@@ -68,6 +68,11 @@ typedef struct {
     uint16_t save_part_checksum_count_nonzero;
     uint16_t save_part_loader_envelope_ok_count;
     uint32_t save_part_loader_envelope_payload_bytes;
+    /* CEDTINCD.C F7057 authenticates the five length-prefixed parts, while
+     * LOADSAVE.C F0435 owns bytes after that envelope (portraits/tail). Keep
+     * their exact boundary in corpus provenance without decoding the tail. */
+    uint32_t save_part_loader_envelope_end_offset;
+    uint32_t save_part_loader_trailing_byte_count;
     uint16_t header_expected_checksum;
     uint16_t header_actual_checksum;
     uint32_t prefix_checksum32;

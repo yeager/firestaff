@@ -171,6 +171,13 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 F7057/F0435 corpus-boundary provenance: each
+  classifier-qualified corpus file and import receipt now records the exact
+  end of ReDMCSB F7057's five authenticated save parts and the raw trailing
+  byte count owned by F0435. A corrupt-suffix regression proves the valid
+  envelope boundary remains distinct from later rejected bytes; no tail
+  format is guessed or imported. Source: ReDMCSB `LOADSAVE.C` F0433/F0435
+   and `CEDTINCD.C` F7057. Verification: focused native-PC34 handoff CTest.
 - 2026-07-13 DM1 PC34 chained tombstone-link safety: checksum-valid C3
   tombstones `2 -> 3 -> active C4 Door 1` remain free staging slots after
   import. Two later queue insertions consume slots 2 then 3, proving that no
