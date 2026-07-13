@@ -1144,6 +1144,47 @@ typedef struct {
     uint8_t draw_order;
 } Nexus_V1_DgnRenderCommand;
 
+/* ITEM.IBS is the documented Structure1Fa item-descriptor source.  The
+ * regular 16x16 4bpp images are independently bounded; special floor-image
+ * records remain excluded until their Saturn pixel encoding is proven. */
+#define NEXUS_V1_ITEM_IBS_BYTES 100352
+#define NEXUS_V1_ITEM_IBS_DECLARATION_COUNT 243
+#define NEXUS_V1_ITEM_IBS_PALETTE_COUNT 8
+#define NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT 223
+
+typedef struct {
+    int valid;
+    int source_hash_verified;
+    uint16_t inventory_association[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t floor_image[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t palette_bgr555[NEXUS_V1_ITEM_IBS_PALETTE_COUNT][16];
+    uint8_t association_palette[256];
+    uint8_t association_image[256];
+    uint8_t regular_image_texels[NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT][128];
+} Nexus_V1_ItemIbsBank;
+
+typedef struct {
+    int entry_index;
+    int command_index;
+    uint8_t item_id;
+    uint8_t palette_index;
+    uint8_t image_index;
+    const uint16_t *palette_bgr555;
+    const uint8_t *packed_4bpp_texels;
+} Nexus_V1_DgnStructure1FItemMaterialBinding;
+
+typedef struct {
+    int source_hash_verified;
+    int item_entry_count;
+    int command_candidate_count;
+    int bound_regular_inventory_count;
+    int blocked_special_floor_image_count;
+    int blocked_missing_command_count;
+    int blocked_invalid_item_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1FItemMaterialReceipt;
+
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
     /* These are package-to-host provenance facts, not decoder claims. A
@@ -1381,5 +1422,19 @@ int nexus_v1_level_build_dgn_view_render_plan(
     Nexus_V1_DgnRenderCommand *commands,
     int max_commands,
     Nexus_V1_DgnRenderPlanReceipt *out_receipt);
+/* Parses only the documented ITEM.IBS regular-icon lane. `source_hash_verified`
+ * must come from the caller's canonical Saturn asset receipt; an unverified
+ * blob is never promotable to a material source. */
+int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
+                                     int source_hash_verified,
+                                     Nexus_V1_ItemIbsBank *out_bank);
+/* Binds direct Structure1Fa item IDs to their authenticated ITEM.IBS regular
+ * image/palette pair and the owning DGN mesh command.  It never substitutes a
+ * special floor image with an inventory icon. */
+int nexus_v1_dgn_bind_structure1f_item_materials(
+    const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
+    const Nexus_V1_DgnRenderCommand *commands, int command_count,
+    Nexus_V1_DgnStructure1FItemMaterialBinding *out_bindings,
+    int max_bindings, Nexus_V1_DgnStructure1FItemMaterialReceipt *out_receipt);
 
 #endif
