@@ -156,12 +156,13 @@ reference-table data. The next admissible collision work is a Saturn
 executable or capture that proves their byte grammar; do not reinterpret them
 as line/circle coordinates or promote them into movement geometry.
 
-## DM2 V2.0 Runtime Follow-up (2026-07-12)
+## DM2 V2.0 Runtime Follow-up (2026-07-13)
 
 M11 now binds the selected DM2 V2 presentation mode to the persistent V2
-phase gate and boot-owned, hash-verified GDAT provider. The runtime HUD can
-therefore consume only decoded `INTERFACE_GENERAL` and `CHAMPIONS` pixels
-after the source viewport frame; absent data remains absent. Remaining V2.0
+phase gate and boot-owned, hash-verified GDAT provider. The runtime HUD now
+consumes only decoded `INTERFACE_GENERAL` and `CHAMPIONS` pixels, mapping each
+IMG3 through its paired boot-owned `dtPalette16` after the source viewport
+frame; absent pixels or palettes remain absent. Remaining V2.0
 work is real packaged Mac capture and wider GDAT/save corpus coverage, not a
 new fallback HUD or menu.
 
