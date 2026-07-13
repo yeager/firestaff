@@ -37,6 +37,7 @@ int main(void)
     int sawSoundAfterStaleC11 = 0;
     uint32_t historicC11FireAtTick = 0u;
     struct TickResult_Compat dispatchResult;
+    struct TimelineEvent_Compat forgedOwnerC04;
 
     memset(&state, 0, sizeof(state));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -148,11 +149,25 @@ int main(void)
      * while CHAMPION.C F0330 stores the champion in C11 Priority.  Losing
      * the original owner after C11's due tick consumes only C11 in
      * TIMELINE.C; the action's already-due C04 must still play. */
+    /* A second C04 due beside C11 cannot carry a champion owner: C20's
+     * aux4 is SOUND_DATA.Priority.  This forged receipt substitutes owner
+     * zero for F0407's source priority 70, and must be consumed silently. */
+    memset(&forgedOwnerC04, 0, sizeof(forgedOwnerC04));
+    forgedOwnerC04.kind = TIMELINE_EVENT_PLAY_SOUND;
+    forgedOwnerC04.fireAtTick = historicC11FireAtTick;
+    forgedOwnerC04.mapIndex = state.world.party.mapIndex;
+    forgedOwnerC04.mapX = 1;
+    forgedOwnerC04.mapY = 2;
+    forgedOwnerC04.aux0 = DM1_SND_WOODEN_THUD;
+    forgedOwnerC04.aux2 = DM1_EVENT_PLAY_SOUND;
+    forgedOwnerC04.aux4 = 0; /* Claimed C11 owner, not C20 sound priority. */
+    assert(F0721_TIMELINE_Schedule_Compat(
+               &state.world.timeline, &forgedOwnerC04) == 1);
     state.world.party.championCount = 0;
     memset(&dispatchResult, 0, sizeof(dispatchResult));
     state.world.gameTick = historicC11FireAtTick + 1u;
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(
-               &state.world, &dispatchResult) == 3);
+               &state.world, &dispatchResult) == 4);
     assert(dispatchResult.emissionCount == 2);
     for (i = 0; i < dispatchResult.emissionCount; ++i) {
         const struct TickEmission_Compat *emission =

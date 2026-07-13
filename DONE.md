@@ -1894,11 +1894,14 @@
   F0380:2308-2312`, `MENU.C F0407:1312-1317,1620-1622`, `SOUND.C
   F0064:1536-1543`, `CHAMPION.C F0330`, and `TIMELINE.C:1903-1905,1927-1932`;
   COMMAND gates the action-area route, C11 stores champion Priority, and C04
-  has no champion field to clean.
+  has no champion field to clean. A second due C04 that repurposes C20 sound
+  priority as the stale C11 owner is rejected and consumed, rather than being
+  treated as a source-authentic F0407 sound receipt.
   Verification: the focused C04/C11 regression proves malformed action input
   creates no receipts, a source-created C04/C11 pair follows this distinct
   ownership rule after C11 is due and the action owner invalidates: stale C11
-  is consumed without `EMIT_ACTION_ENABLED`, while C04 still dispatches.
+  is consumed without `EMIT_ACTION_ENABLED`, valid C04 still dispatches, and
+  a same-due forged owner-tagged C04 produces neither sound nor a stale event.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
