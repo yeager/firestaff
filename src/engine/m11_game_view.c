@@ -14809,17 +14809,26 @@ static int m11_dm1_hoc_c027_input_material_ready(
            panel->height == panelRect.h;
 }
 
-static int m11_disable_front_mirror_route(M11_GameViewState* state,
-                                          int mirrorOrdinal) {
+/* ReDMCSB REVIVE.C F0282 lines 805-817 walks the front square after a
+ * successful C160/C161 choice and disables the first SENSOR it encounters.
+ * It deliberately does not re-check C127/sensorData: BUG0_87 documents that
+ * this can affect a preceding custom-dungeon sensor.  Keep that original
+ * ownership, rather than repairing it with an M11 mirror/TextString scan. */
+static int m11_front_mirror_first_sensor_index_pc34(
+    const M11_GameViewState* state,
+    int* outSensorIndex) {
     int mapX;
     int mapY;
     int sftIndex;
     unsigned short thing;
-    unsigned short prev = THING_ENDOFLIST;
+    int maxLinks = 0;
+    int safety;
+    int type;
 
-    if (!state || mirrorOrdinal < 0 || !state->world.things ||
-        !state->world.things->textStrings ||
-        !state->world.things->squareFirstThings) {
+    if (!state || !outSensorIndex || !state->world.dungeon ||
+        !state->world.things || !state->world.things->squareFirstThings ||
+        !state->world.things->sensors ||
+        state->world.things->sensorCount <= 0) {
         return 0;
     }
 
@@ -14838,39 +14847,38 @@ static int m11_disable_front_mirror_route(M11_GameViewState* state,
         return 0;
     }
     thing = state->world.things->squareFirstThings[sftIndex];
-    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        if (state->world.things->thingCounts[type] > 0) {
+            maxLinks += state->world.things->thingCounts[type];
+        }
+    }
+    if (maxLinks <= 0) {
+        return 0;
+    }
+    for (safety = 0;
+         safety < maxLinks &&
+         thing != THING_ENDOFLIST && thing != THING_NONE;
+         ++safety) {
         int thingType = THING_GET_TYPE(thing);
         int thingIndex = THING_GET_INDEX(thing);
         unsigned short next = m11_raw_next_thing(state->world.things, thing);
         if (thingType == THING_TYPE_SENSOR && state->world.things->sensors &&
-            thingIndex >= 0 && thingIndex < state->world.things->sensorCount &&
-            state->world.things->sensors[thingIndex].sensorType == 127 &&
-            (int)state->world.things->sensors[thingIndex].sensorData == mirrorOrdinal) {
-            /* ReDMCSB REVIVE.C F0282 disables the matching C127 mirror
-             * sensor (champion-portrait type) on the front square after
-             * a confirmed resurrect/reincarnate action. */
-            state->world.things->sensors[thingIndex].sensorType = 0;
-            thing = next;
-            continue;
+            thingIndex >= 0 && thingIndex < state->world.things->sensorCount) {
+            *outSensorIndex = thingIndex;
+            return 1;
         }
-        if (thingType == THING_TYPE_TEXTSTRING && state->world.things->textStrings &&
-            thingIndex >= 0 && thingIndex < state->world.things->textStringCount &&
-            F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                &state->mirrorCatalog, thingIndex) == mirrorOrdinal) {
-            /* Same front-square mirror disable for the HoC TextString carrier
-             * fallback used by m11_front_cell_mirror_ordinal(). */
-            if (prev == THING_ENDOFLIST) {
-                state->world.things->squareFirstThings[sftIndex] = next;
-            } else {
-                m11_set_next_thing(state->world.things, prev, next);
-            }
-            m11_set_next_thing(state->world.things, thing, THING_ENDOFLIST);
-            thing = next;
-            continue;
-        }
-        prev = thing;
         thing = next;
     }
+    return 0;
+}
+
+static int m11_disable_front_mirror_route(M11_GameViewState* state) {
+    int sensorIndex;
+
+    if (!m11_front_mirror_first_sensor_index_pc34(state, &sensorIndex)) {
+        return 0;
+    }
+    state->world.things->sensors[sensorIndex].sensorType = 0;
     return 1;
 }
 
@@ -15073,7 +15081,7 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         champ->poisonDose = 0;
         state->world.party.activeChampionIndex = championIndex;
     }
-    (void)m11_disable_front_mirror_route(state, state->candidateMirrorOrdinal);
+    (void)m11_disable_front_mirror_route(state);
     state->candidateMirrorRenameActive = 0;
     memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->candidateMirrorPanelActive = 0;
@@ -15929,6 +15937,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                            : M11_GAME_INPUT_IGNORED;
             }
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                int sensorIndex;
+                if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                               &sensorIndex)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
                 return M11_GameView_ApplyMirrorCandidateRenameCommand(
                            state,
                            DM1_V1_RESURRECTION_RENAME_UI_COMMAND_OK_PC34_COMPAT)
@@ -15946,6 +15959,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                        : M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+            int sensorIndex;
+            if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                           &sensorIndex)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             return M11_GameView_ConfirmMirrorCandidate(state, 0)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
@@ -16682,6 +16700,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             if (!m11_dm1_hoc_c027_input_material_ready(state)) {
                 return M11_GAME_INPUT_IGNORED;
             }
+            if (m11_point_in_rect(x, y, 197, 147, 19, 9)) {
+                int sensorIndex;
+                if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                               &sensorIndex)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            }
             return M11_GameView_HandleMirrorCandidateRenameClick(state, x, y)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;
@@ -16690,6 +16715,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
+            int sensorIndex;
+            if (!m11_front_mirror_first_sensor_index_pc34(state,
+                                                           &sensorIndex)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             return M11_GameView_ConfirmMirrorCandidate(state, 0)
                        ? M11_GAME_INPUT_REDRAW
                        : M11_GAME_INPUT_IGNORED;

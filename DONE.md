@@ -8,6 +8,13 @@
   compare the complete raw block. Source: ReDMCSB `DEFS.H` `PARTY_INFO` and
   `LOADSAVE.C` F0433:1565-1584/F0435:2766-2777. Verification: focused
   native-PC34 handoff CTest with nonzero opaque PARTY_INFO bytes.
+- 2026-07-13 DM1 HoC F0282 first-sensor host ownership: C160 and C027 OK
+  now fail closed unless the original front-square sensor chain resolves.
+  On confirmation M11 disables exactly the first source SENSOR, preserving
+  ReDMCSB `REVIVE.C F0282` BUG0_87 rather than scanning for a matching C127
+  mirror or a TextString fallback. Verification: focused Ninja build and
+   `m11_dm1_hoc_no_fallback_panel` CTest with real PC34 material, a no-chain
+   rejection, and a custom preceding-sensor regression.
 
 - 2026-07-13 Theron authentic BIOS-to-loader capture: a visible macOS capture
   proves the real Super CD-ROM System Card title accepts `RUN` only after its
