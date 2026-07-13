@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin saved `TT_1` collision-free door runtime: exact saved
+  door receipts now apply one original low-state open/close step and retain
+  the same timer/queue owner through every nonterminal `+1` successor.
+  Party and material-group collision branches remain excluded rather than
+  fabricating damage, reactions, or sound. Source: `CSBCode.cpp:6429`,
+  `Timer.cpp:1224-1341`. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin saved `TT_24` runtime: an authenticated timer now removes
   only its exact `timerObj8` Thing from the saved square and writes `RNfree`
   after a complete source-chain unlink. Invalid receipts stay inert. Source:

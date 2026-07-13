@@ -337,8 +337,10 @@ int main(void)
     profile.csbwin_timers[0].source_index = 0u;
     profile.csbwin_timers[0].time = profile.game_time;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
-              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x82u,
-          "nonterminal restored door timer remains blocked without source requeue");
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x81u &&
+              profile.csbwin_timers[0].time == profile.game_time &&
+              profile.timeline_queue.eventCount == 1,
+          "nonterminal restored door timer retains source requeue");
 
     profile.csbwin_character_tail_invisible = 2u;
     profile.csbwin_timers[0].function = 71u;
