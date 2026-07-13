@@ -5967,6 +5967,35 @@ static int orch_materialize_projectile_tick_explosion_compat(
     return 0;
 }
 
+static void orch_sync_live_projectile_c14_f0219_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile)
+{
+    struct DungeonProjectile_Compat* source;
+    int projectileIndex;
+
+    if (!world || !projectile || !world->things ||
+        !world->things->projectiles) {
+        return;
+    }
+    projectileIndex = projectile->slotIndex;
+    if (projectileIndex < 0 ||
+        projectileIndex >= world->things->projectileCount) {
+        return;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0219:687-714 mutates PROJECTILE.KineticEnergy
+     * and PROJECTILE.Attack before it relinks and requeues the C49 event.
+     * The M10 runtime projection owns those values while the original C14
+     * array remains the F0802 save source; keep the decoded source record
+     * coherent after a successful flight step.  EVENT index ownership stays
+     * with F0802's reconstructed EVENTS/TIMELINE heap because TimelineQueue
+     * deliberately has no PC34 slot allocator. */
+    source = &world->things->projectiles[projectileIndex];
+    source->kineticEnergy = (unsigned char)projectile->kineticEnergy;
+    source->attack = (unsigned char)projectile->attack;
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -6128,6 +6157,7 @@ static int orch_handle_projectile_move_event_compat(
          * by the DM1 flight relink receipt rather than by this M10 adapter. */
         *projectile = newState;
         projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
+        orch_sync_live_projectile_c14_f0219_compat(world, projectile);
     }
     if (relinkReceipt.shouldScheduleNextMove) {
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,

@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0219 live C14 motion writeback: a non-grace C49 flight
+  step now carries ReDMCSB `PROJECTILE.KineticEnergy` and `PROJECTILE.Attack`
+  back to the decoded original C14 record before it relinks and queues the
+  next move. This prevents a subsequent F0802 original-save export from
+  retaining launch values after live flight. PC34 `PROJECTILE.EventIndex`
+  remains owned by F0802's reconstructed EVENTS/TIMELINE heap, since the M10
+  timeline has no original slot allocator. Verification: Ninja and CTest
+  passed `dm1_v1_f0206_packed_directions_runtime_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-13 Nexus Structure2 opaque-pair composition receipt: the bounded
   parser now retains complete raw two-byte pair, trailing-byte, zero-pair,
   and nonzero-pair counts for the already verified post-`FFFF` span. This is
