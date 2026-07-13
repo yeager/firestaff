@@ -1135,8 +1135,12 @@ typedef struct {
     uint16_t animated_texture_structure2_image_id;
     int animated_texture_structure2_image_valid;
     Nexus_V1_DgnAnimatedMaterialRoute animated_texture_host_route;
-    /* Exact Structure1F direct-cell provenance for this material/mesh cell.
-     * A non-zero value forces the plan down its no-draw semantics gate. */
+    /* Exact Structure1F direct-cell provenance for this floor material cell.
+     * Direct item, floor-decoration and floor-sensor records name a documented
+     * 64x64 floor cell. They therefore never attach to the co-located wall or
+     * ceiling commands. A non-zero value still forces the plan down its
+     * no-draw semantics gate until the original Saturn draw/trigger ABI is
+     * evidenced. */
     uint8_t structure1f_direct_family_mask;
     uint8_t structure1f_direct_entry_count;
     Nexus_V1_DgnRenderCommandKind material_source_kind;
@@ -1363,8 +1367,16 @@ typedef struct {
     int structure1f_plan_item_entry_count;
     int structure1f_plan_floor_decoration_entry_count;
     int structure1f_plan_floor_sensor_entry_count;
+    /* Exact direct-cell ownership is retained only on floor commands. The
+     * separate entry counts above still block a visible record when a view has
+     * no floor command to own it, so this refinement cannot silently omit
+     * original data. */
     int structure1f_plan_direct_command_count;
     int structure1f_plan_direct_command_entry_count;
+    int structure1f_plan_direct_floor_command_count;
+    int structure1f_plan_direct_floor_command_entry_count;
+    int structure1f_plan_item_floor_command_count;
+    int structure1f_plan_item_floor_command_entry_count;
     int structure1g_present;
     int structure1g_valid;
     int structure1g_animated_texture_count;
