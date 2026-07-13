@@ -858,6 +858,21 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     const CSB_V1_DSAFilterLocation *slave_location,
     const CSB_V1_CSBWin512TimerSummary *timer);
 
+/* Execute one CSBWin TT_ParameterMessage (101) saved DSA route. The timer
+ * must be the exact serialized TIMER slot retained by this profile; its
+ * EDT_MessageParameters EXPOOL record is FNV-authenticated, source-sized,
+ * and limited to the runner's 26-word ABI before ProcessTimers' source
+ * stone/open-room dispatch is reproduced. Missing, malformed, stale, or
+ * over-cap records fail closed with no global or EXPOOL publication.
+ * Source: CSBWin CSBCode.cpp ProcessTimers:6436-6454; Timer.cpp
+ * ProcessTT_OPENROOM:1641-1711 / ProcessTT_STONEROOM:2118-2185;
+ * data.cpp EXPOOL::Read:1542-1568. */
+int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

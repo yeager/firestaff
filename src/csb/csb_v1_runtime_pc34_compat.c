@@ -16323,6 +16323,91 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
         profile, &runner, action, NULL, 0, NULL);
 }
 
+static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512TimerSummary *timer)
+{
+    const CSB_V1_CSBWin512TimerSummary *saved;
+
+    if (!profile || !timer || timer->source_index >=
+            profile->csbwin_timer_summary_count ||
+        timer->source_index >= CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
+        return 0;
+    }
+    saved = &profile->csbwin_timers[timer->source_index];
+    return saved->valid && !saved->truncated &&
+        saved->source_index == timer->source_index &&
+        saved->time == timer->time && saved->function == timer->function &&
+        saved->ubyte5 == timer->ubyte5 && saved->ubyte6 == timer->ubyte6 &&
+        saved->ubyte7 == timer->ubyte7 && saved->ubyte8 == timer->ubyte8 &&
+        saved->ubyte9 == timer->ubyte9 && saved->sequence == timer->sequence &&
+        saved->level == timer->level;
+}
+
+int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer)
+{
+    CSB_V1_CSBWin512TimerSummary dispatched;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *action = NULL;
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    uint32_t record_id;
+    int parameters[26];
+    size_t parameter_count;
+    size_t i;
+    int square_type;
+    int prepared;
+
+    /* CSBWin CSBCode.cpp ProcessTimers:6436-6454 gives a parameter message
+     * its allocated timer index, selects STONEROOM only for roomSTONE, and
+     * otherwise invokes OPENROOM. Timer.cpp's two handlers read the exact
+     * EDT_MessageParameters record before entering ProcessDSATimer[56]. */
+    if (!profile || !dungeon || !slave_location || !timer ||
+        !timer->valid || timer->truncated || timer->function != 101u ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y ||
+        !csb_v1_runtime_csbwin_timer_matches_saved_slot(profile, timer)) {
+        return 0;
+    }
+    record_id = (1u << 24) | timer->source_index;
+    if (!csb_v1_runtime_locate_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) || !payload ||
+        (payload_size & 3u) != 0u || payload_size / 4u > 26u) {
+        return 0;
+    }
+    parameter_count = payload_size / 4u;
+    for (i = 0u; i < parameter_count; ++i) {
+        parameters[i] = (int)csb_v1_runtime_read_le32(payload + i * 4u);
+    }
+
+    square_type = csb_v1_dungeon_get_square_type(
+        dungeon, slave_location->level, slave_location->x,
+        slave_location->y);
+    if (square_type < 0) return 0;
+    dispatched = *timer;
+    /* Timer.cpp ProcessTT_STONEROOM changes the timer function after Read;
+     * ProcessTT_OPENROOM keeps 101. Both ProcessDSATimer paths consume the
+     * action/position bytes, so normalize only for Firestaff's exact receipt
+     * resolvers instead of admitting a caller-selected timer family. */
+    dispatched.function = square_type == 0 ? 6u : 5u;
+    memset(&runner, 0, sizeof(runner));
+    if (square_type == 0) {
+        prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, &dispatched, &runner, &action);
+    } else {
+        prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, &dispatched, &runner, &action);
+    }
+    if (!prepared || !action) return 0;
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        profile, &runner, action, parameters, (int)parameter_count, NULL);
+}
+
 int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,

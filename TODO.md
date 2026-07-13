@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
+  `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
+  through the 26-word stack ABI for source stone/open-room dispatch. Larger
+  source records, non-DSA timer effects, master-state persistence, and DSA
+  world/filter opcodes remain intentionally unavailable until each has an
+  independently source-owned runtime surface; do not truncate parameters or
+  route a timer by inferred room state.
+
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route and C12 hide-damage removal are complete.
   The non-zero-slot `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot`

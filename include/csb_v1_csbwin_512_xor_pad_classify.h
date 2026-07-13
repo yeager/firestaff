@@ -343,6 +343,9 @@ typedef struct {
 typedef struct {
     int valid;
     int truncated;
+    /* Index in CSBWin's serialized TIMER array. ProcessTimers passes this
+     * unchanged to TT_ParameterMessage's EXPOOL lookup. */
+    uint16_t source_index;
     uint32_t time;
     uint8_t function;
     uint8_t ubyte5;
