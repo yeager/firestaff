@@ -18378,7 +18378,11 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
     int i;
 
     if (!profile) return -1;
-    if (!profile->party_state_valid) return -1;
+    /* ReDMCSB CHAMPION.C F0284 always writes G0308_i_PartyDirection after
+     * its bounded champion loop.  A new PC34 game reaches its first input
+     * before a party has been imported, so ChampionCount may be zero here;
+     * that must still rotate the dungeon-facing party direction rather than
+     * rejecting the command behind Firestaff's party_state_valid marker. */
     if (target_dir < 0 || target_dir > 3) return -1;
 
     current_dir = profile->party_dir & 3;
