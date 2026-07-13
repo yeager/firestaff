@@ -584,7 +584,7 @@ static void test_structure1c_record_table_bounds(void) {
 }
 
 static void test_structure1f_semantics_and_bounds(void) {
-    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 21];
     const int structure1b_rel = 0x200;
     uint8_t *structure1;
     Nexus_V1_DgnStructure1Layout layout;
@@ -595,6 +595,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt render_plan;
 
@@ -602,6 +603,9 @@ static void test_structure1f_semantics_and_bounds(void) {
                           structure1b_rel, 512) == 0,
           "Structure1F fixture builds");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
+    /* DMWeb DGN container Structure3 block envelope: opaque payload only. */
+    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1e, 1U);
     wb32(structure1 + 0x0c, 9U);
     for (int index = 0; index < 9; ++index) {
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
@@ -683,6 +687,15 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_model_references.nonzero_model_index_count == 8 &&
           structure3_model_references.complete,
           "resolved Structure1F owners retain Structure3 indexes as no-draw provenance");
+    CHECK(nexus_v1_level_structure3_payload_receipt(
+              &level, &structure3_payload) == 0 &&
+          structure3_payload.declared && structure3_payload.valid &&
+          structure3_payload.block_offset == 20 &&
+          structure3_payload.block_count == 1 &&
+          structure3_payload.byte_offset == NEXUS_DGN_BLOCK_SIZE * 20 &&
+          structure3_payload.byte_size == NEXUS_DGN_BLOCK_SIZE &&
+          !structure3_payload.face_semantics_proven,
+          "Structure3 payload accepts only its documented bounded header envelope");
     level.structure1f_entries[7].structure1a_index = 9U;
     level.structure1f_entries[7].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_structure1a_relation_receipt(&level,
@@ -708,21 +721,30 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
     CHECK(handoff.status ==
-              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH &&
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
           handoff.blocks_real_dgn_mesh_render && !handoff.fallback_visuals_permitted &&
           strcmp(nexus_v1_dgn_renderer_handoff_status_name(handoff.status),
-                 "blocked-structure3-mesh") == 0,
-          "resolved Structure1A model indexes block until Structure3 mesh bytes are proven");
+                 "blocked-structure3-face-semantics") == 0,
+          "bounded Structure3 payload blocks until original face semantics are proven");
     memset(commands, 0x5a, sizeof(commands));
     CHECK(nexus_v1_level_build_dgn_view_render_plan(
-              &level, 10, 10, 0, commands,
+          &level, 10, 10, 0, commands,
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &render_plan) == 0 &&
           render_plan.status ==
-              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_MESH &&
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
           render_plan.structure3_model_references.complete &&
+          render_plan.structure3_payload.valid &&
           render_plan.command_count == 0 && commands[0].kind == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready,
-          "DGN render planning consumes the Structure3 receipt without emitting a mesh draw");
+          "DGN render planning consumes the bounded Structure3 receipt without a mesh draw");
+    wb16(dgn + 0x1c, 21U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
+          "out-of-file Structure3 payload envelopes fail closed during DGN load");
+    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1e, 0U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
+          "partial Structure3 payload headers fail closed during DGN load");
+    wb16(dgn + 0x1e, 1U);
     structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 +
                NEXUS_DGN_STRUCTURE1F_HEADER_BYTES + 1] = 64U;
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
