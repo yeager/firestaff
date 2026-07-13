@@ -1853,7 +1853,11 @@ static void test_structure1g_animated_floor_material_handoff(void) {
     Nexus_V1_Level level;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_DgnRenderCommand source_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
+    Nexus_V1_DgnStructure2FloorCommandSource sources[2];
+    Nexus_V1_DgnStructure2FloorCommandSourceReceipt source_receipt;
+    int source_command_count;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19,
                           structure1b_rel, 512) == 0,
@@ -2008,10 +2012,36 @@ static void test_structure1g_animated_floor_material_handoff(void) {
           commands[0].animated_texture_host_route ==
               NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR,
           "animated floor host route retains its typed Structure2 image identifier");
+    source_command_count = receipt.command_count;
+    memcpy(source_commands, commands, sizeof(source_commands));
+    memset(sources, 0, sizeof(sources));
+    memset(&source_receipt, 0, sizeof(source_receipt));
+    CHECK(nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, commands, receipt.command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.animated_floor_command_count == 1 &&
+          source_receipt.source_command_count == 1 && source_receipt.complete &&
+          !source_receipt.fallback_visuals_permitted &&
+          sources[0].command_index == 0 && sources[0].image_id == 10U &&
+          sources[0].encoding == 8U && sources[0].palette_id == 0U &&
+          sources[0].width == 16U && sources[0].height == 16U &&
+          sources[0].structure2_source_envelope_valid &&
+          !sources[0].payload_decoder_proven && !sources[0].draw_authorized,
+          "Structure1G/Structure2 binds raw original descriptor provenance to its exact floor command only");
     CHECK(receipt.unresolved_animated_material_count == 1,
           "animated floor declaration remains unresolved without Structure2 handoff");
     CHECK(receipt.blocks_real_dgn_mesh_render && !receipt.fallback_visuals_permitted,
           "animated floor declaration blocks until a proven Structure2 material handoff exists");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 223U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) == 0 &&
+          nexus_v1_dgn_bind_structure2_animated_floor_sources(
+              &level, source_commands, source_command_count, sources, 2,
+              &source_receipt) == 0 &&
+          source_receipt.source_command_count == 0 &&
+          source_receipt.blocked_source_envelope_count == 1 &&
+          !source_receipt.complete && !source_receipt.fallback_visuals_permitted,
+          "unaligned Structure2 source envelopes cannot reach a floor command");
+    wb32(dgn + NEXUS_DGN_BLOCK_SIZE * 20 + 12, 0U);
     /* A bounded sequence that names an absent local descriptor is not a
      * partially valid animation. It must block at handoff, even before a
      * particular viewport happens to look at that floor. */
