@@ -403,21 +403,20 @@ int dm1_v1_spell_projectile_launch_plan_f0327_pc34(
         !receipt->createsProjectile) {
         return 1;
     }
-    if (context->championIndex < 0 ||
+    if (!dm1_spell_f0412ValidateProjectileReceiptPc34(receipt) ||
+        context->championIndex < 0 || context->championCell < 0 ||
+        context->championCell > 3 ||
         !dm1_v1_projectile_subtype_from_thing_pc34(
             receipt->projectileThing, &subtype)) {
         return 0;
     }
 
     kineticEnergy = receipt->projectileKineticEnergy;
-    stepEnergy = receipt->projectileStepEnergy > 0
-                     ? receipt->projectileStepEnergy
-                     : 1;
+    stepEnergy = receipt->projectileStepEnergy;
     if (kineticEnergy < (stepEnergy << 2)) {
         kineticEnergy += 3;
         --stepEnergy;
     }
-    if (stepEnergy < 1) stepEnergy = 1;
 
     /* ReDMCSB CHAMPION.C F0327:2091-2102 consumes F0412's projectile thing
      * and kinetic receipt, subtracts required mana, adjusts weak projectiles
