@@ -1808,13 +1808,16 @@
 - 2026-07-13 DM1 PC34 F0407 invalid-owner receipt cleanup: a typed pending
   C11 whose champion owner is no longer within `Party.ChampionCount` is now
   compacted immediately when Firestaff rejects that invalid action/owner.
-  Valid C11 records survive an invalid action index, and the ownerless C04
-  delayed wooden-thud receipt is intentionally retained. Source: ReDMCSB
-  `MENU.C F0407:1613-1622` and `CHAMPION.C F0330`; F0407 only mutates the
-  selected party champion and C04 has no champion field to clean. Verification:
-  the focused C04/C11 regression proves malformed action input creates no
-  receipts, invalid-owner C11 is removed before its due tick, and a later
-  invalid imported C11 remains non-observable at dispatch.
+  A historic valid-owner C11 survives the later invalid-owner input, while
+  only that stale owner's C11 is removed; the ownerless C04 delayed
+  wooden-thud receipt is intentionally retained. Source: ReDMCSB `COMMAND.C
+  F0380:2308-2312`, `MENU.C F0407:1613-1622`, and `CHAMPION.C F0330`;
+  COMMAND only forwards valid action-area ownership, F0407 only mutates the
+  selected party champion, and C04 has no champion field to clean.
+  Verification: the focused C04/C11 regression proves malformed action input
+  creates no receipts, valid historic C11 and C04 survive the invalid-owner
+  follow-up, stale invalid-owner C11 is removed before its due tick, and a
+  later invalid imported C11 remains non-observable at dispatch.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
