@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C25 explosion union handoff: ReDMCSB
+  `PROJEXPL.C F0213` stores C25 as `B.Location + C.Slot`, then
+  `TIMELINE.C F0261` dispatches it to F0220. F0435 requires that exact C15
+  Thing in the original square chain, creates the live explosion from decoded
+  original type/attack/centering, and schedules the authenticated source time.
+  F0802 maps the live F0220 event back to exactly one matching C15 Thing;
+  absent or ambiguous records reject rather than becoming generic bytes.
+  Verification: Ninja and CTest `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-13 DM2 source save-dialogue event core: skproject
   `c_dialog.cpp::DM2_dialog_2066_33e7` event values 0/1/2/3 now drive a
   source-bound state machine only after `OPEN_DIALOG_PANEL` authenticated the
