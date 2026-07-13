@@ -1763,6 +1763,60 @@ int dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
     return 1;
 }
 
+int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+    const DM1_MeleeF0231AftermathApplyPlanPc34* aftermathApplyPlan,
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34* out) {
+    const DM1_MeleeF0190KilledAllStatePlanPc34* killedAll;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->groupIndex = -1;
+    if (!aftermathApplyPlan || !aftermathApplyPlan->valid) return 0;
+
+    out->valid = 1;
+    if (aftermathApplyPlan->killNotifyOutcome !=
+            COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
+        !aftermathApplyPlan->shouldCreateDeathSmoke ||
+        !aftermathApplyPlan->shouldApplyMutationDispatch ||
+        !aftermathApplyPlan->shouldEmitKillNotify) {
+        return 1;
+    }
+
+    killedAll = &aftermathApplyPlan->mutationDispatchPlan.killedAllStatePlan;
+    if (!aftermathApplyPlan->mutationDispatchPlan.valid ||
+        !aftermathApplyPlan->mutationDispatchPlan
+             .shouldApplyKilledAllSideEffects ||
+        !killedAll->valid || !killedAll->shouldUnlinkGroupFromSquare ||
+        !killedAll->shouldClearGroupNext ||
+        !killedAll->shouldDeleteGroupEvents ||
+        aftermathApplyPlan->killNotifyGroupIndex < 0 ||
+        aftermathApplyPlan->killNotifyGroupIndex != killedAll->groupIndex ||
+        aftermathApplyPlan->smokeCreateInput.explosionType !=
+            C040_EXPLOSION_SMOKE ||
+        (aftermathApplyPlan->smokeCreateInput.attack != 110 &&
+         aftermathApplyPlan->smokeCreateInput.attack != 190 &&
+         aftermathApplyPlan->smokeCreateInput.attack != 255) ||
+        aftermathApplyPlan->smokeCreateInput.mapIndex != killedAll->mapIndex ||
+        aftermathApplyPlan->smokeCreateInput.mapX != killedAll->mapX ||
+        aftermathApplyPlan->smokeCreateInput.mapY != killedAll->mapY) {
+        return 1;
+    }
+
+    out->shouldPresentSourceSmoke = 1;
+    out->requiresKilledAllMutationFirst = 1;
+    out->groupIndex = killedAll->groupIndex;
+    out->mapIndex = killedAll->mapIndex;
+    out->mapX = killedAll->mapX;
+    out->mapY = killedAll->mapY;
+    out->sourceSmokeCreateInput = aftermathApplyPlan->smokeCreateInput;
+
+    /* ReDMCSB: GROUP.C F0190 lines 834-839 runs F0188/F0189 for a final
+     * creature, then lines 907-916 derive the 110/190/255 attack and call
+     * F0213 with the original C040 smoke thing. The receipt carries only
+     * that source materialization; it never invents a visual or palette. */
+    return 1;
+}
+
 int dm1_v1_melee_mutation_dispatch_apply_plan_f0190_pc34(
     const DM1_MeleeF0190MutationDispatchPlanPc34* dispatchPlan,
     DM1_MeleeF0190MutationDispatchApplyPlanPc34* out) {

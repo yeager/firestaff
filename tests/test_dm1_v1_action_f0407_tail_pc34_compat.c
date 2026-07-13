@@ -2023,6 +2023,7 @@ static void test_melee_f0231_aftermath_plan(void) {
     DM1_MeleeF0231AftermathPlanPc34 out;
     DM1_MeleeF0231RawGroupWritebackPlanPc34 rawWritebackOut;
     DM1_MeleeF0231AftermathApplyPlanPc34 applyOut;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
 
     memset(&in, 0, sizeof(in));
     in.groupIndex = 4;
@@ -2114,6 +2115,29 @@ static void test_melee_f0231_aftermath_plan(void) {
              "F0231 killed-all apply notify");
     CHECK_EQ(applyOut.killNotifyGroupIndex, 4,
              "F0231 killed-all apply notify group");
+    CHECK_EQ(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                 &applyOut, &killedAllAfterplay), 1,
+             "F0190 killed-all afterplay receipt builds");
+    CHECK_EQ(killedAllAfterplay.valid, 1,
+             "F0190 killed-all afterplay receipt valid");
+    CHECK_EQ(killedAllAfterplay.shouldPresentSourceSmoke, 1,
+             "F0190 killed-all afterplay keeps source smoke");
+    CHECK_EQ(killedAllAfterplay.requiresKilledAllMutationFirst, 1,
+             "F0190 killed-all afterplay orders deletion before smoke");
+    CHECK_EQ(killedAllAfterplay.groupIndex, 4,
+             "F0190 killed-all afterplay group");
+    CHECK_EQ(killedAllAfterplay.sourceSmokeCreateInput.explosionType,
+             C040_EXPLOSION_SMOKE,
+             "F0190 killed-all afterplay uses source C040 smoke");
+    CHECK_EQ(killedAllAfterplay.sourceSmokeCreateInput.attack, 255,
+             "F0190 killed-all afterplay keeps source attack");
+    applyOut.smokeCreateInput.attack = 111;
+    CHECK_EQ(dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                 &applyOut, &killedAllAfterplay), 1,
+             "F0190 malformed afterplay receipt remains inspectable");
+    CHECK_EQ(killedAllAfterplay.shouldPresentSourceSmoke, 0,
+             "F0190 malformed afterplay rejects synthetic smoke");
+    applyOut.smokeCreateInput.attack = 255;
     CHECK_EQ(out.shouldScheduleReaction, 0,
              "F0231 killed-all suppresses reaction");
 

@@ -205,6 +205,13 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 F0190 killed-all afterplay presentation: added a
+  fail-closed PC34 receipt that admits only the ReDMCSB `GROUP.C F0190`
+  final-group route: F0188/F0189 mutation first, then the source C040 smoke
+  input with attack 110, 190, or 255. Both M10 projectile and melee aftermath
+  routes consume the receipt before scheduling the existing explosion path;
+  malformed inputs do not gain a replacement host effect. Verification:
+  focused F0407/F0231 aftermath and F0190 killed-all cleanup CTests passed.
 - 2026-07-13 DM1 HoC subsequent-frame presentation contract: centralized the
   first and every later materialized HoC frame behind one M11 present-and-M12
   publish edge. Capture is now emitted only after `m11_present_game_frame()`
