@@ -807,6 +807,8 @@ typedef struct {
      * csbBootProfile owns the live CSB_V1_RuntimeProfile and any loaded
      * DUNGEON.DAT handle. */
     void *csbBootProfile;     /* CSB_V1_BootProfile* */
+    /* Opaque CSB-owned C001-C005/C017/C040 source surface session. */
+    void *csbStartupRuntimeAssetSession;
     struct {
         int level_loaded;
         int current_level;
