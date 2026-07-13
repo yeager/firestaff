@@ -15096,6 +15096,12 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     mirrorName[0] = '\0';
     mirrorTitle[0] = '\0';
     if (!state || !state->active) return 0;
+    /* ReDMCSB REVIVE.C F0282:806-807 enters F0281 synchronously for C161.
+     * Its rename modal owns the appended candidate until C160/C161/C162
+     * completes; another C127 cannot replace that candidate underneath it. */
+    if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
+        return 0;
+    }
     if (mirrorOrdinal < 0) return 0;
     if (state->world.party.championCount >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "MIRROR", "PARTY FULL");
