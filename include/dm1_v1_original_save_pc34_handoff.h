@@ -318,6 +318,10 @@ typedef struct {
     int roundtrip_attempted;
     int roundtrip_result;
     int core_state_matches;
+    /* Set only after the complete F0435 -> F0433 -> F0435 transaction
+     * succeeds. Failed rows can retain raw diagnostic evidence below, but
+     * must never present it as a committed C13/C24/C25 corpus receipt. */
+    int roundtrip_receipts_committed;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;

@@ -4725,6 +4725,11 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
                 }
                 continue;
             }
+            /* ReDMCSB LOADSAVE.C F0433 writes a whole save only after F0435
+             * has accepted its authenticated parts. Keep failed corpus rows
+             * diagnostic-only: C13/C24/C25 details become committed evidence
+             * only with the complete import/export/reload transaction. */
+            receipt->roundtrip_receipts_committed = 1;
             ++report.roundtrip_succeeded_count;
             ++report.core_state_match_count;
             report.roundtrip_hash = dm1_original_save_corpus_hash_step(

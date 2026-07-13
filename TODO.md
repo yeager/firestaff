@@ -1223,6 +1223,13 @@ and real community-save corpus round-trip evidence.
     Firestaff manifests and nonoriginal envelopes remain explicit rejected
     rows and never enter import/export. Remaining work is broader original
     dungeon-tail import breadth and independently collected community saves.
+  - 2026-07-13 update: corpus receipts now have an explicit transaction
+    commit boundary. A failed F0435 -> F0433 -> F0435 candidate may retain
+    raw C13/C24/C25 diagnostics for investigation, but cannot publish those
+    fields as committed corpus evidence; only a successful core match with a
+    transient exported hash commits them. This follows ReDMCSB `LOADSAVE.C`
+    F0433/F0435's whole-save staging contract. Remaining work is authentic
+    community-save coverage, not a partial-receipt fallback.
   - 2026-07-13 update: each external corpus candidate now also records the
     source/exported PC34 header identity (`FormatID`, `GameID`, `Platform`,
     `DungeonID`) and all five F0433/F0435 length-prefixed part byte counts.
