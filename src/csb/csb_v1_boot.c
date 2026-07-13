@@ -6595,6 +6595,54 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
     return result;
 }
 
+int csb_v1_boot_runtime_load_original_save_receipt_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *path,
+    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt)
+{
+    CSB_V1_SaveHeader header;
+    int load_result;
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->source_evidence =
+        "ReDMCSB LOADSAVE.C F0435; DUNGEON.C F0173/F0174";
+    if (!profile || !path || path[0] == '\0') {
+        return 0;
+    }
+    out_receipt->boot_profile_ready =
+        profile->state == CSB_V1_BOOT_STATE_RUNTIME_READY &&
+        profile->assets_verified && profile->graphics_verified &&
+        profile->dungeon_verified;
+    snprintf(out_receipt->save_path, sizeof(out_receipt->save_path), "%s", path);
+    memset(&header, 0, sizeof(header));
+    out_receipt->native_csb_header_valid =
+        csb_v1_load_game(path, NULL, 0, &header) == CSB_V1_LOAD_OK &&
+        header.Magic == CSB_V1_SAVE_MAGIC_CSB;
+    if (!out_receipt->boot_profile_ready ||
+        !out_receipt->native_csb_header_valid) {
+        return 0;
+    }
+
+    /* Never route an original CSB save through CSBWin or roster fallback. */
+    load_result = csb_v1_runtime_load_game_from_path(&profile->runtime, path);
+    out_receipt->runtime_load_succeeded = load_result == CSB_V1_LOAD_OK;
+    out_receipt->runtime_dungeon_ready = profile->runtime.dungeon_handle != NULL;
+    /* A legal original save can preserve an empty party at an entrance or
+     * mirror boundary; LOADSAVE.C still owns its live dungeon handoff. */
+    out_receipt->runtime_party_ready =
+        profile->runtime.champion_count >= 0 &&
+        profile->runtime.champion_count <= CSB_V1_MAX_CHAMPIONS;
+    out_receipt->runtime_current_level_after = profile->runtime.current_level;
+    out_receipt->runtime_champion_count_after = profile->runtime.champion_count;
+    out_receipt->runtime_game_time_after = profile->runtime.game_time;
+    out_receipt->valid = out_receipt->runtime_load_succeeded &&
+        out_receipt->runtime_dungeon_ready && out_receipt->runtime_party_ready;
+    return out_receipt->valid;
+}
+
 static void csb_v1_boot_copy_receipt_path_pc34(char *dst,
                                                size_t dst_size,
                                                const char *src)
