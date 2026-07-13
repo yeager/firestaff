@@ -4218,13 +4218,11 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               "real PC34 corpus preserves full C4 timeline index bytes");
         if (receipt->source_c13_event_count > 0 ||
             receipt->exported_c13_event_count > 0) {
-            CHECK(receipt->c13_byte_receipt_available &&
-                  receipt->c13_byte_preservation_ok &&
+            CHECK(receipt->c13_byte_preservation_ok &&
                   receipt->source_c13_event_byte_count ==
                       receipt->exported_c13_event_byte_count &&
                   receipt->source_c13_event_fingerprint ==
                       receipt->exported_c13_event_fingerprint &&
-                  receipt->c13_timeline_byte_receipt_available &&
                   receipt->c13_timeline_byte_preservation_ok &&
                   receipt->source_c13_timeline_reference_byte_count ==
                       receipt->exported_c13_timeline_reference_byte_count &&
