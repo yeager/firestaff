@@ -4,6 +4,9 @@
   corpus row now supplies runtime path, type, size, and hash. Original
   envelope/raw rows return an explicit fail-closed rejection.
 
+- 2026-07-13 M10 SFT-next accessor: M11 traversal now consumes the bounded
+  M10 `F0512` owner for ReDMCSB DUNGEON.C F0156/F0161 links.
+
 - 2026-07-13 Nexus raw Structure1F item attribute pair receipt: complete;
   direct item attribute pairs remain no-draw provenance.
 

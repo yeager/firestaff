@@ -5739,19 +5739,7 @@ static int m11_set_square_byte(struct GameWorld_Compat* world,
 
 static unsigned short m11_raw_next_thing(const struct DungeonThings_Compat* things,
                                          unsigned short thing) {
-    int type;
-    int index;
-    const unsigned char* raw;
-    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
-        return THING_ENDOFLIST;
-    }
-    type = THING_GET_TYPE(thing);
-    index = THING_GET_INDEX(thing);
-    if (type < 0 || type >= 16 || !things->rawThingData[type] || index < 0 || index >= things->thingCounts[type]) {
-        return THING_ENDOFLIST;
-    }
-    raw = things->rawThingData[type] + (index * s_thingDataByteCount[type]);
-    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+    return F0512_DUNGEON_GetThingNext_Compat(things, thing);
 }
 
 static unsigned short m11_get_first_square_thing(const struct GameWorld_Compat* world,

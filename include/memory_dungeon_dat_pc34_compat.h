@@ -505,6 +505,11 @@ unsigned short F0511_DUNGEON_GetSquareFirstThing_Compat(
     int mapX,
     int mapY);
 
+/* ReDMCSB DUNGEON.C F0156/F0161: bounded SFT link decode using the
+ * canonical G0235 thing-record byte counts owned by this M10 module. */
+unsigned short F0512_DUNGEON_GetThingNext_Compat(
+    const struct DungeonThings_Compat* things, unsigned short thing);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*
