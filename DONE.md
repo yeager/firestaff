@@ -201,6 +201,14 @@
   existing F0430/F0419 route to carry C11 and proves no world, queue, or
   receipt publishes.
 
+- 2026-07-13 DM1 HoC C040 resume gate: PC34 resume normalization now permits
+  a candidate panel only when its candidate is the final appended party slot.
+  This matches ReDMCSB `REVIVE.C` F0280 append and F0282:744
+  `PartyChampionCount - 1` consumption. A stale sidecar candidate over an
+  older live champion closes both panel surfaces and clears its indices.
+  Verification: Ninja-built `test_dm1_v1_original_save_pc34_handoff` and its
+  focused CTest entry passed.
+
 - 2026-07-13 DM1 PC34 F0435 dungeon-tail span validation: save handoff now
   rejects a checksum-valid tail before receipt publication when any map's
   raw data span lies outside its saved raw-map block, matching the source

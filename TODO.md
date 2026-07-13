@@ -494,6 +494,11 @@ and real community-save corpus round-trip evidence.
     family without an M10 materializer. It never resumes by silently dropping
     an original event; remaining work is source-complete event-family breadth
     plus real community-save corpus round-trip evidence.
+  - 2026-07-13 update: saved C040 HoC panel state now reopens only for the
+    last appended party slot, the same candidate position consumed by
+    `REVIVE.C` F0282. A stale sidecar cannot bind a mirror panel to an older
+    champion after F0435 resume; broader original-save and HoC runtime proof
+    remains open.
 
 ## DM1 PC 3.4 Real-Data Fallback Inventory (2026-07-11)
 

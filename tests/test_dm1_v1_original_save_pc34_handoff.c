@@ -1178,7 +1178,20 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     CHECK(hoc.inventory_panel_active == 1,
           "valid HoC candidate reopens inventory panel");
 
+    hoc.candidate_party_index = 0;
+    hoc.inventory_panel_active = 1;
+    dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
+        &start_world, &hoc);
+    CHECK(hoc.candidate_panel_active == 0,
+          "stale HoC candidate cannot reopen over an older party slot");
+    CHECK(hoc.candidate_mirror_ordinal == -1 && hoc.candidate_party_index == -1,
+          "stale HoC candidate clears both source indices");
+    CHECK(hoc.inventory_panel_active == 0,
+          "stale HoC candidate closes dependent inventory render panel");
+
+    hoc.candidate_mirror_ordinal = 7;
     hoc.candidate_party_index = CHAMPION_MAX_PARTY;
+    hoc.candidate_panel_active = 1;
     hoc.inventory_panel_active = 1;
     dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         &start_world, &hoc);
