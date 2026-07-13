@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 D0C ordinary-C15 receipt audit: a focused negative
+  regression now documents current HEAD rather than claiming a missing
+  presenter. It proves that M10 has no D0C F0115 receipt (the row mapper stops
+  at D1..D3) and that the generic pattern selector maps C101 to fire art.
+  ReDMCSB `DUNVIEW.C` F0115:5932-6074 requires all three to stay outside D0C's
+  ordinary M636 lane. The resulting implementation gap remains open in TODO;
+  no M11 production or F0190 cue path changed. Verification: direct focused
+  C11 audit build.
+
 - 2026-07-13 DM1 F0190 C040 M10-to-M11 integration audit: a focused test now
   drives the existing killed-all afterplay receipt through `F0821` into the
   live PC34 explosion list, then through the existing F0115 materialization
@@ -5250,6 +5259,7 @@
   `blocked-prs3`. Verification: Ninja
   `firestaff_nexus_v1_prs3_loader_media_probe` and the direct real-media
   probe receipt.
+=======
 
 - ✅ 2026-07-11 CSB-006 CSBWin extended-save runtime handoff: validated plain
   `Extended Features` prefixes now stage `ReadDSAs`, `ReadGameInfo`,
