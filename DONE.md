@@ -39,6 +39,13 @@
   Source: ReDMCSB `REVIVE.C` F0280/F0281/F0282:744-805 and `DUNVIEW.C`:
    3913-3928. Verification: focused CTest against the installed PC34 corpus.
 
+- 2026-07-13 DM1 HoC C127/C160 party order: repeated mirror selection now
+  preserves the existing leader while candidates remain append-only in party
+  slots. The focused regression proves C127 candidates occupy `G0305` slots
+  1 then 2 and C160 finalizes each without changing leader slot 0. Source:
+  ReDMCSB `REVIVE.C` F0280:272-283 and F0282:744-845. Verification:
+   focused CTest.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109

@@ -15187,9 +15187,10 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         champ->wounds = 0;
         champ->poisonDose = 0;
     }
-    /* ReDMCSB REVIVE.C F0282:837-845 assigns the first leader only after
-     * either C160/C161 finalizes a one-champion party.  A later mirror
-     * confirmation leaves the current leader unchanged. */
+    /* ReDMCSB REVIVE.C F0280:272-283 assigns the leader only when the
+     * first C127 candidate enters the party. F0282:837-845 repeats that
+     * first-party assignment after C160/C161 finalization; later C160
+     * confirmations retain the existing leader and party order. */
     if (state->world.party.championCount == 1) {
         state->world.party.activeChampionIndex = 0;
     }
