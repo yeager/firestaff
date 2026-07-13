@@ -58,6 +58,7 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int liveProjectileCount;
     int liveProjectileSlot;
     int liveProjectileSubtype;
+    unsigned short liveProjectileAssociatedThing;
     int liveProjectileCell;
     int liveProjectileDirection;
     int liveExplosionCount;

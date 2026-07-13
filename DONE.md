@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0328/F0811 thrown-object projectile material: the live
+  F0115 viewport receipt now preserves `Projectile.Slot` and M11 resolves it
+  through ReDMCSB `DUNGEON.C F0142`. Non-projectile-aspect thrown objects use
+  their authenticated M612/G0209 `GRAPHICS.DAT` bitmap in the C2900/C10 effect
+  lane; weapons with an M066 aspect retain their M613 projectile bitmap route.
+  The object route cannot publish a floor-item receipt. Verification:
+  Ninja-built `firestaff_m11`,
+  `test_dm1_v1_projectile_explosion_render_pc34_compat`, and
+  `test_dm1_v1_viewport_runtime_materialization_pc34_compat` passed.
+
 - 2026-07-13 CSBWin DSA monster-filter callback: added the production adapter
   from `Monster.cpp`'s `ProcessDSAFilter` callback shape to Firestaff's
   profile-owned, authenticated pure-stack runner. The focused attack-filter

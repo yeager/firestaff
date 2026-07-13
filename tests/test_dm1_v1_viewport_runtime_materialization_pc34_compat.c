@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +36,8 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     projectiles->entries[0].slotIndex = 7;
     projectiles->entries[0].reserved3 = 1;
     projectiles->entries[0].projectileSubtype = 10;
+    projectiles->entries[0].reserved1 =
+        (THING_TYPE_POTION << 10) | 3;
     projectiles->entries[0].mapIndex = 2;
     projectiles->entries[0].mapX = 11;
     projectiles->entries[0].mapY = 12;
@@ -90,10 +93,12 @@ int main(void)
               "new throw materializes through the live D1 decision");
         CHECK(d1c.liveProjectileCount == 1 && d1c.liveProjectileSlot == 7 &&
               d1c.liveProjectileSubtype == 10 && d1c.liveProjectileCell == 3 &&
+              d1c.liveProjectileAssociatedThing ==
+                  ((THING_TYPE_POTION << 10) | 3) &&
               d1c.liveExplosionCount == 1 && d1c.liveExplosionSlot == 4 &&
               d1c.liveExplosionFrame == 2 && d1c.liveExplosionAttack == 96 &&
               d1c.projectileZone >= 0,
-              "D1 decision owns active projectile and explosion records");
+              "D1 receipt preserves Projectile.Slot for F0142 material lookup");
 
         projectiles.entries[0].mapX = 12;
         projectiles.entries[0].cell = 1;

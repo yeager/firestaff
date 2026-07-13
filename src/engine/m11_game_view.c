@@ -17024,6 +17024,8 @@ typedef struct M11_ViewportCell {
     /* First projectile graphic index (416-438) from GRAPHICS.DAT, or -1 */
     int firstProjectileGfxIndex;
     int firstProjectileSubtype;
+    int firstProjectileUsesObjectMaterial;
+    int firstProjectileObjectAspectIndex;
     /* First projectile direction relative to party facing.
      * 0 = moving away from party, 1 = moving right, 2 = toward party,
      * 3 = moving left.  -1 if no projectile or direction unknown.
@@ -17099,6 +17101,65 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     const M11_ViewportCell* frontCell,
     DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
 
+static int m11_projectile_associated_thing_material(
+    const M11_GameViewState* state,
+    unsigned short thing,
+    int* outThingType,
+    int* outThingSubtype,
+    int* outWeaponProjectileAspectOrdinal)
+{
+    const struct DungeonThings_Compat* things;
+    int thingType;
+    int thingIndex;
+
+    if (!state || !outThingType || !outThingSubtype ||
+        !outWeaponProjectileAspectOrdinal || thing == THING_NONE ||
+        thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    things = state->world.things;
+    if (!things) {
+        return 0;
+    }
+    thingType = THING_GET_TYPE(thing);
+    thingIndex = THING_GET_INDEX(thing);
+    *outThingType = thingType;
+    *outThingSubtype = 0;
+    *outWeaponProjectileAspectOrdinal = 0;
+
+    switch (thingType) {
+        case THING_TYPE_WEAPON: {
+            DM1_WeaponInfo info;
+            if (!things->weapons || thingIndex < 0 ||
+                thingIndex >= things->weaponCount) return 0;
+            *outThingSubtype = things->weapons[thingIndex].type;
+            if (dm1_weapon_info_pc34(*outThingSubtype, &info) <= 0) return 0;
+            *outWeaponProjectileAspectOrdinal = (info.attributes >> 8) & 0x1f;
+            return 1;
+        }
+        case THING_TYPE_ARMOUR:
+            if (!things->armours || thingIndex < 0 || thingIndex >= things->armourCount) return 0;
+            *outThingSubtype = things->armours[thingIndex].type;
+            return 1;
+        case THING_TYPE_SCROLL:
+            return things->scrolls && thingIndex >= 0 && thingIndex < things->scrollCount;
+        case THING_TYPE_POTION:
+            if (!things->potions || thingIndex < 0 || thingIndex >= things->potionCount) return 0;
+            *outThingSubtype = things->potions[thingIndex].type;
+            return 1;
+        case THING_TYPE_CONTAINER:
+            if (!things->containers || thingIndex < 0 || thingIndex >= things->containerCount) return 0;
+            *outThingSubtype = things->containers[thingIndex].type;
+            return 1;
+        case THING_TYPE_JUNK:
+            if (!things->junks || thingIndex < 0 || thingIndex >= things->junkCount) return 0;
+            *outThingSubtype = things->junks[thingIndex].type;
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 static int m11_build_dm1_viewport_materialization_decision(
     const M11_GameViewState* state,
     M11_ViewportCell* cell,
@@ -17138,8 +17199,10 @@ static int m11_build_dm1_viewport_materialization_decision(
      * current effect records after F0219/F0220 mutation. The DM1 decision
      * owns this projection; M11 only transfers it to the legacy blitters. */
     if (outDecision->liveProjectileCount > 0) {
-        int aspect = dm1_v1_projectile_subtype_to_aspect(
-            outDecision->liveProjectileSubtype);
+        DM1_ProjectileMaterialResolutionPc34 material;
+        int thingType = -1;
+        int thingSubtype = -1;
+        int weaponProjectileAspectOrdinal = 0;
         cell->summary.projectiles = outDecision->liveProjectileCount;
         cell->summary.total += outDecision->liveProjectileCount;
         cell->firstProjectileSubtype = outDecision->liveProjectileSubtype;
@@ -17147,11 +17210,23 @@ static int m11_build_dm1_viewport_materialization_decision(
             (outDecision->liveProjectileDirection - state->world.party.direction) & 3;
         cell->firstProjectileCell =
             (outDecision->liveProjectileCell - state->world.party.direction) & 3;
-        cell->firstProjectileGfxIndex = dm1_v1_projectile_graphic_index(
-            aspect, cell->firstProjectileRelDir);
-        cell->firstProjectileFlipFlags = dm1_v1_projectile_flip_flags(
-            aspect, cell->firstProjectileRelDir, cell->firstProjectileCell,
-            cell->mapX, cell->mapY);
+        (void)m11_projectile_associated_thing_material(
+            state, outDecision->liveProjectileAssociatedThing,
+            &thingType, &thingSubtype, &weaponProjectileAspectOrdinal);
+        if (dm1_v1_projectile_material_resolve_pc34(
+                outDecision->liveProjectileSubtype, thingType, thingSubtype,
+                weaponProjectileAspectOrdinal, &material)) {
+            cell->firstProjectileGfxIndex = material.graphic_index;
+            cell->firstProjectileUsesObjectMaterial = material.uses_object_aspect;
+            cell->firstProjectileObjectAspectIndex = material.aspect_index;
+            if (!material.uses_object_aspect) {
+                cell->firstProjectileGfxIndex = dm1_v1_projectile_graphic_index(
+                    material.aspect_index, cell->firstProjectileRelDir);
+                cell->firstProjectileFlipFlags = dm1_v1_projectile_flip_flags(
+                    material.aspect_index, cell->firstProjectileRelDir,
+                    cell->firstProjectileCell, cell->mapX, cell->mapY);
+            }
+        }
     }
     if (outDecision->liveExplosionCount > 0) {
         cell->summary.explosions = outDecision->liveExplosionCount;
@@ -17507,6 +17582,78 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_draw_thrown_object_projectile_sprite(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int gfxIndex,
+    int objectAspectIndex,
+    int depthIndex,
+    int relativeCell,
+    int sourceZoneRow)
+{
+    const M11_AssetSlot* slot;
+    DM1_ThrownObjectProjectileBlitPlanPc34 plan;
+
+    if (!state || !state->assetsAvailable || gfxIndex < DM1_GRAPHIC_FIRST_OBJECT) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)gfxIndex);
+    if (!slot || slot->width == 0 || slot->height == 0 ||
+        !dm1_v1_thrown_object_projectile_blit_plan_pc34(
+            &plan, gfxIndex, objectAspectIndex, depthIndex, relativeCell,
+            sourceZoneRow, M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W,
+            M11_VIEWPORT_H, (int)slot->width, (int)slot->height)) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115:5896-5900 jumps from F0142's positive
+     * OBJECT_ASPECT result to T0115015 with the C2900 projectile position.
+     * This is an effect-lane draw only, never an F0115 floor-item receipt. */
+    if (plan.use_mirror) {
+        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, framebufferWidth,
+                                         framebufferHeight, plan.draw_x,
+                                         plan.draw_y, plan.draw_w, plan.draw_h,
+                                         plan.transparent_color);
+    } else {
+        M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
+                                   framebufferHeight, plan.draw_x, plan.draw_y,
+                                   plan.draw_w, plan.draw_h,
+                                   plan.transparent_color);
+    }
+    return 1;
+}
+
+static int m11_draw_viewport_projectile_sprite(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    int w,
+    int h,
+    const M11_ViewportCell* cell,
+    int depthIndex,
+    int sourceZoneRow)
+{
+    if (!cell) {
+        return 0;
+    }
+    if (cell->firstProjectileUsesObjectMaterial) {
+        return m11_draw_thrown_object_projectile_sprite(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            cell->firstProjectileGfxIndex,
+            cell->firstProjectileObjectAspectIndex, depthIndex,
+            cell->firstProjectileCell, sourceZoneRow);
+    }
+    return m11_draw_projectile_sprite(
+        state, framebuffer, framebufferWidth, framebufferHeight, x, y, w, h,
+        cell->firstProjectileGfxIndex, depthIndex, cell->firstProjectileRelDir,
+        cell->firstProjectileCell, cell->firstProjectileFlipFlags, sourceZoneRow);
+}
+
 /* Draw a DM1 explosion bitmap from GRAPHICS.DAT.
  *
  * Replaces the previous cue-style palette-rect bloom with the real
@@ -17840,15 +17987,9 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     /* Projectile sprite from GRAPHICS.DAT, or fallback crosshair */
     if (m11_viewport_cell_has_renderable_projectile(cell)) {
         if (!g_drawState ||
-            !m11_draw_projectile_sprite(g_drawState, framebuffer,
-                                        framebufferWidth, framebufferHeight,
-                                        x, y, w, h,
-                                        cell->firstProjectileGfxIndex,
-                                        depthIndex,
-                                        cell->firstProjectileRelDir,
-                                        cell->firstProjectileCell,
-                                        cell->firstProjectileFlipFlags,
-                                        sourceZoneRow)) {
+            !m11_draw_viewport_projectile_sprite(
+                g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+                x, y, w, h, cell, depthIndex, sourceZoneRow)) {
             /* Fallback: cyan crosshair */
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                            cx - 3, cx + 3, cy, M11_COLOR_LIGHT_CYAN);
@@ -24031,16 +24172,10 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             int projY = paneY + (paneH - projArea) / 2;
             if (projArea < 6) projArea = 6;
             if (!g_drawState ||
-                !m11_draw_projectile_sprite(g_drawState, framebuffer,
-                                            framebufferWidth, framebufferHeight,
-                                            paneX + 1, projY,
-                                            paneW - 2, projArea,
-                                            cell->firstProjectileGfxIndex,
-                                            depthIndex + 1,
-                                            cell->firstProjectileRelDir,
-                                            cell->firstProjectileCell,
-                                            cell->firstProjectileFlipFlags,
-                                            sourceZoneRow)) {
+                !m11_draw_viewport_projectile_sprite(
+                    g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+                    paneX + 1, projY, paneW - 2, projArea, cell,
+                    depthIndex + 1, sourceZoneRow)) {
                 int pcx = paneX + paneW / 2;
                 int pcy = paneY + paneH / 2;
                 m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -24206,16 +24341,10 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 if (projArea < 6) projArea = 6;
                 projY = paneY + (paneH - projArea) / 2;
                 if (!g_drawState ||
-                    !m11_draw_projectile_sprite(g_drawState, framebuffer,
-                                                framebufferWidth, framebufferHeight,
-                                                paneX + 1, projY,
-                                                paneW - 2, projArea,
-                                                cell->firstProjectileGfxIndex,
-                                                depth + 1,
-                                                cell->firstProjectileRelDir,
-                                                cell->firstProjectileCell,
-                                                cell->firstProjectileFlipFlags,
-                                                sourceZoneRow)) {
+                    !m11_draw_viewport_projectile_sprite(
+                        g_drawState, framebuffer, framebufferWidth,
+                        framebufferHeight, paneX + 1, projY, paneW - 2,
+                        projArea, cell, depth + 1, sourceZoneRow)) {
                     int pcx = paneX + paneW / 2;
                     int pcy = paneY + paneH / 2;
                     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
@@ -24261,17 +24390,10 @@ static void m11_draw_dm1_d4_far_projectile_pass(const M11_GameViewState* state,
             continue;
         }
         if (!g_drawState ||
-            !m11_draw_projectile_sprite(g_drawState, framebuffer,
-                                        framebufferWidth, framebufferHeight,
-                                        M11_VIEWPORT_X + x,
-                                        M11_VIEWPORT_Y + y,
-                                        w, h,
-                                        cell.firstProjectileGfxIndex,
-                                        3,
-                                        cell.firstProjectileRelDir,
-                                        cell.firstProjectileCell,
-                                        cell.firstProjectileFlipFlags,
-                                        -1)) {
+            !m11_draw_viewport_projectile_sprite(
+                g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+                M11_VIEWPORT_X + x, M11_VIEWPORT_Y + y, w, h, &cell, 3,
+                dm1_viewport_3d_f0115_c2500_c2900_row(4, kRelSides[i]))) {
             int cx = M11_VIEWPORT_X + x + w / 2;
             int cy = M11_VIEWPORT_Y + y + h / 2;
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,

@@ -117,6 +117,128 @@ int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     return DM1_GFX_FIRST_PROJECTILE + first;
 }
 
+int dm1_v1_projectile_material_resolve_pc34(
+    int projectileSubtype,
+    int associatedThingType,
+    int associatedThingSubtype,
+    int weaponProjectileAspectOrdinal,
+    DM1_ProjectileMaterialResolutionPc34 *outResolution)
+{
+    DM1_ProjectileMaterialResolutionPc34 resolution;
+    int aspect;
+
+    if (!outResolution) {
+        return 0;
+    }
+    memset(&resolution, 0, sizeof(resolution));
+    resolution.graphic_index = -1;
+    resolution.aspect_index = -1;
+    resolution.transparent_color = 10;
+
+    /* ReDMCSB DUNGEON.C F0142: weapons with M066's nonzero ordinal use
+     * G0210 projectile art; every other carried object uses G0237/G0209.
+     * DUNVIEW.C F0115:5896-5900 then enters the object draw path. */
+    if (associatedThingType >= THING_TYPE_WEAPON &&
+        associatedThingType <= THING_TYPE_JUNK) {
+        if (associatedThingType == THING_TYPE_WEAPON &&
+            weaponProjectileAspectOrdinal > 0) {
+            aspect = weaponProjectileAspectOrdinal - 1;
+            if (aspect < 0 || aspect >= DM1_PROJECTILE_ASPECT_COUNT) {
+                return 0;
+            }
+            resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
+            resolution.aspect_index = aspect;
+        } else {
+            aspect = dm1_item_aspect_index(associatedThingType,
+                                           associatedThingSubtype);
+            if (aspect < 0) {
+                return 0;
+            }
+            resolution.uses_object_aspect = 1;
+            resolution.graphic_index = (int)dm1_object_aspect_graphic_index(aspect);
+            resolution.aspect_index = aspect;
+            if (resolution.graphic_index <= 0) {
+                return 0;
+            }
+        }
+    } else {
+        aspect = dm1_v1_projectile_subtype_to_aspect(projectileSubtype);
+        if (aspect < 0) {
+            return 0;
+        }
+        resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
+        resolution.aspect_index = aspect;
+    }
+
+    resolution.valid = 1;
+    *outResolution = resolution;
+    return 1;
+}
+
+int dm1_v1_thrown_object_projectile_blit_plan_pc34(
+    DM1_ThrownObjectProjectileBlitPlanPc34 *outPlan,
+    int graphicIndex,
+    int objectAspectIndex,
+    int depthIndex,
+    int relativeCell,
+    int sourceZoneRow,
+    int viewportX,
+    int viewportY,
+    int viewportW,
+    int viewportH,
+    int spriteW,
+    int spriteH)
+{
+    DM1_ThrownObjectProjectileBlitPlanPc34 plan;
+    int zoneX;
+    int zoneY;
+
+    if (!outPlan || graphicIndex < DM1_GRAPHIC_FIRST_OBJECT ||
+        objectAspectIndex < 0 || objectAspectIndex >= 85 ||
+        relativeCell < 0 || relativeCell > 3 || sourceZoneRow < 0 ||
+        viewportW <= 0 || viewportH <= 0 || spriteW <= 0 || spriteH <= 0 ||
+        !dm1_viewport_3d_c2900_projectile_raw_zone_point(
+            sourceZoneRow, relativeCell, &zoneX, &zoneY)) {
+        return 0;
+    }
+
+    memset(&plan, 0, sizeof(plan));
+    plan.graphic_index = graphicIndex;
+    plan.transparent_color = 10;
+    plan.source_scale_index = dm1_viewport_3d_object_source_scale_index(
+        depthIndex, relativeCell);
+    plan.scale_units = dm1_viewport_3d_object_source_scale_units(
+        plan.source_scale_index);
+    plan.draw_w = spriteW * plan.scale_units / 32;
+    plan.draw_h = spriteH * plan.scale_units / 32;
+    if (plan.draw_w < 3) plan.draw_w = 3;
+    if (plan.draw_h < 3) plan.draw_h = 3;
+    plan.draw_x = viewportX + zoneX - plan.draw_w / 2;
+    plan.draw_y = viewportY + zoneY - plan.draw_h + 1;
+    plan.use_mirror =
+        (dm1_object_aspect_graphic_info(objectAspectIndex) & 0x0001u) &&
+        (relativeCell == 1 || relativeCell == 3);
+    plan.uses_source_row = 1;
+
+    if (plan.draw_x < viewportX - plan.draw_w + 1) {
+        plan.draw_x = viewportX - plan.draw_w + 1;
+    }
+    if (plan.draw_y < viewportY - plan.draw_h + 1) {
+        plan.draw_y = viewportY - plan.draw_h + 1;
+    }
+    if (plan.draw_x >= viewportX + viewportW ||
+        plan.draw_y >= viewportY + viewportH) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0115:5896-5900 sets the projectile C2900
+     * coordinate then jumps to T0115015_DrawProjectileAsObject.  The
+     * object keeps G0209/M612 material and C10 transparency, but skips the
+     * normal floor-pile shift. */
+    *outPlan = plan;
+    return 1;
+}
+
 /* DUNVIEW.C:5745-5806 flip flags.
  * bit0 = horizontal, bit1 = vertical. */
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,

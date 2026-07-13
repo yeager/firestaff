@@ -6,6 +6,7 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 #include <stdio.h>
@@ -161,6 +162,54 @@ static void test_projectile_subtype_mapping(void) {
               DM1_GFX_FIRST_PROJECTILE + 29, "open-door subtype gfx");
     ASSERT_EQ(dm1_v1_projectile_subtype_graphic_index(PROJECTILE_SUBTYPE_KINETIC_ARROW),
               DM1_GFX_FIRST_PROJECTILE, "kinetic subtype gfx");
+}
+
+/* ReDMCSB DUNGEON.C F0142 and DUNVIEW.C F0115:5891-5900: a live thrown
+ * Slot is not always a 454.. projectile bitmap.  This verifies the same
+ * G0237/G0209 object-material handoff without fabricating any pixels. */
+static void test_thrown_object_material_resolution(void) {
+    DM1_ProjectileMaterialResolutionPc34 resolution;
+    DM1_ThrownObjectProjectileBlitPlanPc34 blit;
+
+    printf("  thrown object material resolution...\n");
+    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
+                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                    THING_TYPE_POTION, 0, 0, &resolution),
+                "ordinary thrown potion resolves original object material");
+    ASSERT_EQ(resolution.valid, 1, "potion resolution valid");
+    ASSERT_EQ(resolution.uses_object_aspect, 1, "potion uses F0115 object route");
+    ASSERT_EQ(resolution.aspect_index,
+              dm1_item_aspect_index(THING_TYPE_POTION, 0),
+              "potion uses G0237 object aspect");
+    ASSERT_EQ(resolution.graphic_index,
+              (int)dm1_item_sprite_index(THING_TYPE_POTION, 0),
+              "potion uses M612 original graphic");
+    ASSERT_TRUE(resolution.graphic_index >= DM1_GRAPHIC_FIRST_OBJECT,
+                "potion never falls back to M613 projectile bank");
+
+    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
+                    &blit, resolution.graphic_index, resolution.aspect_index,
+                    1, 2, 2, 0, 0, 224, 136, 16, 16),
+                "object projectile gets C2900 placement plan");
+    ASSERT_EQ(blit.transparent_color, 10, "object projectile keeps C10");
+    ASSERT_EQ(blit.uses_source_row, 1, "object projectile uses C2900 row");
+    ASSERT_TRUE(blit.draw_x >= -15 && blit.draw_x < 224,
+                "object projectile C2900 X is viewport bounded");
+
+    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
+                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                    THING_TYPE_WEAPON, 8, 2, &resolution),
+                "weapon projectile aspect resolves");
+    ASSERT_EQ(resolution.uses_object_aspect, 0,
+              "weapon M066 aspect retains projectile material route");
+    ASSERT_EQ(resolution.graphic_index,
+              dm1_v1_projectile_graphic_index(1, 0),
+              "weapon M066 ordinal maps to G0210 projectile art");
+
+    ASSERT_TRUE(!dm1_v1_projectile_material_resolve_pc34(
+                     PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                     THING_TYPE_POTION, 99, 0, &resolution),
+                "unresolvable carried Slot fails closed");
 }
 
 
@@ -1244,6 +1293,7 @@ int main(void) {
     test_projectile_graphic_indices();
     test_projectile_bitmap_deltas();
     test_projectile_subtype_mapping();
+    test_thrown_object_material_resolution();
     test_projectile_scale();
     test_projectile_d4_far_box();
     test_projectile_renderable_and_effect_particle();
