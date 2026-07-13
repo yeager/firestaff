@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
+  candidate now carries an FNV-1a receipt over the complete original file,
+  including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API
+  rechecks the file receipt, payload size/hash, and candidate kind before any
+  bytes are released for later import; a changed file is rejected before
+  deserialize/runtime mutation. This is a skproject-shaped save boundary, not
+  a synthetic substitute or a claim that a local original corpus exists.
+  Verification: `test_dm2_v1_save_load` 22/22 and focused CTest
+  `dm2_v1_save_load` passed.
+
 - ✅ 2026-07-13 Theron order-independent raw-capture corpus discovery: the
   explicit capture-root probe now retains a hash-verified raw Track 02 MD5
   during its first walk and performs a bounded trace-only second walk when
