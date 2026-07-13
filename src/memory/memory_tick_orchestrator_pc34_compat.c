@@ -10911,6 +10911,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                             }
                         }
                         if (resched.kind != TIMELINE_EVENT_INVALID) {
+                            if (ev.aux0 == DM1_EVENT_POISON_CHAMPION &&
+                                ev.aux2 == DM1_EVENT_POISON_CHAMPION) {
+                                /* ReDMCSB CHAMPION.C F0322:1954-1960
+                                 * requeues native C75 on the party's
+                                 * current map with Attack-1. Preserve the
+                                 * original-save receipt for native export. */
+                                resched.mapIndex = world->partyMapIndex;
+                                resched.aux0 = DM1_EVENT_POISON_CHAMPION;
+                                resched.aux2 = DM1_EVENT_POISON_CHAMPION;
+                                resched.aux4 = championIndex;
+                            }
                             (void)F0721_TIMELINE_Schedule_Compat(
                                 &world->timeline, &resched);
                         }
