@@ -77,7 +77,12 @@ int main(void)
 
     runtime.valid = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
-          "M11 rejects an invalid atomic DM2 frame");
+          "M11 rejects an invalid complete-wall material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.source_materials_required = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a frame without source-owned wall materials");
     runtime = make_runtime_receipt();
 
     boot.runtime_m11_frame_receipt_consumed = 0;
