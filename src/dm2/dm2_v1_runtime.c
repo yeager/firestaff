@@ -2495,6 +2495,19 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->viewport_asset_fetch != NULL;
     g_dm2_frame_ownership.floor_ceiling_gdat_blits =
         viewport.asset_floor_ceiling_drawn_count;
+    g_dm2_frame_ownership.floor_ceiling_material_required_mask =
+        viewport.last_floor_ceiling_material_required_mask;
+    g_dm2_frame_ownership.floor_ceiling_material_consumed_mask =
+        viewport.last_floor_ceiling_material_consumed_mask;
+    /* skproject DM2_DRAW_DUNGEON resolves both GRAPHICSSET planes before
+     * handing the indoor frame to the host. A count of two is insufficient:
+     * retain the renderer's exact local-palette transaction as ownership. */
+    g_dm2_frame_ownership.floor_ceiling_materials_complete =
+        !viewport.source_materials_required ||
+        (g_dm2_frame_ownership.is_outdoor
+            ? g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2
+            : g_dm2_frame_ownership.floor_ceiling_material_required_mask == 3u &&
+              g_dm2_frame_ownership.floor_ceiling_material_consumed_mask == 3u);
     g_dm2_frame_ownership.outdoor_sky_gdat_blits =
         viewport.asset_outdoor_sky_drawn_count;
     g_dm2_frame_ownership.outdoor_ground_gdat_blits =
@@ -2782,6 +2795,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.full_gdat_frame_valid =
         g_dm2_frame_ownership.gdat_provider_bound &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
+        g_dm2_frame_ownership.floor_ceiling_materials_complete &&
         (g_dm2_frame_ownership.is_outdoor ||
          g_dm2_frame_ownership.wall_gdat_blits > 0) &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
@@ -2821,9 +2835,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.gdat_scene_control_hash;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
+    g_dm2_last_m11_frame.floor_ceiling_material_required_mask =
+        g_dm2_frame_ownership.floor_ceiling_material_required_mask;
+    g_dm2_last_m11_frame.floor_ceiling_material_consumed_mask =
+        g_dm2_frame_ownership.floor_ceiling_material_consumed_mask;
+    g_dm2_last_m11_frame.floor_ceiling_materials_complete =
+        g_dm2_frame_ownership.floor_ceiling_materials_complete;
     g_dm2_last_m11_frame.valid =
         g_dm2_frame_ownership.valid &&
         g_dm2_last_m11_frame.source_materials_required &&
+        g_dm2_last_m11_frame.floor_ceiling_materials_complete &&
         g_dm2_last_m11_frame.map_load_token != 0u &&
         g_dm2_last_m11_frame.scene_control_hash != 0u &&
         g_dm2_last_m11_frame.palette_hash != 0u;

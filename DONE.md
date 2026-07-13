@@ -12864,6 +12864,16 @@ bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
 `F0433` export order. Verification: focused
 `test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
 explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
+# ✅ 2026-07-13 DM2 runtime GDAT floor/ceiling handoff gate
+
+`dm2_v1_runtime_render_frame()` now propagates the viewport's exact required
+and consumed floor/ceiling material masks into the runtime ownership and M11
+frame receipts. Source-required indoor frames require both GRAPHICSSET planes
+to complete their decoded-pixel plus local-palette transaction before the
+runtime marks the handoff valid; incomplete material fails closed without a
+synthetic surface. Source reference: skproject `DM2_DRAW_DUNGEON`.
+Verification: Ninja `test_dm2_v1_runtime_handoff_smoke` passed 161/161.
+
 # ✅ 2026-07-13 DM1 PC34 F0435/F0433 dungeon-tail column-table validation
 
 The original-save handoff now validates every persisted

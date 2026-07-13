@@ -456,6 +456,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     a bounded decoded IMG3 pixel receipt that matches their metadata and local
     palette. The decoded material remains no-draw until its complete source
     `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` execution route is consumed.
+  - 2026-07-13 update: the DM2 runtime now carries the verified indoor
+    floor/ceiling required and consumed masks into its M11 handoff receipt.
+    A source-required indoor frame is invalid unless both GRAPHICSSET planes
+    completed their renderer-owned material transactions; an incomplete plane
+    is not presented through a substitute surface.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
