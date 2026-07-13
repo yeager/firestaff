@@ -66,6 +66,20 @@ typedef struct CSB_V1_StartupSessionActionReceipt_PC34 {
     unsigned int session_generation;
 } CSB_V1_StartupSessionActionReceipt_PC34;
 
+typedef enum CSB_V1_StartupSessionSelectionKind_PC34 {
+    CSB_V1_STARTUP_SESSION_SELECTION_NONE_PC34 = 0,
+    CSB_V1_STARTUP_SESSION_SELECTION_SPELL_RUNE_PC34,
+    CSB_V1_STARTUP_SESSION_SELECTION_ACTION_SLOT_PC34
+} CSB_V1_StartupSessionSelectionKind_PC34;
+
+typedef struct CSB_V1_StartupSessionSelectionReceipt_PC34 {
+    int valid;
+    CSB_V1_StartupSessionSelectionKind_PC34 kind;
+    int selection_index;
+    unsigned int source_tick;
+    unsigned int session_generation;
+} CSB_V1_StartupSessionSelectionReceipt_PC34;
+
 /* ReDMCSB TITLE.C F0437, ENTRANCE.C F0807, PANEL.C F0347. */
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -110,5 +124,17 @@ int csb_v1_startup_session_first_action_receipt_pc34(
     unsigned int source_tick,
     unsigned int session_generation,
     CSB_V1_StartupSessionActionReceipt_PC34 *out_receipt);
+
+/* ReDMCSB COMMAND.C selection follows the C017-owned action dispatch on its
+ * next tick; spell runes require CAST, while action slots require a hand. */
+int csb_v1_startup_session_selection_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    const CSB_V1_StartupSessionActionReceipt_PC34 *action_receipt,
+    CSB_V1_StartupSessionSelectionKind_PC34 kind,
+    int selection_index,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionSelectionReceipt_PC34 *out_receipt);
 
 #endif
