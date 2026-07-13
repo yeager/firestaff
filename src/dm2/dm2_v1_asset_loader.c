@@ -623,6 +623,14 @@ static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
     if (!pixels) return NULL;
     typex = raw[6];
 
+    /* skproject SKWIN/SkWinCore.cpp::DECODE_IMG9 has exactly the two
+     * back-reference layouts below. Treating an unknown selector as type 3
+     * would invent a pixel stream from unproven original bytes. */
+    if (typex != 2u && typex != 3u) {
+        free(pixels);
+        return NULL;
+    }
+
     while (out_pos < pixel_total) {
         uint8_t command;
         int bit;
@@ -653,7 +661,7 @@ static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
                 if (typex == 2u) {
                     negative_offset = (a >> 4) + (16 * b);
                     copy_length = (a & 0x0f) + 3;
-                } else {
+                } else { /* typex == 3, validated above */
                     negative_offset = (a >> 5) + (8 * b);
                     copy_length = (a & 0x1f) + 3;
                 }
