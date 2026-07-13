@@ -1068,6 +1068,58 @@ int dm1_v1_melee_death_smoke_plan_f0190_pc34(
     return 1;
 }
 
+int dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+    const DM1_MeleeF0190MovingKilledAllAfterplayInputPc34* in,
+    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34* out) {
+    int attack;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->groupIndex = -1;
+    if (!in) return 0;
+
+    /* ReDMCSB GROUP.C F0190:834-839 bypasses F0188/F0189 when the final
+     * creature is killed while moving. Lines 907-917 nevertheless call
+     * F0213 with P0371/P0372, the source coordinate. F0267 alone owns the
+     * later destination cleanup, so this plan admits no inferred locations. */
+    if (in->outcome != COMBAT_OUTCOME_KILLED_ALL_CREATURES ||
+        in->groupIndex < 0 || in->sourceMapIndex < 0 ||
+        in->sourceMapX < 0 || in->sourceMapY < 0 ||
+        in->destinationMapIndex < 0 || in->destinationMapX < 0 ||
+        in->destinationMapY < 0 ||
+        (in->sourceCell != EXPLOSION_CELL_CENTERED &&
+         (in->sourceCell < 0 || in->sourceCell > 3))) {
+        return 1;
+    }
+
+    attack = dm1_v1_melee_death_smoke_attack_f0190_pc34(
+        in->creatureAttributes);
+    if (attack != 110 && attack != 190 && attack != 255) {
+        return 1;
+    }
+
+    out->valid = 1;
+    out->shouldPresentSourceSmoke = 1;
+    out->requiresDeferredDestinationCleanup = 1;
+    out->groupIndex = in->groupIndex;
+    out->destinationMapIndex = in->destinationMapIndex;
+    out->destinationMapX = in->destinationMapX;
+    out->destinationMapY = in->destinationMapY;
+    out->sourceSmokeCreateInput.explosionType = C040_EXPLOSION_SMOKE;
+    out->sourceSmokeCreateInput.attack = attack;
+    out->sourceSmokeCreateInput.mapIndex = in->sourceMapIndex;
+    out->sourceSmokeCreateInput.mapX = in->sourceMapX;
+    out->sourceSmokeCreateInput.mapY = in->sourceMapY;
+    out->sourceSmokeCreateInput.cell = in->sourceCell;
+    out->sourceSmokeCreateInput.centered =
+        in->sourceCell == EXPLOSION_CELL_CENTERED;
+    out->sourceSmokeCreateInput.currentTick = (int)in->currentTick;
+    out->sourceSmokeCreateInput.ownerKind = PROJECTILE_OWNER_CHAMPION;
+    out->sourceSmokeCreateInput.ownerIndex = -1;
+    out->sourceSmokeCreateInput.creatorProjectileSlot = -1;
+    return 1;
+}
+
 int dm1_v1_melee_death_smoke_attack_f0190_pc34(int creatureAttributes) {
     int size = creatureAttributes & DM1_ATTR_SIZE_MASK;
 
