@@ -624,6 +624,41 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_pc_g1_ground_stack_map_corpus_receipt(void)
+{
+    uint8_t dat[384];
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_G1GroundStackMapCorpusReceipt receipt;
+    size_t size = build_pc_g1_record_evidence_fixture(dat, sizeof(dat));
+
+    CHECK(size > 0 && dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "PC G1 corpus-receipt fixture loads");
+    CHECK(dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+              &dungeon, &receipt) == 1 && receipt.available == 1 &&
+              receipt.g1_layout_absent == 0 && receipt.raw_only == 1,
+          "G1 corpus receipt accepts only verified raw table bounds");
+    CHECK(receipt.column_index_base == 316 &&
+              receipt.column_index_word_count == 2 &&
+              receipt.column_index_byte_count == 4u &&
+              receipt.ground_stack_base == 320 &&
+              receipt.ground_stack_word_count == 1 &&
+              receipt.ground_stack_byte_count == 2u &&
+              receipt.map_data_base == 336 && receipt.map_data_byte_count == 4u,
+          "G1 corpus receipt retains column, ground-stack, and map byte ranges");
+    CHECK(receipt.column_index_hash != 0u && receipt.ground_stack_hash != 0u &&
+              receipt.map_data_hash != 0u &&
+              receipt.column_index_semantics_unresolved == 1 &&
+              receipt.ground_stack_semantics_unresolved == 1,
+          "G1 corpus receipt hashes bytes without assigning c_map semantics");
+    dm2_v1_dungeon_free(&dungeon);
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    CHECK(dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+              &dungeon, &receipt) == 1 && receipt.available == 0 &&
+              receipt.g1_layout_absent == 1,
+          "missing G1 layout is reported as absence without fallback decoding");
+}
+
 static void test_pc_g1_extension_record_transform(void)
 {
     uint8_t dat[14000];
@@ -691,6 +726,7 @@ int main(void)
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();
     test_pc_g1_record_pool_ownership_and_bounded_traversal();
+    test_pc_g1_ground_stack_map_corpus_receipt();
     test_pc_g1_extension_record_transform();
     test_pc_g1_partial_boot_is_transactional();
 

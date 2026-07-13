@@ -322,6 +322,7 @@ static void probe_first_map(const unsigned char *raw, int size)
 {
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RecordPoolEvidence evidence;
+    DM2_V1_G1GroundStackMapCorpusReceipt ground_stack_map;
     DM2_V1_G1PartialMapBootReceipt partial_boot;
     DM2_V1_G1FirstMapRuntimeReceipt first_map_runtime;
     DM2_V1_G1Map5TextRuntimeReceipt map5_text_runtime;
@@ -372,6 +373,24 @@ static void probe_first_map(const unsigned char *raw, int size)
               dungeon.square_first_thing_base == 1708 &&
               dungeon.text_data_base == 6428,
           "loader exposes proven G1 c_map column and ground-stack tables");
+    CHECK(dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+              &dungeon, &ground_stack_map) == 1 &&
+              ground_stack_map.available == 1 &&
+              ground_stack_map.raw_only == 1 &&
+              ground_stack_map.column_index_base == 748 &&
+              ground_stack_map.column_index_word_count == 480 &&
+              ground_stack_map.column_index_byte_count == 960u &&
+              ground_stack_map.ground_stack_base == 1708 &&
+              ground_stack_map.ground_stack_word_count == 2360 &&
+              ground_stack_map.ground_stack_byte_count == 4720u &&
+              ground_stack_map.map_data_base == 31667 &&
+              ground_stack_map.map_data_byte_count > 0u &&
+              ground_stack_map.column_index_hash != 0u &&
+              ground_stack_map.ground_stack_hash != 0u &&
+              ground_stack_map.map_data_hash != 0u &&
+              ground_stack_map.column_index_semantics_unresolved == 1 &&
+              ground_stack_map.ground_stack_semantics_unresolved == 1,
+          "canonical G1 hashes c_map table/map bytes without decoding their unresolved semantics");
     CHECK(dungeon.thing_data_bases[0] == 6942 &&
               dungeon.thing_data_bases[1] == 7810 &&
               dungeon.thing_data_bases[2] == 11266 &&

@@ -89,6 +89,32 @@ typedef struct {
     int tail_pool_base_rejected;
 } DM2_V1_G1RecordPoolEvidence;
 
+/*
+ * Raw-only PC G1 corpus receipt for the two c_map.cpp tables whose semantic
+ * ownership skproject leaves open: ddat.v1e03f4 (per-column ground-stack
+ * offsets) and dm2_v1e038c/dunGroundStacks (ObjectID words).  It records
+ * only already validated byte ranges and FNV-1a identities.  In particular,
+ * it does not decode a tile, select a record, or promote a map root.
+ */
+typedef struct {
+    int available;
+    int g1_layout_absent;
+    int raw_only;
+    int column_index_semantics_unresolved;
+    int ground_stack_semantics_unresolved;
+    int column_index_base;
+    int column_index_word_count;
+    uint32_t column_index_byte_count;
+    uint32_t column_index_hash;
+    int ground_stack_base;
+    int ground_stack_word_count;
+    uint32_t ground_stack_byte_count;
+    uint32_t ground_stack_hash;
+    int map_data_base;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+} DM2_V1_G1GroundStackMapCorpusReceipt;
+
 #define DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS 5
 
 /*
@@ -562,6 +588,12 @@ int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d);
 int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1RecordPoolEvidence *out);
+/* Retain hashes and counts for the verified raw G1 c_map table/map ranges.
+ * A non-G1 or truncated layout returns a receipt with g1_layout_absent set;
+ * it never attempts an alternate table decode. */
+int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1GroundStackMapCorpusReceipt *out);
 /* Transactionally scans the PC G1 map roots and commits a partial-map boot
  * receipt only when every root is either direct, in the proven DB3/DB4
  * continuation, or one of the five explicitly blocked DB8/DB10 roots.

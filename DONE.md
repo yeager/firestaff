@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 G1 raw c_map corpus receipt: verified G1 column-index,
+  ground-stack, and map-data bounds now retain byte counts and FNV-1a hashes.
+  This explicitly preserves skproject `c_map.cpp:43-67` uncertainty around
+  `v1e03f4`, `dunGroundStacks`, and bit `0x10`; no tile, record, object, or
+  runtime promotion is added. Verification: focused loader CTest and the
+  skip-safe hash-verified real-data probe.
+
 - 2026-07-13 Nexus Structure1F item corpus handoff: raw direct-item
   `attribute1/attribute2` and `location/item_id` pair receipts now also flow
   through the per-level LEV00-15 aggregate. This remains fail-closed

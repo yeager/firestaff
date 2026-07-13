@@ -72,6 +72,19 @@ static uint16_t rd16le(const uint8_t *p) {
 
 #define RD16(p) rd16le(p)
 
+static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    uint32_t i;
+
+    if (!data || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 /* DUNGEON_HEADER field offsets */
 #define DM2_HDR_MAP_COUNT_OFFSET   6
 #define DM2_HDR_SEED_OFFSET       8
@@ -1094,6 +1107,72 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
         }
     }
 
+    out->available = 1;
+    return 1;
+}
+
+int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1GroundStackMapCorpusReceipt *out)
+{
+    int column_words;
+    int column_bytes;
+    int ground_stack_bytes;
+    int map_bytes;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->g1_layout_absent = 1;
+
+    /* skproject/SKULLWIN/c_map.cpp:43-67 retains both meanings as TODO:
+     * ddat.v1e03f4 is only an index source and dunGroundStacks only returns
+     * an opaque t_record. Keep the source-proven byte spans as corpus
+     * evidence; do not turn either table into decoded map/object ownership. */
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->column_index_base < 0 || d->square_first_thing_base < 0 ||
+        d->square_first_thing_count < 0 || d->raw_map_data_base < 0 ||
+        d->raw_size < 0) {
+        return 1;
+    }
+
+    column_words = (d->square_first_thing_base - d->column_index_base) / 2;
+    column_bytes = column_words * 2;
+    ground_stack_bytes = d->square_first_thing_count * 2;
+    map_bytes = d->raw_size - d->raw_map_data_base;
+    if (d->square_first_thing_base < d->column_index_base ||
+        column_words <= 0 || column_bytes <= 0 || ground_stack_bytes < 0 ||
+        map_bytes <= 0 ||
+        d->column_index_base + column_bytes != d->square_first_thing_base ||
+        d->square_first_thing_base + ground_stack_bytes > d->raw_size ||
+        d->raw_map_data_base + map_bytes != d->raw_size) {
+        return 1;
+    }
+
+    out->g1_layout_absent = 0;
+    out->raw_only = 1;
+    out->column_index_semantics_unresolved = 1;
+    out->ground_stack_semantics_unresolved = 1;
+    out->column_index_base = d->column_index_base;
+    out->column_index_word_count = column_words;
+    out->column_index_byte_count = (uint32_t)column_bytes;
+    out->column_index_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->column_index_base, out->column_index_byte_count);
+    out->ground_stack_base = d->square_first_thing_base;
+    out->ground_stack_word_count = d->square_first_thing_count;
+    out->ground_stack_byte_count = (uint32_t)ground_stack_bytes;
+    out->ground_stack_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->square_first_thing_base,
+        out->ground_stack_byte_count);
+    out->map_data_base = d->raw_map_data_base;
+    out->map_data_byte_count = (uint32_t)map_bytes;
+    out->map_data_hash = dm2_v1_g1_receipt_hash(
+        d->raw_data + d->raw_map_data_base, out->map_data_byte_count);
+    if (out->column_index_hash == 0u || out->ground_stack_hash == 0u ||
+        out->map_data_hash == 0u) {
+        memset(out, 0, sizeof(*out));
+        out->g1_layout_absent = 1;
+        return 1;
+    }
     out->available = 1;
     return 1;
 }
