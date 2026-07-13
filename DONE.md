@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 F0115 projectile host materialization: M11 now publishes a
+  completed C2900 receipt only after its real PC34 asset blit succeeds. It
+  distinguishes the native M613 projectile material from ReDMCSB DUNGEON.C
+  F0142's G0209/M612 thrown-object branch, retaining bitmap, C10
+  transparency, flip, source row, geometry, and asset dimensions. The
+  focused real-media regression loads PC34 `GRAPHICS.DAT` and covers graphic
+  454 plus the weapon-0 aspect-38 graphic 537 route without a synthetic cache.
+
 - 2026-07-13 Nexus Structure1F floor-decoration model/rotation handoff: raw
   source pairs now reach DGN host, render-plan, and LEV00-15 corpus receipts.
   Their grammar remains unproved, so this assigns no model, orientation, mesh,

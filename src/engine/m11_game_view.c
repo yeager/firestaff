@@ -360,6 +360,8 @@ static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
 static M11_Dm1CreatureHostPresentationReceipt
     s_m11_dm1_creature_host_presentation_receipt;
+static M11_Dm1ProjectileHostPresentationReceipt
+    s_m11_dm1_projectile_host_presentation_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -17633,6 +17635,25 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                    plan.draw_w, plan.draw_h,
                                    effectiveTransparentColor);
     }
+    /* ReDMCSB DUNVIEW.C F0115:5645-5683 materializes M613 projectile
+     * bitmaps in the C2900 lane after its source-zone/flip plan resolves. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        s_m11_dm1_projectile_host_presentation_receipt.valid = 1;
+        s_m11_dm1_projectile_host_presentation_receipt.projectileLane = 1;
+        s_m11_dm1_projectile_host_presentation_receipt.objectMaterial = 0;
+        s_m11_dm1_projectile_host_presentation_receipt.graphicsId = gfxIndex;
+        s_m11_dm1_projectile_host_presentation_receipt.objectAspectIndex = -1;
+        s_m11_dm1_projectile_host_presentation_receipt.transparentColor =
+            effectiveTransparentColor;
+        s_m11_dm1_projectile_host_presentation_receipt.flipFlags = plan.flip_flags;
+        s_m11_dm1_projectile_host_presentation_receipt.sourceZoneRow = sourceZoneRow;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationX = plan.draw_x;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationY = plan.draw_y;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationW = plan.draw_w;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationH = plan.draw_h;
+        s_m11_dm1_projectile_host_presentation_receipt.assetWidth = (int)slot->width;
+        s_m11_dm1_projectile_host_presentation_receipt.assetHeight = (int)slot->height;
+    }
     return 1;
 }
 
@@ -17675,6 +17696,25 @@ static int m11_draw_thrown_object_projectile_sprite(
                                    framebufferHeight, plan.draw_x, plan.draw_y,
                                    plan.draw_w, plan.draw_h,
                                    plan.transparent_color);
+    }
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        s_m11_dm1_projectile_host_presentation_receipt.valid = 1;
+        s_m11_dm1_projectile_host_presentation_receipt.projectileLane = 1;
+        s_m11_dm1_projectile_host_presentation_receipt.objectMaterial = 1;
+        s_m11_dm1_projectile_host_presentation_receipt.graphicsId = gfxIndex;
+        s_m11_dm1_projectile_host_presentation_receipt.objectAspectIndex =
+            objectAspectIndex;
+        s_m11_dm1_projectile_host_presentation_receipt.transparentColor =
+            plan.transparent_color;
+        s_m11_dm1_projectile_host_presentation_receipt.flipFlags =
+            plan.use_mirror ? 1 : 0;
+        s_m11_dm1_projectile_host_presentation_receipt.sourceZoneRow = sourceZoneRow;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationX = plan.draw_x;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationY = plan.draw_y;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationW = plan.draw_w;
+        s_m11_dm1_projectile_host_presentation_receipt.destinationH = plan.draw_h;
+        s_m11_dm1_projectile_host_presentation_receipt.assetWidth = (int)slot->width;
+        s_m11_dm1_projectile_host_presentation_receipt.assetHeight = (int)slot->height;
     }
     return 1;
 }
@@ -37680,6 +37720,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
     memset(&s_m11_dm1_creature_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_creature_host_presentation_receipt));
+    memset(&s_m11_dm1_projectile_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_projectile_host_presentation_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -39509,4 +39551,28 @@ int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
         M11_VIEWPORT_X + 48, M11_VIEWPORT_Y + 40, 96, 72,
         DM1_CREATURE_MUMMY, 1, 0, 0,
         dm1_creature_transparent_color(DM1_CREATURE_MUMMY));
+}
+
+void M11_GameView_GetDm1ProjectileHostPresentationReceipt(
+    M11_Dm1ProjectileHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_projectile_host_presentation_receipt;
+    }
+}
+
+int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
+    M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    if (!state) return 0;
+    memset(&s_m11_dm1_projectile_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_projectile_host_presentation_receipt));
+    /* ReDMCSB DUNGEON.C F0142 + DUNVIEW.C F0115:5896-5900: weapon 0
+     * takes G0209 aspect 38 / native object bitmap 537 in C2900. */
+    return m11_draw_thrown_object_projectile_sprite(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        537, 38, 1, 2, 2);
 }
