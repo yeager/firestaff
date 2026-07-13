@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 GDAT weather destination plan: source-backed environment
+  commands now produce a fail-closed `QUERY_TEMP_PICST` draw receipt with the
+  original `CD` rectangle, `FW`-selected mirror mode, 0x40/0x34 movement
+  scaling, parity/scene flag logic, and CD=6001 horizon offset branch from
+  skproject `ENVIRONMENT_DRAW_DISTANT_ELEMENT` (32CB:56BC) and
+  `SET_GRAPHICS_FLIP_FROM_POSITION` (32CB:59CA). The plan retains only the
+  verified GDAT image identity; it decodes no pixels and draws no fallback.
+  Verification: Ninja-built and CTest-passed `dm2_v1_weather_gdat_receipt`.
+
 - 2026-07-13 Nexus Structure2 word-alignment receipt: the bounded DGN parser
   now records whether every nonzero descriptor target is word-aligned, matching
   the observed LEV00-LEV15 descriptor-window corpus. An odd in-span target

@@ -272,6 +272,144 @@ int dm2_v1_weather_gdat_overlay_plan(
     return 1;
 }
 
+static int dm2_weather_stretch64(int16_t value, int16_t factor,
+                                 int16_t *out_value)
+{
+    int32_t result;
+
+    if (!out_value) return 0;
+    /* skproject CALC_STRETCHED_SIZE (0B36:0036):
+     * (value * factor + (factor >> 1)) >> 6.  Source inputs are signed
+     * 16-bit values.  Refuse an out-of-range result instead of relying on a
+     * host-specific narrowing conversion for a displayed destination. */
+    result = ((int32_t)value * factor + (factor >> 1)) >> 6;
+    if (result < INT16_MIN || result > INT16_MAX) return 0;
+    *out_value = (int16_t)result;
+    return 1;
+}
+
+static int dm2_weather_add_i16(int16_t left, int16_t right,
+                               int16_t *out_value)
+{
+    int32_t result;
+
+    if (!out_value) return 0;
+    result = (int32_t)left + right;
+    if (result < INT16_MIN || result > INT16_MAX) return 0;
+    *out_value = (int16_t)result;
+    return 1;
+}
+
+static int dm2_weather_flip_from_position(uint8_t kind,
+                                          const DM2_V1_WeatherDrawContext *ctx)
+{
+    int64_t parity;
+
+    if (!ctx) return 0;
+    /* skproject SET_GRAPHICS_FLIP_FROM_POSITION (32CB:59CA). */
+    parity = (int64_t)ctx->map_x + ctx->map_y + ctx->direction +
+             ctx->map_offset_x + ctx->map_offset_y + ctx->map_level;
+    parity &= 1;
+    if (kind == 1u) {
+        if ((ctx->scene_flags & 8u) != 0u) {
+            if ((ctx->scene_flags & 0x10u) != 0u) {
+                return (ctx->game_tick & 7u) > 3u;
+            }
+            return (int)parity;
+        }
+        if ((ctx->scene_flags & 0x40u) != 0u) {
+            return (ctx->player_direction & 1u) != 0u;
+        }
+        return 0;
+    }
+    if (kind == 0x20u) {
+        if ((ctx->scene_flags & 2u) != 0u) {
+            if ((ctx->scene_flags & 4u) != 0u) {
+                return (ctx->game_tick & 7u) <= 3u;
+            }
+            return !parity;
+        }
+        if ((ctx->scene_flags & 0x20u) != 0u) {
+            return (ctx->player_direction & 1u) != 0u;
+        }
+        return 0;
+    }
+    return (int)parity;
+}
+
+int dm2_v1_weather_gdat_draw_plan(
+    const DM2_V1_WeatherCommandReceipt *command,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherDrawPlan *out)
+{
+    int16_t offset_x;
+    int16_t offset_y;
+    int16_t scale_x;
+    int16_t scale_y;
+    uint8_t flip_kind = 0u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!command || !context || !command->material_valid ||
+        !command->image_present || !command->query_metadata_valid ||
+        command->rect_number == 0u ||
+        !dm2_weather_command_is_source_owned(command->command)) {
+        return 0;
+    }
+
+    /* ENVIRONMENT_DRAW_DISTANT_ELEMENT chooses a mirror request only for
+     * these four original FW values.  Other source FW values draw unflipped.
+     */
+    if (command->flip_mode == 8u || command->flip_mode == 0x40u) {
+        flip_kind = 1u;
+    } else if (command->flip_mode == 2u || command->flip_mode == 0x20u) {
+        flip_kind = 0x20u;
+    }
+    offset_x = 0;
+    offset_y = 0;
+    scale_x = 0x40;
+    scale_y = 0x40;
+    if (context->player_moving) {
+        if (!dm2_weather_stretch64(offset_x, 0x34, &offset_x) ||
+            !dm2_weather_stretch64(offset_y, 0x34, &offset_y) ||
+            !dm2_weather_stretch64(scale_x, 0x34, &scale_x) ||
+            !dm2_weather_stretch64(scale_y, 0x34, &scale_y)) {
+            return 0;
+        }
+        /* RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes b8/b9 to 0x40.  Keep
+         * the exact moving branch, including the CD=6001 horizon exception.
+         */
+        if (!dm2_weather_add_i16(offset_x, context->movement_offset_x,
+                                 &offset_x)) {
+            return 0;
+        }
+        if (command->rect_number == 0x1771u) {
+            if (!dm2_weather_add_i16(offset_y,
+                                     context->moving_horizon_offset_y,
+                                     &offset_y)) {
+                return 0;
+            }
+        } else {
+            if (!dm2_weather_add_i16(offset_y, context->movement_offset_y,
+                                     &offset_y)) {
+                return 0;
+            }
+        }
+    }
+    out->command = command->command;
+    out->rect_number = command->rect_number;
+    out->image_field = command->image_field;
+    out->mirror_flip = (uint8_t)dm2_weather_flip_from_position(flip_kind,
+                                                                 context);
+    out->scale_x = (uint8_t)scale_x;
+    out->scale_y = (uint8_t)scale_y;
+    out->draw_offset_x = offset_x;
+    out->draw_offset_y = offset_y;
+    out->material_hash = command->material_hash;
+    out->valid = 1;
+    return 1;
+}
+
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
     uint8_t graphicsset,

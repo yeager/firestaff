@@ -90,6 +90,42 @@ typedef struct {
     DM2_V1_WeatherOverlayCommand commands[2];
 } DM2_V1_WeatherOverlayPlan;
 
+/* Source inputs to skproject's ENVIRONMENT_DRAW_DISTANT_ELEMENT.  The
+ * caller supplies live map/movement values; this module does not invent a
+ * destination rectangle, map parity, or movement vector. */
+typedef struct {
+    uint8_t direction;
+    int16_t map_x;
+    int16_t map_y;
+    int16_t map_offset_x;
+    int16_t map_offset_y;
+    int16_t map_level;
+    uint16_t scene_flags;
+    uint16_t game_tick;
+    uint8_t player_direction;
+    int player_moving;
+    int16_t movement_offset_x;
+    int16_t movement_offset_y;
+    int16_t moving_horizon_offset_y;
+    int16_t moving_other_offset_y;
+} DM2_V1_WeatherDrawContext;
+
+/* One source-realized QUERY_TEMP_PICST request.  The GDAT image itself stays
+ * owned by the asset loader; the plan only carries the verified source
+ * rectangle and transform inputs that DRAW_TEMP_PICST consumes. */
+typedef struct {
+    int valid;
+    uint8_t command;
+    uint16_t rect_number;
+    uint8_t image_field;
+    uint8_t mirror_flip;
+    uint8_t scale_x;
+    uint8_t scale_y;
+    int16_t draw_offset_x;
+    int16_t draw_offset_y;
+    uint32_t material_hash;
+} DM2_V1_WeatherDrawPlan;
+
 int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader, uint8_t graphicsset, DM2_V1_WeatherGdatReceipt *out);
 int dm2_v1_weather_gdat_command_receipt(
     const DM2_V1_AssetLoader *loader,
@@ -121,4 +157,12 @@ int dm2_v1_weather_gdat_overlay_plan(
     uint8_t cloud_level,
     uint8_t rain_level,
     DM2_V1_WeatherOverlayPlan *out);
+
+/* Mirrors skproject ENVIRONMENT_DRAW_DISTANT_ELEMENT (SKWIN/SkWinCore.cpp
+ * 32CB:56BC).  It proves the command's real GDAT image/QUERY_TEMP_PICST
+ * metadata before exposing a rectangle/transform plan. */
+int dm2_v1_weather_gdat_draw_plan(
+    const DM2_V1_WeatherCommandReceipt *command,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherDrawPlan *out);
 #endif
