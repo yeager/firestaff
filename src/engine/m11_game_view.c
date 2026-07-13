@@ -9449,12 +9449,22 @@ static void m11_delete_group_events_f0181(M11_GameViewState* state,
      * invokes it after the F0267 unlink. */
 }
 
+static int m11_spawn_f0190_death_smoke(
+    M11_GameViewState* state,
+    int creatureType,
+    int killedCell,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 static int m11_check_group_death_and_drop(
     M11_GameViewState* state,
     unsigned short groupThing,
     int groupMapIndex,
     int groupMapX,
-    int groupMapY) {
+    int groupMapY,
+    int killedCell,
+    int shouldPresentSourceSmoke) {
     int gIdx;
     struct DungeonGroup_Compat* g;
     int anyAlive = 0;
@@ -9560,6 +9570,15 @@ static int m11_check_group_death_and_drop(
     if (killedAllPlan.shouldWriteRawGroup) {
         m11_write_raw_group_record(state->world.things, killedAllApply.groupIndex);
     }
+    if (shouldPresentSourceSmoke) {
+        /* ReDMCSB GROUP.C F0190:834-839 completes F0188/F0189 first;
+         * only then do lines 907-916 materialize the source C040 smoke.
+         * Projectile F0231 has already consumed its own afterplay receipt,
+         * so this generic group route is explicitly opt-in. */
+        (void)m11_spawn_f0190_death_smoke(
+            state, (int)g->creatureType, killedCell,
+            killedAllApply.mapIndex, killedAllApply.mapX, killedAllApply.mapY);
+    }
     return 1;
 }
 
@@ -9570,7 +9589,20 @@ int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
     int mapIndex,
     int mapX,
     int mapY) {
-    return m11_check_group_death_and_drop(state, groupThing, mapIndex, mapX, mapY);
+    return m11_check_group_death_and_drop(
+        state, groupThing, mapIndex, mapX, mapY,
+        EXPLOSION_CELL_CENTERED, 0);
+}
+
+int M11_GameView_ProbeCheckCreatureGroupDeathAndDropWithF0190Afterplay(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int killedCell) {
+    return m11_check_group_death_and_drop(
+        state, groupThing, mapIndex, mapX, mapY, killedCell, 1);
 }
 
 void M11_GameView_SetCameraOffset(M11_GameViewState* state,
@@ -29902,7 +29934,8 @@ static void m11_projectile_apply_impact(
                               m11_creature_name((int)g->creatureType));
                 /* Check if the group is dead after projectile damage */
                 (void)m11_check_group_death_and_drop(
-                    state, groupThing, impactMap, impactX, impactY);
+                    state, groupThing, impactMap, impactX, impactY,
+                    actionPlan.killedCell, 0);
                 m11_write_raw_group_record(state->world.things, gIdx);
                 (void)m11_materialize_projectile_associated_thing(
                     state, p, r, associatedThingMovedToGroup);
@@ -30248,7 +30281,9 @@ static void m11_explosion_apply_tick_result(
                         ? r->outActionGroup.targetMapIndex
                         : state->world.party.mapIndex,
                     r->outActionGroup.targetMapX,
-                    r->outActionGroup.targetMapY);
+                    r->outActionGroup.targetMapY,
+                    r->outActionGroup.targetCell,
+                    1);
             }
         }
     }
