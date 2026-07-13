@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,208 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,257 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -26,6 +26,12 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceE870TransferSourcePC;
 +static uint32 TheronIrq2TraceE870TransferPhysicalPC;
 +static char TheronIrq2TraceE870TransferInstruction[256];
++static bool TheronIrq2TraceE490WindowSeen[0x91];
++static bool TheronIrq2TraceE490TransferPending;
++static bool TheronIrq2TraceE490TransferSeen[0x91];
++static uint32 TheronIrq2TraceE490TransferSourcePC;
++static uint32 TheronIrq2TraceE490TransferPhysicalPC;
++static char TheronIrq2TraceE490TransferInstruction[256];
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -63,6 +69,18 @@ index 347482c4..61d4758e 100644
 +   FlushTheronIrq2Trace();
 +  }
 +  TheronIrq2TraceE870TransferPending = false;
++ }
++
++ if(TheronIrq2TraceE490TransferPending)
++ {
++  if(logical_pc < 0xe490 || logical_pc > 0xe520)
++  {
++   TheronIrq2TraceE490TransferSeen[TheronIrq2TraceE490TransferSourcePC - 0xe490] = true;
++   TheronIrq2Trace->print_format("bios_e490_transfer_source_pc=%04x source_physical_pc=%08x instruction=%s next_pc=%04x next_physical_pc=%08x\n",
++                                 TheronIrq2TraceE490TransferSourcePC, TheronIrq2TraceE490TransferPhysicalPC, TheronIrq2TraceE490TransferInstruction, logical_pc, PC);
++   FlushTheronIrq2Trace();
++  }
++  TheronIrq2TraceE490TransferPending = false;
 + }
 +
 + if(TheronIrq2TraceCallbackCount < 128)
@@ -133,6 +151,37 @@ index 347482c4..61d4758e 100644
 +   TheronIrq2TraceE870TransferSourcePC = logical_pc;
 +   TheronIrq2TraceE870TransferPhysicalPC = PC;
 +   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceE870TransferInstruction);
++  }
++ }
++
++ if(logical_pc >= 0xe490 && logical_pc <= 0xe520 && !TheronIrq2TraceE490WindowSeen[logical_pc - 0xe490])
++ {
++  uint32 disassembly_pc = logical_pc;
++  char disassembly[256];
++  const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++  const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++  const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++  const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++  const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++  const uint32 work_22a4 = CurGame->Debugger->MemPeek(0x22a4, 1, true, true) & 0xff;
++
++  TheronIrq2TraceE490WindowSeen[logical_pc - 0xe490] = true;
++  CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, disassembly);
++  TheronIrq2Trace->print_format("bios_e490_window_pc=%04x physical_pc=%08x instruction=%s cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x work_22a4=%02x\n",
++                                logical_pc, PC, disassembly, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804, work_22a4);
++  FlushTheronIrq2Trace();
++ }
++ if(logical_pc >= 0xe490 && logical_pc <= 0xe520 && !TheronIrq2TraceE490TransferPending && !TheronIrq2TraceE490TransferSeen[logical_pc - 0xe490])
++ {
++  const uint32 opcode = CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff;
++  if(opcode == 0x20 || opcode == 0x40 || opcode == 0x4c || opcode == 0x60 || opcode == 0x6c || (opcode & 0x1f) == 0x10 || (opcode & 0x0f) == 0x0f)
++  {
++   uint32 disassembly_pc = logical_pc;
++
++   TheronIrq2TraceE490TransferPending = true;
++   TheronIrq2TraceE490TransferSourcePC = logical_pc;
++   TheronIrq2TraceE490TransferPhysicalPC = PC;
++   CurGame->Debugger->Disassemble(disassembly_pc, logical_pc, TheronIrq2TraceE490TransferInstruction);
 +  }
 + }
 +
@@ -211,7 +260,7 @@ index 347482c4..61d4758e 100644
  
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
-@@ -162,10 +364,10 @@ static void UpdateCoreHooks(void)
+@@ -162,10 +413,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
@@ -225,7 +274,7 @@ index 347482c4..61d4758e 100644
  }
  
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +1569,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +1618,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -234,7 +283,7 @@ index 347482c4..61d4758e 100644
  }
  
  
-@@ -1873,6 +2075,26 @@ void Debugger_Init(void)
+@@ -1873,6 +2124,29 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -254,6 +303,9 @@ index 347482c4..61d4758e 100644
 +	  memset(TheronIrq2TraceE870WindowSeen, 0, sizeof(TheronIrq2TraceE870WindowSeen));
 +	  TheronIrq2TraceE870TransferPending = false;
 +	  memset(TheronIrq2TraceE870TransferSeen, 0, sizeof(TheronIrq2TraceE870TransferSeen));
++	  memset(TheronIrq2TraceE490WindowSeen, 0, sizeof(TheronIrq2TraceE490WindowSeen));
++	  TheronIrq2TraceE490TransferPending = false;
++	  memset(TheronIrq2TraceE490TransferSeen, 0, sizeof(TheronIrq2TraceE490TransferSeen));
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
 +	  FlushTheronIrq2Trace();
