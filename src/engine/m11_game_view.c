@@ -22434,8 +22434,18 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             * text makes Hall inscriptions look double-exposed and illegible. */
             if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
                 inscription.valid) {
-                m11_draw_dm1_front_wall_inscription_text(state, &cell,
-                                                         framebuffer, fbW, fbH);
+                /* ReDMCSB F0107 owns the D1C text decision, but F0128
+                 * rebuilds a complete viewport for every party tuple.  M11
+                 * must defer this source M648 material until its one final
+                 * repaint after the host palette pass; drawing it here and
+                 * again at frame end duplicates the same glyph cells. */
+                if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+                    /* V2.2 consumes this same verified M648 text during the
+                     * in-place source composition below.  Its modern pass
+                     * follows afterwards, so retain the established order. */
+                    m11_draw_dm1_front_wall_inscription_text(
+                        state, &cell, framebuffer, fbW, fbH);
+                }
                 continue;
             }
             if (m11_draw_dm1_wall_ornament_host_material_receipt(
@@ -22500,21 +22510,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         }
     }
 
-    /* ReDMCSB DUNGEON.C F0172/F0174 records the selected front-wall
-     * TextString independently of the map-local ornament lookup, then
-     * DUNVIEW.C F0107:3592-3706 restores the D1C wall patch and draws M648.
-     * Keep that final text handoff independent of a sparse/uncached local
-     * ornament slot: otherwise a valid source inscription can fall through
-     * to the unreadable ornament path and never reach the source font. */
-    if (cells && cells[0][1].valid &&
-        m11_viewport_cell_is_wall_like(&cells[0][1])) {
-        unsigned char glyph_probe[2];
-        if (m11_decode_visible_wall_text_raw_glyphs(
-                state, &cells[0][1], glyph_probe, (int)sizeof(glyph_probe))) {
-            m11_draw_dm1_front_wall_inscription_text(state, &cells[0][1],
-                                                     framebuffer, fbW, fbH);
-        }
-    }
 }
 
 static int m11_dm1_side_wall_blit_for_rel(int relForward,
@@ -34666,6 +34661,32 @@ static void m11_apply_viewport_turn_pan(unsigned char* framebuffer,
     }
 }
 
+static void m11_repaint_dm1_f0128_front_wall_inscription(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    M11_ViewportCell frontCell;
+    unsigned char glyphProbe[2];
+    if (!state || !framebuffer ||
+        state->presentationMode == M12_PRESENTATION_V22_MODERN ||
+        !m11_sample_viewport_cell(state, 1, 0, &frontCell) ||
+        !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
+        return;
+    }
+    /* ReDMCSB DUNGEON.C F0172/F0174 reselects G0290 from the current party
+     * tuple, then DUNVIEW.C F0107:3592-3706 decodes and draws M648.  This
+     * final M11 repaint is frame-local: a turn/move cannot retain a prior
+     * TextString or replay a host fallback. */
+    if (m11_decode_visible_wall_text_raw_glyphs(
+            state, &frontCell, glyphProbe, (int)sizeof(glyphProbe))) {
+        m11_draw_dm1_front_wall_inscription_text(state, &frontCell,
+                                                 framebuffer, framebufferWidth,
+                                                 framebufferHeight);
+    }
+}
+
 /* ── V2.2 GPU render path: per-frame V22 shape cache ─────────
  *
  * The V22 cache is implemented in m11_v22_shape_cache_pc34.c (its
@@ -35021,22 +35042,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         M11_VIEWPORT_W, M11_VIEWPORT_H,
                                         paletteIndex);
     }
-    /* DUNVIEW.C F0107 completes a readable D1C inscription with its M648
-     * glyph cells.  Firestaff's software palette pass occurs after the wall
-     * batches, so replay the source-indexed glyphs after that pass: otherwise
-     * its palette map changes the M648 pixels before presentation. */
-    if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-        M11_ViewportCell front_cell;
-        unsigned char glyph_probe[2];
-        if (m11_sample_viewport_cell(state, 1, 0, &front_cell) &&
-            front_cell.valid && m11_viewport_cell_is_wall_like(&front_cell) &&
-            m11_decode_visible_wall_text_raw_glyphs(
-                state, &front_cell, glyph_probe, (int)sizeof(glyph_probe))) {
-            m11_draw_dm1_front_wall_inscription_text(state, &front_cell,
-                                                     framebuffer, framebufferWidth,
-                                                     framebufferHeight);
-        }
-    }
+    /* F0128 has completed the tuple's wall/ornament composition.  Repaint
+     * the selected D1C F0107 material once, after the host palette pass. */
+    m11_repaint_dm1_f0128_front_wall_inscription(
+        state, framebuffer, framebufferWidth, framebufferHeight);
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
         /* V2.2 replaces source pixels only with a verified in-place pack.
          * A missing cache is a no-draw condition; boot has already resolved

@@ -27,6 +27,16 @@
   `m11_dm1_hoc_no_fallback_panel` CTest with a real C026/C346 route plus the
   no-asset rejection.
 
+- 2026-07-13 DM1 F0128/F0107 inscription repaint: M11 now defers readable
+  D1C M648 material until one final F0128 current-party-tuple repaint after
+  the host palette pass. The earlier duplicate F0107 draws are removed, so a
+  turn or move cannot retain a previous frame's TextString. The real PC34
+  runtime regression uses a map-1 wall, turns away, then returns and proves
+  the original TextString is absent in the turned tuple and returns with
+  byte-identical M648 material and framebuffer. No host font, replacement
+   graphic, or synthetic wall/text path is used.
+   Verification: focused Ninja build and PC34 inscription CTest suite.
+
 - 2026-07-13 Theron sparse authentic-trace instrumentation: the Mednafen
   debugger callback now filters to bounded System Card/loader windows before
   any debugger-memory inspection, preserving pending-transfer observations.
