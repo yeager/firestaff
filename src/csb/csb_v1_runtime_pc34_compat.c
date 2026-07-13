@@ -13800,16 +13800,14 @@ static void csb_v1_runtime_fix_unmerged_timer_placement(
     queue->timeline[timeline_index] = (uint16_t)event_index;
 }
 
-static int csb_v1_runtime_append_unmerged_map_timer(
-    CSB_V1_RuntimeProfile *profile,
+static int csb_v1_runtime_append_unmerged_map_timer_to_queue(
+    struct DM1_EventQueue_V1 *queue,
     const struct DM1_Event_V1 *event)
 {
-    struct DM1_EventQueue_V1 *queue;
     int index;
     int position;
 
-    if (!profile || !event) return -1;
-    queue = &profile->timeline_queue;
+    if (!queue || !event) return -1;
     if (queue->eventCount >= queue->maxEvents) return -1;
     index = queue->firstUnusedIndex;
     if (index < 0 || index >= queue->maxEvents) return -1;
@@ -13828,6 +13826,15 @@ static int csb_v1_runtime_append_unmerged_map_timer(
     ++queue->eventCount;
     csb_v1_runtime_fix_unmerged_timer_placement(queue, position);
     return index;
+}
+
+static int csb_v1_runtime_append_unmerged_map_timer(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_Event_V1 *event)
+{
+    if (!profile) return -1;
+    return csb_v1_runtime_append_unmerged_map_timer_to_queue(
+        &profile->timeline_queue, event);
 }
 
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
@@ -14718,6 +14725,8 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t queue_index;
+    struct DM1_EventQueue_V1 staged_queue;
+    uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
@@ -14726,7 +14735,13 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     if (profile->csbwin_timer_queue_summary_count >
             CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
         profile->csbwin_timer_summary_count >
-            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        (profile->csbwin_timer_summary_total != 0u &&
+         profile->csbwin_timer_summary_total !=
+             profile->csbwin_timer_summary_count) ||
+        (profile->csbwin_timer_queue_summary_total != 0u &&
+         profile->csbwin_timer_queue_summary_total !=
+             profile->csbwin_timer_queue_summary_count)) {
         return -1;
     }
 
@@ -14734,12 +14749,13 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
      * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.
      * The decoded CSBWin timer queue already captures the source order; this
      * handoff rebuilds Firestaff's timeline heap from that queue, preserving
-     * m_time as Map_Time and m_timerUByte5 as the Type_Priority priority byte.
-     * Unsupported side effects remain harmless dispatch records until their
-     * runtime handlers are implemented. */
-    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
+     * every serialized timer slot. Do not run a restored queue through
+     * GameTimers::SetTimer policy: CSBWin has already accepted these entries
+     * before SaveGame.cpp writes them. Unsupported side effects remain harmless
+     * dispatch records until their runtime handlers are implemented. */
+    dm1v1_event_queue_init(&staged_queue, profile->game_time);
     for (queue_index = 0u; queue_index < DM1_EVENT_MAX_COUNT; ++queue_index) {
-        profile->csbwin_timeline_event_queue_slot[queue_index] =
+        staged_slots[queue_index] =
             CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
     }
     for (queue_index = 0u;
@@ -14750,19 +14766,19 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         struct DM1_Event_V1 event;
 
         if (timer_index >= profile->csbwin_timer_summary_count) {
-            continue;
+            return -1;
         }
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {
-            continue;
+            return -1;
         }
 
         memset(&event, 0, sizeof(event));
-        /* CSBWin TIMER stores level separately from m_time. Preserve that
-         * source field at the DM1 timeline boundary instead of treating a
-         * caller-shaped Map_Time high byte as a saved level. */
-        if ((timer->time & 0xff000000u) != 0u) continue;
-        event.map_time = DM1_MAP_TIME_MAKE(timer->level, timer->time);
+        /* CSBWin's serialized TIMER time word already carries the source
+         * level/time representation consumed by ProcessTimers. The decoded
+         * level field is a receipt for LoadLevel, not a replacement high byte
+         * for the original timer word. */
+        event.map_time = timer->time;
         event.type = timer->function;
         event.priority = timer->ubyte5;
         event.b_mapX = timer->ubyte6;
@@ -14770,14 +14786,18 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         event.c_cell = timer->ubyte8;
         event.c_effect = timer->ubyte9;
         {
-            int event_index = dm1v1_event_add(&profile->timeline_queue, &event);
-            if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_index;
-                ++imported;
+            int event_index = csb_v1_runtime_append_unmerged_map_timer_to_queue(
+                &staged_queue, &event);
+            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+                return -1;
             }
+            staged_slots[event_index] = queue_index;
+            ++imported;
         }
     }
+    profile->timeline_queue = staged_queue;
+    memcpy(profile->csbwin_timeline_event_queue_slot, staged_slots,
+           sizeof(staged_slots));
     return imported;
 }
 
