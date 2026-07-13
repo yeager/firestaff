@@ -3801,6 +3801,15 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             continue;
         }
         ++receipt.global_image_index_binding_count;
+        if (structure1g->sequence_instruction_count <= 0 ||
+            structure1g->structure2_image_instruction_bound_count +
+                structure1g->structure2_image_instruction_unbound_count !=
+                    structure1g->image_instruction_count ||
+            structure1g->structure2_image_instruction_unbound_count != 0) {
+            ++receipt.blocked_sequence_provenance_count;
+            continue;
+        }
+        ++receipt.complete_sequence_provenance_count;
         if (!nexus_v1_level_structure2_source_envelope_valid(level) ||
             !level->structure1g_structure2_bindings_complete) {
             ++receipt.blocked_source_envelope_count;
@@ -3825,6 +3834,16 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             command->animated_texture_structure1g_sequence_word_offset;
         source->structure1g_global_image_index =
             command->animated_texture_first_image_index;
+        source->structure1g_sequence_instruction_count =
+            structure1g->sequence_instruction_count;
+        source->structure1g_sequence_image_instruction_count =
+            structure1g->image_instruction_count;
+        source->structure1g_sequence_goto_instruction_count =
+            structure1g->goto_instruction_count;
+        source->structure1g_sequence_bound_image_count =
+            structure1g->structure2_image_instruction_bound_count;
+        source->structure1g_sequence_unbound_image_count =
+            structure1g->structure2_image_instruction_unbound_count;
         source->image_id = texture->image_id;
         source->encoding = texture->encoding;
         source->palette_id = texture->palette_id;
@@ -3841,10 +3860,13 @@ int nexus_v1_dgn_bind_structure2_animated_floor_sources(
             receipt.animated_floor_command_count &&
         receipt.global_image_index_binding_count ==
             receipt.animated_floor_command_count &&
+        receipt.complete_sequence_provenance_count ==
+            receipt.animated_floor_command_count &&
         receipt.source_command_count == receipt.animated_floor_command_count &&
         receipt.blocked_invalid_command_count == 0 &&
         receipt.blocked_structure1g_provenance_count == 0 &&
         receipt.blocked_global_image_index_count == 0 &&
+        receipt.blocked_sequence_provenance_count == 0 &&
         receipt.blocked_missing_descriptor_count == 0 &&
         receipt.blocked_source_envelope_count == 0;
     *out_receipt = receipt;
