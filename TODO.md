@@ -1762,6 +1762,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     PCE polls after the authentic host event before it can be used to study
     System Card input handling. This is ordering evidence only and never
     injects an emulated controller state.
+    2026-07-13 authentic timing result: an immediate macOS Return hold reached
+    SDL and PCE port 0 (`0008`) but appeared after all 128 observed PCE input
+    transactions (`host_input_order=after_last_observed_pce_input_poll`). The
+    capture still had 25 CDIRQ callbacks and no non-System-Card PCECD read or
+    raw sector. This proves a capture-order boundary only; it does not bind a
+    key, controller poll, CD read, Track 02 record, or game route.
     2026-07-13 caller-PC build repair: caller-PC capture uses Mednafen's
     public `HuC6280::GetRegister(GSREG_PC)` accessor; this changes no trace
     policy.

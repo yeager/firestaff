@@ -5,6 +5,8 @@
   emulated PCE input transactions before and after it. A host event after the
   final observed PCE poll remains explicitly blocked from System Card or
   Track 02 interpretation. Verification: capture-script syntax/contract test.
+  A fresh immediate Return capture observed the host event after 128 PCE input
+  transactions, so it correctly remains blocked.
 
 - 2026-07-13 Theron authenticated macOS controller-capture hardening: the
   Mednafen live harness now performs an opt-in, focused macOS SDL key press
