@@ -543,6 +543,10 @@ static int import_original_pc34_party_part(const uint8_t *part,
     }
     for (; i < CHAMPION_MAX_PARTY; ++i) {
         F0600_CHAMPION_InitEmpty_Compat(&out_state->party->champions[i]);
+        memcpy(out_state->party->pc34InactiveChampionRecords[i],
+               part + (size_t)i * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT,
+               DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT);
+        out_state->party->pc34InactiveChampionRecordValid[i] = 1u;
     }
     if (out_report) {
         out_report->imported_champion_block_count = CHAMPION_MAX_PARTY;
@@ -2173,6 +2177,11 @@ static int import_original_pc34_global_data(
             }
         }
         if (i == SAVEGAME_PC34_PART_PARTY) {
+            if (out_report) {
+                out_report->pc34_party_part_byte_offset =
+                    (uint32_t)(cursor - part_size);
+                out_report->pc34_party_part_key = part_keys[i];
+            }
             rc = import_original_pc34_party_part(part, part_size, out_state,
                                                  out_report);
             if (rc != SAVEGAME_PC34_OK) {
@@ -3073,6 +3082,70 @@ static int dm1_original_save_external_portraits_match(
                   portrait_bytes) == 0;
 }
 
+static int dm1_original_save_inactive_champion_records_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    int source_count;
+    int exported_count;
+    int slot;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > source_size -
+            source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT > exported_size -
+            exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    memcpy(source_part,
+           source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)f0417_xor_checksum_bytes(source_part,
+                                   sizeof(source_part) / 2u,
+                                   source_report->pc34_party_part_key);
+    (void)f0417_xor_checksum_bytes(exported_part,
+                                   sizeof(exported_part) / 2u,
+                                   exported_report->pc34_party_part_key);
+    source_count = source_report->imported_champion_count;
+    exported_count = exported_report->imported_champion_count;
+    if (source_count < 0 || source_count > CHAMPION_MAX_PARTY ||
+        exported_count != source_count) {
+        return 0;
+    }
+    out_report->inactive_champion_record_byte_receipt_available = 1;
+    out_report->inactive_champion_record_count =
+        CHAMPION_MAX_PARTY - source_count;
+    for (slot = source_count; slot < CHAMPION_MAX_PARTY; ++slot) {
+        const size_t offset = (size_t)slot *
+            DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        if (memcmp(source_part + offset, exported_part + offset,
+                   DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT) == 0) {
+            ++out_report->inactive_champion_record_byte_preserved_count;
+        }
+    }
+    out_report->inactive_champion_record_byte_preservation_ok =
+        out_report->inactive_champion_record_byte_preserved_count ==
+        out_report->inactive_champion_record_count;
+    return 1;
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3358,11 +3431,18 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
                 bytes, size, &import_report, out_bytes, *out_size,
                 &export_report);
     }
+    if (out_report && !dm1_original_save_inactive_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->inactive_champion_record_byte_receipt_available = 0;
+    }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report &&
         (!out_report->core_state_matches ||
          !out_report->external_portrait_byte_receipt_available ||
          !out_report->external_portrait_byte_preservation_ok ||
+         !out_report->inactive_champion_record_byte_receipt_available ||
+         !out_report->inactive_champion_record_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
          (out_report->source_c13_event_count > 0 &&
@@ -3590,6 +3670,12 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_external_portrait_fingerprint;
         receipt->external_portrait_byte_preservation_ok =
             roundtrip.external_portrait_byte_preservation_ok;
+        receipt->inactive_champion_record_count =
+            roundtrip.inactive_champion_record_count;
+        receipt->inactive_champion_record_byte_preserved_count =
+            roundtrip.inactive_champion_record_byte_preserved_count;
+        receipt->inactive_champion_record_byte_preservation_ok =
+            roundtrip.inactive_champion_record_byte_preservation_ok;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;

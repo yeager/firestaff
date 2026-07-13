@@ -1189,6 +1189,13 @@ and real community-save corpus round-trip evidence.
     fingerprint, then compares the transient source/export bytes directly.
     A missing, short, or changed portrait block fails closed. Remaining work
     is authentic community-save coverage and broader dungeon-tail import.
+  - 2026-07-13 update: C2 PARTY now retains each inactive `M516_CHAMPIONS`
+    319-byte record as opaque F0435 provenance and F0433 writes it back only
+    when that original record exists. The verifier decrypts each source and
+    transient-export PARTY part with its own original key and compares every
+    inactive slot byte-for-byte. No inactive record creates a live champion;
+    missing, malformed, or changed records fail closed. Remaining work is
+    authentic community-save coverage and broader dungeon-tail import.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live
