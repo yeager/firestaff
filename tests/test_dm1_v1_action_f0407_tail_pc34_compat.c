@@ -1311,16 +1311,18 @@ static void test_melee_damage_emission_plan(void) {
              "kill notify plan builds");
     CHECK_EQ(killOut.valid, 1, "kill notify valid");
     CHECK_EQ(killOut.shouldLogDefeated, 1, "kill notify logs defeated");
-    CHECK_EQ(killOut.shouldAwardKillXp, 1, "kill notify awards legacy xp");
-    CHECK_EQ(killOut.championIndex, 2, "kill notify champion");
+    CHECK_EQ(killOut.shouldAwardKillXp, 0,
+             "F0231 kill notification adds no synthetic XP");
+    CHECK_EQ(killOut.championIndex, -1,
+             "F0231 kill notification has no XP recipient");
     CHECK_EQ(killOut.creatureType, 6, "kill notify creature");
-    CHECK_EQ(killOut.xpBonus, 15, "kill notify base health xp");
+    CHECK_EQ(killOut.xpBonus, 0, "F0231 kill notification has no XP bonus");
 
     killIn.creatureBaseHealth = 3;
     CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
                  &killIn, &killOut), 1,
-             "kill notify minimum xp builds");
-    CHECK_EQ(killOut.xpBonus, 5, "kill notify minimum xp");
+             "kill notify zero-XP receipt remains stable");
+    CHECK_EQ(killOut.xpBonus, 0, "creature health never changes kill receipt XP");
 
     killIn.activeChampionPresent = 0;
     CHECK_EQ(dm1_v1_melee_kill_notify_plan_f0231_pc34(
