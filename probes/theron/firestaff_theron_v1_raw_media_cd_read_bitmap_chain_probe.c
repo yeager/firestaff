@@ -11,6 +11,7 @@
  * executor is involved.
  */
 #include "asset_status_m12.h"
+#include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_system_card_irq2_entry_gate.h"
 #include "theron_v1_track02.h"
@@ -117,6 +118,7 @@ int main(void)
 {
     const char *track02_path = getenv("THERON_RAW_TRACK02");
     const char *system_card_path = getenv("THERON_SYSTEM_CARD");
+    const char *loader_trace_path = getenv("THERON_RAW_LOADER_TRACE");
     unsigned char *track02 = NULL;
     unsigned char *system_card = NULL;
     size_t track02_bytes = 0u;
@@ -129,6 +131,9 @@ int main(void)
     Theron_V1SystemCardIrq2EntryGate system_card_gate;
     Theron_StartupMediaStateReceipt bitmap;
     Theron_StartupRawBitmapRouteReceipt raw_bitmap;
+    Theron_V1RawLoaderTraceReceipt loader_trace;
+    Theron_V1RawLoaderTraceReceipt media_bound_trace;
+    Theron_V1RawLoaderTraceReceipt bitmap_bound_trace;
     const Theron_Track02StartupBitmapAtlasRoute *route;
     const char *route_name = NULL;
     unsigned int route_bit = 0u;
@@ -136,8 +141,8 @@ int main(void)
     int result = 1;
 
     if (!track02_path || !track02_path[0] || !system_card_path ||
-        !system_card_path[0]) {
-        printf("status=skip reason=explicit_raw_track02_and_system_card_required "
+        !system_card_path[0] || !loader_trace_path || !loader_trace_path[0]) {
+        printf("status=skip reason=explicit_raw_track02_system_card_and_loader_trace_required "
                "emulator=not_started fallback=not_run\n");
         return 0;
     }
@@ -157,6 +162,15 @@ int main(void)
         !system_card_md5(system_card_path, system_card_bytes,
                          system_card_md5_hex)) {
         printf("status=blocked reason=system_card_missing_or_unverified "
+               "emulator=not_started fallback=not_run\n");
+        goto done;
+    }
+    if (!theron_v1_raw_loader_trace_import_mednafen_capture_file(
+            loader_trace_path, track02_md5, &loader_trace) ||
+        !theron_v1_raw_loader_trace_bind_track02_destination_span(
+            &loader_trace, track02, track02_bytes, track02_md5,
+            &media_bound_trace)) {
+        printf("status=blocked reason=loader_trace_track02_span_unproven "
                "emulator=not_started fallback=not_run\n");
         goto done;
     }
@@ -204,6 +218,17 @@ int main(void)
                "emulator=not_started fallback=not_run\n");
         goto done;
     }
+    if (!theron_v1_raw_loader_trace_final_bind(
+            &media_bound_trace, &bitmap, &bitmap_bound_trace) ||
+        !bitmap_bound_trace.valid ||
+        bitmap_bound_trace.bitmap_route_mask !=
+            bitmap.startup_bitmap_raw_route_mask ||
+        bitmap_bound_trace.bitmap_atlas_checksum !=
+            bitmap.startup_bitmap_atlas_checksum) {
+        printf("status=blocked reason=loader_trace_bitmap_route_unproven "
+               "emulator=not_started fallback=not_run\n");
+        goto done;
+    }
     if (theron_v1_track02_find_bank_signal(track02, track02_bytes, track02_md5,
                                             &bank) != THERON_TRACK02_SIGNAL_OK ||
         route_anchor_index >= bank.anchor_count ||
@@ -235,6 +260,7 @@ int main(void)
      * intentionally unbound: no loader reference names a palette window for
      * this route.  Do not inspect arbitrary 32-byte spans or publish pixels. */
     printf("status=blocked route=%s raw_bitmap_consumed=1 "
+           "loader_trace_track02_bound=1 bitmap_route_receipt_bound=1 "
            "bitmap_descriptor_hash=%08x palette_descriptor=unproven "
            "rgba_output=blocked emulator=not_started fallback=not_run\n",
            route_name, raw_bitmap.checksum);

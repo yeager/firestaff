@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 Theron Track 02 runtime bitmap-chain gate: the opt-in raw
+  media probe now requires one authenticated Mednafen loader trace alongside
+  the original Track 02 and System Card before consuming a real startup
+  bitmap route. The trace span and bitmap receipt must share the same verified
+  media identity; missing evidence skips or blocks, with no fallback. Palette
+  output and record-to-bitmap semantics remain deliberately unproven.
+  Verification: dedicated CTest probe passed its no-artifact fail-closed skip.
+
 - ✅ 2026-07-13 Theron dynamic CD_READ register provenance: the Mednafen
   capture now records the actual `CL/DL/CH` bytes at the `$4090` call, and
   Firestaff rejects a trace unless those bytes reconstruct its source-locked
