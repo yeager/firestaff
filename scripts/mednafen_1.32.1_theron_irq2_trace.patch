@@ -1235,8 +1235,9 @@ diff --git a/src/pce/huc.cpp b/src/pce/huc.cpp
 diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 --- a/src/cdrom/scsicd.cpp
 +++ b/src/cdrom/scsicd.cpp
-@@ -69,1 +69,31 @@
- // Internal operation to the SCSI CD unit.  Only pass 1 or 0 to these macros!
+@@ -67,3 +67,32 @@
+ static bool TrayOpen;
+-
 +static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
 +{
 + static FILE *trace = NULL;
@@ -1267,12 +1268,13 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 + }
 + return ok;
 +}
+ // Internal operation to the SCSI CD unit.  Only pass 1 or 0 to these macros!
 @@ -2790,7 +2813,7 @@ static void SCSICD_RunCore(scsicd_timestamp_t run_time)
-    else if(SectorAddr >= toc.tracks[100].lba)
-    {
-     CommandCCError(SENSEKEY_ILLEGAL_REQUEST, NSE_END_OF_VOLUME);
-    }
--   else if(!Cur_CDIF->ReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
-+   else if(!TheronTraceReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
-    {
-     cd.data_transfer_done = false;
+     else if(SectorAddr >= toc.tracks[100].lba)
+     {
+      CommandCCError(SENSEKEY_ILLEGAL_REQUEST, NSE_END_OF_VOLUME);
+     }
+-    else if(!Cur_CDIF->ReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
++    else if(!TheronTraceReadRawSector(tmp_read_buf, SectorAddr))	//, SectorAddr + SectorCount))
+     {
+      cd.data_transfer_done = false;
