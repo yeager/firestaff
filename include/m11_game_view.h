@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+#ifndef FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS
 /*
  * Legacy M11 probe spellings.  The production input and layout paths use
  * the DM1_V1_* names directly; retaining these aliases keeps the independent
@@ -107,6 +108,7 @@ static inline int M11_GameView_GetV1DialogChoiceTextZone(
     *outY = layout.centerY - 4;
     return 1;
 }
+#endif
 
 enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,

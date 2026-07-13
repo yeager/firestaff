@@ -1,4 +1,6 @@
+#define FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS 1
 #include "m11_game_view.h"
+#undef FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
