@@ -1477,13 +1477,23 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
         } else if (type == DM1_EVENT_REMOVE_FLUXCAGE) {
             /* ReDMCSB PROJEXPL.C F0224 lines 989-993 stores the
              * fluxcage explosion THING in EVENT.C.Slot while B.Location
-             * remains the target square. Firestaff runtime keeps only the
-             * ExplosionList slot index in aux0, so native export rebuilds
-             * the source C15 thing reference here. */
+             * remains the target square. The materialized event retains
+             * that exact C15 reference in aux2; a host slot number is not
+             * a source Slot and must not be exported as one. */
+            uint16_t thing;
+            if (src->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE ||
+                src->aux1 != C050_EXPLOSION_FLUXCAGE || src->aux4 != 0 ||
+                src->cell != 0 || src->aux2 < 0 || src->aux2 > 0xffff ||
+                !pc34_original_explosion_thing_for_runtime_event(
+                    dungeon, things, explosions, src, &thing) ||
+                thing != (uint16_t)src->aux2 ||
+                explosions->entries[src->aux0].explosionType !=
+                    C050_EXPLOSION_FLUXCAGE) {
+                return 0;
+            }
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
-            write_u16_le(dst + 8u,
-                         pc34_make_thing_ref(THING_TYPE_EXPLOSION, src->aux0));
+            write_u16_le(dst + 8u, thing);
         } else if (type == DM1_EVENT_PLAY_SOUND) {
             /* ReDMCSB SOUND.C:1536-1543 schedules C20 with B.Location
              * and the signed C.SoundIndex union member.  C.Cell/Effect is

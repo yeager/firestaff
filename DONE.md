@@ -10235,3 +10235,14 @@ the source-proven 2/1/0 sequence rather than emitting a guessed native event.
 Source: ReDMCSB `CLIKVIEW.C F0374` lines 179-186 and `TIMELINE.C F0255` lines
 1665-1699. Verification: `test_dm1_v1_original_save_pc34_handoff` exports and
 reimports the C13 union and rejects an unproven step.
+
+# ✅ 2026-07-13 DM1 original-save C24 fluxcage roundtrip
+
+Original PC34 C24 now materializes only from the ReDMCSB C15 fluxcage slot:
+`Priority=0`, `B.Location`, and `C.Slot`. The runtime binds that exact static
+thing to a live C050 fluxcage, respects the source game-won guard, and on
+expiry unlinks and retires both records. Native export recovers the preserved
+source slot rather than writing a host explosion index. Source: ReDMCSB
+`PROJEXPL.C F0224` lines 983-994 and `TIMELINE.C F0261` lines 1906-1916.
+Verification: `test_dm1_v1_original_save_pc34_handoff` drives authenticated
+import, runtime expiry, native export, and reimport of the C24 union.

@@ -432,10 +432,11 @@ static int write_fixture_file(const char *path,
 /* Reuse the test's exact F0430/F0419 fixture obfuscation to turn one
  * accepted event into C11. It remains a checksum-authenticated PC34 save,
  * not a fabricated in-memory timeline. */
-static int rewrite_fixture_event_type(unsigned char *bytes,
+static int rewrite_fixture_event_byte(unsigned char *bytes,
                                       size_t size,
                                       int event_index,
-                                      int event_type)
+                                      int byte_offset,
+                                      int value)
 {
     unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
     uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
@@ -446,7 +447,8 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
 
     if (!bytes || size < sizeof(header) || event_index < 0 ||
         event_index >= ORIGINAL_PC34_EVENT_MAXIMUM_COUNT ||
-        event_type < 0 || event_type > 255) {
+        byte_offset < 0 || byte_offset >= ORIGINAL_PC34_EVENT_BYTES ||
+        value < 0 || value > 255) {
         return 0;
     }
     memcpy(header, bytes, sizeof(header));
@@ -473,8 +475,8 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
 
     xor_words(bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
               keys[SAVEGAME_PC34_PART_EVENTS]);
-    bytes[cursor + (size_t)event_index * ORIGINAL_PC34_EVENT_BYTES + 4u] =
-        (unsigned char)event_type;
+    bytes[cursor + (size_t)event_index * ORIGINAL_PC34_EVENT_BYTES +
+          (size_t)byte_offset] = (unsigned char)value;
     checksum = checksum_and_xor_words(
         bytes + cursor, ORIGINAL_PC34_EVENTS_PART_BYTES / 2u,
         keys[SAVEGAME_PC34_PART_EVENTS]);
@@ -489,6 +491,22 @@ static int rewrite_fixture_event_type(unsigned char *bytes,
         rd16le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
     memcpy(bytes, header, sizeof(header));
     return 1;
+}
+
+static int rewrite_fixture_event_type(unsigned char *bytes,
+                                      size_t size,
+                                      int event_index,
+                                      int event_type)
+{
+    return rewrite_fixture_event_byte(bytes, size, event_index, 4, event_type);
+}
+
+static int rewrite_fixture_event_priority(unsigned char *bytes,
+                                          size_t size,
+                                          int event_index,
+                                          int priority)
+{
+    return rewrite_fixture_event_byte(bytes, size, event_index, 5, priority);
 }
 
 static int rewrite_fixture_event_c_union(unsigned char *bytes,
@@ -1903,6 +1921,143 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
           "C25 binds Location, Slot, and decoded C15 payload without Cell/Effect");
 }
 
+static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int exported_written = 0;
+    int rc;
+    int i;
+    int c24_index = -1;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    unsigned char square_data[3][32 * 32];
+    struct DungeonThings_Compat things;
+    unsigned short first_things[1];
+    unsigned char raw_explosion[4];
+    struct DungeonExplosion_Compat source_explosions[1];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    struct TickResult_Compat result;
+    DM1OriginalSavePC34HandoffReport report;
+    uint16_t source_thing = (uint16_t)(THING_TYPE_EXPLOSION << 10);
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK, "C24 materializer fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_REMOVE_FLUXCAGE) &&
+              rewrite_fixture_event_priority(bytes, (size_t)written, 0, 0) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 0,
+                                            source_thing),
+          "C24 fixture preserves authenticated zero-priority Slot union bytes");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    memset(raw_explosion, 0, sizeof(raw_explosion));
+    memset(source_explosions, 0, sizeof(source_explosions));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    square_data[2][11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = source_thing;
+    wr16le(raw_explosion + 0u, THING_ENDOFLIST);
+    raw_explosion[2] = C050_EXPLOSION_FLUXCAGE;
+    source_explosions[0].next = THING_ENDOFLIST;
+    source_explosions[0].type = C050_EXPLOSION_FLUXCAGE;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.explosions = source_explosions;
+    things.explosionCount = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = raw_explosion;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.loaded = 1;
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "C24 materializer fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "C24 materializes only through the original fluxcage C15 slot");
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        if (loaded_world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            c24_index = i;
+            break;
+        }
+    }
+    CHECK(c24_index >= 0 &&
+              loaded_world.timeline.events[c24_index].aux1 ==
+                  C050_EXPLOSION_FLUXCAGE &&
+              loaded_world.timeline.events[c24_index].aux2 == source_thing &&
+              loaded_world.explosions.entries[
+                  loaded_world.timeline.events[c24_index].aux0].reserved0 == 1,
+          "C24 binds original C15 Slot to one live C050 runtime explosion");
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_written);
+    CHECK(rc == SAVEGAME_PC34_OK && exported_written > 0,
+          "C24 materialized state exports through its original Slot receipt");
+    imported.party = &imported_party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.events[2].type == DM1_EVENT_REMOVE_FLUXCAGE &&
+              report.events[2].priority == 0 &&
+              report.events[2].b_mapX == 11 && report.events[2].b_mapY == 12 &&
+              rd16le(&report.events[2].c_cell) == source_thing,
+          "C24 roundtrip preserves Priority Location and exact C.Slot union");
+
+    loaded_world.timeline.events[c24_index].aux2 = THING_NONE;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C24 export rejects a missing original C.Slot receipt");
+    loaded_world.timeline.events[c24_index].aux2 = source_thing;
+
+    {
+        struct TimelineEvent_Compat c24 = loaded_world.timeline.events[c24_index];
+        CHECK(F0720_TIMELINE_Init_Compat(&loaded_world.timeline, c24.fireAtTick),
+              "C24 runtime expiry timeline initializes");
+        CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &c24),
+              "C24 runtime expiry event schedules");
+        loaded_world.gameTick = c24.fireAtTick;
+    }
+    memset(&result, 0, sizeof(result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result) > 0 &&
+              first_things[0] == THING_ENDOFLIST &&
+              source_explosions[0].next == THING_NONE &&
+              loaded_world.explosions.entries[0].reserved0 == 0,
+          "C24 expiry removes the exact C15 fluxcage and its live counterpart");
+}
+
 static void test_real_dm1_dungeon_tail_map_span_validation(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -2703,6 +2858,7 @@ int main(void)
     test_original_c13_vi_altar_event_plan();
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
+    test_original_c24_fluxcage_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();

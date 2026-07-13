@@ -2553,6 +2553,11 @@ static int orch_unlink_thing_from_square_compat(
     int mapY,
     unsigned short thingToUnlink);
 
+static int orch_c24_find_fluxcage_thing_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    unsigned short* outThing);
+
 static void orch_remove_active_group_state_compat(
     struct GameWorld_Compat* world,
     int groupIndex);
@@ -4954,6 +4959,56 @@ static int orch_unlink_thing_from_square_compat(
         }
         previous = thing;
         thing = nextThing;
+    }
+    return 0;
+}
+
+static int orch_c24_find_fluxcage_thing_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    unsigned short* outThing)
+{
+    unsigned short thing;
+    unsigned short expected;
+    int safety = 0;
+
+    if (outThing) *outThing = THING_NONE;
+    if (!world || !world->dungeon || !world->things || !ev ||
+        ev->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE ||
+        ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
+        ev->aux1 != C050_EXPLOSION_FLUXCAGE || ev->aux2 < 0 ||
+        ev->aux2 > 0xffff || ev->aux4 != 0 || ev->cell != 0 ||
+        ev->mapIndex < 0 ||
+        ev->mapIndex >= (int)world->dungeon->header.mapCount ||
+        ev->mapX < 0 || ev->mapY < 0 ||
+        ev->mapX >= (int)world->dungeon->maps[ev->mapIndex].width ||
+        ev->mapY >= (int)world->dungeon->maps[ev->mapIndex].height ||
+        world->explosions.entries[ev->aux0].reserved0 == 0 ||
+        world->explosions.entries[ev->aux0].explosionType !=
+            C050_EXPLOSION_FLUXCAGE ||
+        world->explosions.entries[ev->aux0].mapIndex != ev->mapIndex ||
+        world->explosions.entries[ev->aux0].mapX != ev->mapX ||
+        world->explosions.entries[ev->aux0].mapY != ev->mapY) {
+        return 0;
+    }
+    expected = (unsigned short)ev->aux2;
+    if (THING_GET_TYPE(expected) != THING_TYPE_EXPLOSION ||
+        THING_GET_CELL(expected) != 0) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (thing == expected && THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            index >= 0 && index < world->things->explosionCount &&
+            world->things->explosions &&
+            world->things->explosions[index].type ==
+                C050_EXPLOSION_FLUXCAGE) {
+            if (outThing) *outThing = thing;
+            return 1;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
     }
     return 0;
 }
@@ -10859,13 +10914,32 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_REMOVE_FLUXCAGE: {
             struct FluxcageRemoveInput_Compat in;
             struct FluxcageRemoveResult_Compat out;
+            unsigned short sourceThing;
+
+            /* ReDMCSB TIMELINE.C F0261:1906-1916 removes C24's exact
+             * C15 slot only while G0302_B_GameWon is false, then marks
+             * the source record unused. An unbound C24 is not allowed to
+             * consume a host-only explosion. */
+            if (world->gameWon ||
+                !orch_c24_find_fluxcage_thing_compat(world, &ev,
+                                                      &sourceThing)) {
+                break;
+            }
             memset(&in, 0, sizeof(in));
             memset(&out, 0, sizeof(out));
             in.explosionSlotIndex = ev.aux0;
             in.mapIndex = ev.mapIndex;
             in.mapX = ev.mapX;
             in.mapY = ev.mapY;
-            F0868_RUNTIME_HandleRemoveFluxcage_Compat(&in, &world->explosions, &out);
+            if (F0868_RUNTIME_HandleRemoveFluxcage_Compat(
+                    &in, &world->explosions, &out) && out.removed) {
+                if (!orch_unlink_thing_from_square_compat(
+                        world, ev.mapIndex, ev.mapX, ev.mapY, sourceThing)) {
+                    break;
+                }
+                (void)orch_set_next_thing_compat(world->things, sourceThing,
+                                                  THING_NONE);
+            }
             break;
         }
         case TIMELINE_EVENT_GROUP_GENERATOR:
