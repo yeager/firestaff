@@ -15372,6 +15372,51 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     return 1;
 }
 
+int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter)
+{
+    CSB_V1_RuntimeDSAFilterStackAdapter candidate;
+
+    if (!profile || !binding || !out_adapter) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    if (!csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+            profile, binding, state_index, action_ordinal, master_location,
+            &candidate.runner)) {
+        return 0;
+    }
+    /* CSBWin Monster.cpp:1134-1180 and 3222-3370 invoke ProcessDSAFilter
+     * through a function-shaped boundary. Keep its user data tied to the
+     * save/profile that authenticated the selected DSAAction. */
+    candidate.profile = profile;
+    *out_adapter = candidate;
+    return 1;
+}
+
+int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
+    const CSB_V1_DSAImportedAction *action,
+    int *parameters,
+    int parameter_count,
+    int flgs_inout[2],
+    void *user)
+{
+    CSB_V1_RuntimeDSAFilterStackAdapter *adapter =
+        (CSB_V1_RuntimeDSAFilterStackAdapter *)user;
+
+    if (!adapter || !adapter->profile) {
+        return 0;
+    }
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        adapter->profile, &adapter->runner, action, parameters,
+        parameter_count, flgs_inout);
+}
+
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,

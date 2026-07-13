@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin DSA monster-filter callback: added the production adapter
+  from `Monster.cpp`'s `ProcessDSAFilter` callback shape to Firestaff's
+  profile-owned, authenticated pure-stack runner. The focused attack-filter
+  regression proves the authenticated action mutates the original 20-word
+  ABI and restores level context. Verification:
+  `csb_v1_dsa_trigger_single_step_pc34_compat` CTest passed 1/1.
+
 - 2026-07-13 Nexus SAL container precondition: all 16 local hash-verified
   Track 1 SAL banks share the exact `dsp01.EXB` preamble, while `DM.BIN`
   contains the adjacent `.MAP`/`.SAL`/`SNDLEV01..15`/`SDDRVS.TSK` strings at
