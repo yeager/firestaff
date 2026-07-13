@@ -209,6 +209,10 @@ static void test_source_selected_item_gdat_material(void)
     DM2_V1_InventoryPanelItemView item;
     DM2_V1_InventoryPanelGdatMaterialReceipt material;
     DM2_V1_InventoryPanelHudReceipt hud;
+    DM2_V1_InventoryPanelHudBlit blit;
+    DM2_V1_InventoryPanelHudSurface surface;
+    DM2_V1_InventoryPanelHudConsumptionReceipt consumption;
+    uint8_t hud_pixels[16];
     uint32_t powerblade;
     int palette;
 
@@ -221,7 +225,7 @@ static void test_source_selected_item_gdat_material(void)
     raw[2] = 1u;
     raw[3] = 0x80u;
     raw[4] = 4u;
-    raw[10] = 0x12u;
+    raw[10] = 0x1cu;
     for (palette = 0; palette < 16; ++palette) {
         raw[11 + palette] = (uint8_t)(0x20 + palette);
     }
@@ -259,6 +263,40 @@ static void test_source_selected_item_gdat_material(void)
               hud.selected_slot == DM2_V1_INV_SLOT_ACTION_HAND &&
               hud.receipt_hash != 0u,
           "HUD receipt accepts only matching selected item material");
+    memset(hud_pixels, 0x7eu, sizeof(hud_pixels));
+    memset(&blit, 0, sizeof(blit));
+    blit.rect_number = 125u;
+    blit.destination_x = 1;
+    blit.destination_y = 2;
+    blit.width = 2u;
+    blit.height = 1u;
+    blit.transparent_index = 12u;
+    surface.pixels = hud_pixels;
+    surface.width = 4;
+    surface.height = 4;
+    surface.stride = 4;
+    CHECK(dm2_v1_inventory_panel_consume_hud_material(
+              &loader, &hud, &blit, &surface, &consumption) &&
+              consumption.valid && consumption.rect_number == 125u &&
+              consumption.drawn_pixel_count == 1u &&
+              consumption.transparent_pixel_count == 1u &&
+              hud_pixels[2 * 4 + 1] == 0x21u &&
+              hud_pixels[2 * 4 + 2] == 0x7eu,
+          "live HUD consumption blits exact item palette with source key 12");
+    blit.transparent_index = 0u;
+    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
+              &loader, &hud, &blit, &surface, &consumption),
+          "non-source transparency key cannot produce an item fallback blit");
+    blit.transparent_index = 12u;
+    blit.destination_x = 3;
+    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
+              &loader, &hud, &blit, &surface, &consumption),
+          "out-of-bounds source rect does not synthesize clipped HUD pixels");
+    blit.destination_x = 1;
+    raw[10] = 0x11u;
+    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
+              &loader, &hud, &blit, &surface, &consumption),
+          "changed GDAT item pixels invalidate the live HUD receipt");
     CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
               &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x19u,
               &material),

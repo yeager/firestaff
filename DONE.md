@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 inventory panel live GDAT consumption: the panel now
+  re-decodes the receipt's exact original `dtImage`, revalidates its local
+  palette and pixel hash, then performs only the source-provided unscaled
+  `QUERY_BLIT_RECT` span with skproject `DRAW_ITEM_ICON` transparency index
+  12. Missing or mismatched material, palette, source/destination bounds, or
+  key fail closed with no icon fallback. Source: skproject
+  `SKWIN/SkWinCore.cpp` `DRAW_ITEM_ICON` 13478-13620 and
+  `DRAW_ICON_PICT_ENTRY` 6901-6925. Verification: Ninja and CTest
+  `dm2_v1_inventory_item_panel_gate` passed; `git diff --check` passed.
+
 - ✅ 2026-07-13 DM2 M11 complete GDAT floor/ceiling gate: M11 now rejects a
   runtime frame unless the boot-owned receipt proves both GRAPHICSSET planes
   were drawn from real assets, with zero plane fallbacks and zero blocked
