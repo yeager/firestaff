@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSBWin saved `TT_DESSAGE` DSA handoff: CSBCode.cpp's exact
+  `TT_DESSAGE` -> `ProcessTT_OPENROOM` dispatch now reaches the authenticated
+  type-47 `ProcessDSATimer5`/`ProcessDSATimer6` receipt and can prepare only
+  its selected pure-stack action. The route remains fail-closed for malformed
+  targets, disabled actions, parameter-message payloads, LocalState 2/3, and
+  all text/counter/generator or world-mutation behavior. Verification: Ninja
+  and CTest `csb_v1_phase7_verification`, plus `git diff --check`.
+
 - 2026-07-13 CSBWin `TT_DOOR` DSA receipt: restored function-10 timers now
   follow `Timer.cpp::ProcessTT_DOOR` through `ActivateDSA` and
   `DSA.cpp::ProcessDSATimer5` to the existing authenticated

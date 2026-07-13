@@ -16004,6 +16004,68 @@ int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
     return 1;
 }
 
+int csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution)
+{
+    /* CSBWin CSBCode.cpp:6435 routes TT_DESSAGE (102) to
+     * Timer.cpp::ProcessTT_OPENROOM. Its type-47 arm calls
+     * ProcessDSATimer5 unchanged, while the source skips non-DSA objects for
+     * DSA messages. The saved action/position/target fields therefore remain
+     * the sole admitted input to the existing ProcessDSATimer6 receipt. */
+    if (!profile || !dungeon || !slave_location || !timer || !out_resolution ||
+        !timer->valid || timer->truncated || timer->function != 102u ||
+        timer->ubyte9 > 2u || timer->ubyte8 > 3u ||
+        timer->level != (uint8_t)slave_location->level ||
+        timer->ubyte6 != (uint8_t)slave_location->x ||
+        timer->ubyte7 != (uint8_t)slave_location->y) {
+        return 0;
+    }
+    return csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+        profile, dungeon, slave_location, (int)timer->ubyte9,
+        (int)timer->ubyte8, out_resolution);
+}
+
+int csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action)
+{
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
+    const CSB_V1_DSAImportedAction *action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
+
+    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
+        !out_action) {
+        return 0;
+    }
+    memset(&resolution, 0, sizeof(resolution));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
+            profile, dungeon, slave_location, timer, &resolution)) {
+        return 0;
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
+        resolution.state_index, resolution.action_ordinal);
+    if (!action || action->column != resolution.input_column ||
+        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+            profile, &resolution.master, resolution.state_index,
+            resolution.action_ordinal, resolution.master_location,
+            &candidate)) {
+        return 0;
+    }
+    *out_runner = candidate;
+    *out_action = action;
+    return 1;
+}
+
 int csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
