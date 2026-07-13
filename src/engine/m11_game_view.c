@@ -6020,6 +6020,15 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
     }
 }
 
+static int m11_f0115_mirror_ordinal_lookup(void* user, int textStringIndex) {
+    const M11_GameViewState* state = (const M11_GameViewState*)user;
+    if (!state || !state->mirrorCatalogAvailable || textStringIndex < 0) {
+        return -1;
+    }
+    return F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
+        &state->mirrorCatalog, textStringIndex);
+}
+
 static int m11_runtime_fluxcage_visible_in_viewport(
     const M11_GameViewState* state,
     const struct ExplosionInstance_Compat* explosion) {
@@ -18411,6 +18420,8 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     unsigned short firstThing = THING_ENDOFLIST;
     unsigned short viewportStaticFirstThing = THING_ENDOFLIST;
     int visibleWallCell = -1;
+    int f0115CandidatesReady = 0;
+    DM1_F0115WorldCandidatesPc34 f0115Candidates;
     M11_ViewportCell cell;
 
     memset(&cell, 0, sizeof(cell));
@@ -18546,6 +18557,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
                                 mapX,
                                 mapY,
                                 &cell.summary);
+    memset(&f0115Candidates, 0, sizeof(f0115Candidates));
+    f0115CandidatesReady = dm1_v1_f0115_world_candidates_pc34(
+        &state->world, state->world.party.mapIndex, mapX, mapY,
+        m11_f0115_mirror_ordinal_lookup, (void*)state, &f0115Candidates);
     if (cell.elementType == DUNGEON_ELEMENT_DOOR) {
         cell.doorState = square & 0x07;
         cell.doorVertical = (square & 0x08) != 0;
@@ -18561,163 +18576,52 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         }
     }
 
-    /* Extract all creature group types on this square (up to 4).
-     * DM1 can have multiple creature groups on a single square; the
-     * viewport draws them stacked/offset.  We also keep the legacy
-     * single creatureType field pointing at the first group. */
-    if (cell.summary.groups > 0 && state->world.things && state->world.things->groups &&
-        cell.elementType != DUNGEON_ELEMENT_WALL &&
-        state->world.party.mapIndex != 0) {
-        /* ReDMCSB: Hall of Champions (map 0) has no active creatures.
-         * Daniel confirmed 2026-05-19: correct behavior, not a bug. */
-        unsigned short scanThing = viewportStaticFirstThing;
-        int scanSafety = 0;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
-            if (THING_GET_TYPE(scanThing) == THING_TYPE_GROUP) {
-                int gIdx = THING_GET_INDEX(scanThing);
-                if (gIdx >= 0 && gIdx < state->world.things->groupCount &&
-                    cell.creatureGroupCount < M11_MAX_CELL_CREATURES) {
-                    int ct = (int)state->world.things->groups[gIdx].creatureType;
-                    if (cell.creatureGroupCount == 0) {
-                        cell.creatureType = ct; /* legacy compat */
-                    }
-                    cell.creatureTypes[cell.creatureGroupCount] = ct;
-                    cell.creatureCountsPerGroup[cell.creatureGroupCount] =
-                        (int)state->world.things->groups[gIdx].count + 1;
-                    cell.creatureDirections[cell.creatureGroupCount] =
-                        (int)state->world.things->groups[gIdx].direction;
-                    cell.creatureGroupCount++;
-                }
+    /* ReDMCSB DUNVIEW.C F0115 defers C04 groups until the floor-object
+     * pass.  DM1/M10 owns compact-chain traversal and typed group decode;
+     * M11 only copies the source-backed candidates into presentation cells. */
+    if (f0115CandidatesReady) {
+        int gi;
+        for (gi = 0; gi < f0115Candidates.groupCount &&
+                     cell.creatureGroupCount < M11_MAX_CELL_CREATURES; ++gi) {
+            const DM1_F0115WorldGroupCandidatePc34* group =
+                &f0115Candidates.groups[gi];
+            if (cell.creatureGroupCount == 0) {
+                cell.creatureType = group->creatureType;
             }
-            scanThing = m11_raw_next_thing(state->world.things, scanThing);
-            ++scanSafety;
+            cell.creatureTypes[cell.creatureGroupCount] = group->creatureType;
+            cell.creatureCountsPerGroup[cell.creatureGroupCount] =
+                group->creatureCount;
+            cell.creatureDirections[cell.creatureGroupCount] = group->direction;
+            ++cell.creatureGroupCount;
         }
+        cell.summary.groups = cell.creatureGroupCount;
     }
 
-    /* Extract item types and subtypes for sprite rendering.
-     * Collect up to M11_MAX_CELL_ITEMS items for multi-item scatter.
-     * The first one also populates the legacy single-item fields.
-     *
-     * ReDMCSB DUNVIEW.C F0115 draws alcove objects from WALL squares
-     * through the special C04_VIEW_CELL_ALCOVE path, so wall cells keep
-     * the existing runtime thing route. Non-wall floor items must come
-     * from a square that actually carries MASK0x0010_THING_LIST_PRESENT;
-     * otherwise Hall floor cells can display unrelated dense-index chains
-     * as visible objects. */
-    /* Do not filter WALL squares here: ReDMCSB DUNVIEW.C F0115 draws
-     * alcove objects from wall-square thing chains after F0107 reports an
-     * alcove.  Non-wall squares still use the flagged first-thing path below
-     * so dense-index chains cannot leak into ordinary floor rendering. */
-    if (cell.summary.items > 0 && state->world.things) {
-        DM1_F0115ThingRouteInputPc34 routeThings[32];
-        DM1_F0115ThingLayerReceiptPc34 itemReceipt;
-        unsigned short routeFirstThing = viewportStaticFirstThing;
-        unsigned short scanThing;
-        int routeThingCount = 0;
-        int suppressHallFloorItems =
-            state->world.party.mapIndex == 0 &&
-            cell.elementType != DUNGEON_ELEMENT_WALL;
-        int scanSafety = 0;
-
-        if (cell.elementType != DUNGEON_ELEMENT_WALL) {
-            routeFirstThing = m11_get_flagged_square_first_thing(
-                &state->world,
-                state->world.party.mapIndex,
-                mapX,
-                mapY);
-        }
-        scanThing = routeFirstThing;
-        while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE &&
-               routeThingCount < (int)(sizeof(routeThings) /
-                                       sizeof(routeThings[0])) &&
-               scanSafety++ < 64) {
-            int type = THING_GET_TYPE(scanThing);
-            int index = THING_GET_INDEX(scanThing);
-            int mirrorOrdinal = -1;
-            if (type == THING_TYPE_TEXTSTRING &&
-                state->mirrorCatalogAvailable &&
-                state->world.things->textStrings &&
-                index >= 0 &&
-                index < state->world.things->textStringCount) {
-                mirrorOrdinal =
-                    F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
-                        &state->mirrorCatalog, index);
+    /* ReDMCSB DUNVIEW.C F0115 draws objects from the same compact chain as
+     * groups.  HoC mirror payload objects are filtered by the DM1 receipt,
+     * so host rendering cannot rediscover them as floor loot. */
+    if (f0115CandidatesReady) {
+        int ii;
+        for (ii = 0; ii < f0115Candidates.itemCount &&
+                     cell.floorItemCount < M11_MAX_CELL_ITEMS; ++ii) {
+            const DM1_F0115WorldItemCandidatePc34* item =
+                &f0115Candidates.items[ii];
+            if (cell.floorItemCount == 0) {
+                cell.firstItemThingType = item->thingType;
+                cell.firstItemSubtype = item->subtype;
             }
-            routeThings[routeThingCount].thing = scanThing;
-            routeThings[routeThingCount].mirrorTextStringOrdinal = mirrorOrdinal;
-            ++routeThingCount;
-            scanThing = m11_raw_next_thing(state->world.things, scanThing);
+            cell.floorItemTypes[cell.floorItemCount] = item->thingType;
+            cell.floorItemSubtypes[cell.floorItemCount] = item->subtype;
+            cell.floorItemCells[cell.floorItemCount] =
+                (item->cell - state->world.party.direction) & 3;
+            ++cell.floorItemCount;
         }
-
-        memset(&itemReceipt, 0, sizeof(itemReceipt));
-        if (dm1_v1_f0115_thing_route_receipt_pc34(
-                routeThings,
-                routeThingCount,
-                -1,
-                0,
-                state->world.party.mapIndex,
-                suppressHallFloorItems,
-                &itemReceipt) &&
-            itemReceipt.valid) {
-            int ri;
-            /* ReDMCSB DUNVIEW.C F0115 lines 4547-4581 draws floor
-             * objects from the F0115 thing pass. REVIVE.C F0280 lines
-             * 297-349 consumes HoC mirror payload objects from the same
-             * chain, so M11 must use the DM1 route receipt instead of a
-             * second raw scan that can leak champion payload as loot. */
-            for (ri = 0;
-                 ri < itemReceipt.visibleFloorItemCount &&
-                 cell.floorItemCount < M11_MAX_CELL_ITEMS;
-                 ++ri) {
-                unsigned short itemThing = itemReceipt.visibleFloorItemThings[ri];
-                int tType = THING_GET_TYPE(itemThing);
-                int tIdx = THING_GET_INDEX(itemThing);
-                int itemSubtype = -1;
-                    switch (tType) {
-                        case THING_TYPE_WEAPON:
-                            if (state->world.things->weapons && tIdx >= 0 && tIdx < state->world.things->weaponCount)
-                                itemSubtype = (int)state->world.things->weapons[tIdx].type;
-                            break;
-                        case THING_TYPE_ARMOUR:
-                            if (state->world.things->armours && tIdx >= 0 && tIdx < state->world.things->armourCount)
-                                itemSubtype = (int)state->world.things->armours[tIdx].type;
-                            break;
-                        case THING_TYPE_POTION:
-                            if (state->world.things->potions && tIdx >= 0 && tIdx < state->world.things->potionCount)
-                                itemSubtype = (int)state->world.things->potions[tIdx].type;
-                            break;
-                        case THING_TYPE_JUNK:
-                            if (state->world.things->junks && tIdx >= 0 && tIdx < state->world.things->junkCount)
-                                itemSubtype = (int)state->world.things->junks[tIdx].type;
-                            break;
-                        case THING_TYPE_SCROLL:
-                            itemSubtype = 0;
-                            break;
-                        case THING_TYPE_CONTAINER:
-                            if (state->world.things->containers && tIdx >= 0 && tIdx < state->world.things->containerCount)
-                                itemSubtype = (int)state->world.things->containers[tIdx].type;
-                            break;
-                        default:
-                            itemSubtype = 0;
-                            break;
-                    }
-                    if (cell.floorItemCount == 0) {
-                        cell.firstItemThingType = tType;
-                        cell.firstItemSubtype = itemSubtype;
-                    }
-                    cell.floorItemTypes[cell.floorItemCount] = tType;
-                    cell.floorItemSubtypes[cell.floorItemCount] = itemSubtype;
-                    cell.floorItemCells[cell.floorItemCount] =
-                        (((int)(itemThing >> 14)) -
-                         state->world.party.direction) & 3;
-                    cell.floorItemCount++;
-            }
-            cell.summary.items = cell.floorItemCount;
-            if (cell.summary.total > cell.floorItemCount) {
-                cell.summary.total -= itemReceipt.ignoredHallPayloadItems;
-                if (cell.summary.total < cell.floorItemCount) {
-                    cell.summary.total = cell.floorItemCount;
-                }
+        cell.summary.items = cell.floorItemCount;
+        if (cell.summary.total > cell.floorItemCount) {
+            cell.summary.total -=
+                f0115Candidates.staticReceipt.ignoredHallPayloadItems;
+            if (cell.summary.total < cell.floorItemCount) {
+                cell.summary.total = cell.floorItemCount;
             }
         }
     }

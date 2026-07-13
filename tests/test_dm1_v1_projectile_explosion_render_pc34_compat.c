@@ -519,6 +519,75 @@ static void test_f0115_runtime_summary_from_world(void) {
               "F0115 world summary joins M10 static and live layers");
 }
 
+static const char* dm1_pc34_dungeon_dat_path(void) {
+    static char path[1024];
+    const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
+    const char* home;
+
+    if (configured && configured[0]) return configured;
+    home = getenv("HOME");
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
+    return path;
+}
+
+static void test_f0115_world_candidates_real_pc34_data(void) {
+    const char* path = dm1_pc34_dungeon_dat_path();
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct GameWorld_Compat world;
+    int sawChain = 0;
+    int sawDrawableCandidate = 0;
+    int mapIndex;
+
+    printf("  F0115 world candidates with PC34 corpus...\n");
+    if (!path) return;
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(&world, 0, sizeof(world));
+    if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
+        !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
+        !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
+        /* This test is optional in data-free CI; a configured local corpus
+         * must be loadable rather than silently receiving a fixture. */
+        if (getenv("DM1_PC34_DUNGEON_DAT")) {
+            ASSERT_EQ(0, 1, "configured PC34 corpus loads");
+        }
+        F0504_DUNGEON_FreeThingData_Compat(&things);
+        F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+        return;
+    }
+    world.dungeon = &dungeon;
+    world.things = &things;
+    for (mapIndex = 0; mapIndex < (int)dungeon.header.mapCount; ++mapIndex) {
+        const struct DungeonMapDesc_Compat* map = &dungeon.maps[mapIndex];
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                DM1_F0115WorldCandidatesPc34 candidates;
+                if (!dm1_v1_f0115_world_candidates_pc34(
+                        &world, mapIndex, x, y, NULL, NULL, &candidates) ||
+                    candidates.chainCount == 0) {
+                    continue;
+                }
+                sawChain = 1;
+                if (candidates.groupCount > 0 || candidates.itemCount > 0) {
+                    sawDrawableCandidate = 1;
+                    break;
+                }
+            }
+            if (sawDrawableCandidate) break;
+        }
+        if (sawDrawableCandidate) break;
+    }
+    ASSERT_EQ(sawChain, 1, "PC34 corpus yields a compact SFT chain");
+    ASSERT_EQ(sawDrawableCandidate, 1,
+              "PC34 corpus yields a source-backed F0115 group or item candidate");
+    F0504_DUNGEON_FreeThingData_Compat(&things);
+    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+}
+
 static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
@@ -1376,6 +1445,7 @@ int main(void) {
     test_f0115_runtime_summary();
     test_f0115_runtime_instance_summary();
     test_f0115_runtime_summary_from_world();
+    test_f0115_world_candidates_real_pc34_data();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

@@ -787,6 +787,135 @@ int dm1_v1_f0115_runtime_summary_from_world_pc34(
     return dm1_v1_f0115_runtime_instance_summary_pc34(&input, outSummary);
 }
 
+static int dm1_f0115_item_subtype_from_thing_pc34(
+    const struct DungeonThings_Compat* things, unsigned short thing)
+{
+    int type = THING_GET_TYPE(thing);
+    int index = THING_GET_INDEX(thing);
+
+    if (!things || index < 0) return -1;
+    switch (type) {
+    case THING_TYPE_WEAPON:
+        return things->weapons && index < things->weaponCount
+            ? (int)things->weapons[index].type : -1;
+    case THING_TYPE_ARMOUR:
+        return things->armours && index < things->armourCount
+            ? (int)things->armours[index].type : -1;
+    case THING_TYPE_POTION:
+        return things->potions && index < things->potionCount
+            ? (int)things->potions[index].type : -1;
+    case THING_TYPE_JUNK:
+        return things->junks && index < things->junkCount
+            ? (int)things->junks[index].type : -1;
+    case THING_TYPE_CONTAINER:
+        return things->containers && index < things->containerCount
+            ? (int)things->containers[index].type : -1;
+    case THING_TYPE_SCROLL:
+        return 0;
+    default:
+        return -1;
+    }
+}
+
+int dm1_v1_f0115_world_candidates_pc34(
+    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
+    DM1_F0115MirrorOrdinalLookupPc34 mirrorOrdinalLookup, void* mirrorUser,
+    DM1_F0115WorldCandidatesPc34* outCandidates)
+{
+    DM1_F0115ThingRouteInputPc34 routeThings[32];
+    const struct DungeonMapDesc_Compat* map;
+    unsigned short thing;
+    int elementType;
+    int routeThingCount = 0;
+    int i;
+
+    if (!outCandidates) return 0;
+    memset(outCandidates, 0, sizeof(*outCandidates));
+    if (!world || !world->dungeon || !world->things ||
+        !world->dungeon->tilesLoaded || mapIndex < 0 ||
+        mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width ||
+        mapY >= (int)map->height || !world->dungeon->tiles ||
+        !world->dungeon->tiles[mapIndex].squareData) {
+        return 0;
+    }
+    elementType = (world->dungeon->tiles[mapIndex].squareData[
+        mapX * (int)map->height + mapY] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+    /* ReDMCSB DUNVIEW.C F0115:4547-4581, DUNGEON.C F0160/F0161:
+     * enumerate only the compact SFT chain belonging to this square. */
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           routeThingCount < (int)(sizeof(routeThings) / sizeof(routeThings[0]))) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        int mirrorOrdinal = -1;
+
+        if (type == THING_TYPE_TEXTSTRING && mirrorOrdinalLookup &&
+            world->things->textStrings && index >= 0 &&
+            index < world->things->textStringCount) {
+            mirrorOrdinal = mirrorOrdinalLookup(mirrorUser, index);
+        }
+        routeThings[routeThingCount].thing = thing;
+        routeThings[routeThingCount].mirrorTextStringOrdinal = mirrorOrdinal;
+        ++routeThingCount;
+        thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
+    }
+    outCandidates->chainCount = routeThingCount;
+    outCandidates->overflow = thing != THING_NONE && thing != THING_ENDOFLIST;
+
+    if (!dm1_v1_f0115_thing_route_receipt_pc34(
+            routeThings, routeThingCount, -1, 0, mapIndex,
+            mapIndex == 0 && elementType != DUNGEON_ELEMENT_WALL,
+            &outCandidates->staticReceipt) ||
+        !outCandidates->staticReceipt.valid) {
+        return 0;
+    }
+
+    /* F0115 defers C04 groups until after floor objects.  Map 0 has no
+     * active groups in the PC34 dungeon and wall squares do not take the
+     * floor-creature route. */
+    if (mapIndex != 0 && elementType != DUNGEON_ELEMENT_WALL) {
+        for (i = 0; i < routeThingCount &&
+                    outCandidates->groupCount < DM1_F0115_MAX_WORLD_GROUPS; ++i) {
+            int index;
+            if (THING_GET_TYPE(routeThings[i].thing) != THING_TYPE_GROUP) continue;
+            index = THING_GET_INDEX(routeThings[i].thing);
+            if (world->things->groups && index >= 0 &&
+                index < world->things->groupCount) {
+                DM1_F0115WorldGroupCandidatePc34* group =
+                    &outCandidates->groups[outCandidates->groupCount++];
+                group->thing = routeThings[i].thing;
+                group->creatureType = (int)world->things->groups[index].creatureType;
+                group->creatureCount = (int)world->things->groups[index].count + 1;
+                group->direction = (int)world->things->groups[index].direction;
+            }
+        }
+    }
+
+    for (i = 0; i < outCandidates->staticReceipt.visibleFloorItemCount &&
+                outCandidates->itemCount < DM1_F0115_MAX_RECEIPT_ITEMS; ++i) {
+        unsigned short itemThing =
+            outCandidates->staticReceipt.visibleFloorItemThings[i];
+        int subtype = dm1_f0115_item_subtype_from_thing_pc34(
+            world->things, itemThing);
+        if (subtype >= 0) {
+            DM1_F0115WorldItemCandidatePc34* item =
+                &outCandidates->items[outCandidates->itemCount++];
+            item->thing = itemThing;
+            item->thingType = THING_GET_TYPE(itemThing);
+            item->subtype = subtype;
+            item->cell = THING_GET_CELL(itemThing);
+        }
+    }
+    outCandidates->valid = 1;
+    return 1;
+}
+
 int dm1_v1_f0115_thing_route_receipt_pc34(
     const DM1_F0115ThingRouteInputPc34* things,
     int thingCount,

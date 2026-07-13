@@ -301,6 +301,7 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 #define DM1_F0115_LAYER_FLUXCAGE_FIELD   5
 #define DM1_F0115_LAYER_COUNT            6
 #define DM1_F0115_MAX_RECEIPT_ITEMS      8
+#define DM1_F0115_MAX_WORLD_GROUPS        4
 
 typedef struct DM1_F0115ThingRouteInputPc34 {
     unsigned short thing;
@@ -360,6 +361,40 @@ typedef struct DM1_F0115RuntimeInstanceInputPc34 {
     int mapY;
 } DM1_F0115RuntimeInstanceInputPc34;
 
+/* M11 supplies only the Hall-of-Champions catalogue lookup.  The caller
+ * never exposes raw Thing traversal: DUNGEON.C F0160/F0161 remain M10-owned. */
+typedef int (*DM1_F0115MirrorOrdinalLookupPc34)(void* user,
+                                                 int textStringIndex);
+
+typedef struct DM1_F0115WorldGroupCandidatePc34 {
+    unsigned short thing;
+    int creatureType;
+    int creatureCount;
+    int direction;
+} DM1_F0115WorldGroupCandidatePc34;
+
+typedef struct DM1_F0115WorldItemCandidatePc34 {
+    unsigned short thing;
+    int thingType;
+    int subtype;
+    int cell;
+} DM1_F0115WorldItemCandidatePc34;
+
+/* Source-backed static F0115 candidates for one loaded PC34 map square.
+ * ReDMCSB DUNVIEW.C F0115:4547-4581 walks the compact SFT chain, then
+ * defers groups and draws admissible objects.  This receipt keeps that
+ * traversal and typed record decoding below the M11 host boundary. */
+typedef struct DM1_F0115WorldCandidatesPc34 {
+    int valid;
+    int chainCount;
+    int overflow;
+    int groupCount;
+    DM1_F0115WorldGroupCandidatePc34 groups[DM1_F0115_MAX_WORLD_GROUPS];
+    int itemCount;
+    DM1_F0115WorldItemCandidatePc34 items[DM1_F0115_MAX_RECEIPT_ITEMS];
+    DM1_F0115ThingLayerReceiptPc34 staticReceipt;
+} DM1_F0115WorldCandidatesPc34;
+
 int dm1_v1_verify_f0115_draw_order(const int* order, int count);
 int dm1_v1_f0115_thing_layer_receipt_pc34(
     const unsigned short* thingRefs,
@@ -387,6 +422,10 @@ int dm1_v1_f0115_runtime_instance_summary_pc34(
 int dm1_v1_f0115_runtime_summary_from_world_pc34(
     const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
     DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_world_candidates_pc34(
+    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
+    DM1_F0115MirrorOrdinalLookupPc34 mirrorOrdinalLookup, void* mirrorUser,
+    DM1_F0115WorldCandidatesPc34* outCandidates);
 
 #ifdef __cplusplus
 }
