@@ -1045,6 +1045,11 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
 
         plan->receipt.structure1a_structure3_topology_candidate_count =
             topology->topology_candidate_count;
+        plan->receipt.structure1a_structure3_topology_structure1f_binding_count =
+            topology->structure1f_binding_count;
+        plan->receipt
+            .structure1a_structure3_topology_structure1f_face_selector_semantics_proven =
+            0;
         plan->receipt.structure1a_structure3_topology_blocked_invalid_source_count =
             topology->blocked_invalid_source_count;
         plan->receipt.structure1a_structure3_topology_blocked_payload_count =
