@@ -1204,6 +1204,48 @@ static int materialize_original_pc34_light_event(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int materialize_original_pc34_generator_reenable_event(
+    const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
+    struct TimelineEvent_Compat *out_event)
+{
+    uint16_t thing;
+    int map_index;
+    int sensor_index = -1;
+    int safety = 0;
+    if (!src || !world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->sensors || !out_event ||
+        src->type != DM1_EVENT_ENABLE_GROUP_GENERATOR || src->priority != 0u) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    /* ReDMCSB TIMELINE.C F0246:1020-1027 reads B.Location only and
+     * re-enables the first disabled sensor found on that exact square. */
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(world->dungeon, world->things,
+                                                      map_index, src->b_mapX, src->b_mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR && index >= 0 &&
+            index < world->things->sensorCount &&
+            world->things->sensors[index].sensorType == RUNTIME_SENSOR_TYPE_DISABLED) {
+            sensor_index = index;
+            break;
+        }
+        thing = original_pc34_next_thing(world->things, thing);
+    }
+    if (sensor_index < 0) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_GROUP_GENERATOR;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->aux0 = GENERATOR_EVENT_AUX0_REENABLE;
+    out_event->aux1 = sensor_index;
+    out_event->aux2 = DM1_EVENT_ENABLE_GROUP_GENERATOR;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_timeline(
     const DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world,
@@ -1255,6 +1297,14 @@ static int materialize_original_pc34_timeline(
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             if (!F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            continue;
+        }
+        if (src->type == DM1_EVENT_ENABLE_GROUP_GENERATOR) {
+            if (materialize_original_pc34_generator_reenable_event(
+                    src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             continue;

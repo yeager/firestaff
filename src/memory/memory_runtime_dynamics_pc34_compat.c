@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 /* -------- Invariants guaranteed by platform / plan -------- */
 
@@ -274,6 +275,8 @@ int F0863_RUNTIME_BuildGeneratorReEnableEvent_Compat(
     outEvent->cell       = 0;
     outEvent->aux0       = GENERATOR_EVENT_AUX0_REENABLE;
     outEvent->aux1       = ctx->sensorIndex;
+    outEvent->aux2       = DM1_EVENT_ENABLE_GROUP_GENERATOR;
+    outEvent->aux4       = 0;
     return 1;
 }
 
