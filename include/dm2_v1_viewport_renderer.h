@@ -759,6 +759,11 @@ typedef struct {
     int asset_outdoor_ground_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
+    /* One bit per visible DM2_SQ_* wall panel.  A source-required indoor
+     * frame may be presented only after every planned GRAPHICSSET material
+     * has a decoded image and its own verified local palette. */
+    uint16_t last_dungeon_wall_material_required_mask;
+    uint16_t last_dungeon_wall_material_consumed_mask;
     int gdat_scene_control_ready;
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;

@@ -3326,12 +3326,26 @@ static int dm2_v1_wall_button_receipt_matches(
 
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
+    typedef struct {
+        const uint8_t *pixels;
+        int width;
+        int height;
+        int stride;
+        uint8_t palette16[16];
+        uint32_t palette_hash;
+        int ready;
+    } DM2_V1_WallMaterial;
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     int wall_asset_count = 0;
     int wall_fallback_count = 0;
     DM2_V1_WallPanelRenderPlan plan;
+    DM2_V1_WallMaterial materials[DM2_V1_WALL_PANEL_RENDER_MAX];
+
+    memset(materials, 0, sizeof(materials));
+    s->last_dungeon_wall_material_required_mask = 0u;
+    s->last_dungeon_wall_material_consumed_mask = 0u;
 
     /* DM2 wall rendering: draw back-to-front (D3→D2→D1→D0).
      * For each depth level, draw side walls first (L,R), then center (C).
@@ -3370,6 +3384,43 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
+    /* skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_WALL resolves
+     * GRAPHICSSET[viewportCell + 0x22] for every visible panel before its
+     * blits.  Cache the complete source set before drawing the first pixel:
+     * a missing later cell must block the frame, never leave an invented or
+     * partially materialized dungeon wall behind. */
+    if (s->source_materials_required) {
+        for (int i = 0; i < plan.panel_count; ++i) {
+            const DM2_V1_WallPanelRender *panel = &plan.panels[i];
+            DM2_V1_WallMaterial *material = &materials[i];
+            int graphicsset_index = 0;
+            int field = 0;
+
+            s->last_dungeon_wall_material_required_mask |=
+                (uint16_t)(1u << (unsigned)panel->view_square);
+            if (!dm2_v1_viewport_wall_graphic_address(
+                    panel->gdat_index, &graphicsset_index, &field) ||
+                graphicsset_index != s->gdat_scene_material_index ||
+                field != dm2_v1_viewport_wall_field_for_square(
+                    panel->view_square) ||
+                dm2_v1_fetch_viewport_local_material(
+                    s, panel->gdat_index, &material->pixels,
+                    &material->width, &material->height,
+                    &material->stride) != 0 ||
+                !material->pixels || material->width <= 0 ||
+                material->height <= 0 || !s->active_asset_palette_ready ||
+                s->active_asset_palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+                return;
+            }
+            memcpy(material->palette16, s->active_asset_palette16,
+                   sizeof(material->palette16));
+            material->palette_hash = s->active_asset_palette_hash;
+            material->ready = 1;
+        }
+    }
+
     for (int i = 0; i < plan.panel_count; ++i) {
         const DM2_V1_WallPanelRender *panel = &plan.panels[i];
         const uint8_t *wall_pixels = NULL;
@@ -3377,12 +3428,24 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int wall_h = 0;
         int wall_stride = 0;
 
-        if (dm2_v1_fetch_viewport_local_material(s,
-                                                 panel->gdat_index,
-                                                 &wall_pixels,
-                                                 &wall_w,
-                                                 &wall_h,
-                                                 &wall_stride) != 0 ||
+        if (s->source_materials_required) {
+            const DM2_V1_WallMaterial *material = &materials[i];
+            wall_pixels = material->pixels;
+            wall_w = material->width;
+            wall_h = material->height;
+            wall_stride = material->stride;
+            memcpy(s->active_asset_palette16, material->palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = material->palette_hash;
+            s->active_asset_palette_ready = material->ready;
+        }
+        if ((!s->source_materials_required &&
+             dm2_v1_fetch_viewport_local_material(s,
+                                                   panel->gdat_index,
+                                                   &wall_pixels,
+                                                   &wall_w,
+                                                   &wall_h,
+                                                   &wall_stride) != 0) ||
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
             if (s->source_materials_required) {
                 ++s->blocked_material_draw_count;
@@ -3417,7 +3480,19 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         if (s->gdat_scene_control_ready) {
             ++s->gdat_scene_control_consumed_count;
         }
+        if (s->source_materials_required) {
+            s->last_dungeon_wall_material_consumed_mask |=
+                (uint16_t)(1u << (unsigned)panel->view_square);
+        }
         ++wall_asset_count;
+    }
+
+    if (s->source_materials_required &&
+        s->last_dungeon_wall_material_required_mask !=
+            s->last_dungeon_wall_material_consumed_mask) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+        return;
     }
 
     if (wall_asset_count > 0) {
