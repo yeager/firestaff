@@ -258,6 +258,45 @@ int main(void)
               profile.csbwin_global_variables[1] == 0u,
           "unsupported pit action cannot reach the live DSA dispatcher");
 
+    /* ProcessTT_PITROOM uses the same empty-target source shape: opening
+     * the pit changes bit 3, while WiggleEverything has nothing to move. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    raw[80] = 0x40u;
+    put_le16(raw, 62u, 0xfffeu);
+    profile.party_x = 1;
+    profile.party_y = 1;
+    profile.csbwin_timers[0].function = 9u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x48u &&
+              profile.timeline_queue.eventCount == 0,
+          "DSA-free empty pit applies its source-owned cell flag");
+
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    raw[80] = 0x50u;
+    put_le16(raw, 62u, (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10));
+    put_le16(raw, 92u, 0x012fu);
+    profile.csbwin_global_variables[1] = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x50u &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "DSA-owned pit blocks generic cell mutation after its receipt");
+
+    raw[80] = 0x14u;
+    profile.party_x = 0;
+    profile.party_y = 0;
+
     profile.csbwin_timers[0].function = 10u;
     profile.csbwin_timers[0].ubyte9 = 0u;
     profile.csbwin_timers[0].time = profile.game_time;

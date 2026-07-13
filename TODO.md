@@ -431,9 +431,9 @@ ReDMCSB WIP 2021-02-06 source tree.
   TT_TELEPORTER now retains the exact DSA-free empty-Thing-chain cell update
   only when the party is elsewhere, so its source WiggleEverything call is a
   no-op; listed-Thing and DSA-owned targets remain mutation-blocked.
-  TT_PITROOM
-  likewise reaches only its pre-mutation ActivateDSA receipt; pit flags and
-  fall-through movement remain blocked. TT_DOOR now retains the exact
+  TT_PITROOM retains the same DSA-free empty-Thing-chain cell update only
+  when the party is elsewhere; listed-Thing and DSA-owned targets remain
+  mutation-blocked. TT_DOOR now retains the exact
   same-time TT_1 handoff only when its saved square has no type-47 owner;
   type-47 squares still reach only their pre-requeue ActivateDSA receipt and
   door cell changes remain blocked. TT_DESSAGE reaches only its

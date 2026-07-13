@@ -709,6 +709,14 @@
   `Timer.cpp:2343-2471`. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 CSBWin restored TT_PITROOM DSA-free tick bridge: verified
+  function-9 entries now apply the source bit-3 cell update only for an empty
+  saved pit target with the party elsewhere, where opening the pit leaves
+  `WiggleEverything` with no movement owner. Listed-Thing targets retain any
+  authenticated pure-stack DSA receipt but cannot fall through to generic M10
+  cell mutation. Source: CSBWin `CSBCode.cpp:6433`, `Timer.cpp:2473-2505`.
+  Verification: Ninja and CTest `csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-13 DM2 skproject carried-item local-palette consumer:
   source-required `DRAW_ITEM_IN_HAND` rendering now accepts the leader-hand
   GDAT IMG3 only with its matching `QUERY_GDAT_IMAGE_LOCALPAL` receipt and
