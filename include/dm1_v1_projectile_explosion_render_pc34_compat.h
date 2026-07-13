@@ -78,6 +78,8 @@
 extern "C" {
 #endif
 
+struct GameWorld_Compat;
+
 /* ── GRAPHICS.DAT index constants ────────────────────────────────── */
 
 #define DM1_GFX_FIRST_PROJECTILE            454  /* M613 I34E */
@@ -381,6 +383,9 @@ int dm1_v1_f0115_runtime_summary_pc34(
     DM1_F0115RuntimeSummaryPc34* outSummary);
 int dm1_v1_f0115_runtime_instance_summary_pc34(
     const DM1_F0115RuntimeInstanceInputPc34* input,
+    DM1_F0115RuntimeSummaryPc34* outSummary);
+int dm1_v1_f0115_runtime_summary_from_world_pc34(
+    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
     DM1_F0115RuntimeSummaryPc34* outSummary);
 
 #ifdef __cplusplus

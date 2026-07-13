@@ -9,6 +9,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -442,6 +443,80 @@ static void test_f0115_runtime_instance_summary(void) {
               "F0115 typed runtime summary filters inactive and off-square projectiles");
     ASSERT_EQ(summary.explosions, 1,
               "F0115 typed runtime summary filters invalid and off-square explosions");
+}
+
+static void test_f0115_runtime_summary_from_world(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct GameWorld_Compat world;
+    unsigned char squareData[1] = { DUNGEON_SQUARE_MASK_THING_LIST };
+    unsigned short squareFirstThings[1];
+    unsigned char groupRaw[16];
+    unsigned char weaponRaw[16];
+    unsigned short groupThing = make_thing(THING_TYPE_GROUP, 0, 0);
+    unsigned short weaponThing = make_thing(THING_TYPE_WEAPON, 0, 0);
+    DM1_F0115RuntimeSummaryPc34 summary;
+
+    printf("  F0115 world summary...\n");
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(&world, 0, sizeof(world));
+    memset(groupRaw, 0, sizeof(groupRaw));
+    memset(weaponRaw, 0, sizeof(weaponRaw));
+
+    map.width = 1;
+    map.height = 1;
+    tiles.squareData = squareData;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    squareFirstThings[0] = groupThing;
+    groupRaw[0] = (unsigned char)(weaponThing & 0xffu);
+    groupRaw[1] = (unsigned char)(weaponThing >> 8);
+    weaponRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    weaponRaw[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.loaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.rawThingData[THING_TYPE_GROUP] = groupRaw;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.explosions.count = 1;
+    world.explosions.entries[0].slotIndex = 0;
+    world.explosions.entries[0].reserved0 = 1;
+    world.explosions.entries[0].explosionType = 0;
+    world.explosions.entries[0].mapIndex = 0;
+    world.explosions.entries[0].mapX = 0;
+    world.explosions.entries[0].mapY = 0;
+
+    ASSERT_EQ(dm1_v1_f0115_runtime_summary_from_world_pc34(
+                  &world, 0, 0, 0, &summary), 1,
+              "F0115 world summary builds through M10 SFT accessors");
+    ASSERT_EQ(summary.groups, 1,
+              "F0115 world summary retains M10 group chain entry");
+    ASSERT_EQ(summary.items, 1,
+              "F0115 world summary retains M10 weapon chain entry");
+    ASSERT_EQ(summary.projectiles, 1,
+              "F0115 world summary includes active local projectile");
+    ASSERT_EQ(summary.explosions, 1,
+              "F0115 world summary includes active local explosion");
+    ASSERT_EQ(summary.total, 4,
+              "F0115 world summary joins M10 static and live layers");
 }
 
 static void test_projectile_sprite_blit_plan(void) {
@@ -1300,6 +1375,7 @@ int main(void) {
     test_f0115_thing_layer_receipt();
     test_f0115_runtime_summary();
     test_f0115_runtime_instance_summary();
+    test_f0115_runtime_summary_from_world();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

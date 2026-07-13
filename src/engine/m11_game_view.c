@@ -6008,29 +6008,12 @@ static void m11_summarize_square_things(const struct GameWorld_Compat* world,
                                         int mapY,
                                         DM1_F0115RuntimeSummaryPc34* outSummary) {
     DM1_F0115RuntimeSummaryPc34 summary;
-    DM1_F0115RuntimeInstanceInputPc34 input;
-    unsigned short thingRefs[32];
-    unsigned short thing = m11_get_viewport_static_first_thing(world, mapIndex, mapX, mapY);
-    int thingRefCount = 0;
-
     memset(&summary, 0, sizeof(summary));
-    while (thing != THING_ENDOFLIST && thing != THING_NONE &&
-           thingRefCount < (int)(sizeof(thingRefs) / sizeof(thingRefs[0]))) {
-        thingRefs[thingRefCount++] = thing;
-        thing = m11_raw_next_thing(world->things, thing);
-    }
     /* ReDMCSB: DUNVIEW.C F0115 layers the static chain before restarting
-     * for live projectile/explosion passes. M11 follows only its private
-     * world links; DM1 owns typed active-instance discovery and the receipt. */
-    memset(&input, 0, sizeof(input));
-    input.thingRefs = thingRefs;
-    input.thingCount = thingRefCount;
-    input.projectiles = world ? &world->projectiles : NULL;
-    input.explosions = world ? &world->explosions : NULL;
-    input.mapIndex = mapIndex;
-    input.mapX = mapX;
-    input.mapY = mapY;
-    (void)dm1_v1_f0115_runtime_instance_summary_pc34(&input, &summary);
+     * for live projectile/explosion passes. M10/DM1 own bounded SFT and
+     * active-instance discovery; M11 consumes only the resulting receipt. */
+    (void)dm1_v1_f0115_runtime_summary_from_world_pc34(
+        world, mapIndex, mapX, mapY, &summary);
 
     if (outSummary) {
         *outSummary = summary;

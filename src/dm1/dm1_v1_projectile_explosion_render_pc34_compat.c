@@ -12,6 +12,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <string.h>
 
@@ -750,6 +751,40 @@ int dm1_v1_f0115_runtime_instance_summary_pc34(
     return dm1_v1_f0115_runtime_summary_pc34(
         input->thingRefs, input->thingCount, projectileCount, explosionCount,
         outSummary);
+}
+
+int dm1_v1_f0115_runtime_summary_from_world_pc34(
+    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
+    DM1_F0115RuntimeSummaryPc34* outSummary)
+{
+    DM1_F0115RuntimeInstanceInputPc34 input;
+    unsigned short refs[32];
+    unsigned short thing;
+    int count = 0;
+    if (!outSummary) return 0;
+    memset(outSummary, 0, sizeof(*outSummary));
+    if (!world || !world->dungeon || !world->things) return 0;
+
+    /* ReDMCSB DUNVIEW.C F0115:4547-4581 walks the current square's SFT
+     * chain before its live F0219/F0220 passes.  DUNGEON.C F0160/F0161
+     * owns the compact SFT lookup and record-next decode, so this bridge
+     * deliberately consumes the M10 APIs rather than M11 raw records. */
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && count < 32) {
+        refs[count++] = thing;
+        thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
+    }
+
+    memset(&input, 0, sizeof(input));
+    input.thingRefs = refs;
+    input.thingCount = count;
+    input.projectiles = &world->projectiles;
+    input.explosions = &world->explosions;
+    input.mapIndex = mapIndex;
+    input.mapX = mapX;
+    input.mapY = mapY;
+    return dm1_v1_f0115_runtime_instance_summary_pc34(&input, outSummary);
 }
 
 int dm1_v1_f0115_thing_route_receipt_pc34(

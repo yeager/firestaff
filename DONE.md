@@ -7,6 +7,11 @@
 
 - 2026-07-13 Nexus raw Structure1F item location/item-id pair receipt: complete; no object or draw semantics inferred.
 
+- 2026-07-13 DM1 F0115 `summary_from_world`: M11 now consumes one DM1/M10
+  receipt built from ReDMCSB DUNGEON.C F0160/F0161 compact SFT traversal and
+  F0115's typed live projectile/explosion passes. The focused world test
+  covers a bounded group/item chain plus local active effects.
+
 - 2026-07-13 DM2 weather timer corpus absence receipt: the skip-safe scan now
   records verified payload bytes and zero matching timer records when no
   skproject-proven save offset exists; no heuristic match or runtime promotion.
