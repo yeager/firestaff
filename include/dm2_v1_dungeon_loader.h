@@ -530,9 +530,10 @@ int dm2_v1_g1_actuator_wall_gfx_allows_button_material(
     int wall_gfx_index,
     int image_field);
 
-/* Direct or source-proven extension DB4 roots only. It binds
- * Creature::CreatureType() to CREATURES/type dtImage/F9 raw ownership, not
- * sprite decoding, animation selection, palette conversion, or drawing. */
+/* Direct or source-proven extension DB4 roots only after the G1 record graph
+ * is complete. It binds Creature::CreatureType() to CREATURES/type dtImage/F9
+ * raw ownership, not sprite decoding, animation selection, palette
+ * conversion, or drawing. */
 int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     const DM2_V1_DungeonData *d,
     int map,
