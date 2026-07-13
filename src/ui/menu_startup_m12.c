@@ -5,7 +5,7 @@
 #include "firestaff_retroachievements.h"
 #include "menu_startup_a11y_m12.h"
 
-#define FIRESTAFF_VERSION_STRING "v3.0.73"
+#define FIRESTAFF_VERSION_STRING "v3.0.74"
 #include "firestaff_bestiary.h"
 #include "screenshot_gallery_m12.h"
 #include "firestaff_spell_ref.h"
