@@ -1333,6 +1333,90 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
     return 1;
 }
 
+int dm2_v1_dungeon_validate_g1_runtime_map(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapValidationReceipt *out) {
+    DM2_V1_G1PartialMapBootReceipt partial;
+    DM2_V1_G1MapCorpusReceipt corpus;
+    DM2_V1_G1RuntimeMapValidationReceipt candidate;
+    int column_index = 0;
+
+    /* skproject SKULLWIN/c_map.cpp DM2_GET_OBJECT_INDEX_FROM_TILE and
+     * DM2_GET_TILE_RECORD_LINK select only the map's column and
+     * dunGroundStacks root. c_record.cpp DM2_GET_NEXT_RECORD_LINK is a later
+     * operation and is deliberately absent here. */
+    if (!out || !d || !d->raw_data || map < 0 || map >= d->level_count ||
+        !dm2_v1_dungeon_validate_record_pools(d) ||
+        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
+        !partial.committed || !partial.incomplete ||
+        !dm2_v1_dungeon_collect_g1_map_corpus_receipt(d, &corpus) ||
+        !corpus.available || corpus.g1_layout_absent) {
+        return 0;
+    }
+    for (int level = 0; level < map; ++level)
+        column_index += d->level_widths[level];
+    if (column_index < 0 ||
+        column_index + d->level_widths[map] >
+            (d->square_first_thing_base - d->column_index_base) / 2) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    candidate.width = d->level_widths[map];
+    candidate.height = d->level_heights[map];
+    candidate.map_data_base = d->raw_map_data_base;
+    candidate.map_data_offset = d->level_offsets[map];
+    candidate.map_data_byte_count = corpus.maps[map].map_byte_count;
+    candidate.map_data_hash = corpus.maps[map].map_hash;
+    if (candidate.width <= 0 || candidate.height <= 0 ||
+        candidate.map_data_byte_count == 0u || candidate.map_data_hash == 0u) {
+        return 0;
+    }
+
+    for (int x = 0; x < candidate.width; ++x) {
+        int stack = (int)RD16(d->raw_data + d->column_index_base +
+                              (column_index + x) * 2);
+        for (int y = 0; y < candidate.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            uint16_t root;
+            int type;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            type = (root >> 10) & 0x0f;
+            ++candidate.root_count;
+            if (dm2_v1_g1_link_has_declared_shape(d, root)) {
+                ++candidate.direct_root_count;
+            } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
+                if (type == 3) ++candidate.db3_root_count;
+                else if (type == 4) ++candidate.db4_root_count;
+                else return 0;
+            } else if (type == 8 || type == 10) {
+                ++candidate.blocked_root_count;
+            } else {
+                return 0;
+            }
+            ++stack;
+        }
+    }
+
+    if (candidate.root_count <= 0 ||
+        candidate.root_count != candidate.direct_root_count +
+            candidate.db3_root_count + candidate.db4_root_count +
+            candidate.blocked_root_count ||
+        candidate.blocked_root_count != partial.blocked_root_count_by_map[map]) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_first_map_runtime(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1FirstMapRuntimeReceipt *out) {

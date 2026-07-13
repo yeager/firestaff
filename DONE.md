@@ -12458,6 +12458,17 @@ disabled. Verification: the real-data handoff test passed against the
 hash-verified 39,437-byte PC G1 `DUNGEON.DAT`; the focused loader gate passed
 87/87.
 
+# ✅ 2026-07-13 DM2 G1 per-map runtime admission receipt
+
+The loader now validates a selected original PC G1 map at the exact skproject
+`c_map.cpp` boundary before runtime consumption: its descriptor-bounded raw
+span, source-order c_record pool gate, and every map-owned ObjectID root are
+reclassified as direct, DB3, DB4, or explicitly blocked. The receipt reads no
+record payload and never reads `GenericRecord::w0`. Real map 0 admits 22 direct
+roots; map 16 admits its raw span while retaining 11 DB3, 2 DB4, and 3 blocked
+DB8/DB10 roots. Verification: new real-data test against hash-verified PC G1
+`DUNGEON.DAT` passed; focused loader gate passed 87/87.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than

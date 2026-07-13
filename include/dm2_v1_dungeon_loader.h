@@ -464,6 +464,32 @@ typedef struct {
     DM2_V1_G1BlockedRoot blocked_roots[DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS];
 } DM2_V1_G1PartialMapBootReceipt;
 
+/*
+ * Runtime-map admission for one PC G1 Map_definitions entry.  This is the
+ * c_map.cpp boundary before c_record.cpp reads GenericRecord::w0: it proves
+ * the selected raw map span, the source-order pool address gate, and every
+ * map-owned root's address class.  It intentionally carries no record bytes,
+ * object payloads, or next-link semantics.
+ */
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int width;
+    int height;
+    int map_data_base;
+    int map_data_offset;
+    uint32_t map_data_byte_count;
+    uint32_t map_data_hash;
+    int root_count;
+    int direct_root_count;
+    int db3_root_count;
+    int db4_root_count;
+    int blocked_root_count;
+    int generic_record_reads;
+    int blocked_record_reads;
+} DM2_V1_G1RuntimeMapValidationReceipt;
+
 /* First-map runtime handoff for the transactional PC G1 boot. This carries
  * source-proven root-address classes only; it deliberately contains no
  * decoded c_record payload or inferred object. */
@@ -634,6 +660,14 @@ int dm2_v1_dungeon_collect_g1_map_corpus_receipt(
 int dm2_v1_dungeon_materialize_g1_partial_map_boot(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1PartialMapBootReceipt *out);
+/* Validate a selected G1 runtime map against the transactional partial boot.
+ * It reads only c_map's column/ground-stack ObjectID roots and classifies
+ * their already-proven c_record addresses; it never reads GenericRecord::w0.
+ * The output is unchanged when the map cannot be source-validated. */
+int dm2_v1_dungeon_validate_g1_runtime_map(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_G1RuntimeMapValidationReceipt *out);
 /* Consume the transactional receipt for map 0 only. This repeats c_map's
  * ground-stack root lookup and classifies source-proven addresses. It may read
  * only a direct DB1 teleporter's independently verified fields; it never reads
