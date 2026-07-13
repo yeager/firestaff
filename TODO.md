@@ -1329,6 +1329,11 @@ and real community-save corpus round-trip evidence.
     together without interpreting opaque PARTY_INFO bytes. Remaining work is
     authentic community-save coverage and source-backed owners for the opaque
     PARTY_INFO fields.
+  - 2026-07-13 update: external corpus certification now requires raw C3
+    EVENT and C4 TIMELINE identity even when C13/C24/C25 subtype counts are
+    zero. Failed rows retain their source provenance and raw receipts but are
+    never promoted as passing corpus evidence. Remaining work is authentic
+    community-save coverage and source-backed owners for opaque fields.
   - 2026-07-13 update: F0802 now round-trips live C48/C49 projectile events
     with original `EVENT.B.Slot`/packed `EVENT.C.Projectile` bytes and updates
     the corresponding exported C14 `EventIndex` without changing the live

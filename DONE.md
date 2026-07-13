@@ -12034,3 +12034,17 @@ Verification: `test_dm1_v1_viewport_3d_pc34_compat`.
   exporter, or runtime behavior. Source: ReDMCSB `LOADSAVE.C`
   F0433:1583-1584/F0435:2762-2777 and `DEFS.H` `PARTY_INFO`. Verification:
   focused native-PC34 handoff CTest, including the opt-in real-corpus path.
+- 2026-07-13 DM1 PC34 C2/C3/C4 receipt negative paths: focused regression
+  covers a truncated C4 part, a checksum-valid header with only the C4 key
+  changed, and one extra byte after the portrait boundary. Each must reject
+  before any C2 PARTY_INFO, C3 EVENT, or C4 TIMELINE fingerprint receipt is
+  published. No import/export/runtime behavior changed. Source: ReDMCSB
+  `LOADSAVE.C` F0433:1583-1589/F0435:2762-2796. Verification: focused
+  native-PC34 handoff CTest.
+- 2026-07-13 DM1 PC34 C2/C3/C4 empty-subtype corpus gate: an external
+  envelope with no C13/C24/C25 records can no longer pass on core state alone.
+  The corpus route now requires the independently authenticated raw C3 EVENT
+  and C4 TIMELINE receipts to preserve identity, while retaining failed-row
+  provenance for diagnosis. No importer/exporter/runtime fallback changed.
+  Source: ReDMCSB `LOADSAVE.C` F0433:1583-1589 and F0435:2762-2796.
+   Verification: focused native-PC34 handoff CTest.
