@@ -155,6 +155,8 @@ typedef struct {
     int item_entry_count;
     int floor_decoration_entry_count;
     int floor_sensor_entry_count;
+    int direct_coordinate_unique_cell_count;
+    int direct_coordinate_duplicate_cell_count;
     int structure1a_bound_entry_count;
 } Nexus_V1_DgnStructure1FSpatialReceipt;
 
