@@ -16530,6 +16530,12 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
         prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
             profile, dungeon, slave_location, timer, &runner, &action);
         break;
+    case 102u:
+        /* CSBWin ProcessTimers routes TT_DESSAGE to ProcessTT_OPENROOM,
+         * which gives ProcessDSATimer5 a zero-parameter DSA message. */
+        prepared = csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action);
+        break;
     default:
         return 0;
     }
@@ -16563,7 +16569,8 @@ static void csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     if (timer_index >= profile->csbwin_timer_summary_count) return;
     timer = &profile->csbwin_timers[timer_index];
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
-        timer->function < 5u || timer->function > 10u ||
+        ((timer->function < 5u || timer->function > 10u) &&
+         timer->function != 102u) ||
         record->eventType != timer->function ||
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||

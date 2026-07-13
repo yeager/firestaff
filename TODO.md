@@ -38,7 +38,8 @@
   likewise reaches only its pre-mutation ActivateDSA receipt; pit flags and
   fall-through movement remain blocked. TT_DOOR likewise reaches only its
   pre-requeue ActivateDSA receipt; door cell changes and the TT_1 requeue
-  path remain blocked.
+  path remain blocked. TT_DESSAGE reaches only its zero-parameter type-47
+  OPENROOM receipt; text/cell/other-actuator effects remain blocked.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are
