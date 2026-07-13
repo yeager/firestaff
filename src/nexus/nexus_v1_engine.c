@@ -479,6 +479,8 @@ int nexus_v1_inspect_dgn_material_corpus(
             &level, &receipt.structure1f_wall_sensor_destinations[level_index]);
         (void)nexus_v1_level_structure1f_wall_sensor_control_selector_receipt(
             &level, &receipt.structure1f_wall_sensor_control_selectors[level_index]);
+        (void)nexus_v1_level_structure1f_alcove_payload_selector_receipt(
+            &level, &receipt.structure1f_alcove_payload_selectors[level_index]);
         (void)nexus_v1_level_structure3_ordinal_correlation_receipt(
             &level, &receipt.structure3_ordinal_correlations[level_index]);
         if (level.structure3_payload.declared) {
@@ -537,6 +539,9 @@ int nexus_v1_inspect_dgn_material_corpus(
         }
         if (receipt.structure1f_wall_sensor_control_selectors[level_index].complete) {
             ++receipt.structure1f_wall_sensor_control_selector_complete_level_count;
+        }
+        if (receipt.structure1f_alcove_payload_selectors[level_index].complete) {
+            ++receipt.structure1f_alcove_payload_selector_complete_level_count;
         }
         if (receipt.structure3_ordinal_correlations[level_index]
                 .zero_based_block_ordinal_mapping_disproven) {
