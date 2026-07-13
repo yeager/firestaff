@@ -1574,6 +1574,14 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_h,
                                      int *out_stride);
 
+/* Resolve Firestaff's renderer-private HUD key to the exact skproject
+ * INTERFACE_GENERAL dtImage address. The mapping is shared by the live
+ * viewport provider and the fail-closed M11 HUD command bridge. */
+int dm2_v1_boot_hud_core_asset_address(int field,
+                                       int *out_category,
+                                       int *out_index,
+                                       int *out_field);
+
 /* Retrieve the source IMG3 local palette for a virtual viewport image.
  * Runtime GDAT presentation must consume this palette with its pixels. */
 int dm2_v1_boot_viewport_asset_palette_fetch(

@@ -6134,6 +6134,20 @@ if(BUILD_TESTING)
             COMMAND test_dm2_v1_hud_hero_type_gdat_route)
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_hud_m11_command_real_data.c")
+        add_executable(test_dm2_v1_gdat_hud_m11_command_real_data
+            tests/test_dm2_v1_gdat_hud_m11_command_real_data.c)
+        target_link_libraries(test_dm2_v1_gdat_hud_m11_command_real_data PRIVATE
+            firestaff_dm2 firestaff_m10)
+        target_include_directories(test_dm2_v1_gdat_hud_m11_command_real_data PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(NOT MSVC)
+            target_compile_options(test_dm2_v1_gdat_hud_m11_command_real_data PRIVATE -Wall -Wextra -Werror)
+        endif()
+        add_test(NAME dm2_v1_gdat_hud_m11_command_real_data
+            COMMAND test_dm2_v1_gdat_hud_m11_command_real_data)
+    endif()
+
     function(firestaff_add_test_if_missing test_name)
         get_property(_firestaff_existing_tests DIRECTORY PROPERTY TESTS)
         list(FIND _firestaff_existing_tests "${test_name}" _firestaff_test_index)
@@ -9877,6 +9891,21 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_dsa_localstate1_save_handoff
         COMMAND test_csb_v1_dsa_localstate1_save_handoff
+    )
+
+    add_executable(test_csb_v1_csbwin_inventory_ownership_save_handoff
+        tests/test_csb_v1_csbwin_inventory_ownership_save_handoff.c
+    )
+    target_include_directories(test_csb_v1_csbwin_inventory_ownership_save_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_inventory_ownership_save_handoff PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_inventory_ownership_save_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_inventory_ownership_save_handoff
+        COMMAND test_csb_v1_csbwin_inventory_ownership_save_handoff
     )
 
     # CSBWin SKIN_CACHE must invalidate cached EDT_Skins columns when a
