@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron Track 02 `$c86e` command-latch trace: a clean-source,
+  instrumented Mednafen 1.32.1 capture from the authenticated US CUE/System
+  Card 3.0 now proves the carry-clear caller continuation
+  `$fe92 -> $c86e -> $c870 -> $c875 -> $c877/$c87c -> $c897`. The live
+  `$18c0` command latch is observed as `$d0` before the second write. This is
+  an observed register/control-flow receipt only: no `CD_READ`, Track 02
+  record, destination, payload, bitmap, palette, object, or level semantics
+  are assigned. Verification: clean patch dry-run, instrumented trace, and
+  `scripts/verify_theron_c86e_command_trace.sh` PASS.
+
 - 2026-07-13 Nexus SLEV rule boundary: unproven SLEV script dispatch now
   blocks the host route rather than deriving a synthetic rule. Verification:
   Ninja-built and CTest-passed `nexus_v1_script_vm`.

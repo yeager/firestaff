@@ -161,14 +161,17 @@ IRQ2 at `$fff6/$fff7` and resumes at `$3802`, so the descriptor table is not
 linear CPU code. Remaining work is later handler execution, Track 02 reads,
 and their data semantics.
 The observed post-return chain now reaches
-`$cbef -> $cb2f -> $e109 -> $c860 -> $fe92 -> $c86e`, with no new `CD_READ`
-request in the captured window. `$cb2f` is a verified `RTS`; `$e109` is a
+`$cbef -> $cb2f -> $e109 -> $c860 -> $fe92 -> $c86e -> $c897`, with no
+proven `CD_READ` in the captured window. `$cb2f` is a verified `RTS`; `$e109` is a
 verified `JSR $c860`; `$c860` initializes `$f8/$f9`, calls `$c950`, then
 executes `JSR $fe92`. `$fe92` reads the System Card handshake registers and
 returns, with `$1800..$1804` still `00 00 00 02 00`; it is not treated as a
-data request. These are control-flow and register receipts only. Capture the
-first reachable System Card data request after this chain and bind its live
-registers to its Track 02 record before promoting any payload.
+data request. On the observed carry-clear return, `$c86e` reaches two writes
+to `$18c0`; the live latch reads as `$d0` before the second write, then the
+routine transfers through `$c950` to `$c897`. These are control-flow and
+register receipts only, not a record binding. Capture a later explicit System
+Card data transaction and bind its live registers to its Track 02 record
+before promoting any payload.
 The authenticated System Card 3.0 container has a 0x200-byte header; its
 genuine IRQ2 vector is `$e736`. Bit 0 of `$f5` selects an indirect `$2200`
 transfer; the clear path saves A/X/Y, calls `$e742`, then returns with `RTI`.
