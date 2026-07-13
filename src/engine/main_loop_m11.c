@@ -1322,7 +1322,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     }
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+    if (dm1_v1_startup_title_timing_receipt_valid_pc34(dm1MediaReceipt)) {
         dm1Media = *dm1MediaReceipt;
         hasDm1Media = 1;
     } else {
@@ -1330,6 +1330,10 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
                 "dm1",
                 &dm1Media);
+        if (hasDm1Media &&
+            !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
+            hasDm1Media = 0;
+        }
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -1494,7 +1498,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     packedScreen = packedStorage + 4U;
     timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (dm1MediaReceipt && dm1MediaReceipt->handled) {
+    if (dm1_v1_startup_title_timing_receipt_valid_pc34(dm1MediaReceipt)) {
         dm1Media = *dm1MediaReceipt;
         hasDm1Media = 1;
     } else {
@@ -1502,6 +1506,10 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
             dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
                 "dm1",
                 &dm1Media);
+        if (hasDm1Media &&
+            !dm1_v1_startup_title_timing_receipt_valid_pc34(&dm1Media)) {
+            hasDm1Media = 0;
+        }
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));

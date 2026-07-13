@@ -1730,6 +1730,8 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
 int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+int dm1_v1_startup_title_timing_receipt_valid_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt);
 int dm1_v1_startup_title_runtime_source_receipt_pc34(
     const char* source_id,
     int graphics_c001_candidate_available,

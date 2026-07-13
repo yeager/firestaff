@@ -393,6 +393,26 @@ static void check_startup_source_timing_contract(void) {
                      VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
                  media.title_zoom_palette == VGA_PALETTE_PC34_SPECIAL_TITLE,
              1);
+    expect_i("startup TITLE receipt is safe for palette/timing consumption",
+             dm1_v1_startup_title_timing_receipt_valid_pc34(&media),
+             1);
+    {
+        DM1_V1_StartupFullGraphicsMediaReceipt_PC34 stale = media;
+        stale.title_presents_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
+        expect_i("stale handled receipt cannot substitute a non-C12 PRESENTS palette",
+                 dm1_v1_startup_title_timing_receipt_valid_pc34(&stale),
+                 0);
+        stale = media;
+        stale.title_zoom_frame_delay_ms++;
+        expect_i("stale handled receipt cannot alter TITLE.C VBlank cadence",
+                 dm1_v1_startup_title_timing_receipt_valid_pc34(&stale),
+                 0);
+        stale = media;
+        stale.title_zoom_palette = VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
+        expect_i("stale handled receipt cannot collapse C12 and C13/C14 phases",
+                 dm1_v1_startup_title_timing_receipt_valid_pc34(&stale),
+                 0);
+    }
     expect_i("startup entrance has no interactive auto-advance",
              media.entrance_auto_enter_ms,
              0);
