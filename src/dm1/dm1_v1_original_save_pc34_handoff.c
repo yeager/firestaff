@@ -1994,6 +1994,7 @@ void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         state->candidate_party_index < 0 ||
         state->candidate_party_index >= world->party.championCount ||
         state->candidate_party_index >= CHAMPION_MAX_PARTY ||
+        state->candidate_party_index != world->party.championCount - 1 ||
         !world->party.champions[state->candidate_party_index].present) {
         state->candidate_mirror_ordinal = -1;
         state->candidate_party_index = -1;
@@ -2006,7 +2007,9 @@ void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
         state->inventory_panel_active = 0;
         return;
     }
-    /* F0280 has already appended the candidate when C040 opens. */
+    /* ReDMCSB REVIVE.C F0280 appends the candidate and F0282:744 reads
+     * PartyChampionCount - 1. A sidecar cannot reopen C040 over an older
+     * live party slot, even if that slot happens to contain a champion. */
     state->candidate_panel_active = 1;
     state->inventory_panel_active = 1;
 }
