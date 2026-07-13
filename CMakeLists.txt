@@ -179,6 +179,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_midi_backend.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(firestaff_m10 PUBLIC
@@ -193,6 +194,13 @@ if(NOT MSVC)
     # M10 code is frozen Turbo-C port — only minimal warnings.
     # -include stddef.h provides NULL for files that skip standard includes.
     target_compile_options(firestaff_m10 PRIVATE -std=c99 -O2 -include stddef.h)
+endif()
+if(APPLE)
+    # dm2_v1_sound is shared by direct M10 test targets; keep its MIDI
+    # companion and framework dependency available to those link lines.
+    target_link_libraries(firestaff_m10 PUBLIC
+        ${COREMIDI_FRAMEWORK}
+        ${COREFOUNDATION_FRAMEWORK})
 endif()
 
 
@@ -7206,6 +7214,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_graphicsset_wall_material_gate
     )
 
+    add_executable(test_dm2_v1_floor_ceiling_material_gate
+        tests/test_dm2_v1_floor_ceiling_material_gate.c
+    )
+    target_include_directories(test_dm2_v1_floor_ceiling_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_floor_ceiling_material_gate PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_floor_ceiling_material_gate PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_floor_ceiling_material_gate
+        COMMAND test_dm2_v1_floor_ceiling_material_gate
+    )
+
     add_executable(test_dm2_v1_wall_door_local_palette_gate
         tests/test_dm2_v1_wall_door_local_palette_gate.c
     )
@@ -7436,6 +7461,21 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_direct_door_runtime_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
+    # Canonical G1-only DB3 actuator receipt; built in CI but requires user
+    # media, so it is deliberately not registered as a data-free CTest.
+    add_executable(test_dm2_v1_g1_direct_actuator_runtime_real_data
+        tests/test_dm2_v1_g1_direct_actuator_runtime_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
             -Wall -Wextra -O2)
     endif()
 

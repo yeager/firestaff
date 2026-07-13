@@ -970,6 +970,35 @@ int dm1_melee_action_defense_f0231_pc34(int rolledDefense,
     return rolledDefense;
 }
 
+/* ReDMCSB: CHAMPION.C F0325 lines 2038-2047. F0231 uses this only after
+ * choosing its hit or T0231015 miss tail, so this compact helper must not be
+ * called by F0407's separate action-table stamina path. */
+static void dm1_f0231_decrement_stamina_pc34(DM1_CombatState* s,
+                                             int champIdx,
+                                             int decrement) {
+    DM1_ChampionCombat* ch;
+    int remaining;
+
+    if (!s || champIdx < 0 || champIdx >= s->championCount) return;
+    ch = &s->champions[champIdx];
+    remaining = ch->currentStamina - decrement;
+    if (remaining <= 0) {
+        ch->currentStamina = 0;
+        (void)dm1_champion_take_damage(s, champIdx, (-remaining) >> 1,
+                                       DM1_WOUND_NONE, DM1_ATTACK_NORMAL);
+    } else if (remaining > ch->maxStamina) {
+        ch->currentStamina = ch->maxStamina;
+    } else {
+        ch->currentStamina = remaining;
+    }
+}
+
+static int dm1_f0231_miss_stamina_pc34(DM1_CombatState* s, int champIdx) {
+    dm1_f0231_decrement_stamina_pc34(s, champIdx,
+                                     dm1_combat_random(2) + 2);
+    return DM1_OUTCOME_KILLED_NONE;
+}
+
 /*
  * dm1_melee_action_damage — Champion melee attack against creature
  *
@@ -989,14 +1018,15 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
     /* ReDMCSB: PROJEXPL.C F0231 lines 1454-1456 (MEDIA720 PC34):
      * CreatureInfo.Dexterity == 255 bypasses the entire hit path. This is
      * stronger than an ordinary dexterity contest: it must not consume the
-     * first M003_RANDOM(32) or F0308 Luck state either. */
+     * first M003_RANDOM(32) or F0308 Luck state, but does continue through
+     * T0231015's M005_RANDOM(2)+2 stamina miss tail. */
     if (group->info.dexterity == 255) {
-        return 0;
+        return dm1_f0231_miss_stamina_pc34(s, champIdx);
     }
 
     /* Source: PROJEXPL.C:1477 gates non-material targets before hit RNG. */
     if (group->info.nonMaterial && !dm1_melee_action_hits_non_material(ch)) {
-        return 0;
+        return dm1_f0231_miss_stamina_pc34(s, champIdx);
     }
 
     /* Champion attack strength */
@@ -1005,13 +1035,13 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
 
     /* Subtract creature defense */
     int creatureDef = group->info.defense;
-    if (creatureDef == 255) return 0; /* Immune */
+    if (creatureDef == 255) return dm1_f0231_miss_stamina_pc34(s, champIdx);
 
     /* Dexterity hit check: random(dex) must beat random(creature dex) */
     int champDex = dm1_champion_dexterity(ch);
     int creaDex = group->info.dexterity;
     if (dm1_combat_random(dm1_max(1, champDex)) < dm1_combat_random(dm1_max(1, creaDex >> 1))) {
-        return 0; /* Miss */
+        return dm1_f0231_miss_stamina_pc34(s, champIdx);
     }
 
     /* Apply creature defense */
@@ -1027,12 +1057,26 @@ int dm1_melee_action_damage(DM1_CombatState* s, int champIdx,
         !group->info.nonMaterial) {
         attack >>= 1;
         if (attack == 0) {
-            return 0;
+            return dm1_f0231_miss_stamina_pc34(s, champIdx);
         }
     }
 
-    /* Apply damage */
-    return dm1_creature_take_damage(group, creatureIdx, attack);
+    /* ReDMCSB: PROJEXPL.C F0231:1528-1539. The skill critical roll follows
+     * the Vorpal branch and precedes F0190. This compact Swing entry owns
+     * only C00_SKILL_SWING; F0407's action profile selects other skill routes
+     * in the dedicated resolver. */
+    if (dm1_combat_random(64) < ch->skillSwing) {
+        attack += attack + 10;
+    }
+
+    /* ReDMCSB: PROJEXPL.C F0231:1538. A landed action spends M004(4)+4,
+     * after the F0190 group result but before the caller's reaction path. */
+    {
+        int outcome = dm1_creature_take_damage(group, creatureIdx, attack);
+        dm1_f0231_decrement_stamina_pc34(s, champIdx,
+                                         dm1_combat_random(4) + 4);
+        return outcome;
+    }
 }
 
 /*

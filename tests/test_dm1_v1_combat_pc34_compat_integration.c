@@ -30,6 +30,7 @@ static void test_f0735_dexterity_255_skips_hit_branch(void);
 static void test_f0735_weak_damage_zero_roll_uses_miss_tail(void);
 static void test_legacy_f0231_dexterity_255_preserves_rng(void);
 static void test_legacy_f0231_icon_damage_order(void);
+static void test_legacy_f0231_aftermath_stamina_and_skill(void);
 static void test_ordered_cells_to_attack_priority(void);
 static void test_f0192_per_creature_resistance(void);
 static void test_f0801b_archenemy_double_move(void);
@@ -617,6 +618,7 @@ static void test_legacy_f0231_dexterity_255_preserves_rng(void) {
     DM1_CreatureGroup g;
     int nextAfterCall;
     int expectedNext;
+    int expectedStaminaCost;
 
     TEST(legacy_f0231_dexterity_255_preserves_rng);
     dm1_combat_init(&s);
@@ -633,16 +635,19 @@ static void test_legacy_f0231_dexterity_255_preserves_rng(void) {
     g.creatures[0].health = 200;
 
     dm1_combat_seed_rng(0x4a31u);
+    expectedStaminaCost = dm1_combat_random(2) + 2;
+    expectedNext = dm1_combat_random(32768);
+
+    dm1_combat_seed_rng(0x4a31u);
     CHECK(dm1_melee_action_damage(&s, 0, &g, 0) == DM1_OUTCOME_KILLED_NONE,
           "Dexterity 255 must reject the compact F0231 melee action");
     CHECK(g.creatures[0].health == 200,
           "Dexterity 255 must leave creature health unchanged");
+    CHECK(s.champions[0].currentStamina == 100 - expectedStaminaCost,
+          "Dexterity 255 must take the F0231 T0231015 miss stamina cost");
     nextAfterCall = dm1_combat_random(32768);
-
-    dm1_combat_seed_rng(0x4a31u);
-    expectedNext = dm1_combat_random(32768);
     CHECK(nextAfterCall == expectedNext,
-          "Dexterity 255 must not consume compact F0231 hit RNG");
+          "Dexterity 255 must consume only the F0231 miss-stamina RNG");
 
     PASS();
 }
@@ -686,6 +691,49 @@ static void test_legacy_f0231_icon_damage_order(void) {
     (void)dm1_melee_action_damage(&s, 0, &vorpal, 0);
     CHECK(vorpal.creatures[0].health > normal.creatures[0].health,
           "Vorpal Blade must halve late F0231 damage against material targets");
+
+    PASS();
+}
+
+/* ReDMCSB PROJEXPL.C F0231:1531-1539 and CHAMPION.C F0325:2025-2047. */
+static void test_legacy_f0231_aftermath_stamina_and_skill(void) {
+    DM1_CombatState ordinary;
+    DM1_CombatState skilled;
+    DM1_CreatureGroup ordinaryGroup;
+    DM1_CreatureGroup skilledGroup;
+
+    TEST(legacy_f0231_aftermath_stamina_and_skill);
+    dm1_combat_init(&ordinary);
+    ordinary.championCount = 1;
+    dm1_combat_init_champion(&ordinary.champions[0]);
+    ordinary.champions[0].strength = 100;
+    ordinary.champions[0].dexterity = 100;
+    ordinary.champions[0].hasWeapon = 1;
+    ordinary.champions[0].actionHandWeapon.strength = 80;
+    ordinary.champions[0].actionHandWeapon.weaponClass = 0;
+    skilled = ordinary;
+    skilled.champions[0].skillSwing = 64;
+
+    dm1_combat_init_group(&ordinaryGroup);
+    ordinaryGroup.info.dexterity = 0;
+    ordinaryGroup.info.defense = 0;
+    ordinaryGroup.count = 0;
+    ordinaryGroup.creatures[0].health = 1000;
+    skilledGroup = ordinaryGroup;
+
+    dm1_combat_seed_rng(0x2a73u);
+    (void)dm1_melee_action_damage(&ordinary, 0, &ordinaryGroup, 0);
+    dm1_combat_seed_rng(0x2a73u);
+    (void)dm1_melee_action_damage(&skilled, 0, &skilledGroup, 0);
+
+    CHECK(skilledGroup.creatures[0].health < ordinaryGroup.creatures[0].health,
+          "skill level 64 must take the F0231 critical-damage branch");
+    CHECK(ordinary.champions[0].currentStamina >= 93 &&
+              ordinary.champions[0].currentStamina <= 96,
+          "landed F0231 melee must spend M004_RANDOM(4)+4 stamina");
+    CHECK(skilled.champions[0].currentStamina ==
+              ordinary.champions[0].currentStamina,
+          "critical damage must not alter the F0231 landed stamina order");
 
     PASS();
 }
@@ -947,6 +995,7 @@ int main(void) {
     test_f0735_weak_damage_zero_roll_uses_miss_tail();
     test_legacy_f0231_dexterity_255_preserves_rng();
     test_legacy_f0231_icon_damage_order();
+    test_legacy_f0231_aftermath_stamina_and_skill();
     test_ordered_cells_to_attack_priority();
     test_f0192_per_creature_resistance();
     test_f0801b_archenemy_double_move();
