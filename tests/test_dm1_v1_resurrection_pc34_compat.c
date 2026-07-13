@@ -330,6 +330,58 @@ static void test_candidate_append_clear_cycles(void) {
     }
 }
 
+static void test_candidate_slot_reuse_before_accept(void) {
+    ChampionPortraitClickInput_Compat in;
+    CandidateChampionAddResult_Compat add;
+    CandidatePanelState_Compat st;
+    CandidatePanelResult_Compat result;
+    int cycle;
+
+    printf("[candidate_slot_reuse_before_accept]\n");
+
+    /* ReDMCSB REVIVE.C F0280:272-276 appends at G0305 and sets G0299 to
+     * the matching ordinal. F0282:745-783 clears G0299 and decrements G0305
+     * on C162. With an established leader in slot 0, repeated C127/C162
+     * cycles must therefore keep reusing slot 1 until C160 finalizes it. */
+    in = base_portrait_click_input();
+    in.partyChampionCount = 1;
+    in.leaderIndex = 0;
+    for (cycle = 0; cycle < 3; ++cycle) {
+        add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+        CHECK(add.triggersCandidateAdd == 1, "C127 stays armed after a prior cancel");
+        CHECK(add.candidateChampionIndex == 1, "C127 reuses appended slot 1");
+        CHECK(add.candidateChampionOrdinal == 2, "C127 restores G0299 ordinal 2");
+        CHECK(add.nextPartyChampionCount == 2, "C127 temporarily increments G0305 to 2");
+
+        st.partyChampionCount = add.nextPartyChampionCount;
+        st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+        result = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+            st, DM1_COMMAND_CANCEL);
+        CHECK(result.valid == 1 && result.cancelled == 1,
+              "C162 is valid for the repeatedly appended candidate");
+        CHECK(result.nextPartyChampionCount == 1,
+              "C162 restores the established one-champion party count");
+        CHECK(result.nextCandidateChampionOrdinal == 0,
+              "C162 clears G0299 before the next C127 attempt");
+        CHECK(result.disablesMirrorSensor == 0,
+              "C162 leaves the mirror enabled for the next attempt");
+    }
+
+    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
+    st.partyChampionCount = add.nextPartyChampionCount;
+    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
+    result = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
+        st, DM1_COMMAND_RESURRECT);
+    CHECK(result.valid == 1 && result.resurrected == 1,
+          "C160 accepts the slot reused after three C162 cycles");
+    CHECK(result.candidateChampionIndex == 1 &&
+          result.nextPartyChampionCount == 2,
+          "C160 retains the append-only party slot and count");
+    CHECK(result.nextCandidateChampionOrdinal == 0 &&
+          result.disablesMirrorSensor == 1,
+          "C160 clears G0299 and takes the mirror-disable path");
+}
+
 static void test_mirror_sensor_disable_order(void) {
     MirrorThing_Compat things[3];
     MirrorSensorDisableResult_Compat d;
@@ -461,6 +513,7 @@ int main(void) {
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
     test_candidate_append_clear_cycles();
+    test_candidate_slot_reuse_before_accept();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();
     test_command_validation();
