@@ -622,6 +622,14 @@ F0127 now consumes its deferred live explosion record through original M636
 pattern material after D0 projectile materialization; remaining work is real
 multi-effect capture, not a cue, marker, or replacement bitmap.
 
+Outside F0127/D0C, F0115's deferred C15 receipt now preserves every ordinary
+same-square PC34 explosion record in source list order and M11 consumes each
+record's own F0114 type/frame/attack material after all object, creature, and
+projectile passes. Fluxcage remains on its F0113 field route and rebirth
+remains no-draw here until its distinct C3000/C3007 coordinates are consumed;
+neither can borrow a generic sprite. Remaining explosion work is real-media
+multi-effect capture plus the separate rebirth geometry route.
+
 DM1 F0115 now consumes only ReDMCSB's compact 13 `G0205` ornament zones.
 The F0676/F0677 D3L2/D3R2 planes are deliberately outside that pass, so they
 cannot duplicate inscriptions.  The remaining DM1 inscription work is a

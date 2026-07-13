@@ -166,6 +166,15 @@
   Verification: capture-script syntax/contract test, Mednafen patch dry-run,
   rebuilt instrumented Mednafen, and three authentic bounded GUI captures.
 
+- 2026-07-13 DM1 F0115 deferred multi-explosion materialization: outside
+  F0127/D0C, the runtime receipt now retains every active ordinary PC34 C15
+  explosion in original list order and M11 consumes each record's own
+  F0114 type/frame/attack material after the object/creature/projectile
+  passes. This follows ReDMCSB `DUNVIEW.C F0115:5915-6200`; Fluxcage remains
+  on F0113 and C100/C101 rebirth remains fail-closed pending its separate
+  C3000/C3007 route. Focused runtime materialization and projectile/explosion
+   CTests plus Ninja build pass.
+
 - 2026-07-13 DM1 F0115/F0127 D0C deferred explosion materialization: the
   D0C live explosion route now follows ReDMCSB `DUNVIEW.C F0115:5915-6074`
   after the D1-D3 deferred passes and its matching D0C projectile draw. It

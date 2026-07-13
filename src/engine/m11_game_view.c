@@ -17215,8 +17215,31 @@ static int m11_viewport_cell_has_renderable_projectile(
 static int m11_viewport_cell_has_renderable_explosion(
     const M11_ViewportCell* cell) {
     return cell &&
-           cell->summary.explosions > 0 &&
-           cell->firstExplosionType >= 0;
+           cell->dm1MaterializationDecisionReady &&
+           cell->dm1MaterializationDecision.liveRenderableExplosionCount > 0;
+}
+
+static int m11_viewport_cell_explosion_material(
+    const M11_ViewportCell* cell,
+    int index,
+    M11_ViewportCell* outMaterial)
+{
+    const DM1_V1_ViewportRuntimeMaterializationDecisionPc34* decision;
+
+    if (!cell || !outMaterial || !cell->dm1MaterializationDecisionReady) {
+        return 0;
+    }
+    decision = &cell->dm1MaterializationDecision;
+    if (index < 0 || index >= decision->liveRenderableExplosionCount) {
+        return 0;
+    }
+    *outMaterial = *cell;
+    outMaterial->firstExplosionType = decision->liveRenderableExplosionTypes[index];
+    outMaterial->firstExplosionFrame = decision->liveRenderableExplosionFrames[index];
+    outMaterial->firstExplosionMaxFrames =
+        decision->liveRenderableExplosionMaxFrames[index];
+    outMaterial->firstExplosionAttack = decision->liveRenderableExplosionAttacks[index];
+    return 1;
 }
 
 static int m11_sample_viewport_cell(const M11_GameViewState* state,
@@ -17387,6 +17410,17 @@ static int m11_build_dm1_viewport_materialization_decision(
         cell->firstExplosionFrame = outDecision->liveExplosionFrame;
         cell->firstExplosionMaxFrames = outDecision->liveExplosionMaxFrames;
         cell->firstExplosionAttack = outDecision->liveExplosionAttack;
+    }
+    if (outDecision->liveRenderableExplosionCount > 0) {
+        /* Fluxcage and rebirth may precede a normal C15 record in the live
+         * slot array. F0115 handles those through distinct routes, so M11's
+         * ordinary F0114 consumer must start from the first admitted record,
+         * not reuse the unfiltered summary's first slot. */
+        cell->firstExplosionType = outDecision->liveRenderableExplosionTypes[0];
+        cell->firstExplosionFrame = outDecision->liveRenderableExplosionFrames[0];
+        cell->firstExplosionMaxFrames =
+            outDecision->liveRenderableExplosionMaxFrames[0];
+        cell->firstExplosionAttack = outDecision->liveRenderableExplosionAttacks[0];
     }
     return 1;
 }
@@ -24750,9 +24784,25 @@ static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
     if (faceW < 8 || faceH < 8) {
         return;
     }
-    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
-                           faceX + 3, faceY + 3, faceW - 6, faceH - 6,
-                           cell, depthIndex, 0);
+    {
+        int effectIndex;
+        /* ReDMCSB DUNVIEW.C F0115:5915-6200 restarts the thing list and
+         * consumes every ordinary C15 effect. Each receipt entry remains
+         * bound to its own PC34 type/frame/attack; do not collapse later
+         * effects onto the first record or invent a substitute sprite. */
+        for (effectIndex = 0;
+             effectIndex < cell->dm1MaterializationDecision.liveRenderableExplosionCount;
+             ++effectIndex) {
+            M11_ViewportCell material;
+            if (!m11_viewport_cell_explosion_material(cell, effectIndex,
+                                                       &material)) {
+                continue;
+            }
+            m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                   faceX + 3, faceY + 3, faceW - 6, faceH - 6,
+                                   &material, depthIndex, 0);
+        }
+    }
 }
 
 static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
@@ -24793,9 +24843,21 @@ static void m11_draw_dm1_deferred_side_explosion(unsigned char* framebuffer,
     expArea = paneH / 2;
     if (expArea < 7) expArea = 7;
     expY = paneY + (paneH - expArea) / 2;
-    m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
-                           paneX + 1, expY, paneW - 2, expArea,
-                           cell, depthIndex + 1, 0);
+    {
+        int effectIndex;
+        for (effectIndex = 0;
+             effectIndex < cell->dm1MaterializationDecision.liveRenderableExplosionCount;
+             ++effectIndex) {
+            M11_ViewportCell material;
+            if (!m11_viewport_cell_explosion_material(cell, effectIndex,
+                                                       &material)) {
+                continue;
+            }
+            m11_draw_explosion_cue(framebuffer, framebufferWidth, framebufferHeight,
+                                   paneX + 1, expY, paneW - 2, expArea,
+                                   &material, depthIndex + 1, 0);
+        }
+    }
 }
 
 static void m11_draw_dm1_d0c_deferred_explosion_pass(
