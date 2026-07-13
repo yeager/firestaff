@@ -10374,6 +10374,18 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
     )
 
+    add_executable(test_dm1_v1_f0306_real_pc34_runtime
+        tests/test_dm1_v1_f0306_real_pc34_runtime.c
+    )
+    target_link_libraries(test_dm1_v1_f0306_real_pc34_runtime PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0306_real_pc34_runtime PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0306_real_pc34_runtime
+        COMMAND test_dm1_v1_f0306_real_pc34_runtime "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+    )
+
     add_executable(test_m11_dm1_hoc_mirror_inscription_invalidation_pc34
         tests/test_m11_dm1_hoc_mirror_inscription_invalidation_pc34.c
     )

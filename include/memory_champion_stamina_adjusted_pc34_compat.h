@@ -58,6 +58,15 @@ int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
     int halfMaxStamina,
     int value);
 
+/* DM1 PC 3.4's Turbo C++ 1.01 operand order, intentionally independent of
+ * the cross-media CSB test toggle above.  M11 runtime callers must use this
+ * entry point so another game's test/profile cannot change DM1 strength or
+ * wound-defense results. */
+int F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
+    int currentStamina,
+    int halfMaxStamina,
+    int value);
+
 #ifdef __cplusplus
 }
 #endif
