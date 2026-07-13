@@ -27,6 +27,16 @@
   disabling the mirror. Source: ReDMCSB `REVIVE.C` F0280:272-277 and
   F0282:744-805. Verification: focused resurrection compatibility test.
 
+- 2026-07-13 DM1 HoC M648/C10 mirror-transition invalidation: a real-PC34
+  runtime regression crosses a visible D1C TextString into a real C127
+  champion mirror, opens its REVIVE candidate panel, closes it with C162,
+  and returns to the source text. Every C127/panel frame must clear the
+  complete M648/C10 receipt; the returned source text must republish its own
+  original glyph bytes and graphic 258. The original M648 pixels are
+  fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
+  F0107:3619-3706,3913-3928 and F0124/F0128; `REVIVE.C` F0280/F0282.
+  Verification: focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC C127 reject/accept party order: cancelling a candidate
   clears only the appended slot, and selecting the same mirror again reuses
   that slot. Its later C160 confirmation retains leader slot 0 and the
