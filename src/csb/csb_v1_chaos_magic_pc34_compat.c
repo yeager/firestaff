@@ -989,7 +989,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_skin_write_count = 0;
     int i;
 
-    if (!state || !context || !out_execution || !context->parameters ||
+    if (!state || !context || !out_execution ||
+        (context->parameter_count > 0 && !context->parameters) ||
         context->parameter_count < 0 || context->global_variable_count < 0 ||
         context->global_variable_count > CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY ||
         (context->global_variable_count > 0 && !context->global_variables)) {
@@ -1162,7 +1163,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     int i;
 
     (void)flgs_inout;
-    if (!action || !parameters || parameter_count < 1 ||
+    if (!action || (parameter_count > 0 && !parameters) || parameter_count < 0 ||
         parameter_count > 26 || !runner || !runner->programs ||
         runner->dsa_id < 0 || runner->action_ordinal < 0 ||
         runner->global_variable_count < 0 ||

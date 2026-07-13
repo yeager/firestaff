@@ -534,6 +534,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
         0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
     };
     uint16_t num_param_program[] = { 0x02d5u, 0x004du };
+    uint16_t zero_param_global_program[] = { 0x02d5u, 0x0054u };
     int parameters[] = { 0, 0 };
     uint8_t exported[8192];
     const uint8_t *global_payload = NULL;
@@ -712,6 +713,35 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.dsa_id == 7 && runner.state_index == 4u &&
               runner.action_ordinal == 0,
           "CSBWin TT_PITROOM prepares only its selected DSA action");
+    action.program_words = zero_param_global_program;
+    action.program_word_count =
+        (int)(sizeof(zero_param_global_program) /
+              sizeof(zero_param_global_program[0]));
+    /* Timer.cpp ActivateDSA creates NEWDSAPARAMETERS, whose sole source
+     * value is the count zero.  AMPERSAND2 NUMPARAM then proves that the
+     * live saved-timer runner has not invented a placeholder parameter. */
+    openroom_timer.function = 102u;
+    CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+              &profile, &dungeon, &location, &openroom_timer) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "CSBWin TT_DESSAGE executes its selected zero-parameter DSA action");
+    openroom_timer.function = 10u;
+    CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+              &profile, &dungeon, &location, &openroom_timer) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "CSBWin TT_DOOR executes its selected zero-parameter DSA action");
+    map_timer.function = 8u;
+    CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+              &profile, &dungeon, &location, &map_timer) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "CSBWin TT_TELEPORTER executes its selected zero-parameter DSA action");
+    map_timer.function = 9u;
+    CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+              &profile, &dungeon, &location, &map_timer) == 1 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "CSBWin TT_PITROOM executes its selected zero-parameter DSA action");
+    action.program_words = program;
+    action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
     map_timer.ubyte9 = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
               &profile, &dungeon, &location, &map_timer, &timer6) == 0,
@@ -819,7 +849,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               runner.master_location == 0x0c345u &&
               runner.global_variable_count == 16 &&
               runner.global_variables[0] == 0x1234u &&
-              runner.global_variables[1] == 0x5678u,
+              runner.global_variables[1] == 0u,
           "CSB runtime prepares its authenticated DSA runner with save-owned globals");
     { int run_result = csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
               &profile, &runner, &action, parameters, 1, NULL);
