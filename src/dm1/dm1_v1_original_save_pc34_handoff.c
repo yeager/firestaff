@@ -72,8 +72,8 @@ static int dm1_original_save_corpus_external_pc34_file(
     return 0;
 }
 
-static uint32_t dm1_original_save_corpus_hash_bytes(const uint8_t *bytes,
-                                                     size_t byte_count)
+static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
+                                             size_t byte_count)
 {
     uint32_t hash = 2166136261u;
     size_t i;
@@ -1787,7 +1787,11 @@ static int import_original_pc34_external_portraits(
     if (count < 0) count = 0;
     if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        if (out_state && out_state->party && slot < count) {
+        if (out_state && out_state->party) {
+            /* ReDMCSB F0435 reads all four fixed portrait payloads into
+             * M516_CHAMPIONS, not only PartyChampionCount live members.
+             * Keep inactive-slot bytes as save-owned evidence so F0433 can
+             * write the same block again; they do not make a champion live. */
             memcpy(out_state->party->champions[slot].portraitBitmap,
                    bytes + cursor,
                    CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
@@ -1797,6 +1801,12 @@ static int import_original_pc34_external_portraits(
     }
     if (out_report) {
         out_report->external_portrait_byte_count = (uint32_t)portrait_bytes;
+        out_report->external_portrait_byte_offset = (uint32_t)cursor -
+            (uint32_t)portrait_bytes;
+        out_report->external_portrait_fingerprint =
+            dm1_original_save_hash_bytes(
+                bytes + out_report->external_portrait_byte_offset,
+                portrait_bytes);
         out_report->external_portrait_payload_count = CHAMPION_MAX_PARTY;
         out_report->external_portrait_imported_count = count;
     }
@@ -3036,6 +3046,33 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+static int dm1_original_save_external_portraits_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report)
+{
+    uint32_t portrait_bytes = SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report ||
+        source_report->external_portrait_byte_count != portrait_bytes ||
+        exported_report->external_portrait_byte_count != portrait_bytes ||
+        source_report->external_portrait_byte_offset > source_size ||
+        portrait_bytes > source_size -
+            source_report->external_portrait_byte_offset ||
+        exported_report->external_portrait_byte_offset > exported_size ||
+        portrait_bytes > exported_size -
+            exported_report->external_portrait_byte_offset) {
+        return 0;
+    }
+    return memcmp(source_bytes + source_report->external_portrait_byte_offset,
+                  exported_bytes + exported_report->external_portrait_byte_offset,
+                  portrait_bytes) == 0;
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3095,6 +3132,23 @@ static void fill_roundtrip_core_report(
     }
     if (reloaded_queue) {
         out_report->reloaded_event_count = reloaded_queue->eventCount;
+    }
+    if (source_report && export_report) {
+        out_report->source_external_portrait_byte_count =
+            source_report->external_portrait_byte_count;
+        out_report->source_external_portrait_fingerprint =
+            source_report->external_portrait_fingerprint;
+        out_report->exported_external_portrait_byte_count =
+            export_report->external_portrait_byte_count;
+        out_report->exported_external_portrait_fingerprint =
+            export_report->external_portrait_fingerprint;
+        out_report->external_portrait_byte_receipt_available =
+            source_report->external_portrait_byte_count ==
+                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+            export_report->external_portrait_byte_count ==
+                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+            source_report->external_portrait_fingerprint != 0u &&
+            export_report->external_portrait_fingerprint != 0u;
     }
 
     /* ReDMCSB LOADSAVE.C F0433:1586-1589 writes the complete EVENT and
@@ -3298,9 +3352,17 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     fill_roundtrip_core_report(&import_report, &export_report,
                                &reloaded_world, &reloaded_queue,
                                out_report);
+    if (out_report && out_report->external_portrait_byte_receipt_available) {
+        out_report->external_portrait_byte_preservation_ok =
+            dm1_original_save_external_portraits_match(
+                bytes, size, &import_report, out_bytes, *out_size,
+                &export_report);
+    }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report &&
         (!out_report->core_state_matches ||
+         !out_report->external_portrait_byte_receipt_available ||
+         !out_report->external_portrait_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
           import_report.original_event_count > 0) ||
          (out_report->source_c13_event_count > 0 &&
@@ -3461,7 +3523,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             continue;
         }
         receipt->source_byte_count = (uint32_t)source_size;
-        receipt->source_hash = dm1_original_save_corpus_hash_bytes(
+        receipt->source_hash = dm1_original_save_hash_bytes(
             source_bytes, source_size);
         free(source_bytes);
         if (receipt->source_hash == 0u) {
@@ -3522,10 +3584,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_timeline_byte_mismatch_count;
         receipt->c13_timeline_byte_preservation_ok =
             roundtrip.c13_timeline_byte_preservation_ok;
+        receipt->source_external_portrait_fingerprint =
+            roundtrip.source_external_portrait_fingerprint;
+        receipt->exported_external_portrait_fingerprint =
+            roundtrip.exported_external_portrait_fingerprint;
+        receipt->external_portrait_byte_preservation_ok =
+            roundtrip.external_portrait_byte_preservation_ok;
         if (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches) {
             receipt->exported_byte_count = (uint32_t)exported_size;
-            receipt->exported_hash = dm1_original_save_corpus_hash_bytes(
+            receipt->exported_hash = dm1_original_save_hash_bytes(
                 exported_bytes, exported_size);
             if (receipt->exported_hash == 0u) {
                 receipt->roundtrip_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;

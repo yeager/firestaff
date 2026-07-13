@@ -17,6 +17,14 @@
    text, host font, synthetic bitmap, or HoC-only route is added.
    Verification: focused Ninja build and four-test PC34 inscription CTest set.
 
+- 2026-07-13 DM1 PC34 external-portrait byte receipt: the four original
+  post-part 32x29 portrait bitmap payloads now retain source/export offsets,
+  lengths, fingerprints, and an exact transient byte comparison across
+  F0435 -> F0433 -> F0435. Missing, truncated, or changed bytes fail closed;
+  no Firestaff-native format is admitted as original-save evidence. Source:
+   ReDMCSB `LOADSAVE.C` F0433:1630-1635 and F0435:2810-2816. Verification:
+   dedicated native-PC34 portrait CTest with nonzero raw bitmap bytes.
+
 - 2026-07-13 DM1 F0107 non-HoC inscription host consumption: M11 now
   publishes the completed F0168/F0107 line destinations only after it draws
   the real PC34 M648 glyph material. The new real-data regression selects a
