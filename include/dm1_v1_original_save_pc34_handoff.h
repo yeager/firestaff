@@ -176,6 +176,23 @@ typedef struct {
     int source_active_group_count;
     int exported_active_group_count;
     int reloaded_active_group_count;
+    /* F0433/F0435 source-owned DM_SAVE_HEADER identity and the five raw
+     * uint16 length prefixes. Noise/Keys/Checksums are intentionally not
+     * compared: F0433 regenerates them, while AdditionalData is Firestaff's
+     * manifest slot rather than an imported external-corpus mirror. */
+    int header_part_shape_receipt_available;
+    uint16_t source_header_format_id;
+    uint16_t exported_header_format_id;
+    uint16_t source_header_platform;
+    uint16_t exported_header_platform;
+    uint16_t source_header_dungeon_id;
+    uint16_t exported_header_dungeon_id;
+    uint32_t source_header_game_id;
+    uint32_t exported_header_game_id;
+    int header_identity_preservation_ok;
+    uint32_t source_part_byte_counts[5];
+    uint32_t exported_part_byte_counts[5];
+    int part_byte_count_preservation_ok;
     /* ReDMCSB DEFS.H EVENT is the ten-byte on-disk record that F0433
      * writes and F0435 reads.  C13 owns every B/C union byte, unlike
      * several timer types with source-uninitialised union arms. */
@@ -248,6 +265,19 @@ typedef struct {
     int c13_byte_preserved_count;
     int c13_byte_mismatch_count;
     int c13_byte_preservation_ok;
+    int header_part_shape_receipt_available;
+    uint16_t source_header_format_id;
+    uint16_t exported_header_format_id;
+    uint16_t source_header_platform;
+    uint16_t exported_header_platform;
+    uint16_t source_header_dungeon_id;
+    uint16_t exported_header_dungeon_id;
+    uint32_t source_header_game_id;
+    uint32_t exported_header_game_id;
+    int header_identity_preservation_ok;
+    uint32_t source_part_byte_counts[5];
+    uint32_t exported_part_byte_counts[5];
+    int part_byte_count_preservation_ok;
     int source_c13_timeline_reference_count;
     int exported_c13_timeline_reference_count;
     int c13_timeline_byte_preserved_count;

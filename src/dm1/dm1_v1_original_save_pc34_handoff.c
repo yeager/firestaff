@@ -3366,6 +3366,57 @@ static int dm1_original_save_party_info_bytes_match(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0433:1573-1627 constructs five source save-part
+ * descriptors, writes their uint16 byte counts, and stamps FormatID/GameID/
+ * Platform/DungeonID before F0430 obfuscates the header. F0435 consumes that
+ * same header identity and each raw length prefix. Keys/checksums are fresh
+ * F0433 output and AdditionalData is Firestaff's manifest area, so neither
+ * belongs in an external-original mirror receipt. */
+static int dm1_original_save_header_part_shape_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    int i;
+
+    if (!source_report || !exported_report || !out_report ||
+        !source_report->classify.header_checksum_ok ||
+        !exported_report->classify.header_checksum_ok ||
+        source_report->part_checksum_ok_count != SAVEGAME_PC34_PART_COUNT ||
+        exported_report->part_checksum_ok_count != SAVEGAME_PC34_PART_COUNT) {
+        return 0;
+    }
+    out_report->header_part_shape_receipt_available = 1;
+    out_report->source_header_format_id = source_report->classify.format_id;
+    out_report->exported_header_format_id = exported_report->classify.format_id;
+    out_report->source_header_platform = source_report->classify.platform;
+    out_report->exported_header_platform = exported_report->classify.platform;
+    out_report->source_header_dungeon_id = source_report->classify.dungeon_id;
+    out_report->exported_header_dungeon_id =
+        exported_report->classify.dungeon_id;
+    out_report->source_header_game_id = source_report->classify.game_id;
+    out_report->exported_header_game_id = exported_report->classify.game_id;
+    out_report->header_identity_preservation_ok =
+        out_report->source_header_format_id ==
+            out_report->exported_header_format_id &&
+        out_report->source_header_platform == out_report->exported_header_platform &&
+        out_report->source_header_dungeon_id ==
+            out_report->exported_header_dungeon_id &&
+        out_report->source_header_game_id == out_report->exported_header_game_id;
+    out_report->part_byte_count_preservation_ok = 1;
+    for (i = 0; i < SAVEGAME_PC34_PART_COUNT; ++i) {
+        out_report->source_part_byte_counts[i] =
+            source_report->part_byte_counts[i];
+        out_report->exported_part_byte_counts[i] =
+            exported_report->part_byte_counts[i];
+        if (out_report->source_part_byte_counts[i] !=
+            out_report->exported_part_byte_counts[i]) {
+            out_report->part_byte_count_preservation_ok = 0;
+        }
+    }
+    return 1;
+}
+
 /* ReDMCSB LOADSAVE.C F0433 writes the optional loaded dungeon immediately
  * after the four external portraits, and F0435 reads it from the same cursor.
  * This is a corpus-only raw-byte receipt: no tail bytes are decoded or
@@ -3725,6 +3776,10 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report)) {
         out_report->party_info_byte_receipt_available = 0;
     }
+    if (out_report && !dm1_original_save_header_part_shape_match(
+            &import_report, &export_report, out_report)) {
+        out_report->header_part_shape_receipt_available = 0;
+    }
     if (out_report && !dm1_original_save_dungeon_tail_bytes_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report)) {
@@ -3739,6 +3794,7 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
          !out_report->inactive_champion_record_byte_preservation_ok ||
          !out_report->party_info_byte_receipt_available ||
          !out_report->party_info_byte_preservation_ok ||
+         !out_report->header_part_shape_receipt_available ||
          !out_report->dungeon_tail_byte_receipt_available ||
          !out_report->dungeon_tail_byte_preservation_ok ||
          (!out_report->c13_byte_receipt_available &&
@@ -4009,6 +4065,29 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_byte_mismatch_count;
         receipt->c13_byte_preservation_ok =
             roundtrip.c13_byte_preservation_ok;
+        receipt->header_part_shape_receipt_available =
+            roundtrip.header_part_shape_receipt_available;
+        receipt->source_header_format_id = roundtrip.source_header_format_id;
+        receipt->exported_header_format_id =
+            roundtrip.exported_header_format_id;
+        receipt->source_header_platform = roundtrip.source_header_platform;
+        receipt->exported_header_platform = roundtrip.exported_header_platform;
+        receipt->source_header_dungeon_id =
+            roundtrip.source_header_dungeon_id;
+        receipt->exported_header_dungeon_id =
+            roundtrip.exported_header_dungeon_id;
+        receipt->source_header_game_id = roundtrip.source_header_game_id;
+        receipt->exported_header_game_id = roundtrip.exported_header_game_id;
+        receipt->header_identity_preservation_ok =
+            roundtrip.header_identity_preservation_ok;
+        for (int part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+            receipt->source_part_byte_counts[part] =
+                roundtrip.source_part_byte_counts[part];
+            receipt->exported_part_byte_counts[part] =
+                roundtrip.exported_part_byte_counts[part];
+        }
+        receipt->part_byte_count_preservation_ok =
+            roundtrip.part_byte_count_preservation_ok;
         receipt->source_c13_timeline_reference_count =
             roundtrip.source_c13_timeline_reference_count;
         receipt->exported_c13_timeline_reference_count =
