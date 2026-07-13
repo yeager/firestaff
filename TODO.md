@@ -154,12 +154,13 @@
   Structure1A owner/model and transform selectors plus Structure1F raw face,
   rotation, face/rotation, signed-offset pair, and wall-payload-selector
   receipts plus raw wall-sensor destination tuples/control selectors and alcove
-  payload selectors and direct floor-sensor control/destination receipts now
-  reach the optional retail DGN corpus. The receipt can separately rule out
-  zero- and one-based direct model-index byte/block/run ordinals, but Structure3
-  record and face grammar remain unparsed. Prove original record boundaries and
-  face attachment before any draw route; do not infer positions, geometry,
-  textures, pixels, palettes, triggers, or fallback art.
+  payload selectors plus direct floor-sensor control/destination and floor-
+  decoration payload receipts now reach the optional retail DGN corpus. The
+  receipt can separately rule out zero- and one-based direct model-index
+  byte/block/run ordinals, but Structure3 record and face grammar remain
+  unparsed. Prove original record boundaries and face attachment before any
+  draw route; do not infer positions, geometry, textures, pixels, palettes,
+  triggers, or fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 
