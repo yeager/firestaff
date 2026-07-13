@@ -1,0 +1,40 @@
+diff --git a/src/pce/input.cpp b/src/pce/input.cpp
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -242,3 +242,18 @@ static INLINE void MultiTapWrite(int32 timestamp, bool old_SEL, bool new_SEL, bo
+ uint8 INPUT_Read(int32 timestamp, unsigned int A)
+ {
++ static FILE *theron_input_read_trace = NULL;
++ static unsigned theron_input_read_count = 0;
++ if(!theron_input_read_trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
++  if(path && *path)
++   theron_input_read_trace = fopen(path, "a");
++ }
++ if(theron_input_read_trace && theron_input_read_count < 64)
++ {
++  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
++  fprintf(theron_input_read_trace, "pce_input_read register=%04x raw=%04x sel=%u clr=%u index=%u\n", A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  fflush(theron_input_read_trace);
++  theron_input_read_count++;
++ }
+  uint8 ret;
+@@ -267,3 +283,17 @@ void INPUT_Write(int32 timestamp, unsigned int A, uint8 V)
+ void INPUT_Write(int32 timestamp, unsigned int A, uint8 V)
+ {
++ static FILE *theron_input_write_trace = NULL;
++ static unsigned theron_input_write_count = 0;
++ if(!theron_input_write_trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
++  if(path && *path)
++   theron_input_write_trace = fopen(path, "a");
++ }
++ if(theron_input_write_trace && theron_input_write_count < 64)
++ {
++  fprintf(theron_input_write_trace, "pce_input_write register=%04x data=%02x sel_before=%u clr_before=%u index=%u\n", A, V, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  fflush(theron_input_write_trace);
++  theron_input_write_count++;
++ }
+  //printf("Input Write: %04x, %02x\n", A, V);

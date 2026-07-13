@@ -1155,6 +1155,14 @@
   runtime output. Verification: all Mednafen patch dry-runs, capture-script
   regression, clean instrumented Mednafen build, and bounded authentic capture.
 
+- ✅ 2026-07-13 Theron controller-port transaction receipt: added bounded raw
+  PCE input read/write logging for port-0, SEL, CLR, and multitap index. It
+  observes emulator-delivered controller state only and does not infer a host
+  key or game action. The next authentic capture can now order controller-port
+  activity against PCECD reads, CDIRQ, and any future raw sector read.
+  Verification: clean Mednafen 1.32.1 patch dry-run and capture-script
+  regression.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
