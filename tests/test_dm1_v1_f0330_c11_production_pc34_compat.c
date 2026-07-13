@@ -1,36 +1,39 @@
-/* ReDMCSB CHAMPION.C F0330 -> TIMELINE.C F0259 M10 regression. */
+/* ReDMCSB CHAMPION.C F0330 C11 producer regression. */
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 
 #include <assert.h>
 #include <string.h>
 
-static int find_c11_refill(const struct GameWorld_Compat* world)
+static int find_c11_enable_action(const struct GameWorld_Compat* world)
 {
     int i;
 
     for (i = 0; i < world->timeline.count; ++i) {
         const struct TimelineEvent_Compat* event = &world->timeline.events[i];
-        if (event->kind == TIMELINE_EVENT_MOVE_TIMER &&
-            event->aux4 == DM1_F0259_MOVE_TIMER_AUX4_PC34 &&
-            event->aux0 == 0) {
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == 0) {
             return i;
         }
     }
     return -1;
 }
 
-static int count_c11_refills(const struct GameWorld_Compat* world)
+static int count_c11_enable_actions(const struct GameWorld_Compat* world)
 {
     int i;
     int count = 0;
 
     for (i = 0; i < world->timeline.count; ++i) {
         const struct TimelineEvent_Compat* event = &world->timeline.events[i];
-        if (event->kind == TIMELINE_EVENT_MOVE_TIMER &&
-            event->aux4 == DM1_F0259_MOVE_TIMER_AUX4_PC34 &&
-            event->aux0 == 0) {
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == 0) {
             ++count;
         }
     }
@@ -103,19 +106,19 @@ int main(void)
         }
     }
     assert(disabledTicks > 0);
-    eventIndex = find_c11_refill(&world);
+    eventIndex = find_c11_enable_action(&world);
     assert(eventIndex >= 0);
-    assert(count_c11_refills(&world) == 1);
-    assert(world.timeline.events[eventIndex].aux1 == CHAMPION_SLOT_HAND_LEFT);
+    assert(count_c11_enable_actions(&world) == 1);
+    assert(world.timeline.events[eventIndex].aux1 == 0);
     assert(world.timeline.events[eventIndex].fireAtTick == (uint32_t)disabledTicks);
     firstTick = world.timeline.events[eventIndex].fireAtTick;
 
     /* A second F0330 action replaces, rather than duplicates, C11 and uses
      * the source half-distance rule against the current pending event. */
     assert(cast_open_door(&world, &result) == ORCH_OK);
-    eventIndex = find_c11_refill(&world);
+    eventIndex = find_c11_enable_action(&world);
     assert(eventIndex >= 0);
-    assert(count_c11_refills(&world) == 1);
+    assert(count_c11_enable_actions(&world) == 1);
     assert(world.timeline.events[eventIndex].fireAtTick ==
            1u + (uint32_t)disabledTicks + ((firstTick - 1u) >> 1));
     return 0;

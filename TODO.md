@@ -468,10 +468,10 @@ ReDMCSB WIP 2021-02-06 source tree.
   expiry, C78 fire-shield expiry, C79 Footprints expiry, C53 Watchdog re-arm,
   C2 door destruction, C7 fakewall, C20 delayed sound playback, C22 CPSE typed no-op handling, and C60/C61
   silent/audible deferred-group moves are complete.
-  The non-zero-slot
-  `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
-  blocked until its original live inventory/object route is bound. Do not coerce
-  its native bytes into substitute Firestaff state.
+  The F0259 C11 `SlotOrdinal == 2` original-save route now reaches the C01
+  action hand. Remaining: bind MENU.C F0407's successful-throw mutation to
+  the exact pending F0330 C11 event. Do not create a generic action-disable
+  refill or coerce any other native slot ordinal into Firestaff inventory.
 
 - 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
   layout, raw zero-separated byte/block spans, payload composition, and
