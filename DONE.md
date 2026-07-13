@@ -129,6 +129,14 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 PC34 SWSH audio handoff: M11 now receives the original
+  `SWSH.C V0901005_SoundCommands` XBIOS `Dosound()` PSG byte program at the
+  source `START_SOUND` event. The audio boundary accepts only its 17 register
+  writes, 20 VBlank waits, and `ff,00` terminator, and explicitly avoids the
+  SND3/procedural-marker fallback path. ReDMCSB: `SWSH.C` lines 10-14 and
+   252-280. Verification: local PC34 title/startup test records the exact
+   program counts (400 checks total), plus four focused startup/palette CTests.
+
 - 2026-07-13 DM1 PC34 SWSH command receipt: M10 now emits one verified
   `SWSH.C` command per original source event, retaining logo-load, sound-start,
   palette word, VBlank count/delay, and `START.PRG` termination evidence. M11

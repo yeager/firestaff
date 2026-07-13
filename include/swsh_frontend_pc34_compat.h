@@ -55,6 +55,7 @@ const char* SWSH_Compat_GetSourceAnimationEvidence(void);
 unsigned int SWSH_Compat_GetRuntimeDelayMsForVblankCount(unsigned int vblankCount);
 unsigned int SWSH_Compat_GetRuntimeInitialLogoHoldMs(void);
 unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void);
+const unsigned char* SWSH_Compat_GetPc34DosoundProgram(unsigned int* outByteCount);
 
 #define SWSH_COMPAT_SOURCE_PALETTE_COMMAND_COUNT 26u
 #define SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT 17u

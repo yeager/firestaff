@@ -1178,11 +1178,14 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     FILE* f = NULL; long fsize = 0;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
+    M11_AudioState swshAudio;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
     int dm1Route = gameId && strcmp(gameId, "dm1") == 0;
+    int swshAudioInitialized = 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
+    memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
@@ -1259,6 +1262,18 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                 !dm1Command.start_sound))) {
               goto cleanup;
           }
+          if (step.kind == SWSH_COMPAT_SOURCE_EVENT_START_SOUND && dm1Route) {
+              unsigned int programBytes = 0u;
+              const unsigned char* program = SWSH_Compat_GetPc34DosoundProgram(
+                  &programBytes);
+              if (!M11_Audio_Init(&swshAudio)) goto cleanup;
+              swshAudioInitialized = 1;
+              if (!M11_Audio_PlayDm1SwshDosoundProgram(
+                      &swshAudio, program, (int)programBytes,
+                      dm1Media.swsh_vblank_ms)) {
+                  goto cleanup;
+              }
+          }
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
               if (dm1Route &&
                   (!dm1Command.set_palette_color ||
@@ -1299,6 +1314,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
                         SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
+    if (swshAudioInitialized) M11_Audio_Shutdown(&swshAudio);
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
     if (screenFbPacked) free(screenFbPacked);

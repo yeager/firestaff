@@ -419,6 +419,27 @@ static const SWSH_CompatPaletteCommand g_swsh_palette_commands[] = {
         {0xF770u, 306u}, {0xE770u, 307u}
 };
 
+/* ReDMCSB SWSH.C V0901005_SoundCommands: the Atari ST XBIOS Dosound()
+ * program is part of the original PC34 SWSH payload, not a sampled SND3
+ * effect.  0xff,n waits n VBlanks and 0xff,0 terminates the program. */
+static const unsigned char g_swsh_pc34_dosound_program[] = {
+        0x08u, 0x10u, 0x09u, 0x10u, 0x0cu, 0x0du, 0x0du, 0x0du,
+        0x06u, 0x1fu, 0x07u, 0x27u, 0xffu, 0x02u,
+        0x06u, 0x1cu, 0xffu, 0x02u, 0x06u, 0x19u, 0xffu, 0x02u,
+        0x06u, 0x16u, 0xffu, 0x02u, 0x06u, 0x13u, 0xffu, 0x02u,
+        0x06u, 0x10u, 0xffu, 0x02u, 0x06u, 0x0cu, 0xffu, 0x02u,
+        0x06u, 0x08u, 0xffu, 0x02u, 0x06u, 0x04u, 0xffu, 0x02u,
+        0x06u, 0x00u, 0xffu, 0x02u, 0x0cu, 0x0au, 0x0du, 0x09u,
+        0xffu, 0x00u
+};
+
+const unsigned char* SWSH_Compat_GetPc34DosoundProgram(unsigned int* outByteCount) {
+        if (outByteCount) {
+                *outByteCount = (unsigned int)sizeof(g_swsh_pc34_dosound_program);
+        }
+        return g_swsh_pc34_dosound_program;
+}
+
 static const char* SWSH_Compat_SourceEventLine(SWSH_CompatSourceEventKind kind) {
         switch (kind) {
         case SWSH_COMPAT_SOURCE_EVENT_LOAD_LOGO_BITMAP:
