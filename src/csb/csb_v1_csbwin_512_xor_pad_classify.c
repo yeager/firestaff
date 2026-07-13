@@ -1114,13 +1114,16 @@ int csb_v1_csbwin_512_inspect_extended_dsa_section(
         uint32_t state_index;
         uint32_t state_ordinal;
 
-        /* SaveGame.cpp ReadDSAs + DSA.cpp DSA::Read. */
-        if (size - offset < 4u + 80u + 24u) {
+        /* SaveGame.cpp ReadDSAs + DSA.cpp DSA::Read.  The DSA header is
+         * dsa number, 80-byte description, then ui16 state/ui8 local state/
+         * ui8 group id followed by three i32 values.  It is 100 bytes, not
+         * a host-sized structure. */
+        if (size - offset < 4u + 80u + 4u + 12u) {
             return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
         }
         dsa_id = read_le32(bytes, offset);
         offset += 4u + 80u;
-        offset += 12u; /* m_state, m_localState, m_groupID */
+        offset += 4u; /* m_state (ui16), m_localState (ui8), m_groupID (ui8) */
         state_slots = read_le32(bytes, offset);
         offset += 4u;
         offset += 4u; /* m_firstDisplayedState */

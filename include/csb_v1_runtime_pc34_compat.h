@@ -668,6 +668,18 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     const CSB_V1_DSAFilterLocation *location,
     CSB_V1_RuntimeDSAFilterBinding *out_binding);
 
+/* Resolve the source's complete Monster.cpp attack-filter handoff: the
+ * verified SpecialLocations actuator, saved level selector, serialized DSA
+ * LocalState, actuator DSAstate, and timer column 0.  It only returns an
+ * already authenticated action and never synthesizes a DSA program. */
+int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    CSB_V1_RuntimeDSAFilterBinding *out_binding,
+    uint32_t *out_state_index,
+    int *out_action_ordinal,
+    uint32_t *out_master_location);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */

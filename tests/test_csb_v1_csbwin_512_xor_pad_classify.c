@@ -158,9 +158,10 @@ static size_t append_extended_dsa_fixture(uint8_t *bytes, size_t offset,
     write_le32(bytes, offset, 7u); offset += 4u;
     for (i = 0u; i < 80u; ++i) bytes[offset + i] = (uint8_t)('A' + (i % 3u));
     offset += 80u;
-    write_le32(bytes, offset, 3u); offset += 4u;
-    write_le32(bytes, offset, 1u); offset += 4u;
-    write_le32(bytes, offset, 9u); offset += 4u;
+    /* DSA.cpp DSA::Read: ui16 state, ui8 local state, ui8 group id. */
+    write_le16(bytes, offset, 3u); offset += 2u;
+    bytes[offset++] = 1u;
+    bytes[offset++] = 9u;
     write_le32(bytes, offset, 2u); offset += 4u;
     write_le32(bytes, offset, 0u); offset += 4u;
     write_le32(bytes, offset, 1u); offset += 4u;
@@ -1566,7 +1567,9 @@ static int test_extended_features_dsa_inspection(void)
 
     size = build_extended_features_fixture(bytes, sizeof(bytes), 1u);
     size = append_extended_dsa_fixture(bytes, size, sizeof(bytes));
-    write_le32(bytes, 636u, 13u);
+    /* Force the first serialized state number outside m_numState.  DSA.cpp
+     * DSA::Read sees it after the 4-byte ui16/ui8/ui8 state header. */
+    write_le32(bytes, 624u, 13u);
     write_le32(bytes, size - 4u, extended_dsa_checksum(bytes + 524u,
                                                         size - 528u));
     rc = csb_v1_csbwin_512_inspect_extended_dsa_section(bytes, size, &report,

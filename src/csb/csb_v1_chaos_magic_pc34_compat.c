@@ -88,6 +88,7 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
     CSB_V1_CSBWinExtendedDSAReport report;
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_DSAImportedAction *actions = NULL;
+    CSB_V1_CSBWinDSAImportedHeader headers[CSB_V1_MAX_DSA_SCRIPTS];
     size_t offset;
     int action_count = 0;
     uint16_t dsa_ordinal;
@@ -105,19 +106,42 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
         actions = calloc((size_t)report.action_count, sizeof(*actions));
         if (!actions) return -1;
     }
+    memset(headers, 0, sizeof(headers));
 
     offset = features.extension_payload_offset;
     for (dsa_ordinal = 0u; dsa_ordinal < features.dsa_count; ++dsa_ordinal) {
         uint32_t dsa_id;
+        uint32_t state_slots;
         uint32_t non_empty_states;
         uint32_t state_ordinal;
-        if (offset > (size_t)size || (size_t)size - offset < 108u) goto reject;
+        CSB_V1_CSBWinDSAImportedHeader header;
+
+        /* DSA.cpp DSA::Read consumes ui16 m_state, ui8 m_localState and
+         * ui8 m_groupID after its 80-byte description.  Do not advance by
+         * host int widths: the bytes are part of CSBWin save provenance. */
+        if (offset > (size_t)size || (size_t)size - offset < 100u) goto reject;
         dsa_id = csb_v1_read_le32(bytes + offset);
-        offset += 4u + 80u + 12u;
-        offset += 4u; /* DSAState slot count, already validated by inspector. */
+        if (dsa_id >= CSB_V1_MAX_DSA_SCRIPTS || headers[dsa_id].valid) {
+            goto reject;
+        }
+        offset += 4u + 80u;
+        memset(&header, 0, sizeof(header));
+        header.persistent_state = (uint32_t)bytes[offset] |
+            ((uint32_t)bytes[offset + 1u] << 8);
+        header.local_state = bytes[offset + 2u];
+        header.group_id = bytes[offset + 3u];
+        offset += 4u;
+        state_slots = csb_v1_read_le32(bytes + offset);
+        header.state_slot_count = state_slots;
+        offset += 4u;
         offset += 4u; /* first displayed state */
         non_empty_states = csb_v1_read_le32(bytes + offset);
         offset += 4u;
+        if (header.local_state > 3u ||
+            state_slots > CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES ||
+            non_empty_states > state_slots) goto reject;
+        header.valid = 1;
+        headers[dsa_id] = header;
         for (state_ordinal = 0u; state_ordinal < non_empty_states; ++state_ordinal) {
             uint32_t state_index;
             uint32_t program_count;
@@ -163,6 +187,7 @@ int csb_v1_chaos_import_extended_save_dsas(CSB_V1_ChaosMagicState *state,
     csb_v1_dsa_free_imported_actions(state);
     state->imported_actions = actions;
     state->imported_action_count = action_count;
+    memcpy(state->imported_headers, headers, sizeof(headers));
     return action_count;
 
 reject:
@@ -204,6 +229,45 @@ const CSB_V1_DSAImportedAction *csb_v1_chaos_find_imported_action_column(
         if (action->dsa_id == (uint8_t)dsa_id &&
             action->state_index == state_index && action->column == column) {
             return action;
+        }
+    }
+    return NULL;
+}
+
+const CSB_V1_DSAImportedAction *
+csb_v1_chaos_resolve_imported_master_filter_action(
+    const CSB_V1_ChaosMagicState *state, int dsa_id, uint16_t actuator_word2,
+    uint32_t input_column, uint32_t *out_state_index, int *out_action_ordinal)
+{
+    const CSB_V1_CSBWinDSAImportedHeader *header;
+    const CSB_V1_DSAImportedAction *action;
+    uint32_t state_index;
+    int i;
+    int ordinal = 0;
+
+    if (!state || dsa_id < 0 || dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
+        !out_state_index || !out_action_ordinal) return NULL;
+    header = &state->imported_headers[dsa_id];
+    /* DSA.cpp FindMaster explicitly leaves LocalState 3 unimplemented; the
+     * other source state stores are distinct ownership models.  This bridge
+     * admits only a master whose state is DB3::DSAstate(). */
+    if (!header->valid || header->local_state != 0u) return NULL;
+    state_index = (uint32_t)((actuator_word2 >> 12) & 0x0fu);
+    if (state_index >= header->state_slot_count) return NULL;
+    action = csb_v1_chaos_find_imported_action_column(
+        state, dsa_id, state_index, input_column);
+    if (!action) return NULL;
+    for (i = 0; i < state->imported_action_count; ++i) {
+        const CSB_V1_DSAImportedAction *candidate =
+            &state->imported_actions[i];
+        if (candidate->dsa_id == (uint8_t)dsa_id &&
+            candidate->state_index == state_index) {
+            if (candidate == action) {
+                *out_state_index = state_index;
+                *out_action_ordinal = ordinal;
+                return action;
+            }
+            ++ordinal;
         }
     }
     return NULL;

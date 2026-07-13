@@ -15771,6 +15771,58 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     return 0;
 }
 
+int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    CSB_V1_RuntimeDSAFilterBinding *out_binding,
+    uint32_t *out_state_index,
+    int *out_action_ordinal,
+    uint32_t *out_master_location)
+{
+    CSB_V1_DSAFilterLocation location;
+    CSB_V1_RuntimeDSAFilterBinding binding;
+    const CSB_V1_DSAImportedAction *action;
+    const uint8_t *record;
+    uint16_t word2;
+    int type;
+    int index;
+    int size;
+    uint32_t state_index;
+    int action_ordinal;
+    uint32_t master_location;
+
+    if (!profile || !dungeon || !out_binding || !out_state_index ||
+        !out_action_ordinal || !out_master_location ||
+        !profile->csbwin_extended_features_valid) return 0;
+    memset(&location, 0, sizeof(location));
+    memset(&binding, 0, sizeof(binding));
+    if (!csb_v1_dungeon_resolve_dsa_filter_location(
+            dungeon, 0, 0, &location) ||
+        !csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+            profile, dungeon, &location, &binding)) return 0;
+    record = csb_v1_dungeon_get_thing_record(dungeon, location.actuator_thing,
+        &type, &index, &size);
+    (void)index;
+    if (!record || type != CSB_V1_THING_TYPE_ACTUATOR || size < 4) return 0;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    if ((word2 & 0x007fu) != CSB_V1_DSA_FILTER_ACTUATOR_TYPE) return 0;
+    /* Monster.cpp:1154-1166 builds timer function/position 0/0.  DSA.cpp
+     * ProcessDSATimer6 derives inputMsgType = 3 * position + function. */
+    action = csb_v1_chaos_resolve_imported_master_filter_action(
+        &profile->csbwin_extended_dsa_state, binding.dsa_id, word2, 0u,
+        &state_index, &action_ordinal);
+    if (!action) return 0;
+    master_location = ((uint32_t)(location.position & 3) << 16) |
+        ((uint32_t)(location.level & 0x3f) << 10) |
+        ((uint32_t)(location.x & 0x1f) << 5) |
+        (uint32_t)(location.y & 0x1f);
+    *out_binding = binding;
+    *out_state_index = state_index;
+    *out_action_ordinal = action_ordinal;
+    *out_master_location = master_location;
+    return 1;
+}
+
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeDSAFilterBinding *binding,

@@ -528,7 +528,7 @@ static void test_dungeon_decode_dsa_filter_location(void)
 
 static void test_runtime_csbwin_dsa_filter_binding(void)
 {
-    uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x01, 0, 0, 0, 0 };
+    uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x41, 0, 0, 0, 0 };
     uint8_t appended_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     uint16_t program[] = {
         0x0686u, 0x55aau, 0x0054u, 0x0053u, 0x000du
@@ -552,6 +552,9 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *selected_action;
+    uint32_t selected_state = 0u;
+    int selected_ordinal = -1;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&location, 0, sizeof(location));
@@ -590,15 +593,34 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
         profile.csbwin_appended_tail, sizeof(appended_tail));
     action.dsa_id = 7u;
     action.state_index = 4u;
+    action.column = 0u;
     action.program_words = program;
     action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
     profile.csbwin_extended_dsa_state.imported_actions = &action;
     profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    profile.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
+    profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 0u;
+    profile.csbwin_extended_dsa_state.imported_headers[7].state_slot_count = 8u;
 
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
               &profile, &dungeon, &location, &binding) == 1 &&
               binding.dsa_selector == 2u && binding.dsa_id == 7u,
           "CSBWin Monster.cpp DSAselector resolves actuator through saved level index");
+    selected_action = csb_v1_chaos_resolve_imported_master_filter_action(
+        &profile.csbwin_extended_dsa_state, 7,
+        (uint16_t)(actuator_record[2] | ((uint16_t)actuator_record[3] << 8)),
+        0u, &selected_state, &selected_ordinal);
+    CHECK(selected_action == &action && selected_state == 4u &&
+              selected_ordinal == 0,
+          "CSBWin DSA.cpp ProcessDSATimer6 selects DB3 DSAstate and timer column zero");
+    profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 1u;
+    CHECK(csb_v1_chaos_resolve_imported_master_filter_action(
+              &profile.csbwin_extended_dsa_state, 7,
+              (uint16_t)(actuator_record[2] |
+                         ((uint16_t)actuator_record[3] << 8)),
+              0u, &selected_state, &selected_ordinal) == NULL,
+          "CSBWin non-actuator LocalState is not promoted through the master filter bridge");
+    profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 0u;
     CHECK(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
               &profile, &binding, 4u, 0, 0x0c345u, &runner) == 1 &&
               runner.programs == &profile.csbwin_extended_dsa_state &&
