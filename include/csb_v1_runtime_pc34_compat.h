@@ -697,6 +697,21 @@ int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
     int timer_position,
     CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
 
+/* Bind one restored CSBWin TT_STONEROOM (function 6) timer to the exact
+ * ProcessDSATimer6 receipt for a concrete type-47 actuator on its target
+ * square.  Timer.cpp ProcessTT_STONEROOM passes timerUByte9 through the
+ * configured SET/CLEAR/TOGGLE map and uses timerUByte8 as the input position;
+ * Firestaff's source save summary preserves the default 0/1/2 mapping and
+ * validates the timer level and coordinates before selecting a DSA action.
+ * TT_ParameterMessage and non-stone-room functions remain outside this
+ * bounded route because their EXPOOL parameter payload has not been wired. */
+int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
+
 /* Resolve the source's complete Monster.cpp attack-filter handoff: the
  * verified SpecialLocations actuator, saved level selector, serialized DSA
  * LocalState, actuator DSAstate, and timer column 0.  It only returns an

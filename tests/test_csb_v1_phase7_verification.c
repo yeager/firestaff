@@ -549,6 +549,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     CSB_V1_DungeonData dungeon;
     CSB_V1_DSAFilterLocation location;
     CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWin512TimerSummary stoneroom_timer;
     CSB_V1_RuntimeProfile profile;
     CSB_V1_RuntimeDSAFilterBinding binding;
     CSB_V1_RuntimeCSBWinDSATimer6Resolution timer6;
@@ -560,6 +561,7 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&location, 0, sizeof(location));
     memset(&action, 0, sizeof(action));
+    memset(&stoneroom_timer, 0, sizeof(stoneroom_timer));
     memset(&binding, 0, sizeof(binding));
     memset(&timer6, 0, sizeof(timer6));
     memset(&runner, 0, sizeof(runner));
@@ -614,6 +616,26 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               timer6.state_index == 4u && timer6.input_column == 0u &&
               timer6.action_ordinal == 0,
           "CSBWin DSA.cpp ProcessDSATimer6 retains self-master identity and saved DB3 state");
+    stoneroom_timer.valid = 1;
+    stoneroom_timer.function = 6u;
+    stoneroom_timer.ubyte6 = (uint8_t)location.x;
+    stoneroom_timer.ubyte7 = (uint8_t)location.y;
+    stoneroom_timer.ubyte8 = 0u;
+    stoneroom_timer.ubyte9 = 0u;
+    stoneroom_timer.level = (uint8_t)location.level;
+    CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
+              &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 1 &&
+              timer6.input_column == 0u && timer6.state_index == 4u,
+          "CSBWin saved TT_STONEROOM timer reaches the verified DSA dispatch receipt");
+    stoneroom_timer.ubyte9 = 3u;
+    CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
+              &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
+          "CSBWin DSA timer rejects non-source SET/CLEAR/TOGGLE actions");
+    stoneroom_timer.ubyte9 = 0u;
+    stoneroom_timer.function = 101u;
+    CHECK(csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
+              &profile, &dungeon, &location, &stoneroom_timer, &timer6) == 0,
+          "CSBWin parameter-message timer stays blocked without its EXPOOL payload");
     selected_action = csb_v1_chaos_resolve_imported_master_filter_action(
         &profile.csbwin_extended_dsa_state, 7,
         (uint16_t)(actuator_record[2] | ((uint16_t)actuator_record[3] << 8)),

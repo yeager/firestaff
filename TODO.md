@@ -87,11 +87,12 @@ CSBWin's admitted DSA `SETSKIN` route is now action-transactional: it stages
 original DB11/EXPOOL skin writes until every authenticated source word has
 been consumed, while a later `GETSKIN` sees the staged byte. `ProcessDSATimer6`
 now retains the real self-master receipt and supports serialized `LocalState=1`
-(`DSA::m_state`) as well as the DB3 state-nibble route. Remaining CSB DSA work
-is binding selected actions into live monster attack/movement ownership,
-authenticating widened `LocalState=2` ParameterB records, a real slave-master
-route, and a real-save corpus. Do not promote unsupported world or text
-opcodes from fixtures.
+(`DSA::m_state`) as well as the DB3 state-nibble route. Verified restored
+`TT_STONEROOM` timers now bind their saved target/action/position to that
+receipt. Remaining CSB DSA work is authenticating widened `LocalState=2`
+ParameterB records, a real slave-master route, full timer execution, and a
+real-save corpus. Do not promote unsupported world or text opcodes from
+fixtures.
 
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
@@ -920,6 +921,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
     - 2026-07-13 movement-filter save handoff: a resolved type-47 movement binding can now atomically install the same authenticated adapter in its exact `Monster.cpp` level slot. The source seven-word callback restores loaded level and may publish only the existing admitted `GLOBALSTORE` bank transaction. All other levels are explicitly unbound rather than defaulting to DSA zero; no distance/party gate inference, movement flag semantics, master-state persistence, generic dispatcher, or new opcode is added.
     - 2026-07-13 multi-level movement callback: independently resolved movement filters can now share one runtime callback across distinct source levels. Every selected action retains exact imported-action identity; duplicate levels or duplicate action ownership reject before replacing the live runtime. It remains the same admitted stack/transfer subset only, with no inferred movement gates/flags, master state, world opcodes, or fallback dispatch.
+    - 2026-07-13 saved timer receipt: CSBWin `Timer.cpp::ProcessTT_STONEROOM`
+      function-6 save timers now prove their original target level/x/y,
+      position, and SET/CLEAR/TOGGLE message before selecting the existing
+      authenticated `ProcessDSATimer6` action. `TT_ParameterMessage`, invalid
+      actions/positions, and mismatched targets remain blocked because their
+      parameter payload or source target is not yet proven. This is a dispatch
+      receipt, not a general timer executor.
   - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted; core export and every runtime EXPOOL lookup reject a marked-truncated tail or one whose stored FNV receipt no longer matches its bytes, rather than re-emitting or consuming incomplete/altered source data. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. `SETSKIN` now follows CSBWin's actual `EXPOOL::Read`/`Write` contract against a complete FNV-authenticated tail: it deletes all-zero columns and consumes an original exact-size DB11 free node for a resized column, but refuses to call `EXPOOL::enlarge` or invent new tail blocks. Every DB11 node is now structurally proven to begin at `block + 1 + n * size` before it can be read, freed, or reused, so a corrupted saved free-list cannot redirect a DSA write into a DB11 header. Other EXPOOL record restore/writeback paths remain open.
     - 2026-07-13 palette restore: all 24 CSBWin `EDT_Palette` records now
       stage atomically from the FNV-authenticated EXPOOL tail and become
