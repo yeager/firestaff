@@ -112,6 +112,12 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 active free-list owner rejection: a checksum-valid
+  `FirstUnusedEventIndex` pointing at an active C3 EVENT now fails closed.
+  The handoff receipt retains its index and source event type; staged party,
+  runtime world, queue, and caller receipt remain unchanged. Source: ReDMCSB
+  `LOADSAVE.C` F0433/F0435 and `TIMELINE.C` F0237/F0651. Verification:
+   focused native-PC34 handoff CTest.
 - 2026-07-13 DM1 PC34 C4 `EVENT_NONE` rejection: a checksum-valid C4 index
   within the decoded EVENT array but pointing to an inactive C3 record now
   fails closed. Its receipt distinguishes the source slot/index and inactive
