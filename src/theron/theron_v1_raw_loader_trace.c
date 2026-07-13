@@ -16,6 +16,19 @@ static uint32_t tqr_trace_fnv1a_u16(uint32_t hash, uint16_t value)
     return hash * 16777619u;
 }
 
+static uint32_t tqr_trace_fnv1a_bytes(const uint8_t *bytes, size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || !byte_count) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int tqr_trace_next_line(const char **cursor,
                                const char **out_line,
                                size_t *out_length)
@@ -215,6 +228,50 @@ int theron_v1_raw_loader_trace_import_mednafen_capture_file(
     return result;
 }
 
+int theron_v1_raw_loader_trace_bind_track02_destination_span(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceReceipt *out)
+{
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_Track02SignalStatus status;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!trace || !track02_data || !track02_md5 || !out || !trace->valid ||
+        !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_destination_span_verified ||
+        !trace->dynamic_cd_read_destination_span_bytes ||
+        !trace->dynamic_cd_read_destination_span_checksum ||
+        strcmp(trace->track02_md5, track02_md5) != 0) {
+        return 0;
+    }
+
+    status = theron_v1_track02_inspect_stage2_dynamic_payload(
+        track02_data, track02_size, track02_md5, &payload);
+    if (status != THERON_TRACK02_SIGNAL_OK || !payload.valid ||
+        payload.variant != trace->variant ||
+        payload.track02_record != trace->dynamic_cd_read_record ||
+        trace->dynamic_cd_read_destination_span_bytes > payload.user_data_bytes ||
+        payload.user_data_offset > track02_size ||
+        trace->dynamic_cd_read_destination_span_bytes >
+            track02_size - payload.user_data_offset ||
+        tqr_trace_fnv1a_bytes(
+            track02_data + payload.user_data_offset,
+            trace->dynamic_cd_read_destination_span_bytes) !=
+            trace->dynamic_cd_read_destination_span_checksum) {
+        return 0;
+    }
+
+    *out = *trace;
+    out->dynamic_cd_read_raw_sector = payload.raw_sector;
+    out->dynamic_cd_read_raw_offset = payload.raw_offset;
+    out->dynamic_cd_read_user_data_offset = payload.user_data_offset;
+    out->dynamic_cd_read_media_span_verified = 1;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_final_bind(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_StartupMediaStateReceipt *media,
@@ -224,6 +281,7 @@ int theron_v1_raw_loader_trace_final_bind(
     if (!trace || !media || !out || !trace->valid ||
         !trace->dynamic_cd_read_verified ||
         !trace->dynamic_cd_read_destination_span_verified ||
+        !trace->dynamic_cd_read_media_span_verified ||
         trace->dynamic_cd_read_destination_span_bytes != 32u ||
         !trace->dynamic_cd_read_destination_span_checksum ||
         !trace->palette_store_observed_after_dynamic_read ||

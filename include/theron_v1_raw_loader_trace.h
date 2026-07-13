@@ -21,6 +21,12 @@ typedef struct {
     uint16_t dynamic_cd_read_destination;
     size_t dynamic_cd_read_destination_span_bytes;
     uint32_t dynamic_cd_read_destination_span_checksum;
+    /* Physical provenance for the traced $3800 destination span.  This is
+     * populated only after the trace checksum matches the hash-verified raw
+     * Track 02 sector that the original loader selected at runtime. */
+    size_t dynamic_cd_read_raw_sector;
+    size_t dynamic_cd_read_raw_offset;
+    size_t dynamic_cd_read_user_data_offset;
     unsigned int palette_store_count;
     unsigned int palette_register_mask;
     unsigned int palette_word_count;
@@ -33,6 +39,7 @@ typedef struct {
     /* Direct checksum of original System Card destination RAM after the
      * authenticated CD_READ returned. It proves record-to-RAM transfer only. */
     int dynamic_cd_read_destination_span_verified;
+    int dynamic_cd_read_media_span_verified;
     int palette_store_observed_after_dynamic_read;
     /* Kept separate deliberately: a VCE store is not RAM/CD byte taint. */
     int palette_descriptor_relation_verified;
@@ -53,6 +60,17 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
 /* Bounded file wrapper for an explicit trace path. */
 int theron_v1_raw_loader_trace_import_mednafen_capture_file(
     const char *path,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceReceipt *out);
+
+/* Binds an accepted Mednafen CD_READ trace to the exact bytes of a
+ * hash-verified raw Track 02 image.  It authenticates only the one-sector
+ * $3800 transfer already observed in the original trace; it does not infer
+ * a palette source, bitmap decoder, object table, or later dungeon record. */
+int theron_v1_raw_loader_trace_bind_track02_destination_span(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const uint8_t *track02_data,
+    size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceReceipt *out);
 

@@ -62,9 +62,10 @@ int main(void)
     media.startup_bitmap_soul_room_atlas_width = 96u;
     media.startup_bitmap_forcefield_atlas_width = 96u;
 
+    /* A text trace alone cannot stand in for the raw Track 02 bytes.  The
+     * positive handoff requires theron_v1_raw_loader_trace_bind_track02_destination_span
+     * with a known original image before final_bind may consume it. */
     return theron_v1_raw_loader_trace_ingest_mednafen_capture(
                capture, THERON_TRACK02_MD5_US_BIN, &trace) &&
-           theron_v1_raw_loader_trace_final_bind(&trace, &media, &bound) &&
-           bound.bitmap_route_mask == 15u && bound.bitmap_atlas_checksum == 1u &&
-           !bound.palette_descriptor_relation_verified ? 0 : 1;
+           !theron_v1_raw_loader_trace_final_bind(&trace, &media, &bound) ? 0 : 1;
 }
