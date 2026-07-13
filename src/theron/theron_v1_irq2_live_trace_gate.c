@@ -242,6 +242,51 @@ static int theron_v1_capture_has_post_e98a_transfer(const char *capture) {
         theron_v1_capture_hex4(next_pc + strlen("next_pc="));
 }
 
+int theron_v1_system_card_controller_wait_from_mednafen_capture(
+    const char *capture,
+    Theron_V1SystemCardControllerWaitReceipt *out_receipt) {
+    const char *command;
+    const char *state;
+    size_t command_length;
+    size_t state_length;
+    unsigned int command_1800, response_1801, response_1802, response_1803;
+    unsigned int response_1804, controller_state;
+    int consumed = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!theron_v1_capture_exact_line(capture,
+            "source=mednafen-pce-instrumented") ||
+        !theron_v1_capture_line(capture, "post_latch_cd_baseline_pc=c897 ",
+                                &command, &command_length) ||
+        !theron_v1_capture_line(capture, "c860_window_pc=c8c4 ",
+                                &state, &state_length) ||
+        theron_v1_capture_line(capture, "dynamic_cd_read_transaction ",
+                               &(const char *){0}, &(size_t){0}) ||
+        sscanf(command,
+               "post_latch_cd_baseline_pc=c897 cd_1800=%x cd_1801=%x cd_1802=%x cd_1803=%x cd_1804=%x%n",
+               &command_1800, &response_1801, &response_1802, &response_1803,
+               &response_1804, &consumed) != 5 ||
+        consumed != (int)command_length ||
+        sscanf(state,
+               "c860_window_pc=c8c4 physical_pc=%*x instruction=LDA $222D  @ $222D = $%x%n",
+               &controller_state, &consumed) != 1 ||
+        consumed <= 0 || (size_t)consumed > state_length || command_1800 != 0xd0u ||
+        response_1801 != 0u || response_1802 != 0u || response_1803 != 0x02u ||
+        response_1804 != 0u || controller_state != 0u) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->runtime_blocked = 1;
+    out_receipt->command_1800 = (uint8_t)command_1800;
+    out_receipt->response_1801 = (uint8_t)response_1801;
+    out_receipt->response_1802 = (uint8_t)response_1802;
+    out_receipt->response_1803 = (uint8_t)response_1803;
+    out_receipt->response_1804 = (uint8_t)response_1804;
+    out_receipt->controller_state_222d = (uint8_t)controller_state;
+    return 1;
+}
+
 int theron_v1_irq2_live_trace_from_mednafen_capture(
     const char *capture,
     Theron_V1Irq2LiveTrace *out_trace) {

@@ -812,6 +812,13 @@
   checkpoints. Added an explicit-input bounded capture script and regression;
   RGB remains blocked and no trace rows, palette, or pixels were fabricated.
 
+- ✅ 2026-07-13 Theron System Card live controller-wait receipt: the observed
+  authentic US CUE/System Card Mednafen trace is now parsed as one exact,
+  pre-Track02 controller wait (`$1800..$1804 = d0,00,00,02,00`, `$222d=00`).
+  The receipt is diagnostic-only and explicitly cannot authorize runtime,
+  palette, bitmap, or RGB output. The bounded capture script and standalone
+  verifier distinguish this result from a completed dynamic Track02 trace.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

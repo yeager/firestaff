@@ -1308,9 +1308,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     and VCE palette-data stores; it cannot promote RGB. A newly built patch
     run against the authentic US CUE/System Card, both dummy-SDL and a
     software-SDL attempt with System Events Return-key calls, remained in the
-    `$c860/$c96x` System Card wait loop and never reached those checkpoints.
-    The repeatable capture
-    script retains this as a negative live result. The Mednafen patch observes
+    `$c860/$c96x` System Card wait loop. The captured `$c897` command/response
+    is now a typed pre-Track02 controller-wait receipt (`d0,00,00,02,00` plus
+    `$222d=00`), which explicitly blocks runtime instead of being treated as
+    an absent trace. The repeatable capture script retains this as a negative
+    live result. The Mednafen patch observes
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect

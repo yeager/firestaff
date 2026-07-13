@@ -62,6 +62,20 @@ typedef struct {
     Theron_V1Irq2LiveBranchReceipt branch;
 } Theron_V1Irq2FullMediaTraceReceipt;
 
+/* A bounded negative receipt for the authentic System Card command loop.
+ * It documents an observed controller wait before any dynamic Track 02 read;
+ * it is never a runtime, palette, bitmap, or RGB authorization. */
+typedef struct {
+    int valid;
+    int runtime_blocked;
+    uint8_t command_1800;
+    uint8_t response_1801;
+    uint8_t response_1802;
+    uint8_t response_1803;
+    uint8_t response_1804;
+    uint8_t controller_state_222d;
+} Theron_V1SystemCardControllerWaitReceipt;
+
 /* Redacted capture-preflight status only. A ready preflight never selects an
  * IRQ2 path; a complete live trace remains mandatory. */
 typedef enum {
@@ -113,6 +127,12 @@ int theron_v1_irq2_live_branch_from_trace(
 int theron_v1_irq2_live_trace_from_mednafen_capture(
     const char *capture,
     Theron_V1Irq2LiveTrace *out_trace);
+
+/* Accepts only the observed System Card C860/C897 wait signature from a
+ * provenance-marked Mednafen capture.  This is diagnostic evidence only. */
+int theron_v1_system_card_controller_wait_from_mednafen_capture(
+    const char *capture,
+    Theron_V1SystemCardControllerWaitReceipt *out_receipt);
 
 /* Requires the complete authenticated Track 02/System Card chain and a live
  * Mednafen trace. Media-only inputs and partial register snapshots reject. */
