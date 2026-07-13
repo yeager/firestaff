@@ -24,6 +24,7 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_DialogueGdatReceipt receipt;
     DM2_V1_DialogueBoxGdatReceipt box_receipt;
+    DM2_V1_DialogueBoxDrawPlan box_plan;
     int i;
 
     memset(raw, 0, sizeof(raw));
@@ -74,9 +75,23 @@ int main(void)
               box_receipt.metadata.height == 24u &&
               box_receipt.palette_hash != 0u && box_receipt.receipt_hash != 0u,
           "save dialogue receipt binds skproject dialog-box image and palette");
+    check(dm2_v1_dialogue_box_draw_plan(&loader, &box_plan) &&
+              box_plan.valid &&
+              box_plan.gdat_category == DM2_GDAT_CATEGORY_DIALOG_BOXES &&
+              box_plan.gdat_index == DM2_V1_DIALOGUE_BOX_INDEX &&
+              box_plan.gdat_field == DM2_V1_DIALOGUE_BOX_FIELD &&
+              box_plan.expanded_rect_index == DM2_V1_DIALOGUE_BOX_RECT_INDEX &&
+              box_plan.text_y_offset == DM2_V1_DIALOGUE_BOX_TEXT_Y_OFFSET &&
+              box_plan.text_palette_slot == DM2_V1_DIALOGUE_BOX_TEXT_PALETTE_SLOT &&
+              box_plan.highlight_palette_slot ==
+                  DM2_V1_DIALOGUE_BOX_HIGHLIGHT_PALETTE_SLOT &&
+              box_plan.optional_highlight_clear && box_plan.plan_hash != 0u,
+          "save dialogue plan keeps skproject RECT_453, palette, and text semantics");
     entries[2].cls2 = 0x80u;
     check(!dm2_v1_dialogue_box_gdat_receipt(&loader, &box_receipt),
           "save dialogue receipt rejects a non-source dialog-box index");
+    check(!dm2_v1_dialogue_box_draw_plan(&loader, &box_plan),
+          "save dialogue plan rejects a non-source dialog-box index");
     entries[2].cls2 = DM2_V1_DIALOGUE_BOX_INDEX;
     check(!dm2_v1_dialogue_gdat_receipt(&loader, 7u, 0xfbu, &receipt),
           "dialogue receipt rejects a non-source shell field");

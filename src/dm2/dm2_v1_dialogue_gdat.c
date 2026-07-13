@@ -86,3 +86,39 @@ int dm2_v1_dialogue_box_gdat_receipt(
     out->valid = 1;
     return 1;
 }
+
+int dm2_v1_dialogue_box_draw_plan(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueBoxDrawPlan *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dm2_v1_dialogue_box_gdat_receipt(loader, &out->material)) {
+        return 0;
+    }
+
+    /* skproject/SKWINSPX/src/v5/uidialog.cpp::DM2_dialog_2066_3820:
+     * QUERY_EXPANDED_RECT(453), QUERY_GDAT_IMAGE_ENTRY_BUFF(26, 0x81, 0),
+     * local palette, yellow text at rect.y + 4, optional orange clear. */
+    out->gdat_category = DM2_GDAT_CATEGORY_DIALOG_BOXES;
+    out->gdat_index = DM2_V1_DIALOGUE_BOX_INDEX;
+    out->gdat_field = DM2_V1_DIALOGUE_BOX_FIELD;
+    out->expanded_rect_index = DM2_V1_DIALOGUE_BOX_RECT_INDEX;
+    out->text_y_offset = DM2_V1_DIALOGUE_BOX_TEXT_Y_OFFSET;
+    out->text_palette_slot = DM2_V1_DIALOGUE_BOX_TEXT_PALETTE_SLOT;
+    out->highlight_palette_slot = DM2_V1_DIALOGUE_BOX_HIGHLIGHT_PALETTE_SLOT;
+    out->optional_highlight_clear = 1;
+    hash = dm2_dialogue_hash_step(hash, (uint32_t)out->gdat_category);
+    hash = dm2_dialogue_hash_step(hash, (uint32_t)out->gdat_index);
+    hash = dm2_dialogue_hash_step(hash, (uint32_t)out->gdat_field);
+    hash = dm2_dialogue_hash_step(hash, out->expanded_rect_index);
+    hash = dm2_dialogue_hash_step(hash, out->text_y_offset);
+    hash = dm2_dialogue_hash_step(hash, out->text_palette_slot);
+    hash = dm2_dialogue_hash_step(hash, out->highlight_palette_slot);
+    hash = dm2_dialogue_hash_step(hash, out->material.receipt_hash);
+    out->plan_hash = hash ? hash : 1u;
+    out->valid = 1;
+    return 1;
+}

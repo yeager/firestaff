@@ -88,6 +88,11 @@ typedef struct {
     int gdat_interface_font_host_ready;
     int gdat_interface_font_consumed;
     uint32_t gdat_interface_font_hash;
+    /* The save/load panel is source-bound for this runtime, but not counted
+     * as drawn until the M11 dialogue owner opens it and expands RECT_453. */
+    int gdat_save_dialogue_material_bound;
+    uint32_t gdat_save_dialogue_material_hash;
+    uint32_t gdat_save_dialogue_rect_index;
     int gdat_interface_hud_layout_ready;
     uint32_t gdat_interface_hud_layout_hash;
     int gdat_interface_rect14_host_ready;
