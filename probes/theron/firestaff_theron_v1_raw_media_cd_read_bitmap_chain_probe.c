@@ -128,6 +128,7 @@ int main(void)
     Theron_Track02BankSignal bank;
     Theron_V1SystemCardIrq2EntryGate system_card_gate;
     Theron_StartupMediaStateReceipt bitmap;
+    Theron_StartupRawBitmapRouteReceipt raw_bitmap;
     const Theron_Track02StartupBitmapAtlasRoute *route;
     const char *route_name = NULL;
     unsigned int route_bit = 0u;
@@ -216,12 +217,27 @@ int main(void)
         goto done;
     }
 
+    if (!theron_v1_startup_media_consume_raw_bitmap_route(
+            &bitmap, route_bit, &raw_bitmap) || !raw_bitmap.valid ||
+        !raw_bitmap.raw_source_verified ||
+        raw_bitmap.variant != bitmap.track02_variant ||
+        raw_bitmap.route_bit != route_bit ||
+        raw_bitmap.checksum != route->checksum ||
+        raw_bitmap.first_raw_offset != route->first_raw_offset ||
+        raw_bitmap.first_user_data_offset != route->first_user_data_offset ||
+        raw_bitmap.palette_binding_verified || raw_bitmap.rgba_output_allowed) {
+        printf("status=blocked reason=raw_bitmap_consumer_rejected "
+               "emulator=not_started fallback=not_run\n");
+        goto done;
+    }
+
     /* The bounded route-to-bank relation is proven, but the palette API is
      * intentionally unbound: no loader reference names a palette window for
      * this route.  Do not inspect arbitrary 32-byte spans or publish pixels. */
-    printf("status=blocked route=%s bitmap_descriptor_hash=%08x "
-           "palette_descriptor=unproven emulator=not_started fallback=not_run\n",
-           route_name, route->checksum);
+    printf("status=blocked route=%s raw_bitmap_consumed=1 "
+           "bitmap_descriptor_hash=%08x palette_descriptor=unproven "
+           "rgba_output=blocked emulator=not_started fallback=not_run\n",
+           route_name, raw_bitmap.checksum);
 
 done:
     free(track02);

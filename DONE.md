@@ -569,6 +569,16 @@
   candidate receipt and remain blocked. Verification:
   `theron_v1_irq2_live_trace_gate` CTest.
 
+- ✅ 2026-07-13 Theron raw Track 02 bitmap consumer boundary: startup media
+  now copies title/stage/Soul Room/forcefield only through a hash-recognised
+  4 bpp route receipt that preserves atlas checksum and raw/MODE1 coordinates.
+  The receipt carries no palette choice: `palette_binding_verified` and
+  `rgba_output_allowed` stay clear, so it cannot manufacture coloured pixels
+  or select a fallback palette. The raw CD-read corpus probe now proves this
+  consumer against an operator-provided authentic Track 02 BIN and System
+  Card, then expects the missing palette binding to block RGB output. The
+  shell regression accepts only that fail-closed corpus result.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete
