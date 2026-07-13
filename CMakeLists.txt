@@ -10292,7 +10292,7 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
-        firestaff_v2
+        firestaff_v2 firestaff_theron
     )
     target_include_directories(test_asset_status_zip_cache_nested_deflate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10322,7 +10322,7 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
     )
     target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
-        firestaff_v2
+        firestaff_v2 firestaff_theron
     )
     target_include_directories(test_asset_status_zip_cache_materialization PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
