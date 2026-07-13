@@ -25,6 +25,15 @@ typedef struct CSB_V1_StartupSessionLiveHudReceipt_PC34 {
     unsigned int session_generation;
 } CSB_V1_StartupSessionLiveHudReceipt_PC34;
 
+typedef struct CSB_V1_StartupSessionDoorHudTickReceipt_PC34 {
+    int valid;
+    int first_live_door_tick;
+    unsigned int previous_door_step;
+    unsigned int door_step;
+    unsigned int source_tick;
+    unsigned int session_generation;
+} CSB_V1_StartupSessionDoorHudTickReceipt_PC34;
+
 /* ReDMCSB TITLE.C F0437, ENTRANCE.C F0807, PANEL.C F0347. */
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -38,5 +47,16 @@ int csb_v1_startup_session_live_hud_receipt_pc34(
     unsigned int source_tick,
     unsigned int session_generation,
     CSB_V1_StartupSessionLiveHudReceipt_PC34 *out_receipt);
+
+/* ReDMCSB DUNGEON.C advances a door one source tick at a time after PANEL.C
+ * has returned from candidate C040 to the live C017 surface. */
+int csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupSessionLiveHudReceipt_PC34 *live_hud_receipt,
+    unsigned int previous_door_step,
+    unsigned int door_step,
+    unsigned int source_tick,
+    unsigned int session_generation,
+    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 *out_receipt);
 
 #endif

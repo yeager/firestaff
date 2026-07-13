@@ -53,6 +53,7 @@ int main(void)
     CSB_V1_StartupSessionTerminalReceipt_PC34 receipt;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
+    CSB_V1_StartupSessionDoorHudTickReceipt_PC34 door_tick;
     unsigned int tick;
     unsigned int generation;
 
@@ -90,6 +91,39 @@ int main(void)
               live_hud.c017_width == 224 && live_hud.c017_height == 136 &&
               live_hud.special_palette == -1,
           "one C040 clear returns to neutral first-live C017 in the terminal session");
+    ++session.source_tick;
+    check(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+              &session, &live_hud, 0u, 1u, session.source_tick,
+              session.generation, &door_tick) && door_tick.valid &&
+              door_tick.first_live_door_tick && door_tick.previous_door_step == 0u &&
+              door_tick.door_step == 1u,
+          "first post-C040 HUD tick starts the runtime door at monotonic step one");
+    ++session.source_tick;
+    check(csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+              &session, &live_hud, 1u, 2u, session.source_tick,
+              session.generation, &door_tick) && door_tick.valid &&
+              !door_tick.first_live_door_tick,
+          "subsequent live HUD door tick remains monotonic in the same session");
+    check(!csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+               &session, &live_hud, 1u, 3u, session.source_tick,
+               session.generation, &door_tick),
+          "door-step jump cannot reach the live HUD route");
+    check(!csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+               &session, &live_hud, 2u, 2u, session.source_tick,
+               session.generation, &door_tick),
+          "replayed door step cannot reach the live HUD route");
+    session.source_tick = live_hud.source_tick;
+    check(!csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+               &session, &live_hud, 0u, 1u, session.source_tick,
+               session.generation, &door_tick),
+          "stale post-C040 HUD tick cannot start the runtime door");
+    ++session.source_tick;
+    ++session.generation;
+    check(!csb_v1_startup_session_first_door_hud_tick_receipt_pc34(
+               &session, &live_hud, 0u, 1u, session.source_tick,
+               session.generation, &door_tick),
+          "stale post-C040 session generation cannot start the runtime door");
+    --session.generation;
     check(!csb_v1_startup_session_live_hud_receipt_pc34(
                &session, &terminal, 0u, tick, generation, &live_hud),
           "missing C040 clear cannot enter the first live HUD");
