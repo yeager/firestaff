@@ -10,6 +10,8 @@
  * bitmap receipt.  No filesystem scan, emulator, framebuffer, or fallback
  * executor is involved.
  */
+#define _XOPEN_SOURCE 700
+
 #include "asset_status_m12.h"
 #include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_startup_media.h"
@@ -19,9 +21,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ftw.h>
+#include <sys/stat.h>
 
 #define THERON_CHAIN_SYSCARD3_MD5 "ff1a674273fe3540ccef576376407d1d"
 #define THERON_CHAIN_SYSCARD3_BYTES 0x40200u
+#define THERON_CHAIN_PATH_CAPACITY 1024u
+#define THERON_CHAIN_TRACE_MAX_BYTES (1024u * 1024u)
+
+typedef struct {
+    char raw_track02_path[THERON_CHAIN_PATH_CAPACITY];
+    char system_card_path[THERON_CHAIN_PATH_CAPACITY];
+    char loader_trace_path[THERON_CHAIN_PATH_CAPACITY];
+    unsigned int known_track02_iso_count;
+} Theron_ChainLocalArtifacts;
+
+static Theron_ChainLocalArtifacts *g_local_artifacts;
 
 static int read_file(const char *path, unsigned char **out_data,
                      size_t *out_size)
@@ -69,6 +84,80 @@ static int system_card_md5(const char *path, size_t bytes, char md5[33])
     return path && bytes == THERON_CHAIN_SYSCARD3_BYTES &&
            m12_file_md5_hex(path, md5) &&
            strcmp(md5, THERON_CHAIN_SYSCARD3_MD5) == 0;
+}
+
+static int known_track02_iso(const char *path, size_t bytes)
+{
+    char md5[33];
+
+    return path && bytes > 0u && bytes % 2048u == 0u &&
+           m12_file_md5_hex(path, md5) &&
+           (strcmp(md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 ||
+            strcmp(md5, THERON_TRACK02_MD5_US_ISO) == 0);
+}
+
+static void copy_artifact_path(char destination[THERON_CHAIN_PATH_CAPACITY],
+                               const char *source)
+{
+    if (!destination || !source || destination[0]) {
+        return;
+    }
+    snprintf(destination, THERON_CHAIN_PATH_CAPACITY, "%s", source);
+}
+
+static int scan_local_artifact(const char *path, const struct stat *status,
+                               int typeflag, struct FTW *entry)
+{
+    char md5[33];
+    Theron_V1RawLoaderTraceReceipt trace;
+
+    (void)entry;
+    if (!g_local_artifacts || typeflag != FTW_F || !status ||
+        status->st_size <= 0 || (uintmax_t)status->st_size > SIZE_MAX) {
+        return 0;
+    }
+    if (!g_local_artifacts->raw_track02_path[0] &&
+        raw_track02_md5(path, (size_t)status->st_size, md5)) {
+        copy_artifact_path(g_local_artifacts->raw_track02_path, path);
+        return 0;
+    }
+    if (!g_local_artifacts->system_card_path[0] &&
+        system_card_md5(path, (size_t)status->st_size, md5)) {
+        copy_artifact_path(g_local_artifacts->system_card_path, path);
+        return 0;
+    }
+    if (known_track02_iso(path, (size_t)status->st_size)) {
+        ++g_local_artifacts->known_track02_iso_count;
+        return 0;
+    }
+    if (g_local_artifacts->raw_track02_path[0] &&
+        !g_local_artifacts->loader_trace_path[0] &&
+        (size_t)status->st_size <= THERON_CHAIN_TRACE_MAX_BYTES &&
+        m12_file_md5_hex(g_local_artifacts->raw_track02_path, md5) &&
+        theron_v1_raw_loader_trace_import_mednafen_capture_file(
+            path, md5, &trace)) {
+        copy_artifact_path(g_local_artifacts->loader_trace_path, path);
+    }
+    return 0;
+}
+
+static int find_local_artifacts(const char *root,
+                                Theron_ChainLocalArtifacts *out_artifacts)
+{
+    if (!out_artifacts) {
+        return 0;
+    }
+    memset(out_artifacts, 0, sizeof(*out_artifacts));
+    if (!root || !root[0]) {
+        return 0;
+    }
+    g_local_artifacts = out_artifacts;
+    if (nftw(root, scan_local_artifact, 16, FTW_PHYS) != 0) {
+        g_local_artifacts = NULL;
+        return 0;
+    }
+    g_local_artifacts = NULL;
+    return 1;
 }
 
 static int requested_route(const char *name, unsigned int *out_route_bit,
@@ -119,6 +208,8 @@ int main(void)
     const char *track02_path = getenv("THERON_RAW_TRACK02");
     const char *system_card_path = getenv("THERON_SYSTEM_CARD");
     const char *loader_trace_path = getenv("THERON_RAW_LOADER_TRACE");
+    const char *capture_root = getenv("THERON_CAPTURE_ROOT");
+    Theron_ChainLocalArtifacts local_artifacts;
     unsigned char *track02 = NULL;
     unsigned char *system_card = NULL;
     size_t track02_bytes = 0u;
@@ -142,8 +233,26 @@ int main(void)
 
     if (!track02_path || !track02_path[0] || !system_card_path ||
         !system_card_path[0] || !loader_trace_path || !loader_trace_path[0]) {
-        printf("status=skip reason=explicit_raw_track02_system_card_and_loader_trace_required "
-               "emulator=not_started fallback=not_run\n");
+        if (!find_local_artifacts(capture_root, &local_artifacts)) {
+            printf("status=skip reason=explicit_artifacts_or_capture_root_required "
+                   "emulator=not_started fallback=not_run\n");
+            return 0;
+        }
+        if (!track02_path || !track02_path[0]) {
+            track02_path = local_artifacts.raw_track02_path;
+        }
+        if (!system_card_path || !system_card_path[0]) {
+            system_card_path = local_artifacts.system_card_path;
+        }
+        if (!loader_trace_path || !loader_trace_path[0]) {
+            loader_trace_path = local_artifacts.loader_trace_path;
+        }
+    }
+    if (!track02_path || !track02_path[0] || !system_card_path ||
+        !system_card_path[0] || !loader_trace_path || !loader_trace_path[0]) {
+        printf("status=skip reason=hash_verified_raw_track02_system_card_and_loader_trace_not_found "
+               "known_track02_iso_candidates=%u emulator=not_started fallback=not_run\n",
+               local_artifacts.known_track02_iso_count);
         return 0;
     }
     if (!requested_route(getenv("THERON_BITMAP_ROUTE"), &route_bit,
