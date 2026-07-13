@@ -52,22 +52,33 @@ static int step_y(int direction)
     return kDy[direction & 3];
 }
 
-static int portrait_cutout_changed(const unsigned char* before,
-                                   const unsigned char* after)
+static int portrait_cutout_matches(const unsigned char* left,
+                                   const unsigned char* right)
 {
     int x;
     int y;
 
-    /* ReDMCSB DUNVIEW.C:3913-3928 writes C026 to the fixed D1C cutout
-     * {96..127,35..63}.  A completed C160 must invalidate that old draw. */
+    /* ReDMCSB DUNVIEW.C:3913-3928 draws C026 in the fixed D1C box. */
     for (y = 35; y < 64; ++y) {
         for (x = 96; x < 128; ++x) {
-            if (before[y * 320 + x] != after[y * 320 + x]) {
-                return 1;
+            if (left[y * 320 + x] != right[y * 320 + x]) {
+                return 0;
             }
         }
     }
-    return 0;
+    return 1;
+}
+
+static int champion_name_matches(const struct ChampionState_Compat* champion,
+                                 const char* expectedName)
+{
+    char unpacked[CHAMPION_NAME_TEXT_CAPACITY];
+
+    if (!champion || !expectedName) {
+        return 0;
+    }
+    F0628_CHAMPION_UnpackName_Compat(champion, unpacked, sizeof(unpacked));
+    return strcmp(unpacked, expectedName) == 0;
 }
 
 int main(int argc, char** argv)
@@ -180,17 +191,23 @@ int main(int argc, char** argv)
         }
     }
 
-    /* ReDMCSB REVIVE.C F0282:785-805 clears G0299 and disables the first
-     * sensor on the source square.  Confirm while still facing that original
-     * C127: the stale candidate prompt and its D1C C026 portrait must not
-     * survive the next F0128 draw. */
+    /* REVIVE.C F0281 clears the temporary candidate name/title for C161,
+     * whereas F0282 C162 removes that candidate and leaves the C127 mirror
+     * available. Reopening the same real PC34 source must rematerialize its
+     * original C026 portrait/name before C160 consumes the source sensor. */
     if (firstOrdinal < 0) {
-        fprintf(stderr, "FAIL no real HoC C127 mirror available for resurrection invalidation\n");
+        fprintf(stderr, "FAIL no real HoC C127 mirror available for C160 audit\n");
         ok = 0;
     } else {
         unsigned char before[320 * 200];
-        unsigned char after[320 * 200];
+        unsigned char afterCancel[320 * 200];
+        unsigned char afterConfirm[320 * 200];
+        unsigned char portrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char expectedName[16];
+        int candidateIndex;
+        int partyCountBefore;
 
+        expectedName[0] = '\0';
         game.world.party.mapIndex = 0;
         game.world.party.mapX = firstPartyX;
         game.world.party.mapY = firstPartyY;
@@ -199,32 +216,87 @@ int main(int argc, char** argv)
         game.candidateMirrorOrdinal = -1;
         game.candidateMirrorPartyIndex = -1;
         M11_GameView_Draw(&game, before, 320, 200);
-        if (M11_GameView_GetFrontMirrorOrdinal(&game) != firstOrdinal ||
-            !M11_GameView_SelectFrontMirrorCandidate(&game) ||
-            !game.candidateMirrorPanelActive ||
-            M11_GameView_ConfirmMirrorCandidate(&game, 0) != 1) {
-            fprintf(stderr, "FAIL HoC C160 selection could not complete at ordinal=%d\n",
+        partyCountBefore = game.world.party.championCount;
+
+        if (!M11_GameView_GetMirrorNameByOrdinal(&game, firstOrdinal,
+                                                  expectedName,
+                                                  (int)sizeof(expectedName)) ||
+            M11_GameView_GetFrontMirrorOrdinal(&game) != firstOrdinal ||
+            !M11_GameView_SelectFrontMirrorCandidate(&game)) {
+            fprintf(stderr, "FAIL HoC C127 candidate could not open at ordinal=%d\n",
                     firstOrdinal);
             ok = 0;
         } else {
-            M11_GameView_Draw(&game, after, 320, 200);
-            if (game.candidateMirrorPanelActive ||
-                game.candidateMirrorOrdinal != -1 ||
-                game.candidateMirrorPartyIndex != -1 ||
-                M11_GameView_GetFrontMirrorOrdinal(&game) != -1 ||
-                strstr(game.inspectTitle, "MIRROR:") != NULL ||
-                strstr(game.inspectDetail, "CHOOSE") != NULL ||
-                !portrait_cutout_changed(before, after)) {
-                fprintf(stderr,
-                        "FAIL HoC C160 left stale mirror panel/text/portrait at ordinal=%d\n",
-                        firstOrdinal);
+            candidateIndex = game.candidateMirrorPartyIndex;
+            if (candidateIndex < 0 || candidateIndex >= CHAMPION_MAX_PARTY ||
+                !game.world.party.champions[candidateIndex].present ||
+                !game.world.party.champions[candidateIndex].portraitBitmapValid ||
+                !champion_name_matches(&game.world.party.champions[candidateIndex],
+                                       expectedName)) {
+                fprintf(stderr, "FAIL HoC C127 candidate did not materialize original name/portrait\n");
                 ok = 0;
+            } else {
+                memcpy(portrait,
+                       game.world.party.champions[candidateIndex].portraitBitmap,
+                       sizeof(portrait));
+                if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&game) ||
+                    game.world.party.champions[candidateIndex].name[0] != '\0' ||
+                    !M11_GameView_CancelMirrorCandidate(&game)) {
+                    fprintf(stderr, "FAIL HoC C161/C162 candidate cancel sequence\n");
+                    ok = 0;
+                } else {
+                    M11_GameView_Draw(&game, afterCancel, 320, 200);
+                    if (game.candidateMirrorPanelActive ||
+                        game.candidateMirrorOrdinal != -1 ||
+                        game.candidateMirrorPartyIndex != -1 ||
+                        game.world.party.championCount != partyCountBefore ||
+                        game.world.party.champions[candidateIndex].present ||
+                        M11_GameView_GetFrontMirrorOrdinal(&game) != firstOrdinal ||
+                        strcmp(game.inspectTitle, "CHAMPION MIRROR") != 0 ||
+                        strstr(game.inspectDetail, "SELECTION CANCELLED") == NULL ||
+                        !portrait_cutout_matches(before, afterCancel)) {
+                        fprintf(stderr,
+                                "FAIL HoC C162 left stale candidate state or altered source portrait\n");
+                        ok = 0;
+                    } else if (!M11_GameView_SelectFrontMirrorCandidate(&game) ||
+                               game.candidateMirrorPartyIndex != candidateIndex ||
+                               !champion_name_matches(
+                                   &game.world.party.champions[candidateIndex],
+                                   expectedName) ||
+                               !game.world.party.champions[candidateIndex].portraitBitmapValid ||
+                               memcmp(game.world.party.champions[candidateIndex].portraitBitmap,
+                                      portrait, sizeof(portrait)) != 0 ||
+                               M11_GameView_ConfirmMirrorCandidate(&game, 0) != 1) {
+                        fprintf(stderr,
+                                "FAIL HoC C160 did not rematerialize original name/portrait after C162\n");
+                        ok = 0;
+                    } else {
+                        M11_GameView_Draw(&game, afterConfirm, 320, 200);
+                        if (game.candidateMirrorPanelActive ||
+                            game.candidateMirrorOrdinal != -1 ||
+                            game.candidateMirrorPartyIndex != -1 ||
+                            !game.world.party.champions[candidateIndex].present ||
+                            !champion_name_matches(
+                                &game.world.party.champions[candidateIndex],
+                                expectedName) ||
+                            memcmp(game.world.party.champions[candidateIndex].portraitBitmap,
+                                   portrait, sizeof(portrait)) != 0 ||
+                            M11_GameView_GetFrontMirrorOrdinal(&game) != -1 ||
+                            strstr(game.inspectTitle, "MIRROR:") != NULL ||
+                            strstr(game.inspectDetail, "CHOOSE") != NULL ||
+                            portrait_cutout_matches(before, afterConfirm)) {
+                            fprintf(stderr,
+                                    "FAIL HoC C160 left stale mirror name/portrait after confirm\n");
+                            ok = 0;
+                        }
+                    }
+                }
             }
         }
     }
 
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
-    printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0282:785-805\n");
+    printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
 
     M11_GameView_Shutdown(&game);

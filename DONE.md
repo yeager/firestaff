@@ -31,6 +31,14 @@
   Source: ReDMCSB `DUNGEON.C` F0172 and `DUNVIEW.C` F0107:3590-3706,
    F0124:7842-7845. Verification: focused CTest against installed PC34 data.
 
+- 2026-07-13 DM1 HoC C160/C162 mirror-state audit: a real-PC34 C127 route
+  now exercises C161 name clearing, C162 cancellation, reopening, and C160
+  confirmation. It proves that cancellation restores the source C026 cutout,
+  clears temporary candidate state/text, and that reopening rematerializes the
+  original name and portrait before confirmation consumes the source sensor.
+  Source: ReDMCSB `REVIVE.C` F0280/F0281/F0282:744-805 and `DUNVIEW.C`:
+   3913-3928. Verification: focused CTest against the installed PC34 corpus.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109
