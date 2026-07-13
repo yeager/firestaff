@@ -448,6 +448,24 @@ static void run_real_launcher_handoff_if_available(void) {
                     "M11 CSB live HUD rejects a missing terminal source session");
         view.csbStartupRuntimeAssetSession = saved_session;
     }
+    {
+        const M11_AssetSlot *loaded_c017 =
+            M11_AssetLoader_Load(&view.assetLoader, 17u);
+        unsigned char saved_c017_byte = 0;
+
+        expect_true(loaded_c017 && loaded_c017->pixels,
+                    "M11 CSB live HUD exposes the renderer C017 source slot");
+        if (loaded_c017 && loaded_c017->pixels) {
+            saved_c017_byte = loaded_c017->pixels[0];
+            loaded_c017->pixels[0] ^= 0x0fu;
+            memset(framebuffer, 0xff, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) ==
+                            0,
+                        "M11 CSB live HUD rejects a C017 byte mismatch against the terminal session");
+            loaded_c017->pixels[0] = saved_c017_byte;
+        }
+    }
     expect_true(view.csbState.runtime_object_marker_drawn_count == 0 &&
                     view.csbState.runtime_group_marker_drawn_count == 0 &&
                     view.csbState.runtime_projectile_marker_drawn_count == 0 &&
