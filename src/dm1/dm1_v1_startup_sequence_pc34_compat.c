@@ -4960,6 +4960,60 @@ int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
     return out_receipt->handled ? 1 : 0;
 }
 
+int dm1_v1_startup_swoosh_presentation_command_pc34(
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    unsigned int source_step,
+    DM1_V1_StartupSwooshPresentationCommand_PC34* out_command) {
+    SWSH_CompatSourceAnimationStep source;
+    DM1_V1_StartupSwooshPresentationCommand_PC34 command;
+
+    if (!out_command) {
+        return 0;
+    }
+    memset(out_command, 0, sizeof(*out_command));
+    if (!media_receipt || !media_receipt->handled ||
+        !media_receipt->play_swsh ||
+        media_receipt->swsh_vblank_ms != SWSH_COMPAT_RUNTIME_VBLANK_MS ||
+        !SWSH_Compat_GetSourceAnimationStep(source_step, &source)) {
+        return 0;
+    }
+
+    memset(&command, 0, sizeof(command));
+    command.handled = 1;
+    command.source_step = source_step;
+    command.source_event_kind = (unsigned int)source.kind;
+    command.source_evidence = source.sourceLineEvidence;
+    switch (source.kind) {
+    case SWSH_COMPAT_SOURCE_EVENT_LOAD_LOGO_BITMAP:
+        command.load_logo_bitmap = 1;
+        break;
+    case SWSH_COMPAT_SOURCE_EVENT_START_SOUND:
+        command.start_sound = 1;
+        break;
+    case SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR:
+        command.set_palette_color = 1;
+        command.palette_color_index = source.colorIndex;
+        command.palette_color_value = source.colorValue;
+        break;
+    case SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS:
+        command.wait_vblanks = 1;
+        command.vblank_count = source.vblankCount;
+        if (source.vblankCount >
+            0xffffffffU / media_receipt->swsh_vblank_ms) {
+            return 0;
+        }
+        command.delay_ms = source.vblankCount * media_receipt->swsh_vblank_ms;
+        break;
+    case SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM:
+        command.run_start_program = 1;
+        break;
+    default:
+        return 0;
+    }
+    *out_command = command;
+    return 1;
+}
+
 int dm1_v1_startup_title_timing_receipt_valid_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt) {
     V1_TitleFrontendSourceTiming timing;

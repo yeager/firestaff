@@ -498,6 +498,24 @@ static void check_startup_source_timing_contract(void) {
             ++swshWaitCount;
             swshWaitVblankCount += swshStep.vblankCount;
         }
+        {
+            DM1_V1_StartupSwooshPresentationCommand_PC34 command;
+            memset(&command, 0, sizeof(command));
+            expect_i("DM1 SWSH command is source-locked",
+                     dm1_v1_startup_swoosh_presentation_command_pc34(
+                         &media, sourceStep, &command),
+                     1);
+            expect_truth("DM1 SWSH command preserves source event kind",
+                         command.handled && command.source_step == sourceStep &&
+                             command.source_event_kind == (unsigned int)swshStep.kind);
+            if (swshStep.kind == SWSH_COMPAT_SOURCE_EVENT_WAIT_VBLANKS) {
+                expect_truth("DM1 SWSH wait command preserves PC34 VBlank delay",
+                             command.wait_vblanks &&
+                                 command.vblank_count == swshStep.vblankCount &&
+                                 command.delay_ms ==
+                                     swshStep.vblankCount * media.swsh_vblank_ms);
+            }
+        }
     }
     expect_u("startup SWSH executes every original palette write",
              swshColorSetCount,

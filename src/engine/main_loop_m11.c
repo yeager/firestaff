@@ -1180,6 +1180,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     unsigned char swshPalette[16][3];
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
+    int dm1Route = gameId && strcmp(gameId, "dm1") == 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
     memset(&dm1Media, 0, sizeof(dm1Media));
@@ -1192,6 +1193,11 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                 gameId,
                 &dm1Media);
     }
+    /* ReDMCSB SWSH.C is a concrete PC34 program: DM1 may present the FTL
+     * bitmap only when M10 supplied its source-locked timing/event receipt.
+     * Do not silently borrow the generic V1 intro cadence when that receipt
+     * is unavailable or stale. */
+    if (dm1Route && (!hasDm1Media || !dm1Media.play_swsh)) return;
     if (!V1_SWSH_Intro_FindLogoPathForGame(menuState,
                                             dataDir,
                                             gameId,
@@ -1236,9 +1242,30 @@ static void m11_play_ftl_swoosh_for_game_if_available(
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
+          DM1_V1_StartupSwooshPresentationCommand_PC34 dm1Command;
           if (M11_Render_PumpEvents()) break;
           if (!SWSH_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
+          memset(&dm1Command, 0, sizeof(dm1Command));
+          if (dm1Route &&
+              !dm1_v1_startup_swoosh_presentation_command_pc34(
+                  &dm1Media, sourceStep, &dm1Command)) {
+              goto cleanup;
+          }
+          if (dm1Route &&
+              (dm1Command.source_event_kind != (unsigned int)step.kind ||
+               (step.kind == SWSH_COMPAT_SOURCE_EVENT_LOAD_LOGO_BITMAP &&
+                !dm1Command.load_logo_bitmap) ||
+               (step.kind == SWSH_COMPAT_SOURCE_EVENT_START_SOUND &&
+                !dm1Command.start_sound))) {
+              goto cleanup;
+          }
           if (step.kind == SWSH_COMPAT_SOURCE_EVENT_SET_PALETTE_COLOR) {
+              if (dm1Route &&
+                  (!dm1Command.set_palette_color ||
+                   dm1Command.palette_color_index != step.colorIndex ||
+                   dm1Command.palette_color_value != step.colorValue)) {
+                  goto cleanup;
+              }
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
                                                        swshPalette[step.colorIndex & 0x0FU]);
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
@@ -1251,16 +1278,21 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                * The previous dead-code `paletteDirty` flag was removed:
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
+              if (dm1Route &&
+                  (!dm1Command.wait_vblanks ||
+                   dm1Command.vblank_count != step.vblankCount)) {
+                  goto cleanup;
+              }
               if (m11_delay_ms_with_intro_event_pump(
-                      hasDm1Media ?
-                          m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
-                          SWSH_Compat_GetRuntimeDelayMsForVblankCount(
-                              step.vblankCount))) {
+                      dm1Route ? dm1Command.delay_ms :
+                          (hasDm1Media ?
+                              m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
+                              SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                                  step.vblankCount)))) {
                   break;
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
-              /* No palette was queued between the previous SET_PALETTE_COLOR
-               * and now (the dead paletteDirty=1 path was never reachable). */
+              if (dm1Route && !dm1Command.run_start_program) goto cleanup;
           }
       }
       (void)m11_delay_ms_with_intro_event_pump(
