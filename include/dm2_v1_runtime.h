@@ -194,6 +194,8 @@ int dm2_v1_runtime_g1_map5_text_receipt(
  * Mode-one GDAT messages and unknown phrase-bank escapes are not fabricated. */
 int dm2_v1_runtime_g1_map5_text_message_receipt(
     DM2_V1_G1TextMessageRuntimeReceipt *out_receipt);
+int dm2_v1_runtime_g1_map5_gdat_text_message_receipt(
+    DM2_V1_G1GdatTextMessageRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_map5_text_wall_gfx_receipt(
     DM2_V1_G1TextWallGfxRuntimeReceipt *out_receipt);
 int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(

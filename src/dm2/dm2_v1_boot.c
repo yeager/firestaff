@@ -4887,6 +4887,30 @@ static int dm2_v1_boot_g1_raw_read(
     return 1;
 }
 
+static int dm2_v1_boot_g1_text_read(
+    void *userdata,
+    int category,
+    int index,
+    int field,
+    const uint8_t **out_data,
+    uint32_t *out_byte_count)
+{
+    const DM2_V1_BootGraphicsDat *gfx =
+        (const DM2_V1_BootGraphicsDat *)userdata;
+    size_t byte_count = 0u;
+    const uint8_t *data;
+
+    if (out_data) *out_data = NULL;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (!gfx || !out_data || !out_byte_count) return 0;
+    data = dm2_v1_asset_load_text_sized(&gfx->loader, category, index, field,
+                                        &byte_count);
+    if (!data || byte_count == 0u || byte_count > UINT32_MAX) return 0;
+    *out_data = data;
+    *out_byte_count = (uint32_t)byte_count;
+    return 1;
+}
+
 static int dm2_v1_boot_g1_image_metadata_read(
     void *userdata,
     int category,
@@ -4955,6 +4979,21 @@ int dm2_v1_boot_g1_text_wall_gfx_materials(
         texts, dm2_v1_boot_g1_wall_gfx_scalar_read,
         dm2_v1_boot_g1_image_metadata_read,
         dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+}
+
+int dm2_v1_boot_g1_gdat_text_materials(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
+    DM2_V1_G1GdatTextMessageRuntimeReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dungeon_materialize_g1_map5_gdat_text_messages(
+        texts, dm2_v1_boot_g1_text_read, gfx, out);
 }
 
 int dm2_v1_boot_g1_actuator_wall_gfx_materials(

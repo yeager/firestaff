@@ -22,6 +22,16 @@
   `Timer.cpp:1788-1836`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 DM2 G1 mode-one GDAT text material: visible map-5 DB2 `Text`
+  rows with `TextMode()==1` and extension usage 14 now select the exact
+  skproject `MESSAGES/0/dtText/low(TextIndex)` payload. Boot/runtime retain
+  source position, ObjectID, field, raw byte count, and hash; a missing
+  payload rejects the whole receipt. This is deliberately raw only:
+  `FORMAT_SKSTR`, phrase-bank controls, and text painting remain blocked
+  without source proof. Source: skproject `SKULLWIN/c_querydb.cpp`
+  `DM2_QUERY_MESSAGE_TEXT` E091-E146. Verification: Ninja and CTest
+  `dm2_v1_g1_text_message_runtime` passed 1/1.
+
 - 2026-07-13 DM2 G1 WALL_GFX local-palette ownership: source DB2 Text and DB3
   Actuator wall graphics now retain `dtImage/1` dimensions, format, and the
   exact `QUERY_GDAT_IMAGE_LOCALPAL` hash before a source-required
