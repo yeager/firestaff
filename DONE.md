@@ -82,6 +82,13 @@
   F0190:892-916 and `DUNVIEW.C` F0115. No renderer, cue fallback, or
   synthetic effect was added. Verification: focused CTest.
 
+- 2026-07-13 DM1 F0190 C040 expiry/shared-square ordering: a focused
+  regression proves F0115 admits C000 then C040 on one square, drops only the
+  expired trailing C040, and restores the same order when the source C040 is
+  materialized again. Source: ReDMCSB `GROUP.C` F0190 and `DUNVIEW.C` F0115.
+  No renderer, cue fallback, or synthetic effect was added. Verification:
+  focused CTest.
+
 - 2026-07-13 DM1 F0190 C040 attack-domain regression: the existing
   killed-all M10-to-F0115 test now drives each source-valid size/attack pair
   (`quarter/110`, `half/190`, `full/255`) through the live explosion list and
