@@ -153,3 +153,14 @@ instruction/register receipt, not a semantic API classification: it does not
 prove a `CD_READ`, record number, RAM destination, transfer size, payload, or
 any game asset. `scripts/verify_theron_post_latch_cd_controller_trace.sh`
 requires this ordered receipt and rejects pre-Run or incomplete traces.
+
+The next observed System Card route is the first controller dispatch after
+that completed exchange. The source-built Mednafen trace reaches `$e97a`,
+where it reads the live `$224c,X` byte, and then reaches `$e981` after the
+corresponding controller-register transition. This binds only the order of
+the original CPU locations and their observed register/RAM bytes. In
+particular, `$224c` has not been classified as a command, `CD_READ` record,
+size, destination, payload, bitmap, palette, object, or level. The new
+`scripts/verify_theron_post_latch_cd_dispatch_trace.sh` requires the completed
+first exchange before the ordered `$e97a -> $e981` receipt, so later trace
+work cannot silently promote an unrelated polling iteration.

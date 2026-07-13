@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,6 +36,746 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,6 +36,784 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -88,6 +88,9 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TracePostLatchCD1803;
 +static uint32 TheronIrq2TracePostLatchCD1804;
 +static unsigned TheronIrq2TracePostLatchCDChangeCount;
++static bool TheronIrq2TracePostLatchFirstExchangeComplete;
++static bool TheronIrq2TracePostLatchDispatchBeforeSeen;
++static bool TheronIrq2TracePostLatchDispatchAfterSeen;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -494,8 +497,43 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TracePostLatchCD1803 = cd_1803;
 +  TheronIrq2TracePostLatchCD1804 = cd_1804;
 +  TheronIrq2TracePostLatchCDChangeCount++;
++  if(logical_pc == 0xea34 &&
++     TheronIrq2TracePostLatchCD1800 == 0xd0 &&
++     TheronIrq2TracePostLatchCD1801 == 0xff &&
++     TheronIrq2TracePostLatchCD1802 == 0x00)
++   TheronIrq2TracePostLatchFirstExchangeComplete = true;
 +  FlushTheronIrq2Trace();
 + }
++}
++
++/* The first $e97a/$e981 visit after the completed $e900 exchange is captured
++ * as raw RAM and controller state.  It does not classify the $224c byte as a
++ * command, CD request, record, or payload. */
++if(TheronIrq2TracePostLatchCDRegistersActive &&
++   TheronIrq2TracePostLatchFirstExchangeComplete &&
++   logical_pc == 0xe97a && !TheronIrq2TracePostLatchDispatchBeforeSeen)
++{
++ const uint32 work_224c = CurGame->Debugger->MemPeek(0x224c, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("post_latch_cd_dispatch_before_pc=%04x physical_pc=%08x instruction=LDA $224C,X work_224c=%02x cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x\\n",
++                               logical_pc, PC, work_224c, TheronIrq2TracePostLatchCD1800,
++                               TheronIrq2TracePostLatchCD1801, TheronIrq2TracePostLatchCD1802,
++                               TheronIrq2TracePostLatchCD1803, TheronIrq2TracePostLatchCD1804);
++ TheronIrq2TracePostLatchDispatchBeforeSeen = true;
++ FlushTheronIrq2Trace();
++}
++if(TheronIrq2TracePostLatchCDRegistersActive &&
++   TheronIrq2TracePostLatchDispatchBeforeSeen &&
++   logical_pc == 0xe981 && !TheronIrq2TracePostLatchDispatchAfterSeen)
++{
++ const uint32 cd_1800 = CurGame->Debugger->MemPeek(0x1800, 1, true, true) & 0xff;
++ const uint32 cd_1801 = CurGame->Debugger->MemPeek(0x1801, 1, true, true) & 0xff;
++ const uint32 cd_1802 = CurGame->Debugger->MemPeek(0x1802, 1, true, true) & 0xff;
++ const uint32 cd_1803 = CurGame->Debugger->MemPeek(0x1803, 1, true, true) & 0xff;
++ const uint32 cd_1804 = CurGame->Debugger->MemPeek(0x1804, 1, true, true) & 0xff;
++ TheronIrq2Trace->print_format("post_latch_cd_dispatch_after_pc=%04x physical_pc=%08x instruction=NOP cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x cd_1804=%02x\\n",
++                               logical_pc, PC, cd_1800, cd_1801, cd_1802, cd_1803, cd_1804);
++ TheronIrq2TracePostLatchDispatchAfterSeen = true;
++ FlushTheronIrq2Trace();
 +}
 +
 +if(logical_pc >= 0xfe90 && logical_pc < 0xff00 && !TheronIrq2TraceFE90WindowSeen[logical_pc - 0xfe90])
@@ -749,7 +787,7 @@ index 347482c4..61d4758e 100644
  
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
-@@ -162,10 +742,10 @@ static void UpdateCoreHooks(void)
+@@ -162,10 +780,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
@@ -763,7 +801,7 @@ index 347482c4..61d4758e 100644
  }
  
  static void UpdatePCBreakpoints(void)
-@@ -1367,6 +1947,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
+@@ -1367,6 +1985,8 @@ static void CPUCallback(uint32 PC, bool bpoint)
   //
   if(TraceLog)
    DoTraceLog(PC);
@@ -772,7 +810,7 @@ index 347482c4..61d4758e 100644
  }
  
  
-@@ -1873,6 +2455,44 @@ void Debugger_Init(void)
+@@ -1873,6 +2493,44 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -817,11 +855,11 @@ index 347482c4..61d4758e 100644
  
  	NeedInit = true;
  	WatchLogical = true;
-@@ -1896,0 +2516,3 @@ void Debugger_Init(void)
+@@ -1896,0 +2554,3 @@ void Debugger_Init(void)
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,6 +2539,8 @@ void Debugger_Kill(void)
+@@ -1916,6 +2577,8 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
