@@ -427,5 +427,44 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               profile.csbwin_character_tail_see_thru_walls == 0u,
           "Thieves Eye expiry fails closed rather than underflowing a zero count");
+
+    profile.csbwin_character_tail_party_shield = 100;
+    profile.csbwin_timers[0].function = 74u;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[0].ubyte6 = 30u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].ubyte8 = 0u;
+    profile.csbwin_timers[0].ubyte9 = 0u;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_party_shield == 70,
+          "restored Party Shield timer applies its signed saved defense delta");
+
+    profile.csbwin_timers[0].source_index = 1u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_party_shield == 70,
+          "stale Party Shield identity cannot change saved defense");
+
+    profile.csbwin_character_tail_party_shield = 10;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].ubyte6 = 0xffu;
+    profile.csbwin_timers[0].ubyte7 = 0xffu;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_party_shield == 10,
+          "nonpositive Party Shield expiry remains fail-closed");
+
+    profile.csbwin_timers[0].ubyte6 = 11u;
+    profile.csbwin_timers[0].ubyte7 = 0u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.csbwin_character_tail_party_shield == 10,
+          "underflowing Party Shield expiry remains fail-closed");
     return failures == 0 ? 0 : 1;
 }
