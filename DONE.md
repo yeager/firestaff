@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 PC34 C24 external-corpus receipt: opt-in external corpus
+  rows now retain canonical four-byte fluxcage unions (`B.Location` plus
+  `C.Slot`) with counts, byte lengths, and fingerprints. The receipt sorts
+  only EVENT storage after F0651; it neither constructs an explosion nor
+  reinterprets its original C15 Thing as a host index. Real corpus candidates
+  require exact source/transient-export identity. Source: ReDMCSB
+  `PROJEXPL.C` F0224 and `LOADSAVE.C` F0433/F0435. Verification: focused
+  native-PC34 handoff CTest.
+
 - 2026-07-13 Theron stage-two capture sidecar: authentic Mednafen captures
   now retain the independently verified `$40cd/$40a4` System Card call and
   return receipt as a separate sidecar only when all four raw rows match.

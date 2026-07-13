@@ -3659,6 +3659,38 @@ static void dm1_original_save_sort_c25_receipt_rows(
     }
 }
 
+/* ReDMCSB PROJEXPL.C F0224 creates C24 for a C15 fluxcage with the same
+ * B.Location/C.Slot union shape as C25. This is receipt-only and never turns
+ * the saved Thing into a host explosion-list index. */
+static void dm1_original_save_c24_union_slot_receipt_bytes(
+    const struct DM1_Event_V1 *event,
+    uint8_t out_bytes[4])
+{
+    out_bytes[0] = event->b_mapX;
+    out_bytes[1] = event->b_mapY;
+    out_bytes[2] = event->c_cell;
+    out_bytes[3] = event->c_effect;
+}
+
+static void dm1_original_save_sort_c24_receipt_rows(
+    uint8_t rows[DM1_EVENT_MAX_COUNT][4],
+    int count)
+{
+    int i;
+
+    for (i = 1; i < count; ++i) {
+        uint8_t row[4];
+        int j = i;
+
+        memcpy(row, rows[i], sizeof(row));
+        while (j > 0 && memcmp(rows[j - 1], row, sizeof(row)) > 0) {
+            memcpy(rows[j], rows[j - 1], sizeof(row));
+            --j;
+        }
+        memcpy(rows[j], row, sizeof(row));
+    }
+}
+
 static void fill_roundtrip_core_report(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *export_report,
@@ -3675,6 +3707,8 @@ static void fill_roundtrip_core_report(
                            [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
     uint8_t source_c25_rows[DM1_EVENT_MAX_COUNT][4];
     uint8_t export_c25_rows[DM1_EVENT_MAX_COUNT][4];
+    uint8_t source_c24_rows[DM1_EVENT_MAX_COUNT][4];
+    uint8_t export_c24_rows[DM1_EVENT_MAX_COUNT][4];
     uint16_t source_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
     uint16_t export_c13_timeline_refs[DM1_EVENT_MAX_COUNT];
     uint8_t source_c13_timeline_bytes[DM1_EVENT_MAX_COUNT * sizeof(uint16_t)];
@@ -3683,6 +3717,8 @@ static void fill_roundtrip_core_report(
     int export_c13_count = 0;
     int source_c25_count = 0;
     int export_c25_count = 0;
+    int source_c24_count = 0;
+    int export_c24_count = 0;
     int source_c13_timeline_count = 0;
     int export_c13_timeline_count = 0;
     int i;
@@ -3975,6 +4011,58 @@ static void fill_roundtrip_core_report(
         out_report->c25_union_slot_byte_preservation_ok =
             out_report->c25_union_slot_byte_mismatch_count == 0 &&
             source_c25_count == export_c25_count;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0224 creates a C24 remove-fluxcage EVENT with
+     * B.Location/C.Slot. LOADSAVE.C F0433/F0435 persists that raw EVENT;
+     * retain only its source-owned four-byte union, canonically ordered after
+     * F0651 may rearrange EVENT storage. */
+    if (!source_report || !export_report ||
+        source_report->event_decode_truncated_count != 0 ||
+        export_report->event_decode_truncated_count != 0) {
+        out_report->c24_union_slot_byte_receipt_available = 0;
+    } else {
+        out_report->c24_union_slot_byte_receipt_available = 1;
+        for (i = 0; i < source_report->decoded_event_count; ++i) {
+            if (source_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
+                dm1_original_save_c24_union_slot_receipt_bytes(
+                    &source_report->events[i], source_c24_rows[source_c24_count++]);
+            }
+        }
+        for (i = 0; i < export_report->decoded_event_count; ++i) {
+            if (export_report->events[i].type == DM1_EVENT_REMOVE_FLUXCAGE) {
+                dm1_original_save_c24_union_slot_receipt_bytes(
+                    &export_report->events[i], export_c24_rows[export_c24_count++]);
+            }
+        }
+        dm1_original_save_sort_c24_receipt_rows(source_c24_rows,
+                                                  source_c24_count);
+        dm1_original_save_sort_c24_receipt_rows(export_c24_rows,
+                                                  export_c24_count);
+        out_report->source_c24_event_count = source_c24_count;
+        out_report->exported_c24_event_count = export_c24_count;
+        out_report->source_c24_union_slot_byte_count =
+            (uint32_t)source_c24_count * 4u;
+        out_report->exported_c24_union_slot_byte_count =
+            (uint32_t)export_c24_count * 4u;
+        out_report->source_c24_union_slot_fingerprint =
+            dm1_original_save_hash_bytes(&source_c24_rows[0][0],
+                out_report->source_c24_union_slot_byte_count);
+        out_report->exported_c24_union_slot_fingerprint =
+            dm1_original_save_hash_bytes(&export_c24_rows[0][0],
+                out_report->exported_c24_union_slot_byte_count);
+        out_report->c24_union_slot_byte_preserved_count =
+            source_c24_count == export_c24_count &&
+            out_report->source_c24_union_slot_fingerprint ==
+                out_report->exported_c24_union_slot_fingerprint
+                ? source_c24_count : 0;
+        out_report->c24_union_slot_byte_mismatch_count =
+            out_report->c24_union_slot_byte_preserved_count == source_c24_count
+                ? 0 : (source_c24_count > export_c24_count
+                    ? source_c24_count : export_c24_count);
+        out_report->c24_union_slot_byte_preservation_ok =
+            out_report->c24_union_slot_byte_mismatch_count == 0 &&
+            source_c24_count == export_c24_count;
     }
 
     out_report->core_state_matches =
@@ -4446,6 +4534,24 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_c25_union_slot_byte_count;
         receipt->exported_c25_union_slot_fingerprint =
             roundtrip.exported_c25_union_slot_fingerprint;
+        receipt->c24_union_slot_byte_receipt_available =
+            roundtrip.c24_union_slot_byte_receipt_available;
+        receipt->source_c24_event_count = roundtrip.source_c24_event_count;
+        receipt->exported_c24_event_count = roundtrip.exported_c24_event_count;
+        receipt->c24_union_slot_byte_preserved_count =
+            roundtrip.c24_union_slot_byte_preserved_count;
+        receipt->c24_union_slot_byte_mismatch_count =
+            roundtrip.c24_union_slot_byte_mismatch_count;
+        receipt->c24_union_slot_byte_preservation_ok =
+            roundtrip.c24_union_slot_byte_preservation_ok;
+        receipt->source_c24_union_slot_byte_count =
+            roundtrip.source_c24_union_slot_byte_count;
+        receipt->source_c24_union_slot_fingerprint =
+            roundtrip.source_c24_union_slot_fingerprint;
+        receipt->exported_c24_union_slot_byte_count =
+            roundtrip.exported_c24_union_slot_byte_count;
+        receipt->exported_c24_union_slot_fingerprint =
+            roundtrip.exported_c24_union_slot_fingerprint;
         receipt->c4_timeline_layout_receipt_available =
             roundtrip.c4_timeline_layout_receipt_available;
         receipt->source_c4_timeline_index_count =
