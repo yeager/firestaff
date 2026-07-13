@@ -17,6 +17,10 @@ if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x addre
    ! grep -Fq 'system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x' "$patch_file" ||
    ! grep -Fq 'TheronIrq2TraceWatchedPC' "$patch_file" ||
    ! grep -Fq 'stage2_4090=%02x%02x%02x stage2_fc=%02x' "$patch_file" ||
+   ! grep -Fq 'stage2_system_card_call pc=%04x return_pc=%04x target=%04x a=%02x x=%02x y=%02x p=%02x' "$patch_file" ||
+   ! grep -Fq 'stage2_system_card_return pc=%04x call_pc=%04x a=%02x x=%02x y=%02x p=%02x' "$patch_file" ||
+   ! grep -Fq 'logical_pc == 0x40cd || logical_pc == 0x40a4' "$patch_file" ||
+   ! grep -Fq 'logical_pc == 0x40d0 || logical_pc == 0x40a7' "$patch_file" ||
    ! grep -Fq 'stage2_disassembly_pc=%04x instruction=%s' "$patch_file" ||
    ! grep -Fq 'distort CD timing' "$patch_file" ||
    ! grep -Fq 'address == 0x2241' "$patch_file"; then
