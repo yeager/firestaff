@@ -954,10 +954,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   verified post-grid record target before mesh readiness, with a distinct
   `blocked-structure1f-reference` receipt for opaque-tail or out-of-prefix
   addresses. Direct item `attribute1/attribute2` and `location/item_id` pairs
-  plus floor-decoration signed offset pairs also reach the host receipt and
-  render plan as raw provenance only. Remaining work is a documented Saturn
-  Structure1F draw/trigger binding, never a synthetic overlay or omission of a
-  visible original record.
+  plus floor-decoration signed offset pairs reach the host receipt, render
+  plan, and LEV00-15 corpus aggregate as raw provenance only. Remaining work
+  is a documented Saturn Structure1F draw/trigger binding, never a synthetic
+  overlay or omission of a visible original record.
 
 - 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
   presentation remains blocked until the full original startup package and

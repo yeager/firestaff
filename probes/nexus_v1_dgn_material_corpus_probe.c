@@ -196,6 +196,8 @@ int main(int argc, char **argv) {
            "complete-floor-decoration-payload-selectors=%d "
            "complete-floor-decoration-rotation-selectors=%d "
            "complete-floor-decoration-offset-pairs=%d "
+           "complete-item-attribute-pairs=%d "
+           "complete-item-location-pairs=%d "
            "ordinal-block-disproven=%d "
            "ordinal-byte-run-disproven=%d "
            "ordinal-run-disproven=%d ordinal-zero=%d/%d/%d "
@@ -226,6 +228,8 @@ int main(int argc, char **argv) {
            receipt.structure1f_floor_decoration_payload_selector_complete_level_count,
            receipt.structure1f_floor_decoration_rotation_selector_complete_level_count,
            receipt.structure1f_floor_decoration_offset_pair_complete_level_count,
+           receipt.structure1f_item_attribute_pair_complete_level_count,
+           receipt.structure1f_item_location_pair_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_run_ordinal_mapping_disproven_level_count,
