@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Nexus SDDRVS identity receipt: every SFX runtime receipt now
+  carries the separate canonical `SDDRVS.TSK` expected identity (26,610 bytes
+  and the verified SHA-256), while engine-owned MD5 discovery remains the
+  source-ownership gate. The sound module does not reopen the file, infer a
+  driver ABI, map SAL samples, or enable playback. Verification: Ninja-built
+  and CTest-passed `nexus_v1_sound_runtime_receipt`.
+
 - 2026-07-13 Theron Track 02 post-return `$e109` trace: a clean-source,
   instrumented Mednafen 1.32.1 build and authenticated US CUE/System Card 3.0
   capture now prove `$cb2f -> $e109 -> $c860`. The `$e109` instruction is

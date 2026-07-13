@@ -88,6 +88,12 @@ static void test_size_matched_assets_block_decode(void) {
           receipt.map_receipt.receipt_class ==
               NEXUS_V1_AUDIO_RECEIPT_SIZE_MATCH,
           "runtime receipt preserves SAL/MAP size-match classes");
+    CHECK(receipt.sound_driver_receipt.kind ==
+              NEXUS_V1_AUDIO_KIND_SOUND_DRIVER &&
+          receipt.sound_driver_receipt.level_index == -1 &&
+          receipt.sound_driver_receipt.expected_size == 26610u &&
+          strcmp(receipt.sound_driver_receipt.expected_name, "SDDRVS.TSK") == 0,
+          "runtime receipt keeps the source-locked SDDRVS identity separate from SAL/MAP");
     CHECK(receipt.cd_track == 2 &&
           receipt.level_index == 0 &&
           receipt.playback_enabled == 0,

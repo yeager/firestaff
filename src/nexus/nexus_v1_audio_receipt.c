@@ -11,6 +11,10 @@ typedef struct {
     const char *map_sha256;
 } Nexus_V1_AudioExpectedRow;
 
+static const uint32_t g_sound_driver_size = 26610u;
+static const char *g_sound_driver_sha256 =
+    "68890ee4a49fd0c341bc3f0a48643e4db4b175df0b0d7dacfeb88306340052b6";
+
 /* Nexus audio receipt table.
  *
  * Source evidence:
@@ -115,16 +119,36 @@ static int parse_sndlev_name(const char *path,
     return NEXUS_V1_AUDIO_OK;
 }
 
+static int parse_sound_driver_name(const char *path) {
+    const char *name = basename_ptr(path);
+
+    if (!name || !suffix_ieq(name, "SDDRVS.TSK") ||
+        strlen(name) != strlen("SDDRVS.TSK")) {
+        return NEXUS_V1_AUDIO_ERR_BAD_NAME;
+    }
+    return NEXUS_V1_AUDIO_OK;
+}
+
 static void fill_expected(Nexus_V1_AudioKind kind,
                           int level_index,
                           Nexus_V1_AudioReceipt *out) {
-    const Nexus_V1_AudioExpectedRow *row = &g_expected[level_index];
+    const Nexus_V1_AudioExpectedRow *row = NULL;
 
     memset(out, 0, sizeof(*out));
     out->kind = kind;
     out->receipt_class = NEXUS_V1_AUDIO_RECEIPT_NAME_ONLY;
     out->level_index = level_index;
-    out->cd_track = nexus_v1_audio_cd_track_for_level_receipt(level_index);
+    out->cd_track = level_index >= 0
+        ? nexus_v1_audio_cd_track_for_level_receipt(level_index) : -1;
+
+    if (kind == NEXUS_V1_AUDIO_KIND_SOUND_DRIVER) {
+        out->expected_size = g_sound_driver_size;
+        out->expected_sha256 = g_sound_driver_sha256;
+        snprintf(out->expected_name, sizeof(out->expected_name), "SDDRVS.TSK");
+        return;
+    }
+
+    row = &g_expected[level_index];
 
     if (kind == NEXUS_V1_AUDIO_KIND_SAL_BANK) {
         out->expected_size = row->sal_size;
@@ -144,6 +168,11 @@ int nexus_v1_audio_expected_asset(Nexus_V1_AudioKind kind,
                                   Nexus_V1_AudioReceipt *out) {
     if (!out) return NEXUS_V1_AUDIO_ERR_NULL;
     memset(out, 0, sizeof(*out));
+    if (kind == NEXUS_V1_AUDIO_KIND_SOUND_DRIVER) {
+        if (level_index != -1) return NEXUS_V1_AUDIO_ERR_BAD_LEVEL;
+        fill_expected(kind, level_index, out);
+        return NEXUS_V1_AUDIO_OK;
+    }
     if (level_index < 0 || level_index >= NEXUS_V1_AUDIO_LEVEL_COUNT) {
         return NEXUS_V1_AUDIO_ERR_BAD_LEVEL;
     }
@@ -168,6 +197,12 @@ int nexus_v1_audio_classify_file(const char *path,
     memset(out, 0, sizeof(*out));
 
     rc = parse_sndlev_name(path, &kind, &level);
+    if (rc != NEXUS_V1_AUDIO_OK &&
+        parse_sound_driver_name(path) == NEXUS_V1_AUDIO_OK) {
+        kind = NEXUS_V1_AUDIO_KIND_SOUND_DRIVER;
+        level = -1;
+        rc = NEXUS_V1_AUDIO_OK;
+    }
     if (rc != NEXUS_V1_AUDIO_OK) return rc;
 
     fill_expected(kind, level, out);
@@ -253,6 +288,7 @@ const char *nexus_v1_audio_kind_name(Nexus_V1_AudioKind kind) {
     case NEXUS_V1_AUDIO_KIND_SAL_BANK: return "sal-bank";
     case NEXUS_V1_AUDIO_KIND_MAP_TABLE: return "map-table";
     case NEXUS_V1_AUDIO_KIND_CDDA_LAYOUT: return "cdda-layout";
+    case NEXUS_V1_AUDIO_KIND_SOUND_DRIVER: return "sound-driver";
     case NEXUS_V1_AUDIO_KIND_UNKNOWN:
     default: return "unknown";
     }
@@ -288,6 +324,7 @@ const char *nexus_v1_audio_source_evidence(void) {
     return
         "docs/NEXUS_FILE_CLASSIFICATION.md: SNDLEV00-15.SAL/.MAP inventory\n"
         "docs/VERIFIED_HASHES.md:154-185 verified SAL/MAP sizes + SHA256\n"
+        "docs/VERIFIED_HASHES.md:121 verified SDDRVS.TSK size + SHA256\n"
         "docs/nexus_audio_format.md: CD-DA tracks 2-9, two levels per track\n"
         "src/nexus/nexus_v1_game.c: nexus_v1_cd_track_for_level mapping\n"
         "Boundary: receipt/classification plus bounded MAP event table parse; "
