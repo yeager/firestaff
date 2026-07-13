@@ -24,7 +24,10 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
 
 cd "$build_root/source"
-CXXFLAGS="${CXXFLAGS:-} -DPCECD_DEBUG" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
+# The Firestaff hook reads PCE registers through Mednafen's debugger API.
+# Enabling the legacy PCECD_DEBUG printf path breaks current 1.32.1 builds
+# because that path does not include the HuCPU declaration.
+CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp --disable-pce-fast \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan
