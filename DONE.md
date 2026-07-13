@@ -5,6 +5,12 @@
   label paired with changed bytes. Verification: capture-manifest unit test
   covers matching and mismatched files; runtime-intake probe remains
   fail-closed without a complete Mednafen transaction.
+- 2026-07-13 DM1 HoC C161 nonzero-leader sequence: real-PC34 coverage now
+  starts with leader slot 1, runs C127/C161/C162 and a later C160 on the same
+  mirror, and proves slot 1 plus its name/C026 portrait survive while the
+  source candidate is rebuilt only in tail slot 2. Source: ReDMCSB `REVIVE.C`
+  F0280 and F0282:744-845. Verification: focused CTest against installed
+   PC34 data.
 
 - 2026-07-13 Theron Track 02 capture-manifest hardening: rewrote the
   provenance parser as an exact five-field format that rejects malformed or

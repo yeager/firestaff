@@ -669,6 +669,105 @@ int main(int argc, char** argv)
         }
     }
 
+    /* ReDMCSB REVIVE.C F0280 appends C127 at the current party tail and
+     * F0282:744-845 only elects slot 0 for a one-member party.  Exercise
+     * real mirror data with an existing leader in slot 1: the C161 modal,
+     * C162 rollback, and later C160 must not reseat that leader or borrow its
+     * name/C026 portrait for the source candidate. */
+    if (firstOrdinal >= 0) {
+        M12_StartupMenuState leaderMenu;
+        M11_GameViewState leaderGame;
+        unsigned char leaderPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        unsigned char sourcePortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char leaderName[16];
+        char sourceName[16];
+        int existingA = (firstOrdinal + 1) % 24;
+        int existingB = (firstOrdinal + 2) % 24;
+        int candidateIndex;
+
+        leaderName[0] = '\0';
+        sourceName[0] = '\0';
+        if (!open_game(dataDir, &leaderMenu, &leaderGame)) {
+            fprintf(stderr, "FAIL could not open nonzero-leader C161 game\n");
+            ok = 0;
+        } else if (!M11_GameView_RecruitChampionByMirrorOrdinal(&leaderGame, existingA) ||
+                   !M11_GameView_RecruitChampionByMirrorOrdinal(&leaderGame, existingB) ||
+                   leaderGame.world.party.championCount != 2) {
+            fprintf(stderr, "FAIL HoC nonzero-leader source party setup\n");
+            ok = 0;
+        } else {
+            leaderGame.world.party.activeChampionIndex = 1;
+            leaderGame.world.party.mapIndex = 0;
+            leaderGame.world.party.mapX = firstPartyX;
+            leaderGame.world.party.mapY = firstPartyY;
+            leaderGame.world.party.direction = firstDirection;
+            if (!M11_GameView_GetMirrorNameByOrdinal(&leaderGame, firstOrdinal,
+                                                      sourceName, (int)sizeof(sourceName))) {
+                fprintf(stderr, "FAIL HoC nonzero-leader source name lookup\n");
+                ok = 0;
+            } else {
+                F0628_CHAMPION_UnpackName_Compat(&leaderGame.world.party.champions[1],
+                                                  leaderName, sizeof(leaderName));
+                memcpy(leaderPortrait, leaderGame.world.party.champions[1].portraitBitmap,
+                       sizeof(leaderPortrait));
+                if (!M11_GameView_SelectFrontMirrorCandidate(&leaderGame)) {
+                    fprintf(stderr, "FAIL HoC nonzero-leader C127 selection\n");
+                    ok = 0;
+                } else {
+                    candidateIndex = leaderGame.candidateMirrorPartyIndex;
+                    if (candidateIndex != 2 ||
+                        !champion_name_matches(
+                            &leaderGame.world.party.champions[candidateIndex], sourceName) ||
+                        !leaderGame.world.party.champions[candidateIndex].portraitBitmapValid) {
+                        fprintf(stderr, "FAIL HoC nonzero-leader C127 source materialization\n");
+                        ok = 0;
+                    } else {
+                        memcpy(sourcePortrait,
+                               leaderGame.world.party.champions[candidateIndex].portraitBitmap,
+                               sizeof(sourcePortrait));
+                        if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&leaderGame) ||
+                            leaderGame.world.party.activeChampionIndex != 1 ||
+                            !champion_name_matches(
+                                &leaderGame.world.party.champions[1], leaderName) ||
+                            memcmp(leaderGame.world.party.champions[1].portraitBitmap,
+                                   leaderPortrait, sizeof(leaderPortrait)) != 0 ||
+                            !M11_GameView_CancelMirrorCandidate(&leaderGame) ||
+                            leaderGame.world.party.championCount != 2 ||
+                            leaderGame.world.party.activeChampionIndex != 1 ||
+                            !champion_name_matches(
+                                &leaderGame.world.party.champions[1], leaderName) ||
+                            memcmp(leaderGame.world.party.champions[1].portraitBitmap,
+                                   leaderPortrait, sizeof(leaderPortrait)) != 0 ||
+                            M11_GameView_GetFrontMirrorOrdinal(&leaderGame) != firstOrdinal ||
+                            !M11_GameView_SelectFrontMirrorCandidate(&leaderGame) ||
+                            leaderGame.candidateMirrorPartyIndex != candidateIndex ||
+                            !champion_name_matches(
+                                &leaderGame.world.party.champions[candidateIndex], sourceName) ||
+                            memcmp(leaderGame.world.party.champions[candidateIndex].portraitBitmap,
+                                   sourcePortrait, sizeof(sourcePortrait)) != 0 ||
+                            M11_GameView_ConfirmMirrorCandidate(&leaderGame, 0) != 1 ||
+                            leaderGame.world.party.championCount != 3 ||
+                            leaderGame.world.party.activeChampionIndex != 1 ||
+                            !champion_name_matches(
+                                &leaderGame.world.party.champions[1], leaderName) ||
+                            memcmp(leaderGame.world.party.champions[1].portraitBitmap,
+                                   leaderPortrait, sizeof(leaderPortrait)) != 0 ||
+                            !champion_name_matches(
+                                &leaderGame.world.party.champions[candidateIndex], sourceName) ||
+                            memcmp(leaderGame.world.party.champions[candidateIndex].portraitBitmap,
+                                   sourcePortrait, sizeof(sourcePortrait)) != 0 ||
+                            M11_GameView_GetFrontMirrorOrdinal(&leaderGame) != -1) {
+                            fprintf(stderr,
+                                    "FAIL HoC nonzero-leader C161/C162/C160 state bleed\n");
+                            ok = 0;
+                        }
+                    }
+                }
+            }
+        }
+        M11_GameView_Shutdown(&leaderGame);
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
