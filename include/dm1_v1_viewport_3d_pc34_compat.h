@@ -683,6 +683,25 @@ typedef struct {
     const char *occlusion_source_lines;
 } DM1_ViewportWallDrawSpec;
 
+/* Host-facing material handoff for the ordinary D3 side-wall cases only.
+ * ReDMCSB DUNVIEW.C F0116/F0117 select the source wall, C705/C706 zone,
+ * C10 transparency, and parity flip before returning or entering F0115. */
+typedef struct {
+    bool handled;
+    bool draw_wall;
+    bool falls_through_to_f0115;
+    bool flip_horizontally;
+    DM1_WallSetIndex selected_wall;
+    int pc34_zone;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    int transparent_color;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportD3SideWallHostHandoffPc34;
+
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
  * They are outside the original M597-M611 dense enum, so use stable negative
  * identifiers for metadata/probe reporting only. */
@@ -1098,6 +1117,12 @@ const DM1_ViewportWallDrawSpec *dm1_viewport_3d_get_side_wall_draw_spec_for_rel(
 DM1_WallSetIndex dm1_viewport_3d_select_wall_bitmap(const DM1_ViewportWallDrawSpec *spec, bool parity_flip, bool *flip_horizontally);
 bool dm1_viewport_3d_wall_occludes_floor_items(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
 uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *spec, bool front_alcove);
+int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
+    DM1_ViewSquareIndex square,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff);
 
 /*
  * Wire wall-frame bitmaps into the V1 viewport drawing pipeline.
