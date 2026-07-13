@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
+  now proves the post-resurrection invalidation while the party remains in
+  front of the source mirror. The focused runtime regression requires the
+  source sensor to be disabled, candidate state and prompt text to clear, and
+  the D1C C026 portrait cutout to change on the next draw. Source: ReDMCSB
+  `REVIVE.C` F0282:785-805 and `DUNVIEW.C`:3913-3928. Verification: focused
+  CTest against the installed PC34 corpus.
+
 - 2026-07-13 DM1 HoC C026/C346 material gate: a DM1/M10-only regression
   scans the installed PC34 Hall of Champions for a real C127 mirror sensor.
   It locks the source ordinal to the exact C026 atlas cell and G0109

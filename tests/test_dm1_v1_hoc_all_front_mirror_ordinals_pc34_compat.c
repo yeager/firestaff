@@ -52,6 +52,24 @@ static int step_y(int direction)
     return kDy[direction & 3];
 }
 
+static int portrait_cutout_changed(const unsigned char* before,
+                                   const unsigned char* after)
+{
+    int x;
+    int y;
+
+    /* ReDMCSB DUNVIEW.C:3913-3928 writes C026 to the fixed D1C cutout
+     * {96..127,35..63}.  A completed C160 must invalidate that old draw. */
+    for (y = 35; y < 64; ++y) {
+        for (x = 96; x < 128; ++x) {
+            if (before[y * 320 + x] != after[y * 320 + x]) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
     const char* dataDir;
@@ -60,6 +78,10 @@ int main(int argc, char** argv)
     const struct DungeonMapDesc_Compat* map;
     int seen[32];
     int expectedCount = 0;
+    int firstPartyX = -1;
+    int firstPartyY = -1;
+    int firstDirection = -1;
+    int firstOrdinal = -1;
     int ok = 1;
     int x;
     int y;
@@ -125,9 +147,17 @@ int main(int argc, char** argv)
                                         x, y, cell, partyX, partyY, direction,
                                         gotOrdinal, expectedOrdinal);
                                 ok = 0;
-                            } else if (!seen[expectedOrdinal]) {
-                                seen[expectedOrdinal] = 1;
-                                expectedCount++;
+                            } else {
+                                if (!seen[expectedOrdinal]) {
+                                    seen[expectedOrdinal] = 1;
+                                    expectedCount++;
+                                }
+                                if (firstOrdinal < 0) {
+                                    firstPartyX = partyX;
+                                    firstPartyY = partyY;
+                                    firstDirection = direction;
+                                    firstOrdinal = expectedOrdinal;
+                                }
                             }
                         }
                     }
@@ -150,8 +180,51 @@ int main(int argc, char** argv)
         }
     }
 
+    /* ReDMCSB REVIVE.C F0282:785-805 clears G0299 and disables the first
+     * sensor on the source square.  Confirm while still facing that original
+     * C127: the stale candidate prompt and its D1C C026 portrait must not
+     * survive the next F0128 draw. */
+    if (firstOrdinal < 0) {
+        fprintf(stderr, "FAIL no real HoC C127 mirror available for resurrection invalidation\n");
+        ok = 0;
+    } else {
+        unsigned char before[320 * 200];
+        unsigned char after[320 * 200];
+
+        game.world.party.mapIndex = 0;
+        game.world.party.mapX = firstPartyX;
+        game.world.party.mapY = firstPartyY;
+        game.world.party.direction = firstDirection;
+        game.candidateMirrorPanelActive = 0;
+        game.candidateMirrorOrdinal = -1;
+        game.candidateMirrorPartyIndex = -1;
+        M11_GameView_Draw(&game, before, 320, 200);
+        if (M11_GameView_GetFrontMirrorOrdinal(&game) != firstOrdinal ||
+            !M11_GameView_SelectFrontMirrorCandidate(&game) ||
+            !game.candidateMirrorPanelActive ||
+            M11_GameView_ConfirmMirrorCandidate(&game, 0) != 1) {
+            fprintf(stderr, "FAIL HoC C160 selection could not complete at ordinal=%d\n",
+                    firstOrdinal);
+            ok = 0;
+        } else {
+            M11_GameView_Draw(&game, after, 320, 200);
+            if (game.candidateMirrorPanelActive ||
+                game.candidateMirrorOrdinal != -1 ||
+                game.candidateMirrorPartyIndex != -1 ||
+                M11_GameView_GetFrontMirrorOrdinal(&game) != -1 ||
+                strstr(game.inspectTitle, "MIRROR:") != NULL ||
+                strstr(game.inspectDetail, "CHOOSE") != NULL ||
+                !portrait_cutout_changed(before, after)) {
+                fprintf(stderr,
+                        "FAIL HoC C160 left stale mirror panel/text/portrait at ordinal=%d\n",
+                        firstOrdinal);
+                ok = 0;
+            }
+        }
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
-    printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280\n");
+    printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0282:785-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
 
     M11_GameView_Shutdown(&game);
