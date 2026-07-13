@@ -703,7 +703,14 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     if (out_type) *out_type = -1;
     if (out_index) *out_index = -1;
     if (out_size) *out_size = 0;
-    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER)
+    /* skproject/SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines
+     * 45-52 computes the DB address from the raw 16-bit value, while its
+     * callers (for example DM2_APPEND_RECORD_TO lines 67-68) reject both
+     * OBJECT_END_MARKER and OBJECT_NULL before that operation.  Keep that
+     * sentinel boundary here too: 0xffff otherwise decodes as DB15/index
+     * 1023 and a malformed G1 pool could turn the null marker into bytes. */
+    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER ||
+        thing == DM2_THING_NULL_MARKER)
         return NULL;
     type = (int)((thing >> 10) & 0x0fu);
     index = (int)(thing & 0x03ffu);
