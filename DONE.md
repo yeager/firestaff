@@ -12428,6 +12428,19 @@ remain unavailable, with no generated replacement text. Verification:
 placement, phrase-bank rejection, GDAT-only skip, and untrusted-receipt
 rejection.
 
+# ✅ 2026-07-13 DM2 G1 world-model c_record/map provenance handoff
+
+`dm2_world_from_mem()` now transfers the validated loader-owned PC G1 source
+record into the world model instead of discarding it after tile materialization.
+`dm2_world_get_verified_g1_map_source()` exposes it only after the exact
+skproject `READ_DUNGEON_STRUCTURE` text-adjacent pool transform and the
+transactional incomplete map-boot receipt both validate. The retained source
+pins the original byte-square map base, c_record pool bases, extension boundary,
+and 878 materialized roots, while `GenericRecord::w0` graph traversal remains
+disabled. Verification: the real-data handoff test passed against the
+hash-verified 39,437-byte PC G1 `DUNGEON.DAT`; the focused loader gate passed
+87/87.
+
 # ✅ 2026-07-13 DM2 weather `dtText` provenance boundary
 
 `dm2_v1_weather_gdat` now follows skproject `c_weather.cpp` rather than

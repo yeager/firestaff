@@ -21,6 +21,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_world_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -327,6 +328,8 @@ static void probe_first_map(const unsigned char *raw, int size)
     DM2_V1_G1PartialMapBootReceipt partial_boot;
     DM2_V1_G1FirstMapRuntimeReceipt first_map_runtime;
     DM2_V1_G1Map5TextRuntimeReceipt map5_text_runtime;
+    dm2_dungeon_world_t *world;
+    const DM2_V1_DungeonData *world_source;
     int load_rc;
     unsigned declared_pool_bytes;
 
@@ -440,6 +443,23 @@ static void probe_first_map(const unsigned char *raw, int size)
           "all sixteen c_record pools retain skproject source order and bounds");
     CHECK(dm2_v1_dungeon_validate_record_pools(&dungeon) == 1,
           "G1 c_record pool locator validates for real map boot");
+    world = dm2_world_from_mem(raw, (size_t)size);
+    CHECK(world != NULL,
+          "world model accepts the hash-verified G1 dungeon through the loader");
+    world_source = dm2_world_get_verified_g1_map_source(world);
+    CHECK(world_source != NULL &&
+              dm2_world_has_verified_g1_record_pools(world) == 1 &&
+              world_source->raw_data != NULL &&
+              world_source->raw_size == size &&
+              world_source->raw_map_data_base == dungeon.raw_map_data_base &&
+              world_source->text_data_base == dungeon.text_data_base &&
+              world_source->thing_data_bases[0] == 6942 &&
+              world_source->g1_extension_base == 23826 &&
+              world_source->partial_map_boot.committed == 1 &&
+              world_source->partial_map_boot.materialized_root_count == 878 &&
+              world->g1_record_graph_complete == 0,
+          "world retains only the verified G1 map/pool source without promoting links");
+    if (world) dm2_world_free(world);
     CHECK(evidence.tail_pool_base == 14783 && evidence.tail_pool_base_rejected,
           "tail-aligned pool base remains rejected by the non-tail text anchor");
     CHECK(evidence.root_count == dungeon.square_first_thing_count &&
