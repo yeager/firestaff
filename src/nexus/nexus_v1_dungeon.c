@@ -9,15 +9,23 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 
+static const Nexus_V1_DgnStructure2Texture *
+nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
+                                      uint16_t image_id)
+{
+    int index;
+    if (!level || !level->structure2_texture_table_valid) return NULL;
+    for (index = 0; index < level->structure2_texture_count; ++index) {
+        if (level->structure2_textures[index].image_id == image_id)
+            return &level->structure2_textures[index];
+    }
+    return NULL;
+}
+
 static int nexus_v1_level_find_structure2_texture(
     const Nexus_V1_Level *level, uint16_t image_id)
 {
-    int index;
-    if (!level || !level->structure2_texture_table_valid) return 0;
-    for (index = 0; index < level->structure2_texture_count; ++index) {
-        if (level->structure2_textures[index].image_id == image_id) return 1;
-    }
-    return 0;
+    return nexus_v1_level_get_structure2_texture(level, image_id) != NULL;
 }
 
 int nexus_v1_level_structure2_source_envelope_valid(
@@ -3725,6 +3733,74 @@ int nexus_v1_level_build_dgn_view_render_plan(
         receipt.blocks_real_dgn_mesh_render =
             receipt.plan_ready ? 0 : 1;
     }
+    *out_receipt = receipt;
+    return 0;
+}
+
+int nexus_v1_dgn_bind_structure2_animated_floor_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnStructure2FloorCommandSource *out_sources,
+    int max_sources, Nexus_V1_DgnStructure2FloorCommandSourceReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure2FloorCommandSourceReceipt receipt;
+    int command_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!level || !commands || command_count < 0 || !out_sources ||
+        max_sources < 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    for (command_index = 0; command_index < command_count; ++command_index) {
+        const Nexus_V1_DgnRenderCommand *command = &commands[command_index];
+        const Nexus_V1_DgnStructure2Texture *texture;
+        Nexus_V1_DgnStructure2FloorCommandSource *source;
+
+        if (!command->animated_texture_declared) continue;
+        ++receipt.animated_floor_command_count;
+        if (command->kind != NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
+            command->animated_texture_host_route !=
+                NEXUS_V1_DGN_ANIMATED_MATERIAL_ROUTE_STRUCTURE2_FLOOR ||
+            !command->animated_texture_structure2_image_valid) {
+            ++receipt.blocked_invalid_command_count;
+            continue;
+        }
+        if (!nexus_v1_level_structure2_source_envelope_valid(level) ||
+            !level->structure1g_structure2_bindings_complete) {
+            ++receipt.blocked_source_envelope_count;
+            continue;
+        }
+        texture = nexus_v1_level_get_structure2_texture(
+            level, command->animated_texture_structure2_image_id);
+        if (!texture) {
+            ++receipt.blocked_missing_descriptor_count;
+            continue;
+        }
+        if (receipt.source_command_count >= max_sources) {
+            ++receipt.blocked_invalid_command_count;
+            continue;
+        }
+        source = &out_sources[receipt.source_command_count++];
+        memset(source, 0, sizeof(*source));
+        source->command_index = command_index;
+        source->image_id = texture->image_id;
+        source->encoding = texture->encoding;
+        source->palette_id = texture->palette_id;
+        source->width = texture->width;
+        source->height = texture->height;
+        source->image_relative_offset = texture->image_relative_offset;
+        source->palette_relative_offset = texture->palette_relative_offset;
+        source->structure2_source_envelope_valid = 1;
+        source->payload_decoder_proven = 0;
+        source->draw_authorized = 0;
+    }
+    receipt.complete = receipt.animated_floor_command_count > 0 &&
+        receipt.source_command_count == receipt.animated_floor_command_count &&
+        receipt.blocked_invalid_command_count == 0 &&
+        receipt.blocked_missing_descriptor_count == 0 &&
+        receipt.blocked_source_envelope_count == 0;
     *out_receipt = receipt;
     return 0;
 }

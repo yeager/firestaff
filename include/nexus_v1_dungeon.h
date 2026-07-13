@@ -1148,6 +1148,34 @@ typedef struct {
     uint8_t draw_order;
 } Nexus_V1_DgnRenderCommand;
 
+/* Exact Structure1G -> Structure2 -> DGN floor-command provenance. The
+ * descriptor fields retain raw original values only: Structure2's payload
+ * grammar, palette layout, pixel codec and animation timing remain unproved,
+ * so this receipt cannot authorize a draw. */
+typedef struct {
+    int command_index;
+    uint16_t image_id;
+    uint16_t encoding;
+    uint16_t palette_id;
+    uint16_t width;
+    uint16_t height;
+    uint32_t image_relative_offset;
+    uint32_t palette_relative_offset;
+    int structure2_source_envelope_valid;
+    int payload_decoder_proven;
+    int draw_authorized;
+} Nexus_V1_DgnStructure2FloorCommandSource;
+
+typedef struct {
+    int animated_floor_command_count;
+    int source_command_count;
+    int blocked_invalid_command_count;
+    int blocked_missing_descriptor_count;
+    int blocked_source_envelope_count;
+    int complete;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2FloorCommandSourceReceipt;
+
 /* ITEM.IBS is the documented Structure1Fa item-descriptor source.  The
  * regular 16x16 4bpp images are independently bounded; special floor-image
  * records remain excluded until their Saturn pixel encoding is proven. */
@@ -1526,6 +1554,13 @@ int nexus_v1_level_build_dgn_view_render_plan(
     Nexus_V1_DgnRenderCommand *commands,
     int max_commands,
     Nexus_V1_DgnRenderPlanReceipt *out_receipt);
+/* Binds a declared animated floor's verified local Structure2 descriptor to
+ * the exact DGN floor command. It emits raw descriptor provenance only and
+ * remains fail-closed until an original Saturn payload/VDP1 decoder exists. */
+int nexus_v1_dgn_bind_structure2_animated_floor_sources(
+    const Nexus_V1_Level *level, const Nexus_V1_DgnRenderCommand *commands,
+    int command_count, Nexus_V1_DgnStructure2FloorCommandSource *out_sources,
+    int max_sources, Nexus_V1_DgnStructure2FloorCommandSourceReceipt *out_receipt);
 /* Parses only the documented ITEM.IBS regular-icon lane. `source_hash_verified`
  * must come from the caller's canonical Saturn asset receipt; an unverified
  * blob is never promotable to a material source. */
