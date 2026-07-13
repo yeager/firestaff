@@ -66,6 +66,7 @@ static int csb_v1_runtime_write_csbwin_global_variables(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate);
+static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -14740,7 +14741,11 @@ static int csb_v1_runtime_build_csbwin_core_summary(
         if (profile->csbwin_appended_tail_preserved_size >
                 CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
             profile->csbwin_appended_tail_size !=
-                profile->csbwin_appended_tail_preserved_size) {
+                profile->csbwin_appended_tail_preserved_size ||
+            profile->csbwin_appended_tail_fnv1a !=
+                csb_v1_runtime_fnv1a32(
+                    profile->csbwin_appended_tail,
+                    profile->csbwin_appended_tail_preserved_size)) {
             return -1;
         }
         summary->appended_offset = 0u;
