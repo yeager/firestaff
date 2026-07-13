@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 runtime corpus receipt consumption: the selected per-file
+  corpus row now supplies runtime path, type, size, and hash. Original
+  envelope/raw rows return an explicit fail-closed rejection.
+
 - 2026-07-13 DM2 per-file original-save corpus receipts: bounded corpus rows
   retain parsed candidate type, path, payload size, and payload hash. Original
   envelope/raw rows are explicitly rejected for runtime import.
