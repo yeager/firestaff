@@ -219,6 +219,8 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
            handoff->stage3_user_data_offset %
                    THERON_TRACK02_RAW_SECTOR_BYTES ==
                THERON_TRACK02_RAW_USER_DATA_OFFSET &&
+           handoff->stage3_user_data_bytes ==
+               THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES &&
            handoff->handler_address != 0u &&
            handoff->cd_state_address != 0u &&
            handoff->cd_state_branch_address != 0u && handoff->branch.valid;

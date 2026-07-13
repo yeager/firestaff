@@ -68,6 +68,8 @@ typedef struct {
      * coordinate facts from the authenticated corpus, not content layout. */
     size_t stage3_raw_sector;
     size_t stage3_user_data_offset;
+    /* Exact byte span transferred by the verified Stage 2 CD_READ. */
+    size_t stage3_user_data_bytes;
     uint16_t handler_address;
     uint16_t cd_state_address;
     uint16_t cd_state_branch_address;
