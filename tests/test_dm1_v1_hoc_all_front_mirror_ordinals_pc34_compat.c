@@ -795,6 +795,86 @@ int main(int argc, char** argv)
         M11_GameView_Shutdown(&leaderGame);
     }
 
+    /* CHAMPION.C F0319:1662-1681 selects the first living G0305 entry when
+     * no usable leader remains. Exercise that rule through a real-PC34 C127
+     * materialization and C160 confirmation: a missing leader must become
+     * slot 0 without changing the two existing portraits or tail append. */
+    if (firstOrdinal >= 0) {
+        M12_StartupMenuState missingLeaderMenu;
+        M11_GameViewState missingLeaderGame;
+        unsigned char firstPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        unsigned char secondPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        char firstName[16];
+        char secondName[16];
+        char sourceName[16];
+        int existingA = (firstOrdinal + 1) % 24;
+        int existingB = (firstOrdinal + 2) % 24;
+        int candidateIndex;
+
+        firstName[0] = '\0';
+        secondName[0] = '\0';
+        sourceName[0] = '\0';
+        if (!open_game(dataDir, &missingLeaderMenu, &missingLeaderGame)) {
+            fprintf(stderr, "FAIL could not open missing-leader C127 game\n");
+            ok = 0;
+        } else if (!M11_GameView_RecruitChampionByMirrorOrdinal(
+                       &missingLeaderGame, existingA) ||
+                   !M11_GameView_RecruitChampionByMirrorOrdinal(
+                       &missingLeaderGame, existingB) ||
+                   missingLeaderGame.world.party.championCount != 2) {
+            fprintf(stderr, "FAIL HoC missing-leader source party setup\n");
+            ok = 0;
+        } else {
+            missingLeaderGame.world.party.activeChampionIndex = -1;
+            missingLeaderGame.world.party.mapIndex = 0;
+            missingLeaderGame.world.party.mapX = firstPartyX;
+            missingLeaderGame.world.party.mapY = firstPartyY;
+            missingLeaderGame.world.party.direction = firstDirection;
+            F0628_CHAMPION_UnpackName_Compat(
+                &missingLeaderGame.world.party.champions[0], firstName,
+                sizeof(firstName));
+            F0628_CHAMPION_UnpackName_Compat(
+                &missingLeaderGame.world.party.champions[1], secondName,
+                sizeof(secondName));
+            memcpy(firstPortrait,
+                   missingLeaderGame.world.party.champions[0].portraitBitmap,
+                   sizeof(firstPortrait));
+            memcpy(secondPortrait,
+                   missingLeaderGame.world.party.champions[1].portraitBitmap,
+                   sizeof(secondPortrait));
+            if (!M11_GameView_GetMirrorNameByOrdinal(&missingLeaderGame,
+                                                      firstOrdinal, sourceName,
+                                                      (int)sizeof(sourceName)) ||
+                !M11_GameView_SelectFrontMirrorCandidate(&missingLeaderGame)) {
+                fprintf(stderr, "FAIL HoC missing-leader C127 selection\n");
+                ok = 0;
+            } else {
+                candidateIndex = missingLeaderGame.candidateMirrorPartyIndex;
+                if (candidateIndex != 2 ||
+                    missingLeaderGame.world.party.activeChampionIndex != 0 ||
+                    !M11_GameView_ConfirmMirrorCandidate(&missingLeaderGame, 0) ||
+                    missingLeaderGame.world.party.championCount != 3 ||
+                    missingLeaderGame.world.party.activeChampionIndex != 0 ||
+                    !champion_name_matches(
+                        &missingLeaderGame.world.party.champions[0], firstName) ||
+                    !champion_name_matches(
+                        &missingLeaderGame.world.party.champions[1], secondName) ||
+                    !champion_name_matches(
+                        &missingLeaderGame.world.party.champions[candidateIndex],
+                        sourceName) ||
+                    memcmp(missingLeaderGame.world.party.champions[0].portraitBitmap,
+                           firstPortrait, sizeof(firstPortrait)) != 0 ||
+                    memcmp(missingLeaderGame.world.party.champions[1].portraitBitmap,
+                           secondPortrait, sizeof(secondPortrait)) != 0) {
+                    fprintf(stderr,
+                            "FAIL HoC missing-leader C127/C160 party ordering\n");
+                    ok = 0;
+                }
+            }
+        }
+        M11_GameView_Shutdown(&missingLeaderGame);
+    }
+
     /* REVIVE.C F0282:744-783 clears the appended candidate without needing
      * to re-read C127. Model the source-compatible edge where the source
      * sensor becomes disabled after F0281 has blanked the candidate name:
