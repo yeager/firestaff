@@ -10942,8 +10942,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
              * projectile slot or owner and has no projectile generation or
              * impact-tick field, so pool reuse cannot revive this receipt.
              * MENU.C F0407/F0330 retain this champion index while party cells
-             * move, so a party-position swap cannot remap it. Imported B/C
-             * padding is deliberately not interpreted. */
+             * move, so a party-position swap cannot remap it. A cleared
+             * Party slot fails the live owner gate rather than rolling C11
+             * onto later slot contents. Imported B/C padding is deliberately
+             * not interpreted. */
             if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
                 ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&

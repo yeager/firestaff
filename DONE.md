@@ -1976,6 +1976,10 @@
   with champion one after F0407/F0330 scheduling: due C11 still enables
   champion zero and C04 still plays, because original ownership is the stable
   champion index rather than a movable party position.
+  Finally, the real `F0643_PARTY_ClearChampionSlot_Compat` rollback between
+  queueing and due tick clears the champion's presence/count/active slot;
+  C11 is then consumed without enabling a removed champion while C04 remains
+  a valid location/sound event.
 
 - 2026-07-13 DM1 PC34 Open Door C11 receipt regression: the F0412 Open Door
   runtime gate now requires both independently owned queue receipts: F0327's
