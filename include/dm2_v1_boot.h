@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include <stddef.h>
 
@@ -114,6 +115,13 @@ typedef struct {
     void   *dungeon_data;      /* DM2_V1_DungeonData* — parsed dungeon */
     void   *graphics_dat;      /* graphics data handle */
 } DM2_V1_BootProfile;
+
+/* Returns only the verified source material and source draw semantics for
+ * skproject's save/load dialogue. The host must expand RECT_453 before it
+ * can render the plan. */
+int dm2_v1_boot_dialogue_box_draw_plan(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueBoxDrawPlan *out);
 
 typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_OK = 0,

@@ -24,6 +24,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_shop.h"
@@ -115,6 +116,19 @@ typedef struct {
     int ccm_program_count;
     int ccm_program_field;
 } DM2_V1_BootGraphicsDat;
+
+int dm2_v1_boot_dialogue_box_draw_plan(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueBoxDrawPlan *out)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dialogue_box_draw_plan(&gfx->loader, out);
+}
 
 static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     DM2_V1_BootProfile *profile,

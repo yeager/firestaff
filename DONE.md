@@ -26,6 +26,14 @@
   F0802 re-exports the same C29-C41 union. Sources: `TIMELINE.C F0261`
   lines 1858-1863 and `GROUP.C F0209`. Verification: Ninja and CTest-passed
   `dm1_v1_original_save_pc34_handoff`.
+- 2026-07-13 DM2 save/load dialogue runtime binding: the exact skproject
+  `DM2_dialog_2066_3820` panel now carries its `DIALOG_BOXES/0x81/0` material,
+  local palette, expanded `RECT_453`, yellow text offset, and optional orange
+  highlight-clear semantics into the live DM2 runtime receipt. It explicitly
+  remains non-drawn until the M11 save/load-dialogue owner expands the source
+  rectangle table; no coordinates, panel pixels, or substitute UI were
+  invented. Verification: Ninja and CTest-passed
+  `dm2_v1_dialogue_gdat_receipt`.
 - 2026-07-13 DM2 save/load dialogue GDAT receipt: the source-owned panel from
   skproject `uidialog.cpp::DM2_dialog_2066_3820` / `sktext.cpp::DIALOG_2066_3820`
   now validates the exact `DIALOG_BOXES/0x81/dtImage/0` 4bpp IMG3 record and

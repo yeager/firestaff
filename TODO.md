@@ -1147,10 +1147,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     receipt with the original decoded GDAT pixels and rectangle table, not a
     generated overlay or substitute placement.
   - 2026-07-13 update: the exact skproject save/load dialogue panel now has a
-    separate `DIALOG_BOXES/0x81/dtImage/0` IMG3/local-palette receipt. It
-    remains deliberately non-rendering until original rectangle-453 and text
-    layout consumption are wired; do not reuse map `GRAPHICSSET` dialogue
-    material or generate a replacement panel.
+    separate `DIALOG_BOXES/0x81/dtImage/0` IMG3/local-palette receipt and its
+    `RECT_453`/yellow-text/optional-orange-clear draw plan are now bound to
+    the live runtime. It remains deliberately non-drawn until M11 expands the
+    original rectangle table and opens a real save/load dialogue; do not reuse
+    map `GRAPHICSSET` dialogue material or generate a replacement panel.
   - 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
 - 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
