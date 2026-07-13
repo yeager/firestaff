@@ -620,6 +620,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1f_spatial.structure1a_bound_entry_count == 8 &&
           handoff.structure1f_family_count[NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS] == 4,
           "Structure1F typed records are consumed by the no-fallback host handoff");
+    CHECK(handoff.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
+          handoff.blocks_real_dgn_mesh_render && !handoff.fallback_visuals_permitted,
+          "unresolved Structure1A-bound Structure1F records block host rendering");
     structure1[structure1b_rel + NEXUS_DGN_STRUCTURE1B_BYTES + 312 + 16] = 0x13U;
     CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
           !layout.structure1f.valid,
@@ -665,7 +669,8 @@ static void test_visible_structure1f_semantics_block_render_plan(void) {
               &level, 3, 4, 0, commands,
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
           "visible Structure1F render plan evaluates");
-    CHECK(receipt.structure1f_plan_floor_decoration_entry_count == 1 &&
+    CHECK(receipt.structure1f_plan_direct_entry_count == 0 &&
+          receipt.command_count == 0 &&
           receipt.status ==
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
           receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&
@@ -687,8 +692,8 @@ static void test_visible_structure1f_semantics_block_render_plan(void) {
               &level, 3, 4, 0, commands,
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &receipt) == 0,
           "visible Structure1F item render plan evaluates");
-    CHECK(receipt.structure1f_plan_item_entry_count == 1 &&
-          receipt.structure1f_plan_floor_decoration_entry_count == 0 &&
+    CHECK(receipt.structure1f_plan_direct_entry_count == 0 &&
+          receipt.command_count == 0 &&
           receipt.status ==
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1F_SEMANTICS &&
           receipt.blocks_real_dgn_mesh_render && !receipt.plan_ready &&

@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 2026-07-13 Nexus Structure1F runtime follow-up: any typed alcove or
+  wall-family record that remains bound only through Structure1A now blocks
+  host handoff and the DGN render plan with the no-fallback
+  `blocked-structure1f-semantics` result. This preserves the unresolved
+  source relation without guessing an object, trigger, draw, pixel, palette,
+  or animation route.
+
 ## M12 Localization Completion (2026-07-12)
 
 The launcher now resolves all 20 shipped locales from `LC_ALL`, `LC_MESSAGES`,
