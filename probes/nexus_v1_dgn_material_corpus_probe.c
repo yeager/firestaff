@@ -184,7 +184,8 @@ int main(int argc, char **argv) {
            "zero-blocks=%d nonzero-blocks=%d runs=%d longest-run=%d "
            "complete-model-relations=%d ordinal-block-disproven=%d "
            "ordinal-byte-run-disproven=%d "
-           "ordinal-run-disproven=%d\n",
+           "ordinal-run-disproven=%d ordinal-zero=%d/%d/%d "
+           "ordinal-one=%d/%d/%d\n",
            receipt.structure3_payload_declared_level_count,
            receipt.structure3_payload_valid_level_count,
            receipt.structure3_payload_byte_count,
@@ -199,7 +200,13 @@ int main(int argc, char **argv) {
            receipt.structure3_model_reference_complete_level_count,
            receipt.structure3_direct_block_ordinal_mapping_disproven_level_count,
            receipt.structure3_direct_byte_run_ordinal_mapping_disproven_level_count,
-           receipt.structure3_direct_run_ordinal_mapping_disproven_level_count);
+           receipt.structure3_direct_run_ordinal_mapping_disproven_level_count,
+           receipt.structure3_zero_based_block_ordinal_mapping_disproven_level_count,
+           receipt.structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count,
+           receipt.structure3_zero_based_run_ordinal_mapping_disproven_level_count,
+           receipt.structure3_one_based_block_ordinal_mapping_disproven_level_count,
+           receipt.structure3_one_based_byte_run_ordinal_mapping_disproven_level_count,
+           receipt.structure3_one_based_run_ordinal_mapping_disproven_level_count);
     for (int level = 0; level < 16; ++level) {
         const Nexus_V1_DgnStructure3PayloadReceipt *payload =
             &receipt.structure3_payloads[level];

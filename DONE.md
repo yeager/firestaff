@@ -15,6 +15,15 @@
   1975-1984. Verification: Ninja and CTest
   `csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-13 Nexus Structure3 ordinal-domain receipt: the corpus receipt now
+  distinguishes an impossible zero-based ordinal from an impossible one-based
+  ordinal for Structure1A model indexes against raw Structure3 byte-, block-,
+  and block-run counts. The combined direct-ordinal exclusion requires both;
+  neither partial result supplies a model, record, face, vertex, mesh, texture,
+  palette, or pixel mapping. Rendering remains fail-closed at face semantics.
+  Verification: Ninja and CTest `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
+
 - 2026-07-13 DM1 original PC34 C78 Fire Shield roundtrip: typed handoff
   accepts zero Priority and positive signed `B.Defense`, subtracts it from
   both fire-shield mirrors at runtime, and exports no invented C union.

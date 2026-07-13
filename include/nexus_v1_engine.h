@@ -219,6 +219,12 @@ typedef struct {
     int structure3_nonzero_block_run_count;
     int structure3_longest_nonzero_block_run;
     int structure3_model_reference_complete_level_count;
+    int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
+    int structure3_one_based_block_ordinal_mapping_disproven_level_count;
+    int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
+    int structure3_one_based_byte_run_ordinal_mapping_disproven_level_count;
+    int structure3_zero_based_run_ordinal_mapping_disproven_level_count;
+    int structure3_one_based_run_ordinal_mapping_disproven_level_count;
     int structure3_direct_block_ordinal_mapping_disproven_level_count;
     int structure3_direct_byte_run_ordinal_mapping_disproven_level_count;
     int structure3_direct_run_ordinal_mapping_disproven_level_count;

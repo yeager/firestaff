@@ -273,9 +273,9 @@ typedef struct {
 } Nexus_V1_DgnStructure3PayloadReceipt;
 
 /* Correlates only documented Structure1A model-index bytes with documented
- * Structure3 byte/block-run counts. A value larger than a count rules out a
- * direct zero- or one-based ordinal mapping; it does not establish any other
- * mapping or decode a record, face, vertex, mesh, texture, or pixel. */
+ * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
+ * separately; neither result establishes any other mapping or decodes a
+ * record, face, vertex, mesh, texture, or pixel. */
 typedef struct {
     int structure1a_relation_complete;
     int structure3_payload_valid;
@@ -287,6 +287,12 @@ typedef struct {
     int model_index_exceeds_block_count;
     int model_index_exceeds_nonzero_byte_run_count;
     int model_index_exceeds_nonzero_block_run_count;
+    int zero_based_block_ordinal_mapping_disproven;
+    int one_based_block_ordinal_mapping_disproven;
+    int zero_based_byte_run_ordinal_mapping_disproven;
+    int one_based_byte_run_ordinal_mapping_disproven;
+    int zero_based_run_ordinal_mapping_disproven;
+    int one_based_run_ordinal_mapping_disproven;
     int direct_block_ordinal_mapping_disproven;
     int direct_byte_run_ordinal_mapping_disproven;
     int direct_run_ordinal_mapping_disproven;

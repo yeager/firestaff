@@ -1667,16 +1667,39 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
         if (model_index > receipt.structure3_nonzero_block_run_count) {
             ++receipt.model_index_exceeds_nonzero_block_run_count;
         }
+        if (model_index >= receipt.structure3_block_count) {
+            receipt.zero_based_block_ordinal_mapping_disproven = 1;
+        }
+        if (model_index == 0 || model_index > receipt.structure3_block_count) {
+            receipt.one_based_block_ordinal_mapping_disproven = 1;
+        }
+        if (model_index >= receipt.structure3_nonzero_byte_run_count) {
+            receipt.zero_based_byte_run_ordinal_mapping_disproven = 1;
+        }
+        if (model_index == 0 ||
+            model_index > receipt.structure3_nonzero_byte_run_count) {
+            receipt.one_based_byte_run_ordinal_mapping_disproven = 1;
+        }
+        if (model_index >= receipt.structure3_nonzero_block_run_count) {
+            receipt.zero_based_run_ordinal_mapping_disproven = 1;
+        }
+        if (model_index == 0 ||
+            model_index > receipt.structure3_nonzero_block_run_count) {
+            receipt.one_based_run_ordinal_mapping_disproven = 1;
+        }
     }
     receipt.direct_block_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
-        receipt.model_index_exceeds_block_count > 0;
+        receipt.zero_based_block_ordinal_mapping_disproven &&
+        receipt.one_based_block_ordinal_mapping_disproven;
     receipt.direct_byte_run_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
-        receipt.model_index_exceeds_nonzero_byte_run_count > 0;
+        receipt.zero_based_byte_run_ordinal_mapping_disproven &&
+        receipt.one_based_byte_run_ordinal_mapping_disproven;
     receipt.direct_run_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
-        receipt.model_index_exceeds_nonzero_block_run_count > 0;
+        receipt.zero_based_run_ordinal_mapping_disproven &&
+        receipt.one_based_run_ordinal_mapping_disproven;
     receipt.valid = receipt.structure1a_relation_complete &&
         receipt.structure3_payload_valid;
     *out_receipt = receipt;
