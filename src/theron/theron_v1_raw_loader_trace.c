@@ -185,8 +185,12 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     out->valid = 1;
     out->variant = live_trace.variant;
     out->dynamic_cd_read_record = live_trace.stage3_track02_record;
+    out->dynamic_cd_read_record_cl = live_trace.cd_read_record_cl;
+    out->dynamic_cd_read_record_dl = live_trace.cd_read_record_dl;
+    out->dynamic_cd_read_record_ch = live_trace.cd_read_record_ch;
     out->dynamic_cd_read_destination = 0x3800u;
     out->dynamic_cd_read_verified = 1;
+    out->dynamic_cd_read_registers_verified = 1;
     out->palette_store_observed_after_dynamic_read = 1;
     /* The current emulator receipt has no source-byte provenance. */
     out->palette_descriptor_relation_verified = 0;
@@ -241,9 +245,14 @@ int theron_v1_raw_loader_trace_bind_track02_destination_span(
     if (out) memset(out, 0, sizeof(*out));
     if (!trace || !track02_data || !track02_md5 || !out || !trace->valid ||
         !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_registers_verified ||
         !trace->dynamic_cd_read_destination_span_verified ||
         !trace->dynamic_cd_read_destination_span_bytes ||
         !trace->dynamic_cd_read_destination_span_checksum ||
+        trace->dynamic_cd_read_record !=
+            ((uint32_t)trace->dynamic_cd_read_record_cl |
+             ((uint32_t)trace->dynamic_cd_read_record_dl << 8) |
+             ((uint32_t)trace->dynamic_cd_read_record_ch << 16)) ||
         strcmp(trace->track02_md5, track02_md5) != 0) {
         return 0;
     }
@@ -280,6 +289,7 @@ int theron_v1_raw_loader_trace_final_bind(
     if (out) memset(out, 0, sizeof(*out));
     if (!trace || !media || !out || !trace->valid ||
         !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_registers_verified ||
         !trace->dynamic_cd_read_destination_span_verified ||
         !trace->dynamic_cd_read_media_span_verified ||
         trace->dynamic_cd_read_destination_span_bytes != 32u ||

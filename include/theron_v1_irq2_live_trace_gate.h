@@ -24,6 +24,11 @@ typedef struct {
     Theron_V1Irq2TraceSource source;
     Theron_Track02Variant variant;
     uint32_t stage3_track02_record;
+    /* Original CL/DL/CH values observed immediately before the $4090 System
+     * Card call.  They must reconstruct stage3_track02_record exactly. */
+    uint8_t cd_read_record_cl;
+    uint8_t cd_read_record_dl;
+    uint8_t cd_read_record_ch;
     uint16_t cd_read_return_pc;
     uint16_t irq2_entry_pc;
     uint16_t cd_state_pc;

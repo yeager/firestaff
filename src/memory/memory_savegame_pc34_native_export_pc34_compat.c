@@ -66,6 +66,7 @@
 #include <string.h>
 
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "memory_door_action_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"  /* F0770_SAVEGAME_CRC32_Compat */
@@ -1510,6 +1511,35 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             if (src->kind != TIMELINE_EVENT_DOOR_DESTRUCTION || src->aux0 != DM1_EVENT_DOOR_DESTRUCTION || src->aux2 != DM1_EVENT_DOOR_DESTRUCTION || src->aux1 != 0 || src->aux3 != 0 || src->cell != 0 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
             dst[6] = (uint8_t)src->mapX;
             dst[7] = (uint8_t)src->mapY;
+        } else if (type == DM1_EVENT_DOOR_ANIMATION) {
+            const struct DungeonMapTiles_Compat* tiles;
+            unsigned char square;
+            /* ReDMCSB TIMELINE.C F0244:894-913 changes C10 into C01 only
+             * after resolving C.A.Effect to SET/CLEAR. F0241:749-816 reads
+             * B.Location and C.A.Effect, never C.A.Cell. Keep C01 source
+             * locked: no generic host event or invented cell may escape in
+             * an original PC34 EVENT record. */
+            if (src->kind != TIMELINE_EVENT_DOOR_ANIMATE ||
+                src->aux0 != DM1_EVENT_DOOR_ANIMATION ||
+                src->aux1 < DOOR_EFFECT_SET || src->aux1 > DOOR_EFFECT_CLEAR ||
+                src->aux2 != DM1_EVENT_DOOR_ANIMATION || src->aux3 != 0 ||
+                src->cell != 0 || !dungeon || !dungeon->maps || !dungeon->tiles ||
+                !dungeon->tilesLoaded || src->mapIndex < 0 ||
+                src->mapIndex >= (int)dungeon->header.mapCount ||
+                src->mapX < 0 || src->mapY < 0 ||
+                src->mapX >= (int)dungeon->maps[src->mapIndex].width ||
+                src->mapY >= (int)dungeon->maps[src->mapIndex].height) {
+                return 0;
+            }
+            tiles = &dungeon->tiles[src->mapIndex];
+            if (!tiles->squareData) return 0;
+            square = tiles->squareData[(size_t)src->mapX *
+                                       (size_t)dungeon->maps[src->mapIndex].height +
+                                       (size_t)src->mapY];
+            if ((square >> 5) != DUNGEON_ELEMENT_DOOR) return 0;
+            dst[6] = (uint8_t)src->mapX;
+            dst[7] = (uint8_t)src->mapY;
+            dst[9] = (uint8_t)src->aux1;
         } else if (type == DM1_EVENT_FAKEWALL) {
             if (src->kind != TIMELINE_EVENT_SQUARE_STATE || src->aux0 != DM1_EVENT_FAKEWALL || src->aux2 != DM1_EVENT_FAKEWALL || src->aux3 != 0 || src->cell != 0 || src->aux1 < 0 || src->aux1 > 2 || !dungeon || !dungeon->maps || src->mapIndex < 0 || src->mapIndex >= (int)dungeon->header.mapCount || src->mapX < 0 || src->mapY < 0 || src->mapX >= (int)dungeon->maps[src->mapIndex].width || src->mapY >= (int)dungeon->maps[src->mapIndex].height) return 0;
             dst[6] = (uint8_t)src->mapX; dst[7] = (uint8_t)src->mapY; dst[9] = (uint8_t)src->aux1;

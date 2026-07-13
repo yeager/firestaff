@@ -2,6 +2,7 @@
 #include "dm1_v1_resurrection_pc34_compat.h"
 
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
@@ -3689,6 +3690,184 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
           "out-of-range real tail map span preserves F0434 size failure");
 }
 
+static int load_local_dm1_dungeon_for_door_event(
+    struct DungeonDatState_Compat *dungeon,
+    struct DungeonThings_Compat *things)
+{
+    const char *root = getenv("FIRESTAFF_DM1_DATA");
+    const char *home;
+    char path[1024];
+
+    if (!dungeon || !things) return 0;
+    if (!root || root[0] == '\0') {
+        home = getenv("HOME");
+        if (!home || home[0] == '\0') return 0;
+        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
+    } else {
+        snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
+    }
+    return F0500_DUNGEON_LoadDatHeader_Compat(path, dungeon) &&
+           F0502_DUNGEON_LoadTileData_Compat(path, dungeon) &&
+           F0504_DUNGEON_LoadThingData_Compat(path, dungeon, things);
+}
+
+static int find_real_dm1_door(const struct DungeonDatState_Compat *dungeon,
+                              int *out_map_index,
+                              int *out_map_x,
+                              int *out_map_y,
+                              unsigned char *out_square)
+{
+    int map_index;
+
+    if (!dungeon || !dungeon->maps || !dungeon->tiles ||
+        !dungeon->tilesLoaded) return 0;
+    for (map_index = 0; map_index < (int)dungeon->header.mapCount; ++map_index) {
+        const struct DungeonMapDesc_Compat *map = &dungeon->maps[map_index];
+        const struct DungeonMapTiles_Compat *tiles = &dungeon->tiles[map_index];
+        int x;
+
+        if (!tiles->squareData) continue;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                unsigned char square = tiles->squareData[(size_t)x *
+                                                         (size_t)map->height +
+                                                         (size_t)y];
+                if ((square >> 5) == DUNGEON_ELEMENT_DOOR) {
+                    if (out_map_index) *out_map_index = map_index;
+                    if (out_map_x) *out_map_x = x;
+                    if (out_map_y) *out_map_y = y;
+                    if (out_square) *out_square = square;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static void test_real_dm1_door_animation_save_handoff(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char reexported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct TimelineEvent_Compat event;
+    DM1OriginalSavePC34HandoffReport report;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    int map_index;
+    int map_x;
+    int map_y;
+    int door_event_index = -1;
+    int written = 0;
+    int reexported_written = 0;
+    int effect;
+    int rc;
+    int i;
+    unsigned char square;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    if (!load_local_dm1_dungeon_for_door_event(&dungeon, &things)) {
+        puts("SKIP real DM1 C01 save handoff (no local DUNGEON.DAT)");
+        return;
+    }
+    CHECK(find_real_dm1_door(&dungeon, &map_index, &map_x, &map_y, &square),
+          "real PC34 DUNGEON.DAT contains a C01 door target");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&event, 0, sizeof(event));
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+    start_world.party.mapIndex = map_index;
+    start_world.party.mapX = map_x;
+    start_world.party.mapY = map_y;
+    start_world.gameTick = 400u;
+    CHECK(F0720_TIMELINE_Init_Compat(&start_world.timeline, start_world.gameTick),
+          "real C01 source timeline initializes");
+
+    /* ReDMCSB TIMELINE.C F0244 converts a C10 door event to C01 only after
+     * resolving its effect. Choose the source-owned direction that advances
+     * this real door one state without creating a host-only event. */
+    effect = (square & 0x07u) == 4u ? DOOR_EFFECT_SET : DOOR_EFFECT_CLEAR;
+    event.kind = TIMELINE_EVENT_DOOR_ANIMATE;
+    event.fireAtTick = start_world.gameTick + 1u;
+    event.mapIndex = map_index;
+    event.mapX = map_x;
+    event.mapY = map_y;
+    event.aux0 = DM1_EVENT_DOOR_ANIMATION;
+    event.aux1 = effect;
+    event.aux2 = DM1_EVENT_DOOR_ANIMATION;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&start_world.timeline, &event),
+          "real C01 source event schedules");
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &start_world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
+          "F0433 exports the real C01 door event");
+
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "real C01 save candidate writes");
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0435 materializes C01 only against the real door square");
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat *candidate =
+            &loaded_world.timeline.events[i];
+        if (candidate->kind == TIMELINE_EVENT_DOOR_ANIMATE) {
+            door_event_index = i;
+            break;
+        }
+    }
+    CHECK(door_event_index >= 0,
+          "real C01 survives F0435 as a live door-animation event");
+    event = loaded_world.timeline.events[door_event_index];
+    CHECK(event.mapIndex == map_index && event.mapX == map_x &&
+              event.mapY == map_y && event.cell == 0 &&
+              event.aux0 == DM1_EVENT_DOOR_ANIMATION &&
+              event.aux1 == effect && event.aux2 == DM1_EVENT_DOOR_ANIMATION,
+          "C01 materializer preserves only ReDMCSB Location and Effect");
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, reexported, (int)sizeof(reexported),
+        &reexported_written);
+    CHECK(rc == SAVEGAME_PC34_OK && reexported_written > 0,
+          "F0433 reexports the materialized real C01 event");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        reexported, (size_t)reexported_written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "reexported real C01 remains F0435-readable");
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_DOOR_ANIMATION) {
+            door_event_index = i;
+            break;
+        }
+    }
+    CHECK(door_event_index >= 0 &&
+              report.events[door_event_index].b_mapX == map_x &&
+              report.events[door_event_index].b_mapY == map_y &&
+              report.events[door_event_index].c_cell == 0 &&
+              report.events[door_event_index].c_effect == effect,
+          "real C01 F0433/F0435 roundtrip writes no Cell fallback bytes");
+
+    F0883_WORLD_Free_Compat(&loaded_world);
+    F0504_DUNGEON_FreeThingData_Compat(&things);
+    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+}
+
 static void test_public_fixture_builder_roundtrips_pc34_handoff(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -4935,6 +5114,7 @@ int main(void)
     test_original_c70_light_import_runtime_export_roundtrip();
     test_original_c65_generator_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();
+    test_real_dm1_door_animation_save_handoff();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();
     test_original_pc34_party_info_runtime_materialization();

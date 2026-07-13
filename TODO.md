@@ -658,6 +658,11 @@ sector before final startup-media binding. This proves only the observed
 record-to-RAM transfer; it does not classify palette bytes, bitmap data,
 objects, or a later dungeon record. A fresh authentic combined capture still
 must pass this gate before any positive runtime route is accepted.
+2026-07-13 register-provenance update: a dynamic CD_READ receipt must now
+carry the observed `CL/DL/CH` bytes and reconstruct its accepted Track 02
+record exactly before raw-media binding. The existing startup bitmap receipt
+remains an independent hash-verified raw-route proof; no record is labelled
+as bitmap data until a real capture establishes that relationship.
 The explicit intake can now bind only a variant-matched authenticated receipt
 to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no
