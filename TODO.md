@@ -52,11 +52,12 @@
   blocked until its original live inventory/object route is bound. Do not coerce
   its native bytes into substitute Firestaff state.
 
-- 🔧 2026-07-13 Nexus Structure3 follow-up: the documented DGN-header block
-  envelope is now bounded, but Structure3 payload and face grammar remain
-  unparsed. Prove original face records and their attachment before any draw
-  route; do not infer positions, geometry, textures, pixels, palettes,
-  triggers, or fallback art.
+- 🔧 2026-07-13 Nexus Structure3 follow-up: bounded raw payload composition
+  and Structure1A owner/model correlation now reach the optional retail DGN
+  corpus receipt, but Structure3 payload and face grammar remain unparsed.
+  Prove original face records and their attachment before any draw route; do
+  not infer positions, geometry, textures, pixels, palettes, triggers, or
+  fallback art.
 
 ## M12 Localization Completion (2026-07-12)
 

@@ -369,6 +369,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure2_in_span_target_total = 0;
     int structure2_word_bounded_target_total = 0;
     int structure2_unaligned_target_total = 0;
+    int structure3_declared_level_count = 0;
+    int structure3_valid_level_count = 0;
+    int structure3_byte_total = 0;
+    int structure3_nonzero_byte_total = 0;
+    int structure3_transition_total = 0;
     int level;
     int checked = 0;
     if (!data_dir || !data_dir[0]) return;
@@ -490,6 +495,38 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               loaded_level.structure2_texture_count ==
                   expected_structure2_textures[level],
               "real Structure1F and optional Structure1G typed records survive level load and reach host handoff");
+        CHECK(handoff.structure3_payload.declared ==
+                  loaded_level.structure3_payload.declared &&
+              handoff.structure3_payload.valid ==
+                  loaded_level.structure3_payload.valid &&
+              handoff.structure3_payload.raw_payload_hash ==
+                  loaded_level.structure3_payload.raw_payload_hash &&
+              handoff.structure3_model_references.structure1f_bound_entry_count ==
+                  loaded_level.structure1f_entry_count -
+                      handoff.structure1f_spatial.direct_coordinate_entry_count,
+              "real Structure3 payload and owner-model provenance reach the host unchanged");
+        if (loaded_level.structure3_payload.declared) {
+            CHECK(loaded_level.structure3_payload.valid &&
+                  loaded_level.structure3_payload.zero_byte_count +
+                          loaded_level.structure3_payload.nonzero_byte_count ==
+                      loaded_level.structure3_payload.byte_size &&
+                  loaded_level.structure3_payload.distinct_byte_value_count > 0 &&
+                  loaded_level.structure3_payload.first_nonzero_byte_offset >= -1 &&
+                  loaded_level.structure3_payload.last_nonzero_byte_offset >=
+                      loaded_level.structure3_payload.first_nonzero_byte_offset &&
+                  loaded_level.structure3_payload.raw_payload_hash != 0U &&
+                  !loaded_level.structure3_payload.face_semantics_proven,
+                  "retail Structure3 spans retain raw bounded observations without face semantics");
+            ++structure3_declared_level_count;
+        }
+        if (loaded_level.structure3_payload.valid) {
+            ++structure3_valid_level_count;
+            structure3_byte_total += loaded_level.structure3_payload.byte_size;
+            structure3_nonzero_byte_total +=
+                loaded_level.structure3_payload.nonzero_byte_count;
+            structure3_transition_total +=
+                loaded_level.structure3_payload.byte_transition_count;
+        }
         CHECK(loaded_level.structure2_payload.valid &&
               loaded_level.structure2_payload.opaque_payload_zero_byte_count +
                       loaded_level.structure2_payload.opaque_payload_nonzero_byte_count ==
@@ -555,6 +592,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
           structure2_word_bounded_target_total == 2944 &&
           structure2_unaligned_target_total == 0,
           "retail Structure2 corpus retains the known 20-byte descriptor target envelope only");
+    CHECK(structure3_valid_level_count == structure3_declared_level_count &&
+          structure3_byte_total >= structure3_nonzero_byte_total &&
+          structure3_transition_total >= 0,
+          "retail Structure3 corpus retains only bounded raw payload correlations");
 }
 
 static void test_structure1c_record_table_bounds(void) {
@@ -606,6 +647,8 @@ static void test_structure1f_semantics_and_bounds(void) {
     /* DMWeb DGN container Structure3 block envelope: opaque payload only. */
     wb16(dgn + 0x1c, 20U);
     wb16(dgn + 0x1e, 1U);
+    dgn[NEXUS_DGN_BLOCK_SIZE * 20 + 1] = 0x7fU;
+    dgn[NEXUS_DGN_BLOCK_SIZE * 20 + 2] = 0x7fU;
     wb32(structure1 + 0x0c, 9U);
     for (int index = 0; index < 9; ++index) {
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
@@ -694,8 +737,15 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_payload.block_count == 1 &&
           structure3_payload.byte_offset == NEXUS_DGN_BLOCK_SIZE * 20 &&
           structure3_payload.byte_size == NEXUS_DGN_BLOCK_SIZE &&
+          structure3_payload.zero_byte_count == NEXUS_DGN_BLOCK_SIZE - 2 &&
+          structure3_payload.nonzero_byte_count == 2 &&
+          structure3_payload.distinct_byte_value_count == 2 &&
+          structure3_payload.byte_transition_count == 2 &&
+          structure3_payload.first_nonzero_byte_offset == 1 &&
+          structure3_payload.last_nonzero_byte_offset == 2 &&
+          structure3_payload.raw_payload_hash != 0U &&
           !structure3_payload.face_semantics_proven,
-          "Structure3 payload accepts only its documented bounded header envelope");
+          "Structure3 payload retains bounded raw composition without face semantics");
     level.structure1f_entries[7].structure1a_index = 9U;
     level.structure1f_entries[7].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_structure1a_relation_receipt(&level,

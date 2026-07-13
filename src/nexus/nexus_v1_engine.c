@@ -460,6 +460,24 @@ int nexus_v1_inspect_dgn_material_corpus(
         }
         free(data);
         ++receipt.parsed_level_count;
+        receipt.structure3_payloads[level_index] = level.structure3_payload;
+        (void)nexus_v1_level_structure3_model_reference_receipt(
+            &level, &receipt.structure3_model_references[level_index]);
+        if (level.structure3_payload.declared) {
+            ++receipt.structure3_payload_declared_level_count;
+        }
+        if (level.structure3_payload.valid) {
+            ++receipt.structure3_payload_valid_level_count;
+            receipt.structure3_payload_byte_count +=
+                level.structure3_payload.byte_size;
+            receipt.structure3_payload_nonzero_byte_count +=
+                level.structure3_payload.nonzero_byte_count;
+            receipt.structure3_payload_transition_count +=
+                level.structure3_payload.byte_transition_count;
+        }
+        if (receipt.structure3_model_references[level_index].complete) {
+            ++receipt.structure3_model_reference_complete_level_count;
+        }
         if (level.geometry_info.mesh_ready) ++receipt.geometry_ready_level_count;
         if (level.geometry_info.structure1f_valid) {
             ++receipt.structure1f_valid_level_count;
