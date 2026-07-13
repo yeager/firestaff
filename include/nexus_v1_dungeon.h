@@ -331,6 +331,25 @@ typedef struct {
     int payload_semantics_proven;
 } Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt;
 
+/* Wall-sensor records carry three raw destination bytes. This receipt keeps
+ * exact tuple reuse after Structure1A ownership only. The bytes are not a
+ * level, cell, orientation, trigger, teleport, route, or runtime command
+ * until original Saturn semantics establish that interpretation. */
+typedef struct {
+    int structure1a_relation_complete;
+    int wall_sensor_entry_count;
+    int resolved_destination_count;
+    int unique_destination_count;
+    int duplicate_destination_count;
+    int zero_destination_count;
+    int nonzero_destination_count;
+    uint8_t highest_destination_x;
+    uint8_t highest_destination_y;
+    uint8_t highest_destination_orientation;
+    int complete;
+    int destination_semantics_proven;
+} Nexus_V1_DgnStructure1FWallSensorDestinationReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -757,6 +776,8 @@ typedef struct {
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
+        structure1f_wall_sensor_destinations;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -855,6 +876,8 @@ typedef struct {
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt structure1f_wall_payload_selectors;
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
+        structure1f_wall_sensor_destinations;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -926,6 +949,9 @@ int nexus_v1_level_structure1f_offset_pair_receipt(
 int nexus_v1_level_structure1f_wall_payload_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_wall_sensor_destination_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);

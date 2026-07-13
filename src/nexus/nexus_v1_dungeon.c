@@ -1888,6 +1888,70 @@ int nexus_v1_level_structure1f_wall_payload_selector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1f_wall_sensor_destination_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.structure1a_relation_complete = relation.complete;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        int previous;
+        int duplicate = 0;
+
+        if (record->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS) continue;
+        ++receipt.wall_sensor_entry_count;
+        if (!record->structure1a_relation_valid) continue;
+        ++receipt.resolved_destination_count;
+        if (record->destination_x == 0U && record->destination_y == 0U &&
+            record->destination_orientation == 0U) {
+            ++receipt.zero_destination_count;
+        } else {
+            ++receipt.nonzero_destination_count;
+        }
+        if (record->destination_x > receipt.highest_destination_x)
+            receipt.highest_destination_x = record->destination_x;
+        if (record->destination_y > receipt.highest_destination_y)
+            receipt.highest_destination_y = record->destination_y;
+        if (record->destination_orientation >
+            receipt.highest_destination_orientation) {
+            receipt.highest_destination_orientation =
+                record->destination_orientation;
+        }
+        for (previous = 0; previous < entry; ++previous) {
+            const Nexus_V1_DgnStructure1FEntry *prior =
+                &level->structure1f_entries[previous];
+            if (prior->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
+                prior->structure1a_relation_valid &&
+                prior->destination_x == record->destination_x &&
+                prior->destination_y == record->destination_y &&
+                prior->destination_orientation == record->destination_orientation) {
+                duplicate = 1;
+                break;
+            }
+        }
+        if (duplicate) ++receipt.duplicate_destination_count;
+        else ++receipt.unique_destination_count;
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.resolved_destination_count == receipt.wall_sensor_entry_count;
+    receipt.destination_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt)
@@ -2154,6 +2218,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1f_offset_pairs);
     (void)nexus_v1_level_structure1f_wall_payload_selector_receipt(
         level, &out_receipt->structure1f_wall_payload_selectors);
+    (void)nexus_v1_level_structure1f_wall_sensor_destination_receipt(
+        level, &out_receipt->structure1f_wall_sensor_destinations);
     (void)nexus_v1_level_structure3_payload_receipt(
         level, &out_receipt->structure3_payload);
     out_receipt->structure1g_present = info->structure1g_present;
@@ -2620,6 +2686,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure1f_offset_pairs = handoff.structure1f_offset_pairs;
     receipt.structure1f_wall_payload_selectors =
         handoff.structure1f_wall_payload_selectors;
+    receipt.structure1f_wall_sensor_destinations =
+        handoff.structure1f_wall_sensor_destinations;
     receipt.structure3_payload = handoff.structure3_payload;
     receipt.structure1g_present = handoff.structure1g_present;
     receipt.structure1g_valid = handoff.structure1g_valid;
