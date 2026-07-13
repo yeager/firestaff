@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC disabled-peer C161 view transition: real-PC34 coverage
+  now draws the source wall, C161 rename panel, and accepted dungeon view
+  while peer B is disabled and source A is disabled before accept. C026 cannot
+  persist from the source wall into either later view, while A's captured
+  portrait still becomes the party member. Source: ReDMCSB `REVIVE.C`
+  F0280/F0281/F0282 and `DUNVIEW.C`:3913-3928. Verification: focused CTest.
+
 - 2026-07-13 DM1 HoC disabled-peer C161 accept: real-PC34 coverage now keeps
   mirror B disabled while A's C127 candidate enters C161, A's source is
   disabled before acceptance, and F0281 completes from A's captured C026

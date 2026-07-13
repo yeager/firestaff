@@ -1029,6 +1029,9 @@ int main(int argc, char** argv)
     if (firstOrdinal >= 0 && secondOrdinal >= 0) {
         M12_StartupMenuState peerMenu;
         M11_GameViewState peerGame;
+        unsigned char sourceWall[320 * 200];
+        unsigned char renamePanel[320 * 200];
+        unsigned char acceptedView[320 * 200];
         unsigned char sourcePortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
         char sourceName[16];
         int candidateIndex;
@@ -1050,6 +1053,7 @@ int main(int argc, char** argv)
                 peerGame.world.party.mapX = firstPartyX;
                 peerGame.world.party.mapY = firstPartyY;
                 peerGame.world.party.direction = firstDirection;
+                M11_GameView_Draw(&peerGame, sourceWall, 320, 200);
                 if (!M11_GameView_GetMirrorNameByOrdinal(&peerGame, firstOrdinal,
                                                           sourceName, (int)sizeof(sourceName)) ||
                     M11_GameView_GetFrontMirrorOrdinal(&peerGame) != firstOrdinal ||
@@ -1066,8 +1070,13 @@ int main(int argc, char** argv)
                         memcpy(sourcePortrait,
                                peerGame.world.party.champions[candidateIndex].portraitBitmap,
                                sizeof(sourcePortrait));
-                        if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&peerGame) ||
-                            !disable_front_mirror_sensor(&peerGame, firstOrdinal) ||
+                        if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&peerGame)) {
+                            fprintf(stderr, "FAIL HoC disabled-peer A C161 panel setup\n");
+                            ok = 0;
+                        } else {
+                            M11_GameView_Draw(&peerGame, renamePanel, 320, 200);
+                            if (portrait_cutout_matches(sourceWall, renamePanel) ||
+                                !disable_front_mirror_sensor(&peerGame, firstOrdinal) ||
                             M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1 ||
                             !M11_GameView_ApplyMirrorCandidateRenameAscii(&peerGame, 'A') ||
                             !M11_GameView_ApplyMirrorCandidateRenameAscii(&peerGame, '\r') ||
@@ -1079,18 +1088,26 @@ int main(int argc, char** argv)
                                 &peerGame.world.party.champions[candidateIndex], "A") ||
                             memcmp(peerGame.world.party.champions[candidateIndex].portraitBitmap,
                                    sourcePortrait, sizeof(sourcePortrait)) != 0) {
-                            fprintf(stderr,
-                                    "FAIL HoC disabled-peer A C161 accept material/order\n");
-                            ok = 0;
-                        } else {
-                            peerGame.world.party.mapX = secondPartyX;
-                            peerGame.world.party.mapY = secondPartyY;
-                            peerGame.world.party.direction = secondDirection;
-                            if (M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1 ||
-                                M11_GameView_SelectFrontMirrorCandidate(&peerGame) != 0) {
                                 fprintf(stderr,
-                                        "FAIL HoC disabled-peer B changed during A accept\n");
+                                        "FAIL HoC disabled-peer A C161 accept material/order\n");
                                 ok = 0;
+                            } else {
+                                M11_GameView_Draw(&peerGame, acceptedView, 320, 200);
+                                if (portrait_cutout_matches(sourceWall, acceptedView) ||
+                                    memcmp(renamePanel, acceptedView, sizeof(renamePanel)) == 0) {
+                                    fprintf(stderr,
+                                            "FAIL HoC disabled-peer C161 view transition stale\n");
+                                    ok = 0;
+                                }
+                                peerGame.world.party.mapX = secondPartyX;
+                                peerGame.world.party.mapY = secondPartyY;
+                                peerGame.world.party.direction = secondDirection;
+                                if (M11_GameView_GetFrontMirrorOrdinal(&peerGame) != -1 ||
+                                    M11_GameView_SelectFrontMirrorCandidate(&peerGame) != 0) {
+                                    fprintf(stderr,
+                                            "FAIL HoC disabled-peer B changed during A accept\n");
+                                    ok = 0;
+                                }
                             }
                         }
                     }
