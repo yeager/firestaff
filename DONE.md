@@ -14,6 +14,7 @@
   CTest `nexus_v1_dgn_geometry_readiness`,
   `nexus_v1_startup_menu_pc34_compat`.
 
+- 2026-07-13 DM1 original PC34 C7 fakewall roundtrip: typed Location/Effect receipt reaches F0242 square-state runtime and native export. Source: ReDMCSB `TIMELINE.C` F0242.
 - 2026-07-13 DM1 original PC34 C2 door-destruction handoff: typed receipt binds B.Location to F0243 and exports only validated source state. Source: ReDMCSB `TIMELINE.C` F0243:872-882.
 
 - 2026-07-13 Nexus Structure1F raw floor-sensor control-selector receipt:

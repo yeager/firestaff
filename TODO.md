@@ -142,7 +142,7 @@
   decay, C71 invisibility expiry, C72 champion-shield expiry, C73 Thieves'
   Eye expiry, C74 party-shield expiry, C75 poison expiry, C77 spell-shield
   expiry, C78 fire-shield expiry, C79 Footprints expiry, C53 Watchdog re-arm,
-  C2 door destruction, C20 delayed sound playback, C22 CPSE typed no-op handling, and C60/C61
+  C2 door destruction, C7 fakewall, C20 delayed sound playback, C22 CPSE typed no-op handling, and C60/C61
   silent/audible deferred-group moves are complete.
   The non-zero-slot
   `F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot` branch remains
