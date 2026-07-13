@@ -2537,6 +2537,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `w0` chain. Remaining work is still source-plus-corpus proof for the five
     blocked DB8/DB10 roots and separately bounded link semantics before any
     graph consumer is enabled.
+  - 2026-07-13 update: selected G1 runtime maps now receive a loader-owned
+    `c_map.cpp` admission receipt that rechecks the raw map span, source-order
+    pool gate, and direct/DB3/DB4/blocked root classes for that one map. It
+    reads no record payload or `GenericRecord::w0`; map 16 remains explicitly
+    incomplete with its three blocked roots. Remaining work is still original
+    loader/layout proof for DB8/DB10 and separately source-bounded record
+    semantics, not a guessed chain walk.
   - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
   - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
   - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
