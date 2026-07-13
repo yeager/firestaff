@@ -9,7 +9,10 @@ seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
 host_key=${THERON_CAPTURE_HOST_KEY:-}
-host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-5}
+# The authentic System Card 3.0 title needs to become interactive before RUN.
+# A real macOS capture shows that 8 seconds reaches the title, while 3 seconds
+# merely sends the key during BIOS initialization.
+host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-8}
 host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 
@@ -216,6 +219,10 @@ fi
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then
+    if [[ "$transition_sector_count" -gt 0 ]]; then
+        printf 'BLOCKED: loader reached authentic raw sectors but dynamic CPU receipts are absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s raw_sectors=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$transition_sector_count" "$status"
+        exit 1
+    fi
     if grep -Fqx 'post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00' "$trace" &&
        grep -Eq '^c860_window_pc=c8c4 .*instruction=LDA \$222D  @ \$222D = \$00( |$)' "$trace" &&
        grep -Eq '^c860_window_pc=c8c7 .*instruction=CMP #\$08' "$trace" &&

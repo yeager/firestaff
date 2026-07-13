@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron authentic BIOS-to-loader capture: a visible macOS capture
+  proves the real Super CD-ROM System Card title accepts `RUN` only after its
+  startup screen is live, then reaches Theron's genuine JVC intro. The bounded
+  instrumented US-CUE capture records 31 raw sector spans after that input.
+  The receipt now distinguishes this progressed-loader state from the prior
+  no-sector System Card wait, while correctly keeping runtime blocked until
+  its dynamic CPU/controller/palette evidence is captured. Verification:
+  macOS window capture, rebuilt instrumented Mednafen, and authentic capture.
+
 - 2026-07-13 DM1 HoC C161/C027 host-input gate: the ReDMCSB `REVIVE.C
   F0282` reincarnate route now opens and edits F0281 rename only when the
   original PC34 C027 panel and M653 interface font are present. C040 stays
