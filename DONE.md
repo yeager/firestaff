@@ -145,6 +145,14 @@
   original save. Corpus rows retain the reference counts and result. Source:
   ReDMCSB `LOADSAVE.C` F0433:1586-1589 and F0435:2781-2799. Verification:
   focused original-save handoff CTest using native F0433 output only.
+- 2026-07-13 DM1 entrance original-audio gate: F0438 opening-door commands
+  now call the M11 original-SND3-only route. It requires the decoded PC34
+  sound buffer and refuses to emit a procedural marker when it is absent;
+  the source index remains the M10-owned entrance command value. ReDMCSB:
+  `ENTRANCE.C F0438` and `SOUND.C F0061`. Verification: focused DM1 test
+   exercises both missing-source rejection and source-buffer acceptance
+   (405 checks), plus startup/palette CTests.
+
 - 2026-07-13 DM1 PC34 SWSH audio handoff: M11 now receives the original
   `SWSH.C V0901005_SoundCommands` XBIOS `Dosound()` PSG byte program at the
   source `START_SOUND` event. The audio boundary accepts only its 17 register

@@ -18,6 +18,7 @@
  */
 
 #include "asset_loader_m11.h"
+#include "audio_sdl_m11.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
@@ -713,6 +714,27 @@ static void check_startup_source_timing_contract(void) {
              0);
 }
 
+static void check_entrance_audio_no_fallback_contract(void) {
+    M11_AudioState audio;
+    float sample = 0.25f;
+
+    memset(&audio, 0, sizeof(audio));
+    audio.initialized = 1;
+    audio.lastMarker = M11_AUDIO_MARKER_DOOR;
+    expect_i("entrance refuses missing original SND3",
+             M11_Audio_EmitOriginalSoundIndexOnly(&audio, 2), 0);
+    expect_i("entrance missing SND3 does not emit marker",
+             (int)audio.lastMarker, (int)M11_AUDIO_MARKER_DOOR);
+    audio.originalSnd3Available = 1;
+    audio.originalSounds[2].samples = &sample;
+    audio.originalSounds[2].sampleCount = 1;
+    expect_i("entrance accepts original SND3 route",
+             M11_Audio_EmitOriginalSoundIndexOnly(&audio, 2), 1);
+    expect_i("entrance preserves source sound identity", audio.lastSoundIndex, 2);
+    expect_i("entrance original route clears marker fallback",
+             (int)audio.lastMarker, (int)M11_AUDIO_MARKER_NONE);
+}
+
 static void check_entrance_credits_runtime_boundary(void) {
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
 
@@ -878,6 +900,7 @@ int main(int argc, char** argv) {
     check_entrance_credits_presentation_command();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
+    check_entrance_audio_no_fallback_contract();
     check_entrance_credits_runtime_boundary();
     check_real_pc34_c001(argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_GRAPHICS_DAT"));
 
