@@ -420,6 +420,135 @@ int main(int argc, char** argv)
         }
     }
 
+    /* Run the two-cancel/reopen sequence in a fresh real-PC34 state so it
+     * cannot borrow the prior C160 test's consumed sensor. ReDMCSB REVIVE.C
+     * F0282:745-783 removes C162 candidates; F0282:785-845 then accepts the
+     * later C160 candidate in its original append slot. */
+    if (firstOrdinal < 0 || secondOrdinal < 0) {
+        fprintf(stderr, "FAIL fewer than two real HoC C127 mirrors for A/B/A sequence\n");
+        ok = 0;
+    } else {
+        M12_StartupMenuState sequenceMenu;
+        M11_GameViewState sequenceGame;
+        char firstName[16];
+        char secondName[16];
+        unsigned char firstPortrait[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
+        int firstCandidateIndex;
+        int secondCandidateIndex;
+
+        firstName[0] = '\0';
+        secondName[0] = '\0';
+        if (!open_game(dataDir, &sequenceMenu, &sequenceGame)) {
+            fprintf(stderr, "FAIL could not open fresh DM1 V1 game for A/B/A sequence\n");
+            ok = 0;
+        } else {
+            sequenceGame.world.party.mapIndex = 0;
+            sequenceGame.world.party.mapX = firstPartyX;
+            sequenceGame.world.party.mapY = firstPartyY;
+            sequenceGame.world.party.direction = firstDirection;
+            if (!M11_GameView_GetMirrorNameByOrdinal(&sequenceGame, firstOrdinal,
+                                                      firstName,
+                                                      (int)sizeof(firstName)) ||
+                !M11_GameView_GetMirrorNameByOrdinal(&sequenceGame, secondOrdinal,
+                                                      secondName,
+                                                      (int)sizeof(secondName)) ||
+                strcmp(firstName, secondName) == 0 ||
+                M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != firstOrdinal ||
+                !M11_GameView_SelectFrontMirrorCandidate(&sequenceGame) ||
+                !M11_GameView_BeginMirrorCandidateReincarnateRename(&sequenceGame)) {
+                fprintf(stderr, "FAIL HoC A candidate setup before first C162\n");
+                ok = 0;
+            } else {
+                firstCandidateIndex = sequenceGame.candidateMirrorPartyIndex;
+                if (firstCandidateIndex != 0 ||
+                    sequenceGame.world.party.champions[firstCandidateIndex].name[0] != '\0' ||
+                    !M11_GameView_CancelMirrorCandidate(&sequenceGame) ||
+                    sequenceGame.world.party.championCount != 0 ||
+                    sequenceGame.world.party.champions[firstCandidateIndex].present ||
+                    M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != firstOrdinal) {
+                    fprintf(stderr, "FAIL HoC first C162 did not restore append slot/source A\n");
+                    ok = 0;
+                } else {
+                    sequenceGame.world.party.mapX = secondPartyX;
+                    sequenceGame.world.party.mapY = secondPartyY;
+                    sequenceGame.world.party.direction = secondDirection;
+                    if (M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != secondOrdinal ||
+                        !M11_GameView_SelectFrontMirrorCandidate(&sequenceGame) ||
+                        !champion_name_matches(
+                            &sequenceGame.world.party.champions[
+                                sequenceGame.candidateMirrorPartyIndex], secondName) ||
+                        !M11_GameView_BeginMirrorCandidateReincarnateRename(&sequenceGame)) {
+                        fprintf(stderr, "FAIL HoC B candidate inherited A state\n");
+                        ok = 0;
+                    } else {
+                        secondCandidateIndex = sequenceGame.candidateMirrorPartyIndex;
+                        if (secondCandidateIndex != 0 ||
+                            sequenceGame.world.party.champions[secondCandidateIndex].name[0] != '\0' ||
+                            !M11_GameView_CancelMirrorCandidate(&sequenceGame) ||
+                            sequenceGame.world.party.championCount != 0 ||
+                            sequenceGame.world.party.champions[secondCandidateIndex].present ||
+                            M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != secondOrdinal) {
+                            fprintf(stderr, "FAIL HoC second C162 did not restore append slot/source B\n");
+                            ok = 0;
+                        } else {
+                            sequenceGame.world.party.mapX = firstPartyX;
+                            sequenceGame.world.party.mapY = firstPartyY;
+                            sequenceGame.world.party.direction = firstDirection;
+                            if (M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != firstOrdinal ||
+                                !M11_GameView_SelectFrontMirrorCandidate(&sequenceGame)) {
+                                fprintf(stderr, "FAIL HoC A did not reopen after two C162 cancels\n");
+                                ok = 0;
+                            } else {
+                                firstCandidateIndex = sequenceGame.candidateMirrorPartyIndex;
+                                if (firstCandidateIndex != 0 ||
+                                    !champion_name_matches(
+                                        &sequenceGame.world.party.champions[firstCandidateIndex],
+                                        firstName) ||
+                                    !sequenceGame.world.party.champions[firstCandidateIndex].portraitBitmapValid) {
+                                    fprintf(stderr,
+                                            "FAIL HoC reopened A did not rematerialize original candidate\n");
+                                    ok = 0;
+                                } else {
+                                    memcpy(firstPortrait,
+                                           sequenceGame.world.party.champions[firstCandidateIndex].portraitBitmap,
+                                           sizeof(firstPortrait));
+                                    if (M11_GameView_ConfirmMirrorCandidate(&sequenceGame, 0) != 1) {
+                                        fprintf(stderr, "FAIL HoC reopened A C160 confirmation\n");
+                                        ok = 0;
+                                    } else {
+                                        sequenceGame.world.party.mapX = secondPartyX;
+                                        sequenceGame.world.party.mapY = secondPartyY;
+                                        sequenceGame.world.party.direction = secondDirection;
+                                        if (sequenceGame.candidateMirrorPanelActive ||
+                                            sequenceGame.candidateMirrorOrdinal != -1 ||
+                                            sequenceGame.candidateMirrorPartyIndex != -1 ||
+                                            sequenceGame.world.party.championCount != 1 ||
+                                            sequenceGame.world.party.activeChampionIndex != 0 ||
+                                            !sequenceGame.world.party.champions[0].present ||
+                                            !champion_name_matches(
+                                                &sequenceGame.world.party.champions[0], firstName) ||
+                                            memcmp(sequenceGame.world.party.champions[0].portraitBitmap,
+                                                   firstPortrait, sizeof(firstPortrait)) != 0 ||
+                                            M11_GameView_GetFrontMirrorOrdinal(&sequenceGame) != secondOrdinal ||
+                                            strstr(sequenceGame.inspectTitle, firstName) == NULL ||
+                                            strstr(sequenceGame.inspectTitle, secondName) != NULL ||
+                                            strstr(sequenceGame.inspectDetail, firstName) == NULL ||
+                                            strstr(sequenceGame.inspectDetail, secondName) != NULL) {
+                                            fprintf(stderr,
+                                                    "FAIL HoC reopened A C160 left wrong party/source/text order\n");
+                                            ok = 0;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            M11_GameView_Shutdown(&sequenceGame);
+        }
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
