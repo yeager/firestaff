@@ -93,6 +93,10 @@ int main(int argc, char** argv)
     int firstPartyY = -1;
     int firstDirection = -1;
     int firstOrdinal = -1;
+    int secondPartyX = -1;
+    int secondPartyY = -1;
+    int secondDirection = -1;
+    int secondOrdinal = -1;
     int ok = 1;
     int x;
     int y;
@@ -168,6 +172,12 @@ int main(int argc, char** argv)
                                     firstPartyY = partyY;
                                     firstDirection = direction;
                                     firstOrdinal = expectedOrdinal;
+                                } else if (secondOrdinal < 0 &&
+                                           expectedOrdinal != firstOrdinal) {
+                                    secondPartyX = partyX;
+                                    secondPartyY = partyY;
+                                    secondDirection = direction;
+                                    secondOrdinal = expectedOrdinal;
                                 }
                             }
                         }
@@ -188,6 +198,121 @@ int main(int argc, char** argv)
         if (!seen[x]) {
             fprintf(stderr, "FAIL HoC mirror ordinal %d was not reachable\n", x);
             ok = 0;
+        }
+    }
+
+    /* REVIVE.C F0281 clears only the selected candidate's editable name.
+     * Two consecutive C162 cancels must leave both original C127/C026 routes
+     * intact, while B's candidate text/portrait is rebuilt from B rather than
+     * inheriting the temporary state from A. */
+    if (firstOrdinal < 0 || secondOrdinal < 0) {
+        fprintf(stderr, "FAIL fewer than two real HoC C127 mirrors available\n");
+        ok = 0;
+    } else {
+        unsigned char firstBefore[320 * 200];
+        unsigned char firstAfterCancel[320 * 200];
+        unsigned char secondBefore[320 * 200];
+        unsigned char secondAfterCancel[320 * 200];
+        char firstName[16];
+        char secondName[16];
+        int firstCandidateIndex;
+        int secondCandidateIndex;
+        int partyCountBefore;
+
+        firstName[0] = '\0';
+        secondName[0] = '\0';
+        game.world.party.mapIndex = 0;
+        game.world.party.mapX = firstPartyX;
+        game.world.party.mapY = firstPartyY;
+        game.world.party.direction = firstDirection;
+        game.candidateMirrorPanelActive = 0;
+        game.candidateMirrorOrdinal = -1;
+        game.candidateMirrorPartyIndex = -1;
+        M11_GameView_Draw(&game, firstBefore, 320, 200);
+        partyCountBefore = game.world.party.championCount;
+
+        if (!M11_GameView_GetMirrorNameByOrdinal(&game, firstOrdinal,
+                                                  firstName,
+                                                  (int)sizeof(firstName)) ||
+            !M11_GameView_GetMirrorNameByOrdinal(&game, secondOrdinal,
+                                                  secondName,
+                                                  (int)sizeof(secondName)) ||
+            strcmp(firstName, secondName) == 0 ||
+            !M11_GameView_SelectFrontMirrorCandidate(&game) ||
+            !M11_GameView_BeginMirrorCandidateReincarnateRename(&game)) {
+            fprintf(stderr, "FAIL HoC first C161 candidate setup\n");
+            ok = 0;
+        } else {
+            firstCandidateIndex = game.candidateMirrorPartyIndex;
+            if (firstCandidateIndex < 0 ||
+                firstCandidateIndex >= CHAMPION_MAX_PARTY ||
+                game.world.party.champions[firstCandidateIndex].name[0] != '\0' ||
+                !M11_GameView_CancelMirrorCandidate(&game)) {
+                fprintf(stderr, "FAIL HoC first C162 cancel\n");
+                ok = 0;
+            } else {
+                M11_GameView_Draw(&game, firstAfterCancel, 320, 200);
+                if (game.candidateMirrorPanelActive ||
+                    game.world.party.championCount != partyCountBefore ||
+                    game.world.party.champions[firstCandidateIndex].present ||
+                    M11_GameView_GetFrontMirrorOrdinal(&game) != firstOrdinal ||
+                    strcmp(game.inspectTitle, "CHAMPION MIRROR") != 0 ||
+                    strstr(game.inspectDetail, "SELECTION CANCELLED") == NULL ||
+                    !portrait_cutout_matches(firstBefore, firstAfterCancel)) {
+                    fprintf(stderr,
+                            "FAIL HoC first C162 left stale candidate text or portrait\n");
+                    ok = 0;
+                } else {
+                    game.world.party.mapX = secondPartyX;
+                    game.world.party.mapY = secondPartyY;
+                    game.world.party.direction = secondDirection;
+                    M11_GameView_Draw(&game, secondBefore, 320, 200);
+                    if (M11_GameView_GetFrontMirrorOrdinal(&game) != secondOrdinal ||
+                        !M11_GameView_SelectFrontMirrorCandidate(&game)) {
+                        fprintf(stderr, "FAIL HoC second C127 candidate could not open\n");
+                        ok = 0;
+                    } else {
+                        secondCandidateIndex = game.candidateMirrorPartyIndex;
+                        if (secondCandidateIndex < 0 ||
+                            secondCandidateIndex >= CHAMPION_MAX_PARTY ||
+                            !game.world.party.champions[secondCandidateIndex].present ||
+                            !game.world.party.champions[secondCandidateIndex].portraitBitmapValid ||
+                            !champion_name_matches(
+                                &game.world.party.champions[secondCandidateIndex],
+                                secondName) ||
+                            strstr(game.inspectTitle, secondName) == NULL ||
+                            strstr(game.inspectDetail, secondName) == NULL ||
+                            strstr(game.inspectTitle, firstName) != NULL ||
+                            strstr(game.inspectDetail, firstName) != NULL) {
+                            fprintf(stderr,
+                                    "FAIL HoC second candidate inherited first-mirror state\n");
+                            ok = 0;
+                        } else {
+                            if (!M11_GameView_BeginMirrorCandidateReincarnateRename(&game) ||
+                                game.world.party.champions[secondCandidateIndex].name[0] != '\0' ||
+                                !M11_GameView_CancelMirrorCandidate(&game)) {
+                                fprintf(stderr, "FAIL HoC second C161/C162 cancel\n");
+                                ok = 0;
+                            } else {
+                                M11_GameView_Draw(&game, secondAfterCancel, 320, 200);
+                                if (game.candidateMirrorPanelActive ||
+                                    game.world.party.championCount != partyCountBefore ||
+                                    game.world.party.champions[secondCandidateIndex].present ||
+                                    game.world.party.champions[secondCandidateIndex].portraitBitmapValid ||
+                                    M11_GameView_GetFrontMirrorOrdinal(&game) != secondOrdinal ||
+                                    strcmp(game.inspectTitle, "CHAMPION MIRROR") != 0 ||
+                                    strstr(game.inspectDetail, "SELECTION CANCELLED") == NULL ||
+                                    !portrait_cutout_matches(secondBefore,
+                                                              secondAfterCancel)) {
+                                    fprintf(stderr,
+                                            "FAIL HoC second C162 left stale candidate state or portrait\n");
+                                    ok = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

@@ -20,6 +20,13 @@
   row proves all five accepted source parts then a fail-closed rollback with no
   exported hash or committed C13/C24/C25 receipt. Source: ReDMCSB
   `LOADSAVE.C` F0433/F0435. Verification: focused native-PC34 handoff CTest.
+- 2026-07-13 DM1 HoC two-cancel candidate reset: a real-PC34 regression now
+  cancels a C161-renamed candidate at C127 mirror A, opens a distinct mirror
+  B, and cancels it too. Both source C026 cutouts remain stable; B's decoded
+  name/portrait cannot inherit A's temporary state; and both C162 paths clear
+  their candidate slots and C040 text. Source: ReDMCSB `REVIVE.C`
+  F0281/F0282:744-783 and `DUNVIEW.C`:3913-3928. Verification: focused CTest
+  against the installed PC34 corpus.
 
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in
