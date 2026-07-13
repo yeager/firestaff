@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron live Mednafen trace: regenerated the Mednafen 1.32.1
+  patch from the exact source context and made its authenticated debugger
+  output flush after each header, callback, target-PC snapshot, and CD-loop
+  record. Verification: the patch applies cleanly to a fresh 1.32.1 tree, the
+  macOS debugger build succeeds, and a real US 19-track CUE/System Card 3.0
+  session produces a nonempty trace while the emulator remains running.
+
 - 2026-07-13 Theron Mednafen capture toolchain: the patched Mednafen 1.32.1
   debugger build now succeeds on macOS without enabling its incompatible
   legacy `PCECD_DEBUG` printf path. The instrumented debugger hook remains
