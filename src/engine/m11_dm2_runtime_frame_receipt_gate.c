@@ -1,6 +1,7 @@
-/* skproject routes dungeon GRAPHICSSET fields and dtPalette16 under one
- * active map context. This M11 boundary rejects a stale handoff rather than
- * presenting an old source-required DM2 frame. */
+/* skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_WALL routes every visible
+ * GRAPHICSSET field and its local palette under one active map context.
+ * Runtime marks the atomic receipt invalid when that complete material pass
+ * fails; M11 must reject it before it presents any framebuffer surface. */
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 
 int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
@@ -14,7 +15,8 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         !runtime_receipt) {
         return 0;
     }
-    return runtime_receipt->valid && runtime_receipt->m11_consume_frame &&
+    return runtime_receipt->source_materials_required &&
+        runtime_receipt->valid && runtime_receipt->m11_consume_frame &&
         runtime_receipt->map_load_token ==
             boot_receipt->runtime_m11_frame_map_load_token &&
         runtime_receipt->scene_control_hash ==
