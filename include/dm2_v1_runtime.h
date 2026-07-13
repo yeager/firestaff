@@ -333,6 +333,8 @@ typedef struct {
     int restored;
     int candidate_kind;
     size_t selected_payload_size;
+    uint32_t selected_payload_hash;
+    int rejected_original_candidate;
     char selected_path[256];
 } DM2_V1_RuntimeCorpusImportReceipt;
 int dm2_v1_runtime_last_door_render_receipt(

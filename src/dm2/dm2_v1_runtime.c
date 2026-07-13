@@ -3298,11 +3298,32 @@ int dm2_v1_runtime_import_sksave_corpus(
     DM2_SKSaveCorpusReceipt corpus;
     DM2_V1_SaveCandidate candidate;
     DM2_V1_SessionState session;
+    const DM2_SKSaveCandidateReceipt *selected = NULL;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!dm2_v1_sksave_corpus_load_first_importable(save_root, payload,
             sizeof(payload), &size, &corpus)) {
         out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
+        return 0;
+    }
+    for (uint8_t i = 0u; i < corpus.candidate_receipt_count; ++i) {
+        if (strcmp(corpus.candidate_receipts[i].path,
+                   corpus.first_importable_path) == 0) {
+            selected = &corpus.candidate_receipts[i];
+            break;
+        }
+    }
+    if (!selected) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+    out->candidate_kind = selected->kind;
+    out->selected_payload_size = selected->payload_size;
+    out->selected_payload_hash = selected->payload_hash;
+    snprintf(out->selected_path, sizeof(out->selected_path), "%s", selected->path);
+    if (selected->import_rejected) {
+        out->rejected_original_candidate = 1;
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
         return 0;
     }
     if (dm2_v1_session_parse_save_candidate(&candidate, payload, size) != 0) {
@@ -3324,9 +3345,6 @@ int dm2_v1_runtime_import_sksave_corpus(
     /* The verified Firestaff session carries the persisted DM2 RNG seed.
      * Runtime weather owns the live copy; do not invent a weather transition. */
     g_dm2_runtime.weather.weather_seed = session.rng_seed;
-    out->selected_payload_size = size;
-    snprintf(out->selected_path, sizeof(out->selected_path), "%s",
-             corpus.first_importable_path);
     return 1;
 }
 
