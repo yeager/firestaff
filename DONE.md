@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-13 DM2 selected leader-hand GDAT consumption: the inventory
+  panel now consumes skproject `DRAW_ITEM_IN_HAND`'s caller-selected `dtImage`
+  through its exact local palette into an origin surface matching the decoded
+  source dimensions. Material, palette, pixels, or destination dimensions that
+  differ fail closed; it supplies neither a generic hand icon nor synthesized
+  transparency. Source: skproject `SKWIN/SkWinCore.cpp`
+  `DRAW_ITEM_IN_HAND` 15778-15812. Verification: Ninja and CTest
+  `dm2_v1_inventory_item_panel_gate` passed; `git diff --check` passed.
+
 - ✅ 2026-07-13 DM2 selected-item survey preview: the inventory panel now
   consumes skproject `DRAW_ITEM_SURVEY`'s optional selected-item
   `dtImage/0x11` only at original expanded rect `0x1EE` with transparency key
@@ -12891,6 +12900,16 @@ bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
 `F0433` export order. Verification: focused
 `test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
 explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
+# ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
+
+`dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`
+component (panel, ornament/destroyed mask, frame, and button) with its own
+decoded IMG3 local-palette receipt. A missing component blocks the full door
+pass before any door pixel can be drawn; complete passes publish required and
+consumed component masks. No synthetic door surface is used in source-required
+mode. Verification: direct `test_dm2_v1_door_material_gate` 3/3 and Ninja
+`test_dm2_v1_runtime_handoff_smoke` 161/161.
+
 # ✅ 2026-07-13 DM2 runtime GDAT floor/ceiling handoff gate
 
 `dm2_v1_runtime_render_frame()` now propagates the viewport's exact required

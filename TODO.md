@@ -461,6 +461,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     A source-required indoor frame is invalid unless both GRAPHICSSET planes
     completed their renderer-owned material transactions; an incomplete plane
     is not presented through a substitute surface.
+  - 2026-07-13 update: source-required `DM2_DRAW_DOOR` now prebinds every
+    visible panel, ornament/destroyed-mask, frame, and button IMG3 together
+    with its local palette before the first door blit. A missing component
+    blocks the complete door pass instead of leaving partial or fallback door
+    pixels. Remaining door work is exact source placement/clipping breadth.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
@@ -4282,6 +4287,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     optional `dtImage/0x11`, requires original rect `0x1EE` and key 12, and
     consumes it through the verified panel blit. Missing `0x11` or a different
     rect/key produces no preview; there is no generic item illustration.
+  - 2026-07-13 update: selected leader-hand consumption now follows
+    `DRAW_ITEM_IN_HAND`: it admits only the caller-selected item `dtImage`,
+    copies its exact local palette, and blits the complete decoded image into
+    an origin surface with identical dimensions. A material/palette/pixel
+    mismatch or a different destination size produces no hand image; no
+    generic hand icon, transparency substitution, or scaling is supplied.
 - DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_SET_TIMER_WEATHER`, `DM2_UPDATE_WEATHER`, `DM2_weather_3df7_0037`, `c_light.cpp`, and `c_cloud.cpp`: `src/dm2/dm2_v1_weather.c`, `dm2_v1_outdoor_renderer.c`, and `dm2_v1_runtime.c` lack the source timer/reseed/light/cloud interaction chain. The runtime now forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: source timer dispatcher, reseed/light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, and real-data capture. Do not add a procedural visual substitute.
   - 2026-07-13 update: `DM2_UPDATE_WEATHER` cloud-then-rain command order now
     has a DM2-owned execution plan. It preserves the source's ten-byte slot
