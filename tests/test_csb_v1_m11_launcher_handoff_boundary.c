@@ -467,6 +467,50 @@ static void run_real_launcher_handoff_if_available(void) {
                     "M11 CSB post-entrance input closes the live inventory surface");
     }
     {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+        const CSB_V1_StartupRuntimeSurface_PC34 *c040 =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+        int c040_composed = 1;
+        int row;
+
+        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
+                    "M11 CSB candidate route opens the terminal inventory base");
+        view.candidateMirrorPanelActive = 1;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (row = 0; row < c040->height; ++row) {
+            int column;
+            for (column = 0; column < c040->width; ++column) {
+                unsigned char expected = c040->pixels[
+                    (size_t)row * c040->width + (size_t)column];
+                unsigned char actual = framebuffer[
+                    (size_t)(33 + 52 + row) * 320u +
+                    (size_t)(48 + 80 + column)];
+                if (expected == 6) {
+                    expected = c017->pixels[
+                        (size_t)(52 + row) * c017->width +
+                        (size_t)(80 + column)];
+                }
+                if (actual != expected) {
+                    c040_composed = 0;
+                    break;
+                }
+            }
+            if (!c040_composed) break;
+        }
+        expect_true(c040_composed,
+                    "M11 CSB candidate panel composes terminal C040 over C017 with source C06 transparency");
+        view.candidateMirrorPanelActive = 0;
+        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
+                    "M11 CSB candidate route closes the terminal inventory base");
+    }
+    {
         void *saved_session = view.csbStartupRuntimeAssetSession;
         memset(framebuffer, 0xff, sizeof(framebuffer));
         view.csbStartupRuntimeAssetSession = NULL;

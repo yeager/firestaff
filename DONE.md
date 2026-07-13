@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 CSB C040 candidate composition: M11 now overlays terminal
+  C040 onto the terminal C017 inventory viewport only while candidate input
+  owns the panel, preserving ReDMCSB `PANEL.C` F0346/F0347 C101 geometry and
+  C06 transparency. Missing or malformed C040 fails closed rather than using
+  the generic candidate panel. Verification: real local-CSB
+  `csb_v1_m11_launcher_handoff_boundary` CTest passed 1/1.
+
 - 2026-07-13 CSB C017 live inventory consumption: after the verified
   entrance handoff, a live CSB inventory request now copies terminal-session
   C017 bytes directly into the original 48,33 viewport rectangle. Missing or
