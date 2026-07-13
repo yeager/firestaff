@@ -59,6 +59,7 @@ static int dm1_v1_f0176_creature_occupies_cell_pc34(
 int dm1_v1_melee_action_tick_plan_f0402_pc34(
     const DM1_MeleeActionTickInputPc34* in,
     DM1_MeleeActionTickPlanPc34* out) {
+    DM1_ActionXpRoute route;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!in) return 0;
@@ -73,17 +74,28 @@ int dm1_v1_melee_action_tick_plan_f0402_pc34(
     if (!dm1_v1_action_is_melee_contact_f0407_pc34(in->actionIndex)) {
         return 0;
     }
+    if (dm1_v1_graphic560_action_damage_factor_get_pc34(in->actionIndex) < 0 ||
+        dm1_v1_graphic560_action_hit_probability_get_pc34(in->actionIndex) < 0 ||
+        !dm1_v1_action_xp_route(in->actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+    if (in->championDirection < DIR_NORTH ||
+        in->championDirection > DIR_WEST) {
+        return 0;
+    }
 
     /* ReDMCSB: MENU.C F0407 lines 1266-1269 computes the target square from
      * the acting champion direction, then lines 1331-1334 dispatch F0402.
-     * M10 still resolves F0177/F0231; this receipt keeps M11 from assembling
-     * the source-shaped CMD_ATTACK transport inline. */
+     * F0402 lines 1021-1056 consumes only that selected contact action and
+     * the concrete front-square group/creature lookup.  M10 still resolves
+     * F0177/F0231; this receipt keeps M11 from inventing a target, direction,
+     * or default action while assembling the source-shaped CMD_ATTACK. */
     out->valid = 1;
     out->command = CMD_ATTACK;
     out->commandArg1 = (unsigned char)in->championIndex;
     out->commandArg2 = CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
     out->reserved = CMD_ATTACK_CREATURE_AUTO_PC34;
-    out->targetDirection = in->championDirection & 3;
+    out->targetDirection = in->championDirection;
     out->hasTargetDirection = 1;
     out->reserved2 = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
                      (unsigned int)(in->actionIndex &
@@ -385,72 +397,62 @@ int dm1_v1_melee_command_decode_plan_f0402_pc34(
     const DM1_MeleeF0402CommandDecodeInputPc34* in,
     DM1_MeleeF0402CommandDecodePlanPc34* out) {
     DM1_ActionXpRoute route;
+    unsigned int allowedReceiptBits;
     int actionIndex;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    out->actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
+    out->actionIndex = -1;
     out->actionSkillIndex = -1;
     out->directGroupIndex = -1;
     out->directCreatureIndex = -1;
     if (!in) return 0;
 
-    out->valid = 1;
-    out->targetDirection = in->partyDirection & 3;
+    allowedReceiptBits = CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID |
+                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
+                         CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK |
+                         CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK;
+    if ((in->reserved2 & ~allowedReceiptBits) != 0u ||
+        (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) == 0u ||
+        (in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) == 0u ||
+        in->commandArg2 != CMD_ATTACK_TARGET_AUTO_GROUP_PC34 ||
+        in->reserved != CMD_ATTACK_CREATURE_AUTO_PC34) {
+        return 0;
+    }
+
+    actionIndex =
+        (int)(in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK);
+    if (!dm1_v1_action_is_melee_contact_f0407_pc34(actionIndex) ||
+        dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
+        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0 ||
+        !dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
+        return 0;
+    }
+
+    out->targetDirection =
+        (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
+              CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT);
     out->targetMapIndex = in->partyMapIndex;
     out->targetMapX = in->partyMapX;
     out->targetMapY = in->partyMapY;
-    out->hasLiveActionIndex =
-        (in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_VALID) != 0u;
-    out->hasLegacyMarker =
-        (in->reserved2 & CMD_ATTACK_RESERVED2_LEGACY_MARKER_VALID) != 0u;
-    out->hasTargetDirection =
-        (in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID) != 0u;
-    if (out->hasTargetDirection) {
-        out->targetDirection =
-            (int)((in->reserved2 & CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK) >>
-                  CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) & 3;
-    }
-    switch (out->targetDirection & 3) {
+    out->hasLiveActionIndex = 1;
+    out->hasTargetDirection = 1;
+    out->requestedAutoTarget = 1;
+    out->requestedAutoCreature = 1;
+    out->actionIndex = actionIndex;
+    out->actionSkillIndex = route.skillIndex;
+    switch (out->targetDirection) {
     case DIR_NORTH: out->targetMapY--; break;
     case DIR_EAST:  out->targetMapX++; break;
     case DIR_SOUTH: out->targetMapY++; break;
     case DIR_WEST:  out->targetMapX--; break;
     }
 
-    out->requestedAutoTarget =
-        in->commandArg2 == CMD_ATTACK_TARGET_AUTO_GROUP_PC34;
-    out->requestedAutoCreature =
-        in->reserved == CMD_ATTACK_CREATURE_AUTO_PC34;
-    if (!out->requestedAutoTarget) {
-        out->directGroupIndex = (int)in->commandArg2;
-    }
-    if (!out->requestedAutoCreature) {
-        out->directCreatureIndex = (int)in->reserved;
-    }
-
-    actionIndex = out->hasLiveActionIndex
-        ? (int)(in->reserved2 & CMD_ATTACK_RESERVED2_ACTION_INDEX_MASK)
-        : CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-    if (dm1_v1_graphic560_action_damage_factor_get_pc34(actionIndex) < 0 ||
-        dm1_v1_graphic560_action_hit_probability_get_pc34(actionIndex) < 0) {
-        actionIndex = CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34;
-    }
-    out->actionIndex = actionIndex;
-
-    if (!dm1_v1_action_xp_route(actionIndex, &route) || !route.valid) {
-        if (!dm1_v1_action_xp_route(
-                CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, &route) ||
-            !route.valid) {
-            return 1;
-        }
-    }
-    out->actionSkillIndex = route.skillIndex;
-
     /* ReDMCSB: MENU.C F0407 lines 1266-1272 selects target square/direction,
-     * G0496 skill route, and G0492/G0493 action tables before F0402.  The
-     * Firestaff CMD_ATTACK transport stores those source facts in arg/reserved2
-     * fields; DM1 owns the decode/default policy, M10 supplies the raw tick and
-     * later resolves live thing-list data. */
+     * G0496 skill route, and G0492/G0493 action tables before F0402.  Unlike
+     * the former host transport, a missing action, target direction, or auto
+     * target lookup is not replaced with a default: F0402 has no such source
+     * branch and therefore receives no receipt. */
+    out->valid = 1;
     return 1;
 }
 
@@ -525,17 +527,11 @@ int dm1_v1_melee_preflight_plan_f0402_pc34(
 
     out->valid = 1;
     if (!in->targetResolved) {
-        if (in->requestedAutoTarget ||
-            in->hasLiveActionIndex ||
-            in->hasLiveGroupTable) {
-            /* ReDMCSB: MENU.C F0402 lines 1021-1057 reaches F0231 only
-             * after a concrete G0517 action-target group and creature
-             * ordinal exist.  Live runtime calls without that target are
-             * handled no-ops, not synthetic marker damage. */
-            out->shouldReturnHandled = 1;
-            return 1;
-        }
-        out->canUseLegacyMarker = 1;
+        /* ReDMCSB: MENU.C F0402 lines 1021-1057 reaches F0231 only after a
+         * concrete G0517 action-target group and creature ordinal exist.
+         * A strict receipt with no live target is a handled no-op; the source
+         * has no marker-only or host-fallback damage branch. */
+        out->shouldReturnHandled = 1;
         return 1;
     }
 

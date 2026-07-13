@@ -28,6 +28,14 @@
   remain untouched. Source: ReDMCSB `DEFS.H` `PARTY_INFO` and `LOADSAVE.C`
   F0433/F0435. Verification: focused native-PC34 handoff CTest proves
   raw-byte import, runtime materialization, and export/reimport.
+- 2026-07-13 DM1 F0402 strict PC34 melee receipt: the F0407 contact-action
+  handoff now retains only an in-range champion direction, source G0492/G0493
+  contact action and G0496 skill route, explicit target direction, and the
+  automatic front-square group/creature lookup. Missing fields, direct target
+  fields, invalid actions, and the former legacy marker/default-action paths
+  fail closed; unresolved targets are handled no-ops. Source: ReDMCSB
+  `MENU.C` F0407:1266-1272,1331-1337 and F0402:1021-1057. Verification:
+  Ninja plus CTest `dm1_v1_action_f0407_tail_pc34_compat` passed 1/1.
 
 - 2026-07-13 DM1 PC34 C2 PARTY_INFO provenance: F0435 now retains the full
   128-byte trailing `PARTY_INFO` record after M516_CHAMPIONS, and F0433 emits

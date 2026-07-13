@@ -2669,6 +2669,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 closed-door melee branch plan for BASH/HACK/BERZERK/KICK/SWING/CHOP, including observed F0232/thud branch success and the source 6-tick action-disable override. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 throw/shoot compat now owns projectile impact explosion-create input and generic impact-log classification. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 F0402 melee compat now owns the M11-facing CMD_ATTACK tick plan for melee-contact actions, including action-index and acting-champion target-direction transport. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+  - 2026-07-13 update: DM1 F0402 now admits only a complete PC34 F0407
+    melee receipt: a contact action accepted by G0492/G0493/G0496, explicit
+    champion-facing target direction, and the source front-square automatic
+    group/creature lookup. Invalid directions, direct target/creature fields,
+    missing action/direction fields, and the legacy marker fail closed; a
+    missing resolved target is the source no-op. Remaining work is M10's
+    broader runtime consumption/real-data evidence, not a host default path.
   - 2026-07-09 update: DM1 F0231 melee compat now owns damage-emission performed/feedback decisions for zero-damage, positive-damage, and invalid-outcome melee emissions. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 action-XP compat now owns F0407 action-defense apply/remove and final disable-slot/refill plans. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
   - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns the combined runtime outcome receipt for attack damage, closed-door branch success, PARRY empty-front failure, failure-tail selection, feedback, and disabled-tick override. Remaining runtime coding work is deeper F0231 damage math ownership and reducing M11 mutation adapters plus packaged full-graphics proof.
