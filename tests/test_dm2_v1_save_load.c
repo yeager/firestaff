@@ -1402,6 +1402,7 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
+    DM2_OriginalTimerFormatCorpusReceipt timer_receipt;
     int r;
 
     memset(&gs_store, 0, sizeof(gs_store));
@@ -1463,7 +1464,6 @@ static int test_sksave_corpus_scan_receipt(void)
         cleanup_slot_dir(tmpdir);
         return 0;
     }
-
     r = dm2_sl_save(tmpdir, 3, "Slot3", payload_c, (size_t)payload_c_size);
     if (r != 0) {
         printf("    FAIL: could not write slot corpus save (%d)\n", r);
@@ -1530,6 +1530,28 @@ static int test_sksave_corpus_scan_receipt(void)
                payload_a_size + payload_b_size + (size_t)payload_c_size,
                receipt.first_valid_path,
                receipt.first_importable_path);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    memset(&timer_receipt, 0, sizeof(timer_receipt));
+    if (!dm2_v1_original_timer_format_corpus_probe(tmpdir, &timer_receipt) ||
+        timer_receipt.scan_complete != 1 ||
+        timer_receipt.has_header_verified_candidate != 1 ||
+        timer_receipt.timer_layout_owner_proven != 0 ||
+        timer_receipt.matching_timer_record_count != 0 ||
+        timer_receipt.original_candidate_list_complete != 1 ||
+        timer_receipt.original_candidate_count != 1 ||
+        timer_receipt.rejected_unowned_candidate_count != 1 ||
+        timer_receipt.candidate_receipt_count != 1 ||
+        timer_receipt.candidate_receipts[0].kind !=
+            DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE ||
+        timer_receipt.candidate_receipts[0].import_rejected != 1 ||
+        timer_receipt.candidate_receipts[0].payload_size != payload_b_size ||
+        timer_receipt.candidate_receipts[0].payload_hash == 0u ||
+        timer_receipt.retained_original_payload_bytes != payload_b_size ||
+        timer_receipt.corpus_hash == 0u) {
+        printf("    FAIL: original timer-format probe promoted or lost "
+               "unowned corpus evidence\n");
         cleanup_slot_dir(tmpdir);
         return 0;
     }
@@ -1657,7 +1679,8 @@ static int test_sksave_corpus_scan_receipt(void)
 
     printf("    PASS: corpus scan reports resume order, slot mask, importable "
            "Firestaff/envelope saves, recursive lowercase corpus saves, "
-           "payload sizes, invalid saves and first-importable payload promotion\n");
+           "payload sizes, invalid saves, timer-format rejection evidence and "
+           "first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);
     return 1;
 }

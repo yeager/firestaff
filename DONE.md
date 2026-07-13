@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM2 original-save timer-format corpus receipt: header-verified
+  original envelope/raw candidate rows now retain their exact path, type,
+  payload size, and hash while explicitly rejecting every row for timer use.
+  skproject does not bind an original save timer owner or layout, so no payload
+  bytes are decoded, imported, or promoted. Verification: focused save/load
+  CTest.
+
 - 2026-07-13 DM2 G1 raw c_map corpus receipt: verified G1 column-index,
   ground-stack, and map-data bounds now retain byte counts and FNV-1a hashes.
   This explicitly preserves skproject `c_map.cpp:43-67` uncertainty around

@@ -965,6 +965,79 @@ bool dm2_v1_distant_environment_timer_corpus_probe(
     return true;
 }
 
+bool dm2_v1_original_timer_format_corpus_probe(
+    const char *save_base,
+    DM2_OriginalTimerFormatCorpusReceipt *out_receipt)
+{
+    DM2_SKSaveCorpusReceipt corpus;
+    uint32_t hash = 2166136261u;
+    uint8_t i;
+
+    if (!out_receipt) return false;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
+
+    /* skproject/SKULLWIN/c_timer.cpp and c_savegame.cpp establish that timer
+     * state exists, but do not identify an original save-record owner or wire
+     * layout. Retain only the already parsed, header-verified payload identity
+     * so a later trace can bind a precise row without heuristic scanning. */
+    out_receipt->scan_complete = 1;
+    out_receipt->has_header_verified_candidate =
+        corpus.has_last_session || corpus.has_last_session_backup ||
+        corpus.valid_slot_count != 0u || corpus.extra_valid_candidate_count != 0u;
+    out_receipt->original_candidate_list_complete =
+        corpus.candidate_receipt_count == corpus.importable_candidate_count;
+    out_receipt->original_candidate_count =
+        (uint16_t)(corpus.original_envelope_candidate_count +
+                   corpus.original_raw_candidate_count);
+    out_receipt->rejected_unowned_candidate_count =
+        out_receipt->original_candidate_count;
+
+    for (i = 0u; i < corpus.candidate_receipt_count; ++i) {
+        const DM2_SKSaveCandidateReceipt *source =
+            &corpus.candidate_receipts[i];
+        DM2_SKSaveCandidateReceipt *target;
+
+        if (source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+            source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+            continue;
+        }
+        if (source->payload_size <= UINT32_MAX &&
+            source->payload_size <=
+                (size_t)(UINT32_MAX -
+                         out_receipt->retained_original_payload_bytes)) {
+            out_receipt->retained_original_payload_bytes +=
+                (uint32_t)source->payload_size;
+        } else {
+            out_receipt->original_candidate_list_complete = 0;
+        }
+        if (out_receipt->candidate_receipt_count >=
+            DM2_SK_CORPUS_RECEIPT_MAX) {
+            out_receipt->original_candidate_list_complete = 0;
+            continue;
+        }
+        target = &out_receipt->candidate_receipts[
+            out_receipt->candidate_receipt_count++];
+        *target = *source;
+        target->import_rejected = 1;
+        hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)target->kind);
+        hash = dm2_sksave_corpus_hash_step(hash,
+                                           (uint32_t)target->payload_size);
+        hash = dm2_sksave_corpus_hash_step(hash, target->payload_hash);
+    }
+
+    /* Fail closed: no skproject source or original trace binds any retained
+     * payload bytes to a timer record. This receipt is never a runtime input. */
+    out_receipt->timer_layout_owner_proven = 0;
+    out_receipt->matching_timer_record_count = 0;
+    hash = dm2_sksave_corpus_hash_step(hash,
+                                       out_receipt->retained_original_payload_bytes);
+    hash = dm2_sksave_corpus_hash_step(
+        hash, (uint32_t)out_receipt->original_candidate_list_complete);
+    out_receipt->corpus_hash = hash;
+    return true;
+}
+
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,
