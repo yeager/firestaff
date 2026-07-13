@@ -2122,9 +2122,9 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
             if (csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                     profile, &profile->last_timeline_dispatch.records[i],
                     source_queue_slots[i])) {
-                /* A saved CSBWin TT_BASH_DOOR is numerically equal to the
-                 * shared DM1 door-destruction event. Its mutation is owned
-                 * exclusively by the source-identity bridge below. */
+                /* Source-owned saved CSBWin timer functions can numerically
+                 * alias shared DM1 events. Their mutations belong exclusively
+                 * to the source-identity bridge below. */
                 profile->last_timeline_dispatch.records[i].eventType =
                     DM1_EVENT_NONE;
             }
@@ -16573,6 +16573,34 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer_index = profile->csbwin_timer_queue[queue_slot];
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
+    if (timer->function == 1u) {
+        uint8_t *square;
+        int square_type;
+
+        /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
+         * ReDMCSB TIMELINE.C F0241 lines 749-823 shows the equivalent door
+         * animation can requeue after nonterminal motion. Retain only the
+         * source terminal closing step: Effect 0 takes low state 1 to 0 and
+         * queues no successor. Opening, collisions, sounds, and every
+         * requeue path remain blocked until their full saved runtime state is
+         * owned. TT_1 aliases the shared C01 door-animation event, so even a
+         * malformed saved function-1 receipt must not fall through there. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 && timer->ubyte9 == 0u) {
+            square = csb_v1_runtime_square_byte_ptr(
+                profile, record->mapIndex, record->mapX, record->mapY,
+                &square_type);
+            if (square && square_type == 4 && (*square & 0x07u) == 1u) {
+                *square = (uint8_t)(*square & (uint8_t)~0x07u);
+            }
+        }
+        return 1;
+    }
     if (timer->function == 12u) {
         /* ReDMCSB TIMELINE.C F0254 lines 1614-1637 and CSBWin
          * CSBCode.cpp:6468/Timer.cpp:2644-2664 consume TT_12 through its
