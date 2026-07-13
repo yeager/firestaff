@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 Theron stage-two capture sidecar: authentic Mednafen captures
+  now retain the independently verified `$40cd/$40a4` System Card call and
+  return receipt as a separate sidecar only when all four raw rows match.
+  Missing stage-two evidence remains absent rather than becoming a transition,
+  asset, palette, object, or dungeon claim. Verification: capture-script
+  contract plus exact trace verifier and its fail-closed negative case.
+
 - 2026-07-13 DM1 C100/C101 fail-closed source lock: focused material tests
   now isolate rebirth records from ordinary effects. Outside D0C, both remain
   off the F0114 list; at D0C, only C101 reaches its documented M636 path and

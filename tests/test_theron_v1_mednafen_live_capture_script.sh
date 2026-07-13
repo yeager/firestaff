@@ -68,6 +68,12 @@ if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
     printf 'FAIL: capture script must publish an observed-or-missing transition receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$script" ||
+   ! grep -Fq 'verify_theron_stage2_system_card_call_trace.sh' "$script" ||
+   ! grep -Fq 'Absence is expected for captures that do not reach this exact stage.' "$script"; then
+    printf 'FAIL: capture script must preserve a separate fail-closed stage-two loader receipt\n' >&2
+    exit 1
+fi
 
 output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")
