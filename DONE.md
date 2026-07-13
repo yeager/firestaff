@@ -1201,6 +1201,12 @@
   Theron behavior claim beyond that address. Verification: clean patch
   dry-run and capture-script regression.
 
+- ✅ 2026-07-13 Theron non-System-Card raw-sector gate: a successful raw-sector
+  span now also requires prior raw input, CDIRQ, and an observed PCECD caller
+  PC below C000 in the same trace. This is an address-range observation only,
+  not a claim about caller identity, game behavior, or payload semantics.
+  Verification: capture-script and Mednafen patch regressions.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

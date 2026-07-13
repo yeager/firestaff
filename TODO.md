@@ -1659,6 +1659,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     retain the live HuC6280 PC. A later read can therefore be classified only
     by observed caller address as System Card or non-System-Card execution;
     no address is assigned a Theron semantic role by this trace alone.
+    2026-07-13 route gate update: a future raw-sector span must be preceded in
+    the same trace by raw PCE input activity, CDIRQ, and a PCECD read from an
+    observed PC below C000. This only excludes the observed System Card
+    C000-FFFF address region; it does not name the caller or infer a payload.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
