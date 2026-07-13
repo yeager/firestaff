@@ -171,6 +171,12 @@
   fingerprinted across the complete sequence. Source: ReDMCSB `DUNVIEW.C`
   F0107:3590-3706 and F0124/F0128. Verification: focused CTest against the
    installed PC34 corpus.
+- 2026-07-13 DM1 PC34 chained tombstone-link safety: checksum-valid C3
+  tombstones `2 -> 3 -> active C4 Door 1` remain free staging slots after
+  import. Two later queue insertions consume slots 2 then 3, proving that no
+  stale raw link can free or overwrite the active C4 owner. Source: ReDMCSB
+  `LOADSAVE.C` F0435 and `TIMELINE.C` F0651. Verification: focused native-PC34
+   handoff CTest.
 - 2026-07-13 DM1 PC34 raw tombstone-link safety: a checksum-valid
   `UNUSED_EVENT.NextUnusedEventIndex` overlay can point at a valid active C4
   Door EVENT without freeing or deactivating it. The handoff retains C4's
