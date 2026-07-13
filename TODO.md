@@ -466,6 +466,11 @@ and real community-save corpus round-trip evidence.
     only the local original `DUNGEON.DAT` through the production F0802 export
     path; it skips without user data. Remaining work is broader original
     dungeon-tail import breadth and real community-save corpus evidence.
+  - 2026-07-13 update: accepted F0433/F0435 dungeon tails now publish a
+    stable full-tail provenance fingerprint only after size, map-span, and
+    checksum validation. The real-data regression proves repeated production
+    exports of the same local original dungeon retain that identity; rejected
+    tails publish no accepted receipt.
 
 ## DM1 PC 3.4 Real-Data Fallback Inventory (2026-07-11)
 
