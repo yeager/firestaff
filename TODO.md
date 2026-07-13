@@ -517,6 +517,9 @@ The authenticated US-CUE capture observes call/return register tuples
 `40cd: A=01 X=03 Y=03 P=00 -> 40d0: A=00 X=01 Y=ff P=03` and
 `40a4: A=01 X=03 Y=ff P=01 -> 40a7: A=78 X=00 Y=03 P=00`. The currently
 sampled zero-page bytes are not assigned loader semantics by this receipt.
+The same run records `MPR0=ff` and equal logical/physical `$fc=00` at every
+sample, so the prior zero-page observation is now bank-accounted but still
+does not establish a record, byte count, destination, or payload role.
 
 The Mednafen trace harness now forces System Card 3.0 and the correct raw-CUE
 PCE route. It records reproducible CPU progress but still lacks the original
