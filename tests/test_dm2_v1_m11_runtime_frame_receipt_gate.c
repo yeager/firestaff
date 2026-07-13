@@ -49,6 +49,14 @@ int main(void)
     DM2_V1_BootRuntimeRenderReceipt boot = make_boot_receipt();
     DM2_V1_ViewportM11FrameReceipt runtime = make_runtime_receipt();
 
+    check(runtime.source_materials_required == 1 &&
+              boot.runtime_m11_frame_map_load_token ==
+                  runtime.map_load_token &&
+              boot.runtime_m11_frame_scene_control_hash ==
+                  runtime.scene_control_hash &&
+              boot.runtime_m11_frame_palette_hash ==
+                  runtime.palette_hash,
+          "boot and viewport receipts retain one source-required GDAT identity");
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 1,
           "M11 presents the current verified atomic DM2 frame");
 
