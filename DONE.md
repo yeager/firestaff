@@ -33,6 +33,16 @@
   and keeps the mirror enabled; the final acceptance retains slot 1, clears
   the candidate ordinal, and takes the mirror-disable path. Source: ReDMCSB
   `REVIVE.C` F0280:272-276 and F0282:745-805. Verification: focused CTest.
+- 2026-07-13 DM1 HoC M648 palette-material transition audit: a real-PC34
+  regression enumerates every legal HoC corridor frame that has no D1C
+  TextString receipt, then crosses each one into and out of every visible
+  HoC inscription. M648 must be the original graphic 258 with C10 as its
+  sole transparent source index; every C10 glyph pixel must preserve the
+  freshly rebuilt source-wall pixel, and corridor frames must clear the
+  complete material receipt. The M648 source pixels are fingerprinted before
+  and after all transitions. Source: ReDMCSB `DUNVIEW.C` F0107:3619-3638,
+  3682-3706 and F0124/F0128. Verification: focused CTest against installed
+  PC34 data.
 
 - 2026-07-13 DM1 HoC C160 stale-render guard: a real-PC34 C127 selection
   now proves the post-resurrection invalidation while the party remains in
