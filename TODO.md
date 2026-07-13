@@ -247,6 +247,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     malformed F7057 body without decoding or promoting tail bytes. Remaining
     evidence is a provenance-recorded real PC34 corpus across the listed
     gameplay states and original executable load results.
+  - 2026-07-13 update: corpus certification now validates the populated
+    receipt itself: header/part shape, F7057 boundary, atomic C3 EVENT bytes,
+    raw C4 TIMELINE bytes, and the optional F0433 dungeon tail. C13/C24/C25
+    are subtype receipts only when source rows exist, so an absent optional
+    subtype cannot block independent C3/C4/tail evidence.
 
 - REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
   F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
