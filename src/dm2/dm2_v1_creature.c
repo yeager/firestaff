@@ -256,67 +256,70 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
     return loaded;
 }
 
+static uint32_t dm2_v1_creature_ccm_hash_bytes(uint32_t hash,
+                                                const uint8_t *bytes,
+                                                size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+int dm2_v1_creature_ccm_corpus_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_CCMCorpusReceipt *out_receipt)
+{
+    int row;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded) return 1;
+    out_receipt->gdat_loaded = 1;
+
+    /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION owns
+     * CREATURE_AI/row/dt00 as a 36-byte AIDefinition. DME.h:1611-1620 owns
+     * Command2/Command only as live CreatureInfoData bytes, not as a GDAT
+     * stream or a persisted record. */
+    for (row = 0; row < DM2_AI_TABLE_SIZE; ++row) {
+        size_t raw_size = 0u;
+        const uint8_t *raw = dm2_v1_asset_load_sized(
+            loader, DM2_GDAT_CATEGORY_CREATURE_AI, row, 0, &raw_size);
+        if (!raw || raw_size != sizeof(DM2_AIDefinition)) continue;
+        ++out_receipt->ai_definition_row_count;
+        out_receipt->ai_definition_byte_count += (uint32_t)raw_size;
+        hash = dm2_v1_creature_ccm_hash_bytes(hash, raw, raw_size);
+    }
+    out_receipt->ai_definition_owner_proven =
+        out_receipt->ai_definition_row_count > 0;
+    out_receipt->ai_definition_hash =
+        out_receipt->ai_definition_owner_proven ? hash : 0u;
+    out_receipt->command_state_owner_proven = 1;
+
+    /* DME.h calls ccm32..34 unknown. Do not scan neighbouring fields for
+     * matching bytes: without the original stream owner that would invent a
+     * grammar and behaviour. */
+    return 1;
+}
+
 int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                 int field) {
-    int loaded = 0;
-    int i;
-
     if (!loader || !loader->loaded || field < 0 || field > 0xff) return -1;
     dm2_v1_creature_reset_ccm_programs();
-
-    /* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM consumes a
-     * per-creature command byte stream. Firestaff stores imported streams
-     * beside the AI table, addressed by the same CREATURE_AI category index.
-     * Field 0 remains the 36-byte AIDefinition row; callers pass the GDAT
-     * field that contains the command byteprogram for the current asset set. */
-    for (i = 0; i < DM2_AI_TABLE_SIZE; ++i) {
-        size_t raw_size = 0;
-        const uint8_t *raw = dm2_v1_asset_load_sized(
-            loader, DM2_GDAT_CATEGORY_CREATURE_AI, i, field, &raw_size);
-        DM2_V1_CCMProgram program;
-        if (!raw || raw_size == 0) continue;
-        if (dm2_v1_ccm_decode_program(raw, raw_size, &program) !=
-            (int)DM2_CCM_RESULT_OK) {
-            continue;
-        }
-        g_ccm_programs[i] = program;
-        g_ccm_program_loaded[i] = 1;
-        ++loaded;
-    }
-
-    g_ccm_program_count = loaded;
-    g_ccm_program_field = loaded > 0 ? field : -1;
-    return loaded;
+    (void)field;
+    /* No corpus/source evidence owns an adjacent CREATURE_AI field as a CCM
+     * byteprogram. Keep it unavailable instead of decoding arbitrary GDAT. */
+    return 0;
 }
 
 int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
     const DM2_V1_AssetLoader *loader,
     int *out_field) {
-    static const int k_fields[] = {
-        1, 2, 3, 4, 5, 6, 7,
-        8, 9, 10, 11, 12, 13, 14, 15,
-        0x10, 0x11, 0x12, 0x18, 0x19, 0x1a, 0x20
-    };
-    int i;
-
     if (out_field) *out_field = -1;
     if (!loader || !loader->loaded) return -1;
-
-    /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION (~233-400)
-     * and QUERY_CREATURE_AI_SPEC_FROM_TYPE (~2995) bind CREATURE_AI GDAT rows
-     * to runtime AI state; SKULLWIN/c_creature.cpp DM2_PROCEED_CCM consumes
-     * the adjacent per-creature CCM stream. Different PC GDAT variants encode
-     * that stream in non-zero fields, so boot probes candidate fields and keeps
-     * the first byteprogram set that decodes cleanly. */
-    for (i = 0; i < (int)(sizeof(k_fields) / sizeof(k_fields[0])); ++i) {
-        int loaded = dm2_v1_creature_load_ccm_programs_from_gdat(
-            loader, k_fields[i]);
-        if (loaded > 0) {
-            if (out_field) *out_field = k_fields[i];
-            return loaded;
-        }
-    }
-
     dm2_v1_creature_reset_ccm_programs();
     return 0;
 }

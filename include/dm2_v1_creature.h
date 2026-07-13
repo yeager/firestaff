@@ -186,7 +186,31 @@ typedef struct {
 int dm2_v1_creature_item_click_evidence(
     int creature_type,
     DM2_V1_CreatureItemClickEvidence *out_evidence);
+
+/* Raw-only CCM corpus receipt. `CREATURE_AI/row/dt00` is the verified
+ * AIDefinition owner; no original source assigns an adjacent GDAT field to a
+ * CCM instruction stream. Thus the receipt hashes only dt00 rows and keeps
+ * all command-byte counts at zero. */
+typedef struct {
+    int gdat_loaded;
+    int ai_definition_owner_proven;
+    int ai_definition_row_count;
+    uint32_t ai_definition_byte_count;
+    uint32_t ai_definition_hash;
+    int command_state_owner_proven;
+    int command_stream_owner_proven;
+    int opcode_32_present;
+    int opcode_33_present;
+    int opcode_34_present;
+    int decoder_permitted;
+} DM2_V1_CCMCorpusReceipt;
+
+int dm2_v1_creature_ccm_corpus_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_CCMCorpusReceipt *out_receipt);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
+/* This rejects every adjacent GDAT field until an original CCM stream
+ * owner/grammar is proven. */
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);
 int  dm2_v1_creature_load_ccm_programs_from_gdat_auto(const DM2_V1_AssetLoader *loader,

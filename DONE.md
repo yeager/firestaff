@@ -5,6 +5,13 @@
   Their grammar remains unproved, so this assigns no model, orientation, mesh,
   material, texture, palette, pixel, or draw meaning.
 
+- 2026-07-13 DM2 CCM corpus ownership gate: `CREATURE_AI/row/dt00` is now
+  retained only as hashable AIDefinition evidence. The prior adjacent-field
+  byteprogram scan is removed: DME.h owns live command state but no GDAT/save
+  stream for CCM 0x32..0x34, so every candidate remains unavailable. No opcode
+  decode or runtime promotion is added. Verification: focused creature CCM
+  runtime CTest.
+
 - 2026-07-13 DM2 original-save timer-format corpus receipt: header-verified
   original envelope/raw candidate rows now retain their exact path, type,
   payload size, and hash while explicitly rejecting every row for timer use.
