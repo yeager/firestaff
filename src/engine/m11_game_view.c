@@ -21284,6 +21284,54 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
     return 1;
 }
 
+/* DM1 has already made the F0115/F0128 clip, zone, parity and F0096
+ * material decision. Keep this host endpoint intentionally mechanical:
+ * an exact PC34 asset blit, otherwise no-draw. */
+static int m11_draw_dm1_side_wall_host_receipt(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    const DM1_ViewportSideWallHostReceiptPc34* receipt)
+{
+    const M11_AssetSlot* slot;
+    int y;
+    if (!state || !state->assetsAvailable || !framebuffer || !receipt ||
+        !receipt->handled || !receipt->draw_wall || !receipt->material.valid) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)receipt->material.graphic_index);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != (unsigned int)receipt->material.expected_width ||
+        slot->height != (unsigned int)receipt->material.expected_height) {
+        return 0;
+    }
+    for (y = 0; y < receipt->height; ++y) {
+        int x;
+        int fbY = M11_VIEWPORT_Y + receipt->dst_y + y;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (x = 0; x < receipt->width; ++x) {
+            int fbX = M11_VIEWPORT_X + receipt->dst_x + x;
+            int sx = receipt->material.flip_horizontally
+                ? receipt->width - 1 - x : x;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[y * (int)slot->width + sx];
+            if (receipt->material.transparent_color >= 0 &&
+                pixel == (unsigned char)receipt->material.transparent_color) {
+                continue;
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_dm1_front_wall_blit(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
@@ -22890,101 +22938,40 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     int fbW,
                                     int fbH,
                                     int maxVisibleForward,
-                                    const M11_ViewportCell cells[3][3]) {
+                                    const DM1_ViewportLaneVisibilityReceiptPc34* visibility) {
     size_t i;
     int flipWalls;
-    if (!state || !state->assetsAvailable) {
+    int mapWallSet;
+    if (!state || !state->assetsAvailable || !visibility) {
         return;
     }
     flipWalls = m11_dm1_use_flipped_walls(state);
+    mapWallSet = state->world.dungeon && state->world.party.mapIndex >= 0 &&
+            state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
+        ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
+        : 0;
     for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
         M11_ViewportCell cell;
-        M11_DM1WallFrontBlit blit;
+        DM1_ViewportSideWallHostReceiptPc34 receipt;
         const DM1_ViewportWallDrawSpec* spec =
             dm1_viewport_3d_get_wall_draw_spec(i);
         if (!spec || spec->center_wall) {
             continue;
         }
-        blit.depthIndex = spec->runtime_rel_forward;
-        blit.relForward = spec->runtime_rel_forward;
-        blit.relSide = spec->runtime_rel_side;
-        blit.graphicIndex =
-            dm1_v1_graphic_wallset0_index_pc34((int)spec->native_wall);
-        blit.dstX = spec->runtime_dst_x;
-        blit.dstY = spec->runtime_dst_y;
-        blit.width = spec->runtime_width;
-        blit.height = spec->runtime_height;
-        /* Far to near: ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
-         * squares far-to-near without testing nearer side-lane occupancy;
-         * nearer D1/D2 side walls and center walls overpaint farther panels.
-         * Firestaff's split primitive passes still must honor the nearest
-         * center blocker; same-side blockers are drawn later in the same
-         * far-to-near pass and overpaint the farther side panel. */
-        if (blit.relForward > maxVisibleForward) {
-            continue;
-        }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             blit.relForward,
-                                             blit.relSide)) {
-            continue;
-        }
         if (!m11_sample_viewport_cell(state,
-                                      blit.relForward,
-                                      blit.relSide,
+                                      spec->runtime_rel_forward,
+                                      spec->runtime_rel_side,
                                       &cell)) {
             continue;
         }
-        if (m11_viewport_cell_is_wall_like(&cell)) {
-            bool flipHoriz = false;
-            DM1_WallSetIndex selectedWall;
-            if (spec->square == DM1_VIEW_SQUARE_D3L2 ||
-                spec->square == DM1_VIEW_SQUARE_D3R2 ||
-                spec->square == DM1_VIEW_SQUARE_D3L ||
-                spec->square == DM1_VIEW_SQUARE_D3R) {
-                DM1_ViewportD3SideWallHostHandoffPc34 handoff;
-                if (!dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
-                        spec->square, flipWalls ? true : false, true, false,
-                        &handoff) || !handoff.handled || !handoff.draw_wall) {
-                    continue;
-                }
-                selectedWall = handoff.selected_wall;
-                flipHoriz = handoff.flip_horizontally;
-                blit.dstX = handoff.dst_x;
-                blit.dstY = handoff.dst_y;
-                blit.width = handoff.width;
-                blit.height = handoff.height;
-            } else {
-                selectedWall = dm1_viewport_3d_select_wall_bitmap(
-                    spec, flipWalls ? true : false, &flipHoriz);
-            }
-            if (selectedWall < DM1_WALL_SET_COUNT) {
-                blit.graphicIndex =
-                    dm1_v1_graphic_wallset0_index_pc34((int)selectedWall);
-            }
-            /* ReDMCSB I34E/P31J side-wall primitives use F0104/F0105 into
-             * C702..C717, and those helpers call F0132_VIDEO_Blit with
-             * C10_COLOR_FLESH as the transparent color.  Center walls use
-             * F0792/F0765 without transparency; side panels must keep the
-             * C10 key so clipped L/R panels do not overpaint the corridor. */
-            if (flipHoriz) {
-                /* ReDMCSB F0116/F0117 (MEDIA709/720 path): DM1 viewport
-                 * metadata selects the parity bitmap and asks M11 to mirror
-                 * the source horizontally. */
-                (void)m11_draw_dm1_wall_blit_flipped(state,
-                                                     framebuffer,
-                                                     fbW,
-                                                     fbH,
-                                                     &blit,
-                                                     10);
-            } else {
-                (void)m11_draw_dm1_wall_blit_with_transparency(state,
-                                                               framebuffer,
-                                                               fbW,
-                                                               fbH,
-                                                               &blit,
-                                                               10);
-            }
+        if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+                spec->square, mapWallSet, flipWalls ? true : false,
+                m11_viewport_cell_is_wall_like(&cell), false,
+                maxVisibleForward, visibility, &receipt)) {
+            continue;
         }
+        (void)m11_draw_dm1_side_wall_host_receipt(state, framebuffer, fbW, fbH,
+                                                   &receipt);
     }
 }
 
@@ -35083,7 +35070,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                             dm1_viewport_3d_primary_side_wall_max_forward_pc34(
                                 maxVisibleForward),
-                            cells);
+                            &visibility);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
@@ -35121,7 +35108,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         if (blockingCenterDepth > 0) {
             int nearMaxVisibleForward = blockingCenterDepth;
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    nearMaxVisibleForward, cells);
+                                    nearMaxVisibleForward, &visibility);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                         nearMaxVisibleForward, cells);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(

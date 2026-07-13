@@ -75,9 +75,12 @@ int main(void)
     char defaultDataDir[1024];
     M11_GameViewState state;
     DM1_ViewportWallHostMaterialReceiptPc34 receipt;
+    DM1_ViewportSideWallHostReceiptPc34 sideReceipt;
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     const M11_AssetSlot *slot;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
     int mapWallSet;
+    const int visible[3] = {1, 1, 1};
     static const struct { int graphic, width, height; } kPanels[] = {
         {97, 160, 111}, {102, 106, 74}, {107, 70, 49}
     };
@@ -96,6 +99,8 @@ int main(void)
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     mapWallSet = (int)state.world.dungeon->maps[0].wallSet;
+    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(
+        visible, visible, visible, visible, visible);
     for (i = 0; i < sizeof(kPanels) / sizeof(kPanels[0]); ++i) {
         if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
                 mapWallSet, kPanels[i].graphic, -1, false,
@@ -109,6 +114,27 @@ int main(void)
             slot->width != (unsigned int)receipt.expected_width ||
             slot->height != (unsigned int)receipt.expected_height) goto fail;
     }
+    /* ReDMCSB DUNVIEW.C F0128: D3L/D3R select their C705/C706 material
+     * before the center square. The receipt owns both the lane decision and
+     * F0096 wall-set material; this test uses the installed PC34 asset, not
+     * a fabricated bitmap. D4 invokes F0115 only, then exits on depth > 3. */
+    if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+            DM1_VIEW_SQUARE_D3L, mapWallSet, false, true, false, 3,
+            &visibility, &sideReceipt) || !sideReceipt.handled ||
+        !sideReceipt.draw_wall || !sideReceipt.material.valid ||
+        sideReceipt.material.transparent_color != 10) goto fail;
+    slot = M11_AssetLoader_Load(&state.assetLoader,
+                                (unsigned int)sideReceipt.material.graphic_index);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width != (unsigned int)sideReceipt.material.expected_width ||
+        slot->height != (unsigned int)sideReceipt.material.expected_height) goto fail;
+    if (dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+            DM1_VIEW_SQUARE_D4L, mapWallSet, false, true, false, 3,
+            &visibility, &sideReceipt)) goto fail;
+    if (!dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+            DM1_VIEW_SQUARE_D3R, mapWallSet, false, true, false, 2,
+            &visibility, &sideReceipt) || sideReceipt.draw_wall ||
+        !sideReceipt.handled) goto fail;
     slot = M11_AssetLoader_Load(&state.assetLoader,
                                 DM1_V1_CHAMPION_PORTRAIT_GRAPHIC_PC34);
     if (!slot || !slot->loaded || !slot->pixels ||

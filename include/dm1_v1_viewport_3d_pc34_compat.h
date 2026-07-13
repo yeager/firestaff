@@ -715,6 +715,26 @@ typedef struct {
     const char *source_lines;
 } DM1_ViewportD3SideWallHostHandoffPc34;
 
+/* Final F0115/F0128 side-wall decision consumed by M11.  This owns the
+ * source-ordered D3/D2/D1 lane clipping and F0096 material selection; M11
+ * may only fetch the named PC34 bitmap and blit it, or leave the cleared
+ * viewport untouched.  D4 deliberately has no receipt: F0128 reaches
+ * F0115's depth>3 exit before any wall panel is selected. */
+typedef struct {
+    bool handled;
+    bool draw_wall;
+    bool falls_through_to_f0115;
+    DM1_ViewSquareIndex square;
+    int pc34_zone;
+    int dst_x;
+    int dst_y;
+    int width;
+    int height;
+    DM1_ViewportWallHostMaterialReceiptPc34 material;
+    const char *redmcsb_function;
+    const char *source_lines;
+} DM1_ViewportSideWallHostReceiptPc34;
+
 /* MEDIA720-only side-wall squares used by the PC34/I34E ReDMCSB draw path.
  * They are outside the original M597-M611 dense enum, so use stable negative
  * identifiers for metadata/probe reporting only. */
@@ -1152,6 +1172,15 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     bool wall_like,
     bool front_alcove,
     DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff);
+int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+    DM1_ViewSquareIndex square,
+    int map_wall_set,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    int max_visible_forward,
+    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
+    DM1_ViewportSideWallHostReceiptPc34 *out_receipt);
 int dm1_viewport_3d_center_door_button_host_plan_pc34(
     int depth_index,
     DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan);

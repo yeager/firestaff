@@ -2363,6 +2363,76 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     return 1;
 }
 
+int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+    DM1_ViewSquareIndex square,
+    int map_wall_set,
+    bool parity_flip,
+    bool wall_like,
+    bool front_alcove,
+    int max_visible_forward,
+    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
+    DM1_ViewportSideWallHostReceiptPc34 *out_receipt)
+{
+    const DM1_ViewportWallDrawSpec *spec;
+    DM1_ViewportSideWallHostReceiptPc34 receipt;
+    DM1_WallSetIndex selected_wall;
+    bool flip_horizontally = false;
+    int wallset0_graphic_index;
+
+    if (!out_receipt || !visibility) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
+    /* ReDMCSB DUNVIEW.C F0128:8466-8477 has D4 F0115 calls but no D4
+     * wall-zone case. F0115 exits on depth > 3 before choosing C702..C717,
+     * so an absent wall spec is deliberately a no-receipt/no-draw result. */
+    if (!spec || spec->center_wall) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.handled = true;
+    receipt.square = square;
+    receipt.pc34_zone = spec->pc34_zone;
+    receipt.dst_x = spec->runtime_dst_x;
+    receipt.dst_y = spec->runtime_dst_y;
+    receipt.width = spec->runtime_width;
+    receipt.height = spec->runtime_height;
+    receipt.redmcsb_function = spec->redmcsb_function;
+    receipt.source_lines = spec->source_lines;
+
+    /* ReDMCSB DUNVIEW.C F0128:8478-8533 invokes each side square before
+     * its center square. The active replay ceiling is passed by the caller;
+     * lane masks keep the opposite/open side ownership in DM1 rather than
+     * leaving a host-specific clip decision in M11. */
+    if (!wall_like || spec->runtime_rel_forward > max_visible_forward ||
+        !dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+            visibility, spec->runtime_rel_forward, spec->runtime_rel_side)) {
+        receipt.falls_through_to_f0115 =
+            !wall_like || (front_alcove && spec->front_alcove_reveals_contents);
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    selected_wall = dm1_viewport_3d_select_wall_bitmap(
+        spec, parity_flip, &flip_horizontally);
+    if (selected_wall >= DM1_WALL_SET_COUNT) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    wallset0_graphic_index =
+        dm1_v1_graphic_wallset0_index_pc34((int)selected_wall);
+    if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
+            map_wall_set, wallset0_graphic_index, 10, flip_horizontally,
+            receipt.width, receipt.height, &receipt.material)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    receipt.draw_wall = true;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_viewport_3d_center_door_button_host_plan_pc34(
     int depth_index,
     DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan)
