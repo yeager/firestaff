@@ -20,6 +20,9 @@
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dialog_frontend_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
@@ -29,6 +32,81 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Legacy M11 probe spellings.  The production input and layout paths use
+ * the DM1_V1_* names directly; retaining these aliases keeps the independent
+ * source-lock probes tied to those same values instead of duplicating them.
+ */
+#define M11_DM1_MOUSE_MASK_LEFT DM1_V1_MOUSE_MASK_LEFT_PC34
+#define M11_DM1_MOUSE_LIST_INVENTORY DM1_V1_MOUSE_LIST_INVENTORY_PC34
+#define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
+
+static inline int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
+    return dm1_v1_graphic_champion_damage_small_pc34();
+}
+
+static inline int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
+    return dm1_v1_graphic_champion_damage_big_pc34();
+}
+
+static inline int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
+    return dm1_v1_graphic_champion_portraits_pc34();
+}
+
+static inline int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
+    return dm1_v1_champion_damage_indicator_zone_id_pc34(championSlot);
+}
+
+static inline int M11_GameView_GetV1InventoryDamageIndicatorZoneId(
+    int championSlot) {
+    return dm1_v1_champion_inventory_damage_indicator_zone_id_pc34(
+        championSlot);
+}
+
+static inline int M11_GameView_GetV1DamageIndicatorZone(
+    int championSlot, int indicatorW, int indicatorH, int* outX, int* outY,
+    int* outW, int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_champion_damage_indicator_rect_pc34(
+            championSlot, indicatorW, indicatorH, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1InventoryDamageIndicatorZone(
+    int championSlot, int indicatorW, int indicatorH, int* outX, int* outY,
+    int* outW, int* outH) {
+    DM1_V1_ChampionStatusRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_champion_inventory_damage_indicator_rect_pc34(
+            championSlot, indicatorW, indicatorH, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1MessageAreaZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    if (!outX || !outY || !outW || !outH) return 0;
+    *outX = 0; *outY = 173; *outW = 320; *outH = 27;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1DialogChoiceTextZone(
+    int choiceCount, int choiceIndex, int* outX, int* outY, int* outW,
+    int* outH) {
+    DialogCompatChoiceLayout layout;
+    if (!outX || !outY || !outW || !outH || choiceIndex < 0 ||
+        !DIALOG_Compat_GetChoiceLayout((unsigned int)choiceCount,
+                                       (unsigned int)choiceIndex + 1u,
+                                       &layout)) return 0;
+    *outW = choiceCount <= 2 ? 192 : 86;
+    *outH = 7;
+    *outX = layout.centerX - *outW / 2;
+    *outY = layout.centerY - 4;
+    return 1;
+}
 
 enum {
     M11_GAME_VIEW_PATH_CAPACITY = 512,
