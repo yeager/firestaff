@@ -1035,6 +1035,13 @@
   palette, bitmap, and RGB paths remain blocked. Verification: clean Mednafen
   1.32.1 patch dry-run plus the authentic bounded capture.
 
+- ✅ 2026-07-13 Theron PCECD controller-write trace boundary: added a separate
+  bounded receipt patch for actual PCECD `$1800..$1804` write-handler calls.
+  It records only physical address and byte after the emulator receives a real
+  write, including indirect caller routes; it assigns no command, sector,
+  payload, palette, or graphics meaning. The next authenticated run must still
+  prove a completed CD-interface read before any Track 02 promotion.
+
 - 2026-07-13 Theron boot runtime trace intake: the boot-owned explicit-file
   intake now reads a bounded Mednafen trace path plus caller-supplied
   hash-authenticated Track 02 and System Card paths, then invokes the concrete

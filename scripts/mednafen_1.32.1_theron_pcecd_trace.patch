@@ -1,0 +1,32 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -661,5 +661,28 @@ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
+ {
+	const uint8 V = data;
+-
++ static FILE *theron_cd_register_trace = NULL;
++ static unsigned theron_cd_register_trace_count = 0;
++ if((physAddr & 0xf) <= 4 && theron_cd_register_trace_count < 32)
++ {
++  if(!theron_cd_register_trace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++   if(path && *path)
++   {
++    theron_cd_register_trace = fopen(path, "a");
++    if(theron_cd_register_trace)
++    {
++     fputs("source=mednafen-pce-instrumented-cd-register\\n", theron_cd_register_trace);
++     fflush(theron_cd_register_trace);
++    }
++   }
++  }
++  if(theron_cd_register_trace)
++  {
++   fprintf(theron_cd_register_trace, "pce_cd_register_write physical=%08x data=%02x\\n", physAddr, data);
++   fflush(theron_cd_register_trace);
++   theron_cd_register_trace_count++;
++  }
++ }
+	#ifdef PCECD_DEBUG
