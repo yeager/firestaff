@@ -75,6 +75,11 @@ hash-bound `SN_WALL.MNS` TEXT bank, so the runtime blocks that MNS route
 unless a Saturn executable or capture proves the mapping. Do not derive a
 nibble, mask, or directional transform from the observed values alone.
 
+Structure1C's bounded four-byte records are now retained only as original
+reference-table data. The next admissible collision work is a Saturn
+executable or capture that proves their byte grammar; do not reinterpret them
+as line/circle coordinates or promote them into movement geometry.
+
 ## DM2 V2.0 Runtime Follow-up (2026-07-12)
 
 M11 now binds the selected DM2 V2 presentation mode to the persistent V2
@@ -752,7 +757,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
     - 2026-07-13 movement-filter save handoff: a resolved type-47 movement binding can now atomically install the same authenticated adapter in its exact `Monster.cpp` level slot. The source seven-word callback restores loaded level and may publish only the existing admitted `GLOBALSTORE` bank transaction. All other levels are explicitly unbound rather than defaulting to DSA zero; no distance/party gate inference, movement flag semantics, master-state persistence, generic dispatcher, or new opcode is added.
     - 2026-07-13 multi-level movement callback: independently resolved movement filters can now share one runtime callback across distinct source levels. Every selected action retains exact imported-action identity; duplicate levels or duplicate action ownership reject before replacing the live runtime. It remains the same admitted stack/transfer subset only, with no inferred movement gates/flags, master state, world opcodes, or fallback dispatch.
-  - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. Palette and other EXPOOL record restore/writeback paths remain open.
+  - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. Palette and other EXPOOL record restore/writeback paths remain open.
   - 2026-07-11 original-data boundary audit: local `SKWIN/data_csb` bytes do
     not match any supported CSB graphics or dungeon hash and therefore remain
     unusable for rendering, menus, or runtime state. The locally staged Amiga,

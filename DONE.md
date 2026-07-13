@@ -45,6 +45,13 @@
   action-disable event. Verification: Ninja-built and ran
   `test_dm1_v1_f0412_needs_practice_runtime_pc34_compat` and
   `test_dm1_v1_spell_casting_pc34_compat`.
+- 2026-07-13 CSBWin DisableSaves core-export policy: `EDBT_DisableSaves` now
+  stops both CSBWin core-memory export and core-path emission before any bytes
+  or file can be produced, matching the existing native-save policy. The
+  dedicated regression locks both fail-closed outcomes. Source: CSBWin
+  `SaveGame.cpp:1972-1976` `EDBT_DisableSaves`. Verification:
+  `csb_v1_disable_saves_core_export` CTest passed 1/1.
+
 - 2026-07-13 CSBWin core-resume Extended Features lifecycle: a core-only
   resume now clears the complete prior extended-save owner, including DSA
   version/flags, cell-array size, game-info allocation/hash, and every
@@ -103,6 +110,13 @@
   `SNDLEV01..15` in the `0x06010000` image space. This is a bounded layout
   invariant only: no codec, sample frame, or playback semantics are claimed.
   Verification: `test_nexus_v1_sound_runtime_receipt` PASS.
+
+- 2026-07-13 Nexus Structure1C fail-closed collision route: the bounded
+  four-byte Structure1C table remains indexed by documented Structure1B
+  references, but its unknown record bytes no longer become invented
+  line/circle collision geometry. Movement retains documented blocked/open
+  Structure1B cells while the opaque records wait for Saturn code or capture
+  evidence. Verification: `nexus_v1_dgn_geometry_readiness` CTest passed 1/1.
 
 - 2026-07-13 DM1 F0407/F0231 melee XP correction: removed the non-source
   base-health kill-XP mutation from the DM1 F0231 defeat receipt. ReDMCSB
