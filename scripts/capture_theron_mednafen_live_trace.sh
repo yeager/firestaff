@@ -89,18 +89,18 @@ trace_input_order_receipt() {
         }
         END {
             if (first_host_line == 0) {
-                printf "first_host_key_input_trace_line=0\\n"
-                printf "pce_input_transactions_before_first_host=%d\\n", input_total
-                printf "pce_input_transactions_after_first_host=0\\n"
-                printf "host_input_order=no_host_key_observed\\n"
+                printf "first_host_key_input_trace_line=0\n"
+                printf "pce_input_transactions_before_first_host=%d\n", input_total
+                printf "pce_input_transactions_after_first_host=0\n"
+                printf "host_input_order=no_host_key_observed\n"
             } else {
-                printf "first_host_key_input_trace_line=%d\\n", first_host_line
-                printf "pce_input_transactions_before_first_host=%d\\n", input_before_first_host
-                printf "pce_input_transactions_after_first_host=%d\\n", input_after_first_host
+                printf "first_host_key_input_trace_line=%d\n", first_host_line
+                printf "pce_input_transactions_before_first_host=%d\n", input_before_first_host
+                printf "pce_input_transactions_after_first_host=%d\n", input_after_first_host
                 if (input_after_first_host > 0)
-                    printf "host_input_order=followed_by_pce_input_poll\\n"
+                    printf "host_input_order=followed_by_pce_input_poll\n"
                 else
-                    printf "host_input_order=after_last_observed_pce_input_poll\\n"
+                    printf "host_input_order=after_last_observed_pce_input_poll\n"
             }
         }
     ' "$file"
