@@ -29,6 +29,14 @@
   positive saved active-effect count. Source portrait redraw and footprint
   visual/cleanup paths remain deliberately unowned. Verified by
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
+- 2026-07-13 Nexus Structure1F raw rotation-selector receipt: complete
+  Structure1A-owned alcove/wall records now retain counts and reuse of their
+  original Structure1F rotation-selector byte through the DGN corpus, host
+  handoff, and render-plan receipts. Its unit and relation to a face, vertex,
+  mesh, texture, palette, or pixel remains unproved; rendering stays
+  fail-closed. Verification: Ninja and CTest
+  `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_startup_menu_pc34_compat`.
 
 - 2026-07-13 CSBWin restored `TT_75` poison bridge: an exact saved queue
   receipt now maps its champion priority and bounded 8-bit `timerWord6` attack

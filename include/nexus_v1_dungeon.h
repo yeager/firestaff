@@ -260,6 +260,23 @@ typedef struct {
     int face_semantics_proven;
 } Nexus_V1_DgnStructure1FFaceSelectorReceipt;
 
+/* Structure1F's Structure1A-bound families also carry a separate raw
+ * rotation-selector byte. It is retained only after the owner relation is
+ * complete. Its unit and relation to any face or Structure3 transform remain
+ * unproved, so it cannot authorize geometry or drawing. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_rotation_selector_count;
+    int unique_rotation_selector_count;
+    int duplicate_rotation_selector_count;
+    int zero_rotation_selector_count;
+    int nonzero_rotation_selector_count;
+    uint8_t highest_rotation_selector;
+    int complete;
+    int rotation_semantics_proven;
+} Nexus_V1_DgnStructure1FRotationSelectorReceipt;
+
 /* DMWeb DGN files: the container header names Structure3 with a block offset
  * and block count. The enclosed bytes have no established Saturn payload,
  * vertex, face, texture, palette, or draw grammar, so this is an envelope
@@ -682,6 +699,7 @@ typedef struct {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
+    Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     int structure1g_present;
     int structure1g_valid;
@@ -776,6 +794,7 @@ typedef struct {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
+    Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is
@@ -835,6 +854,9 @@ int nexus_v1_level_structure1a_transform_selector_receipt(
 int nexus_v1_level_structure1f_face_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFaceSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1f_rotation_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1FRotationSelectorReceipt *out_receipt);
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
