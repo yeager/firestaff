@@ -1,5 +1,4 @@
 #include "m11_game_view.h"
-#include "dm1_v1_probe_assets.h"
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
@@ -81,6 +80,35 @@ static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
     if (outW) *outW = rect.w;
     if (outH) *outH = rect.h;
     return 1;
+}
+
+/* Probe adapters keep the checks on the public DM1 contracts rather than
+ * depending on a retired, non-existent probe-only header. */
+static const M11_AssetSlot* dm1_v1_probe_load_c026_champion_portrait_atlas(
+    M11_AssetLoader* loader)
+{
+    if (!loader) return NULL;
+    return M11_AssetLoader_Load(
+        loader,
+        (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
+}
+
+static int dm1_v1_inventory_panel_zone_xywh_pc34(int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH)
+{
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_inventory_panel_rect_pc34(), outX, outY, outW, outH);
+}
+
+static int dm1_v1_inventory_backdrop_zone_xywh_pc34(int* outX,
+                                                      int* outY,
+                                                      int* outW,
+                                                      int* outH)
+{
+    return probe_dm1_layout_rect_xywh(
+        dm1_v1_inventory_backdrop_rect_pc34(), outX, outY, outW, outH);
 }
 
 static int probe_dm1_movement_rect_xywh(DM1_V1_MovementArrowRectPc34 rect,
