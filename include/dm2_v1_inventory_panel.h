@@ -113,6 +113,20 @@ typedef struct {
     uint32_t blit_hash;
 } DM2_V1_InventoryPanelHudConsumptionReceipt;
 
+/* skproject DRAW_ITEM_SURVEY probes this exact optional item image before it
+ * presents the selected item's survey panel. */
+#define DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD 0x11u
+#define DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT  0x01eeu
+#define DM2_V1_INVENTORY_SURVEY_TRANSPARENCY  12u
+
+typedef struct {
+    int valid;
+    uint16_t expanded_rect_index;
+    uint8_t transparent_index;
+    DM2_V1_InventoryPanelHudReceipt hud;
+    uint32_t receipt_hash;
+} DM2_V1_InventoryPanelSurveyPreviewReceipt;
+
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
@@ -141,6 +155,20 @@ int dm2_v1_inventory_panel_hud_receipt(
 int dm2_v1_inventory_panel_consume_hud_material(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_InventoryPanelHudReceipt *hud_receipt,
+    const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_survey_preview_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelItemView *item,
+    uint8_t gdat_category,
+    uint8_t gdat_index,
+    DM2_V1_InventoryPanelSurveyPreviewReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_consume_survey_preview(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelSurveyPreviewReceipt *preview,
     const DM2_V1_InventoryPanelHudBlit *blit,
     DM2_V1_InventoryPanelHudSurface *surface,
     DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);

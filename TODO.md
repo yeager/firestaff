@@ -4270,6 +4270,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     source span, or destination span. Live M11 ownership of the original
     record-to-GDAT and rectangle route remains open; this panel API supplies
     no default icon, position, clip, scale, or fallback pixels.
+  - 2026-07-13 update: selected-item survey preview now follows
+    `DRAW_ITEM_SURVEY` exactly: it admits only the selected source item's
+    optional `dtImage/0x11`, requires original rect `0x1EE` and key 12, and
+    consumes it through the verified panel blit. Missing `0x11` or a different
+    rect/key produces no preview; there is no generic item illustration.
 - DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_SET_TIMER_WEATHER`, `DM2_UPDATE_WEATHER`, `DM2_weather_3df7_0037`, `c_light.cpp`, and `c_cloud.cpp`: `src/dm2/dm2_v1_weather.c`, `dm2_v1_outdoor_renderer.c`, and `dm2_v1_runtime.c` lack the source timer/reseed/light/cloud interaction chain. The runtime now forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: source timer dispatcher, reseed/light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, and real-data capture. Do not add a procedural visual substitute.
   - 2026-07-13 update: `DM2_UPDATE_WEATHER` cloud-then-rain command order now
     has a DM2-owned execution plan. It preserves the source's ten-byte slot

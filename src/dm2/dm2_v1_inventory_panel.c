@@ -369,6 +369,62 @@ int dm2_v1_inventory_panel_consume_hud_material(
     return 1;
 }
 
+int dm2_v1_inventory_panel_survey_preview_receipt(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelItemView *item,
+    uint8_t gdat_category,
+    uint8_t gdat_index,
+    DM2_V1_InventoryPanelSurveyPreviewReceipt *out_receipt)
+{
+    DM2_V1_InventoryPanelGdatMaterialReceipt material;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_SURVEY:13962-14019 queries
+     * the selected record's dtImage/0x11 only when it is loadable, then
+     * draws that precise image at expanded rect 0x1ee with colour key 12.
+     * There is no original substitute when field 0x11 is absent. */
+    if (!item || !item->has_object || item->object_id == 0u ||
+        !dm2_v1_inventory_panel_gdat_material_receipt(
+            loader, item->object_id, gdat_category, gdat_index,
+            DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD, &material) ||
+        !dm2_v1_inventory_panel_hud_receipt(item, &material,
+                                             &out_receipt->hud)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->expanded_rect_index = DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT;
+    out_receipt->transparent_index = DM2_V1_INVENTORY_SURVEY_TRANSPARENCY;
+    hash = inventory_panel_hash_step(hash, out_receipt->expanded_rect_index);
+    hash = inventory_panel_hash_step(hash, out_receipt->transparent_index);
+    hash = inventory_panel_hash_step(hash, out_receipt->hud.receipt_hash);
+    if (hash == 0u) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->receipt_hash = hash;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int dm2_v1_inventory_panel_consume_survey_preview(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelSurveyPreviewReceipt *preview,
+    const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt)
+{
+    if (!preview || !preview->valid || preview->receipt_hash == 0u || !blit ||
+        blit->rect_number != preview->expanded_rect_index ||
+        blit->transparent_index != preview->transparent_index) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_inventory_panel_consume_hud_material(
+        loader, &preview->hud, blit, surface, out_receipt);
+}
+
 const char *dm2_v1_inventory_panel_source_evidence(void)
 {
     return
