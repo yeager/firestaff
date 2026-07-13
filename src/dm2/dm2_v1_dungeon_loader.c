@@ -733,11 +733,15 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
                                   uint16_t thing) {
     const uint8_t *record;
+    uint16_t next;
     int size = 0;
 
     /* skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK
      * returns GET_ADDRESS_OF_RECORD(rl)->w0; GenericRecord::w0 is the
-     * first little-endian word in every bounded DB pool record. */
+     * first little-endian word in every bounded DB pool record.  c_record.cpp
+     * DM2_APPEND_RECORD_TO/CUT_RECORD_FROM lines 66-68 and 126-127 reject
+     * OBJECT_NULL before a record address is used.  It is not a map-chain
+     * terminator, so do not pass it through to HUD/dungeon chain consumers. */
     /* The PC G1 corpus proves the pool addresses but not every ObjectID
      * shape in the ground-stack graph. Do not promote GenericRecord::w0
      * traversal for that variant until its complete graph validates. */
@@ -747,7 +751,8 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     }
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
-    return (int)RD16(record);
+    next = RD16(record);
+    return next == DM2_THING_NULL_MARKER ? -1 : (int)next;
 }
 
 static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
