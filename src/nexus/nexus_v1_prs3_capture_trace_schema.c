@@ -190,3 +190,70 @@ int nexus_v1_prs3_dm_bin_catalog_verified(
     *out_receipt = receipt;
     return 0;
 }
+
+int nexus_v1_prs3_cross_asset_frame_receipt_verified(
+    const uint8_t *dm_bin, size_t dm_bin_size, int dm_bin_hash_verified,
+    const uint8_t *menu_bpk, size_t menu_bpk_size, int menu_bpk_hash_verified,
+    Nexus_V1_Prs3CrossAssetFrameReceipt *out_receipt) {
+    Nexus_V1_Prs3CrossAssetFrameReceipt receipt;
+    Nexus_V1_Prs3DmBinCatalogReceipt dm_catalog;
+    Nexus_V1_BpkArchiveInfo menu_archive;
+    uint32_t i;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm_bin || !menu_bpk || !dm_bin_hash_verified ||
+        !menu_bpk_hash_verified ||
+        nexus_v1_prs3_dm_bin_catalog_verified(
+            dm_bin, dm_bin_size, 1, &dm_catalog) != 0 ||
+        !dm_catalog.complete ||
+        nexus_v1_bpk_archive_parse(menu_bpk, menu_bpk_size,
+                                   &menu_archive) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.dm_bin_hash_verified = 1;
+    receipt.menu_bpk_hash_verified = 1;
+    receipt.dm_bin_marker_count = dm_catalog.marker_count;
+    receipt.dm_bin_v1_record_count = dm_catalog.v1_record_count;
+    receipt.menu_prs3_entry_count = menu_archive.prs3_payload_count;
+    for (i = 0U; i < menu_archive.candidate_offset_count; ++i) {
+        Nexus_V1_BpkPrs3StreamPlan plan;
+        Nexus_V1_BpkPrs3Info info;
+        int status = nexus_v1_bpk_archive_prs3_stream_plan(
+            menu_bpk, menu_bpk_size, i, &plan);
+
+        if (status == NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3) continue;
+        if (status != NEXUS_V1_BPK_PRS3_STREAM_OK ||
+            nexus_v1_bpk_archive_inspect_prs3(menu_bpk, menu_bpk_size, i,
+                                               &info) != 0 ||
+            !info.prs3_version_matches || !plan.header_first_readable ||
+            plan.header_first_u32 == 0U) {
+            ++receipt.menu_missing_frame_word_count;
+            continue;
+        }
+        ++receipt.menu_v1_stream_count;
+        for (uint32_t marker_index = 0U;
+             marker_index < dm_catalog.marker_count; ++marker_index) {
+            const Nexus_V1_Prs3DmBinMarker *marker =
+                &dm_catalog.markers[marker_index];
+            if (marker->kind == NEXUS_V1_PRS3_DM_BIN_MARKER_V1_RECORD &&
+                marker->declared_target_bytes == plan.expected_output_bytes) {
+                ++receipt.matching_declared_target_count;
+                break;
+            }
+        }
+    }
+    receipt.outer_v1_framing_matches = receipt.dm_bin_v1_record_count > 0U &&
+        receipt.menu_prs3_entry_count > 0U &&
+        receipt.menu_v1_stream_count == receipt.menu_prs3_entry_count &&
+        receipt.menu_missing_frame_word_count == 0U;
+    /* No command execution capture is consumed here. */
+    receipt.shared_opcode_grammar_proven = 0;
+    receipt.decoder_promoted = 0;
+    receipt.menu_handoff_authorized = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.outer_v1_framing_matches;
+}
