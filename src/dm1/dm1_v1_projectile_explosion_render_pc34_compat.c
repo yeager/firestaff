@@ -16,41 +16,6 @@
 
 #include <string.h>
 
-/* ── G0215_auc_Graphic558_ProjectileScales ───────────────────────────
- * 7 scale units out of 32.
- * Ref: DUNVIEW.C:5712 (ST source), scaleIndex computation at :5718.
- * [0] = D1 native/back (32), [1] = D2 front (27), [2] = D2 back (21),
- * [3] = D3 front (18), [4] = D3 back (14), [5] = D4 front (12),
- * [6] = D4 back (9). */
-const unsigned char DM1_ProjectileScales[7] = {32, 27, 21, 18, 14, 12, 9};
-
-/* ── G0210_as_Graphic558_ProjectileAspects (14 entries) ──────────────
- * Ref: DUNVIEW.C line 78-91 (Graphic558 data section), DEFS.H:2037-2044.
- * Format: {FirstNativeBitmapRelativeIndex, FirstDerivedBitmapRelativeIndex,
- *           GraphicInfo}.
- * GraphicInfo bits:
- *   [1:0] = aspect type (0-3)
- *   [4]   = SIDE flag (MASK0x0010)
- *   [8]   = SCALE_WITH_KINETIC_ENERGY (MASK0x0100)
- *
- * Cross-checked against m11_game_view.c kFirstNative[14] and kGraphicInfo[14]. */
-const DM1_ProjectileAspect DM1_ProjectileAspects[DM1_PROJECTILE_ASPECT_COUNT] = {
-    { 0, 0, 0x0011}, /*  0: Arrow/dart/shuriken — type0, SIDE */
-    { 3, 0, 0x0011}, /*  1: Sword/axe/club      — type0, SIDE */
-    { 6, 0, 0x0010}, /*  2: Dagger              — type0, no-SIDE? (SIDE=0x0010 set) */
-    { 9, 0, 0x0112}, /*  3: Lightning bolt      — type2, SCALE_KE */
-    {11, 0, 0x0011}, /*  4: weapon #1           — type0, SIDE */
-    {14, 0, 0x0010}, /*  5: weapon #2           — type0, SIDE=0x0010 */
-    {17, 0, 0x0010}, /*  6: weapon #3           — type0 */
-    {20, 0, 0x0011}, /*  7: weapon #4           — type0, SIDE */
-    {23, 0, 0x0011}, /*  8: weapon #5           — type0, SIDE */
-    {26, 0, 0x0012}, /*  9: weapon #6           — type2 */
-    {28, 0, 0x0103}, /* 10: Fireball            — type3, SCALE_KE */
-    {29, 0, 0x0103}, /* 11: Default spell       — type3, SCALE_KE */
-    {30, 0, 0x0103}, /* 12: Slime               — type3, SCALE_KE */
-    {31, 0, 0x0103}, /* 13: Poison bolt/cloud   — type3, SCALE_KE */
-};
-
 /* ── G0216_auc_Graphic558_ExplosionBaseScales ────────────────────────
  * 4 values indexed by view depth (0=D0 closest, 3=D3 farthest).
  * Ref: DUNVIEW.C:6109 (the actual table values from ReDMCSB data section).
@@ -58,58 +23,6 @@ const DM1_ProjectileAspect DM1_ProjectileAspects[DM1_PROJECTILE_ASPECT_COUNT] = 
  *   max(4, (max(48, attack+1) * G0216[depth]) >> 8) & 0xFFFE */
 const unsigned char DM1_ExplosionBaseScales[4] = {32, 21, 14, 9};
 
-
-/* ── Projectile rendering queries ────────────────────────────────── */
-
-int dm1_v1_projectile_aspect_type(int aspectIndex) {
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
-    return (int)(DM1_ProjectileAspects[aspectIndex].graphicInfo & 0x0003u);
-}
-
-int dm1_v1_projectile_aspect_first_native(int aspectIndex) {
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
-    return (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
-}
-
-unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex) {
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0u;
-    return (unsigned int)DM1_ProjectileAspects[aspectIndex].graphicInfo;
-}
-
-/* DUNVIEW.C:5746-5786, L0183_i_ProjectileBitmapIndexDelta. */
-int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir) {
-    int aspectType;
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0;
-    aspectType = (int)(DM1_ProjectileAspects[aspectIndex].graphicInfo & 0x0003u);
-    if (relativeDir < 0) relativeDir = 0;
-    relativeDir &= 3;
-
-    /* Type 3 (NO_BACK_NO_ROTATION): always delta=0 */
-    if (aspectType == 3) return 0;
-
-    /* Perpendicular to party facing (right or left) */
-    if (relativeDir == 1 || relativeDir == 3) {
-        /* Type 2 (NO_BACK_AND_ROTATION): delta=1 */
-        if (aspectType == 2) return 1;
-        /* Type 0/1 (HAS_BACK): delta=2 */
-        return 2;
-    }
-
-    /* Parallel (forward=0 or backward=2) */
-    if (aspectType >= 2) return 0;
-    /* Type 1 (HAS_BACK_NO_ROTATION): delta=0 unless facing backward */
-    if (aspectType == 1 && relativeDir != 0) return 0;
-    /* Type 0/1 facing away: delta=1 (back graphic) if applicable */
-    return 1;
-}
-
-int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir) {
-    int first;
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
-    first = (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
-    return DM1_GFX_FIRST_PROJECTILE + first +
-           dm1_v1_projectile_bitmap_delta(aspectIndex, relativeDir);
-}
 
 int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     int aspectIndex = dm1_v1_projectile_subtype_to_aspect(subtype);
