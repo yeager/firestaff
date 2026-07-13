@@ -287,7 +287,7 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
 
     FILE *fp = fopen(file_path, "rb");
     if (!fp) {
-        printf("[TQR] Could not open %s: no asset file (using defaults)\n",
+        printf("[TQR] Could not open %s: no original graphics data\n",
                file_path);
         /* No original media was opened, so this remains a data-free path. */
         tqr_palette_init_defaults(&bundle->palette);
@@ -433,17 +433,15 @@ void tr_asset_block_synthetic_rendering_for_verified_media(
 
 int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
     if (!bundle) {
-        return 1;
+        return 0;
     }
     if (bundle->synthetic_rendering_blocked) {
         return 0;
     }
-    if (bundle->assets_verified && bundle->hucard_rom &&
-        bundle->hucard_rom_size > 0u && bundle->palette.tile_count == 0 &&
-        !bundle->track03_data) {
-        return 0;
-    }
-    return 1;
+    /* No test fixture, unverified container, or generated palette can grant
+     * the V1 renderer permission. A graphics bank must be present and have
+     * produced original tile bytes first. */
+    return bundle->track03_data != NULL && bundle->palette.tile_count > 0;
 }
 
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
