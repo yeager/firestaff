@@ -21,6 +21,12 @@
   blocked pending complete source-owned runtime records; do not coerce a
   compact actuator into a widened state value.
 
+- 2026-07-13 CSBWin saved-DSA tick follow-up: restored timer queue entries
+  now retain their source queue identity through the live timeline boundary.
+  Parameter messages stay on their authenticated payload path; malformed
+  queue/timer identity, absent type-47 records, wider timer families, timer
+  cell effects, master-state writes, and world/filter opcodes remain blocked.
+
 - 2026-07-13 DM1 original-save timeline continuation: C11's zero
   `SlotOrdinal` action-enable route, C12 hide-damage removal, and C13 Vi Altar
   rebirth are complete. The non-zero-slot

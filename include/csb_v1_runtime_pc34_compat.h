@@ -78,6 +78,7 @@ extern "C" {
 /* CSBWin SaveGame.cpp serializes the active overlay palette as twenty-four
  * consecutive EDT_Palette EXPOOL records: 3 channels * 512 entries. */
 #define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
+#define CSB_V1_CSBWIN_TIMER_QUEUE_NONE 0xffffu
 
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
@@ -404,6 +405,10 @@ typedef struct {
     uint16_t                csbwin_timer_queue_summary_count;
     uint16_t                csbwin_timer_queue_summary_total;
     uint16_t                csbwin_timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
+    /* Runtime-only receipt from a materialized DM1 timeline event index to
+     * its original CSBWin timer-queue slot. It is rebuilt on every verified
+     * CSBWin resume and is never a caller-provided timer identity. */
+    uint16_t                csbwin_timeline_event_queue_slot[DM1_EVENT_MAX_COUNT];
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
