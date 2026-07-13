@@ -463,6 +463,8 @@ int nexus_v1_inspect_dgn_material_corpus(
         receipt.structure3_payloads[level_index] = level.structure3_payload;
         (void)nexus_v1_level_structure3_model_reference_receipt(
             &level, &receipt.structure3_model_references[level_index]);
+        (void)nexus_v1_level_structure3_ordinal_correlation_receipt(
+            &level, &receipt.structure3_ordinal_correlations[level_index]);
         if (level.structure3_payload.declared) {
             ++receipt.structure3_payload_declared_level_count;
         }
@@ -488,6 +490,14 @@ int nexus_v1_inspect_dgn_material_corpus(
         }
         if (receipt.structure3_model_references[level_index].complete) {
             ++receipt.structure3_model_reference_complete_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .direct_block_ordinal_mapping_disproven) {
+            ++receipt.structure3_direct_block_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .direct_run_ordinal_mapping_disproven) {
+            ++receipt.structure3_direct_run_ordinal_mapping_disproven_level_count;
         }
         if (level.geometry_info.mesh_ready) ++receipt.geometry_ready_level_count;
         if (level.geometry_info.structure1f_valid) {

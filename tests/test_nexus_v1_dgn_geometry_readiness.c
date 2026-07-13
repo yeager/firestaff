@@ -391,6 +391,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnGeometryInfo info;
         Nexus_V1_Level loaded_level;
         Nexus_V1_DgnRendererHandoffReceipt handoff;
+        Nexus_V1_DgnStructure3OrdinalCorrelationReceipt correlation;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -510,6 +511,22 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
               "real Structure3 payload and owner-model provenance reach the host unchanged");
+        CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
+                  &loaded_level, &correlation) == 0 &&
+              correlation.structure1a_relation_complete ==
+                  handoff.structure3_model_references.complete &&
+              correlation.structure3_payload_valid ==
+                  loaded_level.structure3_payload.valid &&
+              correlation.structure3_block_count ==
+                  loaded_level.structure3_payload.block_count &&
+              correlation.structure3_nonzero_block_run_count ==
+                  loaded_level.structure3_payload.nonzero_block_run_count &&
+              correlation.direct_block_ordinal_mapping_disproven ==
+                  (correlation.model_index_exceeds_block_count > 0) &&
+              correlation.direct_run_ordinal_mapping_disproven ==
+                  (correlation.model_index_exceeds_nonzero_block_run_count > 0) &&
+              !correlation.face_semantics_proven,
+              "retail Structure3 correlation rules out only disproven direct ordinals");
         if (loaded_level.structure3_payload.declared) {
             CHECK(loaded_level.structure3_payload.valid &&
                   loaded_level.structure3_payload.zero_byte_count +
@@ -677,6 +694,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
+    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt structure3_correlation;
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt render_plan;
 
@@ -796,6 +814,21 @@ static void test_structure1f_semantics_and_bounds(void) {
           structure3_payload.raw_payload_hash != 0U &&
           !structure3_payload.face_semantics_proven,
           "Structure3 payload retains documented block boundaries without face semantics");
+    CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
+              &level, &structure3_correlation) == 0 &&
+          structure3_correlation.valid &&
+          structure3_correlation.structure1a_relation_complete &&
+          structure3_correlation.structure3_payload_valid &&
+          structure3_correlation.resolved_model_reference_count == 8 &&
+          structure3_correlation.highest_model_index == 0x28 &&
+          structure3_correlation.structure3_block_count == 4 &&
+          structure3_correlation.structure3_nonzero_block_run_count == 2 &&
+          structure3_correlation.model_index_exceeds_block_count == 8 &&
+          structure3_correlation.model_index_exceeds_nonzero_block_run_count == 8 &&
+          structure3_correlation.direct_block_ordinal_mapping_disproven &&
+          structure3_correlation.direct_run_ordinal_mapping_disproven &&
+          !structure3_correlation.face_semantics_proven,
+          "Structure1A model indexes cannot become direct Structure3 block or run ordinals");
     level.structure1f_entries[7].structure1a_index = 9U;
     level.structure1f_entries[7].structure1a_relation_valid = 0;
     CHECK(nexus_v1_level_structure1a_relation_receipt(&level,

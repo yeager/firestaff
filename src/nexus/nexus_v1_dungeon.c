@@ -1548,6 +1548,58 @@ int nexus_v1_level_structure3_payload_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_ordinal_correlation_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt receipt;
+    Nexus_V1_DgnStructure3ModelReferenceReceipt model_references;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.highest_model_index = -1;
+    if (!level) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_level_structure3_model_reference_receipt(
+        level, &model_references);
+    receipt.structure1a_relation_complete = model_references.complete;
+    receipt.structure3_payload_valid = level->structure3_payload.valid;
+    receipt.structure3_block_count = level->structure3_payload.block_count;
+    receipt.structure3_nonzero_block_run_count =
+        level->structure3_payload.nonzero_block_run_count;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        int model_index;
+        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+            !record->structure1a_relation_valid) continue;
+        model_index = (int)record->structure1a_structure3_model_index;
+        ++receipt.resolved_model_reference_count;
+        if (model_index > receipt.highest_model_index) {
+            receipt.highest_model_index = model_index;
+        }
+        if (model_index > receipt.structure3_block_count) {
+            ++receipt.model_index_exceeds_block_count;
+        }
+        if (model_index > receipt.structure3_nonzero_block_run_count) {
+            ++receipt.model_index_exceeds_nonzero_block_run_count;
+        }
+    }
+    receipt.direct_block_ordinal_mapping_disproven =
+        receipt.resolved_model_reference_count > 0 &&
+        receipt.model_index_exceeds_block_count > 0;
+    receipt.direct_run_ordinal_mapping_disproven =
+        receipt.resolved_model_reference_count > 0 &&
+        receipt.model_index_exceeds_nonzero_block_run_count > 0;
+    receipt.valid = receipt.structure1a_relation_complete &&
+        receipt.structure3_payload_valid;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_dgn_structure1_host_provenance_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1HostProvenanceReceipt *out_receipt)
