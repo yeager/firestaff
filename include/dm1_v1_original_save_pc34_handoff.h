@@ -39,6 +39,28 @@ typedef struct {
     int aspect[4];
 } DM1OriginalSavePC34ActiveGroupRecord;
 
+/* ReDMCSB DEFS.H EVENT.C.Projectile is a packed 16-bit motion record. This
+ * plan is the narrow source-bound bridge for a saved C48/C49 event; callers
+ * must still validate the target map before publishing a runtime projectile. */
+typedef struct {
+    int valid;
+    int source_event_type;
+    int source_event_index;
+    int projectile_index;
+    int projectile_category;
+    int projectile_subtype;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+    int direction;
+    int step_energy;
+    int first_move_grace;
+    int kinetic_energy;
+    int attack;
+    unsigned short associated_thing;
+} DM1OriginalSavePC34ProjectileEventPlan;
+
 typedef struct {
     DM1OriginalSaveClassifyResult classify;
     int importer_result;
@@ -208,6 +230,12 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
 int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     const DM1OriginalSavePC34HandoffReport *report,
     struct DM1_EventQueue_V1 *queue);
+
+int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+    const struct DM1_Event_V1 *event,
+    int source_event_index,
+    const struct DungeonThings_Compat *things,
+    DM1OriginalSavePC34ProjectileEventPlan *out_plan);
 
 int dm1_v1_original_save_pc34_handoff_load_world_from_file(
     const char *path,

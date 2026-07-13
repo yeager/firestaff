@@ -1855,6 +1855,61 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "every external PC34 corpus candidate roundtrips");
 }
 
+static void test_original_projectile_event_plan_preserves_c48_bits(void)
+{
+    struct DungeonProjectile_Compat projectiles[6];
+    struct DungeonThings_Compat things;
+    struct DM1_Event_V1 event;
+    DM1OriginalSavePC34ProjectileEventPlan plan;
+    uint16_t projectile_thing;
+    uint16_t motion;
+
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(&things, 0, sizeof(things));
+    memset(&event, 0, sizeof(event));
+    memset(&plan, 0, sizeof(plan));
+    things.projectiles = projectiles;
+    things.projectileCount = 6;
+    projectiles[5].eventIndex = 7;
+    projectiles[5].slot = 0xff80u; /* ReDMCSB fireball explosion thing */
+    projectiles[5].kineticEnergy = 83;
+    projectiles[5].attack = 91;
+    projectile_thing = (uint16_t)((THING_TYPE_PROJECTILE << 10) | 5u |
+                                  (2u << 14));
+    motion = (uint16_t)(17u | (9u << 5) | (3u << 10) | (6u << 12));
+    event.map_time = DM1_MAP_TIME_MAKE(2, 123456u);
+    event.type = DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS;
+    event.priority = 4;
+    wr16le(&event.b_mapX, projectile_thing);
+    wr16le(&event.c_cell, motion);
+
+    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+              &event, 7, &things, &plan) == 1,
+          "C48 projectile event binds its original projectile record");
+    CHECK(plan.valid && plan.projectile_index == 5 && plan.map_index == 2,
+          "C48 plan preserves event identity");
+    CHECK(plan.map_x == 17 && plan.map_y == 9 && plan.cell == 2 &&
+              plan.direction == 3 && plan.step_energy == 6,
+          "C48 plan decodes ReDMCSB C.Projectile bitfields");
+    CHECK(plan.first_move_grace == 1 &&
+              plan.projectile_category == PROJECTILE_CATEGORY_MAGICAL &&
+              plan.projectile_subtype == PROJECTILE_SUBTYPE_FIREBALL,
+          "C48 plan preserves first-move and fireball identity");
+    CHECK(plan.kinetic_energy == 83 && plan.attack == 91,
+          "C48 plan binds the original projectile kinetic fields");
+
+    event.type = DM1_EVENT_MOVE_PROJECTILE;
+    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+              &event, 7, &things, &plan) == 1 &&
+              plan.first_move_grace == 0,
+          "C49 preserves the source immediate-impact state");
+
+    projectiles[5].eventIndex = 8;
+    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+              &event, 7, &things, &plan) == 0,
+          "mismatched original EventIndex rejects projectile materialization");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -1869,6 +1924,7 @@ int main(void)
     test_world_roundtrip_helper_exports_verified_pc34();
     test_corpus_roundtrip_proof();
     test_optional_real_pc34_corpus_roundtrip();
+    test_original_projectile_event_plan_preserves_c48_bits();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
