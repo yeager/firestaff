@@ -87,18 +87,24 @@ int theron_v1_boot_runtime_trace_files_match_declared_hashes(
     const char *track02_path,
     const char *track02_md5_hex,
     const char *system_card_path,
-    const char *system_card_md5_hex) {
+    const char *system_card_md5_hex,
+    const char *trace_path,
+    const char *trace_md5_hex) {
     char actual_track02_md5[33];
     char actual_system_card_md5[33];
+    char actual_trace_md5[33];
 
     if (!track02_path || !track02_md5_hex || !system_card_path ||
-        !system_card_md5_hex || !m12_file_md5_hex(track02_path,
+        !system_card_md5_hex || !trace_path || !trace_md5_hex ||
+        !m12_file_md5_hex(track02_path,
                                                    actual_track02_md5) ||
-        !m12_file_md5_hex(system_card_path, actual_system_card_md5)) {
+        !m12_file_md5_hex(system_card_path, actual_system_card_md5) ||
+        !m12_file_md5_hex(trace_path, actual_trace_md5)) {
         return 0;
     }
     return strcmp(actual_track02_md5, track02_md5_hex) == 0 &&
-           strcmp(actual_system_card_md5, system_card_md5_hex) == 0;
+           strcmp(actual_system_card_md5, system_card_md5_hex) == 0 &&
+           strcmp(actual_trace_md5, trace_md5_hex) == 0;
 }
 
 int theron_v1_boot_track02_runtime_trace_intake_from_files(
@@ -107,6 +113,7 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     const char *system_card_path,
     const char *system_card_md5_hex,
     const char *trace_path,
+    const char *trace_md5_hex,
     Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt) {
     unsigned char *trace = NULL;
     unsigned char *track02 = NULL;
@@ -120,12 +127,15 @@ int theron_v1_boot_track02_runtime_trace_intake_from_files(
     memset(out_receipt, 0, sizeof(*out_receipt));
     /* The parser below receives bytes after these hashes are checked. The
      * explicit rehash prevents a caller from pairing a known hash label with
-     * changed Track 02 or System Card media. */
+     * changed Track 02, System Card, or Mednafen trace evidence. */
     if (!theron_v1_boot_runtime_trace_files_match_declared_hashes(
             track02_path, track02_md5_hex, system_card_path,
-            system_card_md5_hex)) {
+            system_card_md5_hex, trace_path, trace_md5_hex)) {
         return 0;
     }
+    out_receipt->trace_file_hash_verified = 1;
+    snprintf(out_receipt->trace_md5, sizeof(out_receipt->trace_md5), "%s",
+             trace_md5_hex);
     trace = theron_v1_boot_read_evidence_file(
         trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
     if (!trace || trace_size == 0u) goto done;
@@ -983,7 +993,13 @@ int theron_v1_boot_validate_track02_loader_receipt(
         stage2_handoff.stage3_entry_opcode != 0x00u ||
         stage2_handoff.stage3_irq2_selector != 0xffu ||
         stage2_handoff.stage3_continuation_address != 0x3802u ||
-        !stage2_handoff.stage3_mode1_header_verified) {
+        !stage2_handoff.stage3_mode1_header_verified ||
+        !stage2_handoff.stage3_selector_catalog_complete ||
+        stage2_handoff.stage3_resolved_descriptor_selector_count == 0u ||
+        stage2_handoff.stage3_out_of_bounds_descriptor_selector_count != 0u ||
+        stage2_handoff.stage3_resolved_descriptor_selector_count !=
+            stage2_handoff.stage3_nonzero_descriptor_selector_count ||
+        stage2_handoff.stage3_resolved_descriptor_selector_hash == 0u) {
         free(bytes);
         return 0;
     }
@@ -5656,7 +5672,8 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     Theron_V1_BootStartupLaunch *launch,
     const char *system_card_path,
     const char *system_card_md5_hex,
-    const char *trace_path) {
+    const char *trace_path,
+    const char *trace_md5_hex) {
     Theron_V1_BootTrack02RuntimeTraceIntakeReceipt intake;
     Theron_Track02Variant expected_variant;
 
@@ -5676,12 +5693,14 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
             system_card_path,
             system_card_md5_hex,
             trace_path,
+            trace_md5_hex,
             &intake)) {
         return 0;
     }
     expected_variant = theron_v1_track02_variant_for_md5(
         launch->profile->graphics_md5);
-    if (!intake.valid || !intake.trace_file_consumed ||
+    if (!intake.valid || !intake.trace_file_hash_verified ||
+        !intake.trace_file_consumed ||
         intake.runtime_handoff.variant != expected_variant) {
         return 0;
     }
