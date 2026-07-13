@@ -19,6 +19,13 @@
   `test_dm2_v1_hud_portrait_local_palette_gate`; matching CTest passed 2/2;
    `git diff --check` passed.
 
+- 2026-07-13 DM1 original PC34 C72 Champion Shield roundtrip: typed handoff
+  retains only Priority and signed `B.Defense`, validates the selected live
+  champion, subtracts the defense from that champion's lifecycle shield at
+  runtime, and exports no invented C union. Source: ReDMCSB `TIMELINE.C`
+  C72:1964-1967. Verification: Ninja and CTest
+  `dm1_v1_original_save_pc34_handoff` passed 1/1.
+
 - 2026-07-13 CSBWin restored TT_ParameterMessage DSA tick bridge: verified
   function-101 queue entries now reach the source parameter-message route
   through the restored live timer queue only after exact queue-slot, timer,

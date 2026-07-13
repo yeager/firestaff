@@ -10838,6 +10838,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 }
                 break;
             }
+            if (ev.aux0 == DM1_EVENT_CHAMPION_SHIELD &&
+                ev.aux2 == DM1_EVENT_CHAMPION_SHIELD &&
+                ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                world->party.champions[ev.aux4].present) {
+                /* ReDMCSB TIMELINE.C C72:1964-1967 subtracts B.Defense
+                 * from the selected champion only; do not route C72 through
+                 * the host status-lifecycle aliases. */
+                world->lifecycle.champions[ev.aux4].shieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);
