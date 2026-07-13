@@ -1008,6 +1008,8 @@ typedef struct {
         structure1f_floor_decoration_rotation_selectors;
     Nexus_V1_DgnStructure1FItemAttributePairReceipt structure1f_item_attribute_pairs;
     Nexus_V1_DgnStructure1FItemLocationPairReceipt structure1f_item_location_pairs;
+    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
+        structure1f_floor_decoration_offset_pairs;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     /* Direct-coordinate Structure1F records whose documented 64x64 source
      * cell appears in this DGN plan. This is provenance only: no record is

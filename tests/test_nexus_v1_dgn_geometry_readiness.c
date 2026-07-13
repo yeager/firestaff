@@ -1269,6 +1269,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           !handoff.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           handoff.structure1f_floor_decoration_rotation_selectors.complete &&
           !handoff.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          handoff.structure1f_floor_decoration_offset_pairs.complete &&
+          handoff.structure1f_floor_decoration_offset_pairs.unique_pair_count == 2 &&
+          handoff.structure1f_floor_decoration_offset_pairs.nonzero_pair_count == 1 &&
+          !handoff.structure1f_floor_decoration_offset_pairs.offset_semantics_proven &&
           handoff.structure1f_item_attribute_pairs.complete &&
           handoff.structure1f_item_attribute_pairs.unique_pair_count == 2 &&
           !handoff.structure1f_item_attribute_pairs.semantics_proven &&
@@ -1316,6 +1320,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.structure1f_floor_decoration_payload_selectors.payload_semantics_proven &&
           render_plan.structure1f_floor_decoration_rotation_selectors.complete &&
           !render_plan.structure1f_floor_decoration_rotation_selectors.rotation_semantics_proven &&
+          render_plan.structure1f_floor_decoration_offset_pairs.complete &&
+          render_plan.structure1f_floor_decoration_offset_pairs.unique_pair_count == 2 &&
+          render_plan.structure1f_floor_decoration_offset_pairs.nonzero_pair_count == 1 &&
+          !render_plan.structure1f_floor_decoration_offset_pairs.offset_semantics_proven &&
           render_plan.structure1f_item_attribute_pairs.complete &&
           render_plan.structure1f_item_attribute_pairs.unique_pair_count == 2 &&
           !render_plan.structure1f_item_attribute_pairs.semantics_proven &&
