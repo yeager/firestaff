@@ -1488,6 +1488,20 @@ typedef struct {
     int w;
     int h;
 } DM2_V1_InterfaceRect;
+
+/* Source-owned host command for c_dialog.cpp::DM2_dialog_2066_3820.  The
+ * panel image/palette come from DIALOG_BOXES/0x81/0 and its destination comes
+ * from the original INTERFACE_GENERAL raw4 rectangle table. */
+typedef struct {
+    int valid;
+    DM2_V1_DialogueBoxDrawPlan draw;
+    DM2_V1_InterfaceRect rect;
+    uint32_t command_hash;
+} DM2_V1_DialogueBoxHostCommand;
+
+int dm2_v1_boot_dialogue_box_host_command(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_DialogueBoxHostCommand *out_command);
 typedef struct {
     int valid;
     uint32_t table_hash;

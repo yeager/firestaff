@@ -2247,7 +2247,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t font_hash = 0u;
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
-    DM2_V1_DialogueBoxDrawPlan save_dialogue_plan;
+    DM2_V1_DialogueBoxHostCommand save_dialogue_command;
 
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
@@ -2259,7 +2259,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    memset(&save_dialogue_plan, 0, sizeof(save_dialogue_plan));
+    memset(&save_dialogue_command, 0, sizeof(save_dialogue_command));
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
@@ -2360,10 +2360,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_v1_viewport_set_gdat_interface_rect14(
             &viewport, rect14_rows, rect14_row_count, rect14_hash);
     }
-    /* The save/load dialogue is not a map GRAPHICSSET shell. Keep its real
-     * DIALOG_BOXES/0x81/0 material attached to the live runtime so M11 can
-     * later draw the original panel only after it expands RECT_453. */
-    (void)dm2_v1_boot_dialogue_box_draw_plan(rt->boot, &save_dialogue_plan);
+    /* c_dialog.cpp expands RECT_453 before it blits the save/load panel.
+     * Keep that full source-owned command with the live frame; M11 must not
+     * substitute an inferred rectangle or a launcher panel. */
+    (void)dm2_v1_boot_dialogue_box_host_command(
+        rt->boot, &save_dialogue_command);
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
@@ -2635,11 +2636,25 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.gdat_interface_rect14_placement_count =
         rect14_host.placement_count;
     g_dm2_frame_ownership.gdat_save_dialogue_material_bound =
-        save_dialogue_plan.valid;
+        save_dialogue_command.draw.valid;
+    g_dm2_frame_ownership.gdat_save_dialogue_host_command_ready =
+        save_dialogue_command.valid;
     g_dm2_frame_ownership.gdat_save_dialogue_material_hash =
-        save_dialogue_plan.valid ? save_dialogue_plan.plan_hash : 0u;
+        save_dialogue_command.draw.valid
+            ? save_dialogue_command.draw.plan_hash : 0u;
+    g_dm2_frame_ownership.gdat_save_dialogue_host_command_hash =
+        save_dialogue_command.valid ? save_dialogue_command.command_hash : 0u;
     g_dm2_frame_ownership.gdat_save_dialogue_rect_index =
-        save_dialogue_plan.valid ? save_dialogue_plan.expanded_rect_index : 0u;
+        save_dialogue_command.valid
+            ? save_dialogue_command.draw.expanded_rect_index : 0u;
+    g_dm2_frame_ownership.gdat_save_dialogue_x =
+        save_dialogue_command.valid ? save_dialogue_command.rect.x : 0;
+    g_dm2_frame_ownership.gdat_save_dialogue_y =
+        save_dialogue_command.valid ? save_dialogue_command.rect.y : 0;
+    g_dm2_frame_ownership.gdat_save_dialogue_w =
+        save_dialogue_command.valid ? save_dialogue_command.rect.w : 0;
+    g_dm2_frame_ownership.gdat_save_dialogue_h =
+        save_dialogue_command.valid ? save_dialogue_command.rect.h : 0;
     g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed =
         viewport.gdat_material_palette_floor_ceiling_consumed_count;
     g_dm2_frame_ownership.gdat_material_palette_wall_consumed =

@@ -8,6 +8,12 @@
   disabled actions, parameter-message timers, `LocalState=2/3`, door-cell
   mutation, and rescheduling remain rejected/outside this bounded route.
   Verification: Ninja and CTest `csb_v1_phase7_verification`.
+- 2026-07-13 DM2 save/load dialogue host command: skproject
+  `c_dialog.cpp::DM2_dialog_2066_3820` now binds the original
+  `DIALOG_BOXES/0x81/0` image/local-palette plan to the expanded
+  `INTERFACE_GENERAL/0/raw4` `RECT_453` destination. The runtime publishes
+  the exact source-owned image, rectangle, text offset, and palette semantics
+  for M11; it does not create a replacement panel, position, or colour.
 
 - 2026-07-13 CSBWin `TT_FALSEWALL` DSA receipt: restored function-7 timers
   now bind their original target and SET/CLEAR/TOGGLE action through
