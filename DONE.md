@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-13 DM1 HoC C161 modal mirror guard: candidate selection now fails
+  closed while ReDMCSB `REVIVE.C` F0281 rename state is live. A real-PC34
+  regression proves a second C127 cannot replace the editable candidate; after
+  C162 the second mirror materializes only its own portrait and name.
+  Verification: focused CTest against installed PC34 data.
+
 - 2026-07-13 DM1 HoC full-party candidate cancellation: focused coverage now
   proves C127 appends a fourth candidate only from three members, C162 removes
   that tail slot and clears its ordinal while preserving the mirror, and a

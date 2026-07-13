@@ -549,6 +549,54 @@ int main(int argc, char** argv)
         }
     }
 
+    /* ReDMCSB REVIVE.C F0281 owns a C161 candidate until its panel command
+     * completes. A different front C127 must not replace that live candidate. */
+    if (firstOrdinal >= 0 && secondOrdinal >= 0) {
+        M12_StartupMenuState modalMenu;
+        M11_GameViewState modalGame;
+        char secondName[16];
+        int candidateIndex;
+
+        secondName[0] = '\0';
+        if (!open_game(dataDir, &modalMenu, &modalGame)) {
+            fprintf(stderr, "FAIL could not open C161 modal guard game\n");
+            ok = 0;
+        } else {
+            modalGame.world.party.mapIndex = 0;
+            modalGame.world.party.mapX = firstPartyX;
+            modalGame.world.party.mapY = firstPartyY;
+            modalGame.world.party.direction = firstDirection;
+            if (!M11_GameView_GetMirrorNameByOrdinal(&modalGame, secondOrdinal,
+                                                      secondName, (int)sizeof(secondName)) ||
+                !M11_GameView_SelectFrontMirrorCandidate(&modalGame) ||
+                !M11_GameView_BeginMirrorCandidateReincarnateRename(&modalGame)) {
+                fprintf(stderr, "FAIL HoC C161 modal guard setup\n");
+                ok = 0;
+            } else {
+                candidateIndex = modalGame.candidateMirrorPartyIndex;
+                modalGame.world.party.mapX = secondPartyX;
+                modalGame.world.party.mapY = secondPartyY;
+                modalGame.world.party.direction = secondDirection;
+                if (M11_GameView_GetFrontMirrorOrdinal(&modalGame) != secondOrdinal ||
+                    M11_GameView_SelectFrontMirrorCandidate(&modalGame) ||
+                    !modalGame.candidateMirrorPanelActive ||
+                    !modalGame.candidateMirrorRenameActive ||
+                    modalGame.candidateMirrorPartyIndex != candidateIndex ||
+                    modalGame.world.party.champions[candidateIndex].name[0] != '\0' ||
+                    strstr(modalGame.inspectTitle, secondName) != NULL ||
+                    !M11_GameView_CancelMirrorCandidate(&modalGame) ||
+                    !M11_GameView_SelectFrontMirrorCandidate(&modalGame) ||
+                    !champion_name_matches(
+                        &modalGame.world.party.champions[
+                            modalGame.candidateMirrorPartyIndex], secondName)) {
+                    fprintf(stderr, "FAIL HoC C161 modal guard did not retain A or restore B\n");
+                    ok = 0;
+                }
+            }
+            M11_GameView_Shutdown(&modalGame);
+        }
+    }
+
     printf("probe=dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat\n");
     printf("sourceEvidence=ReDMCSB DUNGEON.C:2573,2608-2612 C127 front-wall portrait; MOVESENS.C:1501-1503; REVIVE.C F0280,F0281,F0282:744-805\n");
     printf("visibleMirrorOrdinals=%d\n", expectedCount);
