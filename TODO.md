@@ -1937,6 +1937,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       transparency and deliberately has no substitute 320x200 raster. The
       local real-asset probe passes 47/47. Remaining work is still the Mac/app
       presented-frame capture, not another wrapper or synthetic surface.
+    - 2026-07-13 verified runtime-bridge update: the opening and terminal HUD
+      input/runtime decisions now carry the same PC34 package receipt as the
+      C001/C004/C002/C003/C017/C040 host surface. The bridge rejects a changed
+      session generation, missing source hash, wrapper/fallback route, or an
+      input/runtime state that does not match the opening or post-entrance
+      transition. The local real-asset probe passes 50/50. Remaining work is
+      still a Mac/app presented-frame capture.
 - 🔧 2026-07-11 Theron Track02 real-media handoff follow-up: entries 6 and 8 are disproven as object-table/level candidates by the hash-verified JP/US raw-BIN receipts. Descriptor-local and startup-plus-guessed-object route constructors now reject, so the hash/anchor-gated startup candidate is the only supported Track 02 level decoder route. Remaining work is genuine non-startup loader/layout correlation from original media, followed only by a separately supported decoder and atomic route handoff; no synthetic fallback, arbitrary descriptor scan, or compact-row semantic promotion. Palette offsets and Mac/app capture remain separate real-media work.
   - 2026-07-13 update: the old hand-authored loader-row import has been
     retired. A loader receipt now accepts only the provenance-marked original
