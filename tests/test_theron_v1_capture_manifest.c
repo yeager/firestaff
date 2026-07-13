@@ -37,6 +37,7 @@ int main(void) {
     int system_card_fd;
     int trace_fd;
     int manifest_fd;
+    int mutate_fd;
 
     check(theron_v1_capture_manifest_parse(valid, &manifest),
           "accepts exact, lower-case MD5-bound manifest");
@@ -161,6 +162,13 @@ int main(void) {
                   strcmp(resolved.trace_md5,
                          "04a75036e9d520bb983c5ed03b8d0182") == 0,
               "binds a V2 capture manifest to the selected Track 02 profile");
+        mutate_fd = open(track02_path, O_WRONLY | O_APPEND);
+        check(mutate_fd >= 0 && write(mutate_fd, "d", 1u) == 1,
+              "changes Track 02 bytes after boot-profile identity was set");
+        if (mutate_fd >= 0) close(mutate_fd);
+        check(!theron_v1_boot_runtime_capture_manifest_from_file(
+                  &profile, manifest_path, &resolved) && !resolved.valid,
+              "rejects a capture manifest after selected Track 02 changes");
         snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
                  "f23601102138f87c33025877767ebf76");
         check(!theron_v1_boot_runtime_capture_manifest_from_file(

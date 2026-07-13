@@ -5739,12 +5739,20 @@ int theron_v1_boot_runtime_capture_manifest_from_file(
     unsigned char *text;
     size_t text_size = 0u;
     Theron_V1CaptureManifest parsed;
+    char observed_track02_md5[33];
     int accepted = 0;
 
     if (out_manifest) memset(out_manifest, 0, sizeof(*out_manifest));
     if (!profile || !manifest_path || !out_manifest ||
         !profile->assets_verified || !profile->graphics_path[0] ||
         !profile->graphics_md5[0]) {
+        return 0;
+    }
+    /* A capture manifest is not allowed to revive a profile whose Track 02
+     * bytes changed after boot discovery. This is provenance only: no
+     * Track 02 record, bitmap, palette, or dungeon semantics are inferred. */
+    if (!m12_file_md5_hex(profile->graphics_path, observed_track02_md5) ||
+        strcmp(observed_track02_md5, profile->graphics_md5) != 0) {
         return 0;
     }
     text = theron_v1_boot_read_evidence_file(
