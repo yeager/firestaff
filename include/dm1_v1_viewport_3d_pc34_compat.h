@@ -776,6 +776,14 @@ typedef enum {
 } DM1_ViewDoorButtonIndex;
 
 typedef struct {
+    bool valid;
+    DM1_ViewDoorButtonIndex view_index;
+    const DM1_WallFrame *frame;
+    const uint8_t *palette_remap;
+    int transparent_color;
+} DM1_ViewportCenterDoorButtonHostPlanPc34;
+
+typedef struct {
     DM1_WallFrame frame;       /* G0208-style coordinate set plus src offset */
     const uint8_t *pixels;     /* Native or pre-scaled derived bitmap span */
     int16_t source_width;      /* Chunky source row stride in pixels */
@@ -1124,6 +1132,9 @@ int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
     bool wall_like,
     bool front_alcove,
     DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff);
+int dm1_viewport_3d_center_door_button_host_plan_pc34(
+    int depth_index,
+    DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan);
 
 /*
  * Wire wall-frame bitmaps into the V1 viewport drawing pipeline.

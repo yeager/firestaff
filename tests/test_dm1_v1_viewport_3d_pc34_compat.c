@@ -1917,6 +1917,25 @@ static void test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip(void)
     }
 }
 
+static void test_center_door_button_host_plan(void)
+{
+    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
+    check_int("center_door_button.d2.plan",
+              dm1_viewport_3d_center_door_button_host_plan_pc34(1, &plan), 1);
+    check_int("center_door_button.d2.view", plan.view_index,
+              DM1_VIEW_DOOR_BUTTON_D2C);
+    check_int("center_door_button.d2.c10", plan.transparent_color, 10);
+    check_int("center_door_button.d2.palette", plan.palette_remap != NULL, 1);
+    check_int("center_door_button.d3.plan",
+              dm1_viewport_3d_center_door_button_host_plan_pc34(2, &plan), 1);
+    check_int("center_door_button.d3.view", plan.view_index,
+              DM1_VIEW_DOOR_BUTTON_D3C);
+    check_int("center_door_button.d3.c10", plan.transparent_color, 10);
+    check_int("center_door_button.d3.palette", plan.palette_remap != NULL, 1);
+    check_int("center_door_button.invalid_depth",
+              dm1_viewport_3d_center_door_button_host_plan_pc34(3, &plan), 0);
+}
+
 static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -4331,6 +4350,7 @@ int main(void)
     test_f0099_copy_and_flip_h_preserves_row_boundaries();
     test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip();
+    test_center_door_button_host_plan();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();
