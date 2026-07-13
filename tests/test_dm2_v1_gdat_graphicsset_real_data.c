@@ -111,6 +111,49 @@ static int source_img3_bits_per_pixel(const uint8_t *raw, size_t raw_size,
     return 1;
 }
 
+static int verify_source_c8_selector_gate(DM2_V1_AssetLoader *loader,
+                                          uint8_t *graphics,
+                                          size_t graphics_size,
+                                          const uint8_t *raw,
+                                          size_t raw_size,
+                                          int graphicsset,
+                                          int field,
+                                          int *out_checks)
+{
+    unsigned int bits_per_pixel = 0u;
+    size_t raw_offset;
+    uint8_t saved_selector;
+    uint8_t *decoded;
+
+    if (!loader || !graphics || !raw || raw_size < 8u || !out_checks ||
+        !source_img3_bits_per_pixel(raw, raw_size, &bits_per_pixel)) {
+        return 0;
+    }
+    if (bits_per_pixel != 8u) return 1;
+    if (raw < graphics || raw >= graphics + graphics_size) return 0;
+    raw_offset = (size_t)(raw - graphics);
+    if (raw_offset > graphics_size - 8u ||
+        (graphics[raw_offset + 6u] != 2u &&
+         graphics[raw_offset + 6u] != 3u)) {
+        return 0;
+    }
+
+    /* skproject DECODE_IMG9 accepts only selectors 2 and 3. A source C8
+     * plane with any other selector must fail before it reaches a scene. */
+    saved_selector = graphics[raw_offset + 6u];
+    graphics[raw_offset + 6u] = 0u;
+    decoded = dm2_v1_asset_load_image_field(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
+        NULL, NULL, NULL);
+    graphics[raw_offset + 6u] = saved_selector;
+    if (decoded) {
+        free(decoded);
+        return 0;
+    }
+    ++*out_checks;
+    return 1;
+}
+
 int main(void)
 {
     uint8_t *graphics = NULL;
@@ -122,6 +165,7 @@ int main(void)
     int referenced[16] = { 0 };
     int exact_material_sets = 0;
     int referenced_sets = 0;
+    int c8_selector_checks = 0;
     int failures = 0;
 
     if (!load_canonical_files(&graphics, &graphics_size,
@@ -162,6 +206,14 @@ int main(void)
         unsigned int ceiling_data_index = 0u;
         unsigned int source_floor_bpp = 0u;
         unsigned int source_ceiling_bpp = 0u;
+        int decoded_floor_width = 0;
+        int decoded_floor_height = 0;
+        int decoded_ceiling_width = 0;
+        int decoded_ceiling_height = 0;
+        DM2_ImageFormat decoded_floor_format = DM2_IMG_FMT_UNKNOWN;
+        DM2_ImageFormat decoded_ceiling_format = DM2_IMG_FMT_UNKNOWN;
+        uint8_t *decoded_floor = NULL;
+        uint8_t *decoded_ceiling = NULL;
         int complete = dm2_v1_asset_load_image_metadata(
                 &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
                 DM2_GDAT_GFXSET_FLOOR, &floor) &&
@@ -203,6 +255,36 @@ int main(void)
              ceiling.bits_per_pixel != source_ceiling_bpp)) {
             ++failures;
         }
+        if (referenced[style]) {
+            /* skproject EXTRACT_GDAT_IMAGE dispatches IMG3::Getpf() to
+             * DECODE_IMG9 or DECODE_IMG3_UNDERLAY_LOCAL before dungeon
+             * planes can reach c_gui_vp. Metadata alone is not admission. */
+            decoded_floor = dm2_v1_asset_load_image_field(
+                &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
+                DM2_GDAT_GFXSET_FLOOR, &decoded_floor_width,
+                &decoded_floor_height, &decoded_floor_format);
+            decoded_ceiling = dm2_v1_asset_load_image_field(
+                &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
+                DM2_GDAT_GFXSET_CEIL, &decoded_ceiling_width,
+                &decoded_ceiling_height, &decoded_ceiling_format);
+            if (!decoded_floor || !decoded_ceiling ||
+                decoded_floor_width != (int)floor.width ||
+                decoded_floor_height != (int)floor.height ||
+                decoded_ceiling_width != (int)ceiling.width ||
+                decoded_ceiling_height != (int)ceiling.height ||
+                decoded_floor_format == DM2_IMG_FMT_UNKNOWN ||
+                decoded_ceiling_format == DM2_IMG_FMT_UNKNOWN) {
+                ++failures;
+            }
+            if (!verify_source_c8_selector_gate(
+                    &loader, graphics, graphics_size, floor_raw, floor_size,
+                    style, DM2_GDAT_GFXSET_FLOOR, &c8_selector_checks) ||
+                !verify_source_c8_selector_gate(
+                    &loader, graphics, graphics_size, ceiling_raw, ceiling_size,
+                    style, DM2_GDAT_GFXSET_CEIL, &c8_selector_checks)) {
+                ++failures;
+            }
+        }
         if (complete) ++exact_material_sets;
         if (referenced[style]) {
             ++referenced_sets;
@@ -221,17 +303,20 @@ int main(void)
             }
             if (!complete) ++failures;
         }
+        free(decoded_floor);
+        free(decoded_ceiling);
     }
-    printf("referenced=%d exact-material-sets=%d\n", referenced_sets,
-           exact_material_sets);
+    printf("referenced=%d exact-material-sets=%d c8-selector-gates=%d\n",
+           referenced_sets, exact_material_sets, c8_selector_checks);
     dm2_v1_asset_loader_free(&loader);
     dm2_v1_dungeon_free(&dungeon);
     free(graphics);
     free(dungeon_bytes);
-    if (failures != 0 || referenced_sets == 0 || exact_material_sets == 0) {
+    if (failures != 0 || referenced_sets == 0 || exact_material_sets == 0 ||
+        c8_selector_checks == 0) {
         fputs("FAIL: a map GRAPHICSSET cannot borrow a different set\n", stderr);
         return 1;
     }
-    puts("PASS: every referenced G1 MapGraphicsStyle owns exact scene material");
+    puts("PASS: every referenced G1 MapGraphicsStyle owns exact, decodable scene material");
     return 0;
 }
