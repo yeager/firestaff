@@ -420,6 +420,8 @@ int dm2_v1_sound_play_positional(int sound_id,
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified)
 {
+    size_t root_length;
+
     g_dm2_verified_music_asset_root[0] = '\0';
     g_dm2_music_schedule_active = 0;
     g_dm2_music_schedule_track = -1;
@@ -427,17 +429,23 @@ void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
     if (!primary_assets_verified || !asset_root || asset_root[0] == '\0') {
         return;
     }
-    snprintf(g_dm2_verified_music_asset_root,
-             sizeof(g_dm2_verified_music_asset_root), "%s", asset_root);
+    root_length = strlen(asset_root);
+    if (root_length >= sizeof(g_dm2_verified_music_asset_root)) {
+        return;
+    }
+    memcpy(g_dm2_verified_music_asset_root, asset_root, root_length + 1u);
 }
 
 int dm2_v1_sound_queue_music(int track, int loop,
                              DM2_V1_MusicQueueReceipt *out_receipt)
 {
-    FILE *file;
+    static const char music_suffix_format[] = "/%02x.hmp.mid";
+    FILE *file = NULL;
     uint8_t *data = NULL;
     long file_length;
     size_t bytes_read;
+    size_t root_length;
+    int suffix_length;
     DM2_V1_MusicQueueReceipt receipt;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -449,12 +457,28 @@ int dm2_v1_sound_queue_music(int track, int loop,
     } else if (g_dm2_verified_music_asset_root[0] != '\0') {
         /* skproject/SKULLWIN/c_midi.cpp: MIDIPATHNAME "./DATA/%02x.hmp.mid".
          * asset_root is Firestaff's materialized equivalent of DATA. */
-        snprintf(receipt.asset_path, sizeof(receipt.asset_path),
-                 "%s/%02x.hmp.mid", g_dm2_verified_music_asset_root, track);
-        file = fopen(receipt.asset_path, "rb");
-        if (!file) {
-            receipt.result = DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+        root_length = strlen(g_dm2_verified_music_asset_root);
+        if (root_length >= sizeof(receipt.asset_path) ||
+            sizeof(receipt.asset_path) - root_length <
+                sizeof(music_suffix_format)) {
+            receipt.result = DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED;
         } else {
+            memcpy(receipt.asset_path, g_dm2_verified_music_asset_root,
+                   root_length);
+            suffix_length = snprintf(receipt.asset_path + root_length,
+                                     sizeof(receipt.asset_path) - root_length,
+                                     music_suffix_format, (unsigned int)track);
+            if (suffix_length < 0 ||
+                (size_t)suffix_length >=
+                    sizeof(receipt.asset_path) - root_length) {
+                receipt.asset_path[0] = '\0';
+                receipt.result = DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED;
+            } else {
+                receipt.result = DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+                file = fopen(receipt.asset_path, "rb");
+            }
+        }
+        if (receipt.result == DM2_V1_MUSIC_QUEUE_ASSET_MISSING && file) {
             if (fseek(file, 0, SEEK_END) != 0 ||
                 (file_length = ftell(file)) < 0 ||
                 (unsigned long)file_length > DM2_V1_MUSIC_MAX_FILE_BYTES ||
