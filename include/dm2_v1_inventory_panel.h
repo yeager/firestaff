@@ -83,6 +83,36 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_InventoryPanelHudReceipt;
 
+/* Source-owned QUERY_BLIT_RECT output for DRAW_ITEM_ICON.  The panel cannot
+ * invent a rect number, clipping region, source offset, or transparency key. */
+typedef struct {
+    uint16_t rect_number;
+    int source_x;
+    int source_y;
+    int destination_x;
+    int destination_y;
+    uint16_t width;
+    uint16_t height;
+    uint8_t transparent_index;
+} DM2_V1_InventoryPanelHudBlit;
+
+typedef struct {
+    uint8_t *pixels;
+    int width;
+    int height;
+    int stride;
+} DM2_V1_InventoryPanelHudSurface;
+
+typedef struct {
+    int valid;
+    uint16_t rect_number;
+    uint16_t width;
+    uint16_t height;
+    uint32_t drawn_pixel_count;
+    uint32_t transparent_pixel_count;
+    uint32_t blit_hash;
+} DM2_V1_InventoryPanelHudConsumptionReceipt;
+
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
@@ -107,6 +137,13 @@ int dm2_v1_inventory_panel_hud_receipt(
     const DM2_V1_InventoryPanelItemView *item,
     const DM2_V1_InventoryPanelGdatMaterialReceipt *material,
     DM2_V1_InventoryPanelHudReceipt *out_receipt);
+
+int dm2_v1_inventory_panel_consume_hud_material(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_InventoryPanelHudReceipt *hud_receipt,
+    const DM2_V1_InventoryPanelHudBlit *blit,
+    DM2_V1_InventoryPanelHudSurface *surface,
+    DM2_V1_InventoryPanelHudConsumptionReceipt *out_receipt);
 
 const char *dm2_v1_inventory_panel_source_evidence(void);
 
