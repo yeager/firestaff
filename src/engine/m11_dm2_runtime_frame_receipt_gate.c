@@ -11,6 +11,7 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
     if (!boot_receipt || !boot_receipt->runtime_m11_frame_receipt_consumed ||
         boot_receipt->runtime_m11_frame_map_load_token == 0u ||
         boot_receipt->runtime_m11_frame_scene_control_hash == 0u ||
+        boot_receipt->runtime_m11_frame_scene_light_hash == 0u ||
         boot_receipt->runtime_m11_frame_floor_material_hash == 0u ||
         boot_receipt->runtime_m11_frame_ceiling_material_hash == 0u ||
         /* dm2_v1_runtime marks outdoor map tokens in bit 31.  UPDATE_GFXSET
@@ -40,6 +41,8 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_map_load_token &&
         runtime_receipt->scene_control_hash ==
             boot_receipt->runtime_m11_frame_scene_control_hash &&
+        runtime_receipt->scene_light_hash ==
+            boot_receipt->runtime_m11_frame_scene_light_hash &&
         runtime_receipt->floor_material_hash ==
             boot_receipt->runtime_m11_frame_floor_material_hash &&
         runtime_receipt->ceiling_material_hash ==

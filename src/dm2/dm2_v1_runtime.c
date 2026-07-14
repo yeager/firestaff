@@ -95,6 +95,7 @@ typedef struct {
     uint8_t map_door_gfx_list[2];
     int map_graphics_style;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
+    DM2_V1_GdatSceneLightM11Receipt gdat_scene_light_receipt;
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
@@ -687,6 +688,8 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 
     if (!rt) return;
     dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
+    memset(&rt->gdat_scene_light_receipt, 0,
+           sizeof(rt->gdat_scene_light_receipt));
     dm2_v1_gdat_wall_m11_command_plan_free(&rt->gdat_wall_material_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&rt->gdat_door_material_plan);
     rt->map_graphics_style = -1;
@@ -736,6 +739,11 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         !rt->gdat_scene_material_plan.valid ||
         rt->gdat_scene_material_plan.graphicsset !=
             (uint8_t)rt->map_graphics_style) {
+        return;
+    }
+    if (!dm2_v1_gdat_scene_light_m11_receipt(
+            &rt->gdat_scene_material_plan, &rt->gdat_scene_light_receipt)) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
         return;
     }
     if (!dm2_v1_boot_gdat_wall_m11_command_plan(
@@ -3182,6 +3190,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (rt->outdoor ? UINT32_C(0x80000000) : 0u);
     g_dm2_last_m11_frame.scene_control_hash =
         g_dm2_frame_ownership.gdat_scene_control_hash;
+    g_dm2_last_m11_frame.scene_light_hash =
+        rt->gdat_scene_light_receipt.valid
+            ? rt->gdat_scene_light_receipt.receipt_hash : 0u;
     /* UPDATE_GFXSET owns these exact GRAPHICSSET IMG3 records; retain their
      * individual identities so M11 cannot combine a current control receipt
      * with floor, ceiling, or WALL_GFX pixels from another plan. */
@@ -3214,6 +3225,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.floor_ceiling_materials_complete &&
         g_dm2_last_m11_frame.map_load_token != 0u &&
         g_dm2_last_m11_frame.scene_control_hash != 0u &&
+        g_dm2_last_m11_frame.scene_light_hash != 0u &&
         g_dm2_last_m11_frame.floor_material_hash != 0u &&
         g_dm2_last_m11_frame.ceiling_material_hash != 0u &&
         (rt->outdoor || g_dm2_last_m11_frame.wall_material_plan_hash != 0u) &&

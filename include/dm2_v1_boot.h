@@ -288,6 +288,7 @@ typedef struct {
     int runtime_m11_frame_receipt_consumed;
     uint32_t runtime_m11_frame_map_load_token;
     uint32_t runtime_m11_frame_scene_control_hash;
+    uint32_t runtime_m11_frame_scene_light_hash;
     uint32_t runtime_m11_frame_floor_material_hash;
     uint32_t runtime_m11_frame_ceiling_material_hash;
     uint32_t runtime_m11_frame_wall_material_plan_hash;
