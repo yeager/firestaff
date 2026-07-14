@@ -14,7 +14,8 @@
         } \
     } while (0)
 
-static int receipt_is_admitted(const DM1OriginalSavePC34CorpusReceipt *receipt)
+static int receipt_is_runtime_admitted(
+    const DM1OriginalSavePC34CorpusReceipt *receipt)
 {
     return receipt && receipt->external_original &&
            receipt->roundtrip_receipts_committed &&
@@ -30,7 +31,27 @@ static int receipt_is_admitted(const DM1OriginalSavePC34CorpusReceipt *receipt)
            receipt->part_byte_count_preservation_ok &&
            receipt->c3_event_byte_preservation_ok &&
            receipt->c4_timeline_byte_preservation_ok &&
-           receipt->dungeon_tail_byte_preservation_ok;
+           receipt->dungeon_tail_byte_preservation_ok &&
+           receipt->source_dungeon_tail_byte_count > 0u &&
+           receipt->source_runtime_stage_attempted &&
+           receipt->source_runtime_stage_result ==
+               DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+           receipt->source_runtime_stage_committed &&
+           receipt->source_runtime_stage_owns_dungeon &&
+           receipt->source_runtime_adopt_attempted &&
+           receipt->source_runtime_adopt_result ==
+               DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+           receipt->source_runtime_adopted &&
+           receipt->source_runtime_adopt_owns_dungeon &&
+           receipt->source_runtime_adopt_event_count ==
+               receipt->source_runtime_stage_event_count &&
+           receipt->source_runtime_adopt_timeline_count ==
+               receipt->source_runtime_stage_timeline_count &&
+           receipt->source_runtime_adopt_queue_committed &&
+           receipt->source_runtime_adopt_queue_event_count ==
+               receipt->source_runtime_stage_timeline_count &&
+           receipt->source_runtime_adopt_queue_first_unused_index >=
+               receipt->source_runtime_adopt_queue_event_count;
 }
 
 int main(void)
@@ -60,6 +81,15 @@ int main(void)
               report.roundtrip_succeeded_count == report.pc34_candidate_count &&
               report.roundtrip_succeeded_count == report.receipt_count,
           "every external PC34 candidate completes F0435 to F0433 to F0435");
+    CHECK(report.runtime_stage_attempted_count == report.pc34_candidate_count &&
+              report.runtime_stage_succeeded_count == report.pc34_candidate_count &&
+              report.runtime_stage_unavailable_count == 0 &&
+              report.runtime_stage_failed_count == 0,
+          "every external PC34 candidate stages its own F0435 dungeon");
+    CHECK(report.runtime_adopt_attempted_count == report.pc34_candidate_count &&
+              report.runtime_adopt_succeeded_count == report.pc34_candidate_count &&
+              report.runtime_adopt_failed_count == 0,
+          "every external PC34 candidate adopts its owned runtime state");
     CHECK(report.firestaff_manifest_rejected_count == 0 &&
               report.nonoriginal_envelope_rejected_count == 0,
           "external corpus contains no Firestaff or nonoriginal envelope");
@@ -67,8 +97,8 @@ int main(void)
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
 
-        CHECK(receipt_is_admitted(receipt),
-              "external PC34 receipt is fully admitted");
+        CHECK(receipt_is_runtime_admitted(receipt),
+              "external PC34 receipt is runtime-admitted without fallback");
         printf("ADMITTED path=%s source_bytes=%u source_hash=%08x "
                "f7057_end=%u tail_bytes=%u exported_bytes=%u "
                "exported_hash=%08x runtime_stage=%d runtime_adopt=%d\\n",
