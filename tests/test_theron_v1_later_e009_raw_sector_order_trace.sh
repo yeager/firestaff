@@ -12,6 +12,7 @@ dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3
 later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 caller_opcode=20 caller_target=e009 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510
 cd_interface_raw_sector_read lba=1296 bytes=2352 sector_fnv1a=1234abcd span_offset=0 span_bytes=32 span_fnv1a=5678ef90
 later_system_card_e009_destination_span caller_pc=ea00 return_pc=ea03 record=510 destination=3800 bytes=32 fnv1a=90abcdef
+later_system_card_e009_destination_payload caller_pc=ea00 return_pc=ea03 record=510 destination=3800 bytes=2048 fnv1a=bcdef012
 later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510
 later_system_card_e009_post_return_step caller_pc=ea00 return_pc=ea03 record=510 resume_pc=ea03 next_pc=ea04
 EOF
@@ -25,7 +26,7 @@ if "$script" "$work/sector-after-return.trace" us_bin >/dev/null 2>&1; then
     exit 1
 fi
 
-awk 'NR == 5 { saved = $0; next } NR == 6 { print; print saved; next } { print }' \
+awk 'NR == 5 { saved = $0; next } NR == 7 { print; print saved; next } { print }' \
     "$work/valid.trace" >"$work/destination-after-return.trace"
 if "$script" "$work/destination-after-return.trace" us_bin >/dev/null 2>&1; then
     printf 'FAIL: verifier accepted a destination span after the e009 return\n' >&2
@@ -39,6 +40,20 @@ if "$script" "$work/missing-destination.trace" us_bin >/dev/null 2>&1; then
     exit 1
 fi
 
+grep -v '^later_system_card_e009_destination_payload ' "$work/valid.trace" \
+    >"$work/missing-payload.trace"
+if "$script" "$work/missing-payload.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a missing e009 destination payload\n' >&2
+    exit 1
+fi
+
+sed 's/bytes=2048/bytes=2047/' "$work/valid.trace" \
+    >"$work/short-payload.trace"
+if "$script" "$work/short-payload.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a short e009 destination payload\n' >&2
+    exit 1
+fi
+
 grep -v '^later_system_card_e009_post_return_step ' "$work/valid.trace" \
     >"$work/missing-post-return-step.trace"
 if "$script" "$work/missing-post-return-step.trace" us_bin >/dev/null 2>&1; then
@@ -46,7 +61,7 @@ if "$script" "$work/missing-post-return-step.trace" us_bin >/dev/null 2>&1; then
     exit 1
 fi
 
-awk 'NR == 6 { saved = $0; next } NR == 7 { print; print saved; next } { print }' \
+awk 'NR == 7 { saved = $0; next } NR == 8 { print; print saved; next } { print }' \
     "$work/valid.trace" >"$work/post-return-before-return.trace"
 if "$script" "$work/post-return-before-return.trace" us_bin >/dev/null 2>&1; then
     printf 'FAIL: verifier accepted a post-return step before the e009 return\n' >&2

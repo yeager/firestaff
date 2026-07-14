@@ -71,6 +71,17 @@ $1 == "later_system_card_e009_destination_span" {
     if (destination_caller != caller || destination_return != returned || destination_record != record || destination_ram < 0 || destination_ram > 65535) bad = "later e009 destination-span row does not match dispatch"
     next
 }
+$1 == "later_system_card_e009_destination_payload" {
+    ++destination_payload
+    destination_payload_line = NR
+    if (NF != 7 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "record") == "" || field($5, "destination") == "" || field($6, "bytes") != "2048" || field($7, "fnv1a") !~ /^[0-9a-f]{8}$/) {
+        bad = "malformed later e009 destination-payload row"
+        next
+    }
+    payload_caller = hex(field($2, "caller_pc")); payload_return = hex(field($3, "return_pc")); payload_record = hex(field($4, "record")); payload_ram = hex(field($5, "destination"))
+    if (payload_caller != caller || payload_return != returned || payload_record != record || payload_ram != destination_ram) bad = "later e009 destination-payload row does not match dispatch"
+    next
+}
 $1 == "later_system_card_e009_return" {
     ++returned_row
     return_line = NR
@@ -98,11 +109,12 @@ END {
     else if (dispatch != 1) bad = "expected exactly one later e009 dispatch row"
     else if (sector != 1) bad = "expected exactly one complete raw-sector row"
     else if (destination != 1) bad = "expected exactly one later e009 destination-span row"
+    else if (destination_payload != 1) bad = "expected exactly one later e009 destination-payload row"
     else if (returned_row != 1) bad = "expected exactly one later e009 return row"
     else if (post_return != 1) bad = "expected exactly one later e009 post-return step row"
-    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < destination_line && destination_line < return_line && return_line < post_return_line)) bad = "loader-to-RAM control-resumption order is incomplete"
+    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < destination_line && destination_line < destination_payload_line && destination_payload_line < return_line && return_line < post_return_line)) bad = "loader-to-RAM control-resumption order is incomplete"
     if (bad != "") { print "FAIL: " bad > "/dev/stderr"; exit 1 }
 }
 ' "$trace"
 
-printf 'PASS: coalesced original Mednafen trace retains the later loader-to-local-RAM control-resumption order; no payload or dungeon semantics assigned\n'
+printf 'PASS: coalesced original Mednafen trace retains the later full-sector loader-to-local-RAM control-resumption order; no dungeon semantics assigned\n'
