@@ -4387,6 +4387,34 @@ static int m11_measure_text_pixels(const char* text,
     return (int)(len * (size_t)((5 * effective_scale) + s->tracking));
 }
 
+/* TEXT.C clips C015 to its physical 320-pixel surface.  The active
+ * original font is variable-width, so a character-count limit is not
+ * sufficient here: it can draw beyond the right edge of the message area. */
+static void m11_copy_text_fitting_pixels(char* destination,
+                                         size_t destinationSize,
+                                         const char* source,
+                                         int maximumWidth,
+                                         const M11_TextStyle* style) {
+    size_t length;
+
+    if (!destination || destinationSize == 0U) {
+        return;
+    }
+    destination[0] = '\0';
+    if (!source || maximumWidth <= 0) {
+        return;
+    }
+    for (length = 0U; source[length] != '\0' && length + 1U < destinationSize;
+         ++length) {
+        destination[length] = source[length];
+        destination[length + 1U] = '\0';
+        if (m11_measure_text_pixels(destination, style) > maximumWidth) {
+            destination[length] = '\0';
+            return;
+        }
+    }
+}
+
 static void m11_draw_text_centered_in_rect(unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight,
@@ -38488,17 +38516,13 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
         const char* text = plan.rows[row].text;
         M11_TextStyle style;
         char clipped[M11_MESSAGE_MAX_LENGTH];
-        size_t maxChars;
         if (!text || text[0] == '\0') {
             continue;
         }
-        maxChars = (size_t)(messageW / plan.characterWidth);
-        if (maxChars >= sizeof(clipped)) {
-            maxChars = sizeof(clipped) - 1U;
-        }
-        snprintf(clipped, maxChars + 1U, "%s", text);
         style = g_text_small;
         style.color = (unsigned char)plan.rows[row].color;
+        m11_copy_text_fitting_pixels(clipped, sizeof(clipped), text,
+                                     messageW, &style);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       messageX,
                       messageY + row * plan.lineHeight + plan.textTopAdjust,
