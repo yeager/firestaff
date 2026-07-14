@@ -3412,6 +3412,46 @@ void csb_v1_startup_presentation_receipt_init_pc34(
     receipt->redmcsb_closed_door_h = 161;
 }
 
+static int csb_v1_startup_presentation_facts_are_source_coherent_pc34(
+    const CSB_V1_StartupHostFacts_PC34 *facts)
+{
+    int title_active;
+    int entrance_active;
+    int credits_active;
+    int opening_active;
+
+    if (!facts || facts->entrance_frame < 0) {
+        return 0;
+    }
+    title_active = facts->title_active ? 1 : 0;
+    entrance_active = facts->entrance_active ? 1 : 0;
+    credits_active = facts->credits_active ? 1 : 0;
+    opening_active = facts->opening_active ? 1 : 0;
+
+    /* ReDMCSB TITLE.C F0437 runs within the ENTRANCE.C F0806 session. The
+     * title step is therefore a source-derived fact, while credits and the
+     * door animation are mutually exclusive later entrance states. */
+    if (title_active) {
+        return entrance_active && !credits_active && !opening_active &&
+               facts->title_frame >= 0 &&
+               facts->title_frame < csb_v1_startup_title_total_ticks_pc34() &&
+               facts->title_source_step ==
+                   (int)csb_v1_startup_title_source_step_for_frame_pc34(
+                       facts->title_frame);
+    }
+    if (credits_active) {
+        return entrance_active && !opening_active &&
+               facts->credits_remaining_ticks > 0;
+    }
+    if (opening_active) {
+        return entrance_active && !facts->entrance_dismissed &&
+               facts->opening_delay_ticks >= 0 &&
+               facts->opening_step >= 0 &&
+               facts->opening_step <= CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34;
+    }
+    return !facts->entrance_dismissed || !entrance_active;
+}
+
 int csb_v1_startup_presentation_receipt_from_host_facts_pc34(
     const CSB_V1_StartupHostFacts_PC34 *facts,
     CSB_V1_StartupPresentationReceipt_PC34 *out_receipt)
@@ -3421,6 +3461,9 @@ int csb_v1_startup_presentation_receipt_from_host_facts_pc34(
     }
     csb_v1_startup_presentation_receipt_init_pc34(out_receipt);
     if (!facts) {
+        return 0;
+    }
+    if (!csb_v1_startup_presentation_facts_are_source_coherent_pc34(facts)) {
         return 0;
     }
 
