@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0674 viewport bitmap copy: added the PC F0631
+  cached-graphic lookup and F0653-sized copy into caller-owned viewport
+  storage. Missing graphics and undersized destinations do not synthesize or
+  partially copy data. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0672/F0673 mouse-input initialization: added the
   PC ordered nine-table initialization and command-none bounded zone-box
   conversion over caller-owned MOUSE_INPUT records. The source `-2`/`-3`
