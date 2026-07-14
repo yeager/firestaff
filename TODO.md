@@ -1489,12 +1489,15 @@ and real community-save corpus round-trip evidence.
     missing, malformed, or changed records fail closed. Remaining work is
     authentic community-save coverage and broader dungeon-tail import.
   - 2026-07-13 update: C13 materialization now consumes its original
-    `CLIKVIEW.C F0374` owner relation: the saved `B.Location`/`C.Cell` must
-    resolve to a live PC34 JUNK bones record (`type=5`) whose two-bit
-    `ChargeCount` equals `EVENT.Priority`. An absent or different record
-    rejects the import; C13 can no longer reinterpret Priority as a free
-    champion selector. Remaining work is authentic community-save coverage
-    and broader dungeon-tail import.
+    `CLIKVIEW.C F0374` owner relation at ReDMCSB `TIMELINE.C F0255` step 1:
+    the saved `B.Location`/`C.Cell` must resolve to a live PC34 JUNK bones
+    record (`type=5`) whose two-bit `ChargeCount` equals `EVENT.Priority`.
+    An absent or different record rejects that dereferencing branch; C13 can
+    no longer reinterpret Priority as a free champion selector. Saved steps
+    2 and 0 retain F0255's source behavior: step 2 has not yet read bones,
+    while step 0 follows step 1's unlink and therefore resumes without them.
+    Remaining work is authentic community-save coverage and broader
+    dungeon-tail import.
   - 2026-07-13 update: C13 now has a separate C2 PARTY byte receipt.
     For every saved C13, F0435 -> F0433 -> F0435 decrypts each save's own
     C2 part and compares the exact 319-byte active `M516_CHAMPIONS` record

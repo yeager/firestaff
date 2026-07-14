@@ -5029,9 +5029,11 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
           "native F0433 C13 record survives F0435 -> F0433 -> F0435 byte-for-byte");
 
     /* C13 has no independent live meaning: removing its source-owned bones
-     * must fail the F0435 materializer rather than revive a C2 record. */
+     * must fail the F0435 materializer at step 1, where ReDMCSB F0255
+     * actually reads and unlinks the square-chain owner. */
     square_data[11 * 32 + 12] &= (unsigned char)~DUNGEON_SQUARE_MASK_THING_LIST;
     square_first_things[0] = THING_ENDOFLIST;
+    world.timeline.events[0].aux1 = 1;
     rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
         &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
     CHECK(rc == SAVEGAME_PC34_OK,
@@ -5041,6 +5043,25 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
         sizeof(reexported), &reexported_size, &roundtrip);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
           "C13 handoff rejects a save whose original bones owner is absent");
+
+    /* ReDMCSB TIMELINE.C F0255 unlinks the matching bones in step 1, then
+     * queues step 0. A save made at that terminal point is valid without a
+     * square-chain bones record because F0255:1697-1699 only revives by its
+     * saved Priority; F0435 must therefore admit the step-0 handoff. */
+    world.timeline.events[0].aux1 = 0;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "native F0433 writes a terminal C13 candidate without bones");
+    memset(&roundtrip, 0, sizeof(roundtrip));
+    rc = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+        bytes, (size_t)written, 0x43313445u, reexported,
+        sizeof(reexported), &reexported_size, &roundtrip);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && reexported_size > 0u &&
+              roundtrip.c13_byte_preservation_ok &&
+              roundtrip.c13_timeline_byte_preservation_ok,
+          "C13 terminal step resumes after F0255 has unlinked bones");
+    world.timeline.events[0].aux1 = 2;
     square_data[11 * 32 + 12] |= DUNGEON_SQUARE_MASK_THING_LIST;
     square_first_things[0] = (unsigned short)((1u << 14) |
                                                (THING_TYPE_JUNK << 10));
