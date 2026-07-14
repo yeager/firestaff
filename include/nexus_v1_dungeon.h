@@ -761,11 +761,9 @@ typedef struct {
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;
 
 /* DMWeb documents Structure3a and Structure3c as signed 16.16 X/Y/Z
- * vectors. This validates their fixed-point framing, the documented
- * unit-normal invariant, and face-plane/normal coherence with an analytic
- * component-quantization bound. Winding signs are measured rather than
- * assigned a front-face meaning. This does not expose a mesh, choose
- * transforms, decode UVs, or authorize clipping or drawing. */
+ * vectors. This validates their fixed-point framing and the documented
+ * unit-normal invariant with rounding tolerance only; it does not expose a
+ * mesh, choose transforms, decode UVs, or authorize clipping or drawing. */
 typedef struct {
     int face_receipt_valid;
     int vertex_count;
@@ -776,14 +774,6 @@ typedef struct {
     int normal_unit_length_count;
     int normal_non_unit_length_count;
     uint64_t maximum_normal_length_error;
-    int normal_face_plane_pair_count; /* one normal-to-edge check per pair */
-    int normal_face_plane_within_tolerance_count;
-    int normal_face_plane_outside_tolerance_count;
-    int degenerate_face_triangle_count;
-    int positive_winding_triangle_count;
-    int negative_winding_triangle_count;
-    int zero_winding_triangle_count;
-    uint64_t maximum_normal_face_plane_error;
     int fixed_point_vectors_valid;
     int valid;
     int transform_or_draw_semantics_proven;
