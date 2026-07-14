@@ -337,6 +337,8 @@
   modes, opaque/transparent line selection, and direct aperture writes.
   Focused strict-C11 bitmap test passes. F8151 now uses the same M104 rule.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F0675: PC34 native/derived-cache/temporary selection and cache admission before caller-bound F0129 scaling. Focused test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
   unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused
