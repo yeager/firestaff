@@ -136,6 +136,59 @@ static int find_source_dsa_binding(
     return 0;
 }
 
+/* The saved TIMER heap is materialized before a DSA can receive a timer
+ * dispatch. Prove the live timeline still identifies each event by its exact
+ * serialized queue slot and fields; do not infer a dispatch or action. */
+static int saved_timer_queue_matches_runtime(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t queue_slot;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_queue_summary_count == 0u ||
+        profile->csbwin_timer_queue_summary_count !=
+            profile->csbwin_timer_summary_count ||
+        profile->timeline_queue.eventCount !=
+            (int)profile->csbwin_timer_queue_summary_count) {
+        return 0;
+    }
+    for (queue_slot = 0u;
+         queue_slot < profile->csbwin_timer_queue_summary_count;
+         ++queue_slot) {
+        const uint16_t timer_index = profile->csbwin_timer_queue[queue_slot];
+        const CSB_V1_CSBWin512TimerSummary *timer;
+        int event_index;
+        int matched = 0;
+
+        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+        timer = &profile->csbwin_timers[timer_index];
+        if (!timer->valid || timer->source_index != timer_index) return 0;
+        for (event_index = 0;
+             event_index < profile->timeline_queue.maxEvents;
+             ++event_index) {
+            const struct DM1_Event_V1 *event;
+
+            if (profile->csbwin_timeline_event_queue_slot[event_index] !=
+                queue_slot) {
+                continue;
+            }
+            event = &profile->timeline_queue.events[event_index];
+            if (event->map_time != timer->time ||
+                event->type != timer->function ||
+                event->priority != timer->ubyte5 ||
+                event->b_mapX != timer->ubyte6 ||
+                event->b_mapY != timer->ubyte7 ||
+                event->c_cell != timer->ubyte8 ||
+                event->c_effect != timer->ubyte9) {
+                return 0;
+            }
+            if (++matched != 1) return 0;
+        }
+        if (matched != 1) return 0;
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     const char *dungeon_path = path_arg_or_env(
@@ -187,6 +240,8 @@ int main(int argc, char **argv)
           "resume publishes CSBWin Extended Features into runtime state");
     CHECK(profile.csbwin_extended_level_index_present,
           "resume publishes the source DSA level-index table");
+    CHECK(saved_timer_queue_matches_runtime(&profile),
+          "each saved CSBWin timer-queue slot retains its exact live timeline receipt");
     CHECK(state->imported_actions != NULL && state->imported_action_count > 0,
           "resume retains authenticated source DSA actions");
 
