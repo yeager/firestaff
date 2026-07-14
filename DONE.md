@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
+  census revalidates each scanner-issued original envelope/raw candidate
+  against its complete-file FNV receipt before parsing it, then retains only
+  importer-owned `GAME_LOAD` facts: game tick, RNG seed, party pose/map,
+  champion count, timer count, and rain intensity. It follows skproject
+  `SKWIN/SkWinCore.cpp` `GAME_LOAD` `^2066:2F8C-319F`, before
+  `READ_SKSAVE_DUNGEON`; no dungeon DB or timer payload semantics are
+  inferred, and the receipt cannot mutate runtime. Verification: rebuilt and
+  ran `test_dm2_v1_save_load` (23/23), plus CTest `dm2_v1_save_load` (1/1).
+
 - ✅ 2026-07-14 Nexus Structure3 face-record receipt: DMWeb's Saturn DGN
   format describes each bounded Structure3b row as four vertex indexes, flags,
   and a fill selector, with one Structure3c normal per face. Firestaff now

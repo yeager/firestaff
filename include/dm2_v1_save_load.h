@@ -167,6 +167,36 @@ typedef struct {
         candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
 } DM2_OriginalTimerFormatCorpusReceipt;
 
+/* Read-only census of the original save fields already decoded by the
+ * source-locked SKSave importer.  This is not a restore input: dungeon DB
+ * records and timer payload ownership remain outside this receipt until their
+ * original byte-level contracts are proven. */
+typedef struct {
+    DM2_SKSaveCandidateReceipt candidate;
+    uint32_t game_tick;
+    uint32_t rng_seed;
+    uint16_t party_x;
+    uint16_t party_y;
+    uint8_t party_dir;
+    uint8_t party_map;
+    uint8_t champion_count;
+    uint8_t timer_count;
+    uint8_t rain_intensity;
+    uint32_t state_hash;
+} DM2_OriginalSaveStateCorpusEntry;
+
+typedef struct {
+    int scan_complete;
+    int original_candidate_list_complete;
+    uint16_t original_candidate_count;
+    uint16_t parsed_candidate_count;
+    uint16_t rejected_candidate_count;
+    uint32_t corpus_hash;
+    uint8_t entry_count;
+    DM2_OriginalSaveStateCorpusEntry
+        entries[DM2_SK_CORPUS_RECEIPT_MAX];
+} DM2_OriginalSaveStateCorpusReceipt;
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 
@@ -236,6 +266,12 @@ bool dm2_v1_distant_environment_timer_corpus_probe(
 bool dm2_v1_original_timer_format_corpus_probe(
     const char *save_base,
     DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
+/* Revalidate and parse each original envelope/raw candidate into only the
+ * source-owned state fields the current importer already decodes.  The
+ * receipt is diagnostic evidence and cannot alter live runtime state. */
+bool dm2_v1_original_save_state_corpus_probe(
+    const char *save_base,
+    DM2_OriginalSaveStateCorpusReceipt *out_receipt);
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,
