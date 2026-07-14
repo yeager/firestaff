@@ -1075,8 +1075,8 @@ F1065_SetExecBase	F	SetExecBase	AMIGALIB.C:837-844	include/redmcsb_f1065_set_exe
 F1066_GetUsableChipMemoryByteCount	F	GetUsableChipMemoryByteCount	AMIGINIT.C:498-560	include/redmcsb_f1066_get_usable_chip_memory_byte_count.h	IMPLEMENTED_NARROW	Source-locked largest-block reserve calculation with a focused strict-C11 test; host supplies memory metrics rather than Amiga Exec calls.
 F1067_InitAmigaStuff	F	InitAmigaStuff	AMIGINIT.C:539-628;HINT001.C:4,56-63	include/redmcsb_f1067_init_amiga_stuff_pc34_compat.h	SOURCE_NONAPPLICABLE	Available initialization is Amiga-specific; focused PC boundary is intentionally a source-evidenced no-op.
 F1068_FreeAmigaStuff	F	FreeAmigaStuff	AMIGINIT.C:630-671;HINT001.C:4,65-72;HINTMAIN.C:235-239	include/redmcsb_f1068_free_amiga_stuff_pc34_compat.h	SOURCE_NONAPPLICABLE	Available teardown is Amiga-specific; focused PC boundary is a verified no-op.
-F1069_OpenDosLibrary	F	OpenDosLibrary	AMIGINIT.C:67	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1070_CloseDosLibrary	F	CloseDosLibrary	AMIGINIT.C:79	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1069_OpenDosLibrary	F	OpenDosLibrary	AMIGINIT.C:4,67-77,343	include/redmcsb_f1069_open_dos_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available DOS-library open route is Amiga-only; focused PC boundary is intentionally a no-op.
+F1070_CloseDosLibrary	F	CloseDosLibrary	AMIGINIT.C:79	include/redmcsb_f1070_close_dos_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available DOS-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1071_OpenGraphicsLibrary	F	OpenGraphicsLibrary	AMIGINIT.C:89	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1072_CloseGraphicsLibrary	F	CloseGraphicsLibrary	AMIGINIT.C:101	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1073_OpenIntuitionLibrary	F	OpenIntuitionLibrary	AMIGINIT.C:110	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
