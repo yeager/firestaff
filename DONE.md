@@ -6882,6 +6882,15 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   focused text-message source-lock test verifies both suppression and the
   retained `THE WALL READS ...` route.
 
+- ✅ 2026-07-14 DM1 V1 HoC bottom help-prompt suppression: extended the same
+  Firestaff-only chrome filter to reject `READY: CLICK CENTER TO ADVANCE OR
+  READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION`. This startup
+  instruction has no ReDMCSB `TEXT.C` F0047/F0048 producer and therefore
+  cannot enter C015 during real Hall of Champions gameplay; authentic wall
+  and scroll messages retain their `TEXT.C` routes. The focused
+  `dm1_v1_text_message_source_lock` regression now exercises both rejected
+  Firestaff prompts and the retained wall-read message.
+
 - ✅ 2026-07-11 DM1 PC34 original-save transactional portrait section: `F0796_SAVEGAME_ImportPC34_Compat()` now stages header, party, and timeline state while reading the five original save parts, requires all four fixed 32x29 portrait payloads, and commits only after the whole section validates. A truncated fourth portrait now returns `SAVEGAME_PC34_ERROR_BAD_SIZE` without changing any destination bytes. This matches ReDMCSB `LOADSAVE.C` F0433 lines 1625-1635 (five parts then four portrait writes) and F0435 lines 2804-2815 (four fixed portrait reads). The focused native-save regression passes its existing byte-level export/import round trips plus the new late-truncation atomicity case, directly and through CTest. Honest scope: ACTIVE_GROUP restore, original dungeon-tail import, and real community-save corpus evidence remain open.
 
 - ✅ 2026-07-11 CSB DSA state/column GOSUB dispatch boundary: added the

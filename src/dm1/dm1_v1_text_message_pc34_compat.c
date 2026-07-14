@@ -452,12 +452,13 @@ int DM1_V1_TextMessage_IsPlayerFacingPc34Compat(const char* stripped) {
         "IDLE TICK",
         "GAME VIEW NOT STARTED",
         "GAME DATA LOADED",
-        /* Firestaff M11's generic inspect placeholder. It has no
-         * ReDMCSB TEXT.C equivalent and must not be rerouted into the
-         * source-visible C015 message area. Real inscription/scroll reads
-         * continue through their explicit TEXT.C routes. */
+        /* Firestaff M11's generic inspect/startup prompts. They have no
+         * ReDMCSB TEXT.C F0047/F0048 producer and must not be rerouted into
+         * the source-visible C015 message area. Real inscription/scroll
+         * reads continue through their explicit TEXT.C routes. */
         "NO FOCUS: PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL",
         "PRESS ENTER ON A REAL FRONT-CELL TARGET",
+        "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION",
         "FACING UPDATED",
         "TURN IGNORED",
         "MOVEMENT BLOCKED",

@@ -1813,11 +1813,12 @@ unlink, clears raw next/active-group state only on the party map, and removes
 C29..C41 group events at the deleted square. Remaining DM1 work is deeper
 F0231 combat, non-melee mutation adapters, and broad real-route proof.
 
-The Firestaff-only `NO FOCUS: PRESS ENTER OR CLICK THE VIEW ...` inspect
-placeholder is no longer eligible for the DM1 V1 chrome message reroute.
-Explicit ReDMCSB wall-inscription and scroll reads remain on their original
-TEXT.C paths. Remaining V1 text work is broader source-visible message-route
-proof, not this synthetic prompt.
+The Firestaff-only `NO FOCUS: PRESS ENTER OR CLICK THE VIEW ...` and
+`CLICK CENTER TO ADVANCE OR READ ...` inspect/startup prompts are no longer
+eligible for the DM1 V1 chrome message reroute. Explicit ReDMCSB
+wall-inscription and scroll reads remain on their original TEXT.C paths.
+Remaining V1 text work is broader source-visible message-route proof, not
+these synthetic prompts.
 
 ## DM1 PC34 Original Save Follow-up (2026-07-11)
 
