@@ -60,9 +60,15 @@ int main(void) {
     CHECK(receipt.record_user_data_offset == 0x114u);
     CHECK(receipt.envelope_bytes == 0x36cu);
     CHECK(receipt.header_identifier == 0x0026u);
+    CHECK(receipt.cue_track02_index01_raw_sector == 225u);
+    CHECK(receipt.track02_raw_sector == 3123u);
+    CHECK(receipt.raw_sector_offset == 0x124u);
     CHECK(receipt.adjacent_boundary_opaque);
     CHECK(strcmp(receipt.route, "raw_track02_initial_envelope") == 0);
 
+    facts.raw_track02_bytes = 0u;
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+    facts.raw_track02_bytes = RAW_BYTES;
     admission.admitted = 0;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     admission.admitted = 1;

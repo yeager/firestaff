@@ -12,6 +12,7 @@
 #define THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER 0x0026u
 
 #define THERON_V1_TRACK02_RAW_SECTOR_BYTES 2352u
+#define THERON_V1_TRACK02_MODE1_HEADER_BYTES 16u
 #define THERON_V1_TRACK02_MD5_JP_BIN "b7afb338ad31be1025b53f9aff12d73a"
 #define THERON_V1_TRACK02_MD5_US_BIN "f23601102138f87c33025877767ebf76"
 
@@ -31,6 +32,9 @@ typedef struct {
     uint32_t record_user_data_offset;
     uint32_t envelope_bytes;
     uint16_t header_identifier;
+    uint32_t cue_track02_index01_raw_sector;
+    uint32_t track02_raw_sector;
+    uint32_t raw_sector_offset;
     int adjacent_boundary_opaque;
     const char *route;
 } Theron_V1DungeonHandoffReceipt;

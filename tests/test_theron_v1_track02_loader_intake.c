@@ -27,11 +27,18 @@ int main(void) {
         1, 0, "trace_accepted_runtime_unavailable"
     };
     Theron_V1DungeonHandoffReceipt initial_envelope = {
-        1, 1, THERON_V1_INITIAL_ENVELOPE_RECORD,
-        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
-        THERON_V1_INITIAL_ENVELOPE_BYTES,
-        THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER, 1,
-        "raw_track02_initial_envelope"
+        .selected = 1,
+        .runtime_route_consumed = 1,
+        .record = THERON_V1_INITIAL_ENVELOPE_RECORD,
+        .record_user_data_offset =
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+        .envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES,
+        .header_identifier = THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER,
+        .cue_track02_index01_raw_sector = 225u,
+        .track02_raw_sector = 3123u,
+        .raw_sector_offset = 0x124u,
+        .adjacent_boundary_opaque = 1,
+        .route = "raw_track02_initial_envelope"
     };
     Theron_V1AuthenticatedTrack02LoaderReadFacts authenticated_facts = {
         &trace, 1, THERON_V1_INITIAL_ENVELOPE_RECORD,
@@ -64,6 +71,14 @@ int main(void) {
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
         &receipt, &initial_envelope, &receipt));
     initial_envelope.record = THERON_V1_INITIAL_ENVELOPE_RECORD;
+    initial_envelope.track02_raw_sector = 3122u;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.track02_raw_sector = 3123u;
+    initial_envelope.raw_sector_offset = 0x123u;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.raw_sector_offset = 0x124u;
 
     CHECK(theron_v1_track02_loader_intake_observe_authenticated_trace(
         &authenticated_facts, &receipt));
