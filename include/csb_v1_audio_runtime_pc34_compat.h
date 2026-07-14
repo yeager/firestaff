@@ -7,6 +7,7 @@
  * Source anchors:
  *   ReDMCSB DEFS.H:135-138                  sound play modes
  *   ReDMCSB SOUND.C F0060:887-931,1164-1246 Atari ST sound playback
+ *   ReDMCSB SOUND.C F0061:1144-1307         PSG loud-table amplitude writes
  *   ReDMCSB SOUND.C F0064:1632-1638         pending sound arbitration
  *   ReDMCSB SOUND.C F0065:1804-1865         one pending sound flushed per tick
  *   ReDMCSB GAMELOOP.C:114-115              flush before damage/time advance
@@ -81,6 +82,13 @@ typedef struct CsbV1StSoundDecodeResult {
     size_t encodedBytesConsumed;
 } CsbV1StSoundDecodeResult;
 
+/* F0061 selects all three PSG amplitude registers from its loud table. */
+typedef struct CsbV1PsgChannelAmplitudes {
+    uint8_t channelA;
+    uint8_t channelB;
+    uint8_t channelC;
+} CsbV1PsgChannelAmplitudes;
+
 void csb_v1_audio_runtime_init(CsbV1AudioRuntime* runtime);
 int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
                                  const CsbV1AudioRequest* request);
@@ -91,6 +99,12 @@ void csb_v1_audio_runtime_save_snapshot(const CsbV1AudioRuntime* runtime,
                                         CsbV1AudioSaveSnapshot* outSnapshot);
 void csb_v1_audio_runtime_load_snapshot(CsbV1AudioRuntime* runtime,
                                         const CsbV1AudioSaveSnapshot* snapshot);
+
+/* Resolves the three writes made by F0061_SOUND_SetChannelAmplitudes. The
+ * original routine masks amplitudeIndex with 0x000f before indexing its loud
+ * PSG table, so negative and oversized inputs wrap identically. */
+CsbV1PsgChannelAmplitudes
+csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex);
 
 /* Expands F0060's Atari ST packed stream into the PSG amplitude indices that
  * its Timer-A handler would apply. Returns 0 on success, -1 for invalid
