@@ -211,6 +211,16 @@ typedef struct {
     int newMapY;
 } CSB_TeleporterPitResult;
 
+/* ReDMCSB DUNGEON.C F0145_DUNGEON_GetGroupCells reads the compact C04
+ * GROUP.Cells byte. The byte packs up to four two-bit creature cells; 0xff
+ * is the source centered-group sentinel. This boundary intentionally accepts
+ * only a complete, already admitted C04 record and does not infer a cell from
+ * group count, position, or host-side state. */
+int csb_v1_dungeon_get_group_cells_pc34(
+    const uint8_t *group_record,
+    int record_size,
+    uint8_t *out_cells);
+
 /* ================================================================
  *  Dungeon-layer accessor stubs (M10 integration points)
  *
