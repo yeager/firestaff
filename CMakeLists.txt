@@ -5,6 +5,7 @@ if(POLICY CMP0156)
     # those libraries are split into acyclic units.
     cmake_policy(SET CMP0156 OLD)
 endif()
+
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
@@ -6167,6 +6168,23 @@ endif()
 
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
+
+# DM1 V2.1 capture delivery: production BMP writer must create a configured
+# directory tree and retain repeated presented-frame captures from one second.
+if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_screenshot_capture_delivery.c")
+    add_executable(test_m11_screenshot_capture_delivery
+        tests/test_m11_screenshot_capture_delivery.c
+        src/engine/screenshot_m11.c)
+    target_include_directories(test_m11_screenshot_capture_delivery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m11_screenshot_capture_delivery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_screenshot_capture_delivery
+        COMMAND test_m11_screenshot_capture_delivery)
+    set_tests_properties(m11_screenshot_capture_delivery PROPERTIES
+        LABELS "dm1;v2.1;presentation;capture")
+endif()
 if(BUILD_TESTING)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_l10n.c")
         add_executable(test_firestaff_l10n
