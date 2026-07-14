@@ -32,6 +32,16 @@ static const char valid_manifest[] =
     "normal_culling_state_sequence=1b\nvdp1_command_sequence=1c\n"
     "first_sequence=16\nlast_sequence=1d\n";
 
+static const char valid_producer_attestation[] =
+    "NEXUS_STRUCTURE3_SATURN_PRODUCER_ATTESTATION_V1\n"
+    "producer_name=MEDNAFEN\n"
+    "capture_mode=SH2_VDP1_BUS_TRACE\n"
+    "original_saturn_execution=CLAIMED\n"
+    "producer_binary_fnv1a64=1234\n"
+    "capture_session_fnv1a64=1\n"
+    "capture_bundle_fnv1a64=2\n"
+    "capture_trace_order_fnv1a64=3\n";
+
 static unsigned long long fnv1a64_update(unsigned long long hash,
                                           const unsigned char *data,
                                           size_t size) {
@@ -126,6 +136,8 @@ static unsigned int fnv1a32(const unsigned char *data, size_t size) {
 int main(void) {
     Nexus_V1_DgnStructure3CaptureManifestReceipt receipt;
     Nexus_V1_DgnStructure3CaptureImport capture;
+    Nexus_V1_DgnStructure3RawCaptureAttestation producer_raw_attestation;
+    Nexus_V1_DgnStructure3ProducerAttestationReceipt producer_attestation;
     Nexus_V1_DgnStructure3CaptureImportReceipt import_receipt;
     Nexus_V1_DgnStructure3CaptureHostReceipt host_receipt;
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt raw_receipt;
@@ -234,6 +246,25 @@ int main(void) {
                !receipt.renderer_handoff_ready &&
                receipt.blocks_real_dgn_mesh_render,
            "complete correlation manifest remains no-draw provenance only");
+    expect(nexus_v1_dgn_structure3_capture_producer_attestation_parse(
+               valid_producer_attestation, strlen(valid_producer_attestation),
+               &receipt, 0x1234U, &producer_raw_attestation,
+               &producer_attestation) && producer_attestation.attestation_parsed &&
+               producer_attestation.producer_binary_bound &&
+               producer_attestation.capture_mode_declared &&
+               producer_attestation.original_saturn_execution_claimed &&
+               producer_attestation.workflow_bound &&
+               producer_attestation.independent_authentication_required &&
+               !producer_attestation.runtime_import_permitted &&
+               producer_attestation.no_draw_only &&
+               !producer_raw_attestation.original_saturn_source_attested,
+           "producer attestation binds one claimed trace without self-admitting Saturn evidence");
+    expect(!nexus_v1_dgn_structure3_capture_producer_attestation_parse(
+               valid_producer_attestation, strlen(valid_producer_attestation),
+               &receipt, 0x4321U, &producer_raw_attestation,
+               &producer_attestation) && !producer_attestation.producer_binary_bound &&
+               !producer_attestation.workflow_bound,
+           "a changed producer binary cannot reuse the attestation");
     expect(!nexus_v1_dgn_structure3_capture_target_matches_manifest(
                &target, &receipt),
            "a producer manifest for another source face cannot satisfy the target");

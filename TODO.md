@@ -9,6 +9,14 @@
   require separate original-Saturn proof. A missing or altered lane cannot
   replace a previously admitted runtime source.
 
+- 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
+  Mednafen producer now has a concrete session protocol for its target,
+  manifest, binary-bound attestation, and six lane files. Firestaff verifies
+  their exact session/bundle/order and raw hashes, but a producer claim is not
+  independent original-Saturn authentication: it cannot set the runtime
+  admission bit or enable mesh drawing. Obtain an independently reviewed
+  original trace and proven VDP1/texture/palette semantics next.
+
 - 2026-07-14 Nexus Structure3 capture-producer follow-up: the source-bound
   session launcher now invokes an external instrumented emulator/tracer with
   the exact canonical target and six immutable output paths. It accepts only
