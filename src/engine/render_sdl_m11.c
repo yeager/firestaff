@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "vga_palette_pc34_compat.h"
 #include "dm1v2/dm1_v2_filters.h"
@@ -820,6 +821,34 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     g_state.v2_movement_active = 0;
 }
 
+/* Special TITLE/ENTRANCE palettes are source-owned RGB rows rather than a
+ * G9010 palette index, so the normal indexed LUT cannot correct them. Apply
+ * the same V2.0 transfer curve only after that source palette has expanded. */
+static void m11_apply_v2_special_palette_correction(int w, int h) {
+    unsigned char* rgba = g_state.presentBuffer;
+    double gamma;
+    double brightness;
+    double gain;
+
+    if (!g_state.v2_presentation_active || !rgba ||
+        !g_state.v2_palette_enabled) {
+        return;
+    }
+    gamma = (double)g_state.v2_palette_gamma100 / 100.0;
+    brightness = (double)g_state.v2_palette_brightness / 100.0;
+    gain = 1.0 + ((double)g_state.v2_palette_contrast / 100.0);
+    for (int i = 0; i < w * h * 4; i += 4) {
+        for (int channel = 0; channel < 3; ++channel) {
+            double value = (double)rgba[i + channel] / 255.0;
+            value = pow(value, 1.0 / gamma);
+            value = (value - 0.5) * gain + 0.5 + brightness;
+            if (value < 0.0) value = 0.0;
+            if (value > 1.0) value = 1.0;
+            rgba[i + channel] = (unsigned char)(value * 255.0 + 0.5);
+        }
+    }
+}
+
 /* Pixel-grid overlay: draw thin darkening lines at every scaled-pixel
  * boundary in the destination rect.  Called after SDL_RenderTexture
  * (so the upscale is already on the back buffer) but before
@@ -1588,6 +1617,11 @@ int M11_Render_PresentIndexedToResolutionWithSpecialPalette(
                                               uploadW,
                                               uploadH,
                                               specialPalette);
+    /* TITLE.C and SWSH.C own the indexed pixels and special VGA palette.
+     * V2.0 may only filter their expanded presentation copy, just as it
+     * does for the ordinary indexed path. */
+    m11_apply_v2_special_palette_correction(uploadW, uploadH);
+    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
@@ -1881,6 +1915,10 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
                                         logicalHeight,
                                         specialPalette);
     }
+    /* Preserve the source palette expansion above; V2.0 filters are a
+     * presentation-only post-pass over this RGBA copy. */
+    m11_apply_v2_special_palette_correction(uploadW, uploadH);
+    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;
