@@ -2603,6 +2603,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->script_trace_admission.level_index = level;
     engine->script_trace_admission.blocks_real_script_dispatch = 1;
     engine->script_trace_admission.fallback_visuals_permitted = 0;
+    memset(&engine->script_trace_host_receipt, 0,
+           sizeof(engine->script_trace_host_receipt));
+    engine->script_trace_host_receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
+    engine->script_trace_host_receipt.level_index = level;
+    engine->script_trace_host_receipt.blocks_real_script_dispatch = 1;
+    engine->script_trace_host_receipt.fallback_visuals_permitted = 0;
     free(script_data);
 
     snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
@@ -3193,6 +3199,74 @@ int nexus_v1_current_level_slev_trace_admission_receipt(
     out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->script_trace_admission;
+    return 0;
+}
+
+int nexus_v1_engine_consume_slev_execution_trace(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceHostReceipt *out_receipt) {
+    Nexus_V1_LevelScriptTraceHostReceipt receipt;
+    Nexus_V1_LevelScriptCaptureTargetReceipt target;
+    const Nexus_V1_LevelScriptTraceAdmissionReceipt *trace;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_script_dispatch = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = engine->level_aux_runtime_receipt.level_index;
+    trace = &engine->script_trace_admission;
+    if (trace->status != NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE ||
+        trace->level_index != receipt.level_index ||
+        !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
+        !trace->original_saturn_execution_claimed || !trace->trace_sha256_present ||
+        !trace->trace_chain_complete || trace->task_body_dispatch_proven ||
+        trace->dispatch_permitted || !trace->blocks_real_script_dispatch ||
+        trace->fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (nexus_v1_engine_build_slev_capture_target(engine, &target) != 1 ||
+        !target.valid || target.level_index != trace->level_index ||
+        target.task_body_dispatch_proven || !target.no_dispatch_only ||
+        target.fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_ACTIVE_ROUTE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.status = NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE;
+    receipt.active_slev_target_revalidated = 1;
+    receipt.admitted_trace_bound = 1;
+    receipt.entry_pc = trace->entry_pc;
+    receipt.task_body_pc = trace->task_body_pc;
+    receipt.task_body_opcode = trace->task_body_opcode;
+    receipt.callback_or_write_pc = trace->callback_or_write_pc;
+    receipt.callback_or_write_is_write = trace->callback_or_write_is_write;
+    receipt.host_consumed = 1;
+    receipt.task_body_dispatch_proven = 0;
+    receipt.dispatch_permitted = 0;
+    engine->script_trace_host_receipt = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_current_level_slev_trace_host_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceHostReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_script_dispatch = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->script_trace_host_receipt;
     return 0;
 }
 

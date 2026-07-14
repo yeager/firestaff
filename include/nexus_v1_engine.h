@@ -552,6 +552,33 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelScriptTraceAdmissionReceipt;
 
+/* Runtime ownership of an already-admitted trace. This is a host receipt
+ * only: it revalidates the active SLEV target but never invokes the observed
+ * task-body opcode or callback/write location. */
+typedef enum {
+    NEXUS_V1_SLEV_TRACE_HOST_MISSING = 0,
+    NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE = 1,
+    NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_ACTIVE_ROUTE = 2,
+    NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE = 3
+} Nexus_V1_LevelScriptTraceHostStatus;
+
+typedef struct {
+    Nexus_V1_LevelScriptTraceHostStatus status;
+    int level_index;
+    int active_slev_target_revalidated;
+    int admitted_trace_bound;
+    uint32_t entry_pc;
+    uint32_t task_body_pc;
+    uint32_t task_body_opcode;
+    uint32_t callback_or_write_pc;
+    int callback_or_write_is_write;
+    int host_consumed;
+    int task_body_dispatch_proven;
+    int dispatch_permitted;
+    int blocks_real_script_dispatch;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelScriptTraceHostReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -818,6 +845,7 @@ struct Nexus_V1_Engine {
     Nexus_ScriptVM script_vm;
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
     Nexus_V1_LevelScriptTraceAdmissionReceipt script_trace_admission;
+    Nexus_V1_LevelScriptTraceHostReceipt script_trace_host_receipt;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
@@ -955,6 +983,12 @@ int nexus_v1_engine_admit_slev_execution_trace(
 int nexus_v1_current_level_slev_trace_admission_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_consume_slev_execution_trace(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceHostReceipt *out_receipt);
+int nexus_v1_current_level_slev_trace_host_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceHostReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);

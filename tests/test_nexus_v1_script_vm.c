@@ -429,6 +429,8 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_LevelScriptTraceAdmissionReceipt receipt;
     Nexus_V1_LevelScriptTraceAdmissionReceipt stored;
+    Nexus_V1_LevelScriptTraceHostReceipt host_receipt;
+    Nexus_V1_LevelScriptTraceHostReceipt stored_host;
     uint8_t slev[96];
     static const uint8_t task_header[] = {
         0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
@@ -491,6 +493,27 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           stored.entry_pc == receipt.entry_pc &&
           !stored.dispatch_permitted,
           "engine owns the admitted trace receipt without enabling dispatch");
+    CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine,
+                                                       &host_receipt) == 1 &&
+          host_receipt.status == NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE &&
+          host_receipt.active_slev_target_revalidated &&
+          host_receipt.admitted_trace_bound && host_receipt.host_consumed &&
+          host_receipt.entry_pc == receipt.entry_pc &&
+          host_receipt.task_body_pc == receipt.task_body_pc &&
+          host_receipt.task_body_opcode == receipt.task_body_opcode &&
+          host_receipt.callback_or_write_pc == receipt.callback_or_write_pc &&
+          host_receipt.callback_or_write_is_write &&
+          !host_receipt.task_body_dispatch_proven &&
+          !host_receipt.dispatch_permitted &&
+          host_receipt.blocks_real_script_dispatch &&
+          !host_receipt.fallback_visuals_permitted,
+          "admitted SLEV trace reaches the active host route without dispatch");
+    CHECK(nexus_v1_current_level_slev_trace_host_receipt(&engine,
+                                                         &stored_host) == 0 &&
+          stored_host.status == NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE &&
+          stored_host.entry_pc == receipt.entry_pc &&
+          !stored_host.dispatch_permitted,
+          "engine retains the consumed opaque trace receipt");
     {
         char mismatched_trace[sizeof(trace)];
         memcpy(mismatched_trace, trace, sizeof(trace));
@@ -504,6 +527,14 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
               stored.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE,
               "wrong SLEV identity rejects without replacing admitted evidence");
     }
+    engine.script_vm.current_level = 1;
+    CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine,
+                                                       &host_receipt) == 0 &&
+          host_receipt.status == NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_ACTIVE_ROUTE &&
+          nexus_v1_current_level_slev_trace_host_receipt(&engine,
+                                                         &stored_host) == 0 &&
+          stored_host.status == NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE,
+          "active SLEV mismatch cannot replace the prior host receipt");
 }
 
 static void test_real_slev_corpus_profile(void) {
