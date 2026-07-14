@@ -109,6 +109,8 @@ int main(void) {
         CHECK(decoded_receipt.initial_envelope_decoded);
         CHECK(decoded_receipt.decoded_grid_row_count == 0x001bu);
         CHECK(decoded_receipt.decoded_grid_row_bytes == 0x0020u);
+        CHECK(decoded_receipt.decoded_grid_raw_sector == 3123u);
+        CHECK(decoded_receipt.decoded_grid_raw_sector_offset == 0x130u);
         CHECK(decoded_receipt.decoded_grid_first_row_hash == 0x4b97e3abu);
         CHECK(decoded_receipt.decoded_grid_last_row_hash == 0x0b2ae445u);
         free(real_track02);
