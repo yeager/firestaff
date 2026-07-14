@@ -181,6 +181,12 @@
   14-by-6 creature set into the selected entry of palette tables 0..5, while
   retaining each `COLOR_DEF.Index`. Focused strict-C11 test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8165: source-locked PC 3.4 C25 aperture
+  capture. Operation zero reports the real `width * height + 6` size; capture
+  emits the original little-endian width/height/offset prefix and raw 320-byte
+  stride aperture rows. The source-defined capture return remains unclaimed.
+  Focused strict-C11 test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8161: source-locked PC 3.4 C25 viewport
   blit. The adapter preserves the temporary `0x10` viewport palette bank and
   exact opaque, unflipped F8151 parameters: source origin `(0,0)`, width 224,
