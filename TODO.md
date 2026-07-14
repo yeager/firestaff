@@ -330,6 +330,11 @@
     16-bit accumulation of exact already-read or already-written dungeon-part
     bytes. The port owns no file transport and does not infer a dungeon part,
     CSBWin extension, timer, or DSA layout from that checksum.
+  - 2026-07-14 update: `CEDTINC6.C` F7061/F0429 now checks exactly one
+    512-byte PC34 header and deobfuscates its second half before returning the
+    original checksum verdict, including on failure. It neither identifies a
+    save format nor decodes CSBWin GAMEBLOCK2, CHARDESC, ITEM16, EXPOOL, DSA,
+    timer, or runtime state.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and

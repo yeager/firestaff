@@ -6,6 +6,13 @@
   attestations before DGN host intake. Lane names gain no Saturn hardware or
   pixel meaning; the resulting packet remains no-draw.
 
+- 2026-07-14 CSB ReDMCSB F7061/F0429 PC34 save-header verification: added the
+  exact 512-byte first-half mixed checksum and in-place second-half
+  deobfuscation order from `CEDTINC6.C`. A checksum failure deliberately still
+  leaves the tail deobfuscated, as in the source. The routine claims no save
+  magic, CSBWin extension, DSA, timer, or runtime layout. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 DM2 New Game GAME_LOAD gate: `skproject/SKWIN/SkWinCore.cpp`
   `HANDLE_UI_EVENT`, `SHOW_MENU_SCREEN`, and `INIT` prove that NEW first
   leaves the title menu and then reaches `GAME_LOAD`/`LOAD_NEW_DUNGEON`.
