@@ -568,6 +568,12 @@
     F0693 vertical-blank wait. An unresolved zone leaves state/video untouched.
     The adapter supplies no layout, framebuffer, menu event, DSA, or runtime
     substitute; real CSB menu/HUD zone and video binding remain required.
+  - 2026-07-14 update: F0666 now has the explicit PC endgame handoff over
+    caller-owned state/callbacks: hide the pointer until the original request
+    counter is positive, close `GRAPHICS.DAT` twice, restore CPSX, then enter
+    the caller-owned endgame jump boundary. It does not recreate credits,
+    endgame bitmaps, media loading, or a replacement nonlocal transfer.
+    Real CSB endgame runtime/capture evidence remains required.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
