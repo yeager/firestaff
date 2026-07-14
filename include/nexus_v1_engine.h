@@ -496,6 +496,31 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelScriptRouteReceipt;
 
+/* A producer request for an authentic Saturn SH-2 execution capture. It is
+ * derived only from the active source-bound SLEV entry profile and names the
+ * observations still needed to establish task-body dispatch semantics. */
+#define NEXUS_V1_SLEV_CAPTURE_TARGET_MAGIC \
+    "FIRESTAFF_NEXUS_SLEV_SH2_CAPTURE_TARGET_V1"
+
+typedef struct {
+    int valid;
+    int level_index;
+    char canonical_slev_name[16];
+    char canonical_slev_md5[33];
+    int source_byte_count;
+    int task_header_size;
+    int first_opcode;
+    int setup_immediate;
+    int primary_literal_offset;
+    int primary_literal_address;
+    int auxiliary_literal_offset;
+    int auxiliary_literal_address;
+    int original_saturn_execution_required;
+    int task_body_dispatch_proven;
+    int no_dispatch_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelScriptCaptureTargetReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -886,6 +911,12 @@ int nexus_v1_current_level_sound_route_receipt(
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt);
+int nexus_v1_engine_build_slev_capture_target(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptCaptureTargetReceipt *out_target);
+int nexus_v1_engine_write_slev_capture_target(
+    const Nexus_V1_Engine *engine, const char *path,
+    Nexus_V1_LevelScriptCaptureTargetReceipt *out_target);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);

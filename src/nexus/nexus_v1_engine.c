@@ -2930,6 +2930,98 @@ int nexus_v1_current_level_script_route_receipt(
     return 1;
 }
 
+int nexus_v1_engine_build_slev_capture_target(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptCaptureTargetReceipt *out_target) {
+    Nexus_V1_LevelScriptRouteReceipt route;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->original_saturn_execution_required = 1;
+    out_target->no_dispatch_only = 1;
+    out_target->fallback_visuals_permitted = 0;
+    if (nexus_v1_current_level_script_route_receipt(engine, &route) != 1 ||
+        route.status != NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE ||
+        !route.canonical_slev_source_verified ||
+        route.saturn_task_dispatch_proven || route.dispatch_permitted ||
+        !route.blocks_real_script_dispatch ||
+        route.fallback_visuals_permitted || !engine ||
+        engine->level_aux_runtime_receipt.slev.canonical_name[0] == '\0' ||
+        engine->level_aux_runtime_receipt.slev.canonical_md5[0] == '\0') {
+        return 0;
+    }
+
+    out_target->level_index = route.level_index;
+    snprintf(out_target->canonical_slev_name,
+             sizeof(out_target->canonical_slev_name), "%s",
+             engine->level_aux_runtime_receipt.slev.canonical_name);
+    snprintf(out_target->canonical_slev_md5,
+             sizeof(out_target->canonical_slev_md5), "%s",
+             engine->level_aux_runtime_receipt.slev.canonical_md5);
+    out_target->source_byte_count = route.candidate_source_bytes;
+    out_target->task_header_size = route.task_header_size;
+    out_target->first_opcode = route.first_opcode;
+    out_target->setup_immediate = route.setup_immediate;
+    out_target->primary_literal_offset = route.primary_literal_offset;
+    out_target->primary_literal_address = route.primary_literal_address;
+    out_target->auxiliary_literal_offset = route.auxiliary_literal_offset;
+    out_target->auxiliary_literal_address = route.auxiliary_literal_address;
+    out_target->task_body_dispatch_proven = 0;
+    out_target->valid = 1;
+    return 1;
+}
+
+int nexus_v1_engine_write_slev_capture_target(
+    const Nexus_V1_Engine *engine, const char *path,
+    Nexus_V1_LevelScriptCaptureTargetReceipt *out_target) {
+    char temporary_path[1024];
+    Nexus_V1_LevelScriptCaptureTargetReceipt target;
+    FILE *file;
+
+    if (!path || !out_target ||
+        nexus_v1_engine_build_slev_capture_target(engine, &target) != 1 ||
+        !target.valid || !target.original_saturn_execution_required ||
+        target.task_body_dispatch_proven || !target.no_dispatch_only ||
+        target.fallback_visuals_permitted ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path)) {
+        return 0;
+    }
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    if (fprintf(file,
+                NEXUS_V1_SLEV_CAPTURE_TARGET_MAGIC "\n"
+                "level_index=%x\ncanonical_slev_name=%s\n"
+                "canonical_slev_md5=%s\nsource_byte_count=%x\n"
+                "task_header_size=%x\nfirst_opcode=%x\nsetup_immediate=%x\n"
+                "primary_literal_offset=%x\nprimary_literal_address=%x\n"
+                "auxiliary_literal_offset=%x\nauxiliary_literal_address=%x\n"
+                "capture_kind=original_saturn_sh2_execution\n"
+                "required_observations=entry_pc,task_body_transfer,callback_or_write\n"
+                "task_body_dispatch_proven=0\nno_dispatch_only=1\n",
+                target.level_index, target.canonical_slev_name,
+                target.canonical_slev_md5, target.source_byte_count,
+                target.task_header_size, target.first_opcode,
+                target.setup_immediate, target.primary_literal_offset,
+                target.primary_literal_address, target.auxiliary_literal_offset,
+                target.auxiliary_literal_address) < 0) {
+        fclose(file);
+        remove(temporary_path);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    if (rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {

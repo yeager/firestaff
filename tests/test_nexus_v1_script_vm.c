@@ -360,6 +360,71 @@ static void test_engine_owned_slev_profile_route_stays_blocked(void) {
           "unverified SLEV bytes cannot reach the engine route");
 }
 
+static void test_engine_slev_capture_target_stays_source_bound(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelScriptCaptureTargetReceipt target;
+    uint8_t slev[96];
+    char text[1024];
+    FILE *file;
+    const char *path = "/private/tmp/firestaff-nexus-slev-capture-target.txt";
+    static const uint8_t task_header[] = {
+        0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0xd0, 0x08, 0x4e, 0x08
+    };
+
+    memset(&engine, 0, sizeof(engine));
+    memset(slev, 0, sizeof(slev));
+    memcpy(slev, task_header, sizeof(task_header));
+    slev[36] = 0x43; slev[37] = 0x0b;
+    slev[52] = 0xa0; slev[53] = 0x10;
+    slev[64] = 0x00; slev[65] = 0x20; slev[66] = 0x27; slev[67] = 0x34;
+    slev[68] = 0x00; slev[69] = 0x20; slev[70] = 0x28; slev[71] = 0x40;
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 1;
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_name),
+             "SLEV00.BIN");
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_md5),
+             "59c01cbdd224152a6176687cdebeea9e");
+    nexus_script_vm_init(&engine.script_vm);
+    CHECK(nexus_script_vm_load_canonical_level(&engine.script_vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0,
+          "capture target loads canonical SLEV profile");
+    remove(path);
+    memset(&target, 0, sizeof(target));
+    CHECK(nexus_v1_engine_write_slev_capture_target(&engine, path, &target) == 1 &&
+          target.valid && target.level_index == 0 &&
+          strcmp(target.canonical_slev_name, "SLEV00.BIN") == 0 &&
+          strcmp(target.canonical_slev_md5,
+                 "59c01cbdd224152a6176687cdebeea9e") == 0 &&
+          target.source_byte_count == (int)sizeof(slev) &&
+          target.primary_literal_address == 0x00202734 &&
+          target.auxiliary_literal_address == 0x00202840 &&
+          target.original_saturn_execution_required &&
+          !target.task_body_dispatch_proven && target.no_dispatch_only &&
+          !target.fallback_visuals_permitted,
+          "active verified SLEV writes only an authentic execution-capture target");
+    file = fopen(path, "rb");
+    CHECK(file != NULL, "SLEV capture target is written");
+    if (file) {
+        size_t read_count;
+        read_count = fread(text, 1, sizeof(text) - 1, file);
+        text[read_count] = '\0';
+        fclose(file);
+        CHECK(strstr(text, NEXUS_V1_SLEV_CAPTURE_TARGET_MAGIC) != NULL &&
+              strstr(text, "capture_kind=original_saturn_sh2_execution") != NULL &&
+              strstr(text, "task_body_dispatch_proven=0") != NULL &&
+              strstr(text, "no_dispatch_only=1") != NULL,
+              "capture target requests proof without enabling a dispatcher");
+    }
+    remove(path);
+}
+
 static void test_real_slev_corpus_profile(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int seen = 0;
@@ -469,6 +534,7 @@ int main(void) {
     test_runtime_receipts_block_unparsed_real_source();
     test_real_slev_task_profile_blocks_dispatch();
     test_engine_owned_slev_profile_route_stays_blocked();
+    test_engine_slev_capture_target_stays_source_bound();
     test_real_slev_corpus_profile();
 
     if (g_failures) {
