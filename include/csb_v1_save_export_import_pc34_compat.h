@@ -23,7 +23,7 @@
  *        reserved  uint16 LE     2 bytes   (must be 0)
  *        payload_len uint32 LE   4 bytes   (length of payload bytes)
  *        payload_crc uint32 LE   4 bytes   (CRC-32 / ISO 3309 over payload)
- *        source_path char[64]   64 bytes   (origin artifact path or "(synthetic)")
+ *        source_path char[64]   64 bytes   (required origin artifact path)
  *        payload   <payload_len> bytes     (the raw CSB save container)
  *      Total fixed header = 88 bytes; total envelope =
  *      88 + payload_len bytes.
@@ -135,7 +135,9 @@ typedef enum {
     CSB_V1_SAVE_EXPORT_ERR_BAD_CRC          = -6, /* CRC-32 mismatch */
     CSB_V1_SAVE_EXPORT_ERR_IO               = -7, /* fopen / fread / fwrite */
     /* Envelope payload_kind disagrees with the embedded CSBGAME version. */
-    CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH = -8
+    CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH = -8,
+    /* Exported bytes must retain their originating CSB artifact path. */
+    CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH      = -9
 } CSB_V1_SaveExportResult;
 
 /* ── Classification API ─────────────────────────────────────────────── */
@@ -158,10 +160,9 @@ const char *csb_v1_save_export_kind_name(CSB_V1_SaveExportKind kind);
  * the 88-byte header + payload_len bytes to `out`. Returns total
  * bytes written or a negative CSB_V1_SaveExportResult.
  *
- * `payload_kind` must be 0 (v2.0) or 1 (v2.1). `source_path`
- * may be NULL (recorded as "(synthetic)") or a relative path
- * recorded into the header for diagnostics; longer than 63 chars
- * is truncated. */
+ * `payload_kind` must be 0 (v2.0) or 1 (v2.1). `source_path` must name
+ * the originating CSB artifact; NULL, empty, and the retired synthetic
+ * marker are rejected. Longer paths are truncated to 63 characters. */
 long csb_v1_save_export_build_envelope(const uint8_t *payload,
                                        size_t payload_len,
                                        uint16_t payload_kind,
