@@ -124,8 +124,12 @@
     active G1 byte square through SKProject `DME.h::tileTypeIndex` before it
     reaches the existing GDAT wall/floor consumer. G1 `0=wall` and `1=floor`
     cannot be confused with the host enum; class `4` remains on the direct
-    DB0 door route and every other class stays unavailable. Dynamic light,
-    D3/deep-square projection, and non-wall/floor terrain remain open.
+    DB0 door route and every other class stays unavailable.
+  - 2026-07-14 update: D3L/D3R now use SKProject's deep projection
+    coordinates (five forward, two lateral) and feed the same GDAT wall
+    consumer. D3C remains unavailable because the active GRAPHICSSET exposes
+    no source wall field for it; no fallback surface is drawn. Dynamic light
+    and non-wall/floor terrain remain open.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
   `test_dm2_v1_save_load` external-corpus census accepts only

@@ -829,14 +829,18 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
         int forward;
         int lateral;
     } visible_cells[] = {
-        /* SKProject c_gui_vp.cpp consumes these D0..D2 center/side cells
+        /* SKProject c_gui_vp.cpp consumes these D0..D3 center/side cells
          * through the existing wall panel plan. D0 sides are adjacent to the
-         * party; later rows are one lateral cell beside each forward cell. */
+         * party. D3L/D3R are the deep projections: SKProject's view-cell
+         * table reaches five cells ahead and two cells out from the center
+         * ray. D3C has no source GRAPHICSSET wall field, so it is deliberately
+         * not promoted to a drawable terrain surface here. */
         { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
         { DM2_SQ_D2C, 3,  0 },
         { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
         { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
         { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
+        { DM2_SQ_D3L, 5, -2 }, { DM2_SQ_D3R, 5,  2 },
     };
     DM2_V1_DungeonData *dd;
     int dir;

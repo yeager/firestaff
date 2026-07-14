@@ -14771,3 +14771,13 @@ are claimed. A positive result still requires a fresh authentic capture.
 - Extended `csb_v1_runtime_champion_load_attrs` with the original CSBWin
   `EXPOOL::Locate` key/hash/node layout, live child-content addition, and a
   changed-receipt rejection case.
+# 2026-07-14 — DM2 G1 D3 side-ray GDAT material route
+
+The indoor runtime now projects G1 D3L/D3R from SKProject's documented deep
+coordinates (five cells forward and two cells lateral) before the existing
+source-backed GDAT wall consumer. The focused gate requires all center, side,
+and deep wall classes to consume source material and records zero fallback or
+blocked draws. D3C remains intentionally unavailable because its GRAPHICSSET
+wall field is absent; this change does not fabricate a backdrop, dynamic
+light, doors, or non-wall/floor terrain. Verification:
+`dm2_v1_g1_center_ray_surface_gate`.
