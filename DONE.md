@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 HoC champion-mirror wall composition: M11 now follows
+  ReDMCSB `DUNVIEW.C F0107:3922-3928`: the source-selected, map-local wall
+  ornament is drawn through the ordinary F0107 path first, then C026 is
+  overlaid only in the fixed D1C portrait zone. Removed the non-source
+  hard-coded C346 replacement and last-ornament fallback. Verification:
+  `test_dm1_v1_champion_mirror_pc34_compat` and
+  `test_m11_overlay_command_queue_block`.
+
 - 2026-07-14 Theron Track 02 raw CUE IPL receipt: M12 retains INDEX 01 pregap
   bytes before receipt validation, fixing the false invalid startup graphics
   gate for verified raw JP/US BIN media.

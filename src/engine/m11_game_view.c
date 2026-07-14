@@ -21963,62 +21963,6 @@ static void m11_blit_scaled_palette_map_maybe_flip(const M11_AssetSlot* slot,
     }
 }
 
-/* ReDMCSB DUNVIEW.C F0791 scales C346's native material into G0205's
- * destination zone.  The mirror receipt owns the source origin, while the
- * decoded bitmap determines the native source extent. */
-static int m11_blit_scaled_region_palette_map_maybe_flip(
-    const M11_AssetSlot* slot,
-    int srcX,
-    int srcY,
-    int srcW,
-    int srcH,
-    unsigned char* framebuffer,
-    int fbW,
-    int fbH,
-    int dstX,
-    int dstY,
-    int dstW,
-    int dstH,
-    int transparentColor,
-    const unsigned char paletteMap[16],
-    int flipHorizontal)
-{
-    int dy;
-
-    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
-        srcX < 0 || srcY < 0 || srcW <= 0 || srcH <= 0 ||
-        dstW <= 0 || dstH <= 0 || srcX + srcW > (int)slot->width ||
-        srcY + srcH > (int)slot->height) {
-        return 0;
-    }
-    for (dy = 0; dy < dstH; ++dy) {
-        int dx;
-        int sourceY = srcY + (dy * srcH) / dstH;
-        int fbY = dstY + dy;
-        if (fbY < 0 || fbY >= fbH) {
-            continue;
-        }
-        for (dx = 0; dx < dstW; ++dx) {
-            int sourceX = srcX +
-                ((flipHorizontal ? dstW - 1 - dx : dx) * srcW) / dstW;
-            int fbX = dstX + dx;
-            unsigned char pixel;
-            if (fbX < 0 || fbX >= fbW) {
-                continue;
-            }
-            pixel = slot->pixels[sourceY * (int)slot->width + sourceX];
-            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
-                continue;
-            }
-            if (paletteMap) {
-                pixel = paletteMap[pixel & 0x0f];
-            }
-            framebuffer[fbY * fbW + fbX] = pixel;
-        }
-    }
-    return 1;
-}
-
 static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
                                       const M11_ViewportCell* cell,
                                       int depthIndex) {
@@ -22890,7 +22834,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision;
     const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt;
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
-    const M11_AssetSlot* slot;
     if (!state || !frontCell) {
         return;
     }
@@ -22902,8 +22845,6 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     if (!runtimeDecision->valid || !runtimeDecision->drawFrontWallOverlay ||
         !runtimeDecision->drawChampionPortraitAsWallOverlay ||
         !receipt->valid || !receipt->drawChampionPortrait) return;
-    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                (unsigned int)receipt->backingGraphicIndex);
     /* ReDMCSB DUNGEON.C:2608-2612 publishes the C127 fact for this frame
      * and DUNVIEW.C:3913-3928 consumes its C346/C026 pair.  A release-capture
      * proof is useful evidence, but cannot be a second renderer selector:
@@ -22917,43 +22858,16 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
 
-    if (!drawReceipt.candidatePanelOwnsCell &&
-        (!drawReceipt.drawMirrorBackingAsset || !slot || !slot->loaded ||
-         !slot->pixels)) {
-        return;
-    }
-
     /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
-     * G0289 and DUNVIEW.C:3913-3928 blits the fixed D1C portrait-on-wall
-     * rectangle from that state.  M11 must execute the draw through the
-     * DM1-owned HoC host-draw receipt above, so missing C346 backing assets
-     * stop the route instead of reopening the old fallback rectangle path. */
+     * G0289 and DUNVIEW.C:3913-3928 first completes the ordinary F0107 wall
+     * ornament blit, then copies C026 into the fixed D1C portrait-on-wall
+     * rectangle.  The generic wall pass above owns the backing selected by
+     * the map-local sensor ordinal; do not replace it with hard-coded C346.
+     */
     if (drawReceipt.candidatePanelOwnsCell) {
         m11_draw_dm1_front_champion_portrait_host_receipt(
             state, &drawReceipt, framebuffer, fbW, fbH);
         return;
-    }
-
-    if (drawReceipt.drawMirrorBackingAsset) {
-        if (!m11_blit_scaled_region_palette_map_maybe_flip(
-                slot,
-                drawReceipt.backingSourceX,
-                drawReceipt.backingSourceY,
-                (int)slot->width - drawReceipt.backingSourceX,
-                (int)slot->height - drawReceipt.backingSourceY,
-                framebuffer,
-                fbW,
-                fbH,
-                M11_VIEWPORT_X + drawReceipt.backingDstX,
-                M11_VIEWPORT_Y + drawReceipt.backingDstY,
-                drawReceipt.backingWidth,
-                drawReceipt.backingHeight,
-                drawReceipt.backingTransparentColor,
-                drawReceipt.backingPaletteMapValid
-                    ? drawReceipt.backingPaletteMap : NULL,
-                drawReceipt.backingFlipHorizontal)) {
-            return;
-        }
     }
     m11_draw_dm1_front_champion_portrait_host_receipt(
         state, &drawReceipt, framebuffer, fbW, fbH);
@@ -23078,21 +22992,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             continue;
         }
         mapIdx = state->world.party.mapIndex;
-        if (cell.wallOrnamentOrdinal <= 0 &&
-            spec.viewWallIndex == 12 &&
-            cell.championPortraitOrdinal >= 0 &&
-            state->world.dungeon && mapIdx >= 0 &&
-            mapIdx < (int)state->world.dungeon->header.mapCount &&
-            state->world.dungeon->maps[mapIdx].wallOrnamentCount > 0) {
-            cell.wallOrnamentOrdinal = (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount;
-        }
         if (cell.wallOrnamentOrdinal <= 0) {
-            continue;
-        }
-        if (cell.dm1RuntimeRenderDecisionReady &&
-            cell.dm1RuntimeRenderDecision.drawFrontWallOverlay) {
-            /* The D1C C346/C026 pair is owned by the final DM1 runtime
-             * decision.  Do not revive it through this broad host scan. */
             continue;
         }
         localIdx = cell.wallOrnamentOrdinal - 1;
