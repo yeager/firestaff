@@ -3368,6 +3368,8 @@ int nexus_v1_build_slev_dispatch_evidence(
     char entry[64];
     char task_body[64];
     char callback_or_write[64];
+    char primary_literal[32];
+    char auxiliary_literal[32];
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -3398,6 +3400,10 @@ int nexus_v1_build_slev_dispatch_evidence(
     snprintf(callback_or_write, sizeof(callback_or_write), "pc=%08x kind=%s",
              trace->callback_or_write_pc,
              trace->callback_or_write_is_write ? "write" : "callback");
+    snprintf(primary_literal, sizeof(primary_literal), "literal=%08x",
+             engine->script_vm.real_task_primary_literal_address);
+    snprintf(auxiliary_literal, sizeof(auxiliary_literal), "literal=%08x",
+             engine->script_vm.real_task_aux_literal_address);
     receipt.entry_observed = nexus_v1_slev_raw_trace_find(
         raw_trace, raw_trace_size, entry, &receipt.entry_raw_offset);
     receipt.task_body_observed = nexus_v1_slev_raw_trace_find(
@@ -3405,12 +3411,21 @@ int nexus_v1_build_slev_dispatch_evidence(
     receipt.callback_or_write_observed = nexus_v1_slev_raw_trace_find(
         raw_trace, raw_trace_size, callback_or_write,
         &receipt.callback_or_write_raw_offset);
+    receipt.primary_literal_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, primary_literal,
+        &receipt.primary_literal_raw_offset);
+    receipt.auxiliary_literal_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, auxiliary_literal,
+        &receipt.auxiliary_literal_raw_offset);
     receipt.callback_or_write_is_write = trace->callback_or_write_is_write;
     receipt.observation_order_proven = receipt.entry_observed &&
         receipt.task_body_observed && receipt.callback_or_write_observed &&
         receipt.entry_raw_offset < receipt.task_body_raw_offset &&
         receipt.task_body_raw_offset < receipt.callback_or_write_raw_offset;
-    if (!receipt.observation_order_proven) {
+    receipt.literal_observation_proven = receipt.primary_literal_observed &&
+        receipt.auxiliary_literal_observed;
+    if (!receipt.observation_order_proven ||
+        !receipt.literal_observation_proven) {
         receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION;
         *out_receipt = receipt;
         return 0;
