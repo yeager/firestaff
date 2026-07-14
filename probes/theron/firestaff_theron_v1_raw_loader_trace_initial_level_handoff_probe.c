@@ -44,6 +44,9 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->descriptor_selector_ordinal = 0u;
     out->caller_pc = 0xea00u;
     out->return_pc = 0xea03u;
+    out->later_caller_opcode = 0x20u;
+    out->later_caller_target = 0xe009u;
+    out->later_caller_control_verified = 1;
     out->sector_count = 1u;
     out->later_local_destination = 0x3800u;
     out->later_destination_span_bytes = 32u;
@@ -105,6 +108,22 @@ int main(void)
         return 1;
     }
     coalesced.later_post_return_resume_pc = coalesced.return_pc;
+    coalesced.later_caller_control_verified = 0;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt without the observed e009 caller control admitted the level route\n");
+        return 1;
+    }
+    coalesced.later_caller_control_verified = 1;
+    coalesced.later_caller_target = 0xe00cu;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt with a non-e009 caller target admitted the level route\n");
+        return 1;
+    }
+    coalesced.later_caller_target = 0xe009u;
     coalesced.later_track02_record = 0x0b53u;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {

@@ -149,6 +149,11 @@ typedef struct {
     size_t descriptor_selector_ordinal;
     uint16_t caller_pc;
     uint16_t return_pc;
+    /* Exact caller instruction bytes observed by the capture hook. This proves
+     * the e009 call edge itself, but assigns no gameplay-transition meaning. */
+    uint8_t later_caller_opcode;
+    uint16_t later_caller_target;
+    int later_caller_control_verified;
     uint8_t sector_count;
     int observed_raw_sector_lba;
     uint32_t observed_raw_sector_checksum;
@@ -261,7 +266,8 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
  * hash-verified Track 02 image identity. The transcript must retain the
  * authenticated Stage 2 $4090->$4093 row before the later $e009 dispatch,
  * a raw-sector fingerprint, its matching return, and one observed raw caller
- * control edge from that return target. */
+ * control edge from that return target. The call row must also retain the
+ * observed JSR opcode and e009 target. */
 int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     const char *capture,
     const uint8_t *track02_data,

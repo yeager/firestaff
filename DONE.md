@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 e009 caller-control receipt: the coalesced
+  later `$e009` dispatch now retains the source-observed HuC6280 `JSR` opcode
+  (`0x20`) and its `$e009` target, and the bounded initial-level admission
+  rejects a missing, non-JSR, or non-e009 caller control fact. This proves
+  only that the captured caller executed the System Card call before its
+  already-verified return/resumption edge; it assigns no gameplay transition,
+  dungeon, object, bitmap, or palette meaning. Coverage: fail-closed
+  `test_theron_v1_later_e009_raw_sector_order_trace` and the focused,
+  raw-media-gated `theron_v1_raw_loader_trace_initial_level_handoff` CTest.
+
 - 2026-07-14 Nexus PRS3 VDP1 texture-consumption capture boundary: versioned
   SH-2-to-VDP1 V2 trace receipts now require an observed post-command VDP1
   texture-read interval to begin at the decoder-output base, exactly cover its

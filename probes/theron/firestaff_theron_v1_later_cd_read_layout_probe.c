@@ -86,6 +86,8 @@ static int parse_later_trace_text(const char *text, uint32_t *out_record,
     size_t returned_length;
     unsigned int caller_pc;
     unsigned int return_pc;
+    unsigned int caller_opcode;
+    unsigned int caller_target;
     unsigned int sector_count;
     unsigned int cl;
     unsigned int dl;
@@ -138,9 +140,10 @@ static int parse_later_trace_text(const char *text, uint32_t *out_record,
                &dynamic_dl, &dynamic_ch, dynamic_variant, &dynamic_record,
                &consumed) == 10 && consumed == (int)dynamic_length &&
         sscanf(dispatch,
-               "later_system_card_e009_dispatch caller_pc=%x return_pc=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
-               &caller_pc, &return_pc, &sector_count, &cl, &dl,
-               &ch, &record, &consumed) == 7 && consumed == (int)dispatch_length &&
+               "later_system_card_e009_dispatch caller_pc=%x return_pc=%x caller_opcode=%x caller_target=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
+               &caller_pc, &return_pc, &caller_opcode, &caller_target,
+               &sector_count, &cl, &dl, &ch, &record, &consumed) == 9 &&
+        consumed == (int)dispatch_length &&
         sscanf(returned,
                "later_system_card_e009_return caller_pc=%x return_pc=%x record=%x%n",
                &return_caller_pc, &return_return_pc, &return_record,
@@ -157,6 +160,7 @@ static int parse_later_trace_text(const char *text, uint32_t *out_record,
         dynamic_record != expected_dynamic_record ||
         strcmp(dynamic_variant, expected_variant_name) != 0 ||
         caller_pc > 0xffffu || return_pc > 0xffffu ||
+        caller_opcode != 0x20u || caller_target != 0xe009u ||
         sector_count == 0u || cl > 0xffu || dl > 0xffu ||
         ch > 0xffu || record > 0xffffffu ||
         record != (cl | (dl << 8) | (ch << 16)) ||
@@ -189,7 +193,7 @@ static void test_later_trace_envelope_parser(void) {
     static const char valid_trace[] =
         "source=mednafen-pce-instrumented\n"
         "dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=1 destination=3800 record_register_mask=7 record_cl=df record_dl=4 record_ch=0 variant=jp_bin record=4df\n"
-        "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
+        "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 caller_opcode=20 caller_target=e009 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
         "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n";
     char duplicate_trace[sizeof(valid_trace) * 2u];
     char wrong_return_trace[sizeof(valid_trace)];
