@@ -55,10 +55,6 @@ int main(void)
             0x83u, buffer, record_read, &log)) {
         return 1;
     }
-    if (redmcsb_f0812_check_copy_protection_side0_track1_pc34_compat(
-            0x83u, buffer, NULL, &log)) {
-        return 1;
-    }
     if (strcmp(redmcsb_f0812_check_copy_protection_side0_track1_source_evidence_pc34(),
                "ReDMCSB IO.C:4153-4172; PC-98 INT 1Bh sector 240 CRC-status gate") != 0) {
         return 1;

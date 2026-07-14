@@ -1,7 +1,5 @@
 #include "redmcsb_f0812_check_copy_protection_side0_track1_pc34_compat.h"
 
-#include <stddef.h>
-
 bool redmcsb_f0812_check_copy_protection_side0_track1_pc34_compat(
     uint8_t disk_boot_physical_device_address,
     uint8_t *data_buffer,
@@ -9,10 +7,6 @@ bool redmcsb_f0812_check_copy_protection_side0_track1_pc34_compat(
     void *context)
 {
     uint8_t bios_ah;
-
-    if (read_data == NULL) {
-        return false;
-    }
 
     /* IO.C:4161-4171, PC-98 INT 1Bh AH=76h (MFM, no retry, seek). */
     bios_ah = read_data(disk_boot_physical_device_address,

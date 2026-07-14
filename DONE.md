@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
+  copy-protection BIOS callback, MIDI IODRV commands and substring routine.
+  Focused strict C11 tests pass without synthetic disk or audio behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0807` and `F0808`: source-locked entrance
   animation-step blit and unreferenced disk recalibration dispatch. Focused
   strict C11 tests pass without synthetic graphics or floppy behavior.
