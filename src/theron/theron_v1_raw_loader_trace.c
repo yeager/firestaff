@@ -184,7 +184,9 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *cursor;
     const char *line;
     size_t length;
-    const char *dynamic_read;
+    int dynamic_read_seen = 0;
+    int destination_span_seen = 0;
+    int controller_state_seen = 0;
     unsigned int pc;
     unsigned int address;
     unsigned int accumulator;
@@ -208,15 +210,21 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
         return 0;
     }
 
-    dynamic_read = strstr(capture, "dynamic_cd_read_transaction ");
-    if (!dynamic_read) return 0;
-    cursor = dynamic_read;
+    cursor = capture;
     out->palette_word_checksum = 2166136261u;
     while (tqr_trace_next_line(&cursor, &line, &length)) {
-        if (length >= strlen("dynamic_cd_read_destination_span ") &&
+        if (length >= strlen("dynamic_cd_read_transaction ") &&
+            memcmp(line, "dynamic_cd_read_transaction ",
+                   strlen("dynamic_cd_read_transaction ")) == 0) {
+            if (dynamic_read_seen || destination_span_seen ||
+                controller_state_seen || out->palette_store_count ||
+                out->palette_word_count) return 0;
+            dynamic_read_seen = 1;
+        } else if (length >= strlen("dynamic_cd_read_destination_span ") &&
             memcmp(line, "dynamic_cd_read_destination_span ",
                    strlen("dynamic_cd_read_destination_span ")) == 0) {
-            if (out->dynamic_cd_read_destination_span_verified ||
+            if (!dynamic_read_seen || destination_span_seen ||
+                controller_state_seen || out->dynamic_cd_read_destination_span_verified ||
                 !tqr_trace_parse_cd_read_destination_span(
                     line, length, &destination_span_pc,
                     &destination_span_destination, &destination_span_bytes,
@@ -226,10 +234,18 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
             out->dynamic_cd_read_destination_span_checksum =
                 destination_span_checksum;
             out->dynamic_cd_read_destination_span_verified = 1;
+            destination_span_seen = 1;
+        } else if (length >= strlen("dynamic_cd_read_controller_state ") &&
+                   memcmp(line, "dynamic_cd_read_controller_state ",
+                          strlen("dynamic_cd_read_controller_state ")) == 0) {
+            if (!destination_span_seen || controller_state_seen ||
+                out->palette_store_count || out->palette_word_count) return 0;
+            controller_state_seen = 1;
         } else if (length >= strlen("dynamic_huc6260_palette_store ") &&
             memcmp(line, "dynamic_huc6260_palette_store ",
                    strlen("dynamic_huc6260_palette_store ")) == 0) {
-            if (!tqr_trace_parse_palette_store(line, length, &pc, &address,
+            if (!controller_state_seen ||
+                !tqr_trace_parse_palette_store(line, length, &pc, &address,
                                                &accumulator)) {
                 return 0;
             }
@@ -242,7 +258,8 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
         } else if (length >= strlen("dynamic_huc6260_palette_word ") &&
                    memcmp(line, "dynamic_huc6260_palette_word ",
                           strlen("dynamic_huc6260_palette_word ")) == 0) {
-            if (!tqr_trace_parse_palette_word(line, length, &palette_index,
+            if (!controller_state_seen ||
+                !tqr_trace_parse_palette_word(line, length, &palette_index,
                                               &palette_word)) {
                 return 0;
             }
@@ -258,7 +275,8 @@ int theron_v1_raw_loader_trace_ingest_mednafen_capture(
         }
     }
     if (out->palette_store_count == 0u ||
-        !out->dynamic_cd_read_destination_span_verified) return 0;
+        !out->dynamic_cd_read_destination_span_verified ||
+        !controller_state_seen) return 0;
 
     out->valid = 1;
     out->variant = live_trace.variant;

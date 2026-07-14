@@ -158,10 +158,11 @@ typedef struct {
 } Theron_V1RawLoaderTraceCoalescedLaterReceipt;
 
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
- * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores and
- * completed HuC6260 colour-table words that appear after that read in the
- * same original capture.  Completed VCE words establish hardware output
- * order, not Track 02 source-byte provenance. */
+ * existing dynamic CD_READ/IRQ2 gate first, then requires the captured
+ * CD_READ, $3800 destination span, and IRQ2 controller state in their
+ * observed order before recording VCE stores and completed HuC6260
+ * colour-table words. Completed VCE words establish hardware output order,
+ * not Track 02 source-byte provenance. */
 int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *capture,
     const char *track02_md5,
