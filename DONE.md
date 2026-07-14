@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0685 IMG3 line fill: added the PC I34 packed-4bpp
+  caller-owned line-color fill used by image expansion. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0678/F0679 D2 side dispatcher: added PC D2L2/D2R2
   wall-panel/teleporter-field routing with source wall swaps and zones over
   caller-owned callbacks. Focused strict-C11 regression passes.

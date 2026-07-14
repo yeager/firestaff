@@ -643,6 +643,9 @@
     teleporter-only branch over caller-owned callbacks, preserving C05/C06
     swap, C707/C708 zones, field aspects, and wall early return. No geometry,
     bitmap, F0111/F0115, or runtime fallback is supplied.
+  - 2026-07-14 update: F0685 now provides the PC IMG3 packed-nibble line fill
+    over caller-owned destination storage for real image expansion paths. It
+    allocates no bitmap and supplies no palette, image, or renderer fallback.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
