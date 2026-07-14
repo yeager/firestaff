@@ -14984,6 +14984,16 @@ from overrunning the right edge. Verification: `test_dm1_v1_text_message_pc34_co
 `test_m11_dialog_choice_overlay_fit_pc34_compat`, and
 `test_m11_open_door_spell_runtime_pc34_compat`.
 
+# 2026-07-14 DM1 V1 spell/action HUD source-box geometry
+
+The C009 spell background and C010 action area now interpret ReDMCSB DATA.C
+BOX values as inclusive `{left,right,top,bottom}` coordinates. Their real
+destinations are therefore `{224,42,96,33}` and `{224,77,96,45}`, instead of
+the previously malformed HUD rectangles. Verification:
+`test_dm1_v1_box_spell_area_pc34_compat` (175 assertions),
+`test_dm1_v1_box_action_area_pc34_compat` (161 assertions), and
+`test_m11_open_door_spell_runtime_pc34_compat`.
+
 # ✅ 2026-07-14 DM1 F0435 original-save runtime provenance gate
 
 M11 now publishes `ORIGINAL_SAVE_PC34` only when the input was classified and
