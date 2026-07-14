@@ -1523,6 +1523,9 @@ typedef struct {
     size_t object_boundary_user_data_offset;
     size_t object_boundary_user_data_offset_in_record;
     size_t following_user_data_bytes_in_record;
+    /* Exact raw-media witness for the following opaque bytes. This proves
+     * continuity only; it does not identify an object-table format. */
+    uint32_t following_user_data_hash;
     uint16_t level_width;
     uint16_t level_height;
     uint32_t level_seed;

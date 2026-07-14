@@ -1232,6 +1232,8 @@ static void probe_real_data_initial_candidate(const char *label,
                boundary.object_boundary_user_data_offset_in_record, 0x480u);
     check_size("real initial level/object opaque tail bytes",
                boundary.following_user_data_bytes_in_record, 0x380u);
+    check_int("real initial level/object opaque tail fingerprinted",
+              boundary.following_user_data_hash != 0u, 1);
     check_int("real initial level/object table stays unparsed",
               boundary.object_table_parsed, 0);
     check_int("real initial level/object table stays unproven",
