@@ -1582,6 +1582,26 @@ static void dm2_v1_boot_startup_host_view_receipt_clear(
     }
 }
 
+/* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235) owns one
+ * static TITLE/0/dt07/4 surface and blocks in MessageLoop(true).  There is
+ * no source title-frame counter to replay before GAME_LOAD() returns 1. */
+static int dm2_v1_boot_startup_static_menu_timing_ready(
+    const DM2_V1_BootStartupFullStartReceipt *receipt)
+{
+    return receipt && receipt->title_ready &&
+           receipt->title_animation_tick == 0 &&
+           receipt->title_frame == 0 &&
+           receipt->title_frame_max == 0 &&
+           receipt->title_frame_duration_ticks == 0 &&
+           receipt->title_cycle_ticks == 0 &&
+           receipt->title_cycle_position_tick == 0 &&
+           receipt->title_frame_start_tick == 0 &&
+           receipt->title_next_frame_tick == 0 &&
+           receipt->title_frame_elapsed_ticks == 0 &&
+           receipt->title_frame_remaining_ticks == 0 &&
+           receipt->title_cycle_remaining_ticks == 0;
+}
+
 static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
                                                        uint32_t value)
 {
@@ -1640,39 +1660,8 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
     receipt->menu_gdat_category = render->menu_gdat_category;
     receipt->menu_gdat_index = render->menu_gdat_index;
     receipt->menu_gdat_field = render->menu_gdat_field;
-    receipt->title_cycle_ticks =
-        (receipt->title_frame_max + 1) *
-        receipt->title_frame_duration_ticks;
-    if (receipt->startup_menu_active &&
-        receipt->title_frame_duration_ticks > 0 &&
-        receipt->title_cycle_ticks > 0) {
-        const int cycle_tick =
-            receipt->title_animation_tick % receipt->title_cycle_ticks;
-        receipt->title_cycle_position_tick = cycle_tick;
-        receipt->title_frame_start_tick =
-            (cycle_tick / receipt->title_frame_duration_ticks) *
-            receipt->title_frame_duration_ticks;
-        receipt->title_next_frame_tick =
-            receipt->title_frame_start_tick +
-            receipt->title_frame_duration_ticks;
-        receipt->title_frame_elapsed_ticks =
-            cycle_tick - receipt->title_frame_start_tick;
-        receipt->title_frame_remaining_ticks =
-            receipt->title_next_frame_tick - cycle_tick;
-        receipt->title_cycle_remaining_ticks =
-            receipt->title_cycle_ticks - cycle_tick;
-        receipt->exact_title_timing_ready =
-            receipt->title_frame_start_tick <= cycle_tick &&
-            cycle_tick < receipt->title_next_frame_tick &&
-            receipt->title_frame_elapsed_ticks >= 0 &&
-            receipt->title_frame_remaining_ticks > 0 &&
-            receipt->title_next_frame_tick <= receipt->title_cycle_ticks &&
-            receipt->title_frame ==
-                receipt->title_frame_start_tick /
-                    receipt->title_frame_duration_ticks;
-    } else {
-        receipt->exact_title_timing_ready = receipt->title_ready ? 1 : 0;
-    }
+    receipt->exact_title_timing_ready =
+        dm2_v1_boot_startup_static_menu_timing_ready(receipt);
     receipt->menu_row_count = render->row_count;
     receipt->menu_text_count = render->menu_text_count;
     receipt->selectable_text_count = render->selectable_text_count;
