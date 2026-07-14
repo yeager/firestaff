@@ -1093,6 +1093,44 @@ int main(void)
               profile.timeline_queue.eventCount == 1,
           "requeued TT_60 retains its original CSBWin timer queue owner");
 
+    /* A source-owned TT_60 whose party-square precondition is absent must
+     * not fall through to M10 C60/C61, where timerObj8 has incompatible
+     * generic event-payload semantics. It is consumed without inventing a
+     * successor or mutating the saved TIMER receipt. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    profile.current_level = 1;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.last_timeline_dispatch.count == 1 &&
+              profile.last_timeline_dispatch.records[0].eventType ==
+                  DM1_EVENT_NONE &&
+              profile.timeline_queue.eventCount == 0 &&
+              profile.csbwin_timers[0].time == profile.game_time - 1u,
+          "unsupported TT_60 receipt cannot fall through to generic M10 group handling");
+
+    /* TT_61 shares the CSBWin timerObj8 owner but its sound and movement
+     * branches are not restored. A Lord Chaos target therefore remains
+     * queue-owned and mutation-blocked rather than becoming a generic C61. */
+    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    memset(profile.csbwin_timeline_event_queue_slot, 0xff,
+           sizeof(profile.csbwin_timeline_event_queue_slot));
+    profile.current_level = 0;
+    raw[104u] = 0x17u; /* DB4 monsterType: mon_LordChaos. */
+    profile.csbwin_timers[0].function = 61u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.last_timeline_dispatch.count == 1 &&
+              profile.last_timeline_dispatch.records[0].eventType ==
+                  DM1_EVENT_NONE &&
+              profile.timeline_queue.eventCount == 0 &&
+              profile.csbwin_timers[0].time == profile.game_time - 1u,
+          "unsupported TT_61 Lord Chaos receipt cannot reach generic M10 handling");
+    raw[104u] = 0u;
+
     memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
     memset(profile.csbwin_timeline_event_queue_slot, 0xff,
            sizeof(profile.csbwin_timeline_event_queue_slot));

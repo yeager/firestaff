@@ -2175,6 +2175,14 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   `Timer.cpp:2519-2584`. Verification:
   `test_csb_v1_dsa_restored_timer_tick_bridge`.
 
+- 2026-07-14 CSBWin `TT_60`/`TT_61` fail-closed timer-owner boundary: once a
+  materialized CSBWin queue slot identifies either timer, every unsupported
+  receipt is consumed before M10 C60/C61 can reinterpret `timerObj8` as
+  generic event payload. Only the authenticated party-square, non-Lord-Chaos
+  `+5` requeue remains live; off-party and Lord-Chaos paths create no
+  successor or replacement movement/sound behavior. Verification:
+  `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - 2026-07-13 CSBWin saved `TT_22` runtime: an authenticated imported timer
   now preserves CSBWin's documented restart no-op rather than acquiring a
   generic C22 action. Source: `CSBCode.cpp:6564-6569`. Verification:

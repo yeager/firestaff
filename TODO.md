@@ -291,6 +291,10 @@
   party-square, non-Lord-Chaos `+5` successor is live before M10 can mutate
   `timerObj8`. Object movement, TT_61 sound, occupied-square checks, and the
   Lord Chaos random detour remain fail-closed without their CSBWin owners.
+  - 2026-07-14 hardening: every queue-owned saved `TT_60`/`TT_61` receipt is
+    now consumed before M10's incompatible C60/C61 group path. Unsupported,
+    malformed, off-party-square, and Lord-Chaos shapes create no successor
+    and retain no generic movement or sound behavior.
 
 - 2026-07-13 CSBWin restored `TT_22` follow-up: the imported restart timer's
   exact source no-op is live. Its original creation context and the removed
