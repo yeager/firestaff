@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0766`, `F0785`, `F0787` and `F0789`:
+  source-locked screen blit, mouse-coordinate, XYZ-zone and permanent
+  layout-allocation routes. Four focused strict C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0784`: source-locked direct IODRV_06
   unlock-mouse dispatch. Focused strict C11 test passes.
 

@@ -4,10 +4,6 @@ unsigned char *redmcsb_f0789_allocate_layout_range_pc34_compat(
     unsigned long byte_count,
     redmcsb_f0789_memory_allocate_pc34_compat_fn memory_allocate)
 {
-    if (memory_allocate == 0) {
-        return 0;
-    }
-
     return memory_allocate(byte_count,
                            REDMCSB_F0789_ALLOCATION_PERMANENT,
                            REDMCSB_F0789_MEMORY_REQUEST_LAYOUT_RANGE);
