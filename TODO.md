@@ -750,6 +750,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     transfer. Binding those logical planes to the live Mac/SDL framebuffer
     remains a separate presentation/capture task; no hardware aperture is
     claimed by this narrow adapter.
+  - 2026-07-14 VIDEODRV.C/NEC816.C F8151 now preserves the PC 3.4 C25
+    source-bitmap-to-aperture rectangle path, including source/destination
+    even strides, transparency and vertical flip. C25 F0681/F0683 are empty,
+    so horizontal flip deliberately remains a source-defined no-op. F8143
+    aperture-to-bitmap readback and live framebuffer presentation remain
+    separate, unproven mappings.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette

@@ -58,6 +58,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8151: source-locked PC 3.4 C25
+  source-bitmap-to-aperture rectangle blit with original even-stride,
+  opaque/transparent and vertical-flip behavior. Empty C25 F0681/F0683 paths
+  are preserved as no-ops rather than creating flipped graphics; F8143
+  readback remains separately tracked. Focused strict-C11 test passed.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8140/F8162: source-locked `NEC816.C`
   overlap-safe byte transfer and PC 3.4 multi-plane message-area scroll. The
   portable adapter preserves the exact source direction choice, 160-byte
