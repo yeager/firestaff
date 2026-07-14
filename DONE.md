@@ -13657,6 +13657,21 @@ or fallback-visual claim; later dungeon requests reject. The focused Track 02
 handoff probe checks the real-media route and its refusal of an unproven
 dungeon ID.
 
+# ✅ 2026-07-14 Theron later `$e009` capture correlation gate
+
+Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
+first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
+hash-verified JP and US raw Track 02 images plus matching instrumented traces;
+the record must reconstruct from observed `CL/DL/CH`, remain in each raw-sector
+range, resolve to the same existing stage-three descriptor selector ordinal,
+and preserve one caller/return PC pair. This is only a bounded record/layout
+and control-transfer correlation. It does not label the call as a payload
+format, or publish a CD read, bitmap, palette, object, level, or gameplay
+transition. Inspected historical US traces do not contain the new later
+envelope, so no positive record has been claimed. Verified with an external
+Ninja build of `firestaff_theron_v1_later_cd_read_layout_probe` and skip-safe
+CTest registration.
+
 # 2026-07-14 Nexus Structure3 face-pair multiplicity corpus receipt
 
 The DGN face receipt now partitions each entry-local unordered vertex pair by

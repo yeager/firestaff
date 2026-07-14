@@ -778,6 +778,18 @@ status waits before returning. This remains controller-only evidence: it does
 not identify a CD read, a source record, a destination, a transfer, or payload
 meaning. Continue only from a later explicit original data transaction.
 
+2026-07-14 later-loader capture gate: the authenticated US raw Track 02 is
+available locally, but the inspected historical Mednafen traces contain no
+later `$e009` dispatch/return envelope. The trace patch now records the first post-stage-two
+HuC6280 `JSR $e009` as raw caller/return PC plus `CL/DL/CH` record bytes. The
+new opt-in probe accepts only a paired hash-verified JP/US corpus and trace
+pair whose later records are in raw-sector bounds, reconstruct from those
+bytes, resolve to the same existing stage-three selector ordinal, and retain
+the same caller/return transition anchor. It assigns no CD payload, object,
+graphics, palette, level, or gameplay-transition semantics. A fresh matched
+JP/US capture remains required before any positive record correlation is
+claimed.
+
 ## DM1/CSB Render Follow-up (2026-07-12)
 
 DM1's C38 projectile precheck now carries ReDMCSB F0190's live active-group

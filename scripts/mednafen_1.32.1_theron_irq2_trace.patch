@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1166 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1214 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -127,6 +127,13 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceDynamicStatus1802;
 +static uint32 TheronIrq2TraceDynamicStatus1803;
 +static bool TheronIrq2TraceDynamicControllerStateSeen;
++/* The first later e009 call is retained only as a raw dispatch/return
++ * envelope. Its record bytes may be correlated with authenticated Track 02
++ * sector coordinates, but this hook assigns no payload or transition role. */
++static bool TheronIrq2TraceLaterE009DispatchSeen;
++static bool TheronIrq2TraceLaterE009ReturnSeen;
++static uint32 TheronIrq2TraceLaterE009CallerPC;
++static uint32 TheronIrq2TraceLaterE009Record;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -1100,6 +1107,38 @@ index 347482c4..61d4758e 100644
 +  }
 +  FlushTheronIrq2Trace();
 + }
++
++ /* The initial $4090 call is captured above. Once it has returned, retain
++  * the first subsequent original JSR $e009 and its observed return. This is
++  * an e009-call envelope, not a generic CD_READ or destination classifier. */
++ if(TheronIrq2TraceDynamicTransactionSeen &&
++    !TheronIrq2TraceLaterE009DispatchSeen && logical_pc != 0x4090 &&
++    (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x20 &&
++    (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) == 0x09 &&
++    (CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) == 0xe0)
++ {
++  const uint32 cl = CurGame->Debugger->MemPeek(0x00fc, 1, true, true) & 0xff;
++  const uint32 dl = CurGame->Debugger->MemPeek(0x00fd, 1, true, true) & 0xff;
++  const uint32 ch = CurGame->Debugger->MemPeek(0x00fe, 1, true, true) & 0xff;
++
++  TheronIrq2TraceLaterE009CallerPC = logical_pc;
++  TheronIrq2TraceLaterE009Record = cl | (dl << 8) | (ch << 16);
++  TheronIrq2TraceLaterE009DispatchSeen = true;
++  TheronIrq2Trace->print_format("later_system_card_e009_dispatch caller_pc=%04x return_pc=%04x sector_count=01 record_cl=%02x record_dl=%02x record_ch=%02x record=%06x\\n",
++                                logical_pc, logical_pc + 3, cl, dl, ch,
++                                TheronIrq2TraceLaterE009Record);
++  FlushTheronIrq2Trace();
++ }
++ if(TheronIrq2TraceLaterE009DispatchSeen &&
++    !TheronIrq2TraceLaterE009ReturnSeen &&
++    logical_pc == TheronIrq2TraceLaterE009CallerPC + 3)
++ {
++  TheronIrq2Trace->print_format("later_system_card_e009_return caller_pc=%04x return_pc=%04x record=%06x\\n",
++                                TheronIrq2TraceLaterE009CallerPC, logical_pc,
++                                TheronIrq2TraceLaterE009Record);
++  TheronIrq2TraceLaterE009ReturnSeen = true;
++  FlushTheronIrq2Trace();
++ }
 + if(logical_pc == 0xe736 && TheronIrq2TraceDynamicReadReturnSeen &&
 +    !TheronIrq2TraceDynamicIrq2EntrySeen)
 + {
@@ -1201,7 +1240,7 @@ index 347482c4..61d4758e 100644
 + if(TheronIrq2Trace)
 +  DoTheronIrq2Trace(PC);
  }
-@@ -1873,5 +2530,58 @@ void Debugger_Init(void)
+@@ -1873,5 +2530,65 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -1257,6 +1296,10 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceDynamicStatus1802 = 0;
 +	  TheronIrq2TraceDynamicStatus1803 = 0;
 +	  TheronIrq2TraceDynamicControllerStateSeen = false;
++	  TheronIrq2TraceLaterE009DispatchSeen = false;
++	  TheronIrq2TraceLaterE009ReturnSeen = false;
++	  TheronIrq2TraceLaterE009CallerPC = 0;
++	  TheronIrq2TraceLaterE009Record = 0;
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
 +	  FlushTheronIrq2Trace();
