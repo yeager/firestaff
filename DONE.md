@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0664 front-wall click transaction: added the PC34
+  no-party guard, imaginary fake-wall press/release gate, live mouse sample,
+  pointer hide, ordinary wall-thud request, and input-wait stop flag over
+  caller-owned input/audio state. No mouse/dungeon/DSA/event/sound fallback
+  was introduced. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0661 derived bitmap cache bridge: added the exact
   cache-hit return and cache-miss native/derived lookup, dimension write,
   F0129 dispatch, then cache-admission order. Bitmap/cache/palette ownership
