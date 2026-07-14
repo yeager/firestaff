@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0779`: source-locked DOS current-file-mark
+  query. The focused strict C11 test passes with no host file I/O.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0780`: source-locked signed file-handle
   invalidity predicate. Focused strict C11 test passes.
 
