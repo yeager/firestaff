@@ -1072,10 +1072,11 @@ static int original_pc34_explosion_event_slot_is_valid(
     return 1;
 }
 
-/* ReDMCSB CLIKVIEW.C F0374:179-186 creates C13 only after the dropped
- * champion bones are linked at B.Location/C.A.Cell. F0435 must not publish
- * that saved timer merely because its union bytes look plausible: the C2
- * champion selector is owned by the original JUNK record's ChargeCount. */
+/* ReDMCSB TIMELINE.C F0255:1677-1695 traverses the square chain only for
+ * C13 step 1. The preceding step 2 may be saved before that lookup, while
+ * step 1 unlinks the bones before it schedules step 0. Keep the source
+ * JUNK/ChargeCount ownership check for the sole dereferencing branch; a
+ * resumed terminal step must not require the already-unlinked bones. */
 static int original_pc34_vi_altar_bones_on_square(
     const struct GameWorld_Compat *world,
     int map_index,
@@ -2068,9 +2069,10 @@ static int materialize_original_pc34_timeline(
                 plan.map_x >= (int)world->dungeon->maps[plan.map_index].width ||
                 plan.map_y >= (int)world->dungeon->maps[plan.map_index].height ||
                 !world->party.champions[plan.champion_index].present ||
-                !original_pc34_vi_altar_bones_on_square(
-                    world, plan.map_index, plan.map_x, plan.map_y,
-                    plan.cell, plan.champion_index)) {
+                (plan.step == 1 &&
+                 !original_pc34_vi_altar_bones_on_square(
+                     world, plan.map_index, plan.map_x, plan.map_y,
+                     plan.cell, plan.champion_index))) {
                 return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             }
             ev.mapX = plan.map_x;

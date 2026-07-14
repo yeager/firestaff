@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 C13 Vi Altar terminal-save handoff: aligned the
+  original-save materializer with ReDMCSB `TIMELINE.C F0255:1677-1699`.
+  Firestaff now validates the JUNK bones/`ChargeCount` owner only at C13 step
+  1, the source branch that traverses and unlinks it. A valid save at step 0
+  resumes after that unlink instead of being rejected, while a missing owner
+  at step 1 remains fail-closed. The focused native F0433 -> F0435 -> F0433
+  regression covers both cases. Verification:
+  `./build/test_dm1_v1_original_save_pc34_handoff` passed; the opt-in real
+  corpus section skipped because `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API
