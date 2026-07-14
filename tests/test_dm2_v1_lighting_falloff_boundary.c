@@ -1768,6 +1768,48 @@ int main(void)
         CHECK("source evidence cites DM2 palette documentation",
               e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
     }
+    {
+        uint8_t raw[1u + 1u + 3u + 3u + 512u] = { 0 };
+        uint8_t palette[4] = { 1u, 2u, 3u, 4u };
+        DM2_V1_InterfaceActionTable table;
+
+        raw[0] = 1u;
+        raw[1] = 3u;
+        raw[2] = 0u;
+        raw[3] = 32u;
+        raw[4] = 64u;
+        raw[5] = 10u;
+        raw[6] = 20u;
+        raw[7] = 30u;
+        for (int i = 0; i < 256; ++i) {
+            raw[8 + i * 2] = 0u;
+            raw[8 + i * 2 + 1] = 1u;
+        }
+        memset(&table, 0, sizeof(table));
+        table.valid = 1;
+        table.raw = raw;
+        table.raw_size = (uint32_t)sizeof(raw);
+        table.group_count = 1u;
+        table.tail_offset = 8u;
+        table.tail_size = 512u;
+        table.groups[0].length = 3u;
+        table.groups[0].primary_offset = 2u;
+        table.groups[0].secondary_offset = 5u;
+        CHECK("DM2 dt07/2 palette transform follows skproject nearest threshold",
+              dm2_v1_interface_action_table_remap_palette(
+                  &table, palette, 4u, 32u, -1, -1) == 1 &&
+                  palette[0] == 10u && palette[3] == 10u);
+        palette[0] = 1u;
+        palette[1] = 2u;
+        CHECK("DM2 dt07/2 palette transform preserves source colorkeys",
+              dm2_v1_interface_action_table_remap_palette(
+                  &table, palette, 2u, 0u, 1, -1) == 1 &&
+                  palette[0] == 20u && palette[1] == 2u);
+        table.tail_size = 511u;
+        CHECK("DM2 dt07/2 palette transform rejects a truncated mapping tail",
+              dm2_v1_interface_action_table_remap_palette(
+                  &table, palette, 2u, 0u, -1, -1) == 0);
+    }
     test_door_rect_contracts();
     test_hud_chrome_render_plan();
     test_weather_overlay_render_plan();

@@ -811,6 +811,10 @@ typedef struct {
     int gdat_material_palette_door_frame_consumed_count;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
+    int gdat_interface_text_palette_ready;
+    uint32_t gdat_interface_text_palette_hash;
+    uint8_t gdat_interface_text_palette16[16];
+    int gdat_interface_action_palette_consumed_count;
     const uint8_t *gdat_interface_font_rows;
     uint32_t gdat_interface_font_hash;
     int gdat_interface_font_consumed_count;
@@ -957,6 +961,11 @@ void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
  * The viewport accepts only the already validated logical-index table owned by
  * the DM2 boot profile; HUD colours remain logical until this bind occurs. */
 void dm2_v1_viewport_set_gdat_interface_palette(
+    DM2_V1_ViewportState *s,
+    int ready,
+    uint32_t hash,
+    const uint8_t palette16[16]);
+void dm2_v1_viewport_set_gdat_interface_text_palette(
     DM2_V1_ViewportState *s,
     int ready,
     uint32_t hash,

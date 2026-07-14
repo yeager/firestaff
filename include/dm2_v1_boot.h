@@ -1462,6 +1462,17 @@ int dm2_v1_boot_interface_action_table(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceActionTable *out_table);
 
+/* ReDMCSB/skproject SkWinCore.cpp _0b36_037e uses the dt07/2 tail as 256
+ * (group, threshold) pairs, then selects the nearest source threshold in
+ * that group's pv1 span and returns the matching pv5 palette entry. */
+int dm2_v1_interface_action_table_remap_palette(
+    const DM2_V1_InterfaceActionTable *table,
+    uint8_t *palette,
+    uint32_t palette_count,
+    uint8_t darkness_0_to_64,
+    int colorkey1,
+    int colorkey2);
+
 /* skproject QUERY_FONT reads this six-row, 128-glyph dt07/0 table directly.
  * Storage remains boot-owned and is valid while profile->graphics_dat lives. */
 int dm2_v1_boot_interface_font_table(

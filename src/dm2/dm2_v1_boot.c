@@ -4881,6 +4881,62 @@ int dm2_v1_boot_interface_action_table(
     return dm2_v1_boot_parse_interface_action_table(raw, raw_size, out_table);
 }
 
+int dm2_v1_interface_action_table_remap_palette(
+    const DM2_V1_InterfaceActionTable *table,
+    uint8_t *palette,
+    uint32_t palette_count,
+    uint8_t darkness_0_to_64,
+    int colorkey1,
+    int colorkey2)
+{
+    uint32_t attenuation;
+
+    if (!table || !table->valid || !table->raw || !palette ||
+        palette_count == 0u || palette_count > 256u ||
+        table->tail_size < 512u ||
+        table->tail_offset > table->raw_size - 512u) {
+        return 0;
+    }
+    attenuation = darkness_0_to_64 > 64u ? 0u :
+        64u - (uint32_t)darkness_0_to_64;
+    for (uint32_t i = 0; i < palette_count; ++i) {
+        uint8_t color;
+        uint32_t pair_offset;
+        uint8_t group_index;
+        uint8_t threshold_index;
+        const DM2_V1_InterfaceActionGroup *group;
+        uint32_t target;
+        uint32_t selected = 0u;
+
+        if ((int)i == colorkey1 || (int)i == colorkey2) continue;
+        color = palette[i];
+        pair_offset = table->tail_offset + (uint32_t)color * 2u;
+        group_index = table->raw[pair_offset];
+        threshold_index = table->raw[pair_offset + 1u];
+        if (group_index >= table->group_count) return 0;
+        group = &table->groups[group_index];
+        if (group->length == 0u || threshold_index >= group->length ||
+            group->primary_offset > table->raw_size - group->length ||
+            group->secondary_offset > table->raw_size - group->length) {
+            return 0;
+        }
+        /* skproject _0b36_037e (0B36:03E6-04EB): scale the selected pv1
+         * threshold, then choose the closest source pv1 entry. */
+        target = ((uint32_t)table->raw[group->primary_offset + threshold_index] *
+                  attenuation) >> 6;
+        for (; selected + 1u < group->length; ++selected) {
+            uint32_t left = table->raw[group->primary_offset + selected];
+            uint32_t right = table->raw[group->primary_offset + selected + 1u];
+            if (left <= target && right >= target) {
+                if (target - left > right - target) ++selected;
+                break;
+            }
+        }
+        palette[i] = table->raw[group->secondary_offset + selected];
+    }
+    return 1;
+}
+
 int dm2_v1_boot_interface_font_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,
