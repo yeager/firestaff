@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB ReDMCSB title source path: removed manufactured title text
+  and corrected the title receipt to the 18 real CHAOS rasters (48x12 through
+  320x80), followed by the source-backed PRESENTS and STRIKES regions.
+
 - 2026-07-15 DM2 skproject side-wall GDAT receipt: D3L/D3R/D2L/D2R now have
   canonical-data coverage through M11 with source field, raw hash, decoded
   pixel hash, and local palette required for every side-wall command.
