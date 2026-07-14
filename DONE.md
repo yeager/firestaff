@@ -84,6 +84,15 @@
   observers synchronized with the terminal F0283 champion mutation instead
   of retaining the pre-dispatch hash. Verification:
   `dm1_v1_original_save_c13_m11_runtime`.
+- 2026-07-14 DM1 PC34 C11 M11 movement-runtime consumption: the movement
+  pipeline now passes its one due F0887 result to M11's existing emission
+  consumer before publishing F0891. An admitted original-save C11 therefore
+  reaches the source-gated F0253/F0259 completion path instead of being
+  removed from the live queue without clearing its matching action lock.
+  The focused runtime regression verifies one ordinal-zero C11 clears the
+  matching owner and applies the expected action-defense removal exactly once.
+  Source: ReDMCSB `GAMELOOP.C`, `TIMELINE.C C11/F0253`, and `MENU.C F0407`.
+  Verification: `dm1_v1_original_save_c11_m11_runtime`.
 
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap

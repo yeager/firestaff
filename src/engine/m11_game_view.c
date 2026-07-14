@@ -14527,19 +14527,20 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     m11_apply_champion_time_effects(state);
     m11_process_creature_ticks(state);
     /* ReDMCSB GAMELOOP.C processes TIMELINE.C's due queue before the next
-     * command surface is exposed.  Original F0435 C13 rows already enter
-     * world.timeline through the source-owned materializer; dispatch them
-     * here so an admitted Vi Altar sequence reaches F0283's live champion
-     * mutation instead of becoming an M11 notification-only event. */
+     * command surface is exposed. Original F0435 rows already enter
+     * world.timeline through the source-owned materializer. Consume the
+     * one F0887 result here: C13 mutates the world in the dispatcher, while
+     * C11 reaches M11 through its action-enabled emission. */
     {
         struct TickResult_Compat timelineResult;
         memset(&timelineResult, 0, sizeof(timelineResult));
         (void)F0887_ORCH_DispatchTimelineEvents_Compat(
             &state->world, &timelineResult);
-        /* F0887 may mutate the world after the movement-path pre-dispatch
-         * hash above (for example C13's terminal F0283 rebirth). Publish the
-         * resulting live state, otherwise save/HoC callers retain a hash for
-         * a timeline that no longer exists. */
+        state->lastTickResult = timelineResult;
+        M11_GameView_ProcessTickEmissions(state);
+        /* F0887 and its M11-owned emissions may mutate the world after the
+         * movement-path pre-dispatch hash above. Publish the resulting live
+         * state, otherwise save/HoC callers retain a stale timeline hash. */
         (void)F0891_ORCH_WorldHash_Compat(
             &state->world, &state->lastWorldHash);
     }
