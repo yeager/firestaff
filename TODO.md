@@ -362,6 +362,10 @@
     slots before saving and restores them in source sequential-buffer order
     after loading, only for `PORTRAITS_EXCLUDED`. This owns no champion record
     layout, portrait decode, CSBWin extension, DSA, timer, or save format.
+  - 2026-07-14 update: `CEDT007.C` F7067/F7068 now owns the C31 portrait
+    pointer get/set path for both source champion formats. Other champion info
+    indices remain unimplemented rather than inferring a champion, CSBWin,
+    DSA, timer, or save-record layout.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and

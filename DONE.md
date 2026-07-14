@@ -6,6 +6,12 @@
   covered by the focused strict-C11 test. This is not a claim for the
   different MEDIA472 byte-per-pixel branch or a live framebuffer binding.
 
+- 2026-07-14 CSB ReDMCSB F7067/F7068 C31 portrait info: added the source
+  get/set access path for an explicit champion portrait-pointer slot in both
+  original champion formats. Unknown formats and out-of-range champions fail
+  closed without a fallback record interpretation. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F7064 champion save text: added PC34 post-load NUL
   padding for fixed 8-byte name and 20-byte title fields. Full fields remain
   byte-identical; only bytes after the first NUL are cleared. No champion
