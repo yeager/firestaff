@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1065: available body reads Amiga Exec from
+  address 4. The focused PC 3.4 boundary does not emulate ExecBase.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1063: available checksum is Amiga copy-
   protection code with no PC 3.4 route. The focused boundary avoids
   synthesizing protection behavior.
