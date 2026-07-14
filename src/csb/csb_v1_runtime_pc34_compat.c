@@ -18934,19 +18934,19 @@ int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     return 1;
 }
 
-int csb_v1_runtime_execute_csbwin_character_death_filter(
-    CSB_V1_RuntimeProfile *profile, int champion_index)
+static int csb_v1_runtime_execute_csbwin_special_filter_action(
+    CSB_V1_RuntimeProfile *profile, uint8_t special_location,
+    int timer_function, int *parameters, int parameter_count)
 {
     CSB_V1_DSAFilterLocation location;
     CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action;
-    int parameters[2];
     int flags[2] = { 0, 0 };
 
-    if (!profile || !profile->dungeon_handle || champion_index < 0 ||
-        champion_index >= profile->party_state.ChampionCount ||
-        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+    if (!profile || !profile->dungeon_handle || !parameters ||
+        parameter_count < 1 || parameter_count > 26 ||
+        timer_function < 0 || timer_function > 2 ||
         !profile->csbwin_extended_features_valid) {
         return 0;
     }
@@ -18954,10 +18954,10 @@ int csb_v1_runtime_execute_csbwin_character_death_filter(
     memset(&resolution, 0, sizeof(resolution));
     memset(&runner, 0, sizeof(runner));
     if (!csb_v1_dungeon_resolve_dsa_special_location(
-            profile->dungeon_handle, CSB_V1_EXPOOL_ESL_CHAR_DEATH_FILTER,
+            profile->dungeon_handle, special_location,
             &location) ||
         !csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-            profile, profile->dungeon_handle, &location, 0, 0,
+            profile, profile->dungeon_handle, &location, timer_function, 0,
             &resolution) ||
         !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
             profile, &resolution.master, resolution.state_index,
@@ -18968,10 +18968,59 @@ int csb_v1_runtime_execute_csbwin_character_death_filter(
         &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
         resolution.state_index, resolution.action_ordinal);
     if (!action) return 0;
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        profile, &runner, action, parameters, parameter_count, flags);
+}
+
+int csb_v1_runtime_execute_csbwin_character_death_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index)
+{
+    int parameters[2];
+
+    if (!profile || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
     parameters[0] = 1;
     parameters[1] = champion_index;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, parameters, 2, flags);
+    return csb_v1_runtime_execute_csbwin_special_filter_action(
+        profile, CSB_V1_EXPOOL_ESL_CHAR_DEATH_FILTER, 0, parameters, 2);
+}
+
+int csb_v1_runtime_execute_csbwin_equip_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index, int slot_index,
+    uint16_t old_thing, uint16_t new_thing)
+{
+    int parameters[5];
+
+    if (!profile || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS || slot_index < 0 ||
+        slot_index >= CSB_V1_SLOT_COUNT) {
+        return 0;
+    }
+    parameters[0] = 4;
+    parameters[1] = champion_index;
+    parameters[2] = slot_index;
+    parameters[4] = 0;
+    /* CSBWin Character.cpp::SetPossession uses RNnul (0xffff) as the
+     * absence sentinel and performs the old-object callback first. */
+    if (old_thing != 0xffffu) {
+        parameters[3] = (int)old_thing;
+        if (!csb_v1_runtime_execute_csbwin_special_filter_action(
+                profile, CSB_V1_EXPOOL_ESL_EQUIP_FILTER, 1, parameters, 5)) {
+            return 0;
+        }
+    }
+    if (new_thing != 0xffffu) {
+        parameters[3] = (int)new_thing;
+        if (!csb_v1_runtime_execute_csbwin_special_filter_action(
+                profile, CSB_V1_EXPOOL_ESL_EQUIP_FILTER, 0, parameters, 5)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(

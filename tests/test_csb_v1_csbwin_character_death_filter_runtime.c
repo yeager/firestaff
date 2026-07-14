@@ -55,14 +55,19 @@ int main(void)
         CSB_V1_EXPOOL_ESL_CHAR_DEATH_FILTER;
     const uint32_t special_bucket = 32u +
         ((special_key * 0xbb40e62du) >> 27);
+    const uint32_t equip_key =
+        (CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS << 24) |
+        CSB_V1_EXPOOL_ESL_EQUIP_FILTER;
+    const uint32_t equip_bucket = 32u +
+        ((equip_key * 0xbb40e62du) >> 27);
     uint16_t program[] = { 0x02d5u, 0x004du };
     CSB_V1_DungeonData dungeon;
     CSB_V1_RuntimeProfile profile;
-    CSB_V1_DSAImportedAction action;
+    CSB_V1_DSAImportedAction actions[2];
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&profile, 0, sizeof(profile));
-    memset(&action, 0, sizeof(action));
+    memset(actions, 0, sizeof(actions));
 
     /* One original-format square list with one DB3 type-47 actuator. The
      * DB3 selector is 2 and its compact DSAstate is 4. */
@@ -102,13 +107,16 @@ int main(void)
     profile.csbwin_appended_tail_size = sizeof(tail);
     profile.csbwin_appended_tail_preserved_size = sizeof(tail);
     profile.csbwin_appended_tail_fnv1a = fnv1a32(tail, sizeof(tail));
-    action.dsa_id = 7u;
-    action.state_index = 4u;
-    action.column = 0u;
-    action.program_words = program;
-    action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
-    profile.csbwin_extended_dsa_state.imported_actions = &action;
-    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 0u;
+    actions[0].program_words = program;
+    actions[0].program_word_count =
+        (int)(sizeof(program) / sizeof(program[0]));
+    actions[1] = actions[0];
+    actions[1].column = 1u;
+    profile.csbwin_extended_dsa_state.imported_actions = actions;
+    profile.csbwin_extended_dsa_state.imported_action_count = 2;
     profile.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 0u;
     profile.csbwin_extended_dsa_state.imported_headers[7].state_slot_count = 8u;
@@ -117,6 +125,18 @@ int main(void)
               &profile, 0) == 1,
           "CSBWin CharDeathFilter executes only its selected authenticated DSA action");
 
+    /* Re-point the original DB11 bucket to EquipFilter. Its old RN callback
+     * uses column 1, then its new RN callback uses column 0. */
+    put_le32(raw, 128u + (size_t)special_bucket * 4u, 0u);
+    put_le32(raw, 128u + 2u * 4u, equip_key);
+    put_le32(raw, 128u + (size_t)equip_bucket * 4u, 1u);
+    check(csb_v1_runtime_execute_csbwin_equip_filter(
+              &profile, 0, 3, 0x1234u, 0x5678u) == 1,
+          "CSBWin EquipFilter preserves old-RN column-1 then new-RN column-0 dispatch");
+
+    put_le32(raw, 128u + (size_t)equip_bucket * 4u, 0u);
+    put_le32(raw, 128u + 2u * 4u, special_key);
+    put_le32(raw, 128u + (size_t)special_bucket * 4u, 1u);
     profile.csbwin_appended_tail[0] ^= 0x01u;
     check(csb_v1_runtime_execute_csbwin_character_death_filter(
               &profile, 0) == 0,

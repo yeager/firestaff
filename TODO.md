@@ -2464,8 +2464,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       maps its saved DSA selector, and runs the existing FNV-authenticated
       pure-stack receipt with exactly `{ 1, championIndex }` before the
       champion changes state. Missing, altered, unsupported, or non-owned
-      data remains a no-op; DamageChar/EQUIP/PUT/GET filters, world opcodes,
+      data remains a no-op; DamageChar/PUT/GET filters, world opcodes,
       and arbitrary `ProcessDSAFilter` behavior remain open.
+    - 2026-07-14 EquipFilter handoff: the CSB boot/runtime inventory-slot
+      owner now mirrors `CHARDESC::SetPossession`: it dispatches the existing
+      FNV-authenticated pure-stack runner with `{ 4, champion, slot, oldRN,
+      0 }` through column 1, then `{ 4, champion, slot, newRN, 0 }` through
+      column 0, before committing the original slot write. Missing, altered,
+      unsupported, or non-owned filter data receives no replacement; the
+      established non-DSA slot write remains intact. DamageChar/PUT/GET and
+      the broader DSA world-opcode surface remain open.
     - 2026-07-13 multi-level movement callback: independently resolved movement filters can now share one runtime callback across distinct source levels. Every selected action retains exact imported-action identity; duplicate levels or duplicate action ownership reject before replacing the live runtime. It remains the same admitted stack/transfer subset only, with no inferred movement gates/flags, master state, world opcodes, or fallback dispatch.
     - 2026-07-13 saved timer receipt: CSBWin `Timer.cpp::ProcessTT_STONEROOM`
       function-6 save timers now prove their original target level/x/y,
