@@ -32,6 +32,7 @@ typedef struct {
     uint32_t record_user_data_offset;
     uint32_t observed_destination;
     uint32_t observed_byte_count;
+    uint32_t observed_payload_checksum;
     const char *status;
 } Theron_V1Track02LoaderIntakeReceipt;
 
