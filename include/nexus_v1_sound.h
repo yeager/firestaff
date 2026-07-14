@@ -47,6 +47,17 @@ typedef enum {
     NEXUS_SFX_MAGIC_DAMAGE  = 26   /* spell effect: damage */
 } Nexus_SoundEvent;
 
+/* One raw SNDLEV##.MAP record. `selector` and `attribute` are on-disk bytes;
+ * no Saturn event-dispatch or audio-codec meaning is claimed for either. */
+typedef struct {
+    int selector;
+    int attribute;
+    int sal_offset;
+    int sal_size;
+} Nexus_SoundMapWindow;
+
+#define NEXUS_SFX_MAP_MAX_RECORDS 16
+
 /* ═══════════════════════════════════════════════════════════════════
  * Sound engine
  * ═══════════════════════════════════════════════════════════════════ */
@@ -80,6 +91,7 @@ typedef struct {
     int map_header_transition_count;
     int map_record_table_supported;
     int map_record_count;
+    Nexus_SoundMapWindow map_records[NEXUS_SFX_MAP_MAX_RECORDS];
     int map_record_terminator_offset;
     int map_first_record_event;
     int map_min_record_event;
@@ -248,6 +260,13 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
                                       Nexus_SfxRuntimeReceipt *out_receipt);
 const char *nexus_sound_sfx_runtime_status_name(
     Nexus_SfxRuntimeStatus status);
+
+/* Resolve one unique raw MAP selector to its bounded SAL byte window.
+ * This is a container route only: callers must not interpret or play the
+ * returned bytes without separate Saturn driver and SAL codec evidence. */
+int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
+                                        int selector,
+                                        Nexus_SoundMapWindow *out_window);
 
 /* Play a sound event by ID (from SNDLEV*.MAP mapping) */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event);

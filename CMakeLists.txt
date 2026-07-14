@@ -23297,6 +23297,29 @@ set_tests_properties(nexus_v1_sound_runtime_receipt PROPERTIES
     LABELS "tier4;nexus;audio;runtime;receipt"
 )
 
+add_executable(test_nexus_v1_sal_map_corpus
+    tests/test_nexus_v1_sal_map_corpus.c
+)
+target_link_libraries(test_nexus_v1_sal_map_corpus PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_sal_map_corpus PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_sal_map_corpus PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_sal_map_corpus
+    COMMAND test_nexus_v1_sal_map_corpus
+)
+set_tests_properties(nexus_v1_sal_map_corpus PROPERTIES
+    LABELS "tier4;nexus;audio;sal;map;corpus"
+    SKIP_RETURN_CODE 77
+)
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip
