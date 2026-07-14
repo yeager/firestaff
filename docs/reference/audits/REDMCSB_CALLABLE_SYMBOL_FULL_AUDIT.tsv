@@ -1017,9 +1017,9 @@ F0936_LaunchProcess	F	LaunchProcess	EXEC.C:66-82	include/redmcsb_f0936_launch_pr
 F0937_InitAmigaData	F	InitAmigaData	EXEC.C:175-273	include/redmcsb_f0937_init_amiga_data_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route initializes Amiga libraries, ports and resources; no PC 3.4 branch is supplied.
 F0938_CallCloseWorkbench	F	CallCloseWorkbench	EXEC.C:275-292	include/redmcsb_f0938_call_close_workbench_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route calls Amiga Intuition CloseWorkBench; no PC 3.4 branch is supplied.
 F0939_ReleaseAmigaData	F	ReleaseAmigaData	EXEC.C:294-330	include/redmcsb_f0939_release_amiga_data_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route tears down Amiga Exec/graphics resources and exits; no PC 3.4 branch is supplied.
-F0940_CopyCopperInstructions	F	CopyCopperInstructions	EXEC.C:8	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0942_InitDiskResource	F	InitDiskResource	EXEC.C:10	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0943_ReleaseDiskResource	F	ReleaseDiskResource	EXEC.C:11	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0940_CopyCopperInstructions	F	CopyCopperInstructions	EXEC.C:333-348	include/redmcsb_f0940_copy_copper_instructions_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route compacts Amiga copper instructions; the CopyMem callback adapter is evidence-only and not a PC 3.4 mapping.
+F0942_InitDiskResource	F	InitDiskResource	EXEC.C:379-395	include/redmcsb_f0942_init_disk_resource_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route acquires Amiga disk.resource; no PC 3.4 branch is supplied.
+F0943_ReleaseDiskResource	F	ReleaseDiskResource	EXEC.C:397-406	include/redmcsb_f0943_release_disk_resource_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route releases Amiga disk.resource; no PC 3.4 branch is supplied.
 F0945_InitAudioData	F	InitAudioData	AMIGINIT.C:555	src/dm1/dm1_v1_sound_pc34_compat.c:411	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0946_ReleaseAudioData	F	ReleaseAudioData	AMIGINIT.C:663	src/dm1/dm1_v1_sound_pc34_compat.c:412	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0947_InitDiskData	F	InitDiskData	EXEC.C:15	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

@@ -1883,9 +1883,9 @@ F	0936	F0936_LaunchProcess	EXEC.C	source_nonapplicable
 F	0937	F0937_InitAmigaData	EXEC.C	source_nonapplicable
 F	0938	F0938_CallCloseWorkbench	EXEC.C	source_nonapplicable
 F	0939	F0939_ReleaseAmigaData	EXEC.C	source_nonapplicable
-F	0940	F0940_CopyCopperInstructions	EXEC.C	unmapped_or_unverified
-F	0942	F0942_InitDiskResource	EXEC.C	unmapped_or_unverified
-F	0943	F0943_ReleaseDiskResource	EXEC.C	unmapped_or_unverified
+F	0940	F0940_CopyCopperInstructions	EXEC.C	source_nonapplicable
+F	0942	F0942_InitDiskResource	EXEC.C	source_nonapplicable
+F	0943	F0943_ReleaseDiskResource	EXEC.C	source_nonapplicable
 F	0945	F0945_InitAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
 F	0946	F0946_ReleaseAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
 F	0947	F0947_InitDiskData	EXEC.C	unmapped_or_unverified
