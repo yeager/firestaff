@@ -964,6 +964,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     real 16-bit LFSR order, including its explicit final write to pixel zero
     and `G8177 | black` aperture value. The live host framebuffer consumer
     and frame pacing remain separately unproven.
+  - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
+    from one 320-byte row above, including its source-visible propagation for
+    spans larger than a row. Binding this logical aperture effect to live
+    SDL/Mac rendering remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8230 now preserves the C25 single-colour palette
     mutation: real RGB4 components become `(component << 2) + 3` RGB6 bytes,
     then publish through F8156 only while the curtain is active. The live

@@ -217,6 +217,11 @@
   14-by-6 creature set into the selected entry of palette tables 0..5, while
   retaining each `COLOR_DEF.Index`. Focused strict-C11 test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8216: source-locked PC 3.4 C25 previous-row
+  aperture copy. The adapter mirrors the source's forward `movs` behavior,
+  including overlap propagation rather than replacing it with `memmove`.
+  Focused strict-C11 transfer and overlap tests pass.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8230: source-locked PC 3.4 C25 palette
   component update. The adapter converts real RGB4 values with exact
   `(component << 2) + 3` expansion and republishes via F8156 only when the
