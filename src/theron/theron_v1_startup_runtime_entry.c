@@ -2164,10 +2164,12 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
 
     /* The forcefield is the first startup-to-dungeon mutation. Keep the
-     * player in Soul Room unless the boot-owned receipt came from the live,
-     * authenticated Mednafen/Track 02 intake. */
-    if (!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
-            profile)) {
+     * player in Soul Room unless the boot-owned capture receipt still matches
+     * both the selected Track 02 file and the exact loader route about to be
+     * consumed. */
+    if (!theron_v1_boot_track02_capture_admission_allows_initial_level(
+            profile, hucard_rom, hucard_rom_size,
+            flow ? flow->selected_dungeon : 0, 0)) {
         if (out_result) {
             theron_v1_startup_runtime_entry_result_init(out_result);
             out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
@@ -2176,9 +2178,9 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
             theron_v1_startup_host_receipt_init(out_host_receipt);
             out_host_receipt->input_result =
                 THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_host_receipt->status_scope = "TRACK02 TRACE";
-            out_host_receipt->status = "AUTHENTIC LIVE TRACE REQUIRED";
-            out_host_receipt->inspect_scope = "TRACK02 TRACE";
+            out_host_receipt->status_scope = "TRACK02 ADMISSION";
+            out_host_receipt->status = "AUTHENTIC CAPTURE ADMISSION REQUIRED";
+            out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
             snprintf(out_host_receipt->inspect_detail,
                      sizeof(out_host_receipt->inspect_detail),
                      "%s",
@@ -2190,7 +2192,7 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
-                     "Track02 live trace receipt required "
+                     "Track02 capture admission required "
                      "before forcefield entry");
         }
         return 0;

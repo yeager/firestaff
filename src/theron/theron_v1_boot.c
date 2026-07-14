@@ -216,6 +216,45 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                initial_level);
 }
 
+int theron_v1_boot_track02_capture_admission_allows_initial_level(
+    const Theron_V1_BootProfile *profile,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    int dungeon_id,
+    int sub_level_index) {
+    Theron_Track02InitialLevelLoaderRoute route;
+    char observed_track02_md5[33];
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *initial_level;
+
+    if (!profile || !track02_data || track02_size == 0u ||
+        !profile->graphics_path[0] || !profile->graphics_md5[0] ||
+        !theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+            profile) ||
+        !m12_file_md5_hex(profile->graphics_path, observed_track02_md5) ||
+        strcmp(observed_track02_md5, profile->graphics_md5) != 0) {
+        return 0;
+    }
+
+    initial_level = &profile->track02_initial_level_handoff;
+    memset(&route, 0, sizeof(route));
+    if (theron_v1_track02_load_initial_level_loader_route(
+            track02_data, track02_size, profile->graphics_md5,
+            dungeon_id, sub_level_index, &route) != THERON_TRACK02_SIGNAL_OK ||
+        !route.valid ||
+        route.route_hash != initial_level->initial_level_route.route_hash ||
+        route.dungeon_id != initial_level->initial_level_route.dungeon_id ||
+        route.sub_level_index !=
+            initial_level->initial_level_route.sub_level_index ||
+        route.semantics.envelope.track02_record !=
+            initial_level->observed_track02_record ||
+        route.semantics.envelope.track02_record !=
+            initial_level->initial_level_boundary.track02_record ||
+        route.object_tail_semantics_proven || route.fallback_visuals_allowed) {
+        return 0;
+    }
+    return 1;
+}
+
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
 /* Theron's Quest data files — Phase 0 locked (2026-05-27).

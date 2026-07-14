@@ -38,6 +38,15 @@
   is an intake connection only: no positive capture, dungeon transition,
   bitmap, palette, or object claim is added.
 
+- 2026-07-14 Theron Track 02 capture-to-dungeon admission: the production
+  Soul Room forcefield boundary now rehashes the selected Track 02 path and
+  compares the bytes about to enter the runtime with the completed,
+  manifest-authenticated initial-level receipt. Only the existing Hall of
+  Records level-0 loader route may match; a missing, stale, incomplete, or
+  different route leaves the startup flow and world untouched. This binds
+  capture provenance to one source-owned route and adds no transition,
+  object-tail, bitmap, palette, or broader dungeon semantics.
+
 - 2026-07-14 DM2 G1 side-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now populates D0/D1/D2 left and right wall rays, using the
   party-relative SKProject viewport coordinates, before the existing GDAT

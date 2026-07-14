@@ -270,6 +270,17 @@ int theron_v1_boot_runtime_trace_files_match_declared_hashes(
 int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
     const Theron_V1_BootProfile *profile);
 
+/* Revalidates the capture-authorized Hall of Records level-0 route against
+ * the exact Track 02 bytes about to enter the dungeon runtime. This is an
+ * admission check only: it compares the existing loader route receipt and
+ * does not assign object-tail, bitmap, palette, or broader map semantics. */
+int theron_v1_boot_track02_capture_admission_allows_initial_level(
+    const Theron_V1_BootProfile *profile,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    int dungeon_id,
+    int sub_level_index);
+
 typedef enum {
     THERON_V1_BOOT_STARTUP_PREPARE_OK = 0,
     THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT = -1,
