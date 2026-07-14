@@ -71,6 +71,8 @@ int main(void) {
     Nexus_V1_DgnStructure3CaptureManifestReceipt receipt;
     Nexus_V1_DgnStructure3CaptureImport capture;
     Nexus_V1_DgnStructure3CaptureImportReceipt import_receipt;
+    Nexus_V1_DgnStructure3CaptureHostReceipt host_receipt;
+    Nexus_V1_Level level;
     char imported_manifest[2048];
     static const unsigned char texture[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     static const unsigned char palette[] = { 11, 12, 13, 14, 15, 16, 17, 18,
@@ -123,6 +125,18 @@ int main(void) {
     capture.capture_session_fnv1a64 = receipt.capture_session_fnv1a64;
     capture.capture_bundle_fnv1a64 = bundle_hash(&capture);
     capture.capture_bundle_hash_verified = 1;
+    memset(&level, 0, sizeof(level));
+
+    expect(!nexus_v1_dgn_structure3_capture_host_intake(
+               &level, texture, (int)sizeof(texture),
+               1, valid_manifest, strlen(valid_manifest), &capture,
+               &host_receipt) &&
+               host_receipt.host_dgn_source_verified &&
+               !host_receipt.capture_source_verified &&
+               host_receipt.manifest_parsed &&
+               !host_receipt.importer_invoked && host_receipt.no_draw_only &&
+               host_receipt.import_receipt.blocks_real_dgn_mesh_render,
+           "host intake fail-closes before the binder without Saturn evidence");
 
     snprintf(imported_manifest, sizeof(imported_manifest),
         "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1\n"
@@ -144,6 +158,17 @@ int main(void) {
         sizeof(transform), fnv1a64(transform, sizeof(transform)),
         sizeof(culling), fnv1a64(culling, sizeof(culling)),
         sizeof(command), fnv1a64(command, sizeof(command)));
+    capture.original_saturn_capture_verified = 1;
+    expect(!nexus_v1_dgn_structure3_capture_host_intake(
+               &level, texture, (int)sizeof(texture), 1,
+               imported_manifest, strlen(imported_manifest), &capture,
+               &host_receipt) && host_receipt.capture_source_verified &&
+               host_receipt.importer_invoked &&
+               host_receipt.import_receipt.binder_invoked &&
+               !host_receipt.import_receipt.complete_source_binding &&
+               host_receipt.no_draw_only,
+           "attested Saturn evidence can reach the existing no-draw binder");
+    capture.original_saturn_capture_verified = 0;
     expect(nexus_v1_dgn_structure3_capture_manifest_parse(
                imported_manifest, strlen(imported_manifest), &receipt) &&
                !nexus_v1_dgn_structure3_capture_manifest_bind_import(

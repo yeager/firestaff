@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 startup capture intake: Nexus startup now
+  reopens the loaded canonical `LEVxx.DGN` only after its engine-owned source
+  receipt is hash-bound, then forwards a manifest and opaque capture packet to
+  the existing no-draw binder solely when the capture reader explicitly marks
+  the source as original Saturn. Missing Saturn evidence stops before the
+  importer/binder. No texture, palette, mesh, VDP1, or draw semantics were
+  added. Focused `nexus_v1_structure3_capture_manifest` coverage pins the
+  fail-closed path.
+
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap
   comparator from `skproject/SKULLWIN/c_timer.cpp`: low 24-bit tick ascending,

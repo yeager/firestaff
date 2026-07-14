@@ -25,6 +25,10 @@
   capture-bundle identity verified by the capture reader. Parsing/importing
   never admits a capture source, assigns PRS3 or VDP1
   fields, decodes texture pixels or palette entries, or enables mesh drawing.
+  Nexus startup now owns the asset/capture boundary: it reopens the loaded
+  canonical `LEVxx.DGN`, requires its hash-bound source receipt, and refuses
+  to invoke the importer unless the capture reader explicitly attests an
+  original-Saturn source. The result is receipt-only and remains no-draw.
   Next required evidence is an authenticated original-Saturn capture manifest
   plus separately scanner-verified retail DGN media and observed command/read
   spans; only then may the existing no-draw binder evaluate byte identity.
