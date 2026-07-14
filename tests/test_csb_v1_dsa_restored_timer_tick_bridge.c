@@ -161,6 +161,17 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x10u,
           "stale falsewall SET timer cannot mutate a source cell flag");
 
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].function = 255u;
+    profile.csbwin_timers[0].time = profile.game_time;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.last_timeline_dispatch.count == 1 &&
+              profile.last_timeline_dispatch.records[0].eventType ==
+                  DM1_EVENT_NONE,
+          "source-slotted unsupported timer is consumed before generic dispatch");
+    profile.csbwin_timers[0].function = 7u;
+
     /* No type-47 DSA or portrait actuator owns this square, so the source
      * timerTypeModifier[1] mapping remains CSBWin's canonical CLEAR action. */
     raw[80] = 0x14u;

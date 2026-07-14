@@ -17300,7 +17300,11 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         return 0;
     }
     timer_index = profile->csbwin_timer_queue[queue_slot];
-    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+    /* The event arrived through a materialized CSBWin TimerQueue slot.  If
+     * its live summary receipt has since become invalid, it is still not an
+     * M10 event: consuming it here prevents a numeric timer-function alias
+     * from reaching a generic mutation path with incomplete CSBWin state. */
+    if (timer_index >= profile->csbwin_timer_summary_count) return 1;
     timer = &profile->csbwin_timers[timer_index];
     if (timer->function == DM1_EVENT_WATCHDOG) {
         struct DM1_Event_V1 next;
@@ -18219,7 +18223,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             *square |= 0x04u;
         }
     }
-    if (!profile->dungeon_handle) return 0;
+    if (!profile->dungeon_handle) return 1;
     if (!timer->valid || timer->truncated || timer->source_index != timer_index ||
         ((timer->function < 5u || timer->function > 10u) &&
          timer->function != 101u && timer->function != 102u) ||
@@ -18227,7 +18231,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
         record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
         record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5) {
-        return 0;
+        return 1;
     }
     dungeon = profile->dungeon_handle;
     thing = csb_v1_dungeon_get_first_thing(
@@ -18265,8 +18269,9 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     }
     if (timer->function == 7u &&
         (timer->ubyte9 == 1u || timer->ubyte9 == 2u)) {
-        return csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
+        (void)csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
             profile, record, timer, timer_index, queue_slot);
+        return 1;
     }
     if (timer->function == 5u || timer->function == 6u ||
         timer->function == 8u || timer->function == 9u) {
@@ -18275,7 +18280,10 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
          * may run, but it cannot fall through to M10's generic mutation. */
         return 1;
     }
-    return 0;
+    /* A source-owned queue receipt must be consumed even when its exact
+     * CSBWin handler has no proven mutation path. It cannot become a generic
+     * M10 timer just because validation failed after resume. */
+    return 1;
 }
 
 static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
