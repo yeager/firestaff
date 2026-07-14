@@ -6104,3 +6104,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   leaves its existing host page untouched when the receipt is incomplete.
   This removes the local black-frame replacement path. Remaining CSB startup
   work is real package/app capture breadth, not substitute presentation.
+
+- 🔧 2026-07-15 CSB M11 live HUD/viewport transaction: the F0128/F0115
+  caller now renders its complete verified viewport into a candidate host
+  page and publishes it only on success. C017/C040 is likewise validated as
+  one terminal-session pair before either surface changes the page. Missing
+  source receipts preserve the previously presented page; remaining work is
+  real package/app capture breadth and original-save/DSA corpus evidence.

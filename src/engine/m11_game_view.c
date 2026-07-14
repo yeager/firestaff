@@ -1578,6 +1578,8 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     CSB_V1_ViewportRuntimeDrawerBinding drawer_binding;
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
+    size_t framebuffer_bytes;
+    unsigned char *candidate_page;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
@@ -1585,8 +1587,19 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     if (framebufferWidth < 320 || framebufferHeight < 200) {
         return 0;
     }
+    if ((size_t)framebufferWidth > (size_t)-1 / (size_t)framebufferHeight) {
+        return 0;
+    }
+    framebuffer_bytes = (size_t)framebufferWidth * (size_t)framebufferHeight;
+    candidate_page = (unsigned char *)malloc(framebuffer_bytes);
+    if (!candidate_page) {
+        return 0;
+    }
+    /* F0128/F0115 receives a caller-owned page. Keep the displayed page
+     * intact until the complete source-backed viewport and sprite passes
+     * succeed, so a failed real-asset route cannot expose a partial frame. */
+    memcpy(candidate_page, framebuffer, framebuffer_bytes);
 
-    m11_csb_runtime_overlay_stats_reset(state);
     runtime_sprite_context.state = state;
     runtime_sprite_context.framebuffer_width = framebufferWidth;
     runtime_sprite_context.framebuffer_height = framebufferHeight;
@@ -1609,13 +1622,17 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
 
     if (!csb_v1_boot_render_viewport_frame_pc34(
             state->csbBootProfile,
-            framebuffer,
+            candidate_page,
             framebufferWidth,
             framebufferHeight,
             &drawer_binding,
             &draw_counts)) {
+        free(candidate_page);
         return 0;
     }
+    memcpy(framebuffer, candidate_page, framebuffer_bytes);
+    free(candidate_page);
+    m11_csb_runtime_overlay_stats_reset(state);
     m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     return 1;
 }
@@ -1799,6 +1816,20 @@ static int m11_draw_csb_v1_inventory_surface(
         c017->transparent_color != -1) {
         return 0;
     }
+    c040 = NULL;
+    if (state->candidateMirrorPanelActive) {
+        c040 = &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+        /* PANEL.C F0347 expands C017 first, then F0346 overlays C040.
+         * Validate the whole terminal-session pair before modifying the host
+         * page, so malformed C040 cannot leave a partial C017 presentation. */
+        if (!c040->valid || !c040->pixels || c040->source_asset_id != 40 ||
+            c040->width != CSB_C040_PANEL_WIDTH_PC34 ||
+            c040->height != CSB_C040_PANEL_HEIGHT_PC34 ||
+            c040->transparent_color != CSB_C040_TRANSPARENT_COLOR_PC34) {
+            return 0;
+        }
+    }
     for (row = 0; row < CSB_C017_VIEWPORT_HEIGHT_PC34; ++row) {
         memcpy(framebuffer +
                    (size_t)(CSB_C017_VIEWPORT_Y_PC34 + row) *
@@ -1810,17 +1841,6 @@ static int m11_draw_csb_v1_inventory_surface(
     }
     if (!state->candidateMirrorPanelActive) {
         return 1;
-    }
-    c040 = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    /* ReDMCSB PANEL.C F0347 expands C017 first, then F0346 overlays C040
-     * at C101 with C06 transparency.  Keep both source bitmaps owned by the
-     * same terminal session so a generic M11 candidate panel cannot appear. */
-    if (!c040->valid || !c040->pixels || c040->source_asset_id != 40 ||
-        c040->width != CSB_C040_PANEL_WIDTH_PC34 ||
-        c040->height != CSB_C040_PANEL_HEIGHT_PC34 ||
-        c040->transparent_color != CSB_C040_TRANSPARENT_COLOR_PC34) {
-        return 0;
     }
     for (row = 0; row < CSB_C040_PANEL_HEIGHT_PC34; ++row) {
         int column;
@@ -39059,13 +39079,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* Accessibility: propagate fontScale from game state to file-scope
      * text renderer.  0 means "use M11_TextStyle scale directly". */
     g_m11_font_scale_override = state->fontScale;
-    /* Base background is BLACK (DM PC VGA slot 0).  The pre-correction
+    /* Base background is BLACK (DM PC VGA slot 0). The pre-correction
      * base was NAVY (slot 14, pure blue), which produced the bright-blue
      * outermost frame strip the player saw around the whole game view.
      * Classic DM1 renders the area outside the HUD chrome as solid
-     * black; only the HUD frame itself carries stone/bronze shading. */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  0, 0, framebufferWidth, framebufferHeight, M11_COLOR_BLACK);
+     * black; only the HUD frame itself carries stone/bronze shading. CSB
+     * preserves its current host page until its source-owned receipt commits. */
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      0, 0, framebufferWidth, framebufferHeight,
+                      M11_COLOR_BLACK);
+    }
     if (!state || !state->active) {
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       18, 18, "NO GAME VIEW", &g_text_title);
@@ -39134,10 +39158,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                           framebufferWidth,
                                           framebufferHeight)) {
             /* A verified CSB launch must not exchange missing source
-             * material for a Firestaff status screen. */
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          0, 0, framebufferWidth, framebufferHeight,
-                          M11_COLOR_BLACK);
+             * material for a replacement host page. */
         } else {
             if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
                 if (!m11_csb_consume_c040_clear_session(csb_state) ||
@@ -39145,10 +39166,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     !m11_draw_csb_v1_inventory_surface(
                         csb_state, framebuffer, framebufferWidth,
                         framebufferHeight))) {
-                    m11_fill_rect(framebuffer, framebufferWidth,
-                                  framebufferHeight, 0, 0,
-                                  framebufferWidth, framebufferHeight,
-                                  M11_COLOR_BLACK);
+                    /* The C017/C040 pair did not form one complete terminal
+                     * session surface. The verified viewport page remains. */
                 } else if (!state->inventoryPanelActive) {
                     m11_draw_csb_v1_runtime_hud(state, framebuffer,
                                                 framebufferWidth,

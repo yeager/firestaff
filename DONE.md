@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB M11 viewport/HUD commit: source-backed viewport and C017/C040
+  pages now validate into a candidate page before one atomic host copy. Failed
+  source evidence preserves the preceding page instead of exposing a partial
+  or black replacement frame.
+
 - 2026-07-15 DM1 ReDMCSB F0094/F0098: M11 now supplies the active map's real
   PC 3.4 C079/C078 ceiling and floor assets through the DM1 viewport provider.
   Missing source material remains no-draw; no default floor set is selected.
