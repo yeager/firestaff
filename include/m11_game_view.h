@@ -725,6 +725,9 @@ typedef struct {
     /* DM1 F0172/F0115 consumes live projectile/effect lists after every
      * handoff. This records provenance only and never selects fallback art. */
     int dm1ViewportRuntimeOrigin;
+    /* DRAWVIEW.C F0097 G2123 palette cache. Kept per game view, never as a
+     * global host default, so a recreated/reloaded session starts at -1. */
+    int dm1ViewportPresentedPaletteIndex;
     /* quitGuardActive: 1 while the GAME-NOT-SAVED prompt is on screen.  When
      * the user picks SAVE&QUIT the dialog handler honors this flag and runs
      * a save before returning to the launcher. */

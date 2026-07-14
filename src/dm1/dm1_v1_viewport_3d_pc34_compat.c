@@ -2095,24 +2095,107 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
  *   Copy 224×136 viewport buffer into screen buffer at (0, 33),
  *   matching the original's viewport-to-screen placement.
  * ──────────────────────────────────────────────────────────────────────── */
+bool dm1_viewport_3d_present_pc34(const uint8_t *viewport_pixels,
+                                  int viewport_stride,
+                                  uint8_t *screen_pixels,
+                                  int screen_width,
+                                  int screen_height,
+                                  int screen_stride,
+                                  int palette_switching,
+                                  int dungeon_palette_index,
+                                  int party_map_index,
+                                  int entrance_map_index,
+                                  int mouse_x,
+                                  int mouse_y,
+                                  int *cached_palette_index,
+                                  DM1_ViewportPresentReceiptPc34 *out_receipt)
+{
+    DM1_ViewportPresentReceiptPc34 receipt;
+    int y;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.palette_switch_request = (int16_t)palette_switching;
+    receipt.dungeon_palette_index = (int16_t)dungeon_palette_index;
+    receipt.cached_palette_index = cached_palette_index
+        ? (int16_t)*cached_palette_index : -1;
+    receipt.source_x = 0;
+    receipt.source_y = 0;
+    receipt.destination_x = DM1_VIEWPORT_SCREEN_X;
+    receipt.destination_y = DM1_VIEWPORT_SCREEN_Y;
+    receipt.width = DM1_VIEWPORT_WIDTH;
+    receipt.height = DM1_VIEWPORT_HEIGHT;
+
+    if (!viewport_pixels || !screen_pixels || !cached_palette_index ||
+        viewport_stride < DM1_VIEWPORT_WIDTH ||
+        screen_width < DM1_VIEWPORT_SCREEN_WIDTH ||
+        screen_height < DM1_VIEWPORT_SCREEN_HEIGHT ||
+        screen_stride < screen_width) {
+        if (out_receipt) *out_receipt = receipt;
+        return false;
+    }
+
+    /* DRAWVIEW.C:827-833. The PC path hides the pointer only when it is
+     * outside C007, then restores it after VIDRV_09_BlitViewPort. */
+    if (mouse_y > 168 || mouse_x > 223 || mouse_y < 15) {
+        receipt.mouse_hidden = true;
+    } else {
+        receipt.mouse_screen_update_enabled = true;
+        receipt.mouse_screen_update_disabled = true;
+    }
+
+    /* DRAWVIEW.C:835-848. This records the exact source palette selection;
+     * actual RGB6 bytes are owned by the host's verified palette consumer. */
+    if (palette_switching == 1) {
+        if (dungeon_palette_index != *cached_palette_index) {
+            receipt.palette_changed = true;
+            receipt.palette_action = DM1_VIEWPORT_PRESENT_PALETTE_DUNGEON_PC34;
+            *cached_palette_index = dungeon_palette_index;
+        }
+    } else if (palette_switching == 0) {
+        receipt.palette_changed = true;
+        receipt.palette_action = party_map_index != entrance_map_index
+            ? DM1_VIEWPORT_PRESENT_PALETTE_INVENTORY_PC34
+            : DM1_VIEWPORT_PRESENT_PALETTE_LIGHT0_PC34;
+        *cached_palette_index = -1;
+    }
+    receipt.cached_palette_index = (int16_t)*cached_palette_index;
+
+    /* DRAWVIEW.C:878-893, VIDRV_09_BlitViewPort(G0296, C007). */
+    for (y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        memmove(screen_pixels +
+                    (DM1_VIEWPORT_SCREEN_Y + y) * screen_stride +
+                    DM1_VIEWPORT_SCREEN_X,
+                viewport_pixels + y * viewport_stride,
+                (size_t)DM1_VIEWPORT_WIDTH);
+    }
+    receipt.valid = true;
+    if (out_receipt) *out_receipt = receipt;
+    return true;
+}
+
 void dm1_viewport_3d_present(DM1_Viewport3DState *state,
                              uint8_t *screen_pixels,
                              int screen_stride,
                              int palette_switching)
 {
-    (void)palette_switching; /* Palette handled by separate palette module */
-
-    if (!state->viewport_pixels || !screen_pixels) return;
-
-    int vp_stride = state->viewport_stride;
-    const uint8_t *src = state->viewport_pixels;
-
-    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; y++) {
-        uint8_t *dst = screen_pixels +
-                       (DM1_VIEWPORT_SCREEN_Y + y) * screen_stride +
-                       DM1_VIEWPORT_SCREEN_X;
-        memcpy(dst, src + y * vp_stride, (size_t)DM1_VIEWPORT_WIDTH);
-    }
+    int cached_palette_index;
+    if (!state) return;
+    cached_palette_index = state->palette_index;
+    (void)dm1_viewport_3d_present_pc34(state->viewport_pixels,
+                                        state->viewport_stride,
+                                        screen_pixels,
+                                        DM1_VIEWPORT_SCREEN_WIDTH,
+                                        DM1_VIEWPORT_SCREEN_HEIGHT,
+                                        screen_stride,
+                                        palette_switching,
+                                        state->palette_index,
+                                        0,
+                                        255,
+                                        -1,
+                                        -1,
+                                        &cached_palette_index,
+                                        NULL);
+    state->palette_index = (int16_t)cached_palette_index;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
