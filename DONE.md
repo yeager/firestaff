@@ -76,6 +76,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8143: source-locked PC 3.4 C25
+  aperture-to-packed-4bpp bitmap readback. The adapter takes only source low
+  nibbles and retains opposite packed boundary nibbles exactly as the leading,
+  paired and trailing source assembly does. Focused strict-C11 test covers
+  even and odd boundaries plus failure atomicity.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8152: source-locked PC 3.4 C25
   inclusive box fill through F8137, with the original 320-byte row stride and
   viewport color-index offset. Focused strict-C11 test covers inclusive edges,
