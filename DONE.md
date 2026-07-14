@@ -1,5 +1,25 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `DUNGEON.C F0147`: packed C04 group directions now
+  read from the original final-word bitfield without record mutation.
+  Verification: focused CTest.
+
+- 2026-07-14 DM1 ReDMCSB `PROJECTILE.C F0218`: live projectile impact counts
+  now query bounded records by map, square, and cell without lifecycle
+  mutation. Verification: focused CTest.
+
+- 2026-07-14 DM1 ReDMCSB `CHAMPION.C F0323`: poison-dose reset is now an
+  explicit bounded champion compatibility callable. Verification: focused
+  CTest.
+
+- 2026-07-14 DM1 ReDMCSB `SENSOR.C F0273`: type/cell ordered object queries
+  now preserve first-match and `THING_NONE` behavior. Verification: focused
+  CTest.
+
+- 2026-07-14 CSB ReDMCSB `GROUP.C F0182`: stopping a group clears only its
+  four attack bits and requests one F0181 event deletion for the same square.
+  Verification: focused CTest.
+
 - 2026-07-14 DM1 ReDMCSB `ACTIDRAW.C F0385`: source action-damage feedback
   now has a bounded render plan for negative text, damage tiers, original
   boxes, numeric placement, and screen-update ordering. Verification: focused
