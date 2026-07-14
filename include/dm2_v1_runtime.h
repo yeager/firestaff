@@ -346,6 +346,9 @@ typedef struct {
     int candidate_kind;
     size_t selected_payload_size;
     uint32_t selected_payload_hash;
+    /* Complete SKSave-file identity from the scanner receipt. Runtime restore
+     * rechecks this before it reads any payload bytes. */
+    uint32_t selected_source_file_hash;
     int rejected_original_candidate;
     char selected_path[256];
 } DM2_V1_RuntimeCorpusImportReceipt;
@@ -488,6 +491,13 @@ int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
+/* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
+ * DM2_GAME_LOAD. The caller selects one scanner-issued SKSave receipt; this
+ * function revalidates its complete original file before any runtime state
+ * can change. It never substitutes another corpus candidate. */
+int dm2_v1_runtime_import_sksave_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *candidate_receipt,
+    DM2_V1_RuntimeCorpusImportReceipt *out);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

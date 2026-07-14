@@ -2238,12 +2238,14 @@ static int test_sksave_corpus_runtime_import(void)
     int payload_size;
     DM2_V1_SessionState session;
     DM2_V1_RuntimeCorpusImportReceipt receipt;
+    DM2_SKSaveCorpusReceipt corpus;
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
+    FILE *file;
     int result = 0;
 
-    printf("  SKSave corpus promotes first importable save into runtime...\n");
+    printf("  Selected SKSave corpus receipt restores runtime...\n");
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_corpus_import_%d",
              FS_GETPID());
     FS_MKDIR(tmpdir);
@@ -2278,15 +2280,36 @@ static int test_sksave_corpus_runtime_import(void)
     dm2_v1_runtime_init(&boot);
 
     memset(&receipt, 0xCC, sizeof(receipt));
-    if (!dm2_v1_runtime_import_sksave_corpus(tmpdir, &receipt) ||
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
+        corpus.candidate_receipt_count != 1u ||
+        !dm2_v1_runtime_import_sksave_receipted_candidate(
+            &corpus.candidate_receipts[0], &receipt) ||
         receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
         !receipt.restored ||
         receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
         receipt.selected_payload_size != (size_t)payload_size ||
+        receipt.selected_source_file_hash !=
+            corpus.candidate_receipts[0].source_file_hash ||
         strstr(receipt.selected_path, "SKSave.dat") == NULL ||
         game.party_x != 6 ||
         game.party_y != 7 ||
         game.party_dir != 2 ||
+        dm2_v1_runtime_get_tick_count() != 0x7788 ||
+        dm2_v1_runtime_get_weather_seed() != 0x11223344u) {
+        goto done;
+    }
+    file = fopen(corpus.candidate_receipts[0].path, "ab");
+    if (!file) {
+        goto done;
+    }
+    if (fputc(0xa5, file) == EOF || fclose(file) != 0) {
+        goto done;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (dm2_v1_runtime_import_sksave_receipted_candidate(
+            &corpus.candidate_receipts[0], &receipt) ||
+        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED ||
+        game.party_x != 6 || game.party_y != 7 || game.party_dir != 2 ||
         dm2_v1_runtime_get_tick_count() != 0x7788 ||
         dm2_v1_runtime_get_weather_seed() != 0x11223344u) {
         goto done;
@@ -2300,7 +2323,7 @@ done:
         printf("    FAIL: corpus import did not restore selected runtime session\n");
         return 0;
     }
-    printf("    PASS: first importable SKSave corpus candidate restored runtime state\n");
+    printf("    PASS: selected receipt restores once and changed bytes cannot mutate runtime\n");
     return 1;
 }
 
@@ -2314,6 +2337,7 @@ static int test_original_sksave_corpus_runtime_import(void)
     DM2_ChampionRecord champion;
     DM2_V1_SaveCandidate candidate;
     DM2_V1_RuntimeCorpusImportReceipt receipt;
+    DM2_SKSaveCorpusReceipt corpus;
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
@@ -2368,12 +2392,17 @@ static int test_original_sksave_corpus_runtime_import(void)
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "original-corpus-gdat");
     dm2_v1_runtime_init(&boot);
 
-    if (!dm2_v1_runtime_import_sksave_corpus(tmpdir, &receipt) ||
+    if (!dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
+        corpus.candidate_receipt_count != 1u ||
+        !dm2_v1_runtime_import_sksave_receipted_candidate(
+            &corpus.candidate_receipts[0], &receipt) ||
         receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
         !receipt.restored ||
         receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
         receipt.rejected_original_candidate ||
         receipt.selected_payload_size != payload_size ||
+        receipt.selected_source_file_hash !=
+            corpus.candidate_receipts[0].source_file_hash ||
         strstr(receipt.selected_path, "SKSave.dat") == NULL ||
         game.party_x != 2 || game.party_y != 3 || game.party_dir != 3 ||
         dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick ||
