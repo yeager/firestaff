@@ -29,6 +29,10 @@
 - 2026-07-14 DM1/CSB ReDMCSB F0945-F0946: Amiga `audio.device` setup and
   teardown are source-nonapplicable to PC 3.4. Focused boundary tests pass.
 
+- 2026-07-14 DM1/CSB ReDMCSB F0949-F0951: source-locked Japanese conversion,
+  PC-98 character-pattern port reads and A100 pattern copies. Focused strict
+  C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
   copy-protection BIOS callback, MIDI IODRV commands and substring routine.
   Focused strict C11 tests pass without synthetic disk or audio behavior.
