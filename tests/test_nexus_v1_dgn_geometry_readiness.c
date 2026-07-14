@@ -504,6 +504,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnRendererHandoffReceipt handoff;
         Nexus_V1_DgnStructure3OrdinalCorrelationReceipt correlation;
         Nexus_V1_DgnStructure3ModelFaceSelectorReceipt model_face_selectors;
+        Nexus_V1_DgnStructure3AttachmentReceipt attachments;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -763,6 +764,16 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   handoff.structure3_model_face_selectors.resolved_pair_count &&
               !model_face_selectors.attachment_semantics_proven,
               "retail Structure3 model-face source pairs remain no-draw provenance");
+        CHECK(nexus_v1_level_structure3_attachment_receipt(
+                  &loaded_level, &attachments) == 0 &&
+              attachments.complete &&
+              attachments.record_to_face_normal_semantics_proven &&
+              attachments.structure1f_bound_entry_count ==
+                  attachments.face_normal_bound_count &&
+              attachments.out_of_range_model_selector_count == 0 &&
+              attachments.out_of_range_face_selector_count == 0 &&
+              !attachments.normal_plane_transform_or_draw_semantics_proven,
+              "hash-verified Structure1A/Structure1F selectors fail closed to bounded face-normal ordinals");
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==

@@ -1,4 +1,5 @@
 #include "nexus_v1_dungeon.h"
+#include "asset_find_by_hash.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -6,6 +7,20 @@
 #include <string.h>
 
 static int g_fail;
+
+static const char *expected_dgn_md5(int level) {
+    static const char *const hashes[16] = {
+        "603ec9c531a92539babdda84ab09e78e", "751e1442bf7dccbd41bf146b5be144ab",
+        "e2cb85d9fedc27f894a84e0f465fcde1", "19637d6b59849565f64565aed786d7ea",
+        "85abc1b822e5c66ec4e99f1f676c140e", "ed5d54ab0ac1c927c1346dd966c8a5cc",
+        "58c336ff6146e7216f0081e726823ea1", "c19e6038a017a320515ecbb66f6da197",
+        "9bfc31bea631345a3660c2645be0e95b", "32a6450f29eb7babd73fcbe7a0310f22",
+        "2928440e9c21457929f1323a28a42f70", "d7be5cd0d6e5c10afe99ec9950614fad",
+        "db1cf70d6730615f73f191fad5e11e32", "f8876d0181d79727013236a6b597b99b",
+        "a634dd5e95567ecbbbc332350c8cf12b", "5e6e237074f1e6b0decc629868a51f3c"
+    };
+    return level >= 0 && level < 16 ? hashes[level] : NULL;
+}
 
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
@@ -120,6 +135,7 @@ int main(void) {
         Nexus_V1_DgnStructure3FaceEdgeReceipt edges;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
         Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
+        Nexus_V1_DgnStructure3AttachmentReceipt attachments;
         Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
         Nexus_V1_DgnRenderPlanReceipt plan;
 
@@ -127,6 +143,14 @@ int main(void) {
         data = read_file(path, &size);
         CHECK(data != NULL, "retail DGN file opens and reads");
         if (!data) continue;
+        CHECK(expected_dgn_md5(level_index) &&
+                  asset_file_matches_md5(path, expected_dgn_md5(level_index)),
+              "retail DGN corpus file matches its canonical MD5 before parsing");
+        if (!expected_dgn_md5(level_index) ||
+            !asset_file_matches_md5(path, expected_dgn_md5(level_index))) {
+            free(data);
+            continue;
+        }
         memset(&level, 0, sizeof(level));
         CHECK(nexus_v1_level_load(&level, data, size, level_index) == 0,
               "retail DGN level parses");
@@ -216,6 +240,9 @@ int main(void) {
               plan.structure3_face_normal_geometry.valid &&
               plan.structure3_face_normal_geometry.measured_face_count ==
                   faces.face_count &&
+              plan.structure3_attachments.complete &&
+              plan.structure3_attachments.record_to_face_normal_semantics_proven &&
+              !plan.structure3_attachments.normal_plane_transform_or_draw_semantics_proven &&
               !plan.structure3_face_edges.winding_or_draw_semantics_proven &&
               !plan.structure3_face_geometry.surface_or_draw_semantics_proven &&
               !plan.structure3_face_materials.material_or_draw_semantics_proven &&
@@ -240,6 +267,39 @@ int main(void) {
               !mesh_semantics.renderer_handoff_ready &&
               mesh_semantics.blocks_real_dgn_mesh_render,
               "retail mesh evidence reaches a capture-blocked renderer handoff");
+        CHECK(nexus_v1_level_structure3_attachment_receipt(&level, &attachments) == 0 &&
+              attachments.complete && attachments.record_to_face_normal_semantics_proven &&
+              attachments.structure1f_bound_entry_count ==
+                  attachments.face_normal_bound_count &&
+              attachments.out_of_range_model_selector_count == 0 &&
+              attachments.out_of_range_face_selector_count == 0 &&
+              !attachments.normal_plane_transform_or_draw_semantics_proven,
+              "hash-verified Structure1A/Structure1F selectors bind only to bounded face-normal ordinals");
+        {
+            Nexus_V1_Level mutated = level;
+            Nexus_V1_DgnStructure3AttachmentReceipt rejected;
+            int record_index;
+
+            for (record_index = 0;
+                 record_index < mutated.structure1f_entry_count;
+                 ++record_index) {
+                if (mutated.structure1f_entries[record_index].family >=
+                    NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) {
+                    mutated.structure1f_entries[record_index]
+                        .structure1a_structure3_model_index =
+                        (uint8_t)mutated.structure3_directory.entry_count;
+                    break;
+                }
+            }
+            if (record_index < mutated.structure1f_entry_count) {
+                CHECK(nexus_v1_level_structure3_attachment_receipt(
+                          &mutated, &rejected) == 0 && !rejected.complete &&
+                      !rejected.record_to_face_normal_semantics_proven &&
+                      rejected.out_of_range_model_selector_count == 1 &&
+                      !rejected.normal_plane_transform_or_draw_semantics_proven,
+                      "an out-of-range Structure1A model selector rejects the whole attachment receipt");
+            }
+        }
         if (level_index == 0) {
             Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
             Nexus_V1_DgnStructure3FaceCaptureBindingReceipt capture;

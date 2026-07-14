@@ -34,6 +34,7 @@
 #define NEXUS_DGN_STRUCTURE1G_FIRST_IMAGE_INDEX 0x014c
 #define NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES 20
 #define NEXUS_DGN_MAX_STRUCTURE2_TEXTURES 256
+#define NEXUS_DGN_MAX_STRUCTURE3_ENTRIES 4096
 #define NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES 40
 #define NEXUS_DGN_STRUCTURE3_GEOMETRY_MEASUREMENT_MAX_COMPONENT_ABS 0x100000
 /* Corpus identity serialized by test_nexus_v1_dgn_face_mesh_corpus from the
@@ -996,6 +997,26 @@ typedef struct {
     int transform_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3MeshEntryReceipt;
 
+/* DMWeb identifies Structure1A byte 1 as a Structure3 model index and
+ * Structure1F byte 1 as the face number inside that model.  Since
+ * Structure3c has one normal row per face row, this receipt binds only those
+ * three bounded ordinals.  It does not assign placement, transform, normal
+ * plane, texture, palette, culling, VDP1, or draw behavior. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure3_directory_valid;
+    int structure3_faces_valid;
+    int structure3_face_normal_pairing_valid;
+    int structure1f_bound_entry_count;
+    int model_entry_bound_count;
+    int face_normal_bound_count;
+    int out_of_range_model_selector_count;
+    int out_of_range_face_selector_count;
+    int complete;
+    int record_to_face_normal_semantics_proven;
+    int normal_plane_transform_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3AttachmentReceipt;
+
 /* A future original-Saturn trace may describe one Structure3 face using this
  * opaque evidence packet. The byte spans are fingerprints only: this type
  * does not decode texture pixels, palette entries, VDP1 command fields,
@@ -1360,6 +1381,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
         structure3_face_normal_geometry;
+    uint16_t structure3_entry_face_counts[NEXUS_DGN_MAX_STRUCTURE3_ENTRIES];
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1452,6 +1474,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
         structure3_face_normal_geometry;
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt structure3_mesh_semantics;
+    Nexus_V1_DgnStructure3AttachmentReceipt structure3_attachments;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure3ModelFaceSelectorReceipt structure3_model_face_selectors;
@@ -1924,6 +1947,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
         structure3_face_normal_geometry;
+    Nexus_V1_DgnStructure3AttachmentReceipt structure3_attachments;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure3ModelFaceSelectorReceipt structure3_model_face_selectors;
@@ -2165,6 +2189,9 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     int max_vertices, Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
     Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
     Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt);
+int nexus_v1_level_structure3_attachment_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3AttachmentReceipt *out_receipt);
 int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,

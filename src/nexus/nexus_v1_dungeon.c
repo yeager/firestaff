@@ -2317,6 +2317,22 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                 if (nexus_v1_level_copy_structure3_payload(level, data, size) != 0) {
                     return -1;
                 }
+                if (level->structure3_directory.valid &&
+                    level->structure3_directory.entry_count >= 0 &&
+                    level->structure3_directory.entry_count <=
+                        NEXUS_DGN_MAX_STRUCTURE3_ENTRIES) {
+                    int structure3_entry;
+                    for (structure3_entry = 0;
+                         structure3_entry < level->structure3_directory.entry_count;
+                         ++structure3_entry) {
+                        uint32_t entry_offset = rb32(data +
+                            level->structure3_payload.byte_offset + 4 +
+                            structure3_entry * 4);
+                        level->structure3_entry_face_counts[structure3_entry] =
+                            rb16(data + level->structure3_payload.byte_offset +
+                                 entry_offset + 6);
+                    }
+                }
                 nexus_v1_level_copy_structure1a_models(level, data, &layout);
                 nexus_v1_level_copy_structure1f_entries(level, data, &layout);
                 nexus_v1_level_resolve_structure1a_relations(level);
@@ -4050,6 +4066,67 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     return 0;
 }
 
+int nexus_v1_level_structure3_attachment_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3AttachmentReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3AttachmentReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.structure1a_relation_complete = relation.complete;
+    receipt.structure3_directory_valid = level->structure3_directory.valid &&
+        level->structure3_directory.entry_count >= 0 &&
+        level->structure3_directory.entry_count <= NEXUS_DGN_MAX_STRUCTURE3_ENTRIES;
+    receipt.structure3_faces_valid = level->structure3_faces.valid;
+    receipt.structure3_face_normal_pairing_valid =
+        level->structure3_face_normal_pairs.valid;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint32_t model_index;
+        uint32_t face_count;
+
+        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) continue;
+        ++receipt.structure1f_bound_entry_count;
+        if (!record->structure1a_relation_valid) continue;
+        model_index = record->structure1a_structure3_model_index;
+        if (!receipt.structure3_directory_valid ||
+            model_index >= (uint32_t)level->structure3_directory.entry_count) {
+            ++receipt.out_of_range_model_selector_count;
+            continue;
+        }
+        ++receipt.model_entry_bound_count;
+        /* Entry headers are independently bounded before their face count is
+         * consulted here; the face selector is an ordinal, never a draw key. */
+        face_count = level->structure3_entry_face_counts[model_index];
+        if (record->face >= face_count) {
+            ++receipt.out_of_range_face_selector_count;
+            continue;
+        }
+        ++receipt.face_normal_bound_count;
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.structure3_directory_valid && receipt.structure3_faces_valid &&
+        receipt.structure3_face_normal_pairing_valid &&
+        receipt.structure1f_bound_entry_count == receipt.model_entry_bound_count &&
+        receipt.structure1f_bound_entry_count == receipt.face_normal_bound_count &&
+        receipt.out_of_range_model_selector_count == 0 &&
+        receipt.out_of_range_face_selector_count == 0;
+    receipt.record_to_face_normal_semantics_proven = receipt.complete;
+    receipt.normal_plane_transform_or_draw_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
@@ -4477,6 +4554,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_face_normal_geometry);
     (void)nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
         level, &out_receipt->structure3_mesh_semantics);
+    (void)nexus_v1_level_structure3_attachment_receipt(
+        level, &out_receipt->structure3_attachments);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
@@ -5049,6 +5128,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_face_edges = handoff.structure3_face_edges;
     receipt.structure3_face_normal_pairs = handoff.structure3_face_normal_pairs;
     receipt.structure3_face_normal_geometry = handoff.structure3_face_normal_geometry;
+    receipt.structure3_attachments = handoff.structure3_attachments;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
     receipt.structure3_model_face_selectors =

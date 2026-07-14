@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- DONE 2026-07-14 Nexus Structure3 record-to-face/normal attachment receipt:
+  canonical-MD5-verified `LEV00.DGN`--`LEV15.DGN` corpus tests now bind each
+  complete Structure1A owner relation's documented Structure3 model selector
+  and each Structure1F face selector to an in-range entry-local face row and
+  same-ordinal normal row. A model or face selector outside its bounded domain
+  rejects the entire attachment receipt. The receipt is retained by the DGN
+  renderer handoff and no-draw plan but proves no placement, transform,
+  normal-plane, texture, palette, culling, VDP1, or draw behavior.
+  Verification: strict C99 `test_nexus_v1_dgn_geometry_readiness` and
+  `test_nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - 2026-07-14 DM1 original PC34 save/HoC snapshot runtime gate: the
   fixture-free external runtime target now reads each corpus-certified save
   once, validates its exact source size/hash, and gives those same immutable
