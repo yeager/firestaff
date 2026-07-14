@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 M12 settings column flow: settings tabs with nine or more rows
+  now fill two equal columns top-to-bottom; tabs with up to eight rows retain
+  one column. Rendering and pointer hit-testing share the same geometry.
+  Verification: `test_menu_hit_settings_tab_m12` and
+  `test_menu_hit_launch_direct_click_m12`.
+
 - 2026-07-14 DM1 HoC champion-mirror wall composition: M11 now follows
   ReDMCSB `DUNVIEW.C F0107:3922-3928`: the source-selected, map-local wall
   ornament is drawn through the ordinary F0107 path first, then C026 is
