@@ -17,7 +17,7 @@ bool F0053_TEXT_PrintToLogicalScreen_PC34(
     }
 
     text_print(context, logical_screen,
-               REDMCSB_F0053_LOGICAL_SCREEN_PIXEL_WIDTH_PC34,
+               REDMCSB_F0053_LOGICAL_SCREEN_BYTE_WIDTH_PC34,
                (uint16_t)x, (uint16_t)y, text_color, background_color, string,
                REDMCSB_F0053_LOGICAL_SCREEN_HEIGHT_PC34);
     return true;

@@ -6,7 +6,7 @@ struct print_capture {
     int calls;
     void *context;
     uint8_t *destination;
-    uint16_t pixel_width;
+    uint16_t byte_width;
     uint16_t x;
     uint16_t y;
     int16_t text_color;
@@ -25,7 +25,7 @@ static int check(int condition, const char *label)
 }
 
 static void capture_text_print(void *context, uint8_t *destination,
-                               uint16_t pixel_width, uint16_t x, uint16_t y,
+                               uint16_t byte_width, uint16_t x, uint16_t y,
                                int16_t text_color, int16_t background_color,
                                const char *string, uint16_t height)
 {
@@ -34,7 +34,7 @@ static void capture_text_print(void *context, uint8_t *destination,
     capture->calls++;
     capture->context = context;
     capture->destination = destination;
-    capture->pixel_width = pixel_width;
+    capture->byte_width = byte_width;
     capture->x = x;
     capture->y = y;
     capture->text_color = text_color;
@@ -57,9 +57,9 @@ int main(void)
     ok &= check(capture.calls == 1 && capture.context == &capture,
                 "makes one F0040 call with its context");
     ok &= check(capture.destination == logical_screen &&
-                    capture.pixel_width ==
-                        REDMCSB_F0053_LOGICAL_SCREEN_PIXEL_WIDTH_PC34,
-                "forwards the logical screen with C320 stride");
+                    capture.byte_width ==
+                        REDMCSB_F0053_LOGICAL_SCREEN_BYTE_WIDTH_PC34,
+                "forwards the logical screen with C160 byte width");
     ok &= check(capture.x == 319 && capture.y == 199 &&
                     capture.text_color == 15 && capture.background_color == 0 &&
                     capture.string == text,
@@ -71,8 +71,8 @@ int main(void)
                     capture_text_print, &capture, NULL, -1, -2, 4, 12, NULL),
                 "preserves F0053's unguarded F0040 forwarding");
     ok &= check(capture.calls == 2 && capture.destination == NULL &&
-                    capture.pixel_width ==
-                        REDMCSB_F0053_LOGICAL_SCREEN_PIXEL_WIDTH_PC34 &&
+                    capture.byte_width ==
+                        REDMCSB_F0053_LOGICAL_SCREEN_BYTE_WIDTH_PC34 &&
                     capture.x == UINT16_MAX && capture.y == UINT16_MAX - 1U &&
                     capture.text_color == 4 && capture.background_color == 12 &&
                     capture.string == NULL &&
