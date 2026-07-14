@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `CLIKMENU.C F0362`: source zone highlight state and
+  inclusive inversion transaction now have a renderer-ready plan with vertical
+  blank ordering. Verification: focused CTest; M11 consumption remains separate.
+
 - 2026-07-14 CSB ReDMCSB `DUNGEON.C F0147`: packed C04 group directions now
   read from the original final-word bitfield without record mutation.
   Verification: focused CTest.
