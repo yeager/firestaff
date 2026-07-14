@@ -1147,7 +1147,7 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TraceLaterE009DestinationMode =
 +   CurGame->Debugger->MemPeek(0x00ff, 1, true, true) & 0xff;
 +  TheronIrq2TraceLaterE009DispatchSeen = true;
-+  TheronIrq2Trace->print_format("later_system_card_e009_dispatch caller_pc=%04x return_pc=%04x sector_count=01 record_cl=%02x record_dl=%02x record_ch=%02x record=%06x\\n",
++  TheronIrq2Trace->print_format("later_system_card_e009_dispatch caller_pc=%04x return_pc=%04x caller_opcode=20 caller_target=e009 sector_count=01 record_cl=%02x record_dl=%02x record_ch=%02x record=%06x\\n",
 +                                logical_pc, logical_pc + 3, cl, dl, ch,
 +                                TheronIrq2TraceLaterE009Record);
 +  FlushTheronIrq2Trace();

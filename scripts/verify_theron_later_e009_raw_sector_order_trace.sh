@@ -46,12 +46,12 @@ $1 == "dynamic_cd_read_transaction" {
 $1 == "later_system_card_e009_dispatch" {
     ++dispatch
     dispatch_line = NR
-    if (NF != 8 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "sector_count") == "" || field($5, "record_cl") == "" || field($6, "record_dl") == "" || field($7, "record_ch") == "" || field($8, "record") == "") {
+    if (NF != 10 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "caller_opcode") == "" || field($5, "caller_target") == "" || field($6, "sector_count") == "" || field($7, "record_cl") == "" || field($8, "record_dl") == "" || field($9, "record_ch") == "" || field($10, "record") == "") {
         bad = "malformed later e009 dispatch row"
         next
     }
-    caller = hex(field($2, "caller_pc")); returned = hex(field($3, "return_pc")); sectors = hex(field($4, "sector_count")); cl = hex(field($5, "record_cl")); dl = hex(field($6, "record_dl")); ch = hex(field($7, "record_ch")); record = hex(field($8, "record"))
-    if (caller < 0 || caller > 65535 || returned != caller + 3 || sectors < 1 || sectors > 255 || cl < 0 || cl > 255 || dl < 0 || dl > 255 || ch < 0 || ch > 255 || record < 0 || record > 16777215 || record != cl + dl * 256 + ch * 65536) bad = "invalid later e009 dispatch fields"
+    caller = hex(field($2, "caller_pc")); returned = hex(field($3, "return_pc")); opcode = hex(field($4, "caller_opcode")); target = hex(field($5, "caller_target")); sectors = hex(field($6, "sector_count")); cl = hex(field($7, "record_cl")); dl = hex(field($8, "record_dl")); ch = hex(field($9, "record_ch")); record = hex(field($10, "record"))
+    if (caller < 0 || caller > 65535 || returned != caller + 3 || opcode != 32 || target != 57353 || sectors < 1 || sectors > 255 || cl < 0 || cl > 255 || dl < 0 || dl > 255 || ch < 0 || ch > 255 || record < 0 || record > 16777215 || record != cl + dl * 256 + ch * 65536) bad = "invalid later e009 dispatch fields"
     next
 }
 $1 == "cd_interface_raw_sector_read" {

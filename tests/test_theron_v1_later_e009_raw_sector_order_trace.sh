@@ -9,7 +9,7 @@ trap 'rm -rf "$work"' EXIT
 cat >"$work/valid.trace" <<'EOF'
 source=mednafen-pce-instrumented-coalesced
 dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3800 record_register_mask=07 record_cl=e0 record_dl=04 record_ch=00 variant=us_bin record=4e0
-later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510
+later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 caller_opcode=20 caller_target=e009 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510
 cd_interface_raw_sector_read lba=1296 bytes=2352 sector_fnv1a=1234abcd span_offset=0 span_bytes=32 span_fnv1a=5678ef90
 later_system_card_e009_destination_span caller_pc=ea00 return_pc=ea03 record=510 destination=3800 bytes=32 fnv1a=90abcdef
 later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510
@@ -71,6 +71,20 @@ sed 's/post_return_step caller_pc=ea00/post_return_step caller_pc=ea01/' \
     "$work/valid.trace" >"$work/mismatched-post-return.trace"
 if "$script" "$work/mismatched-post-return.trace" us_bin >/dev/null 2>&1; then
     printf 'FAIL: verifier accepted a post-return step from another e009 call\n' >&2
+    exit 1
+fi
+
+sed 's/caller_opcode=20/caller_opcode=21/' "$work/valid.trace" \
+    >"$work/non-jsr-caller.trace"
+if "$script" "$work/non-jsr-caller.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a non-JSR e009 caller opcode\n' >&2
+    exit 1
+fi
+
+sed 's/caller_target=e009/caller_target=e00c/' "$work/valid.trace" \
+    >"$work/wrong-caller-target.trace"
+if "$script" "$work/wrong-caller-target.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a caller target other than e009\n' >&2
     exit 1
 fi
 

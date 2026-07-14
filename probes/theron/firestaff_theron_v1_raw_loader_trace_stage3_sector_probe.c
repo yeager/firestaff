@@ -14,7 +14,7 @@ int main(void)
     size_t track_size = 0x0511u * THERON_TRACK02_RAW_SECTOR_BYTES;
     static const char later_capture[] =
         "source=mednafen-pce-instrumented\n"
-        "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
+        "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 caller_opcode=20 caller_target=e009 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
         "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n";
 
     memset(&trace, 0, sizeof(trace));
@@ -69,7 +69,7 @@ int main(void)
     if (theron_v1_raw_loader_trace_bind_later_e009_sector(
             &trace,
             "source=mednafen-pce-instrumented\n"
-            "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
+            "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 caller_opcode=20 caller_target=e009 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
             "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n"
             "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n",
             (const uint8_t *)"x", THERON_TRACK02_RAW_SECTOR_BYTES,

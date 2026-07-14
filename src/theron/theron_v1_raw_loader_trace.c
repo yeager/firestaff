@@ -102,16 +102,19 @@ static int tqr_trace_parse_later_e009_dispatch(
     const char *line, size_t length, unsigned int *out_caller_pc,
     unsigned int *out_return_pc, unsigned int *out_sector_count,
     unsigned int *out_cl, unsigned int *out_dl, unsigned int *out_ch,
-    unsigned int *out_record)
+    unsigned int *out_record, unsigned int *out_caller_opcode,
+    unsigned int *out_caller_target)
 {
     int consumed = 0;
 
     if (!line || !out_caller_pc || !out_return_pc || !out_sector_count ||
-        !out_cl || !out_dl || !out_ch || !out_record) return 0;
+        !out_cl || !out_dl || !out_ch || !out_record || !out_caller_opcode ||
+        !out_caller_target) return 0;
     return sscanf(line,
-                  "later_system_card_e009_dispatch caller_pc=%x return_pc=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
-                  out_caller_pc, out_return_pc, out_sector_count, out_cl,
-                  out_dl, out_ch, out_record, &consumed) == 7 &&
+                  "later_system_card_e009_dispatch caller_pc=%x return_pc=%x caller_opcode=%x caller_target=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
+                  out_caller_pc, out_return_pc, out_caller_opcode,
+                  out_caller_target, out_sector_count, out_cl, out_dl,
+                  out_ch, out_record, &consumed) == 9 &&
            consumed == (int)length && *out_caller_pc <= 0xffffu &&
            *out_return_pc <= 0xffffu && *out_sector_count > 0u &&
            *out_sector_count <= 0xffu && *out_cl <= 0xffu &&
@@ -495,6 +498,8 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     unsigned int dl = 0u;
     unsigned int ch = 0u;
     unsigned int record = 0u;
+    unsigned int caller_opcode = 0u;
+    unsigned int caller_target = 0u;
     unsigned int returned_caller_pc = 0u;
     unsigned int returned_pc = 0u;
     unsigned int returned_record = 0u;
@@ -547,7 +552,8 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
                           strlen("later_system_card_e009_dispatch ")) == 0) {
             if (++dispatch_count != 1u || !tqr_trace_parse_later_e009_dispatch(
                     line, length, &caller_pc, &return_pc, &sector_count,
-                    &cl, &dl, &ch, &record)) return 0;
+                    &cl, &dl, &ch, &record, &caller_opcode,
+                    &caller_target)) return 0;
         } else if (length >= strlen("later_system_card_e009_return ") &&
                    memcmp(line, "later_system_card_e009_return ",
                           strlen("later_system_card_e009_return ")) == 0) {
@@ -557,7 +563,8 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
         }
     }
     if (source_count != 1u || dispatch_count != 1u || returned_count != 1u ||
-        return_pc != caller_pc + 3u || returned_caller_pc != caller_pc ||
+        return_pc != caller_pc + 3u || caller_opcode != 0x20u ||
+        caller_target != 0xe009u || returned_caller_pc != caller_pc ||
         returned_pc != return_pc || returned_record != record ||
         record != (cl | (dl << 8) | (ch << 16)) ||
         record <= trace->dynamic_cd_read_record) return 0;
@@ -718,6 +725,8 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     unsigned int dl = 0u;
     unsigned int ch = 0u;
     unsigned int record = 0u;
+    unsigned int caller_opcode = 0u;
+    unsigned int caller_target = 0u;
     unsigned int return_caller_pc = 0u;
     unsigned int return_return_pc = 0u;
     unsigned int return_record = 0u;
@@ -790,7 +799,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
             if (++dispatch_count != 1u ||
                 !tqr_trace_parse_later_e009_dispatch(
                     line, length, &caller_pc, &return_pc, &read_count, &cl,
-                    &dl, &ch, &record)) return 0;
+                    &dl, &ch, &record, &caller_opcode, &caller_target)) return 0;
             dispatch_line = line_number;
         } else if (length >= strlen("cd_interface_raw_sector_read ") &&
                    memcmp(line, "cd_interface_raw_sector_read ",
@@ -834,7 +843,8 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         !(dynamic_line < dispatch_line && dispatch_line < sector_line &&
           sector_line < destination_line && destination_line < return_line &&
           return_line < post_return_line) ||
-        return_pc != caller_pc + 3u ||
+        return_pc != caller_pc + 3u || caller_opcode != 0x20u ||
+        caller_target != 0xe009u ||
         return_caller_pc != caller_pc || return_return_pc != return_pc ||
         return_record != record || destination_caller_pc != caller_pc ||
         destination_return_pc != return_pc || destination_record != record ||
@@ -878,6 +888,9 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->descriptor_selector_ordinal = ordinal;
     out->caller_pc = (uint16_t)caller_pc;
     out->return_pc = (uint16_t)return_pc;
+    out->later_caller_opcode = (uint8_t)caller_opcode;
+    out->later_caller_target = (uint16_t)caller_target;
+    out->later_caller_control_verified = 1;
     out->sector_count = (uint8_t)read_count;
     out->observed_raw_sector_lba = (int)lba;
     out->observed_raw_sector_checksum = expected_sector_checksum;
@@ -913,6 +926,9 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !coalesced_receipt->selector_sector_bytes_verified ||
         !coalesced_receipt->later_destination_local_ram_verified ||
         !coalesced_receipt->later_destination_media_span_verified ||
+        !coalesced_receipt->later_caller_control_verified ||
+        coalesced_receipt->later_caller_opcode != 0x20u ||
+        coalesced_receipt->later_caller_target != 0xe009u ||
         coalesced_receipt->later_destination_span_bytes != 32u ||
         !coalesced_receipt->later_destination_span_checksum ||
         !coalesced_receipt->later_post_return_step_verified ||
