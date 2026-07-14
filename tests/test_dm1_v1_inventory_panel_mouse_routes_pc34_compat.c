@@ -297,6 +297,48 @@ static void test_inventory_close_panel_right_button_route(void) {
                 "left-button screen click does not resolve to C011 right-only close");
 }
 
+/* COMMAND.C:413-417 binds the four visible inventory controls to C140,
+ * C145, C141 and C011.  Exercise the host click dispatch as well as the
+ * already-tested route table so icons cannot regress into inert artwork. */
+static void test_inventory_control_icons_dispatch_runtime(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.dm1MusicOn = 1;
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 168, 36,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C141 music icon is consumed by the runtime");
+    ASSERT_EQ(state.dm1MusicOn, 0,
+              "C141 music icon toggles music off");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 179, 35,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C140 save icon reaches the save command");
+
+    state.inventoryPanelActive = 1;
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 190, 35,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C145 rest icon is consumed by the runtime");
+    ASSERT_EQ(state.resting, 1,
+              "C145 rest icon starts party resting");
+
+    state.resting = 0;
+    state.inventoryPanelActive = 1;
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 209, 35,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C011 close icon is consumed by the runtime");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "C011 close icon closes the inventory panel");
+}
+
 /* Detail 2: all eight chest slot routes C058..C065.  ReDMCSB
  * COMMAND.C:217-226 and 498-507 G0456 panel-chest input list. */
 static void test_inventory_chest_slot_routes_all_eight(void) {
@@ -1052,6 +1094,7 @@ int main(void) {
            "CHEST.C:112-133 close-time compact\n");
 
     test_inventory_close_panel_right_button_route();
+    test_inventory_control_icons_dispatch_runtime();
     test_inventory_chest_slot_routes_all_eight();
     test_inventory_open_chest_panel_click_route_priority();
     test_inventory_mouth_eye_routes_runtime();

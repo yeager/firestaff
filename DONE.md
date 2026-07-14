@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 inventory controls and spell-panel source surface: M11 now
+  dispatches the visible C141 music, C140 save, C145 rest, and C011 close
+  icons through their ReDMCSB COMMAND.C routes. The C009 spell background is
+  admitted at its physical G0000 96x33 size rather than rejected as the C013
+  input interior. Verification: `test_dm1_v1_mouse_routes_pc34_compat`,
+  `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`, and
+  `test_m11_open_door_spell_runtime_pc34_compat`.
+
 - 2026-07-14 M12 settings column flow: settings tabs with nine or more rows
   now fill two equal columns top-to-bottom; tabs with up to eight rows retain
   one column. Rendering and pointer hit-testing share the same geometry.
