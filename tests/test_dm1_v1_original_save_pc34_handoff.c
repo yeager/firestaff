@@ -4,6 +4,7 @@
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -4714,6 +4715,7 @@ static void test_original_pc34_party_info_runtime_materialization(void)
     struct DM1_EventQueue_V1 queue;
     struct SaveGame_Compat reimported;
     struct PartyState_Compat reimported_party;
+    struct SpellEffect_Compat footprints_effect;
     DM1OriginalSavePC34HandoffReport report;
     int written = 0;
     int exported_size = 0;
@@ -4734,6 +4736,7 @@ static void test_original_pc34_party_info_runtime_materialization(void)
     wr16le(party_info + 4u, 17u);
     wr16le(party_info + 6u, 19u);
     wr16le(party_info + 8u, 23u);
+    party_info[10u] = 29u;
     party_info[11u] = 37u;
     CHECK(rewrite_fixture_party_info_bytes(
               bytes, (size_t)written, party_info),
@@ -4748,12 +4751,21 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           world.magic.partyShieldDefense == 17 &&
           world.magic.fireShieldDefense == 19 &&
           world.magic.spellShieldDefense == 23 &&
+          world.magic.scentCount == 29 &&
           world.freezeLifeTicks == 37 &&
           world.magic.freezeLifeTicks == 37 &&
           world.lifecycle.status.partyShieldDefense == 17 &&
           world.lifecycle.status.partyFireShieldDefense == 19 &&
           world.lifecycle.status.partySpellShieldDefense == 23,
           "F0435 materializes source PARTY_INFO magic and freeze-life owners");
+    memset(&footprints_effect, 0, sizeof(footprints_effect));
+    footprints_effect.spellType = C6_SPELL_TYPE_OTHER_FOOTPRINTS_COMPAT;
+    footprints_effect.powerOrdinal = 3;
+    footprints_effect.magicStateDelta[5] = 1;
+    F0760_MAGIC_ApplyStateDelta_Compat(&footprints_effect, &world.magic);
+    CHECK(world.magic.firstScentIndex == 29 &&
+          world.magic.lastScentIndex == 0,
+          "resumed ScentCount drives the source Footprints window");
     F0890_ORCH_ApplyPeriodicEffects_Compat(&world, NULL);
     CHECK(world.freezeLifeTicks == 36 && world.magic.freezeLifeTicks == 36,
           "the resumed source FreezeLifeTicks value reaches the live tick owner");
@@ -4769,10 +4781,11 @@ static void test_original_pc34_party_info_runtime_materialization(void)
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 0u) == -12 &&
           reimported_party.pc34PartyInfoBytes[2u] == 3u &&
-          reimported_party.pc34PartyInfoBytes[3u] == 5u &&
+          reimported_party.pc34PartyInfoBytes[3u] == 6u &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 4u) == 17 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 6u) == 19 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23 &&
+          reimported_party.pc34PartyInfoBytes[10u] == 29u &&
           reimported_party.pc34PartyInfoBytes[11u] == 36u,
           "F0433 preserves source PARTY_INFO field ownership on export");
     F0883_WORLD_Free_Compat(&world);
