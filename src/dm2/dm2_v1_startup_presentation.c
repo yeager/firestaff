@@ -85,8 +85,8 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* skproject fe7299.cpp: DM2_PLAY_MUSIC(0, true) is followed directly by
-     * DM2_SHOW_MENU_SCREEN. TITLE/0 dt07/4 is the complete static menu. */
+    /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235) owns
+     * TITLE/0/dt07/4 before its MessageLoop(true) accepts menu input. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;

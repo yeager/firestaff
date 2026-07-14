@@ -39303,6 +39303,39 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         memset(&startup_visual_receipt, 0, sizeof(startup_visual_receipt));
         memset(&runtime_render_receipt, 0, sizeof(runtime_render_receipt));
         memset(&runtime_frame_receipt, 0, sizeof(runtime_frame_receipt));
+
+        /* skproject/SKWIN/SkWinCore.cpp::INIT (55639-55645) loops through
+         * SHOW_MENU_SCREEN() until GAME_LOAD() accepts a user action.
+         * SHOW_MENU_SCREEN() (55182-55235) owns TITLE/0/dt07/4 and its menu
+         * input loop.  Do not render a live dungeon underneath or instead of
+         * that source-owned surface: missing title GDAT must fail closed. */
+        if (state->dm2State.startup_menu_active) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          0, 0, framebufferWidth, framebufferHeight,
+                          M11_COLOR_BLACK);
+            startup_menu_drawn = m11_draw_dm2_startup_menu(
+                state,
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight,
+                &startup_host_receipt,
+                &startup_ownership_receipt,
+                &startup_visual_receipt);
+            if (startup_menu_drawn) {
+                m11_set_status((M11_GameViewState *)state,
+                               "STARTUP", "DM2 STARTUP GDAT");
+            } else {
+                m11_set_status((M11_GameViewState *)state,
+                               "STARTUP", "DM2 STARTUP GDAT REQUIRED");
+            }
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+
         if (state->dm2World) {
             (void)dm2_v1_boot_runtime_render_frame(
                 (DM2_V1_BootProfile *)state->dm2BootProfile,
@@ -39315,7 +39348,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 &runtime_render_receipt);
             rendered = runtime_render_receipt.render_result;
         }
-        if (rendered == 0 && !state->dm2State.startup_menu_active) {
+        if (rendered == 0) {
             (void)dm2_v1_runtime_last_m11_frame_receipt(
                 &runtime_frame_receipt);
             runtime_frame_accepted = M11_Dm2RuntimeFrameReceipt_ShouldPresent(
@@ -39329,14 +39362,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 rendered = -1;
             }
         }
-        if (rendered != 0 && !state->dm2State.startup_menu_active) {
+        if (rendered != 0) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
         }
         if (rendered == 0 &&
-            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
-            !state->dm2State.startup_menu_active) {
+            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
             /* The V1 viewport has already established the authoritative
              * scene.  V2.0 reuses only the mounted GDAT HUD pixels through
              * the boot-profile fetcher configured at hand-off above.
@@ -39347,34 +39379,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                       framebufferWidth,
                                       framebufferHeight);
         }
-        startup_menu_drawn = m11_draw_dm2_startup_menu(
-            state,
-            framebuffer,
-            framebufferWidth,
-            framebufferHeight,
-            &startup_host_receipt,
-            &startup_ownership_receipt,
-            &startup_visual_receipt);
-        if (startup_menu_drawn) {
-            if (startup_visual_receipt.m11_draw_consumption_ready) {
-                m11_set_status((M11_GameViewState *)state,
-                               "STARTUP",
-                               "DM2 STARTUP GDAT");
-            } else if (startup_visual_receipt.status_scope &&
-                startup_visual_receipt.status) {
-                m11_set_status((M11_GameViewState *)state,
-                               startup_visual_receipt.status_scope,
-                               startup_visual_receipt.status);
-            }
-        } else if (runtime_frame_accepted &&
-                   runtime_render_receipt.runtime_render_real_asset_ready) {
+        if (runtime_frame_accepted &&
+            runtime_render_receipt.runtime_render_real_asset_ready) {
             m11_set_status((M11_GameViewState *)state,
                            "RUNTIME",
                            "DM2 RUNTIME GDAT");
         }
-        if (runtime_frame_accepted &&
-            (!startup_menu_drawn ||
-             !startup_visual_receipt.suppress_game_hud)) {
+        if (runtime_frame_accepted) {
             m11_draw_dm2_shop_panel(state, framebuffer,
                                     framebufferWidth, framebufferHeight);
             if (state->inventoryPanelActive) {
