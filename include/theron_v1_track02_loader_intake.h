@@ -43,6 +43,20 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderIntakeReceipt;
 
+/* A coordinate handoff is restricted to the verified raw grid byte and its
+ * physical Track 02 placement. It intentionally does not name or interpret
+ * the byte as a cell, object, tile, visual, or runtime value. */
+typedef struct {
+    int handed_off;
+    uint16_t raw_grid_x;
+    uint16_t raw_grid_y;
+    uint8_t raw_grid_byte;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridCoordinateReceipt;
+
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
 typedef struct {
@@ -88,5 +102,18 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     size_t raw_track02_bytes,
     const char *raw_track02_md5,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt);
+
+/* Hands off one coordinate only after independently rehashing the canonical
+ * raw BIN and rechecking the decoded envelope header and complete grid hash.
+ * Invalid provenance, altered bytes, or coordinates outside the verified grid
+ * produce no receipt. */
+int theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    uint16_t raw_grid_x,
+    uint16_t raw_grid_y,
+    Theron_V1Track02RawGridCoordinateReceipt *out_receipt);
 
 #endif
