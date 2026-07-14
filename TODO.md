@@ -650,6 +650,9 @@
     zone dimensions, even source/destination strides, vertical/horizontal flip,
     and caller-owned opaque/transparent line primitives. No bitmap or display
     buffer is created by the adapter.
+  - 2026-07-14 update: F0686 now preserves the PC IMG previous-line copy over
+    caller-owned packed bitmap data, used by real IMG/IMG3 expansion. No image
+    allocation, synthetic pixels, or decoder fallback is supplied.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
