@@ -741,6 +741,12 @@ typedef struct {
      * within one bounded face row. They do not establish edge direction,
      * winding, surface continuity, or any mesh/draw behaviour. */
     int face_vertex_component_count;
+    /* Each entry-local co-occurrence graph is accounted for by its component
+     * count only. This neither assigns edges a direction nor infers a
+     * surface, winding, visibility, or drawing behaviour. */
+    int zero_component_vertex_entry_count;
+    int single_component_vertex_entry_count;
+    int multiple_component_vertex_entry_count;
     int maximum_vertex_reference_count;
     int textured_face_count;
     int mesh_transparent_face_count;
@@ -753,6 +759,7 @@ typedef struct {
     int face_topology_accounting_valid;
     int face_vertex_entry_coverage_accounting_valid;
     int face_vertex_component_accounting_valid;
+    int face_vertex_component_entry_accounting_valid;
     int normal_count_matches_face_count;
     int valid;
     int draw_semantics_proven;

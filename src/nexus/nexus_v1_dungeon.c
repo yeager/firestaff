@@ -346,6 +346,7 @@ static int nexus_v1_level_copy_structure3_payload(
         int face_vertex_linkage_measurement_complete = 1;
         int face_vertex_entry_coverage_measurement_complete = 1;
         int face_vertex_component_measurement_complete = 1;
+        int face_vertex_component_entry_measurement_complete = 1;
 
         faces.entry_count = entry_headers.entry_count;
         faces.face_vertex_indexes_valid = 1;
@@ -495,10 +496,18 @@ static int nexus_v1_level_copy_structure3_payload(
                     ++faces.fully_referenced_vertex_entry_count;
                 else
                     ++faces.partially_referenced_vertex_entry_count;
+                if (component_count == 0)
+                    ++faces.zero_component_vertex_entry_count;
+                else if (component_count == 1)
+                    ++faces.single_component_vertex_entry_count;
+                else
+                    ++faces.multiple_component_vertex_entry_count;
             } else if (vertex_count == 0) {
                 ++faces.zero_vertex_entry_count;
+                ++faces.zero_component_vertex_entry_count;
             } else {
                 face_vertex_entry_coverage_measurement_complete = 0;
+                face_vertex_component_entry_measurement_complete = 0;
             }
             free(vertex_reference_counts);
             free(vertex_component_parents);
@@ -531,11 +540,19 @@ static int nexus_v1_level_copy_structure3_payload(
             faces.face_vertex_indexes_valid &&
             faces.face_vertex_component_count >= 0 &&
             faces.face_vertex_component_count <= faces.referenced_vertex_count;
+        faces.face_vertex_component_entry_accounting_valid =
+            face_vertex_component_entry_measurement_complete &&
+            faces.face_vertex_component_accounting_valid &&
+            faces.zero_component_vertex_entry_count +
+                    faces.single_component_vertex_entry_count +
+                    faces.multiple_component_vertex_entry_count ==
+                faces.entry_count;
         faces.valid = faces.face_vertex_indexes_valid &&
             faces.face_vertex_linkage_valid &&
             faces.face_topology_accounting_valid &&
             faces.face_vertex_entry_coverage_accounting_valid &&
             faces.face_vertex_component_accounting_valid &&
+            faces.face_vertex_component_entry_accounting_valid &&
             faces.normal_count_matches_face_count &&
             faces.unclassified_fill_count == 0 &&
             faces.face_vertex_reference_count ==

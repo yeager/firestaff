@@ -52,6 +52,10 @@ each Structure3 entry. A component joins only distinct indexes that co-occur
 in a bounded face row; it is not an edge direction, winding, surface,
 normal-plane, transform, material, palette, or drawing claim.
 
+Each entry is also accounted as having zero, one, or multiple such components.
+That partition covers the bounded Structure3 entry directory without assigning
+any geometric or rendering meaning to the component count.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
