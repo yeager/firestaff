@@ -45,6 +45,10 @@ int main(void)
         0x0686u, 5u, 0x0686u, 6u, 0x0048u, 0x080du
     };
     uint16_t equal_underflow[] = { 0x0008u };
+    uint16_t question_true[] = { 0x0686u, 1u, 0x0049u };
+    uint16_t question_false[] = { 0x0686u, 0u, 0x03c9u };
+    uint16_t question_extended[] = { 0x0686u, 1u, 0x0389u, 0xfffeu };
+    uint16_t question_jump[] = { 0x0686u, 1u, 0x0849u, 2u };
     uint32_t parameters[1] = { 77u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
@@ -94,6 +98,33 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_MALFORMED &&
               parameters[0] == 77u,
           "EQUAL stack underflow rejects without parameter publication");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, question_true,
+              (int)(sizeof(question_true) / sizeof(question_true[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              execution.next_state == 1 && execution.stack_depth == 0u &&
+              parameters[0] == 77u,
+          "QUESTION consumes a true source condition without side effects");
+
+    check(run(&state, &action, question_false,
+              (int)(sizeof(question_false) / sizeof(question_false[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              execution.next_state == -1 && execution.stack_depth == 0u &&
+              parameters[0] == 77u,
+          "QUESTION consumes a false source condition without side effects");
+
+    check(run(&state, &action, question_extended,
+              (int)(sizeof(question_extended) / sizeof(question_extended[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              execution.next_state == 65534 && execution.words_consumed == 4u,
+          "QUESTION MAXSTATE consumes its exact raw extension word");
+
+    check(run(&state, &action, question_jump,
+              (int)(sizeof(question_jump) / sizeof(question_jump[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "QUESTION jump branch remains closed without an action-chain owner");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
