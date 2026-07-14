@@ -55,7 +55,10 @@ static int dm2_v1_gdat_hud_add_command(
     command = &plan->commands[plan->command_count];
     memset(command, 0, sizeof(*command));
     command->kind = kind;
-    command->viewport_gdat_index = viewport_gdat_index;
+    command->viewport_gdat_index = kind ==
+        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT
+        ? dm2_v1_viewport_hud_portrait_graphic_index(viewport_gdat_index)
+        : viewport_gdat_index;
     command->destination = *destination;
     if (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
         command->gdat_category = DM2_GDAT_CATEGORY_CHAMPIONS;
@@ -125,7 +128,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
         if (!dm2_v1_gdat_hud_add_command(loader, out_plan,
                 DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
                 chrome.action_icons[i].gdat_index,
-                &chrome.action_icons[i].frame_rect)) {
+                &chrome.action_icons[i].fill_rect)) {
             dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
             return 0;
         }

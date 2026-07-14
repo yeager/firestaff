@@ -13,6 +13,8 @@ typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
 typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
 typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
 typedef struct DM2_V1_StartupViewReceipt DM2_V1_StartupViewReceipt;
+typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
+typedef struct DM2_V1_HudPartyState DM2_V1_HudPartyState;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
@@ -1691,6 +1693,11 @@ int dm2_v1_boot_gdat_scene_m11_command_plan(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
+
+int dm2_v1_boot_gdat_hud_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_HudPartyState *party,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
  * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;
