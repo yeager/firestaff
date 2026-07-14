@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0763`: source-locked PC 3.4 endgame bitmap
+  allocation/load route. The focused strict C11 test passes without synthetic
+  bitmap content.
+
+- 2026-07-14 DM1/CSB ReDMCSB `F0756` and `F0757`: source-locked PC 3.4
+  memory-requirements evaluation and C700 language-text load routes. Focused
+  strict C11 tests pass without synthetic text content.
+
+- 2026-07-14 DM1/CSB ReDMCSB `F0748`, `F0750`-`F0752` and `F0755`:
+  source-locked EMS allocation, CPSX cleanup, bitmap-size/allocation and
+  memory-profile flag routes. Five focused strict C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0746`, `F0747` and `F0749`: source-locked
   PC 3.4 EMS routes preserve EMMXXXX0 detection/IOCTL gates, EMS version
   high-nibble extraction, and non-clearing handle release behavior. Focused
