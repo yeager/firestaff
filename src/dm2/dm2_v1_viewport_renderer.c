@@ -545,6 +545,37 @@ int dm2_v1_viewport_scene_material_graphic_address(int gdat_index,
     return 1;
 }
 
+int dm2_v1_viewport_weather_environment_graphic_index(int graphicsset_index,
+                                                       int environment_field)
+{
+    if (graphicsset_index < 0 || graphicsset_index > 0xff ||
+        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+        environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
+        return 0;
+    }
+    return DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE -
+           (graphicsset_index << 8) - environment_field;
+}
+
+int dm2_v1_viewport_weather_environment_graphic_address(
+    int gdat_index, int *out_graphicsset_index, int *out_environment_field)
+{
+    int packed = DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE - gdat_index;
+    int environment_field = packed & 0xff;
+    int graphicsset_index = (packed >> 8) & 0xff;
+
+    if (!out_graphicsset_index || !out_environment_field || packed < 0 ||
+        packed > 0xff6c ||
+        gdat_index > DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE ||
+        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+        environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
+        return 0;
+    }
+    *out_graphicsset_index = graphicsset_index;
+    *out_environment_field = environment_field;
+    return 1;
+}
+
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
  * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542
@@ -921,6 +952,21 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_misty_map = ready ? misty_map : 0u;
     s->gdat_thunder_position = ready ? thunder_position : 0u;
     s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+    DM2_V1_ViewportState *s,
+    uint8_t graphicsset_index,
+    const DM2_V1_WeatherRendererReceipt *receipt)
+{
+    if (!s) return;
+    s->gdat_weather_renderer_receipt = receipt && receipt->valid &&
+        receipt->renderer_hash != 0u && receipt->command_count <= 2u
+        ? receipt : NULL;
+    s->gdat_weather_renderer_graphicsset =
+        s->gdat_weather_renderer_receipt ? graphicsset_index : 0u;
+    s->asset_weather_drawn_count = 0;
     s->dirty = 1;
 }
 
@@ -4735,11 +4781,56 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 {
-    /* skproject's weather pass is a source-material blitline route. The
-     * GRAPHICSSET words only select/control it; they are not pixels. Until a
-     * source-backed weather image address is proven, do not fabricate rain,
-     * fog, or lightning over a real GDAT material frame. */
-    (void)s;
+    const DM2_V1_WeatherRendererReceipt *receipt;
+    const uint8_t *pixels[2] = { NULL, NULL };
+    int widths[2] = { 0, 0 };
+    int heights[2] = { 0, 0 };
+    int strides[2] = { 0, 0 };
+    unsigned int i;
+
+    if (!s || !s->is_outdoor || !s->gdat_weather_renderer_receipt) return;
+    receipt = s->gdat_weather_renderer_receipt;
+    if (receipt->command_count == 0u) return;
+
+    /* skproject c_weather.cpp:221-266 fills cloud then rain slots; each is
+     * realized through c_querydb.cpp DM2_QUERY_TEMP_PICST:2381. Preflight
+     * the complete source transaction so a later missing ENVIRONMENT image
+     * cannot leave an earlier cloud layer on the frame. */
+    for (i = 0u; i < receipt->command_count; ++i) {
+        const DM2_V1_WeatherDrawPlan *draw = &receipt->draws[i];
+        const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
+        int gdat_index;
+        if (!draw->valid || !clip->valid || draw->material_hash == 0u ||
+            draw->image_field < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+            draw->image_field > DM2_V1_WEATHER_RAIN_STORM_CMD ||
+            draw->source_right <= draw->source_left ||
+            draw->source_bottom <= draw->source_top ||
+            clip->w <= 0 || clip->h <= 0) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
+            return;
+        }
+        gdat_index = dm2_v1_viewport_weather_environment_graphic_index(
+            s->gdat_weather_renderer_graphicsset, draw->image_field);
+        if (gdat_index == 0 || dm2_v1_fetch_viewport_local_material(
+                s, gdat_index, &pixels[i], &widths[i], &heights[i],
+                &strides[i]) != 0 || !pixels[i] ||
+            widths[i] != draw->source_right - draw->source_left ||
+            heights[i] != draw->source_bottom - draw->source_top ||
+            strides[i] < widths[i]) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
+            return;
+        }
+    }
+    for (i = 0u; i < receipt->command_count; ++i) {
+        const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
+        dm2_v1_blit_scaled_material_bitmap(
+            s, s->framebuffer, s->fb_stride, clip->x, clip->y,
+            clip->w, clip->h, pixels[i], widths[i], heights[i], strides[i],
+            DM2_COLOR_TRANSPARENT, &s->gdat_scene_weather_consumed_count);
+        ++s->asset_weather_drawn_count;
+    }
 }
 
 /* ── UI Chrome ────────────────────────────────────────────────────── */

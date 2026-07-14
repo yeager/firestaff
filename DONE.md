@@ -51,6 +51,19 @@
   introduced. Verification: `test_nexus_v1_dgn_geometry_readiness` passed
   against `/Users/bosse/.firestaff/data/nexus/LEV00.DGN`--`LEV15.DGN`.
 
+- ✅ 2026-07-14 DM2 GDAT weather renderer material gate: the outdoor
+  viewport now consumes `ENVIRONMENT` pixels only from a complete,
+  source-owned `DistantEnvironment` renderer receipt. It preflights every
+  cloud/rain image plus its local palette and source-resolved destination clip
+  before drawing, then consumes the real GDAT layers in source order; a
+  missing later layer blocks the entire transaction with no partial cloud
+  draw or procedural fallback. Source: skproject `c_weather.cpp`
+  `DM2_UPDATE_WEATHER`, `c_querydb.cpp`
+  `DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW` and `DM2_QUERY_TEMP_PICST`.
+  Verification: focused CTest `dm2_v1_weather_renderer_material_gate`,
+  `dm2_v1_weather_gdat_receipt`, and `dm2_v1_weather_no_synthetic_overlay`
+  passed 3/3.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API
