@@ -1862,9 +1862,9 @@ static uint32_t dm2_runtime_creature_material_plan_step(uint32_t hash,
 }
 
 /* c_map.cpp's DB4 route selects CREATURES/type/F9 before DRAW_MAP_CHIP.
- * Preserve every visible direct-root material in one ordered M11 receipt.
- * Dynamic creature instances have no admitted G1 F9 owner yet, so the
- * source-required frame stays fail-closed instead of borrowing this plan. */
+ * QUERY_CREATURE_PICST's live route instead selects a concrete dtImage field
+ * through the V5 FB/FC/FD chain. Preserve either original owner in M11, but
+ * never let one route borrow material from the other. */
 static int dm2_runtime_creature_material_plan_identity(
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
     const DM2_V1_ViewportState *viewport,
@@ -1886,9 +1886,31 @@ static int dm2_runtime_creature_material_plan_identity(
         uint32_t material_hash = 0u;
         int material_index;
 
-        if (sprite->source_kind != 2) {
-            return 0;
+        if (sprite->source_kind == 1) {
+            if (!sprite->source_material_proven ||
+                sprite->source_material_hash == 0u ||
+                sprite->gdat_image_field == DM2_GDAT_IMG_MAP_CHIP) {
+                return 0;
+            }
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, sprite->source_material_hash);
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, (uint32_t)dm2_v1_viewport_creature_field_graphic_index(
+                    sprite->creature_type, sprite->gdat_image_field));
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, sprite->gdat_image_field);
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, sprite->frame_index);
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, (uint32_t)sprite->screen_x);
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, (uint32_t)sprite->screen_y);
+            hash = dm2_runtime_creature_material_plan_step(
+                hash, (uint32_t)sprite->depth);
+            ++*out_count;
+            continue;
         }
+        if (sprite->source_kind != 2) return 0;
         for (material_index = 0;
              material_index < receipt->material_count;
              ++material_index) {
@@ -1977,13 +1999,6 @@ static void dm2_runtime_append_creature_sprite(
                                                dst->frame_index);
 }
 
-static int dm2_runtime_creature_frame_from_instance(
-    const DM2_V1_CreatureInstance *inst)
-{
-    if (!inst) return 0;
-    return inst->animation_frame;
-}
-
 static int dm2_runtime_creature_frame_source_from_instance(
     const DM2_V1_CreatureInstance *inst)
 {
@@ -1996,12 +2011,14 @@ static int dm2_runtime_creature_frame_source_from_instance(
 static void dm2_runtime_append_creature_instance_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_CreatureInstance *inst,
-    const DM2_V1_ViewportSpritePlacement *placement)
+    const DM2_V1_ViewportSpritePlacement *placement,
+    const DM2_V1_BootDynamicCreatureMaterialReceipt *material)
 {
     DM2_CreatureSprite *dst;
     int hp_pct = 100;
 
-    if (!viewport || !inst || !placement || !placement->visible) return;
+    if (!viewport || !inst || !placement || !material || !material->valid ||
+        !placement->visible) return;
     if (!inst->alive || !inst->is_visible) return;
     if (viewport->creature_count >= DM2_MAX_CREATURES_PER_SQ) return;
 
@@ -2015,7 +2032,10 @@ static void dm2_runtime_append_creature_instance_sprite(
     memset(dst, 0, sizeof(*dst));
     dst->creature_type = (uint8_t)(inst->ai_index & 0xff);
     dst->source_kind = 1;
-    dst->frame_index = (uint8_t)dm2_runtime_creature_frame_from_instance(inst);
+    dst->source_material_proven = 1;
+    dst->gdat_image_field = material->image_field;
+    dst->source_material_hash = material->material_hash;
+    dst->frame_index = (uint8_t)material->selected_frame;
     dst->depth = (int16_t)placement->depth;
     dst->screen_x = (int16_t)placement->screen_x;
     dst->screen_y = (int16_t)placement->screen_y;
@@ -2044,8 +2064,8 @@ static void dm2_runtime_append_creature_instance_sprite(
     g_dm2_last_creature_render.screen_y = placement->screen_y;
     g_dm2_last_creature_render.depth = placement->depth;
     g_dm2_last_creature_render.gdat_index =
-        dm2_v1_viewport_creature_graphic_index(dst->creature_type,
-                                               dst->frame_index);
+        dm2_v1_viewport_creature_field_graphic_index(
+            dst->creature_type, material->image_field);
 }
 
 static void dm2_runtime_finish_creature_render_receipt(
@@ -2267,15 +2287,24 @@ static void dm2_runtime_populate_active_creature_instances(
                 &placement)) {
             continue;
         }
-        /* skproject resolves the creature's GDAT AI row before its viewport
-         * path can consume creature-owned material. A real boot profile must
-         * not render an instance through the old type-index substitute. */
-        if (rt->boot->graphics_dat &&
-            !dm2_v1_creature_ai_spec(inst->ai_index)) {
+        DM2_V1_BootDynamicCreatureMaterialReceipt material;
+
+        /* skproject QUERY_CREATURE_PICST receives the live command and V5
+         * mutable animation state, then draws FD's exact CREATURES dtImage.
+         * A missing table/image receipt omits the sprite entirely. */
+        if (!rt->boot || !rt->boot->graphics_dat ||
+            !dm2_v1_creature_ai_spec(inst->ai_index) ||
+            !dm2_v1_boot_dynamic_creature_material_receipt(
+                rt->boot, inst->ai_index, inst->b_1a,
+                inst->gdat_animation_info, inst->direction, &material)) {
+            continue;
+        }
+        if (dm2_v1_creature_set_gdat_animation_state(
+                slot, material.sequence_offset, material.selected_frame) != 0) {
             continue;
         }
         dm2_runtime_append_creature_instance_sprite(
-            viewport, inst, &placement);
+            viewport, inst, &placement, &material);
     }
 }
 

@@ -25,6 +25,7 @@
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
+#include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_dialogue_gdat.h"
@@ -8805,6 +8806,71 @@ int dm2_v1_boot_viewport_asset_evidence(
     return out_evidence->raw_hash != 0u && out_evidence->raw_byte_count > 0u &&
            out_evidence->decoded_hash != 0u &&
            out_evidence->decoded_pixel_count > 0u;
+}
+
+int dm2_v1_boot_dynamic_creature_material_receipt(
+    DM2_V1_BootProfile *profile,
+    int creature_type,
+    uint16_t command,
+    uint16_t previous_frame,
+    int direction,
+    DM2_V1_BootDynamicCreatureMaterialReceipt *out_receipt)
+{
+    DM2_V1_BootDynamicCreatureMaterialReceipt candidate;
+    DM2_V1_BootGraphicsDat *gfx;
+    const DM2_AIDefinition *ai;
+    DM2_V1_CreatureAnimationGdatReceipt animation;
+    uint8_t palette16[16];
+    int gdat_index;
+    uint32_t palette_hash = 0u;
+
+    if (!out_receipt || !profile || !profile->graphics_dat ||
+        creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&animation, 0, sizeof(animation));
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    ai = dm2_v1_creature_ai_spec(creature_type);
+    if (!ai || (ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u ||
+        !dm2_v1_creature_animation_gdat_select_dynamic_v5(
+            &gfx->loader, creature_type, command, previous_frame,
+            ai->w0AIFlags, direction, &animation) ||
+        !animation.valid || !animation.dynamic) {
+        return 0;
+    }
+    gdat_index = dm2_v1_viewport_creature_field_graphic_index(
+        creature_type, animation.image_id);
+    if (gdat_index == 0 ||
+        !dm2_v1_boot_viewport_asset_evidence(
+            profile, gdat_index, &candidate.image) ||
+        candidate.image.category != DM2_GDAT_CATEGORY_CREATURES ||
+        candidate.image.entry_index != creature_type ||
+        candidate.image.field != animation.image_id ||
+        dm2_v1_boot_viewport_asset_palette_fetch(
+            profile, gdat_index, palette16, &palette_hash) != 0 ||
+        palette_hash == 0u) {
+        return 0;
+    }
+    candidate.creature_type = creature_type;
+    candidate.command = command;
+    candidate.previous_frame = previous_frame;
+    candidate.selected_frame = animation.selected_frame;
+    candidate.sequence_offset = animation.sequence_offset;
+    candidate.direction = animation.direction;
+    candidate.image_field = animation.image_id;
+    candidate.animation_table_hash = animation.table_hash;
+    candidate.palette_hash = palette_hash;
+    candidate.material_hash = dm2_v1_boot_packaged_capture_hash_step(
+        animation.table_hash, candidate.image.raw_hash);
+    candidate.material_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.material_hash, candidate.image.decoded_hash);
+    candidate.material_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.material_hash, palette_hash);
+    candidate.valid = candidate.material_hash != 0u;
+    if (!candidate.valid) return 0;
+    *out_receipt = candidate;
+    return 1;
 }
 
 static int dm2_v1_boot_object_pool_to_gdat_category(uint8_t pool)

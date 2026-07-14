@@ -16257,6 +16257,20 @@ Verification: `firestaff_m11` Ninja build.
   all-dungeon receipt inspection. The indexed viewport-only render facade can
   present without an asset bundle; supplied V1 bundles still require original
   tile/palette data. No synthetic artwork or object route is admitted.
+
+# 2026-07-14 — DM2 live creature direct-GDAT material gate
+
+SKProject's `QUERY_CREATURE_PICST` route is now represented end-to-end:
+runtime keeps the mutable V5 animation pair, consumes the complete
+`CREATURES/type` `FB/FC/FD` receipt, and supplies the selected direct
+`dtImage` field to the viewport and M11 material hash. The old live
+type-index/F9 path is not permitted. The AI loader also follows
+`EXTENDED_LOAD_AI_DEFINITION`'s real `dtWordValue` field layout instead of
+requiring a non-source packed 36-byte blob. A missing AI binding, animation
+table, direct image, decoded pixels, or local palette now results in no draw.
+The canonical local corpus currently exposes the animation triads but not an
+admitted dynamic AI binding, which is reported as a clean skip rather than
+fabricating a creature visual.
 - 2026-07-14 Theron Continue/runtime media repair: Continue now transports the
   already captured indexed Track 02 atlas into runtime without attempting a
   second raw-byte decode. Raw bitmap consumers still require MD5 and physical

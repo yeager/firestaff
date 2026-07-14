@@ -9078,6 +9078,37 @@ if(BUILD_TESTING)
             -Wall -Wextra -Werror -O2)
     endif()
 
+    add_executable(test_dm2_v1_dynamic_creature_material_plan
+        tests/test_dm2_v1_dynamic_creature_material_plan.c
+        src/dm2/dm2_v1_viewport_renderer.c
+    )
+    target_include_directories(test_dm2_v1_dynamic_creature_material_plan PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_dynamic_creature_material_plan PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dynamic_creature_material_plan PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_dynamic_creature_material_plan
+             COMMAND test_dm2_v1_dynamic_creature_material_plan)
+
+    add_executable(test_dm2_v1_dynamic_creature_material_real_data
+        tests/test_dm2_v1_dynamic_creature_material_real_data.c
+    )
+    target_include_directories(test_dm2_v1_dynamic_creature_material_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_dynamic_creature_material_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dynamic_creature_material_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_dynamic_creature_material_real_data
+             COMMAND test_dm2_v1_dynamic_creature_material_real_data)
+
     # Canonical G1 DB4 -> CREATURES/F9 scene-material corpus proof.
     # This stays build-only because the original media belongs to the user.
     add_executable(test_dm2_v1_g1_creature_scene_corpus_real_data

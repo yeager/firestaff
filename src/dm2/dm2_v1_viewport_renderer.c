@@ -2558,15 +2558,26 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->source_kind = src->source_kind;
         row->object_id = src->object_id;
         row->frame_index = src->frame_index;
+        row->material_frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;
         row->map_x = src->map_x;
         row->map_y = src->map_y;
         row->center_x = src->screen_x;
         row->center_y = src->screen_y;
-        row->gdat_index = dm2_v1_viewport_creature_graphic_index(
-            src->creature_type,
-            src->frame_index);
+        if (src->source_kind == 1) {
+            /* QUERY_CREATURE_PICST consumes the FD-selected dtImage field
+             * directly. A live creature without that original selection
+             * gets no drawable key, so the source-material gate blocks it. */
+            if (src->source_material_proven) {
+                row->gdat_index = dm2_v1_viewport_creature_field_graphic_index(
+                    src->creature_type, src->gdat_image_field);
+                row->material_frame_index = 0;
+            }
+        } else {
+            row->gdat_index = dm2_v1_viewport_creature_graphic_index(
+                src->creature_type, src->frame_index);
+        }
         if (s->gdat_interface_rect14_rows &&
             src->frame_index < s->gdat_interface_rect14_row_count) {
             const uint8_t *rect14 = s->gdat_interface_rect14_rows +
@@ -2640,7 +2651,7 @@ int dm2_v1_viewport_creature_asset_blit(
         dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
     } else {
         render_frame = dm2_v1_viewport_creature_frame_for_direction(
-            render->frame_index,
+            render->material_frame_index,
             render->direction,
             party_direction,
             frame_count);
