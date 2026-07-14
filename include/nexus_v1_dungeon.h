@@ -708,9 +708,10 @@ typedef struct {
 } Nexus_V1_DgnStructure3EntryHeaderReceipt;
 
 /* DMWeb documents Structure3b as four big-endian vertex indexes followed by
- * flags and a fill selector. This receipt validates index bounds and counts
- * its documented topology/fill lanes, but does not bind a selector to any
- * texture, palette, VDP1 command, or draw operation. */
+ * flags and a fill selector. This receipt validates index bounds and local
+ * face-to-vertex incidence, then counts its documented topology/fill lanes.
+ * It does not bind a selector to any texture, palette, VDP1 command, or draw
+ * operation. */
 typedef struct {
     int entry_headers_valid;
     int entry_count;
@@ -719,6 +720,11 @@ typedef struct {
     int normal_count;
     int triangle_count;
     int quad_count;
+    int face_vertex_reference_count;
+    int linked_face_vertex_reference_count;
+    int referenced_vertex_count;
+    int unreferenced_vertex_count;
+    int maximum_vertex_reference_count;
     int textured_face_count;
     int mesh_transparent_face_count;
     int static_texture_fill_count;
@@ -726,6 +732,7 @@ typedef struct {
     int one_off_color_fill_count;
     int unclassified_fill_count;
     int face_vertex_indexes_valid;
+    int face_vertex_linkage_valid;
     int normal_count_matches_face_count;
     int valid;
     int draw_semantics_proven;
