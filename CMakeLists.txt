@@ -202,6 +202,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_utility_import_confirma
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dungeon_get_group_cells_pc34.c")
+    add_executable(test_csb_v1_dungeon_get_group_cells_pc34
+        tests/test_csb_v1_dungeon_get_group_cells_pc34.c
+    )
+    target_include_directories(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dungeon_get_group_cells_pc34 PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_dungeon_get_group_cells_pc34
+        COMMAND test_csb_v1_dungeon_get_group_cells_pc34
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c")
     add_executable(test_dm1_v1_object_draw_icon_to_screen_pc34_compat
         tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c
