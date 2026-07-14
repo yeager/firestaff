@@ -48,6 +48,25 @@
    receipt does not expose a mesh, select transforms, decode UVs or pixels,
    issue VDP1 commands, or relax the no-draw gate.
 
+- ✅ 2026-07-14 CSBWin package dungeon/save boundary handoff: added an
+  opt-in real-package probe that attaches only a caller-supplied original
+  `Dungeon.dat` to the runtime-owned CSB world, ticks that live world, then
+  attempts its supplied `csbgame*.dat` through the production resume path.
+  The bundled CSBWin corpus pair was exercised directly: dungeon SHA-256
+  `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
+  reaches the runtime, while `csbgame2.dat` SHA-256
+  `105104b30dde164e7000d388f251f3d6d3f83a56959f28f56220711d1e9f3a9e`
+  is rejected before state publication. The probe asserts that rejection
+  preserves the dungeon owner, level, party/body state, and cleanup route;
+  it invents no save header, decryption key, DSA record, or fallback. Source:
+  CSBWin `CSBCode.cpp::LoadDungeon`, `SaveGame.cpp::LoadGame` /
+  `ReadExtendedFeatures` / `ReadDSAs`, `DSA.cpp::DSA::Read`; ReDMCSB
+  `LOADSAVE.C F0435_STARTEND_LoadGame`. Verification:
+  the real pair reached the production dungeon loader and save-rejection
+   boundary; the probe source also passes a strict standalone C11
+   `-Wall -Wextra -Werror` compile. A final full relink remains pending local
+   disk space.
+
 - ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
   census revalidates each scanner-issued original envelope/raw candidate
   against its complete-file FNV receipt before parsing it, then retains only
