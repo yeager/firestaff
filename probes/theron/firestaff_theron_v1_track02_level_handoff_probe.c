@@ -355,7 +355,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
               (int)candidate_height);
     check_int("synthetic initial candidate start x", level.start_x, 1);
     check_int("synthetic initial candidate start y", level.start_y, 1);
-    check_int("synthetic initial candidate start dir", level.start_dir, 1);
+    check_int("synthetic initial candidate start dir", level.start_dir, 0);
 
     candidate[4] = 0x11u; /* corrupt the source-locked seed gate */
     status = theron_v1_track02_load_initial_level_candidate(
@@ -1101,6 +1101,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02InitialLevelEnvelopeReceipt envelope;
     Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
     Theron_Track02InitialLevelLoaderRoute loader_route;
+    Theron_V1_Level loader_level;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1315,6 +1316,7 @@ static void probe_real_data_initial_candidate(const char *label,
               loader_route.level.start_dir == semantics.start_dir, 1);
     check_int("real initial loader route fingerprinted",
               loader_route.route_hash != 0u, 1);
+    loader_level = loader_route.level;
     signal_status = theron_v1_track02_load_initial_level_loader_route(
         data, size, local_md5, THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 0,
         &loader_route);
@@ -1395,9 +1397,14 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate loaded", handoff.loaded, 1);
     check_int("real initial candidate level width", level.width, 32);
     check_int("real initial candidate level height", level.height, 27);
-    check_int("real initial candidate start x", level.start_x, 2);
-    check_int("real initial candidate start y", level.start_y, 1);
-    check_int("real initial candidate start dir", level.start_dir, 1);
+    check_int("real initial candidate start x", level.start_x, 4);
+    check_int("real initial candidate start y", level.start_y, 0);
+    check_int("real initial candidate start dir", level.start_dir, 0);
+    check_int("real initial candidate preserves loader pose",
+              level.start_x == loader_level.start_x &&
+              level.start_y == loader_level.start_y &&
+              level.start_dir == loader_level.start_dir,
+              1);
     check_size("real initial candidate scan/loader offset",
                catalog.candidates[0].absolute_offset,
                handoff.absolute_offset);

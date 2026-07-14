@@ -13984,6 +13984,18 @@ selection. This restores the real JP/US Hall of Records level-0 loader route
 as a green target while retaining the Stage 3 `$4090 -> $4093` CD_READ receipt
 as transport-only: it does not claim a later level, object layout, visual
 decode, or transition.
+
+# ✅ 2026-07-14 Theron Track 02 loader-pose reconciliation
+
+The positive raw-CD Hall of Records level-0 path now preserves the existing
+loader's first-floor/default-North pose across the candidate and loader-route
+handoffs. The previous local passable-neighbor/East preference was removed
+because it was not backed by the original CD or loader evidence. The focused
+probe verifies the two real-media paths agree; it remains skip-safe without
+hash-verified JP/US Track 02 images. The older seed-table semantic handoff is
+still independently blocked on authentic media and is not composed here. This
+does not infer an IPL spawn override, object table, transition, bitmap,
+palette, or fallback.
 # Nexus Structure3 Selector Reuse Receipt (2026-07-14)
 
 `nexus_v1_level_structure3_face_material_receipt()` now retains per-level
