@@ -634,6 +634,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   host frame presentation. **Required independent evidence:** PC34 DOS/emulator
   input/audio/frame capture with tick markers, then Mac/SDL packaged-app
   comparison; no synthetic timing or sound substitute may be promoted.
+  - 2026-07-14 IBMIO.C F8099/F8100/F8111/F8112 now have a source-locked
+    PC34 state adapter for lock depth, cursor coordinates and formatted button
+    state. Host interrupt scheduling, SDL event coalescing and cursor drawing
+    timing remain outside this narrow implementation and still require the
+    recorded PC34 evidence above.
 
 - REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
   mouse interrupt path.** The source records a platform/version race fix for

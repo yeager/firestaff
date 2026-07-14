@@ -115,6 +115,11 @@
   Focused compatibility tests preserve their source transforms without claiming
   a PC route.
 
+- 2026-07-14 DM1/CSB ReDMCSB F8099/F8100/F8111/F8112: source-locked IBMIO.C
+  mouse lock depth, 2x cursor-column synchronization, coordinate assignment
+  and formatted button-state read with a focused strict-C11 test. This remains
+  a narrow PC34 driver-state adapter, not a host interrupt or cursor renderer.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
   I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
   adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
