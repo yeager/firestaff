@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0666 PC endgame handoff: added the source pointer
+  hide loop, double graphics-close, CPSX restore, and caller-owned nonlocal
+  transfer ordering. It does not synthesize credits, graphics, media, or a
+  jump boundary. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0665/F0362 highlight-box route: added the PC
   caller-owned zone gate and ordered screen-update, zone copy, invert, enabled
   state, disable, and vertical-blank sequence. Missing zones are no-ops;
