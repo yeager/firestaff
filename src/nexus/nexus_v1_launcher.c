@@ -122,8 +122,7 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
     if (result > 0) {
         result = nexus_v1_engine_consume_structure3_capture(
             &s_engine, &out_receipt->manifest.candidate,
-            &out_receipt->import_receipt.binding, capture->texture_span,
-            (int)capture->texture_span_size);
+            &out_receipt->import_receipt.binding, capture);
     }
     return result;
 }
