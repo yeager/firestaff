@@ -30,6 +30,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         (boot_receipt->runtime_m11_frame_creature_material_plan_required &&
          (boot_receipt->runtime_m11_frame_creature_material_plan_hash == 0u ||
           !boot_receipt->runtime_m11_frame_creature_material_plan_consumed)) ||
+        (boot_receipt->runtime_m11_frame_teleporter_material_plan_required &&
+         (boot_receipt->runtime_m11_frame_teleporter_material_plan_hash == 0u ||
+          !boot_receipt->runtime_m11_frame_teleporter_material_plan_consumed)) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
         boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
         !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
@@ -79,6 +82,13 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
           runtime_receipt->creature_material_plan_consumed &&
           runtime_receipt->creature_material_plan_hash ==
               boot_receipt->runtime_m11_frame_creature_material_plan_hash)) &&
+        runtime_receipt->teleporter_material_plan_required ==
+            boot_receipt->runtime_m11_frame_teleporter_material_plan_required &&
+        (!runtime_receipt->teleporter_material_plan_required ||
+         (runtime_receipt->teleporter_material_plan_hash != 0u &&
+          runtime_receipt->teleporter_material_plan_consumed &&
+          runtime_receipt->teleporter_material_plan_hash ==
+              boot_receipt->runtime_m11_frame_teleporter_material_plan_hash)) &&
         runtime_receipt->palette_hash ==
             boot_receipt->runtime_m11_frame_palette_hash &&
         runtime_receipt->interface_action_palette_hash ==

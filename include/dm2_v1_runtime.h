@@ -167,6 +167,9 @@ typedef struct {
     int creature_material_plan_required;
     uint32_t creature_material_plan_hash;
     int creature_material_plan_consumed;
+    int teleporter_material_plan_required;
+    uint32_t teleporter_material_plan_hash;
+    int teleporter_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;

@@ -113,6 +113,9 @@ typedef struct {
     uint8_t *projectile_pixels[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int projectile_w[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
     int projectile_h[DM2_GDAT_VIEWPORT_SPRITE_CACHE_LIMIT];
+    uint8_t *teleporter_pixels;
+    int teleporter_w;
+    int teleporter_h;
     uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
@@ -364,6 +367,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
         dm2_v1_asset_free_pixels(gfx->item_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->projectile_pixels[i]);
     }
+    dm2_v1_asset_free_pixels(gfx->teleporter_pixels);
     for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
     }
@@ -6911,6 +6915,15 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_creature_material_plan_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.creature_material_plan_consumed : 0;
+        out_receipt->runtime_m11_frame_teleporter_material_plan_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.teleporter_material_plan_required : 0;
+        out_receipt->runtime_m11_frame_teleporter_material_plan_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.teleporter_material_plan_hash : 0u;
+        out_receipt->runtime_m11_frame_teleporter_material_plan_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.teleporter_material_plan_consumed : 0;
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;
@@ -8237,6 +8250,13 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->scene_material_w[index][field];
         cache_h = &gfx->scene_material_h[index][field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP) {
+        cache_pixels = &gfx->teleporter_pixels;
+        cache_w = &gfx->teleporter_w;
+        cache_h = &gfx->teleporter_h;
+        category = DM2_GDAT_CATEGORY_TELEPORTERS;
+        index = 0;
+        field = DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ||
                gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         int material_field = gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ?
@@ -8613,6 +8633,10 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     if (dm2_v1_viewport_scene_material_graphic_address(
             gdat_index, out_index, out_field)) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (gdat_index == DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP) {
+        *out_category = DM2_GDAT_CATEGORY_TELEPORTERS;
+        *out_index = 0;
+        *out_field = DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         *out_index = 0;

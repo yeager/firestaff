@@ -889,6 +889,9 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
             } else if (square_type == DM2_SQUARE_FLOOR) {
                 surface->square_type = DM2_SQUARE_FLOOR;
                 surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
+            } else if (square_type == DM2_SQUARE_TELEPORTER) {
+                surface->square_type = DM2_SQUARE_TELEPORTER;
+                surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
             }
         }
         if (dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
@@ -1947,6 +1950,40 @@ static int dm2_runtime_creature_material_plan_identity(
     return 1;
 }
 
+static int dm2_runtime_teleporter_material_plan_identity(
+    DM2_V1_BootProfile *boot,
+    const DM2_V1_ViewportState *viewport,
+    uint32_t *out_hash)
+{
+    DM2_V1_BootViewportAssetEvidence evidence;
+    uint8_t palette16[16];
+    uint32_t palette_hash = 0u;
+    uint32_t hash = 2166136261u;
+    int gdat_index;
+
+    if (out_hash) *out_hash = 0u;
+    if (!boot || !viewport || !out_hash ||
+        viewport->asset_teleporter_drawn_count <= 0) return 0;
+    gdat_index = dm2_v1_viewport_teleporter_map_chip_graphic_index();
+    if (!dm2_v1_boot_viewport_asset_evidence(boot, gdat_index, &evidence) ||
+        evidence.category != DM2_GDAT_CATEGORY_TELEPORTERS ||
+        evidence.entry_index != 0 || evidence.field != DM2_GDAT_IMG_MAP_CHIP ||
+        dm2_v1_boot_viewport_asset_palette_fetch(
+            boot, gdat_index, palette16, &palette_hash) != 0 ||
+        palette_hash == 0u) {
+        return 0;
+    }
+    hash = dm2_runtime_creature_material_plan_step(hash, evidence.raw_hash);
+    hash = dm2_runtime_creature_material_plan_step(hash, evidence.decoded_hash);
+    hash = dm2_runtime_creature_material_plan_step(hash, palette_hash);
+    hash = dm2_runtime_creature_material_plan_step(
+        hash, (uint32_t)viewport->tick_count);
+    hash = dm2_runtime_creature_material_plan_step(
+        hash, (uint32_t)viewport->asset_teleporter_drawn_count);
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_G1CreatureMapChipMaterial *material,
@@ -2699,6 +2736,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int creature_material_plan_required = 0;
     int creature_material_plan_consumed = 0;
     int creature_material_plan_count = 0;
+    uint32_t teleporter_material_plan_hash = 0u;
+    int teleporter_material_plan_required = 0;
+    int teleporter_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
@@ -2931,6 +2971,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (!creature_material_plan_consumed) {
         creature_material_plan_hash = 0u;
     }
+    teleporter_material_plan_required =
+        viewport.asset_teleporter_drawn_count > 0;
+    teleporter_material_plan_consumed =
+        teleporter_material_plan_required &&
+        dm2_runtime_teleporter_material_plan_identity(
+            rt->boot, &viewport, &teleporter_material_plan_hash);
+    if (!teleporter_material_plan_consumed) {
+        teleporter_material_plan_hash = 0u;
+    }
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
     g_dm2_last_fallback_floor_ceiling_count =
@@ -3066,6 +3115,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             dm2_v1_viewport_wall_graphic_index_for_graphicsset(
                 wall_graphicsset_index, DM2_SQ_D0L));
+    }
+    if (viewport.asset_teleporter_drawn_count > 0) {
+        dm2_runtime_add_viewport_asset_evidence(
+            &g_dm2_frame_ownership,
+            dm2_v1_viewport_teleporter_map_chip_graphic_index());
     }
     if (viewport.asset_hud_core_drawn_count > 0) {
         /* skproject loads interface GDAT through
@@ -3368,6 +3422,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         creature_material_plan_hash;
     g_dm2_last_m11_frame.creature_material_plan_consumed =
         creature_material_plan_consumed;
+    g_dm2_last_m11_frame.teleporter_material_plan_required =
+        teleporter_material_plan_required;
+    g_dm2_last_m11_frame.teleporter_material_plan_hash =
+        teleporter_material_plan_hash;
+    g_dm2_last_m11_frame.teleporter_material_plan_consumed =
+        teleporter_material_plan_consumed;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3401,6 +3461,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.creature_material_plan_required ||
          (g_dm2_last_m11_frame.creature_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.creature_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.teleporter_material_plan_required ||
+         (g_dm2_last_m11_frame.teleporter_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.teleporter_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
