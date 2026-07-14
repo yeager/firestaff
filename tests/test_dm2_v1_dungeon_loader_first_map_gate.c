@@ -251,6 +251,25 @@ static size_t build_skproject_map_wall_gfx_list_fixture(uint8_t *buf,
     return raw_map_base + 9u;
 }
 
+static size_t build_skproject_map_floor_gfx_list_fixture(uint8_t *buf,
+                                                         size_t cap)
+{
+    size_t size = build_skproject_map_wall_gfx_list_fixture(buf, cap);
+    const size_t header_size = 44;
+    const size_t map_desc_size = 16;
+    const size_t raw_map_base = header_size + map_desc_size +
+                                4u + 2u + 4u + 8u;
+    uint8_t *desc;
+
+    if (size == 0 || cap < raw_map_base + 11u) return 0;
+    desc = buf + header_size;
+    /* DME.h Map_definitions::FloorGraphics is w10 bits 8..11. */
+    put16le(desc + 10, (uint16_t)(4u | (2u << 8)));
+    buf[raw_map_base + 9u] = 0x41;
+    buf[raw_map_base + 10u] = 0x57;
+    return raw_map_base + 11u;
+}
+
 static size_t build_pc_g1_record_evidence_fixture(uint8_t *buf, size_t cap)
 {
     const size_t header_size = 44;
@@ -553,6 +572,24 @@ static void test_skproject_map_wall_gfx_list(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_map_floor_gfx_list(void)
+{
+    uint8_t dat[192];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_map_floor_gfx_list_fixture(dat, sizeof(dat));
+    uint8_t list[2] = { 0 };
+    int count;
+
+    CHECK(size > 0, "skproject map floor-gfx list fixture is complete");
+    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts a skproject map-local floor-gfx list");
+    count = dm2_v1_dungeon_get_map_floor_gfx_list(&dungeon, 0, list, 2);
+    CHECK(count == 2 && list[0] == 0x41 && list[1] == 0x57,
+          "loader exposes FLOOR_GFX list after creature and wall lists");
+
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
 {
     uint8_t dat[384];
@@ -746,6 +783,7 @@ int main(void)
     test_skproject_text_wall_gfx_metadata();
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();
+    test_skproject_map_floor_gfx_list();
     test_pc_g1_record_pool_ownership_and_bounded_traversal();
     test_pc_g1_ground_stack_map_corpus_receipt();
     test_pc_g1_extension_record_transform();

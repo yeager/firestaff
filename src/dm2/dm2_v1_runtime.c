@@ -92,6 +92,8 @@ typedef struct {
     void *viewport_asset_palette_user;
     uint8_t map_wall_gfx_list[16];
     int map_wall_gfx_count;
+    uint8_t map_floor_gfx_list[16];
+    int map_floor_gfx_count;
     uint8_t map_door_gfx_list[2];
     int map_graphics_style;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
@@ -389,7 +391,7 @@ static void dm2_runtime_refresh_g1_scene_handoff(
 }
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
-#define DM2_RUNTIME_SAVE_VERSION 3u
+#define DM2_RUNTIME_SAVE_VERSION 4u
 
 typedef struct {
     char magic[8];
@@ -400,8 +402,10 @@ typedef struct {
     uint32_t graphics_size;
     char graphics_md5[33];
     uint8_t map_wall_gfx_list[16];
+    uint8_t map_floor_gfx_list[16];
     uint8_t map_door_gfx_list[2];
     int32_t map_wall_gfx_count;
+    int32_t map_floor_gfx_count;
     int32_t move_cooldown_ticks;
     int32_t paused;
     int32_t map_graphics_style;
@@ -432,6 +436,7 @@ static int dm2_runtime_live_header_valid(const DM2_V1_RuntimeSaveHeader *header,
         header->dungeon_size != (uint32_t)dungeon->raw_size ||
         header->graphics_size != (uint32_t)g_dm2_runtime.boot->graphics_size ||
         header->map_wall_gfx_count < 0 || header->map_wall_gfx_count > 16 ||
+        header->map_floor_gfx_count < 0 || header->map_floor_gfx_count > 16 ||
         header->move_cooldown_ticks < 0) {
         return 0;
     }
@@ -659,6 +664,8 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     if (!rt) return;
     memset(rt->map_wall_gfx_list, 0, sizeof(rt->map_wall_gfx_list));
     rt->map_wall_gfx_count = 0;
+    memset(rt->map_floor_gfx_list, 0, sizeof(rt->map_floor_gfx_list));
+    rt->map_floor_gfx_count = 0;
     memset(rt->map_door_gfx_list, 0, sizeof(rt->map_door_gfx_list));
     if (!rt->boot || !rt->boot->dungeon_data) return;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
@@ -675,6 +682,12 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
         (int)sizeof(rt->map_wall_gfx_list));
     if (count > 0) {
         rt->map_wall_gfx_count = count;
+    }
+    count = dm2_v1_dungeon_get_map_floor_gfx_list(
+        dd, rt->dungeon_level, rt->map_floor_gfx_list,
+        (int)sizeof(rt->map_floor_gfx_list));
+    if (count > 0) {
+        rt->map_floor_gfx_count = count;
     }
 }
 
@@ -1984,6 +1997,50 @@ static int dm2_runtime_teleporter_material_plan_identity(
     return 1;
 }
 
+/* SKProject LOAD_LOCALLEVEL_DYN walks Map_definitions::FloorGraphics(), then
+ * marks each map-local FLOOR_GFX/index/F9 map chip before DRAW_MAP_CHIP can
+ * consume it.  This is a material admission, not a guessed 3D placement:
+ * every listed chip must have its own decoded pixels and local palette. */
+static int dm2_runtime_floor_gfx_map_chip_material_plan_identity(
+    DM2_V1_BootProfile *boot,
+    const uint8_t *floor_gfx_list,
+    int floor_gfx_count,
+    uint32_t *out_hash)
+{
+    uint32_t hash = 2166136261u;
+
+    if (out_hash) *out_hash = 0u;
+    if (!boot || !floor_gfx_list || !out_hash || floor_gfx_count <= 0 ||
+        floor_gfx_count > 16) {
+        return 0;
+    }
+    for (int i = 0; i < floor_gfx_count; ++i) {
+        DM2_V1_BootViewportAssetEvidence evidence;
+        uint8_t palette16[16];
+        uint32_t palette_hash = 0u;
+        int gdat_index = dm2_v1_viewport_floor_gfx_map_chip_graphic_index(
+            floor_gfx_list[i]);
+
+        if (gdat_index == 0 ||
+            !dm2_v1_boot_viewport_asset_evidence(boot, gdat_index, &evidence) ||
+            evidence.category != DM2_GDAT_CATEGORY_FLOOR_GFX ||
+            evidence.entry_index != floor_gfx_list[i] ||
+            evidence.field != DM2_GDAT_IMG_MAP_CHIP ||
+            dm2_v1_boot_viewport_asset_palette_fetch(
+                boot, gdat_index, palette16, &palette_hash) != 0 ||
+            palette_hash == 0u) {
+            return 0;
+        }
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)floor_gfx_list[i]);
+        hash = dm2_runtime_creature_material_plan_step(hash, evidence.raw_hash);
+        hash = dm2_runtime_creature_material_plan_step(hash, evidence.decoded_hash);
+        hash = dm2_runtime_creature_material_plan_step(hash, palette_hash);
+    }
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_G1CreatureMapChipMaterial *material,
@@ -2739,6 +2796,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t teleporter_material_plan_hash = 0u;
     int teleporter_material_plan_required = 0;
     int teleporter_material_plan_consumed = 0;
+    uint32_t floor_gfx_map_chip_material_plan_hash = 0u;
+    int floor_gfx_map_chip_material_plan_required = 0;
+    int floor_gfx_map_chip_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
@@ -2979,6 +3039,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             rt->boot, &viewport, &teleporter_material_plan_hash);
     if (!teleporter_material_plan_consumed) {
         teleporter_material_plan_hash = 0u;
+    }
+    floor_gfx_map_chip_material_plan_required =
+        !rt->outdoor && rt->map_floor_gfx_count > 0;
+    floor_gfx_map_chip_material_plan_consumed =
+        !floor_gfx_map_chip_material_plan_required ||
+        dm2_runtime_floor_gfx_map_chip_material_plan_identity(
+            rt->boot, rt->map_floor_gfx_list, rt->map_floor_gfx_count,
+            &floor_gfx_map_chip_material_plan_hash);
+    if (!floor_gfx_map_chip_material_plan_consumed) {
+        floor_gfx_map_chip_material_plan_hash = 0u;
     }
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
@@ -3428,6 +3498,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         teleporter_material_plan_hash;
     g_dm2_last_m11_frame.teleporter_material_plan_consumed =
         teleporter_material_plan_consumed;
+    g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_required =
+        floor_gfx_map_chip_material_plan_required;
+    g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_hash =
+        floor_gfx_map_chip_material_plan_hash;
+    g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_consumed =
+        floor_gfx_map_chip_material_plan_consumed;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3464,6 +3540,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.teleporter_material_plan_required ||
          (g_dm2_last_m11_frame.teleporter_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.teleporter_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_required ||
+         (g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
@@ -4147,9 +4226,12 @@ int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size) {
              g_dm2_runtime.boot->graphics_md5);
     memcpy(header.map_wall_gfx_list, g_dm2_runtime.map_wall_gfx_list,
            sizeof(header.map_wall_gfx_list));
+    memcpy(header.map_floor_gfx_list, g_dm2_runtime.map_floor_gfx_list,
+           sizeof(header.map_floor_gfx_list));
     memcpy(header.map_door_gfx_list, g_dm2_runtime.map_door_gfx_list,
            sizeof(header.map_door_gfx_list));
     header.map_wall_gfx_count = g_dm2_runtime.map_wall_gfx_count;
+    header.map_floor_gfx_count = g_dm2_runtime.map_floor_gfx_count;
     header.move_cooldown_ticks = g_dm2_runtime.move_cooldown_ticks;
     header.paused = g_dm2_runtime.paused;
     header.map_graphics_style = g_dm2_runtime.map_graphics_style;
@@ -4215,9 +4297,12 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     g_dm2_runtime_restore_in_progress = 0;
     memcpy(g_dm2_runtime.map_wall_gfx_list, header->map_wall_gfx_list,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
+    memcpy(g_dm2_runtime.map_floor_gfx_list, header->map_floor_gfx_list,
+           sizeof(g_dm2_runtime.map_floor_gfx_list));
     memcpy(g_dm2_runtime.map_door_gfx_list, header->map_door_gfx_list,
            sizeof(g_dm2_runtime.map_door_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = header->map_wall_gfx_count;
+    g_dm2_runtime.map_floor_gfx_count = header->map_floor_gfx_count;
     g_dm2_runtime.move_cooldown_ticks = header->move_cooldown_ticks;
     g_dm2_runtime.paused = header->paused;
     if (header->gdat_scene_control_ready &&
