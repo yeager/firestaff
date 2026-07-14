@@ -12,7 +12,8 @@
   is required. Nested configured output directories are created before capture,
   and repeated captures in one second receive distinct filenames instead of
   replacing an earlier presented frame. Asset-free fallback frames are
-  rejected before capture.
+  rejected before capture, and the probe locks Scale2x edges in the displayed
+  RGBA surface and saved BMP.
 
 - 2026-07-14 DM1 original-PC34 save/HoC follow-up: tail-backed external C13
   rows now have an explicit F0435-to-runtime-to-adoption receipt for the
