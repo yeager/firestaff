@@ -7,6 +7,7 @@ input_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_trace.patch
 state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
 input_state_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch
 host_input_patch_file=$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch
+transfer_patch_file=$repo/scripts/mednafen_1.32.1_theron_cd_transfer_trace.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -58,6 +59,15 @@ if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
     printf 'FAIL: Mednafen host-input patch no longer retains raw SDL key-event evidence\n' >&2
     exit 1
 fi
+if ! grep -Fq 'scsi_read_command generation=%u start_lba=%u sector_count=%u' "$transfer_patch_file" ||
+   ! grep -Fq 'scsi_read_sector_binding generation=%u start_lba=%u sector_count=%u lba=%d sector_index=%u' "$transfer_patch_file" ||
+   ! grep -Fq 'pce_cd_data_read cpu_pc=%04x data=%02x' "$transfer_patch_file" ||
+   ! grep -Fq 'pce_cd_data_destination_candidate reader_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x' "$transfer_patch_file" ||
+   ! grep -Fq 'if(read_value != stored_value)' "$transfer_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceTakeDataRead' "$transfer_patch_file"; then
+    printf 'FAIL: Mednafen transfer patch no longer retains bounded SCSI/FIFO/RAM receipts\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -77,4 +87,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$host_input_patch_file"
-printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and port transaction evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$transfer_patch_file"
+printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

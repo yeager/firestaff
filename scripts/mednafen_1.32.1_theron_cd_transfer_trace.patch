@@ -1,0 +1,171 @@
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -65,6 +65,9 @@ static int WhichSystem;
+
+ static CDInterface *Cur_CDIF;
+ static bool TrayOpen;
++static unsigned TheronSCSIReadCommandGeneration;
++static uint32 TheronSCSIReadCommandStartLBA;
++static uint32 TheronSCSIReadCommandSectorCount;
+ static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
+ {
+  static FILE *trace = NULL;
+@@ -97,6 +100,15 @@ static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
+      span_fnv1a = (span_fnv1a ^ buffer[i]) * 16777619U;
+    }
+    fprintf(trace, "cd_interface_raw_sector_read lba=%d bytes=2352 sector_fnv1a=%08x span_offset=0 span_bytes=32 span_fnv1a=%08x\n", lba, sector_fnv1a, span_fnv1a);
++   if(TheronSCSIReadCommandGeneration && lba >= (int32)TheronSCSIReadCommandStartLBA &&
++      (uint32)lba - TheronSCSIReadCommandStartLBA < TheronSCSIReadCommandSectorCount)
++   {
++    fprintf(trace,
++            "scsi_read_sector_binding generation=%u start_lba=%u sector_count=%u lba=%d sector_index=%u\n",
++            TheronSCSIReadCommandGeneration, TheronSCSIReadCommandStartLBA,
++            TheronSCSIReadCommandSectorCount, lba,
++            (uint32)lba - TheronSCSIReadCommandStartLBA);
++   }
+    fflush(trace);
+    trace_count++;
+   }
+@@ -246,6 +258,31 @@ static int32 CDReadTimer;
+ static uint32 SectorAddr;
+ static uint32 SectorCount;
+
++static void TheronTraceSCSIReadCommand(uint32 start_lba, uint32 sector_count)
++{
++ static FILE *trace = NULL;
++
++ if(WhichSystem != SCSICD_PCE || !sector_count)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "a");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-instrumented-scsi-read\n", trace);
++ }
++ TheronSCSIReadCommandGeneration++;
++ TheronSCSIReadCommandStartLBA = start_lba;
++ TheronSCSIReadCommandSectorCount = sector_count;
++ fprintf(trace,
++         "scsi_read_command generation=%u start_lba=%u sector_count=%u\n",
++         TheronSCSIReadCommandGeneration, start_lba, sector_count);
++ fflush(trace);
++}
++
+
+ enum
+ {
+@@ -1995,6 +2032,7 @@ static void DoREADBase(uint32 sa, uint32 sc)
+
+  SectorAddr = sa;
+  SectorCount = sc;
++ TheronTraceSCSIReadCommand(sa, sc);
+  if(SectorCount)
+  {
+   Cur_CDIF->HintReadSector(sa);	//, sa + sc);
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -111,8 +111,40 @@ static DECLFR(BaseRAMReadSGX)
+  return(BaseRAM[A & 0x7FFF]);
+ }
+
++extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value);
++
++static void TheronTracePCECDDataDestination(uint32 physical, uint8 stored_value)
++{
++ static FILE *trace = NULL;
++ static unsigned trace_count = 0;
++ uint16 reader_pc;
++ uint8 read_value;
++
++ if(!TheronPCECDTraceTakeDataRead(&reader_pc, &read_value) || trace_count >= 256)
++  return;
++if(read_value != stored_value)
++ return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "a");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-instrumented-cd-transfer\n", trace);
++ }
++ fprintf(trace,
++         "pce_cd_data_destination_candidate reader_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
++         reader_pc, HuCPU.GetLastLogicalWriteAddr(), physical, read_value,
++         stored_value);
++ fflush(trace);
++ trace_count++;
++}
++
+ static DECLFW(BaseRAMWriteSGX)
+ {
++ TheronTracePCECDDataDestination(A, V);
+  BaseRAM[A & 0x7FFF] = V;
+ }
+
+@@ -123,6 +151,7 @@ static DECLFR(BaseRAMRead)
+
+ static DECLFW(BaseRAMWrite)
+ {
++ TheronTracePCECDDataDestination(A, V);
+  BaseRAM[A & 0x1FFF] = V;
+ }
+
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -98,6 +98,9 @@ namespace MDFN_IEN_PCE
+ static void (*IRQCB)(bool asserted);
+ static FILE *TheronPCECDStateTrace;
+ static unsigned TheronPCECDStateTraceCount;
++static bool TheronPCECDDataReadPending;
++static uint16 TheronPCECDDataReadPC;
++static uint8 TheronPCECDDataReadValue;
+
+ static void TheronTracePCECDState(const char *format, ...)
+ {
+@@ -121,6 +124,16 @@ static void TheronTracePCECDState(const char *format, ...)
+  fflush(TheronPCECDStateTrace);
+  TheronPCECDStateTraceCount++;
+ }
++
++bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value)
++{
++ if(!TheronPCECDDataReadPending)
++  return false;
++ TheronPCECDDataReadPending = false;
++ *reader_pc = TheronPCECDDataReadPC;
++ *value = TheronPCECDDataReadValue;
++ return true;
++}
+ // Settings:
+ static double CDDABaseVolume;
+ static double ADPCMBaseVolume;
+@@ -578,8 +591,17 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
+     ret |= SCSICD_GetIO() ? 0x08 : 0x00;
+     break;
+
+-   case 0x1: ret = SCSICD_GetDB();
+-	     break;
++   case 0x1:
++    ret = SCSICD_GetDB();
++    if(!PeekMode && SCSICD_GetIO() && !SCSICD_GetCD())
++    {
++     TheronPCECDDataReadPending = true;
++     TheronPCECDDataReadPC = HuCPU.GetRegister(HuC6280::GSREG_PC);
++     TheronPCECDDataReadValue = ret;
++     TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x\n",
++                           TheronPCECDDataReadPC, ret);
++    }
++	    break;
+
+    case 0x2: ret = _Port[2];
+ 	     break;
