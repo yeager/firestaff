@@ -27,7 +27,7 @@ extern "C" {
  *   width/height: positive image dimensions.
  *   palette     : pointer to 256 * 3 bytes (R,G,B,R,G,B,...) in 0..255.
  *                 If NULL, a grayscale fallback is used.
- *   outputDir   : directory to write into (created if missing).  NULL =>
+ *   outputDir   : directory tree to write into (created if missing).  NULL =>
  *                 ~/.firestaff/screenshots/.
  *
  * Returns 1 on success, 0 on any error.  On success, writes the full
@@ -55,7 +55,7 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
  *
  *   rgba        : width*height*4 bytes; the alpha channel is dropped on write.
  *   width/height: positive image dimensions.
- *   outputDir   : directory to write into (created if missing).  NULL =>
+ *   outputDir   : directory tree to write into (created if missing).  NULL =>
  *                 ~/.firestaff/screenshots/.
  *
  * Returns 1 on success, 0 on any error.  On success, writes the full

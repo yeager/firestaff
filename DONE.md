@@ -29,6 +29,13 @@
    Verification: `firestaff_dm1_v2_actual_render_screenshot_probe` and
    `test_m11_game_presentation_target_pc34_compat`.
 
+- 2026-07-14 DM1 V2.1 presented-frame capture delivery: the production BMP
+  writer now creates a nested configured screenshot directory and allocates a
+  unique same-second filename before writing a presented RGBA frame. Repeated
+  `F12` captures therefore retain each already-presented 640x400 EPX/Scale2x
+   frame instead of overwriting the previous one. This changes only capture
+   delivery; it does not create, replace, or synthesize DM1 artwork.
+
 - 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
   now admits pixels only when the finished-art material gate resolves the
   boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that

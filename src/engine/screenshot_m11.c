@@ -21,7 +21,9 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <io.h>
 #define MKDIR(p) _mkdir(p)
+#define access _access
 #else
 #include <unistd.h>
 #define MKDIR(p) mkdir((p), 0755)
@@ -49,9 +51,50 @@ static void write_u32_le(unsigned char* dst, unsigned int v) {
     dst[3] = (unsigned char)((v >> 24) & 0xFF);
 }
 
-static void ensure_dir(const char* dir) {
-    if (!dir || !*dir) return;
-    (void)MKDIR(dir);
+static int ensure_dir_tree(const char* dir) {
+    char path[1024];
+    size_t length;
+    size_t i;
+
+    if (!dir || !*dir) return 0;
+    length = strlen(dir);
+    if (length >= sizeof(path)) return 0;
+    memcpy(path, dir, length + 1U);
+    for (i = 1; i < length; ++i) {
+        if (path[i] == '/') {
+            path[i] = '\0';
+            if (path[0] != '\0' && MKDIR(path) != 0 && access(path, F_OK) != 0) {
+                return 0;
+            }
+            path[i] = '/';
+        }
+    }
+    return MKDIR(path) == 0 || access(path, F_OK) == 0;
+}
+
+static int build_capture_path(char* path, size_t pathCap,
+                              const char* dir, const char* stem) {
+    time_t now;
+    struct tm* lt;
+    char stamp[64];
+    unsigned int suffix;
+
+    if (!path || pathCap == 0U || !dir || !*dir || !stem || !*stem) return 0;
+    now = time(NULL);
+    lt = localtime(&now);
+    if (lt) {
+        strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", lt);
+    } else {
+        snprintf(stamp, sizeof(stamp), "unknown");
+    }
+    for (suffix = 0; suffix < 10000U; ++suffix) {
+        int written = suffix == 0U
+            ? snprintf(path, pathCap, "%s/%s-%s.bmp", dir, stem, stamp)
+            : snprintf(path, pathCap, "%s/%s-%s-%u.bmp", dir, stem, stamp, suffix);
+        if (written < 0 || (size_t)written >= pathCap) return 0;
+        if (access(path, F_OK) != 0) return 1;
+    }
+    return 0;
 }
 
 const char* M11_Screenshot_DefaultDir(void) {
@@ -60,9 +103,9 @@ const char* M11_Screenshot_DefaultDir(void) {
     char base[1024];
     if (!home || !*home) home = ".";
     snprintf(base, sizeof(base), "%s/.firestaff", home);
-    ensure_dir(base);
+    (void)ensure_dir_tree(base);
     snprintf(path, sizeof(path), "%s/.firestaff/screenshots", home);
-    ensure_dir(path);
+    (void)ensure_dir_tree(path);
     return path;
 }
 
@@ -80,9 +123,6 @@ int M11_Screenshot_Capture(const unsigned char* framebuffer,
     unsigned char* row;
     char dirBuf[1024];
     char path[1280];
-    time_t now;
-    struct tm* lt;
-    char stamp[64];
     int y, x;
     static unsigned char grayscale[256 * 3];
     static int grayscaleInit = 0;
@@ -92,19 +132,12 @@ int M11_Screenshot_Capture(const unsigned char* framebuffer,
 
     if (outputDir && *outputDir) {
         snprintf(dirBuf, sizeof(dirBuf), "%s", outputDir);
-        ensure_dir(dirBuf);
+        if (!ensure_dir_tree(dirBuf)) return 0;
     } else {
         snprintf(dirBuf, sizeof(dirBuf), "%s", M11_Screenshot_DefaultDir());
     }
 
-    now = time(NULL);
-    lt = localtime(&now);
-    if (lt) {
-        strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", lt);
-    } else {
-        snprintf(stamp, sizeof(stamp), "unknown");
-    }
-    snprintf(path, sizeof(path), "%s/firestaff-%s.bmp", dirBuf, stamp);
+    if (!build_capture_path(path, sizeof(path), dirBuf, "firestaff")) return 0;
 
     if (!pal) {
         if (!grayscaleInit) {
@@ -221,9 +254,6 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
     unsigned char* row;
     char dirBuf[1024];
     char path[1280];
-    time_t now;
-    struct tm* lt;
-    char stamp[64];
     int y, x;
 
     rgba = M11_Render_GetPresentedRGBA(&width, &height);
@@ -233,19 +263,12 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
 
     if (outputDir && *outputDir) {
         snprintf(dirBuf, sizeof(dirBuf), "%s", outputDir);
-        ensure_dir(dirBuf);
+        if (!ensure_dir_tree(dirBuf)) return 0;
     } else {
         snprintf(dirBuf, sizeof(dirBuf), "%s", M11_Screenshot_DefaultDir());
     }
 
-    now = time(NULL);
-    lt = localtime(&now);
-    if (lt) {
-        strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", lt);
-    } else {
-        snprintf(stamp, sizeof(stamp), "unknown");
-    }
-    snprintf(path, sizeof(path), "%s/firestaff-presented-%s.bmp", dirBuf, stamp);
+    if (!build_capture_path(path, sizeof(path), dirBuf, "firestaff-presented")) return 0;
 
     rowBytes = width * 3;
     padded = (rowBytes + 3) & ~3;
@@ -324,9 +347,6 @@ int M11_Screenshot_CaptureRGBA(const unsigned char* rgba,
     unsigned char* row;
     char dirBuf[1024];
     char path[1280];
-    time_t now;
-    struct tm* lt;
-    char stamp[64];
     int y, x;
 
     if (!rgba || width <= 0 || height <= 0) {
@@ -335,19 +355,12 @@ int M11_Screenshot_CaptureRGBA(const unsigned char* rgba,
 
     if (outputDir && *outputDir) {
         snprintf(dirBuf, sizeof(dirBuf), "%s", outputDir);
-        ensure_dir(dirBuf);
+        if (!ensure_dir_tree(dirBuf)) return 0;
     } else {
         snprintf(dirBuf, sizeof(dirBuf), "%s", M11_Screenshot_DefaultDir());
     }
 
-    now = time(NULL);
-    lt = localtime(&now);
-    if (lt) {
-        strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", lt);
-    } else {
-        snprintf(stamp, sizeof(stamp), "unknown");
-    }
-    snprintf(path, sizeof(path), "%s/firestaff-%s.bmp", dirBuf, stamp);
+    if (!build_capture_path(path, sizeof(path), dirBuf, "firestaff")) return 0;
 
     rowBytes = width * 3;
     padded = (rowBytes + 3) & ~3;
