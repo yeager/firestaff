@@ -138,6 +138,14 @@ int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
 int  M11_Render_PresentEpxIndexed(const unsigned char* framebuffer,
                                   int logicalWidth,
                                   int logicalHeight);
+/* Scale2x first, then present the resulting indexed surface at an explicit
+ * target resolution. This preserves the V2.1 EPX stage before the existing
+ * target-resolution presentation path samples it. */
+int  M11_Render_PresentEpxIndexedToResolution(const unsigned char* framebuffer,
+                                              int logicalWidth,
+                                              int logicalHeight,
+                                              int targetWidth,
+                                              int targetHeight);
 int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
                                                  int logicalWidth,
                                                  int logicalHeight,
@@ -146,6 +154,13 @@ int  M11_Render_PresentEpxIndexedWithSpecialPalette(
     const unsigned char* framebuffer,
     int logicalWidth,
     int logicalHeight,
+    int specialPalette);
+int  M11_Render_PresentEpxIndexedToResolutionWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
     int specialPalette);
 int  M11_Render_PresentIndexedToResolutionWithSpecialPalette(
     const unsigned char* framebuffer,

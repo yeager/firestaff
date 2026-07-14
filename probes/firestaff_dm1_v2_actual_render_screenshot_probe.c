@@ -414,7 +414,9 @@ typedef struct ModeCapture {
     const char* label;
     int expected_w;
     int expected_h;
-    int present_via_rgba; /* 1 -> use M11_Render_PresentRGBA, 0 -> PresentIndexed */
+    int present_via_epx; /* 1 -> use the production Scale2x presentation route */
+    int target_w;
+    int target_h;
     int capture_via_presented_api;
     int v22_overlay_active; /* 1 -> paint V22 overlay into fb before present */
     char bmp_path[512];
@@ -468,24 +470,18 @@ static int run_mode_capture(ModeCapture* cap,
             v1_framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, 3);
     }
 
-    if (cap->present_via_rgba) {
-        /* V2.1 path: drive EPX into v21_viewport_rgba, then present that
-         * RGBA through M11_Render_PresentRGBA so the presented buffer is
-         * 640x400 (not 320x200). */
-        v21_viewport_init(2);
-        memcpy(v21_viewport_get_v1_framebuffer_mut(), v1_framebuffer, M11_FB_BYTES);
-        v21_viewport_render_full_pipeline();
-        {
-            const uint32_t* v21_rgba = v21_viewport_get_rgba(&outW, &outH);
-            if (!v21_rgba || outW <= 0 || outH <= 0) {
-                fprintf(stderr, "FAIL %s: v21_viewport_get_rgba returned empty\n", cap->id);
-                return 0;
-            }
-            rc = M11_Render_PresentRGBA((const unsigned char*)v21_rgba, outW, outH);
-            if (rc != M11_RENDER_OK) {
-                fprintf(stderr, "FAIL %s: M11_Render_PresentRGBA rc=%d\n", cap->id, rc);
-                return 0;
-            }
+    if (cap->present_via_epx) {
+        if (cap->target_w > 0 && cap->target_h > 0) {
+            rc = M11_Render_PresentEpxIndexedToResolution(
+                v1_framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                cap->target_w, cap->target_h);
+        } else {
+            rc = M11_Render_PresentEpxIndexed(v1_framebuffer,
+                                              M11_FB_WIDTH, M11_FB_HEIGHT);
+        }
+        if (rc != M11_RENDER_OK) {
+            fprintf(stderr, "FAIL %s: production EPX presentation rc=%d\n", cap->id, rc);
+            return 0;
         }
     } else {
         /* V2.0 / V2.2 / V1 path: present the indexed V1 framebuffer.
@@ -499,7 +495,7 @@ static int run_mode_capture(ModeCapture* cap,
         }
     }
 
-    /* M11_Render_PresentIndexed / PresentRGBA populates the present buffer
+    /* Every production Present* path populates the present buffer
      * via the same path M11_Screenshot_CapturePresentedRGBA reads from, so
      * we can capture the same pixels here and write a deterministic BMP. */
     rgba = M11_Render_GetPresentedRGBA(&outW, &outH);
@@ -667,7 +663,7 @@ int main(void) {
     v1_cap.label = "V1 baseline";
     v1_cap.expected_w = 320;
     v1_cap.expected_h = 200;
-    v1_cap.present_via_rgba = 0;
+    v1_cap.present_via_epx = 0;
     snprintf(v1_cap.bmp_path, sizeof(v1_cap.bmp_path), "%s/v1_baseline.bmp", out_dir);
 
     /* Make sure we are in V1 mode for the V1 baseline. */
@@ -691,7 +687,7 @@ int main(void) {
     v20_unfiltered_cap.label = "V2.0 unfiltered";
     v20_unfiltered_cap.expected_w = 320;
     v20_unfiltered_cap.expected_h = 200;
-    v20_unfiltered_cap.present_via_rgba = 0;
+    v20_unfiltered_cap.present_via_epx = 0;
     snprintf(v20_unfiltered_cap.bmp_path, sizeof(v20_unfiltered_cap.bmp_path),
              "%s/v20_unfiltered.bmp", out_dir);
 
@@ -717,7 +713,7 @@ int main(void) {
     v20_filtered_cap.label = "V2.0 filtered";
     v20_filtered_cap.expected_w = 320;
     v20_filtered_cap.expected_h = 200;
-    v20_filtered_cap.present_via_rgba = 0;
+    v20_filtered_cap.present_via_epx = 0;
     snprintf(v20_filtered_cap.bmp_path, sizeof(v20_filtered_cap.bmp_path),
              "%s/v20_filtered.bmp", out_dir);
 
@@ -751,7 +747,7 @@ int main(void) {
     v21_cap.label = "V2.1 upscaled";
     v21_cap.expected_w = 640;
     v21_cap.expected_h = 400;
-    v21_cap.present_via_rgba = 1;
+    v21_cap.present_via_epx = 1;
     v21_cap.capture_via_presented_api = 1;
     snprintf(v21_cap.bmp_path, sizeof(v21_cap.bmp_path), "%s/v21_upscaled.bmp", out_dir);
 
@@ -770,12 +766,42 @@ int main(void) {
                      "V2.1 upscaled capture failed");
     }
 
+    /* A V2.1 launcher resolution choice must retain EPX before the
+     * renderer expands the 640x400 surface to the requested target. */
+    {
+        ModeCapture v21_target_cap;
+        memset(&v21_target_cap, 0, sizeof(v21_target_cap));
+        v21_target_cap.id = "V21_TARGET";
+        v21_target_cap.label = "V2.1 target-resolution upscaled";
+        v21_target_cap.expected_w = 960;
+        v21_target_cap.expected_h = 600;
+        v21_target_cap.present_via_epx = 1;
+        v21_target_cap.target_w = 960;
+        v21_target_cap.target_h = 600;
+        snprintf(v21_target_cap.bmp_path, sizeof(v21_target_cap.bmp_path),
+                 "%s/v21_target_upscaled.bmp", out_dir);
+        if (run_mode_capture(&v21_target_cap, framebuffer, v1_shadow)) {
+            char note[220];
+            snprintf(note, sizeof(note),
+                     "%s: %ld bytes, %dx%d, fnv1a=0x%08x",
+                     v21_target_cap.label, v21_target_cap.bmp_size,
+                     v21_target_cap.bmp_w, v21_target_cap.bmp_h,
+                     v21_target_cap.bmp_hash);
+            probe_record(&stats, "DM1V2_SCREENSHOT_V21_TARGET_FILE",
+                         v21_target_cap.bmp_size >= 54 + 960 * 600 * 3,
+                         note);
+        } else {
+            probe_record(&stats, "DM1V2_SCREENSHOT_V21_TARGET_FILE", 0,
+                         "V2.1 target-resolution capture failed");
+        }
+    }
+
     /* ---------- V2.2 modern ---------- */
     v22_cap.id = "V22";
     v22_cap.label = "V2.2 modern";
     v22_cap.expected_w = 320;
     v22_cap.expected_h = 200;
-    v22_cap.present_via_rgba = 0;
+    v22_cap.present_via_epx = 0;
     v22_cap.v22_overlay_active = 1;
     snprintf(v22_cap.bmp_path, sizeof(v22_cap.bmp_path), "%s/v22_modern.bmp", out_dir);
 
@@ -805,7 +831,7 @@ int main(void) {
     route_v22_cap.label = "route-owned V2.2 modern";
     route_v22_cap.expected_w = 320;
     route_v22_cap.expected_h = 200;
-    route_v22_cap.present_via_rgba = 0;
+    route_v22_cap.present_via_epx = 0;
     route_v22_cap.v22_overlay_active = 1;
     snprintf(route_v22_cap.bmp_path, sizeof(route_v22_cap.bmp_path),
              "%s/route_entry_turncycle_v22_modern.bmp", out_dir);
