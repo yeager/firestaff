@@ -269,6 +269,18 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveLevelRendererSourceReceipt;
 
+/* Active canonical LEV Structure3 directory, retained as source evidence for
+ * capture tools. Directory offsets are bounded package facts only. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3DirectoryReceipt directory;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveStructure3DirectoryReceipt;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -641,6 +653,9 @@ int nexus_v1_current_level_structure3_render_packet(
 int nexus_v1_current_level_dgn_renderer_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveLevelRendererSourceReceipt *out_receipt);
+int nexus_v1_current_level_structure3_directory_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure3DirectoryReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

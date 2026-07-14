@@ -93,6 +93,10 @@
   command/order semantics, and no transform or culling semantics. Even an
   authenticated opaque capture keeps all four blockers set and remains
   no-draw; no synthetic pixels may replace those missing Saturn facts.
+  The active canonical LEV now also exposes its bounded Structure3 directory
+  to capture tooling with exact source bytes/FNV. Entry offsets remain source
+  framing only; texture, palette, transform, VDP1, and draw semantics remain
+  unimplemented.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette
