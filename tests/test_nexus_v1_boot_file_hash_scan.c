@@ -474,6 +474,10 @@ int main(void) {
                       structure2_source.canonical_hash_verified == 1 &&
                       structure2_source.materialization_bound ==
                           structure2_source.structure2_payload_envelope_valid &&
+                      structure2_source.loaded_bytes_bound == 1 &&
+                      structure2_source.loaded_dgn_size ==
+                          engine.current_level_dgn_size &&
+                      structure2_source.loaded_dgn_fnv1a64 != 0U &&
                       structure2_source.payload_decoder_permitted == 0 &&
                       structure2_source.fallback_visuals_permitted == 0,
                   "hash-resolved LEV00 remains the only authenticated Structure2 source without decoder promotion");

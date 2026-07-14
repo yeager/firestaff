@@ -5416,6 +5416,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     separate caller-owned gate. A hash-verified DGN plus matching fixture
     bytes cannot form a complete binding without a verified original-Saturn
     capture manifest. No such manifest or trace has been imported.
+  - 2026-07-14 host-route follow-up: real DGN material-plan assembly now also
+    rechecks the retained canonical `LEVxx.DGN` byte identity before either
+    MNS or BPK material routes can become presentable. A stale or mutated
+    in-memory level therefore blocks the host route rather than reusing a
+    file receipt. This is package-consumption hardening only; it does not
+    establish the required Saturn texture/palette or mesh semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

@@ -19,6 +19,11 @@
   original-Saturn capture packet. A mutated retained DGN cannot reuse a
   package receipt; the route fails closed with no fallback rendering.
 
+- 2026-07-14 Nexus DGN package-to-host identity: DGN material-plan assembly
+  now consumes the same retained-byte identity, so MNS/BPK material routes
+  cannot present a stale or changed `LEVxx.DGN` merely because its earlier
+  package receipt was valid.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1081-F1084: available NIL-device and
   AMISTRUCT allocation routes are Amiga-only. Focused PC 3.4 boundaries are
   intentionally unavailable.
