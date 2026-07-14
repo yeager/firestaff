@@ -43,6 +43,25 @@ dm1_v1_g0490_get_pc34(int byte_index)
     return (int)s_g0490[byte_index];
 }
 
+const char *
+dm1_v1_action_name_f0384_pc34(unsigned char action_index)
+{
+    const unsigned char *name = s_g0490;
+    unsigned int index;
+
+    /* MENU.C F0384 returns the empty name for ACTION_NONE/out-of-range. */
+    if (action_index == DM1_V1_ACTION_NONE_PC34 ||
+        action_index >= DM1_V1_ACTION_NAME_COUNT_PC34) {
+        return "";
+    }
+
+    for (index = 0; index < action_index; ++index) {
+        while (*name != 0) ++name;
+        ++name;
+    }
+    return (const char *)name;
+}
+
 int
 dm1_v1_g0490_run_pc34(
     DM1_V1_G0490ResultPc34 *out)
