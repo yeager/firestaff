@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
+  the verified terminal surface. Do not reopen substitute presentation paths.
+
 - 2026-07-15 DM2 DRAW_DOOR follow-up: D3 panel evidence, source split-panel
   geometry, DRAW_DOOR_FRAMES timing, and complete map door-type routing still
   need direct skproject bindings. Do not substitute a generic panel or frame.
@@ -6076,3 +6079,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   object-tail or fallback flag. It deliberately receives no objects, bitmap,
   palette, or broader transition interpretation; those require separate
   original execution evidence.
+
+- 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
+  session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and
+  leaves its existing host page untouched when the receipt is incomplete.
+  This removes the local black-frame replacement path. Remaining CSB startup
+  work is real package/app capture breadth, not substitute presentation.

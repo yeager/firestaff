@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB M11 startup surface: M11 now presents only the complete,
+  verified session-owned C001-C005/C017/C040 host surface. Missing evidence
+  leaves the prior page untouched; the black replacement frame is removed.
+
 - 2026-07-15 Theron Mednafen trace build: the official 1.32.1 trace patch now
   applies reproducibly with `git apply`; the real Track 02 run remains
   fail-closed because no SDL input or non-System-Card CD reads were observed.

@@ -3956,8 +3956,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
-    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
@@ -3971,20 +3970,11 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         !host_view.valid ||
         !host_view.render_draw_valid ||
         !host_view.render_draw.render_plan_valid) {
-        m11_fill_rect(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      0,
-                      0,
-                      framebufferWidth,
-                      framebufferHeight,
-                      M11_COLOR_BLACK);
         return;
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
-    memset(&frame, 0, sizeof(frame));
-    memset(&raster, 0, sizeof(raster));
+    memset(&host_surface, 0, sizeof(host_surface));
     if (session &&
         session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34) {
         CSB_V1_StartupAudioAction_PC34 audio_action;
@@ -4030,36 +4020,36 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             session = NULL;
         }
     }
-    /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source
-     * plan.  The CSB session owns the verified C001-C005/C017/C040 pixels;
-     * M11 only presents its raster and has no startup draw callbacks. */
+    /* TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source plan.
+     * The owning session turns C001-C005/C017/C040 into one verified host
+     * surface. M11 consumes that terminal page atomically; it must not
+     * derive a replacement frame or clear the page when source media fails. */
     if (!session ||
         framebufferWidth != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
         framebufferHeight != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 ||
-        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+        !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             session,
             &host_view.render_draw.render_plan,
             (uint32_t)state->csbState.startup_entrance_frame,
-            &frame) ||
-        !frame.valid || !frame.no_legacy_wrappers ||
-        !csb_v1_boot_startup_runtime_frame_rasterize_pc34(
-            &frame, &host_view.render_draw.render_plan, &raster) ||
-        !raster.valid || !raster.pixels ||
-        raster.width != framebufferWidth || raster.height != framebufferHeight) {
-        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
-        m11_fill_rect(framebuffer,
-                      framebufferWidth,
-                      framebufferHeight,
-                      0,
-                      0,
-                      framebufferWidth,
-                      framebufferHeight,
-                      M11_COLOR_BLACK);
+            &host_surface) ||
+        !host_surface.valid || !host_surface.real_asset_matched ||
+        !host_surface.no_legacy_wrappers ||
+        !host_surface.no_synthetic_surface ||
+        host_surface.host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 ||
+        host_surface.host_surface_hash == 0u ||
+        !host_surface.raster.valid || !host_surface.raster.real_asset_matched ||
+        !host_surface.raster.pixels ||
+        host_surface.raster.width != framebufferWidth ||
+        host_surface.raster.height != framebufferHeight) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
         return;
     }
-    memcpy(framebuffer, raster.pixels,
+    memcpy(framebuffer, host_surface.raster.pixels,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
-    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+        &host_surface);
 }
 
 static void m11_csb_startup_command_state_receipt_to_m11(
