@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0765`, `F0768` and `F0770`: source-locked
+  opaque dungeon bitmap draw, padded zone-text printing and DOS file-open
+  behavior. Three focused strict C11 tests pass with no synthetic graphics or
+  file data.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0758`: source-locked PC 3.4 language-table
   lookup. The focused strict C11 test passes without synthetic text.
 
