@@ -263,10 +263,18 @@ APPLESCRIPT
     # requested duration and repeat count observable at the host boundary;
     # only Mednafen's own input trace can establish emulated delivery.
     for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
-        if ! swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold"; then
+        quartz_receipt=$(swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold" "$mednafen_ui_pid") || {
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: macOS could not deliver the requested Quartz key pair' >&2
+            exit 1
+        }
+        if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
+              "$quartz_receipt" != *$'quartz_keypair=posted_to_pid'* ||
+              "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ]]; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: Quartz helper did not attest PID-targeted key delivery' >&2
             exit 1
         fi
         sleep 0.2
@@ -304,7 +312,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
         printf 'requested_host_key=%s\n' "$host_key"
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
-        printf 'host_input_delivery=quartz_hid_key_down_up\n'
+        printf 'host_input_delivery=quartz_pid_key_down_up\n'
         printf 'host_input_delivery_key_code=%s\n' "$host_key_code"
         printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
