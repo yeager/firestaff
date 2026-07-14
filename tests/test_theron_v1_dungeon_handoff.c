@@ -64,6 +64,8 @@ int main(void) {
     /* Anchor-shaped test bytes are not original media and must never select. */
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     CHECK(!receipt.selected && !receipt.raw_track02_md5_verified);
+    CHECK(receipt.header_width == 0u && receipt.header_height == 0u &&
+          receipt.header_seed == 0u && receipt.header_identifier == 0u);
 
     facts.raw_track02_bytes = 0u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
@@ -80,6 +82,12 @@ int main(void) {
     raw[US_CANDIDATE_OFFSET + 9u] = 0x27u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     raw[US_CANDIDATE_OFFSET + 9u] = 0x26u;
+    raw[US_CANDIDATE_OFFSET + 3u] = 0x1au;
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+    raw[US_CANDIDATE_OFFSET + 3u] = 0x1bu;
+    raw[US_CANDIDATE_OFFSET + 7u] = 0x39u;
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+    raw[US_CANDIDATE_OFFSET + 7u] = 0x38u;
     facts.track02_md5 = "00000000000000000000000000000000";
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
 
