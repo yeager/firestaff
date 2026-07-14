@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `GROUP.C F0195`: the current-map native C04 chain
+  scan now materializes active groups idempotently from source record state.
+  Verification: focused M10-linked CTest.
+
+- 2026-07-14 CSB ReDMCSB `TIMELINE.C F0243`: door-destruction dispatch now
+  uses the source callable to write only the low three state bits as destroyed,
+  retaining all upper square attributes. Verification: focused CTest.
+
 - 2026-07-14 DM1 ReDMCSB `CLIKMENU.C F0362`: source zone highlight state and
   inclusive inversion transaction now have a renderer-ready plan with vertical
   blank ordering. Verification: focused CTest; M11 consumption remains separate.
