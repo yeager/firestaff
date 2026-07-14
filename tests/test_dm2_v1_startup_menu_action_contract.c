@@ -376,6 +376,7 @@ int main(void)
     check(dm2_v1_startup_launch_from_host_facts_with_receipt(
               &host_facts,
               &launch_receipt) &&
+              !launch_receipt.session_valid &&
               launch_receipt.menu_state_receipt_valid &&
               launch_receipt.menu_state_receipt.row_count == 1 &&
               launch_receipt.host_receipt.mode_update.set_startup_menu_active &&

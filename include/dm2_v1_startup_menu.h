@@ -253,6 +253,10 @@ typedef struct DM2_V1_StartupLaunchReceipt {
     int menu_state_receipt_valid;
     DM2_V1_StartupMenuStateReceipt menu_state_receipt;
     DM2_V1_StartupRuntimeHandoffReceipt runtime_handoff;
+    /* Kept for M11's receipt ABI. It remains zero while SHOW_MENU_SCREEN
+     * waits for GAME_LOAD; only an original load route may publish session. */
+    int session_valid;
+    DM2_V1_SessionState session;
 } DM2_V1_StartupLaunchReceipt;
 
 typedef struct {
