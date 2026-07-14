@@ -4,6 +4,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+static uint16_t read_be16(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static uint32_t read_be32(const uint8_t *bytes)
+{
+    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) |
+        ((uint32_t)bytes[2] << 8) | bytes[3];
+}
+
+static uint32_t fnv1a32(const uint8_t *data, size_t size)
+{
+    uint32_t hash = UINT32_C(2166136261);
+    size_t index;
+
+    if (!data || size == 0U) return 0U;
+    for (index = 0U; index < size; ++index) {
+        hash ^= data[index];
+        hash *= UINT32_C(16777619);
+    }
+    return hash;
+}
 
 static int read_u64(const char **cursor, const char *label, uint64_t *out) {
     unsigned long long value;
@@ -50,6 +75,164 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size)
 {
     if (!data || size == 0U) return 0U;
     return fnv1a64_update(UINT64_C(1469598103934665603), data, size);
+}
+
+int nexus_v1_dgn_structure3_capture_target_build(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int level_index, int dgn_source_hash_verified, uint32_t entry_index,
+    uint32_t face_ordinal, Nexus_V1_DgnStructure3CaptureTargetReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3CaptureTargetReceipt receipt;
+    const Nexus_V1_DgnStructure3PayloadReceipt *payload;
+    const uint8_t *header;
+    const uint8_t *face;
+    const uint8_t *normal;
+    uint32_t entry_offset;
+    uint32_t vertex_offset;
+    uint32_t face_offset;
+    uint32_t normal_offset;
+    uint16_t vertex_count;
+    uint16_t face_count;
+    uint16_t indexes[4];
+    uint32_t vertex_hash = UINT32_C(2166136261);
+    int slot_count;
+    int slot;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    if (!level || !dgn_data || dgn_size <= 0 || level_index < 0 ||
+        !dgn_source_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    payload = &level->structure3_payload;
+    if (!payload->valid || !level->structure3_directory.valid ||
+        !level->structure3_entry_headers.valid || !level->structure3_faces.valid ||
+        !level->structure3_vectors.valid || !level->structure3_face_normal_pairs.valid ||
+        payload->byte_offset < 0 || payload->byte_size < 4 ||
+        payload->byte_offset > dgn_size ||
+        payload->byte_size > dgn_size - payload->byte_offset ||
+        entry_index >= (uint32_t)level->structure3_directory.entry_count ||
+        entry_index > ((uint32_t)payload->byte_size - 8U) / 4U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry_offset = read_be32(dgn_data + payload->byte_offset + 4U +
+                             entry_index * 4U);
+    if (entry_offset > (uint32_t)payload->byte_size ||
+        (uint32_t)payload->byte_size - entry_offset < 40U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    header = dgn_data + payload->byte_offset + entry_offset;
+    vertex_count = read_be16(header + 4U);
+    face_count = read_be16(header + 6U);
+    vertex_offset = read_be32(header + 8U);
+    face_offset = read_be32(header + 16U);
+    normal_offset = read_be32(header + 20U);
+    if (face_ordinal >= (uint32_t)face_count ||
+        vertex_offset > (uint32_t)payload->byte_size ||
+        face_offset > (uint32_t)payload->byte_size ||
+        normal_offset > (uint32_t)payload->byte_size ||
+        (uint32_t)vertex_count >
+            ((uint32_t)payload->byte_size - vertex_offset) / 12U ||
+        (uint32_t)face_count >
+            ((uint32_t)payload->byte_size - face_offset) / 12U ||
+        (uint32_t)face_count >
+            ((uint32_t)payload->byte_size - normal_offset) / 12U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    face = dgn_data + payload->byte_offset + face_offset + face_ordinal * 12U;
+    normal = dgn_data + payload->byte_offset + normal_offset + face_ordinal * 12U;
+    for (slot = 0; slot < 4; ++slot) indexes[slot] = read_be16(face + slot * 2U);
+    slot_count = indexes[2] == indexes[3] ? 3 : 4;
+    for (slot = 0; slot < slot_count; ++slot) {
+        const uint8_t *vertex;
+        int byte;
+        if (indexes[slot] >= vertex_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        vertex = dgn_data + payload->byte_offset + vertex_offset +
+            indexes[slot] * 12U;
+        for (byte = 0; byte < 12; ++byte) {
+            vertex_hash ^= vertex[byte];
+            vertex_hash *= UINT32_C(16777619);
+        }
+    }
+    receipt.level_index = level_index;
+    receipt.candidate.dgn_fnv1a64 = fnv1a64(dgn_data, (size_t)dgn_size);
+    receipt.candidate.structure3_payload_fnv1a32 = payload->raw_payload_hash;
+    receipt.candidate.typed_mesh_corpus_fnv1a32 =
+        NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
+    receipt.candidate.entry_index = entry_index;
+    receipt.candidate.face_ordinal = face_ordinal;
+    receipt.candidate.face_row_fnv1a32 = fnv1a32(face, 12U);
+    receipt.candidate.referenced_vertex_rows_fnv1a32 = vertex_hash;
+    receipt.candidate.normal_row_fnv1a32 = fnv1a32(normal, 12U);
+    receipt.candidate.fill_selector = read_be16(face + 10U);
+    receipt.capture_producer_required = 1;
+    receipt.original_saturn_capture_required = 1;
+    receipt.valid = receipt.candidate.dgn_fnv1a64 != 0U &&
+        receipt.candidate.structure3_payload_fnv1a32 != 0U &&
+        receipt.candidate.face_row_fnv1a32 != 0U &&
+        receipt.candidate.referenced_vertex_rows_fnv1a32 != 0U &&
+        receipt.candidate.normal_row_fnv1a32 != 0U;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int nexus_v1_dgn_structure3_capture_target_write(
+    const char *path, const Nexus_V1_DgnStructure3CaptureTargetReceipt *target)
+{
+    char temporary_path[1024];
+    FILE *file;
+
+    if (!path || !target || !target->valid ||
+        !target->capture_producer_required ||
+        !target->original_saturn_capture_required || !target->no_draw_only ||
+        target->fallback_visuals_permitted || target->level_index < 0 ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp.%ld", path,
+                 (long)getpid()) >= (int)sizeof(temporary_path)) return 0;
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    if (fprintf(file,
+                NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC "\n"
+                "level_index=%x\n"
+                "dgn_fnv1a64=%llx\n"
+                "structure3_payload_fnv1a32=%x\n"
+                "typed_mesh_corpus_fnv1a32=%x\n"
+                "entry_index=%x\n"
+                "face_ordinal=%x\n"
+                "face_row_fnv1a32=%x\n"
+                "referenced_vertex_rows_fnv1a32=%x\n"
+                "normal_row_fnv1a32=%x\n"
+                "fill_selector=%x\n"
+                "capture_manifest_magic=" NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC "\n"
+                "required_lanes=texture_span,palette_state,vdp1_state,transform_state,normal_culling_state,vdp1_command\n"
+                "original_saturn_capture_required=1\n"
+                "no_draw_only=1\n",
+                target->level_index,
+                (unsigned long long)target->candidate.dgn_fnv1a64,
+                target->candidate.structure3_payload_fnv1a32,
+                target->candidate.typed_mesh_corpus_fnv1a32,
+                target->candidate.entry_index, target->candidate.face_ordinal,
+                target->candidate.face_row_fnv1a32,
+                target->candidate.referenced_vertex_rows_fnv1a32,
+                target->candidate.normal_row_fnv1a32,
+                target->candidate.fill_selector) < 0) {
+        fclose(file);
+        remove(temporary_path);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    return rename(temporary_path, path) == 0;
 }
 
 static uint64_t capture_bundle_fnv1a64(

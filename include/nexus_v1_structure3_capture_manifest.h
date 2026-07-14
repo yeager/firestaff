@@ -12,6 +12,8 @@
  * capture provenance before passing the candidate to the DGN binder. */
 #define NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1"
+#define NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC \
+    "NEXUS_STRUCTURE3_SATURN_CAPTURE_TARGET_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES (16U * 1024U * 1024U)
 #define NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT 6U
 
@@ -45,6 +47,20 @@ typedef struct {
     int renderer_handoff_ready;
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3CaptureManifestReceipt;
+
+/* A capture target is generated from canonical DGN bytes before any Saturn
+ * trace exists. It names one bounded face and the exact source rows an
+ * external producer must correlate with its six raw capture lanes. It is not
+ * a trace, decoder, palette, transform, or draw command. */
+typedef struct {
+    int valid;
+    int level_index;
+    Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure3CaptureTargetReceipt;
 
 /* The capture reader keeps raw observations separate from the text envelope.
  * `capture_bundle_fnv1a64` must be computed over these six length-prefixed
@@ -162,6 +178,19 @@ void nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(
     Nexus_V1_DgnStructure3RawCaptureHostReceipt *receipt);
 void nexus_v1_dgn_structure3_raw_capture_host_receipt_release(
     Nexus_V1_DgnStructure3RawCaptureHostReceipt *receipt);
+
+/* Build one exact source-bound target for an external Saturn/VDP1 producer.
+ * `dgn_source_hash_verified` must come from the canonical asset scanner. */
+int nexus_v1_dgn_structure3_capture_target_build(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int level_index, int dgn_source_hash_verified, uint32_t entry_index,
+    uint32_t face_ordinal, Nexus_V1_DgnStructure3CaptureTargetReceipt *out_receipt);
+
+/* Write a deterministic target request for a concrete external capture
+ * producer. It writes no capture bytes, does not manufacture lane hashes,
+ * and cannot be imported as a completed capture manifest. */
+int nexus_v1_dgn_structure3_capture_target_write(
+    const char *path, const Nexus_V1_DgnStructure3CaptureTargetReceipt *target);
 
 void nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt);

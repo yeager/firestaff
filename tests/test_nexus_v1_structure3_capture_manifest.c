@@ -101,6 +101,28 @@ static int write_capture_file(const char *path, const unsigned char *data,
     return fclose(file) == 0;
 }
 
+static void wb16(unsigned char *p, unsigned int value) {
+    p[0] = (unsigned char)(value >> 8);
+    p[1] = (unsigned char)value;
+}
+
+static void wb32(unsigned char *p, unsigned int value) {
+    p[0] = (unsigned char)(value >> 24);
+    p[1] = (unsigned char)(value >> 16);
+    p[2] = (unsigned char)(value >> 8);
+    p[3] = (unsigned char)value;
+}
+
+static unsigned int fnv1a32(const unsigned char *data, size_t size) {
+    unsigned int hash = 2166136261U;
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619U;
+    }
+    return hash;
+}
+
 int main(void) {
     Nexus_V1_DgnStructure3CaptureManifestReceipt receipt;
     Nexus_V1_DgnStructure3CaptureImport capture;
@@ -110,7 +132,9 @@ int main(void) {
     Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_host_receipt;
     Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
     Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
+    Nexus_V1_DgnStructure3CaptureTargetReceipt target;
     Nexus_V1_Level level;
+    Nexus_V1_Level target_level;
     char imported_manifest[2048];
     static const unsigned char texture[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     static const unsigned char palette[] = { 11, 12, 13, 14, 15, 16, 17, 18,
@@ -128,6 +152,72 @@ int main(void) {
     unsigned char altered_palette[sizeof(palette)];
     char malformed[sizeof(valid_manifest)];
     char raw_paths_storage[6][128];
+    char target_path[128];
+    char target_text[1024];
+    unsigned char target_dgn[128];
+    FILE *target_file;
+
+    memset(&target_level, 0, sizeof(target_level));
+    memset(target_dgn, 0, sizeof(target_dgn));
+    wb32(target_dgn + 4, 16U);
+    wb16(target_dgn + 16 + 4, 3U);
+    wb16(target_dgn + 16 + 6, 1U);
+    wb32(target_dgn + 16 + 8, 56U);
+    wb32(target_dgn + 16 + 16, 92U);
+    wb32(target_dgn + 16 + 20, 104U);
+    wb16(target_dgn + 56, 0U); wb16(target_dgn + 56 + 4, 0U); wb16(target_dgn + 56 + 8, 0U);
+    wb16(target_dgn + 68, 1U); wb16(target_dgn + 68 + 4, 0U); wb16(target_dgn + 68 + 8, 0U);
+    wb16(target_dgn + 80, 0U); wb16(target_dgn + 80 + 4, 1U); wb16(target_dgn + 80 + 8, 0U);
+    wb16(target_dgn + 92, 0U); wb16(target_dgn + 94, 1U);
+    wb16(target_dgn + 96, 2U); wb16(target_dgn + 98, 2U);
+    wb16(target_dgn + 102, 0x0001U);
+    target_level.structure3_payload.valid = 1;
+    target_level.structure3_payload.byte_offset = 0;
+    target_level.structure3_payload.byte_size = 116;
+    target_level.structure3_payload.raw_payload_hash = fnv1a32(target_dgn, 116U);
+    target_level.structure3_directory.valid = 1;
+    target_level.structure3_directory.entry_count = 1;
+    target_level.structure3_entry_headers.valid = 1;
+    target_level.structure3_faces.valid = 1;
+    target_level.structure3_vectors.valid = 1;
+    target_level.structure3_face_normal_pairs.valid = 1;
+    expect(nexus_v1_dgn_structure3_capture_target_build(
+               &target_level, target_dgn, 116, 1, 1, 0U, 0U, &target) &&
+               target.valid && target.level_index == 1 &&
+               target.candidate.entry_index == 0U &&
+               target.candidate.face_ordinal == 0U &&
+               target.candidate.fill_selector == 1U &&
+               target.capture_producer_required &&
+               target.original_saturn_capture_required && target.no_draw_only &&
+               !target.fallback_visuals_permitted,
+           "canonical Structure3 rows build one no-draw external capture target");
+    expect(!nexus_v1_dgn_structure3_capture_target_build(
+               &target_level, target_dgn, 116, 1, 0, 0U, 0U, &target) &&
+               !target.valid && target.no_draw_only,
+           "an unverified DGN source cannot generate a capture target");
+    expect(nexus_v1_dgn_structure3_capture_target_build(
+               &target_level, target_dgn, 116, 1, 1, 0U, 0U, &target),
+           "verified target rebuilds for producer request output");
+    snprintf(target_path, sizeof(target_path),
+             "/tmp/firestaff-nexus-structure3-target-%ld.txt", (long)getpid());
+    remove(target_path);
+    expect(nexus_v1_dgn_structure3_capture_target_write(target_path, &target) &&
+               (target_file = fopen(target_path, "rb")) != NULL &&
+               fread(target_text, 1U, sizeof(target_text) - 1U, target_file) > 0U &&
+               fclose(target_file) == 0,
+           "capture target writer emits a producer request from verified DGN rows");
+    target_file = fopen(target_path, "rb");
+    if (target_file) {
+        size_t target_size = fread(target_text, 1U, sizeof(target_text) - 1U,
+                                   target_file);
+        target_text[target_size] = '\0';
+        fclose(target_file);
+        expect(strstr(target_text, NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC) != NULL &&
+                   strstr(target_text, "required_lanes=texture_span,palette_state,vdp1_state,transform_state,normal_culling_state,vdp1_command") != NULL &&
+                   strstr(target_text, "no_draw_only=1") != NULL,
+               "capture target names every required raw lane without manufacturing bytes");
+    }
+    remove(target_path);
 
     expect(nexus_v1_dgn_structure3_capture_manifest_parse(
                valid_manifest, strlen(valid_manifest), &receipt) &&
