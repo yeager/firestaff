@@ -111,6 +111,33 @@ static inline int M11_GameView_GetV1InventoryPanelZone(
     return 1;
 }
 
+/* Test-facing adapters retained over the source-owned DM1 helpers.  These
+ * expose no M11-local geometry: ReDMCSB PANEL.C uses C023/C025, C503 and
+ * C537..C544 through the PC34 compatibility tables. */
+static inline int M11_GameView_GetV1OpenScrollPanelGraphicId(void) {
+    return dm1_v1_graphic_panel_open_scroll_pc34();
+}
+
+static inline int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
+    return dm1_v1_inventory_chest_slot_box_zone_count_pc34();
+}
+
+static inline int M11_GameView_GetV1ChestSlotBoxZone(
+    int chestOrdinal, int* outX, int* outY, int* outW, int* outH) {
+    return dm1_v1_inventory_chest_slot_box_zone_xywh_pc34(
+        chestOrdinal, outX, outY, outW, outH);
+}
+
+static inline int M11_GameView_GetV1ArrowOrEyeZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_LayoutZoneRectPc34 rect;
+    if (!outX || !outY || !outW || !outH) return 0;
+    rect = dm1_v1_arrow_or_eye_rect_pc34();
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
 /* ReDMCSB: DUNVIEW.C inventory-view backdrop is the viewport rectangle.
  * Keep the legacy probe export source-owned by the DM1 layout helper. */
 static inline int M11_GameView_GetV1InventoryBackdropZone(
@@ -1832,6 +1859,18 @@ int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
 int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
 void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
 unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(const M11_GameViewState* state);
+
+static inline int M11_GameView_DecodeV1InventoryActionHandScrollText(
+    const M11_GameViewState* state, char* out, int outSize) {
+    return DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+        state, out, outSize);
+}
+
+static inline int M11_GameView_GetV1InventorySlotIconIndex(
+    const M11_GameViewState* state, int championSlot) {
+    return DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
+        state, championSlot);
+}
 
 /* M11_DM1 V1 sub-cell hit mask (BUG-111).  Source-locked per
  * ReDMCSB DEFS.H M550 (DUNGEON.C:1085).  Full-square creatures
