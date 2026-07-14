@@ -34460,6 +34460,10 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
         !ownership_receipt.final_m11_draw_caller_ready ||
         !ownership_receipt.final_m11_draw_caller_consumes_ownership ||
         !ownership_receipt.execute_startup_draw_commands ||
+        !ownership_receipt.extended_spells_definition_consumed ||
+        memcmp(&ownership_receipt.extended_spells,
+               &view_model.host_view_receipt.extended_spells,
+               sizeof(ownership_receipt.extended_spells)) != 0 ||
         ownership_receipt.draw_command_count != view_model.command_count) {
         return 0;
     }

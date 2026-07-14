@@ -152,6 +152,8 @@ typedef struct {
     uint32_t map_load_token;
     uint32_t scene_control_hash;
     uint32_t palette_hash;
+    uint32_t interface_action_palette_hash;
+    int interface_action_palette_consumed;
     uint8_t floor_ceiling_material_required_mask;
     uint8_t floor_ceiling_material_consumed_mask;
     int floor_ceiling_materials_complete;
