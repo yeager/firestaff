@@ -973,6 +973,14 @@ typedef struct {
     int save_corpus_original_candidate_count;
     unsigned int save_corpus_valid_slot_mask;
     uint32_t save_corpus_hash;
+    /* Source-owned GAME_LOAD census over header- and file-hash-verified
+     * original candidates. This remains observational until the remaining
+     * dungeon DB and timer record layouts have exact source contracts. */
+    int save_corpus_original_state_scan_complete;
+    int save_corpus_original_state_list_complete;
+    int save_corpus_original_state_parsed_candidate_count;
+    int save_corpus_original_state_rejected_candidate_count;
+    uint32_t save_corpus_original_state_hash;
     int complete_support_ready;
     uint32_t complete_support_hash;
     const char *status_scope;
