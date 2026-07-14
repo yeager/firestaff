@@ -220,6 +220,53 @@ static unsigned int viewport_fingerprint(const unsigned char *pixels,
     return hash;
 }
 
+static int find_pending_poison_expiry(const struct GameWorld_Compat *world,
+                                      uint32_t now,
+                                      uint32_t *out_fire_at_tick,
+                                      int *out_champion_index)
+{
+    int i;
+    int found = 0;
+
+    if (!world || !out_fire_at_tick || !out_champion_index) return 0;
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat *event = &world->timeline.events[i];
+
+        if (event->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+            event->aux0 != DM1_EVENT_POISON_CHAMPION ||
+            event->aux4 < 0 || event->aux4 >= DM1_MAX_CHAMPIONS ||
+            (event->fireAtTick > now &&
+             event->fireAtTick - now >= PC34_EXTERNAL_RUNTIME_EVENT_HORIZON)) {
+            continue;
+        }
+        if (!found || event->fireAtTick < *out_fire_at_tick) {
+            *out_fire_at_tick = event->fireAtTick;
+            *out_champion_index = event->aux4;
+            found = 1;
+        }
+    }
+    return found;
+}
+
+static int tick_result_has_champion_damage(const struct TickResult_Compat *result,
+                                            int champion_index,
+                                            int damage)
+{
+    int i;
+
+    if (!result) return 0;
+    for (i = 0; i < result->emissionCount; ++i) {
+        const struct TickEmission_Compat *emission = &result->emissions[i];
+
+        if (emission->kind == EMIT_CHAMPION_DAMAGED &&
+            emission->payload[0] == champion_index &&
+            emission->payload[2] == damage) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* ReDMCSB LOADSAVE.C F0435:2803-2816 restores the four packed portrait
  * buffers before returning to the live game. The M11 inventory portrait is
  * at the C017 viewport origin plus its source-owned five/four pixel inset. */
@@ -301,6 +348,9 @@ int main(void)
         uint32_t actual_post_tick_world_hash;
         uint32_t pre_tick;
         struct TimelineEvent_Compat next_event;
+        uint32_t poison_fire_at_tick = 0;
+        int poison_champion_index = -1;
+        int poison_runtime_checked = 0;
         int traced_steps_for_save = 0;
 
         CHECK(receipt_is_runtime_admitted(receipt),
@@ -379,6 +429,18 @@ int main(void)
          * remains owned by the external PC34 save's restored C3/C4 timeline.
          */
         pre_tick = (uint32_t)state.world.gameTick;
+        (void)find_pending_poison_expiry(&expected_world,
+                                         pre_tick,
+                                         &poison_fire_at_tick,
+                                         &poison_champion_index);
+        {
+            int poison_hp_before = -1;
+
+            if (poison_champion_index >= 0 &&
+                poison_fire_at_tick <= pre_tick + 1u) {
+                poison_hp_before = expected_world.party.champions[
+                    poison_champion_index].hp.current;
+            }
         memset(&expected_input, 0, sizeof(expected_input));
         memset(&expected_tick, 0, sizeof(expected_tick));
         expected_input.tick = (uint32_t)expected_world.gameTick;
@@ -419,6 +481,23 @@ int main(void)
                   memcmp(state.lastTickResult.emissions, expected_tick.emissions,
                          sizeof(expected_tick.emissions)) == 0,
               "M11 preserves the staged F0435 timeline and emission receipt");
+            if (poison_hp_before >= 0) {
+                int poison_damage = poison_hp_before - expected_world.party.champions[
+                    poison_champion_index].hp.current;
+
+                if (poison_damage > 0) {
+                    CHECK(tick_result_has_champion_damage(&expected_tick,
+                                                           poison_champion_index,
+                                                           poison_damage),
+                          "C75 poison expiry emits its source damage receipt");
+                    CHECK(state.championDamageTimer[poison_champion_index] > 0 &&
+                              state.championDamageAmount[poison_champion_index] ==
+                                  poison_damage,
+                          "C75 poison expiry materializes an M11 damage overlay");
+                }
+                poison_runtime_checked = 1;
+            }
+        }
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&state, framebuffer, 320, 200);
         CHECK(viewport_is_nonblank(framebuffer, 320),
@@ -439,14 +518,28 @@ int main(void)
         memset(&next_event, 0, sizeof(next_event));
         if (F0722_TIMELINE_Peek_Compat(&expected_world.timeline, &next_event)) {
             uint32_t ticks_until_event;
+            uint32_t replay_until_tick;
             uint32_t step;
 
             CHECK(next_event.fireAtTick >= (uint32_t)expected_world.gameTick,
                   "restored C4 queue has no overdue event after the idle tick");
-            ticks_until_event = next_event.fireAtTick -
+            replay_until_tick = next_event.fireAtTick;
+            if (!poison_runtime_checked && poison_champion_index >= 0 &&
+                poison_fire_at_tick > replay_until_tick) {
+                replay_until_tick = poison_fire_at_tick;
+            }
+            ticks_until_event = replay_until_tick -
                                 (uint32_t)expected_world.gameTick;
             if (ticks_until_event < PC34_EXTERNAL_RUNTIME_EVENT_HORIZON) {
                 for (step = 0; step <= ticks_until_event; ++step) {
+                    int poison_hp_before = -1;
+
+                    if (!poison_runtime_checked && poison_champion_index >= 0 &&
+                        poison_fire_at_tick <=
+                            (uint32_t)expected_world.gameTick + 1u) {
+                        poison_hp_before = expected_world.party.champions[
+                            poison_champion_index].hp.current;
+                    }
                     memset(&expected_input, 0, sizeof(expected_input));
                     memset(&expected_tick, 0, sizeof(expected_tick));
                     expected_input.tick = (uint32_t)expected_world.gameTick;
@@ -472,10 +565,28 @@ int main(void)
                               memcmp(state.lastTickResult.emissions, expected_tick.emissions,
                                      sizeof(expected_tick.emissions)) == 0,
                           "M11 preserves queued-event timeline and emissions");
+                    if (poison_hp_before >= 0) {
+                        int poison_damage = poison_hp_before -
+                            expected_world.party.champions[
+                                poison_champion_index].hp.current;
+
+                        if (poison_damage > 0) {
+                            CHECK(tick_result_has_champion_damage(
+                                      &expected_tick,
+                                      poison_champion_index,
+                                      poison_damage),
+                                  "C75 poison expiry emits its source damage receipt");
+                            CHECK(state.championDamageTimer[poison_champion_index] > 0 &&
+                                      state.championDamageAmount[poison_champion_index] ==
+                                          poison_damage,
+                                  "C75 poison expiry materializes an M11 damage overlay");
+                        }
+                        poison_runtime_checked = 1;
+                    }
                 }
                 CHECK((uint32_t)state.world.gameTick ==
-                          next_event.fireAtTick + 1u,
-                      "M11 reaches the saved queue event on its source tick");
+                          replay_until_tick + 1u,
+                      "M11 reaches the requested saved queue tick");
                 printf("ADMITTED_HOC_RUNTIME_EVENT path=%s kind=%d fire_at=%u steps=%u\\n",
                        receipt->path, next_event.kind,
                        (unsigned int)next_event.fireAtTick,

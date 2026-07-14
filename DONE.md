@@ -10,6 +10,17 @@
   the emitted BMP dimensions and bytes. Verification:
   `dm1_v2_actual_render_screenshot_probe`.
 
+- 2026-07-14 DM1 PC34 C75 poison expiry M11 materialization: F0887 now emits
+  the existing `EMIT_CHAMPION_DAMAGED` live signal after a ReDMCSB C75's
+  F0322-shaped positive HP decrement. M11 consequently refreshes the saved
+  champion's damage-overlay timer and amount through its normal emission
+  consumer; C75 contributes no invented wound mask or display cell. The
+  fixture-free external HoC runtime gate detects a bounded, saved C75 from an
+  admitted PC34 corpus snapshot and, when that expiry causes damage, verifies
+  both the M10 receipt and the M11 overlay. No save, event, or command trace
+   is generated, and this is not original executable or frame parity.
+   Verification: `dm1_v1_original_save_pc34_external_hoc_runtime`.
+
 - 2026-07-14 Nexus Structure3 renderer source-packet staging: the DGN
   viewport now receives only an engine-owned Structure3 packet after every
   existing capture, DGN, face, referenced-vertex, and normal-row relation is
