@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 original-PC34 `PARTY_INFO` ScentCount runtime handoff:
+  F0435 now restores the source-owned byte 10 `ScentCount` to the existing
+  F0412 Footprints-window owner, and F0433 writes only the validated
+  `[0,255]` runtime value back to that retained source byte. The focused
+  handoff regression proves authenticated import, a resumed strong Footprints
+  window (`FirstScentIndex=29`, `LastScentIndex=0`), and export/reimport.
+  Scent indices and arrays remain unowned source bytes. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-14 DM1 HoC F0121/F0124 C2548 alcove-object runtime binding: the
   live M11 F0115 alcove lane now resolves ReDMCSB's
   `C2548 + CoordinateSet * 7 + G2029[ViewSquare]` Graphic 558 anchors,
