@@ -958,6 +958,51 @@ static void probe_synthetic_multiple_initial_candidates_rejected(void) {
               0);
 }
 
+/* The envelope receipt has no synthetic-positive route.  Its facts are only
+ * meaningful after the authenticated raw JP/US corpus passes the IPL and
+ * descriptor gates; these checks keep test fixtures from becoming a fallback
+ * source of level or object semantics. */
+static void probe_initial_level_envelope_rejected_without_corpus(void) {
+    uint8_t sector[THERON_TRACK02_RAW_SECTOR_BYTES];
+    Theron_Track02InitialLevelEnvelopeReceipt envelope;
+    Theron_Track02SignalStatus status;
+
+    memset(sector, 0, sizeof(sector));
+    memset(&envelope, 0xff, sizeof(envelope));
+
+    status = theron_v1_track02_decode_initial_level_envelope(
+        NULL, sizeof(sector), THERON_TRACK02_MD5_US_BIN, &envelope);
+    check_int("initial envelope null media rejected",
+              status,
+              THERON_TRACK02_SIGNAL_BAD_INPUT);
+    check_int("initial envelope null media clears receipt", envelope.valid, 0);
+
+    memset(&envelope, 0xff, sizeof(envelope));
+    status = theron_v1_track02_decode_initial_level_envelope(
+        sector, sizeof(sector), "not-a-track02-md5", &envelope);
+    check_int("initial envelope unknown media rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("initial envelope unknown media clears receipt", envelope.valid, 0);
+    check_int("initial envelope unknown media has no grid", envelope.grid_byte_count, 0);
+    check_int("initial envelope unknown media has no object claim",
+              envelope.object_tail_semantics_proven, 0);
+
+    memset(&envelope, 0xff, sizeof(envelope));
+    status = theron_v1_track02_decode_initial_level_envelope(
+        sector, sizeof(sector), THERON_TRACK02_MD5_US_BIN, &envelope);
+    check_int("initial envelope non-corpus bytes rejected",
+              status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("initial envelope non-corpus bytes clear receipt", envelope.valid, 0);
+    check_int("initial envelope non-corpus bytes have no grid",
+              envelope.grid_byte_count, 0);
+    check_int("initial envelope non-corpus bytes have no object claim",
+              envelope.object_tail_semantics_proven, 0);
+    check_int("initial envelope non-corpus bytes allow no fallback",
+              envelope.fallback_visuals_allowed, 0);
+}
+
 static void probe_negative_handoffs(void) {
     uint8_t track[0x3000u];
     Theron_V1_Level level;
@@ -1526,6 +1571,7 @@ int main(void) {
     probe_split_raw_initial_candidate_semantic_handoff();
     probe_synthetic_initial_candidate_user_data_offsets();
     probe_synthetic_multiple_initial_candidates_rejected();
+    probe_initial_level_envelope_rejected_without_corpus();
     probe_negative_handoffs();
     probe_media_gated_level_bank_selection();
     probe_real_data_if_present();
