@@ -1886,8 +1886,8 @@ F	0939	F0939_ReleaseAmigaData	EXEC.C	source_nonapplicable
 F	0940	F0940_CopyCopperInstructions	EXEC.C	source_nonapplicable
 F	0942	F0942_InitDiskResource	EXEC.C	source_nonapplicable
 F	0943	F0943_ReleaseDiskResource	EXEC.C	source_nonapplicable
-F	0945	F0945_InitAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
-F	0946	F0946_ReleaseAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
+F	0945	F0945_InitAudioData	EXEC.C;AMIGINIT.C;SOUND.C	source_nonapplicable
+F	0946	F0946_ReleaseAudioData	EXEC.C;AMIGINIT.C;SOUND.C	source_nonapplicable
 F	0947	F0947_InitDiskData	EXEC.C	source_nonapplicable
 F	0948	F0948_ReleaseDiskData	EXEC.C	source_nonapplicable
 F	0949	F0949_JAPANESE_	JAPANESE.C	unmapped_or_unverified
