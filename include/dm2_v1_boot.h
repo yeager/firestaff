@@ -1821,6 +1821,33 @@ int dm2_v1_boot_viewport_asset_evidence(
     int gdat_index,
     DM2_V1_BootViewportAssetEvidence *out_evidence);
 
+/* skproject QUERY_CREATURE_PICST resolves a live non-static creature through
+ * GET_CREATURE_ANIMATION_FRAME's FB/FC/FD table chain, then draws the exact
+ * CREATURES/type/dtImage field selected by FD.  This receipt deliberately
+ * does not fall back to the DB4 map-chip F9 route. */
+typedef struct {
+    int valid;
+    int creature_type;
+    uint16_t command;
+    uint16_t previous_frame;
+    uint16_t selected_frame;
+    uint16_t sequence_offset;
+    uint8_t direction;
+    uint8_t image_field;
+    uint32_t animation_table_hash;
+    uint32_t material_hash;
+    uint32_t palette_hash;
+    DM2_V1_BootViewportAssetEvidence image;
+} DM2_V1_BootDynamicCreatureMaterialReceipt;
+
+int dm2_v1_boot_dynamic_creature_material_receipt(
+    DM2_V1_BootProfile *profile,
+    int creature_type,
+    uint16_t command,
+    uint16_t previous_frame,
+    int direction,
+    DM2_V1_BootDynamicCreatureMaterialReceipt *out_receipt);
+
 void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels);
 
 /* Free resources allocated during boot (but not the profile itself). */

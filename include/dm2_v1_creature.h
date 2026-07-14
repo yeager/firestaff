@@ -260,6 +260,10 @@ typedef struct {
     uint32_t animation_tick;
     uint32_t render_revision;
     uint8_t animation_frame;
+    /* SKProject V5 keeps this mutable sequence pair on the live creature
+     * context. It is distinct from the legacy presentation frame. */
+    uint16_t gdat_animation_sequence;
+    uint16_t gdat_animation_info;
 } DM2_V1_CreatureInstance;
 
 /* Live CCM pool persistence.  This is deliberately the owning creature
@@ -377,6 +381,12 @@ int dm2_v1_creature_instance_ai(int instance_id);
  * Returns NULL if instance_id is out of range.  Used by projectile
  * dispatch (Phase 5 wire-up) to read AI attack flags + position. */
 const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
+
+/* Commits the source-selected V5 animation state after a complete FB/FC/FD
+ * receipt has resolved. Invalid indices are rejected. */
+int dm2_v1_creature_set_gdat_animation_state(int instance_id,
+                                              uint16_t sequence,
+                                              uint16_t info);
 
 int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state);
 int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state);

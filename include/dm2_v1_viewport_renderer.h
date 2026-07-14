@@ -496,6 +496,9 @@ typedef struct {
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
+    uint8_t  source_material_proven; /* real GDAT owner admitted */
+    uint8_t  gdat_image_field; /* direct CREATURES dtImage field for live route */
+    uint32_t source_material_hash;
     uint16_t object_id;        /* G1 DB4 ObjectID; zero for non-dungeon sprites */
     int16_t  map_x;            /* source map coordinate for G1 material ownership */
     int16_t  map_y;
@@ -507,6 +510,7 @@ typedef struct {
     int source_kind;
     uint16_t object_id;
     int frame_index;
+    int material_frame_index;
     int direction;
     int depth;
     int map_x;

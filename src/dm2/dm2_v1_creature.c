@@ -233,17 +233,33 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
     for (creature_type = 0; creature_type < DM2_AI_TABLE_SIZE;
          ++creature_type) {
         uint16_t ai_row;
-        size_t raw_size = 0;
-        const uint8_t *raw;
+        uint16_t hit_points = 0u;
+        uint8_t raw[sizeof(DM2_AIDefinition)];
 
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,
                 &ai_row) || ai_row >= DM2_AI_TABLE_SIZE) {
             continue;
         }
-        raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_CREATURE_AI,
-                                       ai_row, 0, &raw_size);
-        if (!raw || raw_size < sizeof(DM2_AIDefinition)) continue;
+        /* SKProject SkWinCore.cpp::EXTENDED_LOAD_AI_DEFINITION does not
+         * load a packed 36-byte record. Its real DM2 path queries the 36
+         * dtWordValue fields individually, treating absent optional fields
+         * as zero. Field four is BaseHP's low byte and is the source's
+         * admission probe for an AI row. */
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_CREATURE_AI, ai_row, 4,
+                &hit_points) || hit_points == 0u) {
+            continue;
+        }
+        memset(raw, 0, sizeof(raw));
+        for (int field = 0; field < (int)sizeof(raw); ++field) {
+            uint16_t value = 0u;
+            if (dm2_v1_asset_load_word_value(
+                    loader, DM2_GDAT_CATEGORY_CREATURE_AI, ai_row,
+                    field, &value)) {
+                raw[field] = (uint8_t)(value & 0xffu);
+            }
+        }
         if (!g_ai_table_loaded[ai_row]) {
             dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[ai_row]);
             g_ai_table_loaded[ai_row] = 1;
@@ -509,6 +525,8 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     c->is_visible  = 1;
     c->b_1a        = DM2_CCM_WALK_NOW;
     c->b_17        = 0;
+    c->gdat_animation_sequence = 0u;
+    c->gdat_animation_info = 0xffffu;
     c->attack_cooldown = 0;
     c->poison_ticks    = 0;
     dm2_v1_creature_write_render_state(c, 0);
@@ -565,6 +583,23 @@ int dm2_v1_creature_instance_ai(int instance_id) {
 const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id) {
     if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return NULL;
     return &g_creature_pool[instance_id];
+}
+
+int dm2_v1_creature_set_gdat_animation_state(int instance_id,
+                                              uint16_t sequence,
+                                              uint16_t info)
+{
+    DM2_V1_CreatureInstance *instance;
+
+    if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) {
+        return -1;
+    }
+    instance = &g_creature_pool[instance_id];
+    if (!instance->alive) return -1;
+    instance->gdat_animation_sequence = sequence;
+    instance->gdat_animation_info = info;
+    ++instance->render_revision;
+    return 0;
 }
 
 int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state) {
