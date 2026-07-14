@@ -58,6 +58,40 @@ static unsigned long action_fingerprint(const CSB_V1_DSAImportedAction *action)
 }
 
 static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
+                                      int action_index);
+
+/* DSA.cpp keeps the decoded action table owned by the loaded save. A runtime
+ * tick may consume a queued timer, but it must neither replace that catalog
+ * nor redirect a source selector to a synthesized action. */
+static int action_catalog_survives_tick(
+    const CSB_V1_ChaosMagicState *state,
+    const CSB_V1_DSAImportedAction *const *before_actions,
+    const unsigned long *before_hashes,
+    int action_count)
+{
+    int i;
+
+    if (!state || !before_actions || !before_hashes ||
+        action_count <= 0 || state->imported_action_count != action_count) {
+        return 0;
+    }
+    for (i = 0; i < action_count; ++i) {
+        const CSB_V1_DSAImportedAction *action = &state->imported_actions[i];
+
+        if (action != before_actions[i] ||
+            action_fingerprint(action) != before_hashes[i]) {
+            return 0;
+        }
+        if (action_is_first_for_column(state, i) &&
+            csb_v1_chaos_find_imported_action_column(
+                state, action->dsa_id, action->state_index, action->column) != action) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
                                       int action_index)
 {
     const CSB_V1_DSAImportedAction *action;
@@ -198,10 +232,9 @@ int main(int argc, char **argv)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData *dungeon;
     const CSB_V1_ChaosMagicState *state;
-    const CSB_V1_DSAImportedAction *first_action;
-    const CSB_V1_DSAImportedAction *first_action_after_tick;
+    const CSB_V1_DSAImportedAction **actions_before_tick = NULL;
+    unsigned long *action_hashes_before_tick = NULL;
     CSB_V1_RuntimeDSAFilterBinding source_binding;
-    unsigned long first_action_hash;
     int mapped_entries = 0;
     int mapped_actions = 0;
     int source_binding_found;
@@ -304,15 +337,30 @@ int main(int argc, char **argv)
                   "source actuator binding reaches an authenticated save-owned DSA");
         }
 
-        first_action = &state->imported_actions[0];
-        first_action_hash = action_fingerprint(first_action);
-        csb_v1_runtime_tick(&profile, CSB_V1_TICK_MS_NOMINAL);
-        first_action_after_tick = &profile.csbwin_extended_dsa_state.imported_actions[0];
-        CHECK(first_action_after_tick == first_action &&
-                  action_fingerprint(first_action_after_tick) == first_action_hash,
-              "runtime tick preserves the admitted source DSA action owner");
+        actions_before_tick = calloc((size_t)state->imported_action_count,
+                                    sizeof(*actions_before_tick));
+        action_hashes_before_tick = calloc((size_t)state->imported_action_count,
+                                           sizeof(*action_hashes_before_tick));
+        CHECK(actions_before_tick != NULL && action_hashes_before_tick != NULL,
+              "allocate a complete save-owned DSA catalog receipt");
+        if (actions_before_tick && action_hashes_before_tick) {
+            for (i = 0; i < state->imported_action_count; ++i) {
+                actions_before_tick[i] = &state->imported_actions[i];
+                action_hashes_before_tick[i] = action_fingerprint(
+                    actions_before_tick[i]);
+            }
+            csb_v1_runtime_tick(&profile, CSB_V1_TICK_MS_NOMINAL);
+            CHECK(action_catalog_survives_tick(
+                      &profile.csbwin_extended_dsa_state,
+                      actions_before_tick,
+                      action_hashes_before_tick,
+                      state->imported_action_count),
+                  "runtime tick preserves every admitted source DSA action and selector");
+        }
     }
 
+    free(action_hashes_before_tick);
+    free(actions_before_tick);
     csb_v1_runtime_cleanup(&profile);
     CHECK(csb_v1_dungeon_get_current() == NULL,
           "runtime cleanup releases the package dungeon singleton");
