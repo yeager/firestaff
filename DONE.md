@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 ReDMCSB F0098 viewport floor/ceiling: real provider-owned
+  GRAPHICS.DAT ceiling and floor pixels now reach their original viewport rows;
+  a missing source bitmap is no-draw rather than a synthetic floor.
+
 - 2026-07-15 DM1/CSB ReDMCSB F0685-F0688 IMG3 verification: source-locked
   the real PC 3.4 line fill, previous-line copy, packed-nibble reader, and
   signed pixel-count forms with focused strict-C11 coverage. No pixel,

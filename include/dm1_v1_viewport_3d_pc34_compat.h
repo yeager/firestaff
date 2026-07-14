@@ -1004,8 +1004,9 @@ void dm1_viewport_3d_load_wall_set(DM1_Viewport3DState *state,
                                    int floor_set_index);
 
 /*
- * Draw floor and ceiling into viewport framebuffer.
- * Clears black area, copies ceiling (top 29 lines), floor (bottom 70 lines).
+ * Draw floor and ceiling into viewport framebuffer. Clears the source-defined
+ * black band, then copies only provider-supplied GRAPHICS.DAT ceiling (top 29
+ * lines) and floor (bottom 70 lines). Missing source graphics are no-draw.
  *
  * Source: DUNVIEW.C F0098_DUNGEONVIEW_DrawFloorAndCeiling (line 2962)
  */

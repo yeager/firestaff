@@ -1330,14 +1330,20 @@ void dm1_viewport_3d_load_wall_set(DM1_Viewport3DState *state,
  *     1. Clear black area (single chunky buffer)
  *     2. F0674_F0128_sub: copies ceiling/floor bitmaps via GetBitmapPointer
  *
- * Our implementation clears the viewport and marks sub-regions.
- * Actual bitmap copying requires the asset system to provide the
- * floor/ceiling pixel data.
+ * The PC path only clears its black band, then F0674 copies the real cached
+ * ceiling and floor bitmaps. Do not manufacture floor/ceiling pixels when a
+ * GRAPHICS.DAT provider cannot supply the selected source graphics.
  * ──────────────────────────────────────────────────────────────────────── */
 void dm1_viewport_3d_draw_floor_ceiling(DM1_Viewport3DState *state)
 {
     uint8_t *vp = state->viewport_pixels;
     int stride = state->viewport_stride;
+    const uint8_t *ceiling_pixels = NULL;
+    const uint8_t *floor_pixels = NULL;
+    int ceiling_width = 0;
+    int ceiling_height = 0;
+    int floor_width = 0;
+    int floor_height = 0;
 
     /* Clear viewport black area: lines 0..36 (37 lines).
      * ReDMCSB F0098 Amiga: F0008_MAIN_ClearBytes for each bitplane.
@@ -1346,14 +1352,30 @@ void dm1_viewport_3d_draw_floor_ceiling(DM1_Viewport3DState *state)
         memset(vp + y * stride, 0, (size_t)DM1_VIEWPORT_WIDTH);
     }
 
-    /* Ceiling bitmap would be copied to lines 0..28 (29 lines).
-     * Floor bitmap would be copied to lines 66..135 (70 lines).
-     * These are populated by the asset/blit system calling
-     * dm1_viewport_3d_draw_wall() with floor/ceiling bitmaps. */
+    if (state->graphic_provider_callback &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data, state->ceiling_graphic,
+            &ceiling_pixels, &ceiling_width, &ceiling_height) &&
+        ceiling_pixels && ceiling_width >= DM1_VIEWPORT_WIDTH &&
+        ceiling_height >= DM1_VIEWPORT_CEILING_H) {
+        for (int y = 0; y < DM1_VIEWPORT_CEILING_H; y++) {
+            memcpy(vp + y * stride,
+                   ceiling_pixels + y * ceiling_width,
+                   DM1_VIEWPORT_WIDTH);
+        }
+    }
 
-    /* Clear floor area as well (in case floor bitmap isn't loaded yet) */
-    for (int y = DM1_VIEWPORT_FLOOR_Y; y < DM1_VIEWPORT_HEIGHT; y++) {
-        memset(vp + y * stride, 0, (size_t)DM1_VIEWPORT_WIDTH);
+    if (state->graphic_provider_callback &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data, state->floor_graphic,
+            &floor_pixels, &floor_width, &floor_height) &&
+        floor_pixels && floor_width >= DM1_VIEWPORT_WIDTH &&
+        floor_height >= DM1_VIEWPORT_FLOOR_H) {
+        for (int y = 0; y < DM1_VIEWPORT_FLOOR_H; y++) {
+            memcpy(vp + (DM1_VIEWPORT_FLOOR_Y + y) * stride,
+                   floor_pixels + y * floor_width,
+                   DM1_VIEWPORT_WIDTH);
+        }
     }
 
     state->floor_ceiling_dirty = false;
