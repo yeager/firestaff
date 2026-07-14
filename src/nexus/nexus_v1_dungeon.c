@@ -4083,13 +4083,28 @@ static int nexus_v1_dgn_structure3_face_materials_plan_bound(
 {
     const Nexus_V1_DgnStructure3FaceReceipt *faces;
     const Nexus_V1_DgnStructure3FaceMaterialReceipt *materials;
+    const Nexus_V1_DgnStructure3VectorReceipt *vectors;
 
     if (!handoff) return 0;
     faces = &handoff->structure3_faces;
     materials = &handoff->structure3_face_materials;
+    vectors = &handoff->structure3_vectors;
     return materials->face_receipt_valid && materials->valid &&
         faces->valid && materials->face_count == faces->face_count &&
         materials->textured_face_count == faces->textured_face_count &&
+        vectors->face_receipt_valid && vectors->valid &&
+        vectors->vertex_count == faces->vertex_count &&
+        vectors->normal_count == faces->normal_count &&
+        vectors->vertex_vector_count == faces->vertex_count &&
+        vectors->normal_vector_count == faces->normal_count &&
+        vectors->normal_unit_length_count == faces->normal_count &&
+        vectors->normal_non_unit_length_count == 0 &&
+        vectors->normal_face_plane_pair_count ==
+            faces->triangle_count * 2 + faces->quad_count * 4 &&
+        vectors->normal_face_plane_within_tolerance_count ==
+            vectors->normal_face_plane_pair_count &&
+        vectors->normal_face_plane_outside_tolerance_count == 0 &&
+        !vectors->transform_or_draw_semantics_proven &&
         materials->static_texture_selector_count ==
             materials->static_texture_bound_count &&
         materials->animated_texture_selector_count ==
