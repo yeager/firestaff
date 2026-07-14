@@ -1778,6 +1778,26 @@ add_test(
     COMMAND firestaff_dm1_v2_presentation_mode_probe
 )
 
+# DM1 V2.0 startup presentation timing. The ReDMCSB source VBlank interval
+# includes the V2.0 special-palette post-pass instead of sleeping again after
+# it. Headless and deterministic.
+add_executable(firestaff_dm1_v20_startup_presentation_timing_probe
+    probes/dm1/firestaff_dm1_v20_startup_presentation_timing_probe.c
+    src/dm1v2/dm1_v20_startup_presentation_timing_pc34.c)
+target_include_directories(firestaff_dm1_v20_startup_presentation_timing_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v20_startup_presentation_timing_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v20_startup_presentation_timing_probe
+        COMMAND firestaff_dm1_v20_startup_presentation_timing_probe
+    )
+    set_tests_properties(dm1_v20_startup_presentation_timing_probe PROPERTIES
+        LABELS "tier2;dm1;v2;v2.0;startup;timing")
+endif()
+
 # DM1 V2 — V1/V2 side-by-side verification seed probe.
 # Headless: no game assets, no SDL rendering required.
 # Verifies: presentation-disabled parity across every V1-source-locked
