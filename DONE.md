@@ -53,7 +53,7 @@
   Focused strict-C11 regression passes.
 
 - 2026-07-14 Nexus M11 startup regression: moved the large local test fixtures
-  for the optional real-data route to static test storage. This prevents
+  and the raw-capture NULL-rejection receipt to static test storage. This prevents
   `test_m11_nexus_startup_gate` from exceeding the macOS main-thread stack
   before it can exercise the launcher; the launcher route remains no-draw.
 

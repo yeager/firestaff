@@ -44,6 +44,8 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
+/* Keep the raw-capture receipt out of main's already large fixture frame. */
+static Nexus_V1_DgnStructure3RawCaptureHostReceipt g_raw_capture_receipt;
 
 static void expect_true(int condition, const char* message) {
     if (!condition) {
@@ -737,6 +739,13 @@ int main(void) {
     char partial_dm_bin[512];
     char real_fallback[512];
     const char* real_dir;
+
+    expect_true(nexus_v1_launcher_startup_structure3_raw_capture_intake(
+                    NULL, 0U, NULL, NULL, &g_raw_capture_receipt) == 0 &&
+                    g_raw_capture_receipt.no_draw_only &&
+                    !g_raw_capture_receipt.raw_reader.import_ready &&
+                    !g_raw_capture_receipt.host.importer_invoked,
+                "Nexus launcher rejects raw Structure3 capture before a real level is loaded");
 
     expect_face_loader_counts_real_vs_fallback();
     expect_bpk_runtime_surface_import();
