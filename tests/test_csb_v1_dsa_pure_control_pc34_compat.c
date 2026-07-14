@@ -4,7 +4,7 @@
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
  * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
  * STKOP_TimeFetch:2512-2518 and STKOP_ThisDSAId:4822-4828. These commands
- * have no filter or world effect. */
+ * and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
@@ -89,6 +89,12 @@ int main(void)
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
+    uint16_t local_fetch_store[] = {
+        0x0686u, 3u, 0x0686u, 0u, 0x0a0bu,
+        0x0686u, 1u, 0x098bu, 0x0686u, 2u, 0x09cbu,
+        0x0686u, 3u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t local_fetch_bad_index[] = { 0x0686u, 100u, 0x098bu };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
@@ -256,6 +262,26 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0x8123u && execution.stack_depth == 0u,
           "THIS_DSA_ID returns the verified source actuator Thing identity");
+
+    parameters[0] = 10u;
+    parameters[1] = 20u;
+    parameters[2] = 30u;
+    parameters[3] = 40u;
+    check(run(&state, &action, local_fetch_store,
+              (int)(sizeof(local_fetch_store) / sizeof(local_fetch_store[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 10u && parameters[1] == 20u &&
+              parameters[2] == 20u && parameters[3] == 40u &&
+              execution.stack_depth == 0u,
+          "FETCH and STORE preserve CSBWin DSAVARS stack order");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, local_fetch_bad_index,
+              (int)(sizeof(local_fetch_bad_index) /
+                    sizeof(local_fetch_bad_index[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL &&
+              parameters[0] == 77u,
+          "FETCH rejects an out-of-bank source local without publication");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
