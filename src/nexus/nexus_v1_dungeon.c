@@ -4257,6 +4257,15 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
             vertex_hash *= 16777619u;
         }
     }
+    /* A capture can identify a row without making it drawable. Do not bind a
+     * zero-area Structure3 face into the host packet, even with matching
+     * original-capture fingerprints. */
+    if (!nexus_v1_structure3_face_has_noncollinear_vertices(
+            dgn_data + payload->byte_offset + vertex_offset, indexes,
+            slot_count)) {
+        *out_receipt = receipt;
+        return 0;
+    }
     receipt.referenced_vertex_rows_match = vertex_hash ==
         candidate->referenced_vertex_rows_fnv1a32;
     receipt.fill_selector_matches = rb16(face + 10) == candidate->fill_selector;

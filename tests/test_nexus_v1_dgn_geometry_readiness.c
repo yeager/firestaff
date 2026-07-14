@@ -2138,6 +2138,16 @@ static void test_structure3_entry_header_boundaries(void) {
           !capture.original_saturn_capture_verified &&
           !capture.renderer_handoff_ready && capture.blocks_real_dgn_mesh_render,
           "a fully bound Structure3 packet remains no-draw without Saturn provenance");
+    CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+              &level, dgn, (int)sizeof(dgn), 1, 1, &candidate,
+              texture_span, (int)sizeof(texture_span),
+              palette_state, (int)sizeof(palette_state),
+              vdp1_state, (int)sizeof(vdp1_state),
+              transform_state, (int)sizeof(transform_state),
+              culling_state, (int)sizeof(culling_state),
+              vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
+          !capture.complete_source_binding && capture.blocks_real_dgn_mesh_render,
+          "a degenerate Structure3 face cannot enter the host packet");
 
     {
         Nexus_V1_Engine engine;
