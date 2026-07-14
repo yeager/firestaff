@@ -465,6 +465,11 @@
     does not admit a C4 heap, event dispatcher, DSA program, or runtime from
     test data. A real CSB save still must establish the PC34 EVENT stride and
     bind this result to a live load transaction.
+  - 2026-07-14 update: F0652 now source-merges C05..C10/C01/C02 records only
+    through Firestaff's existing native EVENT/TIMELINE owner and F0237 delete
+    transaction. It does not create a second queue, add or dispatch an event,
+    or execute a DSA action. Real CSB media remains required before this
+    helper can be selected by a live restored queue.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;

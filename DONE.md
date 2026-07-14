@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0652 merge transaction: added the source C05..C10,
+  C01, and C02 merge/delete behavior over the existing native EVENT/TIMELINE
+  owner. It uses F0237 only for source-required deletions and returns before
+  any new-event allocation, queue execution, or DSA path. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0651 post-save timeline management: added the
   source-order `EVENT_NONE` free-list rebuild after C4 intake. It overwrites
   stale `UNUSED_EVENT` links, reports the first free and source `index + 1`
