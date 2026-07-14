@@ -120,6 +120,14 @@
     timer-slot, or core-resume evidence. The probe remains unavailable without an explicit
     checksum-valid DSA-bearing save/dungeon pair; it creates no substitute
     save, dungeon, timer, or DSA record.
+  - 2026-07-14 follow-up: when a real resumed tick reaches the existing
+    source-bounded `ProcessDSATimer5/6` pure-stack route, the runtime now
+    retains a receipt for its original `TimerQueue` slot, `TIMER` index, and
+    exact authenticated DSA action. The opt-in package probe verifies that
+    receipt against the retained save-owned action table and reports the
+    positive action path separately from an unavailable package. It neither
+    predicts a timer nor synthesizes a DSA action; current local data has no
+    checksum-valid extended save to exercise this positive branch.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while
