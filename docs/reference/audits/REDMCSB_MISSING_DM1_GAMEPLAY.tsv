@@ -1,0 +1,10 @@
+symbol	family	reference_source	disposition	evidence
+F0106_DUNGEONVIEW_TestResetToStep1_CPSF	DUNGEONVIEW	ATARIST.H:62	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no DM1 source-owned reset-step API located.
+F0145_DUNGEON_GetGroupCells	DUNGEON	ATARIST.H:76	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; active-group cells remain decoded inline in src/dm1/dm1_v1_original_save_pc34_handoff.c.
+F0147_DUNGEON_GetGroupDirections	DUNGEON	ATARIST.H:78	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; packed directions remain decoded inline in src/dm1/dm1_v1_original_save_pc34_handoff.c.
+F0165_DUNGEON_GetDiscardedThing	DUNGEON	DEFS.H:7344	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no source-owned discarded-thing allocator located.
+F0218_PROJECTILE_GetImpactCount	PROJECTILE	ATARIST.H:126	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no source-owned impact-count callable located.
+F0273_SENSOR_GetObjectOfTypeInCell	SENSOR	DEFS.H:7813	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no source-owned typed-cell sensor query located.
+F0323_CHAMPION_Unpoison	CHAMPION	CHAMPION.C:1652	missing	Live behavior is duplicated at src/engine/m11_game_view.c:8048 and :15512, but no source-owned F0323 callable boundary exists.
+F0362_COMMAND_HighlightBoxEnable	COMMAND	CLIKMENU.C:6	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no DM1 source-owned highlight enable route located.
+F0385_MENUS_DrawActionDamage	MENUS	ACTIDRAW.C:34	missing	No callable mapping in REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv; no source-owned action-damage draw plan located.
