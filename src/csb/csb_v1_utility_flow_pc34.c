@@ -1563,6 +1563,7 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
             ctx->imported_party = party;
             ctx->imported_champion_count = count;
             /* Import successful — show confirmation preview */
+            ctx->import_confirmed = -1;
             ctx->state = CSB_V1_UTIL_FLOW_CONFIRM_IMPORT;
         }
         return 0;  /* continue */
@@ -1577,6 +1578,10 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
          *
          * If import_confirmed is set, commit the import and go to NEW_GAME.
          * If import not confirmed, go back to SELECT_ACTION. */
+        if (ctx->import_confirmed < 0) {
+            /* The preview stays visible until the user supplies a decision. */
+            return 0;
+        }
         if (ctx->import_confirmed) {
             /* Commit: party already updated in IMPORT_CHAMPIONS state.
              * Transition to NEW_GAME to start playing. */
