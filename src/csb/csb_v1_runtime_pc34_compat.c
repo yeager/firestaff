@@ -19319,6 +19319,27 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.game_time = profile->game_time;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
     candidate.dsa_slave_thing = binding->location.actuator_thing;
+    if (profile->party_state_valid &&
+        profile->party_state.ChampionCount >= 0 &&
+        profile->party_state.ChampionCount <= 4) {
+        int champion_index;
+
+        candidate.party_champions_valid = 1;
+        candidate.party_champion_count = profile->party_state.ChampionCount;
+        for (champion_index = 0;
+             champion_index < candidate.party_champion_count;
+             ++champion_index) {
+            const CSB_V1_Champion *champion =
+                &profile->party_state.Champions[champion_index];
+
+            candidate.party_champion_talents[champion_index] =
+                champion->Talents;
+            candidate.party_champion_wounds[champion_index] =
+                champion->Wounds;
+            candidate.party_champion_health[champion_index] =
+                champion->CurrentHealth;
+        }
+    }
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =
             profile->csbwin_global_variable_count;

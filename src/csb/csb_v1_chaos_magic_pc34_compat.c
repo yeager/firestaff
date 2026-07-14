@@ -973,6 +973,34 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         break;
+    case 106u: /* STKOP_CountInjury */
+        /* CSBWin DSA.cpp:4798-4817 pops injuryMask then champion mask,
+         * ignores dead champions, and sums each selected wound bit. */
+        if (!context->party_champions_valid ||
+            context->party_champion_count < 0 ||
+            context->party_champion_count > 4 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        count = 0u;
+        for (sv = 0; sv < context->party_champion_count; ++sv, w >>= 1) {
+            uint32_t injuries;
+
+            if ((w & 1u) == 0u || context->party_champion_health[sv] <= 0) {
+                continue;
+            }
+            injuries = (uint32_t)context->party_champion_wounds[sv] & v;
+            injuries = (injuries & 0x55555555u) +
+                ((injuries >> 1) & 0x55555555u);
+            injuries = (injuries & 0x33333333u) +
+                ((injuries >> 2) & 0x33333333u);
+            injuries = (injuries + (injuries >> 4)) & 0x0f0f0f0fu;
+            injuries += injuries >> 8;
+            count += injuries & 0x3fu;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, count)) goto underflow;
+        break;
     case 40u: /* STKOP_ParamFetch */
         /* CSBWin DSA.cpp:2956-2999 copies the first N source parameters to
          * DSAVARS starting at I.  Missing logical parameters become zero and
@@ -1106,6 +1134,23 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             memmove(variable_state + v, variable_state + w,
                     (size_t)count * sizeof(*variable_state));
         }
+        break;
+    case 117u: /* STKOP_WhoHasTalent */
+        /* DSA.cpp:4363-4380 evaluates every source party CHARDESC and
+         * returns its bitmask when all requested talent bits are present. */
+        if (!context->party_champions_valid ||
+            context->party_champion_count < 0 ||
+            context->party_champion_count > 4 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        w = 0u;
+        for (sv = 0; sv < context->party_champion_count; ++sv) {
+            if ((context->party_champion_talents[sv] & v) == v) {
+                w |= 1u << sv;
+            }
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, w)) goto underflow;
         break;
     case 131u: /* STKOP_GetSkin, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:3107-3120 pops the packed five/five/six-bit
@@ -1462,6 +1507,14 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.game_time = runner->game_time;
     context.dsa_slave_thing_valid = runner->dsa_slave_thing_valid;
     context.dsa_slave_thing = runner->dsa_slave_thing;
+    context.party_champions_valid = runner->party_champions_valid;
+    context.party_champion_count = runner->party_champion_count;
+    memcpy(context.party_champion_talents, runner->party_champion_talents,
+           sizeof(context.party_champion_talents));
+    memcpy(context.party_champion_wounds, runner->party_champion_wounds,
+           sizeof(context.party_champion_wounds));
+    memcpy(context.party_champion_health, runner->party_champion_health,
+           sizeof(context.party_champion_health));
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;

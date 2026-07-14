@@ -3,8 +3,9 @@
  * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
  * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
- * STKOP_TimeFetch:2512-2518 and STKOP_ThisDSAId:4822-4828. These commands
- * and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
+ * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
+ * STKOP_WhoHasTalent:4363-4380, and STKOP_CountInjury:4798-4817. These
+ * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
@@ -42,6 +43,19 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.game_time = 12345u;
     context.dsa_slave_thing_valid = 1;
     context.dsa_slave_thing = 0x8123u;
+    context.party_champions_valid = 1;
+    context.party_champion_count = 4;
+    context.party_champion_talents[0] = 0x3u;
+    context.party_champion_talents[1] = 0x1u;
+    context.party_champion_talents[2] = 0x7u;
+    context.party_champion_wounds[0] = 0x0003u;
+    context.party_champion_wounds[1] = 0x000fu;
+    context.party_champion_wounds[2] = 0x0006u;
+    context.party_champion_wounds[3] = 0x8000u;
+    context.party_champion_health[0] = 10;
+    context.party_champion_health[1] = 0;
+    context.party_champion_health[2] = 20;
+    context.party_champion_health[3] = 30;
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
 }
@@ -95,6 +109,10 @@ int main(void)
         0x0686u, 3u, 0x0686u, 0u, 0x0a4bu
     };
     uint16_t local_fetch_bad_index[] = { 0x0686u, 100u, 0x098bu };
+    uint16_t who_has_talent[] = { 0x0686u, 1u, 0x1d4bu, 0x000du };
+    uint16_t count_injury[] = {
+        0x0686u, 15u, 0x0686u, 7u, 0x1a8bu, 0x000du
+    };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
@@ -282,6 +300,20 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL &&
               parameters[0] == 77u,
           "FETCH rejects an out-of-bank source local without publication");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, who_has_talent,
+              (int)(sizeof(who_has_talent) / sizeof(who_has_talent[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 7u && execution.stack_depth == 0u,
+          "WHO_HAS_TALENT returns the source party talent mask");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, count_injury,
+              (int)(sizeof(count_injury) / sizeof(count_injury[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 4u && execution.stack_depth == 0u,
+          "COUNT_INJURY skips dead champions and counts selected source wounds");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
