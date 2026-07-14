@@ -3343,6 +3343,76 @@ int nexus_v1_current_level_slev_trace_host_receipt(
     return 0;
 }
 
+static int nexus_v1_slev_raw_trace_has(const uint8_t *data, size_t size,
+                                       const char *needle) {
+    size_t needle_size;
+    size_t index;
+    if (!data || !needle || !(needle_size = strlen(needle)) || needle_size > size)
+        return 0;
+    for (index = 0; index <= size - needle_size; ++index) {
+        if (memcmp(data + index, needle, needle_size) == 0) return 1;
+    }
+    return 0;
+}
+
+int nexus_v1_build_slev_dispatch_evidence(
+    const Nexus_V1_Engine *engine, const uint8_t *raw_trace,
+    size_t raw_trace_size, Nexus_V1_SlevDispatchEvidenceReceipt *out_receipt) {
+    Nexus_V1_SlevDispatchEvidenceReceipt receipt;
+    const Nexus_V1_LevelScriptTraceAdmissionReceipt *trace;
+    char entry[64];
+    char task_body[64];
+    char callback_or_write[64];
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_script_dispatch = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    trace = &engine->script_trace_admission;
+    receipt.level_index = trace->level_index;
+    if (trace->status != NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE ||
+        !trace->raw_trace_bytes_bound ||
+        trace->raw_trace_byte_count != raw_trace_size ||
+        trace->raw_trace_fnv1a64 !=
+            nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size)) {
+        receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_RAW;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bound = 1;
+    snprintf(entry, sizeof(entry), "pc=%08x opcode=%04x",
+             trace->entry_pc, engine->script_vm.real_task_first_opcode);
+    snprintf(task_body, sizeof(task_body), "pc=%08x opcode=%04x",
+             trace->task_body_pc, trace->task_body_opcode);
+    snprintf(callback_or_write, sizeof(callback_or_write), "pc=%08x kind=%s",
+             trace->callback_or_write_pc,
+             trace->callback_or_write_is_write ? "write" : "callback");
+    receipt.entry_observed = nexus_v1_slev_raw_trace_has(raw_trace,
+                                                          raw_trace_size, entry);
+    receipt.task_body_observed = nexus_v1_slev_raw_trace_has(raw_trace,
+                                                              raw_trace_size, task_body);
+    receipt.callback_or_write_observed = nexus_v1_slev_raw_trace_has(
+        raw_trace, raw_trace_size, callback_or_write);
+    receipt.callback_or_write_is_write = trace->callback_or_write_is_write;
+    if (!receipt.entry_observed || !receipt.task_body_observed ||
+        !receipt.callback_or_write_observed) {
+        receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED;
+    receipt.task_body_dispatch_proven = 0;
+    receipt.dispatch_permitted = 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {
