@@ -1,0 +1,267 @@
+/* Canonical PC G1 DB4 creature -> GDAT CREATURES/F9 handoff proof.
+ * Source: skproject/SKWIN/c_map.cpp QUERY_DUNGEON_MAP_CHIP_PICT and
+ * SKWIN/SkWinCore.cpp DRAW_CHIP_OF_MAGIC_MAP. */
+
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_g1_scene_runtime_bridge.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    const DM2_V1_AssetLoader *loader;
+    int creature_type;
+    int expected_index;
+    uint8_t *decoded_pixels;
+    int fetch_calls;
+    int palette_calls;
+    int resolve_calls;
+    int reject_fetch;
+} GdatTrace;
+
+static int read_file(const char *path, uint8_t **out, size_t *out_size)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    if (!path || !out || !out_size) return 0;
+    *out = NULL;
+    *out_size = 0u;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out = bytes;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
+                                uint8_t **dungeon, size_t *dungeon_size)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *home = getenv("HOME");
+    char fallback[1024];
+    char graphics_path[1100];
+    char dungeon_path[1100];
+
+    if (!root || !root[0]) {
+        if (!home || !home[0]) return 0;
+        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data",
+                 home);
+        root = fallback;
+    }
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    return read_file(graphics_path, graphics, graphics_size) &&
+        read_file(dungeon_path, dungeon, dungeon_size);
+}
+
+static int unexpected_generic_resolve(void *user,
+                                      DM2_V1_G1SceneTileClass tile_class,
+                                      DM2_V1_G1SceneRootClass root_class,
+                                      int *out_gdat_index)
+{
+    GdatTrace *trace = user;
+    (void)tile_class;
+    (void)root_class;
+    (void)out_gdat_index;
+    ++trace->resolve_calls;
+    return 0;
+}
+
+static int fetch_creature_map_chip(void *user, int gdat_index,
+                                   const uint8_t **out_pixels,
+                                   int *out_width, int *out_height,
+                                   int *out_stride)
+{
+    GdatTrace *trace = user;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+
+    ++trace->fetch_calls;
+    if (trace->reject_fetch || gdat_index != trace->expected_index ||
+        trace->decoded_pixels) return -1;
+    trace->decoded_pixels = dm2_v1_asset_load_image_field(
+        trace->loader, DM2_GDAT_CATEGORY_CREATURES, trace->creature_type,
+        DM2_GDAT_IMG_MAP_CHIP, &width, &height, &format);
+    if (!trace->decoded_pixels || width <= 0 || height <= 0 ||
+        format == DM2_IMG_FMT_UNKNOWN) {
+        dm2_v1_asset_free_pixels(trace->decoded_pixels);
+        trace->decoded_pixels = NULL;
+        return -1;
+    }
+    *out_pixels = trace->decoded_pixels;
+    *out_width = width;
+    *out_height = height;
+    *out_stride = width;
+    return 0;
+}
+
+static int fetch_creature_local_palette(void *user, int gdat_index,
+                                        uint8_t out_palette16[16],
+                                        uint32_t *out_hash)
+{
+    GdatTrace *trace = user;
+
+    ++trace->palette_calls;
+    if (trace->reject_fetch || gdat_index != trace->expected_index) return -1;
+    return dm2_v1_asset_load_image_local_palette(
+        trace->loader, DM2_GDAT_CATEGORY_CREATURES, trace->creature_type,
+        DM2_GDAT_IMG_MAP_CHIP, out_palette16, out_hash) && *out_hash != 0u
+        ? 0 : -1;
+}
+
+int main(void)
+{
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon_bytes = NULL;
+    size_t graphics_size = 0u;
+    size_t dungeon_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_G1DungeonSceneClassificationReceipt scene;
+    DM2_V1_G1SceneRuntimeHandoffReceipt handoff;
+    GdatTrace trace;
+    const DM2_V1_G1DirectChainNode *root;
+    const uint8_t *raw_map_chip;
+    size_t raw_map_chip_size = 0u;
+    int creature_level = -1;
+    int creature_x = -1;
+    int creature_y = -1;
+    int failures = 0;
+
+    if (!load_canonical_files(&graphics, &graphics_size,
+                              &dungeon_bytes, &dungeon_size)) {
+        puts("SKIP: no local canonical DM2 data");
+        return 0;
+    }
+    memset(&loader, 0, sizeof(loader));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&scene, 0, sizeof(scene));
+    memset(&handoff, 0, sizeof(handoff));
+    memset(&trace, 0, sizeof(trace));
+    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
+        dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0 ||
+        dungeon_bytes[2] != 0x47u || dungeon_bytes[3] != 0x31u) {
+        fputs("FAIL: canonical G1/GDAT input was not accepted\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    /* The corpus, not a synthetic fixture, chooses the first direct DB4 root
+     * whose exact CREATURES/type/F9 record is present. */
+    for (int level = 0; level < dungeon.level_count && creature_level < 0;
+         ++level) {
+        for (int x = 0; x < dungeon.level_widths[level] && creature_level < 0;
+             ++x) {
+            for (int y = 0; y < dungeon.level_heights[level]; ++y) {
+                DM2_V1_G1DungeonSceneClassificationReceipt candidate;
+                const DM2_V1_G1DirectChainNode *candidate_root;
+                int candidate_type;
+
+                memset(&candidate, 0, sizeof(candidate));
+                if (!dm2_v1_dungeon_classify_g1_direct_root_scene(
+                        &dungeon, level, x, y, &candidate) ||
+                    candidate.root_class != DM2_V1_G1_SCENE_ROOT_CREATURE ||
+                    candidate.chain.node_count < 1) {
+                    continue;
+                }
+                candidate_root = &candidate.chain.nodes[0];
+                if (candidate_root->type != 4 || candidate_root->record_size < 5 ||
+                    candidate_root->record_offset < 0 ||
+                    candidate_root->record_offset + candidate_root->record_size >
+                        dungeon.raw_size) {
+                    continue;
+                }
+                candidate_type = dungeon.raw_data[candidate_root->record_offset + 4];
+                if (!dm2_v1_asset_load_sized(
+                        &loader, DM2_GDAT_CATEGORY_CREATURES, candidate_type,
+                        DM2_GDAT_IMG_MAP_CHIP, NULL)) {
+                    continue;
+                }
+                scene = candidate;
+                creature_level = level;
+                creature_x = x;
+                creature_y = y;
+                break;
+            }
+        }
+    }
+    if (creature_level < 0) {
+        fputs("FAIL: canonical G1 has no direct DB4 root with CREATURES/F9 art\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
+    root = &scene.chain.nodes[0];
+    if (root->type != 4 || root->record_size < 5 || root->record_offset < 0 ||
+        root->record_offset + root->record_size > dungeon.raw_size) {
+        fputs("FAIL: canonical DB4 creature root has no b4 type byte\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    trace.loader = &loader;
+    trace.creature_type = dungeon.raw_data[root->record_offset + 4];
+    trace.expected_index = dm2_v1_viewport_creature_graphic_index(
+        trace.creature_type, 0);
+    raw_map_chip = dm2_v1_asset_load_sized(
+        &loader, DM2_GDAT_CATEGORY_CREATURES, trace.creature_type,
+        DM2_GDAT_IMG_MAP_CHIP, &raw_map_chip_size);
+    if (!raw_map_chip || raw_map_chip_size == 0u || trace.expected_index == 0) {
+        fputs("FAIL: canonical CREATURES/type/F9 source image is absent\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    if (!dm2_v1_g1_scene_runtime_handoff(
+            &dungeon, creature_level, creature_x, creature_y,
+            unexpected_generic_resolve, &trace,
+            fetch_creature_map_chip, &trace, fetch_creature_local_palette,
+            &trace, &handoff) || !handoff.valid || handoff.blocked ||
+        handoff.scene.root_class != DM2_V1_G1_SCENE_ROOT_CREATURE ||
+        handoff.creature_type != trace.creature_type ||
+        handoff.gdat_index != trace.expected_index ||
+        handoff.material_width <= 0 || handoff.material_height <= 0 ||
+        handoff.material_stride < handoff.material_width ||
+        handoff.material_palette_hash == 0u || trace.resolve_calls != 0 ||
+        trace.fetch_calls != 1 || trace.palette_calls != 1) {
+        fputs("FAIL: DB4 b4 did not hand off its exact decoded CREATURES/F9 material\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
+    dm2_v1_asset_free_pixels(trace.decoded_pixels);
+    trace.decoded_pixels = NULL;
+    trace.reject_fetch = 1;
+    memset(&handoff, 0, sizeof(handoff));
+    if (dm2_v1_g1_scene_runtime_handoff(
+            &dungeon, creature_level, creature_x, creature_y,
+            unexpected_generic_resolve, &trace,
+            fetch_creature_map_chip, &trace, fetch_creature_local_palette,
+            &trace, &handoff) != 0 || !handoff.blocked || handoff.valid) {
+        fputs("FAIL: unavailable CREATURES/F9 material did not fail closed\n",
+              stderr);
+        failures = 1;
+    }
+
+done:
+    dm2_v1_asset_free_pixels(trace.decoded_pixels);
+    dm2_v1_asset_loader_free(&loader);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics);
+    free(dungeon_bytes);
+    if (failures) return 1;
+    puts("PASS: canonical DB4 creature reaches its exact GDAT CREATURES/F9 material");
+    return 0;
+}
