@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB native runtime save v11: source-owned creature-attack timing
+  is preserved through save/load while transient pending/played audio is reset;
+  v10 images remain readable. Verification: focused audio CTest.
+
 - 2026-07-14 DM1 ReDMCSB `MENU.C F0384_MENUS_GetActionName`: action names
   now resolve from the source-owned packed `G0490` table, retaining duplicate
   and placeholder names and rejecting `ACTION_NONE`/out-of-range inputs.
