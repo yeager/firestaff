@@ -5122,8 +5122,9 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
         if (command->kind == kind && command->viewport_gdat_index == gdat_index &&
-            command->destination.x == rect->x && command->destination.y == rect->y &&
-            command->destination.w == rect->w && command->destination.h == rect->h &&
+            (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
+             (command->destination.x == rect->x && command->destination.y == rect->y &&
+              command->destination.w == rect->w && command->destination.h == rect->h)) &&
             command->pixels && command->width > 0 && command->height > 0 &&
             command->palette_hash != 0u) return command;
     }
@@ -5392,10 +5393,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     s->active_asset_palette_hash = portrait_command->palette_hash;
                     s->active_asset_palette_ready = 1;
                     dm2_v1_blit_scaled_material_bitmap(s, vp, stride,
-                        plan.champion_slots[slot].portrait_rect.x,
-                        plan.champion_slots[slot].portrait_rect.y,
-                        plan.champion_slots[slot].portrait_rect.w,
-                        plan.champion_slots[slot].portrait_rect.h,
+                        portrait_command->destination.x,
+                        portrait_command->destination.y,
+                        portrait_command->destination.w,
+                        portrait_command->destination.h,
                         portrait_command->pixels, portrait_command->width,
                         portrait_command->height, portrait_command->width,
                         DM2_COLOR_TRANSPARENT,

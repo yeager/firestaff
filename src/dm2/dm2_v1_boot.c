@@ -4317,12 +4317,35 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_InterfaceRect source_portraits[4];
+    DM2_V1_ViewportRect portrait_destinations[4];
+    uint32_t table_hash = 0u;
+    int slot;
 
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !party || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_gdat_hud_m11_command_plan_build_for_party(
-        &gfx->loader, party, out_plan);
+    if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
+            &gfx->loader, party, out_plan) ||
+        !dm2_v1_boot_interface_hud_portrait_destinations(
+            profile, source_portraits, &table_hash) || table_hash == 0u) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    for (slot = 0; slot < 4; ++slot) {
+        if (source_portraits[slot].x < 0 || source_portraits[slot].y < 0 ||
+            source_portraits[slot].w <= 0 || source_portraits[slot].h <= 0) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        /* SKProject _098d_1208 uses the 640-wide dt04 coordinates; M11 is
+         * its matching 320-wide indexed surface. */
+        portrait_destinations[slot] = (DM2_V1_ViewportRect){
+            source_portraits[slot].x / 2, source_portraits[slot].y / 2,
+            source_portraits[slot].w / 2, source_portraits[slot].h / 2 };
+    }
+    return dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
+        out_plan, portrait_destinations, table_hash);
 }
 
 int dm2_v1_boot_weather_gdat_receipt(
@@ -5294,6 +5317,43 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
             if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(185u + slot + stat * 4u), &out_layout->status[slot][stat])) return 0;
     }
     out_layout->table_hash = hash; out_layout->valid = 1; return 1;
+}
+
+int dm2_v1_boot_interface_hud_portrait_destinations(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceRect out_portraits[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT],
+    uint32_t *out_table_hash)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+    uint16_t slot;
+
+    if (!out_portraits || !out_table_hash || !profile || !profile->graphics_dat) {
+        return 0;
+    }
+    memset(out_portraits, 0,
+           sizeof(DM2_V1_InterfaceRect) * DM2_V1_INTERFACE_HUD_CHAMPION_COUNT);
+    *out_table_hash = 0u;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    raw = dm2_v1_asset_load_typed_sized(&gfx->loader, 1, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
+    if (!raw || raw_size < 4u) return 0;
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    for (slot = 0; slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT; ++slot) {
+        if (!dm2_v1_boot_expand_hud_rect(raw, raw_size,
+                                         (uint16_t)(173u + slot),
+                                         &out_portraits[slot])) {
+            memset(out_portraits, 0, sizeof(DM2_V1_InterfaceRect) *
+                   DM2_V1_INTERFACE_HUD_CHAMPION_COUNT);
+            return 0;
+        }
+    }
+    *out_table_hash = hash ? hash : 1u;
+    return 1;
 }
 
 int dm2_v1_boot_dialogue_box_host_command(

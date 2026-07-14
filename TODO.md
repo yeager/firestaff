@@ -13,7 +13,8 @@
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
   source-owned destination/clipping plan. Complete standard door panels,
   frames, default buttons, and overlays now reach M11 through exact material
-  plans; custom `WALL_GFX` buttons remain receipt-gated, including the
+  plans. HUD champion portraits now bind their M11 destination to the original
+  `INTERFACE_GENERAL/0/dt04` RECT_173..RECT_176 table receipt; custom `WALL_GFX` buttons remain receipt-gated, including the
   source receipt's decoded dimensions. Direct DB4 creature sprites require
   their exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.

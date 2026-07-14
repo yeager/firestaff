@@ -13954,6 +13954,19 @@ without its own source receipt; no G1/DB meaning was inferred. Verification:
 external Ninja target `test_dm2_v1_gdat_hud_m11_command_real_data` and CTest
 `dm2_v1_gdat_hud_m11_command_real_data` pass against local canonical media.
 
+# ✅ 2026-07-14 DM2 GDAT HUD portrait destination receipt
+
+The four `CHAMPIONS` M11 commands now retain their exact source-owned
+`INTERFACE_GENERAL/0/dt04` destination: `RECT_173..RECT_176` and the complete
+decoded rectangle-table hash. The boot handoff converts those original
+640-wide rectangles to the matching 320-wide M11 surface before rendering, so
+the material plan cannot be matched against placeholder portrait coordinates.
+Missing, non-positive, out-of-bounds, or hashless rect-table input clears the
+complete plan. Source: SKProject `SkWinCore.cpp::QUERY_BLIT_RECT` and `SKWINSPX` HUD
+layout expansion. Verification: `test_dm2_v1_gdat_hud_m11_command_real_data`
+requires the four rect IDs/hashes and renders them callback-free with canonical
+PC DM2 media.
+
 # ✅ 2026-07-14 DM2 corpus-wide G1 GRAPHICSSET scene-plan handoff
 
 `test_dm2_v1_gdat_scene_plan_viewport_real_data` now traverses every distinct
