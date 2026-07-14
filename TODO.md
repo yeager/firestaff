@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict
+  single-face manifest intake now preserves one DGN/Structure3 face's opaque
+  texture span, palette state, VDP1 state, transform state, normal/culling
+  state, command bytes, sizes, FNV witnesses, and capture ordering. It
+  rejects missing or zero-sized correlations before the DGN binder sees a
+  candidate. Parsing never admits a capture source, assigns PRS3 or VDP1
+  fields, decodes texture pixels or palette entries, or enables mesh drawing.
+  Next required evidence is an authenticated original-Saturn capture manifest
+  plus separately scanner-verified retail DGN media and observed command/read
+  spans; only then may the existing no-draw binder evaluate byte identity.
+
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked
   later `$e009` observation to the already source-locked record `0x0b52`

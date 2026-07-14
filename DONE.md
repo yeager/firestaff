@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 capture-manifest intake: introduced a strict,
+  ordered single-face correlation envelope for future original-Saturn DGN
+  captures. It records opaque, size-bounded texture/palette/VDP1/transform/
+  culling/command witnesses and the exact Structure3 face candidate without
+  accepting capture provenance or inferring any PRS3, VDP1, pixel, palette,
+  transform, culling, or draw semantics. The receipt remains no-draw until
+  independently admitted source/capture evidence reaches the existing binder.
+  Declared span sizes must now exactly match each captured buffer before it
+  can reach that binder.
+  Verification: strict C99 `test_nexus_v1_structure3_capture_manifest`
+  rejects missing palette correlation, zero-sized texture spans, and invalid
+  ordering.
+
 - 2026-07-14 DM2 original SKSave corpus renamed-artifact admission: recursive
   corpus discovery now accepts a noncanonical filename only after the same
   complete 42-byte SKSave header gate used by load plus the existing
