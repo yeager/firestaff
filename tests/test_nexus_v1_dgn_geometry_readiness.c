@@ -1679,6 +1679,14 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.structure1a_kinds.complete &&
           !render_plan.structure1a_kinds.kind_semantics_proven &&
           render_plan.structure3_model_references.complete &&
+          render_plan.structure3_faces.valid &&
+          render_plan.structure3_face_materials.face_receipt_valid &&
+          render_plan.structure3_face_materials.valid &&
+          render_plan.structure3_face_materials.face_count ==
+              render_plan.structure3_faces.face_count &&
+          render_plan.structure3_face_materials.selector_bindings_complete &&
+          !render_plan.structure3_face_materials
+              .material_or_draw_semantics_proven &&
           render_plan.structure1a_transform_selectors.complete &&
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
           render_plan.structure1f_face_selectors.complete &&
