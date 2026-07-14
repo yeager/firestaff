@@ -3690,6 +3690,65 @@ static void test_real_dm1_dungeon_tail_map_span_validation(void)
           "out-of-range real tail map span preserves F0434 size failure");
 }
 
+static void test_real_dm1_dungeon_tail_rejects_out_of_bounds_party_pose(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat party;
+    struct GameWorld_Compat loaded_world;
+    struct GameWorld_Compat loaded_world_before;
+    DM1OriginalSavePC34HandoffReport report;
+    DM1OriginalSavePC34HandoffReport report_before;
+    const size_t pose_offsets[] = { 18u, 12u, 14u };
+    char path[1024];
+    int written = 0;
+    size_t i;
+    int rc;
+
+    if (!export_local_dm1_dungeon_save(bytes, sizeof(bytes), &written)) {
+        puts("SKIP real DM1 DUNGEON.DAT party-pose validation (no local data)");
+        return;
+    }
+
+    for (i = 0u; i < sizeof(pose_offsets) / sizeof(pose_offsets[0]); ++i) {
+        CHECK(rewrite_fixture_global_u16(bytes, (size_t)written,
+                                         pose_offsets[i], 0x7fffu),
+              "rebuilds a checksum-valid PC34 GLOBAL_DATA pose mutation");
+        memset(&imported, 0, sizeof(imported));
+        memset(&party, 0, sizeof(party));
+        imported.party = &party;
+        memset(&report, 0, sizeof(report));
+        rc = dm1_v1_original_save_pc34_handoff_bytes(
+            bytes, (size_t)written, &imported, &report);
+        CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+                  report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT,
+              "out-of-bounds pose retains all original PC34 part checksums");
+
+        memset(&loaded_world, 0xa5, sizeof(loaded_world));
+        memset(&report, 0x5a, sizeof(report));
+        memcpy(&loaded_world_before, &loaded_world, sizeof(loaded_world));
+        memcpy(&report_before, &report, sizeof(report));
+        make_temp_save_path(path, sizeof(path));
+        remove(path);
+        CHECK(write_fixture_file(path, bytes, written),
+              "writes checksum-valid original-data party-pose mutation");
+        rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+            path, NULL, &loaded_world, NULL, &report);
+        remove(path);
+        CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+              "F0435 tail pose outside materialized dungeon rejects before commit");
+        CHECK(memcmp(&loaded_world, &loaded_world_before,
+                     sizeof(loaded_world)) == 0 &&
+                  memcmp(&report, &report_before, sizeof(report)) == 0,
+              "rejected checksum-valid tail pose leaves world and report unchanged");
+
+        if (i + 1u < sizeof(pose_offsets) / sizeof(pose_offsets[0])) {
+            CHECK(export_local_dm1_dungeon_save(bytes, sizeof(bytes), &written),
+                  "re-exports original DUNGEON.DAT tail for next pose mutation");
+        }
+    }
+}
+
 static int load_local_dm1_dungeon_for_door_event(
     struct DungeonDatState_Compat *dungeon,
     struct DungeonThings_Compat *things)
@@ -5135,6 +5194,7 @@ int main(void)
     test_original_c70_light_import_runtime_export_roundtrip();
     test_original_c65_generator_import_runtime_export_roundtrip();
     test_real_dm1_dungeon_tail_map_span_validation();
+    test_real_dm1_dungeon_tail_rejects_out_of_bounds_party_pose();
     test_real_dm1_door_animation_save_handoff();
     test_public_fixture_builder_roundtrips_pc34_handoff();
     test_world_roundtrip_helper_exports_verified_pc34();

@@ -2476,6 +2476,27 @@ static int materialize_original_pc34_dungeon_tail(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 lines 2729-2745 restores PartyMapIndex/X/Y
+ * from GLOBAL_DATA before F0434 materializes the saved dungeon at 2826.
+ * A checksum-authenticated pose still cannot enter M10 unless it names a
+ * square in that newly materialized tail. */
+static int original_pc34_party_pose_is_in_materialized_dungeon(
+    const struct GameWorld_Compat *world)
+{
+    const struct DungeonMapDesc_Compat *map;
+
+    if (!world || !world->dungeon || !world->dungeon->maps ||
+        world->party.mapIndex < 0 ||
+        world->party.mapIndex >= (int)world->dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &world->dungeon->maps[world->party.mapIndex];
+    return world->party.mapX >= 0 &&
+           world->party.mapX < (int)map->width &&
+           world->party.mapY >= 0 &&
+           world->party.mapY < (int)map->height;
+}
+
 static int import_original_pc34_global_data(
     const uint8_t *bytes,
     size_t size,
@@ -3226,6 +3247,10 @@ static int load_world_from_bytes_uncommitted(
         bytes, size, world, report);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
+    }
+    if (world->ownsDungeon &&
+        !original_pc34_party_pose_is_in_materialized_dungeon(world)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
     result = dm1_v1_original_save_pc34_handoff_apply_active_groups(
         report, world);
