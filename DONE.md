@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject DRAW_DOOR D0-D2: M11 door commands now retain the
+  selected GDAT image field, real decoded pixels/local palette, and source
+  stretch/light controls for D0, D1, and D2.
+
 - 2026-07-15 CSB M11 viewport/HUD commit: source-backed viewport and C017/C040
   pages now validate into a candidate page before one atomic host copy. Failed
   source evidence preserves the preceding page instead of exposing a partial

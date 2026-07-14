@@ -16,6 +16,37 @@ static uint32_t hash_u32(uint32_t hash, uint32_t value)
     return hash_bytes(hash, (const uint8_t *)&value, sizeof(value));
 }
 
+/* SKWINSPX v0/skglobal.cpp glbTabYAxisDistance and
+ * v4/SkWinCore.cpp DRAW_DOOR: D0/D1/D2/D3 center cells are 0/3/6/11.
+ * DRAW_DOOR starts with stretch 0x40 and light palette 0, selecting
+ * image y-distance-1 except D0, which explicitly selects image zero. */
+static int resolve_draw_door_distance(int view_square,
+                                      uint8_t *out_distance,
+                                      uint8_t *out_stretch,
+                                      uint8_t *out_light)
+{
+    uint8_t distance;
+    if (!out_distance || !out_stretch || !out_light) return 0;
+    switch (view_square) {
+    case DM2_SQ_D0C: distance = 0u; break;
+    case DM2_SQ_D1C: distance = 1u; break;
+    case DM2_SQ_D2C: distance = 2u; break;
+    case DM2_SQ_D3C: distance = 3u; break;
+    default: return 0;
+    }
+    *out_distance = distance;
+    *out_stretch = 0x40u;
+    *out_light = 0u;
+    return 1;
+}
+
+static uint8_t draw_door_distance_stretch(uint8_t distance)
+{
+    /* kskval1.h tlbDistanceStretch = { 0x60, 0x40, 0x2b, 0x1c, 0x13 }. */
+    static const uint8_t stretch[] = { 0x60u, 0x40u, 0x2bu, 0x1cu, 0x13u };
+    return distance < sizeof(stretch) ? stretch[distance] : 0u;
+}
+
 void dm2_v1_gdat_door_overlay_m11_command_plan_free(
     DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
 {
@@ -99,9 +130,34 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     if (plan->command_count >= DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX ||
         index < 0 || index > 0xff || field < 0) return 0;
     command = &plan->commands[plan->command_count];
+    if (kind == DM2_V1_GDAT_DOOR_PANEL &&
+        (!resolve_draw_door_distance(door->view_square,
+                                     &command->draw_distance,
+                                     &command->stretch_dual,
+                                     &command->light_palette) ||
+         field != (command->draw_distance == 0u
+                       ? 0 : (int)command->draw_distance - 1))) {
+        return 0;
+    }
     raw = dm2_v1_asset_load_sized(loader, category, index, field, &raw_size);
     command->pixels = dm2_v1_asset_load_image_field(loader, category, index,
                                                       field, &width, &height, NULL);
+    /* DRAW_DOOR retries image zero when the distance-selected image cannot
+     * be loaded. Its retry is a real DOORS GDAT image, with the table-owned
+     * distance stretch and light palette, rather than substitute artwork. */
+    if (kind == DM2_V1_GDAT_DOOR_PANEL &&
+        (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0) &&
+        field != 0 && command->draw_distance != 0u) {
+        dm2_v1_asset_free_pixels(command->pixels);
+        command->pixels = NULL;
+        raw_size = 0u;
+        field = 0;
+        raw = dm2_v1_asset_load_sized(loader, category, index, field, &raw_size);
+        command->pixels = dm2_v1_asset_load_image_field(loader, category, index,
+                                                          field, &width, &height, NULL);
+        command->stretch_dual = draw_door_distance_stretch(command->draw_distance);
+        command->light_palette = command->draw_distance;
+    }
     if (!raw || !raw_size || !command->pixels || width <= 0 || height <= 0 ||
         !dm2_v1_asset_load_image_local_palette(loader, category, index, field,
                                                 command->palette16,
@@ -152,6 +208,12 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                            command->color_key);
         command->selection_hash = hash_u32(command->selection_hash,
                                            command->no_frames);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->draw_distance);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->stretch_dual);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->light_palette);
     }
     return command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
