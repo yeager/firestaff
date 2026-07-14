@@ -21674,6 +21674,7 @@ static int m11_draw_dm1_side_wall_host_receipt(
     const DM1_ViewportSideWallHostReceiptPc34* receipt)
 {
     const M11_AssetSlot* slot;
+    int source_backing_accepts_zone;
     int y;
     if (!state || !state->assetsAvailable || !framebuffer || !receipt ||
         !receipt->handled || !receipt->draw_wall || !receipt->material.valid) {
@@ -21681,9 +21682,20 @@ static int m11_draw_dm1_side_wall_host_receipt(
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->material.graphic_index);
+    /* ReDMCSB DUNVIEW.C F0119/F0120 send the G0163 D2L/D2R frame
+     * (C710/C711: 75x71) to F0104/F0105.  The PC34 material backing is
+     * 78x74, so demanding bitmap and destination-zone identity silently
+     * drops both two-forward side walls.  This is a source crop, not a
+     * scaled substitute; the blit below remains bounded by the 75x71 zone. */
+    source_backing_accepts_zone = receipt->pc34_zone == 710 ||
+        receipt->pc34_zone == 711;
     if (!slot || !slot->loaded || !slot->pixels ||
-        slot->width != (unsigned int)receipt->material.expected_width ||
-        slot->height != (unsigned int)receipt->material.expected_height) {
+        ((slot->width != (unsigned int)receipt->material.expected_width ||
+          slot->height != (unsigned int)receipt->material.expected_height) &&
+         !(source_backing_accepts_zone &&
+           receipt->material.expected_width == 75 &&
+           receipt->material.expected_height == 71 &&
+           slot->width == 78 && slot->height == 74))) {
         return 0;
     }
     for (y = 0; y < receipt->height; ++y) {
