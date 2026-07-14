@@ -492,6 +492,12 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir);
  * Returns 0 on success, -1 on failure. */
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
 
+/* Compares the exact DGN byte buffer selected by the launcher with the
+ * canonical MD5 from the Saturn asset catalog. Callers must not substitute a
+ * path-level lookup for this check before Structure3 binding. */
+int nexus_v1_dgn_bytes_match_canonical_md5(
+    const uint8_t *data, int size, const char *canonical_md5);
+
 /* Inspects every canonical level without changing the currently loaded
  * level or promoting corpus coverage into a runtime launch gate. */
 int nexus_v1_inspect_dgn_material_corpus(
