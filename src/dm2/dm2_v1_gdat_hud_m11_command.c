@@ -21,6 +21,15 @@ static uint32_t dm2_v1_gdat_hud_hash_bytes(uint32_t hash,
     return hash;
 }
 
+uint32_t dm2_v1_gdat_hud_m11_command_pixel_hash(
+    const DM2_V1_GdatHudM11Command *command)
+{
+    if (!command || !command->pixels || command->width <= 0 ||
+        command->height <= 0) return 0u;
+    return dm2_v1_gdat_hud_hash_bytes(2166136261u, command->pixels,
+                                      (size_t)command->width * command->height);
+}
+
 static uint32_t dm2_v1_gdat_hud_command_hash(
     const DM2_V1_GdatHudM11CommandPlan *plan)
 {
@@ -34,6 +43,9 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
                                            sizeof(command->kind));
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->raw_hash,
                                            sizeof(command->raw_hash));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->decoded_hash,
+            sizeof(command->decoded_hash));
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->palette_hash,
                                            sizeof(command->palette_hash));
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->destination,
@@ -118,7 +130,8 @@ static int dm2_v1_gdat_hud_add_command(
     }
     command->raw_byte_count = (uint32_t)raw_size;
     command->raw_hash = dm2_v1_gdat_hud_hash_bytes(2166136261u, raw, raw_size);
-    if (command->raw_hash == 0u) {
+    command->decoded_hash = dm2_v1_gdat_hud_m11_command_pixel_hash(command);
+    if (command->raw_hash == 0u || command->decoded_hash == 0u) {
         dm2_v1_asset_free_pixels(command->pixels);
         command->pixels = NULL;
         return 0;

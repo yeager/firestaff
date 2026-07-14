@@ -185,6 +185,8 @@ int main(void)
                         command->gdat_index != i - 9 || command->gdat_field != 0)) ||
             command->width <= 0 || command->height <= 0 || !command->pixels ||
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
+            command->decoded_hash == 0u || command->decoded_hash !=
+                dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
             command->raw_byte_count == 0u || command->palette_hash == 0u ||
             command->destination.w <= 0 || command->destination.h <= 0) {
             ++failures;

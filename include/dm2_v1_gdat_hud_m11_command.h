@@ -34,6 +34,7 @@ typedef struct DM2_V1_GdatHudM11Command {
     DM2_ImageFormat format;
     uint8_t palette16[16];
     uint32_t raw_hash;
+    uint32_t decoded_hash;
     uint32_t raw_byte_count;
     uint32_t palette_hash;
 } DM2_V1_GdatHudM11Command;
@@ -67,6 +68,8 @@ int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
     DM2_V1_GdatHudM11CommandPlan *plan,
     const DM2_V1_ViewportRect portrait_destinations[4],
     uint32_t source_table_hash);
+uint32_t dm2_v1_gdat_hud_m11_command_pixel_hash(
+    const DM2_V1_GdatHudM11Command *command);
 
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan);
