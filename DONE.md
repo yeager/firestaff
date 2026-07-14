@@ -1,6 +1,6 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-14 DM1/CSB ReDMCSB `F0683`, `F0695`, `F0696` and `F0697`: PC 3.4
+- 2026-07-14 DM1/CSB ReDMCSB `F0683`–`F0697`: PC 3.4
   C25-VGA transparent horizontal flip, creature palette replacement, message
   update sequencing and hatch callback routes are source-locked. Verification:
   focused strict C11 tests.
