@@ -310,6 +310,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     its EVENTS/TIMELINE queue before it is called runtime-admitted. A
     tail-less byte roundtrip remains diagnostic-only; it cannot borrow a host
     dungeon or satisfy the corpus runtime gate.
+  - 2026-07-14 update: the external HoC runtime gate now requires the live
+    M11 runtime to retain the `ORIGINAL_SAVE_PC34` viewport origin and emit a
+    nonblank, byte-stable 224x136 PC34 viewport crop. HUD chrome cannot
+    satisfy this rendering receipt. This records Firestaff consumption of an
+    admitted save's live dungeon state; it remains neither a DOS pixel-parity
+    claim nor a replacement for provenance-recorded original executable runs.
   - 2026-07-13 update: F0435 tail validation now verifies the persisted
     per-column cumulative SquareFirstThings table against raw-map thing-list
     flags before M10 can reconstruct its lookup. The remaining requirement is
