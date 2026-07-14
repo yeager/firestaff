@@ -718,6 +718,10 @@ ReDMCSB WIP 2021-02-06 source tree.
   - 2026-07-14 IBMIO.C F8134 now preserves the defined DOS EXEC command-tail
     prefix and normal-termination result. Program loading and DOS exit status
     remain callback boundaries requiring PC34 proof.
+  - 2026-07-14 NEC816.C F8137 now preserves the MEDIA457_P20JA 4bpp packed
+    nibble fill, including odd/even start and bounded write behavior. The
+    MEDIA472 byte-per-pixel path and the live framebuffer consumer remain
+    separate, unproven work.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
