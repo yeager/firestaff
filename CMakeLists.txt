@@ -7797,6 +7797,22 @@ if(BUILD_TESTING)
             -Wall -Wextra -Werror -O2)
     endif()
 
+    # Canonical-only SKProject creature-animation ownership proof. This is
+    # build-only because original GRAPHICS.DAT remains user-owned media.
+    add_executable(test_dm2_v1_gdat_creature_animation_real_data
+        tests/test_dm2_v1_gdat_creature_animation_real_data.c
+    )
+    target_include_directories(test_dm2_v1_gdat_creature_animation_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_gdat_creature_animation_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_creature_animation_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c

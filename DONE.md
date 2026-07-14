@@ -13659,6 +13659,22 @@ and all world-mutating DSA behavior remain fail-closed. Verification:
   style values and checks each style actually referenced by the supplied
   dungeon against its exact GDAT floor, ceiling, and scene controls.
 
+# ✅ 2026-07-14 DM2 same-index creature animation-table admission
+
+The DM2 creature-atlas receipt now records animation-table ownership only when
+the same original `CREATURES` index resolves all SKProject
+`GET_CREATURE_ANIMATION_FRAME` inputs: `dtRaw8/FB`, `dtRaw7/FC`, and
+`dtRaw7/FD`. It retains a complete-index mask and deterministic hash, so three
+unrelated GDAT entries cannot claim an animation route. The focused real-data
+probe accepts only canonical `GRAPHICS.DAT`, skips when user media is absent,
+and has no synthetic fallback. Source: SKProject `SKWIN/SkWinCore.cpp`
+`GET_CREATURE_ANIMATION_FRAME`; `SKWINSPX/src/v4/skcrture.cpp`
+`GET_CREATURE_COMMAND_ANIMATION_V5`, `GET_ANIM_SEQUENCE_INFO_V5`, and
+`GET_CREATURE_ANIMATION_IMAGE_ID_V5`.
+Verification: external Ninja target
+`test_dm2_v1_gdat_creature_animation_real_data` passed against local canonical
+media with 57 complete owners and masks `bfdff3f7/ffbffeff`.
+
 # ✅ 2026-07-14 DM2 GDAT HUD material-plan handoff
 
 The validated 13-command PC DM2 HUD family is now consumed directly by the
