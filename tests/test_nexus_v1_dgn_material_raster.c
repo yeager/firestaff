@@ -45,6 +45,16 @@ static void wb32(uint8_t *p, uint32_t v) {
     p[3] = (uint8_t)(v & 0xffU);
 }
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t index;
+    for (index = 0U; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static uint8_t *dgn_cell(uint8_t *structure1, int structure1b_rel,
                          int x, int y) {
     return structure1 + structure1b_rel +
@@ -231,6 +241,16 @@ int main(void) {
     engine.game.party_x = 3;
     engine.game.party_y = 4;
     engine.game.party_dir = 0;
+    engine.current_level_dgn_data = dgn;
+    engine.current_level_dgn_size = (int)sizeof(dgn);
+    engine.current_level_structure2_source.level_index = 0;
+    engine.current_level_structure2_source.canonical_hash_verified = 1;
+    engine.current_level_structure2_source.structure2_payload_envelope_valid = 1;
+    engine.current_level_structure2_source.materialization_bound = 1;
+    engine.current_level_structure2_source.loaded_bytes_bound = 1;
+    engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
+    engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+        fnv1a64(dgn, sizeof(dgn));
     engine.floor_materials.valid = 1;
     engine.floor_materials.surface_count = 1;
     seed_surface(&engine.floor_materials.surfaces[0],
@@ -320,6 +340,19 @@ int main(void) {
     expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
                !engine.dgn_material_plan.receipt.uses_bpk_material_route,
            "bound Structure1B selectors admit one static MNS package route only");
+    dgn[0] ^= 1U;
+    nexus_v1_invalidate_dgn_material_plan(&engine);
+    {
+        const Nexus_V1_DgnMaterialPlan *mutated_plan =
+            nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0);
+        expect(mutated_plan == NULL &&
+               engine.dgn_material_plan.receipt.status ==
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
+               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
+               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+           "a changed retained LEV buffer blocks the material host route despite valid MNS sources");
+    }
+    dgn[0] ^= 1U;
     /* A resolved Structure1A owner may retain only the bounded Structure3
      * envelope. The plan keeps that source evidence while the absent face
      * grammar remains a hard no-draw gate. */

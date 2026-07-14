@@ -991,6 +991,10 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         engine->current_level_structure2_source
             .structure2_payload_envelope_valid &&
         engine->current_level_structure2_source.materialization_bound &&
+        nexus_v1_dgn_source_bytes_match(
+            &engine->current_level_structure2_source,
+            engine->current_level_dgn_data,
+            engine->current_level_dgn_size) &&
         !engine->current_level_structure2_source.fallback_visuals_permitted;
     if (engine->current_level_structure2_source.canonical_hash_verified) {
         plan->structure2_source_level_index =
@@ -1007,6 +1011,17 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     plan->receipt.structure1b_selector_binding_proven =
         engine->dgn_static_material_sources.structure1b_selector_binding_proven;
     plan->receipt.bpk_material_route_bound = bpk_material_route_bound;
+    /* Every visible DGN command still originates in the active LEV bytes,
+     * including the static MNS material route.  Do not let a valid texture
+     * pair present geometry after the retained DGN has diverged from its
+     * canonical package receipt. */
+    if (!structure2_source_bound) {
+        plan->receipt.status =
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
     if (!static_mns_route_bound &&
         engine->dgn_static_material_sources.canonical_pair_bound &&
         engine->floor_mns_material_route_valid &&
@@ -1018,8 +1033,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
-    if (!static_mns_route_bound &&
-        (!bpk_material_route_bound || !structure2_source_bound)) {
+    if (!static_mns_route_bound && !bpk_material_route_bound) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
         plan->receipt.blocks_real_dgn_mesh_render = 1;
