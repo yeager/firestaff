@@ -493,6 +493,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0902_draw_ftl_logo_pre
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0904_palette_animation_pc34_compat.c")
+    add_executable(test_f0904_palette_animation_pc34_compat
+        tests/test_f0904_palette_animation_pc34_compat.c
+        src/frontend/f0904_palette_animation_pc34_compat.c
+    )
+    target_include_directories(test_f0904_palette_animation_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_f0904_palette_animation_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME f0904_palette_animation_pc34_compat
+        COMMAND test_f0904_palette_animation_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c
