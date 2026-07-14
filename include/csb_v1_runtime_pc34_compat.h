@@ -949,6 +949,14 @@ int csb_v1_runtime_execute_csbwin_equip_filter(
     CSB_V1_RuntimeProfile *profile, int champion_index, int slot_index,
     uint16_t old_thing, uint16_t new_thing);
 
+/* CSBWin Character.cpp::DamageCharacter routes its post-defense damage word
+ * through ESL_DAMAGECHARFILTER. The callback receives
+ * `{ championIndex, fingerprint, requestedDamage, finalDamage, woundMask,
+ * attackType, 0 }`; only its updated finalDamage is returned. */
+int csb_v1_runtime_execute_csbwin_damage_character_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index, int requested_damage,
+    uint16_t wound_mask, uint16_t attack_type, int *out_final_damage);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */

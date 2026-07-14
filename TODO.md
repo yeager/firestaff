@@ -1212,6 +1212,15 @@ widened `LocalState=2` ParameterB records, a real slave-master route,
 master-state/world effects, and a real-save corpus; no fallback catalog or
 generated DSA state is accepted.
 
+The source-owned C38 creature-damage path now also enters CSBWin
+`Character.cpp::DamageCharacter`'s `DamageCharFilter` only after its existing
+shared resolver has produced a positive source-shaped damage and wound mask.
+The bounded handoff passes the documented seven parameters and consumes only
+an authenticated pure-stack callback's non-negative signed-16 final-damage
+word. Missing, altered, unsupported, or unrepresentable filter results leave
+the established C38 path unchanged; this does not claim complete
+`DamageCharacter` pending-damage, wound, shield, or non-C38 coverage.
+
 The Phase 7 CSB runtime gate now also drives the same compact `LocalState=2`
 `ParameterB=4` state through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
 `TT_FALSEWALL` runner boundaries, then proves a widened high-bit value rejects
