@@ -6,8 +6,8 @@
 
 /*
  * ReDMCSB MEMORY.C F0470_MEMORY_FreeAtHeapBottom, PC34/I34E family.
- * The permanent heap grows upward from heap_begin; this bounded adapter
- * accounts for a permanent release by moving permanent_end downward.
+ * This adapter records the released capacity only.  It deliberately does
+ * not move either permanent or temporary allocation boundary.
  * All members are offsets in the caller-owned heap address space.
  */
 typedef struct {
@@ -15,12 +15,14 @@ typedef struct {
     size_t permanent_end;
     size_t temporary_top;
     size_t heap_limit;
+    size_t available_heap_byte_count;
 } ReDMCSBF0470MemoryHeapBoundsPc34Compat;
 
 /*
- * Applies the original permanent-heap boundary adjustment. Returns false
- * without changing bounds when the heap state is invalid or byte_count
- * exceeds the accounted permanent allocation.
+ * Increases available_heap_byte_count by byte_count rounded up to an even
+ * value. Returns false without changing bounds when the heap state is
+ * invalid, rounding would overflow, or the increased count exceeds the
+ * bounded heap capacity. Allocation boundary members are never modified.
  */
 bool F0470_MEMORY_FreeAtHeapBottom_PC34(
     ReDMCSBF0470MemoryHeapBoundsPc34Compat *bounds,

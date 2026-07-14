@@ -1,51 +1,64 @@
-#include <stdio.h>
-
 #include "redmcsb_f0470_memory_free_at_heap_bottom_pc34_compat.h"
 
-static int failures;
+#include <stdint.h>
+#include <stdio.h>
 
-#define CHECK(expression) do { \
-    if (!(expression)) { \
-        fprintf(stderr, "failed: %s (%s:%d)\n", #expression, __FILE__, __LINE__); \
-        ++failures; \
-    } \
-} while (0)
-
-static ReDMCSBF0470MemoryHeapBoundsPc34Compat valid_bounds(void)
+static int check(int condition, const char *label)
 {
-    ReDMCSBF0470MemoryHeapBoundsPc34Compat bounds = {100U, 160U, 240U, 256U};
-    return bounds;
+    if (condition) {
+        return 1;
+    }
+    fprintf(stderr, "FAIL: %s\n", label);
+    return 0;
 }
 
 int main(void)
 {
-    ReDMCSBF0470MemoryHeapBoundsPc34Compat bounds = valid_bounds();
-    ReDMCSBF0470MemoryHeapBoundsPc34Compat unchanged;
+    ReDMCSBF0470MemoryHeapBoundsPc34Compat heap = {
+        .heap_begin = 100U,
+        .permanent_end = 140U,
+        .temporary_top = 180U,
+        .heap_limit = 200U,
+        .available_heap_byte_count = 20U,
+    };
+    ReDMCSBF0470MemoryHeapBoundsPc34Compat before;
+    int ok = 1;
 
-    CHECK(F0470_MEMORY_FreeAtHeapBottom_PC34(&bounds, 24U));
-    CHECK(bounds.permanent_end == 136U);
-    CHECK(bounds.temporary_top == 240U);
+    before = heap;
+    ok &= check(F0470_MEMORY_FreeAtHeapBottom_PC34(&heap, 5U),
+                "odd release succeeds");
+    ok &= check(heap.available_heap_byte_count == 26U,
+                "odd release is rounded up before accounting");
+    ok &= check(heap.heap_begin == before.heap_begin &&
+                    heap.permanent_end == before.permanent_end &&
+                    heap.temporary_top == before.temporary_top &&
+                    heap.heap_limit == before.heap_limit,
+                "release does not move allocation boundaries");
 
-    CHECK(F0470_MEMORY_FreeAtHeapBottom_PC34(&bounds, 0U));
-    CHECK(bounds.permanent_end == 136U);
+    ok &= check(F0470_MEMORY_FreeAtHeapBottom_PC34(&heap, 4U),
+                "even release succeeds");
+    ok &= check(heap.available_heap_byte_count == 30U,
+                "even release increases available bytes exactly");
 
-    bounds = valid_bounds();
-    CHECK(F0470_MEMORY_FreeAtHeapBottom_PC34(&bounds, 60U));
-    CHECK(bounds.permanent_end == bounds.heap_begin);
+    before = heap;
+    ok &= check(!F0470_MEMORY_FreeAtHeapBottom_PC34(&heap, 71U),
+                "release beyond heap capacity rejects");
+    ok &= check(heap.available_heap_byte_count == before.available_heap_byte_count &&
+                    heap.permanent_end == before.permanent_end &&
+                    heap.temporary_top == before.temporary_top,
+                "capacity rejection preserves all accounting and boundaries");
 
-    bounds = valid_bounds();
-    unchanged = bounds;
-    CHECK(!F0470_MEMORY_FreeAtHeapBottom_PC34(&bounds, 61U));
-    CHECK(bounds.heap_begin == unchanged.heap_begin);
-    CHECK(bounds.permanent_end == unchanged.permanent_end);
+    before = heap;
+    ok &= check(!F0470_MEMORY_FreeAtHeapBottom_PC34(&heap, SIZE_MAX),
+                "odd maximum release rejects before rounding overflow");
+    ok &= check(heap.available_heap_byte_count == before.available_heap_byte_count &&
+                    heap.permanent_end == before.permanent_end &&
+                    heap.temporary_top == before.temporary_top,
+                "overflow rejection preserves all accounting and boundaries");
 
-    bounds = valid_bounds();
-    bounds.permanent_end = 241U;
-    unchanged = bounds;
-    CHECK(!F0470_MEMORY_FreeAtHeapBottom_PC34(&bounds, 1U));
-    CHECK(bounds.permanent_end == unchanged.permanent_end);
-
-    CHECK(!F0470_MEMORY_FreeAtHeapBottom_PC34(NULL, 1U));
-
-    return failures != 0;
+    if (!ok) {
+        return 1;
+    }
+    puts("PASS redmcsb_f0470_memory_free_at_heap_bottom_pc34_compat");
+    return 0;
 }
