@@ -211,6 +211,27 @@ trace_input_order_receipt() {
     ' "$file"
 }
 
+resolve_mednafen_ui_pid() {
+    local parent_pid=$1
+    local child_pid
+    local child_command
+    local nested_pid
+
+    for child_pid in $(pgrep -P "$parent_pid" 2>/dev/null || true); do
+        child_command=$(ps -p "$child_pid" -o command= 2>/dev/null || true)
+        if [[ "$child_command" == *"$mednafen_bin"* ]]; then
+            printf '%s\n' "$child_pid"
+            return 0
+        fi
+        nested_pid=$(resolve_mednafen_ui_pid "$child_pid" || true)
+        if [[ "$nested_pid" =~ ^[1-9][0-9]*$ ]]; then
+            printf '%s\n' "$nested_pid"
+            return 0
+        fi
+    done
+    return 1
+}
+
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -257,8 +278,9 @@ mednafen_pid=$!
 mednafen_ui_pid=0
 if [[ -n "$host_key" ]]; then
     sleep "$host_key_delay"
-    # The launcher PID belongs to timeout/env; focus the actual SDL process.
-    mednafen_ui_pid=$(pgrep -f "$mednafen_bin" | tail -n 1 || true)
+    # Resolve only descendants of this capture's timeout/env launcher. A
+    # global pgrep can select a stale Mednafen process from another capture.
+    mednafen_ui_pid=$(resolve_mednafen_ui_pid "$mednafen_pid" || true)
     if [[ ! "$mednafen_ui_pid" =~ ^[1-9][0-9]*$ ]]; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true

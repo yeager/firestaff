@@ -5,6 +5,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
+build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
@@ -15,6 +16,10 @@ if [[ ! -x "$runtime_verifier" ]] ||
    ! grep -Fq 'sdl2-compat' "$runtime_verifier" ||
    ! grep -Fq 'use a real SDL2 runtime for authentic Quartz/SDL capture' "$runtime_verifier"; then
     printf 'FAIL: live capture build must reject the SDL2-compat event bridge\n' >&2
+    exit 1
+fi
+if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script"; then
+    printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
 if [[ ! -f "$quartz_helper" ]] ||
@@ -48,7 +53,9 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' "$script" ||
    ! grep -Fq 'set targetProcess to first application process whose unix id is $mednafen_ui_pid' "$script" ||
    ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
-   ! grep -Fq 'mednafen_ui_pid=$(pgrep -f "$mednafen_bin" | tail -n 1 || true)' "$script" ||
+   ! grep -Fq 'resolve_mednafen_ui_pid()' "$script" ||
+   ! grep -Fq 'mednafen_ui_pid=$(resolve_mednafen_ui_pid "$mednafen_pid" || true)' "$script" ||
+   grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||
    ! grep -Fq 'i) host_key_code=34' "$script" ||
