@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0689 IMG3 expansion: added source-backed bounded
+  even-stride IMG3 header/palette/command expansion using F0685-F0688. Focused
+  strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0687/F0688 IMG3 stream: added PC packed-nibble and
   source run-count decoding for real IMG3 expansion. Focused strict-C11
   regression passes.

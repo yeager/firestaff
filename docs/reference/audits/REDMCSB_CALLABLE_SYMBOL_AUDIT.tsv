@@ -884,7 +884,7 @@ F	0685	F0685_IMG3_LineColorFilling	IMAGE4.C;ANIMIMG.C;SWITCH.C;IMAGE2.C;IMAGE3.C
 F	0686	F0686_IMG_CopyFromPreviousLine	ANIMIMG.C;IMAGE2.C	implemented-narrow	implemented_narrow	IMAGE2.C F0686 PC caller-owned packed-pixel previous-line copy
 F	0687	F0687_IMG3_GetNibble	IMAGE2.C;IMAGE3.C	implemented-narrow	implemented_narrow	IMAGE2.C F0687 PC caller-owned IMG3 packed-nibble reader
 F	0688	F0688_IMG3_GetPixelCount	IMAGE2.C;IMAGE3.C	implemented-narrow	implemented_narrow	IMAGE2.C F0688 PC caller-owned IMG3 run-count decoder
-F	0689	F0689_IMG_ExpandGraphicToBitmap	FMTOWNS.H;DEFS.H;SWITCH.C;IMAGE2.C;EXPAND.C;CEDT018.C;SELECTOR.C;SWSH.C;NECIO.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0689	F0689_IMG_ExpandGraphicToBitmap	FMTOWNS.H;DEFS.H;SWITCH.C;IMAGE2.C;EXPAND.C;CEDT018.C;SELECTOR.C;SWSH.C;NECIO.C	implemented-narrow	implemented_narrow	IMAGE2.C F0689 PC I34 real IMG3 even-stride expansion over caller-owned source/destination bytes
 F	0690	F0690_CopyPixelLineToScreenWithoutTransparency	ANIMIMG.C;SWITCH.C;IMAGE3.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0691	F0691_IMG_ExpandGraphicToScreen	DEFS.H;SWITCH.C;EXPAND.C;IMAGE3.C;SELECTOR.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0692	F0692_FillBox	FILLBOX.C;DEFS.H;CEDT027.C;IMAGE3.C;SELECTOR.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

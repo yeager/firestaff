@@ -31891,6 +31891,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0687_f0688_img3_pc34_
     add_test(NAME redmcsb_f0687_f0688_img3_pc34_compat COMMAND test_redmcsb_f0687_f0688_img3_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0689_img3_expand_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f0689_img3_expand_pc34_compat.c")
+    add_executable(test_redmcsb_f0689_img3_expand_pc34_compat tests/test_redmcsb_f0689_img3_expand_pc34_compat.c src/csb/redmcsb_f0689_img3_expand_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0686_copy_previous_line_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
+    target_include_directories(test_redmcsb_f0689_img3_expand_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0689_img3_expand_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f0689_img3_expand_pc34_compat COMMAND test_redmcsb_f0689_img3_expand_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8156_f8157_c25_palette_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f8156_f8157_c25_palette_pc34_compat.c")
     add_executable(test_redmcsb_f8156_f8157_c25_palette_pc34_compat
