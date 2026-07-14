@@ -8,7 +8,7 @@
  * task headers and never enable fallback dispatch.
  */
 
-#include "nexus_v1_script_vm.h"
+#include "nexus_v1_engine.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -293,6 +293,73 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
           "malformed task bytes are not promoted to real-profile evidence");
 }
 
+static void test_engine_owned_slev_profile_route_stays_blocked(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelScriptRouteReceipt route;
+    uint8_t slev[96];
+    static const uint8_t task_header[] = {
+        0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0xd0, 0x08, 0x4e, 0x08
+    };
+
+    memset(&engine, 0, sizeof(engine));
+    memset(slev, 0, sizeof(slev));
+    memcpy(slev, task_header, sizeof(task_header));
+    slev[52] = 0xa0;
+    slev[53] = 0x10;
+    slev[36] = 0x43;
+    slev[37] = 0x0b;
+    slev[40] = 0x41;
+    slev[41] = 0x23;
+    slev[48] = 0xe0;
+    slev[49] = 0xff;
+    slev[64] = 0x00;
+    slev[65] = 0x20;
+    slev[66] = 0x27;
+    slev[67] = 0x34;
+    slev[68] = 0x00;
+    slev[69] = 0x20;
+    slev[70] = 0x28;
+    slev[71] = 0x40;
+
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 1;
+    nexus_script_vm_init(&engine.script_vm);
+    CHECK(nexus_script_vm_load_canonical_level(&engine.script_vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0,
+          "engine-owned canonical SLEV profile loads");
+    memset(&route, 0, sizeof(route));
+    CHECK(nexus_v1_current_level_script_route_receipt(&engine, &route) == 1 &&
+          route.status == NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE &&
+          route.level_index == 0 && route.canonical_slev_source_verified &&
+          route.candidate_source_bytes == (int)sizeof(slev) &&
+          route.task_header_size == 36 && route.task_word_count == 48 &&
+          route.first_opcode == 0x2fe6 && route.setup_immediate == 0x1a &&
+          route.setup_immediate_provenance ==
+              NEXUS_SLEV_SETUP_IMMEDIATE_SH2_MOV_R2 &&
+          route.primary_literal_offset == 64 &&
+          route.primary_literal_address == 0x00202734 &&
+          route.primary_literal_provenance ==
+              NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3 &&
+          route.auxiliary_literal_offset == 68 &&
+          route.auxiliary_literal_address == 0x00202840 &&
+          route.auxiliary_literal_provenance ==
+              NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0 &&
+          route.task_header_profile_bound && !route.saturn_task_dispatch_proven &&
+          !route.dispatch_permitted && route.blocks_real_script_dispatch &&
+          !route.fallback_visuals_permitted,
+          "engine binds only the active verified SLEV task profile");
+    engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 0;
+    CHECK(nexus_v1_current_level_script_route_receipt(&engine, &route) == 0 &&
+          route.status == NEXUS_V1_LEVEL_SCRIPT_ROUTE_BLOCKED_SOURCE &&
+          route.blocks_real_script_dispatch,
+          "unverified SLEV bytes cannot reach the engine route");
+}
+
 static void test_real_slev_corpus_profile(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int seen = 0;
@@ -401,6 +468,7 @@ int main(void) {
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();
     test_real_slev_task_profile_blocks_dispatch();
+    test_engine_owned_slev_profile_route_stays_blocked();
     test_real_slev_corpus_profile();
 
     if (g_failures) {

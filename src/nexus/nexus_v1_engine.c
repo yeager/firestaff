@@ -2875,6 +2875,61 @@ int nexus_v1_current_level_sound_route_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_script_route_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptRouteReceipt *out_receipt) {
+    const Nexus_ScriptVM *vm;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_script_dispatch = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+
+    out_receipt->level_index = engine->level_aux_runtime_receipt.level_index;
+    out_receipt->canonical_slev_source_verified =
+        engine->level_aux_runtime_receipt.slev.canonical_hash_verified;
+    vm = &engine->script_vm;
+    if (!out_receipt->canonical_slev_source_verified ||
+        !vm->candidate_source_loaded || !vm->canonical_source_verified ||
+        vm->current_level != out_receipt->level_index) {
+        out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_BLOCKED_SOURCE;
+        return 0;
+    }
+
+    out_receipt->candidate_source_bytes = vm->candidate_source_bytes;
+    if (!vm->real_task_profile_supported || !vm->real_task_header_supported ||
+        vm->real_task_header_size <= 0 || vm->real_task_word_count <= 0 ||
+        vm->real_task_primary_literal_offset < vm->real_task_header_size ||
+        vm->real_task_aux_literal_offset < vm->real_task_header_size) {
+        out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_BLOCKED_PROFILE;
+        return 0;
+    }
+
+    out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE;
+    out_receipt->task_header_size = vm->real_task_header_size;
+    out_receipt->task_word_count = vm->real_task_word_count;
+    out_receipt->first_opcode = vm->real_task_first_opcode;
+    out_receipt->setup_immediate = vm->real_task_setup_immediate;
+    out_receipt->setup_immediate_provenance =
+        vm->real_task_setup_immediate_provenance;
+    out_receipt->primary_literal_offset = vm->real_task_primary_literal_offset;
+    out_receipt->primary_literal_address = vm->real_task_primary_literal_address;
+    out_receipt->primary_literal_provenance =
+        vm->real_task_primary_literal_provenance;
+    out_receipt->auxiliary_literal_offset = vm->real_task_aux_literal_offset;
+    out_receipt->auxiliary_literal_address = vm->real_task_aux_literal_address;
+    out_receipt->auxiliary_literal_provenance =
+        vm->real_task_aux_literal_provenance;
+    out_receipt->task_header_profile_bound = 1;
+    /* Header framing is evidence, not a task interpreter or callback ABI. */
+    out_receipt->saturn_task_dispatch_proven = 0;
+    out_receipt->dispatch_permitted = 0;
+    return 1;
+}
+
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {
