@@ -35,6 +35,15 @@
   admitted style and rejects an altered scene/light receipt. No light level,
   palette, timer state, or weather image is synthesized.
 
+- 2026-07-14 DM2 skproject door-material M11 identity: the consumed
+  `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` GDAT material-plan hash now follows the
+  live viewport through runtime and boot to M11. The gate requires the exact
+  multi-category plan only for frames that actually drew a door, rejects a
+  stale hash or an unconsumed plan, and never invents a door identity for a
+  doorless frame. The canonical `graphics.dat` CTest reports the real plan
+  hash and command count after panel, ornate overlay, frame, and button
+  consumption.
+
 - 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
   sequential intake of the source's 22 caller-owned dungeon spans and the
   final F0421 byte-sum checksum word. The boundary stops at an unreadable

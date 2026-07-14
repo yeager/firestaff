@@ -114,7 +114,8 @@ int main(void)
         viewport.asset_door_frame_drawn_count != 1 ||
         viewport.asset_door_button_drawn_count != 1 ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
-    puts("PASS: canonical GDAT door panel/frame/button/overlay plan reaches M11 directly");
+    printf("PASS: canonical GDAT door plan hash=%08x commands=%u reaches M11 directly\n",
+           material_plan.command_hash, (unsigned)material_plan.command_count);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
 done:
     dm2_v1_asset_loader_free(&loader); free(graphics); return 0;

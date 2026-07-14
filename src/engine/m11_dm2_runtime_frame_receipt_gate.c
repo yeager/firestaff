@@ -21,6 +21,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         (((boot_receipt->runtime_m11_frame_map_load_token &
            UINT32_C(0x80000000)) == 0u) &&
          boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u) ||
+        (boot_receipt->runtime_m11_frame_door_material_plan_required &&
+         (boot_receipt->runtime_m11_frame_door_material_plan_hash == 0u ||
+          !boot_receipt->runtime_m11_frame_door_material_plan_consumed)) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
         boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
         !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
@@ -49,6 +52,13 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_ceiling_material_hash &&
         runtime_receipt->wall_material_plan_hash ==
             boot_receipt->runtime_m11_frame_wall_material_plan_hash &&
+        runtime_receipt->door_material_plan_required ==
+            boot_receipt->runtime_m11_frame_door_material_plan_required &&
+        (!runtime_receipt->door_material_plan_required ||
+         (runtime_receipt->door_material_plan_hash != 0u &&
+          runtime_receipt->door_material_plan_consumed &&
+          runtime_receipt->door_material_plan_hash ==
+              boot_receipt->runtime_m11_frame_door_material_plan_hash)) &&
         runtime_receipt->palette_hash ==
             boot_receipt->runtime_m11_frame_palette_hash &&
         runtime_receipt->interface_action_palette_hash ==

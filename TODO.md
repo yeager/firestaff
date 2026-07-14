@@ -203,6 +203,12 @@
   source receipt's decoded dimensions. Direct DB4 creature sprites require
   their exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.
+  - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
+    exact consumed multi-category door-material plan hash through runtime,
+    boot, and the M11 gate. Doorless frames deliberately carry no invented
+    identity; a frame that drew a door is rejected when its real plan was not
+    consumed. The remaining weather work is still blocked on source-owned
+    live timer destination/clipping state, not on a synthetic overlay.
   - 2026-07-14 update: the live dungeon candidate list now comes only from
     the committed direct-DB4 `CREATURES/type/F9` material receipt. It retains
     the original ObjectID, tile, direction, decoded dimensions, and local
