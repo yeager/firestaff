@@ -52,6 +52,9 @@
 #define CSB_V1_CHAMPION_ATTRIBUTE_DEAD          0x0800  /* champion is dead */
 #define CSB_V1_CHAMPION_ATTRIBUTE_NEEDS_RENAME 0x1000  /* reincarnate requires rename */
 #define CSB_V1_CHAMPION_ATTRIBUTE_NEOPHYTE_MODE 0x2000  /* neophyte skill display mode */
+/* ReDMCSB C15_CHAMPION_INFO_ATTRIBUTES preserves only this bit while
+ * F7090_MakeNewAdventure normalizes an imported party. */
+#define CSB_V1_CHAMPION_ATTRIBUTE_MALE          0x0010
 
 /* Champion action indices (F0xx) */
 #define CSB_V1_ACTION_NONE          0xFF
@@ -169,6 +172,8 @@ typedef struct {
 
     /* ── Status ── */
     uint8_t  ActionIndex;                             /* 3878  F0xx action code */
+    uint8_t  SymbolStep;                              /* F7090 resets to zero */
+    uint16_t MaximumDamageReceived;                   /* F7090 resets to zero */
     int16_t  EnableActionEventIndex;                  /* 3879 */
     int16_t  HideDamageReceivedEventIndex;            /* 3881 */
     uint16_t Attributes;                               /* 3883  bit flags (icon, dead, ...) */
@@ -180,6 +185,7 @@ typedef struct {
     int16_t  Water;
     uint16_t Load;
     uint16_t ShieldStrength;
+    uint16_t ActionDefense;
     uint32_t Talents;
     uint16_t Fingerprint;
     uint16_t CauseOfDamage;
