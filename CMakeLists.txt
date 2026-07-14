@@ -721,6 +721,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0052_text_print_to_vi
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0054_text_initialize_pc34_compat.c")
+    add_executable(test_redmcsb_f0054_text_initialize_pc34_compat
+        tests/test_redmcsb_f0054_text_initialize_pc34_compat.c
+        src/csb/redmcsb_f0054_text_initialize_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0054_text_initialize_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0054_text_initialize_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0054_text_initialize_pc34_compat
+        COMMAND test_redmcsb_f0054_text_initialize_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0480_cache_release_state_transition_pc34_compat.c")
     add_executable(test_redmcsb_f0480_cache_release_state_transition_pc34_compat
         tests/test_redmcsb_f0480_cache_release_state_transition_pc34_compat.c
