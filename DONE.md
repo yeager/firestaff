@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0655/F0656 viewport bitmap bridge: added the
+  IBM-PC bitmap-prefix `F0615` dimension copy plus F0132 flip dispatch, and
+  the F0635-resolved transparent viewport dispatch. The adapter owns no
+  pixel/layout data: callers provide their admitted bitmap, F0635 resolver,
+  viewport, and video blitter. It creates no graphics fallback, event, DSA,
+  or runtime. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0652 merge transaction: added the source C05..C10,
   C01, and C02 merge/delete behavior over the existing native EVENT/TIMELINE
   owner. It uses F0237 only for source-required deletions and returns before
