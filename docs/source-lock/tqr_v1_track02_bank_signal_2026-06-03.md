@@ -107,6 +107,30 @@ neighbor, preferring east/south/west/north. Current real JP/US candidates prove
 `start=(2,1,EAST)`; the synthetic candidate fixture proves the same selector on
 `start=(1,1,EAST)`.
 
+### CD Record And Following Boundary
+
+The IPL receipt supplies the only accepted Track 02 `INDEX 01` coordinate:
+raw sector 224 for JP and 225 for US. Combining that coordinate with the
+hash-gated initial candidate places both real payloads at the same Track 02
+record and the same MODE1 user-data offsets:
+
+| Fact | JP raw BIN | US raw BIN |
+|------|------------|------------|
+| Candidate raw sector | 3122 | 3123 |
+| Track 02 record | `0x0b52` | `0x0b52` |
+| Level start in record user data | `0x114` | `0x114` |
+| Level envelope | `0x36c` bytes | `0x36c` bytes |
+| Immediate following boundary | `0x480` | `0x480` |
+| Remaining user data in that record | `0x380` bytes | `0x380` bytes |
+
+`theron_v1_track02_capture_initial_level_object_boundary()` parses and
+fingerprints this real CD-relative boundary only after both the IPL receipt and
+descriptor-relative level candidate validate. The following bytes are called
+an **object boundary**, not an object table: no original loader read yet assigns
+them an object role. The receipt exposes no object records, creates no tiles or
+placements, and remains promotion-blocked. This preserves the completed Soul
+Room/forcefield media handoff's fail-closed contract.
+
 ## Regression Gate
 
 `firestaff_theron_v1_track02_bank_probe` verifies:

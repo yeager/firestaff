@@ -1040,6 +1040,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02InitialCandidateBinding binding;
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1152,6 +1153,36 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate binding anchor match",
               binding.matches_initial_anchor,
               1);
+
+    signal_status = theron_v1_track02_capture_initial_level_object_boundary(
+        data, size, local_md5, &boundary);
+    check_int("real initial level/object boundary status",
+              signal_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("real initial level/object boundary valid", boundary.valid, 1);
+    check_u32("real initial level/object CD record", boundary.track02_record, 0x0b52u);
+    check_size("real initial level/object level offset in record",
+               boundary.level_user_data_offset_in_record, 0x114u);
+    check_size("real initial level/object level bytes", boundary.level_byte_count, 0x36cu);
+    check_size("real initial level/object opaque boundary in record",
+               boundary.object_boundary_user_data_offset_in_record, 0x480u);
+    check_size("real initial level/object opaque tail bytes",
+               boundary.following_user_data_bytes_in_record, 0x380u);
+    check_int("real initial level/object table stays unparsed",
+              boundary.object_table_parsed, 0);
+    check_int("real initial level/object table stays unproven",
+              boundary.object_table_semantics_proven, 0);
+    check_int("real initial level/object boundary promotion blocked",
+              boundary.promotion_blocked, 1);
+    check_int("real initial level/object receipt fingerprinted",
+              boundary.receipt_hash != 0u, 1);
+    printf("%s CD boundary: record=0x%04x level-user=0x%zx bytes=0x%zx "
+           "opaque-boundary=0x%zx tail=0x%zx hash=0x%08x\n",
+           label, (unsigned)boundary.track02_record,
+           boundary.level_user_data_offset_in_record, boundary.level_byte_count,
+           boundary.object_boundary_user_data_offset_in_record,
+           boundary.following_user_data_bytes_in_record,
+           (unsigned)boundary.receipt_hash);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,
