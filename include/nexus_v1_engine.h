@@ -363,6 +363,21 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure3FaceFramingReceipt;
 
+/* Active canonical LEV Structure3 face topology and bounded material-selector
+ * joins. Selectors remain identifiers only: this does not decode material
+ * bytes, palettes, UVs, VDP1 commands, or authorize a draw. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
+    Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
+    int face_topology_material_binding_complete;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveStructure3FaceMaterialReceipt;
+
 /* Active party pose bound to the canonical LEV source and the bounded raw
  * Structure1A transform-selector evidence. This is camera input provenance,
  * not a decoded Saturn camera, transform, culling, or drawing rule. */
@@ -1008,6 +1023,9 @@ int nexus_v1_current_level_structure3_mesh_semantic_receipt(
 int nexus_v1_current_level_structure3_face_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure3FaceFramingReceipt *out_receipt);
+int nexus_v1_current_level_structure3_face_material_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt *out_receipt);
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);

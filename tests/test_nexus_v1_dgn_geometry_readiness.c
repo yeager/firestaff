@@ -607,6 +607,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure3AttachmentReceipt attachments;
         Nexus_V1_Engine active_engine;
         Nexus_V1_DgnActiveStructure1FFaceMeshReceipt active_face_mesh;
+        Nexus_V1_DgnActiveStructure3FaceMaterialReceipt active_face_material;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -902,6 +903,34 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_face_mesh.no_draw_only &&
               !active_face_mesh.fallback_visuals_permitted,
               "active retail LEV consumes only authenticated Structure1F face/normal ordinals");
+        CHECK(nexus_v1_current_level_structure3_face_material_receipt(
+                  &active_engine, &active_face_material) == 1 &&
+              active_face_material.valid &&
+              active_face_material.level_index == level &&
+              active_face_material.source_byte_count == (int)size &&
+              active_face_material.source_bytes_fnv1a64 ==
+                  fnv1a64(data, (size_t)size) &&
+              active_face_material.faces.valid &&
+              active_face_material.faces.face_topology_accounting_valid &&
+              active_face_material.materials.valid &&
+              active_face_material.materials.face_receipt_valid &&
+              active_face_material.materials.face_count ==
+                  active_face_material.faces.face_count &&
+              active_face_material.materials.selector_bindings_complete &&
+              active_face_material.materials.selector_reuse_accounting_valid &&
+              !active_face_material.materials.material_or_draw_semantics_proven &&
+              active_face_material.face_topology_material_binding_complete &&
+              active_face_material.no_draw_only &&
+              !active_face_material.fallback_visuals_permitted,
+              "active retail LEV binds face topology to documented material selectors only");
+        active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 ^= 1U;
+        CHECK(nexus_v1_current_level_structure3_face_material_receipt(
+                  &active_engine, &active_face_material) == 0 &&
+              !active_face_material.valid && active_face_material.no_draw_only &&
+              !active_face_material.fallback_visuals_permitted,
+              "active face-material selector binding withdraws on stale LEV identity");
+        active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+            fnv1a64(data, (size_t)size);
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==

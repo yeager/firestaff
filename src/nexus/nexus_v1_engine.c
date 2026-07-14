@@ -2782,6 +2782,47 @@ int nexus_v1_current_level_structure3_face_framing_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_structure3_face_material_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        nexus_v1_level_structure3_face_receipt(
+            &engine->current_level, &out_receipt->faces) != 0 ||
+        !out_receipt->faces.valid ||
+        !out_receipt->faces.face_topology_accounting_valid ||
+        nexus_v1_level_structure3_face_material_receipt(
+            &engine->current_level, &out_receipt->materials) != 0 ||
+        !out_receipt->materials.valid ||
+        !out_receipt->materials.face_receipt_valid ||
+        !out_receipt->materials.selector_bindings_complete ||
+        !out_receipt->materials.selector_reuse_accounting_valid ||
+        out_receipt->materials.material_or_draw_semantics_proven ||
+        out_receipt->materials.face_count != out_receipt->faces.face_count) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    out_receipt->face_topology_material_binding_complete = 1;
+    return 1;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)
