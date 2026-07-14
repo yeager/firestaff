@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0651 post-save timeline management: added the
+  source-order `EVENT_NONE` free-list rebuild after C4 intake. It overwrites
+  stale `UNUSED_EVENT` links, reports the first free and source `index + 1`
+  largest-used ordinal,
+  and preserves active event bytes. The caller must provide an authenticated
+  original EVENT stride; this adds no C4 heap execution, DSA, allocation, or
+  synthetic runtime. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
   sequential intake of the source's 22 caller-owned dungeon spans and the
   final F0421 byte-sum checksum word. The boundary stops at an unreadable
