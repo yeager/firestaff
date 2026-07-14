@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7064 champion save text: added PC34 post-load NUL
+  padding for fixed 8-byte name and 20-byte title fields. Full fields remain
+  byte-identical; only bytes after the first NUL are cleared. No champion
+  record, character conversion, CSBWin extension, DSA, or timer semantics are
+  inferred. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB CEDTINC8/F7060 dungeon write stream: added the exact
   ordered 22-part PC34 dungeon byte emission and trailing little-endian
   checksum word. The header, maps, tables, ThingData pools, and RawMapData
