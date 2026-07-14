@@ -26,6 +26,13 @@ int main(void) {
     Theron_V1TraceProvenanceReceipt trace = {
         1, 0, "trace_accepted_runtime_unavailable"
     };
+    Theron_V1DungeonHandoffReceipt initial_envelope = {
+        1, 1, THERON_V1_INITIAL_ENVELOPE_RECORD,
+        THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+        THERON_V1_INITIAL_ENVELOPE_BYTES,
+        THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER, 1,
+        "raw_track02_initial_envelope"
+    };
     Theron_V1AuthenticatedTrack02LoaderReadFacts authenticated_facts = {
         &trace, 1, THERON_V1_INITIAL_ENVELOPE_RECORD,
         THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET, 0x3800u, 0x800u
@@ -42,6 +49,21 @@ int main(void) {
     CHECK(receipt.observed_byte_count == facts.byte_count);
     CHECK(strcmp(receipt.status,
                  "initial_envelope_loader_read_observed_payload_blocked") == 0);
+    CHECK(theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    CHECK(receipt.initial_envelope_source_bound);
+    CHECK(!receipt.payload_intake_admitted);
+    CHECK(strcmp(receipt.status,
+                 "initial_envelope_loader_read_source_bound_payload_blocked") == 0);
+
+    initial_envelope.envelope_bytes = facts.byte_count + 1u;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES;
+    initial_envelope.record = 0x04e0u;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.record = THERON_V1_INITIAL_ENVELOPE_RECORD;
 
     CHECK(theron_v1_track02_loader_intake_observe_authenticated_trace(
         &authenticated_facts, &receipt));
