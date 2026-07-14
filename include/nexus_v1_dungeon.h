@@ -683,10 +683,11 @@ typedef struct {
     int entry_semantics_proven;
 } Nexus_V1_DgnStructure3DirectoryReceipt;
 
-/* Retail Structure3 directory entries begin with a bounded 40-byte header.
- * Two packed big-endian counts and three in-payload boundaries describe two
- * consecutive 12-byte regions. This only proves entry framing; neither
- * region is called a face, vertex, mesh, texture, palette, or pixel stream. */
+/* DMWeb's Saturn DGN reference names the three count-bounded 12-byte
+ * regions in a Structure3 entry as vertices, faces, and per-face normals.
+ * This receipt validates only their enclosing boundaries and paired
+ * face/normal counts; individual records, face flags, vertex indexes, and
+ * all draw/material behaviour remain outside this parser's no-draw gate. */
 typedef struct {
     int payload_valid;
     int directory_valid;
@@ -695,10 +696,13 @@ typedef struct {
     int fixed_header_byte_count;
     int first_region_element_count;
     int second_region_element_count;
+    int third_region_element_count;
+    int complete_third_region_entry_count;
     int zero_tag_entry_count;
     int tag_0x100_entry_count;
     int other_tag_entry_count;
     int boundaries_valid;
+    int third_region_boundaries_valid;
     int valid;
     int semantics_proven;
 } Nexus_V1_DgnStructure3EntryHeaderReceipt;

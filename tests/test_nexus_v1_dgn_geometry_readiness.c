@@ -610,8 +610,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES &&
               handoff.structure3_entry_headers.first_region_element_count > 0 &&
               handoff.structure3_entry_headers.second_region_element_count > 0 &&
+              handoff.structure3_entry_headers.third_region_element_count ==
+                  handoff.structure3_entry_headers.second_region_element_count &&
+              handoff.structure3_entry_headers.complete_third_region_entry_count ==
+                  handoff.structure3_entry_headers.entry_count &&
               handoff.structure3_entry_headers.other_tag_entry_count == 0 &&
               handoff.structure3_entry_headers.boundaries_valid &&
+              handoff.structure3_entry_headers.third_region_boundaries_valid &&
               !handoff.structure3_entry_headers.semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
@@ -1705,18 +1710,18 @@ static void test_structure3_entry_header_boundaries(void) {
     wb16(dgn + 0x1e, 4U);
     wb32(payload, 2U);
     wb32(payload + 4, 16U);
-    wb32(payload + 8, 96U);
+    wb32(payload + 8, 104U);
     wb32(payload + 16, 0x100U);
     wb16(payload + 20, 2U);
     wb16(payload + 22, 1U);
     wb32(payload + 24, 56U);
     wb32(payload + 32, 80U);
     wb32(payload + 36, 92U);
-    wb16(payload + 100, 1U);
-    wb16(payload + 102, 2U);
-    wb32(payload + 104, 136U);
-    wb32(payload + 112, 148U);
-    wb32(payload + 116, 172U);
+    wb16(payload + 108, 1U);
+    wb16(payload + 110, 2U);
+    wb32(payload + 112, 144U);
+    wb32(payload + 120, 156U);
+    wb32(payload + 124, 180U);
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
@@ -1726,10 +1731,13 @@ static void test_structure3_entry_header_boundaries(void) {
               NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES &&
           headers.first_region_element_count == 3 &&
           headers.second_region_element_count == 3 &&
+          headers.third_region_element_count == 3 &&
+          headers.complete_third_region_entry_count == 2 &&
           headers.zero_tag_entry_count == 1 && headers.tag_0x100_entry_count == 1 &&
           headers.other_tag_entry_count == 0 && headers.boundaries_valid &&
+          headers.third_region_boundaries_valid &&
           !headers.semantics_proven,
-          "Structure3 entry framing retains only bounded 12-byte regions");
+          "Structure3 entry framing bounds the paired third 12-byte region");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
@@ -1742,6 +1750,14 @@ static void test_structure3_entry_header_boundaries(void) {
           !headers.valid && !headers.boundaries_valid &&
           !headers.semantics_proven,
           "invalid Structure3 entry boundaries remain fail-closed");
+
+    wb32(payload + 36, 92U);
+    wb32(payload + 124, 8184U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
+          !headers.valid && !headers.third_region_boundaries_valid &&
+          !headers.semantics_proven,
+          "truncated third Structure3 region remains fail-closed");
 }
 
 static void test_visible_structure1f_semantics_block_render_plan(void) {
