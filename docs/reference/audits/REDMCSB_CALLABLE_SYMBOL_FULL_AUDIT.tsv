@@ -1079,8 +1079,8 @@ F1069_OpenDosLibrary	F	OpenDosLibrary	AMIGINIT.C:4,67-77,343	include/redmcsb_f10
 F1070_CloseDosLibrary	F	CloseDosLibrary	AMIGINIT.C:79	include/redmcsb_f1070_close_dos_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available DOS-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1071_OpenGraphicsLibrary	F	OpenGraphicsLibrary	AMIGINIT.C:4,88-99,333-361	include/redmcsb_f1071_open_graphics_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available graphics-library open route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1072_CloseGraphicsLibrary	F	CloseGraphicsLibrary	AMIGINIT.C:4,101-108,363-375	include/redmcsb_f1072_close_graphics_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available graphics-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
-F1073_OpenIntuitionLibrary	F	OpenIntuitionLibrary	AMIGINIT.C:110	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1074_CloseIntuitionLibrary	F	CloseIntuitionLibrary	AMIGINIT.C:122	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1073_OpenIntuitionLibrary	F	OpenIntuitionLibrary	AMIGINIT.C:4,88-130,333-361	include/redmcsb_f1073_open_intuition_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available Intuition-library open route is Amiga-only; focused PC boundary is intentionally a no-op.
+F1074_CloseIntuitionLibrary	F	CloseIntuitionLibrary	AMIGINIT.C:4,122-129,363-385	include/redmcsb_f1074_close_intuition_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available Intuition-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1075_OpenLayersLibrary	F	OpenLayersLibrary	AMIGINIT.C:133	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1076_CloseLayersLibrary	F	CloseLayersLibrary	AMIGINIT.C:145	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1077_OpenConsoleDevice	F	OpenConsoleDevice	AMIGINIT.C:154	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
