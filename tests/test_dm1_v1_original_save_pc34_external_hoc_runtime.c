@@ -40,6 +40,11 @@ static int receipt_is_runtime_admitted(
 #define PC34_VIEWPORT_WIDTH 224
 #define PC34_VIEWPORT_HEIGHT 136
 
+/* This is a test-run bound, not a game-time policy.  The event time comes
+ * exclusively from the admitted F0435 C4 queue; a far-future or malformed
+ * timestamp must not make an opt-in corpus probe run indefinitely. */
+#define PC34_EXTERNAL_RUNTIME_EVENT_HORIZON 1024u
+
 static int viewport_is_nonblank(const unsigned char *pixels,
                                 int framebuffer_width)
 {
@@ -111,6 +116,7 @@ int main(void)
         struct TickResult_Compat expected_tick;
         uint32_t expected_post_tick_world_hash;
         uint32_t pre_tick;
+        struct TimelineEvent_Compat next_event;
 
         CHECK(receipt_is_runtime_admitted(receipt),
               "external save owns an admitted F0435 runtime");
@@ -213,6 +219,60 @@ int main(void)
         CHECK(post_tick_viewport_hash ==
                   viewport_fingerprint(repeated_framebuffer, 320),
               "ticked original runtime preserves the PC34 viewport receipt");
+
+        /* The first tick proves the immediate idle route.  When the restored
+         * C4 queue supplies a near pending event, continue with CMD_NONE until
+         * that exact source-owned event is due.  Each host tick must retain
+         * the independently materialized F0435 world's M10 receipt. */
+        memset(&next_event, 0, sizeof(next_event));
+        if (F0722_TIMELINE_Peek_Compat(&expected_world.timeline, &next_event)) {
+            uint32_t ticks_until_event;
+            uint32_t step;
+
+            CHECK(next_event.fireAtTick >= (uint32_t)expected_world.gameTick,
+                  "restored C4 queue has no overdue event after the idle tick");
+            ticks_until_event = next_event.fireAtTick -
+                                (uint32_t)expected_world.gameTick;
+            if (ticks_until_event < PC34_EXTERNAL_RUNTIME_EVENT_HORIZON) {
+                for (step = 0; step <= ticks_until_event; ++step) {
+                    memset(&expected_input, 0, sizeof(expected_input));
+                    memset(&expected_tick, 0, sizeof(expected_tick));
+                    expected_input.tick = (uint32_t)expected_world.gameTick;
+                    expected_input.command = CMD_NONE;
+                    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&expected_world,
+                                                            &expected_input,
+                                                            &expected_tick) != ORCH_FAIL,
+                          "staged F0435 runtime accepts the queued-event idle tick");
+                    CHECK(M11_GameView_HandleInput(&state, M12_MENU_INPUT_NONE) ==
+                              M11_GAME_INPUT_REDRAW,
+                          "M11 accepts the queued-event idle tick");
+                    CHECK(state.lastTickResult.preTick == expected_tick.preTick &&
+                              state.lastTickResult.postTick == expected_tick.postTick &&
+                              state.lastTickResult.worldHashPost == expected_tick.worldHashPost &&
+                              state.lastWorldHash == expected_tick.worldHashPost,
+                          "M11 queued-event idle receipt matches staged F0435 tick");
+                    CHECK(state.world.timeline.count == expected_world.timeline.count &&
+                              state.lastTickResult.emissionCount == expected_tick.emissionCount &&
+                              memcmp(state.lastTickResult.emissions, expected_tick.emissions,
+                                     sizeof(expected_tick.emissions)) == 0,
+                          "M11 preserves queued-event timeline and emissions");
+                }
+                CHECK((uint32_t)state.world.gameTick ==
+                          next_event.fireAtTick + 1u,
+                      "M11 reaches the saved queue event on its source tick");
+                printf("ADMITTED_HOC_RUNTIME_EVENT path=%s kind=%d fire_at=%u steps=%u\\n",
+                       receipt->path, next_event.kind,
+                       (unsigned int)next_event.fireAtTick,
+                       (unsigned int)(ticks_until_event + 1u));
+            } else {
+                printf("ADMITTED_HOC_RUNTIME_EVENT_DEFERRED path=%s kind=%d fire_at=%u horizon=%u\\n",
+                       receipt->path, next_event.kind,
+                       (unsigned int)next_event.fireAtTick,
+                       (unsigned int)PC34_EXTERNAL_RUNTIME_EVENT_HORIZON);
+            }
+        } else {
+            puts("ADMITTED_HOC_RUNTIME_EVENT_NONE");
+        }
         printf("ADMITTED_HOC_RUNTIME path=%s map=%d,%d,%d dir=%d tick=%u champions=%d viewport_hash=%08x\\n",
                receipt->path, state.world.party.mapIndex, state.world.party.mapX,
                state.world.party.mapY, state.world.party.direction,

@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 PC34 external-save queued-runtime gate: the fixture-free
+  HoC runtime probe now follows the next persisted F0435 C4 timeline event
+  when its source timestamp falls inside a 1024-tick test horizon. It advances
+  only `CMD_NONE` and compares every M11 tick's pre/post time, canonical world
+  hash, timeline count, and full emission receipt with an independently
+  materialized F0435 world. Empty and far-future queues are reported, not
+  manufactured or promoted. Source-lock: ReDMCSB `LOADSAVE.C F0435`,
+  `GAMELOOP.C` idle loop, and `TIMELINE.C F0238/F0261`. Verification:
+  `dm1_v1_original_save_pc34_external_hoc_runtime` remains skip-safe without
+  operator-supplied original PC34 save/media inputs.
+
 - DONE 2026-07-14 Nexus Structure3 real-face geometry receipt: the bounded
   LEV00-LEV15 DGN parser now measures every documented entry-local face row
   against its signed-16.16 vertex coordinates and preserves the result across
