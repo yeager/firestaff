@@ -97,6 +97,8 @@ typedef struct {
     char track02_md5[33];
     uint32_t stage3_track02_record;
     uint32_t later_track02_record;
+    uint16_t descriptor_selector;
+    size_t descriptor_selector_ordinal;
     uint16_t caller_pc;
     uint16_t return_pc;
     uint8_t sector_count;
@@ -107,6 +109,7 @@ typedef struct {
     uint32_t user_data_hash;
     int later_e009_return_verified;
     int later_cd_read_to_media_verified;
+    int descriptor_selector_bound;
 } Theron_V1RawLoaderTraceLaterSectorReceipt;
 
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
@@ -147,8 +150,10 @@ int theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
 /* Consumes one complete later `JSR $e009` dispatch/return envelope from the
  * original Mednafen capture and binds its captured record range to the same
  * hash-verified raw Track 02 identity as `trace`. The prior $4090->$3800
- * receipt must already be media-bound. This is a loader-coordinate handoff
- * only; it cannot authorize a dungeon load or rendering. */
+ * receipt must already be media-bound. The captured record must also resolve
+ * through the original Stage 3 descriptor-selector coordinates.
+ * This is a loader-coordinate handoff only; it cannot authorize a dungeon
+ * load or rendering. */
 int theron_v1_raw_loader_trace_bind_later_e009_sector(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const char *capture,

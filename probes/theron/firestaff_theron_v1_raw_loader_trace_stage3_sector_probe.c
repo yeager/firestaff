@@ -57,19 +57,9 @@ int main(void)
     if (!track) return 1;
     track[0x0510u * THERON_TRACK02_RAW_SECTOR_BYTES +
           THERON_TRACK02_RAW_USER_DATA_OFFSET] = 0x5au;
-    if (!theron_v1_raw_loader_trace_bind_later_e009_sector(
+    if (theron_v1_raw_loader_trace_bind_later_e009_sector(
             &trace, later_capture, track, track_size,
-            THERON_TRACK02_MD5_US_BIN, &later_receipt) ||
-        !later_receipt.valid || !later_receipt.later_e009_return_verified ||
-        !later_receipt.later_cd_read_to_media_verified ||
-        later_receipt.stage3_track02_record != 0x0004e0u ||
-        later_receipt.later_track02_record != 0x000510u ||
-        later_receipt.caller_pc != 0xea00u || later_receipt.return_pc != 0xea03u ||
-        later_receipt.sector_count != 1u ||
-        later_receipt.first_raw_offset !=
-            0x0510u * THERON_TRACK02_RAW_SECTOR_BYTES ||
-        later_receipt.user_data_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES ||
-        !later_receipt.user_data_hash) {
+            THERON_TRACK02_MD5_US_BIN, &later_receipt) || later_receipt.valid) {
         free(track);
         return 1;
     }
