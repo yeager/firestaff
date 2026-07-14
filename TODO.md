@@ -1063,6 +1063,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     direct `G8177 | color` bytes over the real 320x200-compatible aperture.
     Its runtime call-site consumption and live capture remain separately
     unproven.
+  - 2026-07-14 IMAGE3.C F0684 now preserves the PC 3.4 C25 packed-bitmap
+    source-to-aperture route for all four flip modes and transparency. It
+    consumes the direct 320x200 host-compatible aperture; live game call-site
+    capture remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
     from one 320-byte row above, including its source-visible propagation for
     spans larger than a row. Binding this logical aperture effect to live

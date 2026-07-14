@@ -324,6 +324,11 @@
   span, directly compatible with a 320x200 indexed host framebuffer. Focused
   strict-C11 odd/even-span, no-op and bounds test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F0684: source-locked PC 3.4 C25 packed-bitmap
+  blit. The adapter preserves M104 round-up-to-even strides, all four flip
+  modes, opaque/transparent line selection, and direct aperture writes.
+  Focused strict-C11 bitmap test passes. F8151 now uses the same M104 rule.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
   unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused

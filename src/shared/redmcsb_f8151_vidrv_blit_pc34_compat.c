@@ -27,8 +27,8 @@ bool redmcsb_f8151_vidrv_blit_pc34_compat(
     }
 
     /* F8151 uses M104_EVEN_INTEGER for both line strides. */
-    source_stride = (int32_t)source_width & ~1;
-    destination_stride = (int32_t)destination_width & ~1;
+    source_stride = ((int32_t)source_width + 1) & ~1;
+    destination_stride = ((int32_t)destination_width + 1) & ~1;
     width = (int32_t)box->right - (int32_t)box->left + 1;
     height = (int32_t)box->bottom - (int32_t)box->top + 1;
     if (source_stride <= 0 || destination_stride <= 0 || width <= 0 || height <= 0 ||
