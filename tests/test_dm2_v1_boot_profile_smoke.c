@@ -40,6 +40,18 @@ static int write_file(const char *path, const char *bytes)
     return 1;
 }
 
+static int write_bytes(const char *path, const uint8_t *bytes, size_t size)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f) return 0;
+    if (fwrite(bytes, 1, size, f) != size) {
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    return 1;
+}
+
 static int copy_file_bytes(const char *src, const char *dst)
 {
     unsigned char buf[8192];
@@ -261,6 +273,45 @@ static void test_enter_requires_assets(void)
     /* enter_game fails without verified assets (no files found) */
     CHECK(dm2_v1_boot_enter_game(&p) == -1,
           "enter_game rejects unverified profile (no files found)");
+}
+
+static void test_enter_admits_map_without_complete_record_graph(void)
+{
+    DM2_V1_BootProfile p;
+    uint8_t dungeon[512];
+    char path[256];
+
+    memset(dungeon, 0, sizeof(dungeon));
+    /* A bounded PC G1 map with no declared DB pools. Its map bytes are
+     * valid, while the optional record graph remains unavailable. */
+    dungeon[2] = 0x47;
+    dungeon[3] = 0x31;
+    dungeon[4] = 44;
+    dungeon[6] = 1;
+    dungeon[44 + 8] = 0;
+    dungeon[44 + 9] = 0;
+    dungeon[sizeof(dungeon) - 1] = 0x20;
+    snprintf(path, sizeof(path), "/tmp/firestaff-dm2-g1-boot-%ld.dat",
+             (long)TEST_GETPID());
+    remove(path);
+    CHECK(write_bytes(path, dungeon, sizeof(dungeon)) == 1,
+          "writes bounded G1 map fixture");
+
+    dm2_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", path);
+    CHECK(dm2_v1_boot_enter_game(&p) == 0 &&
+              p.dm2_state != NULL && p.dungeon_data != NULL,
+          "boot admits a real-format map before record graph promotion");
+    CHECK(p.dungeon_data != NULL &&
+              dm2_v1_dungeon_get_tile_raw(
+                  (const DM2_V1_DungeonData *)p.dungeon_data,
+                  0, 0, 0) == 0x20 &&
+              !dm2_v1_dungeon_validate_record_graph(
+                  (const DM2_V1_DungeonData *)p.dungeon_data),
+          "record graph remains a separate runtime capability");
+    dm2_v1_boot_cleanup(&p);
+    remove(path);
 }
 
 static void test_startup_launch_alloc_missing_data(void)
@@ -897,6 +948,8 @@ int main(void)
 /* ── enter game guard --─ */
     printf("\n--- test_enter_requires_assets ---\n");
     test_enter_requires_assets();
+    printf("\n--- test_enter_admits_map_without_complete_record_graph ---\n");
+    test_enter_admits_map_without_complete_record_graph();
 /* ── startup launch helper --─ */
     printf("\n--- test_startup_launch_alloc_missing_data ---\n");
     test_startup_launch_alloc_missing_data();
