@@ -247,6 +247,36 @@ static void test_f0417_obfuscate_reversible(void) {
     puts("  PASS f0417_obfuscate_reversible");
 }
 
+/* READWRIT.C F0417 uses 16-bit LE words, adds each plaintext and encrypted
+ * value, and advances its key by the immutable word count. This is the exact
+ * original-save F0433/F0435 primitive, not the older header compatibility
+ * helper above. */
+static void test_f0417_pc34_exact_word_contract(void) {
+    unsigned char words[6] = {0x34u, 0x12u, 0xCDu, 0xABu, 0x01u, 0x00u};
+    static const unsigned char expected[6] = {
+        0x36u, 0x13u, 0xC8u, 0xAAu, 0x09u, 0x01u
+    };
+    unsigned char original[sizeof(words)];
+    uint16_t checksum;
+
+    memcpy(original, words, sizeof(words));
+    checksum = F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        words, 3u, 0x0102u);
+    CHECK(checksum == 0x7E0Bu,
+          "exact PC34 F0417 returns the source word checksum");
+    CHECK(memcmp(words, expected, sizeof(words)) == 0,
+          "exact PC34 F0417 writes the source rolling-key word XOR output");
+    CHECK(F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+              words, 3u, 0x0102u) == 0x7E0Bu &&
+              memcmp(words, original, sizeof(words)) == 0,
+          "exact PC34 F0417 is reversible with the original immutable count");
+    CHECK(F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+              NULL, 0u, 0x0102u) == 0x0102u,
+          "exact PC34 F0417 has no caller bytes for an empty bounded part");
+
+    puts("  PASS f0417_pc34_exact_word_contract");
+}
+
 /* Test 6: F0417_SAVEUTIL_GetChecksumAndObfuscate_Compat is
  * deterministic for the same noise + same plaintext. */
 static void test_f0417_obfuscate_deterministic(void) {
@@ -382,6 +412,7 @@ int main(void) {
     test_f0417_port_hint_null_seed_preserves_noise();
     test_f0417_obfuscate_null_and_zero();
     test_f0417_obfuscate_reversible();
+    test_f0417_pc34_exact_word_contract();
     test_f0417_obfuscate_deterministic();
     test_f0417_obfuscate_sensitive_to_noise();
     test_f0417_obfuscate_window_clamp();
