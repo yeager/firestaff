@@ -951,6 +951,22 @@ static void test_csbwin_authenticated_filter_stack_runner(void)
           "CSBWin/SaveGame.cpp ReadDSAs + DSA.cpp:5315-5460",
           "filter runner rejects a forged action pointer without publishing state");
 
+    action.program_words = NULL;
+    action.program_word_count = 0;
+    parameters[0] = 70;
+    runner.global_variable_count = 1;
+    runner.global_variables[0] = 0xfeedu;
+    runner.last_execution.words_consumed = 19u;
+    runner.last_transfer.final_state = 23;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 0 &&
+              parameters[0] == 70 && runner.global_variables[0] == 0xfeedu &&
+              runner.execution_count == 1 && runner.transfer_execution_count == 0 &&
+              runner.last_execution.words_consumed == 19u &&
+              runner.last_transfer.final_state == 23,
+          "CSBWin/SaveGame.cpp ReadDSAs + DSA.cpp:5053-5293",
+          "zero-word authenticated action rejects before opcode dispatch without publication");
+
     action.program_words = unsupported;
     action.program_word_count = 1;
     parameters[0] = 70;
@@ -963,6 +979,7 @@ static void test_csbwin_authenticated_filter_stack_runner(void)
     action.program_words = direct_jump;
     action.program_word_count = 1;
     action.column = 2u;
+    runner.global_variable_count = 0;
     parameters[0] = 69;
     check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
               &action, parameters, 1, NULL, &runner) == 1 &&

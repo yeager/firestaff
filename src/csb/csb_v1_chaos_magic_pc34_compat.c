@@ -1163,7 +1163,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     int i;
 
     (void)flgs_inout;
-    if (!action || (parameter_count > 0 && !parameters) || parameter_count < 0 ||
+    if (!action || !action->program_words || action->program_word_count < 1 ||
+        (parameter_count > 0 && !parameters) || parameter_count < 0 ||
         parameter_count > 26 || !runner || !runner->programs ||
         runner->dsa_id < 0 || runner->action_ordinal < 0 ||
         runner->global_variable_count < 0 ||
