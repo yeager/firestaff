@@ -65,14 +65,17 @@ int main(void)
     viewport.squares[DM2_SQ_D0C].square_type =
         (uint8_t)dm2_v1_viewport_g1_tile_class_to_square_type(0u);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_WALL;
+    viewport.squares[DM2_SQ_D1R].square_type =
+        (uint8_t)dm2_v1_viewport_g1_tile_class_to_square_type(0u);
+    viewport.squares[DM2_SQ_D1R].flags = DM2_SQF_HAS_WALL;
     dm2_v1_render_walls(&viewport);
-    if (viewport.asset_wall_drawn_count == 0 ||
+    if (viewport.asset_wall_drawn_count < 2 ||
         viewport.fallback_wall_drawn_count != 0 ||
         viewport.blocked_material_draw_count != 0) {
-        fputs("FAIL: G1 wall class did not consume source wall material\n", stderr);
+        fputs("FAIL: G1 center/side wall classes did not consume source material\n", stderr);
         return 1;
     }
 
-    puts("PASS: G1 center-ray terrain reaches only source-backed wall material");
+    puts("PASS: G1 center/side-ray terrain reaches only source-backed wall material");
     return 0;
 }

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 G1 side-ray surface binding: the active G1 byte-square
+  `tileTypeIndex` now populates D0/D1/D2 left and right wall rays, using the
+  party-relative SKProject viewport coordinates, before the existing GDAT
+  wall material pass. Source-backed side panels consume their normal
+  GRAPHICSSET material and cannot trigger fallback art; DB0 doors keep their
+  direct record route. Verification: `dm2_v1_g1_center_ray_surface_gate`
+  proves simultaneous center and side panels consume only source material.
+
 - 2026-07-14 DM2 G1 center-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now reaches D0/D1/D2 as its actual SKProject terrain class
   before M11 consumes the already source-bound wall/floor material plan.

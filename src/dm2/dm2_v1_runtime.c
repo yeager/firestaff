@@ -817,20 +817,26 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     }
 }
 
-static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
-                                              DM2_V1_ViewportState *viewport,
-                                              int party_dir,
-                                              int party_x,
-                                              int party_y) {
+static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
+                                                 DM2_V1_ViewportState *viewport,
+                                                 int party_dir,
+                                                 int party_x,
+                                                 int party_y) {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
     static const struct {
         int square;
         int forward;
-    } center_doors[] = {
-        { DM2_SQ_D0C, 1 },
-        { DM2_SQ_D1C, 2 },
-        { DM2_SQ_D2C, 3 },
+        int lateral;
+    } visible_cells[] = {
+        /* SKProject c_gui_vp.cpp consumes these D0..D2 center/side cells
+         * through the existing wall panel plan. D0 sides are adjacent to the
+         * party; later rows are one lateral cell beside each forward cell. */
+        { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
+        { DM2_SQ_D2C, 3,  0 },
+        { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
+        { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
+        { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
     };
     DM2_V1_DungeonData *dd;
     int dir;
@@ -841,14 +847,15 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
     }
     dir = party_dir & 3;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    for (size_t i = 0; i < sizeof(center_doors) / sizeof(center_doors[0]); ++i) {
+    for (size_t i = 0; i < sizeof(visible_cells) / sizeof(visible_cells[0]); ++i) {
+        int map_x = party_x + dx[dir] * visible_cells[i].forward -
+            dy[dir] * visible_cells[i].lateral;
+        int map_y = party_y + dy[dir] * visible_cells[i].forward +
+            dx[dir] * visible_cells[i].lateral;
         int raw = dm2_v1_dungeon_get_tile_raw(
             dd,
             rt->dungeon_level,
-            party_x + dx[dir] * center_doors[i].forward,
-            party_y + dy[dir] * center_doors[i].forward);
-        int map_x = party_x + dx[dir] * center_doors[i].forward;
-        int map_y = party_y + dy[dir] * center_doors[i].forward;
+            map_x, map_y);
         int square_type = dm2_v1_dungeon_get_square_type(
             dd, rt->dungeon_level, map_x, map_y);
         int type;
@@ -863,7 +870,7 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             if (square_type < 0) continue;
         }
         {
-            DM2_ViewSquare *surface = &viewport->squares[center_doors[i].square];
+            DM2_ViewSquare *surface = &viewport->squares[visible_cells[i].square];
             if (square_type == DM2_SQUARE_WALL) {
                 surface->square_type = DM2_SQUARE_WALL;
                 surface->flags |= DM2_SQF_HAS_WALL;
@@ -873,7 +880,7 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
             }
         }
         if (dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
-            DM2_ViewSquare *door = &viewport->squares[center_doors[i].square];
+            DM2_ViewSquare *door = &viewport->squares[visible_cells[i].square];
             door->square_type =
                 (uint8_t)(square_type >= 0 ? square_type : type);
             door->flags |= DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
@@ -2626,7 +2633,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport,
         (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
     viewport.random_seed = rt->weather.weather_seed;
-    dm2_runtime_populate_front_square(rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_visible_terrain(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_active_creature_instances(
         rt, &viewport, party_dir, party_x, party_y);
