@@ -95,6 +95,37 @@ Nexus_V1_Engine *nexus_v1_launcher_get_engine(void) {
     return &s_engine;
 }
 
+int nexus_v1_launcher_startup_structure3_capture_intake(
+    const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3CaptureImport *capture,
+    Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure2SourceReceipt source;
+    uint8_t *dgn_data;
+    int dgn_size = 0;
+    int source_verified;
+    char name[32];
+    int result;
+
+    if (!out_receipt) return -1;
+    nexus_v1_dgn_structure3_capture_host_receipt_clear(out_receipt);
+    if (!s_initialized || !s_engine.level_loaded || !capture) return 0;
+    memset(&source, 0, sizeof(source));
+    (void)nexus_v1_current_level_structure2_source_receipt(&s_engine, &source);
+    source_verified = source.canonical_hash_verified &&
+        source.materialization_bound &&
+        source.level_index == s_engine.game.current_level;
+    if (!source_verified) return 0;
+    snprintf(name, sizeof(name), "LEV%02d.DGN", source.level_index);
+    dgn_data = nexus_v1_read_file(&s_engine, name, &dgn_size);
+    if (!dgn_data) return 0;
+    result = nexus_v1_dgn_structure3_capture_host_intake(
+        &s_engine.current_level, dgn_data, dgn_size, source_verified,
+        manifest_text, manifest_size, capture, out_receipt);
+    free(dgn_data);
+    return result;
+}
+
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt)
 {

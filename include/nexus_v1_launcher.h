@@ -26,6 +26,7 @@
 #include "firestaff_nexus_v1_boot_profile.h"
 #include "nexus_v1_light_runtime.h"
 #include "nexus_v1_startup_menu.h"
+#include "nexus_v1_structure3_capture_manifest.h"
 #include "nexus_v1_title.h"
 
 #ifdef __cplusplus
@@ -51,6 +52,13 @@ int nexus_v1_launcher_load_level(int level);
  * Returns NULL if launcher not initialized.
  * The returned pointer is owned by the launcher — do not free it. */
 Nexus_V1_Engine *nexus_v1_launcher_get_engine(void);
+
+/* Startup's source-owned Structure3 capture boundary. It never exposes a
+ * drawable surface or interpretation of opaque capture bytes. */
+int nexus_v1_launcher_startup_structure3_capture_intake(
+    const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3CaptureImport *capture,
+    Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt);
 
 typedef struct {
     int title_surface_loaded;

@@ -70,6 +70,22 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt binding;
 } Nexus_V1_DgnStructure3CaptureImportReceipt;
 
+/* Host-owned intake receipt. This is the only path that may forward a raw
+ * packet to the face binder: an authenticated DGN source and an explicit
+ * original-Saturn verdict must both exist first. It remains no-draw. */
+typedef struct {
+    int host_dgn_source_verified;
+    int capture_source_verified;
+    int manifest_parsed;
+    int importer_invoked;
+    int no_draw_only;
+    Nexus_V1_DgnStructure3CaptureManifestReceipt manifest;
+    Nexus_V1_DgnStructure3CaptureImportReceipt import_receipt;
+} Nexus_V1_DgnStructure3CaptureHostReceipt;
+
+void nexus_v1_dgn_structure3_capture_host_receipt_clear(
+    Nexus_V1_DgnStructure3CaptureHostReceipt *receipt);
+
 /* Parse one complete, single-face correlation envelope. The manifest retains
  * opaque byte fingerprints and ordering only. It assigns no texture, palette,
  * VDP1, transform, culling, or drawing semantics. */
@@ -98,5 +114,13 @@ int nexus_v1_dgn_structure3_capture_manifest_bind_import(
     const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest,
     const Nexus_V1_DgnStructure3CaptureImport *capture,
     Nexus_V1_DgnStructure3CaptureImportReceipt *out_receipt);
+
+/* The host supplies its loaded DGN bytes and independent source result.
+ * Local byte matches can never substitute for original-Saturn evidence. */
+int nexus_v1_dgn_structure3_capture_host_intake(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int dgn_source_hash_verified, const char *manifest_text,
+    size_t manifest_size, const Nexus_V1_DgnStructure3CaptureImport *capture,
+    Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt);
 
 #endif

@@ -74,6 +74,16 @@ static uint64_t capture_bundle_fnv1a64(
                          capture->vdp1_command_size);
 }
 
+void nexus_v1_dgn_structure3_capture_host_receipt_clear(
+    Nexus_V1_DgnStructure3CaptureHostReceipt *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->no_draw_only = 1;
+    receipt->manifest.blocks_real_dgn_mesh_render = 1;
+    receipt->import_receipt.blocks_real_dgn_mesh_render = 1;
+}
+
 int nexus_v1_dgn_structure3_capture_manifest_parse(
     const char *text, size_t text_size,
     Nexus_V1_DgnStructure3CaptureManifestReceipt *out_receipt)
@@ -267,4 +277,37 @@ int nexus_v1_dgn_structure3_capture_manifest_bind_import(
     receipt.renderer_handoff_ready = receipt.binding.renderer_handoff_ready;
     *out_receipt = receipt;
     return receipt.complete_source_binding ? 1 : 0;
+}
+
+int nexus_v1_dgn_structure3_capture_host_intake(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int dgn_source_hash_verified, const char *manifest_text,
+    size_t manifest_size, const Nexus_V1_DgnStructure3CaptureImport *capture,
+    Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3CaptureHostReceipt receipt;
+
+    if (!out_receipt) return -1;
+    nexus_v1_dgn_structure3_capture_host_receipt_clear(&receipt);
+    *out_receipt = receipt;
+    if (!level || !dgn_data || dgn_size <= 0 || !manifest_text || !capture)
+        return 0;
+    receipt.host_dgn_source_verified = dgn_source_hash_verified != 0;
+    receipt.capture_source_verified =
+        capture->original_saturn_capture_verified != 0;
+    receipt.manifest_parsed = nexus_v1_dgn_structure3_capture_manifest_parse(
+        manifest_text, manifest_size, &receipt.manifest);
+    /* The external Saturn verdict is an admission precondition, not a byte
+     * property. Do not let a locally assembled packet probe the binder. */
+    if (!receipt.host_dgn_source_verified || !receipt.capture_source_verified ||
+        !receipt.manifest_parsed) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.importer_invoked = 1;
+    (void)nexus_v1_dgn_structure3_capture_manifest_bind_import(
+        level, dgn_data, dgn_size, receipt.host_dgn_source_verified,
+        &receipt.manifest, capture, &receipt.import_receipt);
+    *out_receipt = receipt;
+    return receipt.import_receipt.complete_source_binding ? 1 : 0;
 }
