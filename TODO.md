@@ -3210,6 +3210,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       result without reading a dungeon record, timer, filter, or substitute
       runtime. `CASE` transfer routing and every world-owned AMPERSAND form
       remain blocked until their complete original owners are present.
+    - 2026-07-15 parameter/DSAVARS update: authenticated `STKOP_ParamFetch`,
+      `STKOP_ParamStore`, and `STKOP_VSET` now preserve CSBWin's 100-cell
+      DSAVARS order and `DVT_NonParameter` protection on the caller-owned
+      parameter surface. All writes remain staged until the complete action
+      succeeds; bad variable spans reject without publication. No filter,
+      dungeon, timer, or fabricated parameter list is introduced.
     - 2026-07-12 runtime binding: a resolved type-47 filter actuator now reads its CSBWin `DB3::DSAselector` bits 7..11 and maps that slot through the authenticated save's `DSALevelIndex[level][selector]` before a pure-stack runner can be prepared. The binding rejects mismatched actuator types, missing level-index entries, undefined DSA IDs, and actions absent from the staged extension. It does not infer a master DSA state or execute world/filter commands; those `ProcessDSATimer6` responsibilities remain open.
     - 2026-07-13 runtime callback binding: the prepared profile-owned stack runner can now occupy the real CSBWin `Monster.cpp` `ProcessDSAFilter` callback slot. The adapter preserves the 20-word attack ABI and loaded-level restoration while routing only an exact authenticated action through the save-owned global bank; it adds no opcode, filter flag, master-state, or world mutation support.
     - 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
