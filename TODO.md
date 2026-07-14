@@ -1881,10 +1881,12 @@ now retains the real self-master receipt and supports serialized `LocalState=1`
 `TT_TELEPORTER`, and `TT_PITROOM` timers now bind their saved
 target/action/position to that receipt. The exact zero-parameter
 `TT_DESSAGE`/`TT_DOOR`/`TT_TELEPORTER`/`TT_PITROOM` handoffs also execute the
-already admitted authenticated pure-stack action. Remaining CSB DSA work is
-authenticating widened `LocalState=2` ParameterB records, a real slave-master
-route, source master-state/world effects, and a real-save corpus. Do not
-promote unsupported world or text opcodes from fixtures.
+already admitted authenticated pure-stack action. Authenticated `JUMP/GOSUB`
+transfer receipts now also persist their source final `LocalState=1`
+`DSA::m_state` through the complete RCS-checked Extended Features DSA stream.
+Remaining CSB DSA work is authenticating widened `LocalState=2` ParameterB
+records, a real slave-master route, source world effects, and a real-save
+corpus. Do not promote unsupported world or text opcodes from fixtures.
 
 CSBWin type-47 DSA binding now also requires the current complete
 FNV-authenticated Extended Features tail that published its saved level index

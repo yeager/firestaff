@@ -13,6 +13,8 @@
 #define DSA_STATE_OFFSET (DSA_OFFSET + 84u)
 #define DSA_CHECKSUM_OFFSET (DSA_OFFSET + 122u)
 #define SAVE_BYTES (DSA_CHECKSUM_OFFSET + 4u)
+#define TRANSFER_DSA_CHECKSUM_OFFSET (DSA_OFFSET + 118u)
+#define TRANSFER_SAVE_BYTES (TRANSFER_DSA_CHECKSUM_OFFSET + 4u)
 
 static int failures;
 
@@ -94,19 +96,46 @@ static void make_real_shape(uint8_t bytes[SAVE_BYTES])
              rcs_checksum(bytes + DSA_OFFSET, DSA_CHECKSUM_OFFSET - DSA_OFFSET));
 }
 
+static void make_transfer_shape(uint8_t bytes[TRANSFER_SAVE_BYTES])
+{
+    uint8_t header[EXTENDED_HEADER_BYTES];
+
+    memset(bytes, 0, TRANSFER_SAVE_BYTES);
+    memcpy(bytes, " Extended Features ", sizeof(" Extended Features "));
+    put_le16(bytes, 38u, 1u);
+    memcpy(header, bytes, sizeof(header));
+    memset(header + 32u, 0, 4u);
+    put_le32(bytes, 32u, form_checksum(header, sizeof(header)));
+
+    /* One complete DSA::Read JUMP action returns state 2 through PutState. */
+    put_le32(bytes, DSA_OFFSET, 7u);
+    put_le16(bytes, DSA_STATE_OFFSET, 1u);
+    bytes[DSA_OFFSET + 86u] = 1u;
+    put_le32(bytes, DSA_OFFSET + 88u, 4u);
+    put_le32(bytes, DSA_OFFSET + 96u, 1u);
+    put_le32(bytes, DSA_OFFSET + 100u, 1u);
+    put_le32(bytes, DSA_OFFSET + 104u, 1u);
+    put_le32(bytes, DSA_OFFSET + 108u, 0u);
+    put_le32(bytes, DSA_OFFSET + 112u, 1u);
+    put_le16(bytes, DSA_OFFSET + 116u, 0x208cu);
+    put_le32(bytes, TRANSFER_DSA_CHECKSUM_OFFSET,
+             rcs_checksum(bytes + DSA_OFFSET,
+                          TRANSFER_DSA_CHECKSUM_OFFSET - DSA_OFFSET));
+}
+
 static int initialize_profile(CSB_V1_RuntimeProfile *profile,
-                              uint8_t bytes[SAVE_BYTES])
+                              const uint8_t *bytes, size_t size)
 {
     csb_v1_runtime_init(profile, NULL);
     profile->csbwin_extended_features_valid = 1;
     profile->csbwin_appended_tail_valid = 1;
-    profile->csbwin_appended_tail_size = SAVE_BYTES;
-    profile->csbwin_appended_tail_preserved_size = SAVE_BYTES;
-    memcpy(profile->csbwin_appended_tail, bytes, SAVE_BYTES);
-    profile->csbwin_appended_tail_fnv1a = fnv1a32(bytes, SAVE_BYTES);
+    profile->csbwin_appended_tail_size = size;
+    profile->csbwin_appended_tail_preserved_size = size;
+    memcpy(profile->csbwin_appended_tail, bytes, size);
+    profile->csbwin_appended_tail_fnv1a = fnv1a32(bytes, size);
     if (csb_v1_chaos_import_extended_save_dsas(
             &profile->csbwin_extended_dsa_state,
-            profile->csbwin_appended_tail, SAVE_BYTES) != 1) {
+            profile->csbwin_appended_tail, (int)size) != 1) {
         return 0;
     }
     return 1;
@@ -115,6 +144,7 @@ static int initialize_profile(CSB_V1_RuntimeProfile *profile,
 int main(void)
 {
     uint8_t bytes[SAVE_BYTES];
+    uint8_t transfer_bytes[TRANSFER_SAVE_BYTES];
     CSB_V1_RuntimeProfile profile;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action;
@@ -124,7 +154,7 @@ int main(void)
 
     make_real_shape(bytes);
     memset(&profile, 0, sizeof(profile));
-    check(initialize_profile(&profile, bytes) == 1,
+    check(initialize_profile(&profile, bytes, sizeof(bytes)) == 1,
           "real-shaped Extended Features DSA receipt imports");
     memset(&runner, 0, sizeof(runner));
     {
@@ -157,7 +187,7 @@ int main(void)
     csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
     make_real_shape(bytes);
     memset(&profile, 0, sizeof(profile));
-    check(initialize_profile(&profile, bytes) == 1,
+    check(initialize_profile(&profile, bytes, sizeof(bytes)) == 1,
           "second real-shaped receipt imports for the negative path");
     before_hash = profile.csbwin_appended_tail_fnv1a;
     profile.csbwin_appended_tail[DSA_CHECKSUM_OFFSET] ^= 1u;
@@ -181,5 +211,40 @@ int main(void)
                   .persistent_state == 1u &&
               profile.csbwin_appended_tail_fnv1a != before_hash,
           "bad DSA RCS fails closed without publishing a new master state");
+    csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
+
+    make_transfer_shape(transfer_bytes);
+    memset(&profile, 0, sizeof(profile));
+    check(initialize_profile(&profile, transfer_bytes, sizeof(transfer_bytes)) == 1,
+          "real-shaped LocalState=1 transfer receipt imports");
+    memset(&runner, 0, sizeof(runner));
+    {
+        CSB_V1_RuntimeDSAFilterBinding binding;
+        memset(&binding, 0, sizeof(binding));
+        binding.dsa_id = 7u;
+        check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+                  &profile, &binding, 1u, 0, 0u, &runner) == 1,
+              "LocalState=1 transfer action resolves from the saved receipt");
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile.csbwin_extended_dsa_state, 7, 1u, 0);
+    check(action != NULL &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, action, NULL, 0, NULL) == 1 &&
+              runner.state_index == 2u &&
+              profile.csbwin_extended_dsa_state.imported_headers[7]
+                  .persistent_state == 2u &&
+              profile.csbwin_appended_tail[DSA_STATE_OFFSET] == 2u &&
+              profile.csbwin_appended_tail[DSA_STATE_OFFSET + 1u] == 0u,
+          "JUMP transfer commits its source final state through PutState");
+    memset(&report, 0, sizeof(report));
+    memset(&features, 0, sizeof(features));
+    check(csb_v1_csbwin_512_inspect_extended_dsa_section(
+              profile.csbwin_appended_tail,
+              profile.csbwin_appended_tail_preserved_size, &report,
+              &features) == CSB_V1_CSBWIN_EXTENDED_OK && report.valid &&
+              report.stored_checksum == report.computed_checksum,
+          "JUMP PutState recomputes its complete DSA receipt checksum");
+    csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
     return failures == 0 ? 0 : 1;
 }
