@@ -1839,8 +1839,8 @@ F	0802	F0802_IsMagicMap	PANEL.C;MENU.C;DEFS.H	implemented_source_locked
 F	0803	F0803_DrawMagicMapIcon	PANEL.C	implemented_source_locked
 F	0804	F0804_DrawMagicMap	PANEL.C	implemented_source_locked
 F	0805	F0805_CreatureNameScroll	PANEL.C	implemented_source_locked
-F	0807	F0807_ENTRANCE_DrawAnimationStep	ENTRANCE.C	referenced_not_verified
-F	0808	F0808_SeekToCylinder0_Unreferenced	IO.C	referenced_not_verified
+F	0807	F0807_ENTRANCE_DrawAnimationStep	ENTRANCE.C	implemented_source_locked
+F	0808	F0808_SeekToCylinder0_Unreferenced	IO.C	implemented_source_locked
 F	0809	F0809_CheckCopyProtectionSide0Track0_CPSX	LOADSAVE.C;DUNVIEW.C;IO.C;DEFS.H	referenced_not_verified
 F	0810	F0810_CheckCopyProtectionSide0Track2_CPSX	LOADSAVE.C;IO.C;DEFS.H	referenced_not_verified
 F	0811	F0811_CheckCopyProtectionSide0Track0_Unreferenced	IO.C	referenced_not_verified
