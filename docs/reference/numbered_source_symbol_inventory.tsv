@@ -1934,7 +1934,7 @@ F	1050	F1050_AlertCSBSystemError	AMIGA.H;PALETTE.C;AMIGINIT.C;FLOPPYAM.C;IO.C;CO
 F	1052	F1052_WaitForScanLine	FILLBOX.C	source_nonapplicable
 F	1053	F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC	AMIGA.H;COMMAND.C	source_nonapplicable
 F	1055	F1055_Post_F0380_COMMAND_ProcessQueue_CPSC	AMIGA.H;COMMAND.C	source_nonapplicable
-F	1057	F1057_Pre_F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	AMIGA.H;LOADSAVE.C;COMMAND.C;MOVESENS.C	referenced_not_verified
+F	1057	F1057_Pre_F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	AMIGA.H;LOADSAVE.C;COMMAND.C;MOVESENS.C	source_nonapplicable
 F	1059	F1059_Post_F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	AMIGA.H;LOADSAVE.C;COMMAND.C;MOVESENS.C	referenced_not_verified
 F	1061	F1061_Pre_Unreferenced	READWRIT.C	unmapped_or_unverified
 F	1063	F1063_ChecksumEor_CPSX	READWRIT.C;COMMAND.C	referenced_not_verified
