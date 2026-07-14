@@ -22,6 +22,8 @@
 /* CSBWin Data.h:1686-1708, 1947-1984.  These are source DSA word-code
  * values, not the older Firestaff compatibility-bytecode values below. */
 #define CSB_V1_CSBWIN_DSACMD_LOAD 6u
+#define CSB_V1_CSBWIN_DSACMD_NOOP 3u
+#define CSB_V1_CSBWIN_DSACMD_EQUAL 8u
 #define CSB_V1_CSBWIN_DSACMD_GOSUB 5u
 #define CSB_V1_CSBWIN_DSACMD_AMPERSAND 11u
 #define CSB_V1_CSBWIN_DSACMD_JUMP 12u

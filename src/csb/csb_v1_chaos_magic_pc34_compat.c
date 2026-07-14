@@ -1033,6 +1033,39 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             } else if (selector <= 25u) {
                 if (!csb_v1_csbwin_dsa_stack_push(stack, &depth, parameters[selector])) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             } else return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_NOOP) {
+            /* CSBWin DSA.cpp:574-591 / Data.h DSAnoopCmd: NOOP carries
+             * only Execute's next-state value. Its MAXSTATE extension is a
+             * raw source word, matching the other DSA command extensions. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
+            uint32_t first;
+            uint32_t second;
+
+            /* DSA.cpp:1491-1515 pops two source stack words, pushes the
+             * boolean result, then follows the same DSAequalCmd state form
+             * as NOOP. No filter or world surface is involved. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (!csb_v1_csbwin_dsa_stack_pop(stack, &depth, &first) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &second) ||
+                !csb_v1_csbwin_dsa_stack_push(stack, &depth,
+                                                first == second ? 1u : 0u)) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             if (selector > 25u) return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
