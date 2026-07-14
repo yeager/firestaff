@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 direct-DB4 live candidate gate: M11 now receives static
+  dungeon creature candidates only from the committed G1
+  `Creature::b4 -> CREATURES/type/F9` material receipt. Each candidate carries
+  its original ObjectID, tile, direction, decoded dimensions, and local
+  palette ownership; the prior generic record-link walk cannot nominate a
+  sprite. The focused real-data `test_dm2_v1_g1_scene_creature_gdat_real_data`
+  remains the positive canonical G1/GRAPHICS proof, while the runtime smoke
+  fixture now proves that an unowned linked DB4 record produces no atlas draw
+  or render receipt. This adds no animation timing, light calculation,
+  destination/clipping plan, art, or save behavior.
+
 - 2026-07-14 Nexus PRS3 captured-input span binding: a claimed SH-2-to-VDP1
   capture now carries a nonzero fingerprint for its exact `MENU.BPK` stream
   range. Asset binding recomputes that range from the bounded PRS3 entry plan

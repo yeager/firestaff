@@ -1637,39 +1637,32 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
 
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
-    uint16_t thing,
-    int map_x,
-    int map_y,
+    const DM2_V1_G1CreatureMapChipMaterial *material,
     int screen_x,
     int screen_y,
-    int depth,
-    const uint8_t *record,
-    int record_size)
+    int depth)
 {
     DM2_CreatureSprite *dst;
 
-    if (!viewport || !record || record_size < 5) return;
+    if (!viewport || !material) return;
     if (viewport->creature_count >= DM2_MAX_CREATURES_PER_SQ) return;
 
     dst = &viewport->creatures[viewport->creature_count++];
     memset(dst, 0, sizeof(*dst));
-    /* skproject SKWIN/DME.h Creature::CreatureType() exposes the DB4
-     * creature record's b4 byte as the GDAT creature index. SkWinCore.cpp
-     * lines 10557-10619 then routes it through QUERY_DUNGEON_MAP_CHIP_PICT
-     * before DRAW_CHIP_OF_MAGIC_MAP. */
-    dst->creature_type = record[4];
+    /* The material receipt has already read only the direct DB4 b4 type and
+     * matched its ObjectID/tile to CREATURES/type/F9. Do not re-traverse a
+     * generic record chain to discover a different viewport candidate. */
+    dst->creature_type = material->creature_type;
     dst->source_kind = 2;
-    dst->object_id = thing;
-    dst->map_x = (int16_t)map_x;
-    dst->map_y = (int16_t)map_y;
+    dst->object_id = material->object_id;
+    dst->map_x = (int16_t)material->x;
+    dst->map_y = (int16_t)material->y;
     dst->frame_index = 0;
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
     dst->screen_y = (int16_t)screen_y;
     dst->health_pct = 100;
-    if (record_size >= 8) {
-        dst->direction = (uint8_t)(record[7] & 3u);
-    }
+    dst->direction = material->direction;
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     /* skproject SKWIN/DME.h Creature::CreatureType() plus
@@ -1678,14 +1671,14 @@ static void dm2_runtime_append_creature_sprite(
      * fields once asset dimensions are known. */
     g_dm2_last_creature_render.valid = 1;
     g_dm2_last_creature_render.instance_id = -1;
-    g_dm2_last_creature_render.thing_handle = thing;
+    g_dm2_last_creature_render.thing_handle = material->object_id;
     g_dm2_last_creature_render.source_kind = 2;
     g_dm2_last_creature_render.creature_type = dst->creature_type;
     g_dm2_last_creature_render.frame_index = dst->frame_index;
     g_dm2_last_creature_render.direction = dst->direction;
     g_dm2_last_creature_render.hp_pct = 100;
-    g_dm2_last_creature_render.map_x = map_x;
-    g_dm2_last_creature_render.map_y = map_y;
+    g_dm2_last_creature_render.map_x = material->x;
+    g_dm2_last_creature_render.map_y = material->y;
     g_dm2_last_creature_render.screen_x = screen_x;
     g_dm2_last_creature_render.screen_y = screen_y;
     g_dm2_last_creature_render.depth = depth;
@@ -2003,70 +1996,28 @@ static void dm2_runtime_populate_creatures(
     int party_x,
     int party_y)
 {
-    static const int dx[4] = { 0, 1, 0, -1 };
-    static const int dy[4] = { -1, 0, 1, 0 };
-    DM2_V1_DungeonData *dd;
-    int dir;
-    int right;
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt;
 
-    if (!rt || !viewport || rt->outdoor || !rt->boot ||
-        !rt->boot->dungeon_data) {
+    if (!rt || !viewport || rt->outdoor) {
         return;
     }
-    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    dir = party_dir & 3;
-    right = (dir + 1) & 3;
+    receipt = &rt->g1_creature_map_chip_runtime;
+    if (!receipt->valid || receipt->map != rt->dungeon_level) return;
 
-    for (int forward = 1; forward <= 4; ++forward) {
-        for (int lateral = -2; lateral <= 2; ++lateral) {
-            int map_x = party_x + dx[dir] * forward +
-                        dx[right] * lateral;
-            int map_y = party_y + dy[dir] * forward +
-                        dy[right] * lateral;
-            int thing = dm2_v1_dungeon_get_first_thing(
-                dd, rt->dungeon_level, map_x, map_y);
-            int guard = 0;
-            DM2_V1_ViewportSpritePlacement placement;
+    for (int i = 0; i < receipt->material_count &&
+                    viewport->creature_count < DM2_MAX_CREATURES_PER_SQ; ++i) {
+        const DM2_V1_G1CreatureMapChipMaterial *material =
+            &receipt->materials[i];
+        DM2_V1_ViewportSpritePlacement placement;
 
-            if (thing < 0 || thing == 0xfffe) continue;
-            if (!dm2_v1_viewport_project_map_to_sprite(
-                    map_x, map_y, party_dir, party_x, party_y,
-                    &placement)) {
-                continue;
-            }
-            while (thing >= 0 && thing != 0xfffe && guard++ < 64 &&
-                   viewport->creature_count < DM2_MAX_CREATURES_PER_SQ) {
-                int type = -1;
-                int size = 0;
-                int next;
-                const uint8_t *record = dm2_v1_dungeon_get_thing_record(
-                    dd, (uint16_t)thing, &type, NULL, &size);
-                if (!record || size < 2) break;
-                if (type == 4 && size >= 5) {
-                    if (rt->boot->graphics_dat &&
-                        !dm2_v1_creature_ai_spec(record[4])) {
-                        next = dm2_v1_dungeon_get_next_thing(
-                            dd, (uint16_t)thing);
-                        if (next < 0 || next == thing) break;
-                        thing = next;
-                        continue;
-                    }
-                    dm2_runtime_append_creature_sprite(
-                        viewport,
-                        (uint16_t)thing,
-                        map_x,
-                        map_y,
-                        placement.screen_x,
-                        placement.screen_y,
-                        placement.depth,
-                        record,
-                        size);
-                }
-                next = dm2_v1_dungeon_get_next_thing(dd, (uint16_t)thing);
-                if (next < 0 || next == thing) break;
-                thing = next;
-            }
+        if (!dm2_v1_viewport_project_map_to_sprite(
+                material->x, material->y, party_dir, party_x, party_y,
+                &placement)) {
+            continue;
         }
+        dm2_runtime_append_creature_sprite(
+            viewport, material, placement.screen_x, placement.screen_y,
+            placement.depth);
     }
 }
 

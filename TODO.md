@@ -52,6 +52,12 @@
   source receipt's decoded dimensions. Direct DB4 creature sprites require
   their exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.
+  - 2026-07-14 update: the live dungeon candidate list now comes only from
+    the committed direct-DB4 `CREATURES/type/F9` material receipt. It retains
+    the original ObjectID, tile, direction, decoded dimensions, and local
+    palette owner through M11; generic record-link traversal cannot nominate
+    a creature sprite. This is a static map-chip handoff only: animation
+    selection, dynamic lighting, and movement offsets remain unavailable.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
   `test_dm2_v1_save_load` external-corpus census accepts only
