@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSBWin real extended-DSA package stability gate: the opt-in
+  `Dungeon.dat` plus `csbgame*.dat` runtime handoff now snapshots both
+  complete input files before production resume and requires matching
+  complete-file size/FNV receipts after the live DSA/timer tick. This prevents
+  a changed package path from retaining an earlier DSA catalog, timer-slot, or post-tick core-resume
+  result. The probe is registered as a skip-safe real-data CTest and creates
+  no save, dungeon, timer, or DSA fixture. Verification: focused
+  `csb_v1_csbwin_extended_dsa_handoff` CTest (skips without explicit paths).
+
 - 2026-07-14 DM1 F0435 saved-portrait host-consumption gate: M11's normal
   C017 inventory panel now unpacks the active champion's saved 32x29 4bpp
   portrait payload from the F0435-restored M516_CHAMPIONS state before it may

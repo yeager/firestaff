@@ -42,6 +42,57 @@ static const char *path_arg_or_env(int argc, char **argv, int index,
     return value && value[0] != '\0' ? value : NULL;
 }
 
+typedef struct {
+    size_t size;
+    uint32_t fnv1a;
+} SourceFileReceipt;
+
+/* Keep the supplied package pair stable for the entire probe. The runtime
+ * owns decoded copies after admission, but a changed source path must not be
+ * able to inherit that earlier DSA/timer result. */
+static int source_file_receipt(const char *path, SourceFileReceipt *out)
+{
+    uint8_t buffer[4096];
+    FILE *fp;
+    size_t total = 0u;
+    uint32_t hash = 2166136261u;
+    size_t count;
+
+    if (!path || !out) return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    while ((count = fread(buffer, 1u, sizeof(buffer), fp)) != 0u) {
+        size_t i;
+
+        if (total > (size_t)-1 - count) {
+            fclose(fp);
+            return 0;
+        }
+        total += count;
+        for (i = 0u; i < count; ++i) {
+            hash = (hash ^ buffer[i]) * 16777619u;
+        }
+    }
+    {
+        const int had_error = ferror(fp);
+        const int close_error = fclose(fp);
+
+        if (had_error || close_error != 0) return 0;
+    }
+    out->size = total;
+    out->fnv1a = hash;
+    return 1;
+}
+
+static int source_file_receipt_matches(const char *path,
+                                       const SourceFileReceipt *expected)
+{
+    SourceFileReceipt current;
+
+    return expected && source_file_receipt(path, &current) &&
+           current.size == expected->size && current.fnv1a == expected->fnv1a;
+}
+
 static unsigned long action_fingerprint(const CSB_V1_DSAImportedAction *action)
 {
     unsigned long hash = 2166136261u;
@@ -354,6 +405,8 @@ int main(int argc, char **argv)
     const CSB_V1_DSAImportedAction **actions_before_tick = NULL;
     unsigned long *action_hashes_before_tick = NULL;
     CSB_V1_RuntimeDSAFilterBinding source_binding;
+    SourceFileReceipt dungeon_receipt;
+    SourceFileReceipt save_receipt;
     int mapped_entries = 0;
     int mapped_actions = 0;
     int source_binding_found;
@@ -367,6 +420,11 @@ int main(int argc, char **argv)
                "FIRESTAFF_CSBWIN_DUNGEON and FIRESTAFF_CSBWIN_SAVE.\n");
         return 0;
     }
+
+    CHECK(source_file_receipt(dungeon_path, &dungeon_receipt) &&
+              source_file_receipt(save_path, &save_receipt),
+          "snapshot supplied Dungeon.dat and csbgame bytes before admission");
+    if (failures != 0) return 1;
 
     dungeon = (CSB_V1_DungeonData *)calloc(1u, sizeof(*dungeon));
     CHECK(dungeon != NULL, "allocate runtime-owned dungeon handle");
@@ -483,6 +541,9 @@ int main(int argc, char **argv)
                       csb_v1_dungeon_get_current() == dungeon &&
                       remaining_saved_timer_queue_matches_runtime(&profile),
                   "post-tick live queue retains only exact package TIMER slots");
+            CHECK(source_file_receipt_matches(dungeon_path, &dungeon_receipt) &&
+                      source_file_receipt_matches(save_path, &save_receipt),
+                  "package files retain their complete size/FNV receipts across runtime proof");
             core_resume_result = exported_core_reloads_after_tick(&profile);
             CHECK(core_resume_result != 0,
                   "post-tick core export either reloads exactly or remains unavailable");
