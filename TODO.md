@@ -836,6 +836,13 @@ ReDMCSB WIP 2021-02-06 source tree.
   - 2026-07-14 VIDEODRV.C F8155 now preserves the PC 3.4 C25 hatch box:
     `((x ^ y) & 1) == 0` aperture pixels clear to zero and the others are
     retained. Live Mac/SDL aperture consumption remains separately unproven.
+  - 2026-07-14 VIDEODRV.C F8156/F8157 now preserve the PC 3.4 C25 RGB6
+    palette bytes: F8157 updates only terminated table entries whose index is
+    below 32, and F8156 publishes all 32 rows only after a host VBlank gate
+    when the curtain is active. This does not fabricate a VBlank or a palette:
+    M11/SDL consumption of the verified DAC rows remains separate work.
+  - 2026-07-14 VIDEODRV.C F8158 is not a PC 3.4 C25 task: its source body is
+    guarded to EGA/Tandy builds only, so no C25 behavior is invented.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
