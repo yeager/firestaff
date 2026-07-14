@@ -115,6 +115,7 @@ int main(void)
         struct TickInput_Compat expected_input;
         struct TickResult_Compat expected_tick;
         uint32_t expected_post_tick_world_hash;
+        uint32_t actual_post_tick_world_hash;
         uint32_t pre_tick;
         struct TimelineEvent_Compat next_event;
 
@@ -202,6 +203,10 @@ int main(void)
                   state.lastTickResult.worldHashPost == expected_tick.worldHashPost &&
                   state.lastWorldHash == expected_post_tick_world_hash,
               "M11 idle receipt matches the independently staged F0435 tick");
+        CHECK(F0891_ORCH_WorldHash_Compat(&state.world,
+                                           &actual_post_tick_world_hash) &&
+                  actual_post_tick_world_hash == expected_post_tick_world_hash,
+              "M11 live world matches the staged F0435 idle world");
         CHECK(state.world.timeline.count == expected_world.timeline.count &&
                   state.lastTickResult.emissionCount == expected_tick.emissionCount &&
                   memcmp(state.lastTickResult.emissions, expected_tick.emissions,
@@ -251,6 +256,10 @@ int main(void)
                               state.lastTickResult.worldHashPost == expected_tick.worldHashPost &&
                               state.lastWorldHash == expected_tick.worldHashPost,
                           "M11 queued-event idle receipt matches staged F0435 tick");
+                    CHECK(F0891_ORCH_WorldHash_Compat(
+                              &state.world, &actual_post_tick_world_hash) &&
+                              actual_post_tick_world_hash == expected_tick.worldHashPost,
+                          "M11 live world matches every staged F0435 queue tick");
                     CHECK(state.world.timeline.count == expected_world.timeline.count &&
                               state.lastTickResult.emissionCount == expected_tick.emissionCount &&
                               memcmp(state.lastTickResult.emissions, expected_tick.emissions,

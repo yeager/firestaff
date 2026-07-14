@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 PC34 external-save live-world runtime receipt: the
+  fixture-free HoC runtime probe now recomputes the canonical M10 world hash
+  from M11's adopted world after the first ReDMCSB-shaped idle tick and after
+  every bounded C4 queue tick. A stale published receipt can no longer certify
+  a divergent live runtime. Source-lock: ReDMCSB `LOADSAVE.C F0435` restores
+  C3/C4 before `TIMELINE.C F0261` consumes due events. Verification:
+  `dm1_v1_original_save_pc34_external_hoc_runtime` remains skip-safe without
+  operator-supplied original PC34 save/media inputs.
+
 - 2026-07-14 DM1 PC34 external-save queued-runtime gate: the fixture-free
   HoC runtime probe now follows the next persisted F0435 C4 timeline event
   when its source timestamp falls inside a 1024-tick test horizon. It advances
