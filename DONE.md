@@ -14994,6 +14994,15 @@ the previously malformed HUD rectangles. Verification:
 `test_dm1_v1_box_action_area_pc34_compat` (161 assertions), and
 `test_m11_open_door_spell_runtime_pc34_compat`.
 
+# 2026-07-14 DM2 G1 startup-map boot admission
+
+DM2 now admits a successfully decoded original G1 map into the real GDAT
+startup/menu route before the optional generic-record graph is promoted.
+Malformed map data still fails boot; incomplete record links remain separately
+gated at runtime. This follows SKProject's `SHOW_MENU_SCREEN` before the later
+`GAME_LOAD` world-graph path. The focused smoke test covers a bounded G1 map
+whose record graph is intentionally unavailable.
+
 # ✅ 2026-07-14 DM1 F0435 original-save runtime provenance gate
 
 M11 now publishes `ORIGINAL_SAVE_PC34` only when the input was classified and
