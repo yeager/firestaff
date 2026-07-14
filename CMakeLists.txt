@@ -164,6 +164,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0111_door_ornament_dis
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_outdoor_renderer_material_gate.c")
+    add_executable(test_dm2_v1_outdoor_renderer_material_gate
+        tests/test_dm2_v1_outdoor_renderer_material_gate.c
+        src/dm2/dm2_v1_outdoor_renderer.c
+    )
+    target_include_directories(test_dm2_v1_outdoor_renderer_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_outdoor_renderer_material_gate PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_outdoor_renderer_material_gate
+        COMMAND test_dm2_v1_outdoor_renderer_material_gate
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c")
     add_executable(test_dm1_v1_object_draw_icon_to_screen_pc34_compat
         tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c
