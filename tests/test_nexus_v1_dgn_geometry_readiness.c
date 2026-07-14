@@ -841,6 +841,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure1FSpatialReceipt spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
+    Nexus_V1_DgnStructure1AKindReceipt structure1a_kinds;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt face_selectors;
@@ -898,6 +899,8 @@ static void test_structure1f_semantics_and_bounds(void) {
     dgn[NEXUS_DGN_BLOCK_SIZE * 23 + 7] = 0x42U;
     wb32(structure1 + 0x0c, 9U);
     for (int index = 0; index < 9; ++index) {
+        structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES] =
+            (uint8_t)(index % 3);
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 1] =
             (uint8_t)(0x20 + index);
         structure1[0x38 + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 2] =
@@ -1060,6 +1063,18 @@ static void test_structure1f_semantics_and_bounds(void) {
           !structure3_candidates[0].draw_authorized &&
           !structure3_candidate_receipt.fallback_visuals_permitted,
           "Structure1A owner cells retain only bounded Structure3 topology candidates without ordinal or draw claims");
+    CHECK(nexus_v1_level_structure1a_kind_receipt(&level, &structure1a_kinds) == 0 &&
+          structure1a_kinds.structure1a_relation_complete &&
+          structure1a_kinds.structure1f_bound_entry_count == 8 &&
+          structure1a_kinds.resolved_kind_count == 8 &&
+          structure1a_kinds.unique_kind_count == 3 &&
+          structure1a_kinds.duplicate_kind_count == 5 &&
+          structure1a_kinds.zero_kind_count == 4 &&
+          structure1a_kinds.nonzero_kind_count == 4 &&
+          structure1a_kinds.highest_kind == 2U &&
+          structure1a_kinds.complete &&
+          !structure1a_kinds.kind_semantics_proven,
+          "resolved Structure1A kind bytes remain raw no-draw provenance");
     CHECK(nexus_v1_level_structure1a_transform_selector_receipt(
               &level, &transform_selectors) == 0 &&
           transform_selectors.structure1a_relation_complete &&
@@ -1455,6 +1470,9 @@ static void test_structure1f_semantics_and_bounds(void) {
           handoff.structure1a_boundary.duplicate_index_count == 1 &&
           handoff.structure1a_relation.complete &&
           handoff.structure1a_relation.resolved_entry_count == 8 &&
+          handoff.structure1a_kinds.complete &&
+          handoff.structure1a_kinds.unique_kind_count == 3 &&
+          !handoff.structure1a_kinds.kind_semantics_proven &&
           handoff.structure3_model_references.complete &&
           handoff.structure3_model_references.unique_model_index_count == 7 &&
           handoff.structure1a_transform_selectors.complete &&
@@ -1550,6 +1568,8 @@ static void test_structure1f_semantics_and_bounds(void) {
           !render_plan.plan_ready &&
           render_plan.blocks_real_dgn_mesh_render &&
           !render_plan.fallback_visuals_permitted &&
+          render_plan.structure1a_kinds.complete &&
+          !render_plan.structure1a_kinds.kind_semantics_proven &&
           render_plan.structure3_model_references.complete &&
           render_plan.structure1a_transform_selectors.complete &&
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&

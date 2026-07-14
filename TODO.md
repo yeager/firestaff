@@ -543,6 +543,10 @@ ReDMCSB WIP 2021-02-06 source tree.
   unparsed. Prove original record boundaries and face attachment before any
   draw route; do not infer positions, geometry, textures, pixels, palettes,
   triggers, or fallback art.
+  - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
+    render-plan receipts only through complete Structure1F owner relations.
+    Its raw reuse is counted, but its grammar remains unassigned; it cannot
+    select a face, model, transform, mesh, material, or draw route.
 
 ## M12 Localization Completion (2026-07-12)
 

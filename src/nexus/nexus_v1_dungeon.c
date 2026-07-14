@@ -1578,6 +1578,56 @@ int nexus_v1_level_structure1a_relation_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1a_kind_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1AKindReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AKindReceipt receipt;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    unsigned char seen[UINT8_MAX + 1U];
+    int entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&relation, 0, sizeof(relation));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1a_relation_receipt(
+                      level, &relation) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.structure1a_relation_complete = relation.complete;
+    for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
+        const Nexus_V1_DgnStructure1FEntry *record =
+            &level->structure1f_entries[entry];
+        uint8_t kind;
+
+        if (record->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES) continue;
+        ++receipt.structure1f_bound_entry_count;
+        if (!record->structure1a_relation_valid ||
+            record->structure1a_index >=
+                (uint16_t)level->structure1a_model_count) {
+            continue;
+        }
+        kind = level->structure1a_models[record->structure1a_index].kind;
+        ++receipt.resolved_kind_count;
+        if (kind == 0U) ++receipt.zero_kind_count;
+        else ++receipt.nonzero_kind_count;
+        if (kind > receipt.highest_kind) receipt.highest_kind = kind;
+        if (seen[kind]) ++receipt.duplicate_kind_count;
+        else {
+            seen[kind] = 1U;
+            ++receipt.unique_kind_count;
+        }
+    }
+    receipt.complete = receipt.structure1a_relation_complete &&
+        receipt.resolved_kind_count == receipt.structure1f_bound_entry_count;
+    receipt.kind_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure3_model_reference_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3ModelReferenceReceipt *out_receipt)
@@ -2945,6 +2995,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1a_boundary);
     (void)nexus_v1_level_structure1a_relation_receipt(
         level, &out_receipt->structure1a_relation);
+    (void)nexus_v1_level_structure1a_kind_receipt(
+        level, &out_receipt->structure1a_kinds);
     (void)nexus_v1_level_structure3_model_reference_receipt(
         level, &out_receipt->structure3_model_references);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
@@ -3506,6 +3558,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure1f_spatial = handoff.structure1f_spatial;
     receipt.structure1a_boundary = handoff.structure1a_boundary;
     receipt.structure1a_relation = handoff.structure1a_relation;
+    receipt.structure1a_kinds = handoff.structure1a_kinds;
     receipt.structure3_model_references = handoff.structure3_model_references;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;

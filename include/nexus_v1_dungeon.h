@@ -212,6 +212,23 @@ typedef struct {
     int complete;
 } Nexus_V1_DgnStructure1ARelationReceipt;
 
+/* Structure1A byte 0 is retained only after the indexed Structure1F record
+ * has a complete owner relation. Its original grammar is unknown, so this
+ * receipt records raw byte reuse and cannot authorize an object, face, mesh,
+ * texture, palette, pixel, or draw command. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_kind_count;
+    int unique_kind_count;
+    int duplicate_kind_count;
+    int zero_kind_count;
+    int nonzero_kind_count;
+    uint8_t highest_kind;
+    int complete;
+    int kind_semantics_proven;
+} Nexus_V1_DgnStructure1AKindReceipt;
+
 /* Structure1A byte 1 is the documented Structure3 model index. This receipt
  * consumes that byte only after the Structure1F owner relation is complete.
  * It measures original model-reference reuse, but does not parse Structure3
@@ -1025,6 +1042,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
+    Nexus_V1_DgnStructure1AKindReceipt structure1a_kinds;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1482,6 +1500,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FSpatialReceipt structure1f_spatial;
     Nexus_V1_DgnStructure1ABoundaryReceipt structure1a_boundary;
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
+    Nexus_V1_DgnStructure1AKindReceipt structure1a_kinds;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1605,6 +1624,9 @@ int nexus_v1_level_structure1a_boundary_receipt(
 int nexus_v1_level_structure1a_relation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ARelationReceipt *out_receipt);
+int nexus_v1_level_structure1a_kind_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure1AKindReceipt *out_receipt);
 int nexus_v1_level_structure3_model_reference_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3ModelReferenceReceipt *out_receipt);

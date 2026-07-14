@@ -29,6 +29,16 @@
    passed accepted and mismatch cases; `test_dm2_v1_runtime_handoff_smoke`
    passed 161/161.
 
+- ✅ 2026-07-14 Nexus Structure1A raw-kind provenance: resolved
+  Structure1F alcove/wall records now carry a receipt for exact reuse of
+  Structure1A row byte 0 into both DGN handoff and render-plan evidence. The
+  receipt is complete only after every bound record has a valid owner/table
+  relation and deliberately keeps `kind_semantics_proven` false. The existing
+  `blocked-structure3-face-semantics` outcome is unchanged: no kind is treated
+  as an object, face, model, transform, mesh, material, texture, palette, or
+  pixel instruction. Verification: focused build and CTest
+  `nexus_v1_dgn_geometry_readiness` passed 1/1; `git diff --check` passed.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API
