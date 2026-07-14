@@ -97,6 +97,24 @@ static uint64_t nexus_v1_fixed_normal_plane_tolerance(const int32_t *a,
     return (dx + dy + dz + 1U) / 2U;
 }
 
+static int nexus_v1_dgn_structure3_edge_compare(const void *left,
+                                                  const void *right)
+{
+    uint64_t a = *(const uint64_t *)left;
+    uint64_t b = *(const uint64_t *)right;
+
+    return a < b ? -1 : a > b ? 1 : 0;
+}
+
+static uint64_t nexus_v1_dgn_structure3_edge_key(uint32_t first,
+                                                   uint32_t second)
+{
+    uint32_t low = first < second ? first : second;
+    uint32_t high = first < second ? second : first;
+
+    return ((uint64_t)low << 32) | high;
+}
+
 static const Nexus_V1_DgnStructure2Texture *
 nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
                                       uint16_t image_id)
@@ -142,6 +160,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3DirectoryReceipt directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
+    Nexus_V1_DgnStructure3EdgeReceipt edges;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -173,6 +192,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&directory, 0, sizeof(directory));
     memset(&entry_headers, 0, sizeof(entry_headers));
     memset(&faces, 0, sizeof(faces));
+    memset(&edges, 0, sizeof(edges));
     memset(&vectors, 0, sizeof(vectors));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
@@ -500,6 +520,74 @@ static int nexus_v1_level_copy_structure3_payload(
     /* Record grammar alone cannot select material data or issue a draw. */
     faces.draw_semantics_proven = 0;
     level->structure3_faces = faces;
+    edges.face_receipt_valid = faces.valid;
+    edges.entry_count = directory.entry_count;
+    if (faces.valid) {
+        uint64_t *edge_keys;
+        int edge_cursor = 0;
+        int entry;
+        int expected_edge_count = faces.triangle_count * 3 +
+            faces.quad_count * 4;
+
+        edge_keys = (uint64_t *)calloc((size_t)expected_edge_count,
+                                       sizeof(*edge_keys));
+        if (edge_keys) {
+            for (entry = 0; entry < directory.entry_count; ++entry) {
+                uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+                const uint8_t *header = data + byte_offset + entry_offset;
+                uint16_t face_count = rb16(header + 6);
+                uint32_t face_offset = rb32(header + 16);
+                int face_index;
+
+                for (face_index = 0; face_index < (int)face_count; ++face_index) {
+                    const uint8_t *face = data + byte_offset + face_offset +
+                        face_index * 12;
+                    uint16_t indexes[4] = {
+                        rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                    };
+                    int endpoint_count = indexes[2] == indexes[3] ? 3 : 4;
+                    int endpoint;
+
+                    for (endpoint = 0; endpoint < endpoint_count; ++endpoint) {
+                        uint32_t first = ((uint32_t)entry << 16) | indexes[endpoint];
+                        uint32_t second = ((uint32_t)entry << 16) |
+                            indexes[(endpoint + 1) % endpoint_count];
+                        if (first == second) ++edges.degenerate_edge_count;
+                        edge_keys[edge_cursor++] =
+                            nexus_v1_dgn_structure3_edge_key(first, second);
+                    }
+                }
+            }
+            qsort(edge_keys, (size_t)edge_cursor, sizeof(*edge_keys),
+                  nexus_v1_dgn_structure3_edge_compare);
+            for (int edge = 0; edge < edge_cursor;) {
+                int uses = 1;
+                while (edge + uses < edge_cursor &&
+                       edge_keys[edge] == edge_keys[edge + uses]) {
+                    ++uses;
+                }
+                ++edges.unique_edge_count;
+                if (uses == 1) ++edges.single_use_edge_count;
+                else if (uses == 2) ++edges.shared_edge_count;
+                else ++edges.nonmanifold_edge_count;
+                if (uses > edges.maximum_edge_use_count) {
+                    edges.maximum_edge_use_count = uses;
+                }
+                edge += uses;
+            }
+            edges.edge_count = edge_cursor;
+            edges.topology_measurement_complete =
+                edge_cursor == expected_edge_count;
+            free(edge_keys);
+        }
+    }
+    edges.valid = edges.face_receipt_valid &&
+        edges.topology_measurement_complete &&
+        edges.edge_count == faces.triangle_count * 3 + faces.quad_count * 4 &&
+        edges.unique_edge_count == edges.single_use_edge_count +
+            edges.shared_edge_count + edges.nonmanifold_edge_count;
+    edges.topology_semantics_proven = 0;
+    level->structure3_edges = edges;
     vectors.face_receipt_valid = faces.valid;
     vectors.vertex_count = faces.vertex_count;
     vectors.normal_count = faces.normal_count;
@@ -3300,6 +3388,16 @@ int nexus_v1_level_structure3_face_material_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_edge_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3EdgeReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_edges;
+    return 0;
+}
+
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt)
@@ -3578,6 +3676,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_faces);
     (void)nexus_v1_level_structure3_face_material_receipt(
         level, &out_receipt->structure3_face_materials);
+    (void)nexus_v1_level_structure3_edge_receipt(
+        level, &out_receipt->structure3_edges);
     (void)nexus_v1_level_structure3_vector_receipt(
         level, &out_receipt->structure3_vectors);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
@@ -4086,15 +4186,23 @@ static int nexus_v1_dgn_structure3_face_materials_plan_bound(
 {
     const Nexus_V1_DgnStructure3FaceReceipt *faces;
     const Nexus_V1_DgnStructure3FaceMaterialReceipt *materials;
+    const Nexus_V1_DgnStructure3EdgeReceipt *edges;
     const Nexus_V1_DgnStructure3VectorReceipt *vectors;
 
     if (!handoff) return 0;
     faces = &handoff->structure3_faces;
     materials = &handoff->structure3_face_materials;
+    edges = &handoff->structure3_edges;
     vectors = &handoff->structure3_vectors;
     return materials->face_receipt_valid && materials->valid &&
         faces->valid && materials->face_count == faces->face_count &&
         materials->textured_face_count == faces->textured_face_count &&
+        edges->face_receipt_valid && edges->valid &&
+        edges->edge_count == faces->triangle_count * 3 +
+            faces->quad_count * 4 &&
+        edges->unique_edge_count == edges->single_use_edge_count +
+            edges->shared_edge_count + edges->nonmanifold_edge_count &&
+        !edges->topology_semantics_proven &&
         vectors->face_receipt_valid && vectors->valid &&
         vectors->vertex_count == faces->vertex_count &&
         vectors->normal_count == faces->normal_count &&
@@ -4183,6 +4291,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_entry_headers = handoff.structure3_entry_headers;
     receipt.structure3_faces = handoff.structure3_faces;
     receipt.structure3_face_materials = handoff.structure3_face_materials;
+    receipt.structure3_edges = handoff.structure3_edges;
     receipt.structure3_vectors = handoff.structure3_vectors;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
