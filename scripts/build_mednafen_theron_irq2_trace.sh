@@ -8,6 +8,7 @@ fi
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 source_root=${1:-/tmp/mednafen-src}
+sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-${TMPDIR:-/tmp}/mednafen-firestaff-irq2-trace}
@@ -17,6 +18,13 @@ if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
    [ ! -f "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch" ]; then
     printf 'FAIL: expected Mednafen 1.32.1 source tree and Firestaff patch\n' >&2
     exit 1
+fi
+if [[ -n "$sdl2_prefix" ]]; then
+    if [[ ! -f "$sdl2_prefix/lib/pkgconfig/sdl2.pc" ]]; then
+        printf 'FAIL: FIRESTAFF_MEDNAFEN_SDL2_PREFIX must contain lib/pkgconfig/sdl2.pc\n' >&2
+        exit 1
+    fi
+    export PKG_CONFIG_PATH="$sdl2_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 fi
 
 rm -rf "$build_root"
@@ -54,4 +62,5 @@ CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disab
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan
 make -j"$(sysctl -n hw.ncpu)"
 make install
+"$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh" "$prefix/bin/mednafen"
 printf '%s\n' "$prefix/bin/mednafen"

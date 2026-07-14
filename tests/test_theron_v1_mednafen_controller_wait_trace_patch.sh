@@ -7,6 +7,7 @@ input_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_trace.patch
 state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
 input_state_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch
 host_input_patch_file=$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch
+build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_state_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x state_before=%02x' "$patch_file" ||
@@ -55,6 +56,11 @@ if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
    ! grep -Fq 'host_focus_state have=%u' "$host_input_patch_file" ||
    ! grep -Fq 'host_key_event type=%s scancode=%u repeat=%u' "$host_input_patch_file"; then
     printf 'FAIL: Mednafen host-input patch no longer retains raw SDL key-event evidence\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
+   ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
+    printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
     exit 1
 fi
 

@@ -4,12 +4,19 @@ set -euo pipefail
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
+runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
     exit 1
 fi
 bash -n "$script"
+if [[ ! -x "$runtime_verifier" ]] ||
+   ! grep -Fq 'sdl2-compat' "$runtime_verifier" ||
+   ! grep -Fq 'use a real SDL2 runtime for authentic Quartz/SDL capture' "$runtime_verifier"; then
+    printf 'FAIL: live capture build must reject the SDL2-compat event bridge\n' >&2
+    exit 1
+fi
 if [[ ! -f "$quartz_helper" ]] ||
    ! grep -Fq 'CGEvent(keyboardEventSource: source' "$quartz_helper" ||
    ! grep -Fq 'CGPreflightPostEventAccess()' "$quartz_helper" ||
