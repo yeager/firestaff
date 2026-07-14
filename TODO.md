@@ -44,6 +44,10 @@
     match one unique serialized TimerQueue slot and all TIMER fields. A host
     event without that source receipt fails the probe; no generated save,
     dungeon, DSA, or replacement event is used.
+  - 2026-07-14 follow-up: CSBWin core export now also revalidates the retained
+    TIMER/TimerQueue heap after matching every live source receipt. A live
+    event that still matches its timer cannot make a stale or reordered
+    serialized heap exportable; the route rejects before emitting bytes.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

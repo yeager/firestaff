@@ -15516,6 +15516,14 @@ static int csb_v1_runtime_build_csbwin_core_summary(
                 (int)profile->csbwin_timer_queue_summary_count) {
             return -1;
         }
+        /* CSBWin SaveGame.cpp writes the TIMER array together with its
+         * TimerQueue heap. A live event can still match its source slot
+         * after a timer mutation, while the retained serialized heap no
+         * longer orders that timer correctly. Do not emit that plausible
+         * but invalid resume artifact. */
+        if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) {
+            return -1;
+        }
         for (i = 0u; i < (uint16_t)profile->timeline_queue.eventCount; ++i) {
             const int event_index = profile->timeline_queue.timeline[i];
             const struct DM1_Event_V1 *event;
