@@ -3039,7 +3039,9 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     tiles[1].squareData = square_data[1];
     tiles[1].squareCount = 32 * 32;
     square_data[1][2 * 32 + 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    square_first_things[2 * 32 + 3] =
+    /* squareFirstThings is compacted over flagged squares, so this first
+     * and only flagged map square is entry zero rather than raw tile 67. */
+    square_first_things[0] =
         (unsigned short)((1u << 14) | (THING_TYPE_JUNK << 10));
     wr16le(raw_junk, THING_ENDOFLIST);
     raw_junk[2] = (unsigned char)(DM1_JUNK_TYPE_BONES | 0x80u);
@@ -3096,7 +3098,7 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     world.gameTick = 55u;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) > 0 &&
-              square_first_things[2 * 32 + 3] == THING_ENDOFLIST,
+              square_first_things[0] == THING_ENDOFLIST,
           "C13 step 1 unlinks its exact PC34 bones owner");
     for (i = 0; i < world.timeline.count; ++i) {
         if (world.timeline.events[i].kind == TIMELINE_EVENT_VI_ALTAR_REBIRTH &&
