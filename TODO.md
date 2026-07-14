@@ -542,11 +542,12 @@ ReDMCSB WIP 2021-02-06 source tree.
   byte/block/run ordinals. The verified retail corpus also has a bounded,
   strictly increasing Structure3 offset directory and a fixed 40-byte entry
   header with three count-bounded 12-byte regions. The tracked DMWeb Saturn
-  reference identifies their vertex/face/per-face-normal layout, while the
-  parser verifies only their bounded framing. Next: obtain original Saturn
-  execution or capture evidence that validates record fields, face lists,
-  vertex coordinates, and texture binding before any draw route; do not infer
-  positions, geometry, textures, pixels, palettes, triggers, or fallback art.
+  reference and verified `LEV00.DGN`--`LEV15.DGN` corpus now establish
+  entry-local vertex-index bounds, triangle/quad topology, paired normal
+  counts, and static/animated/one-off face-fill lanes. Next: prove the
+  original selector-to-Structure2/Structure1G material binding and Saturn VDP1
+  draw ordering before any draw route; do not infer texture pixels, palettes,
+  transforms, clipping, triggers, or fallback art.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
     render-plan receipts only through complete Structure1F owner relations.
     Its raw reuse is counted, but its grammar remains unassigned; it cannot

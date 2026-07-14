@@ -707,6 +707,30 @@ typedef struct {
     int semantics_proven;
 } Nexus_V1_DgnStructure3EntryHeaderReceipt;
 
+/* DMWeb documents Structure3b as four big-endian vertex indexes followed by
+ * flags and a fill selector. This receipt validates index bounds and counts
+ * its documented topology/fill lanes, but does not bind a selector to any
+ * texture, palette, VDP1 command, or draw operation. */
+typedef struct {
+    int entry_headers_valid;
+    int entry_count;
+    int vertex_count;
+    int face_count;
+    int normal_count;
+    int triangle_count;
+    int quad_count;
+    int textured_face_count;
+    int mesh_transparent_face_count;
+    int static_texture_fill_count;
+    int animated_texture_fill_count;
+    int one_off_color_fill_count;
+    int unclassified_fill_count;
+    int face_vertex_indexes_valid;
+    int normal_count_matches_face_count;
+    int valid;
+    int draw_semantics_proven;
+} Nexus_V1_DgnStructure3FaceReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1011,6 +1035,7 @@ typedef struct {
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
+    Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1094,6 +1119,7 @@ typedef struct {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
+    Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1554,6 +1580,7 @@ typedef struct {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
+    Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1760,6 +1787,9 @@ int nexus_v1_level_structure3_directory_receipt(
 int nexus_v1_level_structure3_entry_header_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3EntryHeaderReceipt *out_receipt);
+int nexus_v1_level_structure3_face_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);
