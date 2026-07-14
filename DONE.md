@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 static title/menu timing: `skproject/SKWIN/SkWinCore.cpp`
+  `INIT` and `SHOW_MENU_SCREEN` prove that TITLE/0/dt07/4 remains static in
+  `MessageLoop(true)` until `GAME_LOAD` succeeds. M11 and the boot receipt
+  reject invented title frames/ticks and keep runtime closed behind the
+  source-owned menu surface. Focused strict-C11 timing test passes.
+
 - 2026-07-14 DM2 sound source gate: source `c_sfx.cpp` query handling and
   `c_sound.cpp` queue lifecycle establish that `xsndptr2` is runtime storage,
   not a GDAT table. Unbound SFX identifiers, direct playback, and positional

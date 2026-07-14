@@ -14373,10 +14373,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
-            /* M11's idle scheduler is the only clock available while the
-             * static DM2 title menu owns the frame.  Advance the MIDI-only
-             * timeline at its 60 Hz handoff cadence; no due event is sent to
-             * SDL audio until a proven MIDI device backend is installed. */
+            /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235)
+             * keeps one static TITLE/0/dt07/4 frame in MessageLoop(true).
+             * A stale host tick must not select an invented title frame. */
+            state->dm2State.startup_title_animation_tick = 0;
+            /* M11's idle scheduler advances only the independent MIDI
+             * timeline. No due event is sent to SDL audio until a proven MIDI
+             * device backend is installed. */
             if (state->dm2State.music_elapsed_us <= UINT32_MAX - 16667u) {
                 state->dm2State.music_elapsed_us += 16667u;
             }
