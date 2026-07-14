@@ -1398,6 +1398,12 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-14 update: each external PC34 snapshot now also receives a
+    no-fallback F0435 runtime-stage receipt before transient export. A source
+    tail must materialize its own owned dungeon and carry its C13 count into
+    the staged timeline; a tail-less source remains explicitly not runtime
+    ready and never borrows a host start dungeon. Remaining work is broader
+    authentic tail coverage and independently collected community saves.
   - 2026-07-13 update: every classifier-qualified external PC34 corpus file
     now emits a separate source path/hash/size, game-id, transient export
     hash/size, and result receipt for the F0435 -> F0433 -> F0435 handoff.
