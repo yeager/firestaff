@@ -22,6 +22,30 @@ static Theron_V1Track02LoaderReadFacts valid_facts(void) {
     return facts;
 }
 
+static unsigned char *read_real_track02(const char *path, size_t *out_bytes) {
+    FILE *file;
+    long file_bytes;
+    unsigned char *bytes;
+
+    if (!path || !out_bytes || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_bytes = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = malloc((size_t)file_bytes);
+    if (!bytes || fread(bytes, 1u, (size_t)file_bytes, file) !=
+        (size_t)file_bytes) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_bytes = (size_t)file_bytes;
+    return bytes;
+}
+
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1TraceProvenanceReceipt trace = {
@@ -51,6 +75,9 @@ int main(void) {
     };
     Theron_V1Track02LoaderIntakeReceipt receipt;
     Theron_V1Track02LoaderIntakeReceipt decoded_receipt;
+    const char *real_track02_path;
+    unsigned char *real_track02;
+    size_t real_track02_bytes;
     unsigned char *synthetic_raw;
     size_t synthetic_raw_bytes;
 
@@ -70,6 +97,22 @@ int main(void) {
     CHECK(!receipt.payload_intake_admitted);
     CHECK(strcmp(receipt.status,
                  "initial_envelope_loader_read_source_bound_payload_blocked") == 0);
+
+    /* Success remains available only for an operator-supplied canonical BIN. */
+    real_track02_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    real_track02 = read_real_track02(real_track02_path, &real_track02_bytes);
+    if (real_track02) {
+        CHECK(theron_v1_track02_loader_intake_decode_initial_envelope(
+            &receipt, &initial_envelope, real_track02, real_track02_bytes,
+            THERON_V1_TRACK02_MD5_US_BIN, &decoded_receipt));
+        CHECK(decoded_receipt.payload_intake_admitted);
+        CHECK(decoded_receipt.initial_envelope_decoded);
+        CHECK(decoded_receipt.decoded_grid_row_count == 0x001bu);
+        CHECK(decoded_receipt.decoded_grid_row_bytes == 0x0020u);
+        CHECK(decoded_receipt.decoded_grid_first_row_hash == 0x4b97e3abu);
+        CHECK(decoded_receipt.decoded_grid_last_row_hash == 0x0b2ae445u);
+        free(real_track02);
+    }
 
     /* A header-shaped local fixture cannot substitute for the canonical BIN. */
     synthetic_raw_bytes = ((size_t)initial_envelope.track02_raw_sector + 1u) *

@@ -63,6 +63,8 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     Theron_V1Track02LoaderIntakeReceipt receipt;
     size_t raw_offset;
     const uint8_t *envelope;
+    uint16_t grid_width;
+    uint16_t grid_height;
     uint32_t grid_bytes;
 
     if (!source_bound_receipt || !initial_envelope || !out_receipt) return 0;
@@ -103,9 +105,11 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     }
 
     envelope = raw_track02 + raw_offset;
-    grid_bytes = (uint32_t)read_be16(envelope) * read_be16(envelope + 2u);
-    if (read_be16(envelope) != initial_envelope->header_width ||
-        read_be16(envelope + 2u) != initial_envelope->header_height ||
+    grid_width = read_be16(envelope);
+    grid_height = read_be16(envelope + 2u);
+    grid_bytes = (uint32_t)grid_width * grid_height;
+    if (grid_width != initial_envelope->header_width ||
+        grid_height != initial_envelope->header_height ||
         read_be32(envelope + 4u) != initial_envelope->header_seed ||
         read_be16(envelope + 8u) != initial_envelope->header_identifier ||
         grid_bytes != initial_envelope->envelope_bytes -
@@ -123,6 +127,14 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     receipt.decoded_grid_bytes = grid_bytes;
     receipt.decoded_grid_hash = hash_bytes(envelope + TQR_INITIAL_ENVELOPE_HEADER_BYTES,
                                            grid_bytes);
+    receipt.decoded_grid_row_count = grid_height;
+    receipt.decoded_grid_row_bytes = grid_width;
+    receipt.decoded_grid_first_row_hash = hash_bytes(
+        envelope + TQR_INITIAL_ENVELOPE_HEADER_BYTES, grid_width);
+    receipt.decoded_grid_last_row_hash = hash_bytes(
+        envelope + TQR_INITIAL_ENVELOPE_HEADER_BYTES +
+            ((size_t)(grid_height - 1u) * grid_width),
+        grid_width);
     receipt.status = "initial_envelope_loader_read_decoded_no_semantic_handoff";
     *out_receipt = receipt;
     return 1;
