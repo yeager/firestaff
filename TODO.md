@@ -888,6 +888,14 @@ not `$e009` causality, capture-session identity, a payload format, or
 dungeon/object/palette/bitmap semantics. The next admissible handoff remains
 a fresh matching JP/US original-capture pair with an independently observed
 loader-to-sector ordering boundary.
+2026-07-14 ordered-capture follow-up: the next JP/US captures must provide one
+coalesced, provenance-marked Mednafen transcript whose exact authenticated
+`$4090/$4093` row precedes one later `$e009` dispatch, one complete 2352-byte
+raw-sector fingerprint, and the matching `$e009` return in that order. The
+verifier records only observation order and rejects separate, reordered,
+duplicated, unmarked, malformed, or cross-variant rows. It does not infer a
+destination, payload format, dungeon, map, object, graphics, or palette
+meaning. Existing split CPU/CD sidecars remain insufficient for this boundary.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 

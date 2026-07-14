@@ -14038,6 +14038,18 @@ payload format, dungeon, object, graphics, palette, bitmap, or transition
 semantics. Verification: focused raw-loader CTest and Mednafen patch/capture
 script contracts.
 
+# ✅ 2026-07-14 Theron later `$e009` ordered raw-sector capture gate
+
+The next Track 02 capture handoff now has a strict, source-only admission
+contract. A future authentic JP or US coalesced Mednafen transcript must retain
+exactly one variant-matched `$4090/$4093` loader row, followed by one later
+`$e009` dispatch, exactly one complete 2352-byte raw-sector FNV witness, and
+the matching `$e009` return. The verifier rejects split sidecars, reordered
+rows, duplicate rows, malformed fingerprints, and unmarked transcripts. It
+records only observation order; no destination, CD causality, payload format,
+dungeon, map, object, graphics, or palette claim is introduced.
+Verification: `tests/test_theron_v1_later_e009_raw_sector_order_trace.sh`.
+
 Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
 first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
 hash-verified JP and US raw Track 02 images plus matching instrumented traces;
