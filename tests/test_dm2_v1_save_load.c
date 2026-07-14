@@ -1416,6 +1416,7 @@ static int test_sksave_corpus_scan_receipt(void)
     DM2_V1_SaveCandidate loaded_candidate;
     char nested_dir[256];
     char nested_save_path[256];
+    char renamed_save_path[256];
     int payload_c_size;
     DM2_TestGameStateStorage gs_store;
     DM2_GameStateBlock *gs = &gs_store.block;
@@ -1706,16 +1707,30 @@ static int test_sksave_corpus_scan_receipt(void)
         cleanup_slot_dir(tmpdir);
         return 0;
     }
+    /* Corpus files are frequently copied from removable media or archives
+     * without SKProject's live-resume basename.  Header + parser admission,
+     * not this name, must decide whether the original payload is retained. */
+    snprintf(renamed_save_path, sizeof(renamed_save_path),
+             "%s/captured-original.bin", nested_dir);
+    if (write_valid_sksave_file_at_path(renamed_save_path, "Captured",
+                                        payload_b, payload_b_size) != 0) {
+        printf("    FAIL: could not write renamed corpus save\n");
+        (void)remove(nested_save_path);
+        FS_RMDIR(nested_dir);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
         receipt.valid_slot_count != 1 ||
-        receipt.importable_candidate_count != 2 ||
+        receipt.importable_candidate_count != 3 ||
         receipt.firestaff_session_candidate_count != 1 ||
-        receipt.original_envelope_candidate_count != 1 ||
-        receipt.recursive_candidate_count != 1 ||
-        receipt.recursive_importable_candidate_count != 1 ||
-        receipt.alternate_name_candidate_count != 1 ||
-        receipt.extra_valid_candidate_count != 1 ||
+        receipt.original_envelope_candidate_count != 2 ||
+        receipt.recursive_candidate_count != 2 ||
+        receipt.recursive_importable_candidate_count != 2 ||
+        receipt.alternate_name_candidate_count != 2 ||
+        receipt.header_discovered_candidate_count != 1 ||
+        receipt.extra_valid_candidate_count != 2 ||
         receipt.importable_kind_mask !=
             ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
              (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
@@ -1724,25 +1739,28 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.recursive_scan_candidate_cap != 64 ||
         receipt.recursive_scan_truncated != 0 ||
         strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
-        printf("    FAIL: recursive lowercase corpus receipt did not match "
-               "expected fields (importable=%u rec=%u rec_imp=%u alt=%u "
+        printf("    FAIL: recursive corpus receipt did not match expected "
+               "fields (importable=%u rec=%u rec_imp=%u alt=%u header=%u "
                "extra=%u first=%s)\n",
                receipt.importable_candidate_count,
                receipt.recursive_candidate_count,
                receipt.recursive_importable_candidate_count,
                receipt.alternate_name_candidate_count,
+               receipt.header_discovered_candidate_count,
                receipt.extra_valid_candidate_count,
                receipt.first_importable_path);
+        (void)remove(renamed_save_path);
         (void)remove(nested_save_path);
         FS_RMDIR(nested_dir);
         cleanup_slot_dir(tmpdir);
         return 0;
     }
+    (void)remove(renamed_save_path);
     (void)remove(nested_save_path);
     FS_RMDIR(nested_dir);
 
     printf("    PASS: corpus scan reports resume order, slot mask, importable "
-           "Firestaff/envelope saves, recursive lowercase corpus saves, "
+           "Firestaff/envelope saves, renamed header-verified corpus saves, "
            "payload sizes, invalid saves, timer-format rejection evidence and "
            "first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);

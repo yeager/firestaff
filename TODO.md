@@ -79,6 +79,12 @@
   restore, and rejects any incomplete original-candidate census. Remaining
   work is byte-level ownership for the timer and rebuilt dungeon DB regions;
   do not infer either from a header-valid save.
+  - 2026-07-14 update: recursive corpus discovery now also retains a renamed
+    artifact only after its exact 42-byte SKSave header and full source-bound
+    payload parser both succeed. Filename or extension alone cannot consume
+    a scan slot or promote a candidate; runtime import still revalidates the
+    complete-file hash. Remaining work is authentic corpus breadth plus
+    timer and rebuilt-dungeon byte ownership.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 
