@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0802`: source-locked magic-map scroll
+  classification and decoded-text match. Focused strict C11 test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0797`: source-locked PC 3.4 entrance
   micro-dungeon map and south-view dispatch. Focused strict C11 test passes.
 
