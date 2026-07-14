@@ -54,6 +54,30 @@
 
 extern int dm2_suppress_self_verification(void);
 
+static uint32_t corpus_hash_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t corpus_hash_words_le(const uint16_t *words, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < count; ++i) {
+        hash ^= (uint8_t)(words[i] & 0xffu);
+        hash *= 16777619u;
+        hash ^= (uint8_t)(words[i] >> 8);
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void cleanup_one_slot_dir(const char *dir, uint8_t slot)
 {
     char p[256];
@@ -1420,6 +1444,10 @@ static int test_sksave_corpus_scan_receipt(void)
     champion.absolute_direction = 1;
     champion.cur_hp = 42;
     champion.max_hp = 50;
+    global_flags[0] = 0x82u;
+    global_bytes[7] = 0x4du;
+    global_words[3] = 0x81f2u;
+    spell_effects[5] = 0x37u;
     dm2_v1_session_new(&session);
     session.game_tick = 0x1234u;
     payload_c_size = dm2_v1_session_serialize(&session, payload_c,
@@ -1576,6 +1604,14 @@ static int test_sksave_corpus_scan_receipt(void)
         state_receipt.entries[0].champion_count != gs->wChampionsCount ||
         state_receipt.entries[0].timer_count != 0u ||
         state_receipt.entries[0].rain_intensity != gs->rain_state[0] ||
+        state_receipt.entries[0].global_flags_hash !=
+            corpus_hash_bytes(global_flags, sizeof(global_flags)) ||
+        state_receipt.entries[0].global_bytes_hash !=
+            corpus_hash_bytes(global_bytes, sizeof(global_bytes)) ||
+        state_receipt.entries[0].global_words_hash !=
+            corpus_hash_words_le(global_words, DM2_GLOBAL_WORDS_SIZE) ||
+        state_receipt.entries[0].spell_effects_hash !=
+            corpus_hash_bytes(spell_effects, sizeof(spell_effects)) ||
         state_receipt.entries[0].state_hash == 0u ||
         state_receipt.corpus_hash == 0u) {
         printf("    FAIL: original save state census lost source-decoded fields\n");

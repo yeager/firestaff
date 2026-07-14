@@ -366,6 +366,20 @@ static uint32_t dm2_sksave_corpus_payload_hash(const uint8_t *payload,
     return hash;
 }
 
+static uint32_t dm2_sksave_corpus_words_hash(const uint16_t *words,
+                                             size_t word_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!words) return 0u;
+    for (i = 0u; i < word_count; ++i) {
+        hash = dm2_sksave_corpus_hash_step(hash, words[i] & 0xffu);
+        hash = dm2_sksave_corpus_hash_step(hash, words[i] >> 8);
+    }
+    return hash;
+}
+
 static uint32_t dm2_sksave_corpus_file_hash(const char *path)
 {
     FILE *file;
@@ -1129,6 +1143,18 @@ bool dm2_v1_original_save_state_corpus_probe(
         target->champion_count = candidate.session.champion_count;
         target->timer_count = candidate.session.original_timer_count;
         target->rain_intensity = candidate.session.rain_intensity;
+        target->global_flags_hash = dm2_sksave_corpus_payload_hash(
+            candidate.session.original_global_flags,
+            sizeof(candidate.session.original_global_flags), 2166136261u);
+        target->global_bytes_hash = dm2_sksave_corpus_payload_hash(
+            candidate.session.original_global_bytes,
+            sizeof(candidate.session.original_global_bytes), 2166136261u);
+        target->global_words_hash = dm2_sksave_corpus_words_hash(
+            candidate.session.original_global_words,
+            DM2_GLOBAL_WORDS_SIZE);
+        target->spell_effects_hash = dm2_sksave_corpus_payload_hash(
+            candidate.session.original_spell_effects,
+            sizeof(candidate.session.original_spell_effects), 2166136261u);
         hash = dm2_sksave_corpus_hash_step(hash, target->candidate.source_file_hash);
         hash = dm2_sksave_corpus_hash_step(hash, target->game_tick);
         hash = dm2_sksave_corpus_hash_step(hash, target->rng_seed);
@@ -1141,6 +1167,14 @@ bool dm2_v1_original_save_state_corpus_probe(
                   target->timer_count);
         target->state_hash = dm2_sksave_corpus_hash_step(
             hash, target->rain_intensity);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->global_flags_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->global_bytes_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->global_words_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->spell_effects_hash);
         hash = target->state_hash;
         out_receipt->parsed_candidate_count++;
     }
