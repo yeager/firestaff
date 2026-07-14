@@ -12,6 +12,7 @@ struct print_capture {
     int16_t text_color;
     int16_t background_color;
     const char *string;
+    uint16_t height;
 };
 
 static int check(int condition, const char *label)
@@ -26,7 +27,7 @@ static int check(int condition, const char *label)
 static void capture_text_print(void *context, uint8_t *destination,
                                uint16_t byte_width, uint16_t x, uint16_t y,
                                int16_t text_color, int16_t background_color,
-                               const char *string)
+                               const char *string, uint16_t height)
 {
     struct print_capture *capture = context;
 
@@ -39,6 +40,7 @@ static void capture_text_print(void *context, uint8_t *destination,
     capture->text_color = text_color;
     capture->background_color = background_color;
     capture->string = string;
+    capture->height = height;
 }
 
 int main(void)
@@ -64,6 +66,8 @@ int main(void)
     ok &= check(capture.background_color ==
                     REDMCSB_F0052_VIEWPORT_BACKGROUND_COLOR_PC34,
                 "always selects C12 as TEXT.C F0052 background");
+    ok &= check(capture.height == REDMCSB_F0052_VIEWPORT_HEIGHT_PC34,
+                "forwards C136 viewport height as F0040's final argument");
 
     ok &= check(F0052_TEXT_PrintToViewport_PC34(
                     capture_text_print, &capture, NULL, -1, -2, 13, NULL),
@@ -71,7 +75,8 @@ int main(void)
     ok &= check(capture.calls == 2 && capture.destination == NULL &&
                     capture.x == UINT16_MAX &&
                     capture.y == UINT16_MAX - 1U &&
-                    capture.text_color == 13 && capture.string == NULL,
+                    capture.text_color == 13 && capture.string == NULL &&
+                    capture.height == REDMCSB_F0052_VIEWPORT_HEIGHT_PC34,
                 "converts coordinate words as F0040's unsigned parameters");
 
     ok &= check(!F0052_TEXT_PrintToViewport_PC34(
