@@ -35219,7 +35219,10 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         }
     }
 
-    if (!drewAuthenticFrames) {
+    /* C010/C011 are source-owned V1 surfaces. A failed GRAPHICS.DAT
+     * validation has already cleared their strip; never replace that result
+     * with Firestaff's procedural utility frame in V1 chrome. */
+    if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled()) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
                       M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
