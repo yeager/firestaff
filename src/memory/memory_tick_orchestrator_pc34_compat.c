@@ -3616,6 +3616,10 @@ static int orch_dispatch_square_state_event_compat(
         /* ReDMCSB TIMELINE.C F0242:820-870 defers a CLEAR while either the
          * party or a material group occupies the fakewall square. It does
          * not relocate or mutate that group; the same C07 retries next tick. */
+        if (((*square & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+            DUNGEON_ELEMENT_FAKEWALL) {
+            return 0;
+        }
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x04) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
         if (effect == DOOR_EFFECT_CLEAR && world->party.mapIndex == ev->mapIndex &&
