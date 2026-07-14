@@ -1485,23 +1485,24 @@ static void test_viewport_render_auto_room_slots_custom_background_layer(void)
 static void test_startup_package_hud_and_door_surfaces(void)
 {
     enum {
-        TITLE_PIXELS = 320 * 153,
+        TITLE_PIXELS = 320 * 200,
         ENTRANCE_PIXELS = 320 * 200,
-        DOOR_PIXELS = 105 * 161,
+        LEFT_DOOR_PIXELS = 105 * 161,
+        RIGHT_DOOR_PIXELS = 128 * 161,
         INVENTORY_PIXELS = 224 * 136,
         RESURRECT_PIXELS = 144 * 73
     };
     uint8_t *title = (uint8_t *)calloc(TITLE_PIXELS, 1u);
     uint8_t *entrance = (uint8_t *)calloc(ENTRANCE_PIXELS, 1u);
-    uint8_t *left_door = (uint8_t *)calloc(DOOR_PIXELS, 1u);
-    uint8_t *right_door = (uint8_t *)calloc(DOOR_PIXELS, 1u);
+    uint8_t *left_door = (uint8_t *)calloc(LEFT_DOOR_PIXELS, 1u);
+    uint8_t *right_door = (uint8_t *)calloc(RIGHT_DOOR_PIXELS, 1u);
     uint8_t *inventory = (uint8_t *)calloc(INVENTORY_PIXELS, 1u);
     uint8_t *resurrect = (uint8_t *)calloc(RESURRECT_PIXELS, 1u);
     const CSB_V1_CSBGraphicsStartupPackageSpec specs[] = {
-        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE, 1u, 320u, 153u },
+        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE, 1u, 320u, 200u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN, 2u, 320u, 200u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR, 3u, 105u, 161u },
-        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR, 4u, 105u, 161u },
+        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR, 4u, 128u, 161u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY, 17u, 224u, 136u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_RESURRECT_PANEL, 40u, 144u, 73u }
     };
@@ -1528,8 +1529,8 @@ static void test_startup_package_hud_and_door_surfaces(void)
     resurrect[0] = 6u;
     entries[0] = (CompressedEntryFixture){ 1u, title, TITLE_PIXELS };
     entries[1] = (CompressedEntryFixture){ 2u, entrance, ENTRANCE_PIXELS };
-    entries[2] = (CompressedEntryFixture){ 3u, left_door, DOOR_PIXELS };
-    entries[3] = (CompressedEntryFixture){ 4u, right_door, DOOR_PIXELS };
+    entries[2] = (CompressedEntryFixture){ 3u, left_door, LEFT_DOOR_PIXELS };
+    entries[3] = (CompressedEntryFixture){ 4u, right_door, RIGHT_DOOR_PIXELS };
     entries[4] = (CompressedEntryFixture){ 17u, inventory, INVENTORY_PIXELS };
     entries[5] = (CompressedEntryFixture){ 40u, resurrect, RESURRECT_PIXELS };
     bytes = build_csbgraphics_entries_compressed(entries, 6u, &size);

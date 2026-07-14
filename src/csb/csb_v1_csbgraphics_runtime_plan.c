@@ -257,20 +257,23 @@ static int startup_role_geometry(CSB_V1_CSBGraphicsStartupAssetRole role,
     *out_route = CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE;
     switch (role) {
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE:
-        /* ReDMCSB TITLE.C F0437 only addresses C001 rows 0..152:
-         * CHAOS (0..79), STRIKES BACK (80..136), PRESENTS (137..152).
-         * The PC34 C001 archive entry is therefore 320x153, not a padded
-         * 320x200 screen. */
+        /* TITLE.C F0437 allocates and expands the complete 320x200 C001
+         * bitmap before selecting C424/C425/C426 regions from it. */
         *out_width = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W;
-        *out_height = 153u;
+        *out_height = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H;
         return 1;
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN:
         *out_width = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W;
         *out_height = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H;
         return 1;
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR:
-    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR:
         *out_width = 105u;
+        *out_height = 161u;
+        return 1;
+    case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR:
+        /* ENTRANCE.C expands C003 into the 128x161 source strip. C431
+         * clips it during composition; the archive package remains 128 px. */
+        *out_width = 128u;
         *out_height = 161u;
         return 1;
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_HUD_INVENTORY:

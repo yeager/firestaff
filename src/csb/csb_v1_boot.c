@@ -2941,18 +2941,35 @@ static int csb_v1_boot_startup_execute_host_view_render_plan_pc34(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
     const CSB_V1_StartupRenderExecutor_PC34 *executor)
 {
+    CSB_V1_StartupRenderPlan_PC34 render_plan;
+    int i;
+
     if (!host_view || !host_view->valid ||
         !host_view->host_draw_package_ready ||
         !host_view->host_draw_uses_receipt_package ||
         !host_view->no_legacy_render_wrapper_ready || !executor) {
         return 0;
     }
+    render_plan = host_view->render_draw.render_plan;
+    /* The HUD receipt owns the entrance/utility draw and therefore consumes
+     * the closed-door command below. Do not invoke it again through the
+     * surface executor after that callback has been intentionally stripped. */
+    if (host_view->hud_menu_draw_valid && host_view->hud_menu_draw.valid) {
+        for (i = 0; i < render_plan.render_command_count &&
+                    i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
+            if (render_plan.render_commands[i].kind ==
+                CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34) {
+                render_plan.render_commands[i].kind =
+                    CSB_V1_STARTUP_RENDER_COMMAND_NONE_PC34;
+            }
+        }
+    }
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 keep title,
      * utility, closed-door, and door-opening drawing inside the startup
      * host loop. This lets host code consume the packaged host-view receipt
      * directly instead of rebuilding capture/render-view decisions. */
     return csb_v1_startup_execute_render_plan_pc34(
-        &host_view->render_draw.render_plan,
+        &render_plan,
         executor);
 }
 
@@ -4010,14 +4027,14 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             boot_profile,
             out_receipt->source_title_presents_ticks +
                 out_receipt->source_title_chaos_zoom_ticks,
-            21,
+            19,
             CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
             &out_receipt->title_sample_hashes[2]);
     out_receipt->title_strikes_back_capture_ready =
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             csb_v1_startup_title_total_ticks_pc34() - 1,
-            22,
+            20,
             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
@@ -4232,8 +4249,8 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     static const int title_source_steps[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
         1,
         2,
-        21,
-        22
+        19,
+        20
     };
     int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;

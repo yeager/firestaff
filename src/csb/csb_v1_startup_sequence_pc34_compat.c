@@ -9,7 +9,9 @@ enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
     /* ReDMCSB TITLE.C F0437:438-450 allocates 20 CHAOS rasters, from
      * 320x80 down to 16x4, before F0437:455-459 presents them in reverse. */
-    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
+    /* PC34 TITLE.C F0437 consumes the 18 usable CHAOS rasters: 48x12
+     * through 320x80. The 16x4 and 32x8 allocations are not presented. */
+    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 18,
     CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
     CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
@@ -724,19 +726,28 @@ int csb_v1_startup_execute_render_plan_pc34(
             case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34:
                 if (!executor->draw_full_surface ||
                     !executor->draw_full_surface(executor->user, plan)) {
-                    return 0;
+                    /* The packaged route has attempted its real surface.
+                     * Do not manufacture an entrance/title fallback after a
+                     * source-asset failure. */
+                    return 1;
                 }
                 drew_asset = 1;
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34:
-                if (!drew_asset || !executor->draw_opening_frame ||
+                if (!drew_asset) {
+                    return 1;
+                }
+                if (!executor->draw_opening_frame ||
                     !executor->draw_opening_frame(executor->user, plan)) {
                     return 0;
                 }
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34:
-                if (!drew_asset || !executor->draw_closed_doors) {
+                if (!drew_asset) {
+                    return 1;
+                }
+                if (!executor->draw_closed_doors) {
                     return 0;
                 }
                 executor->draw_closed_doors(executor->user, plan);
@@ -1150,7 +1161,7 @@ static void csb_v1_startup_set_title_rect_pc34(
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
-        plan->title_source_step <= 21) {
+        plan->title_source_step <= 19) {
         /* ReDMCSB TITLE.C F0437:190-199 applies C425's CSB-only gold and
          * dark-blue slots before the source-ordered zoom raster. */
         plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
@@ -1158,9 +1169,9 @@ static void csb_v1_startup_set_title_rect_pc34(
         /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
          * bitmaps from the full 320x80 title source, and lines 385-387
          * blit those bitmaps centered on the screen.  Do not crop the
-         * source: the animation grows the full CHAOS image from 16x4 to
+         * source: the animation grows the full CHAOS image from 48x12 to
          * 320x80. */
-        zoom_index = 21 - plan->title_source_step;
+        zoom_index = 19 - plan->title_source_step;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
         plan->title_source_x = 0;
