@@ -965,6 +965,13 @@ int csb_v1_runtime_execute_csbwin_damage_character_filter(
 int csb_v1_runtime_execute_csbwin_cursor_read_game_filter(
     CSB_V1_RuntimeProfile *profile, uint16_t object_thing);
 
+/* CSBWin CSBCode.cpp TAG0138ec sends CursorFilter with
+ * CURSORFILTER_ResumeSavedGame immediately before ObjectToCursor restores a
+ * non-empty saved hand. Like the source path, this is a notification only:
+ * the callback cannot cancel or replace the restored object. */
+int csb_v1_runtime_execute_csbwin_cursor_resume_saved_game_filter(
+    CSB_V1_RuntimeProfile *profile, uint16_t object_thing);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */
