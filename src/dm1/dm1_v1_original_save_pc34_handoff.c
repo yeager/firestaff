@@ -1639,11 +1639,32 @@ static int materialize_original_pc34_deferred_group_move_event(
 }
 
 static int materialize_original_pc34_fakewall_event(const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world, struct TimelineEvent_Compat *out_event) {
+    const struct DungeonMapTiles_Compat *tiles;
     int map_index;
-    if (!src || !world || !world->dungeon || !world->dungeon->maps || !out_event || src->type != DM1_EVENT_FAKEWALL || src->c_effect > 2u) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    int square_index;
+    if (!src || !world || !world->dungeon || !world->dungeon->maps ||
+        !world->dungeon->tiles || !out_event ||
+        src->type != DM1_EVENT_FAKEWALL || src->c_effect > 2u) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
     map_index = (int)((src->map_time >> 24) & 0xffu);
-    if (map_index >= (int)world->dungeon->header.mapCount || src->b_mapX >= world->dungeon->maps[map_index].width || src->b_mapY >= world->dungeon->maps[map_index].height) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-    /* ReDMCSB TIMELINE.C F0242 consumes B.Location and C.A.Effect. */
+    if (map_index < 0 || map_index >= (int)world->dungeon->header.mapCount ||
+        !world->dungeon->tilesLoaded ||
+        src->b_mapX >= world->dungeon->maps[map_index].width ||
+        src->b_mapY >= world->dungeon->maps[map_index].height) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    tiles = &world->dungeon->tiles[map_index];
+    square_index = (int)src->b_mapX *
+        (int)world->dungeon->maps[map_index].height + (int)src->b_mapY;
+    /* ReDMCSB TIMELINE.C F0242:820-870 changes only a fakewall square.
+     * F0435 must not turn a source-shaped C07 into a generic attribute write. */
+    if (!tiles->squareData || square_index < 0 ||
+        (tiles->squareCount > 0 && square_index >= tiles->squareCount) ||
+        ((tiles->squareData[square_index] & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+            DUNGEON_ELEMENT_FAKEWALL) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
     memset(out_event, 0, sizeof(*out_event)); out_event->kind = TIMELINE_EVENT_SQUARE_STATE;
     out_event->fireAtTick = src->map_time & 0x00ffffffu; out_event->mapIndex = map_index;
     out_event->mapX = src->b_mapX; out_event->mapY = src->b_mapY; out_event->aux0 = DM1_EVENT_FAKEWALL;
