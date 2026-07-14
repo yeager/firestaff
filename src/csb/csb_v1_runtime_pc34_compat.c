@@ -19,6 +19,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
+#include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
@@ -18126,7 +18127,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
              * to five. A restored receipt may alter only a loaded byte-map
              * door square; all other target shapes fail closed. */
             if (square && square_type == 4) {
-                *square = (uint8_t)((*square & (uint8_t)~0x07u) | 5u);
+                F0243_TIMELINE_ProcessEvent2_DoorDestruction(square);
             }
         }
         return 1;
