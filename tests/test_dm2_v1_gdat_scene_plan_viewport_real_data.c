@@ -5,6 +5,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -234,6 +235,12 @@ int main(void)
             continue;
         }
         if (!verify_direct_handoff(candidate, &plan)) failures = 1;
+        if (dm2_v1_runtime_g1_scene_map_token(level, candidate, 0) == 0u ||
+            dm2_v1_runtime_g1_scene_map_token(level, candidate, 0) ==
+                dm2_v1_runtime_g1_scene_map_token(level, candidate ^ 1, 0)) {
+            fputs("FAIL: G1 MapGraphicsStyle is absent from the M11 scene token\n", stderr);
+            failures = 1;
+        }
         if (first_style < 0) {
             first_style = candidate;
             mismatched = plan;

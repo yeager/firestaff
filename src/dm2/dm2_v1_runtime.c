@@ -3579,8 +3579,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.source_materials_required =
         viewport.source_materials_required ? 1 : 0;
     g_dm2_last_m11_frame.map_load_token =
-        (uint32_t)(rt->dungeon_level + 1) |
-        (rt->outdoor ? UINT32_C(0x80000000) : 0u);
+        dm2_v1_runtime_g1_scene_map_token(rt->dungeon_level,
+                                           rt->map_graphics_style,
+                                           rt->outdoor);
     g_dm2_last_m11_frame.scene_control_hash =
         g_dm2_frame_ownership.gdat_scene_control_hash;
     g_dm2_last_m11_frame.scene_light_hash =
@@ -3728,6 +3729,15 @@ int dm2_v1_runtime_last_m11_frame_receipt(
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_last_m11_frame;
     return out_receipt->valid;
+}
+
+uint32_t dm2_v1_runtime_g1_scene_map_token(int level, int graphicsset,
+                                            int outdoor)
+{
+    if (level < 0 || level >= DM2_V1_MAX_LEVELS ||
+        graphicsset < 0 || graphicsset > 0x0f) return 0u;
+    return (uint32_t)(level + 1) | ((uint32_t)(graphicsset + 1) << 8) |
+        (outdoor ? UINT32_C(0x80000000) : 0u);
 }
 
 int dm2_v1_runtime_graphicsset_scene_receipt(
