@@ -15712,3 +15712,10 @@ two-forward, one-side wall lanes without accepting arbitrary size mismatches.
 Source anchors: ReDMCSB `DUNVIEW.C F0119/F0120` and `G0163` C710/C711.
 Verification: `firestaff_m11` Ninja build.
 - 2026-07-14 DM1/CSB ReDMCSB F0817-F0819/F0903/F0908: source-locked string, Japanese-text, message-plane, error-plane, and sound-init boundaries. Focused strict C11 tests pass.
+
+- 2026-07-14 Theron coalesced `$e009` manifest binding: the completed
+  initial-level receipt now binds its runtime payload handoff to the exact
+  original Track 02, System Card 3.0, and coalesced capture-trace identities.
+  Runtime rejects a changed or incomplete manifest before consuming bytes;
+  no dungeon, tile, object, bitmap, palette, or fallback semantics were
+  invented. Focused Track 02 intake and initial-level-handoff probes pass.

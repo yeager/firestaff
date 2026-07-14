@@ -93,6 +93,9 @@ int main(void)
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt handoff;
     Theron_V1_BootProfile profile;
     Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
+    Theron_V1CaptureManifest manifest;
+    const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
+    const char *trace_md5 = "0123456789abcdef0123456789abcdef";
 
     if (!raw_path) {
         printf("SKIP: set FIRESTAFF_THERON_TRACK02_US_BIN for raw-media handoff coverage\n");
@@ -127,6 +130,38 @@ int main(void)
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
         return 1;
     }
+    memset(&manifest, 0, sizeof(manifest));
+    manifest.valid = 1;
+    snprintf(manifest.track02_path, sizeof(manifest.track02_path),
+             "%s", "/tmp/theron-track02.bin");
+    snprintf(manifest.track02_md5, sizeof(manifest.track02_md5), "%s", md5);
+    snprintf(manifest.system_card_path, sizeof(manifest.system_card_path),
+             "%s", "/tmp/syscard3.pce");
+    snprintf(manifest.system_card_md5, sizeof(manifest.system_card_md5),
+             "%s", system_card_md5);
+    snprintf(manifest.trace_path, sizeof(manifest.trace_path),
+             "%s", "/tmp/theron-e009.trace");
+    snprintf(manifest.trace_md5, sizeof(manifest.trace_md5), "%s", trace_md5);
+    if (!theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
+            &handoff, &manifest, manifest.track02_path, md5,
+            manifest.system_card_path, system_card_md5, manifest.trace_path,
+            trace_md5, &handoff) ||
+        !theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
+            &handoff)) {
+        free(raw);
+        printf("FAIL: authenticated manifest did not bind the e009 handoff\n");
+        return 1;
+    }
+    ++manifest.trace_md5[0];
+    if (theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
+            &handoff, &manifest, manifest.track02_path, md5,
+            manifest.system_card_path, system_card_md5, manifest.trace_path,
+            trace_md5, &handoff)) {
+        free(raw);
+        printf("FAIL: altered manifest trace identity reached the handoff\n");
+        return 1;
+    }
+    --manifest.trace_md5[0];
     memset(&profile, 0, sizeof(profile));
     snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s", md5);
     profile.track02_initial_level_handoff = handoff;

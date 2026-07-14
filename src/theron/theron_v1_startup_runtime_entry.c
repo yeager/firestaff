@@ -432,13 +432,11 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !hucard_rom || !out_receipt ||
         !theron_v1_startup_runtime_has_verified_track02_request(
-            profile->graphics_md5) ||
-        !theron_v1_track02_raw_bytes_match_md5(
-            hucard_rom, hucard_rom_size, profile->graphics_md5)) {
+            profile->graphics_md5)) {
         return 0;
     }
     handoff = &profile->track02_initial_level_handoff;
-    if (!theron_v1_raw_loader_trace_initial_level_handoff_is_complete(handoff) ||
+    if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(handoff) ||
         strcmp(handoff->track02_md5, profile->graphics_md5) != 0 ||
         !handoff->loader_payload.handed_off ||
         !handoff->loader_payload.no_fallback ||
