@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1046: available code opens Amiga FTL libraries
+  only. The focused PC 3.4 boundary returns unavailable rather than synthesizing
+  a library-loading route.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1042-F1043: source-locked X68000 interrupt
   cleanup boundary and empty Amiga caller boundary. Focused strict-C11 tests
   preserve the non-PC decision without emulating unavailable hardware paths.
