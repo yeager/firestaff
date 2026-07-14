@@ -12,6 +12,15 @@
   material gates passed 3/3, and `test_dm2_v1_runtime_handoff_smoke` passed
   161/161.
 
+- ✅ 2026-07-14 DM1 PC34 C4 heap-order validation: the original-save handoff
+  now validates the checksum-qualified TIMELINE array as the ReDMCSB
+  `TIMELINE.C F0234/F0236` binary heap: low-24-bit time ascending, then
+  Type/Priority descending, then EVENT-array ordinal. It records the first
+   invalid parent/child source slots and rejects before staged PARTY or runtime
+   state commits. The focused regression swaps two valid C4 entries while
+   preserving checksums and membership, then proves exact provenance and
+   rollback. No fallback ordering or host-dungeon state is introduced.
+
 - ✅ 2026-07-14 DM1 original PC34 corpus runtime-stage receipt: every
   classifier-qualified external snapshot now takes an additional immutable
   `LOADSAVE.C` F0435 candidate-world pass before Firestaff's transient export.

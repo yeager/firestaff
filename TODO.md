@@ -1406,6 +1406,11 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-14 update: checksum-authenticated C4 data must now also preserve
+    ReDMCSB `TIMELINE.C F0234` heap order, not only its C3 membership. The
+    importer rejects the first parent/child ordering violation before staged
+    PARTY or runtime state can commit. Remaining work is authentic tail/save
+    corpus coverage, not accepting reordered timeline records.
   - 2026-07-14 update: each external PC34 snapshot now also receives a
     no-fallback F0435 runtime-stage receipt before transient export. A source
     tail must materialize its own owned dungeon and carry its C13 count into
