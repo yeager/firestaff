@@ -177,14 +177,15 @@
 
 ### ReDMCSB Numbered-Symbol Audit (2026-07-14)
 
-- REDMCSB-SYMBOL-GAP-004 — **Callable inventory audit: 1,199 routines have
-  no Firestaff reference.** `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_AUDIT.tsv`
-  classifies all 2,137 `Exxx`/`Fxxxx`/`Rxxx`/`Sxxx` symbols: 938 are exact
-  Firestaff references but remain unverified, while 1,199 are missing from
-  Firestaff source/header/test surfaces. Required work: triage each missing
-  callable routine by DM1/CSB runtime relevance, then implement or document a
-  source-backed non-applicability decision with focused evidence. A comment
-  or identifier match alone cannot close this gap.
+- REDMCSB-SYMBOL-GAP-004 — **Callable inventory audit: 981 routines have no
+  Firestaff numeric reference.** `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv`
+  classifies all 2,137 `Exxx`/`Fxxxx`/`Rxxx`/`Sxxx` symbols: 1,156 have
+  uncertain numeric Firestaff evidence and 981 have no exact numeric reference.
+  Neither status establishes semantic parity; all 2,137 still require source
+  behavior triage before they can be considered implemented. Required work:
+  triage each missing callable routine by DM1/CSB runtime relevance, then
+  implement or document a source-backed non-applicability decision with focused
+  evidence. A comment or identifier match alone cannot close this gap.
 
 - REDMCSB-SYMBOL-GAP-005 — **C/G semantic ownership is not verified.**
   `docs/reference/audits/REDMCSB_CONSTANT_GLOBAL_FULL_AUDIT.tsv` covers all 866
