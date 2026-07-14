@@ -965,6 +965,7 @@ static void probe_synthetic_multiple_initial_candidates_rejected(void) {
 static void probe_initial_level_envelope_rejected_without_corpus(void) {
     uint8_t sector[THERON_TRACK02_RAW_SECTOR_BYTES];
     Theron_Track02InitialLevelEnvelopeReceipt envelope;
+    Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
     Theron_Track02SignalStatus status;
 
     memset(sector, 0, sizeof(sector));
@@ -1001,6 +1002,17 @@ static void probe_initial_level_envelope_rejected_without_corpus(void) {
               envelope.object_tail_semantics_proven, 0);
     check_int("initial envelope non-corpus bytes allow no fallback",
               envelope.fallback_visuals_allowed, 0);
+
+    memset(&semantics, 0xff, sizeof(semantics));
+    status = theron_v1_track02_decode_initial_level_loader_semantics(
+        sector, sizeof(sector), THERON_TRACK02_MD5_US_BIN, &semantics);
+    check_int("initial loader semantics non-corpus bytes rejected",
+              status, THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("initial loader semantics clears receipt", semantics.valid, 0);
+    check_int("initial loader semantics has no object claim",
+              semantics.object_tail_semantics_proven, 0);
+    check_int("initial loader semantics allows no fallback",
+              semantics.fallback_visuals_allowed, 0);
 }
 
 static void probe_negative_handoffs(void) {
@@ -1087,6 +1099,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02InitialCandidateBinding binding;
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02InitialLevelEnvelopeReceipt envelope;
+    Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1262,6 +1275,28 @@ static void probe_real_data_initial_candidate(const char *label,
               envelope.fallback_visuals_allowed, 0);
     check_int("real initial envelope receipt fingerprinted",
               envelope.receipt_hash != 0u, 1);
+
+    signal_status = theron_v1_track02_decode_initial_level_loader_semantics(
+        data, size, local_md5, &semantics);
+    check_int("real initial loader semantics decode status", signal_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("real initial loader semantics valid", semantics.valid, 1);
+    check_int("real initial loader semantics envelope retained",
+              semantics.envelope.receipt_hash == envelope.receipt_hash, 1);
+    check_int("real initial loader semantics map accepted",
+              semantics.map_status, THERON_MAP_OK);
+    check_size("real initial loader semantics grid cells",
+               semantics.grid_cell_count, 0x360u);
+    check_int("real initial loader semantics proven",
+              semantics.loader_grid_semantics_proven, 1);
+    check_int("real initial loader semantics extension remains opaque",
+              semantics.header_extension_semantics_proven, 0);
+    check_int("real initial loader semantics object tail remains opaque",
+              semantics.object_tail_semantics_proven, 0);
+    check_int("real initial loader semantics blocks fallback visuals",
+              semantics.fallback_visuals_allowed, 0);
+    check_int("real initial loader semantics receipt fingerprinted",
+              semantics.receipt_hash != 0u, 1);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,

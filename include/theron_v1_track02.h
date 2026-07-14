@@ -1567,6 +1567,37 @@ typedef struct {
     uint32_t receipt_hash;
 } Theron_Track02InitialLevelEnvelopeReceipt;
 
+/* Loader-backed semantic projection of the authenticated startup grid.
+ *
+ * This is intentionally a receipt, not a world route: it runs the exact
+ * envelope bytes through theron_v1_level_load() and retains only the
+ * loader's bounded 5-bit cell classification and selected entrance pose.
+ * `raw_high_bit_cell_count` records cells whose source byte carried bits that
+ * the existing loader masks away, so consumers cannot mistake this projection
+ * for a claim about every raw-bit meaning.  No object records, transitions,
+ * artwork, or runtime level are published.  The header extension and the
+ * bytes following the grid remain opaque and blocked.
+ */
+#define THERON_TRACK02_LOADER_TILE_VALUE_COUNT 32u
+
+typedef struct {
+    int valid;
+    Theron_Track02InitialLevelEnvelopeReceipt envelope;
+    Theron_MapLoadResult map_status;
+    size_t grid_cell_count;
+    size_t raw_high_bit_cell_count;
+    unsigned int loader_tile_value_mask;
+    size_t loader_tile_value_counts[THERON_TRACK02_LOADER_TILE_VALUE_COUNT];
+    int start_x;
+    int start_y;
+    int start_dir;
+    int loader_grid_semantics_proven;
+    int header_extension_semantics_proven;
+    int object_tail_semantics_proven;
+    int fallback_visuals_allowed;
+    uint32_t receipt_hash;
+} Theron_Track02InitialLevelLoaderSemanticReceipt;
+
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
  * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
@@ -1696,6 +1727,17 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_envelope(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02InitialLevelEnvelopeReceipt *out_receipt);
+
+/* Decode the source-locked startup grid through the existing level loader.
+ * Only authenticated JP/US raw Track 02 media can produce a receipt.  This
+ * function neither publishes a level nor interprets the header extension or
+ * post-grid tail as objects, routes, visuals, or any other payload. */
+Theron_Track02SignalStatus
+theron_v1_track02_decode_initial_level_loader_semantics(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelLoaderSemanticReceipt *out_receipt);
 
 /* Copy the hash/anchor-gated initial startup candidate through the logical
  * MODE1/2048 user-data address space.
