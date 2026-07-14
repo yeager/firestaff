@@ -456,6 +456,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_longest_nonzero_byte_run = 0;
     int structure3_static_face_selector_total = 0;
     int structure3_animated_face_selector_total = 0;
+    uint64_t structure3_maximum_normal_length_error = 0;
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
     int structure3_nonzero_block_total = 0;
@@ -643,6 +644,20 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_face_materials.unsupported_textured_fill_count == 0 &&
               handoff.structure3_face_materials.selector_bindings_complete &&
               !handoff.structure3_face_materials.material_or_draw_semantics_proven &&
+              handoff.structure3_vectors.face_receipt_valid &&
+              handoff.structure3_vectors.valid &&
+              handoff.structure3_vectors.vertex_count ==
+                  handoff.structure3_faces.vertex_count &&
+              handoff.structure3_vectors.normal_count ==
+                  handoff.structure3_faces.normal_count &&
+              handoff.structure3_vectors.vertex_vector_count ==
+                  handoff.structure3_faces.vertex_count &&
+              handoff.structure3_vectors.normal_vector_count ==
+                  handoff.structure3_faces.normal_count &&
+              handoff.structure3_vectors.normal_unit_length_count ==
+                  handoff.structure3_faces.normal_count &&
+              handoff.structure3_vectors.normal_non_unit_length_count == 0 &&
+              !handoff.structure3_vectors.transform_or_draw_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
@@ -656,6 +671,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
             handoff.structure3_face_materials.static_texture_selector_count;
         structure3_animated_face_selector_total +=
             handoff.structure3_face_materials.animated_texture_selector_count;
+        if (handoff.structure3_vectors.maximum_normal_length_error >
+            structure3_maximum_normal_length_error) {
+            structure3_maximum_normal_length_error =
+                handoff.structure3_vectors.maximum_normal_length_error;
+        }
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==
@@ -871,6 +891,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     CHECK(structure3_static_face_selector_total > 0 &&
           structure3_animated_face_selector_total > 0,
           "retail Structure3 texture and animated selectors bind only to documented tables");
+    CHECK(structure3_maximum_normal_length_error == 196835ULL,
+          "retail Structure3 signed 16.16 normal residual stays corpus-verified");
 }
 
 static void test_structure1c_record_table_bounds(void) {
@@ -1736,6 +1758,7 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_DgnStructure3EntryHeaderReceipt headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
+    Nexus_V1_DgnStructure3VectorReceipt vectors;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
@@ -1756,6 +1779,14 @@ static void test_structure3_entry_header_boundaries(void) {
     wb32(payload + 112, 144U);
     wb32(payload + 120, 156U);
     wb32(payload + 124, 180U);
+
+    /* Structure3a/3c signed 16.16 X/Y/Z rows. */
+    wb32(payload + 56, 65536U);
+    wb32(payload + 68, 65536U);
+    wb32(payload + 144, 65536U);
+    wb32(payload + 92, 65536U);
+    wb32(payload + 180, 65536U);
+    wb32(payload + 192, 65536U);
 
     /* Structure3b face rows: all three rows are triangles; entry 1 carries
      * one textured triangle. All indexes stay inside their own vertex table. */
@@ -1800,11 +1831,28 @@ static void test_structure3_entry_header_boundaries(void) {
           !materials.selector_bindings_complete &&
           !materials.material_or_draw_semantics_proven,
           "an unbound Structure3 texture selector stays blocked without a draw claim");
+    CHECK(nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
+          vectors.face_receipt_valid && vectors.valid &&
+          vectors.vertex_count == 3 && vectors.normal_count == 3 &&
+          vectors.vertex_vector_count == 3 && vectors.nonzero_vertex_vector_count == 3 &&
+          vectors.normal_vector_count == 3 && vectors.normal_unit_length_count == 3 &&
+          vectors.normal_non_unit_length_count == 0 &&
+          vectors.maximum_normal_length_error == 0 &&
+          !vectors.transform_or_draw_semantics_proven,
+          "Structure3 signed 16.16 vectors remain bounded without a transform or draw claim");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
           !handoff.fallback_visuals_permitted,
           "Structure3 entry-header receipt cannot authorize a draw route");
+
+    wb32(payload + 92, 0U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
+          !vectors.valid && vectors.normal_non_unit_length_count == 1 &&
+          !vectors.transform_or_draw_semantics_proven,
+          "a non-unit Structure3 normal remains fail-closed without a draw claim");
+    wb32(payload + 92, 65536U);
 
     wb32(payload + 36, 88U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&

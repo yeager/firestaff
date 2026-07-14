@@ -753,6 +753,25 @@ typedef struct {
     int material_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;
 
+/* DMWeb documents Structure3a and Structure3c as signed 16.16 X/Y/Z
+ * vectors. This validates their fixed-point framing and the documented
+ * unit-normal invariant with rounding tolerance only; it does not expose a
+ * mesh, choose transforms, decode UVs, or authorize clipping or drawing. */
+typedef struct {
+    int face_receipt_valid;
+    int vertex_count;
+    int normal_count;
+    int vertex_vector_count;
+    int normal_vector_count;
+    int nonzero_vertex_vector_count;
+    int normal_unit_length_count;
+    int normal_non_unit_length_count;
+    uint64_t maximum_normal_length_error;
+    int fixed_point_vectors_valid;
+    int valid;
+    int transform_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3VectorReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1059,6 +1078,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1144,6 +1164,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1605,6 +1626,7 @@ typedef struct {
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
+    Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1817,6 +1839,9 @@ int nexus_v1_level_structure3_face_receipt(
 int nexus_v1_level_structure3_face_material_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt);
+int nexus_v1_level_structure3_vector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3VectorReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);

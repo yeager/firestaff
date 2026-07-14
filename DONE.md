@@ -31,6 +31,14 @@
    introduced. Verification: `firestaff_theron_v1_startup_real_asset_receipt_probe`
    exercises the assertion when raw JP/US Track 02 media is staged.
 
+- ✅ 2026-07-14 Nexus Structure3 fixed-point vector receipt: the tracked
+  DMWeb Saturn DGN reference identifies Structure3a vertices and Structure3c
+  normals as signed 16.16 X/Y/Z vectors, with one unit-length normal per face.
+  Firestaff now bounds and validates those rows through the retail
+  `LEV00.DGN`--`LEV15.DGN` corpus with fixed-point rounding tolerance. The
+   receipt does not expose a mesh, select transforms, decode UVs or pixels,
+   issue VDP1 commands, or relax the no-draw gate.
+
 - ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
   census revalidates each scanner-issued original envelope/raw candidate
   against its complete-file FNV receipt before parsing it, then retains only

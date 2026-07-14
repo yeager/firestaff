@@ -9,6 +9,30 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 
+static int32_t rbs32(const uint8_t *p) {
+    uint32_t value = rb32(p);
+    return value <= INT32_MAX ? (int32_t)value :
+        (int32_t)((int64_t)value - 0x100000000LL);
+}
+
+static uint64_t nexus_v1_fixed_vector_length_squared(int32_t x, int32_t y,
+                                                       int32_t z)
+{
+    const int64_t components[3] = { x, y, z };
+    uint64_t sum = 0;
+    int component;
+
+    for (component = 0; component < 3; ++component) {
+        uint64_t magnitude = components[component] < 0
+            ? (uint64_t)-components[component]
+            : (uint64_t)components[component];
+        uint64_t square = magnitude * magnitude;
+        if (sum > UINT64_MAX - square) return UINT64_MAX;
+        sum += square;
+    }
+    return sum;
+}
+
 static const Nexus_V1_DgnStructure2Texture *
 nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
                                       uint16_t image_id)
@@ -54,6 +78,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3DirectoryReceipt directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
+    Nexus_V1_DgnStructure3VectorReceipt vectors;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -84,6 +109,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&directory, 0, sizeof(directory));
     memset(&entry_headers, 0, sizeof(entry_headers));
     memset(&faces, 0, sizeof(faces));
+    memset(&vectors, 0, sizeof(vectors));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
@@ -367,6 +393,66 @@ static int nexus_v1_level_copy_structure3_payload(
     /* Record grammar alone cannot select material data or issue a draw. */
     faces.draw_semantics_proven = 0;
     level->structure3_faces = faces;
+    vectors.face_receipt_valid = faces.valid;
+    vectors.vertex_count = faces.vertex_count;
+    vectors.normal_count = faces.normal_count;
+    vectors.fixed_point_vectors_valid = faces.valid;
+    if (faces.valid) {
+        const uint64_t unit_length_squared = 65536ULL * 65536ULL;
+        /* The documented unit vector is quantized to three signed 16.16
+         * components. Keep a conservative fixed-point error envelope; the
+         * corpus receipt retains the actual maximum for audit. */
+        const uint64_t rounding_tolerance = 4ULL * 65536ULL;
+        int entry;
+
+        for (entry = 0; entry < directory.entry_count; ++entry) {
+            uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+            const uint8_t *header = data + byte_offset + entry_offset;
+            uint16_t vertex_count = rb16(header + 4);
+            uint16_t face_count = rb16(header + 6);
+            uint32_t vertex_offset = rb32(header + 8);
+            uint32_t normal_offset = rb32(header + 20);
+            int vector_index;
+
+            for (vector_index = 0; vector_index < (int)vertex_count;
+                 ++vector_index) {
+                const uint8_t *vertex = data + byte_offset + vertex_offset +
+                    vector_index * 12;
+                if (rbs32(vertex) != 0 || rbs32(vertex + 4) != 0 ||
+                    rbs32(vertex + 8) != 0) {
+                    ++vectors.nonzero_vertex_vector_count;
+                }
+                ++vectors.vertex_vector_count;
+            }
+            for (vector_index = 0; vector_index < (int)face_count;
+                 ++vector_index) {
+                const uint8_t *normal = data + byte_offset + normal_offset +
+                    vector_index * 12;
+                uint64_t length_squared = nexus_v1_fixed_vector_length_squared(
+                    rbs32(normal), rbs32(normal + 4), rbs32(normal + 8));
+                uint64_t error = length_squared > unit_length_squared
+                    ? length_squared - unit_length_squared
+                    : unit_length_squared - length_squared;
+
+                if (error > vectors.maximum_normal_length_error) {
+                    vectors.maximum_normal_length_error = error;
+                }
+                if (error <= rounding_tolerance) {
+                    ++vectors.normal_unit_length_count;
+                } else {
+                    ++vectors.normal_non_unit_length_count;
+                    vectors.fixed_point_vectors_valid = 0;
+                }
+                ++vectors.normal_vector_count;
+            }
+        }
+    }
+    vectors.valid = vectors.fixed_point_vectors_valid &&
+        vectors.vertex_vector_count == vectors.vertex_count &&
+        vectors.normal_vector_count == vectors.normal_count &&
+        vectors.normal_unit_length_count == vectors.normal_count;
+    vectors.transform_or_draw_semantics_proven = 0;
+    level->structure3_vectors = vectors;
     return 0;
 }
 
@@ -3040,6 +3126,16 @@ int nexus_v1_level_structure3_face_material_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_vector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3VectorReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_vectors;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3308,6 +3404,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_faces);
     (void)nexus_v1_level_structure3_face_material_receipt(
         level, &out_receipt->structure3_face_materials);
+    (void)nexus_v1_level_structure3_vector_receipt(
+        level, &out_receipt->structure3_vectors);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
@@ -3872,6 +3970,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_directory = handoff.structure3_directory;
     receipt.structure3_entry_headers = handoff.structure3_entry_headers;
     receipt.structure3_faces = handoff.structure3_faces;
+    receipt.structure3_vectors = handoff.structure3_vectors;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
     receipt.structure1f_rotation_selectors = handoff.structure1f_rotation_selectors;
