@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM2 HUD follow-up: exact real HUD command counts now cross M11.
+  Remaining work is original save-corpus admission, not partial HUD fallback.
+
 - 2026-07-15 DM2 HUD follow-up: M11 now verifies each decoded GDAT HUD
   command before its blit. Remaining work is real save-corpus state binding.
 

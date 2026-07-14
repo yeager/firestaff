@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject HUD M11 delivery: the exact real GDAT HUD command
+  count now accompanies its hash and consumed flag; a partial plan is no-draw.
+
 - 2026-07-15 DM2 skproject HUD command delivery: M11 now checks the decoded
   pixel identity of every real GDAT HUD command before composition; mismatch
   is no-draw, never a generated HUD substitute.
