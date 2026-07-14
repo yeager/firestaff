@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7059/F7060 dungeon-part checksum: added the exact
+  PC34 16-bit modular byte accumulator used after a dungeon part is read or
+  before it is written. The C11 port receives only those real bytes and does
+  not manufacture a transport, dungeon layout, CSBWin extension, timer, or
+  DSA semantics. Focused strict-C11 regression passes.
+
 - 2026-07-14 Nexus Structure3 raw package-to-host route: connected the strict
   six-span reader to the DGN host intake. Only an exact manifest-ordered,
   hash-matching, externally Saturn-attested packet can invoke the existing
