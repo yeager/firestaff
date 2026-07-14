@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0803`-`F0805`: source-locked magic-map
+  icon/map and creature-name-scroll routes. Focused strict C11 tests pass
+  without synthetic graphics or game data.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0802`: source-locked magic-map scroll
   classification and decoded-text match. Focused strict C11 test passes.
 
