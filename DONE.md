@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
+  timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap
+  comparator from `skproject/SKULLWIN/c_timer.cpp`: low 24-bit tick ascending,
+  timer type descending, actor descending, then stable original table index.
+  The receipt retains the rebuilt heap, next table index/tick, and a raw-byte
+  FNV witness without scheduling or firing a timer. `tty0C` ownership remains
+  source-bound; `tty1D`/`tty1E` remain blocked pending a proven saved DB
+  address owner. Focused `dm2_v1_save_load` coverage checks tick/type order,
+  stable heap indices, and the existing rejection-before-publish boundary.
+
 - 2026-07-14 Nexus Structure3 strict raw-capture import: one atomic import
   boundary now binds a parsed face manifest to all six opaque raw spans. It
   independently rechecks declared lengths, FNV witnesses, capture-session

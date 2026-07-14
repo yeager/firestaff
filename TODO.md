@@ -8,11 +8,12 @@
   still does not decode or rebuild the original DB record graph, tile-object
   chains, checkcodes, minion associations, actuator state, or post-load
   effects beyond the bounded importer fields. SKProject's `_3a15_020f`
-  post-load timer sweep now rebinds authenticated `tty0C` champion owners,
-  but retains `tty1D`/`tty1E` RecordE timer owners as unavailable until the
-  saved DB graph has an exact address owner. Remaining: corpus-verified
-  original read/write across those full DB/timer sections and the rest of
-  SKProject's post-load rebuild order.
+  post-load timer sweep now rebinds authenticated `tty0C` champion owners
+  and reconstructs SKProject's raw-timer min-heap (tick, type, actor, table
+  index). It retains `tty1D`/`tty1E` RecordE timer owners as unavailable
+  until the saved DB graph has an exact address owner. Remaining:
+  corpus-verified original read/write across those full DB/timer sections and
+  the rest of SKProject's post-load rebuild order.
 
 - 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict
   single-face manifest intake now preserves one DGN/Structure3 face's opaque
