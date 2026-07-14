@@ -6118,3 +6118,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   one terminal-session pair before either surface changes the page. Missing
   source receipts preserve the previously presented page; remaining work is
   real package/app capture breadth and original-save/DSA corpus evidence.
+
+- 🔧 2026-07-15 CSB viewport/HUD lane separation: the F0128 boot viewport
+  now applies only real CSBgraphics derived-viewport entries. C017/C040 stay
+  in the source-ordered PANEL.C terminal-session consumer and cannot replace
+  every dungeon frame. Remaining work is an actual CSB package/app capture
+  across the title, door, HUD, and panel transitions.

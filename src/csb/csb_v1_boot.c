@@ -1234,15 +1234,25 @@ int csb_v1_boot_render_viewport_frame_pc34(
     if (profile->csbgraphics_runtime_plan.ready &&
         profile->csbgraphics_cache.loaded) {
         for (i = 0u; i < profile->csbgraphics_runtime_plan.planned_count; ++i) {
+            const CSB_V1_CSBGraphicsRuntimePlanEntry *entry =
+                &profile->csbgraphics_runtime_plan.entries[i];
             CSB_V1_CSBGraphicsRuntimeBinding binding;
-            if (profile->csbgraphics_runtime_plan.entries[i]
-                    .deferred_masked_composite) {
+
+            /* F0128 owns only the derived dungeon-art lanes. PANEL.C
+             * F0347/F0346 consumes C017/C040 when an inventory/mirror panel
+             * is actually active; applying either entry here would make an
+             * optional real HUD override overwrite every live viewport
+             * frame. Custom backgrounds are consumed at their source-ordered
+             * room hooks by csb_v1_viewport_render_frame(). */
+            if (entry->deferred_masked_composite ||
+                entry->route !=
+                    CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_VIEWPORT_DERIVED) {
                 continue;
             }
             (void)csb_v1_csbgraphics_runtime_plan_apply_entry(
                 &profile->csbgraphics_runtime_plan,
                 &profile->csbgraphics_cache,
-                profile->csbgraphics_runtime_plan.entries[i].entry_index,
+                entry->entry_index,
                 framebuffer,
                 framebuffer_width,
                 framebuffer_height,
