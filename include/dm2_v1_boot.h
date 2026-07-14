@@ -1569,6 +1569,14 @@ int dm2_v1_boot_interface_hud_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceHudLayout *out_layout);
 
+/* Decodes only the four DRAW_CHAMPION_PICTURE destination rectangles. This
+ * smaller receipt remains usable when unrelated HUD status rows are not yet
+ * admitted by the broader layout decoder. */
+int dm2_v1_boot_interface_hud_portrait_destinations(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_InterfaceRect out_portraits[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT],
+    uint32_t *out_table_hash);
+
 typedef struct {
     int valid;
     uint32_t table_hash;

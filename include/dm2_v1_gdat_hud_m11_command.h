@@ -26,6 +26,8 @@ typedef struct DM2_V1_GdatHudM11Command {
     int gdat_field;
     int viewport_gdat_index;
     DM2_V1_ViewportRect destination;
+    uint16_t destination_rect_id;
+    uint32_t destination_table_hash;
     uint8_t *pixels;
     int width;
     int height;
@@ -58,6 +60,13 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+
+/* Binds four original INTERFACE_GENERAL/0/dt04 portrait rectangles
+ * (RECT_173..RECT_176) to a complete four-champion command plan. */
+int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_ViewportRect portrait_destinations[4],
+    uint32_t source_table_hash);
 
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan);

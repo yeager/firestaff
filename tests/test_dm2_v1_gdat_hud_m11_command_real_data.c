@@ -67,6 +67,8 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_BootProfile boot;
     DM2_V1_GdatHudM11CommandPlan plan;
+    DM2_V1_InterfaceRect portrait_destinations[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
+    uint32_t portrait_table_hash = 0u;
     DM2_V1_HudPartyState party;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
@@ -118,18 +120,32 @@ int main(void)
         party.champions[i].portrait_type_source_bound = 1;
         party.champions[i].portrait_index = (uint8_t)i;
     }
-    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
-        !dm2_v1_gdat_hud_m11_command_plan_build_for_party(&loader, &party,
-                                                            &plan)) {
-        fputs("FAIL: canonical GDAT HUD command plan was not admitted\n", stderr);
-        dm2_v1_gdat_hud_m11_command_plan_free(&plan);
-        dm2_v1_asset_loader_free(&loader);
+    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
+        fputs("FAIL: canonical DM2 GRAPHICS.DAT was not admitted\n", stderr);
         free(graphics);
         return 1;
     }
     if (dm2_v1_boot_scan_assets(&boot, boot_root) != 0 ||
         dm2_v1_boot_enter_game(&boot) != 0) {
         fputs("FAIL: canonical DM2 boot profile was not entered\n", stderr);
+        dm2_v1_boot_cleanup(&boot);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
+    memset(portrait_destinations, 0, sizeof(portrait_destinations));
+    if (!dm2_v1_boot_interface_hud_portrait_destinations(
+            &boot, portrait_destinations, &portrait_table_hash) ||
+        portrait_table_hash == 0u) {
+        fputs("FAIL: canonical HUD rectangle table was not decoded\n", stderr);
+        dm2_v1_boot_cleanup(&boot);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
+    if (!dm2_v1_boot_gdat_hud_m11_command_plan(&boot, &party, &plan)) {
+        fputs("FAIL: canonical HUD command layout was not source-bound\n", stderr);
+        dm2_v1_gdat_hud_m11_command_plan_free(&plan);
         dm2_v1_boot_cleanup(&boot);
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
@@ -171,6 +187,14 @@ int main(void)
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
             command->raw_byte_count == 0u || command->palette_hash == 0u ||
             command->destination.w <= 0 || command->destination.h <= 0) {
+            ++failures;
+        }
+        if (i >= 9 && (command->destination_rect_id != (uint16_t)(164 + i) ||
+                       command->destination_table_hash != portrait_table_hash ||
+                       command->destination.x != portrait_destinations[i - 9].x / 2 ||
+                       command->destination.y != portrait_destinations[i - 9].y / 2 ||
+                       command->destination.w != portrait_destinations[i - 9].w / 2 ||
+                       command->destination.h != portrait_destinations[i - 9].h / 2)) {
             ++failures;
         }
         printf("command=%d type=%d source=%d/%d/%d %dx%d dst=%d,%d %dx%d\n",

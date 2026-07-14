@@ -21,6 +21,33 @@ static uint32_t dm2_v1_gdat_hud_hash_bytes(uint32_t hash,
     return hash;
 }
 
+static uint32_t dm2_v1_gdat_hud_command_hash(
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+    if (!plan || plan->command_count <= 0 ||
+        plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX) return 0u;
+    for (i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->kind,
+                                           sizeof(command->kind));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->raw_hash,
+                                           sizeof(command->raw_hash));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->palette_hash,
+                                           sizeof(command->palette_hash));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->destination,
+                                           sizeof(command->destination));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->destination_rect_id,
+            sizeof(command->destination_rect_id));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            (const uint8_t *)&command->destination_table_hash,
+            sizeof(command->destination_table_hash));
+    }
+    return hash ? hash : 1u;
+}
+
 void dm2_v1_gdat_hud_m11_command_plan_free(
     DM2_V1_GdatHudM11CommandPlan *plan)
 {
@@ -105,7 +132,6 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_HudChromeRenderPlan chrome;
-    uint32_t hash = 2166136261u;
     int i;
 
     if (!out_plan) return 0;
@@ -140,19 +166,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
-    for (i = 0; i < out_plan->command_count; ++i) {
-        const DM2_V1_GdatHudM11Command *command = &out_plan->commands[i];
-        hash = dm2_v1_gdat_hud_hash_bytes(hash,
-                                           (const uint8_t *)&command->kind,
-                                           sizeof(command->kind));
-        hash = dm2_v1_gdat_hud_hash_bytes(hash,
-                                           (const uint8_t *)&command->raw_hash,
-                                           sizeof(command->raw_hash));
-        hash = dm2_v1_gdat_hud_hash_bytes(hash,
-                                           (const uint8_t *)&command->palette_hash,
-                                           sizeof(command->palette_hash));
-    }
-    out_plan->command_hash = hash ? hash : 1u;
+    out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
     out_plan->valid = 1;
     return 1;
 }
@@ -163,7 +177,6 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_HudChromeRenderPlan chrome;
-    uint32_t hash = 2166136261u;
     int slot;
 
     if (!party || !dm2_v1_gdat_hud_m11_command_plan_build(loader, out_plan) ||
@@ -185,11 +198,39 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
-    for (slot = 0; slot < out_plan->command_count; ++slot) {
-        hash = dm2_v1_gdat_hud_hash_bytes(hash,
-            (const uint8_t *)&out_plan->commands[slot].raw_hash,
-            sizeof(out_plan->commands[slot].raw_hash));
+    out_plan->command_hash = dm2_v1_gdat_hud_command_hash(out_plan);
+    return 1;
+}
+
+int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    const DM2_V1_ViewportRect portrait_destinations[4],
+    uint32_t source_table_hash)
+{
+    int slot;
+    if (!plan || !plan->valid || plan->command_count !=
+        DM2_V1_GDAT_HUD_M11_COMMAND_MAX || !portrait_destinations ||
+        source_table_hash == 0u) return 0;
+    for (slot = 0; slot < 4; ++slot) {
+        DM2_V1_GdatHudM11Command *command = &plan->commands[9 + slot];
+        const DM2_V1_ViewportRect *destination = &portrait_destinations[slot];
+        if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
+            command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
+            command->gdat_index != slot || command->gdat_field != 0 ||
+            destination->x < 0 || destination->y < 0 || destination->w <= 0 ||
+            destination->h <= 0 || destination->x + destination->w > DM2_VP_WIDTH ||
+            destination->y + destination->h > DM2_VP_HEIGHT) {
+            dm2_v1_gdat_hud_m11_command_plan_free(plan);
+            return 0;
+        }
+        command->destination = *destination;
+        command->destination_rect_id = (uint16_t)(173 + slot);
+        command->destination_table_hash = source_table_hash;
     }
-    out_plan->command_hash = hash ? hash : 1u;
+    plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
+    if (plan->command_hash == 0u) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
     return 1;
 }
