@@ -636,6 +636,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_faces.face_vertex_reference_count ==
                   handoff.structure3_faces.triangle_count * 3 +
                       handoff.structure3_faces.quad_count * 4 &&
+              handoff.structure3_faces.face_topology_accounting_valid &&
+              handoff.structure3_faces.one_distinct_vertex_face_count +
+                      handoff.structure3_faces.two_distinct_vertex_face_count +
+                      handoff.structure3_faces.three_distinct_vertex_face_count +
+                      handoff.structure3_faces.four_distinct_vertex_face_count ==
+                  handoff.structure3_faces.face_count &&
+              handoff.structure3_faces.distinct_face_vertex_count +
+                      handoff.structure3_faces.repeated_face_vertex_reference_count ==
+                  handoff.structure3_faces.face_vertex_reference_count &&
               handoff.structure3_faces.normal_count_matches_face_count &&
               handoff.structure3_faces.unclassified_fill_count == 0 &&
               !handoff.structure3_faces.draw_semantics_proven &&
@@ -1826,15 +1835,22 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_count == 3 && faces.normal_count == 3 &&
           faces.triangle_count == 3 && faces.quad_count == 0 &&
           faces.face_vertex_reference_count == 9 &&
+          faces.distinct_face_vertex_count == 4 &&
+          faces.repeated_face_vertex_reference_count == 5 &&
+          faces.one_distinct_vertex_face_count == 2 &&
+          faces.two_distinct_vertex_face_count == 1 &&
+          faces.three_distinct_vertex_face_count == 0 &&
+          faces.four_distinct_vertex_face_count == 0 &&
           faces.linked_face_vertex_reference_count == 9 &&
           faces.referenced_vertex_count == 3 &&
           faces.unreferenced_vertex_count == 0 &&
           faces.maximum_vertex_reference_count == 6 &&
           faces.textured_face_count == 1 && faces.static_texture_fill_count == 3 &&
           faces.face_vertex_indexes_valid && faces.face_vertex_linkage_valid &&
+          faces.face_topology_accounting_valid &&
           faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
-          "Structure3 face rows retain bounded topology without authorizing a draw");
+          "Structure3 face rows retain raw distinct-index topology without authorizing a draw");
     CHECK(nexus_v1_level_structure3_face_material_receipt(&level, &materials) == 0 &&
           materials.face_receipt_valid && materials.valid &&
           materials.textured_face_count == 1 &&

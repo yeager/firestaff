@@ -709,7 +709,8 @@ typedef struct {
 
 /* DMWeb documents Structure3b as four big-endian vertex indexes followed by
  * flags and a fill selector. This receipt validates index bounds and local
- * face-to-vertex incidence, then counts its documented topology/fill lanes.
+ * face-to-vertex incidence, then accounts for each row's raw distinct-index
+ * topology and documented fill lanes.
  * It does not bind a selector to any texture, palette, VDP1 command, or draw
  * operation. */
 typedef struct {
@@ -721,6 +722,12 @@ typedef struct {
     int triangle_count;
     int quad_count;
     int face_vertex_reference_count;
+    int distinct_face_vertex_count;
+    int repeated_face_vertex_reference_count;
+    int one_distinct_vertex_face_count;
+    int two_distinct_vertex_face_count;
+    int three_distinct_vertex_face_count;
+    int four_distinct_vertex_face_count;
     int linked_face_vertex_reference_count;
     int referenced_vertex_count;
     int unreferenced_vertex_count;
@@ -733,6 +740,7 @@ typedef struct {
     int unclassified_fill_count;
     int face_vertex_indexes_valid;
     int face_vertex_linkage_valid;
+    int face_topology_accounting_valid;
     int normal_count_matches_face_count;
     int valid;
     int draw_semantics_proven;

@@ -377,19 +377,44 @@ static int nexus_v1_level_copy_structure3_payload(
             for (face_index = 0; face_index < (int)face_count; ++face_index) {
                 const uint8_t *face = data + byte_offset + face_offset +
                     face_index * 12;
-                uint16_t index2 = rb16(face + 4);
-                uint16_t index3 = rb16(face + 6);
+                uint16_t indexes[4] = {
+                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                };
+                uint16_t index2 = indexes[2];
+                uint16_t index3 = indexes[3];
                 uint16_t fill = rb16(face + 10);
+                int slot_count = index2 == index3 ? 3 : 4;
+                int distinct_count = 0;
+                int index_valid = 1;
+                int slot;
 
-                if (rb16(face) >= vertex_count || rb16(face + 2) >= vertex_count ||
-                    index2 >= vertex_count || index3 >= vertex_count) {
+                for (slot = 0; slot < slot_count; ++slot) {
+                    int earlier;
+                    if (indexes[slot] >= vertex_count) {
+                        index_valid = 0;
+                        break;
+                    }
+                    for (earlier = 0; earlier < slot; ++earlier) {
+                        if (indexes[earlier] == indexes[slot]) break;
+                    }
+                    if (earlier == slot) ++distinct_count;
+                }
+                if (!index_valid) {
                     faces.face_vertex_indexes_valid = 0;
+                } else {
+                    faces.distinct_face_vertex_count += distinct_count;
+                    faces.repeated_face_vertex_reference_count +=
+                        slot_count - distinct_count;
+                    if (distinct_count == 1) ++faces.one_distinct_vertex_face_count;
+                    else if (distinct_count == 2) ++faces.two_distinct_vertex_face_count;
+                    else if (distinct_count == 3) ++faces.three_distinct_vertex_face_count;
+                    else if (distinct_count == 4) ++faces.four_distinct_vertex_face_count;
                 }
                 if (vertex_reference_counts) {
-                    if (rb16(face) < vertex_count)
-                        ++vertex_reference_counts[rb16(face)];
-                    if (rb16(face + 2) < vertex_count)
-                        ++vertex_reference_counts[rb16(face + 2)];
+                    if (indexes[0] < vertex_count)
+                        ++vertex_reference_counts[indexes[0]];
+                    if (indexes[1] < vertex_count)
+                        ++vertex_reference_counts[indexes[1]];
                     if (index2 < vertex_count)
                         ++vertex_reference_counts[index2];
                     if (index3 != index2 && index3 < vertex_count)
@@ -427,8 +452,18 @@ static int nexus_v1_level_copy_structure3_payload(
                 faces.vertex_count &&
             faces.linked_face_vertex_reference_count ==
                 faces.face_vertex_reference_count;
+        faces.face_topology_accounting_valid =
+            faces.face_vertex_indexes_valid &&
+            faces.one_distinct_vertex_face_count +
+                    faces.two_distinct_vertex_face_count +
+                    faces.three_distinct_vertex_face_count +
+                    faces.four_distinct_vertex_face_count == faces.face_count &&
+            faces.distinct_face_vertex_count +
+                    faces.repeated_face_vertex_reference_count ==
+                faces.face_vertex_reference_count;
         faces.valid = faces.face_vertex_indexes_valid &&
             faces.face_vertex_linkage_valid &&
+            faces.face_topology_accounting_valid &&
             faces.normal_count_matches_face_count &&
             faces.unclassified_fill_count == 0 &&
             faces.face_vertex_reference_count ==

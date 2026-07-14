@@ -34,6 +34,14 @@ LEV00-LEV15 remains in that span. This is a safety and provenance result, not
 a pixel decoder. Image payload grammar, palette coupling, animation flags, and
 timing remain blocked until proven.
 
+## Structure3 Face Topology
+
+Structure3 face rows retain bounded vertex-index topology only. The parser
+counts triangle/quad slots plus each row's one-, two-, three-, or
+four-distinct-index form and checks that the accounting covers every valid
+face row. This is source-format provenance, not a winding, normal-plane,
+transform, material, palette, or draw claim.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
