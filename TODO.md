@@ -1074,6 +1074,7 @@ ReDMCSB WIP 2021-02-06 source tree.
     source-to-aperture route for all four flip modes and transparency. It
     consumes the direct 320x200 host-compatible aperture; live game call-site
     capture remains separately unproven.
+  - 2026-07-14 DUNVIEW.C F0675 now preserves native/derived/temporary bitmap selection before real F0129 scaling; M11 call-site binding remains unproven.
   - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
     from one 320-byte row above, including its source-visible propagation for
     spans larger than a row. Binding this logical aperture effect to live
