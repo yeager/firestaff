@@ -168,6 +168,25 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure2SourceReceipt;
 
+/* One original-capture-bound Structure3 face source retained by the live
+ * engine.  The texture bytes are intentionally opaque: this cache exists so
+ * a later verified Saturn decoder has the exact face, normal, and source span
+ * that its capture admitted, not to infer a host texture format. */
+typedef struct {
+    int valid;
+    int level_index;
+    uint32_t entry_index;
+    uint32_t face_ordinal;
+    Nexus_V1_DgnStructure3Face face;
+    Nexus_V1_DgnStructure3Vector vertices[4];
+    int vertex_slot_count;
+    Nexus_V1_DgnStructure3Vector normal;
+    uint8_t *texture_span;
+    int texture_span_size;
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt binding;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3RuntimeSource;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -399,6 +418,11 @@ struct Nexus_V1_Engine {
     /* Current level */
     Nexus_V1_Level current_level;
     int level_loaded;
+    /* Owned canonical bytes remain available for authenticated Structure3
+     * capture consumption; they are discarded on replacement/shutdown. */
+    uint8_t *current_level_dgn_data;
+    int current_level_dgn_size;
+    Nexus_V1_DgnStructure3RuntimeSource structure3_runtime_source;
 
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
@@ -503,6 +527,14 @@ int nexus_v1_inspect_dgn_material_corpus(
 int nexus_v1_current_level_structure2_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2SourceReceipt *out_receipt);
+/* Commit one already-bound original-capture face into engine-owned source
+ * storage. This copies only typed DGN rows and opaque texture bytes; it never
+ * enables mesh drawing or Saturn texture decoding. */
+int nexus_v1_engine_consume_structure3_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
+    const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
+    const uint8_t *texture_span, int texture_span_size);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

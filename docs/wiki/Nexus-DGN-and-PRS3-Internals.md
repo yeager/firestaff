@@ -84,6 +84,16 @@ requires an original Saturn capture and marks it unavailable. It therefore
 blocks normal-plane use, transforms, texture/palette decoding, and draw
 commands until a capture ties those operations to the original runtime.
 
+DONE: the startup capture gate now consumes an admitted packet through the
+live engine: it retains the canonical loaded `LEVxx.DGN` bytes, extracts the
+selected typed face/vertex/normal rows, and copies the exact captured texture
+span into engine-owned storage. The copied texture bytes remain opaque and the
+engine keeps the real-mesh draw blocker asserted.
+
+TODO: admit a real original-Saturn packet that proves texture, palette,
+transform, culling, and draw semantics before any Structure3 source cache can
+reach rasterization.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,

@@ -20782,6 +20782,9 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_nexus_v1_dgn_geometry_readiness PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_dgn_geometry_readiness PRIVATE
+        firestaff_nexus
+    )
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_dgn_geometry_readiness PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
