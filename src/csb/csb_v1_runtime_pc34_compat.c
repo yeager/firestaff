@@ -12600,6 +12600,87 @@ static void csb_v1_runtime_apply_door_timeline_record(
     }
 }
 
+static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_CSBWin512TimerSummary *timer,
+    uint16_t timer_index,
+    uint16_t queue_slot)
+{
+    struct CombatAction_Compat party_damage;
+    struct DM1_Event_V1 next;
+    uint8_t *square;
+    int square_type;
+    int door_state;
+    int effect;
+    int next_state;
+    int event_index;
+
+    /* CSBWin Timer.cpp ProcessTT_DOOR changes the saved TIMER to TT_1, then
+     * TIMELINE.C F0241 owns every subsequent door-animation step. Retain the
+     * same source TIMER and queue slot for those successors: a plain M10 C01
+     * follow-up has no CSBWin restart receipt. */
+    if (!profile || !record || !timer || !profile->dungeon_handle ||
+        timer->function != 1u || !timer->valid || timer->truncated ||
+        timer->source_index != timer_index ||
+        record->eventType != timer->function ||
+        record->mapIndex != timer->level || record->mapX != timer->ubyte6 ||
+        record->mapY != timer->ubyte7 || record->cell != timer->ubyte8 ||
+        record->effect != timer->ubyte9 || record->aux0 != timer->ubyte5 ||
+        timer->ubyte9 > 1u || profile->game_time >= 0x00ffffffu) {
+        return 0;
+    }
+    square = csb_v1_runtime_square_byte_ptr(
+        profile, timer->level, timer->ubyte6, timer->ubyte7, &square_type);
+    if (!square || square_type != 4) return 0;
+
+    door_state = *square & 0x07u;
+    effect = timer->ubyte9;
+    if (door_state == 5 ||
+        (effect == DM1_EFFECT_SET && door_state == 0) ||
+        (effect == DM1_EFFECT_CLEAR && door_state == 4)) {
+        return 1;
+    }
+
+    if (effect == DM1_EFFECT_CLEAR && timer->level == profile->current_level &&
+        timer->ubyte6 == profile->party_x && timer->ubyte7 == profile->party_y &&
+        profile->party_state_valid && profile->party_state.ChampionCount > 0) {
+        memset(&party_damage, 0, sizeof(party_damage));
+        party_damage.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
+        party_damage.attackTypeCode = COMBAT_ATTACK_SELF;
+        party_damage.rawAttackValue = 5;
+        party_damage.allowedWounds = COMBAT_WOUND_TORSO |
+                                    COMBAT_WOUND_HEAD;
+        *square = (uint8_t)(*square & (uint8_t)~0x07u);
+        (void)csb_v1_runtime_apply_explosion_party_action(
+            profile, &party_damage, &(struct RngState_Compat){
+                0xC5B1241u ^ profile->game_time ^
+                ((uint32_t)timer->ubyte6 << 8) ^ timer->ubyte7 });
+    } else {
+        next_state = door_state + (effect == DM1_EFFECT_SET ? -1 : 1);
+        *square = (uint8_t)((*square & (uint8_t)~0x07u) |
+                            (uint8_t)next_state);
+    }
+
+    if ((effect == DM1_EFFECT_SET && (*square & 0x07u) == 0u) ||
+        (effect == DM1_EFFECT_CLEAR && (*square & 0x07u) == 4u)) {
+        return 1;
+    }
+    memset(&next, 0, sizeof(next));
+    next.map_time = DM1_MAP_TIME_MAKE(timer->level, profile->game_time + 1u);
+    next.type = 1u;
+    next.priority = timer->ubyte5;
+    next.b_mapX = timer->ubyte6;
+    next.b_mapY = timer->ubyte7;
+    next.c_cell = timer->ubyte8;
+    next.c_effect = timer->ubyte9;
+    event_index = csb_v1_runtime_add_timeline_event(profile, &next);
+    if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+    timer->time = profile->game_time + 1u;
+    profile->csbwin_timeline_event_queue_slot[event_index] = queue_slot;
+    return 1;
+}
+
 static void csb_v1_runtime_apply_square_flag_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
@@ -18198,6 +18279,14 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                 *square = (uint8_t)((*square & (uint8_t)~0x07u) | 5u);
             }
         }
+        return 1;
+    }
+    if (timer->function == 1u) {
+        /* TT_1 is the source-owned continuation installed by ProcessTT_DOOR.
+         * It must never use the shared C01 scheduler, because every later
+         * animation step has to retain this TIMER's original queue receipt. */
+        (void)csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
+            profile, record, timer, timer_index, queue_slot);
         return 1;
     }
     if (timer->function == 7u) {

@@ -590,8 +590,11 @@ int main(void)
 
     check(csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x81u &&
               profile.csbwin_timers[0].function == 1u &&
+              profile.csbwin_timers[0].time == profile.game_time &&
+              profile.last_timeline_dispatch.records[0].eventType ==
+                  DM1_EVENT_NONE &&
               profile.timeline_queue.eventCount == 1,
-          "converted restored TT_DOOR reaches its source-owned TT_1 step");
+          "converted restored TT_DOOR keeps its TT_1 follow-up source-owned");
 
     profile.csbwin_character_tail_invisible = 2u;
     profile.csbwin_timers[0].function = 71u;
