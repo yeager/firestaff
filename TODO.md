@@ -3,8 +3,9 @@
 - 2026-07-14 DM1 original-PC34 save/HoC follow-up: tail-backed external C13
   rows now have an explicit F0435-to-runtime-to-adoption receipt for the
   source-owned Vi Altar fields. Remaining work is authentic corpus coverage
-  for additional C13 states and source-backed execution/capture evidence;
-  this receipt neither constructs saves nor establishes runtime parity.
+  for additional C13 states and original-PC34 capture evidence; M11 now
+  dispatches the admitted sequence through the source-backed timeline on
+  movement ticks, but this does not establish original executable parity.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: raw original candidates now
   stage through the existing source-owned G1 dungeon loader before runtime

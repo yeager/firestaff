@@ -34,6 +34,14 @@
   lines 2532-2585, `DSA.cpp` lines 5363-5416, and `data.cpp`
   `EXPOOL::Locate`. Verification:
    `csb_v1_csbwin_character_death_filter_runtime`.
+- 2026-07-14 DM1 PC34 C13 M11 movement-runtime dispatch: M11's source-locked
+  movement pipeline now dispatches its due F0435 timeline through F0887,
+  rather than consuming an admitted C13 as a notification-only event. The
+  focused CTest drives C13 step 2 -> step 1 -> step 0 through M11 movement
+  ticks and verifies the authenticated bones unlink plus F0283 health,
+  direction, and inventory mutation. Source: ReDMCSB `GAMELOOP.C`,
+   `TIMELINE.C F0255`, and `REVIVE.C F0283`. This is deterministic host
+   runtime coverage, not original-PC34 frame or executable parity.
 
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap
