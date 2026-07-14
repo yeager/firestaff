@@ -912,6 +912,67 @@ static int validate_original_pc34_timeline_membership(
     return SAVEGAME_PC34_OK;
 }
 
+static int original_pc34_timeline_event_is_before(
+    const struct DM1_Event_V1 *left,
+    int left_index,
+    const struct DM1_Event_V1 *right,
+    int right_index)
+{
+    uint32_t left_time;
+    uint32_t right_time;
+    uint16_t left_type_priority;
+    uint16_t right_type_priority;
+
+    if (!left || !right) {
+        return 0;
+    }
+    left_time = left->map_time & 0x00ffffffu;
+    right_time = right->map_time & 0x00ffffffu;
+    if (left_time != right_time) {
+        return left_time < right_time;
+    }
+    left_type_priority = (uint16_t)(((uint16_t)left->type << 8) |
+                                    left->priority);
+    right_type_priority = (uint16_t)(((uint16_t)right->type << 8) |
+                                     right->priority);
+    if (left_type_priority != right_type_priority) {
+        return left_type_priority > right_type_priority;
+    }
+    return left_index <= right_index;
+}
+
+static int validate_original_pc34_timeline_heap(
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    int child_slot;
+
+    if (!out_report) {
+        return SAVEGAME_PC34_ERROR_BAD_SIZE;
+    }
+    for (child_slot = 1;
+         child_slot < out_report->original_event_count;
+         ++child_slot) {
+        int parent_slot = (child_slot - 1) / 2;
+        int parent_index = out_report->timeline_indices[parent_slot];
+        int child_index = out_report->timeline_indices[child_slot];
+
+        /* ReDMCSB TIMELINE.C F0234 compares low-24-bit time first, then
+         * Type/Priority descending, and finally EVENT array address. F0236
+         * preserves that relation in C4; F0240 consumes C4[0] directly. */
+        if (!original_pc34_timeline_event_is_before(
+                &out_report->events[parent_index], parent_index,
+                &out_report->events[child_index], child_index)) {
+            out_report->timeline_heap_invalid_parent_slot = parent_slot;
+            out_report->timeline_heap_invalid_child_slot = child_slot;
+            out_report->timeline_heap_invalid_parent_event_index =
+                parent_index;
+            out_report->timeline_heap_invalid_child_event_index = child_index;
+            return SAVEGAME_PC34_ERROR_BAD_SIZE;
+        }
+    }
+    return SAVEGAME_PC34_OK;
+}
+
 static int timeline_kind_from_original_pc34_event_type(int type)
 {
     switch (type) {
@@ -2967,6 +3028,10 @@ int dm1_v1_original_save_pc34_handoff_bytes(
     staged_report.timeline_invalid_event_is_none = 0;
     staged_report.timeline_orphan_active_event_index = -1;
     staged_report.timeline_orphan_active_event_type = -1;
+    staged_report.timeline_heap_invalid_parent_slot = -1;
+    staged_report.timeline_heap_invalid_child_slot = -1;
+    staged_report.timeline_heap_invalid_parent_event_index = -1;
+    staged_report.timeline_heap_invalid_child_event_index = -1;
     staged_report.first_unused_event_index_event_type = -1;
     if (out_report) {
         memset(out_report, 0, sizeof(*out_report));
@@ -2979,6 +3044,10 @@ int dm1_v1_original_save_pc34_handoff_bytes(
         out_report->timeline_invalid_event_is_none = 0;
         out_report->timeline_orphan_active_event_index = -1;
         out_report->timeline_orphan_active_event_type = -1;
+        out_report->timeline_heap_invalid_parent_slot = -1;
+        out_report->timeline_heap_invalid_child_slot = -1;
+        out_report->timeline_heap_invalid_parent_event_index = -1;
+        out_report->timeline_heap_invalid_child_event_index = -1;
         out_report->first_unused_event_index_event_type = -1;
     }
     if (!bytes || !out_state) {
@@ -3027,6 +3096,9 @@ int dm1_v1_original_save_pc34_handoff_bytes(
                                           &staged_report);
     if (rc == SAVEGAME_PC34_OK) {
         rc = validate_original_pc34_timeline_membership(&staged_report);
+    }
+    if (rc == SAVEGAME_PC34_OK) {
+        rc = validate_original_pc34_timeline_heap(&staged_report);
     }
     staged_report.importer_result = rc;
     if (out_report) *out_report = staged_report;
@@ -3157,6 +3229,7 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     struct DM1_EventQueue_V1 *queue)
 {
     struct DM1_EventQueue_V1 candidate_queue;
+    DM1OriginalSavePC34HandoffReport candidate_report;
     int i;
 
     if (!report || !queue) {
@@ -3178,12 +3251,14 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     /* ReDMCSB LOADSAVE.C F0435:2780-2800 reads EVENTS and TIMELINE before
      * F0651 publishes optimized timeline management. Validate and build the
      * complete Firestaff queue first, so a malformed timeline cannot replace
-     * the runtime's previously valid queue with a partial load. */
-    for (i = 0; i < report->original_event_count; ++i) {
-        if (report->timeline_indices[i] >=
-            (uint16_t)report->decoded_event_count) {
-            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
-        }
+     * the runtime's previously valid queue with a partial load. Keep failure
+     * provenance local because this public apply API accepts a const report. */
+    candidate_report = *report;
+    if (validate_original_pc34_timeline_membership(&candidate_report) !=
+            SAVEGAME_PC34_OK ||
+        validate_original_pc34_timeline_heap(&candidate_report) !=
+            SAVEGAME_PC34_OK) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
     if (!dm1v1_event_queue_init(&candidate_queue, report->original_game_time)) {

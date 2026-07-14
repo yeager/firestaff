@@ -124,6 +124,13 @@ typedef struct {
      * provenance before runtime materialization can drop it. */
     int timeline_orphan_active_event_index;
     int timeline_orphan_active_event_type;
+    /* ReDMCSB TIMELINE.C F0234 expects C4 to remain a binary heap. Keep
+     * the first parent/child violation so a checksum-valid reordered C4
+     * payload cannot resume later events ahead of earlier ones. */
+    int timeline_heap_invalid_parent_slot;
+    int timeline_heap_invalid_child_slot;
+    int timeline_heap_invalid_parent_event_index;
+    int timeline_heap_invalid_child_event_index;
     int first_unused_event_index_points_to_active;
     int first_unused_event_index_event_type;
     uint32_t external_portrait_byte_count;
