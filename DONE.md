@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 GDAT wall material-plan handoff: the active map's visible
+  `GRAPHICSSET` wall fields are decoded once into a boot-owned plan with their
+  original local palettes and consumed directly by the M11 wall pass. A
+  missing panel, palette, or graphics-set mismatch blocks the wall frame
+  before drawing; provider fetches remain only for data-free focused tests.
+  Source: skproject `c_gui_vp.cpp` `DM2_DRAW_WALL` / `QUERY_TEMP_PICST`.
+  Verification: Ninja `test_dm2_v1_runtime_handoff_smoke` passed 161/161 and
+  canonical-media `test_dm2_v1_gdat_wall_plan_viewport_real_data` passed.
+
 - ✅ 2026-07-14 CSBWin Vi Altar `EDT_ChampionBones` runtime handoff: restored
   C13 state-1 timers now authenticate and consume the exact one-word saved
   DB11/EXPOOL record, use its low-16 fingerprint to select the matching dead

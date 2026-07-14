@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 DM2 GDAT wall-plan follow-up: visible `GRAPHICSSET` wall panels
+  now reach M11 through a boot-owned decoded material plan. Remaining dungeon
+  work is source-owned plans for door overlays and other record-specific
+  material families; do not replace missing GDAT entries with generic walls.
+
 ## ReDMCSB CSB Reference-Boundary Audit
 
 - REDMCSB-CSB-GAP-001 — **CSBWin DSA is outside ReDMCSB's source domain.**

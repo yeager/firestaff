@@ -14,6 +14,7 @@ typedef struct DM2_V1_StartupLaunchReceipt DM2_V1_StartupLaunchReceipt;
 typedef struct DM2_V1_StartupDrawCommand DM2_V1_StartupDrawCommand;
 typedef struct DM2_V1_StartupViewReceipt DM2_V1_StartupViewReceipt;
 typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
+typedef struct DM2_V1_GdatWallM11CommandPlan DM2_V1_GdatWallM11CommandPlan;
 typedef struct DM2_V1_HudPartyState DM2_V1_HudPartyState;
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
@@ -1693,6 +1694,9 @@ int dm2_v1_boot_gdat_scene_m11_command_plan(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
+int dm2_v1_boot_gdat_wall_m11_command_plan(
+    DM2_V1_BootProfile *profile, int graphicsset_index,
+    DM2_V1_GdatWallM11CommandPlan *out_plan);
 
 int dm2_v1_boot_gdat_hud_m11_command_plan(
     DM2_V1_BootProfile *profile,
