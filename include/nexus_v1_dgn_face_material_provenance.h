@@ -20,8 +20,9 @@ typedef enum {
 } Nexus_V1_DgnFaceMaterialSource;
 
 typedef enum {
-    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC = 0,
-    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED = 1
+    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR = 0,
+    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC = 1,
+    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED = 2
 } Nexus_V1_DgnFaceMaterialSelectorKind;
 
 typedef struct {
@@ -62,6 +63,7 @@ typedef struct {
     int reopened_bytes_match_canonical;
     int canonical_dgn_size;
     int face_count;
+    int color_selector_count;
     int static_selector_count;
     int animated_selector_count;
     int selector_bindings_complete;

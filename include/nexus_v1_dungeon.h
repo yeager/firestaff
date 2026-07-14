@@ -2,6 +2,7 @@
 #ifndef NEXUS_V1_DUNGEON_H
 #define NEXUS_V1_DUNGEON_H
 #include <stdint.h>
+#include "nexus_v1_dgn_face_material_provenance.h"
 
 /* DM Nexus dungeon level format (.DGN files).
  * Source-lock: DMWeb "Dungeon Master Nexus DGN files", fetched 2026-05-28.
@@ -1886,6 +1887,13 @@ int nexus_v1_level_structure3_face_receipt(
 int nexus_v1_level_structure3_face_material_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt);
+/* Copies only parser-validated Structure3b fill selectors from the exact
+ * active LEV buffer. This is an identity/provenance bridge, not a texture or
+ * palette decoder. */
+int nexus_v1_level_collect_structure3_face_material_bindings(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    Nexus_V1_DgnFaceMaterialBinding *out_bindings, int max_bindings,
+    int *out_binding_count);
 int nexus_v1_level_structure3_edge_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3EdgeReceipt *out_receipt);

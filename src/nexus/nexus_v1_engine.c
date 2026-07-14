@@ -975,6 +975,47 @@ void nexus_v1_invalidate_dgn_material_plan(Nexus_V1_Engine *engine) {
     plan->receipt.plan_ready = 0;
 }
 
+int nexus_v1_current_level_dgn_face_material_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnFaceMaterialReceipt *out_receipt)
+{
+    Nexus_V1_DgnFaceMaterialBinding bindings[NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES];
+    Nexus_V1_DgnFaceMaterialInput input;
+    int binding_count = 0;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_INPUT;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_bytes ||
+        engine->current_level_dgn_size <= 0 ||
+        !engine->current_level_dgn_bytes_canonical ||
+        !engine->current_level_dgn_canonical_md5[0] ||
+        !nexus_v1_dgn_bytes_match_canonical_md5(
+            engine->current_level_dgn_bytes, engine->current_level_dgn_size,
+            engine->current_level_dgn_canonical_md5)) {
+        out_receipt->status = NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE;
+        return 0;
+    }
+    if (nexus_v1_level_collect_structure3_face_material_bindings(
+            &engine->current_level, engine->current_level_dgn_bytes,
+            engine->current_level_dgn_size, bindings,
+            NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES, &binding_count) != 0) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
+    input.dgn_bytes = engine->current_level_dgn_bytes;
+    input.dgn_size = engine->current_level_dgn_size;
+    /* The MD5 above authenticated this exact retained launch buffer. */
+    input.canonical_dgn_bytes = engine->current_level_dgn_bytes;
+    input.canonical_dgn_size = engine->current_level_dgn_size;
+    input.canonical_source_verified = 1;
+    input.bindings = bindings;
+    input.face_count = binding_count;
+    input.material_selector_count = 256;
+    return nexus_v1_dgn_face_material_validate(&input, out_receipt) ? 0 : -1;
+}
+
 void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
                                     int level, int party_x, int party_y,
                                     int party_dir) {
@@ -1014,6 +1055,9 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
 
     memset(plan->commands, 0, sizeof(plan->commands));
     memset(&plan->receipt, 0, sizeof(plan->receipt));
+    memset(&plan->structure3_face_material_source, 0,
+           sizeof(plan->structure3_face_material_source));
+    plan->structure3_face_material_source_consumed = 0;
     memset(plan->structure2_floor_command_sources, 0,
            sizeof(plan->structure2_floor_command_sources));
     memset(&plan->structure2_floor_command_source_receipt, 0,
@@ -1122,6 +1166,17 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             &plan->receipt) != 0) {
         return NULL;
     }
+    /* Rebuild the documented face-selector table from the exact LEV buffer
+     * authenticated by the launcher. A parser receipt or a file name alone
+     * cannot enter this source boundary, and this receipt grants no draw. */
+    if (nexus_v1_current_level_dgn_face_material_source_receipt(
+            engine, &plan->structure3_face_material_source) != 0 ||
+        !plan->structure3_face_material_source.can_submit_raster_input) {
+        plan->receipt.blocks_real_dgn_mesh_render = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
+        return NULL;
+    }
+    plan->structure3_face_material_source_consumed = 1;
     /* Consume the real DGN command plan once, before its no-draw Structure2
      * gate returns control to the host. The resulting records are raw
      * package provenance only: neither this engine cache nor the viewport
@@ -1949,8 +2004,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
     nexus_v1_load_item_ibs_runtime_source(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
+    free(engine->current_level_dgn_bytes);
+    engine->current_level_dgn_bytes = data;
+    engine->current_level_dgn_size = size;
     engine->current_level_dgn_bytes_canonical = loaded_bytes_canonical;
-    free(data);
+    strncpy(engine->current_level_dgn_canonical_md5, canonical_md5,
+            sizeof(engine->current_level_dgn_canonical_md5) - 1U);
     (void)nexus_v1_structure2_source_receipt(
         engine, level, &engine->current_level, loaded_bytes_canonical,
         &engine->current_level_structure2_source);
@@ -2173,6 +2232,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
 void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     int i;
     if (!engine) return;
+    free(engine->current_level_dgn_bytes);
+    engine->current_level_dgn_bytes = NULL;
     /* Free mechanics state */
     free(engine->mechanics);
     engine->mechanics = NULL;

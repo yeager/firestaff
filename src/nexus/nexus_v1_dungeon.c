@@ -3388,6 +3388,83 @@ int nexus_v1_level_structure3_face_material_receipt(
     return 0;
 }
 
+int nexus_v1_level_collect_structure3_face_material_bindings(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    Nexus_V1_DgnFaceMaterialBinding *out_bindings, int max_bindings,
+    int *out_binding_count)
+{
+    const Nexus_V1_DgnStructure3PayloadReceipt *payload;
+    int entry;
+    int output = 0;
+
+    if (out_binding_count) *out_binding_count = 0;
+    if (!level || !data || size <= 0 || !out_bindings || max_bindings <= 0 ||
+        !out_binding_count || !level->structure3_payload.valid ||
+        !level->structure3_directory.valid ||
+        !level->structure3_entry_headers.valid ||
+        !level->structure3_faces.valid ||
+        !level->structure3_face_materials.valid ||
+        !level->structure3_face_materials.selector_bindings_complete) {
+        return -1;
+    }
+    payload = &level->structure3_payload;
+    if (payload->byte_offset < 0 || payload->byte_size <= 0 ||
+        payload->byte_offset > size || payload->byte_size > size - payload->byte_offset ||
+        level->structure3_directory.entry_count <= 0 ||
+        level->structure3_directory.directory_byte_count < 4 ||
+        level->structure3_directory.directory_byte_count > payload->byte_size) {
+        return -1;
+    }
+
+    for (entry = 0; entry < level->structure3_directory.entry_count; ++entry) {
+        uint32_t entry_offset = rb32(data + payload->byte_offset + 4 + entry * 4);
+        uint32_t entry_end = entry + 1 < level->structure3_directory.entry_count
+            ? rb32(data + payload->byte_offset + 4 + (entry + 1) * 4)
+            : (uint32_t)payload->byte_size;
+        const uint8_t *header;
+        uint16_t face_count;
+        uint32_t face_offset;
+        int face_index;
+
+        if (entry_offset >= (uint32_t)payload->byte_size || entry_end < entry_offset ||
+            entry_end - entry_offset < NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES) {
+            return -1;
+        }
+        header = data + payload->byte_offset + entry_offset;
+        face_count = rb16(header + 6);
+        face_offset = rb32(header + 16);
+        if (face_offset < entry_offset || face_offset > entry_end ||
+            (uint64_t)face_offset + (uint64_t)face_count * 12U > entry_end ||
+            output > max_bindings - (int)face_count) {
+            return -1;
+        }
+        for (face_index = 0; face_index < (int)face_count; ++face_index) {
+            const uint8_t *face = data + payload->byte_offset + face_offset +
+                face_index * 12;
+            uint16_t fill = rb16(face + 10);
+            Nexus_V1_DgnFaceMaterialBinding *binding = &out_bindings[output];
+
+            binding->face_ordinal = (uint16_t)output;
+            binding->material_selector = 0;
+            if ((face[8] & 0x40U) == 0U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR;
+            } else if ((fill & 0xff00U) == 0U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC;
+                binding->material_selector = (uint16_t)(fill & 0xffU);
+            } else if ((fill & 0xff00U) == 0x0800U) {
+                binding->selector_kind = NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED;
+                binding->material_selector = (uint16_t)(fill & 0xffU);
+            } else {
+                return -1;
+            }
+            ++output;
+        }
+    }
+    if (output != level->structure3_faces.face_count || output <= 0) return -1;
+    *out_binding_count = output;
+    return 0;
+}
+
 int nexus_v1_level_structure3_edge_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3EdgeReceipt *out_receipt)
