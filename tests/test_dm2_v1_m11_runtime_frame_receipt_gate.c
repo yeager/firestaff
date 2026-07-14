@@ -26,6 +26,9 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_receipt_consumed = 1;
     receipt.runtime_m11_frame_map_load_token = 42u;
     receipt.runtime_m11_frame_scene_control_hash = 0x53434e45u;
+    receipt.runtime_m11_frame_floor_material_hash = 0x464c4f52u;
+    receipt.runtime_m11_frame_ceiling_material_hash = 0x4345494cu;
+    receipt.runtime_m11_frame_wall_material_plan_hash = 0x57414c4cu;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -46,6 +49,9 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.source_materials_required = 1;
     receipt.map_load_token = 42u;
     receipt.scene_control_hash = 0x53434e45u;
+    receipt.floor_material_hash = 0x464c4f52u;
+    receipt.ceiling_material_hash = 0x4345494cu;
+    receipt.wall_material_plan_hash = 0x57414c4cu;
     receipt.palette_hash = 0x50414c31u;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
@@ -71,6 +77,16 @@ int main(void)
     runtime.map_load_token++;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a stale DM2 map token");
+    runtime = make_runtime_receipt();
+
+    runtime.floor_material_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale GDAT floor material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.wall_material_plan_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale GDAT wall material receipt");
     runtime = make_runtime_receipt();
 
     runtime.interface_action_palette_hash++;

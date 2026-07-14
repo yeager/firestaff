@@ -3182,6 +3182,18 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (rt->outdoor ? UINT32_C(0x80000000) : 0u);
     g_dm2_last_m11_frame.scene_control_hash =
         g_dm2_frame_ownership.gdat_scene_control_hash;
+    /* UPDATE_GFXSET owns these exact GRAPHICSSET IMG3 records; retain their
+     * individual identities so M11 cannot combine a current control receipt
+     * with floor, ceiling, or WALL_GFX pixels from another plan. */
+    g_dm2_last_m11_frame.floor_material_hash =
+        rt->gdat_scene_material_plan.valid
+            ? rt->gdat_scene_material_plan.commands[0].raw_hash : 0u;
+    g_dm2_last_m11_frame.ceiling_material_hash =
+        rt->gdat_scene_material_plan.valid
+            ? rt->gdat_scene_material_plan.commands[1].raw_hash : 0u;
+    g_dm2_last_m11_frame.wall_material_plan_hash =
+        rt->gdat_wall_material_plan.valid
+            ? rt->gdat_wall_material_plan.command_hash : 0u;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3202,6 +3214,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.floor_ceiling_materials_complete &&
         g_dm2_last_m11_frame.map_load_token != 0u &&
         g_dm2_last_m11_frame.scene_control_hash != 0u &&
+        g_dm2_last_m11_frame.floor_material_hash != 0u &&
+        g_dm2_last_m11_frame.ceiling_material_hash != 0u &&
+        (rt->outdoor || g_dm2_last_m11_frame.wall_material_plan_hash != 0u) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
