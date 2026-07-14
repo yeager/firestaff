@@ -716,6 +716,14 @@ ReDMCSB WIP 2021-02-06 source tree.
     retail LEV00--LEV15 corpus extracts every 1,144 entries while preserving
     the 18,478 face/normal totals. Next remains original Saturn evidence for
     payload/palette decoding and VDP1 ordering, not fallback visuals.
+  - 2026-07-14 update: hash-verified retail Structure1A/Structure1F records
+    now bind their documented Structure3 model and face selectors to one
+    bounded entry-local face row and its same-ordinal normal row. Any
+    out-of-range model or face selector rejects the complete attachment
+    receipt. This does not establish placement, transform, normal-plane use,
+    texture/palette behavior, culling, VDP1 state, or a draw route. The next
+    boundary remains original Saturn execution/capture evidence for those
+    behaviors; do not promote the attachment receipt into rendering.
 
 ## M12 Localization Completion (2026-07-12)
 

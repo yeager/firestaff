@@ -20712,6 +20712,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_dgn_face_mesh_corpus
         tests/test_nexus_v1_dgn_face_mesh_corpus.c
         src/nexus/nexus_v1_dungeon.c
+        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
