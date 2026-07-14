@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0052`: source viewport text forwarding
+  now preserves the fixed 112-byte stride, C12 background and 136-pixel
+  height through a bounded F0040 callback. Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `MEMORY.C F0471`: source unused-list unlinking
   has a strict C11 compatibility callable and focused CTest.
 
