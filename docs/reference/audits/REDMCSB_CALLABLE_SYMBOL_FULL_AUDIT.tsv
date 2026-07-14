@@ -209,7 +209,7 @@ F0144_DUNGEON_GetCreatureAttributes	F	DUNGEON	ATARIST.H:75	src/dm1/dm1_v1_melee_
 F144_amzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:75	src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c:2124	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0145_DUNGEON_GetGroupCells	F	DUNGEON	ATARIST.H:76	include/csb_v1_dungeon_world_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 group-cells accessor; focused CTest.
 F145_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:76	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0146_DUNGEON_SetGroupCells	F	DUNGEON	ATARIST.H:77	src/nexus/nexus_v1_game.c:9	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
+F0146_DUNGEON_SetGroupCells	F	DUNGEON	ATARIST.H:77	include/csb_v1_f0146_dungeon_set_group_cells_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 group-cells mutation; focused CTest.
 F146_aczz_	F	Atari ST / PRIM ABI alias	ATARIST.H:77	src/nexus/nexus_v1_game.c:9	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0147_DUNGEON_GetGroupDirections	F	DUNGEON	ATARIST.H:78	include/csb_v1_dungeon_world_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 directions accessor; focused CTest.
 F147_aawz_	F	Atari ST / PRIM ABI alias	ATARIST.H:78	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
