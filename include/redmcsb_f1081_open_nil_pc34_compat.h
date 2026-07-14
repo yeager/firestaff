@@ -1,0 +1,7 @@
+#ifndef FIRESTAFF_REDMCSB_F1081_OPEN_NIL_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1081_OPEN_NIL_PC34_COMPAT_H
+
+void redmcsb_f1081_open_nil_pc34_compat(void);
+const char *redmcsb_f1081_open_nil_source_evidence_pc34(void);
+
+#endif

@@ -1087,10 +1087,10 @@ F1077_OpenConsoleDevice	F	OpenConsoleDevice	AMIGINIT.C:154	-	MISSING	No exact nu
 F1078_CloseConsoleDevice	F	CloseConsoleDevice	AMIGINIT.C:182	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1079_OpenInputDevice	F	OpenInputDevice	AMIGINIT.C:201	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1080_CloseInputDevice	F	CloseInputDevice	AMIGINIT.C:217	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1081_OpenNIL	F	OpenNIL	AMIGINIT.C:236	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1082_CloseNIL	F	CloseNIL	AMIGINIT.C:248	src/nexus/nexus_v1_rasterizer.c:7	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F1083_Allocate724Bytes	F	Allocate724Bytes	AMIGINIT.C:260	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1084_Free724Bytes	F	Free724Bytes	AMIGINIT.C:268	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1081_OpenNIL	F	OpenNIL	AMIGINIT.C:236	src/shared/redmcsb_f1081_open_nil_pc34_compat.c	PC34_HOST_BOUNDARY	Amiga DOS NIL: handle open is explicitly unavailable on PC34; source evidence records no portable behavior.
+F1082_CloseNIL	F	CloseNIL	AMIGINIT.C:248	src/shared/redmcsb_f1082_close_nil_pc34_compat.c	PC34_HOST_BOUNDARY	Amiga DOS NIL: handle close is explicitly unavailable on PC34; source evidence records no portable behavior.
+F1083_Allocate724Bytes	F	Allocate724Bytes	AMIGINIT.C:260	src/shared/redmcsb_f1083_allocate_724_bytes_pc34_compat.c	PC34_HOST_BOUNDARY	C03 Amiga chip-memory AMISTRUCT allocation is explicitly unavailable on PC34; no host allocation is claimed.
+F1084_Free724Bytes	F	Free724Bytes	AMIGINIT.C:268	src/shared/redmcsb_f1084_free_724_bytes_pc34_compat.c	PC34_HOST_BOUNDARY	C03 Amiga chip-memory AMISTRUCT release is explicitly unavailable on PC34; no host free is claimed.
 F1085_IntuitionVectorReplacement	F	IntuitionVectorReplacement	AMIGINIT.C:277	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1086_ReplaceIntuitionVectors	F	ReplaceIntuitionVectors	AMIGINIT.C:283	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1087_RestoreIntuitionVectors	F	RestoreIntuitionVectors	AMIGINIT.C:293	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
