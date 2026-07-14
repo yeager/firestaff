@@ -14742,6 +14742,12 @@ misordered, mismatched, or non-local span. It does not establish a game
 transition or assign dungeon, object-tail, bitmap, palette, or payload
 semantics. Verification: focused raw-loader CTest and capture-order script.
 
+# ✅ 2026-07-14 CSBWin saved TT_75 full-word poison continuation
+
+Restored `TT_75` now keeps its full `timerWord6` through the source-timed
+poison requeue instead of truncating it to one byte. Verification:
+`csb_v1_dsa_restored_timer_tick_bridge`.
+
 # ✅ 2026-07-14 Theron Track 02 startup-grid positive route
 
 The existing CD/MODE1 envelope and loader-semantic receipt now materialize one

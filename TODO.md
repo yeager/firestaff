@@ -649,10 +649,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   their complete CSBWin timer ownership is preserved.
 
 - 2026-07-13 CSBWin restored `TT_75` follow-up: exact saved 8-bit poison
-  attacks now enter the existing source C75 damage and `+36` requeue chain.
-  Wider `timerWord6` attacks remain blocked until the live continuation owns
-  the complete 16-bit attack word; do not truncate them. Source panel redraws
-  and candidate-champion UI effects remain blocked without a restored HUD owner.
+attacks now enter the existing source C75 damage and `+36` requeue chain.
+2026-07-14 update: the live event-slot receipt now retains the complete
+16-bit `timerWord6` through every `+36` continuation, clearing only when its
+exact event is consumed. Source panel redraws and candidate-champion UI
+effects remain blocked without a restored HUD owner.
 
 - 2026-07-13 CSBWin restored `TT_78`/`TT_79` follow-up: Fire Shield and
   Magic Footprints now consume exact saved timer queue/event identities and

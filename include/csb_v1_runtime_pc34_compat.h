@@ -427,6 +427,13 @@ typedef struct {
     uint32_t                csbwin_last_saved_timer_dsa_state_index;
     uint32_t                csbwin_last_saved_timer_dsa_column;
     int                     csbwin_last_saved_timer_dsa_action_ordinal;
+     /* CSBWin TT_75 carries its remaining poison attack in TIMER::timerWord6.
+     * The shared V1 EVENT record has only an eight-bit effect field, so a
+     * requeued poison event retains its full source word here, keyed by the
+     * live heap slot that owns it.  This is runtime-only and is cleared as
+     * soon as that exact event is consumed. */
+     uint16_t                csbwin_poison_event_attack[DM1_EVENT_MAX_COUNT];
+     uint8_t                 csbwin_poison_event_attack_valid[DM1_EVENT_MAX_COUNT];
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
