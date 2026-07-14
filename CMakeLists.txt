@@ -417,6 +417,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0243_timeline_door_des
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_hud_material_admission_dm2_010.c")
+    add_executable(test_dm2_v1_gdat_hud_material_admission_dm2_010
+        tests/test_dm2_v1_gdat_hud_material_admission_dm2_010.c
+        src/dm2/dm2_v1_gdat_hud_material_admission_dm2_010.c
+    )
+    target_include_directories(test_dm2_v1_gdat_hud_material_admission_dm2_010 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_hud_material_admission_dm2_010 PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_gdat_hud_material_admission_dm2_010
+        COMMAND test_dm2_v1_gdat_hud_material_admission_dm2_010
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c
