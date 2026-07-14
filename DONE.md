@@ -13788,6 +13788,18 @@ fixture: unavailable or non-PC34 media skips, and any non-package route fails.
 It records the existing ReDMCSB TITLE.C/ENTRANCE.C and CSBWin indexed-graphics
 contract boundary without promoting a custom CSBgraphics.dat override.
 
+# ✅ 2026-07-14 CSB real-package credits consumption
+
+The opt-in PC34 package-presentation probe now drives the production startup
+session through ReDMCSB `ENTRANCE.C F0442/F0806`'s credits state and presents
+decoded `C005` before the normal C004/C002/C003 door sequence and C017/C040
+HUD handoff. It accepts one source surface only for credits and still skips
+when the hash-verified local package is unavailable; no generated credits
+screen, text fallback, or wrapper can satisfy the probe. Source boundary:
+ReDMCSB `ENTRANCE.C F0442/F0806`; independent archive-read boundary: CSBWin
+`Graphics.cpp::ReadGraphic`. Verification: focused Ninja build and
+`csb_v1_pc_package_presentation` (skip-safe without local PC34 media).
+
 # ✅ 2026-07-14 CSB package CHAOS hold consumption gate
 
 The terminal PC34 package receipt now requires the complete four-phase

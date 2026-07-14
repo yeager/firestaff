@@ -803,6 +803,19 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             }
             receipt.host_surface =
                 CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34;
+        } else if (plan->surface ==
+                   CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
+            /* ReDMCSB ENTRANCE.C F0442 presents C005 as one full-screen
+             * package surface while credits are active. */
+            if (!receipt.raster.entrance_composited ||
+                receipt.raster.door_composited ||
+                receipt.raster.source_surface_count != 1) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &receipt);
+                return 0;
+            }
+            receipt.host_surface =
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34;
         } else {
             csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
                 &receipt);
@@ -820,7 +833,7 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     receipt.host_surface_hash = hash;
     receipt.source_evidence =
         "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "
-        "721-826,850-889; DUNVIEW.C F0111 lines 4248-4313";
+        "721-826,850-889 and F0442; DUNVIEW.C F0111 lines 4248-4313";
     receipt.valid = receipt.real_asset_matched && receipt.no_legacy_wrappers &&
         receipt.no_synthetic_surface && receipt.host_surface !=
             CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 &&

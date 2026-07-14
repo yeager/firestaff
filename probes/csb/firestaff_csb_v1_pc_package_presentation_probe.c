@@ -186,13 +186,26 @@ int main(int argc, char **argv)
 
     csb_v1_startup_host_facts_init_pc34(&facts);
     facts.entrance_active = 1;
+    facts.credits_active = 1;
+    facts.credits_remaining_ticks = csb_v1_startup_entrance_credits_ticks_pc34();
+    CHECK(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &entrance) == 1 && entrance.valid &&
+              entrance.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
+              entrance.render_plan.source_asset_id == 5,
+          "ENTRANCE.C selects C005 for its credits phase");
+    host_surface(&session, &entrance.render_plan, 101u, 1,
+                 "credits presents decoded C005 package pixels only");
+
+    facts.credits_active = 0;
+    facts.credits_remaining_ticks = 0;
     facts.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
     CHECK(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
               &facts, &entrance) == 1 && entrance.valid &&
               entrance.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "ENTRANCE.C selects the closed C004/C002/C003 composition");
-    host_surface(&session, &entrance.render_plan, 101u, 3,
+    host_surface(&session, &entrance.render_plan, 102u, 3,
                  "closed entrance presents C004/C002/C003 package pixels");
 
     facts.opening_active = 1;
@@ -203,7 +216,7 @@ int main(int argc, char **argv)
               entrance.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
           "ENTRANCE.C selects the opening-door composition");
-    host_surface(&session, &entrance.render_plan, 102u, 3,
+    host_surface(&session, &entrance.render_plan, 103u, 3,
                  "opening door presents C004/C002/C003 package pixels");
 
     CHECK(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) == 1 &&
@@ -212,7 +225,7 @@ int main(int argc, char **argv)
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
-    host_surface(&session, &plan, 103u, 2,
+    host_surface(&session, &plan, 104u, 2,
                  "C017/C040 HUD presents package pixels without a wrapper");
 
     memset(&runtime, 0, sizeof(runtime));
