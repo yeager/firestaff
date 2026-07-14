@@ -250,6 +250,136 @@ int nexus_v1_dgn_structure3_capture_target_write(
     return rename(temporary_path, path) == 0;
 }
 
+int nexus_v1_dgn_structure1a_structure3_capture_target_build(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int level_index, int dgn_source_hash_verified,
+    const Nexus_V1_DgnStructure1AStructure3TopologyCandidate *source,
+    uint32_t entry_index, uint32_t face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt receipt;
+    const Nexus_V1_DgnStructure1FEntry *entry;
+    const Nexus_V1_DgnStructure1AModel *model;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    if (!level || !dgn_data || dgn_size <= 0 || !source || level_index < 0 ||
+        !dgn_source_hash_verified || source->entry_index < 0 ||
+        source->entry_index >= level->structure1f_entry_count ||
+        !source->structure1f_binding_proven ||
+        !source->structure1a_row_binding_proven ||
+        !source->structure1a_model_rotation_binding_proven ||
+        source->model_ordinal_proven || source->draw_authorized ||
+        !level->structure1a_table_valid ||
+        source->structure1f_structure1a_index >=
+            (uint16_t)level->structure1a_model_count ||
+        source->structure3_raw_payload_hash !=
+            level->structure3_payload.raw_payload_hash ||
+        source->structure3_byte_size != level->structure3_payload.byte_size) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry = &level->structure1f_entries[source->entry_index];
+    model = &level->structure1a_models[source->structure1f_structure1a_index];
+    if (entry->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+        !entry->structure1a_relation_valid ||
+        entry->family != source->structure1f_family ||
+        entry->tag != source->structure1f_tag ||
+        entry->face != source->structure1f_face_selector ||
+        entry->structure1a_index != source->structure1f_structure1a_index ||
+        entry->structure1a_owner_x != source->owner_x ||
+        entry->structure1a_owner_y != source->owner_y ||
+        entry->structure1a_structure3_model_index != source->structure3_model_index ||
+        entry->structure1a_z_rotation != source->z_rotation ||
+        model->kind != source->structure1a_kind ||
+        model->structure3_model_index != source->structure3_model_index ||
+        model->z_rotation != source->z_rotation ||
+        !nexus_v1_dgn_structure3_capture_target_build(
+            level, dgn_data, dgn_size, level_index, dgn_source_hash_verified,
+            entry_index, face_ordinal, &receipt.face_target)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = level_index;
+    receipt.owner_x = source->owner_x;
+    receipt.owner_y = source->owner_y;
+    receipt.structure1f_entry_index = source->entry_index;
+    receipt.structure1f_family = source->structure1f_family;
+    receipt.structure1f_tag = source->structure1f_tag;
+    receipt.structure1f_face_selector = source->structure1f_face_selector;
+    receipt.structure1a_index = source->structure1f_structure1a_index;
+    receipt.structure1a_kind = source->structure1a_kind;
+    receipt.structure3_model_index = source->structure3_model_index;
+    receipt.z_rotation = source->z_rotation;
+    receipt.structure3_payload_fnv1a32 = source->structure3_raw_payload_hash;
+    receipt.structure3_entry_mapping_proven = 0;
+    receipt.capture_producer_required = 1;
+    receipt.original_saturn_capture_required = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_dgn_structure1a_structure3_capture_target_write(
+    const char *path,
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *target)
+{
+    char temporary_path[1024];
+    FILE *file;
+    const Nexus_V1_DgnStructure3CaptureTargetReceipt *face_target;
+
+    if (!path || !target || !target->valid || target->level_index < 0 ||
+        !target->capture_producer_required ||
+        !target->original_saturn_capture_required || !target->no_draw_only ||
+        target->fallback_visuals_permitted || target->structure3_entry_mapping_proven ||
+        !target->face_target.valid ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp.%ld", path,
+                 (long)getpid()) >= (int)sizeof(temporary_path)) return 0;
+    face_target = &target->face_target;
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    if (fprintf(file,
+                NEXUS_V1_STRUCTURE1A_STRUCTURE3_CAPTURE_TARGET_MAGIC "\n"
+                "level_index=%x\nowner_x=%x\nowner_y=%x\n"
+                "structure1f_entry_index=%x\nstructure1f_family=%x\n"
+                "structure1f_tag=%x\nstructure1f_face_selector=%x\n"
+                "structure1a_index=%x\nstructure1a_kind=%x\n"
+                "structure3_model_index=%x\nz_rotation=%x\n"
+                "structure3_payload_fnv1a32=%x\n"
+                "structure3_entry_mapping_proven=0\n"
+                "structure3_entry_index=%x\nface_ordinal=%x\n"
+                "face_row_fnv1a32=%x\nnormal_row_fnv1a32=%x\n"
+                "entry_byte_offset=%x\nvertex_byte_offset=%x\n"
+                "face_byte_offset=%x\nnormal_byte_offset=%x\n"
+                "vertex_count=%x\nface_count=%x\n"
+                "capture_manifest_magic=" NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC "\n"
+                "original_saturn_capture_required=1\nno_draw_only=1\n",
+                target->level_index, target->owner_x, target->owner_y,
+                target->structure1f_entry_index, target->structure1f_family,
+                target->structure1f_tag, target->structure1f_face_selector,
+                target->structure1a_index, target->structure1a_kind,
+                target->structure3_model_index, target->z_rotation,
+                target->structure3_payload_fnv1a32,
+                face_target->candidate.entry_index,
+                face_target->candidate.face_ordinal,
+                face_target->candidate.face_row_fnv1a32,
+                face_target->candidate.normal_row_fnv1a32,
+                face_target->entry_byte_offset, face_target->vertex_byte_offset,
+                face_target->face_byte_offset, face_target->normal_byte_offset,
+                face_target->vertex_count, face_target->face_count) < 0) {
+        fclose(file);
+        remove(temporary_path);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    return rename(temporary_path, path) == 0;
+}
+
 int nexus_v1_dgn_structure3_capture_target_matches_manifest(
     const Nexus_V1_DgnStructure3CaptureTargetReceipt *target,
     const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest)

@@ -25,6 +25,14 @@
   palette, VDP1, transform, culling, and raster rules remain required before
   any renderer draw is allowed.
 
+- 2026-07-15 Nexus Structure1F/Structure1A capture follow-up: the new
+  dual-source producer target joins one visible Structure1F owner row and its
+  exact Structure1A bytes with a separately selected bounded Structure3 face.
+  The target explicitly records that the Structure1A model index has not been
+  proven to select that mesh entry. A real original-Saturn trace must establish
+  or reject this relation, then separately prove texture, palette, VDP1,
+  transform, culling, and draw semantics before any renderer promotion.
+
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
   manifest, binary-bound attestation, and six lane files. Firestaff verifies

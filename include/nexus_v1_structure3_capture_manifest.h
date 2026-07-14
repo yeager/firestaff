@@ -16,6 +16,8 @@
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_TARGET_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_PRODUCER_ATTESTATION_V1"
+#define NEXUS_V1_STRUCTURE1A_STRUCTURE3_CAPTURE_TARGET_MAGIC \
+    "NEXUS_STRUCTURE1A_STRUCTURE3_SATURN_CAPTURE_TARGET_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES (16U * 1024U * 1024U)
 #define NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT 6U
 
@@ -76,6 +78,32 @@ typedef struct {
     int no_draw_only;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure3CaptureTargetReceipt;
+
+/* One visible Structure1F/Structure1A row beside an independently selected
+ * Structure3 face capture target. It records both source sides so an
+ * external trace can later prove (or disprove) their runtime relation. It
+ * deliberately does not map model indexes to mesh entries or authorize draw. */
+typedef struct {
+    int valid;
+    int level_index;
+    int owner_x;
+    int owner_y;
+    int structure1f_entry_index;
+    Nexus_V1_DgnStructure1FFamily structure1f_family;
+    uint8_t structure1f_tag;
+    uint8_t structure1f_face_selector;
+    uint16_t structure1a_index;
+    uint8_t structure1a_kind;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    uint32_t structure3_payload_fnv1a32;
+    int structure3_entry_mapping_proven;
+    Nexus_V1_DgnStructure3CaptureTargetReceipt face_target;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt;
 
 /* The capture reader keeps raw observations separate from the text envelope.
  * `capture_bundle_fnv1a64` must be computed over these six length-prefixed
@@ -220,6 +248,22 @@ int nexus_v1_dgn_structure3_capture_target_build(
  * and cannot be imported as a completed capture manifest. */
 int nexus_v1_dgn_structure3_capture_target_write(
     const char *path, const Nexus_V1_DgnStructure3CaptureTargetReceipt *target);
+
+/* Builds a dual-source capture target from a fully checked Structure1A owner
+ * candidate and one exact Structure3 face. The two identifiers are retained
+ * side by side only; their model-entry mapping remains explicitly unproven. */
+int nexus_v1_dgn_structure1a_structure3_capture_target_build(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int level_index, int dgn_source_hash_verified,
+    const Nexus_V1_DgnStructure1AStructure3TopologyCandidate *source,
+    uint32_t entry_index, uint32_t face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *out_receipt);
+
+/* Writes the dual-source request for an external producer. It contains no
+ * capture bytes, pixel data, transform interpretation, or draw command. */
+int nexus_v1_dgn_structure1a_structure3_capture_target_write(
+    const char *path,
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *target);
 
 /* Checks that a producer's completed manifest correlates to the one exact
  * source-bound target it was asked to capture. This is intentionally a

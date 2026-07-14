@@ -147,6 +147,8 @@ int main(void) {
     Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
     Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
     Nexus_V1_DgnStructure3CaptureTargetReceipt target;
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate owner_source;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt owner_target;
     Nexus_V1_Level level;
     Nexus_V1_Level target_level;
     char imported_manifest[2048];
@@ -239,6 +241,74 @@ int main(void) {
                "capture target names every required raw lane without manufacturing bytes");
     }
     remove(target_path);
+
+    target_level.structure1f_entry_count = 1;
+    target_level.structure1a_table_valid = 1;
+    target_level.structure1a_model_count = 1;
+    target_level.structure1f_entries[0].family = NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+    target_level.structure1f_entries[0].tag = 7U;
+    target_level.structure1f_entries[0].face = 3U;
+    target_level.structure1f_entries[0].structure1a_index = 0U;
+    target_level.structure1f_entries[0].structure1a_relation_valid = 1;
+    target_level.structure1f_entries[0].structure1a_owner_x = 2;
+    target_level.structure1f_entries[0].structure1a_owner_y = 3;
+    target_level.structure1f_entries[0].structure1a_structure3_model_index = 0x23U;
+    target_level.structure1f_entries[0].structure1a_z_rotation = 1U;
+    target_level.structure1a_models[0].kind = 2U;
+    target_level.structure1a_models[0].structure3_model_index = 0x23U;
+    target_level.structure1a_models[0].z_rotation = 1U;
+    memset(&owner_source, 0, sizeof(owner_source));
+    owner_source.entry_index = 0;
+    owner_source.owner_x = 2;
+    owner_source.owner_y = 3;
+    owner_source.structure1f_family = NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+    owner_source.structure1f_tag = 7U;
+    owner_source.structure1f_face_selector = 3U;
+    owner_source.structure1f_structure1a_index = 0U;
+    owner_source.structure1f_binding_proven = 1;
+    owner_source.structure1a_kind = 2U;
+    owner_source.structure1a_row_binding_proven = 1;
+    owner_source.structure3_model_index = 0x23U;
+    owner_source.z_rotation = 1U;
+    owner_source.structure1a_model_rotation_binding_proven = 1;
+    owner_source.structure3_byte_size = 116;
+    owner_source.structure3_raw_payload_hash = target_level.structure3_payload.raw_payload_hash;
+    expect(nexus_v1_dgn_structure1a_structure3_capture_target_build(
+               &target_level, target_dgn, 116, 1, 1, &owner_source, 0U, 0U,
+               &owner_target) && owner_target.valid &&
+               owner_target.owner_x == 2 && owner_target.owner_y == 3 &&
+               owner_target.structure1f_entry_index == 0 &&
+               owner_target.structure3_model_index == 0x23U &&
+               !owner_target.structure3_entry_mapping_proven &&
+               owner_target.face_target.valid && owner_target.no_draw_only &&
+               !owner_target.fallback_visuals_permitted,
+           "a verified Structure1F owner row can be paired with one no-draw Structure3 capture target without claiming a model-entry map");
+    snprintf(target_path, sizeof(target_path),
+             "/tmp/firestaff-nexus-structure1a-target-%ld.txt", (long)getpid());
+    remove(target_path);
+    expect(nexus_v1_dgn_structure1a_structure3_capture_target_write(
+               target_path, &owner_target) && (target_file = fopen(target_path, "rb")) != NULL &&
+               fread(target_text, 1U, sizeof(target_text) - 1U, target_file) > 0U &&
+               fclose(target_file) == 0,
+           "dual-source capture target writer emits no-draw owner and face context");
+    target_file = fopen(target_path, "rb");
+    if (target_file) {
+        size_t target_size = fread(target_text, 1U, sizeof(target_text) - 1U,
+                                   target_file);
+        target_text[target_size] = '\0';
+        fclose(target_file);
+        expect(strstr(target_text,
+                      NEXUS_V1_STRUCTURE1A_STRUCTURE3_CAPTURE_TARGET_MAGIC) != NULL &&
+                   strstr(target_text, "structure3_entry_mapping_proven=0") != NULL &&
+                   strstr(target_text, "no_draw_only=1") != NULL,
+               "dual-source target records correlation context without mesh promotion");
+    }
+    remove(target_path);
+    owner_source.structure1f_face_selector ^= 1U;
+    expect(!nexus_v1_dgn_structure1a_structure3_capture_target_build(
+               &target_level, target_dgn, 116, 1, 1, &owner_source, 0U, 0U,
+               &owner_target) && !owner_target.valid && owner_target.no_draw_only,
+           "a changed Structure1F owner selector cannot reuse a capture target");
 
     expect(nexus_v1_dgn_structure3_capture_manifest_parse(
                valid_manifest, strlen(valid_manifest), &receipt) &&
