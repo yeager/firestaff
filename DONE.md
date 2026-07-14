@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0773`, `F0781` and `F0783`: source-locked
+  DOS chunked write, mouse pointer-event routing and lock-mouse driver
+  dispatch. Focused strict C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0779`: source-locked DOS current-file-mark
   query. The focused strict C11 test passes with no host file I/O.
 
