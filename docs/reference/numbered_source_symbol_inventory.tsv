@@ -1919,7 +1919,6 @@ F	1029	F1029_InitializeMessageAreaData	TEXT.C	referenced_not_verified
 F	1031	F1031_IsOperationSuccessful	CEDTINC2.C;DEFS.H;FLOPPY.C;CEDT023.C;FILE.C	implemented_narrow
 F	1032	F1032_GRF1_12_HatchBox	GRF1MAIN.C;FILLBOX.C;BLITFILL.C;GRF1.C	source_nonapplicable
 F	1033	F1033_HatchBox_Unreferenced	BLITFILL.C	implemented_narrow
-F	1034	F1034_Unreferenced	IO2.C;AMIGINIT.C	source_nonapplicable
 F	1035	F1035_Unreferenced	IO2.C	source_nonapplicable
 F	1036	F1036_Mouse1	AMIGA.H;IO.C	source_nonapplicable
 F	1037	F1037_Mouse2	IO.C	source_nonapplicable
