@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `LZW.C F0496`: source `0x90` repeat-escape
+  emission now has a bounded decoder-state callable. Verification: focused
+  strict CTest.
+
 - 2026-07-14 Nexus: DGN face/material raster admission now requires complete
   canonical retail-DGN provenance and rejects any fallback source.
   Verification: focused strict CTest.
