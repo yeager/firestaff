@@ -367,6 +367,14 @@ typedef struct {
     int source_runtime_stage_event_count;
     int source_runtime_stage_c13_event_count;
     int source_runtime_stage_timeline_count;
+    /* A tail-backed source must also cross the final candidate-to-live
+     * ownership transfer with no start-world argument. */
+    int source_runtime_adopt_attempted;
+    int source_runtime_adopt_result;
+    int source_runtime_adopted;
+    int source_runtime_adopt_owns_dungeon;
+    int source_runtime_adopt_event_count;
+    int source_runtime_adopt_timeline_count;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
@@ -526,6 +534,9 @@ typedef struct {
     int runtime_stage_succeeded_count;
     int runtime_stage_unavailable_count;
     int runtime_stage_failed_count;
+    int runtime_adopt_attempted_count;
+    int runtime_adopt_succeeded_count;
+    int runtime_adopt_failed_count;
     /* Files below the corpus root that were deliberately not eligible for
      * F0435 import, including truncated/non-PC34 payloads. */
     int rejected_count;
