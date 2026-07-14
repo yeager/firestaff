@@ -72,16 +72,15 @@ static int find_unique_exact_line(const char *text, const char *prefix,
     return match_count == 1u;
 }
 
-static int parse_later_trace(const char *path, uint32_t *out_record,
-                             uint16_t *out_caller_pc,
-                             uint16_t *out_return_pc,
-                             Theron_Track02Variant expected_variant) {
-    uint8_t *bytes;
-    size_t size;
-    const char *text;
+static int parse_later_trace_text(const char *text, uint32_t *out_record,
+                                  uint16_t *out_caller_pc,
+                                  uint16_t *out_return_pc,
+                                  Theron_Track02Variant expected_variant) {
     const char *dispatch;
     const char *returned;
     const char *dynamic;
+    size_t source_length;
+    size_t dynamic_length;
     size_t dispatch_length;
     size_t returned_length;
     unsigned int caller_pc;
@@ -109,8 +108,7 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
     int consumed = 0;
     int ok;
 
-    if (!path || !out_record || !out_caller_pc ||
-        !out_return_pc || !(bytes = read_file_bytes(path, &size))) {
+    if (!text || !out_record || !out_caller_pc || !out_return_pc) {
         return 0;
     }
     if (expected_variant == THERON_TRACK02_VARIANT_JP_BIN) {
@@ -120,16 +118,14 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
         expected_variant_name = "us_bin";
         expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
     } else {
-        free(bytes);
         return 0;
     }
-    text = (const char *)bytes;
     ok =
         find_unique_exact_line(text, "source=mednafen-pce-instrumented",
-                               &dynamic, &dispatch_length) &&
-        dispatch_length == strlen("source=mednafen-pce-instrumented") &&
+                               &dynamic, &source_length) &&
+        source_length == strlen("source=mednafen-pce-instrumented") &&
         find_unique_exact_line(text, "dynamic_cd_read_transaction ", &dynamic,
-                               &dispatch_length) &&
+                               &dynamic_length) &&
         find_unique_exact_line(text, "later_system_card_e009_dispatch ",
                                &dispatch, &dispatch_length) &&
         find_unique_exact_line(text, "later_system_card_e009_return ",
@@ -139,18 +135,17 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
                &dynamic_pc, &dynamic_return_pc, &dynamic_sector_count,
                &dynamic_destination, &dynamic_record_mask, &dynamic_cl,
                &dynamic_dl, &dynamic_ch, dynamic_variant, &dynamic_record,
-               &consumed) == 10 && consumed == (int)dispatch_length &&
+               &consumed) == 10 && consumed == (int)dynamic_length &&
         sscanf(dispatch,
                "later_system_card_e009_dispatch caller_pc=%x return_pc=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
                &caller_pc, &return_pc, &sector_count, &cl, &dl,
-               &ch, &record, &consumed) == 8 && consumed == (int)dispatch_length &&
+               &ch, &record, &consumed) == 7 && consumed == (int)dispatch_length &&
         sscanf(returned,
                "later_system_card_e009_return caller_pc=%x return_pc=%x record=%x%n",
                &return_caller_pc, &return_return_pc, &return_record,
                &consumed) == 3 && consumed == (int)returned_length &&
         return_caller_pc == caller_pc && return_return_pc == return_pc &&
         return_record == record;
-    free(bytes);
     if (!ok || dynamic_pc != 0x4090u || dynamic_return_pc != 0x4093u ||
         dynamic_sector_count != 1u || dynamic_destination != 0x3800u ||
         dynamic_record_mask != 0x07u || dynamic_cl > 0xffu ||
@@ -171,6 +166,50 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
     *out_caller_pc = (uint16_t)caller_pc;
     *out_return_pc = (uint16_t)return_pc;
     return 1;
+}
+
+static int parse_later_trace(const char *path, uint32_t *out_record,
+                             uint16_t *out_caller_pc,
+                             uint16_t *out_return_pc,
+                             Theron_Track02Variant expected_variant) {
+    uint8_t *bytes;
+    size_t size;
+    int ok;
+
+    if (!path || !(bytes = read_file_bytes(path, &size))) return 0;
+    (void)size;
+    ok = parse_later_trace_text((const char *)bytes, out_record,
+                                out_caller_pc, out_return_pc, expected_variant);
+    free(bytes);
+    return ok;
+}
+
+static void test_later_trace_envelope_parser(void) {
+    static const char valid_trace[] =
+        "source=mednafen-pce-instrumented\n"
+        "dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=1 destination=3800 record_register_mask=7 record_cl=df record_dl=4 record_ch=0 variant=jp_bin record=4df\n"
+        "later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510\n"
+        "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n";
+    char duplicate_trace[sizeof(valid_trace) * 2u];
+    char wrong_return_trace[sizeof(valid_trace)];
+    uint32_t record = 0u;
+    uint16_t caller_pc = 0u;
+    uint16_t return_pc = 0u;
+
+    check(parse_later_trace_text(valid_trace, &record, &caller_pc, &return_pc,
+                                 THERON_TRACK02_VARIANT_JP_BIN) &&
+              record == 0x510u && caller_pc == 0xea00u && return_pc == 0xea03u,
+          "later e009 trace parser accepts one complete JP envelope");
+    snprintf(duplicate_trace, sizeof(duplicate_trace), "%s%s", valid_trace,
+             "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n");
+    check(!parse_later_trace_text(duplicate_trace, &record, &caller_pc,
+                                  &return_pc, THERON_TRACK02_VARIANT_JP_BIN),
+          "later e009 trace parser rejects duplicate return rows");
+    snprintf(wrong_return_trace, sizeof(wrong_return_trace), "%s", valid_trace);
+    wrong_return_trace[sizeof(wrong_return_trace) - 3u] = '1';
+    check(!parse_later_trace_text(wrong_return_trace, &record, &caller_pc,
+                                  &return_pc, THERON_TRACK02_VARIANT_JP_BIN),
+          "later e009 trace parser rejects a changed return record");
 }
 
 static int inspect(const char *track_path, const char *trace_path,
@@ -224,6 +263,7 @@ int main(void) {
     LaterCdReadLayoutReceipt jp;
     LaterCdReadLayoutReceipt us;
 
+    test_later_trace_envelope_parser();
     if (!jp_track || !us_track || !jp_trace || !us_trace) {
         ++g_skip;
         printf("[SKIP] set authenticated JP/US Track02 and later Mednafen trace paths\n");
