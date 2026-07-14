@@ -187,8 +187,8 @@ F0131_VIDEO_FlipVertical	F	VIDEO	BASE.C:1580	src/dm1/dm1_v1_viewport_3d_pc34_com
 F0132_VIDEO_Blit	F	VIDEO	ANIM.C:283	src/nexus/nexus_v1_rasterizer.c:8	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F132_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:65	src/nexus/nexus_v1_rasterizer.c:8	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0133_VIDEO_BlitBoxFilledWithMaskedBitmap	F	VIDEO	BLITMASK.C:33	src/dm1/dm1_v1_chest_scroll_wheel_pull_from_chest_pc34_compat.c:31	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F0134_VIDEO_FillBitmap	F	VIDEO	ACTIDRAW.C:255	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F134_zzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:66	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0134_VIDEO_FillBitmap	F	VIDEO	ACTIDRAW.C:255	include/video_f0134_fill_bitmap_bounded_pc34_compat.h	IMPLEMENTED_NARROW	Source planar bitmap fill; focused CTest.
+F134_zzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:66	F0134_VIDEO_FillBitmap	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0134.
 F0135_VIDEO_FillBox	F	VIDEO	ANIMTOWN.C:672	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F135_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:67	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0136_VIDEO_HatchScreenBox	F	VIDEO	ACTIDRAW.C:285	src/dm1/dm1_v1_box_action_area_pc34_compat.c:13	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -670,7 +670,7 @@ F0456_START_DrawDisabledMenus	F	START	ATARIST.H:221	src/dm1/dm1_v1_graphic560_bo
 F456_vzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:221	src/dm1/dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat.c:10	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0457_START_DrawEnabledMenus_CPSF	F	START	ATARIST.H:222	src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c:127	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F457_AA08_	F	Atari ST / PRIM ABI alias	ATARIST.H:222	src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c:127	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F0458_START_GetCommandLineParameters_CPSA	F	START	DEFS.H:8664	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0458_START_GetCommandLineParameters_CPSA	F	START	DEFS.H:8664	include/firestaff/dm1/v1/f0458_start_get_command_line_parameters_cpsa_pc34_compat.h	IMPLEMENTED_NARROW	Source TOS command-tail copy; focused CTest.
 F0459_START_GetScaledBitmapByteCount	F	START	BMPSIZE.C:4	include/redmcsb_start_bitmap_size_pc34_compat.h	IMPLEMENTED_NARROW	Source bitmap byte-count calculation; focused CTest.
 F0460_START_InitializeGraphicData	F	START	DEFS.H:8677	src/dm1/dm1_v1_game_state_pc34_compat.c:19	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0461_START_AllocateFlippedWallBitmaps	F	START	ATARIST.H:223	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

@@ -417,6 +417,44 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0243_timeline_door_des
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_video_f0134_fill_bitmap_bounded_pc34_compat.c")
+    add_executable(test_video_f0134_fill_bitmap_bounded_pc34_compat
+        tests/test_video_f0134_fill_bitmap_bounded_pc34_compat.c
+        src/frontend/video_f0134_fill_bitmap_bounded_pc34_compat.c
+    )
+    target_include_directories(test_video_f0134_fill_bitmap_bounded_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_video_f0134_fill_bitmap_bounded_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME video_f0134_fill_bitmap_bounded_pc34_compat
+        COMMAND test_video_f0134_fill_bitmap_bounded_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat.c")
+    add_executable(test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat
+        tests/test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat.c
+        src/dm1/dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat
+        COMMAND test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0227_group_is_destination_visible_from_source_pc34_compat.c")
     add_executable(test_csb_v1_f0227_group_is_destination_visible_from_source_pc34_compat
         tests/test_csb_v1_f0227_group_is_destination_visible_from_source_pc34_compat.c
