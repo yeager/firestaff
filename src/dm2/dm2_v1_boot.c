@@ -6871,6 +6871,15 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_scene_control_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.scene_control_hash : 0u;
+        out_receipt->runtime_m11_frame_floor_material_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.floor_material_hash : 0u;
+        out_receipt->runtime_m11_frame_ceiling_material_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.ceiling_material_hash : 0u;
+        out_receipt->runtime_m11_frame_wall_material_plan_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.wall_material_plan_hash : 0u;
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;

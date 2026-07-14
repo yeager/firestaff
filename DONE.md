@@ -15,6 +15,12 @@
   spans, checksum failures, and a tail failure stop the sequence without a
   replacement layout, event runtime, DSA, allocation, or fallback. Focused
   strict-C11 regression passes.
+- 2026-07-14 DM2 skproject `UPDATE_GFXSET` to M11 material receipt: the
+  exact GDAT floor, ceiling, and `WALL_GFX` plan hashes now move from the
+  active runtime graphics set through boot to the M11 acceptance gate. M11
+  fails closed on a missing or mismatched material identity. The canonical
+  `GRAPHICS.DAT` regression proves one admitted real-data family and rejects
+  altered floor and wall receipts; it creates no replacement image or material.
 
 - 2026-07-14 CSB ReDMCSB HINTLOAD F1910/F1913/F1914/F1918: added the
   source-defined initial CPSX save sequence for exact sequential transport,

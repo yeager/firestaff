@@ -11,6 +11,15 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
     if (!boot_receipt || !boot_receipt->runtime_m11_frame_receipt_consumed ||
         boot_receipt->runtime_m11_frame_map_load_token == 0u ||
         boot_receipt->runtime_m11_frame_scene_control_hash == 0u ||
+        boot_receipt->runtime_m11_frame_floor_material_hash == 0u ||
+        boot_receipt->runtime_m11_frame_ceiling_material_hash == 0u ||
+        /* dm2_v1_runtime marks outdoor map tokens in bit 31.  UPDATE_GFXSET
+         * resolves WALL_GFX for indoor frames; an outdoor frame instead
+         * carries its real sky/ground planes and is not made invalid merely
+         * because there is no indoor wall plan. */
+        (((boot_receipt->runtime_m11_frame_map_load_token &
+           UINT32_C(0x80000000)) == 0u) &&
+         boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
         boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
         !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
@@ -31,6 +40,12 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_map_load_token &&
         runtime_receipt->scene_control_hash ==
             boot_receipt->runtime_m11_frame_scene_control_hash &&
+        runtime_receipt->floor_material_hash ==
+            boot_receipt->runtime_m11_frame_floor_material_hash &&
+        runtime_receipt->ceiling_material_hash ==
+            boot_receipt->runtime_m11_frame_ceiling_material_hash &&
+        runtime_receipt->wall_material_plan_hash ==
+            boot_receipt->runtime_m11_frame_wall_material_plan_hash &&
         runtime_receipt->palette_hash ==
             boot_receipt->runtime_m11_frame_palette_hash &&
         runtime_receipt->interface_action_palette_hash ==
