@@ -435,6 +435,12 @@
     heap semantics, tail allocation, DSA, or a runtime from fixtures. A real
     CSB corpus was not available locally; per-media positive evidence remains
     required before this boundary can admit a live save.
+  - 2026-07-14 update: F0434 now has a sequential PC34 dungeon-tail byte
+    boundary: the caller supplies its exact 22 original spans, each is read
+    in F0434/F7063 order, and F0421's 16-bit byte accumulator must match the
+    trailing source checksum. It does not infer headers, map/ThingData sizes,
+    allocations, or runtime publication. A real CSB tail is still required to
+    bind this transaction to an actual media layout.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
