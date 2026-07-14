@@ -32,8 +32,20 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     return bytes;
 }
 
+static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
-                            const char *md5)
+                            const char *md5, const uint8_t *raw)
 {
     memset(out, 0, sizeof(*out));
     out->valid = 1;
@@ -50,7 +62,9 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->sector_count = 1u;
     out->later_local_destination = 0x3800u;
     out->later_destination_span_bytes = 32u;
-    out->later_destination_span_checksum = 1u;
+    out->later_destination_span_checksum = fnv1a_bytes(
+        raw + 0x0b52u * THERON_TRACK02_RAW_SECTOR_BYTES +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET, 32u);
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
     out->later_post_return_resume_pc = 0xea03u;
@@ -82,7 +96,7 @@ int main(void)
         return 1;
     }
 
-    fixture_receipt(&coalesced, md5);
+    fixture_receipt(&coalesced, md5, raw);
     if (!theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff) || !handoff.valid ||
         handoff.observed_track02_record != 0x0b52u ||
@@ -124,6 +138,15 @@ int main(void)
         return 1;
     }
     coalesced.later_caller_target = 0xe009u;
+
+    ++coalesced.later_destination_span_checksum;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt with a mismatched source span admitted the level route\n");
+        return 1;
+    }
+    --coalesced.later_destination_span_checksum;
     coalesced.later_track02_record = 0x0b53u;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {
@@ -131,7 +154,7 @@ int main(void)
         printf("FAIL: adjacent CD record unexpectedly admitted the level route\n");
         return 1;
     }
-    printf("PASS: fixture receipt composes only the source-locked record 0x0b52; no object or visual semantics promoted\n");
+    printf("PASS: source-bound receipt composes only record 0x0b52; no object or visual semantics promoted\n");
 
     if (trace_path) {
         uint8_t *trace;
