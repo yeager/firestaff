@@ -19952,6 +19952,22 @@ if(NOT TARGET test_m11_dm1_skill_query_runtime_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_m11_dm1_spell_area_asset_route)
+    add_executable(test_m11_dm1_spell_area_asset_route
+        tests/test_m11_dm1_spell_area_asset_route.c
+    )
+    target_compile_definitions(test_m11_dm1_spell_area_asset_route PRIVATE
+        FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_spell_area_asset_route PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_dm1_spell_area_asset_route
+        COMMAND test_m11_dm1_spell_area_asset_route
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     add_executable(test_dm1_v1_skill_experience_pc34_compat
         tests/test_dm1_v1_skill_experience_pc34_compat.c
