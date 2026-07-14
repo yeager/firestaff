@@ -178,6 +178,11 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
 
     if (!loader || !loader->loaded) return -1;
 
+    /* EXTENDED_LOAD_AI_DEFINITION repopulates the live table from the active
+     * GDAT session.  A new session must not inherit an AI row that is absent
+     * from its own CREATURE_AI category. */
+    dm2_v1_creature_reset_ai_table();
+
     /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION lines
      * ~233-400 loads 36 AIDefinition bytes per creature AI index from
      * GDAT_CATEGORY_CREATURE_AI (0x19).  QUERY_CREATURE_AI_SPEC_FROM_TYPE
