@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 external-save HoC runtime gate: every
+  operator-staged, checksum-qualified PC34 corpus candidate now has a
+  fixture-free M11 F0435 runtime check against original DM1 media. The gate
+  compares the adopted live party pose/tick and owned dungeon with an
+  independently materialized F0435 world, requires a nonblank M11 frame, and
+  rejects a fabricated transient C040/HoC panel. Source-lock: ReDMCSB
+  `LOADSAVE.C F0435` and `REVIVE.C F0280/F0282`. Verification: CTest
+  `dm1_v1_original_save_pc34_external_hoc_runtime` (skip-safe without an
+  operator corpus or original media).
+
 - ✅ 2026-07-14 DM1 PC34 F0435 runtime queue-adoption gate: the final
   candidate-to-live transfer now verifies the staged F0238 queue belongs to
   the restored F0435 GameTime, has unique live C4 entries, and has the same

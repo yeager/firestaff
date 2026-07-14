@@ -1476,6 +1476,14 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-14 update: the fixture-free external-corpus M11 runtime gate now
+    drives every F0435-admitted original PC34 save through the live game view,
+    checks the source party pose/tick and owned dungeon against an independent
+    F0435 materialization, draws an M11 frame, and rejects any invented C040
+    HoC panel or stale sidecar state. It requires operator-staged original
+    save bytes plus original DM1 media and skips when either is absent; no
+    synthetic save, dungeon, or HoC fallback can satisfy it. Remaining work
+    is independently collected community saves with broader tail/map coverage.
   - 2026-07-14 update: the focused M11 runtime interop route now proves a
     checksum-qualified original PC34 F0435 load can be quicksaved by the live
     host, exported through F0433 as a new PC34 envelope, reclassified, and
