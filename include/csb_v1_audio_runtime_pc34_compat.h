@@ -1,10 +1,12 @@
 #ifndef FIRESTAFF_CSB_V1_AUDIO_RUNTIME_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_AUDIO_RUNTIME_PC34_COMPAT_H
+
 /*
  * CSB V1 audio runtime boundary.
  *
  * Source anchors:
  *   ReDMCSB DEFS.H:135-138                  sound play modes
+ *   ReDMCSB SOUND.C F0060:887-931,1164-1246 Atari ST sound playback
  *   ReDMCSB SOUND.C F0064:1632-1638         pending sound arbitration
  *   ReDMCSB SOUND.C F0065:1804-1865         one pending sound flushed per tick
  *   ReDMCSB GAMELOOP.C:114-115              flush before damage/time advance
@@ -12,6 +14,7 @@
  *   ReDMCSB PROJEXPL.C:5                    LastCreatureAttackTime initial -200
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -70,6 +73,14 @@ typedef struct CsbV1AudioSaveSnapshot {
     int32_t lastCreatureAttackTime;
 } CsbV1AudioSaveSnapshot;
 
+/* ReDMCSB SOUND.C F0060 supplies a u16be output-count followed by packed
+ * high-nibble-first amplitude commands. A zero command repeats initialLevel
+ * or the previous nonzero command for a variable-length run. */
+typedef struct CsbV1StSoundDecodeResult {
+    size_t sampleCount;
+    size_t encodedBytesConsumed;
+} CsbV1StSoundDecodeResult;
+
 void csb_v1_audio_runtime_init(CsbV1AudioRuntime* runtime);
 int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
                                  const CsbV1AudioRequest* request);
@@ -80,6 +91,18 @@ void csb_v1_audio_runtime_save_snapshot(const CsbV1AudioRuntime* runtime,
                                         CsbV1AudioSaveSnapshot* outSnapshot);
 void csb_v1_audio_runtime_load_snapshot(CsbV1AudioRuntime* runtime,
                                         const CsbV1AudioSaveSnapshot* snapshot);
+
+/* Expands F0060's Atari ST packed stream into the PSG amplitude indices that
+ * its Timer-A handler would apply. Returns 0 on success, -1 for invalid
+ * arguments, -2 for malformed/truncated data, and -3 for insufficient output
+ * storage. initialLevel is the already-active PSG level (0..15). */
+int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
+                                         size_t encodedSize,
+                                         uint8_t initialLevel,
+                                         uint8_t* outLevels,
+                                         size_t outLevelCapacity,
+                                         CsbV1StSoundDecodeResult* outResult);
+
 const char* csb_v1_audio_runtime_source_evidence(void);
 
 #ifdef __cplusplus
