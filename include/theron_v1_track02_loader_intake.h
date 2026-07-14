@@ -57,6 +57,21 @@ typedef struct {
     const char *status;
 } Theron_V1Track02RawGridCoordinateReceipt;
 
+/* A row handoff retains one complete verified source row as opaque bytes.
+ * Neither the row nor its contents acquire dungeon, cell, object, tile, or
+ * visual semantics at this boundary. */
+typedef struct {
+    int handed_off;
+    uint16_t raw_grid_y;
+    uint16_t raw_grid_bytes;
+    uint8_t raw_grid_row[THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH];
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    uint32_t raw_grid_row_hash;
+    const char *status;
+} Theron_V1Track02RawGridRowReceipt;
+
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
 typedef struct {
@@ -115,5 +130,16 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
     uint16_t raw_grid_x,
     uint16_t raw_grid_y,
     Theron_V1Track02RawGridCoordinateReceipt *out_receipt);
+
+/* Hands off one complete source-verified grid row after independently
+ * rehashing the canonical raw BIN and rechecking its literal envelope and
+ * complete-grid receipt. The returned bytes remain opaque. */
+int theron_v1_track02_loader_intake_handoff_raw_grid_row(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    uint16_t raw_grid_y,
+    Theron_V1Track02RawGridRowReceipt *out_receipt);
 
 #endif
