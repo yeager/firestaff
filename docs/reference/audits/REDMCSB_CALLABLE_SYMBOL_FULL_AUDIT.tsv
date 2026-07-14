@@ -189,8 +189,8 @@ F132_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:65	src/nexus/nexus_v1_rasterize
 F0133_VIDEO_BlitBoxFilledWithMaskedBitmap	F	VIDEO	BLITMASK.C:33	src/dm1/dm1_v1_chest_scroll_wheel_pull_from_chest_pc34_compat.c:31	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0134_VIDEO_FillBitmap	F	VIDEO	ACTIDRAW.C:255	include/video_f0134_fill_bitmap_bounded_pc34_compat.h	IMPLEMENTED_NARROW	Source planar bitmap fill; focused CTest.
 F134_zzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:66	F0134_VIDEO_FillBitmap	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0134.
-F0135_VIDEO_FillBox	F	VIDEO	ANIMTOWN.C:672	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F135_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:67	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0135_VIDEO_FillBox	F	VIDEO	ANIMTOWN.C:672	include/dm1_f0135_video_fillbox_planar_20260714_pc34_compat.h	IMPLEMENTED_NARROW	Source four-plane fill-box implementation; focused CTest.
+F135_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:67	F0135_VIDEO_FillBox	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0135.
 F0136_VIDEO_HatchScreenBox	F	VIDEO	ACTIDRAW.C:285	src/dm1/dm1_v1_box_action_area_pc34_compat.c:13	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F136_nzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:68	src/dm1/dm1_v1_box_action_area_pc34_compat.c:13	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0137_CPSEF_PatchFunctionWithHiddenCodeLauncher	F	CPSEF	ATARIST.H:69	src/dm1/dm1_v1_viewport_3d_pc34_compat.c:3560	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
