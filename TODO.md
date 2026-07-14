@@ -103,6 +103,9 @@
   Structure3 topology/vector/face-normal receipt through the same byte-bound
   gate. This supplies no renderer permission: original capture, texture,
   palette, transform, VDP1, and draw semantics remain blocked.
+  Active entry-header and face-row framing is also source-bound now, including
+  bounded entry regions and local vertex-index checks. These are not Saturn
+  transform or surface semantics and remain no-draw pending authentic capture.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette

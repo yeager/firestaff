@@ -294,6 +294,21 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure3MeshSemanticReceipt;
 
+/* Active canonical LEV Structure3 entry and face-row framing. Header offsets
+ * and local index bounds are source facts only: they do not establish a
+ * Saturn transform, surface, material, texture, palette, or draw command. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveStructure3FaceFramingReceipt;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -672,6 +687,9 @@ int nexus_v1_current_level_structure3_directory_receipt(
 int nexus_v1_current_level_structure3_mesh_semantic_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure3MeshSemanticReceipt *out_receipt);
+int nexus_v1_current_level_structure3_face_framing_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure3FaceFramingReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
