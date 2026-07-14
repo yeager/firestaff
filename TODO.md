@@ -9,7 +9,14 @@
   now assigns ORIGINAL_SAVE_PC34 only
   after its F0435 classifier/materializer route succeeds; native F0433-style
   saves retain QUICKSAVE_RESUME_PC34 provenance. Retain broader original PC34
-  interactive route/capture comparison as an external-corpus task.
+  executable route/capture comparison as an external-corpus task. The opt-in
+  HoC runtime gate now also replays a hash-bound, operator-recorded movement
+  trace (`FIRESTAFF_DM1_PC34_HOC_COMMAND_TRACE`) through independently staged
+  F0435 and live M11 worlds, matching every M10 receipt, live-world hash,
+  timeline, emission list, and byte-stable host viewport capture. It accepts
+  only IDLE/FORWARD/BACKWARD/TURN/STRAFE inputs because those are the direct
+  GAMELOOP-to-M10 command boundary; it is not original-executable pixel
+  parity and does not synthesize saves, dungeons, command streams, or art.
 
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
   source-owned destination/clipping plan. Complete standard door panels,

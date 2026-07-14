@@ -44,6 +44,97 @@ static int receipt_is_runtime_admitted(
  * exclusively from the admitted F0435 C4 queue; a far-future or malformed
  * timestamp must not make an opt-in corpus probe run indefinitely. */
 #define PC34_EXTERNAL_RUNTIME_EVENT_HORIZON 1024u
+#define PC34_EXTERNAL_RUNTIME_TRACE_MAX_STEPS 256
+
+/* Operator-provided trace rows are deliberately bound to an admitted save
+ * snapshot: `<source_crc32_hex> <IDLE|FORWARD|BACKWARD|TURN_LEFT|TURN_RIGHT|
+ * STRAFE_LEFT|STRAFE_RIGHT>`.  This target owns neither a replacement save
+ * nor a made-up command stream.  ReDMCSB GAMELOOP.C hands normal movement
+ * commands to the restored world after F0435; these are the M11 inputs that
+ * map one-to-one to the M10 movement/timeline boundary. */
+typedef struct PC34ExternalRuntimeTraceStep {
+    uint32_t source_hash;
+    M12_MenuInput input;
+} PC34ExternalRuntimeTraceStep;
+
+static int trace_input_from_name(const char *name, M12_MenuInput *out_input)
+{
+    if (!name || !out_input) return 0;
+    if (strcmp(name, "IDLE") == 0) *out_input = M12_MENU_INPUT_NONE;
+    else if (strcmp(name, "FORWARD") == 0) *out_input = M12_MENU_INPUT_UP;
+    else if (strcmp(name, "BACKWARD") == 0) *out_input = M12_MENU_INPUT_DOWN;
+    else if (strcmp(name, "TURN_LEFT") == 0) *out_input = M12_MENU_INPUT_TURN_LEFT;
+    else if (strcmp(name, "TURN_RIGHT") == 0) *out_input = M12_MENU_INPUT_TURN_RIGHT;
+    else if (strcmp(name, "STRAFE_LEFT") == 0) *out_input = M12_MENU_INPUT_STRAFE_LEFT;
+    else if (strcmp(name, "STRAFE_RIGHT") == 0) *out_input = M12_MENU_INPUT_STRAFE_RIGHT;
+    else return 0;
+    return 1;
+}
+
+static int load_external_trace(const char *path,
+                               PC34ExternalRuntimeTraceStep *out_steps,
+                               int out_capacity,
+                               int *out_count)
+{
+    FILE *file;
+    char line[128];
+    int count = 0;
+
+    if (!path || !path[0] || !out_steps || out_capacity <= 0 || !out_count) {
+        return 0;
+    }
+    file = fopen(path, "r");
+    if (!file) return 0;
+    while (fgets(line, sizeof(line), file)) {
+        char hash_text[16];
+        char input_text[32];
+        char trailing[2];
+        char *end;
+        unsigned long hash;
+        M12_MenuInput input;
+
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
+        if (count >= out_capacity ||
+            sscanf(line, "%15s %31s %1s", hash_text, input_text, trailing) != 2) {
+            fclose(file);
+            return 0;
+        }
+        hash = strtoul(hash_text, &end, 16);
+        if (strlen(hash_text) != 8u || *end != '\0' || hash > 0xfffffffful ||
+            !trace_input_from_name(input_text, &input)) {
+            fclose(file);
+            return 0;
+        }
+        out_steps[count].source_hash = (uint32_t)hash;
+        out_steps[count].input = input;
+        ++count;
+    }
+    fclose(file);
+    *out_count = count;
+    return count > 0;
+}
+
+static uint8_t trace_command_for_input(M12_MenuInput input, int direction)
+{
+    switch (input) {
+        case M12_MENU_INPUT_NONE: return CMD_NONE;
+        case M12_MENU_INPUT_TURN_LEFT: return CMD_TURN_LEFT;
+        case M12_MENU_INPUT_TURN_RIGHT: return CMD_TURN_RIGHT;
+        case M12_MENU_INPUT_UP:
+            return (uint8_t[]){CMD_MOVE_NORTH, CMD_MOVE_EAST,
+                               CMD_MOVE_SOUTH, CMD_MOVE_WEST}[direction & 3];
+        case M12_MENU_INPUT_DOWN:
+            return (uint8_t[]){CMD_MOVE_SOUTH, CMD_MOVE_WEST,
+                               CMD_MOVE_NORTH, CMD_MOVE_EAST}[direction & 3];
+        case M12_MENU_INPUT_STRAFE_LEFT:
+            return (uint8_t[]){CMD_MOVE_WEST, CMD_MOVE_NORTH,
+                               CMD_MOVE_EAST, CMD_MOVE_SOUTH}[direction & 3];
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            return (uint8_t[]){CMD_MOVE_EAST, CMD_MOVE_SOUTH,
+                               CMD_MOVE_WEST, CMD_MOVE_NORTH}[direction & 3];
+        default: return CMD_NONE;
+    }
+}
 
 static int viewport_is_nonblank(const unsigned char *pixels,
                                 int framebuffer_width)
@@ -85,7 +176,10 @@ int main(void)
 {
     const char *corpus_root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
     const char *data_dir = getenv("FIRESTAFF_DM1_PC_DATA");
+    const char *trace_path = getenv("FIRESTAFF_DM1_PC34_HOC_COMMAND_TRACE");
     DM1OriginalSavePC34CorpusRoundtripReport report;
+    PC34ExternalRuntimeTraceStep trace_steps[PC34_EXTERNAL_RUNTIME_TRACE_MAX_STEPS];
+    int trace_step_count = 0;
     int i;
 
     /* This is intentionally fixture-free. It only drives files classified as
@@ -93,6 +187,14 @@ int main(void)
     if (!corpus_root || !corpus_root[0] || !data_dir || !data_dir[0]) {
         puts("SKIP external PC34 HoC runtime: FIRESTAFF_DM1_PC34_SAVE_CORPUS or FIRESTAFF_DM1_PC_DATA unset");
         return 0;
+    }
+    if (trace_path && trace_path[0] &&
+        !load_external_trace(trace_path, trace_steps,
+                             PC34_EXTERNAL_RUNTIME_TRACE_MAX_STEPS,
+                             &trace_step_count)) {
+        fprintf(stderr, "FAIL external PC34 HoC command trace is malformed or empty: %s\n",
+                trace_path);
+        return 1;
     }
 
     memset(&report, 0, sizeof(report));
@@ -118,6 +220,7 @@ int main(void)
         uint32_t actual_post_tick_world_hash;
         uint32_t pre_tick;
         struct TimelineEvent_Compat next_event;
+        int traced_steps_for_save = 0;
 
         CHECK(receipt_is_runtime_admitted(receipt),
               "external save owns an admitted F0435 runtime");
@@ -282,6 +385,68 @@ int main(void)
         } else {
             puts("ADMITTED_HOC_RUNTIME_EVENT_NONE");
         }
+        if (trace_step_count > 0) {
+            int trace_index;
+
+            for (trace_index = 0; trace_index < trace_step_count; ++trace_index) {
+                const PC34ExternalRuntimeTraceStep *step =
+                    &trace_steps[trace_index];
+                uint32_t trace_world_hash;
+                uint32_t live_trace_world_hash;
+                unsigned int trace_viewport_hash;
+
+                if (step->source_hash != receipt->source_hash) continue;
+                memset(&expected_input, 0, sizeof(expected_input));
+                memset(&expected_tick, 0, sizeof(expected_tick));
+                expected_input.tick = (uint32_t)expected_world.gameTick;
+                expected_input.command = trace_command_for_input(
+                    step->input, expected_world.party.direction);
+                CHECK(F0884_ORCH_AdvanceOneTick_Compat(&expected_world,
+                                                        &expected_input,
+                                                        &expected_tick) != ORCH_FAIL,
+                      "staged F0435 runtime accepts the traced source command");
+                CHECK(M11_GameView_HandleInput(&state, step->input) ==
+                          M11_GAME_INPUT_REDRAW,
+                      "M11 accepts the traced source command");
+                CHECK(state.lastTickResult.preTick == expected_tick.preTick &&
+                          state.lastTickResult.postTick == expected_tick.postTick &&
+                          state.lastTickResult.worldHashPost ==
+                              expected_tick.worldHashPost &&
+                          state.lastWorldHash == expected_tick.worldHashPost,
+                      "M11 traced command receipt matches staged F0435 tick");
+                CHECK(F0891_ORCH_WorldHash_Compat(&expected_world,
+                                                   &trace_world_hash) &&
+                          F0891_ORCH_WorldHash_Compat(&state.world,
+                                                       &live_trace_world_hash) &&
+                          trace_world_hash == expected_tick.worldHashPost &&
+                          live_trace_world_hash == trace_world_hash,
+                      "M11 traced command world matches staged F0435 world");
+                CHECK(state.world.timeline.count == expected_world.timeline.count &&
+                          state.lastTickResult.emissionCount ==
+                              expected_tick.emissionCount &&
+                          memcmp(state.lastTickResult.emissions,
+                                 expected_tick.emissions,
+                                 sizeof(expected_tick.emissions)) == 0,
+                      "M11 traced command preserves timeline and emissions");
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&state, framebuffer, 320, 200);
+                CHECK(viewport_is_nonblank(framebuffer, 320),
+                      "traced source command produces a nonblank PC34 viewport");
+                trace_viewport_hash = viewport_fingerprint(framebuffer, 320);
+                memset(repeated_framebuffer, 0, sizeof(repeated_framebuffer));
+                M11_GameView_Draw(&state, repeated_framebuffer, 320, 200);
+                CHECK(memcmp(framebuffer, repeated_framebuffer,
+                             sizeof(framebuffer)) == 0 &&
+                          trace_viewport_hash ==
+                              viewport_fingerprint(repeated_framebuffer, 320),
+                      "traced source command preserves a stable viewport capture");
+                ++traced_steps_for_save;
+            }
+            CHECK(traced_steps_for_save > 0,
+                  "external command trace binds at least one row to every admitted save");
+            printf("ADMITTED_HOC_RUNTIME_TRACE path=%s source_hash=%08x steps=%d\\n",
+                   receipt->path, receipt->source_hash, traced_steps_for_save);
+        }
         printf("ADMITTED_HOC_RUNTIME path=%s map=%d,%d,%d dir=%d tick=%u champions=%d viewport_hash=%08x\\n",
                receipt->path, state.world.party.mapIndex, state.world.party.mapX,
                state.world.party.mapY, state.world.party.direction,
@@ -291,7 +456,7 @@ int main(void)
         M11_GameView_Shutdown(&state);
     }
 
-    printf("ADMITTED_HOC_RUNTIME_SUMMARY root=%s candidates=%d\\n",
-           corpus_root, report.receipt_count);
+    printf("ADMITTED_HOC_RUNTIME_SUMMARY root=%s candidates=%d trace_steps=%d\\n",
+           corpus_root, report.receipt_count, trace_step_count);
     return 0;
 }
