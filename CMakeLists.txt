@@ -22095,6 +22095,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_capture_trace_schema PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -24356,6 +24357,24 @@ add_test(
 set_tests_properties(nexus_v1_prs3_loader_media_probe PROPERTIES
     LABELS "tier4;nexus;prs3;loader_media;skip_safe"
 )
+
+# Nexus PRS3 V3 capture validator. It imports an externally captured trace
+# only after canonical MENU.BPK/DM.BIN MD5 checks and reports source binding;
+# it cannot decode, upload, or render PRS3 output.
+add_executable(firestaff_nexus_v1_prs3_v3_capture_validator
+    probes/nexus/firestaff_nexus_v1_prs3_v3_capture_validator.c
+)
+target_link_libraries(firestaff_nexus_v1_prs3_v3_capture_validator PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_prs3_v3_capture_validator PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_prs3_v3_capture_validator PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
 
 # Nexus PRS3 selected version-1 branch-flow receipt. This separate original
 # executable probe locks one low-bit branch and its byte-store fallthrough;

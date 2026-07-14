@@ -15289,6 +15289,16 @@ changed palette span rejects the capture. This establishes no PRS3 opcode,
 texture-pixel, palette-format, or VDP1 field semantics, and it never permits
 rendering or fallback visuals. Verification:
 `test_nexus_v1_prs3_capture_trace_schema`.
+
+# ✅ 2026-07-14 Nexus PRS3 V3 external-capture validator
+
+`firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN` now
+imports a read-only V3 candidate trace only after the two supplied ordinary
+files match the canonical Track 1 MD5 identities. The validator binds the
+trace's MENU.BPK span to real bytes and reports the VDP1-command/palette
+witnesses, while leaving runtime import, decoder promotion, and fallback
+visuals disabled. It does not manufacture a trace or attest the capture
+producer. Verification: `nexus_v1_prs3_capture_trace_schema`.
 # ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
 
 `dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`

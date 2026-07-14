@@ -95,6 +95,13 @@
   grammar, the VDP1 command field meanings, the palette source/format and
   application rules, plus a positive authentic V3 capture. Until all exist,
   MENU.BPK surfaces remain blocked and no synthetic menu pixels are allowed.
+  `firestaff_nexus_v1_prs3_v3_capture_validator` now imports one externally
+  captured V3 trace only after the supplied ordinary files match canonical
+  `MENU.BPK` and `DM.BIN` MD5 identities. It confirms source binding and the
+  captured command/palette witnesses but does not attest the capture tool
+  itself. Remaining work is a positive trace recorded from an original Saturn
+  or independently authenticated emulator capture, then separate proof of
+  PRS3 opcode, palette, and VDP1 semantics.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked

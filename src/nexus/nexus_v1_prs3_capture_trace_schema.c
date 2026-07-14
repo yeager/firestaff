@@ -1,8 +1,40 @@
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_bpk_archive.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#define NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5 "c2776768ff25287c79013a1452253ca0"
+#define NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5 "e88d60859f65f08fa622e1992b02280f"
+#define NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES (1024U * 1024U)
+
+static uint8_t *read_capture_file(const char *path, size_t max_size,
+                                  size_t *out_size)
+{
+    FILE *file;
+    long file_size;
+    uint8_t *data;
+
+    if (out_size) *out_size = 0U;
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (file_size = ftell(file)) <= 0 ||
+        (size_t)file_size > max_size || fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    data = (uint8_t *)malloc((size_t)file_size + 1U);
+    if (!data || fread(data, 1U, (size_t)file_size, file) != (size_t)file_size) {
+        free(data);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    data[file_size] = 0U;
+    *out_size = (size_t)file_size;
+    return data;
+}
 
 static int read_u64(const char **cursor, const char *label, uint64_t *out) {
     unsigned long long value;
@@ -520,4 +552,59 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     receipt.fallback_visuals_permitted = 0;
     *out_receipt = receipt;
     return receipt.valid;
+}
+
+int nexus_v1_prs3_vdp1_capture_validate_files(
+    const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
+    Nexus_V1_Prs3Vdp1CaptureFileReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1CaptureFileReceipt receipt;
+    uint8_t *trace_data = NULL;
+    uint8_t *menu_bpk = NULL;
+    uint8_t *dm_bin = NULL;
+    size_t trace_size = 0U;
+    size_t menu_bpk_size = 0U;
+    size_t dm_bin_size = 0U;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!trace_path || !menu_bpk_path || !dm_bin_path ||
+        !asset_file_matches_md5(menu_bpk_path,
+                                NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5) ||
+        !asset_file_matches_md5(dm_bin_path,
+                                NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.menu_bpk_original_hash_verified = 1;
+    receipt.dm_bin_original_hash_verified = 1;
+    trace_data = read_capture_file(trace_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                                   &trace_size);
+    menu_bpk = read_capture_file(menu_bpk_path, 16U * 1024U * 1024U,
+                                 &menu_bpk_size);
+    dm_bin = read_capture_file(dm_bin_path, 16U * 1024U * 1024U,
+                               &dm_bin_size);
+    if (!trace_data || !menu_bpk || !dm_bin) goto done;
+    receipt.trace_file_read = 1;
+    receipt.v3_trace_parsed = nexus_v1_prs3_vdp1_capture_schema_parse(
+        (const char *)trace_data, trace_size, &receipt.trace) &&
+        receipt.trace.schema_version == 3U;
+    if (receipt.v3_trace_parsed) {
+        receipt.source_bound_capture =
+            nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+                &receipt.trace, menu_bpk, menu_bpk_size, dm_bin, dm_bin_size,
+                &receipt.binding) &&
+            receipt.binding.vdp1_command_consumption_observed &&
+            receipt.binding.palette_consumption_observed;
+    }
+done:
+    free(trace_data);
+    free(menu_bpk);
+    free(dm_bin);
+    /* An imported capture is diagnostic evidence only. */
+    receipt.runtime_import_permitted = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.source_bound_capture;
 }

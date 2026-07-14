@@ -163,6 +163,23 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1CaptureBindingReceipt;
 
+/* File-backed import receipt for an externally captured V3 trace. The trace
+ * is evidence supplied by a capture tool, not a runtime asset: successful
+ * import only proves that its stated spans bind to canonical MENU.BPK/DM.BIN
+ * bytes and that its internal VDP1/palette intervals are complete. */
+typedef struct {
+    int trace_file_read;
+    int menu_bpk_original_hash_verified;
+    int dm_bin_original_hash_verified;
+    int v3_trace_parsed;
+    int source_bound_capture;
+    int runtime_import_permitted;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+    Nexus_V1_Prs3Vdp1CaptureReceipt trace;
+    Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
+} Nexus_V1_Prs3Vdp1CaptureFileReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -261,5 +278,13 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     const uint8_t *menu_bpk, size_t menu_bpk_size,
     const uint8_t *dm_bin, size_t dm_bin_size,
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt *out_receipt);
+
+/* Read a text V3 capture plus ordinary canonical MENU.BPK and DM.BIN files.
+ * The two source files must match the original Track 1 MD5 identities before
+ * their bytes are handed to the schema binder. This importer is read-only and
+ * deliberately never enables decoding, rendering, or fallback visuals. */
+int nexus_v1_prs3_vdp1_capture_validate_files(
+    const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
+    Nexus_V1_Prs3Vdp1CaptureFileReceipt *out_receipt);
 
 #endif
