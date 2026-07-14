@@ -16145,6 +16145,15 @@ VDP1 commands, and drawing remain unavailable, with no fallback visuals.
 Verification: `test_nexus_v1_dgn_geometry_readiness` against the hash-verified
 retail LEV00.DGN through LEV15.DGN corpus.
 
+# ✅ 2026-07-15 Nexus active Structure1A owner-chain receipt
+
+`nexus_v1_current_level_structure1a_owner_chain_receipt()` now consumes the
+complete Structure1F index to unique Structure1B owner to Structure1A row to
+raw Structure3 model/face-selector chain from the active hash-bound LEV. The
+receipt withdraws on stale source identity. It assigns no placement,
+transform, material, pixel, palette, VDP1, or draw semantics and permits no
+fallback visuals. Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 mesh semantic receipt
 
 The engine now publishes the active canonical LEV's bounded Structure3

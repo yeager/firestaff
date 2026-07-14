@@ -6263,3 +6263,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Structure2/Structure1G selector joins. This remains identifier provenance,
   not material/pixel/palette/UV/VDP1/draw semantics. Original Saturn capture
   evidence is still required before any renderer promotion.
+
+- 🔧 2026-07-15 Nexus active Structure1A owner chain: the active canonical
+  LEV now carries the complete Structure1F -> Structure1B owner ->
+  Structure1A -> model/face selector chain. Owner coordinates, selectors, and
+  model indexes remain source evidence only; original Saturn capture is still
+  required for placement, transforms, materials, pixels, and drawing.

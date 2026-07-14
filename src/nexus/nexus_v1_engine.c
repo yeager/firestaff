@@ -2823,6 +2823,61 @@ int nexus_v1_current_level_structure3_face_material_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_structure1a_owner_chain_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure1AOwnerChainReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        nexus_v1_level_structure1f_spatial_receipt(
+            &engine->current_level, &out_receipt->spatial) != 0 ||
+        !out_receipt->spatial.valid ||
+        nexus_v1_level_structure1a_boundary_receipt(
+            &engine->current_level, &out_receipt->boundary) != 0 ||
+        !out_receipt->boundary.valid ||
+        nexus_v1_level_structure1a_relation_receipt(
+            &engine->current_level, &out_receipt->relation) != 0 ||
+        !out_receipt->relation.complete ||
+        nexus_v1_level_structure3_model_reference_receipt(
+            &engine->current_level, &out_receipt->model_references) != 0 ||
+        !out_receipt->model_references.complete ||
+        nexus_v1_level_structure1f_face_selector_receipt(
+            &engine->current_level, &out_receipt->face_selectors) != 0 ||
+        !out_receipt->face_selectors.complete ||
+        out_receipt->face_selectors.face_semantics_proven ||
+        nexus_v1_level_structure3_model_face_selector_receipt(
+            &engine->current_level, &out_receipt->model_face_selectors) != 0 ||
+        !out_receipt->model_face_selectors.complete ||
+        out_receipt->model_face_selectors.attachment_semantics_proven ||
+        out_receipt->relation.structure1f_bound_entry_count !=
+            out_receipt->model_references.structure1f_bound_entry_count ||
+        out_receipt->relation.resolved_entry_count !=
+            out_receipt->face_selectors.resolved_face_selector_count ||
+        out_receipt->model_references.resolved_model_reference_count !=
+            out_receipt->model_face_selectors.resolved_pair_count) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    out_receipt->owner_chain_complete = 1;
+    return 1;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)
