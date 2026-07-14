@@ -29391,6 +29391,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_gdat_receipt.c"
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_renderer_material_gate.c")
+    add_executable(test_dm2_v1_weather_renderer_material_gate
+        tests/test_dm2_v1_weather_renderer_material_gate.c
+    )
+    target_include_directories(test_dm2_v1_weather_renderer_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_renderer_material_gate PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_renderer_material_gate PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_weather_renderer_material_gate
+        COMMAND test_dm2_v1_weather_renderer_material_gate
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dialogue_gdat_receipt.c")
     add_executable(test_dm2_v1_dialogue_gdat_receipt
         tests/test_dm2_v1_dialogue_gdat_receipt.c

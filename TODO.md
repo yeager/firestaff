@@ -2313,6 +2313,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     command has a verified material receipt; corpus evidence for the original
     timer-owned live slot bytes is still absent, so no runtime promotion or
     pixel blit is permitted.
+  - 2026-07-14 update: a complete, source-owned `DistantEnvironment` renderer
+    receipt now reaches the outdoor viewport's real `ENVIRONMENT` image/local
+    palette consumer. It preflights the full cloud/rain transaction and its
+    source dt04 clips before the first pixel, so a missing later layer blocks
+    the whole weather pass rather than leaving a partial draw or creating a
+    procedural substitute. Runtime binding remains intentionally blocked
+    until the original save/timer corpus supplies the live ten-byte slots.
   - 2026-07-13 update: the exact skproject save/load dialogue now binds its
     separate `DIALOG_BOXES/0x81/dtImage/0` IMG3/local palette to the real
     `INTERFACE_GENERAL/0/raw4` expansion of `RECT_453`; the live runtime

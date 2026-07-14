@@ -124,6 +124,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE    0x80u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE      0x100u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT  0x200u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER       0x400u
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
@@ -164,6 +165,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR   0x00
 #define DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE (-0xE00000)
 #define DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET 0x01
+#define DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE (-0xF00000)
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -209,6 +211,10 @@ int dm2_v1_viewport_scene_material_graphic_index(int graphicsset_index,
 int dm2_v1_viewport_scene_material_graphic_address(int gdat_index,
                                                     int *out_graphicsset_index,
                                                     int *out_material_field);
+int dm2_v1_viewport_weather_environment_graphic_index(int graphicsset_index,
+                                                       int environment_field);
+int dm2_v1_viewport_weather_environment_graphic_address(
+    int gdat_index, int *out_graphicsset_index, int *out_environment_field);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,
@@ -780,6 +786,9 @@ typedef struct {
     int gdat_scene_control_consumed_count;
     int gdat_scene_light_consumed_count;
     int gdat_scene_weather_consumed_count;
+    const DM2_V1_WeatherRendererReceipt *gdat_weather_renderer_receipt;
+    uint8_t gdat_weather_renderer_graphicsset;
+    int asset_weather_drawn_count;
     int gdat_sprite_palette_consumed_count;
     int gdat_local_palette_consumed_count;
     uint32_t gdat_scene_control_hash;
@@ -940,6 +949,10 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t misty_map,
     uint16_t thunder_position,
     uint16_t ambient_darkness);
+void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+    DM2_V1_ViewportState *s,
+    uint8_t graphicsset_index,
+    const DM2_V1_WeatherRendererReceipt *receipt);
 /* skproject SkWinCore::INIT loads dtPalIRGB/dtPalette16 before HUD drawing.
  * The viewport accepts only the already validated logical-index table owned by
  * the DM2 boot profile; HUD colours remain logical until this bind occurs. */
