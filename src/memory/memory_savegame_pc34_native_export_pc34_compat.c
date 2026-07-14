@@ -1372,6 +1372,40 @@ static int pc34_original_explosion_thing_for_runtime_event(
     return matches == 1;
 }
 
+/* ReDMCSB TIMELINE.C F0261 forwards C29..C41's B.Location and C.Ticks to
+ * GROUP.C F0209.  A live group array index alone is not an original-save
+ * receipt: the C04 THING on that exact saved square owns the association. */
+static int pc34_original_group_thing_for_runtime_event(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    const struct TimelineEvent_Compat* event)
+{
+    uint16_t thing;
+    int matches = 0;
+    int safety = 0;
+
+    if (!dungeon || !things || !event || !things->groups ||
+        event->aux0 < 0 || event->aux0 >= things->groupCount ||
+        event->mapIndex < 0 ||
+        event->mapIndex >= (int)dungeon->header.mapCount ||
+        event->mapX < 0 || event->mapY < 0 ||
+        event->mapX >= (int)dungeon->maps[event->mapIndex].width ||
+        event->mapY >= (int)dungeon->maps[event->mapIndex].height) {
+        return 0;
+    }
+
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, event->mapIndex, event->mapX, event->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+            (int)THING_GET_INDEX(thing) == event->aux0) {
+            ++matches;
+        }
+        thing = pc34_original_next_thing(things, thing);
+    }
+    return matches == 1;
+}
+
 static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                                     const struct ProjectileList_Compat* projectiles,
                                     const struct DungeonDatState_Compat* dungeon,
@@ -1651,7 +1685,9 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
                 src->aux3 < 0 || src->aux3 > 0xffff ||
                 src->mapIndex < 0 || src->mapIndex > 0xff ||
                 src->mapX < 0 || src->mapX > 0xff || src->mapY < 0 ||
-                src->mapY > 0xff) return 0;
+                src->mapY > 0xff ||
+                !pc34_original_group_thing_for_runtime_event(
+                    dungeon, things, src)) return 0;
             dst[6] = (uint8_t)(src->mapX & 0xff);
             dst[7] = (uint8_t)(src->mapY & 0xff);
             write_u16_le(dst + 8u, (uint16_t)(src->aux3 & 0xffff));

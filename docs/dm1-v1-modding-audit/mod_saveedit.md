@@ -48,6 +48,20 @@ Save files are not straightforward to edit because:
 4. For each section: compute Checksum(sectionData, Keys[i], byteCount/2), write Checksum + section
 5. Write portrait data last
 
+### Runtime Handoff Constraints
+
+`LOADSAVE.C F0435` restores the C3 `EVENT` and C4 `TIMELINE` parts before
+the runtime dispatches individual event families.  For C29 through C41
+(group reactions and behavior updates), `TIMELINE.C F0261` passes the saved
+`B.Location` and `C.Ticks` to `GROUP.C F0209`.  The live group-array index is
+therefore not sufficient provenance when exporting a resumed save: the exact
+original C04 group thing must still appear in the saved square's thing chain.
+
+Firestaff's PC34 exporter rejects a C29..C41 runtime event when that C04
+owner is absent or ambiguous.  It does not manufacture a group association
+from host runtime state.  A valid event writes its original union unchanged:
+`Priority`, `B.Location`, and `C.Ticks`.
+
 ## Firestaff Save Architecture
 Firestaff implements its own save system using the same structural layout:
 - GAME struct mirrors ReDMCSB GAME (DEFS.H:4449–4483)
