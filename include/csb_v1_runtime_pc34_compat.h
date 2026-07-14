@@ -417,6 +417,16 @@ typedef struct {
      * its original CSBWin timer-queue slot. It is rebuilt on every verified
      * CSBWin resume and is never a caller-provided timer identity. */
     uint16_t                csbwin_timeline_event_queue_slot[DM1_EVENT_MAX_COUNT];
+    /* Receipt for the most recent source-owned ProcessDSATimer5/6 action
+     * completed by a restored TimerQueue entry. This is diagnostic state for
+     * real-package provenance; it never selects or creates a DSA action. */
+    int                     csbwin_last_saved_timer_dsa_valid;
+    uint16_t                csbwin_last_saved_timer_dsa_queue_slot;
+    uint16_t                csbwin_last_saved_timer_dsa_timer_index;
+    uint8_t                 csbwin_last_saved_timer_dsa_id;
+    uint32_t                csbwin_last_saved_timer_dsa_state_index;
+    uint32_t                csbwin_last_saved_timer_dsa_column;
+    int                     csbwin_last_saved_timer_dsa_action_ordinal;
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];

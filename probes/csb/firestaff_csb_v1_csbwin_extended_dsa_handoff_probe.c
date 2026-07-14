@@ -134,6 +134,42 @@ static int extended_dsa_tail_is_current(const CSB_V1_RuntimeProfile *profile)
                profile->csbwin_appended_tail_preserved_size);
 }
 
+/* A positive runtime result must identify the exact TimerQueue entry and the
+ * exact imported action it executed. This is intentionally not a prediction:
+ * the receipt is written only after the production tick reaches a complete
+ * source-owned ProcessDSATimer5/6 pure-stack action. */
+static int saved_timer_dsa_execution_is_authenticated(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const CSB_V1_ChaosMagicState *state;
+    const CSB_V1_DSAImportedAction *action;
+    uint16_t queue_slot;
+    uint16_t timer_index;
+    int action_ordinal;
+
+    if (!profile || !profile->csbwin_last_saved_timer_dsa_valid ||
+        !profile->csbwin_body_runtime_summary_valid) {
+        return 0;
+    }
+    queue_slot = profile->csbwin_last_saved_timer_dsa_queue_slot;
+    timer_index = profile->csbwin_last_saved_timer_dsa_timer_index;
+    action_ordinal = profile->csbwin_last_saved_timer_dsa_action_ordinal;
+    state = &profile->csbwin_extended_dsa_state;
+    if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
+        timer_index >= profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue[queue_slot] != timer_index ||
+        action_ordinal < 0 || action_ordinal >= state->imported_action_count ||
+        !state->imported_actions) {
+        return 0;
+    }
+    action = &state->imported_actions[action_ordinal];
+    return action->dsa_id == profile->csbwin_last_saved_timer_dsa_id &&
+           action->state_index ==
+               profile->csbwin_last_saved_timer_dsa_state_index &&
+           action->column == profile->csbwin_last_saved_timer_dsa_column &&
+           state->imported_headers[action->dsa_id].valid;
+}
+
 static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
                                       int action_index);
 
@@ -541,6 +577,13 @@ int main(int argc, char **argv)
                       csb_v1_dungeon_get_current() == dungeon &&
                       remaining_saved_timer_queue_matches_runtime(&profile),
                   "post-tick live queue retains only exact package TIMER slots");
+            if (profile.csbwin_last_saved_timer_dsa_valid) {
+                CHECK(saved_timer_dsa_execution_is_authenticated(&profile),
+                      "live tick executed an exact saved TimerQueue DSA action");
+                puts("CSBWIN_DSA_TIMER_ACTION=verified");
+            } else {
+                puts("CSBWIN_DSA_TIMER_ACTION=unavailable");
+            }
             CHECK(source_file_receipt_matches(dungeon_path, &dungeon_receipt) &&
                       source_file_receipt_matches(save_path, &save_receipt),
                   "package files retain their complete size/FNV receipts across runtime proof");

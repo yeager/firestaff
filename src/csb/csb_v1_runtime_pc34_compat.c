@@ -15141,6 +15141,15 @@ static void csb_v1_runtime_reset_csbwin_extended_metadata(
     profile->csbwin_extended_game_info_size = 0u;
     profile->csbwin_extended_game_info_fnv1a = 0u;
     profile->csbwin_extended_features_valid = 0;
+    profile->csbwin_last_saved_timer_dsa_valid = 0;
+    profile->csbwin_last_saved_timer_dsa_queue_slot =
+        CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    profile->csbwin_last_saved_timer_dsa_timer_index =
+        CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    profile->csbwin_last_saved_timer_dsa_id = 0xffu;
+    profile->csbwin_last_saved_timer_dsa_state_index = 0u;
+    profile->csbwin_last_saved_timer_dsa_column = 0u;
+    profile->csbwin_last_saved_timer_dsa_action_ordinal = -1;
     profile->csbwin_extended_features_version = 0u;
     profile->csbwin_extended_features_flags = 0u;
     profile->csbwin_extended_features_flags32 = 0u;
@@ -17379,6 +17388,34 @@ static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
         saved->level == timer->level;
 }
 
+static void csb_v1_runtime_record_saved_timer_dsa_execution(
+    CSB_V1_RuntimeProfile *profile, uint16_t queue_slot,
+    uint16_t timer_index, const CSB_V1_DSAImportedAction *action)
+{
+    int action_ordinal;
+
+    if (!profile || !action) return;
+    for (action_ordinal = 0;
+         action_ordinal < profile->csbwin_extended_dsa_state.imported_action_count;
+         ++action_ordinal) {
+        if (&profile->csbwin_extended_dsa_state.imported_actions[action_ordinal] ==
+            action) {
+            break;
+        }
+    }
+    if (action_ordinal ==
+        profile->csbwin_extended_dsa_state.imported_action_count) {
+        return;
+    }
+    profile->csbwin_last_saved_timer_dsa_valid = 1;
+    profile->csbwin_last_saved_timer_dsa_queue_slot = queue_slot;
+    profile->csbwin_last_saved_timer_dsa_timer_index = timer_index;
+    profile->csbwin_last_saved_timer_dsa_id = action->dsa_id;
+    profile->csbwin_last_saved_timer_dsa_state_index = action->state_index;
+    profile->csbwin_last_saved_timer_dsa_column = action->column;
+    profile->csbwin_last_saved_timer_dsa_action_ordinal = action_ordinal;
+}
+
 int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -17438,9 +17475,19 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
         prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
             profile, dungeon, slave_location, &dispatched, &runner, &action);
     }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, parameters, (int)parameter_count, NULL);
+    if (!prepared || !action ||
+        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+            profile, &runner, action, parameters, (int)parameter_count, NULL)) {
+        return 0;
+    }
+    for (i = 0u; i < profile->csbwin_timer_queue_summary_count; ++i) {
+        if (profile->csbwin_timer_queue[i] == timer->source_index) {
+            csb_v1_runtime_record_saved_timer_dsa_execution(
+                profile, (uint16_t)i, timer->source_index, action);
+            break;
+        }
+    }
+    return 1;
 }
 
 int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
@@ -17520,9 +17567,14 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
     default:
         return 0;
     }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, NULL, 0, NULL);
+    if (!prepared || !action ||
+        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+            profile, &runner, action, NULL, 0, NULL)) {
+        return 0;
+    }
+    csb_v1_runtime_record_saved_timer_dsa_execution(
+        profile, queue_index, timer_index, action);
+    return 1;
 }
 
 static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
