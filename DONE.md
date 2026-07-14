@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
+  I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
+  adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
+  F0924 are source-nonapplicable: their available ReDMCSB routes require Atari
+  ST/Amiga hardware.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
   copy-protection BIOS callback, MIDI IODRV commands and substring routine.
   Focused strict C11 tests pass without synthetic disk or audio behavior.
