@@ -1810,6 +1810,55 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     F0883_WORLD_Free_Compat(&start_world);
 }
 
+static void test_runtime_state_adoption_moves_f0435_queue(void)
+{
+    struct GameWorld_Compat runtime_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DM1_EventQueue_V1 runtime_queue;
+    struct DM1_EventQueue_V1 loaded_queue;
+
+    memset(&runtime_world, 0, sizeof(runtime_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    CHECK(dm1v1_event_queue_init(&runtime_queue, 77u),
+          "runtime queue initializes before adoption");
+    CHECK(dm1v1_event_queue_init(&loaded_queue, 123456u),
+          "loaded queue initializes before adoption");
+    runtime_world.gameTick = 77u;
+    loaded_world.gameTick = 123456u;
+    loaded_world.dungeon = &dungeon;
+    loaded_world.things = &things;
+    loaded_world.timeline.count = 1;
+    loaded_queue.eventCount = 1;
+    loaded_queue.firstUnusedIndex = 2;
+    loaded_queue.events[1].type = DM1_EVENT_DOOR;
+    loaded_queue.timeline[0] = 1u;
+
+    CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+              &runtime_world, &runtime_queue, &loaded_world, &loaded_queue) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "runtime state adoption commits world and F0435 queue together");
+    CHECK(runtime_world.gameTick == 123456u &&
+              runtime_world.dungeon == &dungeon && runtime_world.things == &things &&
+              runtime_world.timeline.count == 1,
+          "runtime state adoption publishes the loaded world");
+    CHECK(runtime_queue.gameTick == 123456u && runtime_queue.eventCount == 1 &&
+              runtime_queue.firstUnusedIndex == 2 &&
+              runtime_queue.events[1].type == DM1_EVENT_DOOR &&
+              runtime_queue.timeline[0] == 1u,
+          "runtime state adoption publishes the exact F0435 event queue");
+    CHECK(loaded_world.dungeon == NULL && loaded_world.things == NULL &&
+              loaded_queue.eventCount == 0 && loaded_queue.gameTick == 0u,
+          "runtime state adoption consumes both candidate owners");
+    CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+              &runtime_world, &runtime_queue, &runtime_world, &loaded_queue) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
+          "runtime state adoption rejects aliased world owners");
+}
+
 static void test_runtime_materializer_binds_original_group_reaction(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -4874,6 +4923,11 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                       receipt->source_runtime_stage_event_count &&
                   receipt->source_runtime_adopt_timeline_count ==
                       receipt->source_runtime_stage_timeline_count &&
+                  receipt->source_runtime_adopt_queue_committed &&
+                  receipt->source_runtime_adopt_queue_event_count ==
+                      receipt->source_runtime_stage_timeline_count &&
+                  receipt->source_runtime_adopt_queue_first_unused_index >=
+                      receipt->source_runtime_adopt_queue_event_count &&
                   receipt->source_runtime_stage_c13_event_count ==
                       receipt->source_c13_event_count &&
                   receipt->source_runtime_stage_event_count >=
@@ -4890,7 +4944,8 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   !receipt->source_runtime_stage_owns_dungeon,
                   "tail-less real PC34 save cannot borrow a runtime dungeon");
             CHECK(!receipt->source_runtime_adopt_attempted &&
-                  !receipt->source_runtime_adopted,
+                  !receipt->source_runtime_adopted &&
+                  !receipt->source_runtime_adopt_queue_committed,
                   "tail-less real PC34 save cannot reach no-fallback adoption");
         }
     }
@@ -5455,6 +5510,7 @@ int main(void)
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
+    test_runtime_state_adoption_moves_f0435_queue();
     test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();

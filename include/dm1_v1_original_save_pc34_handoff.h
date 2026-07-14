@@ -375,6 +375,12 @@ typedef struct {
     int source_runtime_adopt_owns_dungeon;
     int source_runtime_adopt_event_count;
     int source_runtime_adopt_timeline_count;
+    /* The F0238 queue is a separate runtime owner from world.timeline.
+     * Corpus adoption must move that validated C3/C4 queue with the world,
+     * rather than merely observing its pre-adoption count. */
+    int source_runtime_adopt_queue_committed;
+    int source_runtime_adopt_queue_event_count;
+    int source_runtime_adopt_queue_first_unused_index;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
@@ -646,6 +652,15 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
 int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     struct GameWorld_Compat *runtime_world,
     struct GameWorld_Compat *loaded_world);
+
+/* Transfer a fully staged F0435 runtime pair. The world and F0238 queue are
+ * committed together only after both source objects have been validated; the
+ * consumed candidate pair is cleared so it cannot be published twice. */
+int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    struct GameWorld_Compat *loaded_world,
+    struct DM1_EventQueue_V1 *loaded_queue);
 
 void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
     const struct GameWorld_Compat *world,
