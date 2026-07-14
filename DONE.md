@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7088 portrait transfer: added the source-proven
+  PC34 `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` path for exactly four
+  464-byte portrait spans, followed by F7066 slot rebinding. Format/count
+  mismatches and missing source slots fail closed before any destination byte
+  changes. No champion record, allocation, CSBWin extension, DSA, timer, or
+  save layout is inferred. Focused strict-C11 regression passes.
+
 - 2026-07-14 DM1 ReDMCSB F8137 packed pixels: added the source-linked
   MEDIA457_P20JA 4bpp packed-nibble fill from `NEC816.C`. Odd and even pixel
   starts, odd and even fill lengths, nibble masking, and bounded writes are
