@@ -8588,6 +8588,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_gdat_m11_material_receipt_real_data
             PRIVATE -Wall -Wextra -Werror -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_m11_material_receipt_real_data
+             COMMAND test_dm2_v1_gdat_m11_material_receipt_real_data)
 
     # Canonical-user-media skproject DRAW_WALL material proof. Like the
     # floor/ceiling handoff gate, this is build-only because it reads the
