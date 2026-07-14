@@ -1816,6 +1816,14 @@ int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
         out_rect->w = 103;
         out_rect->h = 71;
         return 1;
+    case DM2_SQ_D3C:
+        /* SKWIN c_gui_vp.cpp G0163: D3C is the source table's
+         * [74..149] x [25..75] panel. It has no DRAW_DOOR_FRAMES route. */
+        out_rect->x = 74;
+        out_rect->y = 25;
+        out_rect->w = 76;
+        out_rect->h = 51;
+        return 1;
     default:
         return 0;
     }
@@ -4173,7 +4181,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
                 door->destroyed_mask_gdat_index != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                !source_no_frames && door->frame_rect.w > 0 &&
+                !source_no_frames && door->frame_gdat_index != 0 &&
+                    door->frame_rect.w > 0 &&
                     door->frame_rect.h > 0,
                 door->button_gdat_index != 0 &&
                     door->button_rect.w > 0 && door->button_rect.h > 0
@@ -4486,7 +4495,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
             }
         }
-        if (!source_no_frames && door->frame_rect.w > 0 &&
+        if (!source_no_frames && door->frame_gdat_index != 0 &&
+            door->frame_rect.w > 0 &&
             door->frame_rect.h > 0) {
             const uint8_t *door_pixels = NULL;
             int door_w = 0;

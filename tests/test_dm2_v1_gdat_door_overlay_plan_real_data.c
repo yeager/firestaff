@@ -163,6 +163,28 @@ int main(void)
            d3_panel->light_palette == 3u)) || !d3_panel->raw_hash ||
         !d3_panel->decoded_hash || !d3_panel->palette_hash) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
+    /* Rebuild only after attaching the actual D3 receipt: render_doors must
+     * consume its source panel and must not invent a frame. */
+    if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
+                                                          &d3_plan)) goto fail;
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
+    dm2_v1_render_doors(&viewport);
+    if (fallback_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 1 ||
+        viewport.asset_door_panel_drawn_count != 1 ||
+        viewport.asset_door_frame_drawn_count != 0 ||
+        viewport.last_door_panel_asset_blit.dst_rect.x != 74 ||
+        viewport.last_door_panel_asset_blit.dst_rect.y != 25 ||
+        viewport.last_door_panel_asset_blit.dst_rect.w != 76 ||
+        viewport.last_door_panel_asset_blit.dst_rect.h != 51 ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     door_plan.doors[0].view_square = DM2_SQ_D0C;
     door_plan.doors[0].ornate_gdat_index =
         dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);

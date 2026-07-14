@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject D3C viewport door: the real D3 GDAT panel now
+  reaches the source-material renderer at G0163's 74,25 76x51 geometry, with
+  no frame substitute. The focused canonical-data test verifies M11 consumes
+  exactly the panel and blocks no material.
+
 - 2026-07-15 DM2 skproject DRAW_DOOR D3 receipt: M11 now admits the real
   cell-11/third-distance DOORS panel transaction without inventing a D3 frame
   or destination rectangle. It preserves the original field-2 choice or its
