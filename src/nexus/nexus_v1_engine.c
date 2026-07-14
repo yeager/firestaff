@@ -3343,14 +3343,19 @@ int nexus_v1_current_level_slev_trace_host_receipt(
     return 0;
 }
 
-static int nexus_v1_slev_raw_trace_has(const uint8_t *data, size_t size,
-                                       const char *needle) {
+static int nexus_v1_slev_raw_trace_find(const uint8_t *data, size_t size,
+                                        const char *needle, size_t *out_offset) {
     size_t needle_size;
     size_t index;
-    if (!data || !needle || !(needle_size = strlen(needle)) || needle_size > size)
+    if (out_offset) *out_offset = 0;
+    if (!data || !needle || !out_offset ||
+        !(needle_size = strlen(needle)) || needle_size > size)
         return 0;
     for (index = 0; index <= size - needle_size; ++index) {
-        if (memcmp(data + index, needle, needle_size) == 0) return 1;
+        if (memcmp(data + index, needle, needle_size) == 0) {
+            *out_offset = index;
+            return 1;
+        }
     }
     return 0;
 }
@@ -3393,15 +3398,19 @@ int nexus_v1_build_slev_dispatch_evidence(
     snprintf(callback_or_write, sizeof(callback_or_write), "pc=%08x kind=%s",
              trace->callback_or_write_pc,
              trace->callback_or_write_is_write ? "write" : "callback");
-    receipt.entry_observed = nexus_v1_slev_raw_trace_has(raw_trace,
-                                                          raw_trace_size, entry);
-    receipt.task_body_observed = nexus_v1_slev_raw_trace_has(raw_trace,
-                                                              raw_trace_size, task_body);
-    receipt.callback_or_write_observed = nexus_v1_slev_raw_trace_has(
-        raw_trace, raw_trace_size, callback_or_write);
+    receipt.entry_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, entry, &receipt.entry_raw_offset);
+    receipt.task_body_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, task_body, &receipt.task_body_raw_offset);
+    receipt.callback_or_write_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, callback_or_write,
+        &receipt.callback_or_write_raw_offset);
     receipt.callback_or_write_is_write = trace->callback_or_write_is_write;
-    if (!receipt.entry_observed || !receipt.task_body_observed ||
-        !receipt.callback_or_write_observed) {
+    receipt.observation_order_proven = receipt.entry_observed &&
+        receipt.task_body_observed && receipt.callback_or_write_observed &&
+        receipt.entry_raw_offset < receipt.task_body_raw_offset &&
+        receipt.task_body_raw_offset < receipt.callback_or_write_raw_offset;
+    if (!receipt.observation_order_proven) {
         receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION;
         *out_receipt = receipt;
         return 0;
