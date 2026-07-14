@@ -42,6 +42,11 @@ four-distinct-index form and checks that the accounting covers every valid
 face row. This is source-format provenance, not a winding, normal-plane,
 transform, material, palette, or draw claim.
 
+It also accounts for each entry-local vertex table as fully or partially
+referenced by its bounded face rows. This is only a raw index-coverage result;
+it does not establish a surface, visibility, winding, normal-plane, transform,
+material, palette, or drawing rule.
+
 The same no-draw receipt also counts connected vertex-index components within
 each Structure3 entry. A component joins only distinct indexes that co-occur
 in a bounded face row; it is not an edge direction, winding, surface,

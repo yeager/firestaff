@@ -731,6 +731,12 @@ typedef struct {
     int linked_face_vertex_reference_count;
     int referenced_vertex_count;
     int unreferenced_vertex_count;
+    /* Per-entry coverage is a bounded index observation: whether the face
+     * rows mention every vertex in that entry's own table. It does not infer
+     * connectivity, winding, visibility, or any drawing behaviour. */
+    int fully_referenced_vertex_entry_count;
+    int partially_referenced_vertex_entry_count;
+    int zero_vertex_entry_count;
     /* Components are formed only by distinct vertex indexes that co-occur
      * within one bounded face row. They do not establish edge direction,
      * winding, surface continuity, or any mesh/draw behaviour. */
@@ -745,6 +751,7 @@ typedef struct {
     int face_vertex_indexes_valid;
     int face_vertex_linkage_valid;
     int face_topology_accounting_valid;
+    int face_vertex_entry_coverage_accounting_valid;
     int face_vertex_component_accounting_valid;
     int normal_count_matches_face_count;
     int valid;

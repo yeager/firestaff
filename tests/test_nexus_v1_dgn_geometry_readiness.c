@@ -649,6 +649,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_faces.face_vertex_component_count >= 0 &&
               handoff.structure3_faces.face_vertex_component_count <=
                   handoff.structure3_faces.referenced_vertex_count &&
+              handoff.structure3_faces.face_vertex_entry_coverage_accounting_valid &&
+              handoff.structure3_faces.fully_referenced_vertex_entry_count +
+                      handoff.structure3_faces.partially_referenced_vertex_entry_count +
+                      handoff.structure3_faces.zero_vertex_entry_count ==
+                  handoff.structure3_faces.entry_count &&
               handoff.structure3_faces.normal_count_matches_face_count &&
               handoff.structure3_faces.unclassified_fill_count == 0 &&
               !handoff.structure3_faces.draw_semantics_proven &&
@@ -1860,11 +1865,15 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.linked_face_vertex_reference_count == 12 &&
           faces.referenced_vertex_count == 5 &&
           faces.unreferenced_vertex_count == 0 &&
+          faces.fully_referenced_vertex_entry_count == 2 &&
+          faces.partially_referenced_vertex_entry_count == 0 &&
+          faces.zero_vertex_entry_count == 0 &&
           faces.face_vertex_component_count == 3 &&
           faces.maximum_vertex_reference_count == 6 &&
           faces.textured_face_count == 1 && faces.static_texture_fill_count == 4 &&
           faces.face_vertex_indexes_valid && faces.face_vertex_linkage_valid &&
           faces.face_topology_accounting_valid &&
+          faces.face_vertex_entry_coverage_accounting_valid &&
           faces.face_vertex_component_accounting_valid &&
           faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
@@ -1921,6 +1930,7 @@ static void test_structure3_entry_header_boundaries(void) {
           nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
           !faces.valid && !faces.face_vertex_indexes_valid &&
           !faces.face_vertex_linkage_valid &&
+          !faces.face_vertex_entry_coverage_accounting_valid &&
           !faces.face_vertex_component_accounting_valid &&
           !faces.draw_semantics_proven,
           "out-of-range Structure3 face indexes remain fail-closed");
