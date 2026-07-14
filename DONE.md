@@ -175,6 +175,11 @@
   test. F8128 is source-nonapplicable because its unbounded ISR/timer polling
   has no portable PC34-equivalent host progress contract.
 
+- 2026-07-14 DM1/CSB ReDMCSB F8129/F8130: source-locked IBMIO.C device-type
+  mapping and three-attempt first-sector probe with resets after failed reads.
+  The focused strict-C11 test keeps actual DOS IOCTL and BIOS transports as
+  caller-owned boundaries and does not infer their host behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
   I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
   adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
