@@ -716,3 +716,77 @@ done:
     *out_receipt = receipt;
     return receipt.provenance_complete;
 }
+
+int nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
+    const char *attestation_path, const char *trace_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, const char *producer_binary_path,
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
+    Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1ProducerAttestationReceipt receipt;
+    uint8_t *attestation = NULL, *trace = NULL, *output = NULL, *command = NULL;
+    uint8_t *palette = NULL, *producer = NULL;
+    size_t attestation_size = 0U, trace_size = 0U, output_size = 0U;
+    size_t command_size = 0U, palette_size = 0U, producer_size = 0U;
+    const char *cursor;
+    const char magic[] = NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC "\n";
+    uint64_t trace_hash, output_hash, command_hash, palette_hash, producer_hash;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.independent_authentication_required = 1;
+    if (!raw_sidecars || !provenance || !raw_sidecars->raw_sidecars_bound ||
+        !provenance->provenance_complete || !attestation_path || !trace_path ||
+        !output_path || !vdp1_command_path || !palette_path ||
+        !producer_binary_path) goto done;
+    receipt.raw_sidecars_bound = 1;
+    receipt.provenance_complete = 1;
+    attestation = read_capture_file(attestation_path,
+                                    NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                                    &attestation_size);
+    trace = read_capture_file(trace_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                              &trace_size);
+    output = read_capture_file(output_path, 16U * 1024U * 1024U, &output_size);
+    command = read_capture_file(vdp1_command_path, 64U * 1024U, &command_size);
+    palette = read_capture_file(palette_path, 1024U * 1024U, &palette_size);
+    producer = read_capture_file(producer_binary_path, 512U * 1024U * 1024U,
+                                 &producer_size);
+    if (!attestation || !trace || !output || !command || !palette || !producer ||
+        attestation_size <= sizeof(magic) - 1U ||
+        memcmp(attestation, magic, sizeof(magic) - 1U) != 0) goto done;
+    receipt.attestation_file_read = 1;
+    cursor = (const char *)attestation + sizeof(magic) - 1U;
+    if (strncmp(cursor, "producer_name=MEDNAFEN\n", 23U) != 0) goto done;
+    cursor += 23U;
+    if (strncmp(cursor, "capture_mode=SH2_VDP1_BUS_TRACE\n", 32U) != 0) goto done;
+    cursor += 32U;
+    if (strncmp(cursor, "original_saturn_execution=CLAIMED\n", 34U) != 0) goto done;
+    cursor += 34U;
+    if (!read_u64(&cursor, "trace_fnv1a64=", &trace_hash) ||
+        !read_u64(&cursor, "output_fnv1a64=", &output_hash) ||
+        !read_u64(&cursor, "vdp1_command_fnv1a64=", &command_hash) ||
+        !read_u64(&cursor, "palette_fnv1a64=", &palette_hash) ||
+        !read_u64(&cursor, "producer_binary_fnv1a64=", &producer_hash) ||
+        *cursor != '\0') goto done;
+    receipt.attestation_parsed = 1;
+    receipt.capture_mode_declared = 1;
+    receipt.original_saturn_execution_claimed = 1;
+    receipt.producer_binary_bound = producer_hash == fnv1a64(producer, producer_size);
+    receipt.artifact_hashes_bound = trace_hash == fnv1a64(trace, trace_size) &&
+        output_hash == fnv1a64(output, output_size) &&
+        command_hash == fnv1a64(command, command_size) &&
+        palette_hash == fnv1a64(palette, palette_size);
+    receipt.workflow_complete = receipt.producer_binary_bound &&
+        receipt.artifact_hashes_bound;
+done:
+    free(attestation); free(trace); free(output); free(command); free(palette);
+    free(producer);
+    receipt.capture_producer_authenticated = 0;
+    receipt.runtime_import_permitted = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.workflow_complete;
+}

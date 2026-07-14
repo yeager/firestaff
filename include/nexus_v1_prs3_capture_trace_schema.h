@@ -10,6 +10,8 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V1"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V2"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V3"
+#define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
+    "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
 
 typedef enum {
@@ -211,6 +213,27 @@ typedef struct {
     int runtime_import_permitted;
 } Nexus_V1_Prs3Vdp1ProvenanceReceipt;
 
+/* A producer attestation is a strict description of a proposed external
+ * capture workflow. It binds the producer binary and artifact fingerprints,
+ * but its text is not a trust authority: independent original-Saturn review
+ * remains mandatory and no receipt can promote decoding or rendering. */
+typedef struct {
+    int attestation_file_read;
+    int attestation_parsed;
+    int raw_sidecars_bound;
+    int provenance_complete;
+    int producer_binary_bound;
+    int capture_mode_declared;
+    int original_saturn_execution_claimed;
+    int artifact_hashes_bound;
+    int workflow_complete;
+    int independent_authentication_required;
+    int capture_producer_authenticated;
+    int runtime_import_permitted;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Vdp1ProducerAttestationReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -336,5 +359,16 @@ int nexus_v1_prs3_vdp1_capture_validate_provenance(
     const char *producer_binary_path,
     const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
     Nexus_V1_Prs3Vdp1ProvenanceReceipt *out_receipt);
+
+/* Validate a source-owned producer-attestation file after sidecar and ledger
+ * checks. The fixed capture mode is `SH2_VDP1_BUS_TRACE`; the claimed
+ * original-Saturn execution is recorded but never trusted as authentication. */
+int nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
+    const char *attestation_path, const char *trace_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, const char *producer_binary_path,
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const Nexus_V1_Prs3Vdp1ProvenanceReceipt *provenance,
+    Nexus_V1_Prs3Vdp1ProducerAttestationReceipt *out_receipt);
 
 #endif

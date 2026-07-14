@@ -525,6 +525,7 @@ int main(void) {
         Nexus_V1_Prs3Vdp1CaptureFileReceipt file_receipt;
         Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecar_receipt;
         Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance_receipt;
+        Nexus_V1_Prs3Vdp1ProducerAttestationReceipt attestation_receipt;
         expect(!nexus_v1_prs3_vdp1_capture_validate_files(
                    "/missing/nexus-v3.trace", "/missing/MENU.BPK",
                    "/missing/DM.BIN", &file_receipt) &&
@@ -561,6 +562,18 @@ int main(void) {
                    !provenance_receipt.capture_producer_authenticated &&
                    !provenance_receipt.runtime_import_permitted,
                "provenance gate rejects an absent raw capture ledger without authenticating a producer");
+        expect(!nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
+                   "/missing/attestation", "/missing/trace", "/missing/output",
+                   "/missing/command", "/missing/palette", "/missing/producer",
+                   &sidecar_receipt, &provenance_receipt, &attestation_receipt) &&
+                   !attestation_receipt.attestation_file_read &&
+                   !attestation_receipt.workflow_complete &&
+                   attestation_receipt.independent_authentication_required &&
+                   !attestation_receipt.capture_producer_authenticated &&
+                   !attestation_receipt.runtime_import_permitted &&
+                   !attestation_receipt.decoder_promoted &&
+                   !attestation_receipt.fallback_visuals_permitted,
+               "producer attestation rejects absent evidence without authenticating a capture source");
     }
 
     test_dm_bin_prs3_catalog();

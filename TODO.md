@@ -118,6 +118,11 @@
   capture-producer binary. It checks file identity only: the producer remains
   unauthenticated and no trace can promote a decoder, pixels, palette route,
   or runtime import.
+  A source-owned producer-attestation layer now requires the fixed
+  `MEDNAFEN`/`SH2_VDP1_BUS_TRACE` workflow plus exact artifact and producer
+  hashes. Its original-Saturn statement is intentionally only a claim; an
+  independent review/certificate remains required and all decode/render paths
+  stay closed.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette
