@@ -21,6 +21,12 @@
   offsets and inclusive endpoints are covered; no input layout, zone, menu,
   HUD, DSA, or runtime fallback was introduced. Focused strict-C11 regression
   passes.
+- 2026-07-14 DM2 SKProject teleporter GDAT runtime bridge: the dungeon
+  `DRAW_MAP_CHIP` teleporter branch now resolves only `TELEPORTERS/0/F9`, uses
+  the source map-chip frame selected by the live tick, and consumes the image's
+  local IMG3 palette. Its raw/decoded/palette identity is carried to M11; a
+  missing image or palette blocks the source-required frame without a visual
+  substitute. Focused teleporter material and M11 receipt-gate tests pass.
 
 - 2026-07-14 CSB ReDMCSB F0670/F0671 text helpers: added the PC first-match
   replacement and signed decimal long formatting used by save-path and

@@ -591,6 +591,11 @@ int dm2_v1_viewport_weather_environment_graphic_address(
     return 1;
 }
 
+int dm2_v1_viewport_teleporter_map_chip_graphic_index(void)
+{
+    return DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP;
+}
+
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
  * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542
@@ -2267,6 +2272,9 @@ static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
     return s->gdat_interface_palette16[logical_color];
 }
 
+static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
+                                         uint32_t material_bit);
+
 static void dm2_v1_blit_scaled_material_bitmap(DM2_V1_ViewportState *s,
                                                 uint8_t *dst,
                                                 int dst_stride,
@@ -2299,6 +2307,53 @@ static void dm2_v1_blit_scaled_material_bitmap(DM2_V1_ViewportState *s,
             dst[fy * dst_stride + fx] =
                 dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
+    }
+}
+
+void dm2_v1_render_teleporter_fields(DM2_V1_ViewportState *s)
+{
+    static const struct { int x, y, w, h; } placements[DM2_SQ_COUNT] = {
+        { 102, 63, 16, 10 }, {  68, 65, 20, 12 }, { 136, 65, 20, 12 },
+        {  88, 70, 48, 24 }, {  45, 72, 30, 18 }, { 179, 72, 30, 18 },
+        {  74, 78, 76, 38 }, {  34, 82, 42, 25 }, { 192, 82, 42, 25 },
+        {  53, 90,118, 58 }, {  13, 96, 54, 34 }, { 203, 96, 54, 34 }
+    };
+    const uint8_t *pixels = NULL;
+    int width = 0, height = 0, stride = 0;
+    int frame_width, frame_count, frame_index;
+    int found = 0;
+    const int gdat_index = dm2_v1_viewport_teleporter_map_chip_graphic_index();
+
+    if (!s || !s->framebuffer || s->is_outdoor) return;
+    for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+        if (s->squares[i].square_type == DM2_SQUARE_TELEPORTER) {
+            found = 1;
+            break;
+        }
+    }
+    if (!found) return;
+
+    /* SKProject DRAW_MAP_CHIP selects TELEPORTERS/0/F9 and advances its
+     * horizontal map-chip frame with the live game tick. */
+    if (dm2_v1_fetch_viewport_local_material(
+            s, gdat_index, &pixels, &width, &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width ||
+        (frame_count = dm2_v1_viewport_map_chip_frame_count(width, height)) <= 0 ||
+        (frame_width = dm2_v1_viewport_map_chip_frame_width(width, height)) <= 0) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_TELEPORTER);
+        return;
+    }
+    frame_index = dm2_v1_viewport_map_chip_frame_index(
+        s->tick_count, frame_count);
+    for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+        if (s->squares[i].square_type != DM2_SQUARE_TELEPORTER) continue;
+        dm2_v1_blit_scaled_material_bitmap(
+            s, s->framebuffer, s->fb_stride,
+            placements[i].x, placements[i].y, placements[i].w, placements[i].h,
+            pixels + frame_index * frame_width, frame_width, height, stride,
+            DM2_COLOR_TRANSPARENT, &s->gdat_sprite_palette_consumed_count);
+        ++s->asset_teleporter_drawn_count;
     }
 }
 
@@ -5645,6 +5700,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     if (!s->dirty && !s->framebuffer) return;
     s->asset_floor_ceiling_drawn_count = 0;
     s->fallback_floor_ceiling_drawn_count = 0;
+    s->asset_teleporter_drawn_count = 0;
     s->blocked_material_draw_count = 0;
     s->blocked_material_mask = 0u;
     s->asset_outdoor_sky_drawn_count = 0;
@@ -5893,6 +5949,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
 
         /* 2. Floor and ceiling */
         dm2_v1_render_floor_ceiling(s);
+
+        /* 2b. Source-owned TELEPORTERS/0/F9 map-chip fields. */
+        dm2_v1_render_teleporter_fields(s);
 
         /* 3. Walls — placeholder pass (real walls need GRAPHICS.DAT) */
         dm2_v1_render_walls(s);
