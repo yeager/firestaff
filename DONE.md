@@ -17,6 +17,17 @@
   direct record route. Verification: `dm2_v1_g1_center_ray_surface_gate`
   proves simultaneous center and side panels consume only source material.
 
+- 2026-07-14 CSBWin CursorFilter ReadGame save handoff: after the existing
+  GAMEBLOCK2 `objectInHand` handoff reaches the live CSB runtime, it now
+  sends CSBWin's exact `CURSORFILTER_ReadGame` six-word packet through the
+  authenticated `EDT_SpecialLocations/ESL_CURSORFILTER` type-47 DSA action.
+  The source treats ReadGame as a notification, so DSA output cannot replace
+  the restored cursor object. Missing, altered, or unsupported DSA data is a
+  no-op and no cursor operation, cancellation, or synthetic object route was
+  introduced. Source: CSBWin `SaveGame.cpp:1754-1760`, `MoveObject.cpp:797-`
+  `852`, and `CSB.h` CursorFilter definitions. Verification:
+  `csb_v1_csbwin_cursor_read_game_filter_runtime`.
+
 - 2026-07-14 DM2 G1 center-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now reaches D0/D1/D2 as its actual SKProject terrain class
   before M11 consumes the already source-bound wall/floor material plan.

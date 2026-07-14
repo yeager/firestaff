@@ -957,6 +957,14 @@ int csb_v1_runtime_execute_csbwin_damage_character_filter(
     CSB_V1_RuntimeProfile *profile, int champion_index, int requested_damage,
     uint16_t wound_mask, uint16_t attack_type, int *out_final_damage);
 
+/* CSBWin SaveGame.cpp calls CursorFilter with CURSORFILTER_ReadGame after
+ * restoring GAMEBLOCK2.objectInHand.  This is that exact six-word packet:
+ * `{ object, 1, 0, 0, 0, 0 }`.  ReadGame is notification-only in the source;
+ * any values written back by the DSA are deliberately not used to replace the
+ * restored cursor object. */
+int csb_v1_runtime_execute_csbwin_cursor_read_game_filter(
+    CSB_V1_RuntimeProfile *profile, uint16_t object_thing);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */

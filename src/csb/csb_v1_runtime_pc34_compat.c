@@ -19069,6 +19069,27 @@ int csb_v1_runtime_execute_csbwin_damage_character_filter(
     return 1;
 }
 
+int csb_v1_runtime_execute_csbwin_cursor_read_game_filter(
+    CSB_V1_RuntimeProfile *profile, uint16_t object_thing)
+{
+    int parameters[6];
+
+    if (!profile) return 0;
+    /* CSBWin SaveGame.cpp:1754-1760 restores GAMEBLOCK2.objectInHand, then
+     * sends CURSORFILTER_ReadGame through MoveObject.cpp::CursorFilter.
+     * Unlike cancelable cursor operations, that call ignores returned packet
+     * words, so never let this bounded notification replace the save-owned
+     * cursor object. */
+    parameters[0] = (int)object_thing;
+    parameters[1] = 1; /* CURSORFILTER_ReadGame */
+    parameters[2] = 0;
+    parameters[3] = 0;
+    parameters[4] = 0;
+    parameters[5] = 0;
+    return csb_v1_runtime_execute_csbwin_special_filter_action(
+        profile, CSB_V1_EXPOOL_ESL_CURSOR_FILTER, 0, parameters, 6);
+}
+
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeDSAFilterBinding *binding,
