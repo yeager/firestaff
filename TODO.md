@@ -639,6 +639,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     state. Host interrupt scheduling, SDL event coalescing and cursor drawing
     timing remain outside this narrow implementation and still require the
     recorded PC34 evidence above.
+  - 2026-07-14 IBMIO.C F8101/F8108/F8109 now preserve handler registration,
+    72-byte pointer-slot registration and visible-pointer transition ordering.
+    The DOS interrupt, deferred mouse history and host video drawing remain
+    callback boundaries and still require the recorded PC34 evidence above.
 
 - REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
   mouse interrupt path.** The source records a platform/version race fix for

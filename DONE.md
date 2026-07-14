@@ -125,6 +125,11 @@
   and formatted button-state read with a focused strict-C11 test. This remains
   a narrow PC34 driver-state adapter, not a host interrupt or cursor renderer.
 
+- 2026-07-14 DM1/CSB ReDMCSB F8101/F8108/F8109: source-locked IBMIO.C mouse
+  handler registration, four 18x18 bitmap slots and pointer transition order.
+  The focused strict-C11 test preserves the visible and hidden-pointer paths
+  without claiming DOS interrupt or host-video behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
   I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
   adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
