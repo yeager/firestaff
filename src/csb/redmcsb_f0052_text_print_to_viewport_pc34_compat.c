@@ -18,6 +18,7 @@ bool F0052_TEXT_PrintToViewport_PC34(
     text_print(context, viewport_bitmap,
                REDMCSB_F0052_VIEWPORT_BYTE_WIDTH_PC34,
                (uint16_t)x, (uint16_t)y, text_color,
-               REDMCSB_F0052_VIEWPORT_BACKGROUND_COLOR_PC34, string);
+               REDMCSB_F0052_VIEWPORT_BACKGROUND_COLOR_PC34, string,
+               REDMCSB_F0052_VIEWPORT_HEIGHT_PC34);
     return true;
 }
