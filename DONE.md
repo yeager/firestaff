@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject HUD command delivery: M11 now checks the decoded
+  pixel identity of every real GDAT HUD command before composition; mismatch
+  is no-draw, never a generated HUD substitute.
+
 - 2026-07-15 DM2 skproject G1 scene identity: M11 frame tokens now retain
   both the G1 level and its MapGraphicsStyle before presenting GDAT scene/HUD.
 
