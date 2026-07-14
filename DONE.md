@@ -10,8 +10,8 @@
 - 2026-07-14 CSB title asset cadence: the source-backed sequence now presents
   all 20 CHAOS frames, holds the complete CHAOS image for two VBlanks, then
   presents STRIKES BACK for one VBlank, following ReDMCSB `TITLE.C F0437`.
-  The terminal real-asset handoff target builds and runs with the updated
-  sequence.
+  The source-step/receipt coherence test is registered in CTest and passes,
+  alongside the terminal real-asset handoff target.
 
 - 2026-07-14 DM1 inventory controls and spell-panel source surface: M11 now
   dispatches the visible C141 music, C140 save, C145 rest, and C011 close
