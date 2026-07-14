@@ -26,6 +26,7 @@
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
+#include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "dialog_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
@@ -242,15 +243,22 @@ static inline int M11_GameView_GetV1MessageAreaZone(
 static inline int M11_GameView_GetV1DialogChoiceTextZone(
     int choiceCount, int choiceIndex, int* outX, int* outY, int* outW,
     int* outH) {
-    DialogCompatChoiceLayout layout;
+    DM1_V1_DialogRectPc34 rect;
     if (!outX || !outY || !outW || !outH || choiceIndex < 0 ||
-        !DIALOG_Compat_GetChoiceLayout((unsigned int)choiceCount,
-                                       (unsigned int)choiceIndex + 1u,
-                                       &layout)) return 0;
-    *outW = choiceCount <= 2 ? 192 : 86;
-    *outH = 7;
-    *outX = layout.centerX - *outW / 2;
-    *outY = layout.centerY - 4;
+        !dm1_v1_dialog_choice_text_rect_pc34(choiceCount, choiceIndex,
+                                              &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+static inline int M11_GameView_GetV1DialogChoiceHitZone(
+    int choiceCount, int choiceIndex, int* outX, int* outY, int* outW,
+    int* outH) {
+    DM1_V1_DialogRectPc34 rect;
+    if (!outX || !outY || !outW || !outH || choiceIndex < 0 ||
+        !dm1_v1_dialog_choice_hit_rect_pc34(choiceCount, choiceIndex,
+                                             &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
     return 1;
 }
 #endif
