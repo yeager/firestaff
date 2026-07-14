@@ -172,6 +172,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
+                                    const char* captureManifestPath,
                                     const char* savePath);
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
@@ -11893,6 +11894,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                       spec->verifiedAssetPath,
                                       spec->verifiedAssetMd5,
                                       spec->theronTrack02LoaderReceipt,
+                                      spec->theronTrack02CaptureManifestPath,
                                       spec->savePath);
         if (ok) {
             state->presentationMode = spec->presentationMode;
@@ -13755,6 +13757,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
+                                    const char* captureManifestPath,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
@@ -13787,6 +13790,13 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             state,
             &launch.launch_host_receipt,
             NULL);
+        goto fail;
+    }
+
+    if (captureManifestPath && captureManifestPath[0] != '\0' &&
+        !theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
+            &launch, captureManifestPath)) {
+        m11_set_status(state, "STARTUP", "TRACK02 CAPTURE MANIFEST REJECTED");
         goto fail;
     }
 

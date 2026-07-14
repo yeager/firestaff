@@ -352,6 +352,9 @@ typedef struct {
     const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
     const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
     const Theron_Track02StartupLoaderReceipt* theronTrack02LoaderReceipt;
+    /* Optional authenticated Track 02 capture manifest. The Theron launch
+     * consumes it before publishing its detached runtime receipt. */
+    const char* theronTrack02CaptureManifestPath;
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
