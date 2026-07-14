@@ -4195,11 +4195,14 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
                                                       (uint32_t)candidate);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, mask);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, count);
-        ready = count >= 4u &&
-                (mask & (1u << 0)) != 0u &&
-                (mask & (1u << 1)) != 0u &&
-                (mask & (1u << 3)) != 0u &&
-                (mask & (1u << 4)) != 0u;
+        /* SKProject map setup admits the selected GRAPHICSSET after its
+         * SCENE_COLORKEY and SCENE_FLAGS reads.  The later light and weather
+         * words are separate consumers: requiring them here would let an
+         * unproven subsystem block an otherwise source-owned dungeon surface.
+         * Keep their successfully read values in this receipt for those
+         * consumers, but do not promote them to map-scene prerequisites. */
+        ready = (mask & ((1u << 0) | (1u << 1))) ==
+                ((1u << 0) | (1u << 1));
         if (ready || count > best_count) {
             best_hash = hash;
             best_mask = mask;
