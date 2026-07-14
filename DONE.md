@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 CSBWin Vi Altar `EDT_ChampionBones` runtime handoff: restored
+  C13 state-1 timers now authenticate and consume the exact one-word saved
+  DB11/EXPOOL record, use its low-16 fingerprint to select the matching dead
+  imported party champion, remove the exact DB10 bones object, and schedule
+  the source state-0 successor. The consumed source record is returned to its
+  DB11 free list before the save-tail FNV receipt is refreshed, so it cannot
+  remain in a later export. The old no-tail DB10-value branch is retained for
+  original saves. Source-lock: CSBWin `Timer.cpp` `ProcessTT_ViAltar`
+  lines 2692-2741 and `data.cpp` `EXPOOL::GetChampionBonesRecord` lines
+  1660-1669. Verification: focused
+  `test_csb_v1_csbwin_champion_bones_expool_runtime`.
+
 - ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
   map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
   retained by the runtime and consumed directly by M11 with its original

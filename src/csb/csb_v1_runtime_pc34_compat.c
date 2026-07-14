@@ -17436,10 +17436,94 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         /* CSBWin CSBCode.cpp:6469 dispatches TT_ViAltar to Timer.cpp:
          * 2663-2763. Retain only ProcessTT_ViAltar's final packedState()==0
          * step, which calls Character.cpp:804-825 BringCharacterToLife.
-         * State 2 needs CreateCloud. State 1 can additionally retain the
-         * old-save DB10 branch when no EXPOOL tail is present: it owns the
-         * exact bones Thing, its DB10 value, and the +1 successor. The source
-         * stores packed position in timerUByte5 bits 2..3. */
+         * State 2 needs CreateCloud. State 1 has both the CSBWin
+         * EDT_ChampionBones fingerprint path and the old-save DB10 fallback.
+         * The source stores packed position in timerUByte5 bits 2..3. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function &&
+            record->mapIndex == timer->level &&
+            record->mapX == timer->ubyte6 && record->mapY == timer->ubyte7 &&
+            record->cell == timer->ubyte8 && record->effect == timer->ubyte9 &&
+            record->aux0 == timer->ubyte5 &&
+            (timer->ubyte5 & 3u) == 1u &&
+            profile->csbwin_appended_tail_valid && profile->dungeon_handle &&
+            timer->time < 0x00ffffffu) {
+            const uint16_t bones_thing = (uint16_t)timer->ubyte8 |
+                ((uint16_t)timer->ubyte9 << 8);
+            const uint32_t record_id = (9u << 24) | (uint32_t)bones_thing;
+            const uint8_t *payload = NULL;
+            size_t payload_size = 0u;
+            uint16_t fingerprint;
+            uint8_t *bones_record;
+            struct DM1_Event_V1 next;
+            int bones_type;
+            int bones_size;
+            int event_index;
+
+            /* CSBWin Timer.cpp:2692-2741 uses EXPOOL::GetChampionBonesRecord
+             * for current saves. It consumes only a one-word record, matches
+             * its low-16 fingerprint to a dead party champion, then removes
+             * the exact DB10 bones object and queues the state-zero successor.
+             * data.cpp EXPOOL::Read removes that record, so use the existing
+             * authenticated Read-shaped delete rather than retaining stale
+             * save-tail ownership after the bones leave the dungeon. */
+            bones_record = csb_v1_runtime_mutable_thing_record(
+                profile->dungeon_handle, bones_thing, &bones_type, &bones_size);
+            if (bones_record && bones_type == 10 && bones_size >= 4 &&
+                ((bones_thing >> 14) & 3u) == ((timer->ubyte5 >> 2) & 3u) &&
+                csb_v1_runtime_square_contains_thing(profile->dungeon_handle,
+                                                       bones_thing,
+                                                       timer->level,
+                                                       timer->ubyte6,
+                                                       timer->ubyte7) &&
+                csb_v1_runtime_locate_appended_expool_record_internal(
+                    profile, record_id, &payload, &payload_size) &&
+                payload && payload_size == sizeof(uint32_t)) {
+                fingerprint = (uint16_t)csb_v1_runtime_read_le32(payload);
+                for (champion_index = 0;
+                     champion_index < profile->party_state.ChampionCount;
+                     ++champion_index) {
+                    if (profile->party_state.Champions[champion_index].Fingerprint ==
+                        fingerprint) {
+                        break;
+                    }
+                }
+                if (champion_index < profile->party_state.ChampionCount &&
+                    profile->party_state.Champions[champion_index].CurrentHealth ==
+                        0) {
+                    memset(&next, 0, sizeof(next));
+                    next.map_time = DM1_MAP_TIME_MAKE(timer->level,
+                                                       timer->time + 1u);
+                    next.type = timer->function;
+                    next.priority = (uint8_t)(champion_index << 2);
+                    next.b_mapX = timer->ubyte6;
+                    next.b_mapY = timer->ubyte7;
+                    next.c_cell = timer->ubyte8;
+                    next.c_effect = timer->ubyte9;
+                    event_index = csb_v1_runtime_add_timeline_event(profile,
+                                                                      &next);
+                    if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT &&
+                        csb_v1_runtime_replace_appended_expool_record_internal(
+                            profile, record_id, NULL, 0u) &&
+                        csb_v1_runtime_unlink_thing_from_square(
+                            profile->dungeon_handle, bones_thing, timer->level,
+                            timer->ubyte6, timer->ubyte7)) {
+                        csb_v1_runtime_write_u16(bones_record, 0xfffeu);
+                        csb_v1_runtime_write_u16(bones_record + 2, 0u);
+                        profile->csbwin_appended_tail_fnv1a =
+                            csb_v1_runtime_fnv1a32(
+                                profile->csbwin_appended_tail,
+                                profile->csbwin_appended_tail_preserved_size);
+                        timer->time += 1u;
+                        timer->ubyte5 = (uint8_t)(champion_index << 2);
+                        profile->csbwin_timeline_event_queue_slot[event_index] =
+                            queue_slot;
+                    }
+                }
+            }
+            return 1;
+        }
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
