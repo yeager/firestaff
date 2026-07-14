@@ -6066,6 +6066,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original-Saturn capture is still required for render semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 update: the active canonical LEV route can now atomically emit
+    its verified dual-source Structure1F/Structure1A and Structure3-face
+    target for an external capture producer. The written request contains no
+    capture lanes or decoder output; unresolved Saturn semantics remain
+    fail-closed.
   - 2026-07-15 update: external dual-source capture targets now originate at
     the active engine package route. The engine requires retained canonical
     LEV bytes and a complete live Structure1F/Structure1A topology candidate
