@@ -552,6 +552,12 @@
     does not infer mouse coordinates, dungeon cells, graphics, events, DSA,
     or a replacement sound route. Real CSB runtime input/audio binding is
     still required for end-to-end play evidence.
+  - 2026-07-14 update: F0665 plus the PC F0362 zone gate now routes a
+    caller-owned F0638 zone through source screen-update enable, copied
+    highlighted zone, F0698 invert, enabled state, screen-update disable, and
+    F0693 vertical-blank wait. An unresolved zone leaves state/video untouched.
+    The adapter supplies no layout, framebuffer, menu event, DSA, or runtime
+    substitute; real CSB menu/HUD zone and video binding remain required.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
