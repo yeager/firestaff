@@ -895,6 +895,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     black waits at the caller-owned VBlank boundary and writes 32 zero rows;
     normal restores verified source RGB6 bytes through F8156. SDL/Mac DAC
     consumption remains separately unproven.
+  - 2026-07-14 VIDEODRV.C F8160 now preserves the PC 3.4 C25 creature palette
+    mutation: six existing palette-table rows receive only the RGB6 bytes from
+    one real `G8175_CREAT_PAL` set. Publishing that altered logical palette to
+    the live SDL/Mac DAC remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8161 now preserves the PC 3.4 C25 viewport
     source-to-aperture consumption: it applies the original `0x10` RGB bank
     only to an opaque, unflipped `224 -> 320` F8151 blit. Binding this logical
