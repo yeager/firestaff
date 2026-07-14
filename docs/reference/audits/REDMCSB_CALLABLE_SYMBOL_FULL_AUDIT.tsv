@@ -1078,7 +1078,7 @@ F1068_FreeAmigaStuff	F	FreeAmigaStuff	AMIGINIT.C:630-671;HINT001.C:4,65-72;HINTM
 F1069_OpenDosLibrary	F	OpenDosLibrary	AMIGINIT.C:4,67-77,343	include/redmcsb_f1069_open_dos_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available DOS-library open route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1070_CloseDosLibrary	F	CloseDosLibrary	AMIGINIT.C:79	include/redmcsb_f1070_close_dos_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available DOS-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1071_OpenGraphicsLibrary	F	OpenGraphicsLibrary	AMIGINIT.C:4,88-99,333-361	include/redmcsb_f1071_open_graphics_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available graphics-library open route is Amiga-only; focused PC boundary is intentionally a no-op.
-F1072_CloseGraphicsLibrary	F	CloseGraphicsLibrary	AMIGINIT.C:101	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1072_CloseGraphicsLibrary	F	CloseGraphicsLibrary	AMIGINIT.C:4,101-108,363-375	include/redmcsb_f1072_close_graphics_library_pc34_compat.h	SOURCE_NONAPPLICABLE	Available graphics-library teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1073_OpenIntuitionLibrary	F	OpenIntuitionLibrary	AMIGINIT.C:110	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1074_CloseIntuitionLibrary	F	CloseIntuitionLibrary	AMIGINIT.C:122	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1075_OpenLayersLibrary	F	OpenLayersLibrary	AMIGINIT.C:133	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
