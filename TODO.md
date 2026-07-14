@@ -85,11 +85,13 @@
   host-key events, three System-Card IRQ callbacks, zero non-System-Card
   PCECD reads, and zero raw-sector spans. The next PID-targeted capture
   additionally reached only SDL event types `519,518`, with zero window or
-  focus callback and zero key event. This identifies the remaining blocker as
-  macOS Quartz-to-SDL keyboard-queue delivery, not a PCE mapping or CD loader
-  interpretation. It remains non-admissible. Obtain an SDL-observed keyboard
-  event or a later original CD_READ trace; do not inject an emulated controller
-  state.
+  focus callback and zero key event. `otool -L` proves that capture binary was
+  linked to Homebrew `sdl2-compat`; its SDL3 bridge emits those as
+  `WINDOW_PIXEL_SIZE_CHANGED` and `WINDOW_RESIZED`, while Mednafen is compiled
+  for SDL2 input events. The build path now rejects that bridge and can prepend
+  a verified real-SDL2 prefix via `FIRESTAFF_MEDNAFEN_SDL2_PREFIX`. It remains
+  non-admissible until an authentic run on real SDL2 observes a key event and
+  later loader/CD receipts; do not inject an emulated controller state.
   Receipt-only inspection now uses an isolated staging world; direct runtime
   mutation continues to require the original Stage 2/3 physical-media gate.
 - 2026-07-14 Nexus Structure3 external capture follow-up: the capture-target
