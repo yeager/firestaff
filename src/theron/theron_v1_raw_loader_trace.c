@@ -802,6 +802,74 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_level_handoff(
+    const Theron_V1RawLoaderTraceCoalescedLaterReceipt *coalesced_receipt,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out)
+{
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02InitialLevelLoaderRoute route;
+    uint32_t hash;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
+        !coalesced_receipt->valid ||
+        !coalesced_receipt->observation_order_verified ||
+        !coalesced_receipt->selector_sector_bytes_verified ||
+        coalesced_receipt->sector_count != 1u ||
+        strcmp(coalesced_receipt->track02_md5, track02_md5) != 0 ||
+        (coalesced_receipt->variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         coalesced_receipt->variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        theron_v1_track02_variant_for_md5(track02_md5) !=
+            coalesced_receipt->variant ||
+        theron_v1_track02_capture_initial_level_object_boundary(
+            track02_data, track02_size, track02_md5, &boundary) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !boundary.valid ||
+        !boundary.promotion_blocked || boundary.object_table_parsed ||
+        boundary.object_table_semantics_proven ||
+        coalesced_receipt->later_track02_record != boundary.track02_record ||
+        theron_v1_track02_load_initial_level_loader_route(
+            track02_data, track02_size, track02_md5,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &route) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !route.valid || route.semantics.envelope.track02_record !=
+            boundary.track02_record ||
+        route.semantics.object_tail_semantics_proven ||
+        route.fallback_visuals_allowed) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->variant = coalesced_receipt->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->observed_track02_record = coalesced_receipt->later_track02_record;
+    out->descriptor_selector = coalesced_receipt->descriptor_selector;
+    out->descriptor_selector_ordinal =
+        coalesced_receipt->descriptor_selector_ordinal;
+    out->coalesced_loader_cd_receipt_proven = 1;
+    out->initial_level_record_proven = 1;
+    out->complete_initial_level_envelope_proven = 1;
+    out->initial_level_boundary = boundary;
+    out->initial_level_route = route;
+    out->object_tail_semantics_proven = 0;
+    out->fallback_visuals_allowed = 0;
+
+    hash = boundary.receipt_hash;
+    hash ^= route.route_hash;
+    hash *= 16777619u;
+    hash ^= out->observed_track02_record;
+    hash *= 16777619u;
+    hash ^= out->descriptor_selector;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out->descriptor_selector_ordinal;
+    hash *= 16777619u;
+    out->receipt_hash = hash;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_capture_manifest_matches(
     const Theron_V1CaptureManifest *manifest,
     const char *track02_path,
