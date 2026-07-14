@@ -2,7 +2,8 @@
  * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
  * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
- * 2956-3044,4850-4887. These commands have no filter or world effect. */
+ * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072. These commands
+ * have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
@@ -32,6 +33,10 @@ static CSB_V1_CSBWinDSAStackResult run(
     action->program_word_count = word_count;
     context.parameters = parameters;
     context.parameter_count = 4;
+    context.party_location_valid = 1;
+    context.party_level = 5;
+    context.party_x = 10;
+    context.party_y = 12;
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
 }
@@ -70,6 +75,12 @@ int main(void)
     };
     uint16_t parameter_bad_variable_span[] = {
         0x0686u, 4u, 0x0686u, 98u, 0x0a0bu
+    };
+    uint16_t party_distance_same_level[] = {
+        0x0786u, 0x14f4u, 0u, 0x0055u, 0x000du
+    };
+    uint16_t party_distance_other_level[] = {
+        0x0786u, 0x08f4u, 0u, 0x0055u, 0x000du
     };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
@@ -208,6 +219,22 @@ int main(void)
               parameters[0] == 10u && parameters[1] == 20u &&
               parameters[2] == 30u && parameters[3] == 40u,
           "PARAM@ rejects an out-of-bank DSAVARS span without publication");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, party_distance_same_level,
+              (int)(sizeof(party_distance_same_level) /
+                    sizeof(party_distance_same_level[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 11u && execution.stack_depth == 0u,
+          "PARTYDISTANCE returns source Manhattan distance on the party level");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, party_distance_other_level,
+              (int)(sizeof(party_distance_other_level) /
+                    sizeof(party_distance_other_level[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0xfffffffdu && execution.stack_depth == 0u,
+          "PARTYDISTANCE returns negative source level distance off-level");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;

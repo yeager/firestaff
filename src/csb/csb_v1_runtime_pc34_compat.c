@@ -19310,6 +19310,10 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.state_index = state_index;
     candidate.action_ordinal = action_ordinal;
     candidate.master_location = master_location;
+    candidate.party_location_valid = profile->party_state_valid ? 1 : 0;
+    candidate.party_level = profile->current_level;
+    candidate.party_x = profile->party_x;
+    candidate.party_y = profile->party_y;
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =
             profile->csbwin_global_variable_count;

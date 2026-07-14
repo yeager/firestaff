@@ -1008,6 +1008,29 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 129u: /* STKOP_PartyDistance, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:4057-4072 pops LOCATIONREL and compares it with
+         * d.partyLevel/X/Y.  The source returns Manhattan distance on the
+         * same level, otherwise the negative absolute level distance. */
+        if (!context->party_location_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = (int)((v >> 10) & 0x3fu);
+        sw = context->party_level - sv;
+        if (sw == 0) {
+            int dx = context->party_x - (int)((v >> 5) & 0x1fu);
+            int dy = context->party_y - (int)(v & 0x1fu);
+
+            if (dx < 0) dx = -dx;
+            if (dy < 0) dy = -dy;
+            v = (uint32_t)(dx + dy);
+        } else {
+            if (sw < 0) sw = -sw;
+            v = (uint32_t)(-sw);
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
+        break;
     case 136u: /* STKOP_VSET, reached via AMPERSAND2 + 128 */
         /* DSA.cpp:4850-4887 consumes N, destination, and source from the
          * source stack.  It clamps the two DSAVARS spans to 100 cells, then
@@ -1389,6 +1412,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.master_location = runner->master_location;
     context.parameters = parameter_words;
     context.parameter_count = parameter_count;
+    context.party_location_valid = runner->party_location_valid;
+    context.party_level = runner->party_level;
+    context.party_x = runner->party_x;
+    context.party_y = runner->party_y;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;
