@@ -102,6 +102,7 @@ static void verify_real_c017_c040_hud_handoff(
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupAudioAction_PC34 audio_action;
     const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
     const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
@@ -167,9 +168,19 @@ static void verify_real_c017_c040_hud_handoff(
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
               host_surface.runtime_hud_decision &&
               host_surface.uses_c017_inventory && host_surface.uses_c040_resurrect &&
-              host_surface.raster.pixels == NULL &&
+              host_surface.raster.valid &&
+              host_surface.raster.real_asset_matched &&
+              host_surface.raster.source_surface_count == 2 &&
               host_surface.no_synthetic_surface,
-          "runtime host selects original C017/C040 surfaces without a synthetic HUD raster");
+          "runtime host captures the presented original C017/C040 HUD frame");
+    memset(&raster, 0, sizeof(raster));
+    CHECK(csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+              &frame, 1, &raster) == 1 && raster.valid &&
+              raster.real_asset_matched && raster.source_surface_count == 2 &&
+              raster.pixel_hash == host_surface.raster.pixel_hash &&
+              raster.route_hash == host_surface.raster.route_hash,
+          "C017/C040 presented HUD capture is stable across direct and host routes");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
 }
 

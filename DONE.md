@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 CSB PC34 post-door HUD presented-frame capture: the real-data
+  startup path now composes the original opaque C017 224x136 viewport at
+  screen `(0,33)` with the original C040 144x73 resurrect panel at `(80,85)`
+  using only C040's dark-green transparency key. The host receipt owns the
+  resulting indexed raster and rejects missing/mismatched source surfaces;
+  there is no synthetic art or fallback surface. Source-lock: ReDMCSB
+  `PANEL.C` F0346/F0347 and CSBWin `Character.cpp` TAG0189a8. Verification:
+  `firestaff_csb_v1_pc_real_asset_launch_probe` passed 67/67 with the local
+  hash-verified PC 3.4 CSB pair.
+
 - ✅ 2026-07-14 Nexus Structure3 trailing-region bound: the tracked DMWeb
   Saturn DGN reference identifies each Structure3 entry's three 12-byte
   regions as vertices, faces, and count-matched per-face normals. The parser

@@ -16,6 +16,27 @@
 
 #define CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 (1024u * 1024u)
 
+enum {
+    CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 = 224,
+    CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 = 136,
+    CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 = 144,
+    CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 = 73,
+    CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34 = 6
+};
+
+static int csb_v1_startup_hud_capture_surface_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int source_asset_id,
+    int width,
+    int height,
+    int transparent_color)
+{
+    return surface && surface->valid && surface->pixels &&
+        surface->source_asset_id == source_asset_id &&
+        surface->width == width && surface->height == height &&
+        surface->transparent_color == transparent_color;
+}
+
 static int csb_v1_startup_surface_load_graphic_pc34(
     const char *path, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height)
@@ -462,6 +483,84 @@ done:
     return 0;
 }
 
+int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    int draw_resurrect_panel,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster)
+{
+    unsigned char *pixels;
+    int source_count = 0;
+
+    if (!out_raster) return 0;
+    memset(out_raster, 0, sizeof(*out_raster));
+    if (!frame || !frame->valid || !frame->real_asset_matched ||
+        !frame->no_legacy_wrappers || !frame->uses_verified_hud_bindings ||
+        !csb_v1_startup_hud_capture_surface_matches_pc34(
+            frame->hud_inventory_surface, 17,
+            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
+            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, -1) ||
+        (draw_resurrect_panel &&
+         !csb_v1_startup_hud_capture_surface_matches_pc34(
+             frame->hud_resurrect_surface, 40,
+             CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
+             CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34,
+             CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34))) {
+        return 0;
+    }
+
+    pixels = (unsigned char *)calloc(
+        CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 *
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
+        1u);
+    if (!pixels) return 0;
+
+    /* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport at
+     * (0,33). F0346 then blits C040 at panel-relative (80,52), hence
+     * screen (80,85), with dark-green key 6. CSBWin Character.cpp
+     * TAG0189a8 lines 3836-3844 independently uses basic graphic 40 with
+     * the same transparency key. */
+    if (!csb_v1_startup_raster_blit_pc34(
+            pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
+            frame->hud_inventory_surface, 0, 0,
+            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
+            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, 0, 33,
+            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
+            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, -1)) {
+        free(pixels);
+        return 0;
+    }
+    source_count = 1;
+    if (draw_resurrect_panel && !csb_v1_startup_raster_blit_pc34(
+            pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
+            frame->hud_resurrect_surface, 0, 0,
+            CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
+            CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34, 80, 85,
+            CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
+            CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34,
+            frame->hud_resurrect_surface->transparent_color)) {
+        free(pixels);
+        return 0;
+    }
+    if (draw_resurrect_panel) source_count = 2;
+    out_raster->pixels = pixels;
+    out_raster->width = CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34;
+    out_raster->height = CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34;
+    out_raster->real_asset_matched = 1;
+    out_raster->entrance_composited = 1;
+    out_raster->source_surface_count = source_count;
+    out_raster->pixel_hash = csb_v1_startup_raster_hash_pc34(
+        pixels, (size_t)out_raster->width * (size_t)out_raster->height);
+    out_raster->route_hash = csb_v1_startup_frame_hash_step_pc34(
+        frame->hud_binding_hash, (uint32_t)draw_resurrect_panel);
+    out_raster->valid = out_raster->pixel_hash != 0u &&
+        out_raster->route_hash != 0u;
+    if (out_raster->valid) return 1;
+    csb_v1_boot_startup_runtime_raster_release_pc34(out_raster);
+    return 0;
+}
+
 static int csb_v1_startup_frame_title_phase_mask_pc34(
     CSB_V1_StartupStage_PC34 stage)
 {
@@ -622,12 +721,19 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
 
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34) {
         /* ReDMCSB ENTRANCE.C F0806 leaves the temporary entrance loop before
-         * DUNVIEW/PANEL consume the live HUD.  Do not turn C017/C040 into a
-         * made-up 320x200 frame: hand their original decoded surfaces to the
-         * host as the explicit runtime decision. */
+         * PANEL.C consumes the live C017/C040 HUD. Capture that exact indexed
+         * presentation rather than handing the host an unpresented pair. */
         if (session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
             !receipt.frame.uses_verified_hud_bindings ||
             !receipt.uses_c017_inventory || !receipt.uses_c040_resurrect) {
+            return 0;
+        }
+        if (!csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+                &receipt.frame, 1, &receipt.raster) || !receipt.raster.valid ||
+            !receipt.raster.real_asset_matched ||
+            receipt.raster.source_surface_count != 2) {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &receipt);
             return 0;
         }
         receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34;

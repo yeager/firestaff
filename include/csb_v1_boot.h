@@ -1372,6 +1372,13 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+/* Capture the first runtime HUD presentation from original C017 and C040
+ * surfaces. C017 is the opaque viewport base; C040 uses its original
+ * dark-green transparency key. */
+int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    int draw_resurrect_panel,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
 void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt);
 int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
