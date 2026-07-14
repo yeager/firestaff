@@ -163,7 +163,7 @@ int main(void)
     size_t dungeon_size = 0u;
     DM2_V1_AssetLoader loader;
     DM2_V1_DungeonData dungeon;
-    int referenced[16] = { 0 };
+    int referenced[0x100] = { 0 };
     int exact_material_sets = 0;
     int referenced_sets = 0;
     int c8_selector_checks = 0;
@@ -188,13 +188,13 @@ int main(void)
     }
     for (int level = 0; level < dungeon.level_count; ++level) {
         int style = dm2_v1_dungeon_get_map_graphics_style(&dungeon, level);
-        if (style < 0 || style > 15) {
+        if (style < 0 || style > 0xff) {
             ++failures;
         } else {
             referenced[style] = 1;
         }
     }
-    for (int style = 0; style < 16; ++style) {
+    for (int style = 0; style <= 0xff; ++style) {
         DM2_V1_GdatImageMetadata floor;
         DM2_V1_GdatImageMetadata ceiling;
         const uint8_t *floor_raw;
