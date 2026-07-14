@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `DIALOG.C F0425`: centered-choice text placement
+  now has a source-derived render plan. Verification: focused strict CTest.
+
 - 2026-07-14 ReDMCSB `ACTIDRAW.C F0134`: bounded planar bitmap fill now
   follows original four-plane 16-pixel unit layout. Verification: focused
   strict CTest.
