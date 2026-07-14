@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `DUNGEON.C F0146`: the native C04 `GROUP.Cells`
+  setter now has a source-owned callable and bounded record mutation.
+  Verification: focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `DUNGEON.C F0148`: source C04 group-direction
   storage now selects the active-group lane on the party map or the packed
   final-word lane elsewhere. Verification: focused strict CTest.
