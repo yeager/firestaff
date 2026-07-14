@@ -13964,3 +13964,15 @@ selector occurrences plus 44 unique and 376 reused Structure1G occurrences.
 This is identifier provenance only: payload decoding, dimensions, UVs,
 palettes, animation, transforms, and VDP1 drawing remain blocked pending
 original Saturn evidence.
+
+# 2026-07-14 Nexus Structure3 typed mesh corpus identity receipt
+
+`test_nexus_v1_dgn_face_mesh_corpus` now serializes only the bounded typed
+Structure3 vertex, face, and normal rows in the hash-verified retail
+LEV00.DGN through LEV15.DGN corpus. The source receipt is `d3f42b1f`, alongside
+the existing 1,144 entries, 18,478 face/normal pairs, and selector-join
+coverage. It deliberately does not read or associate the separate `FACE.BIN`
+asset, decode texture pixels, assign palette/VDP semantics, choose a transform,
+or authorize drawing. Verification: focused
+`test_nexus_v1_dgn_face_mesh_corpus` against
+`/Users/bosse/.firestaff/data/nexus`.

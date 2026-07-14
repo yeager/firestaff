@@ -4860,3 +4860,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   from face rows to transform, winding/culling, normal use, fill-selector
   texture and palette data, and a concrete draw command. The retained
   entry-local pair multiplicity is row incidence only until this exists.
+
+- [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  establish one original Saturn execution-to-VDP1 receipt for a named
+  `(LEVxx.DGN, Structure3 entry, face ordinal)` from the hash-verified retail
+  corpus. The receipt must bind the exact typed mesh-row corpus identity
+  (`d3f42b1f` across LEV00--LEV15), the selected `00xx`/`08xx` fill selector,
+  the consumed texture-byte span and palette/VDP state, the vertex transform,
+  normal/culling decision, and the emitted VDP1 command. `FACE.BIN` is a
+  separate asset until that trace proves an explicit relation; no FACE.BIN
+  pixels, selector interpretation, palette semantics, coordinate convention,
+  or fallback visual may be inferred. Promote real DGN geometry only after
+  the capture reproduces the observed command and rejects altered source rows,
+  selectors, texture bytes, palette state, and trace coordinates atomically.
