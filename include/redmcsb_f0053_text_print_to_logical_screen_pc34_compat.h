@@ -11,17 +11,17 @@ extern "C" {
 /* ReDMCSB TEXT.C F0053_TEXT_PrintToLogicalScreen (PC 3.4).
  *
  * F0053 forwards to the text primitive with the logical screen bitmap, its
- * fixed 320-pixel stride and fixed 200-pixel height. It does not render text.
+ * fixed 160-byte stride and fixed 200-pixel height. It does not render text.
  */
 enum {
-    REDMCSB_F0053_LOGICAL_SCREEN_PIXEL_WIDTH_PC34 = 320,
+    REDMCSB_F0053_LOGICAL_SCREEN_BYTE_WIDTH_PC34 = 160,
     REDMCSB_F0053_LOGICAL_SCREEN_HEIGHT_PC34 = 200
 };
 
 typedef void (*redmcsb_f0053_text_print_fn)(
     void *context,
     uint8_t *destination,
-    uint16_t pixel_width,
+    uint16_t byte_width,
     uint16_t x,
     uint16_t y,
     int16_t text_color,
