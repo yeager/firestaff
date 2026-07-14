@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject side-wall GDAT receipt: D3L/D3R/D2L/D2R now have
+  canonical-data coverage through M11 with source field, raw hash, decoded
+  pixel hash, and local palette required for every side-wall command.
+
 - 2026-07-15 DM2 skproject D3C viewport door: the real D3 GDAT panel now
   reaches the source-material renderer at G0163's 74,25 76x51 geometry, with
   no frame substitute. The focused canonical-data test verifies M11 consumes

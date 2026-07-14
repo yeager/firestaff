@@ -52,8 +52,12 @@ int dm2_v1_gdat_wall_m11_command_plan_build(
         command->width = (uint16_t)width;
         command->height = (uint16_t)height;
         command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
-        if (!command->raw_hash) goto fail;
+        command->decoded_hash = hash_bytes(
+            2166136261u, command->pixels, (size_t)width * (size_t)height);
+        if (!command->raw_hash || !command->decoded_hash) goto fail;
         hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash, sizeof(command->raw_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->decoded_hash,
+                          sizeof(command->decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash, sizeof(command->palette_hash));
         ++candidate.command_count;
     }

@@ -3987,7 +3987,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                 if (!command || command->field !=
                         dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
                     !command->pixels || !command->width || !command->height ||
-                    !command->palette_hash) {
+                    !command->decoded_hash || !command->palette_hash) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
                     return;
                 }

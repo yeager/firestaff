@@ -15,6 +15,7 @@ typedef struct {
     uint16_t height;
     uint8_t palette16[16];
     uint32_t raw_hash;
+    uint32_t decoded_hash;
     uint32_t palette_hash;
 } DM2_V1_GdatWallM11Command;
 
