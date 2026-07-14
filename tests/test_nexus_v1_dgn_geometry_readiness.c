@@ -1,4 +1,5 @@
 #include "nexus_v1_dungeon.h"
+#include "asset_find_by_hash.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -6,6 +7,33 @@
 #include <string.h>
 
 static int g_fail;
+
+static const char *expected_dgn_md5(int level) {
+    static const char *const hashes[16] = {
+        "603ec9c531a92539babdda84ab09e78e",
+        "751e1442bf7dccbd41bf146b5be144ab",
+        "e2cb85d9fedc27f894a84e0f465fcde1",
+        "19637d6b59849565f64565aed786d7ea",
+        "85abc1b822e5c66ec4e99f1f676c140e",
+        "ed5d54ab0ac1c927c1346dd966c8a5cc",
+        "58c336ff6146e7216f0081e726823ea1",
+        "c19e6038a017a320515ecbb66f6da197",
+        "9bfc31bea631345a3660c2645be0e95b",
+        "32a6450f29eb7babd73fcbe7a0310f22",
+        "2928440e9c21457929f1323a28a42f70",
+        "d7be5cd0d6e5c10afe99ec9950614fad",
+        "db1cf70d6730615f73f191fad5e11e32",
+        "f8876d0181d79727013236a6b597b99b",
+        "a634dd5e95567ecbbbc332350c8cf12b",
+        "5e6e237074f1e6b0decc629868a51f3c"
+    };
+    return level >= 0 && level < 16 ? hashes[level] : NULL;
+}
+
+static int real_dgn_is_hash_verified(const char *path, int level) {
+    const char *expected = expected_dgn_md5(level);
+    return expected && asset_file_matches_md5(path, expected);
+}
 
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
@@ -475,6 +503,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_Level loaded_level;
         Nexus_V1_DgnRendererHandoffReceipt handoff;
         Nexus_V1_DgnStructure3OrdinalCorrelationReceipt correlation;
+        Nexus_V1_DgnStructure3ModelFaceSelectorReceipt model_face_selectors;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -482,6 +511,12 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         file = fopen(path, "rb");
         CHECK(file != NULL, "real DGN corpus file opens");
         if (!file) continue;
+        CHECK(real_dgn_is_hash_verified(path, level),
+              "real DGN corpus file matches its canonical MD5");
+        if (!real_dgn_is_hash_verified(path, level)) {
+            fclose(file);
+            continue;
+        }
         CHECK(fseek(file, 0, SEEK_END) == 0, "real DGN corpus file seeks");
         size = ftell(file);
         CHECK(size > 0 && fseek(file, 0, SEEK_SET) == 0,
@@ -704,6 +739,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
                   handoff.structure3_model_references.resolved_model_reference_count &&
               !handoff.structure1f_face_selectors.face_semantics_proven &&
+              handoff.structure3_model_face_selectors.complete &&
+              handoff.structure3_model_face_selectors.resolved_pair_count ==
+                  handoff.structure3_model_references.resolved_model_reference_count &&
+              !handoff.structure3_model_face_selectors.attachment_semantics_proven &&
               handoff.structure3_model_references.structure1f_bound_entry_count ==
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
@@ -717,6 +756,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
             structure3_maximum_normal_length_error =
                 handoff.structure3_vectors.maximum_normal_length_error;
         }
+        CHECK(nexus_v1_level_structure3_model_face_selector_receipt(
+                  &loaded_level, &model_face_selectors) == 0 &&
+              model_face_selectors.complete &&
+              model_face_selectors.resolved_pair_count ==
+                  handoff.structure3_model_face_selectors.resolved_pair_count &&
+              !model_face_selectors.attachment_semantics_proven,
+              "retail Structure3 model-face source pairs remain no-draw provenance");
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==
@@ -977,6 +1023,7 @@ static void test_structure1f_semantics_and_bounds(void) {
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt face_selectors;
+    Nexus_V1_DgnStructure3ModelFaceSelectorReceipt model_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt offset_pairs;
@@ -1232,6 +1279,19 @@ static void test_structure1f_semantics_and_bounds(void) {
           face_selectors.highest_face_selector == 4U &&
           face_selectors.complete && !face_selectors.face_semantics_proven,
           "resolved Structure1F face selectors remain no-draw provenance");
+    CHECK(nexus_v1_level_structure3_model_face_selector_receipt(
+              &level, &model_face_selectors) == 0 &&
+          model_face_selectors.structure1a_relation_complete &&
+          model_face_selectors.structure1f_bound_entry_count == 8 &&
+          model_face_selectors.resolved_pair_count == 8 &&
+          model_face_selectors.unique_pair_count == 7 &&
+          model_face_selectors.duplicate_pair_count == 1 &&
+          model_face_selectors.zero_pair_count == 0 &&
+          model_face_selectors.nonzero_pair_count == 8 &&
+          model_face_selectors.highest_pair == 0x2804U &&
+          model_face_selectors.complete &&
+          !model_face_selectors.attachment_semantics_proven,
+          "Structure3 model-face pairs retain original attachment provenance only");
     CHECK(nexus_v1_level_structure1f_rotation_selector_receipt(
               &level, &rotation_selectors) == 0 &&
           rotation_selectors.structure1a_relation_complete &&
@@ -2229,6 +2289,12 @@ static void test_real_structure1f_direct_cell_corpus(void) {
         file = fopen(path, "rb");
         CHECK(file != NULL, "real Structure1F direct-cell corpus file opens");
         if (!file) continue;
+        CHECK(real_dgn_is_hash_verified(path, level_index),
+              "real Structure1F direct-cell DGN matches its canonical MD5");
+        if (!real_dgn_is_hash_verified(path, level_index)) {
+            fclose(file);
+            continue;
+        }
         CHECK(fseek(file, 0, SEEK_END) == 0,
               "real Structure1F direct-cell corpus file seeks");
         size = ftell(file);
@@ -3160,6 +3226,12 @@ static void test_real_item_ibs_special_floor_corpus(void) {
         level_file = fopen(path, "rb");
         CHECK(level_file != NULL, "real ITEM.IBS coverage DGN opens");
         if (!level_file) continue;
+        CHECK(real_dgn_is_hash_verified(path, level_index),
+              "real ITEM.IBS coverage DGN matches its canonical MD5");
+        if (!real_dgn_is_hash_verified(path, level_index)) {
+            fclose(level_file);
+            continue;
+        }
         CHECK(fseek(level_file, 0, SEEK_END) == 0,
               "real ITEM.IBS coverage DGN seeks");
         level_size = ftell(level_file);
