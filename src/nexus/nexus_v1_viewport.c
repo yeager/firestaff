@@ -144,6 +144,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
 
     if (engine->current_level.geometry_info.dmweb_container) {
         const Nexus_V1_DgnMaterialPlan *plan;
+        Nexus_V1_DgnStructure3RenderPacket structure3_packet;
         int i;
 
         /* Real Nexus DGN path: draw only commands derived from Structure1B.
@@ -155,6 +156,20 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.party_x = px;
         vp->last_dgn_render_receipt.party_y = py;
         vp->last_dgn_render_receipt.party_dir = pdir;
+        memset(&vp->structure3_source_packet, 0,
+               sizeof(vp->structure3_source_packet));
+        if (nexus_v1_current_level_structure3_render_packet(
+                engine, &structure3_packet) > 0) {
+            /* The viewport keeps only the authenticated geometry packet. It
+             * does not inspect or rasterize its opaque Saturn state. */
+            vp->structure3_source_packet = structure3_packet;
+            vp->last_dgn_render_receipt.structure3_source_packet_consumed = 1;
+            vp->last_dgn_render_receipt.structure3_source_geometry_bound =
+                structure3_packet.source_geometry_bound;
+            vp->last_dgn_render_receipt.structure3_source_no_draw =
+                structure3_packet.no_draw_only &&
+                structure3_packet.blocks_real_dgn_mesh_render;
+        }
         /* The real runtime must not convert a decoded DMDF-only bank into
          * visible DGN material. FLOORS/WALLS need independently verified BPK
          * containers and completed host routes; missing Track 1 containers

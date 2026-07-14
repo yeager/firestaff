@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_viewport.h"
 #include "asset_find_by_hash.h"
 
 #include <stdint.h>
@@ -2142,6 +2143,8 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_Engine engine;
         Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
         Nexus_V1_DgnStructure3CaptureImport import;
+        Nexus_V1_DgnStructure3RenderPacket packet;
+        Nexus_Viewport viewport;
 
         memset(&engine, 0, sizeof(engine));
         memset(&bound, 0, sizeof(bound));
@@ -2171,8 +2174,23 @@ static void test_structure3_entry_header_boundaries(void) {
         import.capture_bundle_hash_verified = 1;
         import.original_saturn_capture_verified = 1;
         bound.complete_source_binding = 1;
+        bound.candidate_framing_valid = 1;
         bound.dgn_source_hash_verified = 1;
         bound.capture_source_verified = 1;
+        bound.dgn_source_matches = 1;
+        bound.structure3_payload_matches = 1;
+        bound.typed_mesh_corpus_matches = 1;
+        bound.entry_face_matches = 1;
+        bound.face_row_matches = 1;
+        bound.referenced_vertex_rows_match = 1;
+        bound.normal_row_matches = 1;
+        bound.fill_selector_matches = 1;
+        bound.texture_span_matches = 1;
+        bound.palette_state_matches = 1;
+        bound.vdp1_state_matches = 1;
+        bound.transform_state_matches = 1;
+        bound.normal_culling_state_matches = 1;
+        bound.vdp1_command_matches = 1;
         bound.blocks_real_dgn_mesh_render = 1;
         import.original_saturn_capture_verified = 0;
         CHECK(!nexus_v1_engine_consume_structure3_capture(
@@ -2217,6 +2235,36 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
+        memset(&packet, 0, sizeof(packet));
+        CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 1 &&
+              packet.valid && packet.source_geometry_bound &&
+              packet.no_draw_only && packet.blocks_real_dgn_mesh_render &&
+              packet.vertices == engine.structure3_runtime_source.vertices &&
+              packet.vertex_count == 3 &&
+              packet.normal == &engine.structure3_runtime_source.normal &&
+              packet.texture_span == engine.structure3_runtime_source.texture_span &&
+              packet.palette_state == engine.structure3_runtime_source.palette_state &&
+              packet.vdp1_state == engine.structure3_runtime_source.vdp1_state &&
+              packet.transform_state == engine.structure3_runtime_source.transform_state &&
+              packet.normal_culling_state ==
+                  engine.structure3_runtime_source.normal_culling_state &&
+              packet.vdp1_command == engine.structure3_runtime_source.vdp1_command,
+              "the DGN renderer receives only the engine-owned, fully related Structure3 packet and keeps it no-draw");
+        nexus_viewport_init(&viewport);
+        nexus_viewport_render(&viewport, &engine);
+        CHECK(viewport.last_dgn_render_receipt.structure3_source_packet_consumed &&
+              viewport.last_dgn_render_receipt.structure3_source_geometry_bound &&
+              viewport.last_dgn_render_receipt.structure3_source_no_draw &&
+              viewport.structure3_source_packet.vertices ==
+                  engine.structure3_runtime_source.vertices &&
+              viewport.structure3_source_packet.normal ==
+                  &engine.structure3_runtime_source.normal,
+              "the DGN viewport stages the bound Structure3 geometry without drawing it");
+        engine.structure3_runtime_source.binding.normal_row_matches = 0;
+        CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 0 &&
+              !packet.valid && packet.no_draw_only &&
+              packet.blocks_real_dgn_mesh_render,
+              "a missing face-to-normal relation withdraws the Structure3 renderer packet");
         free(engine.structure3_runtime_source.texture_span);
         free(engine.structure3_runtime_source.palette_state);
         free(engine.structure3_runtime_source.vdp1_state);
