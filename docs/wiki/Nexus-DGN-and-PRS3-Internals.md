@@ -112,12 +112,14 @@ no accepted capture and no VDP1 texture route.
 
 DONE: `tests/test_nexus_v1_script_vm.c` consumes every `SLEV00.BIN` through
 `SLEV15.BIN` file from `FIRESTAFF_NEXUS_DATA_DIR`. It locks the observed
-36-byte SH-2 entry receipt, bounded profile accounting, and the runtime block
+36-byte SH-2 entry receipt, including the terminal `MOV.L @(disp,PC),R0` in
+the fixed `RTS` delay slot, bounded profile accounting, and the runtime block
 against condition/action dispatch.
 
-TODO: task-body opcodes, entry-point ownership, host callbacks, and trigger
-semantics remain unproven. The receipt must not be promoted into a dispatcher
-without hash-bound Saturn execution or capture evidence.
+TODO: the delay-slot fact does not establish either literal target's ownership,
+task-body opcodes, entry-point ownership, host callbacks, or trigger semantics.
+The receipt must not be promoted into a dispatcher without hash-bound Saturn
+execution or capture evidence.
 
 ## SAL Opaque Prefix Receipt
 

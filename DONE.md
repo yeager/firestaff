@@ -19,6 +19,12 @@
   `DRAW_CHIP_OF_MAGIC_MAP`. Verification: Ninja
    `test_dm2_v1_g1_creature_scene_corpus_real_data`.
 
+- DONE 2026-07-14 Nexus SLEV RTS delay-slot receipt: the canonical 36-byte
+  SH-2 entry parser now records that its terminal `MOV.L @(disp,PC),R0`
+  occupies the delay slot after the fixed `RTS`. The focused real-data corpus
+  test verifies this across `SLEV00.BIN` through `SLEV15.BIN`; targets,
+   task-body semantics, callbacks, and all dispatch remain blocked.
+
 - ✅ 2026-07-14 DM1 M11 PC34 runtime load-save interop: the focused M11
   resume path now proves a checksum-qualified original PC34 F0435 load can
   pass through the live host, be quicksaved, exported by F0433 as a PC34

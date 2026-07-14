@@ -1397,6 +1397,11 @@ instruction offsets and their raw displacement bytes, and verifies each
 in-file literal slot as the SH-2 PC-relative formula result across all sixteen
 files. This remains parser evidence only, not a task-body grammar or route.
 
+2026-07-14 update: the terminal `d0dd` is now explicitly retained as the
+delay-slot instruction after the fixed `RTS` in every hash-bound SLEV entry.
+This is SH-2 control-flow placement only: it does not identify either literal
+target, assign task ownership, or enable a host callback or script dispatch.
+
 ## CSB V1 Runtime Presentation Follow-up (2026-07-11)
 
 The verified PC 3.4 entrance now hands the loaded dungeon directly to the V1
