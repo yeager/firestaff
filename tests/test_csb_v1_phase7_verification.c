@@ -612,6 +612,12 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
     profile.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 0u;
     profile.csbwin_extended_dsa_state.imported_headers[7].state_slot_count = 8u;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_timer_summary_count = 1u;
+    profile.csbwin_timer_summary_total = 1u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_timer_queue[0] = 0u;
 
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
               &profile, &dungeon, &location, &binding) == 1 &&
@@ -721,25 +727,48 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
      * value is the count zero.  AMPERSAND2 NUMPARAM then proves that the
      * live saved-timer runner has not invented a placeholder parameter. */
     openroom_timer.function = 102u;
+    profile.csbwin_timers[0] = openroom_timer;
     CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
               &profile, &dungeon, &location, &openroom_timer) == 1 &&
-              profile.csbwin_global_variables[1] == 0u,
-          "CSBWin TT_DESSAGE executes its selected zero-parameter DSA action");
+              profile.csbwin_global_variables[1] == 0u &&
+              profile.csbwin_last_saved_timer_dsa_valid == 1 &&
+              profile.csbwin_last_saved_timer_dsa_queue_slot == 0u &&
+              profile.csbwin_last_saved_timer_dsa_timer_index == 0u,
+          "CSBWin TT_DESSAGE executes only its queued saved DSA action");
     openroom_timer.function = 10u;
+    profile.csbwin_timers[0] = openroom_timer;
     CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
               &profile, &dungeon, &location, &openroom_timer) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "CSBWin TT_DOOR executes its selected zero-parameter DSA action");
     map_timer.function = 8u;
+    profile.csbwin_timers[0] = map_timer;
     CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
               &profile, &dungeon, &location, &map_timer) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "CSBWin TT_TELEPORTER executes its selected zero-parameter DSA action");
     map_timer.function = 9u;
+    profile.csbwin_timers[0] = map_timer;
     CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
               &profile, &dungeon, &location, &map_timer) == 1 &&
               profile.csbwin_global_variables[1] == 0u,
           "CSBWin TT_PITROOM executes its selected zero-parameter DSA action");
+    ++map_timer.sequence;
+    CHECK(csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
+              &profile, &dungeon, &location, &map_timer) == 0 &&
+              profile.csbwin_last_saved_timer_dsa_timer_index == 0u,
+          "CSBWin forged saved timer cannot enter ProcessDSATimer5");
+    --map_timer.sequence;
+    /* The remaining DSA binding/export checks deliberately exercise a
+     * profile without a serialized CSBWin TIMER heap. Restore that fixture
+     * shape after proving the saved-timer boundary above. */
+    profile.csbwin_body_runtime_summary_valid = 0;
+    profile.csbwin_timer_summary_count = 0u;
+    profile.csbwin_timer_summary_total = 0u;
+    profile.csbwin_timer_queue_summary_count = 0u;
+    profile.csbwin_timer_queue_summary_total = 0u;
+    memset(profile.csbwin_timers, 0, sizeof(profile.csbwin_timers));
+    memset(profile.csbwin_timer_queue, 0, sizeof(profile.csbwin_timer_queue));
     action.program_words = program;
     action.program_word_count = (int)(sizeof(program) / sizeof(program[0]));
     map_timer.ubyte9 = 3u;
