@@ -107,6 +107,9 @@ int main(void)
         uint32_t expected_world_hash;
         unsigned int viewport_hash;
         unsigned int post_tick_viewport_hash;
+        struct TickInput_Compat expected_input;
+        struct TickResult_Compat expected_tick;
+        uint32_t expected_post_tick_world_hash;
         uint32_t pre_tick;
 
         CHECK(receipt_is_runtime_admitted(receipt),
@@ -155,10 +158,28 @@ int main(void)
         CHECK(viewport_hash == viewport_fingerprint(repeated_framebuffer, 320),
               "unchanged adopted runtime preserves the PC34 viewport receipt");
         /* ReDMCSB GAMELOOP.C advances the restored F0435 world through its
-         * normal idle command path.  Do not manufacture an input route or a
-         * replacement world here: every exercised event remains owned by the
-         * external PC34 save's restored C3/C4 timeline. */
+         * normal idle command path. Advance the separately staged F0435
+         * world first, so M11 must publish the same M10 tick receipt rather
+         * than merely incrementing a host-side counter. Do not manufacture an
+         * input route or a replacement world here: every exercised event
+         * remains owned by the external PC34 save's restored C3/C4 timeline.
+         */
         pre_tick = (uint32_t)state.world.gameTick;
+        memset(&expected_input, 0, sizeof(expected_input));
+        memset(&expected_tick, 0, sizeof(expected_tick));
+        expected_input.tick = (uint32_t)expected_world.gameTick;
+        expected_input.command = CMD_NONE;
+        CHECK(F0884_ORCH_AdvanceOneTick_Compat(&expected_world,
+                                                &expected_input,
+                                                &expected_tick) != ORCH_FAIL,
+              "staged F0435 runtime accepts the source idle tick");
+        CHECK(expected_tick.preTick == pre_tick &&
+                  expected_tick.postTick == pre_tick + 1u,
+              "staged F0435 runtime advances exactly one source tick");
+        CHECK(F0891_ORCH_WorldHash_Compat(&expected_world,
+                                           &expected_post_tick_world_hash) &&
+                  expected_post_tick_world_hash == expected_tick.worldHashPost,
+              "staged F0435 idle tick publishes its canonical world hash");
         CHECK(M11_GameView_HandleInput(&state, M12_MENU_INPUT_NONE) ==
                   M11_GAME_INPUT_REDRAW,
               "adopted original runtime accepts an idle source tick");
@@ -170,6 +191,16 @@ int main(void)
         CHECK(state.lastTickResult.worldHashPost == state.lastWorldHash &&
                   state.lastWorldHash != 0u,
               "idle source tick publishes the M10 runtime receipt");
+        CHECK(state.lastTickResult.preTick == expected_tick.preTick &&
+                  state.lastTickResult.postTick == expected_tick.postTick &&
+                  state.lastTickResult.worldHashPost == expected_tick.worldHashPost &&
+                  state.lastWorldHash == expected_post_tick_world_hash,
+              "M11 idle receipt matches the independently staged F0435 tick");
+        CHECK(state.world.timeline.count == expected_world.timeline.count &&
+                  state.lastTickResult.emissionCount == expected_tick.emissionCount &&
+                  memcmp(state.lastTickResult.emissions, expected_tick.emissions,
+                         sizeof(expected_tick.emissions)) == 0,
+              "M11 preserves the staged F0435 timeline and emission receipt");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&state, framebuffer, 320, 200);
         CHECK(viewport_is_nonblank(framebuffer, 320),
