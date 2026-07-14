@@ -1,0 +1,298 @@
+/* Canonical PC G1 MapGraphicsStyle -> GRAPHICSSET wall plan -> M11 proof.
+ * Source: skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_WALL/QUERY_TEMP_PICST. */
+
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_viewport_renderer.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    const DM2_V1_AssetLoader *loader;
+    int graphicsset;
+    int fetch_calls;
+    int palette_calls;
+    int reject_after;
+    /* GRAPHICSSET wall fields occupy the source's 0x00..0x3f field space,
+     * not the compact viewport-panel count. */
+    uint8_t *pixels[64];
+} WallTrace;
+
+static int read_file(const char *path, uint8_t **out, size_t *out_size)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    if (!path || !out || !out_size) return 0;
+    *out = NULL;
+    *out_size = 0u;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out = bytes;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
+                                uint8_t **dungeon, size_t *dungeon_size)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *home = getenv("HOME");
+    char fallback[1024];
+    char graphics_path[1100];
+    char dungeon_path[1100];
+
+    if (!root || !root[0]) {
+        if (!home || !home[0]) return 0;
+        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data",
+                 home);
+        root = fallback;
+    }
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    return read_file(graphics_path, graphics, graphics_size) &&
+        read_file(dungeon_path, dungeon, dungeon_size);
+}
+
+static int wall_provider_address(int gdat_index, int expected_graphicsset,
+                                 int *out_field)
+{
+    int graphicsset = -1;
+    int field = -1;
+
+    if (!dm2_v1_viewport_wall_graphic_address(
+            gdat_index, &graphicsset, &field) ||
+        graphicsset != expected_graphicsset ||
+        field < DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST || field >= 0x40) {
+        return 0;
+    }
+    *out_field = field;
+    return 1;
+}
+
+static int fetch_wall(void *user, int gdat_index, const uint8_t **out_pixels,
+                      int *out_width, int *out_height, int *out_stride)
+{
+    WallTrace *trace = user;
+    int field = -1;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    uint8_t *pixels;
+
+    ++trace->fetch_calls;
+    if ((trace->reject_after > 0 && trace->fetch_calls >= trace->reject_after) ||
+        !wall_provider_address(gdat_index, trace->graphicsset, &field)) {
+        return -1;
+    }
+    pixels = dm2_v1_asset_load_image_field(
+        trace->loader, DM2_GDAT_CATEGORY_GRAPHICSSET, trace->graphicsset,
+        field, &width, &height, &format);
+    if (!pixels || width <= 0 || height <= 0 || format == DM2_IMG_FMT_UNKNOWN) {
+        dm2_v1_asset_free_pixels(pixels);
+        return -1;
+    }
+    if (field >= (int)(sizeof(trace->pixels) / sizeof(trace->pixels[0])) ||
+        trace->pixels[field]) {
+        dm2_v1_asset_free_pixels(pixels);
+        return -1;
+    }
+    trace->pixels[field] = pixels;
+    *out_pixels = pixels;
+    *out_width = width;
+    *out_height = height;
+    *out_stride = width;
+    return 0;
+}
+
+static int fetch_wall_palette(void *user, int gdat_index,
+                              uint8_t out_palette16[16], uint32_t *out_hash)
+{
+    WallTrace *trace = user;
+    int field = -1;
+
+    ++trace->palette_calls;
+    if (!wall_provider_address(gdat_index, trace->graphicsset, &field)) {
+        return -1;
+    }
+    return dm2_v1_asset_load_image_local_palette(
+        trace->loader, DM2_GDAT_CATEGORY_GRAPHICSSET, trace->graphicsset,
+        field, out_palette16, out_hash) && *out_hash != 0u ? 0 : -1;
+}
+
+static void free_wall_pixels(WallTrace *trace)
+{
+    for (size_t i = 0; i < sizeof(trace->pixels) / sizeof(trace->pixels[0]);
+         ++i) {
+        dm2_v1_asset_free_pixels(trace->pixels[i]);
+        trace->pixels[i] = NULL;
+    }
+}
+
+static int style_has_complete_wall_plan(const DM2_V1_AssetLoader *loader,
+                                        int graphicsset)
+{
+    DM2_V1_ViewportState viewport;
+    DM2_V1_WallPanelRenderPlan plan;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, 1u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+        0u);
+    if (!dm2_v1_viewport_build_wall_panel_render_plan(&viewport, &plan) ||
+        plan.panel_count <= 0) {
+        return 0;
+    }
+    for (int i = 0; i < plan.panel_count; ++i) {
+        int field = -1;
+        uint8_t palette16[16];
+        uint32_t palette_hash = 0u;
+
+        if (!wall_provider_address(plan.panels[i].gdat_index, graphicsset,
+                                   &field) ||
+            !dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                                      graphicsset, field, NULL) ||
+            !dm2_v1_asset_load_image_local_palette(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
+                palette16, &palette_hash) || !palette_hash) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int main(void)
+{
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon_bytes = NULL;
+    size_t graphics_size = 0u;
+    size_t dungeon_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_GdatSceneM11CommandPlan scene_plan;
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    WallTrace trace;
+    int graphicsset = -1;
+    int failures = 0;
+
+    if (!load_canonical_files(&graphics, &graphics_size,
+                              &dungeon_bytes, &dungeon_size)) {
+        puts("SKIP: no local canonical DM2 data");
+        return 0;
+    }
+    memset(&loader, 0, sizeof(loader));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&scene_plan, 0, sizeof(scene_plan));
+    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
+        dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0) {
+        fputs("FAIL: canonical DM2 GDAT/G1 input was not accepted\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        int candidate = dm2_v1_dungeon_get_map_graphics_style(&dungeon, level);
+        if (candidate >= 0 && candidate <= 0xff &&
+            dm2_v1_gdat_scene_m11_command_plan_build(
+                &loader, (uint8_t)candidate, &scene_plan) &&
+            style_has_complete_wall_plan(&loader, candidate)) {
+            graphicsset = candidate;
+            break;
+        }
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+    }
+    if (graphicsset < 0) {
+        fputs("FAIL: no canonical MapGraphicsStyle has a complete wall plan\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
+
+    memset(&trace, 0, sizeof(trace));
+    trace.loader = &loader;
+    trace.graphicsset = graphicsset;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_wall, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_wall_palette,
+                                                &trace);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_render_walls(&viewport);
+    if (trace.fetch_calls <= 0 || trace.palette_calls != trace.fetch_calls ||
+        viewport.asset_wall_drawn_count != trace.fetch_calls ||
+        viewport.fallback_wall_drawn_count != 0 ||
+        viewport.last_dungeon_wall_material_required_mask == 0u ||
+        viewport.last_dungeon_wall_material_required_mask !=
+            viewport.last_dungeon_wall_material_consumed_mask ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL)) {
+        fprintf(stderr, "FAIL: canonical GRAPHICSSET wall material did not "
+                "reach M11 as one complete no-fallback plan "
+                "(fetch=%d palette=%d draw=%d required=%u consumed=%u "
+                "fallback=%d blocked=%u)\n", trace.fetch_calls,
+                trace.palette_calls, viewport.asset_wall_drawn_count,
+                viewport.last_dungeon_wall_material_required_mask,
+                viewport.last_dungeon_wall_material_consumed_mask,
+                viewport.fallback_wall_drawn_count, viewport.blocked_material_mask);
+        failures = 1;
+    }
+    free_wall_pixels(&trace);
+
+    memset(&trace, 0, sizeof(trace));
+    trace.loader = &loader;
+    trace.graphicsset = graphicsset;
+    trace.reject_after = 2;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_wall, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_wall_palette,
+                                                &trace);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+        scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+        scene_plan.ambient_darkness);
+    dm2_v1_render_walls(&viewport);
+    if (viewport.asset_wall_drawn_count != 0 ||
+        viewport.fallback_wall_drawn_count != 0 ||
+        viewport.last_dungeon_wall_material_consumed_mask != 0u ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) ==
+            0u) {
+        fputs("FAIL: incomplete canonical wall material did not fail closed\n",
+              stderr);
+        failures = 1;
+    }
+    free_wall_pixels(&trace);
+
+done:
+    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+    dm2_v1_asset_loader_free(&loader);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics);
+    free(dungeon_bytes);
+    if (failures) return 1;
+    puts("PASS: canonical GRAPHICSSET wall plan reaches M11 without fallback");
+    return 0;
+}

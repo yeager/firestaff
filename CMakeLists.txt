@@ -7318,6 +7318,22 @@ if(BUILD_TESTING)
             PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # Canonical-user-media skproject DRAW_WALL material proof. Like the
+    # floor/ceiling handoff gate, this is build-only because it reads the
+    # user's original GRAPHICS.DAT and DUNGEON.DAT corpus.
+    add_executable(test_dm2_v1_gdat_wall_plan_viewport_real_data
+        tests/test_dm2_v1_gdat_wall_plan_viewport_real_data.c
+    )
+    target_include_directories(test_dm2_v1_gdat_wall_plan_viewport_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gdat_wall_plan_viewport_real_data
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_wall_plan_viewport_real_data
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_wall_button_material_gate
         tests/test_dm2_v1_g1_wall_button_material_gate.c
     )
