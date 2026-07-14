@@ -12,9 +12,15 @@ fi
 bash -n "$script"
 if [[ ! -f "$quartz_helper" ]] ||
    ! grep -Fq 'CGEvent(keyboardEventSource: source' "$quartz_helper" ||
-   ! grep -Fq 'down.post(tap: .cghidEventTap)' "$quartz_helper" ||
-   ! grep -Fq 'up.post(tap: .cghidEventTap)' "$quartz_helper"; then
+   ! grep -Fq 'CGPreflightPostEventAccess()' "$quartz_helper" ||
+   ! grep -Fq 'down.postToPid(targetPid)' "$quartz_helper" ||
+   ! grep -Fq 'up.postToPid(targetPid)' "$quartz_helper" ||
+   ! grep -Fq 'quartz_keypair=posted_to_pid' "$quartz_helper"; then
     printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
+    exit 1
+fi
+if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
+    printf 'FAIL: Quartz helper accepted a non-positive target PID\n' >&2
     exit 1
 fi
 if ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
@@ -39,7 +45,8 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||
    ! grep -Fq 'i) host_key_code=34' "$script" ||
-   ! grep -Fq 'swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold"' "$script" ||
+   ! grep -Fq 'swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold" "$mednafen_ui_pid"' "$script" ||
+   ! grep -Fq 'Quartz helper did not attest PID-targeted key delivery' "$script" ||
    ! grep -Fq 'host input requires Swift and the checked-in Quartz keypair helper' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
@@ -66,7 +73,7 @@ fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'host_input_target_pid=%s' "$script" ||
    ! grep -Fq 'host_input_focus=screen_click:%s,%s' "$script" ||
-   ! grep -Fq 'host_input_delivery=quartz_hid_key_down_up' "$script" ||
+   ! grep -Fq 'host_input_delivery=quartz_pid_key_down_up' "$script" ||
    ! grep -Fq 'host_input_delivery_attempts=%s' "$script" ||
    ! grep -Fq 'trace_input_order_receipt()' "$script" ||
    ! grep -Fq 'pce_input_transactions_after_first_host' "$script" ||

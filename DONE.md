@@ -16352,3 +16352,18 @@ fabricating a creature visual.
   before emulated input, CD-read, dungeon, object, palette, bitmap, or
   fallback claims. Focused script test passes; the authentic capture is a
   negative receipt.
+# ✅ 2026-07-14 Theron PID-targeted Quartz host-input receipt
+
+The live-capture helper now requires a focused Mednafen process PID and posts
+the requested key-down/up pair directly to that PID with Quartz. It checks
+macOS event-access preflight, emits the granted/post-to-PID receipt, and the
+capture script rejects a missing or mismatched helper attestation before it
+can evaluate any trace. The final transition gate still requires Mednafen's
+own SDL input row plus the existing controller/CD/sector evidence; no
+controller state is injected and a host-side receipt cannot promote a dungeon
+handoff. Verification: `swiftc -typecheck
+scripts/send_theron_macos_quartz_keypair.swift`, `bash -n
+scripts/capture_theron_mednafen_live_trace.sh`, and
+`tests/test_theron_v1_mednafen_live_capture_script.sh` PASS. The installed
+Mednafen binary has no Firestaff trace instrumentation, so this does not claim
+a positive live capture.

@@ -7,10 +7,13 @@
   a host event, emulated controller change, non-System-Card CD read, and raw
   sector receipt in order; no object, dungeon, palette, bitmap, or fallback
   path is unlocked by the inspection receipt.
-  Quartz preflight now confirms that macOS authorizes and posts the HID pair,
-  while the authentic US run still has zero Mednafen SDL events. Investigate
-  the SDL-window delivery boundary or obtain a later original CD_READ trace;
-  do not inject an emulated controller state.
+  Quartz preflight now confirms that macOS authorizes and posts a PID-targeted
+  key pair only after the actual SDL process has been focused. The available
+  installed Mednafen binary lacks the Firestaff trace instrumentation, so this
+  improved delivery route has not yet produced an emulator-owned observation.
+  Re-run it only with the instrumented Mednafen build and authentic media;
+  investigate the SDL-window delivery boundary or obtain a later original
+  CD_READ trace. Do not inject an emulated controller state.
   Receipt-only inspection now uses an isolated staging world; direct runtime
   mutation continues to require the original Stage 2/3 physical-media gate.
 - 2026-07-14 Nexus Structure3 external capture follow-up: the capture-target
