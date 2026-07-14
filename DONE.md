@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB IMG3 asset presentation: connected successful source-backed
+  F0689 expansion to a caller-owned presentation callback; malformed data
+  never reaches the display route. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0689 IMG3 expansion: added source-backed bounded
   even-stride IMG3 header/palette/command expansion using F0685-F0688. Focused
   strict-C11 regression passes.
