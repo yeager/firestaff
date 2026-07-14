@@ -71,6 +71,13 @@
     extended DSA metadata. A fired or requeued timer that lacks a serializable
     CSBWin heap is explicitly unavailable; the probe never fabricates a
     replacement save or DSA tail.
+  - 2026-07-14 follow-up: the general original-package handoff applies the
+    same post-tick core writer/reader proof to every accepted `csbgame*.dat`,
+    including saves without Extended Features. A verified core-only resume
+    must retain the exact surviving timer queue, level, party pose, facing,
+    and game time while owning no Extended Features/DSA state. A nonexportable
+    post-tick heap remains an explicit unavailable result; no generic timer
+    or synthetic core save is substituted.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

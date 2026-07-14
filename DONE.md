@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSBWin general-package post-tick core-resume gate: the opt-in
+  package handoff now applies the production core writer and reader to every
+  accepted original `csbgame*.dat`, not only Extended Features saves. When
+  the surviving source TIMER/TimerQueue heap remains serializable, an isolated
+  core-only runtime must retain its exact queue receipts, level, party pose,
+  facing, and game time while clearing all Extended Features/DSA ownership.
+  A consumed or requeued timer that cannot be serialized remains explicitly
+  unavailable; the probe creates no replacement save, timer, dungeon, or DSA.
+  Verification: `csb_v1_csbwin_package_runtime_handoff` with supplied
+  original package paths.
+
 - 2026-07-14 CSBWin real-package DSA post-tick core-resume gate: the opt-in
   Extended Features/DSA probe now exports a post-tick core save only when the
   retained source TIMER/TimerQueue heap is still serializable. It verifies the
