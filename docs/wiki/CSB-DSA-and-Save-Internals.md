@@ -96,3 +96,12 @@ functions and DSA bytecode still fail closed at their existing boundaries. It
 does not generate a save, DSA record, selector, actuator, timer, or fallback
 action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON` and
 `FIRESTAFF_CSBWIN_SAVE`), it skips.
+
+## Timer Queue Restart Boundary
+
+For a resumed CSBWin save, `TIMER` and `TimerQueue` remain source-owned data.
+Core export retains their original array indexes, heap topology, sequence words,
+and GAMEBLOCK2 timer counters only when every live timeline entry still has one
+exact saved queue-slot receipt. A fired, replaced, duplicated, or unmapped event
+breaks that receipt and causes CSBWin core export to reject rather than emitting
+a reconstructed queue that could look valid while changing restart behavior.
