@@ -674,51 +674,71 @@ int theron_v1_startup_media_bind_runtime_receipt(
     Theron_V1_World *world,
     const Theron_StartupMediaStateReceipt *receipt) {
 
-    Theron_StartupRawBitmapRouteReceipt title;
-    Theron_StartupRawBitmapRouteReceipt stage;
-    Theron_StartupRawBitmapRouteReceipt soul_room;
-    Theron_StartupRawBitmapRouteReceipt forcefield;
+    const Theron_Track02StartupBitmapAtlasRoute *routes[4] = {NULL};
+    const unsigned int route_bits[4] = {
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD
+    };
+    size_t i;
+    size_t route_index;
 
     if (!world || !receipt ||
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             receipt)) {
         return 0;
     }
-    if (!theron_v1_startup_media_consume_raw_bitmap_route(
-            receipt, THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE, &title) ||
-        !theron_v1_startup_media_consume_raw_bitmap_route(
-            receipt, THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE, &stage) ||
-        !theron_v1_startup_media_consume_raw_bitmap_route(
-            receipt, THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
-            &soul_room) ||
-        !theron_v1_startup_media_consume_raw_bitmap_route(
-            receipt, THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD,
-            &forcefield)) {
-        return 0;
+    /* A runtime receipt carries the source-captured indexed atlas forward
+     * without decoding or inventing a new image. Raw-route consumption is a
+     * stricter rendering API and additionally requires the original byte
+     * offsets and MD5; Continue has no raw Track 02 buffer to re-read. */
+    for (i = 0u; i < receipt->startup_bitmap_atlas.route_count; ++i) {
+        const Theron_Track02StartupBitmapAtlasRoute *candidate =
+            &receipt->startup_bitmap_atlas.routes[i];
+        for (route_index = 0u; route_index < 4u; ++route_index) {
+            if (candidate->route_bit == route_bits[route_index]) {
+                routes[route_index] = candidate;
+                break;
+            }
+        }
+    }
+    for (route_index = 0u; route_index < 4u; ++route_index) {
+        const Theron_Track02StartupBitmapAtlasRoute *route =
+            routes[route_index];
+        if (!route || route->tile_count == 0u || route->width == 0u ||
+            route->width > THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH ||
+            route->height == 0u ||
+            route->height > THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_HEIGHT ||
+            route->nonzero_pixel_count == 0u || route->checksum == 0u) {
+            return 0;
+        }
     }
     theron_v1_world_runtime_media_clear(world);
     if (!theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, title.route_bit,
-            title.width, title.height, title.tile_count,
-            title.nonzero_pixel_count, title.checksum, title.pixels,
-            (size_t)title.width * (size_t)title.height) ||
+            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, routes[0]->route_bit,
+            routes[0]->width, routes[0]->height, routes[0]->tile_count,
+            routes[0]->nonzero_pixel_count, routes[0]->checksum,
+            routes[0]->pixels,
+            (size_t)routes[0]->width * (size_t)routes[0]->height) ||
         !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, stage.route_bit,
-            stage.width, stage.height, stage.tile_count,
-            stage.nonzero_pixel_count, stage.checksum, stage.pixels,
-            (size_t)stage.width * (size_t)stage.height) ||
+            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, routes[1]->route_bit,
+            routes[1]->width, routes[1]->height, routes[1]->tile_count,
+            routes[1]->nonzero_pixel_count, routes[1]->checksum,
+            routes[1]->pixels,
+            (size_t)routes[1]->width * (size_t)routes[1]->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM,
-            soul_room.route_bit, soul_room.width, soul_room.height,
-            soul_room.tile_count, soul_room.nonzero_pixel_count,
-            soul_room.checksum, soul_room.pixels,
-            (size_t)soul_room.width * (size_t)soul_room.height) ||
+            routes[2]->route_bit, routes[2]->width, routes[2]->height,
+            routes[2]->tile_count, routes[2]->nonzero_pixel_count,
+            routes[2]->checksum, routes[2]->pixels,
+            (size_t)routes[2]->width * (size_t)routes[2]->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
-            forcefield.route_bit, forcefield.width, forcefield.height,
-            forcefield.tile_count, forcefield.nonzero_pixel_count,
-            forcefield.checksum, forcefield.pixels,
-            (size_t)forcefield.width * (size_t)forcefield.height) ||
+            routes[3]->route_bit, routes[3]->width, routes[3]->height,
+            routes[3]->tile_count, routes[3]->nonzero_pixel_count,
+            routes[3]->checksum, routes[3]->pixels,
+            (size_t)routes[3]->width * (size_t)routes[3]->height) ||
         !theron_v1_world_runtime_media_set_identity(
             world, &receipt->runtime_media_identity)) {
         theron_v1_world_runtime_media_clear(world);
