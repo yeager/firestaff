@@ -15881,6 +15881,15 @@ and runtime import as false by design. No PRS3 opcode grammar, pixel/palette
 decode, synthetic surface, or draw route is enabled. Verification:
 `test_nexus_v1_prs3_capture_trace_schema` and the validator target build.
 
+# ✅ 2026-07-14 Nexus PRS3 V3 producer-attestation workflow
+
+The V3 validator can now additionally check a strict Mednafen SH-2/VDP1 bus
+trace workflow attestation against the complete artifact bundle and producer
+binary. Its original-Saturn execution line is deliberately only a claim, so
+the result always requires independent authentication and cannot permit
+runtime import, decoding, fallback pixels, or rendering. Verification:
+`test_nexus_v1_prs3_capture_trace_schema` and the validator target build.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the

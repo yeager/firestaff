@@ -6,6 +6,8 @@
  *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN
  *   firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN \
  *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN PROVENANCE.TXT PRODUCER
+ *   firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN \
+ *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN PROVENANCE.TXT PRODUCER ATTESTATION.TXT
  *
  * The program deliberately does not emit decoded bytes or render a surface.
  * It only reports whether an externally recorded trace is internally complete
@@ -20,10 +22,11 @@ int main(int argc, char **argv)
     Nexus_V1_Prs3Vdp1CaptureFileReceipt receipt;
     Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecars;
     Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance;
+    Nexus_V1_Prs3Vdp1ProducerAttestationReceipt attestation;
     int accepted;
 
-    if (argc != 4 && argc != 7 && argc != 9) {
-        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN [OUTPUT VDP1-COMMAND PALETTE [PROVENANCE PRODUCER]]\n",
+    if (argc != 4 && argc != 7 && argc != 9 && argc != 10) {
+        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN [OUTPUT VDP1-COMMAND PALETTE [PROVENANCE PRODUCER [ATTESTATION]]]\n",
                 argv[0]);
         return 2;
     }
@@ -38,7 +41,7 @@ int main(int argc, char **argv)
         printf("raw_sidecars_bound=%d\n", sidecars.raw_sidecars_bound);
         printf("capture_producer_authenticated=%d\n",
                sidecars.capture_producer_authenticated);
-        if (argc == 9) {
+        if (argc >= 9) {
             int provenance_accepted = nexus_v1_prs3_vdp1_capture_validate_provenance(
                 argv[7], argv[1], argv[4], argv[5], argv[6], argv[8],
                 &sidecars, &provenance);
@@ -50,6 +53,19 @@ int main(int argc, char **argv)
             printf("provenance_runtime_import_permitted=%d\n",
                    provenance.runtime_import_permitted);
             accepted = accepted && provenance_accepted;
+        }
+        if (argc == 10) {
+            int attestation_accepted = nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
+                argv[9], argv[1], argv[4], argv[5], argv[6], argv[8],
+                &sidecars, &provenance, &attestation);
+            printf("attestation_file_read=%d\n", attestation.attestation_file_read);
+            printf("attestation_parsed=%d\n", attestation.attestation_parsed);
+            printf("producer_workflow_complete=%d\n", attestation.workflow_complete);
+            printf("independent_authentication_required=%d\n",
+                   attestation.independent_authentication_required);
+            printf("attestation_capture_producer_authenticated=%d\n",
+                   attestation.capture_producer_authenticated);
+            accepted = accepted && attestation_accepted;
         }
     } else {
         accepted = nexus_v1_prs3_vdp1_capture_validate_files(
