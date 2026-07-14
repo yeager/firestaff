@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0681`, `F0682`, `F0690` and `F0692`: PC 3.4
+  C25-VGA flip/transparency, video-driver line forwarding and packed fill-box
+  contracts are source-locked. Verification: focused strict C11 tests.
+
 - 2026-07-14 DM1/CSB ReDMCSB `IMAGE5.C F0680`: PC 3.4 C25 VGA aperture copy
   now preserves packed-nibble order, high-nibble viewport colour offset and
   odd source/count boundaries. Verification: focused strict C11 test.
