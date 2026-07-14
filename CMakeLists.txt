@@ -23353,6 +23353,31 @@ set_tests_properties(nexus_v1_sal_map_corpus PROPERTIES
     SKIP_RETURN_CODE 77
 )
 
+# Nexus V1 retail SAL prefix receipt. This test locks a shared opaque byte
+# prefix only; it does not decode the bank or infer sample/playback behavior.
+add_executable(test_nexus_v1_sal_opaque_prefix_corpus
+    tests/test_nexus_v1_sal_opaque_prefix_corpus.c
+)
+target_link_libraries(test_nexus_v1_sal_opaque_prefix_corpus PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_sal_opaque_prefix_corpus PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_sal_opaque_prefix_corpus PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_sal_opaque_prefix_corpus
+    COMMAND test_nexus_v1_sal_opaque_prefix_corpus
+)
+set_tests_properties(nexus_v1_sal_opaque_prefix_corpus PROPERTIES
+    LABELS "tier4;nexus;audio;sal;corpus;receipt;skip_safe"
+    SKIP_RETURN_CODE 77
+)
+
 if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_save_load_round_trip

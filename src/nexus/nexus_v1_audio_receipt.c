@@ -15,6 +15,15 @@ static const uint32_t g_sound_driver_size = 26610u;
 static const char *g_sound_driver_sha256 =
     "68890ee4a49fd0c341bc3f0a48643e4db4b175df0b0d7dacfeb88306340052b6";
 
+#define NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES 33u
+
+static const uint8_t g_sal_opaque_prefix[NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES] = {
+    'd', 's', 'p', '0', '1', '.', 'E', 'X', 'B',
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0x02
+};
+
 /* Nexus audio receipt table.
  *
  * Source evidence:
@@ -226,6 +235,26 @@ int nexus_v1_audio_classify_file(const char *path,
     }
 
     return NEXUS_V1_AUDIO_OK;
+}
+
+int nexus_v1_audio_sal_opaque_prefix_receipt(
+    const uint8_t *data,
+    uint32_t size,
+    Nexus_V1_SalOpaquePrefixReceipt *out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->opaque_prefix_bytes = NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES;
+    out->blocks_decode = 1;
+    if (!data || size < NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES) return 0;
+
+    out->signature_matches =
+        memcmp(data, g_sal_opaque_prefix, 9u) == 0 ? 1 : 0;
+    out->reserved_zero_bytes_match =
+        memcmp(data + 9u, g_sal_opaque_prefix + 9u, 23u) == 0 ? 1 : 0;
+    out->marker_matches = data[32] == g_sal_opaque_prefix[32] ? 1 : 0;
+    out->valid = out->signature_matches && out->reserved_zero_bytes_match &&
+        out->marker_matches;
+    return out->valid;
 }
 
 int nexus_v1_audio_classify_cdda_layout(int data_track_count,
