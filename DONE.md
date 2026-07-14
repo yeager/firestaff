@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 ReDMCSB F0094/F0098: M11 now supplies the active map's real
+  PC 3.4 C079/C078 ceiling and floor assets through the DM1 viewport provider.
+  Missing source material remains no-draw; no default floor set is selected.
+
 - 2026-07-15 Theron SDL delivery trace: the authentic run records every SDL
   event class and proves Quartz never reaches a key/window/focus event. The
   empty PCE input and CD route remains fail-closed.

@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0094/F0098: packaged active-map C079/C078 assets now reach
+  the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
+  original Mac/app capture, not a fallback texture path.
+
 - 2026-07-15 DM2 DRAW_DOOR remaining: D3 panel evidence, split-panel
   geometry, distance stretch/light palette selection, and broader door-type
   coverage need direct skproject bindings. No generic panel/frame fallback.

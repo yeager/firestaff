@@ -141,6 +141,14 @@ extern "C" {
 #define DM1_VIEWPORT_FLOOR_H        70   /* Lines 66..135: floor bitmap */
 #define DM1_VIEWPORT_FLOOR_Y        66   /* Floor area starts at viewport line 66 */
 
+/* PC 3.4 STARTUP2.C:621-622 derives the two pointers from the actual
+ * M651/M650 bitmap byte counts: C079 ceiling is 224x39 and C078 floor is
+ * 224x97. This fills the complete 224x136 chunky aperture with no black
+ * inter-band. Keep the older 29/70 constants above for the non-PC paths. */
+#define DM1_PC34_VIEWPORT_CEILING_H 39
+#define DM1_PC34_VIEWPORT_FLOOR_Y   39
+#define DM1_PC34_VIEWPORT_FLOOR_H   97
+
 /* Amiga byte widths — VIEWPORT.C */
 #define DM1_VIEWPORT_BYTE_WIDTH     (DM1_VIEWPORT_WIDTH)  /* pc34 chunky: 1 bpp */
 #define DM1_SCREEN_BYTE_WIDTH       320

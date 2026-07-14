@@ -1327,12 +1327,15 @@ void dm1_viewport_3d_load_wall_set(DM1_Viewport3DState *state,
  *     2. Copy ceiling bitmap → viewport top (29 lines)
  *     3. Copy floor bitmap → viewport floor area (70 lines)
  *   PC34 (F20E/I34E) path:
- *     1. Clear black area (single chunky buffer)
- *     2. F0674_F0128_sub: copies ceiling/floor bitmaps via GetBitmapPointer
+ *     1. STARTUP2.C:621-622 lays out C079 (224×39) followed by C078
+ *        (224×97) as the complete 224×136 aperture.
+ *     2. F0674_F0128_sub: copies that cached ceiling/floor pair via
+ *        GetBitmapPointer; there is no Amiga black inter-band.
  *
- * The PC path only clears its black band, then F0674 copies the real cached
- * ceiling and floor bitmaps. Do not manufacture floor/ceiling pixels when a
- * GRAPHICS.DAT provider cannot supply the selected source graphics.
+ * The legacy 29/70 path retains the source's non-PC geometry.  The PC3.4
+ * path consumes the complete cached pair. Do not manufacture floor/ceiling
+ * pixels when a GRAPHICS.DAT provider cannot supply the selected source
+ * graphics.
  * ──────────────────────────────────────────────────────────────────────── */
 void dm1_viewport_3d_draw_floor_ceiling(DM1_Viewport3DState *state)
 {
@@ -1344,6 +1347,40 @@ void dm1_viewport_3d_draw_floor_ceiling(DM1_Viewport3DState *state)
     int ceiling_height = 0;
     int floor_width = 0;
     int floor_height = 0;
+
+    if (state->graphic_provider_callback &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data, state->ceiling_graphic,
+            &ceiling_pixels, &ceiling_width, &ceiling_height) &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data, state->floor_graphic,
+            &floor_pixels, &floor_width, &floor_height) &&
+        ceiling_pixels && floor_pixels &&
+        ceiling_width >= DM1_VIEWPORT_WIDTH &&
+        floor_width >= DM1_VIEWPORT_WIDTH &&
+        ceiling_height >= DM1_PC34_VIEWPORT_CEILING_H &&
+        floor_height >= DM1_PC34_VIEWPORT_FLOOR_H) {
+        /* PC 3.4: STARTUP2.C:621-622 derives G0086/G0087 from C079/C078's
+         * actual byte counts. F0674 therefore copies the complete 39-row
+         * ceiling and 97-row floor pair with no Amiga black inter-band. */
+        for (int y = 0; y < DM1_PC34_VIEWPORT_CEILING_H; y++) {
+            memcpy(vp + y * stride,
+                   ceiling_pixels + y * ceiling_width,
+                   DM1_VIEWPORT_WIDTH);
+        }
+        for (int y = 0; y < DM1_PC34_VIEWPORT_FLOOR_H; y++) {
+            memcpy(vp + (DM1_PC34_VIEWPORT_FLOOR_Y + y) * stride,
+                   floor_pixels + y * floor_width,
+                   DM1_VIEWPORT_WIDTH);
+        }
+        state->floor_ceiling_dirty = false;
+        return;
+    }
+
+    ceiling_pixels = NULL;
+    floor_pixels = NULL;
+    ceiling_width = ceiling_height = 0;
+    floor_width = floor_height = 0;
 
     /* Clear viewport black area: lines 0..36 (37 lines).
      * ReDMCSB F0098 Amiga: F0008_MAIN_ClearBytes for each bitplane.
