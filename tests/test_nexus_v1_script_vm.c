@@ -432,6 +432,11 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
     Nexus_V1_LevelScriptTraceHostReceipt host_receipt;
     Nexus_V1_LevelScriptTraceHostReceipt stored_host;
     uint8_t slev[96];
+    char trace[2048];
+    uint64_t raw_trace_hash = 1469598103934665603ULL;
+    size_t raw_index;
+    static const uint8_t raw_trace[] =
+        "mednafen debugger raw SH-2 trace\n06001200 2fe6\n06001224 430b\n";
     static const uint8_t task_header[] = {
         0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
         0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
@@ -439,21 +444,6 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
         0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
         0xd0, 0x08, 0x4e, 0x08
     };
-    static const char trace[] =
-        "magic=FIRESTAFF_NEXUS_SLEV_SH2_TRACE_V1\n"
-        "producer=mednafen-debugger\n"
-        "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
-        "level_index=0\n"
-        "canonical_slev_md5=59c01cbdd224152a6176687cdebeea9e\n"
-        "source_byte_count=60\n"
-        "entry_opcode=2fe6\n"
-        "entry_pc=06001200\n"
-        "task_body_pc=06001224\n"
-        "task_body_opcode=430b\n"
-        "callback_or_write_pc=06001280\n"
-        "callback_or_write_kind=write\n"
-        "original_saturn_execution=1\n";
-
     memset(&engine, 0, sizeof(engine));
     memset(slev, 0, sizeof(slev));
     memcpy(slev, task_header, sizeof(task_header));
@@ -474,13 +464,31 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
     CHECK(nexus_script_vm_load_canonical_level(&engine.script_vm, 0, slev,
                                                (int)sizeof(slev), 1) == 0,
           "trace admission loads canonical SLEV profile");
+    for (raw_index = 0; raw_index < sizeof(raw_trace) - 1; ++raw_index) {
+        raw_trace_hash ^= raw_trace[raw_index];
+        raw_trace_hash *= 1099511628211ULL;
+    }
+    snprintf(trace, sizeof(trace),
+             "magic=FIRESTAFF_NEXUS_SLEV_SH2_TRACE_V1\n"
+             "producer=mednafen-debugger\n"
+             "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+             "raw_trace_fnv1a64=%llx\nlevel_index=0\n"
+             "canonical_slev_md5=59c01cbdd224152a6176687cdebeea9e\n"
+             "source_byte_count=60\nentry_opcode=2fe6\nentry_pc=06001200\n"
+             "task_body_pc=06001224\ntask_body_opcode=430b\n"
+             "callback_or_write_pc=06001280\ncallback_or_write_kind=write\n"
+             "original_saturn_execution=1\n",
+             (unsigned long long)raw_trace_hash);
     memset(&receipt, 0, sizeof(receipt));
-    CHECK(nexus_v1_engine_admit_slev_execution_trace(
-              &engine, trace, sizeof(trace) - 1, &receipt) == 1 &&
+    CHECK(nexus_v1_engine_admit_slev_execution_trace_with_raw(
+              &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
+              &receipt) == 1 &&
           receipt.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE &&
           receipt.level_index == 0 && receipt.capture_target_bound &&
           receipt.mednafen_debugger_provenance &&
           receipt.original_saturn_execution_claimed && receipt.trace_sha256_present &&
+          receipt.raw_trace_bytes_bound && receipt.raw_trace_fnv1a64 == raw_trace_hash &&
+          receipt.raw_trace_byte_count == sizeof(raw_trace) - 1 &&
           receipt.entry_pc == 0x06001200u && receipt.task_body_pc == 0x06001224u &&
           receipt.task_body_opcode == 0x430bu &&
           receipt.callback_or_write_pc == 0x06001280u &&
@@ -516,10 +524,11 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           "engine retains the consumed opaque trace receipt");
     {
         char mismatched_trace[sizeof(trace)];
-        memcpy(mismatched_trace, trace, sizeof(trace));
+        strcpy(mismatched_trace, trace);
         memcpy(strstr(mismatched_trace, "59c01"), "00000", 5);
-        CHECK(nexus_v1_engine_admit_slev_execution_trace(
-                  &engine, mismatched_trace, sizeof(mismatched_trace) - 1,
+        CHECK(nexus_v1_engine_admit_slev_execution_trace_with_raw(
+                  &engine, mismatched_trace, strlen(mismatched_trace), raw_trace,
+                  sizeof(raw_trace) - 1,
                   &receipt) == 0 &&
               receipt.status == NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH &&
               nexus_v1_current_level_slev_trace_admission_receipt(

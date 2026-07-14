@@ -530,7 +530,8 @@ typedef enum {
     NEXUS_V1_SLEV_TRACE_MISSING = 0,
     NEXUS_V1_SLEV_TRACE_BLOCKED_MALFORMED = 1,
     NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH = 2,
-    NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE = 3
+    NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE = 3,
+    NEXUS_V1_SLEV_TRACE_BLOCKED_RAW_TRACE = 4
 } Nexus_V1_LevelScriptTraceStatus;
 
 typedef struct {
@@ -540,6 +541,9 @@ typedef struct {
     int mednafen_debugger_provenance;
     int original_saturn_execution_claimed;
     int trace_sha256_present;
+    int raw_trace_bytes_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
     uint32_t entry_pc;
     uint32_t task_body_pc;
     uint32_t task_body_opcode;
@@ -979,6 +983,10 @@ int nexus_v1_engine_write_slev_capture_target(
     Nexus_V1_LevelScriptCaptureTargetReceipt *out_target);
 int nexus_v1_engine_admit_slev_execution_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_admit_slev_execution_trace_with_raw(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
     Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_slev_trace_admission_receipt(
     const Nexus_V1_Engine *engine,
