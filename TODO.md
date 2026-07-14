@@ -1352,8 +1352,11 @@ EPX/Scale2x before the normal palette route, including special-palette title
 and entrance frames. Remaining V2.1 work is packaged Mac/app capture only.
 
 DM1 V2.2 now consumes boot's finished-art decision in M11 and has no
-placeholder-overlay route. Remaining V2.2 work is external: a complete,
-operator-reviewed real-art pack and packaged Mac/app capture.
+placeholder-overlay route. The in-place cache independently requires the
+same `FINISHED_REAL` decision, and its real-asset gate is skip-safe when no
+operator-reviewed original-art pack is installed; no placeholder cache can
+activate V2.2. Remaining work is external: a complete, operator-reviewed
+real-art pack and packaged Mac/app capture.
 
 CSB V2.0 now applies its real indexed filter chain to an M11 presentation
 copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real

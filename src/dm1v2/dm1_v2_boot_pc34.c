@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "dm1_v22_finished_pack_receipt_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "m11_v22_inplace_draw_pc34.h"
@@ -34,6 +35,7 @@ int dm1_v2_boot_startup_prepare_pc34(
 
     if (data_dir && data_dir[0]) {
         m11_v22_set_manifest_path(data_dir);
+        dm1_v22_famg_set_manifest_path(data_dir);
         dm1_v22_fpr_set_receipt_path(data_dir);
     }
 

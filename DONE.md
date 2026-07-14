@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
+  now admits pixels only when the finished-art material gate resolves the
+  boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that
+  gate's root alongside M11's manifest root. The real-asset material CTest
+  no longer manufactures placeholder art/cache data; it skip-passes until an
+  operator-reviewed original pack is installed, then verifies the genuine
+  cache path. Verification: `m11_v22_inplace_draw_pc34` and
+  `dm1_v22_real_asset_material_gate_pc34`.
+
 - 2026-07-14 DM1 V2.1 presented-frame screenshot capture: `F12` now captures
   an active DM1 V2.1 session from `M11_Render_GetPresentedRGBA` through the
   production BMP writer, preserving the post-EPX 640x400 image instead of
