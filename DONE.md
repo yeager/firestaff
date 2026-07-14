@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7055/F7056/F7057/F7058 save-part checksum: added a
+  CSB-owned C11 port of `CEDTINC6.C`'s PC34 little-endian word XOR/checksum
+  utilities. F7058 returns the original checksum and restores caller
+  plaintext; F7057 decrypts and accepts only a matching checksum. Empty and
+  odd blocks are unavailable rather than taking a byte-wise fallback. A
+  focused strict-C11 regression passes. This is original ReDMCSB save-part
+  support only, not a CSBWin extended-save or DSA layout claim.
+
 - 2026-07-14 Nexus Structure3 raw capture reader: added a strict six-span
   file reader for future original-Saturn trace exports. It owns opaque raw
   bytes, validates every size/hash and the length-prefixed bundle against the

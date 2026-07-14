@@ -319,6 +319,12 @@
   extension bytes. Firestaff risk: accepting a header-shaped file as proof of
   a complete CSBWin resume, or writing unowned extension bytes. Independent
   source: CSBWin `SaveGame.cpp` and real CSBWin save corpus across versions.
+  - 2026-07-14 update: `CEDTINC6.C` F7055/F7056/F7057/F7058 now has a
+    CSB-owned PC34 little-endian word port for the original save-part
+    checksum/XOR and write-then-restore transaction. Empty and odd-length
+    sections remain unavailable rather than acquiring a byte-wise fallback.
+    This does not specify CSBWin GAMEBLOCK2, CHARDESC, ITEM16, EXPOOL, or DSA
+    layouts, and does not establish a complete CSBWin resume.
 
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
