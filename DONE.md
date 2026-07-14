@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus PRS3 VDP1 texture-consumption capture boundary: versioned
+  SH-2-to-VDP1 V2 trace receipts now require an observed post-command VDP1
+  texture-read interval to begin at the decoder-output base, exactly cover its
+  declared byte count, and carry the same FNV-1a64 fingerprint as the captured
+  decoder output. Asset binding retains this only after the existing exact
+  `MENU.BPK` payload-span and whole-asset identities agree. V1 remains accepted
+  as address-only evidence and cannot claim consumption. This proves one future
+  capture's byte-range handoff only; it proves no PRS3 opcode, VDP1 command
+  field, texture format, palette, pixel, draw order, or render route.
+  Verification: strict-C99 `test_nexus_v1_prs3_capture_trace_schema` covers
+  the positive V2 receipt plus mismatched texture digest/base and V1 regression
+  cases.
+
 - 2026-07-14 DM2 direct-DB4 live candidate gate: M11 now receives static
   dungeon creature candidates only from the committed G1
   `Creature::b4 -> CREATURES/type/F9` material receipt. Each candidate carries

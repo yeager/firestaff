@@ -8,6 +8,7 @@
  * not read assets, decode a stream, or authorize a runtime route. */
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_TRACE_V1"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V1"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V2"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
 
 typedef enum {
@@ -92,6 +93,7 @@ typedef struct {
 typedef struct {
     int valid;
     int complete_capture;
+    uint32_t schema_version;
     uint64_t menu_bpk_fnv1a64;
     uint64_t dm_bin_fnv1a64;
     uint32_t entry_index;
@@ -118,7 +120,14 @@ typedef struct {
     uint32_t vdp1_command_address;
     uint32_t vdp1_texture_source_address;
     uint32_t vdp1_texture_source_bytes;
+    uint64_t vdp1_texture_first_read_sequence;
+    uint64_t vdp1_texture_last_read_sequence;
+    uint32_t vdp1_texture_first_read_address;
+    uint32_t vdp1_texture_last_read_address;
+    uint32_t vdp1_texture_read_bytes;
+    uint64_t vdp1_texture_fnv1a64;
     int exact_vdp1_handoff_observed;
+    int vdp1_texture_consumption_observed;
     int opcode_grammar_proven;
     int decoder_promoted;
     int fallback_visuals_permitted;
@@ -132,6 +141,7 @@ typedef struct {
     int entry_plan_matches;
     int payload_span_matches;
     int exact_vdp1_handoff_observed;
+    int vdp1_texture_consumption_observed;
     int decoder_promoted;
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Vdp1CaptureBindingReceipt;
@@ -216,9 +226,11 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3Sh2V1ExecutionReceipt *out_receipt);
 
-/* Parse one complete SH-2-to-VDP1 capture for a single frame. The parser
- * rejects incomplete ranges or invalid ordering. A valid capture remains
- * evidence-only until an independently reviewed opcode grammar exists. */
+/* Parse one complete SH-2-to-VDP1 capture for a single frame. V1 records a
+ * command's texture-source address. V2 additionally records VDP1's actual
+ * texture-read interval and fingerprint, which must exactly cover the
+ * decoder-output range. Both remain evidence-only until an independently
+ * reviewed opcode grammar exists. */
 int nexus_v1_prs3_vdp1_capture_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3Vdp1CaptureReceipt *out_receipt);

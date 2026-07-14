@@ -37,7 +37,7 @@ static const char valid_trace[] =
     "capture_complete=1\n";
 
 static const char valid_vdp1_trace[] =
-    "NEXUS_PRS3_SH2_VDP1_TRACE_V1\n"
+    "NEXUS_PRS3_SH2_VDP1_TRACE_V2\n"
     "menu_bpk_fnv1a64=%llx\n"
     "dm_bin_fnv1a64=%llx\n"
     "entry_index=0\nstream_offset=40\nstream_size=4\nexpected_output_bytes=4\n"
@@ -51,6 +51,9 @@ static const char valid_vdp1_trace[] =
     "last_output_write_sequence=14\ndecoder_return_sequence=15\n"
     "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
     "vdp1_texture_source_address=6020000\nvdp1_texture_source_bytes=4\n"
+    "vdp1_texture_first_read_sequence=17\nvdp1_texture_last_read_sequence=18\n"
+    "vdp1_texture_first_read_address=6020000\nvdp1_texture_last_read_address=6020003\n"
+    "vdp1_texture_read_bytes=4\nvdp1_texture_fnv1a64=3\n"
     "decoder_returned_success=1\ncapture_complete=1\n";
 
 static void put_be32(unsigned char *p, unsigned int value) {
@@ -382,14 +385,46 @@ int main(void) {
     expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                bound_trace, strlen(bound_trace), &vdp1_receipt) &&
                nexus_v1_prs3_vdp1_capture_schema_bind_assets(
-                   &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+               &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
                    &vdp1_binding) && vdp1_binding.valid &&
                vdp1_binding.exact_vdp1_handoff_observed &&
+               vdp1_receipt.schema_version == 2U &&
+               vdp1_receipt.vdp1_texture_consumption_observed &&
+               vdp1_binding.vdp1_texture_consumption_observed &&
                vdp1_binding.payload_span_matches &&
                !vdp1_receipt.opcode_grammar_proven &&
                !vdp1_binding.decoder_promoted &&
                !vdp1_binding.fallback_visuals_permitted,
            "complete SH-2 to VDP1 capture binds one exact frame without a decoder");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(vdp1_malformed, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC,
+           sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC) - 1U);
+    {
+        char *texture_reads = strstr(
+            vdp1_malformed, "vdp1_texture_first_read_sequence=");
+        char *return_status = strstr(vdp1_malformed, "decoder_returned_success=");
+        memmove(texture_reads, return_status, strlen(return_status) + 1U);
+    }
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               vdp1_receipt.schema_version == 1U &&
+               !vdp1_receipt.vdp1_texture_consumption_observed,
+           "V1 captures remain address-only and cannot claim VDP1 consumption");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "vdp1_texture_fnv1a64=3"),
+           "vdp1_texture_fnv1a64=4", sizeof("vdp1_texture_fnv1a64=4") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "VDP1 texture reads must fingerprint the decoder output bytes");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "vdp1_texture_first_read_address=6020000"),
+           "vdp1_texture_first_read_address=6020001",
+           sizeof("vdp1_texture_first_read_address=6020001") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "VDP1 texture reads must start at the decoder output base");
     snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
     memcpy(strstr(vdp1_malformed, "payload_fnv1a64="), "payload_missing=",
            sizeof("payload_missing=") - 1U);
