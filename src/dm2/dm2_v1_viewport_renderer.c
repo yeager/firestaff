@@ -4087,6 +4087,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         int stride;
         uint8_t palette16[16];
         uint32_t palette_hash;
+        int transparent_color;
         int required;
         int consumed;
     } DM2_V1_DoorMaterial;
@@ -4193,6 +4194,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         memcpy(material->palette16, command->palette16,
                                sizeof(material->palette16));
                         material->palette_hash = command->palette_hash;
+                        /* SKProject DRAW_DOOR obtains DOORS/entry/
+                         * GDAT_IMG_COLORKEY_1 before its panel blit. Only
+                         * the selected panel owns that datum. */
+                        material->transparent_color =
+                            kind == DM2_DOOR_MATERIAL_PANEL
+                                ? (int)command->color_key
+                                : DM2_COLOR_TRANSPARENT;
                         ++s->gdat_door_overlay_material_plan_consumed_count;
                     }
                 }
@@ -4301,6 +4309,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                                           panel_h,
                                                           panel_stride,
                                                           &blit)) {
+                    if (s->source_materials_required) {
+                        blit.transparent_color =
+                            materials[i][DM2_DOOR_MATERIAL_PANEL]
+                                .transparent_color;
+                    }
                     dm2_v1_blit_scaled_material_bitmap_region_ex(
                         s, vp,
                         stride,

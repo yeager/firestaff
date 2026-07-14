@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM2 DRAW_DOOR follow-up: D3 panel evidence, source split-panel
+  geometry, DRAW_DOOR_FRAMES timing, and complete map door-type routing still
+  need direct skproject bindings. Do not substitute a generic panel or frame.
+
 - 2026-07-15 DM1 F0098 follow-up: bind the packaged M11 DM1 asset loader to
   the viewport provider with verified map-floor-set graphic identities. Do not
   add a default texture or fallback.

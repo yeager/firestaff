@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject DRAW_DOOR M11 receipt: source-selected door panels
+  now carry real DOORS pixels, opening state, decoded hash, and IMG_COLORKEY_1
+  through M11; no generic panel or transparency is supplied.
+
 - 2026-07-15 DM1 ReDMCSB F0098 viewport floor/ceiling: real provider-owned
   GRAPHICS.DAT ceiling and floor pixels now reach their original viewport rows;
   a missing source bitmap is no-draw rather than a synthetic floor.
