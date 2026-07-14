@@ -177,6 +177,15 @@
 
 ### ReDMCSB Numbered-Symbol Audit (2026-07-14)
 
+- REDMCSB-SYMBOL-GAP-004 — **Callable inventory audit: 1,199 routines have
+  no Firestaff reference.** `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_AUDIT.tsv`
+  classifies all 2,137 `Exxx`/`Fxxxx`/`Rxxx`/`Sxxx` symbols: 938 are exact
+  Firestaff references but remain unverified, while 1,199 are missing from
+  Firestaff source/header/test surfaces. Required work: triage each missing
+  callable routine by DM1/CSB runtime relevance, then implement or document a
+  source-backed non-applicability decision with focused evidence. A comment
+  or identifier match alone cannot close this gap.
+
 - REDMCSB-SYMBOL-GAP-001 — **The complete numbered-symbol inventory is not a
   completion claim.** ReDMCSB has 13,090 unique numbered source symbols:
   `A` 4, `C` 866, `E` 6, `F` 2,104, `G` 2,074, `L` 4,616, `M` 397, `P` 2,996,
