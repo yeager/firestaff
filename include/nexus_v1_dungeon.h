@@ -36,6 +36,9 @@
 #define NEXUS_DGN_MAX_STRUCTURE2_TEXTURES 256
 #define NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES 40
 #define NEXUS_DGN_STRUCTURE3_GEOMETRY_MEASUREMENT_MAX_COMPONENT_ABS 0x100000
+/* Corpus identity serialized by test_nexus_v1_dgn_face_mesh_corpus from the
+ * documented typed Structure3 rows in hash-verified LEV00--LEV15. */
+#define NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32 0xd3f42b1fU
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
@@ -924,6 +927,58 @@ typedef struct {
     int valid;
     int transform_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3MeshEntryReceipt;
+
+/* A future original-Saturn trace may describe one Structure3 face using this
+ * opaque evidence packet. The byte spans are fingerprints only: this type
+ * does not decode texture pixels, palette entries, VDP1 command fields,
+ * transforms, or culling. `captured_*` buffers supplied to the binder must
+ * exactly match these fingerprints, so an altered row, selector, texture
+ * span, palette state, VDP state, transform state, or culling state cannot
+ * be promoted independently. */
+typedef struct {
+    uint64_t dgn_fnv1a64;
+    uint32_t structure3_payload_fnv1a32;
+    uint32_t typed_mesh_corpus_fnv1a32;
+    uint32_t entry_index;
+    uint32_t face_ordinal;
+    uint32_t face_row_fnv1a32;
+    uint32_t referenced_vertex_rows_fnv1a32;
+    uint32_t normal_row_fnv1a32;
+    uint16_t fill_selector;
+    uint64_t texture_span_fnv1a64;
+    uint64_t palette_state_fnv1a64;
+    uint64_t vdp1_state_fnv1a64;
+    uint64_t transform_state_fnv1a64;
+    uint64_t normal_culling_state_fnv1a64;
+    uint64_t vdp1_command_fnv1a64;
+    uint64_t first_sequence;
+    uint64_t last_sequence;
+} Nexus_V1_DgnStructure3FaceCaptureCandidate;
+
+typedef struct {
+    int candidate_framing_valid;
+    int dgn_source_matches;
+    int structure3_payload_matches;
+    int typed_mesh_corpus_matches;
+    int entry_face_matches;
+    int face_row_matches;
+    int referenced_vertex_rows_match;
+    int normal_row_matches;
+    int fill_selector_matches;
+    int texture_span_matches;
+    int palette_state_matches;
+    int vdp1_state_matches;
+    int transform_state_matches;
+    int normal_culling_state_matches;
+    int vdp1_command_matches;
+    int complete_source_binding;
+    /* A packet can be byte-bound without proving that an emulator captured
+     * it from original Saturn execution. That provenance must be supplied by
+     * a later trace importer; this boundary never permits DGN drawing. */
+    int original_saturn_capture_verified;
+    int renderer_handoff_ready;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3FaceCaptureBindingReceipt;
 
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
@@ -2021,6 +2076,17 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     int max_vertices, Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
     Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
     Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt);
+int nexus_v1_dgn_bind_structure3_face_capture_candidate(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
+    const uint8_t *captured_texture_span, int captured_texture_span_size,
+    const uint8_t *captured_palette_state, int captured_palette_state_size,
+    const uint8_t *captured_vdp1_state, int captured_vdp1_state_size,
+    const uint8_t *captured_transform_state, int captured_transform_state_size,
+    const uint8_t *captured_normal_culling_state,
+    int captured_normal_culling_state_size,
+    const uint8_t *captured_vdp1_command, int captured_vdp1_command_size,
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);

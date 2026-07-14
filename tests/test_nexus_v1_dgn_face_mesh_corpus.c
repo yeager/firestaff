@@ -179,6 +179,18 @@ int main(void) {
               !mesh_semantics.renderer_handoff_ready &&
               mesh_semantics.blocks_real_dgn_mesh_render,
               "retail mesh evidence reaches a capture-blocked renderer handoff");
+        if (level_index == 0) {
+            Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
+            Nexus_V1_DgnStructure3FaceCaptureBindingReceipt capture;
+
+            memset(&candidate, 0, sizeof(candidate));
+            CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+                      &level, data, size, &candidate, NULL, 0, NULL, 0,
+                      NULL, 0, NULL, 0, NULL, 0, NULL, 0, &capture) != 0 &&
+                  !capture.complete_source_binding && !capture.renderer_handoff_ready &&
+                  capture.blocks_real_dgn_mesh_render,
+                  "a real DGN face stays blocked until an original capture supplies every span");
+        }
         {
             int entry_index;
             int extracted_vertex_total = 0;

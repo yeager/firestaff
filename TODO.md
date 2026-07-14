@@ -4905,6 +4905,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   from face rows to transform, winding/culling, normal use, fill-selector
   texture and palette data, and a concrete draw command. The retained
   entry-local pair multiplicity is row incidence only until this exists.
+  - 2026-07-14: `nexus_v1_dgn_bind_structure3_face_capture_candidate` now
+    defines the fail-closed byte-binding boundary for that trace: it requires
+    the retail typed-row corpus identity, exact DGN and Structure3 payload
+    hashes, entry/face row, referenced vertices, normal row, fill selector,
+    texture span, palette state, VDP1 state, transform/culling state, and
+    command bytes to match together. No capture is currently supplied, so the
+    binding cannot verify original-Saturn provenance and always blocks DGN
+    mesh rendering. The next increment is importing a genuine capture packet,
+    not constructing palette, pixel, VDP1, or fallback evidence.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

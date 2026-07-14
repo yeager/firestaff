@@ -11,6 +11,17 @@
   `dm1_v1_original_save_pc34_external_hoc_runtime` remains skip-safe without
   operator-supplied original PC34 save/media inputs.
 
+- DONE 2026-07-14 Nexus Structure3 face-capture binding boundary: added a
+  no-draw, atomic receipt for a future original Saturn `(LEVxx.DGN, entry,
+  face)` trace. It binds the existing retail typed-mesh corpus identity
+  `d3f42b1f` plus the exact DGN/Structure3 source, bounded face and vertex
+  rows, paired normal, documented fill selector, and captured texture,
+  palette, VDP1, transform/culling, and command byte spans. The corpus
+  contains no capture packet, so the receipt never claims original-Saturn
+  provenance, cannot make the renderer ready, and blocks real DGN mesh draws
+  without fallback. Verification: `test_nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - DONE 2026-07-14 Nexus Structure3 real-face geometry receipt: the bounded
   LEV00-LEV15 DGN parser now measures every documented entry-local face row
   against its signed-16.16 vertex coordinates and preserves the result across
