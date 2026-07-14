@@ -667,6 +667,10 @@
   - 2026-07-14 update: F0687/F0688 now preserve PC IMG3 nibble and run-count
     decoding over caller-owned source bytes. No image material or decoder
     fallback is supplied.
+  - 2026-07-14 update: F0689 now expands real caller-owned PC IMG3 records
+    through their header, six-entry local palette, command stream, F0685, and
+    F0686. The bounded adapter accepts the source even-stride branch only;
+    padded-row variants remain explicitly unclaimed rather than synthesized.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
