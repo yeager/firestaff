@@ -1746,8 +1746,8 @@ F	0677	F0677_DrawD3R2	DUNVIEW.C	referenced_not_verified
 F	0678	F0678_DrawD2L2	DUNVIEW.C	referenced_not_verified
 F	0679	F0679_DrawD2R2	DUNVIEW.C	referenced_not_verified
 F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
-F	0681	F0681_CopyPixelLineToScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced_not_verified
-F	0682	F0682_CopyPixelLineToScreenWithTransparency	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced_not_verified
+F	0681	F0681_CopyPixelLineToScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
+F	0682	F0682_CopyPixelLineToScreenWithTransparency	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
 F	0683	F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	unmapped_or_unverified
 F	0684	F0684_Blit	BLIT.C;DEFS.H;NEC816.C;VIDEODRV.C;CEDT027.C;IMAGE3.C	referenced_not_verified
 F	0685	F0685_IMG3_LineColorFilling	IMAGE4.C;ANIMIMG.C;SWITCH.C;IMAGE2.C;IMAGE3.C	referenced_not_verified
@@ -1755,9 +1755,9 @@ F	0686	F0686_IMG_CopyFromPreviousLine	ANIMIMG.C;IMAGE2.C	referenced_not_verified
 F	0687	F0687_IMG3_GetNibble	IMAGE2.C;IMAGE3.C	referenced_not_verified
 F	0688	F0688_IMG3_GetPixelCount	IMAGE2.C;IMAGE3.C	referenced_not_verified
 F	0689	F0689_IMG_ExpandGraphicToBitmap	FMTOWNS.H;DEFS.H;SWITCH.C;IMAGE2.C;EXPAND.C;CEDT018.C;SELECTOR.C;SWSH.C;NECIO.C	referenced_not_verified
-F	0690	F0690_CopyPixelLineToScreenWithoutTransparency	ANIMIMG.C;SWITCH.C;IMAGE3.C	referenced_not_verified
+F	0690	F0690_CopyPixelLineToScreenWithoutTransparency	ANIMIMG.C;SWITCH.C;IMAGE3.C	implemented_source_locked
 F	0691	F0691_IMG_ExpandGraphicToScreen	DEFS.H;SWITCH.C;EXPAND.C;IMAGE3.C;SELECTOR.C	implemented_source_locked
-F	0692	F0692_FillBox	FILLBOX.C;DEFS.H;CEDT027.C;IMAGE3.C;SELECTOR.C	unmapped_or_unverified
+F	0692	F0692_FillBox	FILLBOX.C;DEFS.H;CEDT027.C;IMAGE3.C;SELECTOR.C	implemented_source_locked
 F	0693	F0693_WaitVerticalBlank	PALETTE.C;CEDT025.C;VBLANK.C;FMTOWNS.H;DRAWVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;SWITCH.C;IMAGE.C;ANIMTOWN.C;CEDT027.C;JAPANESE.C;SWSH.C	referenced_not_verified
 F	0694	F0694_SetMultipleColorsInPalette	LOADSAVE.C;FMTOWNS.H;DRAWVIEW.C;DEFS.H;SWITCH.C;TIMELINE.C;IMAGE.C;ANIMTOWN.C;STARTUP2.C;CEDT027.C;CEDT018.C;ENDGAME.C;ENTRANCE.C;TITLE.C;SWSH.C;DIALOG.C	referenced_not_verified
 F	0695	F0695_SetCreatureReplacementColors	FMTOWNS.H;DUNVIEW.C;DRAWVIEW.C;IMAGE.C	referenced_not_verified
