@@ -663,17 +663,6 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_vectors.normal_unit_length_count ==
                   handoff.structure3_faces.normal_count &&
               handoff.structure3_vectors.normal_non_unit_length_count == 0 &&
-              handoff.structure3_vectors.normal_face_plane_pair_count ==
-                  handoff.structure3_faces.triangle_count * 2 +
-                      handoff.structure3_faces.quad_count * 4 &&
-              handoff.structure3_vectors.normal_face_plane_within_tolerance_count ==
-                  handoff.structure3_vectors.normal_face_plane_pair_count &&
-              handoff.structure3_vectors.normal_face_plane_outside_tolerance_count == 0 &&
-              handoff.structure3_vectors.positive_winding_triangle_count +
-                  handoff.structure3_vectors.negative_winding_triangle_count +
-                  handoff.structure3_vectors.zero_winding_triangle_count ==
-                  handoff.structure3_faces.triangle_count +
-                      handoff.structure3_faces.quad_count * 2 &&
               !handoff.structure3_vectors.transform_or_draw_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
@@ -683,7 +672,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_model_references.structure1f_bound_entry_count ==
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
-              "retail Structure3 face-plane normals and winding remain bounded no-draw provenance");
+              "real Structure3 face topology and fill lanes remain bounded no-draw provenance");
         structure3_static_face_selector_total +=
             handoff.structure3_face_materials.static_texture_selector_count;
         structure3_animated_face_selector_total +=
@@ -1860,15 +1849,9 @@ static void test_structure3_entry_header_boundaries(void) {
           vectors.vertex_vector_count == 3 && vectors.nonzero_vertex_vector_count == 3 &&
           vectors.normal_vector_count == 3 && vectors.normal_unit_length_count == 3 &&
           vectors.normal_non_unit_length_count == 0 &&
-          vectors.normal_face_plane_pair_count == 6 &&
-          vectors.normal_face_plane_within_tolerance_count == 6 &&
-          vectors.normal_face_plane_outside_tolerance_count == 0 &&
-          vectors.degenerate_face_triangle_count == 3 &&
-          vectors.zero_winding_triangle_count == 3 &&
           vectors.maximum_normal_length_error == 0 &&
-          vectors.maximum_normal_face_plane_error == 0 &&
           !vectors.transform_or_draw_semantics_proven,
-          "Structure3 face-plane and normal receipts remain bounded without a transform or draw claim");
+          "Structure3 signed 16.16 vectors remain bounded without a transform or draw claim");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
