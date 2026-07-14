@@ -296,6 +296,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     discovery is rejected with a diagnostic instead of inheriting stale
     header/envelope provenance. This is transaction hardening only; it does
     not replace the required original PC34 corpus.
+  - 2026-07-14 update: `dm1_v1_original_save_pc34_external_corpus` is a
+    fixture-free admission target for an explicitly staged corpus. It reports
+    each admitted file's source/export hashes, F7057 envelope boundary,
+    trailing-tail size, and no-fallback runtime-stage/adoption results; an
+    unset corpus root is a non-promoting skip. Remaining evidence is still
+    provenance-recorded original PC34 saves and original executable results.
   - 2026-07-13 update: F0435 tail validation now verifies the persisted
     per-column cumulative SquareFirstThings table against raw-map thing-list
     flags before M10 can reconstruct its lookup. The remaining requirement is
