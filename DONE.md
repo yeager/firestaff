@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 raw capture reader: added a strict six-span
+  file reader for future original-Saturn trace exports. It owns opaque raw
+  bytes, validates every size/hash and the length-prefixed bundle against the
+  parsed manifest, and requires a separate external Saturn attestation before
+  it marks an import usable. Altered, truncated, missing, cross-session, or
+  unattested captures remain no-draw and cannot reach a renderer.
+
 - 2026-07-14 DM2 static title/menu timing: `skproject/SKWIN/SkWinCore.cpp`
   `INIT` and `SHOW_MENU_SCREEN` prove that TITLE/0/dt07/4 remains static in
   `MessageLoop(true)` until `GAME_LOAD` succeeds. M11 and the boot receipt

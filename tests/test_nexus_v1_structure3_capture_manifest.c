@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 static int failures;
 
@@ -67,11 +68,25 @@ static unsigned long long bundle_hash(const Nexus_V1_DgnStructure3CaptureImport 
     return hash;
 }
 
+static int write_capture_file(const char *path, const unsigned char *data,
+                              size_t size) {
+    FILE *file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fwrite(data, 1U, size, file) != size) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
+}
+
 int main(void) {
     Nexus_V1_DgnStructure3CaptureManifestReceipt receipt;
     Nexus_V1_DgnStructure3CaptureImport capture;
     Nexus_V1_DgnStructure3CaptureImportReceipt import_receipt;
     Nexus_V1_DgnStructure3CaptureHostReceipt host_receipt;
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt raw_receipt;
+    Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
+    Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
     Nexus_V1_Level level;
     char imported_manifest[2048];
     static const unsigned char texture[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -87,7 +102,9 @@ int main(void) {
     static const unsigned char command[] = { 71, 72, 73, 74, 75, 76, 77, 78,
                                               79, 80, 81, 82, 83, 84, 85, 86,
                                               87, 88, 89, 90 };
+    unsigned char altered_palette[sizeof(palette)];
     char malformed[sizeof(valid_manifest)];
+    char raw_paths_storage[6][128];
 
     expect(nexus_v1_dgn_structure3_capture_manifest_parse(
                valid_manifest, strlen(valid_manifest), &receipt) &&
@@ -168,6 +185,58 @@ int main(void) {
                !host_receipt.import_receipt.complete_source_binding &&
                host_receipt.no_draw_only,
            "attested Saturn evidence can reach the existing no-draw binder");
+    expect(nexus_v1_dgn_structure3_capture_manifest_parse(
+               imported_manifest, strlen(imported_manifest), &receipt),
+           "raw reader starts from a byte-correlated capture manifest");
+    for (int path_index = 0; path_index < 6; ++path_index) {
+        snprintf(raw_paths_storage[path_index], sizeof(raw_paths_storage[path_index]),
+                 "/tmp/firestaff-nexus-structure3-%ld-%d.bin",
+                 (long)getpid(), path_index);
+    }
+    expect(write_capture_file(raw_paths_storage[0], texture, sizeof(texture)) &&
+               write_capture_file(raw_paths_storage[1], palette, sizeof(palette)) &&
+               write_capture_file(raw_paths_storage[2], vdp1, sizeof(vdp1)) &&
+               write_capture_file(raw_paths_storage[3], transform, sizeof(transform)) &&
+               write_capture_file(raw_paths_storage[4], culling, sizeof(culling)) &&
+               write_capture_file(raw_paths_storage[5], command, sizeof(command)),
+           "raw capture fixture writes six opaque original-trace lanes");
+    memset(&raw_paths, 0, sizeof(raw_paths));
+    raw_paths.texture_span_path = raw_paths_storage[0];
+    raw_paths.palette_state_path = raw_paths_storage[1];
+    raw_paths.vdp1_state_path = raw_paths_storage[2];
+    raw_paths.transform_state_path = raw_paths_storage[3];
+    raw_paths.normal_culling_state_path = raw_paths_storage[4];
+    raw_paths.vdp1_command_path = raw_paths_storage[5];
+    memset(&raw_attestation, 0, sizeof(raw_attestation));
+    raw_attestation.capture_session_fnv1a64 = receipt.capture_session_fnv1a64;
+    raw_attestation.capture_bundle_fnv1a64 = bundle_hash(&capture);
+    raw_attestation.original_saturn_source_attested = 1;
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(&raw_receipt);
+    expect(nexus_v1_dgn_structure3_raw_capture_read(
+               &receipt, &raw_paths, &raw_attestation, &raw_receipt) &&
+               raw_receipt.manifest_accepted && raw_receipt.all_spans_read &&
+               raw_receipt.raw_span_hashes_match &&
+               raw_receipt.attestation_session_matches &&
+               raw_receipt.attestation_bundle_matches &&
+               raw_receipt.import_ready && raw_receipt.no_draw_only &&
+               raw_receipt.import_packet.original_saturn_capture_verified &&
+               raw_receipt.import_packet.texture_span != texture,
+           "raw capture reader retains six file-backed spans only after atomically matching manifest and external attestation");
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    memcpy(altered_palette, palette, sizeof(altered_palette));
+    altered_palette[0] ^= 1U;
+    expect(write_capture_file(raw_paths_storage[1], altered_palette,
+                              sizeof(altered_palette)) &&
+               !nexus_v1_dgn_structure3_raw_capture_read(
+                   &receipt, &raw_paths, &raw_attestation, &raw_receipt) &&
+               raw_receipt.manifest_accepted && raw_receipt.all_spans_read &&
+               !raw_receipt.raw_span_hashes_match && !raw_receipt.import_ready &&
+               raw_receipt.no_draw_only &&
+               !raw_receipt.import_packet.original_saturn_capture_verified,
+           "one altered raw span rejects the complete capture atomically before any host import");
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    for (int path_index = 0; path_index < 6; ++path_index)
+        remove(raw_paths_storage[path_index]);
     capture.original_saturn_capture_verified = 0;
     expect(nexus_v1_dgn_structure3_capture_manifest_parse(
                imported_manifest, strlen(imported_manifest), &receipt) &&
