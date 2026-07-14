@@ -106,6 +106,8 @@ int main(void)
         unsigned char repeated_framebuffer[320 * 200];
         uint32_t expected_world_hash;
         unsigned int viewport_hash;
+        unsigned int post_tick_viewport_hash;
+        uint32_t pre_tick;
 
         CHECK(receipt_is_runtime_admitted(receipt),
               "external save owns an admitted F0435 runtime");
@@ -152,11 +154,39 @@ int main(void)
               "unchanged adopted runtime produces a byte-stable M11 frame");
         CHECK(viewport_hash == viewport_fingerprint(repeated_framebuffer, 320),
               "unchanged adopted runtime preserves the PC34 viewport receipt");
+        /* ReDMCSB GAMELOOP.C advances the restored F0435 world through its
+         * normal idle command path.  Do not manufacture an input route or a
+         * replacement world here: every exercised event remains owned by the
+         * external PC34 save's restored C3/C4 timeline. */
+        pre_tick = (uint32_t)state.world.gameTick;
+        CHECK(M11_GameView_HandleInput(&state, M12_MENU_INPUT_NONE) ==
+                  M11_GAME_INPUT_REDRAW,
+              "adopted original runtime accepts an idle source tick");
+        CHECK((uint32_t)state.world.gameTick == pre_tick + 1u,
+              "adopted original runtime advances exactly one source tick");
+        CHECK(state.dm1ViewportRuntimeOrigin ==
+                  DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
+              "idle source tick retains the original-save viewport origin");
+        CHECK(state.lastTickResult.worldHashPost == state.lastWorldHash &&
+                  state.lastWorldHash != 0u,
+              "idle source tick publishes the M10 runtime receipt");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        CHECK(viewport_is_nonblank(framebuffer, 320),
+              "ticked original runtime produces a nonblank PC34 viewport");
+        post_tick_viewport_hash = viewport_fingerprint(framebuffer, 320);
+        memset(repeated_framebuffer, 0, sizeof(repeated_framebuffer));
+        M11_GameView_Draw(&state, repeated_framebuffer, 320, 200);
+        CHECK(memcmp(framebuffer, repeated_framebuffer, sizeof(framebuffer)) == 0,
+              "unchanged ticked runtime produces a byte-stable M11 frame");
+        CHECK(post_tick_viewport_hash ==
+                  viewport_fingerprint(repeated_framebuffer, 320),
+              "ticked original runtime preserves the PC34 viewport receipt");
         printf("ADMITTED_HOC_RUNTIME path=%s map=%d,%d,%d dir=%d tick=%u champions=%d viewport_hash=%08x\\n",
                receipt->path, state.world.party.mapIndex, state.world.party.mapX,
                state.world.party.mapY, state.world.party.direction,
                (unsigned int)state.world.gameTick,
-               state.world.party.championCount, viewport_hash);
+               state.world.party.championCount, post_tick_viewport_hash);
         F0883_WORLD_Free_Compat(&expected_world);
         M11_GameView_Shutdown(&state);
     }

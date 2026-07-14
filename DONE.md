@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 PC34 external-save first-runtime-tick gate: the fixture-free
+  HoC runtime probe now advances each authenticated external F0435 world once
+  through M11's `CMD_NONE` path and requires exactly one tick, a published M10
+  runtime receipt, retained original-save viewport ownership, and a nonblank,
+  byte-stable PC34 viewport after the tick. It introduces no fixture, graphics,
+  or substitute input route. Source-lock: ReDMCSB `LOADSAVE.C F0435` restores
+  the C3/C4 timeline before `TIMELINE.C F0651`; `GAMELOOP.C` then processes an
+  idle command against that restored world. Verification:
+  `dm1_v1_original_save_pc34_external_hoc_runtime` is skip-safe unless both
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS` and `FIRESTAFF_DM1_PC_DATA` name operator
+  supplied original PC34 material.
+
 - 2026-07-14 DM1 save-and-quit guard: the M11 keyboard and pointer quit
   routes now persist the source SAVE-AND-QUIT header value and retain the
   guard when saving or path construction fails, reporting the actual failure
