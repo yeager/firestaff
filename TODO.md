@@ -1,8 +1,9 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
-  retain broad original PC34 interactive runtime/capture comparison as an
-  external-corpus task.
+  the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
+  ReDMCSB-shaped idle runtime tick. Retain broader original PC34 interactive
+  route/capture comparison as an external-corpus task.
 
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
   source-owned destination/clipping plan. Complete standard door panels,
