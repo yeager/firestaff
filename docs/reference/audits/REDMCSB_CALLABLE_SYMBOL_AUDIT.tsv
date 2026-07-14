@@ -871,8 +871,8 @@ F	0672	F0672_InitializeAllMouseInput	COMMAND.C;DEFS.H;STARTUP2.C	implemented-nar
 F	0673	F0673_SetMouseInputBoxFromZone	COMMAND.C;DEFS.H	implemented-narrow	implemented_narrow	COMMAND.C F0673 PC command-none terminated caller-owned mouse-input zone resolution with -2/-3 offsets and inclusive endpoints
 F	0674	F0674_F0128_sub	DUNVIEW.C;DEFS.H	implemented-narrow	implemented_narrow	DUNVIEW.C F0674 PC F0631 graphic lookup and F0653 byte-counted copy into caller-owned viewport bitmap
 F	0675	F0675_DUNGEONVIEW_GetScaledBitmap	DUNVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0676	F0676_DrawD3L2	DUNVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0677	F0677_DrawD3R2	DUNVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0676	F0676_DrawD3L2	DUNVIEW.C	implemented-narrow	implemented_narrow	DUNVIEW.C F0676 PC D3L2 caller-owned draw dispatcher and ordering
+F	0677	F0677_DrawD3R2	DUNVIEW.C	implemented-narrow	implemented_narrow	DUNVIEW.C F0677 PC D3R2 caller-owned draw dispatcher and ordering
 F	0678	F0678_DrawD2L2	DUNVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0679	F0679_DrawD2R2	DUNVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;NEC816.C;VIDEODRV.C;IMAGE3.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0676/F0677 D3 side dispatcher: added PC D3L2/D3R2
+  ordering for walls, stairs, doors, pits, corridors, and teleporters over
+  caller-owned rendering callbacks. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0674 viewport bitmap copy: added the PC F0631
   cached-graphic lookup and F0653-sized copy into caller-owned viewport
   storage. Missing graphics and undersized destinations do not synthesize or
