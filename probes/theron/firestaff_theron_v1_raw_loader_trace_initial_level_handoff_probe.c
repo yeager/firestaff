@@ -5,7 +5,9 @@
  * supply a coalesced Mednafen transcript that the production parser accepts.
  */
 #include "asset_status_m12.h"
+#include "theron_v1_boot.h"
 #include "theron_v1_raw_loader_trace.h"
+#include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +91,8 @@ int main(void)
     size_t raw_size;
     Theron_V1RawLoaderTraceCoalescedLaterReceipt coalesced;
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt handoff;
+    Theron_V1_BootProfile profile;
+    Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
 
     if (!raw_path) {
         printf("SKIP: set FIRESTAFF_THERON_TRACK02_US_BIN for raw-media handoff coverage\n");
@@ -114,11 +118,39 @@ int main(void)
         handoff.loader_intake.record != handoff.observed_track02_record ||
         handoff.loader_intake.observed_payload_checksum !=
             handoff.complete_payload_checksum ||
+        !handoff.loader_payload.handed_off ||
+        !handoff.loader_payload.no_fallback ||
+        handoff.loader_payload.payload_checksum !=
+            handoff.complete_payload_checksum ||
         handoff.object_tail_semantics_proven || handoff.fallback_visuals_allowed) {
         free(raw);
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
         return 1;
     }
+    memset(&profile, 0, sizeof(profile));
+    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s", md5);
+    profile.track02_initial_level_handoff = handoff;
+    if (!theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+            &profile, raw, raw_size, &payload_receipt) ||
+        !payload_receipt.consumed || !payload_receipt.no_fallback ||
+        payload_receipt.record != handoff.observed_track02_record ||
+        payload_receipt.payload_checksum != handoff.complete_payload_checksum ||
+        payload_receipt.raw_track02_offset !=
+            (uint64_t)handoff.observed_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET) {
+        free(raw);
+        printf("FAIL: boot receipt did not retain the exact runtime payload\n");
+        return 1;
+    }
+    ++raw[payload_receipt.raw_track02_offset];
+    if (theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+            &profile, raw, raw_size, &payload_receipt)) {
+        free(raw);
+        printf("FAIL: altered original payload reached the runtime handoff\n");
+        return 1;
+    }
+    --raw[payload_receipt.raw_track02_offset];
     coalesced.later_post_return_step_verified = 0;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {

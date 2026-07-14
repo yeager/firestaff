@@ -42,6 +42,19 @@ static int theron_v1_startup_runtime_publish_track02_route(
     Theron_DungeonID dungeon_id,
     const Theron_Track02DungeonRoute *route);
 
+static uint32_t theron_v1_startup_runtime_fnv1a32(const uint8_t *bytes,
+                                                   size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes && byte_count != 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 /* The only original dynamic stage-two CD_READ proved so far is the JP/US
  * one-sector stage-three load. Direct runtime entry must verify its physical
  * `$3800` BRK $ff bytes too, rather than trusting a previously built startup
@@ -403,6 +416,67 @@ static int theron_v1_startup_runtime_has_verified_track02_request(
     }
     return theron_v1_track02_variant_for_md5(md5_hex) !=
         THERON_TRACK02_VARIANT_UNKNOWN;
+}
+
+int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+    const void *boot_profile,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    Theron_V1StartupRuntimeInitialPayloadReceipt *out_receipt) {
+    const Theron_V1_BootProfile *profile =
+        (const Theron_V1_BootProfile *)boot_profile;
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff;
+    Theron_V1StartupRuntimeInitialPayloadReceipt receipt = {0};
+    size_t raw_offset;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !hucard_rom || !out_receipt ||
+        !theron_v1_startup_runtime_has_verified_track02_request(
+            profile->graphics_md5) ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            hucard_rom, hucard_rom_size, profile->graphics_md5)) {
+        return 0;
+    }
+    handoff = &profile->track02_initial_level_handoff;
+    if (!theron_v1_raw_loader_trace_initial_level_handoff_is_complete(handoff) ||
+        strcmp(handoff->track02_md5, profile->graphics_md5) != 0 ||
+        !handoff->loader_payload.handed_off ||
+        !handoff->loader_payload.no_fallback ||
+        handoff->loader_payload.record != handoff->observed_track02_record ||
+        handoff->loader_payload.destination !=
+            THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        handoff->loader_payload.payload_bytes !=
+            THERON_TRACK02_RAW_USER_DATA_BYTES ||
+        handoff->loader_payload.payload_checksum !=
+            handoff->complete_payload_checksum ||
+        handoff->loader_payload.payload_checksum !=
+            handoff->loader_intake.observed_payload_checksum) {
+        return 0;
+    }
+    raw_offset = (size_t)handoff->loader_payload.record *
+            THERON_TRACK02_RAW_SECTOR_BYTES +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    if (raw_offset > hucard_rom_size ||
+        handoff->loader_payload.payload_bytes > hucard_rom_size - raw_offset ||
+        theron_v1_startup_runtime_fnv1a32(
+            hucard_rom + raw_offset,
+            handoff->loader_payload.payload_bytes) !=
+            handoff->loader_payload.payload_checksum ||
+        memcmp(hucard_rom + raw_offset, handoff->loader_payload.payload,
+               handoff->loader_payload.payload_bytes) != 0) {
+        return 0;
+    }
+
+    receipt.consumed = 1;
+    receipt.no_fallback = 1;
+    receipt.record = handoff->loader_payload.record;
+    receipt.destination = handoff->loader_payload.destination;
+    receipt.payload_bytes = handoff->loader_payload.payload_bytes;
+    receipt.payload_checksum = handoff->loader_payload.payload_checksum;
+    receipt.raw_track02_offset = raw_offset;
+    receipt.status = "initial_envelope_payload_runtime_consumed_no_semantics";
+    *out_receipt = receipt;
+    return 1;
 }
 
 int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
@@ -2162,6 +2236,7 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         (const Theron_V1_BootProfile *)boot_profile;
     const char *md5_hex =
         (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
+    Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
 
     /* The forcefield is the first startup-to-dungeon mutation. Keep the
      * player in Soul Room unless the boot-owned capture receipt still matches
@@ -2194,6 +2269,31 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
                      receipt_cap,
                      "Track02 capture admission required "
                      "before forcefield entry");
+        }
+        return 0;
+    }
+    if (!theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+            profile, hucard_rom, hucard_rom_size, &payload_receipt)) {
+        if (out_result) {
+            theron_v1_startup_runtime_entry_result_init(out_result);
+            out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+        }
+        if (out_host_receipt) {
+            theron_v1_startup_host_receipt_init(out_host_receipt);
+            out_host_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
+            out_host_receipt->status_scope = "TRACK02 PAYLOAD";
+            out_host_receipt->status = "AUTHENTIC PAYLOAD HANDOFF REQUIRED";
+            out_host_receipt->inspect_scope = "TRACK02 PAYLOAD";
+            snprintf(out_host_receipt->inspect_detail,
+                     sizeof(out_host_receipt->inspect_detail), "%s",
+                     out_host_receipt->status);
+        }
+        if (out_state_receipt) {
+            theron_v1_startup_state_receipt_init(out_state_receipt);
+        }
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track02 payload handoff required before forcefield entry");
         }
         return 0;
     }
