@@ -26,9 +26,9 @@ int main(void)
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1RawLoaderTraceStage3SectorReceipt stage3_receipt;
 
-    if (!raw || !system_card || !trace || stat(raw, &st) != 0 ||
+    if (!raw || !system_card || !trace || !manifest || stat(raw, &st) != 0 ||
         st.st_size <= 0) {
-        printf("status=skip reason=explicit_raw_track02_system_card_and_trace_required\n");
+        printf("status=skip reason=explicit_raw_track02_system_card_trace_and_manifest_required\n");
         return 0;
     }
     if ((size_t)st.st_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
@@ -43,22 +43,20 @@ int main(void)
         printf("status=blocked reason=system_card_or_loader_trace_unhashed\n");
         return 1;
     }
-    if (manifest) {
-        file = fopen(manifest, "r");
-        if (!file || !fread(text, 1u, sizeof(text) - 1u, file)) {
-            if (file) fclose(file);
-            printf("status=blocked reason=capture_manifest_invalid\n");
-            return 1;
-        }
-        fclose(file);
-        text[sizeof(text) - 1u] = '\0';
-        if (!theron_v1_capture_manifest_parse(text, &capture_manifest) ||
-            !theron_v1_capture_manifest_matches_preflight_inputs(
-                &capture_manifest, raw, md5, system_card, system_card_md5,
-                trace, trace_md5)) {
-            printf("status=blocked reason=capture_manifest_mismatch\n");
-            return 1;
-        }
+    file = fopen(manifest, "r");
+    if (!file || !fread(text, 1u, sizeof(text) - 1u, file)) {
+        if (file) fclose(file);
+        printf("status=blocked reason=capture_manifest_invalid\n");
+        return 1;
+    }
+    fclose(file);
+    text[sizeof(text) - 1u] = '\0';
+    if (!theron_v1_capture_manifest_parse(text, &capture_manifest) ||
+        !theron_v1_raw_loader_trace_capture_manifest_matches(
+            &capture_manifest, raw, md5, system_card, system_card_md5,
+            trace, trace_md5)) {
+        printf("status=blocked reason=capture_manifest_mismatch\n");
+        return 1;
     }
     raw_bytes = (uint8_t *)malloc((size_t)st.st_size);
     file = raw_bytes ? fopen(raw, "rb") : NULL;

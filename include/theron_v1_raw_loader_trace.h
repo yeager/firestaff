@@ -232,13 +232,13 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     const char *track02_md5,
     Theron_V1RawLoaderTraceCoalescedLaterReceipt *out);
 
-/* Validates the explicit V2 capture-manifest identity for a coalesced
- * Mednafen transcript before the transcript is parsed. The caller must
- * rehash these files before passing their measured MD5 values. This binds
- * only the original raw Track 02, System Card 3.0, and trace artifacts; it
- * assigns no payload, dungeon, object, graphics, palette, or transition
- * meaning to the receipt. */
-int theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+/* Validates the explicit V2 capture-manifest identity for an ordered
+ * Mednafen loader transcript before it is parsed. The caller must rehash
+ * these files before passing their measured MD5 values. This binds only the
+ * original raw Track 02, System Card 3.0, and trace artifacts; it assigns no
+ * payload, dungeon, object, graphics, palette, or transition meaning to the
+ * receipt. */
+int theron_v1_raw_loader_trace_capture_manifest_matches(
     const Theron_V1CaptureManifest *manifest,
     const char *track02_path,
     const char *track02_md5,

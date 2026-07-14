@@ -14219,6 +14219,16 @@ manifest, or System Card path fails the supplied-evidence gate. This records
 only original-artifact provenance and loader/media coordinates; no payload
 format, dungeon, map, object, graphics, palette, bitmap, or transition meaning
 is assigned.
+
+# ✅ 2026-07-14 Theron Track 02 manifest-required raw loader preflight
+
+The positive raw-loader preflight now requires a V2 capture manifest and
+rehashes the exact raw Track 02, System Card 3.0, and ordered Mednafen trace
+against it before admitting the existing `$3800` media-span/Stage 3 receipt.
+The shared loader-capture identity check rejects a missing manifest, a changed
+trace, or a non-System-Card-3.0 hash. This is artifact provenance and transport
+only; it assigns no payload format, dungeon, object, bitmap, palette source,
+or decoder meaning.
 # Nexus Structure3 Selector Reuse Receipt (2026-07-14)
 
 `nexus_v1_level_structure3_face_material_receipt()` now retains per-level
