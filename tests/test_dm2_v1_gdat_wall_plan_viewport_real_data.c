@@ -241,6 +241,7 @@ int main(void)
         };
         for (size_t side = 0; side < sizeof(side_squares) / sizeof(side_squares[0]); ++side) {
             const DM2_V1_GdatWallM11Command *command = NULL;
+            const DM2_WallFrame *frame = dm2_v1_get_wall_frame(side_squares[side]);
             for (int i = 0; i < wall_plan.command_count; ++i) {
                 if (wall_plan.commands[i].view_square == side_squares[side]) {
                     command = &wall_plan.commands[i];
@@ -250,8 +251,17 @@ int main(void)
             if (!command || command->field !=
                     dm2_v1_viewport_wall_field_for_square(side_squares[side]) ||
                 !command->raw_hash || !command->decoded_hash ||
-                !command->palette_hash || !command->width || !command->height) {
-                fputs("FAIL: canonical side-wall command lacks source pixels\n", stderr);
+                !command->palette_hash || !command->width || !command->height ||
+                !frame || !command->geometry_hash ||
+                command->source_x != frame->blit_x ||
+                command->source_y != frame->blit_y ||
+                command->source_width != frame->byte_width ||
+                command->source_height != frame->height ||
+                command->destination_x != frame->left_x ||
+                command->destination_y != frame->top_y ||
+                command->destination_width != frame->right_x - frame->left_x + 1 ||
+                command->destination_height != frame->bottom_y - frame->top_y + 1) {
+                fputs("FAIL: canonical side-wall command lacks G0163 geometry\n", stderr);
                 failures = 1;
                 goto done;
             }
@@ -288,6 +298,41 @@ int main(void)
                 viewport.last_dungeon_wall_material_consumed_mask,
                 viewport.fallback_wall_drawn_count, viewport.blocked_material_mask);
         failures = 1;
+    }
+    {
+        DM2_V1_GdatWallM11CommandPlan malformed_plan = wall_plan;
+        int altered = 0;
+
+        for (int i = 0; i < malformed_plan.command_count; ++i) {
+            if (malformed_plan.commands[i].view_square == DM2_SQ_D2L) {
+                ++malformed_plan.commands[i].destination_x;
+                altered = 1;
+                break;
+            }
+        }
+        if (!altered) {
+            fputs("FAIL: canonical plan omitted D2L side-wall receipt\n", stderr);
+            failures = 1;
+            goto done;
+        }
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, graphicsset, scene_plan.command_hash,
+            scene_plan.scene_colorkey, scene_plan.scene_flags, 0u,
+            scene_plan.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            scene_plan.ambient_darkness);
+        dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &malformed_plan);
+        dm2_v1_render_walls(&viewport);
+        if (viewport.asset_wall_drawn_count != 0 ||
+            viewport.last_dungeon_wall_material_consumed_mask != 0u ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) == 0u) {
+            fputs("FAIL: altered side-wall M11 destination did not fail closed\n",
+                  stderr);
+            failures = 1;
+        }
     }
     memset(&trace, 0, sizeof(trace));
     trace.loader = &loader;

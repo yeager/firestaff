@@ -17,6 +17,17 @@ typedef struct {
     uint32_t raw_hash;
     uint32_t decoded_hash;
     uint32_t palette_hash;
+    /* G0163's source crop and destination panel are part of the command,
+     * rather than renderer-local defaults. */
+    uint16_t source_x;
+    uint16_t source_y;
+    uint16_t source_width;
+    uint16_t source_height;
+    uint16_t destination_x;
+    uint16_t destination_y;
+    uint16_t destination_width;
+    uint16_t destination_height;
+    uint32_t geometry_hash;
 } DM2_V1_GdatWallM11Command;
 
 typedef struct DM2_V1_GdatWallM11CommandPlan {
