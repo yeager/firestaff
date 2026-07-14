@@ -664,6 +664,9 @@
   - 2026-07-14 update: F0686 now preserves the PC IMG previous-line copy over
     caller-owned packed bitmap data, used by real IMG/IMG3 expansion. No image
     allocation, synthetic pixels, or decoder fallback is supplied.
+  - 2026-07-14 update: F0687/F0688 now preserve PC IMG3 nibble and run-count
+    decoding over caller-owned source bytes. No image material or decoder
+    fallback is supplied.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
