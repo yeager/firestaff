@@ -458,6 +458,16 @@ static void test_row_local_flip(void)
     CHECK_EQ("flip.r1c3", dest[7], 11, "row 1 col 3 from row 1 col 0");
     CHECK_EQ("flip.guard_before", guard_before, 0xA5, "external guard unchanged");
     CHECK_EQ("flip.guard_after", guard_after, 0x5A, "external guard unchanged");
+
+    memcpy(dest, source, sizeof(dest));
+    CHECK_EQ("flip.in_place.run",
+             dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_flip_row_pc34(
+                 dest, dest, 4, 2),
+             1, "F0099 scratch-buffer alias route");
+    CHECK_EQ("flip.in_place.r0", memcmp(dest, (uint8_t[]){4, 3, 2, 1}, 4), 0,
+             "in-place first row reverses independently");
+    CHECK_EQ("flip.in_place.r1", memcmp(dest + 4, (uint8_t[]){14, 13, 12, 11}, 4), 0,
+             "in-place second row reverses independently");
 }
 
 static void test_rejects_non_contract_state(void)
