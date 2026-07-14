@@ -1,46 +1,62 @@
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-
 #include "redmcsb_f0709_start_sound_pc34_compat.h"
 
+#include <assert.h>
+#include <string.h>
+
 typedef struct {
-    int calls;
-    int16_t sound_index;
-    int16_t sound_volume;
-} start_capture;
+    redmcsb_f0709_sound_descriptor_pc34_compat descriptor;
+    int lookup_calls;
+    int play_calls;
+    int16_t seen_index;
+    void *seen_buffer;
+    int16_t seen_volume;
+    int16_t seen_period;
+} redmcsb_f0709_capture_pc34_compat;
 
-static void capture_start(
-    void *context,
-    int16_t sound_index,
-    int16_t sound_volume)
+static const redmcsb_f0709_sound_descriptor_pc34_compat *lookup(
+    void *context, int16_t sound_index)
 {
-    start_capture *capture = context;
+    redmcsb_f0709_capture_pc34_compat *capture = context;
 
-    capture->calls++;
-    capture->sound_index = sound_index;
-    capture->sound_volume = sound_volume;
+    capture->lookup_calls++;
+    capture->seen_index = sound_index;
+    return &capture->descriptor;
+}
+
+static void play(void *context, void *buffer, int16_t volume, int16_t period)
+{
+    redmcsb_f0709_capture_pc34_compat *capture = context;
+
+    capture->play_calls++;
+    capture->seen_buffer = buffer;
+    capture->seen_volume = volume;
+    capture->seen_period = period;
 }
 
 int main(void)
 {
-    start_capture capture = { 0, 0, 0 };
+    redmcsb_f0709_capture_pc34_compat capture = {
+        { 42, (void *)0x1234 }, 0, 0, 0, NULL, 0, 0
+    };
+    redmcsb_f0709_sound_route_pc34_compat route = { lookup, play, &capture };
 
-    redmcsb_f0709_start_sound_pc34_compat(
-        34, 3, capture_start, &capture);
-    assert(capture.calls == 1);
-    assert(capture.sound_index == 34);
-    assert(capture.sound_volume == 3);
+    assert(redmcsb_f0709_start_sound_pc34_compat(&route, 3, 17));
+    assert(capture.lookup_calls == 1);
+    assert(capture.seen_index == 3);
+    assert(capture.play_calls == 1);
+    assert(capture.seen_buffer == (void *)0x1234);
+    assert(capture.seen_volume == 17);
+    assert(capture.seen_period == 6000);
 
-    redmcsb_f0709_start_sound_pc34_compat(
-        INT16_C(-1), INT16_C(-32768), capture_start, &capture);
-    assert(capture.calls == 2);
-    assert(capture.sound_index == -1);
-    assert(capture.sound_volume == INT16_MIN);
+    capture.descriptor.graphic_index = -1;
+    assert(!redmcsb_f0709_start_sound_pc34_compat(&route, 3, -11));
+    assert(capture.play_calls == 1);
 
-    redmcsb_f0709_start_sound_pc34_compat(1, 2, NULL, &capture);
-    assert(capture.calls == 2);
-
-    puts("ok: ReDMCSB F0709 PC 3.4 start-sound dispatch");
+    assert(redmcsb_f0709_start_sound_pc34_compat(&route, -1, -11));
+    assert(capture.play_calls == 2);
+    assert(capture.seen_volume == -11);
+    assert(!redmcsb_f0709_start_sound_pc34_compat(NULL, 0, 0));
+    assert(strstr(redmcsb_f0709_start_sound_source_evidence_pc34(),
+                  "IO.C:3832-3843") != NULL);
     return 0;
 }
