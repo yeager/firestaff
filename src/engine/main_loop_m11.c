@@ -40,6 +40,8 @@
 #include "screenshot_m11.h"
 #include "v1_swsh_intro_pathfinder_pc34_compat.h"
 #include "v1_title_intro_pathfinder_pc34_compat.h"
+#include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v20_startup_presentation_timing_pc34.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -635,10 +637,26 @@ typedef enum {
     M11_ENTRANCE_COMMAND_CREDITS = ENTRANCE_COMPAT_COMMAND_PATH_CREDITS
 } M11_EntranceCommand;
 
+static unsigned int m11_v20_startup_remaining_delay_ms(
+    unsigned int source_delay_ms,
+    Uint64 presentation_started_ms)
+{
+    if (!dm1_v2_presentation_mode_is_v20() ||
+        presentation_started_ms == 0U) {
+        return source_delay_ms;
+    }
+    return dm1_v20_startup_presentation_remaining_delay_ms_pc34(
+        source_delay_ms, SDL_GetTicks() - presentation_started_ms);
+}
+
 static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
-                                              unsigned int vblank_delay_ms) {
+                                              unsigned int vblank_delay_ms,
+                                              Uint64 presentation_started_ms) {
     unsigned int ticks;
     SDL_Event ev;
+    const int v20TimingActive = dm1_v2_presentation_mode_is_v20();
+    const Uint64 sourceDeadlineMs = presentation_started_ms +
+        (Uint64)wait_ticks * (Uint64)vblank_delay_ms;
     /* ReDMCSB ENTRANCE.C:1012-1091 F0442 sets L1406=1800, discards stale
      * keyboard input, then waits one delay/vblank per tick until any
      * keyboard or mouse input is present before returning to the entrance
@@ -675,7 +693,18 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
             }
 #endif
         }
-        SDL_Delay(vblank_delay_ms);
+        if (v20TimingActive) {
+            const Uint64 nowMs = SDL_GetTicks();
+            const Uint64 remainingMs = nowMs >= sourceDeadlineMs
+                ? 0U : sourceDeadlineMs - nowMs;
+            if (remainingMs == 0U) {
+                return M11_ENTRANCE_COMMAND_NONE;
+            }
+            SDL_Delay((unsigned int)(remainingMs < vblank_delay_ms
+                ? remainingMs : vblank_delay_ms));
+        } else {
+            SDL_Delay(vblank_delay_ms);
+        }
     }
     return M11_ENTRANCE_COMMAND_NONE;
 }
@@ -688,6 +717,7 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
                                                  out_command) {
     const M11_AssetSlot* credits;
     DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    Uint64 presentationStartedMs;
     int waitResult;
     if (!gameView || !framebuffer || !media_receipt || !out_command ||
         !gameView->assetsAvailable) {
@@ -701,12 +731,14 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     }
     M11_AssetLoader_Blit(credits, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
                          0, 0, -1);
+    presentationStartedMs = SDL_GetTicks();
     M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                 M11_FB_WIDTH,
                                                 M11_FB_HEIGHT,
                                                 command.special_palette);
     waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
-                                                    command.vblank_delay_ms);
+                                                    command.vblank_delay_ms,
+                                                    presentationStartedMs);
     *out_command = command;
     return waitResult;
 }
@@ -859,6 +891,7 @@ static int m11_play_redmcsb_entrance_transition(
     for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
         EntranceCompatSourceAnimationStep step;
         DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
+        Uint64 presentationStartedMs = 0U;
         if (!ENTRANCE_Compat_GetSourceAnimationStep(sourceStep, &step)) break;
         memset(&command, 0, sizeof(command));
         if (!dm1_v1_startup_entrance_render_audio_command_pc34(
@@ -924,6 +957,7 @@ static int m11_play_redmcsb_entrance_transition(
         }
 
         if (command.present_entrance_palette) {
+            presentationStartedMs = SDL_GetTicks();
             M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
@@ -984,7 +1018,8 @@ static int m11_play_redmcsb_entrance_transition(
             }
         }
         {
-            unsigned int delayMs = command.delay_ms;
+            unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
+                command.delay_ms, presentationStartedMs);
             if (delayMs > 0U) {
                 SDL_Delay(delayMs);
             }
@@ -1436,6 +1471,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
     int titlePalette = -1;
+    Uint64 presentationStartedMs = 0U;
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
@@ -1548,6 +1584,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * latch visible before waiting. */
         if (command.palette_before_pre_present_delay &&
             titlePalette != command.special_palette) {
+            presentationStartedMs = SDL_GetTicks();
             if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                             M11_FB_WIDTH,
                                                             M11_FB_HEIGHT,
@@ -1561,9 +1598,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * post-zoom waits and the final guard individually, so do not add
          * an aggregate delay after this loop. */
         if (command.pre_present_delay_ms > 0U &&
-            m11_delay_ms_with_intro_event_pump(command.pre_present_delay_ms)) {
+            m11_delay_ms_with_intro_event_pump(
+                m11_v20_startup_remaining_delay_ms(
+                    command.pre_present_delay_ms, presentationStartedMs))) {
             break;
         }
+        presentationStartedMs = 0U;
         if (!command.present_frame) continue;
         if (blitPlan.kind == V1_TITLE_FRONTEND_C001_BLIT_REGION) {
             M11_AssetLoader_BlitRegion(titleGraphic,
@@ -1603,6 +1643,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * truth for that mapping; v2.7.4 always used
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
+        presentationStartedMs = SDL_GetTicks();
         if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
                                                         M11_FB_WIDTH,
                                                         M11_FB_HEIGHT,
@@ -1614,8 +1655,13 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             *outPlayedAnyFrame = 1;
         }
         if (command.post_present_delay_ms > 0U &&
-            m11_delay_ms_with_intro_event_pump(command.post_present_delay_ms)) {
+            m11_delay_ms_with_intro_event_pump(
+                m11_v20_startup_remaining_delay_ms(
+                    command.post_present_delay_ms, presentationStartedMs))) {
             break;
+        }
+        if (command.post_present_delay_ms > 0U) {
+            presentationStartedMs = 0U;
         }
     }
     if (titleAudioInitialized) {

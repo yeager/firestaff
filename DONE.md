@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 V2.0 source-owned title/entrance cadence: V2.0 presentation
+  consumes the existing ReDMCSB VBlank interval instead of adding a full host
+  delay. Verification: `dm1_v20_startup_presentation_timing_probe`.
+
 - 2026-07-14 DM1 V2.1 F12 real-asset capture admission: F12 rejects an
   asset-free fallback frame and preserves the original TITLE palette in its
   selected-resolution capture. Verification:
