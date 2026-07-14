@@ -701,6 +701,10 @@
     retained pixels, local palette entries, and the original 320-pixel line
     boundary are preserved; no clipping, generated graphics, or fallback is
     supplied.
+  - 2026-07-15 update: CSB startup surfaces now consume the real
+    LZW-decompressed PC34 IMG3 record through F0691 and bind only a complete,
+    header-matching indexed result to title/entrance/HUD consumers. Unknown,
+    truncated, and non-IMG3 records fail closed without a generated surface.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;

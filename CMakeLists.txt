@@ -1475,6 +1475,10 @@ set(M11_SOURCES
     src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
     src/csb/csb_v1_keyboard_commands_pc34_compat.c
     src/engine/render_sdl_m11.c
@@ -4114,6 +4118,10 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/csb/csb_v1_save_load_pc34_compat.c
@@ -4148,6 +4156,10 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -4168,6 +4180,10 @@ add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -4190,6 +4206,10 @@ add_executable(firestaff_csb_v1_pc_package_presentation_probe
     probes/csb/firestaff_csb_v1_pc_package_presentation_probe.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
@@ -4287,6 +4307,10 @@ add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -4338,6 +4362,10 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
@@ -4386,6 +4414,10 @@ add_executable(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
@@ -4469,6 +4501,10 @@ add_executable(firestaff_csb_v1_pc_real_asset_d2c_f0107_f0111_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
     src/csb/csb_v1_viewport_d2c_f0107_wall_ornament_with_f0111_door_front_pc34_compat.c
@@ -7802,6 +7838,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_boot_profile_smoke.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
     )
@@ -7831,6 +7871,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_required_complete_launches.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
     )
@@ -7852,6 +7896,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_boot_title_import_ui_gate_pc34_compat.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
@@ -11012,6 +11060,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_boot_viewport_render_gate.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -11054,6 +11106,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_runtime_champion_load_attrs.c
         src/csb/csb_v1_boot.c
         src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_startup_real_asset_receipt.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
@@ -11311,6 +11367,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_boot_runtime_handoff.c
         src/csb/csb_v1_boot.c
         src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_startup_real_asset_receipt.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_startup_runtime_bridge_pc34_compat.c
@@ -11349,6 +11409,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_startup_real_asset_receipt.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
@@ -11830,6 +11894,10 @@ if(BUILD_TESTING)
         tests/test_csb_v1_phase7_verification.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
+    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
+    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/csb/csb_v1_dungeon_world_pc34_compat.c
@@ -31943,6 +32011,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0691_draw_compressed_
         target_compile_options(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0691_draw_compressed_img3_pc34_compat COMMAND test_redmcsb_f0691_draw_compressed_img3_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_img3_decode_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_startup_img3_decode_pc34_compat.c")
+    add_executable(test_csb_v1_startup_img3_decode_pc34_compat tests/test_csb_v1_startup_img3_decode_pc34_compat.c src/csb/csb_v1_startup_img3_decode_pc34_compat.c src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
+    target_include_directories(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_startup_img3_decode_pc34_compat COMMAND test_csb_v1_startup_img3_decode_pc34_compat)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8156_f8157_c25_palette_pc34_compat.c"
