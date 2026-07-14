@@ -2526,7 +2526,7 @@ static int test_original_sksave_timer_post_load_rebuild(void)
     DM2_TestGameStateStorage gs_store;
     DM2_GameStateBlock *gs = &gs_store.block;
     DM2_ChampionRecord champion;
-    DM2_TimerEntry timers[3];
+    DM2_TimerEntry timers[4];
     DM2_V1_SaveCandidate candidate;
     DM2_V1_BootProfile boot;
     DM2_V1_GameState game;
@@ -2549,22 +2549,29 @@ static int test_original_sksave_timer_post_load_rebuild(void)
     gs->wPlayerPosX = 2;
     gs->wPlayerPosY = 3;
     gs->wPlayerDir = 3;
-    gs->wTimersCount = 3;
+    gs->wTimersCount = 4;
     memcpy(champion.first_name, "ZED", 3u);
     champion.cur_hp = 41;
     champion.max_hp = 50;
 
     /* Raw Timer is dw00, type, actor, value, w8.  Write the retained
      * ten-byte LE wire image directly, not the compatibility field names. */
+    ((uint8_t *)&timers[0])[0] = 5u;
     ((uint8_t *)&timers[0])[4] = 0x0cu; /* tty0C, champion actor 0 */
+    ((uint8_t *)&timers[1])[0] = 4u;
     ((uint8_t *)&timers[1])[4] = 0x1du; /* tty1D, RecordE value follows */
     ((uint8_t *)&timers[1])[6] = 0x34u;
     ((uint8_t *)&timers[1])[7] = 0x12u;
+    ((uint8_t *)&timers[2])[0] = 4u;
     ((uint8_t *)&timers[2])[4] = 0x1eu; /* tty1E, RecordE value follows */
     ((uint8_t *)&timers[2])[6] = 0x78u;
     ((uint8_t *)&timers[2])[7] = 0x56u;
+    /* Same tick/type/actor as timer 2.  DM2_cmp_timers breaks this final tie
+     * with the original timer-table address, so table index 2 stays first. */
+    ((uint8_t *)&timers[3])[0] = 4u;
+    ((uint8_t *)&timers[3])[4] = 0x1eu;
     if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
-                                  global_words, spell_effects, timers, 3,
+                                  global_words, spell_effects, timers, 4,
                                   inventory, dm2_db_make_handle(7, 0x44),
                                   payload, sizeof(payload),
                                   &payload_size) ||
@@ -2590,10 +2597,18 @@ static int test_original_sksave_timer_post_load_rebuild(void)
 
     if (dm2_v1_runtime_restore_save_candidate(payload, payload_size) != 0 ||
         !dm2_v1_runtime_last_timer_post_load_receipt(&timer_receipt) ||
-        !timer_receipt.valid || timer_receipt.timer_count != 3u ||
+        !timer_receipt.valid || timer_receipt.timer_count != 4u ||
+        timer_receipt.timer_heap_count != 4u ||
+        timer_receipt.next_timer_index != 2u ||
+        timer_receipt.next_timer_tick != 4u ||
+        timer_receipt.timer_heap_index[0] != 2u ||
+        timer_receipt.timer_heap_index[1] != 3u ||
+        timer_receipt.timer_heap_index[2] != 0u ||
+        timer_receipt.timer_heap_index[3] != 1u ||
+        timer_receipt.timer_heap_hash == 0u ||
         timer_receipt.champion_timer_bound_mask != 0x01u ||
         timer_receipt.champion_timer_index[0] != 0u ||
-        timer_receipt.unresolved_record_timer_count != 2u ||
+        timer_receipt.unresolved_record_timer_count != 3u ||
         timer_receipt.other_timer_count != 0u) {
         goto done;
     }
@@ -2614,7 +2629,7 @@ done:
         printf("    FAIL: SKProject timer ownership was not rebuilt exactly\n");
         return 0;
     }
-    printf("    PASS: tty0C binds champion and RecordE timers stay unbound\n");
+    printf("    PASS: SKProject timer heap and tty0C ownership rebuilt\n");
     return 1;
 }
 

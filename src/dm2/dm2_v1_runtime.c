@@ -176,6 +176,104 @@ enum {
     DM2_SKPROJECT_TTY_MISSILE_1 = 0x1e
 };
 
+static uint32_t dm2_runtime_timer_tick(const DM2_TimerEntry *timer)
+{
+    uint8_t raw[DM2_TIMER_ENTRY_SIZE];
+
+    memcpy(raw, timer, sizeof(raw));
+    return (uint32_t)raw[0] |
+           ((uint32_t)raw[1] << 8) |
+           ((uint32_t)raw[2] << 16);
+}
+
+/* skproject/SKULLWIN/c_timer.cpp::DM2_cmp_timers compares the saved timer
+ * table, not a decoded compatibility view.  The final pointer comparison is
+ * the original table index here, because this array preserves that order. */
+static int dm2_runtime_timer_precedes(const DM2_V1_SessionState *session,
+                                      uint8_t lhs_index,
+                                      uint8_t rhs_index)
+{
+    uint8_t lhs[DM2_TIMER_ENTRY_SIZE];
+    uint8_t rhs[DM2_TIMER_ENTRY_SIZE];
+    uint32_t lhs_tick;
+    uint32_t rhs_tick;
+
+    memcpy(lhs, &session->original_timers[lhs_index], sizeof(lhs));
+    memcpy(rhs, &session->original_timers[rhs_index], sizeof(rhs));
+    lhs_tick = (uint32_t)lhs[0] | ((uint32_t)lhs[1] << 8) |
+               ((uint32_t)lhs[2] << 16);
+    rhs_tick = (uint32_t)rhs[0] | ((uint32_t)rhs[1] << 8) |
+               ((uint32_t)rhs[2] << 16);
+    if (lhs_tick != rhs_tick) return lhs_tick < rhs_tick;
+    if (lhs[4] != rhs[4]) return lhs[4] > rhs[4];
+    if (lhs[5] != rhs[5]) return lhs[5] > rhs[5];
+    return lhs_index <= rhs_index;
+}
+
+static uint32_t dm2_runtime_timer_heap_hash(
+    const DM2_V1_SessionState *session,
+    const DM2_V1_RuntimeTimerPostLoadReceipt *receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    for (uint8_t i = 0u; i < receipt->timer_heap_count; ++i) {
+        const uint8_t timer_index = receipt->timer_heap_index[i];
+        const uint8_t *raw = (const uint8_t *)&session->original_timers[timer_index];
+        hash ^= timer_index;
+        hash *= 16777619u;
+        for (uint8_t byte = 0u; byte < DM2_TIMER_ENTRY_SIZE; ++byte) {
+            hash ^= raw[byte];
+            hash *= 16777619u;
+        }
+    }
+    return hash;
+}
+
+static void dm2_runtime_heapify_original_timers(
+    const DM2_V1_SessionState *session,
+    DM2_V1_RuntimeTimerPostLoadReceipt *out)
+{
+    uint8_t count = out->timer_count;
+
+    out->timer_heap_count = count;
+    out->next_timer_index = 0xffu;
+    for (uint8_t i = 0u; i < count; ++i) {
+        out->timer_heap_index[i] = i;
+    }
+
+    /* This is the bottom-up heap pass from DM2_SORT_TIMERS.  It deliberately
+     * leaves the raw table untouched: later DB-backed timer dispatch remains
+     * unavailable until its original DB address owner is proven. */
+    for (int parent = ((int)count - 2) / 2; parent >= 0; --parent) {
+        int current = parent;
+        for (;;) {
+            int child = current * 2 + 1;
+            uint8_t saved_index;
+            if (child >= (int)count) break;
+            if (child + 1 < (int)count &&
+                dm2_runtime_timer_precedes(session,
+                    out->timer_heap_index[child + 1],
+                    out->timer_heap_index[child])) {
+                child++;
+            }
+            if (dm2_runtime_timer_precedes(session,
+                out->timer_heap_index[current], out->timer_heap_index[child])) {
+                break;
+            }
+            saved_index = out->timer_heap_index[current];
+            out->timer_heap_index[current] = out->timer_heap_index[child];
+            out->timer_heap_index[child] = saved_index;
+            current = child;
+        }
+    }
+    if (count != 0u) {
+        out->next_timer_index = out->timer_heap_index[0];
+        out->next_timer_tick = dm2_runtime_timer_tick(
+            &session->original_timers[out->next_timer_index]);
+    }
+    out->timer_heap_hash = dm2_runtime_timer_heap_hash(session, out);
+}
+
 /* skproject/SKWIN/SkWinCore.cpp::_3a15_020f.  DM2_TimerEntry is retained as
  * the original ten-byte wire image by the SUPPRESS decoder, so inspect its
  * bytes rather than its older compatibility field names. */
@@ -194,13 +292,18 @@ static int dm2_runtime_rebuild_original_timer_owners(
            sizeof(out->champion_timer_index));
     count = session->original_timer_count;
     out->timer_count = count;
+    memset(out->timer_heap_index, 0xff, sizeof(out->timer_heap_index));
 
     /* The source returns immediately for an empty queue.  There are no
      * source timer-owner facts to manufacture in that case. */
     if (count == 0u) {
+        out->next_timer_index = 0xffu;
+        out->timer_heap_hash = dm2_runtime_timer_heap_hash(session, out);
         out->valid = 1;
         return 1;
     }
+
+    dm2_runtime_heapify_original_timers(session, out);
 
     for (uint8_t i = 0u; i < count; ++i) {
         uint8_t raw[DM2_TIMER_ENTRY_SIZE];

@@ -188,6 +188,15 @@ typedef struct {
 typedef struct {
     int valid;
     uint8_t timer_count;
+    /* skproject/SKULLWIN/c_timer.cpp::DM2_SORT_TIMERS reconstructs a
+     * min-heap of timer-table indices after SKSave load.  Keep the exact
+     * source ordering as a receipt; this is not permission to dispatch an
+     * otherwise unimplemented timer type. */
+    uint8_t timer_heap_count;
+    uint8_t timer_heap_index[DM2_MAX_TIMERS];
+    uint8_t next_timer_index;
+    uint32_t next_timer_tick;
+    uint32_t timer_heap_hash;
     uint8_t champion_timer_bound_mask;
     uint8_t champion_timer_index[4];
     uint8_t unresolved_record_timer_count;
