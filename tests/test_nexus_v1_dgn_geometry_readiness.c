@@ -1703,6 +1703,22 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.structure1a_kinds.complete &&
           !render_plan.structure1a_kinds.kind_semantics_proven &&
           render_plan.structure3_model_references.complete &&
+          render_plan.structure3_face_materials.face_receipt_valid ==
+              handoff.structure3_face_materials.face_receipt_valid &&
+          render_plan.structure3_face_materials.face_count ==
+              handoff.structure3_face_materials.face_count &&
+          render_plan.structure3_face_materials.textured_face_count ==
+              handoff.structure3_face_materials.textured_face_count &&
+          render_plan.structure3_face_materials.static_texture_unbound_count ==
+              handoff.structure3_face_materials.static_texture_unbound_count &&
+          !render_plan.structure3_face_materials.material_or_draw_semantics_proven &&
+          render_plan.structure3_face_normal_pairs.face_receipt_valid ==
+              handoff.structure3_face_normal_pairs.face_receipt_valid &&
+          render_plan.structure3_face_normal_pairs.vector_receipt_valid ==
+              handoff.structure3_face_normal_pairs.vector_receipt_valid &&
+          render_plan.structure3_face_normal_pairs.face_normal_pair_count ==
+              handoff.structure3_face_normal_pairs.face_normal_pair_count &&
+          !render_plan.structure3_face_normal_pairs.normal_plane_or_draw_semantics_proven &&
           render_plan.structure1a_transform_selectors.complete &&
           !render_plan.structure1a_transform_selectors.transform_semantics_proven &&
           render_plan.structure1f_face_selectors.complete &&
@@ -1763,7 +1779,7 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.command_count > 0 && commands[0].kind != 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready &&
           !render_plan.fallback_visuals_permitted,
-          "DGN render planning retains bounded Structure3 source commands without a mesh draw");
+          "DGN render planning retains bounded Structure3 selector and normal receipts without a mesh draw");
     wb16(dgn + 0x1c, 24U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
           "out-of-file Structure3 payload envelopes fail closed during DGN load");

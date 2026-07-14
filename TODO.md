@@ -593,6 +593,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     render-plan receipts only through complete Structure1F owner relations.
     Its raw reuse is counted, but its grammar remains unassigned; it cannot
     select a face, model, transform, mesh, material, or draw route.
+  - 2026-07-14 update: the renderer-facing DGN plan now retains the same
+    bounded Structure3 texture-selector and face/normal ordinal receipts as
+    the handoff, including the complete retail LEV00--LEV15 selector joins.
+    This remains no-draw provenance: original Saturn capture/executable
+    evidence must still establish payload/palette decode, transforms, and
+    VDP1 ordering before any mesh command can render.
 
 ## M12 Localization Completion (2026-07-12)
 

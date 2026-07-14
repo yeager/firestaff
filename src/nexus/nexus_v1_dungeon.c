@@ -4337,7 +4337,9 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_directory = handoff.structure3_directory;
     receipt.structure3_entry_headers = handoff.structure3_entry_headers;
     receipt.structure3_faces = handoff.structure3_faces;
+    receipt.structure3_face_materials = handoff.structure3_face_materials;
     receipt.structure3_vectors = handoff.structure3_vectors;
+    receipt.structure3_face_normal_pairs = handoff.structure3_face_normal_pairs;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
     receipt.structure1f_rotation_selectors = handoff.structure1f_rotation_selectors;
