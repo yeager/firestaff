@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `SWSH.C F0904`: the 27-record palette animation
+  now preserves source palette writes and black-palette VBlank waits.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `SWSH.C F0902`: FTL-logo presentation now gates
   on a caller-supplied original 320x200 frame and its 16-color palette;
   missing or truncated data authorizes no substitute. Verification: focused
