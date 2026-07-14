@@ -1,0 +1,7 @@
+#ifndef FIRESTAFF_REDMCSB_F1083_ALLOCATE_724_BYTES_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1083_ALLOCATE_724_BYTES_PC34_COMPAT_H
+
+void redmcsb_f1083_allocate_724_bytes_pc34_compat(void);
+const char *redmcsb_f1083_allocate_724_bytes_source_evidence_pc34(void);
+
+#endif
