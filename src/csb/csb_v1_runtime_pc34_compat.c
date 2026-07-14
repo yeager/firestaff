@@ -12528,6 +12528,7 @@ static void csb_v1_runtime_apply_door_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
 {
+    struct CombatAction_Compat party_damage;
     uint8_t *square;
     int square_type;
     int door_state;
@@ -12550,6 +12551,37 @@ static void csb_v1_runtime_apply_door_timeline_record(
         effect = (door_state == 0) ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
     }
     if (effect != DM1_EFFECT_SET && effect != DM1_EFFECT_CLEAR) return;
+
+    /* ReDMCSB TIMELINE.C F0241 lines 754-809: a closing door on the
+     * party square is forced back open, hurts the party through F0324,
+     * and advances its same animation event by one tick.  In particular,
+     * it must not progress to state 1 while the party is still in the
+     * doorway.  The original PC expression retains the historical
+     * torso/head wound-mask precedence bug, so this compatibility route
+     * keeps the effective torso|head mask rather than inventing a cleaner
+     * vertical-door substitute. */
+    if (effect == DM1_EFFECT_CLEAR &&
+        record->mapIndex == profile->current_level &&
+        record->mapX == profile->party_x &&
+        record->mapY == profile->party_y &&
+        profile->party_state_valid &&
+        profile->party_state.ChampionCount > 0) {
+        memset(&party_damage, 0, sizeof(party_damage));
+        party_damage.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
+        party_damage.attackTypeCode = COMBAT_ATTACK_SELF;
+        party_damage.rawAttackValue = 5;
+        party_damage.allowedWounds = COMBAT_WOUND_TORSO |
+                                    COMBAT_WOUND_HEAD;
+        *square = (uint8_t)((*square & (uint8_t)~0x07u) | 0u);
+        (void)csb_v1_runtime_apply_explosion_party_action(
+            profile, &party_damage, &(struct RngState_Compat){
+                0xC5B1241u ^ profile->game_time ^
+                ((uint32_t)(record->mapX & 0xff) << 8) ^
+                (uint32_t)(record->mapY & 0xff) });
+        csb_v1_runtime_schedule_door_animation_followup(
+            profile, record, effect);
+        return;
+    }
     if ((effect == DM1_EFFECT_SET && door_state == 0) ||
         (effect == DM1_EFFECT_CLEAR && door_state == 4)) {
         return;
