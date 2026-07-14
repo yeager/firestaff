@@ -5,6 +5,8 @@ extern unsigned short G2157_;
 extern unsigned char* G2159_puc_Bitmap_Source;
 extern unsigned char* G2160_puc_Bitmap_Destination;
 
+/* ReDMCSB PC 3.4 IMAGE4.C:48-111 and IMAGE2.C:19-117. These primitives
+ * feed F0689's real IMG3 bitmap expansion; the caller owns both buffers. */
 unsigned char F0687_IMG3_GetNibble(void);
 short F0688_IMG3_GetPixelCount(void);
 void F0685_IMG3_LineColorFilling(unsigned short P2344_ui_, char P2345_c_Color, int P2346_i_);

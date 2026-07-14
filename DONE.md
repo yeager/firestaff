@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1/CSB ReDMCSB F0685-F0688 IMG3 verification: source-locked
+  the real PC 3.4 line fill, previous-line copy, packed-nibble reader, and
+  signed pixel-count forms with focused strict-C11 coverage. No pixel,
+  palette, or fallback image data was introduced.
+
 - 2026-07-14 CSB IMG3 asset presentation: connected successful source-backed
   F0689 expansion to a caller-owned presentation callback; malformed data
   never reaches the display route. Focused strict-C11 regression passes.

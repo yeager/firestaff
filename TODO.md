@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1/CSB ReDMCSB IMG2 boundary: F0685-F0689 are verified only
+  for the PC 3.4 IMG3 command format. Any additional IMG2 caller needs its
+  own original-format binding; the IMG3 decoder must never become a fallback.
+
 - 2026-07-14 Nexus Structure3 runtime-capture follow-up: a complete external
   capture now reaches engine-owned runtime storage only through the active
   canonical `LEVxx.DGN` identity, parsed manifest, byte-matched six raw lanes,
