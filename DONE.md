@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject scene command integrity: real GRAPHICSSET floor
+  and ceiling M11 commands now retain decoded-pixel plus QUERY_BLIT_RECT
+  geometry hashes. A changed source bitmap or plane destination blocks the
+  source-required frame before either material is drawn.
+
 - 2026-07-15 DM2 skproject side-wall command delivery: the real D3L/D3R/D2L/
   D2R M11 wall receipts now include G0163 source-crop and destination-panel
   geometry. The source-required renderer consumes that destination and blocks

@@ -13,6 +13,11 @@
   Remaining work is source-proven panel compositing/light behavior, not a
   renderer-local rectangle or synthetic material path.
 
+- 2026-07-15 DM2 skproject scene follow-up: floor and ceiling commands now
+  carry decoded-pixel and QUERY_BLIT_RECT geometry receipts, verified at the
+  source-required M11 boundary. Remaining work is original light/weather
+  composition evidence, not a substitute plane or rectangle.
+
 - 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
   the verified terminal surface. Do not reopen substitute presentation paths.
 

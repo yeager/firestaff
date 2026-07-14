@@ -184,7 +184,9 @@ int main(void)
                 &loader, (uint8_t)candidate, &plan) ||
             !plan.valid || plan.graphicsset != (uint8_t)candidate ||
             plan.command_hash == 0u || plan.commands[0].raw_hash == 0u ||
-            plan.commands[1].raw_hash == 0u || plan.commands[0].palette_hash == 0u ||
+            plan.commands[1].raw_hash == 0u || plan.commands[0].decoded_hash == 0u ||
+            plan.commands[1].decoded_hash == 0u ||
+            plan.commands[0].palette_hash == 0u ||
             plan.commands[1].palette_hash == 0u ||
             !plan.query_blit_rect.valid ||
             plan.query_blit_rect_hash == 0u ||
@@ -213,6 +215,24 @@ int main(void)
             dm2_v1_gdat_scene_m11_command_plan_free(&plan);
             continue;
         }
+        if (plan.commands[0].decoded_hash !=
+                dm2_v1_gdat_scene_m11_command_pixel_hash(&plan.commands[0]) ||
+            plan.commands[1].decoded_hash !=
+                dm2_v1_gdat_scene_m11_command_pixel_hash(&plan.commands[1]) ||
+            plan.commands[0].geometry_hash == 0u ||
+            plan.commands[1].geometry_hash == 0u ||
+            plan.commands[0].geometry_hash !=
+                dm2_v1_gdat_scene_m11_command_geometry_hash(
+                    &plan.commands[0], &plan.rects[0]) ||
+            plan.commands[1].geometry_hash !=
+                dm2_v1_gdat_scene_m11_command_geometry_hash(
+                    &plan.commands[1], &plan.rects[1])) {
+            fprintf(stderr, "FAIL: G1 MapGraphicsStyle %d scene command lost "
+                    "decoded pixels or QUERY_BLIT_RECT geometry\n", candidate);
+            failures = 1;
+            dm2_v1_gdat_scene_m11_command_plan_free(&plan);
+            continue;
+        }
         if (!verify_direct_handoff(candidate, &plan)) failures = 1;
         if (first_style < 0) {
             first_style = candidate;
@@ -226,6 +246,63 @@ int main(void)
         fputs("FAIL: no G1 MapGraphicsStyle yielded a complete plane plan\n", stderr);
         failures = 1;
         goto done;
+    }
+
+    {
+        DM2_V1_GdatSceneM11CommandPlan altered_geometry = mismatched;
+
+        ++altered_geometry.rects[0].x;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        unexpected_fetches = 0;
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(
+            &viewport, unexpected_palette_fetch, NULL);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, first_style, altered_geometry.command_hash,
+            altered_geometry.scene_colorkey, altered_geometry.scene_flags, 0u,
+            altered_geometry.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            altered_geometry.ambient_darkness);
+        dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &altered_geometry);
+        dm2_v1_render_floor_ceiling(&viewport);
+        if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+            viewport.fallback_floor_ceiling_drawn_count != 0 ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
+            fputs("FAIL: altered QUERY_BLIT_RECT geometry was not a callback-free no-draw\n",
+                  stderr);
+            failures = 1;
+        }
+    }
+
+    {
+        uint8_t original_pixel = mismatched.commands[0].pixels[0];
+
+        mismatched.commands[0].pixels[0] ^= 1u;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        unexpected_fetches = 0;
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(
+            &viewport, unexpected_palette_fetch, NULL);
+        dm2_v1_viewport_set_gdat_scene_control(
+            &viewport, 1, first_style, mismatched.command_hash,
+            mismatched.scene_colorkey, mismatched.scene_flags, 0u,
+            mismatched.highest_light_level, 0u, 0u, 0u, 0u, 0u,
+            mismatched.ambient_darkness);
+        dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
+        dm2_v1_render_floor_ceiling(&viewport);
+        mismatched.commands[0].pixels[0] = original_pixel;
+        if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+            viewport.fallback_floor_ceiling_drawn_count != 0 ||
+            (viewport.blocked_material_mask &
+             DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
+            fputs("FAIL: altered canonical floor pixels were not a callback-free no-draw\n",
+                  stderr);
+            failures = 1;
+        }
     }
 
     mismatched.graphicsset = (uint8_t)(first_style ^ 1);
