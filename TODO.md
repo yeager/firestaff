@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
+  now writes the already-presented 640x400 EPX/Scale2x RGBA surface for an
+  active DM1 V2.1 session, using the configured screenshot directory (or the
+  default). It does not substitute the 320x200 indexed source frame when the
+  presented buffer is unavailable. Remaining work is an operator-run packaged
+  Mac/app visual capture with original DM1 assets; no new artwork or synthetic
+  material route is required.
+
 - 2026-07-14 DM1 original-PC34 save/HoC follow-up: tail-backed external C13
   rows now have an explicit F0435-to-runtime-to-adoption receipt for the
   source-owned Vi Altar fields. M11 also consumes the single due F0887 result

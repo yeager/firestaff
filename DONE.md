@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 V2.1 presented-frame screenshot capture: `F12` now captures
+  an active DM1 V2.1 session from `M11_Render_GetPresentedRGBA` through the
+  production BMP writer, preserving the post-EPX 640x400 image instead of
+  saving the unscaled indexed source. The configured screenshot directory is
+  honored, with the existing default retained; unavailable presented output
+  reports failure rather than falling back. The focused headless V2 screenshot
+  test now uses that same production capture API for its V2.1 case and checks
+  the emitted BMP dimensions and bytes. Verification:
+  `dm1_v2_actual_render_screenshot_probe`.
+
 - 2026-07-14 Nexus Structure3 renderer source-packet staging: the DGN
   viewport now receives only an engine-owned Structure3 packet after every
   existing capture, DGN, face, referenced-vertex, and normal-row relation is
