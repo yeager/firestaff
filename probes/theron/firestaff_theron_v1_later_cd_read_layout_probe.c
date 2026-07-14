@@ -48,10 +48,12 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
     return bytes;
 }
 
-static int find_exact_line(const char *text, const char *prefix,
-                           const char **out_line, size_t *out_length) {
+static int find_unique_exact_line(const char *text, const char *prefix,
+                                  const char **out_line,
+                                  size_t *out_length) {
     const char *line = text;
     size_t prefix_length;
+    size_t match_count = 0u;
 
     if (!text || !prefix || !out_line || !out_length) return 0;
     prefix_length = strlen(prefix);
@@ -63,21 +65,23 @@ static int find_exact_line(const char *text, const char *prefix,
             memcmp(line, prefix, prefix_length) == 0) {
             *out_line = line;
             *out_length = length;
-            return 1;
+            ++match_count;
         }
         line = end ? end + 1 : line + length;
     }
-    return 0;
+    return match_count == 1u;
 }
 
 static int parse_later_trace(const char *path, uint32_t *out_record,
                              uint16_t *out_caller_pc,
-                             uint16_t *out_return_pc) {
+                             uint16_t *out_return_pc,
+                             Theron_Track02Variant expected_variant) {
     uint8_t *bytes;
     size_t size;
     const char *text;
     const char *dispatch;
     const char *returned;
+    const char *dynamic;
     size_t dispatch_length;
     size_t returned_length;
     unsigned int caller_pc;
@@ -87,9 +91,21 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
     unsigned int dl;
     unsigned int ch;
     unsigned int record;
+    unsigned int dynamic_pc;
+    unsigned int dynamic_return_pc;
+    unsigned int dynamic_sector_count;
+    unsigned int dynamic_destination;
+    unsigned int dynamic_record_mask;
+    unsigned int dynamic_cl;
+    unsigned int dynamic_dl;
+    unsigned int dynamic_ch;
+    unsigned int dynamic_record;
     unsigned int return_caller_pc;
     unsigned int return_return_pc;
     unsigned int return_record;
+    char dynamic_variant[16];
+    const char *expected_variant_name;
+    uint32_t expected_dynamic_record;
     int consumed = 0;
     int ok;
 
@@ -97,15 +113,33 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
         !out_return_pc || !(bytes = read_file_bytes(path, &size))) {
         return 0;
     }
+    if (expected_variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        expected_variant_name = "jp_bin";
+        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP;
+    } else if (expected_variant == THERON_TRACK02_VARIANT_US_BIN) {
+        expected_variant_name = "us_bin";
+        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
+    } else {
+        free(bytes);
+        return 0;
+    }
     text = (const char *)bytes;
     ok =
-        find_exact_line(text, "source=mednafen-pce-instrumented", &dispatch,
-                        &dispatch_length) &&
+        find_unique_exact_line(text, "source=mednafen-pce-instrumented",
+                               &dynamic, &dispatch_length) &&
         dispatch_length == strlen("source=mednafen-pce-instrumented") &&
-        find_exact_line(text, "later_system_card_e009_dispatch ", &dispatch,
-                        &dispatch_length) &&
-        find_exact_line(text, "later_system_card_e009_return ", &returned,
-                        &returned_length) &&
+        find_unique_exact_line(text, "dynamic_cd_read_transaction ", &dynamic,
+                               &dispatch_length) &&
+        find_unique_exact_line(text, "later_system_card_e009_dispatch ",
+                               &dispatch, &dispatch_length) &&
+        find_unique_exact_line(text, "later_system_card_e009_return ",
+                               &returned, &returned_length) &&
+        sscanf(dynamic,
+               "dynamic_cd_read_transaction pc=%x return_pc=%x sector_count=%x destination=%x record_register_mask=%x record_cl=%x record_dl=%x record_ch=%x variant=%15[a-z_] record=%x%n",
+               &dynamic_pc, &dynamic_return_pc, &dynamic_sector_count,
+               &dynamic_destination, &dynamic_record_mask, &dynamic_cl,
+               &dynamic_dl, &dynamic_ch, dynamic_variant, &dynamic_record,
+               &consumed) == 10 && consumed == (int)dispatch_length &&
         sscanf(dispatch,
                "later_system_card_e009_dispatch caller_pc=%x return_pc=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
                &caller_pc, &return_pc, &sector_count, &cl, &dl,
@@ -117,7 +151,16 @@ static int parse_later_trace(const char *path, uint32_t *out_record,
         return_caller_pc == caller_pc && return_return_pc == return_pc &&
         return_record == record;
     free(bytes);
-    if (!ok || caller_pc > 0xffffu || return_pc > 0xffffu ||
+    if (!ok || dynamic_pc != 0x4090u || dynamic_return_pc != 0x4093u ||
+        dynamic_sector_count != 1u || dynamic_destination != 0x3800u ||
+        dynamic_record_mask != 0x07u || dynamic_cl > 0xffu ||
+        dynamic_dl > 0xffu || dynamic_ch > 0xffu ||
+        dynamic_record > 0xffffffu ||
+        dynamic_record != (dynamic_cl | (dynamic_dl << 8) |
+                           (dynamic_ch << 16)) ||
+        dynamic_record != expected_dynamic_record ||
+        strcmp(dynamic_variant, expected_variant_name) != 0 ||
+        caller_pc > 0xffffu || return_pc > 0xffffu ||
         sector_count == 0u || cl > 0xffu || dl > 0xffu ||
         ch > 0xffu || record > 0xffffffu ||
         record != (cl | (dl << 8) | (ch << 16)) ||
@@ -150,7 +193,8 @@ static int inspect(const char *track_path, const char *trace_path,
             bytes, size, expected_md5, &payload) != THERON_TRACK02_SIGNAL_OK ||
         !theron_v1_stage3_manifest_evidence_from_payload(
             bytes, size, &payload, &manifest) ||
-        !parse_later_trace(trace_path, &record, &caller_pc, &return_pc) ||
+        !parse_later_trace(trace_path, &record, &caller_pc, &return_pc,
+                           manifest.variant) ||
         record <= manifest.track02_record || record >= size / 2352u ||
         record < manifest.track02_record - manifest.first_descriptor.word2) {
         free(bytes);

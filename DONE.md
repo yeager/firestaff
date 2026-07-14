@@ -13691,6 +13691,11 @@ envelope, so no positive record has been claimed. Verified with an external
 Ninja build of `firestaff_theron_v1_later_cd_read_layout_probe` and skip-safe
 CTest registration.
 
+The probe now additionally requires exactly one observed `$4090/$4093`
+dynamic receipt in each trace, including its matching JP/US variant and
+reconstructed `CL/DL/CH` stage-two record. A freestanding, duplicate, or
+cross-variant later `$e009` row cannot be paired with authenticated media.
+
 # 2026-07-14 Nexus Structure3 face-pair multiplicity corpus receipt
 
 The DGN face receipt now partitions each entry-local unordered vertex pair by
