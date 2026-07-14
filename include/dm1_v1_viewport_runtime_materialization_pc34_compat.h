@@ -43,6 +43,8 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int valid;
     int consumedF0172SquareFacts;
     int consumedF0115ThingPass;
+    int f0115EligibleForSquare;
+    int suppressedF0115ForStairs;
     int viewSquare;
     int row;
     int itemZone;

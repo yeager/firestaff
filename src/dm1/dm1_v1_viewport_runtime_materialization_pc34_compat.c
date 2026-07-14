@@ -16,6 +16,37 @@ static int dm1_v1_viewport_runtime_explosion_is_active_pc34(
     return explosion && explosion->slotIndex >= 0 && explosion->reserved0 != 0;
 }
 
+static int dm1_v1_viewport_runtime_f0115_eligible_for_square_pc34(
+    const DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
+    int *out_suppressed_for_stairs)
+{
+    int stairs;
+    int lateral_stairs;
+
+    if (out_suppressed_for_stairs) {
+        *out_suppressed_for_stairs = 0;
+    }
+    if (!input || input->elementType == DM1_VP_ELEMENT_WALL) {
+        return 0;
+    }
+
+    stairs = input->elementType == DM1_VP_ELEMENT_STAIRS ||
+             input->elementType == DM1_VP_ELEMENT_STAIRS_SIDE ||
+             input->elementType == DM1_VP_ELEMENT_STAIRS_FRONT;
+    if (!stairs) {
+        return 1;
+    }
+
+    lateral_stairs = input->relativeSide != 0 &&
+                     input->relativeForward >= 1 &&
+                     input->relativeForward <= 3 &&
+                     input->elementType != DM1_VP_ELEMENT_STAIRS_FRONT;
+    if (!lateral_stairs && out_suppressed_for_stairs) {
+        *out_suppressed_for_stairs = 1;
+    }
+    return lateral_stairs;
+}
+
 const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void)
 {
     return "ReDMCSB DUNGEON.C F0172 lines 2466-2589 publishes each visible "
@@ -24,7 +55,10 @@ const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void)
            "selects C2500 object zones, lines 5668-5683 select C2900 "
            "projectile zones, and lines 5915-5933 restart for deferred "
            "explosions. DUNVIEW.C lines 3913-3928 reserve the D1C champion "
-           "mirror for the wall-overlay route.";
+           "mirror for the wall-overlay route. DUNVIEW.C F0116-F0123 routes "
+           "D3-D1 lateral stairs through their door-side F0115 tails, while "
+           "F0118/F0121/F0124 front-stairs and F0125/F0126 D0 lateral stairs "
+           "return before F0115.";
 }
 
 int dm1_v1_viewport_runtime_materialization_decide_pc34(
@@ -38,6 +72,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     int projectileY;
     int projectileCell;
     int isD1c;
+    int f0115Eligible;
 
     if (!input || !outDecision) {
         return 0;
@@ -70,10 +105,13 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         return 1;
     }
 
+    f0115Eligible = dm1_v1_viewport_runtime_f0115_eligible_for_square_pc34(
+        input, &decision.suppressedF0115ForStairs);
+
     /* ReDMCSB: PROJEXPL.C F0219:644-764 and F0220:765 onward mutate the
      * active effect records. F0115:5668-5683 / 5916-5933 consumes those
      * live records at draw time, not an earlier square thing-chain snapshot. */
-    if (input->liveProjectiles) {
+    if (f0115Eligible && input->liveProjectiles) {
         int i;
         for (i = 0; i < input->liveProjectiles->count &&
                     i < PROJECTILE_LIST_CAPACITY; ++i) {
@@ -93,7 +131,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
             }
         }
     }
-    if (input->liveExplosions) {
+    if (f0115Eligible && input->liveExplosions) {
         int i;
         for (i = 0; i < input->liveExplosions->count &&
                     i < EXPLOSION_LIST_CAPACITY; ++i) {
@@ -120,10 +158,11 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
 
     decision.valid = 1;
     decision.consumedF0172SquareFacts = 1;
-    decision.consumedF0115ThingPass = 1;
+    decision.consumedF0115ThingPass = f0115Eligible;
+    decision.f0115EligibleForSquare = f0115Eligible;
     isD1c = input->relativeForward == 1 && input->relativeSide == 0;
 
-    if (input->floorItemCount > 0 && input->elementType != DM1_VP_ELEMENT_WALL &&
+    if (f0115Eligible && input->floorItemCount > 0 &&
         dm1_viewport_3d_c2500_object_raw_zone_point(decision.row, 2,
                                                      &itemX, &itemY)) {
         (void)itemX;
@@ -135,7 +174,8 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     if (decision.liveProjectileCount > 0) {
         projectileCell = (decision.liveProjectileCell - input->partyDirection) & 3;
     }
-    if ((input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
+    if (f0115Eligible &&
+        (input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
         dm1_viewport_3d_c2900_projectile_raw_zone_point(
             decision.row, projectileCell, &projectileX, &projectileY)) {
         (void)projectileX;
@@ -153,7 +193,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         decision.suppressMirrorAsSpellEffect = 1;
     }
     decision.drawDeferredSpellEffects =
-        decision.suppressMirrorAsSpellEffect ? 0 : 1;
+        f0115Eligible && !decision.suppressMirrorAsSpellEffect;
     *outDecision = decision;
     return 1;
 }
