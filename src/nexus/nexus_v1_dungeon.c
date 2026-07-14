@@ -52,6 +52,7 @@ static int nexus_v1_level_copy_structure3_payload(
     int nonzero_byte_run_length = 0;
     int byte_index;
     Nexus_V1_DgnStructure3DirectoryReceipt directory;
+    Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -80,6 +81,7 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.last_nonzero_block_run_start_block_index = -1;
     level->structure3_payload.complete_block_count = (int)block_count;
     memset(&directory, 0, sizeof(directory));
+    memset(&entry_headers, 0, sizeof(entry_headers));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
@@ -231,6 +233,73 @@ static int nexus_v1_level_copy_structure3_payload(
      * recovered from original Saturn execution or capture evidence. */
     directory.entry_semantics_proven = 0;
     level->structure3_directory = directory;
+    entry_headers.payload_valid = 1;
+    entry_headers.directory_valid = directory.valid;
+    entry_headers.fixed_header_byte_count =
+        NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES;
+    if (directory.valid) {
+        int entry;
+
+        entry_headers.entry_count = directory.entry_count;
+        entry_headers.boundaries_valid = 1;
+        for (entry = 0; entry < directory.entry_count; ++entry) {
+            uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+            uint32_t entry_end = (entry + 1 < directory.entry_count)
+                ? rb32(data + byte_offset + 4 + (entry + 1) * 4)
+                : (uint32_t)byte_size;
+            const uint8_t *header;
+            uint32_t tag;
+            uint16_t first_count;
+            uint16_t second_count;
+            uint32_t first_boundary;
+            uint32_t second_boundary;
+            uint32_t third_boundary;
+            uint64_t expected_second;
+            uint64_t expected_third;
+
+            if (entry_end < entry_offset ||
+                entry_end - entry_offset <
+                    NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES) {
+                entry_headers.boundaries_valid = 0;
+                break;
+            }
+            header = data + byte_offset + entry_offset;
+            tag = rb32(header);
+            first_count = rb16(header + 4);
+            second_count = rb16(header + 6);
+            first_boundary = rb32(header + 8);
+            second_boundary = rb32(header + 16);
+            third_boundary = rb32(header + 20);
+            expected_second = (uint64_t)first_boundary +
+                (uint64_t)first_count * 12U;
+            expected_third = expected_second +
+                (uint64_t)second_count * 12U;
+            if (tag == 0U) ++entry_headers.zero_tag_entry_count;
+            else if (tag == 0x100U) ++entry_headers.tag_0x100_entry_count;
+            else ++entry_headers.other_tag_entry_count;
+            if (first_boundary != entry_offset +
+                    NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES ||
+                expected_second > UINT32_MAX ||
+                expected_third > UINT32_MAX ||
+                second_boundary != (uint32_t)expected_second ||
+                third_boundary != (uint32_t)expected_third ||
+                first_boundary > second_boundary ||
+                second_boundary > third_boundary ||
+                third_boundary > entry_end) {
+                entry_headers.boundaries_valid = 0;
+                break;
+            }
+            ++entry_headers.bounded_entry_count;
+            entry_headers.first_region_element_count += first_count;
+            entry_headers.second_region_element_count += second_count;
+        }
+        entry_headers.valid = entry_headers.boundaries_valid &&
+            entry_headers.bounded_entry_count == entry_headers.entry_count;
+    }
+    /* The fixed framing and 12-byte regions are not yet a face, mesh, or
+     * texture grammar. Keep the renderer on its existing fail-closed gate. */
+    entry_headers.semantics_proven = 0;
+    level->structure3_entry_headers = entry_headers;
     return 0;
 }
 
@@ -2797,6 +2866,16 @@ int nexus_v1_level_structure3_directory_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_entry_header_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3EntryHeaderReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_entry_headers;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3059,6 +3138,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_model_references);
     (void)nexus_v1_level_structure3_directory_receipt(
         level, &out_receipt->structure3_directory);
+    (void)nexus_v1_level_structure3_entry_header_receipt(
+        level, &out_receipt->structure3_entry_headers);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
@@ -3620,6 +3701,8 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure1a_relation = handoff.structure1a_relation;
     receipt.structure1a_kinds = handoff.structure1a_kinds;
     receipt.structure3_model_references = handoff.structure3_model_references;
+    receipt.structure3_directory = handoff.structure3_directory;
+    receipt.structure3_entry_headers = handoff.structure3_entry_headers;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
     receipt.structure1f_rotation_selectors = handoff.structure1f_rotation_selectors;

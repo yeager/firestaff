@@ -275,6 +275,10 @@ typedef struct {
     int structure3_longest_nonzero_block_run;
     int structure3_directory_valid_level_count;
     int structure3_directory_entry_count;
+    int structure3_entry_header_valid_level_count;
+    int structure3_entry_header_entry_count;
+    int structure3_entry_header_first_region_element_count;
+    int structure3_entry_header_second_region_element_count;
     int structure3_model_reference_complete_level_count;
     int structure1a_transform_selector_complete_level_count;
     int structure1f_face_selector_complete_level_count;
@@ -315,6 +319,7 @@ typedef struct {
     int structure3_direct_directory_ordinal_mapping_disproven_level_count;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payloads[16];
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directories[16];
+    Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers[16];
     Nexus_V1_DgnStructure3ModelReferenceReceipt
         structure3_model_references[16];
     Nexus_V1_DgnStructure1ATransformSelectorReceipt

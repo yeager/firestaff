@@ -599,6 +599,20 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.byte_size &&
               handoff.structure3_directory.offsets_strictly_increasing &&
               !handoff.structure3_directory.entry_semantics_proven &&
+              handoff.structure3_entry_headers.payload_valid &&
+              handoff.structure3_entry_headers.directory_valid &&
+              handoff.structure3_entry_headers.valid &&
+              handoff.structure3_entry_headers.entry_count ==
+                  handoff.structure3_directory.entry_count &&
+              handoff.structure3_entry_headers.bounded_entry_count ==
+                  handoff.structure3_directory.entry_count &&
+              handoff.structure3_entry_headers.fixed_header_byte_count ==
+                  NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES &&
+              handoff.structure3_entry_headers.first_region_element_count > 0 &&
+              handoff.structure3_entry_headers.second_region_element_count > 0 &&
+              handoff.structure3_entry_headers.other_tag_entry_count == 0 &&
+              handoff.structure3_entry_headers.boundaries_valid &&
+              !handoff.structure3_entry_headers.semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
@@ -1676,6 +1690,58 @@ static void test_structure1f_semantics_and_bounds(void) {
     CHECK(nexus_v1_dgn_structure1_layout(&layout, dgn, (int)sizeof(dgn)) == 0 &&
           !layout.structure1f.valid,
           "Structure1F rejects a family tag that is not documented by the original format");
+}
+
+static void test_structure3_entry_header_boundaries(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 24];
+    uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnStructure3EntryHeaderReceipt headers;
+    Nexus_V1_DgnRendererHandoffReceipt handoff;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
+          "Structure3 entry-header fixture builds");
+    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1e, 4U);
+    wb32(payload, 2U);
+    wb32(payload + 4, 16U);
+    wb32(payload + 8, 96U);
+    wb32(payload + 16, 0x100U);
+    wb16(payload + 20, 2U);
+    wb16(payload + 22, 1U);
+    wb32(payload + 24, 56U);
+    wb32(payload + 32, 80U);
+    wb32(payload + 36, 92U);
+    wb16(payload + 100, 1U);
+    wb16(payload + 102, 2U);
+    wb32(payload + 104, 136U);
+    wb32(payload + 112, 148U);
+    wb32(payload + 116, 172U);
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
+          headers.payload_valid && headers.directory_valid && headers.valid &&
+          headers.entry_count == 2 && headers.bounded_entry_count == 2 &&
+          headers.fixed_header_byte_count ==
+              NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES &&
+          headers.first_region_element_count == 3 &&
+          headers.second_region_element_count == 3 &&
+          headers.zero_tag_entry_count == 1 && headers.tag_0x100_entry_count == 1 &&
+          headers.other_tag_entry_count == 0 && headers.boundaries_valid &&
+          !headers.semantics_proven,
+          "Structure3 entry framing retains only bounded 12-byte regions");
+    CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
+          handoff.structure3_entry_headers.valid &&
+          !handoff.structure3_entry_headers.semantics_proven &&
+          !handoff.fallback_visuals_permitted,
+          "Structure3 entry-header receipt cannot authorize a draw route");
+
+    wb32(payload + 36, 88U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
+          !headers.valid && !headers.boundaries_valid &&
+          !headers.semantics_proven,
+          "invalid Structure3 entry boundaries remain fail-closed");
 }
 
 static void test_visible_structure1f_semantics_block_render_plan(void) {
@@ -2857,6 +2923,7 @@ int main(void) {
     test_real_item_ibs_special_floor_corpus();
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
+    test_structure3_entry_header_boundaries();
     test_visible_structure1f_semantics_block_render_plan();
     test_direct_structure1f_mesh_command_provenance();
     test_structure1g_semantics_and_bounds();
