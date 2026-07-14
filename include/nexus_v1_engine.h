@@ -601,6 +601,11 @@ typedef struct {
     size_t task_body_raw_offset;
     size_t callback_or_write_raw_offset;
     int observation_order_proven;
+    int primary_literal_observed;
+    int auxiliary_literal_observed;
+    size_t primary_literal_raw_offset;
+    size_t auxiliary_literal_raw_offset;
+    int literal_observation_proven;
     int callback_or_write_is_write;
     int task_body_dispatch_proven;
     int dispatch_permitted;

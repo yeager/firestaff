@@ -439,7 +439,9 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
     static const uint8_t raw_trace[] =
         "mednafen debugger raw SH-2 trace\n"
         "pc=06001200 opcode=2fe6\n"
+        "literal=00202734\n"
         "pc=06001224 opcode=430b\n"
+        "literal=00202840\n"
         "pc=06001280 kind=write\n";
     static const uint8_t task_header[] = {
         0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
@@ -510,9 +512,11 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           evidence.status == NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED &&
           evidence.raw_trace_bound && evidence.entry_observed &&
           evidence.task_body_observed && evidence.callback_or_write_observed &&
+          evidence.primary_literal_observed && evidence.auxiliary_literal_observed &&
           evidence.entry_raw_offset < evidence.task_body_raw_offset &&
           evidence.task_body_raw_offset < evidence.callback_or_write_raw_offset &&
           evidence.observation_order_proven &&
+          evidence.literal_observation_proven &&
           evidence.callback_or_write_is_write &&
           !evidence.task_body_dispatch_proven && !evidence.dispatch_permitted &&
           evidence.blocks_real_script_dispatch &&
