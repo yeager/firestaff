@@ -1053,6 +1053,37 @@ static void test_timeline_square_events_mutate_real_format_map_bytes(void)
           "fully opened door leaves no pending door-animation event");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 0u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 0;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_VIT][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_ANTIFIRE][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_ANTIMAGIC][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MAX] = 30;
+    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MIN] = 30;
+    queue_square_event(&profile, DM1_EVENT_DOOR, DM1_EFFECT_CLEAR, 1, 0);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "closing door event fires on an occupied real-format door square");
+    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 0u,
+          "closing door on party is forced back to open state");
+    CHECK(profile.party_state.Champions[0].CurrentHealth < 100,
+          "closing door routes source self-damage to the occupying party");
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "closing door on party requeues its animation instead of closing through party");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     raw[real_format_square_offset(0, 1)] = (uint8_t)(6u << 5);
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
