@@ -161,6 +161,13 @@ int main(void)
     profile.party_x = 10;
     profile.party_y = 12;
     profile.game_time = 991u;
+    profile.party_state.ChampionCount = 2;
+    profile.party_state.Champions[0].Talents = 0x3u;
+    profile.party_state.Champions[0].Wounds = 0x0003u;
+    profile.party_state.Champions[0].CurrentHealth = 30;
+    profile.party_state.Champions[1].Talents = 0x4u;
+    profile.party_state.Champions[1].Wounds = 0x000cu;
+    profile.party_state.Champions[1].CurrentHealth = 0;
     memset(&runner, 0, sizeof(runner));
     {
         CSB_V1_RuntimeDSAFilterBinding binding;
@@ -175,6 +182,12 @@ int main(void)
         check(runner.game_time_valid && runner.game_time == 991u &&
                   !runner.dsa_slave_thing_valid,
               "runtime runner carries time but rejects an unverified DSA Thing");
+        check(runner.party_champions_valid &&
+                  runner.party_champion_count == 2 &&
+                  runner.party_champion_talents[0] == 0x3u &&
+                  runner.party_champion_wounds[1] == 0x000cu &&
+                  runner.party_champion_health[1] == 0,
+              "runtime runner copies the profile-owned CSBWin party query data");
     }
     action = csb_v1_chaos_find_imported_action(
         &profile.csbwin_extended_dsa_state, 7, 1u, 0);
