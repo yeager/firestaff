@@ -654,6 +654,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       handoff.structure3_faces.single_component_vertex_entry_count +
                       handoff.structure3_faces.multiple_component_vertex_entry_count ==
                   handoff.structure3_faces.entry_count &&
+              handoff.structure3_faces.face_vertex_adjacency_accounting_valid &&
+              handoff.structure3_faces.face_vertex_adjacency_pair_count +
+                      handoff.structure3_faces
+                          .repeated_face_vertex_adjacency_pair_count ==
+                  handoff.structure3_faces.face_vertex_cooccurrence_pair_count &&
               handoff.structure3_faces.face_vertex_entry_coverage_accounting_valid &&
               handoff.structure3_faces.fully_referenced_vertex_entry_count +
                       handoff.structure3_faces.partially_referenced_vertex_entry_count +
@@ -1877,6 +1882,9 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.zero_component_vertex_entry_count == 0 &&
           faces.single_component_vertex_entry_count == 1 &&
           faces.multiple_component_vertex_entry_count == 1 &&
+          faces.face_vertex_cooccurrence_pair_count == 2 &&
+          faces.face_vertex_adjacency_pair_count == 2 &&
+          faces.repeated_face_vertex_adjacency_pair_count == 0 &&
           faces.maximum_vertex_reference_count == 6 &&
           faces.textured_face_count == 1 && faces.static_texture_fill_count == 4 &&
           faces.face_vertex_indexes_valid && faces.face_vertex_linkage_valid &&
@@ -1884,6 +1892,7 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_vertex_entry_coverage_accounting_valid &&
           faces.face_vertex_component_accounting_valid &&
           faces.face_vertex_component_entry_accounting_valid &&
+          faces.face_vertex_adjacency_accounting_valid &&
           faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
           "Structure3 face rows retain raw distinct-index topology without authorizing a draw");
@@ -1942,8 +1951,23 @@ static void test_structure3_entry_header_boundaries(void) {
           !faces.face_vertex_entry_coverage_accounting_valid &&
           !faces.face_vertex_component_accounting_valid &&
           !faces.face_vertex_component_entry_accounting_valid &&
+          !faces.face_vertex_adjacency_accounting_valid &&
           !faces.draw_semantics_proven,
           "out-of-range Structure3 face indexes remain fail-closed");
+
+    wb16(payload + 104, 0U);
+    wb16(payload + 116, 0U);
+    wb16(payload + 118, 1U);
+    wb16(payload + 120, 0U);
+    wb16(payload + 122, 0U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
+          faces.face_vertex_cooccurrence_pair_count == 2 &&
+          faces.face_vertex_adjacency_pair_count == 1 &&
+          faces.repeated_face_vertex_adjacency_pair_count == 1 &&
+          faces.face_vertex_adjacency_accounting_valid &&
+          !faces.draw_semantics_proven,
+          "repeated Structure3 index pairs remain bounded no-draw incidence");
 }
 
 static void test_visible_structure1f_semantics_block_render_plan(void) {

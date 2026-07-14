@@ -34,6 +34,14 @@ static uint64_t nexus_v1_fixed_vector_length_squared(int32_t x, int32_t y,
     return sum;
 }
 
+static int nexus_v1_compare_u32(const void *left, const void *right)
+{
+    uint32_t a = *(const uint32_t *)left;
+    uint32_t b = *(const uint32_t *)right;
+
+    return a < b ? -1 : a > b;
+}
+
 static const Nexus_V1_DgnStructure2Texture *
 nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
                                       uint16_t image_id)
@@ -347,6 +355,7 @@ static int nexus_v1_level_copy_structure3_payload(
         int face_vertex_entry_coverage_measurement_complete = 1;
         int face_vertex_component_measurement_complete = 1;
         int face_vertex_component_entry_measurement_complete = 1;
+        int face_vertex_adjacency_measurement_complete = 1;
 
         faces.entry_count = entry_headers.entry_count;
         faces.face_vertex_indexes_valid = 1;
@@ -362,6 +371,9 @@ static int nexus_v1_level_copy_structure3_payload(
             int face_index;
             int *vertex_reference_counts = NULL;
             int *vertex_component_parents = NULL;
+            uint32_t *vertex_adjacency_pairs = NULL;
+            int vertex_adjacency_pair_count = 0;
+            int vertex_adjacency_pair_capacity = 0;
 
             faces.vertex_count += vertex_count;
             faces.face_count += face_count;
@@ -386,6 +398,15 @@ static int nexus_v1_level_copy_structure3_payload(
                     for (vertex = 0; vertex < (int)vertex_count; ++vertex) {
                         vertex_component_parents[vertex] = vertex;
                     }
+                }
+            }
+            if (face_count > 0) {
+                vertex_adjacency_pair_capacity = (int)face_count * 6;
+                vertex_adjacency_pairs = (uint32_t *)malloc(
+                    (size_t)vertex_adjacency_pair_capacity *
+                    sizeof(*vertex_adjacency_pairs));
+                if (!vertex_adjacency_pairs) {
+                    face_vertex_adjacency_measurement_complete = 0;
                 }
             }
             for (face_index = 0; face_index < (int)face_count; ++face_index) {
@@ -416,6 +437,20 @@ static int nexus_v1_level_copy_structure3_payload(
                 if (!index_valid) {
                     faces.face_vertex_indexes_valid = 0;
                 } else {
+                    uint16_t distinct_indexes[4];
+                    int distinct_index_count = 0;
+
+                    for (slot = 0; slot < slot_count; ++slot) {
+                        int earlier;
+
+                        for (earlier = 0; earlier < slot; ++earlier) {
+                            if (indexes[earlier] == indexes[slot]) break;
+                        }
+                        if (earlier == slot) {
+                            distinct_indexes[distinct_index_count++] =
+                                indexes[slot];
+                        }
+                    }
                     faces.distinct_face_vertex_count += distinct_count;
                     faces.repeated_face_vertex_reference_count +=
                         slot_count - distinct_count;
@@ -423,6 +458,37 @@ static int nexus_v1_level_copy_structure3_payload(
                     else if (distinct_count == 2) ++faces.two_distinct_vertex_face_count;
                     else if (distinct_count == 3) ++faces.three_distinct_vertex_face_count;
                     else if (distinct_count == 4) ++faces.four_distinct_vertex_face_count;
+                    faces.face_vertex_cooccurrence_pair_count +=
+                        distinct_index_count * (distinct_index_count - 1) / 2;
+                    if (vertex_adjacency_pairs) {
+                        int left;
+
+                        for (left = 0; left < distinct_index_count; ++left) {
+                            int right;
+
+                            for (right = left + 1; right < distinct_index_count;
+                                 ++right) {
+                                uint16_t low = distinct_indexes[left] <
+                                    distinct_indexes[right]
+                                    ? distinct_indexes[left]
+                                    : distinct_indexes[right];
+                                uint16_t high = distinct_indexes[left] <
+                                    distinct_indexes[right]
+                                    ? distinct_indexes[right]
+                                    : distinct_indexes[left];
+
+                                if (vertex_adjacency_pair_count >=
+                                    vertex_adjacency_pair_capacity) {
+                                    face_vertex_adjacency_measurement_complete =
+                                        0;
+                                } else {
+                                    vertex_adjacency_pairs[
+                                        vertex_adjacency_pair_count++] =
+                                        ((uint32_t)low << 16) | high;
+                                }
+                            }
+                        }
+                    }
                     if (vertex_component_parents) {
                         int root = indexes[0];
 
@@ -465,6 +531,23 @@ static int nexus_v1_level_copy_structure3_payload(
                 else if ((fill & 0xff00U) == 0U)
                     ++faces.static_texture_fill_count;
                 else ++faces.unclassified_fill_count;
+            }
+            if (vertex_adjacency_pairs) {
+                int pair;
+                int unique_pair_count = 0;
+
+                qsort(vertex_adjacency_pairs,
+                      (size_t)vertex_adjacency_pair_count,
+                      sizeof(*vertex_adjacency_pairs), nexus_v1_compare_u32);
+                for (pair = 0; pair < vertex_adjacency_pair_count; ++pair) {
+                    if (pair == 0 || vertex_adjacency_pairs[pair] !=
+                        vertex_adjacency_pairs[pair - 1]) {
+                        ++unique_pair_count;
+                    }
+                }
+                faces.face_vertex_adjacency_pair_count += unique_pair_count;
+                faces.repeated_face_vertex_adjacency_pair_count +=
+                    vertex_adjacency_pair_count - unique_pair_count;
             }
             for (face_index = 0; face_index < (int)vertex_count; ++face_index) {
                 int references = vertex_reference_counts
@@ -511,6 +594,7 @@ static int nexus_v1_level_copy_structure3_payload(
             }
             free(vertex_reference_counts);
             free(vertex_component_parents);
+            free(vertex_adjacency_pairs);
         }
         faces.face_vertex_linkage_valid =
             face_vertex_linkage_measurement_complete &&
@@ -547,12 +631,19 @@ static int nexus_v1_level_copy_structure3_payload(
                     faces.single_component_vertex_entry_count +
                     faces.multiple_component_vertex_entry_count ==
                 faces.entry_count;
+        faces.face_vertex_adjacency_accounting_valid =
+            face_vertex_adjacency_measurement_complete &&
+            faces.face_vertex_indexes_valid &&
+            faces.face_vertex_adjacency_pair_count +
+                    faces.repeated_face_vertex_adjacency_pair_count ==
+                faces.face_vertex_cooccurrence_pair_count;
         faces.valid = faces.face_vertex_indexes_valid &&
             faces.face_vertex_linkage_valid &&
             faces.face_topology_accounting_valid &&
             faces.face_vertex_entry_coverage_accounting_valid &&
             faces.face_vertex_component_accounting_valid &&
             faces.face_vertex_component_entry_accounting_valid &&
+            faces.face_vertex_adjacency_accounting_valid &&
             faces.normal_count_matches_face_count &&
             faces.unclassified_fill_count == 0 &&
             faces.face_vertex_reference_count ==
