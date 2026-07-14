@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `SOUND.C F0061`: the three PSG channel amplitudes
+  now resolve through the original loud table with 4-bit index masking.
+  Verification is included in the focused F0060/F0061 CTest.
+
 - 2026-07-14 DM1 ReDMCSB `MENUS.C F0383`: action-list construction now keeps
   the primary action, compacts eligible optional actions, clears unused slots,
   and rejects incomplete runtime receipts without mutation. The focused CTest
