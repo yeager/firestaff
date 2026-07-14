@@ -8104,6 +8104,15 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
         return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     }
 
+    /* The only positive level record currently correlated with the original
+     * loader is the Hall of Records entry record.  The shared 32x27 envelope
+     * is not evidence for a different dungeon merely because callers can
+     * supply another dungeon id to the generic level loader. */
+    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        sub_level_index != 0) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+
     status = theron_v1_track02_bind_startup_semantic_handoff(track02_data,
                                                               track02_size,
                                                               md5_hex,

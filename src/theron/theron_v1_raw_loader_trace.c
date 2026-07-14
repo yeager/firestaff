@@ -1109,27 +1109,33 @@ int theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
     const char *trace_path,
     const char *trace_md5,
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out) {
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt source_copy;
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt receipt;
     uint32_t binding_hash = 2166136261u;
 
-    if (out) memset(out, 0, sizeof(*out));
-    if (!source || !manifest || !out ||
-        !theron_v1_raw_loader_trace_initial_level_handoff_is_complete(source) ||
+    if (!source || !manifest || !out) return 0;
+    /* Callers may atomically enrich a receipt in place. Preserve the source
+     * before clearing `out`, otherwise source == out destroys the evidence
+     * that this function is meant to bind. */
+    source_copy = *source;
+    if (source != out) memset(out, 0, sizeof(*out));
+    if (!theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+            &source_copy) ||
         !theron_v1_raw_loader_trace_capture_manifest_matches(
             manifest, track02_path, track02_md5, system_card_path,
             system_card_md5, trace_path, trace_md5) ||
-        strcmp(source->track02_md5, track02_md5) != 0) {
+        strcmp(source_copy.track02_md5, track02_md5) != 0) {
         return 0;
     }
 
-    receipt = *source;
+    receipt = source_copy;
     receipt.capture_manifest_bound = 1;
     snprintf(receipt.capture_manifest_system_card_md5,
              sizeof(receipt.capture_manifest_system_card_md5), "%s",
              system_card_md5);
     snprintf(receipt.capture_manifest_trace_md5,
              sizeof(receipt.capture_manifest_trace_md5), "%s", trace_md5);
-    binding_hash ^= source->receipt_hash;
+    binding_hash ^= source_copy.receipt_hash;
     binding_hash *= 16777619u;
     binding_hash ^= tqr_trace_fnv1a_bytes((const uint8_t *)track02_md5,
                                           strlen(track02_md5));
@@ -1235,29 +1241,28 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         return 0;
     }
 
-    /* Keep the final admission bound to the bytes that the trace claims
-     * reached local RAM, rather than trusting a checksum copied from a
-     * prior receipt. */
-    if (coalesced_receipt->later_track02_record >
+    /* CD_READ records are INDEX 01-relative.  The authenticated IPL receipt
+     * supplies the corresponding physical sector in the raw BIN; using the
+     * logical record as a file-sector offset silently reads the pregap on
+     * discs that retain it. */
+    if (boundary.level_first_raw_sector >
             track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
-        (size_t)coalesced_receipt->later_track02_record *
-            THERON_TRACK02_RAW_SECTOR_BYTES > track02_size ||
+        boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES >
+            track02_size ||
         THERON_TRACK02_RAW_USER_DATA_OFFSET >
-            track02_size - (size_t)coalesced_receipt->later_track02_record *
+            track02_size - boundary.level_first_raw_sector *
                 THERON_TRACK02_RAW_SECTOR_BYTES ||
         coalesced_receipt->later_destination_span_bytes >
-            track02_size - ((size_t)coalesced_receipt->later_track02_record *
+            track02_size - (boundary.level_first_raw_sector *
                 THERON_TRACK02_RAW_SECTOR_BYTES +
                 THERON_TRACK02_RAW_USER_DATA_OFFSET) ||
         tqr_trace_fnv1a_bytes(track02_data +
-            (size_t)coalesced_receipt->later_track02_record *
-                THERON_TRACK02_RAW_SECTOR_BYTES +
+            boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
             THERON_TRACK02_RAW_USER_DATA_OFFSET,
             coalesced_receipt->later_destination_span_bytes) !=
             coalesced_receipt->later_destination_span_checksum ||
         tqr_trace_fnv1a_bytes(track02_data +
-            (size_t)coalesced_receipt->later_track02_record *
-                THERON_TRACK02_RAW_SECTOR_BYTES +
+            boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
             THERON_TRACK02_RAW_USER_DATA_OFFSET,
             coalesced_receipt->later_destination_payload_bytes) !=
             coalesced_receipt->later_destination_payload_checksum) {
@@ -1265,7 +1270,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     }
     if (!theron_v1_track02_loader_intake_handoff_complete_payload(
             &loader_intake,
-            track02_data + (size_t)coalesced_receipt->later_track02_record *
+            track02_data + boundary.level_first_raw_sector *
                 THERON_TRACK02_RAW_SECTOR_BYTES +
                 THERON_TRACK02_RAW_USER_DATA_OFFSET,
             coalesced_receipt->later_destination_payload_bytes,
