@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 returned-PC control-edge receipt: the coalesced
+  later `$e009` trace now retains the exact System Card return target alongside
+  the next observed caller PC, and admission rejects a receipt whose raw edge
+  does not start at that returned PC. This proves only one source-observed
+  caller control/resumption edge after the media-bound read; it assigns no
+  instruction, gameplay transition, dungeon, object, bitmap, or palette
+  meaning. Coverage: fail-closed
+  `test_theron_v1_later_e009_raw_sector_order_trace` and the focused,
+  raw-media-gated `theron_v1_raw_loader_trace_initial_level_handoff` CTest.
+
 - 2026-07-14 DM2 canonical DB4 creature GDAT draw-consumption gate: the
   existing source-classified G1 `Creature::b4 -> CREATURES/type/F9` route is
   now proven through the viewport, not just its bridge receipt. The focused

@@ -156,18 +156,19 @@ static int tqr_trace_parse_later_e009_destination_span(
 static int tqr_trace_parse_later_e009_post_return_step(
     const char *line, size_t length, unsigned int *out_caller_pc,
     unsigned int *out_return_pc, unsigned int *out_record,
-    unsigned int *out_next_pc)
+    unsigned int *out_resume_pc, unsigned int *out_next_pc)
 {
     int consumed = 0;
 
     if (!line || !out_caller_pc || !out_return_pc || !out_record ||
-        !out_next_pc) return 0;
+        !out_resume_pc || !out_next_pc) return 0;
     return sscanf(line,
-                  "later_system_card_e009_post_return_step caller_pc=%x return_pc=%x record=%x next_pc=%x%n",
-                  out_caller_pc, out_return_pc, out_record, out_next_pc,
-                  &consumed) == 4 && consumed == (int)length &&
+                  "later_system_card_e009_post_return_step caller_pc=%x return_pc=%x record=%x resume_pc=%x next_pc=%x%n",
+                  out_caller_pc, out_return_pc, out_record, out_resume_pc,
+                  out_next_pc, &consumed) == 5 && consumed == (int)length &&
            *out_caller_pc <= 0xffffu && *out_return_pc <= 0xffffu &&
-           *out_record <= 0xffffffu && *out_next_pc <= 0xffffu;
+           *out_record <= 0xffffffu && *out_resume_pc <= 0xffffu &&
+           *out_next_pc <= 0xffffu;
 }
 
 static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
@@ -735,6 +736,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     unsigned int post_return_caller_pc = 0u;
     unsigned int post_return_return_pc = 0u;
     unsigned int post_return_record = 0u;
+    unsigned int post_return_resume_pc = 0u;
     unsigned int post_return_next_pc = 0u;
     uint32_t expected_span_checksum;
     uint32_t expected_sector_checksum;
@@ -821,6 +823,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
                 !tqr_trace_parse_later_e009_post_return_step(
                     line, length, &post_return_caller_pc,
                     &post_return_return_pc, &post_return_record,
+                    &post_return_resume_pc,
                     &post_return_next_pc)) return 0;
             post_return_line = line_number;
         }
@@ -837,6 +840,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         destination_return_pc != return_pc || destination_record != record ||
         post_return_caller_pc != caller_pc ||
         post_return_return_pc != return_pc || post_return_record != record ||
+        post_return_resume_pc != return_pc ||
         record != (cl | (dl << 8) | (ch << 16)) ||
         read_count == 0u || record <= manifest.track02_record ||
         record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
@@ -883,6 +887,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->later_destination_span_checksum = destination_checksum;
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
+    out->later_post_return_resume_pc = (uint16_t)post_return_resume_pc;
     out->later_post_return_next_pc = (uint16_t)post_return_next_pc;
     out->later_post_return_step_verified = 1;
     out->observation_order_verified = 1;
@@ -911,6 +916,8 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         coalesced_receipt->later_destination_span_bytes != 32u ||
         !coalesced_receipt->later_destination_span_checksum ||
         !coalesced_receipt->later_post_return_step_verified ||
+        coalesced_receipt->later_post_return_resume_pc !=
+            coalesced_receipt->return_pc ||
         coalesced_receipt->sector_count != 1u ||
         strcmp(coalesced_receipt->track02_md5, track02_md5) != 0 ||
         (coalesced_receipt->variant != THERON_TRACK02_VARIANT_JP_BIN &&

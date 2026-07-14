@@ -7,8 +7,9 @@
   authenticated coalesced capture. Its contract now additionally requires the
   later call's observed local-RAM destination and a post-return 32-byte
   user-data fingerprint checked against the selected record. Its next capture
-  revision also requires the first observed CPU step after the System Card
-  return, retaining only a raw control-resumption edge. Remaining semantic
+  revision must retain the returned-PC-to-next-PC control edge after the
+  System Card return, with no interpretation of the observed instruction.
+  Remaining semantic
   boundary: no gameplay-transition causality, and no object-tail,
   bitmap, palette, or broader dungeon-record semantics.
 
