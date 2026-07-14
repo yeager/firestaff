@@ -2766,6 +2766,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DB0 door render receipts now expose the chosen render-plan row with panel, ornate, destroyed-mask, frame, and button GDAT indices. Remaining DM2 work is exact GDAT animation-table decoding, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
 
 - 🔧 2026-07-10 CSB startup route follow-up: full startup runtime, title phase, host-capture, HUD, opening-door gates, and no-wrapper host-route retirement are verified in DONE.md. Remaining work is real Mac/app release capture against local CSB data.
+  - 2026-07-14 verified opening-door capture: the real staged-data M12-to-M11
+    boundary now captures first-visible F0438/F0807 PC34 door step one and
+    compares the C002 `[0..100]` and C003 `[4..126]` strips byte-for-byte at
+    their source `y=30` destinations. ReDMCSB owns the step/crop geometry and
+    CSBWin `Graphics.cpp::ReadGraphic` remains the archive-read boundary. The
+    local hash-verified launcher test passes 327/327; remaining work is still
+    Mac/app presented-frame evidence, not synthetic startup art.
   - 2026-07-11 update: the strict C001-C005 session now also materializes original C017/C040 HUD pixels into the CSB-owned indexed frame route, and full-runtime proof rejects metadata-only HUD bindings. The obsolete snapshot materializer is retired. Remaining CSB startup work is still real Mac/app release capture against local CSB data, including presented-frame evidence for these indexed surfaces.
   - 2026-07-11 update: CSB host-view and M11 presentation receipts now expose receipt-packaged draw readiness, and the host-view executor requires that package before startup callbacks run. Verified with Ninja `test_csb_v1_boot_runtime_handoff` (445/445), `test_csb_v1_m11_launcher_handoff_boundary` (262/262), and `test_csb_v1_runtime_route_first_frame_movement_utility_gate` (105/105). Remaining CSB startup cleanup from this pass: fix the M11 startup/resume pointer Quit-row regression (Back-key quit still passes) and update the stale title/import UI gate that still calls the now-private runtime asset-gate helper.
   - 2026-07-11 update: the stale title/import UI gate now builds against the public runtime asset-gate receipt, and the CSB startup pointer path no longer lets the utility panel steal the normal entrance Quit row. `test_csb_v1_boot_title_import_ui_gate_pc34_compat` passes 118/118. Remaining CSB startup work is real Mac/app release capture against local CSB data.

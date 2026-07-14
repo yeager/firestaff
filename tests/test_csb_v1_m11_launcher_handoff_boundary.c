@@ -134,6 +134,35 @@ static int count_nonzero_pixels_in_rows(const unsigned char* pixels,
     return count;
 }
 
+static int frame_matches_source_rect(const unsigned char* frame,
+                                     const CSB_V1_StartupRuntimeSurface_PC34* source,
+                                     int source_x,
+                                     int source_y,
+                                     int dest_x,
+                                     int dest_y,
+                                     int width,
+                                     int height) {
+    int row;
+
+    if (!frame || !source || !source->valid || !source->pixels ||
+        source_x < 0 || source_y < 0 || dest_x < 0 || dest_y < 0 ||
+        width <= 0 || height <= 0 || source_x + width > source->width ||
+        source_y + height > source->height || dest_x + width > 320 ||
+        dest_y + height > 200) {
+        return 0;
+    }
+    for (row = 0; row < height; ++row) {
+        if (memcmp(frame + (size_t)(dest_y + row) * 320u + (size_t)dest_x,
+                   source->pixels +
+                       (size_t)(source_y + row) * (size_t)source->width +
+                       (size_t)source_x,
+                   (size_t)width) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void drive_csb_entrance_opening(M11_GameViewState *view,
                                        const char *message) {
     unsigned int guard =
@@ -470,6 +499,36 @@ static void run_real_launcher_handoff_if_available(void) {
                                      entrance_opening_frame,
                                      sizeof(entrance_opening_frame)) > 64,
                 "M11 CSB entrance opening visibly changes the door frame");
+    {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        const CSB_V1_StartupRuntimeSurface_PC34 *left =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+        const CSB_V1_StartupRuntimeSurface_PC34 *right =
+            &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+
+        /* ReDMCSB ENTRANCE.C F0438/F0807 lines 142-304: the first
+         * visible PC34 step draws C002[0..100] and C003[4..126] at y=30.
+         * CSBWin Graphics.cpp ReadGraphic is the matching archive-read
+         * boundary for those two resident source surfaces. */
+        expect_true(view.csbState.startup_entrance_opening_step == 1,
+                    "M11 CSB launcher captures the first visible source door step");
+        expect_true(left->valid && left->source_asset_id == 2 &&
+                        left->width >= 101 && left->height >= 161 &&
+                        frame_matches_source_rect(entrance_opening_frame,
+                                                  left, 0, 0, 0, 30, 101,
+                                                  161),
+                    "M11 CSB opening capture consumes C002 first-step bytes at PC34 geometry");
+        expect_true(right->valid && right->source_asset_id == 3 &&
+                        right->width >= 127 && right->height >= 161 &&
+                        frame_matches_source_rect(entrance_opening_frame,
+                                                  right, 4, 0, 109, 30, 123,
+                                                  161),
+                    "M11 CSB opening capture consumes C003 first-step bytes at PC34 geometry");
+    }
     drive_csb_entrance_opening(
         &view,
         "M11 CSB launcher entrance clears after explicit command");
