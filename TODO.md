@@ -13,6 +13,15 @@
   do not inject an emulated controller state.
   Receipt-only inspection now uses an isolated staging world; direct runtime
   mutation continues to require the original Stage 2/3 physical-media gate.
+- 2026-07-14 Nexus Structure3 external capture follow-up: the capture-target
+  writer now derives one exact entry/face request from a canonical loaded
+  `LEVxx.DGN`, including the source DGN, payload, face, referenced-vertex,
+  normal, and fill-selector fingerprints. An external Saturn/VDP1 producer
+  must record all six raw lanes named by that request and then write the
+  existing capture manifest. The target contains no lane bytes or hashes and
+  cannot be treated as a capture, decoder, palette, transform, or draw route.
+  Remaining blocker: obtain and independently authenticate an original-Saturn
+  trace that satisfies one emitted target.
 
 - 2026-07-14 DM1 ReDMCSB F8144: `NEC816.C:1554-1557` and C25
   `VIDEODRV.C:1529-1532` have empty bodies and only commented parameter

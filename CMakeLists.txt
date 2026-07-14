@@ -24411,6 +24411,24 @@ if(NOT MSVC)
     )
 endif()
 
+# Emits source-bound Structure3 face targets from canonical LEV bytes for an
+# external Saturn/VDP1 capture producer. The output is a no-draw request, not
+# a synthetic trace or material decoder.
+add_executable(firestaff_nexus_v1_structure3_capture_target_writer
+    probes/nexus/firestaff_nexus_v1_structure3_capture_target_writer.c
+)
+target_link_libraries(firestaff_nexus_v1_structure3_capture_target_writer PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_structure3_capture_target_writer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure3_capture_target_writer PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus PRS3 selected version-1 branch-flow receipt. This separate original
 # executable probe locks one low-bit branch and its byte-store fallthrough;
 # it never decodes or uploads a PRS3 surface.
