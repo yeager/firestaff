@@ -375,6 +375,11 @@
     pointer get/set path for both source champion formats. Other champion info
     indices remain unimplemented rather than inferring a champion, CSBWin,
     DSA, timer, or save-record layout.
+  - 2026-07-14 update: `CEDTINCR.C` F7088 now transfers the exact PC34
+    `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` route: four source portrait
+    spans of 464 bytes are copied and then rebound through F7066. Other
+    champion properties, allocation, champion records, CSBWin, DSA, timer,
+    and save layouts remain unimplemented rather than inferred.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
