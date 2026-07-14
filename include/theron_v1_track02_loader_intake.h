@@ -34,6 +34,10 @@ typedef struct {
     uint16_t decoded_header_extension;
     uint32_t decoded_grid_bytes;
     uint32_t decoded_grid_hash;
+    uint16_t decoded_grid_row_count;
+    uint16_t decoded_grid_row_bytes;
+    uint32_t decoded_grid_first_row_hash;
+    uint32_t decoded_grid_last_row_hash;
     const char *status;
 } Theron_V1Track02LoaderIntakeReceipt;
 
@@ -72,8 +76,9 @@ int theron_v1_track02_loader_intake_bind_initial_envelope(
 /* Decodes the source-bound initial envelope only from the complete, canonical
  * raw Track 02 image. The raw bytes are independently rehashed and must still
  * agree with the selected receipt and runtime-admitted loader observation.
- * It promotes the literal header and 32x27 grid span, but assigns no grid,
- * object, visual, or post-grid-tail semantics. */
+ * It promotes the literal header, grid span, and its bounded raw row
+ * partition, but assigns no cell, object, visual, or post-grid-tail
+ * semantics. */
 int theron_v1_track02_loader_intake_decode_initial_envelope(
     const Theron_V1Track02LoaderIntakeReceipt *source_bound_receipt,
     const Theron_V1DungeonHandoffReceipt *initial_envelope,
