@@ -35708,6 +35708,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
+    /* ReDMCSB DUNVIEW.C F0107:3913-3928 draws C346/C026 as part of the
+     * D1C wall-ornament pass.  Keeping the C127 mirror until frame end
+     * makes it paint over the later side-wall replay and door occluders.
+     * Draw it here, before those nearer layers are restored. */
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -35786,15 +35792,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                      framebufferWidth, framebufferHeight);
     m11_draw_dm1_d0c_deferred_explosion_pass(state, framebuffer,
                                              framebufferWidth, framebufferHeight);
-
-    /* ReDMCSB DUNGEON.C:2608-2612 / DUNVIEW.C:3922-3928: the C127
-     * champion portrait belongs to the D1C front champion-mirror wall
-     * ornament.  Firestaff's current V1 renderer still batches primitive
-     * classes, so draw this D1C mirror route after all content/effect passes
-     * have finished; otherwise stale HoC payload/effect classification can
-     * erase the C346 mirror backing and C026 portrait. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
      * DRAWVIEW output.  It stays available in debug HUD mode, but normal

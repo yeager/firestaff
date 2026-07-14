@@ -59,6 +59,13 @@
    F0115 object or live projectile remains renderable. Verification:
    `firestaff_dm1_v1_hoc_floor_runtime_no_false_items_probe`.
 
+- 2026-07-14 DM1 HoC C127 wall-ornament occlusion: M11 now draws the
+  ReDMCSB DUNVIEW.C F0107 C346/C026 mirror route with the D1C wall-ornament
+  phase, before the later side-wall and door occlusion replay. This prevents
+  a visible mirror from painting over nearer viewport geometry after the
+  C127 payload suppression handoff. Verification:
+  `firestaff_dm1_v1_hoc_c127_f0115_same_frame_runtime_probe`.
+
 - 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
   now admits pixels only when the finished-art material gate resolves the
   boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that
