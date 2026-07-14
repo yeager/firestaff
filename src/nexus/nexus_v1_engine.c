@@ -1253,6 +1253,64 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     return plan;
 }
 
+int nexus_v1_engine_build_structure1a_structure3_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt receipt;
+    const Nexus_V1_DgnMaterialPlan *plan;
+
+    if (!out_target || !out_receipt) return 0;
+    memset(out_target, 0, sizeof(*out_target));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.active_canonical_lev_bound =
+        engine->current_level_structure2_source.level_index ==
+            engine->game.current_level &&
+        engine->current_level_structure2_source.canonical_hash_verified &&
+        engine->current_level_structure2_source.materialization_bound &&
+        engine->current_level_structure2_source.loaded_bytes_bound &&
+        nexus_v1_dgn_source_bytes_match(&engine->current_level_structure2_source,
+                                        engine->current_level_dgn_data,
+                                        engine->current_level_dgn_size);
+    if (!receipt.active_canonical_lev_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_prepare_dgn_material_plan(
+        engine, engine->game.party_x, engine->game.party_y,
+        engine->game.party_dir);
+    plan = &engine->dgn_material_plan;
+    receipt.material_plan_prepared = plan->level == engine->game.current_level &&
+        plan->structure1a_structure3_topology_candidates_consumed &&
+        plan->structure1a_structure3_topology_candidate_receipt.complete &&
+        !plan->structure1a_structure3_topology_candidate_receipt
+             .fallback_visuals_permitted;
+    if (!receipt.material_plan_prepared || topology_candidate_index < 0 ||
+        topology_candidate_index >= plan->structure1a_structure3_topology_candidate_receipt
+            .topology_candidate_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.topology_candidate_bound = 1;
+    receipt.target_built = nexus_v1_dgn_structure1a_structure3_capture_target_build(
+        &engine->current_level, engine->current_level_dgn_data,
+        engine->current_level_dgn_size, engine->game.current_level, 1,
+        &plan->structure1a_structure3_topology_candidates[
+            topology_candidate_index], structure3_entry_index,
+        structure3_face_ordinal, out_target);
+    if (!receipt.target_built) memset(out_target, 0, sizeof(*out_target));
+    *out_receipt = receipt;
+    return receipt.target_built;
+}
+
 static uint8_t *nexus_read_host_file(const char *path, int *out_size) {
     uint8_t *buf = NULL;
     FILE *fp;
