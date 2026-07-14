@@ -862,7 +862,7 @@ F	0658	F0658_BlitBitmapIndexToZoneIndexWithTransparency	PANEL.C;FMTOWNS.H;REVIVE
 F	0661	F0661_GetShrinkedBitmap	FMTOWNS.H;BASE.C;DEFS.H;ACTIDRAW.C	implemented-narrow	implemented_narrow	BASE.C F0661 source cache-hit/cache-miss F0489/F0492/F0129/F0493 ordering over caller-owned data
 F	0662	F0662_ApplyPaletteChanges	FMTOWNS.H;CHAMDRAW.C;IO.C;BASE.C;DEFS.H;ACTIDRAW.C	implemented-narrow	implemented_narrow	BASE.C F0662 in-place F0129 dispatch over caller-owned bitmap/palette data
 F	0663	F0663_CopyBitmapWithPaletteChanges	FMTOWNS.H;DUNVIEW.C;IO.C;BASE.C;DEFS.H	implemented-narrow	implemented_narrow	BASE.C F0663 dimensions-prefix copy plus caller-owned F0129 palette dispatch
-F	0664	F0664_COMMAND_ProcessType80_ClickInDungeonView_KnockOnFrontWall	CLIKVIEW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0664	F0664_COMMAND_ProcessType80_ClickInDungeonView_KnockOnFrontWall	CLIKVIEW.C	implemented-narrow	implemented_narrow	CLIKVIEW.C F0664 PC34 wall-click press/sound transaction over caller-owned input/audio state
 F	0665	F0665_F0362_sub	CLIKMENU.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0666	F0666_endgame	LOADSAVE.C;COMMAND.C;BASE.C;DEFS.H;TIMELINE.C;STARTUP2.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0670	F0670_ReplaceCharacterByString	SAVEPATH.C;STRING.C;DEFS.H;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

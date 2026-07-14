@@ -545,6 +545,13 @@
     the caller-owned cache. It creates no cache storage, image, palette,
     event, DSA, or runtime fallback. Real CSB cache/graphics corpus evidence
     is still required for a live HUD binding.
+  - 2026-07-14 update: F0664 now owns the bounded source wall-click
+    transaction over caller-owned live input and sound callbacks: the
+    no-champion guard, closed imaginary-wall press/release state, left-button
+    sample, pointer hide, ordinary wall thud, and input-wait stop flag. It
+    does not infer mouse coordinates, dungeon cells, graphics, events, DSA,
+    or a replacement sound route. Real CSB runtime input/audio binding is
+    still required for end-to-end play evidence.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
