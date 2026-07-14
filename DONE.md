@@ -13594,6 +13594,16 @@ Source lock: ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0438/F0807`; CSBWin
 `git diff --check` passed. The broad `test_csb_v1_boot_runtime_handoff` still
 has pre-existing failures in unrelated synthetic-fixture assertions.
 
+# ✅ 2026-07-14 CSB PC package presentation probe
+
+`csb_v1_pc_package_presentation` now drives one hash-verified PC34 CSB
+package through the production session's C001 PRESENTS/CHAOS/STRIKES phases,
+closed and opening C004+C002+C003 entrance-door composites, F0807 completion,
+and C017/C040 HUD. The opt-in probe has no image, palette, or fallback
+fixture: unavailable or non-PC34 media skips, and any non-package route fails.
+It records the existing ReDMCSB TITLE.C/ENTRANCE.C and CSBWin indexed-graphics
+contract boundary without promoting a custom CSBgraphics.dat override.
+
 # DM2 GDAT MapGraphicsStyle Corpus (2026-07-14)
 
 - DM2's boot-owned scene-material cache now spans the original unsigned-byte
