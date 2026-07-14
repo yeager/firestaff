@@ -12,6 +12,11 @@
   receipt but did not report a `host_key_event`; it therefore remains blocked
   and cannot promote a later CD_READ, dungeon, object, or fallback route.
 
+- 2026-07-14 Theron host-input mapping gate: capture mode now requires an
+  explicit `THERON_MEDNAFEN_HOME` when injecting input, preventing an empty
+  temporary configuration from silently using an unverified PCE mapping. The
+  real mapped US capture remained fail-closed because SDL reported no event.
+
 - 2026-07-14 CSB ReDMCSB F0657/F0658 bitmap-index viewport bridge: added
   the PC34 F0630 `STRUCT2` bitmap-origin path and the F0658 F0635-relative
   zone-offset path before F0132 dispatch. Bitmap lookup, layout resolution,
