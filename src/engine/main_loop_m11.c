@@ -1131,6 +1131,16 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
     }
 }
 
+int M11_Entrance_ShouldAutoEnterForTimeout(int allowHeadlessTimeout,
+                                           int autoEnterAfterMs,
+                                           uint64_t elapsedMs) {
+    uint64_t timeoutMs;
+
+    if (!allowHeadlessTimeout) return 0;
+    timeoutMs = autoEnterAfterMs > 0 ? (uint64_t)autoEnterAfterMs : 5000u;
+    return elapsedMs > timeoutMs;
+}
+
 /* Play the FTL swoosh palette animation. ReDMCSB SWSH.C: static logo on black palette,
  * then V0901006_PaletteCommands lights colors sequentially via Setcolor()/Vsync.
  * ESC/Enter/click skips. Skipped when --game was used (direct launch skips full intro). */
