@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `SAVEGAME.C F0100..F0120` utility import: a staged
+  champion preview now remains pending until explicit user confirmation;
+  reject returns to selection and accept begins the new game. Verification:
+  focused confirmation and utility-flow CTests.
+
 - 2026-07-14 DM2 outdoor renderer: synthetic sky-color generation is removed.
   Outdoor output now remains unavailable until source-owned ENVIRONMENT GDAT
   image, palette, and destination receipts are consumed. Verification:
