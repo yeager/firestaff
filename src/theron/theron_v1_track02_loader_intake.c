@@ -28,23 +28,3 @@ int theron_v1_track02_loader_intake_observe(
     *out_receipt = receipt;
     return 1;
 }
-
-int theron_v1_track02_loader_intake_observe_authenticated_trace(
-    const Theron_V1AuthenticatedTrack02LoaderReadFacts *facts,
-    Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
-    Theron_V1Track02LoaderReadFacts observation;
-
-    if (!facts || !facts->trace_provenance ||
-        !facts->trace_provenance->valid) {
-        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-        return 0;
-    }
-
-    observation.authenticated_original_trace = 1;
-    observation.later_than_stage2_transfer = facts->later_than_stage2_transfer;
-    observation.track02_record = facts->track02_record;
-    observation.record_user_data_offset = facts->record_user_data_offset;
-    observation.destination = facts->destination;
-    observation.byte_count = facts->byte_count;
-    return theron_v1_track02_loader_intake_observe(&observation, out_receipt);
-}
