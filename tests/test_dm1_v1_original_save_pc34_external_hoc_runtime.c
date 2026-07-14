@@ -220,6 +220,38 @@ static unsigned int viewport_fingerprint(const unsigned char *pixels,
     return hash;
 }
 
+/* ReDMCSB LOADSAVE.C F0435:2803-2816 restores the four packed portrait
+ * buffers before returning to the live game. The M11 inventory portrait is
+ * at the C017 viewport origin plus its source-owned five/four pixel inset. */
+static int saved_portrait_matches_inventory_frame(
+    const struct ChampionState_Compat *champion,
+    const unsigned char *pixels,
+    int framebuffer_width)
+{
+    int y;
+
+    if (!champion || !champion->portraitBitmapValid || !pixels ||
+        framebuffer_width < 32) {
+        return 0;
+    }
+    for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+        const unsigned char *source = champion->portraitBitmap +
+            y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+        const unsigned char *rendered = pixels +
+            (PC34_VIEWPORT_Y + 4 + y) * framebuffer_width +
+            PC34_VIEWPORT_X + 5;
+        int x;
+
+        for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+            if (rendered[x] != (unsigned char)(source[x / 2] >> 4) ||
+                rendered[x + 1] != (unsigned char)(source[x / 2] & 0x0fU)) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     const char *corpus_root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
@@ -310,6 +342,23 @@ int main(void)
                   !state.candidateMirrorRenameActive &&
                   !state.inventoryPanelActive,
               "F0435 does not invent a transient C040 HoC panel");
+        CHECK(state.world.party.activeChampionIndex >= 0 &&
+                  state.world.party.activeChampionIndex < CHAMPION_MAX_PARTY &&
+                  state.world.party.champions[
+                      state.world.party.activeChampionIndex].present &&
+                  state.world.party.champions[
+                      state.world.party.activeChampionIndex].portraitBitmapValid,
+              "F0435 retains the active champion's saved portrait payload");
+        CHECK(M11_GameView_ToggleInventoryPanel(&state),
+              "M11 opens the source inventory panel for the adopted runtime");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        CHECK(saved_portrait_matches_inventory_frame(
+                  &state.world.party.champions[state.world.party.activeChampionIndex],
+                  framebuffer, 320),
+              "M11 inventory consumes the F0435 saved portrait pixels");
+        CHECK(!M11_GameView_ToggleInventoryPanel(&state),
+              "M11 closes the source inventory panel after the portrait receipt");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&state, framebuffer, 320, 200);
         CHECK(viewport_is_nonblank(framebuffer, 320),

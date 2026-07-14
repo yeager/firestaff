@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 F0435 saved-portrait host-consumption gate: M11's normal
+  C017 inventory panel now unpacks the active champion's saved 32x29 4bpp
+  portrait payload from the F0435-restored M516_CHAMPIONS state before it may
+  fall back to the GRAPHICS.DAT atlas. The fixture-free external PC34 HoC
+  runtime target opens the production inventory panel and compares every
+  rendered portrait pixel to the authenticated in-memory save snapshot.
+  Source-lock: ReDMCSB `LOADSAVE.C F0435` lines 2803-2816. Verification:
+  `dm1_v1_original_save_pc34_external_hoc_runtime` (skip-safe without
+  operator-supplied original PC34 save/media inputs). This proves Firestaff
+  host consumption, not original DOS pixel parity.
+
 - DONE 2026-07-14 Nexus Structure3 record-to-face/normal attachment receipt:
   canonical-MD5-verified `LEV00.DGN`--`LEV15.DGN` corpus tests now bind each
   complete Structure1A owner relation's documented Structure3 model selector
