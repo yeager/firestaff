@@ -123,6 +123,10 @@
   hashes. Its original-Saturn statement is intentionally only a claim; an
   independent review/certificate remains required and all decode/render paths
   stay closed.
+  The capture tool can now write a deterministic provenance ledger directly
+  from a real V3 trace bundle only after canonical media and all raw sidecars
+  pass their existing byte checks. It copies no original bytes and remains an
+  acquisition aid, not a producer authentication, decode, or render route.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette

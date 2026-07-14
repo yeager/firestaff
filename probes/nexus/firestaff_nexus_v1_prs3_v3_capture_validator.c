@@ -8,6 +8,8 @@
  *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN PROVENANCE.TXT PRODUCER
  *   firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN \
  *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN PROVENANCE.TXT PRODUCER ATTESTATION.TXT
+ *   firestaff_nexus_v1_prs3_v3_capture_validator --write-ledger TRACE MENU.BPK DM.BIN \
+ *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN PRODUCER PROVENANCE.TXT
  *
  * The program deliberately does not emit decoded bytes or render a surface.
  * It only reports whether an externally recorded trace is internally complete
@@ -16,6 +18,7 @@
 #include "nexus_v1_prs3_capture_trace_schema.h"
 
 #include <stdio.h>
+#include <string.h>
 
 int main(int argc, char **argv)
 {
@@ -25,8 +28,24 @@ int main(int argc, char **argv)
     Nexus_V1_Prs3Vdp1ProducerAttestationReceipt attestation;
     int accepted;
 
+    if (argc == 10 && strcmp(argv[1], "--write-ledger") == 0) {
+        accepted = nexus_v1_prs3_vdp1_capture_write_provenance_ledger(
+            argv[9], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7],
+            argv[8], &sidecars);
+        printf("trace_source_bound=%d\n", sidecars.trace_source_bound);
+        printf("raw_sidecars_bound=%d\n", sidecars.raw_sidecars_bound);
+        printf("provenance_ledger_written=%d\n", accepted ? 1 : 0);
+        printf("runtime_import_permitted=%d\n", sidecars.runtime_import_permitted);
+        printf("decoder_promoted=%d\n", sidecars.decoder_promoted);
+        printf("fallback_visuals_permitted=%d\n",
+               sidecars.fallback_visuals_permitted);
+        return accepted ? 0 : 1;
+    }
+
     if (argc != 4 && argc != 7 && argc != 9 && argc != 10) {
-        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN [OUTPUT VDP1-COMMAND PALETTE [PROVENANCE PRODUCER [ATTESTATION]]]\n",
+        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN [OUTPUT VDP1-COMMAND PALETTE [PROVENANCE PRODUCER [ATTESTATION]]]\n"
+                        "       %s --write-ledger TRACE MENU.BPK DM.BIN OUTPUT VDP1-COMMAND PALETTE PRODUCER PROVENANCE\n",
+                argv[0],
                 argv[0]);
         return 2;
     }

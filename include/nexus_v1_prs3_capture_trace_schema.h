@@ -360,6 +360,16 @@ int nexus_v1_prs3_vdp1_capture_validate_provenance(
     const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
     Nexus_V1_Prs3Vdp1ProvenanceReceipt *out_receipt);
 
+/* Write the deterministic V3 provenance ledger for an already source-bound
+ * raw capture bundle. This copies no capture bytes and never creates a trace,
+ * pixels, palette, decoder, or runtime route. */
+int nexus_v1_prs3_vdp1_capture_write_provenance_ledger(
+    const char *ledger_path, const char *trace_path,
+    const char *menu_bpk_path, const char *dm_bin_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, const char *producer_binary_path,
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt);
+
 /* Validate a source-owned producer-attestation file after sidecar and ledger
  * checks. The fixed capture mode is `SH2_VDP1_BUS_TRACE`; the claimed
  * original-Saturn execution is recorded but never trusted as authentication. */

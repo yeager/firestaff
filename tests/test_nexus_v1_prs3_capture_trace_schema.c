@@ -562,6 +562,15 @@ int main(void) {
                    !provenance_receipt.capture_producer_authenticated &&
                    !provenance_receipt.runtime_import_permitted,
                "provenance gate rejects an absent raw capture ledger without authenticating a producer");
+        expect(!nexus_v1_prs3_vdp1_capture_write_provenance_ledger(
+                   "/tmp/nexus-v3-ledger", "/missing/trace", "/missing/MENU.BPK",
+                   "/missing/DM.BIN", "/missing/output", "/missing/command",
+                   "/missing/palette", "/missing/producer", &sidecar_receipt) &&
+                   !sidecar_receipt.raw_sidecars_bound &&
+                   !sidecar_receipt.runtime_import_permitted &&
+                   !sidecar_receipt.decoder_promoted &&
+                   !sidecar_receipt.fallback_visuals_permitted,
+               "bundle writer rejects absent capture artifacts without writing a substitute ledger");
         expect(!nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
                    "/missing/attestation", "/missing/trace", "/missing/output",
                    "/missing/command", "/missing/palette", "/missing/producer",

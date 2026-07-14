@@ -15913,6 +15913,15 @@ the result always requires independent authentication and cannot permit
 runtime import, decoding, fallback pixels, or rendering. Verification:
 `test_nexus_v1_prs3_capture_trace_schema` and the validator target build.
 
+# ✅ 2026-07-14 Nexus PRS3 V3 capture-bundle ledger writer
+
+The V3 capture tool now writes the deterministic provenance ledger from an
+externally acquired trace, canonical MENU.BPK/DM.BIN, raw output/VDP1/palette
+sidecars, and the producer binary only after the existing byte-bound admission
+passes. It writes hashes, never copies capture or game bytes, and cannot
+authenticate a producer, decode PRS3, import runtime data, or render.
+Verification: `test_nexus_v1_prs3_capture_trace_schema` and validator build.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the
