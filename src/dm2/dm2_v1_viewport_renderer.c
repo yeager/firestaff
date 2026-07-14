@@ -955,6 +955,15 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_scene_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    if (!s) return;
+    s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,
@@ -3201,15 +3210,60 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     s->last_floor_ceiling_material_required_mask = 0u;
     s->last_floor_ceiling_material_consumed_mask = 0u;
     if (s->source_materials_required) {
+        const DM2_V1_GdatSceneM11CommandPlan *plan =
+            s->gdat_scene_material_plan;
         int graphicsset_index = 0;
         int material_field = 0;
 
         s->last_floor_ceiling_material_required_mask =
             DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
-        /* skproject/SKULLWIN/c_gui_vp.cpp resolves GRAPHICSSET ceiling and
-         * floor images with QUERY_GDAT_IMAGE_LOCALPAL immediately before the
-         * matching plane draw. Cache both proven source surfaces first so a
-         * missing floor cannot leave a ceiling-only synthetic-looking frame. */
+        /* skproject c_gui_vp consumes the decoded UPDATE_GFXSET result. When
+         * M11 has that exact boot-owned plan, do not re-query GDAT or permit a
+         * callback to substitute another graphics set. */
+        if (plan) {
+            const DM2_V1_GdatSceneM11Command *floor = &plan->commands[0];
+            const DM2_V1_GdatSceneM11Command *ceiling = &plan->commands[1];
+            if (!s->gdat_scene_control_ready ||
+                plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
+                plan->command_hash != s->gdat_scene_control_hash ||
+                floor->field != DM2_GDAT_GFXSET_FLOOR ||
+                ceiling->field != DM2_GDAT_GFXSET_CEIL ||
+                !floor->pixels || !ceiling->pixels ||
+                floor->width == 0u || floor->height == 0u ||
+                ceiling->width == 0u || ceiling->height == 0u ||
+                floor->palette_hash == 0u || ceiling->palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            floor_material.pixels = floor->pixels;
+            floor_material.width = floor->width;
+            floor_material.height = floor->height;
+            floor_material.stride = floor->width;
+            memcpy(floor_material.palette16, floor->palette16,
+                   sizeof(floor_material.palette16));
+            floor_material.palette_hash = floor->palette_hash;
+            floor_material.ready = 1;
+            ceiling_material.pixels = ceiling->pixels;
+            ceiling_material.width = ceiling->width;
+            ceiling_material.height = ceiling->height;
+            ceiling_material.stride = ceiling->width;
+            memcpy(ceiling_material.palette16, ceiling->palette16,
+                   sizeof(ceiling_material.palette16));
+            ceiling_material.palette_hash = ceiling->palette_hash;
+            ceiling_material.ready = 1;
+            ceiling_pixels = ceiling_material.pixels;
+            ceiling_w = ceiling_material.width;
+            ceiling_h_src = ceiling_material.height;
+            ceiling_stride = ceiling_material.stride;
+            memcpy(s->active_asset_palette16, ceiling_material.palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = ceiling_material.palette_hash;
+            s->active_asset_palette_ready = 1;
+            ceiling_asset = 1;
+        } else {
+            /* Legacy callback route for focused renderer tests. The live M11
+             * runtime supplies the validated UPDATE_GFXSET plan above. */
         if (!dm2_v1_viewport_scene_material_graphic_address(
                 ceiling_gdat_index, &graphicsset_index, &material_field) ||
             graphicsset_index != s->gdat_scene_material_index ||
@@ -3258,6 +3312,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         s->active_asset_palette_hash = ceiling_material.palette_hash;
         s->active_asset_palette_ready = ceiling_material.ready;
         ceiling_asset = 1;
+        }
     } else {
         ceiling_asset = dm2_v1_fetch_viewport_asset(
                             s, ceiling_gdat_index, &ceiling_pixels,
@@ -3265,11 +3320,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
             ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
     }
 
-    /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as DM1.
-     * Source: DUNVIEW.C:126-127 (G2108_Floor=-1, G2109_Ceiling=-2).
-     * Ceiling: lines 0-28, Floor: lines 66-135.
-     * Actual floor/ceiling graphics are provided by dm2_v1_gfx_fetch().
-     * For now: fill with solid color (actual graphics deferred to asset system). */
+    /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as
+     * DM1. Source: ReDMCSB DUNVIEW.C:126-127. */
 
     int ceiling_h = DM2_CEILING_H;
     if (ceiling_asset) {

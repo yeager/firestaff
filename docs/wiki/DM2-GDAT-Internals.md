@@ -38,6 +38,13 @@ on a map selecting another style. The runtime consumes typed material classes
 for floor, ceiling, wall, door panel/frame/overlay, creature, item, carried
 item, and projectile map chips.
 
+For indoor floor and ceiling, `UPDATE_GFXSET` now retains the validated,
+decoded pair through the M11 frame. The viewport consumes those exact plan
+pixels and their per-image local palettes directly; it does not issue a second
+asset callback that could accidentally select a different graphics set. A plan
+whose graphics-set index or command hash no longer matches the active map is a
+blocked no-draw frame.
+
 If a required material class cannot be resolved, the frame records a blocked
 no-draw receipt. It must not paint a conventional-color approximation.
 
