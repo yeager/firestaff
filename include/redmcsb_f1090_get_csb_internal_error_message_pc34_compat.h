@@ -1,0 +1,9 @@
+#ifndef FIRESTAFF_REDMCSB_F1090_GET_CSB_INTERNAL_ERROR_MESSAGE_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1090_GET_CSB_INTERNAL_ERROR_MESSAGE_PC34_COMPAT_H
+
+#include <stdint.h>
+
+uint8_t *redmcsb_f1090_get_csb_internal_error_message_pc34_compat(void);
+const char *redmcsb_f1090_get_csb_internal_error_message_source_evidence_pc34(void);
+
+#endif
