@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0709`: PC 3.4 start-sound dispatch preserves
+  the original signed 16-bit index and volume at the host audio boundary.
+  Focused strict C11 test passes.
+
+- 2026-07-14 DM1/CSB ReDMCSB `F0710` and `F0712`: PC 3.4 source-locked
+  sound-completion and any-input routes are built into `firestaff_m10`.
+  `F0710` delegates once to IODRV_16; `F0712` reads IODRV_13 before the
+  original mouse-or-keyboard short-circuit. Focused strict C11 tests and the
+  Ninja `firestaff_m10` build pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0703`-`F0707`: PC 3.4 source-locked modules
   now cover champion-icon release, IODRV_03/IODRV_04 dispatch, mouse state,
   and sound-buffer reset. Strict C11 tests pass. F0703/F0706/F0707 move from
