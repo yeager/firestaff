@@ -110,6 +110,10 @@
   the sidecar gate deliberately does not claim producer authenticity. Needed
   next: a trace/sidecar set recorded from an original Saturn or an
   independently authenticated emulator run, followed by semantic decoding.
+  A separate provenance ledger can now bind the trace, each raw sidecar, and
+  the exact capture-producer binary by FNV. It deliberately reports producer
+  authentication as false: local searches found no authentic Nexus V3 trace,
+  sidecars, or emulator log to admit.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked

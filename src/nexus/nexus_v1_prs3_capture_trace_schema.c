@@ -655,3 +655,64 @@ done:
     *out_receipt = receipt;
     return receipt.raw_sidecars_bound;
 }
+
+int nexus_v1_prs3_vdp1_capture_validate_provenance(
+    const char *ledger_path, const char *trace_path, const char *output_path,
+    const char *vdp1_command_path, const char *palette_path,
+    const char *producer_binary_path,
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    Nexus_V1_Prs3Vdp1ProvenanceReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1ProvenanceReceipt receipt;
+    uint8_t *ledger = NULL, *trace = NULL, *output = NULL, *command = NULL;
+    uint8_t *palette = NULL, *producer = NULL;
+    size_t ledger_size = 0U, trace_size = 0U, output_size = 0U;
+    size_t command_size = 0U, palette_size = 0U, producer_size = 0U;
+    const char *cursor;
+    uint64_t trace_hash, output_hash, command_hash, palette_hash, producer_hash;
+    const char magic[] = "NEXUS_PRS3_V3_PROVENANCE_V1\n";
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!raw_sidecars || !raw_sidecars->raw_sidecars_bound || !ledger_path ||
+        !trace_path || !output_path || !vdp1_command_path || !palette_path ||
+        !producer_binary_path) goto done;
+    receipt.raw_sidecars_bound = 1;
+    ledger = read_capture_file(ledger_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                               &ledger_size);
+    trace = read_capture_file(trace_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                              &trace_size);
+    output = read_capture_file(output_path, 16U * 1024U * 1024U, &output_size);
+    command = read_capture_file(vdp1_command_path, 64U * 1024U, &command_size);
+    palette = read_capture_file(palette_path, 1024U * 1024U, &palette_size);
+    producer = read_capture_file(producer_binary_path, 512U * 1024U * 1024U,
+                                 &producer_size);
+    if (!ledger || !trace || !output || !command || !palette || !producer ||
+        ledger_size <= sizeof(magic) - 1U ||
+        memcmp(ledger, magic, sizeof(magic) - 1U) != 0) goto done;
+    cursor = (const char *)ledger + sizeof(magic) - 1U;
+    if (!read_u64(&cursor, "trace_fnv1a64=", &trace_hash) ||
+        !read_u64(&cursor, "output_fnv1a64=", &output_hash) ||
+        !read_u64(&cursor, "vdp1_command_fnv1a64=", &command_hash) ||
+        !read_u64(&cursor, "palette_fnv1a64=", &palette_hash) ||
+        !read_u64(&cursor, "producer_binary_fnv1a64=", &producer_hash) ||
+        *cursor != '\0') goto done;
+    receipt.ledger_parsed = 1;
+    receipt.trace_bytes_match = trace_hash == fnv1a64(trace, trace_size);
+    receipt.output_bytes_match = output_hash == fnv1a64(output, output_size);
+    receipt.vdp1_command_bytes_match =
+        command_hash == fnv1a64(command, command_size);
+    receipt.palette_bytes_match = palette_hash == fnv1a64(palette, palette_size);
+    receipt.producer_binary_bound =
+        producer_hash == fnv1a64(producer, producer_size);
+    receipt.provenance_complete = receipt.trace_bytes_match &&
+        receipt.output_bytes_match && receipt.vdp1_command_bytes_match &&
+        receipt.palette_bytes_match && receipt.producer_binary_bound;
+done:
+    free(ledger); free(trace); free(output); free(command); free(palette);
+    free(producer);
+    receipt.capture_producer_authenticated = 0;
+    receipt.runtime_import_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.provenance_complete;
+}

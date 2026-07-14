@@ -195,6 +195,22 @@ typedef struct {
     Nexus_V1_Prs3Vdp1CaptureFileReceipt trace_file;
 } Nexus_V1_Prs3Vdp1RawSidecarReceipt;
 
+/* Provenance ledger for a raw-sidecar admission. It binds the supplied files
+ * to a named capture producer binary, but does not authenticate that producer
+ * or claim original-Saturn execution. */
+typedef struct {
+    int ledger_parsed;
+    int raw_sidecars_bound;
+    int trace_bytes_match;
+    int output_bytes_match;
+    int vdp1_command_bytes_match;
+    int palette_bytes_match;
+    int producer_binary_bound;
+    int provenance_complete;
+    int capture_producer_authenticated;
+    int runtime_import_permitted;
+} Nexus_V1_Prs3Vdp1ProvenanceReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -310,5 +326,15 @@ int nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
     const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
     const char *output_path, const char *vdp1_command_path,
     const char *palette_path, Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt);
+
+/* Validate a text provenance ledger against already admitted raw sidecars and
+ * the exact trace/sidecar/producer files. This never changes the producer
+ * authentication verdict or permits runtime import. */
+int nexus_v1_prs3_vdp1_capture_validate_provenance(
+    const char *ledger_path, const char *trace_path, const char *output_path,
+    const char *vdp1_command_path, const char *palette_path,
+    const char *producer_binary_path,
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    Nexus_V1_Prs3Vdp1ProvenanceReceipt *out_receipt);
 
 #endif

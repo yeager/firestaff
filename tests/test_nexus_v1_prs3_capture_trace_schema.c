@@ -524,6 +524,7 @@ int main(void) {
     {
         Nexus_V1_Prs3Vdp1CaptureFileReceipt file_receipt;
         Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecar_receipt;
+        Nexus_V1_Prs3Vdp1ProvenanceReceipt provenance_receipt;
         expect(!nexus_v1_prs3_vdp1_capture_validate_files(
                    "/missing/nexus-v3.trace", "/missing/MENU.BPK",
                    "/missing/DM.BIN", &file_receipt) &&
@@ -550,6 +551,15 @@ int main(void) {
                    !sidecar_receipt.decoder_promoted &&
                    !sidecar_receipt.fallback_visuals_permitted,
                "raw sidecar admission rejects absent capture artifacts without a substitute route");
+        expect(!nexus_v1_prs3_vdp1_capture_validate_provenance(
+                   "/missing/ledger", "/missing/trace", "/missing/output",
+                   "/missing/command", "/missing/palette", "/missing/producer",
+                   &sidecar_receipt, &provenance_receipt) &&
+                   !provenance_receipt.ledger_parsed &&
+                   !provenance_receipt.provenance_complete &&
+                   !provenance_receipt.capture_producer_authenticated &&
+                   !provenance_receipt.runtime_import_permitted,
+               "provenance gate rejects an absent raw capture ledger without authenticating a producer");
     }
 
     test_dm_bin_prs3_catalog();
