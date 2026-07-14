@@ -740,6 +740,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0481_cache_free_memor
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0471_cache_remove_unused_block_pc34_compat.c")
+    add_executable(test_redmcsb_f0471_cache_remove_unused_block_pc34_compat
+        tests/test_redmcsb_f0471_cache_remove_unused_block_pc34_compat.c
+        src/memory/redmcsb_f0471_cache_remove_unused_block_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0471_cache_remove_unused_block_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0471_cache_remove_unused_block_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0471_cache_remove_unused_block_pc34_compat
+        COMMAND test_redmcsb_f0471_cache_remove_unused_block_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0693_wait_vertical_blank_pc34_compat.c")
     add_executable(test_redmcsb_f0693_wait_vertical_blank_pc34_compat
         tests/test_redmcsb_f0693_wait_vertical_blank_pc34_compat.c
