@@ -42,8 +42,8 @@
   as runtime order. Broader original PC34 executable route/capture comparison
   remains an external-corpus task.
 
-- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light and movement
-  offsets still need source-owned destination/clipping plans. The static
+- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light still needs
+  source-owned destination/clipping plans. The static
   floor/ceiling route now accepts only the source-bound `QUERY_BLIT_RECT`
   700/701 program receipt. Complete standard door panels,
   frames, default buttons, and overlays now reach M11 through exact material
@@ -57,7 +57,10 @@
     the original ObjectID, tile, direction, decoded dimensions, and local
     palette owner through M11; generic record-link traversal cannot nominate
     a creature sprite. This is a static map-chip handoff only: animation
-    selection, dynamic lighting, and movement offsets remain unavailable.
+    selection and dynamic lighting remain unavailable.
+  - 2026-07-14 update: the active G1 map's original offset bytes now reach
+    SKProject `SET_GRAPHICS_FLIP_FROM_POSITION` for decoded plane rects
+    700/701. No unproven tile/material route is enabled by this binding.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
   `test_dm2_v1_save_load` external-corpus census accepts only

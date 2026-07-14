@@ -2387,6 +2387,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
+    if (rt->boot && rt->boot->dungeon_data) {
+        const DM2_V1_DungeonData *dungeon =
+            (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        if (rt->dungeon_level >= 0 && rt->dungeon_level < dungeon->level_count) {
+            dm2_v1_viewport_set_gdat_scene_map_origin(
+                &viewport, dungeon->map_offset_x[rt->dungeon_level],
+                dungeon->map_offset_y[rt->dungeon_level]);
+        }
+    }
     dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
     if (rt->g1_first_map_runtime.committed) {
         dm2_v1_viewport_set_g1_first_map_runtime(

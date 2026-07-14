@@ -984,6 +984,15 @@ void dm2_v1_viewport_set_gdat_scene_movement_active(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_scene_map_origin(
+    DM2_V1_ViewportState *s, int map_offset_x, int map_offset_y)
+{
+    if (!s) return;
+    s->gdat_scene_map_offset_x = map_offset_x;
+    s->gdat_scene_map_offset_y = map_offset_y;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s, const DM2_V1_GdatWallM11CommandPlan *plan)
 {
@@ -2292,6 +2301,7 @@ static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
                                                int src_h,
                                                int src_stride,
                                                int transparent_color,
+                                               int mirror_flip,
                                                int *consumed_count)
 {
     int y;
@@ -2304,7 +2314,11 @@ static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
             int fx = dst_x + x;
             uint8_t pixel;
             if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
-            pixel = src[(y % src_h) * src_stride + (x % src_w)];
+            {
+                int sx = x % src_w;
+                if (mirror_flip) sx = src_w - 1 - sx;
+                pixel = src[(y % src_h) * src_stride + sx];
+            }
             if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
                 continue;
             }
@@ -2312,6 +2326,42 @@ static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
                 dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
     }
+}
+
+static int dm2_v1_scene_plane_flip_from_position(
+    const DM2_V1_ViewportState *s, uint8_t kind)
+{
+    int64_t parity;
+
+    if (!s) return 0;
+    /* SKProject SkWinCore.cpp SET_GRAPHICS_FLIP_FROM_POSITION (32CB:59CA).
+     * DISPLAY_VIEWPORT uses kind 0x20 for ceiling rect 700 and 1 for floor
+     * rect 701; no other caller is admitted by this plane route. */
+    parity = (int64_t)s->party_x + s->party_y + s->party_dir +
+        s->gdat_scene_map_offset_x + s->gdat_scene_map_offset_y +
+        s->dungeon_level;
+    parity &= 1;
+    if (kind == 1u) {
+        if ((s->gdat_scene_flags & 8u) != 0u) {
+            if ((s->gdat_scene_flags & 0x10u) != 0u)
+                return (s->tick_count & 7) > 3;
+            return (int)parity;
+        }
+        if ((s->gdat_scene_flags & 0x40u) != 0u)
+            return (s->party_dir & 1) != 0;
+        return 0;
+    }
+    if (kind == 0x20u) {
+        if ((s->gdat_scene_flags & 2u) != 0u) {
+            if ((s->gdat_scene_flags & 4u) != 0u)
+                return (s->tick_count & 7) <= 3;
+            return !parity;
+        }
+        if ((s->gdat_scene_flags & 0x20u) != 0u)
+            return (s->party_dir & 1) != 0;
+        return 0;
+    }
+    return (int)parity;
 }
 
 static void dm2_v1_blit_scaled_material_bitmap_region(
@@ -3249,6 +3299,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
      * nonzero, and only for rect 700/701. Do not admit arbitrary offsets. */
     const int movement_ceiling_y = s->gdat_scene_movement_active ? -2 : 0;
     const int movement_floor_y = s->gdat_scene_movement_active ? 3 : 0;
+    const int ceiling_mirror = dm2_v1_scene_plane_flip_from_position(s, 0x20u);
+    const int floor_mirror = dm2_v1_scene_plane_flip_from_position(s, 1u);
 
     s->last_floor_ceiling_material_required_mask = 0u;
     s->last_floor_ceiling_material_consumed_mask = 0u;
@@ -3428,6 +3480,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  ceiling_h_src,
                                  ceiling_stride > 0 ? ceiling_stride : ceiling_w,
                                  -1,
+                                 ceiling_mirror,
                                  &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
@@ -3497,6 +3550,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                                  floor_h_src,
                                  floor_stride > 0 ? floor_stride : floor_w,
                                  -1,
+                                 floor_mirror,
                                  &s->gdat_material_palette_floor_ceiling_consumed_count);
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
@@ -5741,6 +5795,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
                 sky_w, sky_h_src,
                 sky_stride > 0 ? sky_stride : sky_w, -1,
+                0,
                 &s->gdat_material_palette_floor_ceiling_consumed_count);
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
@@ -5782,6 +5837,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 DM2_VP_HEIGHT - sky_h, ground_pixels, ground_w,
                 ground_h_src,
                 ground_stride > 0 ? ground_stride : ground_w, -1,
+                0,
                 &s->gdat_material_palette_floor_ceiling_consumed_count);
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
