@@ -1216,6 +1216,39 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         return 0;
     }
 
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            request->md5_hex);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        request->hucard_rom, request->hucard_rom_size, request->md5_hex,
+        &media_receipt);
+
+    /* The Soul Room forcefield is the public handoff into the original-media
+     * route. A known Track 02 profile must prove its complete startup atlas
+     * and the stage-two $4090 -> $3800 loader chain before it can mutate the
+     * selected party, startup flow, or world. See
+     * theron-us-stage2-huc6280.asm:163-181. */
+    if (verified_track02_request &&
+        (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+             &media_receipt) ||
+         !theron_v1_startup_runtime_stage3_loader_ready(
+             request->hucard_rom,
+             request->hucard_rom_size,
+             request->md5_hex))) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 verified profile missing authenticated Soul Room handoff; "
+                     "fallback visuals blocked; no raw Track 02 bytes");
+        }
+        if (out_result) {
+            out_result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+        }
+        theron_v1_startup_runtime_entry_capture_failure_route(
+            receipt, verified_track02_request, &media_receipt, out_result);
+        return 0;
+    }
+
     result = theron_v1_startup_enter_forcefield_with_roster(
         flow,
         &world->party,
@@ -1237,12 +1270,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     level_load_context.hucard_rom = request->hucard_rom;
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
-    verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(
-            request->md5_hex);
-    theron_v1_startup_media_capture_track02_state_receipt(
-        request->hucard_rom, request->hucard_rom_size, request->md5_hex,
-        &media_receipt);
     result = theron_v1_startup_enter_runtime_from_forcefield(
         flow,
         world,

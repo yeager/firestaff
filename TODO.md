@@ -691,6 +691,11 @@ to a prepared boot profile. The production Soul Room forcefield transition
 checks that receipt before it mutates startup flow or world state, so no
 missing or unrecognised trace can open the dungeon route. A fresh combined
 capture is still required to demonstrate the positive path.
+2026-07-14 atomicity follow-up: the direct Soul Room runtime entry now applies
+that same complete startup-media and stage-two `$4090 -> $3800` preflight
+before it creates the party or changes flow/world state. The tracked startup
+probe verifies the rejected known-profile path remains in the Soul Room;
+positive progress still requires an authentic combined capture.
 The generic startup-flow probe no longer treats its own rectangles or
 fabricated Track 02 bytes as title/runtime evidence. The title plan remains
 empty until an authenticated Track 02 bitmap route exists, while a known
