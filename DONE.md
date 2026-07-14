@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `ACTIDRAW.C F0385`: source action-damage feedback
+  now has a bounded render plan for negative text, damage tiers, original
+  boxes, numeric placement, and screen-update ordering. Verification: focused
+  CTest. M11 pixel consumption remains a separate runtime integration.
+
 - 2026-07-14 ReDMCSB `BMPSIZE.C F0459`: PC34 scaled packed-bitmap byte
   count now follows the original scale and even-width allocation formula.
   Verification: focused CTest; allocation and pixel decoding remain separate.
