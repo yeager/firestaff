@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 HoC C127/C2548 saved-runtime render admission: M11 now
+  applies the same DM1-owned F0115 payload gate to the C2548 alcove route as
+  to ordinary C2500 floor objects. A visible C127 mirror after original-PC34
+  save import cannot re-enter the alcove item blitter, while independently
+  admitted objects still use their runtime receipt. Verification:
+  `dm1_v1_viewport_runtime_materialization_pc34_compat`.
+
 - 2026-07-14 DM1 original-PC34 `PARTY_INFO` ScentCount runtime handoff:
   F0435 now restores the source-owned byte 10 `ScentCount` to the existing
   F0412 Footprints-window owner, and F0433 writes only the validated

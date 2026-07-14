@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -289,6 +290,7 @@ int main(void)
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34);
+        DM1_F0115AlcoveItemMaterialPlanPc34 alcove;
         input.hasVisibleChampionMirrorPayload = 1;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "D1C mirror decision is built after original-save load");
@@ -296,6 +298,14 @@ int main(void)
               d1c.suppressMirrorAsFloorItem && d1c.suppressMirrorAsProjectile &&
               d1c.suppressMirrorAsSpellEffect && !d1c.drawDeferredSpellEffects,
               "D1C mirror remains a wall overlay across save provenance");
+        input.elementType = DUNGEON_ELEMENT_WALL;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.valid && !d1c.drawFloorItems &&
+              d1c.suppressMaterializedItemPayload &&
+              dm1_v1_f0115_alcove_item_material_plan_pc34(
+                  &alcove, THING_TYPE_WEAPON, 0, 1, 0, 2) &&
+              alcove.coordinate_binding_ready && alcove.source_zone >= 2548,
+              "original-save C127 suppression survives the otherwise legal C2548 alcove plan");
     }
 
     {
