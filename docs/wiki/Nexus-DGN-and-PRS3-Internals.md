@@ -56,6 +56,11 @@ Each entry is also accounted as having zero, one, or multiple such components.
 That partition covers the bounded Structure3 entry directory without assigning
 any geometric or rendering meaning to the component count.
 
+The receipt additionally retains each entry-local unordered pair of distinct
+indexes that co-occurs in a face row, separating distinct pairs from repeated
+occurrences. This is row-incidence accounting only, not an edge direction,
+winding, surface, normal-plane, transform, material, palette, or drawing rule.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
