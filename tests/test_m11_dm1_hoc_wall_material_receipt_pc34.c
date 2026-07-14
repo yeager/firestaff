@@ -29,7 +29,8 @@ static int square_element(const M11_GameViewState *state, int x, int y)
 }
 
 static int find_front_mirror(M11_GameViewState *state,
-                             unsigned char *framebuffer)
+                             unsigned char *framebuffer,
+                             int *out_render_index)
 {
     const struct DungeonMapDesc_Compat *map = &state->world.dungeon->maps[0];
     int y;
@@ -57,12 +58,88 @@ static int find_front_mirror(M11_GameViewState *state,
                         memset(framebuffer, 0, kFramebufferWidth * kFramebufferHeight);
                         M11_GameView_Draw(state, framebuffer,
                                           kFramebufferWidth, kFramebufferHeight);
-                        return M11_GameView_GetFrontMirrorOrdinal(state) ==
-                               (int)state->world.things->sensors[sensorIndex].sensorData;
+                        if (M11_GameView_GetFrontMirrorOrdinal(state) !=
+                            (int)state->world.things->sensors[sensorIndex].sensorData) {
+                            return 0;
+                        }
+                        if (out_render_index) {
+                            *out_render_index =
+                                (int)state->world.things->sensors[sensorIndex].sensorData;
+                        }
+                        return 1;
                     }
                 }
                 thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
             }
+        }
+    }
+    return 0;
+}
+
+static int verify_front_mirror_backing_pixel(
+    M11_GameViewState *state,
+    const unsigned char *framebuffer,
+    int renderIndex)
+{
+    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+    const M11_AssetSlot *backing;
+    int y;
+
+    if (!state || !framebuffer ||
+        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
+            127, renderIndex, 4, 2, 2, &frontWall) ||
+        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) ||
+        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            &render, 0, 1, &hostDraw) || !hostDraw.valid ||
+        !hostDraw.drawMirrorBackingAsset || hostDraw.candidatePanelOwnsCell) {
+        return 0;
+    }
+    backing = M11_AssetLoader_Load(&state->assetLoader,
+                                   (unsigned int)hostDraw.backingGraphicIndex);
+    if (!backing || !backing->loaded || !backing->pixels ||
+        hostDraw.backingSourceX < 0 || hostDraw.backingSourceY < 0 ||
+        hostDraw.backingWidth <= 0 || hostDraw.backingHeight <= 0 ||
+        hostDraw.backingSourceX >= (int)backing->width ||
+        hostDraw.backingSourceY >= (int)backing->height) {
+        return 0;
+    }
+    for (y = 0; y < hostDraw.backingHeight; ++y) {
+        int x;
+        for (x = 0; x < hostDraw.backingWidth; ++x) {
+            int dstX = hostDraw.backingDstX + x;
+            int dstY = hostDraw.backingDstY + y;
+            int sourceWidth = (int)backing->width - hostDraw.backingSourceX;
+            int sourceHeight = (int)backing->height - hostDraw.backingSourceY;
+            int sourceX = hostDraw.backingSourceX +
+                ((hostDraw.backingFlipHorizontal ? hostDraw.backingWidth - 1 - x : x) *
+                 sourceWidth) / hostDraw.backingWidth;
+            int sourceY = hostDraw.backingSourceY +
+                (y * sourceHeight) / hostDraw.backingHeight;
+            unsigned char expected = backing->pixels[
+                sourceY * (int)backing->width + sourceX];
+            int framebufferX = dstX;
+            int framebufferY = 33 + dstY; /* COORD.C G2067/G2068: (0,33). */
+
+            if (expected == (unsigned char)hostDraw.backingTransparentColor ||
+                (dstX >= hostDraw.portraitDstX &&
+                 dstX < hostDraw.portraitDstX + hostDraw.portraitWidth &&
+                 dstY >= hostDraw.portraitDstY &&
+                 dstY < hostDraw.portraitDstY + hostDraw.portraitHeight)) {
+                continue;
+            }
+            if (hostDraw.backingPaletteMapValid) {
+                expected = hostDraw.backingPaletteMap[expected & 0x0f];
+            }
+            if (framebufferX < 0 || framebufferX >= kFramebufferWidth ||
+                framebufferY < 0 || framebufferY >= kFramebufferHeight) {
+                return 0;
+            }
+            if (framebuffer[framebufferY * kFramebufferWidth + framebufferX] != expected) {
+                return 0;
+            }
+            return 1;
         }
     }
     return 0;
@@ -79,6 +156,7 @@ int main(void)
     DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     const M11_AssetSlot *slot;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
+    int mirrorRenderIndex = -1;
     int mapWallSet;
     const int visible[3] = {1, 1, 1};
     static const struct { int graphic, width, height; } kPanels[] = {
@@ -140,8 +218,9 @@ int main(void)
     if (!slot || !slot->loaded || !slot->pixels ||
         !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
             (int)slot->width, (int)slot->height) ||
-        !find_front_mirror(&state, framebuffer)) goto fail;
-    printf("ok: real PC34 HoC F0096 wall receipts and C127/C026 route are exact\n");
+        !find_front_mirror(&state, framebuffer, &mirrorRenderIndex) ||
+        !verify_front_mirror_backing_pixel(&state, framebuffer, mirrorRenderIndex)) goto fail;
+    printf("ok: real PC34 HoC F0096 wall receipts and exact C346/C026 host route\n");
     M11_GameView_Shutdown(&state);
     return 0;
 fail:
