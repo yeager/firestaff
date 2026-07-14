@@ -1199,6 +1199,8 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     size_t receipt_cap) {
 
     Theron_V1StartupRuntimeLevelLoadContext level_load_context;
+    Theron_StartupFlow candidate_flow;
+    Theron_V1_World candidate_world;
     Theron_StartupResult result;
     int verified_track02_request = 0;
     Theron_StartupMediaStateReceipt media_receipt;
@@ -1224,17 +1226,17 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         &media_receipt);
 
     /* The Soul Room forcefield is the public handoff into the original-media
-     * route. A known Track 02 profile must prove its complete startup atlas
-     * and the stage-two $4090 -> $3800 loader chain before it can mutate the
-     * selected party, startup flow, or world. See
+     * route. The selected Track 02 profile must prove its complete startup
+     * atlas and the stage-two $4090 -> $3800 loader chain before a candidate
+     * world may mutate the selected party, startup flow, or world. See
      * theron-us-stage2-huc6280.asm:163-181. */
-    if (verified_track02_request &&
-        (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-             &media_receipt) ||
-         !theron_v1_startup_runtime_stage3_loader_ready(
-             request->hucard_rom,
-             request->hucard_rom_size,
-             request->md5_hex))) {
+    if (!verified_track02_request ||
+        !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &media_receipt) ||
+        !theron_v1_startup_runtime_stage3_loader_ready(
+            request->hucard_rom,
+            request->hucard_rom_size,
+            request->md5_hex)) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
@@ -1249,16 +1251,18 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         return 0;
     }
 
+    candidate_flow = *flow;
+    candidate_world = *world;
     result = theron_v1_startup_enter_forcefield_with_roster(
-        flow,
-        &world->party,
+        &candidate_flow,
+        &candidate_world.party,
         request->roster_names,
         request->roster_name_count);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
-                     "startup-flow forcefield failed: %s",
+                     "startup-flow forcefield preflight failed: %s",
                      theron_v1_startup_result_name(result));
         }
         if (out_result) {
@@ -1271,8 +1275,8 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
     result = theron_v1_startup_enter_runtime_from_forcefield(
-        flow,
-        world,
+        &candidate_flow,
+        &candidate_world,
         theron_v1_startup_runtime_level_load_callback,
         &level_load_context,
         receipt,
@@ -1293,6 +1297,9 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                                                               out_result);
         return 0;
     }
+
+    *flow = candidate_flow;
+    *world = candidate_world;
 
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
