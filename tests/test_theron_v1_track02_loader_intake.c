@@ -5,6 +5,17 @@
 
 static int failures;
 
+static uint32_t fnv1a32(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 #define CHECK(condition) do { \
     if (!(condition)) { \
         fprintf(stderr, "failed: %s (%s:%d)\n", #condition, __FILE__, __LINE__); \
@@ -26,6 +37,14 @@ static Theron_V1Track02LoaderReadFacts valid_facts(void) {
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1Track02LoaderIntakeReceipt receipt;
+    Theron_V1Track02LoaderPayloadReceipt payload_receipt;
+    uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
+    size_t i;
+
+    for (i = 0u; i < sizeof(payload); ++i) {
+        payload[i] = (uint8_t)(i * 37u + 11u);
+    }
+    facts.complete_payload_checksum = fnv1a32(payload, sizeof(payload));
 
     CHECK(theron_v1_track02_loader_intake_observe(&facts, &receipt));
     CHECK(receipt.observed);
@@ -38,6 +57,24 @@ int main(void) {
     CHECK(receipt.observed_payload_checksum == facts.complete_payload_checksum);
     CHECK(strcmp(receipt.status,
                  "initial_envelope_loader_read_observed_media_bound_payload_blocked") == 0);
+    CHECK(theron_v1_track02_loader_intake_handoff_complete_payload(
+        &receipt, payload, sizeof(payload), &payload_receipt));
+    CHECK(payload_receipt.handed_off && payload_receipt.no_fallback);
+    CHECK(payload_receipt.record == receipt.record);
+    CHECK(payload_receipt.destination == receipt.observed_destination);
+    CHECK(payload_receipt.payload_bytes == sizeof(payload));
+    CHECK(payload_receipt.payload_checksum == facts.complete_payload_checksum);
+    CHECK(memcmp(payload_receipt.payload, payload, sizeof(payload)) == 0);
+    CHECK(strcmp(payload_receipt.status,
+                 "initial_envelope_payload_handoff_no_semantics") == 0);
+    ++payload[0];
+    CHECK(!theron_v1_track02_loader_intake_handoff_complete_payload(
+        &receipt, payload, sizeof(payload), &payload_receipt));
+    CHECK(!payload_receipt.handed_off && payload_receipt.status == NULL);
+    --payload[0];
+    CHECK(!theron_v1_track02_loader_intake_handoff_complete_payload(
+        &receipt, payload, sizeof(payload) - 1u, &payload_receipt));
+    CHECK(!payload_receipt.handed_off && payload_receipt.status == NULL);
 
     facts.authenticated_original_trace = 0;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
@@ -65,7 +102,7 @@ int main(void) {
     facts.complete_payload_witness_verified = 1;
     facts.complete_payload_checksum = 0u;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
-    facts.complete_payload_checksum = 0x6e6d4d21u;
+    facts.complete_payload_checksum = fnv1a32(payload, sizeof(payload));
     facts.byte_count = 0u;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));
 

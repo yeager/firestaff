@@ -997,6 +997,20 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_intake.observed_payload_checksum;
     hash *= 16777619u;
+    hash ^= receipt->loader_payload.handed_off ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.no_fallback ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.record;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.record_user_data_offset;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.destination;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.payload_bytes;
+    hash *= 16777619u;
+    hash ^= receipt->loader_payload.payload_checksum;
+    hash *= 16777619u;
     return hash;
 }
 
@@ -1021,6 +1035,16 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES &&
            receipt->loader_intake.observed_payload_checksum ==
                receipt->complete_payload_checksum &&
+           receipt->loader_payload.handed_off &&
+           receipt->loader_payload.no_fallback &&
+           receipt->loader_payload.record == receipt->loader_intake.record &&
+           receipt->loader_payload.record_user_data_offset ==
+               receipt->loader_intake.record_user_data_offset &&
+           receipt->loader_payload.destination ==
+               receipt->loader_intake.observed_destination &&
+           receipt->loader_payload.payload_bytes == receipt->complete_payload_bytes &&
+           receipt->loader_payload.payload_checksum ==
+               receipt->complete_payload_checksum &&
            receipt->receipt_hash != 0u &&
            receipt->receipt_hash == tqr_trace_initial_level_handoff_hash(receipt);
 }
@@ -1036,6 +1060,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     Theron_Track02InitialLevelLoaderRoute route;
     Theron_V1Track02LoaderReadFacts loader_facts;
     Theron_V1Track02LoaderIntakeReceipt loader_intake;
+    Theron_V1Track02LoaderPayloadReceipt loader_payload;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
@@ -1082,6 +1107,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
 
     memset(&loader_facts, 0, sizeof(loader_facts));
     memset(&loader_intake, 0, sizeof(loader_intake));
+    memset(&loader_payload, 0, sizeof(loader_payload));
     loader_facts.authenticated_original_trace = 1;
     loader_facts.later_than_stage2_transfer = 1;
     loader_facts.track02_record = coalesced_receipt->later_track02_record;
@@ -1133,6 +1159,15 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             coalesced_receipt->later_destination_payload_checksum) {
         return 0;
     }
+    if (!theron_v1_track02_loader_intake_handoff_complete_payload(
+            &loader_intake,
+            track02_data + (size_t)coalesced_receipt->later_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET,
+            coalesced_receipt->later_destination_payload_bytes,
+            &loader_payload)) {
+        return 0;
+    }
 
     out->valid = 1;
     out->variant = coalesced_receipt->variant;
@@ -1150,6 +1185,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         coalesced_receipt->later_destination_payload_checksum;
     out->complete_payload_witness_proven = 1;
     out->loader_intake = loader_intake;
+    out->loader_payload = loader_payload;
     out->initial_level_boundary = boundary;
     out->initial_level_route = route;
     out->object_tail_semantics_proven = 0;

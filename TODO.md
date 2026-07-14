@@ -5224,6 +5224,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
+- 🔧 2026-07-14 Track 02 initial-level payload handoff: the one complete,
+  trace-witnessed 2048-byte `$e009` payload is now copied atomically from the
+  rehashed original MODE1 user-data sector into the runtime boot receipt.
+  Record `0x0b52`, source coordinate `0x114`, destination `$3800`, byte
+  count, and FNV-1a checksum must all agree; any change rejects the Soul Room
+  route and cannot select a generated fallback. The payload remains opaque:
+  its dungeon/object/tile/bitmap/palette grammar and a positive level
+  transition still need original execution evidence.
+
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
   MODE1/2352 declaration canonically resolves to the independently
