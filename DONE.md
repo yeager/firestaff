@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `DUNVIEW.C F0111`: source-owned closed-door
+  ornament eligibility and temporary panel replay are now explicit renderer
+  dispatch receipts, with bounded invalid-route rejection. Verification:
+  focused CTest. Host pixel composition remains owned by the renderer.
+
 - 2026-07-14 CSB native runtime save v11: source-owned creature-attack timing
   is preserved through save/load while transient pending/played audio is reset;
   v10 images remain readable. Verification: focused audio CTest.

@@ -187,7 +187,7 @@
   or identifier match alone cannot close this gap.
 
 - REDMCSB-SYMBOL-GAP-005 — **C/G semantic ownership is not verified.**
-  `docs/reference/audits/REDMCSB_CONSTANT_GLOBAL_AUDIT.tsv` covers all 866
+  `docs/reference/audits/REDMCSB_CONSTANT_GLOBAL_FULL_AUDIT.tsv` covers all 866
   `Cxxx` constants and 2,074 named `Gxxxx` globals. Of those, 1,830 have only
   a semantic Firestaff candidate, 587 have no direct counterpart, and 523 are
   platform/toolchain-specific. Required work: prioritize the DM1/CSB runtime
@@ -195,7 +195,7 @@
   then give each an owner, width/lifetime contract, and focused evidence.
 
 - REDMCSB-SYMBOL-GAP-006 — **Runtime parameter ABI surfaces need contract
-  review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_AUDIT.tsv` covers
+  review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_FULL_AUDIT.tsv` covers
   all 8,013 `A/L/M/P` symbols: 5,017 are local/module/auxiliary labels with no
   standalone port target, while 2,996 `Pxxx` entries remain runtime ABI
   surfaces. Required work: audit parameters by their enclosing high-impact
