@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0670/F0671 text helpers: added the PC first-match
+  replacement and signed decimal long formatting used by save-path and
+  out-of-memory UI routes. Buffers remain caller-owned and no localization,
+  allocation, dialog, or menu fallback was introduced. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0666 PC endgame handoff: added the source pointer
   hide loop, double graphics-close, CPSX restore, and caller-owned nonlocal
   transfer ordering. It does not synthesize credits, graphics, media, or a

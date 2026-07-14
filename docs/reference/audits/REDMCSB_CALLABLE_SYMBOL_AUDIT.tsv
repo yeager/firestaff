@@ -865,8 +865,8 @@ F	0663	F0663_CopyBitmapWithPaletteChanges	FMTOWNS.H;DUNVIEW.C;IO.C;BASE.C;DEFS.H
 F	0664	F0664_COMMAND_ProcessType80_ClickInDungeonView_KnockOnFrontWall	CLIKVIEW.C	implemented-narrow	implemented_narrow	CLIKVIEW.C F0664 PC34 wall-click press/sound transaction over caller-owned input/audio state
 F	0665	F0665_F0362_sub	CLIKMENU.C	implemented-narrow	implemented_narrow	CLIKMENU.C PC F0362/F0638 zone gate plus F0665 highlight update/invert/vblank route over caller-owned layout/video
 F	0666	F0666_endgame	LOADSAVE.C;COMMAND.C;BASE.C;DEFS.H;TIMELINE.C;STARTUP2.C;ENDGAME.C	implemented-narrow	implemented_narrow	ENDGAME.C F0666 PC pointer-hide/double-close/CPSX/nonlocal-transfer handoff over caller-owned state
-F	0670	F0670_ReplaceCharacterByString	SAVEPATH.C;STRING.C;DEFS.H;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0671	F0671_ConvertLongToString	STRING.C;DEFS.H;STARTUP2.C;TEXT.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0670	F0670_ReplaceCharacterByString	SAVEPATH.C;STRING.C;DEFS.H;STARTUP2.C	implemented-narrow	implemented_narrow	STRING.C F0670 PC first-character replacement over caller-owned source/replacement/destination strings
+F	0671	F0671_ConvertLongToString	STRING.C;DEFS.H;STARTUP2.C;TEXT.C	implemented-narrow	implemented_narrow	STRING.C F0671 PC signed decimal formatting over caller-owned destination string
 F	0672	F0672_InitializeAllMouseInput	COMMAND.C;DEFS.H;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0673	F0673_SetMouseInputBoxFromZone	COMMAND.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0674	F0674_F0128_sub	DUNVIEW.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
