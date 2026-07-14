@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1063: available checksum is Amiga copy-
+  protection code with no PC 3.4 route. The focused boundary avoids
+  synthesizing protection behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1059/F1061: available post-save and pre-read
   hooks select Amiga fake-code only. Focused PC 3.4 boundaries are source-
   faithful no-ops.
