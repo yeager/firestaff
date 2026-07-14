@@ -1948,9 +1948,9 @@ F8124_IsSoundPlayComplete	F	IsSoundPlayComplete	IBMIO.C:2085	include/redmcsb_f81
 F8128_WaitSoundPlayComplete	F	WaitSoundPlayComplete	IBMIO.C:2146	-	SOURCE_NONAPPLICABLE	PC 3.4 body performs unbounded polling of ISR-owned V8117008 or Tandy timer state; no portable host wait can preserve that hardware progress contract.
 F8129_GetConvertedDeviceType	F	GetConvertedDeviceType	IBMIO.C:2177	include/redmcsb_f8129_disk_probe_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 eight-entry device-type mapping is source-locked behind a host IOCTL result; unsupported source-out-of-bounds types are unavailable; focused strict C11 test.
 F8130_GetReadFirstSectorResult	F	GetReadFirstSectorResult	IBMIO.C:2209	include/redmcsb_f8129_disk_probe_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 converts drive ordinal to BIOS drive, reads sector 0/head 0/sector 1 up to three times, and resets after each failure; focused strict C11 test.
-F8131_GetVolumeName	F	GetVolumeName	IBMIO.C:2259	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8132_GetRandomSeed	F	GetRandomSeed	IBMIO.C:2303	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8133_ReadFloppySector	F	ReadFloppySector	IBMIO.C:2313	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8131_GetVolumeName	F	GetVolumeName	IBMIO.C:2259	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 filters a host-supplied 11-byte FAT volume label by omitting spaces and periods; focused strict C11 test.
+F8132_GetRandomSeed	F	GetRandomSeed	IBMIO.C:2303	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 returns DOS time DX exactly as seconds in high byte and hundredths in low byte; focused strict C11 test.
+F8133_ReadFloppySector	F	ReadFloppySector	IBMIO.C:2313	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 body is an explicit no-op; focused strict C11 test.
 F8134_ExecuteProgramWithParameters	F	ExecuteProgramWithParameters	IBMIO.C:2318	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8137_SetMultiplePixels	F	SetMultiplePixels	NEC816.C:1804	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8139_Unreferenced	F	Unreferenced	VIDEODRV.C:1224	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

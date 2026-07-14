@@ -666,6 +666,9 @@ ReDMCSB WIP 2021-02-06 source tree.
     and three-attempt first-sector probe through host I/O callbacks. The DOS
     IOCTL/BIOS transports and source-undefined device types outside 0–7 remain
     external evidence boundaries.
+  - 2026-07-14 IBMIO.C F8131/F8132/F8133 now preserve FAT-label filtering,
+    DOS-time `DX` seed packing and the empty floppy route. DOS FCB/DTA lookup
+    and clock provenance remain host callback boundaries requiring PC34 proof.
 
 - REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
   mouse interrupt path.** The source records a platform/version race fix for

@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F8131/F8132/F8133: source-locked IBMIO.C FAT
+  volume-label filter, DOS-time `DX` seed and explicit empty floppy route.
+  The focused strict-C11 test keeps FCB/DTA lookup and clock provenance as
+  caller-owned boundaries without inventing DOS services.
+
 - 2026-07-14 Nexus Structure3 trace-order attestation: the strict capture
   manifest now records six explicit opaque observation ordinals. The reader
   rejects missing, duplicate, out-of-window, or externally mismatched order
