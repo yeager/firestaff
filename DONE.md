@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1041: source review identified an X68000/Amiga
+  pointer resolver with no PC 3.4 route. A focused compatibility resolver
+  preserves source semantics without claiming platform parity.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0918: source-locked PC release callback and
   null gate with a focused strict-C11 test. F1038 is source-nonapplicable:
   available mouse-pointer update paths are X68000/Amiga-only.
