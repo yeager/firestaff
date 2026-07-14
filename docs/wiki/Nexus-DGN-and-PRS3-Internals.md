@@ -42,6 +42,11 @@ four-distinct-index form and checks that the accounting covers every valid
 face row. This is source-format provenance, not a winding, normal-plane,
 transform, material, palette, or draw claim.
 
+The same no-draw receipt also counts connected vertex-index components within
+each Structure3 entry. A component joins only distinct indexes that co-occur
+in a bounded face row; it is not an edge direction, winding, surface,
+normal-plane, transform, material, palette, or drawing claim.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,

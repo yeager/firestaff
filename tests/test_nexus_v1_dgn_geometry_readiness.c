@@ -645,6 +645,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_faces.distinct_face_vertex_count +
                       handoff.structure3_faces.repeated_face_vertex_reference_count ==
                   handoff.structure3_faces.face_vertex_reference_count &&
+              handoff.structure3_faces.face_vertex_component_accounting_valid &&
+              handoff.structure3_faces.face_vertex_component_count >= 0 &&
+              handoff.structure3_faces.face_vertex_component_count <=
+                  handoff.structure3_faces.referenced_vertex_count &&
               handoff.structure3_faces.normal_count_matches_face_count &&
               handoff.structure3_faces.unclassified_fill_count == 0 &&
               !handoff.structure3_faces.draw_semantics_proven &&
@@ -1782,38 +1786,50 @@ static void test_structure3_entry_header_boundaries(void) {
     wb16(dgn + 0x1e, 4U);
     wb32(payload, 2U);
     wb32(payload + 4, 16U);
-    wb32(payload + 8, 104U);
+    wb32(payload + 8, 152U);
     wb32(payload + 16, 0x100U);
-    wb16(payload + 20, 2U);
-    wb16(payload + 22, 1U);
+    wb16(payload + 20, 4U);
+    wb16(payload + 22, 2U);
     wb32(payload + 24, 56U);
-    wb32(payload + 32, 80U);
-    wb32(payload + 36, 92U);
-    wb16(payload + 108, 1U);
-    wb16(payload + 110, 2U);
-    wb32(payload + 112, 144U);
-    wb32(payload + 120, 156U);
-    wb32(payload + 124, 180U);
+    wb32(payload + 32, 104U);
+    wb32(payload + 36, 128U);
+    wb16(payload + 156, 1U);
+    wb16(payload + 158, 2U);
+    wb32(payload + 160, 192U);
+    wb32(payload + 168, 204U);
+    wb32(payload + 172, 228U);
 
     /* Structure3a/3c signed 16.16 X/Y/Z rows. */
     wb32(payload + 56, 65536U);
     wb32(payload + 68, 65536U);
-    wb32(payload + 144, 65536U);
+    wb32(payload + 80, 65536U);
     wb32(payload + 92, 65536U);
-    wb32(payload + 180, 65536U);
     wb32(payload + 192, 65536U);
+    wb32(payload + 128, 65536U);
+    wb32(payload + 140, 65536U);
+    wb32(payload + 228, 65536U);
+    wb32(payload + 240, 65536U);
 
-    /* Structure3b face rows: all three rows are triangles; entry 1 carries
-     * one textured triangle. All indexes stay inside their own vertex table. */
-    wb16(payload + 80, 0U);
-    wb16(payload + 82, 1U);
-    wb16(payload + 84, 0U);
-    wb16(payload + 86, 0U);
-    wb16(payload + 156, 0U);
-    wb16(payload + 158, 0U);
-    wb16(payload + 160, 0U);
-    wb16(payload + 162, 0U);
-    payload[164] = 0x40U;
+    /* Structure3b face rows: all four rows are triangles. Entry 0 holds two
+     * disconnected two-index components; entry 1 carries one textured
+     * one-index component. All indexes stay inside their own vertex table. */
+    wb16(payload + 104, 0U);
+    wb16(payload + 106, 1U);
+    wb16(payload + 108, 0U);
+    wb16(payload + 110, 0U);
+    wb16(payload + 116, 2U);
+    wb16(payload + 118, 3U);
+    wb16(payload + 120, 2U);
+    wb16(payload + 122, 2U);
+    wb16(payload + 204, 0U);
+    wb16(payload + 206, 0U);
+    wb16(payload + 208, 0U);
+    wb16(payload + 210, 0U);
+    wb16(payload + 216, 0U);
+    wb16(payload + 218, 0U);
+    wb16(payload + 220, 0U);
+    wb16(payload + 222, 0U);
+    payload[212] = 0x40U;
 
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
@@ -1821,9 +1837,9 @@ static void test_structure3_entry_header_boundaries(void) {
           headers.entry_count == 2 && headers.bounded_entry_count == 2 &&
           headers.fixed_header_byte_count ==
               NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES &&
-          headers.first_region_element_count == 3 &&
-          headers.second_region_element_count == 3 &&
-          headers.third_region_element_count == 3 &&
+          headers.first_region_element_count == 5 &&
+          headers.second_region_element_count == 4 &&
+          headers.third_region_element_count == 4 &&
           headers.complete_third_region_entry_count == 2 &&
           headers.zero_tag_entry_count == 1 && headers.tag_0x100_entry_count == 1 &&
           headers.other_tag_entry_count == 0 && headers.boundaries_valid &&
@@ -1831,23 +1847,25 @@ static void test_structure3_entry_header_boundaries(void) {
           !headers.semantics_proven,
           "Structure3 entry framing bounds the paired third 12-byte region");
     CHECK(nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
-          faces.entry_headers_valid && faces.valid && faces.vertex_count == 3 &&
-          faces.face_count == 3 && faces.normal_count == 3 &&
-          faces.triangle_count == 3 && faces.quad_count == 0 &&
-          faces.face_vertex_reference_count == 9 &&
-          faces.distinct_face_vertex_count == 4 &&
-          faces.repeated_face_vertex_reference_count == 5 &&
+          faces.entry_headers_valid && faces.valid && faces.vertex_count == 5 &&
+          faces.face_count == 4 && faces.normal_count == 4 &&
+          faces.triangle_count == 4 && faces.quad_count == 0 &&
+          faces.face_vertex_reference_count == 12 &&
+          faces.distinct_face_vertex_count == 6 &&
+          faces.repeated_face_vertex_reference_count == 6 &&
           faces.one_distinct_vertex_face_count == 2 &&
-          faces.two_distinct_vertex_face_count == 1 &&
+          faces.two_distinct_vertex_face_count == 2 &&
           faces.three_distinct_vertex_face_count == 0 &&
           faces.four_distinct_vertex_face_count == 0 &&
-          faces.linked_face_vertex_reference_count == 9 &&
-          faces.referenced_vertex_count == 3 &&
+          faces.linked_face_vertex_reference_count == 12 &&
+          faces.referenced_vertex_count == 5 &&
           faces.unreferenced_vertex_count == 0 &&
+          faces.face_vertex_component_count == 3 &&
           faces.maximum_vertex_reference_count == 6 &&
-          faces.textured_face_count == 1 && faces.static_texture_fill_count == 3 &&
+          faces.textured_face_count == 1 && faces.static_texture_fill_count == 4 &&
           faces.face_vertex_indexes_valid && faces.face_vertex_linkage_valid &&
           faces.face_topology_accounting_valid &&
+          faces.face_vertex_component_accounting_valid &&
           faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
           "Structure3 face rows retain raw distinct-index topology without authorizing a draw");
@@ -1861,9 +1879,9 @@ static void test_structure3_entry_header_boundaries(void) {
           "an unbound Structure3 texture selector stays blocked without a draw claim");
     CHECK(nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
           vectors.face_receipt_valid && vectors.valid &&
-          vectors.vertex_count == 3 && vectors.normal_count == 3 &&
-          vectors.vertex_vector_count == 3 && vectors.nonzero_vertex_vector_count == 3 &&
-          vectors.normal_vector_count == 3 && vectors.normal_unit_length_count == 3 &&
+          vectors.vertex_count == 5 && vectors.normal_count == 4 &&
+          vectors.vertex_vector_count == 5 && vectors.nonzero_vertex_vector_count == 5 &&
+          vectors.normal_vector_count == 4 && vectors.normal_unit_length_count == 4 &&
           vectors.normal_non_unit_length_count == 0 &&
           vectors.maximum_normal_length_error == 0 &&
           !vectors.transform_or_draw_semantics_proven,
@@ -1874,35 +1892,36 @@ static void test_structure3_entry_header_boundaries(void) {
           !handoff.fallback_visuals_permitted,
           "Structure3 entry-header receipt cannot authorize a draw route");
 
-    wb32(payload + 92, 0U);
+    wb32(payload + 128, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
           !vectors.valid && vectors.normal_non_unit_length_count == 1 &&
           !vectors.transform_or_draw_semantics_proven,
           "a non-unit Structure3 normal remains fail-closed without a draw claim");
-    wb32(payload + 92, 65536U);
+    wb32(payload + 128, 65536U);
 
-    wb32(payload + 36, 88U);
+    wb32(payload + 36, 124U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
           !headers.valid && !headers.boundaries_valid &&
           !headers.semantics_proven,
           "invalid Structure3 entry boundaries remain fail-closed");
 
-    wb32(payload + 36, 92U);
-    wb32(payload + 124, 8184U);
+    wb32(payload + 36, 128U);
+    wb32(payload + 172, 8184U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
           !headers.valid && !headers.third_region_boundaries_valid &&
           !headers.semantics_proven,
           "truncated third Structure3 region remains fail-closed");
 
-    wb32(payload + 124, 180U);
-    wb16(payload + 80, 2U);
+    wb32(payload + 172, 228U);
+    wb16(payload + 104, 4U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
           !faces.valid && !faces.face_vertex_indexes_valid &&
           !faces.face_vertex_linkage_valid &&
+          !faces.face_vertex_component_accounting_valid &&
           !faces.draw_semantics_proven,
           "out-of-range Structure3 face indexes remain fail-closed");
 }

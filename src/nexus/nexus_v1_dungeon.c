@@ -344,6 +344,7 @@ static int nexus_v1_level_copy_structure3_payload(
     if (entry_headers.valid) {
         int entry;
         int face_vertex_linkage_measurement_complete = 1;
+        int face_vertex_component_measurement_complete = 1;
 
         faces.entry_count = entry_headers.entry_count;
         faces.face_vertex_indexes_valid = 1;
@@ -358,6 +359,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint32_t normal_offset = rb32(header + 20);
             int face_index;
             int *vertex_reference_counts = NULL;
+            int *vertex_component_parents = NULL;
 
             faces.vertex_count += vertex_count;
             faces.face_count += face_count;
@@ -372,6 +374,16 @@ static int nexus_v1_level_copy_structure3_payload(
                     (size_t)vertex_count, sizeof(*vertex_reference_counts));
                 if (!vertex_reference_counts) {
                     face_vertex_linkage_measurement_complete = 0;
+                }
+                vertex_component_parents = (int *)malloc(
+                    (size_t)vertex_count * sizeof(*vertex_component_parents));
+                if (!vertex_component_parents) {
+                    face_vertex_component_measurement_complete = 0;
+                } else {
+                    int vertex;
+                    for (vertex = 0; vertex < (int)vertex_count; ++vertex) {
+                        vertex_component_parents[vertex] = vertex;
+                    }
                 }
             }
             for (face_index = 0; face_index < (int)face_count; ++face_index) {
@@ -409,6 +421,25 @@ static int nexus_v1_level_copy_structure3_payload(
                     else if (distinct_count == 2) ++faces.two_distinct_vertex_face_count;
                     else if (distinct_count == 3) ++faces.three_distinct_vertex_face_count;
                     else if (distinct_count == 4) ++faces.four_distinct_vertex_face_count;
+                    if (vertex_component_parents) {
+                        int root = indexes[0];
+
+                        while (vertex_component_parents[root] != root) {
+                            root = vertex_component_parents[root];
+                        }
+                        for (slot = 1; slot < slot_count; ++slot) {
+                            int other = indexes[slot];
+                            int other_root;
+
+                            while (vertex_component_parents[other] != other) {
+                                other = vertex_component_parents[other];
+                            }
+                            other_root = other;
+                            if (other_root != root) {
+                                vertex_component_parents[other_root] = root;
+                            }
+                        }
+                    }
                 }
                 if (vertex_reference_counts) {
                     if (indexes[0] < vertex_count)
@@ -444,7 +475,22 @@ static int nexus_v1_level_copy_structure3_payload(
                     faces.maximum_vertex_reference_count = references;
                 }
             }
+            if (vertex_component_parents && vertex_reference_counts) {
+                int vertex;
+                int component_count = 0;
+
+                for (vertex = 0; vertex < (int)vertex_count; ++vertex) {
+                    int root = vertex;
+                    if (vertex_reference_counts[vertex] == 0) continue;
+                    while (vertex_component_parents[root] != root) {
+                        root = vertex_component_parents[root];
+                    }
+                    if (root == vertex) ++component_count;
+                }
+                faces.face_vertex_component_count += component_count;
+            }
             free(vertex_reference_counts);
+            free(vertex_component_parents);
         }
         faces.face_vertex_linkage_valid =
             face_vertex_linkage_measurement_complete &&
@@ -461,9 +507,16 @@ static int nexus_v1_level_copy_structure3_payload(
             faces.distinct_face_vertex_count +
                     faces.repeated_face_vertex_reference_count ==
                 faces.face_vertex_reference_count;
+        faces.face_vertex_component_accounting_valid =
+            face_vertex_component_measurement_complete &&
+            face_vertex_linkage_measurement_complete &&
+            faces.face_vertex_indexes_valid &&
+            faces.face_vertex_component_count >= 0 &&
+            faces.face_vertex_component_count <= faces.referenced_vertex_count;
         faces.valid = faces.face_vertex_indexes_valid &&
             faces.face_vertex_linkage_valid &&
             faces.face_topology_accounting_valid &&
+            faces.face_vertex_component_accounting_valid &&
             faces.normal_count_matches_face_count &&
             faces.unclassified_fill_count == 0 &&
             faces.face_vertex_reference_count ==
