@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 F0099 D3R2 in-place flip: the row-local mirror now handles
+  aliased source/destination buffers without overwriting later source pixels,
+  matching the F0099 scratch-buffer route. The public header is in `include/`
+  and the focused D3L2/D3R2 F0108 CTest is registered and passing.
+
 - 2026-07-14 DM2 source-backed GRAPHICSSET admission: dungeon scene material
   is admitted once the selected set supplies SKProject's `SCENE_COLORKEY` and
   `SCENE_FLAGS`; light and weather fields remain separately recorded instead

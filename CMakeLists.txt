@@ -69,6 +69,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_receipt_coheren
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat.c")
+    add_executable(test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat
+        tests/test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat
+        COMMAND test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat
+    )
+endif()
+
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
