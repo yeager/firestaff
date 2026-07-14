@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `SOUND.C F0060`: packed Atari ST sound streams now
+  decode high-nibble-first commands and repeat runs while retaining the prior
+  PSG amplitude. The focused CTest validates normal, leading-repeat, and
+  malformed-stream paths.
+
 - 2026-07-14 DM2 GDAT hand actions: the hand-action resolver follows
   SKProject's `INTERFACE_GENERAL/4` image route and fails closed when source
   images are unavailable. Verification: strict probe against original DM2
