@@ -13853,3 +13853,14 @@ selection. This restores the real JP/US Hall of Records level-0 loader route
 as a green target while retaining the Stage 3 `$4090 -> $4093` CD_READ receipt
 as transport-only: it does not claim a later level, object layout, visual
 decode, or transition.
+# Nexus Structure3 Selector Reuse Receipt (2026-07-14)
+
+`nexus_v1_level_structure3_face_material_receipt()` now retains per-level
+unique and reused bounded face-selector occurrences for both documented
+Structure2 (`00xx`) and Structure1G (`08xx`) joins. The focused retail
+LEV00.DGN through LEV15.DGN corpus test requires complete reuse accounting.
+The aggregate corpus retains 1,291 unique and 16,110 reused Structure2
+selector occurrences plus 44 unique and 376 reused Structure1G occurrences.
+This is identifier provenance only: payload decoding, dimensions, UVs,
+palettes, animation, transforms, and VDP1 drawing remain blocked pending
+original Saturn evidence.

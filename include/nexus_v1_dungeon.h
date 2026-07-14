@@ -792,11 +792,19 @@ typedef struct {
     int static_texture_selector_count;
     int static_texture_bound_count;
     int static_texture_unbound_count;
+    /* Per-level selector reuse is retained from bounded face rows. These are
+     * identifier occurrences only: they do not establish texture contents,
+     * dimensions, UVs, palette use, animation timing, or draw behaviour. */
+    int static_texture_unique_selector_count;
+    int static_texture_reused_selector_count;
     int animated_texture_selector_count;
     int animated_texture_bound_count;
     int animated_texture_unbound_count;
+    int animated_texture_unique_selector_count;
+    int animated_texture_reused_selector_count;
     int unsupported_textured_fill_count;
     int selector_bindings_complete;
+    int selector_reuse_accounting_valid;
     int valid;
     int material_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;

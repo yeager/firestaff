@@ -624,6 +624,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     This remains no-draw provenance: original Saturn capture/executable
     evidence must still establish payload/palette decode, transforms, and
     VDP1 ordering before any mesh command can render.
+  - 2026-07-14 update: those bounded face selectors now retain per-level
+    unique/reused occurrence accounting for both Structure2 and Structure1G
+    joins. This records raw source selector reuse only; it does not assign
+    payload contents, texture dimensions, UVs, palette semantics, animation,
+    transforms, or a draw route.
 
 ## M12 Localization Completion (2026-07-12)
 
