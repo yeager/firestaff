@@ -997,6 +997,7 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)
 {
+    DM2_V1_SessionState candidate;
     DM2_GameStateBlock gs;
     size_t pos = 0u;
     int decoded;
@@ -1012,59 +1013,64 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
     if (decoded <= 0) return -1;
     pos += (size_t)decoded;
 
-    dm2_v1_apply_original_gamestate(session, &gs);
+    /* SKProject GAME_LOAD restores into a rebuilt game state only after its
+     * save sections have been accepted. Keep the Firestaff raw importer
+     * transactional too: a truncated later SUPPRESS section must not leave
+     * an existing live session partly overwritten. */
+    memset(&candidate, 0, sizeof(candidate));
+    dm2_v1_apply_original_gamestate(&candidate, &gs);
 
     decoded = dm2_suppress_decode_global_flags(buf + pos, buf_size - pos,
-                                               session->original_global_flags,
+                                               candidate.original_global_flags,
                                                0);
     if (decoded <= 0) return -1;
     pos += (size_t)decoded;
 
     decoded = dm2_suppress_decode_global_bytes(buf + pos, buf_size - pos,
-                                               session->original_global_bytes,
+                                               candidate.original_global_bytes,
                                                0);
     if (decoded <= 0) return -1;
     pos += (size_t)decoded;
 
     decoded = dm2_suppress_decode_global_words(buf + pos, buf_size - pos,
-                                               session->original_global_words,
+                                               candidate.original_global_words,
                                                0);
     if (decoded <= 0) return -1;
     pos += (size_t)decoded;
 
-    if (dm2_v1_decode_original_champions(session, buf, buf_size, &pos, 0,
+    if (dm2_v1_decode_original_champions(&candidate, buf, buf_size, &pos, 0,
                                          (int)gs.wChampionsCount) != 0) {
         return -1;
     }
 
     decoded = dm2_suppress_decode_spell_effects(buf + pos, buf_size - pos,
-                                                session->original_spell_effects,
+                                                candidate.original_spell_effects,
                                                 0);
     if (decoded <= 0) return -1;
     pos += (size_t)decoded;
 
-    session->original_timer_count = 0;
+    candidate.original_timer_count = 0;
     if (gs.wTimersCount > 0u) {
         int timer_count = (int)gs.wTimersCount;
         if (timer_count > DM2_MAX_TIMERS) timer_count = DM2_MAX_TIMERS;
         for (int i = 0; i < timer_count; i++) {
             decoded = dm2_suppress_decode_timer(buf + pos, buf_size - pos,
-                                                &session->original_timers[i],
+                                                &candidate.original_timers[i],
                                                 0);
             if (decoded <= 0) return -1;
             pos += (size_t)decoded;
-            session->original_timer_count++;
+            candidate.original_timer_count++;
         }
     }
 
-    if (session->champion_count > 0u) {
+    if (candidate.champion_count > 0u) {
         const size_t inv_bytes =
-            (size_t)session->champion_count *
+            (size_t)candidate.champion_count *
             (size_t)DM2_CHAMPION_INVENTORY_SLOTS * 4u;
         if (inv_bytes > buf_size - pos) return -1;
-        for (int c = 0; c < (int)session->champion_count; c++) {
+        for (int c = 0; c < (int)candidate.champion_count; c++) {
             DM2_ChampionRecord *champ =
-                (DM2_ChampionRecord *)session->champion_data[c];
+                (DM2_ChampionRecord *)candidate.champion_data[c];
             for (int slot = 0; slot < DM2_CHAMPION_INVENTORY_SLOTS;
                  slot++) {
                 champ->inventory[slot] =
@@ -1074,7 +1080,7 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
         }
     }
     if (buf_size - pos < 4u) return -1;
-    session->original_leader_hand_object = dm2_v1_read_u32_le_at(buf, pos);
+    candidate.original_leader_hand_object = dm2_v1_read_u32_le_at(buf, pos);
     pos += 4u;
     if (pos < buf_size) {
         const uint8_t count = buf[pos++];
@@ -1082,18 +1088,20 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
             (size_t)count * 8u > buf_size - pos) {
             return -1;
         }
-        memset(&session->original_minions, 0, sizeof(session->original_minions));
-        session->original_minions.count = count;
+        memset(&candidate.original_minions, 0,
+               sizeof(candidate.original_minions));
+        candidate.original_minions.count = count;
         for (int i = 0; i < (int)count; i++) {
-            session->original_minions.entries[i].object_id =
+            candidate.original_minions.entries[i].object_id =
                 dm2_v1_read_u32_le_at(buf, pos);
-            session->original_minions.entries[i].owner_champion =
+            candidate.original_minions.entries[i].owner_champion =
                 dm2_v1_read_u32_le_at(buf, pos + 4u);
             pos += 8u;
         }
     }
 
-    if (pos != buf_size || !dm2_v1_session_validate(session)) return -1;
+    if (pos != buf_size || !dm2_v1_session_validate(&candidate)) return -1;
+    *session = candidate;
     return 0;
 }
 

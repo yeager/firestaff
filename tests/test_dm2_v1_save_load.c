@@ -1398,6 +1398,57 @@ static int test_raw_sksave_resume_import(void)
     return 1;
 }
 
+static int test_raw_sksave_import_is_transactional(void)
+{
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SessionState session;
+    DM2_V1_SessionState before;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+
+    printf("  Raw SKSave malformed tail keeps prior session intact...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x12345678u;
+    gs->dwRandomSeed = 0x00002211u;
+    gs->wChampionsCount = 1u;
+    gs->wPlayerPosX = 3u;
+    gs->wPlayerPosY = 2u;
+    gs->wPlayerDir = 1u;
+    gs->wPlayerMap = 0u;
+    memcpy(champion.first_name, "ZED", 3u);
+    champion.cur_hp = 20;
+    champion.max_hp = 25;
+
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, NULL, 0,
+                                  inventory, 0u, payload, sizeof(payload),
+                                  &payload_size) || payload_size < 2u) {
+        printf("    FAIL: could not build raw SKSave fixture\n");
+        return 0;
+    }
+
+    memset(&session, 0xA5, sizeof(session));
+    before = session;
+    /* Keep the raw dungeon/GAMESTATE prefix valid and truncate only the
+     * terminal leader-hand field after the importer has decoded prior rows. */
+    if (dm2_v1_session_import_raw_sksave_payload(&session, payload,
+                                                 payload_size - 2u) == 0 ||
+        memcmp(&session, &before, sizeof(session)) != 0) {
+        printf("    FAIL: malformed raw SKSave partially changed session\n");
+        return 0;
+    }
+    printf("    PASS: malformed raw SKSave had no partial session publish\n");
+    return 1;
+}
+
 static int test_sksave_corpus_scan_receipt(void)
 {
     printf("  Real SKSave corpus scan receipt...\n");
@@ -2744,15 +2795,16 @@ int main(void)
     RUN(14, test_stale_fixture_metadata_guard);
     RUN(15, test_resume_smoke_gate_position_facing_inventory);
     RUN(16, test_raw_sksave_resume_import);
-    RUN(17, test_sksave_corpus_scan_receipt);
-    RUN(18, test_champion_death_permanence_source_lock);
-    RUN(19, test_live_runtime_state_roundtrip);
-    RUN(20, test_original_save_candidate_live_restore);
-    RUN(21, test_sksave_corpus_runtime_import);
-    RUN(22, test_sksave_receipted_candidate_hash_gate);
-    RUN(23, test_original_sksave_corpus_runtime_import);
-    RUN(24, test_original_sksave_timer_post_load_rebuild);
-    RUN(25, test_external_original_sksave_corpus_census);
+    RUN(17, test_raw_sksave_import_is_transactional);
+    RUN(18, test_sksave_corpus_scan_receipt);
+    RUN(19, test_champion_death_permanence_source_lock);
+    RUN(20, test_live_runtime_state_roundtrip);
+    RUN(21, test_original_save_candidate_live_restore);
+    RUN(22, test_sksave_corpus_runtime_import);
+    RUN(23, test_sksave_receipted_candidate_hash_gate);
+    RUN(24, test_original_sksave_corpus_runtime_import);
+    RUN(25, test_original_sksave_timer_post_load_rebuild);
+    RUN(26, test_external_original_sksave_corpus_census);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
