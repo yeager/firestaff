@@ -3525,6 +3525,111 @@ int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
     return 0;
 }
 
+int nexus_v1_level_extract_structure3_mesh_entry(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    int entry_index, Nexus_V1_DgnStructure3Vector *out_vertices,
+    int max_vertices, Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
+    Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
+    Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3MeshEntryReceipt receipt;
+    const Nexus_V1_DgnStructure3PayloadReceipt *payload;
+    int payload_offset;
+    int payload_size;
+    uint32_t payload_hash = 2166136261u;
+    uint32_t entry_offset;
+    const uint8_t *header;
+    uint16_t vertex_count;
+    uint16_t face_count;
+    uint16_t normal_count;
+    uint32_t vertex_offset;
+    uint32_t face_offset;
+    uint32_t normal_offset;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.entry_index = entry_index;
+    *out_receipt = receipt;
+    if (!level || !data || size <= 0 || entry_index < 0 ||
+        entry_index >= level->structure3_directory.entry_count ||
+        max_vertices < 0 || max_faces < 0 || max_normals < 0) return -1;
+
+    payload = &level->structure3_payload;
+    payload_offset = payload->byte_offset;
+    payload_size = payload->byte_size;
+    if (!payload->valid || !level->structure3_directory.valid ||
+        !level->structure3_entry_headers.valid ||
+        !level->structure3_faces.valid || !level->structure3_vectors.valid ||
+        !level->structure3_face_normal_pairs.valid || payload_offset < 0 ||
+        payload_size < 4 || payload_offset > size || payload_size > size - payload_offset)
+        return -1;
+    for (index = 0; index < payload_size; ++index) {
+        payload_hash ^= data[payload_offset + index];
+        payload_hash *= 16777619u;
+    }
+    if (payload_hash != payload->raw_payload_hash) return -1;
+    receipt.source_identity_valid = 1;
+    entry_offset = rb32(data + payload_offset + 4 + entry_index * 4);
+    if (entry_offset > (uint32_t)payload_size ||
+        (uint32_t)payload_size - entry_offset < 40U) return -1;
+    header = data + payload_offset + entry_offset;
+    vertex_count = rb16(header + 4);
+    face_count = rb16(header + 6);
+    /* The documented entry framing stores one normal row per face; its third
+     * region is bounded at header+20 rather than carrying a third count. */
+    normal_count = face_count;
+    vertex_offset = rb32(header + 8);
+    face_offset = rb32(header + 16);
+    normal_offset = rb32(header + 20);
+    if (vertex_offset > (uint32_t)payload_size ||
+        face_offset > (uint32_t)payload_size || normal_offset > (uint32_t)payload_size ||
+        (uint32_t)vertex_count > ((uint32_t)payload_size - vertex_offset) / 12U ||
+        (uint32_t)face_count > ((uint32_t)payload_size - face_offset) / 12U ||
+        (uint32_t)normal_count > ((uint32_t)payload_size - normal_offset) / 12U)
+        return -1;
+    receipt.vertex_count = (int)vertex_count;
+    receipt.face_count = (int)face_count;
+    receipt.normal_count = (int)normal_count;
+    receipt.vertex_capacity_sufficient = max_vertices >= (int)vertex_count;
+    receipt.face_capacity_sufficient = max_faces >= (int)face_count;
+    receipt.normal_capacity_sufficient = max_normals >= (int)normal_count;
+    if (!receipt.vertex_capacity_sufficient || !receipt.face_capacity_sufficient ||
+        !receipt.normal_capacity_sufficient || (vertex_count && !out_vertices) ||
+        (face_count && !out_faces) || (normal_count && !out_normals)) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    for (index = 0; index < (int)vertex_count; ++index) {
+        const uint8_t *row = data + payload_offset + vertex_offset + index * 12;
+        out_vertices[index].x = rbs32(row);
+        out_vertices[index].y = rbs32(row + 4);
+        out_vertices[index].z = rbs32(row + 8);
+    }
+    for (index = 0; index < (int)face_count; ++index) {
+        const uint8_t *row = data + payload_offset + face_offset + index * 12;
+        Nexus_V1_DgnStructure3Face *face = &out_faces[index];
+        face->vertex_indexes[0] = rb16(row);
+        face->vertex_indexes[1] = rb16(row + 2);
+        face->vertex_indexes[2] = rb16(row + 4);
+        face->vertex_indexes[3] = rb16(row + 6);
+        face->flags = row[8];
+        face->raw_byte_9 = row[9];
+        face->fill_selector = rb16(row + 10);
+        face->triangle = face->vertex_indexes[2] == face->vertex_indexes[3];
+    }
+    for (index = 0; index < (int)normal_count; ++index) {
+        const uint8_t *row = data + payload_offset + normal_offset + index * 12;
+        out_normals[index].x = rbs32(row);
+        out_normals[index].y = rbs32(row + 4);
+        out_normals[index].z = rbs32(row + 8);
+    }
+    receipt.valid = 1;
+    receipt.transform_or_draw_semantics_proven = 0;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)

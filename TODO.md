@@ -634,6 +634,14 @@ ReDMCSB WIP 2021-02-06 source tree.
     joins. This records raw source selector reuse only; it does not assign
     payload contents, texture dimensions, UVs, palette semantics, animation,
     transforms, or a draw route.
+  - 2026-07-14 update: the bounded Structure3 grammar now has a caller-owned,
+    source-hash-checked typed entry extractor for documented signed-16.16
+    vertex/normal rows and entry-local face rows. It rejects partial buffers
+    and mutated payloads, retains raw byte 9 without assigning it a role, and
+    never grants transform, palette, texture, VDP1, or draw semantics. The
+    retail LEV00--LEV15 corpus extracts every 1,144 entries while preserving
+    the 18,478 face/normal totals. Next remains original Saturn evidence for
+    payload/palette decoding and VDP1 ordering, not fallback visuals.
 
 ## M12 Localization Completion (2026-07-12)
 
