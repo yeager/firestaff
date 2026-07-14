@@ -303,8 +303,8 @@ static void test_scroll_layout_source_lock(void) {
 }
 
 static void test_log_render_plan(void) {
-    const char* texts[6];
-    int colors[6];
+    const char* texts[8];
+    int colors[8];
     DM1_V1_MessageRenderPlanPc34Compat plan;
 
     texts[0] = "T42: YOU SEE A SCROLL";
@@ -319,6 +319,10 @@ static void test_log_render_plan(void) {
     colors[4] = DM1_V1_COLOR_WHITE;
     texts[5] = "CAST SPELL #17";
     colors[5] = DM1_V1_COLOR_RED;
+    texts[6] = "NO FOCUS: PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL";
+    colors[6] = DM1_V1_COLOR_CYAN;
+    texts[7] = "READY: CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION";
+    colors[7] = DM1_V1_COLOR_CYAN;
 
     ASSERT_STR_EQ(DM1_V1_TextMessage_StripTickPrefixPc34Compat(texts[0]),
                   "YOU SEE A SCROLL", "strip tick prefix");
@@ -330,12 +334,15 @@ static void test_log_render_plan(void) {
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat(
                   "PRESS ENTER ON A REAL FRONT-CELL TARGET"),
               0, "suppress Firestaff synthetic fallback inspect reroute");
+    ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat(
+                  texts[7]),
+              0, "suppress Firestaff synthetic HoC advance prompt reroute");
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("A DOOR OPENS"),
               1, "accept player-facing message");
     ASSERT_EQ(DM1_V1_TextMessage_IsPlayerFacingPc34Compat("THE WALL READS RUN"),
               1, "keep explicit wall inscription reads player-facing");
 
-    DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(texts, colors, 6, &plan);
+    DM1_V1_TextMessage_BuildLogRenderPlanPc34Compat(texts, colors, 8, &plan);
     ASSERT_EQ(plan.rowCount, 3, "render plan accepted count");
     ASSERT_EQ(plan.lineHeight, DM1_V1_TEXT_LINE_HEIGHT, "render line height");
     ASSERT_EQ(plan.characterWidth, DM1_V1_TEXT_CHARACTER_WIDTH, "render char width");
