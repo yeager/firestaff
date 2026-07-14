@@ -432,7 +432,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 10u
+#define CSB_V1_RUNTIME_SAVE_VERSION 11u
 
 typedef struct {
     int valid;
@@ -529,6 +529,7 @@ typedef struct {
     uint16_t active_group_state_reserved0;
     CSB_V1_RuntimeActiveGroupState
         active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
+    CsbV1AudioSaveSnapshot audio_snapshot;
 } CSB_V1_RuntimeSaveImageV1;
 
 #define CSB_V1_RUNTIME_SAVE_V1_SIZE \
@@ -555,6 +556,8 @@ typedef struct {
     (CSB_V1_RUNTIME_SAVE_V6_SIZE + 4u + \
      (CSB_V1_RUNTIME_ACTIVE_GROUP_CAP * \
       (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV9)))
+#define CSB_V1_RUNTIME_SAVE_V10_SIZE \
+    ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, audio_snapshot))
 
 _Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV7) == 24u,
                "CSB native save v7 active-group entry size drifted");
@@ -911,6 +914,8 @@ static void csb_v1_runtime_capture_save_image(
     memcpy(image->active_group_state,
            profile->active_group_state,
            sizeof(image->active_group_state));
+    csb_v1_audio_runtime_save_snapshot(&profile->audio_runtime,
+                                       &image->audio_snapshot);
 }
 
 static int csb_v1_runtime_validate_projectile_list(
@@ -1162,6 +1167,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V7_SIZE) ||
           (image->version == 8u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V8_SIZE) ||
+          (image->version == 10u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V10_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -1287,6 +1294,14 @@ static int csb_v1_runtime_apply_save_image(
             profile,
             image) != 0) {
         return -1;
+    }
+    if (image->byte_size >=
+        offsetof(CSB_V1_RuntimeSaveImageV1, audio_snapshot) +
+            sizeof(image->audio_snapshot)) {
+        csb_v1_audio_runtime_load_snapshot(&profile->audio_runtime,
+                                           &image->audio_snapshot);
+    } else {
+        csb_v1_audio_runtime_init(&profile->audio_runtime);
     }
 
     profile->party_state.PartyMapX = profile->party_x;
