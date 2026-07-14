@@ -37,6 +37,31 @@ static int csb_v1_audio_valid_index(int16_t soundIndex)
     return soundIndex >= 0 && soundIndex < CSB_V1_SOUND_COUNT;
 }
 
+CsbV1PsgChannelAmplitudes
+csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex)
+{
+    static const uint8_t channel_a_loud[16] = {
+        0, 8, 10, 11, 12, 13, 13, 13,
+        14, 14, 14, 14, 15, 14, 14, 14
+    };
+    static const uint8_t channel_b_loud[16] = {
+        0, 5, 7, 9, 9, 5, 10, 12,
+        8, 10, 12, 13, 11, 14, 14, 14
+    };
+    static const uint8_t channel_c_loud[16] = {
+        0, 0, 0, 0, 0, 0, 6, 0,
+        0, 10, 10, 10, 0, 11, 13, 14
+    };
+    CsbV1PsgChannelAmplitudes amplitudes;
+    uint16_t index = (uint16_t)amplitudeIndex & 0x000fu;
+
+    /* SOUND.C F0061 uses V0061004's three 16-entry loud tables. */
+    amplitudes.channelA = channel_a_loud[index];
+    amplitudes.channelB = channel_b_loud[index];
+    amplitudes.channelC = channel_c_loud[index];
+    return amplitudes;
+}
+
 static void csb_v1_audio_clear_pending(CsbV1AudioRuntime* runtime)
 {
     runtime->pendingSoundIndex = CSB_V1_SOUND_NONE;
@@ -209,6 +234,7 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
 const char* csb_v1_audio_runtime_source_evidence(void)
 {
     return "DEFS.H:135-138; SOUND.C F0060:887-931,1164-1246; "
+           "SOUND.C F0061:1144-1307; "
            "SOUND.C:1632-1638; SOUND.C:1804-1865; "
            "GAMELOOP.C:114-115; LOADSAVE.C:1530/2739; PROJEXPL.C:5";
 }
