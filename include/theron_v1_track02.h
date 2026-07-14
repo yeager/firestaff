@@ -1498,6 +1498,41 @@ typedef struct {
     Theron_Track02LevelCandidate candidate;
 } Theron_Track02InitialCandidateBinding;
 
+/* Physical CD-record boundary for the one source-locked startup level
+ * payload.  It joins the IPL's authenticated Track 02 INDEX 01 coordinate
+ * with the existing descriptor-relative level receipt.  `object_*` names
+ * the byte boundary immediately following the 32x27 level payload only; it
+ * does not assert that the following bytes form an object table.  They remain
+ * opaque until an original loader read establishes that semantic role.
+ *
+ * The known JP and US raw corpora agree on record 0x0b52, user-data offset
+ * 0x114, and a 0x36c-byte level envelope.  No tiles, objects, or runtime
+ * world state are returned by this receipt. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t track02_record;
+    size_t data_track_index01_raw_sector;
+    size_t level_first_raw_sector;
+    size_t level_raw_offset;
+    size_t level_user_data_offset;
+    size_t level_user_data_offset_in_record;
+    size_t level_byte_count;
+    size_t object_boundary_raw_offset;
+    size_t object_boundary_user_data_offset;
+    size_t object_boundary_user_data_offset_in_record;
+    size_t following_user_data_bytes_in_record;
+    uint16_t level_width;
+    uint16_t level_height;
+    uint32_t level_seed;
+    uint16_t level_index;
+    uint32_t level_payload_hash;
+    int object_table_parsed;
+    int object_table_semantics_proven;
+    int promotion_blocked;
+    uint32_t receipt_hash;
+} Theron_Track02InitialLevelObjectBoundaryReceipt;
+
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
  * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
@@ -1605,6 +1640,18 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     const char *md5_hex,
     size_t descriptor_offset,
     Theron_Track02InitialCandidateBinding *out_binding);
+
+/* Parse the CD-record-relative boundary of the known initial level payload.
+ * This is a real-media receipt: it accepts only the known raw JP/US hashes,
+ * validates the IPL/INDEX 01 record coordinate, and reuses the strict
+ * descriptor-relative candidate binder.  It never decodes or exposes the
+ * opaque bytes after the level envelope as an object table. */
+Theron_Track02SignalStatus
+theron_v1_track02_capture_initial_level_object_boundary(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelObjectBoundaryReceipt *out_receipt);
 
 /* Copy the hash/anchor-gated initial startup candidate through the logical
  * MODE1/2048 user-data address space.

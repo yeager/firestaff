@@ -5323,6 +5323,103 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     return out_binding->status;
 }
 
+Theron_Track02SignalStatus
+theron_v1_track02_capture_initial_level_object_boundary(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelObjectBoundaryReceipt *out_receipt) {
+
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02InitialCandidateBinding binding;
+    Theron_Track02SignalStatus status;
+    size_t level_sector_offset;
+    size_t level_record;
+    size_t boundary_sector_offset;
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    /* The IPL receipt is the only source of the variant-specific INDEX 01
+     * coordinate.  ReDMCSB has no Theron's Quest equivalent; see
+     * docs/source-lock/tqr_v1_track02_ipl_loader_2026-07-11.md. */
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK || !loader.valid) return status;
+    if (theron_v1_track02_bind_initial_level_candidate(
+            track02_data, track02_size, md5_hex,
+            loader.variant == THERON_TRACK02_VARIANT_JP_BIN
+                ? g_jp_bin_descriptor_offsets[0]
+                : g_us_bin_descriptor_offsets[0],
+            &binding) != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        !binding.matches_initial_anchor || !binding.candidate.loaded ||
+        !binding.candidate.user_data_offset_valid) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    level_sector_offset = binding.candidate.absolute_offset % TQR_RAW_SECTOR_BYTES;
+    if (level_sector_offset < TQR_RAW_SECTOR_USER_DATA_OFFSET ||
+        binding.candidate.byte_count >
+            TQR_RAW_SECTOR_USER_DATA_BYTES -
+                (level_sector_offset - TQR_RAW_SECTOR_USER_DATA_OFFSET)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    level_record = binding.candidate.absolute_offset / TQR_RAW_SECTOR_BYTES;
+    if (level_record < loader.data_track_index01_raw_sector) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    level_record -= loader.data_track_index01_raw_sector;
+    boundary_sector_offset = level_sector_offset + binding.candidate.byte_count;
+
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->track02_record = (uint32_t)level_record;
+    out_receipt->data_track_index01_raw_sector =
+        loader.data_track_index01_raw_sector;
+    out_receipt->level_first_raw_sector =
+        binding.candidate.absolute_offset / TQR_RAW_SECTOR_BYTES;
+    out_receipt->level_raw_offset = binding.candidate.absolute_offset;
+    out_receipt->level_user_data_offset = binding.candidate.user_data_offset;
+    out_receipt->level_user_data_offset_in_record =
+        level_sector_offset - TQR_RAW_SECTOR_USER_DATA_OFFSET;
+    out_receipt->level_byte_count = binding.candidate.byte_count;
+    out_receipt->object_boundary_raw_offset =
+        binding.candidate.absolute_offset + binding.candidate.byte_count;
+    out_receipt->object_boundary_user_data_offset =
+        binding.candidate.user_data_offset + binding.candidate.byte_count;
+    out_receipt->object_boundary_user_data_offset_in_record =
+        boundary_sector_offset - TQR_RAW_SECTOR_USER_DATA_OFFSET;
+    out_receipt->following_user_data_bytes_in_record =
+        TQR_RAW_SECTOR_USER_DATA_BYTES -
+        out_receipt->object_boundary_user_data_offset_in_record;
+    out_receipt->level_width = binding.candidate.header_width;
+    out_receipt->level_height = binding.candidate.header_height;
+    out_receipt->level_seed = binding.candidate.header_seed;
+    out_receipt->level_index = binding.candidate.header_level_index;
+    out_receipt->level_payload_hash = tqr_hash_bytes(
+        track02_data + binding.candidate.absolute_offset,
+        binding.candidate.byte_count);
+    out_receipt->object_table_parsed = 0;
+    out_receipt->object_table_semantics_proven = 0;
+    out_receipt->promotion_blocked = 1;
+
+    hash ^= (uint32_t)out_receipt->track02_record;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->level_user_data_offset_in_record;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->level_byte_count;
+    hash *= 16777619u;
+    hash ^= out_receipt->level_payload_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->object_boundary_user_data_offset_in_record;
+    hash *= 16777619u;
+    out_receipt->receipt_hash = hash;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_window(
     const uint8_t *track02_data,
     size_t track02_size,
