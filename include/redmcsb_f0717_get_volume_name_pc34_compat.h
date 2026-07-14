@@ -20,7 +20,7 @@ typedef struct {
 
 /*
  * Executes the sole PC 3.4 F0717 action:
- * G2162_IODriver->IODRV_19_GetVolumeName(drive_ordinal, volume_name).
+ * G2161_IODriver->IODRV_19_GetVolumeName(drive_ordinal, volume_name).
  *
  * The output buffer is owned and sized by the caller, just as in IO.C.
  */

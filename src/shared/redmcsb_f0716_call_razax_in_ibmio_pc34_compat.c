@@ -15,7 +15,8 @@ void redmcsb_f0716_call_razax_in_ibmio_pc34_compat(
 
 const char *redmcsb_f0716_call_razax_in_ibmio_source_evidence_pc34(void)
 {
-    return "ReDMCSB IO.C:3889-3903, MEDIA709_I34E_I34M_P31J: F0716 calls "
-           "G2161_IODriver->IODRV_17 with its sole int16_t argument and "
-           "returns void; IBMIO.C supplies the IODRV_17 implementation.";
+    return "ReDMCSB IO.C:3928-3932, MEDIA709_I34E_I34M_P31J: F0716 calls "
+           "G2162_IODriver->IODRV_17 with its sole int16_t argument. The "
+           "declared int16_t function body has no return statement; IODRV_17 "
+           "itself is void in DEFS.H:4319.";
 }
