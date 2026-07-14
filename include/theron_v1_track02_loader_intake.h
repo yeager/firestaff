@@ -72,6 +72,23 @@ typedef struct {
     const char *status;
 } Theron_V1Track02RawGridRowReceipt;
 
+/* A complete source-verified initial grid for the downstream dungeon handoff.
+ * The bytes are atomic and opaque: this boundary assigns no dungeon, cell,
+ * object, tile, visual, or runtime semantics to them. */
+typedef struct {
+    int handed_off;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint8_t raw_grid[THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH *
+                     THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT];
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    uint32_t raw_grid_hash;
+    const char *status;
+} Theron_V1Track02RawGridReceipt;
+
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
 typedef struct {
@@ -141,5 +158,16 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_row(
     const char *raw_track02_md5,
     uint16_t raw_grid_y,
     Theron_V1Track02RawGridRowReceipt *out_receipt);
+
+/* Hands off the complete literal grid only after independently rehashing the
+ * canonical raw BIN and requiring the exact source-locked 32x27 receipt.
+ * This is the atomic raw-data boundary for a later dungeon consumer; no
+ * fallback visual or inferred semantic route is enabled here. */
+int theron_v1_track02_loader_intake_handoff_raw_grid(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    Theron_V1Track02RawGridReceipt *out_receipt);
 
 #endif
