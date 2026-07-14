@@ -1,0 +1,16 @@
+partition	missing_callable_rows	disposition	evidence
+BASE	9	deferred_except_portable_callable	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; BASE.C has platform and runtime ownership outside this partition.
+MAIN	5	deferred_platform_runtime	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; exception/vector behavior is platform-owned.
+INPUT	5	deferred_input_runtime	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; no event-loop equivalence claim.
+KEYREAD	1	deferred_input_runtime	CEDT029.C:35 source reference; keyboard device behavior remains platform-owned.
+MOUSE	3	deferred_input_runtime	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; pointer/screen-update ownership remains unbound.
+DIALOG	3	deferred_ui_material	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; no source-backed dialog material route selected.
+TEXT	1	deferred_ui_material	DEFS.H:6774 source reference; text rendering and font material remain separate work.
+CEDT*	221	deferred_editor_utility	All MISSING rows whose reference source is CEDT*.C; editor and save utility behavior is not promoted by name alone.
+HINTTEXT	3	deferred_platform_text	HINTTEXT.C source references; VDI and platform text calls have no portable equivalence claim.
+FILE	16	deferred_platform_io	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; native filesystem and ProDOS routes remain platform-owned.
+COPYPRO*	1	deferred_platform_protection	COPYPROE.C:14 source reference; no copy-protection emulation is introduced.
+FLOPPY	18	deferred_media_io	REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv MISSING rows; physical-drive behavior is not portable startup behavior.
+START	3	partially_implemented	F0459 implemented from BMPSIZE.C:4 plus DEFS.H:2515 and :3466; remaining START callables stay deferred.
+SWOOSH	12	deferred_startup_presentation	11 SWSH.C MISSING rows plus F2255 SWOOSH_main; no synthetic title or palette presentation is introduced.
+TITLE	0	no_missing_rows	No MISSING callable rows match the TITLE family or TITLE.C reference in the full audit baseline.
