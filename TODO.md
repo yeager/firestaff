@@ -358,6 +358,10 @@
     NUL padding for the 8-byte champion name and 20-byte title after load.
     Media-specific character conversion and all champion/CSBWin/DSA layouts
     remain outside this byte-field normalizer.
+  - 2026-07-14 update: `CEDTINCS.C` F7065/F7066 now clears portrait pointer
+    slots before saving and restores them in source sequential-buffer order
+    after loading, only for `PORTRAITS_EXCLUDED`. This owns no champion record
+    layout, portrait decode, CSBWin extension, DSA, timer, or save format.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
