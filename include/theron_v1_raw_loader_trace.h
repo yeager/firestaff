@@ -153,6 +153,13 @@ typedef struct {
     int observed_raw_sector_lba;
     uint32_t observed_raw_sector_checksum;
     uint32_t observed_raw_sector_span_checksum;
+    /* The later call's DH/BX values and a post-return RAM fingerprint. The
+     * hash is checked against the selected MODE1 user-data prefix only. */
+    uint16_t later_local_destination;
+    size_t later_destination_span_bytes;
+    uint32_t later_destination_span_checksum;
+    int later_destination_local_ram_verified;
+    int later_destination_media_span_verified;
     int observation_order_verified;
     int selector_sector_bytes_verified;
 } Theron_V1RawLoaderTraceCoalescedLaterReceipt;

@@ -100,6 +100,22 @@ but still does not name the 218 manifest units. Sources: [PCEDev HuC6280
 Software Manual](https://archive.org/details/PCEDev) and [PC Engine CD record
 format analysis](https://retrocomputing.stackexchange.com/questions/27518/did-the-pc-engine-turbografx-super-cd-rom-have-a-standardized-file-system).
 
+## Later Loader-to-RAM Capture Contract
+
+The later `$e009` observation is not admitted from a dispatch/return pair
+alone. A future authenticated coalesced capture must retain the matched raw
+sector fingerprint followed by one `later_system_card_e009_destination_span`
+row before the return. The Mednafen hook emits that row only when the live
+System Card destination mode is local RAM (`DH=$01`); it records the live
+`BX` address and an FNV-1a fingerprint of 32 bytes at that address after the
+call returns. Firestaff compares the fingerprint with the first 32 MODE1
+user-data bytes of the selector-resolved record.
+
+This can prove a bounded record-to-local-RAM transfer for the already-admitted
+`0x0b52` startup envelope once an operator supplies the original capture. It
+does not prove that the call caused a game transition, or assign dungeon,
+object-tail, bitmap, palette, or payload-format semantics.
+
 ## Post-Return Continuation
 
 On 2026-07-13, the Mednafen 1.32.1 debugger patch was verified with a clean

@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1214 @@ static std::unique_ptr<FileStream> TraceLog;
+@@ -36,5 +36,1238 @@ static std::unique_ptr<FileStream> TraceLog;
  static std::string TraceLogSpec;
  static int64 TraceLogEnd;
  static unsigned TraceLogRTO;
@@ -134,6 +134,8 @@ index 347482c4..61d4758e 100644
 +static bool TheronIrq2TraceLaterE009ReturnSeen;
 +static uint32 TheronIrq2TraceLaterE009CallerPC;
 +static uint32 TheronIrq2TraceLaterE009Record;
++static uint32 TheronIrq2TraceLaterE009Destination;
++static uint32 TheronIrq2TraceLaterE009DestinationMode;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -1123,6 +1125,11 @@ index 347482c4..61d4758e 100644
 +
 +  TheronIrq2TraceLaterE009CallerPC = logical_pc;
 +  TheronIrq2TraceLaterE009Record = cl | (dl << 8) | (ch << 16);
++  TheronIrq2TraceLaterE009Destination =
++   (CurGame->Debugger->MemPeek(0x00fa, 1, true, true) & 0xff) |
++   ((CurGame->Debugger->MemPeek(0x00fb, 1, true, true) & 0xff) << 8);
++  TheronIrq2TraceLaterE009DestinationMode =
++   CurGame->Debugger->MemPeek(0x00ff, 1, true, true) & 0xff;
 +  TheronIrq2TraceLaterE009DispatchSeen = true;
 +  TheronIrq2Trace->print_format("later_system_card_e009_dispatch caller_pc=%04x return_pc=%04x sector_count=01 record_cl=%02x record_dl=%02x record_ch=%02x record=%06x\\n",
 +                                logical_pc, logical_pc + 3, cl, dl, ch,
@@ -1133,6 +1140,23 @@ index 347482c4..61d4758e 100644
 +    !TheronIrq2TraceLaterE009ReturnSeen &&
 +    logical_pc == TheronIrq2TraceLaterE009CallerPC + 3)
 + {
++  if(TheronIrq2TraceLaterE009DestinationMode == 0x01)
++  {
++   uint32 destination_hash = 2166136261U;
++   unsigned int destination_offset;
++   for(destination_offset = 0; destination_offset < 32; destination_offset++)
++   {
++    destination_hash ^= CurGame->Debugger->MemPeek(
++     TheronIrq2TraceLaterE009Destination + destination_offset,
++     1, true, true) & 0xff;
++    destination_hash *= 16777619U;
++   }
++   TheronIrq2Trace->print_format("later_system_card_e009_destination_span caller_pc=%04x return_pc=%04x record=%06x destination=%04x bytes=32 fnv1a=%08x\\n",
++                                 TheronIrq2TraceLaterE009CallerPC, logical_pc,
++                                 TheronIrq2TraceLaterE009Record,
++                                 TheronIrq2TraceLaterE009Destination,
++                                 destination_hash);
++  }
 +  TheronIrq2Trace->print_format("later_system_card_e009_return caller_pc=%04x return_pc=%04x record=%06x\\n",
 +                                TheronIrq2TraceLaterE009CallerPC, logical_pc,
 +                                TheronIrq2TraceLaterE009Record);

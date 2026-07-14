@@ -14162,6 +14162,17 @@ It adds no opcode support, synthetic behavior, or world/filter route. Source:
 CSBWin `SaveGame.cpp::ReadDSAs` / `DSA.cpp::ProcessDSAFilter` and `Execute`.
 Verification: focused `csb_v1_dsa_trigger_single_step_pc34_compat` CTest.
 
+# ✅ 2026-07-14 Theron Track 02 later loader-to-local-RAM capture contract
+
+The coalesced original Mednafen receipt now requires the later `$e009`
+dispatch's observed local-RAM destination plus a 32-byte post-return RAM
+fingerprint. Firestaff compares that fingerprint with the selected MODE1
+user-data prefix, so a supplied authentic capture can establish a bounded
+record-to-RAM transfer for `0x0b52`. The contract rejects a missing,
+misordered, mismatched, or non-local span. It does not establish a game
+transition or assign dungeon, object-tail, bitmap, palette, or payload
+semantics. Verification: focused raw-loader CTest and capture-order script.
+
 # ✅ 2026-07-14 Theron Track 02 startup-grid positive route
 
 The existing CD/MODE1 envelope and loader-semantic receipt now materialize one

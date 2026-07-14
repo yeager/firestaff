@@ -60,6 +60,17 @@ $1 == "cd_interface_raw_sector_read" {
     if (NF != 7 || field($2, "lba") == "" || field($3, "bytes") != "2352" || field($4, "sector_fnv1a") !~ /^[0-9a-f]{8}$/ || field($5, "span_offset") != "0" || field($6, "span_bytes") != "32" || field($7, "span_fnv1a") !~ /^[0-9a-f]{8}$/) bad = "malformed complete raw-sector row"
     next
 }
+$1 == "later_system_card_e009_destination_span" {
+    ++destination
+    destination_line = NR
+    if (NF != 7 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "record") == "" || field($5, "destination") == "" || field($6, "bytes") != "32" || field($7, "fnv1a") !~ /^[0-9a-f]{8}$/) {
+        bad = "malformed later e009 destination-span row"
+        next
+    }
+    destination_caller = hex(field($2, "caller_pc")); destination_return = hex(field($3, "return_pc")); destination_record = hex(field($4, "record")); destination_ram = hex(field($5, "destination"))
+    if (destination_caller != caller || destination_return != returned || destination_record != record || destination_ram < 0 || destination_ram > 65535) bad = "later e009 destination-span row does not match dispatch"
+    next
+}
 $1 == "later_system_card_e009_return" {
     ++returned_row
     return_line = NR
@@ -75,10 +86,11 @@ END {
     else if (dynamic != 1) bad = "expected exactly one dynamic CD_READ row"
     else if (dispatch != 1) bad = "expected exactly one later e009 dispatch row"
     else if (sector != 1) bad = "expected exactly one complete raw-sector row"
+    else if (destination != 1) bad = "expected exactly one later e009 destination-span row"
     else if (returned_row != 1) bad = "expected exactly one later e009 return row"
-    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < return_line)) bad = "loader-to-sector observation order is incomplete"
+    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < destination_line && destination_line < return_line)) bad = "loader-to-RAM observation order is incomplete"
     if (bad != "") { print "FAIL: " bad > "/dev/stderr"; exit 1 }
 }
 ' "$trace"
 
-printf 'PASS: coalesced original Mednafen trace retains the later loader-to-sector order; no destination, payload, or dungeon semantics assigned\n'
+printf 'PASS: coalesced original Mednafen trace retains the later loader-to-local-RAM order; no payload, dungeon, or transition semantics assigned\n'
