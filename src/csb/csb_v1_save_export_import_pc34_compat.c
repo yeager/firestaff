@@ -59,6 +59,12 @@ static uint32_t rd_u32(const uint8_t *p) {
          | ((uint32_t)p[3] << 24);
 }
 
+static int csb_v1_save_export_source_path_valid(const char *source_path)
+{
+    return source_path && source_path[0] != '\0' &&
+           strcmp(source_path, "(synthetic)") != 0;
+}
+
 /* ── CRC-32 / ISO 3309 (poly 0xEDB88320, reflected) ───────────────── */
 
 /* Standard reflected CRC-32 used by PNG / gzip / zlib. We
@@ -161,6 +167,8 @@ long csb_v1_save_export_build_envelope(const uint8_t *payload,
     size_t total;
 
     if (!payload || !out) return CSB_V1_SAVE_EXPORT_ERR_NULL;
+    if (!csb_v1_save_export_source_path_valid(source_path))
+        return CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH;
     if (payload_len == 0u) return CSB_V1_SAVE_EXPORT_ERR_BUF_TOO_SMALL;
     if (payload_len > CSB_V1_SAVE_EXPORT_MAX_PAYLOAD)
         return CSB_V1_SAVE_EXPORT_ERR_BUF_TOO_SMALL;
@@ -189,7 +197,7 @@ long csb_v1_save_export_build_envelope(const uint8_t *payload,
 
     /* [24..87] source_path, NUL-padded (no terminator when full). */
     {
-        const char *src = source_path ? source_path : "(synthetic)";
+        const char *src = source_path;
         size_t copy_len = strlen(src);
         if (copy_len >= CSB_V1_SAVE_EXPORT_SOURCE_PATH_LEN) {
             copy_len = CSB_V1_SAVE_EXPORT_SOURCE_PATH_LEN - 1u;
@@ -249,6 +257,8 @@ int csb_v1_save_export_validate_envelope(const uint8_t *raw,
         return CSB_V1_SAVE_EXPORT_ERR_BAD_VERSION;
     if (hdr.payload_kind != 0u && hdr.payload_kind != 1u)
         return CSB_V1_SAVE_EXPORT_ERR_BAD_PAYLOAD_KIND;
+    if (!csb_v1_save_export_source_path_valid(hdr.source_path))
+        return CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH;
     if (hdr.payload_len == 0u)
         return CSB_V1_SAVE_EXPORT_ERR_BUF_TOO_SMALL;
     if (hdr.payload_len > CSB_V1_SAVE_EXPORT_MAX_PAYLOAD)
@@ -319,6 +329,8 @@ long csb_v1_save_export_roundtrip(const CSB_V1_PartyState *party,
         return CSB_V1_SAVE_EXPORT_ERR_BAD_PARTY;
     if (csb_version != CSB_SAVE_VERSION_V20 && csb_version != CSB_SAVE_VERSION_V21)
         return CSB_V1_SAVE_EXPORT_ERR_BAD_VERSION;
+    if (!csb_v1_save_export_source_path_valid(source_path))
+        return CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH;
     payload_kind = (csb_version == CSB_SAVE_VERSION_V20) ? 0u : 1u;
 
     /* Build the raw CSB v2.x payload first into local scratch. */

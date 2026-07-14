@@ -231,7 +231,7 @@ int main(void)
 
         rc_long = csb_v1_save_export_build_envelope(
             payload, sizeof(payload), 0u,
-            "/tmp/synthetic.csbsave",
+            "/tmp/fixture.csbsave",
             scratch, scratch_size);
         CHECK(rc_long > 0, "build_envelope on synthetic payload returns > 0");
         CHECK((size_t)rc_long == CSB_V1_SAVE_EXPORT_HEADER_LEN + sizeof(payload),
@@ -259,7 +259,7 @@ int main(void)
                   "parse_header.reserved == 0");
             CHECK(hdr.payload_len == sizeof(payload),
                   "parse_header.payload_len matches");
-            CHECK(strcmp(hdr.source_path, "/tmp/synthetic.csbsave") == 0,
+            CHECK(strcmp(hdr.source_path, "/tmp/fixture.csbsave") == 0,
                   "parse_header.source_path round-trip");
         }
 
@@ -474,7 +474,7 @@ int main(void)
         make_synthetic_party(&export_party, 1);
         envelope_len = csb_v1_save_export_roundtrip(
             &export_party, CSB_SAVE_VERSION_V21,
-            NULL,
+            "/tmp/v21-roundtrip.csbsave",
             scratch, scratch_size);
         CHECK(envelope_len > 0,
               "roundtrip(1-champion v2.1 party) -> envelope > 0 bytes");
@@ -491,8 +491,8 @@ int main(void)
                   "v2.1 envelope parse_header OK");
             CHECK(hdr.payload_kind == 1u,
                   "v2.1 envelope payload_kind == 1");
-            CHECK(strcmp(hdr.source_path, "(synthetic)") == 0,
-                  "NULL source_path -> (synthetic)");
+            CHECK(strcmp(hdr.source_path, "/tmp/v21-roundtrip.csbsave") == 0,
+                  "v2.1 source_path retains origin artifact");
         }
 
         memset(&import_party, 0, sizeof(import_party));
@@ -564,6 +564,47 @@ int main(void)
             scratch, scratch_size);
         CHECK(envelope_len == CSB_V1_SAVE_EXPORT_ERR_BAD_VERSION,
               "roundtrip(bad csb_version) -> ERR_BAD_VERSION");
+    }
+
+    /* ── Export provenance is mandatory ── */
+    {
+        uint8_t payload[16] = {0};
+        uint8_t envelope[CSB_V1_SAVE_EXPORT_HEADER_LEN + sizeof(payload)];
+        CSB_V1_PartyState export_party;
+
+        CHECK(csb_v1_save_export_build_envelope(
+                  payload, sizeof(payload), 0u, NULL,
+                  envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH,
+              "build_envelope(NULL source_path) -> ERR_SOURCE_PATH");
+        CHECK(csb_v1_save_export_build_envelope(
+                  payload, sizeof(payload), 0u, "",
+                  envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH,
+              "build_envelope(empty source_path) -> ERR_SOURCE_PATH");
+        CHECK(csb_v1_save_export_build_envelope(
+                  payload, sizeof(payload), 0u, "(synthetic)",
+                  envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH,
+              "build_envelope(retired synthetic marker) -> ERR_SOURCE_PATH");
+
+        CHECK(csb_v1_save_export_build_envelope(
+                  payload, sizeof(payload), 0u, "/tmp/original.csbsave",
+                  envelope, sizeof(envelope)) == (long)sizeof(envelope),
+              "build_envelope accepts an artifact origin");
+        memset(envelope + 24u, 0, CSB_V1_SAVE_EXPORT_SOURCE_PATH_LEN);
+        memcpy(envelope + 24u, "(synthetic)", sizeof("(synthetic)"));
+        CHECK(csb_v1_save_export_validate_envelope(
+                  envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH,
+              "validate_envelope rejects retired synthetic marker");
+
+        make_synthetic_party(&export_party, 1);
+        CHECK(csb_v1_save_export_roundtrip(
+                  &export_party, CSB_SAVE_VERSION_V20, NULL,
+                  scratch, scratch_size)
+                  == CSB_V1_SAVE_EXPORT_ERR_SOURCE_PATH,
+              "roundtrip(NULL source_path) -> ERR_SOURCE_PATH");
     }
 
     /* ── Builder determinism: two envelopes built from the same
@@ -679,11 +720,11 @@ int main(void)
 
         /* Negative I/O paths. */
         CHECK(csb_v1_save_export_write_envelope(
-                  "/no/such/directory/x.csbsave", scratch, 100u)
+                  "/dev/null/x.csbsave", scratch, (size_t)envelope_len)
                   == CSB_V1_SAVE_EXPORT_ERR_IO,
               "write_envelope(bad path) -> ERR_IO");
         CHECK(csb_v1_save_export_read_envelope(
-                  "/no/such/directory/x.csbsave",
+                  "/dev/null/x.csbsave",
                   read_buf, sizeof(read_buf))
                   == CSB_V1_SAVE_EXPORT_ERR_IO,
               "read_envelope(bad path) -> ERR_IO");
