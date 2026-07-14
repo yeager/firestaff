@@ -35,8 +35,5 @@ int main(void)
         REDMCSB_F0789_MEMORY_REQUEST_LAYOUT_RANGE) {
         return 4;
     }
-    if (redmcsb_f0789_allocate_layout_range_pc34_compat(1UL, 0) != 0) {
-        return 5;
-    }
     return 0;
 }

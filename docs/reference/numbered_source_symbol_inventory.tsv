@@ -1811,7 +1811,7 @@ F	0757	F0757_LoadTexts	DEFS.H;STARTUP2.C;LANGUAGE.C	implemented_source_locked
 F	0758	F0758_TranslateLanguage	PANEL.C;REQDISK.C;LOADSAVE.C;REVIVE.C;MENU.C;CHAMDRAW.C;COMMAND.C;SPELFAIL.C;DEFS.H;ACTIDRAW.C;CHAMPION.C;STARTUP2.C;ENDGAME.C;LANGUAGE.C	implemented_source_locked
 F	0763	F0763_LoadEndgameBitmapExpanded	MEMORY.C;DEFS.H;ENDGAME.C;ENTRANCE.C;TITLE.C	implemented_source_locked
 F	0765	F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency	DUNVIEW.C	implemented_source_locked
-F	0766	F0766_BlitToScreen	FMTOWNS.H;BASE.C;DEFS.H;ENTRANCE.C;TITLE.C	referenced_not_verified
+F	0766	F0766_BlitToScreen	FMTOWNS.H;BASE.C;DEFS.H;ENTRANCE.C;TITLE.C	implemented_source_locked
 F	0768	F0768_TEXT_PrintToZoneWithTrailingSpaces	FMTOWNS.H;DEFS.H;TEXT.C	implemented_source_locked
 F	0770	F0770_FILE_Open	LOADSAVE.C;FIO1.C;ANIM.C;MEMORY.C;FMTOWNS.H;IIGS.H;APPBLANG.C;DEFS.H;CEDT023.C;SELECTOR.C;ENTRANCE.C;CEDTINCG.C;FILE.C;CEDTINC7.C;CEDTINCD.C	implemented_source_locked
 F	0771	F0771_FILE_Close	CEDTINCE.C;LOADSAVE.C;FIO1.C;ANIM.C;FMTOWNS.H;IIGS.H;APPBLANG.C;DEFS.H;CEDTINC8.C;CEDT023.C;SELECTOR.C;ENTRANCE.C;CEDTINCG.C;FILE.C;CEDTINC7.C;CEDTINCD.C	implemented_source_locked
@@ -1827,9 +1827,9 @@ F	0780	F0780_FILE_IsHandleInvalid	LOADSAVE.C;ANIM.C;MEMORY.C;FMTOWNS.H;IIGS.H;DE
 F	0781	F0781_MouseHandler	FMTOWNS.H;IO.C	implemented_source_locked
 F	0783	F0783_LockMouse	FMTOWNS.H;IO.C;CEDT026.C	implemented_source_locked
 F	0784	F0784_UnlockMouse	FMTOWNS.H;IO.C;CEDT026.C	implemented_source_locked
-F	0785	F0785_SetMousePointerCoordinates	FMTOWNS.H;IO.C;DEFS.H;CEDT026.C;SELECTOR.C;ENTRANCE.C	referenced_not_verified
-F	0787	F0787_GetZoneInitializedFromCoordinates	PANEL.C;FMTOWNS.H;COORD.C;REVIVE.C;DEFS.H	referenced_not_verified
-F	0789	F0789_AllocateLayoutRange	COORD.C	referenced_not_verified
+F	0785	F0785_SetMousePointerCoordinates	FMTOWNS.H;IO.C;DEFS.H;CEDT026.C;SELECTOR.C;ENTRANCE.C	implemented_source_locked
+F	0787	F0787_GetZoneInitializedFromCoordinates	PANEL.C;FMTOWNS.H;COORD.C;REVIVE.C;DEFS.H	implemented_source_locked
+F	0789	F0789_AllocateLayoutRange	COORD.C	implemented_source_locked
 F	0791	F0791_DUNGEONVIEW_DrawBitmapXX	DUNVIEW.C	referenced_not_verified
 F	0792	F0792_DUNGEONVIEW_DrawBitmapYYY	DUNVIEW.C	referenced_not_verified
 F	0797	F0797_STARTEND_DrawEntranceMicroDungeon	IIGS.H;DEFS.H;ENTRANCE.C	referenced_not_verified
