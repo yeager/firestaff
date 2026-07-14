@@ -45,6 +45,26 @@ typedef struct {
     int roster_name_count;
 } Theron_V1StartupRuntimeEntryRequest;
 
+/* Runtime proof for the opaque original `$e009` payload retained by boot.
+ * It carries no inferred dungeon, object, bitmap, palette, or transition
+ * semantics. */
+typedef struct {
+    int consumed;
+    int no_fallback;
+    uint32_t record;
+    uint32_t destination;
+    uint32_t payload_bytes;
+    uint32_t payload_checksum;
+    uint64_t raw_track02_offset;
+    const char *status;
+} Theron_V1StartupRuntimeInitialPayloadReceipt;
+
+int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+    const void *boot_profile,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    Theron_V1StartupRuntimeInitialPayloadReceipt *out_receipt);
+
 typedef struct {
     Theron_StartupResult result;
     int level_loaded;
