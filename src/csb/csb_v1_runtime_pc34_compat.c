@@ -75,6 +75,10 @@ static int csb_v1_runtime_write_csbwin_global_variables(
 static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate);
 static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
+static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes);
+static int csb_v1_runtime_csbwin_chest_weight_from_expool(
+    const CSB_V1_RuntimeProfile *profile,
+    int *out_weight);
 static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
@@ -9803,8 +9807,16 @@ static int csb_v1_runtime_get_object_weight_internal_pc34_compat(
         return (int)kJunkWeights[subtype];
     case THING_TYPE_CONTAINER: {
         uint16_t child;
-        int total = 50;
+        int total;
         int guard = 0;
+
+        /* CSBWin Mouse.cpp::GetObjectWeight obtains the chest base from the
+         * save-owned EDBT_ObjectWeights record before adding live contents.
+         * A malformed saved EXPOOL receipt must not silently fall back to 50. */
+        if (csb_v1_runtime_csbwin_chest_weight_from_expool(
+                profile, &total) != 0) {
+            return 0;
+        }
         if (record_size < 8) return total;
         /* ReDMCSB DEFS.H CONTAINER stores contained-object head in Slot at
          * +2; +4 is the container Type word.  F0328/F0312 object-weight
@@ -9831,6 +9843,47 @@ static int csb_v1_runtime_get_object_weight_internal_pc34_compat(
     default:
         return 0;
     }
+}
+
+/* CSBWin Mouse.cpp:52-75 obtains the chest base through
+ * EXPOOL::Locate((EDT_Database << 24) | (EDBT_ObjectWeights << 16)).
+ * The record is optional (default 50) but, once a CSBWin tail is present,
+ * it is usable only while its preserved bytes still match the FNV receipt. */
+static int csb_v1_runtime_csbwin_chest_weight_from_expool(
+    const CSB_V1_RuntimeProfile *profile,
+    int *out_weight)
+{
+    const uint32_t object_weights_record = 5u << 24;
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    uint32_t weight;
+
+    if (!profile || !out_weight) return -1;
+    *out_weight = 50;
+
+    if (!profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_size == 0u) {
+        return 0;
+    }
+    if (profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+    if (!csb_v1_runtime_locate_appended_expool_record_internal(
+            profile, object_weights_record, &payload, &payload_size)) {
+        return 0;
+    }
+    if (!payload || payload_size < sizeof(uint32_t)) return -1;
+    weight = csb_v1_runtime_read_le32(payload);
+    if (weight > 0x7fffffffu) return -1;
+    *out_weight = (int)weight;
+    return 0;
 }
 
 int csb_v1_runtime_get_object_weight_pc34_compat(

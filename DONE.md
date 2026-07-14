@@ -14557,3 +14557,13 @@ receipt alone. It rehashes Track 02, System Card, and transcript before
 binding record `0x0b52` to the source-locked initial-level envelope. This is
 only a fail-closed loader/media admission; no dungeon/object/visual semantics
 are claimed. A positive result still requires a fresh authentic capture.
+# 2026-07-14 — CSBWin EDBT_ObjectWeights runtime handoff
+
+- Bound CSBWin `Mouse.cpp::GetObjectWeight`'s `EDBT_ObjectWeights` chest-base
+  lookup to Firestaff's live ReDMCSB `DUNGEON.C F0140` container path. The
+  DB11/EXPOOL record is consumed only while the complete appended tail matches
+  its stored FNV receipt; absent records retain CSBWin's source default of 50,
+  while altered, truncated, short, or out-of-range records cannot fall back.
+- Extended `csb_v1_runtime_champion_load_attrs` with the original CSBWin
+  `EXPOOL::Locate` key/hash/node layout, live child-content addition, and a
+  changed-receipt rejection case.

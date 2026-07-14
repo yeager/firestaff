@@ -80,6 +80,56 @@ static int failed;
     } \
 } while (0)
 
+static void put_le16(uint8_t *bytes, size_t offset, uint16_t value)
+{
+    bytes[offset] = (uint8_t)value;
+    bytes[offset + 1u] = (uint8_t)(value >> 8);
+}
+
+static void put_le32(uint8_t *bytes, size_t offset, uint32_t value)
+{
+    bytes[offset] = (uint8_t)value;
+    bytes[offset + 1u] = (uint8_t)(value >> 8);
+    bytes[offset + 2u] = (uint8_t)(value >> 16);
+    bytes[offset + 3u] = (uint8_t)(value >> 24);
+}
+
+static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static void install_csbwin_chest_weight_record(CSB_V1_RuntimeProfile *profile,
+                                                uint32_t weight)
+{
+    const uint32_t record_id = 5u << 24;
+    const uint32_t bucket = 32u +
+        ((record_id * 0xbb40e62du) >> 27);
+
+    memset(profile->csbwin_appended_tail, 0,
+           CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    /* DB11 size=3 words: next link, key, one ui32 weight payload. */
+    put_le16(profile->csbwin_appended_tail, 2u, 3u);
+    put_le32(profile->csbwin_appended_tail, (size_t)bucket * 4u, 1u);
+    put_le32(profile->csbwin_appended_tail, 1u * 4u, 0u);
+    put_le32(profile->csbwin_appended_tail, 2u * 4u, record_id);
+    put_le32(profile->csbwin_appended_tail, 3u * 4u, weight);
+    profile->csbwin_appended_tail_valid = 1;
+    profile->csbwin_appended_tail_size = CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES;
+    profile->csbwin_appended_tail_preserved_size =
+        CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES;
+    profile->csbwin_appended_tail_fnv1a = fnv1a32(
+        profile->csbwin_appended_tail,
+        profile->csbwin_appended_tail_preserved_size);
+}
+
 /* -- Helpers (mirrors test_csb_v1_boot_runtime_handoff.c shape) ------- */
 
 /* Build a minimal valid CSB V1 DUNGEON.DAT buffer. Mirrors the
@@ -781,6 +831,18 @@ static void test_loaded_champion_load_calculation(void)
              "F0140 waterskin adds two units per charge", "d");
     CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, container), 51,
              "F0140 container includes base plus linked scroll", "d");
+    install_csbwin_chest_weight_record(&profile, 79u);
+    CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, container), 80,
+             "CSBWin EDBT_ObjectWeights overrides chest base through verified EXPOOL", "d");
+    profile.csbwin_appended_tail_fnv1a ^= 1u;
+    CHECK_EQ(csb_v1_runtime_get_object_weight_pc34_compat(&profile, container), 0,
+             "altered CSBWin EXPOOL receipt cannot fall back to a chest weight", "d");
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(
+        profile.csbwin_appended_tail,
+        profile.csbwin_appended_tail_preserved_size);
+    profile.csbwin_appended_tail_valid = 0;
+    profile.csbwin_appended_tail_size = 0u;
+    profile.csbwin_appended_tail_preserved_size = 0u;
     CHECK_EQ(csb_v1_runtime_recompute_champion_load_pc34_compat(&profile, 0), 75,
              "loaded champion sums all C00..C29 F0140 weights", "d");
     CHECK_EQ(profile.party_state.Champions[0].Load, 75,
