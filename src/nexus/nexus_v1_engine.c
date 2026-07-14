@@ -3091,6 +3091,36 @@ static int nexus_v1_slev_trace_is_sha256(const char *text) {
     return 1;
 }
 
+static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = 1469598103934665603ULL;
+    size_t index;
+    if (!data || size == 0) return 0;
+    for (index = 0; index < size; ++index) {
+        hash ^= data[index];
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static int nexus_v1_slev_trace_hex_u64(const char *text, uint64_t *out_value) {
+    uint64_t value = 0;
+    const char *cursor;
+    int digits = 0;
+
+    if (!text || !text[0] || !out_value) return 0;
+    for (cursor = text; *cursor; ++cursor) {
+        uint64_t digit;
+        if (*cursor >= '0' && *cursor <= '9') digit = (uint64_t)(*cursor - '0');
+        else if (*cursor >= 'a' && *cursor <= 'f') digit = (uint64_t)(*cursor - 'a' + 10);
+        else if (*cursor >= 'A' && *cursor <= 'F') digit = (uint64_t)(*cursor - 'A' + 10);
+        else return 0;
+        if (++digits > 16 || value > 0x0fffffffffffffffULL) return 0;
+        value = (value << 4) | digit;
+    }
+    *out_value = value;
+    return 1;
+}
+
 int nexus_v1_engine_admit_slev_execution_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
     Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
@@ -3188,6 +3218,47 @@ int nexus_v1_engine_admit_slev_execution_trace(
     return 1;
 }
 
+int nexus_v1_engine_admit_slev_execution_trace_with_raw(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
+    Nexus_V1_LevelScriptTraceAdmissionReceipt receipt;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt previous;
+    char value[96];
+    uint64_t expected_hash;
+    uint64_t actual_hash;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_script_dispatch = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_trace_fnv1a64",
+                                   value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        !(actual_hash = nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size)) ||
+        actual_hash != expected_hash) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_BLOCKED_RAW_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    previous = engine->script_trace_admission;
+    if (nexus_v1_engine_admit_slev_execution_trace(engine, trace_text, trace_size,
+                                                    &receipt) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bytes_bound = 1;
+    receipt.raw_trace_fnv1a64 = actual_hash;
+    receipt.raw_trace_byte_count = raw_trace_size;
+    engine->script_trace_admission = receipt;
+    *out_receipt = receipt;
+    (void)previous;
+    return 1;
+}
+
 int nexus_v1_current_level_slev_trace_admission_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
@@ -3225,6 +3296,8 @@ int nexus_v1_engine_consume_slev_execution_trace(
         trace->level_index != receipt.level_index ||
         !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
         !trace->original_saturn_execution_claimed || !trace->trace_sha256_present ||
+        !trace->raw_trace_bytes_bound || !trace->raw_trace_fnv1a64 ||
+        trace->raw_trace_byte_count == 0 ||
         !trace->trace_chain_complete || trace->task_body_dispatch_proven ||
         trace->dispatch_permitted || !trace->blocks_real_script_dispatch ||
         trace->fallback_visuals_permitted) {
