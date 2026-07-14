@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0050`: source white-space output now
+  delegates the exact white color/message pair through a bounded callable.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0473_MEMORY_SortValues`: source unsigned
   16-bit ascending heap sort now has a bounded compatibility callable.
   Verification: focused strict CTest.
