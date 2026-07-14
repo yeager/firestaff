@@ -1980,7 +1980,7 @@ F8170_Return0	F	Return0	NEC816.C:2815	-	MISSING	No exact numbered token found in
 F8171_ExecuteProgram	F	ExecuteProgram	NEC816.C:2821	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8213_SetSinglePixel_Unreferenced	F	SetSinglePixel	VIDEODRV.C:1052	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8216_Unreferenced	F	Unreferenced	VIDEODRV.C:1450	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8230_VIDRV_16_SetSingleColorComponentsInPalette	F	VIDRV	NEC816.C:2315	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8230_VIDRV_16_SetSingleColorComponentsInPalette	F	VIDRV	VIDEODRV.C:3456	include/redmcsb_f8230_palette_components_c25_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 C25 expands each RGB4 component as (value << 2)+3 into G8183 and publishes through F8156 only while curtain equals one; focused strict C11 test.
 F8232_VIDRV_12_SetCreatureReplacementColors	F	VIDRV	DRAWVIEW.C:684	src/dm1/dm1_v1_viewport_3d_pc34_compat.c:3574	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F8271_PlayMIDIMusic	F	PlayMIDIMusic	ANIM.C:1684	src/dm1/dm1_v1_creature_render_pc34_compat.c:1087	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F8272_StopMIDIMusic	F	StopMIDIMusic	ANIM.C:1689	src/dm1/dm1_v1_creature_render_pc34_compat.c:1088	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
