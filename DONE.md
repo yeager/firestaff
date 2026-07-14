@@ -15748,3 +15748,10 @@ Verification: `firestaff_m11` Ninja build.
   Runtime rejects a changed or incomplete manifest before consuming bytes;
   no dungeon, tile, object, bitmap, palette, or fallback semantics were
   invented. Focused Track 02 intake and initial-level-handoff probes pass.
+
+- 2026-07-14 Theron authenticated Hall of Records route receiver: the boot
+  handoff now re-derives the original level-0 grid from Track 02 and compares
+  it with the completed manifest-bound route before publishing a candidate
+  runtime world. Changed route receipts, payloads, or source bytes fail
+  closed. Object tables, bitmap/palette decoding, and fallback visuals remain
+  unavailable. Focused Track 02 intake and initial-level-handoff probes pass.

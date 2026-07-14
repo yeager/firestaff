@@ -65,6 +65,28 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     size_t hucard_rom_size,
     Theron_V1StartupRuntimeInitialPayloadReceipt *out_receipt);
 
+/* Receives the one source-locked Hall of Records level-0 route retained in a
+ * completed boot handoff. It re-derives the route from the supplied original
+ * Track 02 bytes before publishing it to a candidate world. Object-tail,
+ * bitmap, palette, and broader transition semantics stay unavailable. */
+typedef struct {
+    int received;
+    int no_fallback;
+    int dungeon_id;
+    int sub_level_index;
+    uint32_t route_hash;
+    uint32_t payload_checksum;
+    const char *status;
+} Theron_V1StartupRuntimeInitialRouteReceipt;
+
+int theron_v1_startup_runtime_receive_boot_profile_initial_route(
+    const void *boot_profile,
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    Theron_DungeonID dungeon_id,
+    Theron_V1StartupRuntimeInitialRouteReceipt *out_receipt);
+
 typedef struct {
     Theron_StartupResult result;
     int level_loaded;

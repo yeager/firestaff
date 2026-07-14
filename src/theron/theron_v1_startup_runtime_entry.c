@@ -477,6 +477,71 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     return 1;
 }
 
+int theron_v1_startup_runtime_receive_boot_profile_initial_route(
+    const void *boot_profile,
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    Theron_DungeonID dungeon_id,
+    Theron_V1StartupRuntimeInitialRouteReceipt *out_receipt) {
+    const Theron_V1_BootProfile *profile =
+        (const Theron_V1_BootProfile *)boot_profile;
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff;
+    Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
+    Theron_Track02InitialLevelLoaderRoute route;
+    Theron_V1_World candidate;
+    Theron_V1StartupRuntimeInitialRouteReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !world || !hucard_rom || !out_receipt ||
+        dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        !theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+            profile, hucard_rom, hucard_rom_size, &payload_receipt)) {
+        return 0;
+    }
+    handoff = &profile->track02_initial_level_handoff;
+    memset(&route, 0, sizeof(route));
+    if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
+            handoff) ||
+        handoff->object_tail_semantics_proven ||
+        handoff->fallback_visuals_allowed ||
+        theron_v1_track02_load_initial_level_loader_route(
+            hucard_rom, hucard_rom_size, profile->graphics_md5, dungeon_id, 0,
+            &route) != THERON_TRACK02_SIGNAL_OK ||
+        !route.valid || route.object_tail_semantics_proven ||
+        route.fallback_visuals_allowed ||
+        route.route_hash != handoff->initial_level_route.route_hash ||
+        route.dungeon_id != handoff->initial_level_route.dungeon_id ||
+        route.sub_level_index != handoff->initial_level_route.sub_level_index ||
+        route.semantics.receipt_hash !=
+            handoff->initial_level_route.semantics.receipt_hash ||
+        route.semantics.envelope.track02_record != handoff->observed_track02_record ||
+        route.semantics.envelope.track02_record !=
+            handoff->initial_level_boundary.track02_record) {
+        return 0;
+    }
+
+    candidate = *world;
+    candidate.current_dungeon = dungeon_id;
+    candidate.current_level = 0;
+    candidate.levels[(int)dungeon_id - 1][0] = route.level;
+    candidate.levels[(int)dungeon_id - 1][0].thing_count = 0;
+    candidate.level_loaded[(int)dungeon_id - 1][0] = 1;
+    theron_v1_party_place(&candidate, route.level.start_x, route.level.start_y,
+                          route.level.start_dir);
+
+    receipt.received = 1;
+    receipt.no_fallback = 1;
+    receipt.dungeon_id = dungeon_id;
+    receipt.sub_level_index = 0;
+    receipt.route_hash = route.route_hash;
+    receipt.payload_checksum = payload_receipt.payload_checksum;
+    receipt.status = "initial_level_route_runtime_received_no_object_or_visual_semantics";
+    *world = candidate;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
@@ -2234,7 +2299,8 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         (const Theron_V1_BootProfile *)boot_profile;
     const char *md5_hex =
         (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
-    Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
+    Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
+    Theron_V1_World candidate_world;
 
     /* The forcefield is the first startup-to-dungeon mutation. Keep the
      * player in Soul Room unless the boot-owned capture receipt still matches
@@ -2270,8 +2336,10 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         }
         return 0;
     }
-    if (!theron_v1_startup_runtime_consume_boot_profile_initial_payload(
-            profile, hucard_rom, hucard_rom_size, &payload_receipt)) {
+    candidate_world = *world;
+    if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
+            profile, &candidate_world, hucard_rom, hucard_rom_size,
+            flow ? flow->selected_dungeon : 0, &route_receipt)) {
         if (out_result) {
             theron_v1_startup_runtime_entry_result_init(out_result);
             out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
@@ -2279,9 +2347,9 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         if (out_host_receipt) {
             theron_v1_startup_host_receipt_init(out_host_receipt);
             out_host_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_host_receipt->status_scope = "TRACK02 PAYLOAD";
-            out_host_receipt->status = "AUTHENTIC PAYLOAD HANDOFF REQUIRED";
-            out_host_receipt->inspect_scope = "TRACK02 PAYLOAD";
+            out_host_receipt->status_scope = "TRACK02 ROUTE";
+            out_host_receipt->status = "AUTHENTIC LEVEL ROUTE REQUIRED";
+            out_host_receipt->inspect_scope = "TRACK02 ROUTE";
             snprintf(out_host_receipt->inspect_detail,
                      sizeof(out_host_receipt->inspect_detail), "%s",
                      out_host_receipt->status);
@@ -2291,14 +2359,14 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         }
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
-                     "Track02 payload handoff required before forcefield entry");
+                     "Track02 level route handoff required before forcefield entry");
         }
         return 0;
     }
 
-    return theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
+    if (!theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
         flow,
-        world,
+        &candidate_world,
         hucard_rom,
         hucard_rom_size,
         md5_hex,
@@ -2309,5 +2377,9 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         out_host_receipt,
         out_state_receipt,
         receipt,
-        receipt_cap);
+        receipt_cap)) {
+        return 0;
+    }
+    *world = candidate_world;
+    return 1;
 }

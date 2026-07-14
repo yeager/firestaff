@@ -5487,3 +5487,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   fails closed without a generated bitmap or dungeon fallback. The remaining
   gap is still a positive original capture that assigns actual dungeon-route
   semantics to this authenticated byte transfer.
+
+- 🔧 2026-07-14 authenticated Hall of Records route receiver: the completed
+  manifest-bound handoff now re-derives and compares the source-locked level-0
+  route before atomically publishing its loader-accepted grid to runtime. The
+  receiver rejects altered payloads, route hashes, source receipts, and any
+  object-tail or fallback flag. It deliberately receives no objects, bitmap,
+  palette, or broader transition interpretation; those require separate
+  original execution evidence.
