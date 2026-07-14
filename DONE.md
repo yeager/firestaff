@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `SOUND.C F0064/F0065`: pending-sound arbitration
+  now rejects undefined play modes, preserving only immediate/deferred source
+  states through tick and save/load. Verification: focused audio CTest.
+
 - 2026-07-14 CSB ReDMCSB `SOUND.C F0061`: the three PSG channel amplitudes
   now resolve through the original loud table with 4-bit index masking.
   Verification is included in the focused F0060/F0061 CTest.
