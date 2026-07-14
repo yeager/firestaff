@@ -1164,6 +1164,9 @@ static void probe_real_data_initial_candidate(const char *label,
     check_size("real initial level/object level offset in record",
                boundary.level_user_data_offset_in_record, 0x114u);
     check_size("real initial level/object level bytes", boundary.level_byte_count, 0x36cu);
+    check_u16("real initial level/object opaque header extension",
+              boundary.level_header_extension_be,
+              0x0103u);
     check_size("real initial level/object opaque boundary in record",
                boundary.object_boundary_user_data_offset_in_record, 0x480u);
     check_size("real initial level/object opaque tail bytes",
