@@ -28,6 +28,36 @@ static void check_nonnull(const char *id, const void *ptr)
     }
 }
 
+typedef struct FloorCeilingProviderFixture {
+    const uint8_t *ceiling;
+    const uint8_t *floor;
+} FloorCeilingProviderFixture;
+
+static int floor_ceiling_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    const FloorCeilingProviderFixture *fixture =
+        (const FloorCeilingProviderFixture *)user_data;
+
+    if (!fixture || !out_pixels || !out_width || !out_height) {
+        return 0;
+    }
+    if (graphic_index == -2 && fixture->ceiling) {
+        *out_pixels = fixture->ceiling;
+        *out_width = DM1_VIEWPORT_WIDTH;
+        *out_height = DM1_VIEWPORT_CEILING_H;
+        return 1;
+    }
+    if (graphic_index == -1 && fixture->floor) {
+        *out_pixels = fixture->floor;
+        *out_width = DM1_VIEWPORT_WIDTH;
+        *out_height = DM1_VIEWPORT_FLOOR_H;
+        return 1;
+    }
+    return 0;
+}
+
 static void test_redmcsb_g0163_wall_frames(void)
 {
     static const struct {
@@ -867,10 +897,9 @@ static void test_floor_ceiling_bands_and_zones(void)
      * ReDMCSB: DUNVIEW.C F0098 lines 2962-3004 clears
      * G0086_puc_Bitmap_ViewportBlackArea, copies the ceiling/floor bitmaps
      * through F0674_F0128_sub on PC34/I34E, then resets
-     * G0297_B_DrawFloorAndCeilingRequested.  Firestaff's current asset-free
-     * fallback must still keep the same row ownership: top black-area rows and
-     * the floor area are refreshed, while the intervening wall band is not
-     * over-cleared before the square draw walk.
+     * G0297_B_DrawFloorAndCeilingRequested. Without the source bitmaps only
+     * the original black-area clear is allowed; the floor cannot be replaced
+     * by a synthetic zero band.
      */
     check_int("F0098.viewport.width", DM1_VIEWPORT_WIDTH, 224);
     check_int("F0098.viewport.height", DM1_VIEWPORT_HEIGHT, 136);
@@ -898,11 +927,39 @@ static void test_floor_ceiling_bands_and_zones(void)
               viewport[DM1_VIEWPORT_BLACK_AREA_H * DM1_VIEWPORT_WIDTH + 17], 0x5a);
     check_int("F0098.pixel.wall_band_before_floor_preserved",
               viewport[(DM1_VIEWPORT_FLOOR_Y - 1) * DM1_VIEWPORT_WIDTH + 111], 0x5a);
-    check_int("F0098.pixel.floor_first_row_clear",
-              viewport[DM1_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 0], 0);
-    check_int("F0098.pixel.floor_last_row_clear",
-              viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 223], 0);
+    check_int("F0098.pixel.floor_first_row_no_provider_preserved",
+              viewport[DM1_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 0], 0x5a);
+    check_int("F0098.pixel.floor_last_row_no_provider_preserved",
+              viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 223], 0x5a);
     check_int("F0098.pixel.dirty_flag_reset", state.floor_ceiling_dirty ? 1 : 0, 0);
+}
+
+static void test_floor_ceiling_uses_real_provider_pixels(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t ceiling[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_CEILING_H];
+    uint8_t floor[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_FLOOR_H];
+    DM1_Viewport3DState state;
+    FloorCeilingProviderFixture fixture;
+
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(ceiling, 0x03, sizeof(ceiling));
+    memset(floor, 0x0c, sizeof(floor));
+    fixture.ceiling = ceiling;
+    fixture.floor = floor;
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    state.graphic_provider_callback = floor_ceiling_graphic_provider;
+    state.graphic_provider_user_data = &fixture;
+
+    dm1_viewport_3d_draw_floor_ceiling(&state);
+    check_int("F0098.provider.ceiling_real_pixel",
+              viewport[17 * DM1_VIEWPORT_WIDTH + 111], 0x03);
+    check_int("F0098.provider.black_tail_preserved",
+              viewport[DM1_VIEWPORT_CEILING_H * DM1_VIEWPORT_WIDTH + 111], 0);
+    check_int("F0098.provider.floor_real_pixel",
+              viewport[DM1_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 111], 0x0c);
+    check_int("F0098.provider.floor_last_real_pixel",
+              viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 111], 0x0c);
 }
 
 
@@ -4501,6 +4558,7 @@ int main(void)
     test_parity_flip_restore();
     test_wall_frame_bitmap_global_null_guard();
     test_floor_ceiling_bands_and_zones();
+    test_floor_ceiling_uses_real_provider_pixels();
     test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();
     test_same_viewport_capture_contract();

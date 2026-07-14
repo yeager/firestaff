@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0098 follow-up: bind the packaged M11 DM1 asset loader to
+  the viewport provider with verified map-floor-set graphic identities. Do not
+  add a default texture or fallback.
+
 - 2026-07-15 DM1/CSB ReDMCSB IMG2 boundary: F0685-F0689 are verified only
   for the PC 3.4 IMG3 command format. Any additional IMG2 caller needs its
   own original-format binding; the IMG3 decoder must never become a fallback.
