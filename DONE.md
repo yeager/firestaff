@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 original PC34 corpus runtime-stage receipt: every
+  classifier-qualified external snapshot now takes an additional immutable
+  `LOADSAVE.C` F0435 candidate-world pass before Firestaff's transient export.
+  Only a save carrying its own valid dungeon tail may publish an owned staged
+  runtime receipt, including the C13 count that reaches the runtime timeline.
+  Tail-less saves remain explicit non-runtime receipts; the corpus never
+  borrows a start dungeon or manufactures a fallback. The opt-in real-corpus
+  test checks this per file when `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is supplied.
+
 - ✅ 2026-07-14 DM1 PC34 F0435 dungeon-tail party-pose validation: after
   F0434 materializes a checksum-qualified saved dungeon into the candidate
   world, the original handoff now rejects PartyMapIndex/X/Y outside the saved

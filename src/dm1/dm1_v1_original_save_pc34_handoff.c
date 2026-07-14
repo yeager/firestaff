@@ -150,6 +150,50 @@ static void dm1_original_save_corpus_receipt_source_handoff(
         handoff_report.part_checksum_ok_count;
 }
 
+/* ReDMCSB: LOADSAVE.C F0435 lines 2721-2826 and 2932-2934 restore PARTY,
+ * EVENTS, TIMELINE, portraits, then the optional saved dungeon before the
+ * game returns live. Stage the immutable corpus snapshot through that exact
+ * candidate-world order, with no start-world backing. A tail-less save may
+ * still authenticate its parts, but cannot claim runtime readiness by
+ * borrowing host dungeon data. */
+static void dm1_original_save_corpus_receipt_runtime_stage(
+    const uint8_t *bytes,
+    size_t size,
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    struct GameWorld_Compat staged_world;
+    struct DM1_EventQueue_V1 staged_queue;
+    DM1OriginalSavePC34HandoffReport staged_report;
+    int i;
+
+    if (!bytes || !receipt) {
+        return;
+    }
+    memset(&staged_world, 0, sizeof(staged_world));
+    memset(&staged_queue, 0, sizeof(staged_queue));
+    memset(&staged_report, 0, sizeof(staged_report));
+    receipt->source_runtime_stage_attempted = 1;
+    receipt->source_runtime_stage_result =
+        dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+            bytes, size, &staged_world, &staged_queue, &staged_report);
+    if (receipt->source_runtime_stage_result ==
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        receipt->source_runtime_stage_owns_dungeon = staged_world.ownsDungeon &&
+            staged_world.dungeon != NULL && staged_world.things != NULL;
+        receipt->source_runtime_stage_event_count = staged_world.timeline.count;
+        receipt->source_runtime_stage_timeline_count = staged_queue.eventCount;
+        for (i = 0; i < staged_world.timeline.count; ++i) {
+            if (staged_world.timeline.events[i].kind ==
+                TIMELINE_EVENT_VI_ALTAR_REBIRTH) {
+                ++receipt->source_runtime_stage_c13_event_count;
+            }
+        }
+        receipt->source_runtime_stage_committed =
+            receipt->source_runtime_stage_owns_dungeon;
+    }
+    F0883_WORLD_Free_Compat(&staged_world);
+}
+
 /* C13/C24/C25 are subtype receipts. Core corpus proof instead requires the
  * complete C3 EVENT and C4 TIMELINE parts plus the optional raw F0433 tail. */
 static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
@@ -4918,6 +4962,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         }
         dm1_original_save_corpus_receipt_source_handoff(
             source_bytes, source_size, receipt);
+        dm1_original_save_corpus_receipt_runtime_stage(
+            source_bytes, source_size, receipt);
+        ++report.runtime_stage_attempted_count;
+        if (receipt->source_runtime_stage_committed) {
+            ++report.runtime_stage_succeeded_count;
+        } else if (receipt->source_runtime_stage_result ==
+                   DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+            ++report.runtime_stage_unavailable_count;
+        } else {
+            ++report.runtime_stage_failed_count;
+        }
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;
         receipt->roundtrip_attempted = 1;

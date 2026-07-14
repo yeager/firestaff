@@ -349,6 +349,17 @@ typedef struct {
     int source_handoff_result;
     int source_importer_result;
     int source_part_checksum_ok_count;
+    /* A second, no-fallback F0435 receipt stages the exact source snapshot
+     * through the candidate runtime world. It commits only when that source
+     * carries and materializes its own dungeon; tail-less saves are never
+     * paired with a host-created or borrowed start dungeon for corpus proof. */
+    int source_runtime_stage_attempted;
+    int source_runtime_stage_result;
+    int source_runtime_stage_committed;
+    int source_runtime_stage_owns_dungeon;
+    int source_runtime_stage_event_count;
+    int source_runtime_stage_c13_event_count;
+    int source_runtime_stage_timeline_count;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
@@ -504,6 +515,10 @@ typedef struct {
     int roundtrip_succeeded_count;
     int core_state_match_count;
     int roundtrip_failed_count;
+    int runtime_stage_attempted_count;
+    int runtime_stage_succeeded_count;
+    int runtime_stage_unavailable_count;
+    int runtime_stage_failed_count;
     /* Files below the corpus root that were deliberately not eligible for
      * F0435 import, including truncated/non-PC34 payloads. */
     int rejected_count;

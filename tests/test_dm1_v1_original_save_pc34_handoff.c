@@ -4586,6 +4586,12 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
           "every external PC34 corpus candidate roundtrips");
     CHECK(report.pc34_candidate_count > 0,
           "real PC34 corpus contains at least one external candidate");
+    CHECK(report.runtime_stage_attempted_count == report.pc34_candidate_count &&
+              report.runtime_stage_succeeded_count +
+                      report.runtime_stage_unavailable_count +
+                      report.runtime_stage_failed_count ==
+                  report.runtime_stage_attempted_count,
+          "real PC34 corpus records one no-fallback runtime stage per candidate");
     for (int i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
         CHECK(receipt->roundtrip_receipts_committed &&
@@ -4687,11 +4693,26 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
               receipt->dungeon_tail_byte_preservation_ok,
               "real PC34 corpus preserves each observed dungeon tail exactly");
         if (receipt->source_dungeon_tail_byte_count > 0u) {
+            CHECK(receipt->source_runtime_stage_attempted &&
+                  receipt->source_runtime_stage_result ==
+                      DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+                  receipt->source_runtime_stage_committed &&
+                  receipt->source_runtime_stage_owns_dungeon &&
+                  receipt->source_runtime_stage_c13_event_count ==
+                      receipt->source_c13_event_count &&
+                  receipt->source_runtime_stage_event_count >=
+                      receipt->source_runtime_stage_c13_event_count,
+                  "tail-backed real PC34 C13 reaches an owned staged runtime");
             CHECK(receipt->source_dungeon_tail_byte_count ==
                       receipt->exported_dungeon_tail_byte_count &&
                   receipt->source_dungeon_tail_fingerprint ==
                       receipt->exported_dungeon_tail_fingerprint,
                   "real PC34 corpus tail receipt retains raw byte identity");
+        } else {
+            CHECK(receipt->source_runtime_stage_attempted &&
+                  !receipt->source_runtime_stage_committed &&
+                  !receipt->source_runtime_stage_owns_dungeon,
+                  "tail-less real PC34 save cannot borrow a runtime dungeon");
         }
     }
 }
