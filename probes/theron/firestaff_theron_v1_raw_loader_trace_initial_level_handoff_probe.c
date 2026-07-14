@@ -109,6 +109,11 @@ int main(void)
         !handoff.complete_initial_level_envelope_proven ||
         !handoff.complete_payload_witness_proven ||
         handoff.complete_payload_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES ||
+        !handoff.loader_intake.observed ||
+        handoff.loader_intake.payload_intake_admitted ||
+        handoff.loader_intake.record != handoff.observed_track02_record ||
+        handoff.loader_intake.observed_payload_checksum !=
+            handoff.complete_payload_checksum ||
         handoff.object_tail_semantics_proven || handoff.fallback_visuals_allowed) {
         free(raw);
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
@@ -171,6 +176,14 @@ int main(void)
         return 1;
     }
     --coalesced.later_destination_payload_checksum;
+    coalesced.later_local_destination = 0x3900u;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt with a non-loader-intake destination admitted the level route\n");
+        return 1;
+    }
+    coalesced.later_local_destination = 0x3800u;
     coalesced.later_track02_record = 0x0b53u;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {
