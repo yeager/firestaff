@@ -40,6 +40,9 @@ static DM1_V1_StartupHoCBootProbeSummary_PC34 save_ready_summary(void) {
     summary.user_save_corpus_roundtrip_ready = 1;
     summary.user_save_corpus_roundtrip_verified = 3;
     summary.user_save_corpus_roundtrip_hash = 0x5a1e2026u;
+    summary.user_save_corpus_runtime_ready = 1;
+    summary.user_save_corpus_runtime_adopt_attempted = 3;
+    summary.user_save_corpus_runtime_adopt_succeeded = 3;
     snprintf(summary.user_save_corpus_first_pc34_path,
              sizeof(summary.user_save_corpus_first_pc34_path),
              "saves/pc34/DMSAVE.DAT");
@@ -77,6 +80,9 @@ int main(void) {
                           "roundtrip=1",
                           "roundtrip diagnostic");
     ok &= expect_contains(receipt.diagnostic,
+                          "runtime=1",
+                          "runtime adoption diagnostic");
+    ok &= expect_contains(receipt.diagnostic,
                           "verified=3",
                           "verified diagnostic");
     ok &= expect_contains(receipt.diagnostic,
@@ -90,6 +96,9 @@ int main(void) {
                           "first path diagnostic");
 
     failed.user_save_corpus_roundtrip_ready = 0;
+    failed.user_save_corpus_runtime_ready = 0;
+    failed.user_save_corpus_runtime_adopt_succeeded = 2;
+    failed.user_save_corpus_runtime_adopt_failed = 1;
     failed.user_save_corpus_roundtrip_failed = 1;
     failed.user_save_corpus_roundtrip_hash = 0x00bad5afu;
     failed.user_save_corpus_rejected = 2;
@@ -111,6 +120,9 @@ int main(void) {
     ok &= expect_contains(receipt.diagnostic,
                           "failed=1",
                           "failed count diagnostic");
+    ok &= expect_contains(receipt.diagnostic,
+                          "runtimeFailed=1",
+                          "runtime adoption failure diagnostic");
     ok &= expect_contains(receipt.diagnostic,
                           "hash=00bad5af",
                           "failed hash diagnostic");

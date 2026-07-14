@@ -1485,6 +1485,12 @@ int dm1_v1_startup_save_resume_capture_receipt_pc34(
         facts->observed_user_save_corpus_roundtrip_failed;
     receipt.user_save_corpus_roundtrip_hash =
         facts->observed_user_save_corpus_roundtrip_hash;
+    receipt.user_save_corpus_runtime_adopt_attempted =
+        facts->observed_user_save_corpus_runtime_adopt_attempted;
+    receipt.user_save_corpus_runtime_adopt_succeeded =
+        facts->observed_user_save_corpus_runtime_adopt_succeeded;
+    receipt.user_save_corpus_runtime_adopt_failed =
+        facts->observed_user_save_corpus_runtime_adopt_failed;
     receipt.user_save_corpus_rejected =
         facts->observed_user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -3372,12 +3378,26 @@ int dm1_v1_complete_support_receipt_pc34(
         original_save->user_save_corpus_roundtrip_verified ==
             original_save->user_save_corpus_part_envelope &&
         original_save->user_save_corpus_roundtrip_failed == 0;
+    /* ReDMCSB LOADSAVE.C F0435 returns to the game only after its staged
+     * dungeon and EVENTS/TIMELINE state become the live world. A byte
+     * roundtrip alone cannot advertise that runtime handoff. */
+    receipt.user_save_corpus_runtime_ready =
+        receipt.user_save_corpus_roundtrip_ready &&
+        original_save->user_save_corpus_runtime_adopt_succeeded ==
+            original_save->user_save_corpus_part_envelope &&
+        original_save->user_save_corpus_runtime_adopt_failed == 0;
     receipt.user_save_corpus_roundtrip_verified =
         original_save->user_save_corpus_roundtrip_verified;
     receipt.user_save_corpus_roundtrip_failed =
         original_save->user_save_corpus_roundtrip_failed;
     receipt.user_save_corpus_roundtrip_hash =
         original_save->user_save_corpus_roundtrip_hash;
+    receipt.user_save_corpus_runtime_adopt_attempted =
+        original_save->user_save_corpus_runtime_adopt_attempted;
+    receipt.user_save_corpus_runtime_adopt_succeeded =
+        original_save->user_save_corpus_runtime_adopt_succeeded;
+    receipt.user_save_corpus_runtime_adopt_failed =
+        original_save->user_save_corpus_runtime_adopt_failed;
     receipt.user_save_corpus_rejected =
         original_save->user_save_corpus_rejected;
     receipt.user_save_corpus_truncated =
@@ -3596,6 +3616,12 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
                 corpus_receipt.roundtrip_failed_count;
             save_facts.observed_user_save_corpus_roundtrip_hash =
                 corpus_receipt.roundtrip_hash;
+            save_facts.observed_user_save_corpus_runtime_adopt_attempted =
+                corpus_receipt.runtime_adopt_attempted_count;
+            save_facts.observed_user_save_corpus_runtime_adopt_succeeded =
+                corpus_receipt.runtime_adopt_succeeded_count;
+            save_facts.observed_user_save_corpus_runtime_adopt_failed =
+                corpus_receipt.runtime_adopt_failed_count;
             save_facts.observed_user_save_corpus_rejected =
                 corpus_receipt.rejected_count;
             save_facts.observed_user_save_corpus_truncated = 0;
@@ -3787,12 +3813,20 @@ int dm1_v1_startup_hoc_boot_probe_summary_pc34(
         receipt->complete_support.user_save_corpus_part_envelope_ready;
     summary.user_save_corpus_roundtrip_ready =
         receipt->complete_support.user_save_corpus_roundtrip_ready;
+    summary.user_save_corpus_runtime_ready =
+        receipt->complete_support.user_save_corpus_runtime_ready;
     summary.user_save_corpus_roundtrip_verified =
         receipt->complete_support.user_save_corpus_roundtrip_verified;
     summary.user_save_corpus_roundtrip_failed =
         receipt->complete_support.user_save_corpus_roundtrip_failed;
     summary.user_save_corpus_roundtrip_hash =
         receipt->complete_support.user_save_corpus_roundtrip_hash;
+    summary.user_save_corpus_runtime_adopt_attempted =
+        receipt->complete_support.user_save_corpus_runtime_adopt_attempted;
+    summary.user_save_corpus_runtime_adopt_succeeded =
+        receipt->complete_support.user_save_corpus_runtime_adopt_succeeded;
+    summary.user_save_corpus_runtime_adopt_failed =
+        receipt->complete_support.user_save_corpus_runtime_adopt_failed;
     summary.user_save_corpus_rejected =
         receipt->complete_support.user_save_corpus_rejected;
     summary.user_save_corpus_truncated =
@@ -3942,6 +3976,31 @@ int dm1_v1_startup_hoc_boot_probe_expectation_receipt_pc34(
                  summary->host_draw_consumes_backing_asset,
                  summary->host_draw_rejects_backing_fallback,
                  summary->no_host_fallback_visuals);
+    } else if (expectation ==
+               DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_ORIGINAL_SAVE_CORPUS_PC34) {
+        receipt.original_save_corpus_ready =
+            summary->user_save_corpus_pc34_ready &&
+            summary->user_save_corpus_part_envelope_ready &&
+            summary->user_save_corpus_roundtrip_ready &&
+            summary->user_save_corpus_runtime_ready;
+        receipt.ready = receipt.original_save_corpus_ready;
+        snprintf(receipt.diagnostic,
+                 sizeof(receipt.diagnostic),
+                 "originalSave=%d pc34=%d partEnvelope=%d roundtrip=%d runtime=%d verified=%d failed=%d runtimeAttempted=%d runtimeAdopted=%d runtimeFailed=%d hash=%08x rejected=%d truncated=%d firstPath=%s",
+                 summary->complete_original_save_roundtrip_route,
+                 summary->user_save_corpus_pc34_ready,
+                 summary->user_save_corpus_part_envelope_ready,
+                 summary->user_save_corpus_roundtrip_ready,
+                 summary->user_save_corpus_runtime_ready,
+                 summary->user_save_corpus_roundtrip_verified,
+                 summary->user_save_corpus_roundtrip_failed,
+                 summary->user_save_corpus_runtime_adopt_attempted,
+                 summary->user_save_corpus_runtime_adopt_succeeded,
+                 summary->user_save_corpus_runtime_adopt_failed,
+                 summary->user_save_corpus_roundtrip_hash,
+                 summary->user_save_corpus_rejected,
+                 summary->user_save_corpus_truncated,
+                 summary->user_save_corpus_first_pc34_path);
     } else {
         snprintf(receipt.diagnostic,
                  sizeof(receipt.diagnostic),
@@ -3981,7 +4040,7 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
     receipt.ready = 1;
     snprintf(receipt.fields,
              sizeof(receipt.fields),
-             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d",
+             "dm1HoCFullGraphicsReady=%d dm1HoCHostRenderPlanReady=%d dm1HoCCaptureProofPassed=%d dm1HoCRuntimeApplyReady=%d dm1HoCProductionConsumerReady=%d dm1HoCNoHostFallbackVisuals=%d dm1HoCRealAssetCapture=%d dm1HoCMacWindowCapture=%d dm1HoCReleaseAppCapture=%d dm1HoCHostCaptureRouteMatches=%d dm1HoCReleaseCaptureOwnershipReady=%d dm1HoCHostRenderConsumer=%d dm1HoCM11BootProbeConsumer=%d dm1HoCLaunchPathReady=%d dm1HoCRequiredAssetCapture=%d dm1HoCReceiptOnlyConsumerReady=%d dm1HoCLowerLevelHelpersReady=%d dm1HoCHostDrawUsesOwnedReceipt=%d dm1HoCHostDrawConsumesBackingAsset=%d dm1HoCHostDrawRejectsBackingFallback=%d dm1HoCHoCAssetCapture=%d dm1HoCHostWindowCapture=%d dm1HoCPresentedCapture=%d dm1HoCPresentedCaptureSize=%dx%d dm1HoCPresentedCaptureGeometry=%d dm1HoCPresentedCapturePixels=%d dm1HoCPresentedCaptureBytes=%d dm1HoCPresentedCaptureHash=%08x dm1HoCPresentedCaptureChain=%d dm1HoCPresentedCaptureConsumerMask=%x dm1HoCPresentedCaptureChainHash=%08x dm1HoCOpenedEntranceFrame=%d dm1HoCHallMirrorOverlay=%d dm1HoCBlockedEnterUntilChampion=%d dm1HoCMap=%dx%d dm1HoCRenderCommandCount=%d dm1CompleteSupportReady=%d dm1CompleteSourceVisibleStartup=%d dm1CompleteEntranceToHoC=%d dm1CompleteHoCRenderRoute=%d dm1CompleteHostAppCaptureRoute=%d dm1CompleteSaveCorpusRoute=%d dm1CompleteOriginalSaveRoundtripRoute=%d dm1UserSaveCorpusPC34=%d dm1UserSaveCorpusPartEnvelope=%d dm1UserSaveCorpusRoundtripReady=%d dm1UserSaveCorpusRoundtripVerified=%d dm1UserSaveCorpusRoundtripFailed=%d dm1UserSaveCorpusRoundtripHash=%08x dm1UserSaveCorpusRuntimeReady=%d dm1UserSaveCorpusRuntimeAdopted=%d dm1UserSaveCorpusRuntimeFailed=%d dm1UserSaveCorpusFirstPC34Path=%s",
              summary->full_graphics_ready,
              summary->host_render_plan_ready,
              summary->capture_proof_passed,
@@ -4026,7 +4085,17 @@ int dm1_v1_startup_hoc_boot_probe_log_receipt_pc34(
              summary->complete_hoc_render_route,
              summary->complete_host_app_capture_route,
              summary->complete_save_corpus_route,
-             summary->complete_original_save_roundtrip_route);
+             summary->complete_original_save_roundtrip_route,
+             summary->user_save_corpus_pc34_ready,
+             summary->user_save_corpus_part_envelope_ready,
+             summary->user_save_corpus_roundtrip_ready,
+             summary->user_save_corpus_roundtrip_verified,
+             summary->user_save_corpus_roundtrip_failed,
+             summary->user_save_corpus_roundtrip_hash,
+             summary->user_save_corpus_runtime_ready,
+             summary->user_save_corpus_runtime_adopt_succeeded,
+             summary->user_save_corpus_runtime_adopt_failed,
+             summary->user_save_corpus_first_pc34_path);
     *out_receipt = receipt;
     return 1;
 }
@@ -4114,6 +4183,30 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
     fields.complete_save_corpus_route = summary->complete_save_corpus_route;
     fields.complete_original_save_roundtrip_route =
         summary->complete_original_save_roundtrip_route;
+    fields.user_save_corpus_pc34_ready = summary->user_save_corpus_pc34_ready;
+    fields.user_save_corpus_part_envelope_ready =
+        summary->user_save_corpus_part_envelope_ready;
+    fields.user_save_corpus_roundtrip_ready =
+        summary->user_save_corpus_roundtrip_ready;
+    fields.user_save_corpus_runtime_ready =
+        summary->user_save_corpus_runtime_ready;
+    fields.user_save_corpus_roundtrip_verified =
+        summary->user_save_corpus_roundtrip_verified;
+    fields.user_save_corpus_roundtrip_failed =
+        summary->user_save_corpus_roundtrip_failed;
+    fields.user_save_corpus_roundtrip_hash =
+        summary->user_save_corpus_roundtrip_hash;
+    fields.user_save_corpus_runtime_adopt_attempted =
+        summary->user_save_corpus_runtime_adopt_attempted;
+    fields.user_save_corpus_runtime_adopt_succeeded =
+        summary->user_save_corpus_runtime_adopt_succeeded;
+    fields.user_save_corpus_runtime_adopt_failed =
+        summary->user_save_corpus_runtime_adopt_failed;
+    fields.user_save_corpus_rejected = summary->user_save_corpus_rejected;
+    fields.user_save_corpus_truncated = summary->user_save_corpus_truncated;
+    snprintf(fields.user_save_corpus_first_pc34_path,
+             sizeof(fields.user_save_corpus_first_pc34_path),
+             "%s", summary->user_save_corpus_first_pc34_path);
     *out_fields = fields;
     return 1;
 }

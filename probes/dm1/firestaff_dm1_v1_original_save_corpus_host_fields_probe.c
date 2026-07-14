@@ -55,6 +55,9 @@ int main(void) {
     summary.user_save_corpus_roundtrip_verified = 4;
     summary.user_save_corpus_roundtrip_failed = 0;
     summary.user_save_corpus_roundtrip_hash = 0x7eed5a1eu;
+    summary.user_save_corpus_runtime_ready = 1;
+    summary.user_save_corpus_runtime_adopt_attempted = 4;
+    summary.user_save_corpus_runtime_adopt_succeeded = 4;
     summary.user_save_corpus_rejected = 2;
     summary.user_save_corpus_truncated = 1;
     snprintf(summary.user_save_corpus_first_pc34_path,
@@ -91,6 +94,12 @@ int main(void) {
     ok &= expect_uint(fields.user_save_corpus_roundtrip_hash,
                       0x7eed5a1eu,
                       "roundtrip hash");
+    ok &= expect_int(fields.user_save_corpus_runtime_ready,
+                     1,
+                     "runtime ready");
+    ok &= expect_int(fields.user_save_corpus_runtime_adopt_succeeded,
+                     4,
+                     "runtime adopted");
     ok &= expect_int(fields.user_save_corpus_rejected, 2, "rejected");
     ok &= expect_int(fields.user_save_corpus_truncated, 1, "truncated");
     ok &= expect_string(fields.user_save_corpus_first_pc34_path,
@@ -98,7 +107,9 @@ int main(void) {
                         "first PC34 path");
 
     summary.user_save_corpus_roundtrip_ready = 0;
+    summary.user_save_corpus_runtime_ready = 0;
     summary.user_save_corpus_roundtrip_failed = 1;
+    summary.user_save_corpus_runtime_adopt_failed = 1;
     summary.user_save_corpus_roundtrip_hash = 0x00c0ffeeu;
 
     memset(&fields, 0, sizeof(fields));
@@ -115,6 +126,12 @@ int main(void) {
     ok &= expect_uint(fields.user_save_corpus_roundtrip_hash,
                       0x00c0ffeeu,
                       "failed roundtrip hash");
+    ok &= expect_int(fields.user_save_corpus_runtime_ready,
+                     0,
+                     "failed runtime ready");
+    ok &= expect_int(fields.user_save_corpus_runtime_adopt_failed,
+                     1,
+                     "failed runtime adoption");
 
     return ok ? 0 : 1;
 }
