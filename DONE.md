@@ -15729,6 +15729,14 @@ draw semantics are granted, and the no-draw barrier remains active.
 Verification: `test_nexus_v1_dgn_geometry_readiness` covers the active route
 and mutation rejection.
 
+# ✅ 2026-07-14 Nexus active LEV Structure3 directory receipt
+
+The engine now exposes the active canonical LEV's bounded Structure3 directory
+with the exact retained source-byte FNV for capture tooling. This is a
+source-owned no-draw catalog only; it does not decode texture, palette, VDP1,
+transform, or drawing semantics. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the

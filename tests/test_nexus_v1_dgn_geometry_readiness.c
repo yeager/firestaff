@@ -2224,6 +2224,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnStructure3Vector live_normals[2];
         Nexus_V1_DgnStructure3MeshEntryReceipt live_mesh;
         Nexus_V1_DgnActiveLevelRendererSourceReceipt active_source;
+        Nexus_V1_DgnActiveStructure3DirectoryReceipt active_directory;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_Viewport viewport;
 
@@ -2242,6 +2243,16 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(dgn, sizeof(dgn));
+        CHECK(nexus_v1_current_level_structure3_directory_receipt(
+                  &engine, &active_directory) == 1 && active_directory.valid &&
+              active_directory.level_index == 0 &&
+              active_directory.source_byte_count == (int)sizeof(dgn) &&
+              active_directory.source_bytes_fnv1a64 == fnv1a64(dgn, sizeof(dgn)) &&
+              active_directory.directory.valid &&
+              active_directory.directory.entry_count == 2 &&
+              active_directory.no_draw_only &&
+              !active_directory.fallback_visuals_permitted,
+              "active canonical LEV exposes a bounded Structure3 directory without texture or draw semantics");
         memset(&active_source, 0, sizeof(active_source));
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 1 &&
