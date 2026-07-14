@@ -239,6 +239,11 @@
   `(component << 2) + 3` expansion and republishes via F8156 only when the
   curtain is active. Focused strict-C11 logical/DAC/VBlank test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
+  transfer. The adapter binds the caller's real packed source and delegates
+  unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused
+  strict-C11 test covers odd source origin, palette bank, and bounds.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8169: source-locked PC 3.4 C25 LFSR
   blackening. The adapter retains seed `1`, polynomial `0xB400`, the `<64000`
   source gate, and the explicit final pixel-zero write through C25's viewport
