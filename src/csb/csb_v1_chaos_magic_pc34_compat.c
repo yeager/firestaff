@@ -923,12 +923,42 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, w * v)) goto underflow;
         break;
+    case 48u: /* STKOP_Loc2AbsCoord */
+        /* CSBWin DSA.cpp:3253-3268 constructs LOCATIONREL from the source
+         * packed integer, assigns it to LOCATIONABS, then pushes level, X,
+         * Y, and position in that order.  The packed layout is the same
+         * LOCATIONREL::Integer form already used by master_location. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                            (v >> 10) & 0x3fu) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                            (v >> 5) & 0x1fu) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, v & 0x1fu) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                            (v >> 16) & 0x03u)) {
+            goto underflow;
+        }
+        break;
     case 139u: /* STKOP_NumParam, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:4949-4955 pushes pDSAparameters[0].  Firestaff's
          * authenticated filter context keeps that source count separately
          * from its A..Z payload, so no world or filter state is invented. */
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
                                            (uint32_t)parameter_count)) {
+            goto underflow;
+        }
+        break;
+    case 108u: /* STKOP_BitCount */
+        /* DSA.cpp:4832-4848 sums the eight four-bit entries in bitCounts.
+         * Use the equivalent exact population count here; this stays wholly
+         * inside the authenticated source stack and needs no world owner. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        v = (v & 0x55555555u) + ((v >> 1) & 0x55555555u);
+        v = (v & 0x33333333u) + ((v >> 2) & 0x33333333u);
+        v = (v + (v >> 4)) & 0x0f0f0f0fu;
+        v += v >> 8;
+        v += v >> 16;
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v & 0x3fu)) {
             goto underflow;
         }
         break;
