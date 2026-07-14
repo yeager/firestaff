@@ -490,32 +490,11 @@ int main(void)
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
-              plan.fallback_title_x == 38 &&
-              plan.fallback_title_y == 52 &&
-              plan.fallback_title_style == 1 &&
-              strcmp(plan.fallback_title_text, "FTL PRESENTS") == 0 &&
-              plan.title_empty_fallback_x == 38 &&
-              plan.title_empty_fallback_y == 90 &&
-              plan.title_empty_fallback_style == 1 &&
-              strcmp(plan.title_empty_fallback_text, "FTL PRESENTS") == 0 &&
-              plan.fallback_subtitle_x == 38 &&
-              plan.fallback_subtitle_y == 86 &&
-              plan.fallback_subtitle_style == 2 &&
-              strcmp(plan.fallback_subtitle_text, "CHAOS") == 0 &&
-              plan.fallback_prompt_x == 38 &&
-              plan.fallback_prompt_y == 112 &&
-              plan.fallback_prompt_style == 3 &&
-              strcmp(plan.fallback_prompt_text, "STRIKES BACK") == 0 &&
-              plan.fallback_text_row_count == 3 &&
-              plan.fallback_text_rows[0].visible &&
-              plan.fallback_text_rows[0].x == 38 &&
-              plan.fallback_text_rows[0].y == 52 &&
-              plan.fallback_text_rows[0].style == 1 &&
-              strcmp(plan.fallback_text_rows[0].text, "FTL PRESENTS") == 0 &&
-              plan.fallback_text_rows[1].visible &&
-              strcmp(plan.fallback_text_rows[1].text, "CHAOS") == 0 &&
-              plan.fallback_text_rows[2].visible &&
-              strcmp(plan.fallback_text_rows[2].text, "STRIKES BACK") == 0 &&
+              plan.fallback_title_text == NULL &&
+              plan.fallback_subtitle_text == NULL &&
+              plan.fallback_prompt_text == NULL &&
+              plan.title_empty_fallback_text == NULL &&
+              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -532,7 +511,7 @@ int main(void)
               plan.asset_commands[0].dest_y == 90 &&
               plan.asset_commands[0].transparent_color == -1 &&
               !plan.waiting_for_input,
-          "startup render plan owns title PRESENTS surface, boxes, palette, fallback rows, asset blit, and primitive clear");
+          "startup render plan owns real PRESENTS region, palette, asset blit, and primitive clear without text fallback");
     check(plan.render_command_count == 2 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
