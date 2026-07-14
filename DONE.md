@@ -17,6 +17,18 @@
   partial receipts retain the V2.1 source route. Verification:
   `dm1_v22_finished_pack_receipt_pc34`.
 
+- 2026-07-14 DM1 V2.1 selected-resolution EPX presentation: the live M11
+  render route now applies Scale2x/EPX before it uses the selected V2.1 target
+  resolution, rather than returning early with a fixed 640x400 surface. The
+  same ordering applies to normal and special-palette frames, so the
+  renderer-owned presented RGBA buffer and the in-game F12 capture agree with
+  the active V2.1 surface. The focused actual-render screenshot probe exercises
+  the production EPX route at 640x400 and 960x600; the launcher-to-game
+  presentation target contract remains green. This is host-side presentation
+   behavior only, not a packaged-app or original-asset visual-capture claim.
+   Verification: `firestaff_dm1_v2_actual_render_screenshot_probe` and
+   `test_m11_game_presentation_target_pc34_compat`.
+
 - 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
   now admits pixels only when the finished-art material gate resolves the
   boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that

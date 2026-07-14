@@ -1850,6 +1850,21 @@ int M11_Render_PresentEpxIndexed(const unsigned char* framebuffer,
                                      logicalHeight * 2);
 }
 
+int M11_Render_PresentEpxIndexedToResolution(const unsigned char* framebuffer,
+                                             int logicalWidth,
+                                             int logicalHeight,
+                                             int targetWidth,
+                                             int targetHeight) {
+    if (!m11_epx_expand_indexed(framebuffer, logicalWidth, logicalHeight)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    return M11_Render_PresentIndexedToResolution(g_epx_present_buffer,
+                                                 logicalWidth * 2,
+                                                 logicalHeight * 2,
+                                                 targetWidth,
+                                                 targetHeight);
+}
+
 
 int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
                                                 int logicalWidth,
@@ -1994,6 +2009,25 @@ int M11_Render_PresentEpxIndexedWithSpecialPalette(
                                                         logicalWidth * 2,
                                                         logicalHeight * 2,
                                                         specialPalette);
+}
+
+int M11_Render_PresentEpxIndexedToResolutionWithSpecialPalette(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
+    int specialPalette) {
+    if (!m11_epx_expand_indexed(framebuffer, logicalWidth, logicalHeight)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    return M11_Render_PresentIndexedToResolutionWithSpecialPalette(
+        g_epx_present_buffer,
+        logicalWidth * 2,
+        logicalHeight * 2,
+        targetWidth,
+        targetHeight,
+        specialPalette);
 }
 
 int M11_Render_PresentRGBA(const unsigned char* rgba,
