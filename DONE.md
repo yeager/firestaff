@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `OBJECT.C F0037`: source-owned icon pixels now
+  blit into the PC34 screen with source-key transparency, row stride, lookup,
+  and bounds rejection. Verification: focused 9-assertion CTest.
+
 - 2026-07-14 CSB ReDMCSB `SOUND.C F0064/F0065`: pending-sound arbitration
   now rejects undefined play modes, preserving only immediate/deferred source
   states through tick and save/load. Verification: focused audio CTest.
