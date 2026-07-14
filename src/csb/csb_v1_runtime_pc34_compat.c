@@ -18791,8 +18791,17 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     if (timer_index >= profile->csbwin_timer_summary_count) return 0;
     timer = &profile->csbwin_timers[timer_index];
     event = &profile->timeline_queue.events[event_index];
-    if ((timer->function != 60u && timer->function != 61u) ||
-        !timer->valid || timer->truncated ||
+    if (timer->function != 60u && timer->function != 61u) {
+        return 0;
+    }
+
+    /* timerObj8 is a CSBWin Thing handle, whereas the shared M10 C60/C61
+     * handler treats the same bytes as generic event payload. Once a live
+     * queue slot names a saved TT_60/TT_61, every unsupported source shape
+     * must be consumed here. Only the narrow, fully authenticated branch
+     * below may requeue it; no rejected receipt may fall through and acquire
+     * a different M10 group mutation. */
+    if (!timer->valid || timer->truncated ||
         timer->source_index != timer_index ||
         event->type != timer->function ||
         DM1_MAP_TIME_MAP(event->map_time) != timer->level ||
@@ -18800,7 +18809,7 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
         event->priority != timer->ubyte5 || event->b_mapX != timer->ubyte6 ||
         event->b_mapY != timer->ubyte7 || event->c_cell != timer->ubyte8 ||
         event->c_effect != timer->ubyte9) {
-        return 0;
+        return 1;
     }
 
     /* ProcessTimer60and61 only reaches this deterministic requeue when the
@@ -18809,7 +18818,7 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
      * Lord Chaos random detour require source state not retained here. */
     if (profile->current_level != timer->level ||
         profile->party_x != timer->ubyte6 || profile->party_y != timer->ubyte7) {
-        return 0;
+        return 1;
     }
     dungeon = profile->dungeon_handle;
     group_thing = (uint16_t)timer->ubyte8 | ((uint16_t)timer->ubyte9 << 8);
@@ -18818,7 +18827,7 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     if (!group_record || thing_type != CSB_V1_THING_TYPE_GROUP ||
         thing_size < 16 || group_record[4] == 0x17u ||
         timer->time > 0x00fffffau) {
-        return 0;
+        return 1;
     }
 
     memset(&next, 0, sizeof(next));
@@ -18830,7 +18839,7 @@ static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     next.c_cell = timer->ubyte8;
     next.c_effect = timer->ubyte9;
     successor_index = csb_v1_runtime_add_timeline_event(profile, &next);
-    if (successor_index < 0 || successor_index >= DM1_EVENT_MAX_COUNT) return 0;
+    if (successor_index < 0 || successor_index >= DM1_EVENT_MAX_COUNT) return 1;
 
     /* Commit only after the source successor owns a live M10 queue slot. */
     timer->time += 5u;
