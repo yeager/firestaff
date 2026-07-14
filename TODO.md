@@ -9,6 +9,17 @@
   require separate original-Saturn proof. A missing or altered lane cannot
   replace a previously admitted runtime source.
 
+- 2026-07-14 Nexus Structure3 capture-producer follow-up: the source-bound
+  session launcher now invokes an external instrumented emulator/tracer with
+  the exact canonical target and six immutable output paths. It accepts only
+  a producer-written manifest whose DGN, mesh, entry, face, vertex, normal,
+  and fill-selector witnesses match that target, and whose raw lane sizes
+  match the manifest. It deliberately does not attest Saturn provenance,
+  import runtime bytes, infer VDP1/texture/palette semantics, or draw. The
+  installed Mednafen binary does not emit the six lane artifacts, so the next
+  evidence remains one authenticated run from a suitably instrumented Saturn
+  producer.
+
 - 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
   receipt inspection is deliberately separate from the live Soul Room
   Stage 2/3 admission. The latter still requires original physical-media

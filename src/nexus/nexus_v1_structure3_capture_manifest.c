@@ -235,6 +235,35 @@ int nexus_v1_dgn_structure3_capture_target_write(
     return rename(temporary_path, path) == 0;
 }
 
+int nexus_v1_dgn_structure3_capture_target_matches_manifest(
+    const Nexus_V1_DgnStructure3CaptureTargetReceipt *target,
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest)
+{
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *expected;
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *observed;
+
+    if (!target || !manifest || !target->valid || !target->capture_producer_required ||
+        !target->original_saturn_capture_required || !target->no_draw_only ||
+        target->fallback_visuals_permitted || !manifest->valid ||
+        !manifest->complete || manifest->original_saturn_capture_verified ||
+        manifest->renderer_handoff_ready || !manifest->blocks_real_dgn_mesh_render)
+        return 0;
+    expected = &target->candidate;
+    observed = &manifest->candidate;
+    return expected->dgn_fnv1a64 == observed->dgn_fnv1a64 &&
+        expected->structure3_payload_fnv1a32 ==
+            observed->structure3_payload_fnv1a32 &&
+        expected->typed_mesh_corpus_fnv1a32 ==
+            observed->typed_mesh_corpus_fnv1a32 &&
+        expected->entry_index == observed->entry_index &&
+        expected->face_ordinal == observed->face_ordinal &&
+        expected->face_row_fnv1a32 == observed->face_row_fnv1a32 &&
+        expected->referenced_vertex_rows_fnv1a32 ==
+            observed->referenced_vertex_rows_fnv1a32 &&
+        expected->normal_row_fnv1a32 == observed->normal_row_fnv1a32 &&
+        expected->fill_selector == observed->fill_selector;
+}
+
 static uint64_t capture_bundle_fnv1a64(
     const Nexus_V1_DgnStructure3CaptureImport *capture)
 {
