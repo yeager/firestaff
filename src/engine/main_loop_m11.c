@@ -981,6 +981,16 @@ static M11_EntranceCommand m11_entrance_route_framebuffer_pointer(int fbX,
                                                                               buttonMask);
 }
 
+/* ReDMCSB ENTRANCE.C -> COMMAND.C pointer route exported for the focused
+ * HiDPI gate. The event loop uses the same framebuffer-space helper. */
+int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
+                                                    int framebufferY,
+                                                    unsigned int buttonMask) {
+    return ENTRANCE_Compat_DispatchMouseRouteCommand(framebufferX,
+                                                      framebufferY,
+                                                      buttonMask);
+}
+
 static M11_EntranceCommand m11_entrance_route_window_pointer(int windowX,
                                                             int windowY,
                                                             unsigned int buttonMask) {
