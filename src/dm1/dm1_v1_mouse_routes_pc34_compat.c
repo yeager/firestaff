@@ -103,7 +103,13 @@ static const DM1_V1_MouseRoutePc34Compat kInventoryRoutes[] = {
     { 63, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 542, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 64, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 543, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 65, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 544, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 81, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101, DM1_V1_MOUSE_MASK_LEFT_PC34 }
+    { 81, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    /* COMMAND.C:413-417 inventory control icons.  These are viewport
+     * relative even though their source boxes sit above the dungeon view. */
+    { 140, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 562, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 145, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 564, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 11,  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 566, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 141, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 565, DM1_V1_MOUSE_MASK_LEFT_PC34 }
 };
 
 static int dm1_v1_mouse_routes_for_list(
@@ -348,6 +354,36 @@ static int dm1_v1_mouse_route_zone_rect_pc34(int zoneId,
         if (outW) *outW = 16;
         if (outH) *outH = 16;
         return 1;
+    }
+    if (zoneId >= 562 && zoneId <= 566) {
+        switch (zoneId) {
+            case 562: /* save */
+                if (outX) *outX = 179;
+                if (outY) *outY = 2;
+                if (outW) *outW = 11;
+                if (outH) *outH = 11;
+                return 1;
+            case 564: /* rest */
+                if (outX) *outX = 190;
+                if (outY) *outY = 2;
+                if (outW) *outW = 19;
+                if (outH) *outH = 11;
+                return 1;
+            case 565: /* music */
+                if (outX) *outX = 168;
+                if (outY) *outY = 3;
+                if (outW) *outW = 9;
+                if (outH) *outH = 9;
+                return 1;
+            case 566: /* close */
+                if (outX) *outX = 209;
+                if (outY) *outY = 2;
+                if (outW) *outW = 11;
+                if (outH) *outH = 11;
+                return 1;
+            default:
+                break;
+        }
     }
     return 0;
 }

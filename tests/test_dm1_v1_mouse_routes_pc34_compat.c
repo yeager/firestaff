@@ -86,7 +86,7 @@ int main(void) {
               8,
               "movement route count");
     ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(DM1_V1_MOUSE_LIST_INVENTORY_PC34),
-              50,
+              54,
               "inventory route count");
 
     assert_route(DM1_V1_MOUSE_LIST_INTERFACE_PC34, 0, 20,

@@ -17366,6 +17366,32 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         }
+
+        /* ReDMCSB COMMAND.C F0380 routes the four visible inventory-panel
+         * controls after the slot/mouth/eye lanes: C141 toggles music,
+         * C140 enters the save path, C145 starts/restores resting, and C011
+         * closes the panel.  The hit table was already source-locked, but
+         * without this dispatch the visible icons were inert. */
+        if (command == 141 && zoneId == 565) {
+            int musicOn = M11_GameView_ToggleMusic(state);
+            m11_set_status(state, "MUSIC", musicOn ? "MUSIC ON" : "MUSIC OFF");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (command == 140 && zoneId == 562) {
+            /* C140 leaves the inventory route before LOADSAVE takes over. */
+            state->inventoryPanelActive = 0;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_SAVE_GAME);
+        }
+        if (command == 145 && zoneId == 564) {
+            /* C145 switches to the resting input list, not the inventory
+             * overlay's local navigation list. */
+            state->inventoryPanelActive = 0;
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_REST_TOGGLE);
+        }
+        if (command == 11 && zoneId == 566) {
+            M11_GameView_ToggleInventoryPanel(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
     }
 
     /* The procedural utility-panel buttons (inspect / save /
@@ -35355,10 +35381,14 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
      * the controls behind the source-font glyphs. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+    /* C009 is stored for the physical G0000 spell box, not the smaller
+     * C013 input zone.  ReDMCSB CASTER.C F0394 blits all 96x33 pixels at
+     * 224,42; validating it as the 87x25 interactive interior rejects the
+     * original asset and leaves the spell HUD black. */
     if (!m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
-        87, 25, spellX, spellY)) {
+        spellW, spellH, spellX, spellY)) {
         return;
     }
     if (!m11_blit_panel_asset_region_native(state,
