@@ -21,6 +21,36 @@ static int16_t read_le16s(const uint8_t *bytes)
     return (int16_t)read_le16(bytes);
 }
 
+uint32_t dm2_v1_gdat_scene_m11_command_pixel_hash(
+    const DM2_V1_GdatSceneM11Command *command)
+{
+    if (!command || !command->pixels || command->width == 0u ||
+        command->height == 0u) {
+        return 0u;
+    }
+    return hash_bytes(2166136261u, command->pixels,
+                      (size_t)command->width * command->height);
+}
+
+uint32_t dm2_v1_gdat_scene_m11_command_geometry_hash(
+    const DM2_V1_GdatSceneM11Command *command,
+    const DM2_V1_GdatSceneBlitRect *rect)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!command || !rect || command->width == 0u || command->height == 0u ||
+        rect->width != command->width || rect->height != command->height ||
+        rect->x < 0 || rect->y < 0) {
+        return 0u;
+    }
+    hash = hash_bytes(hash, &command->field, sizeof(command->field));
+    hash = hash_bytes(hash, (const uint8_t *)&command->width,
+                      sizeof(command->width));
+    hash = hash_bytes(hash, (const uint8_t *)&command->height,
+                      sizeof(command->height));
+    return hash_bytes(hash, (const uint8_t *)rect, sizeof(*rect));
+}
+
 uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
     const DM2_V1_GdatSceneQueryBlitRectReceipt *receipt)
 {
@@ -212,8 +242,13 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
         }
         command->width = (uint16_t)width; command->height = (uint16_t)height;
         command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
-        if (!command->raw_hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }
+        command->decoded_hash = dm2_v1_gdat_scene_m11_command_pixel_hash(command);
+        if (!command->raw_hash || !command->decoded_hash) {
+            dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0;
+        }
         hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash, sizeof(command->raw_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&command->decoded_hash,
+                          sizeof(command->decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash, sizeof(command->palette_hash));
     }
     {
@@ -232,8 +267,18 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
                 dm2_v1_gdat_scene_m11_command_plan_free(&candidate);
                 return 0;
             }
+            candidate.commands[i].geometry_hash =
+                dm2_v1_gdat_scene_m11_command_geometry_hash(
+                    &candidate.commands[i], &candidate.rects[i]);
+            if (!candidate.commands[i].geometry_hash) {
+                dm2_v1_gdat_scene_m11_command_plan_free(&candidate);
+                return 0;
+            }
             hash = hash_bytes(hash, (const uint8_t *)&candidate.rects[i],
                               sizeof(candidate.rects[i]));
+            hash = hash_bytes(hash,
+                              (const uint8_t *)&candidate.commands[i].geometry_hash,
+                              sizeof(candidate.commands[i].geometry_hash));
         }
     }
     hash = hash_bytes(hash,

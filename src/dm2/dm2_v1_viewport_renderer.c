@@ -3491,7 +3491,22 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 !floor->pixels || !ceiling->pixels ||
                 floor->width == 0u || floor->height == 0u ||
                 ceiling->width == 0u || ceiling->height == 0u ||
+                floor->decoded_hash == 0u || ceiling->decoded_hash == 0u ||
                 floor->palette_hash == 0u || ceiling->palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            if (floor->decoded_hash !=
+                    dm2_v1_gdat_scene_m11_command_pixel_hash(floor) ||
+                ceiling->decoded_hash !=
+                    dm2_v1_gdat_scene_m11_command_pixel_hash(ceiling) ||
+                floor->geometry_hash == 0u || ceiling->geometry_hash == 0u ||
+                floor->geometry_hash !=
+                    dm2_v1_gdat_scene_m11_command_geometry_hash(floor, floor_rect) ||
+                ceiling->geometry_hash !=
+                    dm2_v1_gdat_scene_m11_command_geometry_hash(
+                        ceiling, ceiling_rect)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;

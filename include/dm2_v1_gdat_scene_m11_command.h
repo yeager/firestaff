@@ -11,7 +11,9 @@ typedef struct {
     DM2_ImageFormat format;
     uint8_t palette16[16];
     uint32_t raw_hash;
+    uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint32_t geometry_hash;
 } DM2_V1_GdatSceneM11Command;
 
 typedef struct {
@@ -84,6 +86,11 @@ int dm2_v1_gdat_scene_query_blit_rect_receipt(
     DM2_V1_GdatSceneQueryBlitRectReceipt *out_receipt);
 uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
     const DM2_V1_GdatSceneQueryBlitRectReceipt *receipt);
+uint32_t dm2_v1_gdat_scene_m11_command_pixel_hash(
+    const DM2_V1_GdatSceneM11Command *command);
+uint32_t dm2_v1_gdat_scene_m11_command_geometry_hash(
+    const DM2_V1_GdatSceneM11Command *command,
+    const DM2_V1_GdatSceneBlitRect *rect);
 void dm2_v1_gdat_scene_m11_command_plan_free(
     DM2_V1_GdatSceneM11CommandPlan *plan);
 
