@@ -479,8 +479,11 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
              "producer=mednafen-debugger\n"
              "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
              "raw_trace_fnv1a64=%llx\nlevel_index=0\n"
+             "canonical_slev_name=SLEV00.BIN\n"
              "canonical_slev_md5=59c01cbdd224152a6176687cdebeea9e\n"
-             "source_byte_count=60\nentry_opcode=2fe6\nentry_pc=06001200\n"
+             "source_byte_count=60\ntask_header_size=24\nentry_opcode=2fe6\n"
+             "primary_literal_address=00202734\nauxiliary_literal_address=00202840\n"
+             "entry_pc=06001200\n"
              "task_body_pc=06001224\ntask_body_opcode=430b\n"
              "callback_or_write_pc=06001280\ncallback_or_write_kind=write\n"
              "original_saturn_execution=1\n",
