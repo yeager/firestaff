@@ -23,6 +23,11 @@
   temporary configuration from silently using an unverified PCE mapping. The
   real mapped US capture remained fail-closed because SDL reported no event.
 
+- 2026-07-14 Theron SDL-surface focus provenance: host capture now records an
+  explicit `cliclick` screen-focus coordinate before PID-bound key delivery.
+  The real US capture recorded that focus but no SDL key event, so it remains
+  insufficient for any later CD_READ, dungeon, object, or visual promotion.
+
 - 2026-07-14 CSB ReDMCSB F0657/F0658 bitmap-index viewport bridge: added
   the PC34 F0630 `STRUCT2` bitmap-origin path and the F0658 F0635-relative
   zone-offset path before F0132 dispatch. Bitmap lookup, layout resolution,
