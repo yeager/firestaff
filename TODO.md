@@ -1034,6 +1034,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     blank poll: leave an active blank, then wait for the following one. The
     live SDL/Mac VBlank-status provider and frame presentation remain
     separately unproven.
+  - 2026-07-14 VIDEODRV.C F8139 now preserves C25's direct packed-4bpp
+    source-to-aperture loop, including source parity and bytewise G8177 OR.
+    Binding the logical aperture to live SDL/Mac presentation remains
+    separately unproven.
   - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
     from one 320-byte row above, including its source-visible propagation for
     spans larger than a row. Binding this logical aperture effect to live

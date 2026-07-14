@@ -289,6 +289,11 @@
   order: wait out an existing blank, then wait for the next blank. Focused
   strict-C11 polling-order test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8139: source-locked PC 3.4 C25 packed-pixel
+  aperture transfer. The adapter preserves source-nibble parity and raw
+  `G8177 | nibble` writes, including unnormalized OR behavior. Focused
+  strict-C11 transfer and bounds test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
   unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused

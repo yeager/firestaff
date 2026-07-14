@@ -1953,7 +1953,7 @@ F	8132	F8132_GetRandomSeed	IBMIO.C	missing	unmapped_or_unverified	no exact ident
 F	8133	F8133_ReadFloppySector	IBMIO.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	8134	F8134_ExecuteProgramWithParameters	IBMIO.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	8137	F8137_SetMultiplePixels	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	8139	F8139_Unreferenced	VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	8139	F8139_Unreferenced	VIDEODRV.C	implemented-narrow	redmcsb_f8139_copy_packed_pixels_c25_pc34_compat	PC 3.4 C25 packed-4bpp source to viewport-bank OR aperture transfer ported and focused-tested
 F	8140	F8140_ScrollMessageAreaUp	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8140_scroll_message_area_up_pc34_compat	PC 3.4 source-defined overlap-copy direction is ported and focused-tested
 F	8143	F8143_CopyPixelLineFromScreenWithoutTransparency	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8143_copy_pixel_line_from_screen_pc34_compat	PC 3.4 C25 aperture packed-readback ported and focused-tested
 F	8144	F8144_CopyPixelLineFromScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
