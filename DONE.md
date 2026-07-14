@@ -3,6 +3,12 @@
 - 2026-07-14 CSB ReDMCSB F0676/F0677 D3 side dispatcher: added PC D3L2/D3R2
   ordering for walls, stairs, doors, pits, corridors, and teleporters over
   caller-owned rendering callbacks. Focused strict-C11 regression passes.
+- 2026-07-14 Nexus Structure3 runtime raw-capture intake: connected the
+  verified external manifest/sidecar path to the active canonical-LEV engine
+  source. All six byte-bound lanes plus session, bundle, trace-order, and
+  original-Saturn attestation must pass before the engine copies the opaque
+  packet. The retained source remains no-draw, and failed intake preserves the
+  previous admitted packet. Focused DGN geometry-readiness regression passes.
 
 - 2026-07-14 CSB ReDMCSB F0674 viewport bitmap copy: added the PC F0631
   cached-graphic lookup and F0653-sized copy into caller-owned viewport
