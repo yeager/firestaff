@@ -1939,9 +1939,9 @@ F	1059	F1059_Post_F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	AMIGA.H;LOADS
 F	1061	F1061_Pre_Unreferenced	READWRIT.C	source_nonapplicable
 F	1063	F1063_ChecksumEor_CPSX	READWRIT.C;COMMAND.C	source_nonapplicable
 F	1065	F1065_SetExecBase	AMIGINIT.C;MEM1.C;AMIGALIB.C;COMPILE.H;MEM1MAIN.C	source_nonapplicable
-F	1066	F1066_GetUsableChipMemoryByteCount	AMIGINIT.C	unmapped_or_unverified
-F	1067	F1067_InitAmigaStuff	AMIGA.H;AMIGINIT.C;HINTMAIN.C;HINT001.C;STARTUP2.C	unmapped_or_unverified
-F	1068	F1068_FreeAmigaStuff	AMIGINIT.C;HINTMAIN.C;HINT001.C	unmapped_or_unverified
+F	1066	F1066_GetUsableChipMemoryByteCount	AMIGINIT.C	implemented_narrow
+F	1067	F1067_InitAmigaStuff	AMIGA.H;AMIGINIT.C;HINTMAIN.C;HINT001.C;STARTUP2.C	source_nonapplicable
+F	1068	F1068_FreeAmigaStuff	AMIGINIT.C;HINTMAIN.C;HINT001.C	source_nonapplicable
 F	1069	F1069_OpenDosLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1070	F1070_CloseDosLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1071	F1071_OpenGraphicsLibrary	AMIGINIT.C	unmapped_or_unverified
