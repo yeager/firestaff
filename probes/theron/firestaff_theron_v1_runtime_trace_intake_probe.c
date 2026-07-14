@@ -58,9 +58,22 @@ int main(void) {
     snprintf(profile.track02_runtime_trace_md5,
              sizeof(profile.track02_runtime_trace_md5), "%s",
              "04a75036e9d520bb983c5ed03b8d0182");
+    check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+              &profile),
+          "Stage-three provenance alone cannot open the Soul Room route");
+    profile.track02_initial_level_handoff.valid = 1;
+    profile.track02_initial_level_handoff.variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(profile.track02_initial_level_handoff.track02_md5,
+             sizeof(profile.track02_initial_level_handoff.track02_md5), "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    profile.track02_initial_level_handoff.observed_track02_record = 0x0b52u;
+    profile.track02_initial_level_handoff.coalesced_loader_cd_receipt_proven = 1;
+    profile.track02_initial_level_handoff.initial_level_record_proven = 1;
+    profile.track02_initial_level_handoff.complete_initial_level_envelope_proven = 1;
+    profile.track02_initial_level_handoff.receipt_hash = 1u;
     check(theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
               &profile),
-          "Soul Room route retains canonical loader-trace provenance");
+          "Soul Room route requires a coalesced initial-level receipt");
     theron_v1_boot_profile_init(&profile);
     memset(&flow, 0, sizeof(flow));
     memset(&world, 0, sizeof(world));

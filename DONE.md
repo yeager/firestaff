@@ -14528,3 +14528,11 @@ phase. The opt-in route still accepts only the hash-verified PC34
 `GRAPHICS.DAT` plus `DUNGEON.DAT` pair and does not create fallback art.
 Source boundary: ReDMCSB `TITLE.C F0437`, `ENTRANCE.C F0438/F0807`, and
 CSBWin `Graphics.cpp::ReadGraphic`.
+## 2026-07-14 — Theron production initial-level capture gate
+
+The production Soul Room entry now consumes the manifest-bound coalesced
+Mednafen `$e009` receipt instead of permitting the earlier Stage 3/IRQ2
+receipt alone. It rehashes Track 02, System Card, and transcript before
+binding record `0x0b52` to the source-locked initial-level envelope. This is
+only a fail-closed loader/media admission; no dungeon/object/visual semantics
+are claimed. A positive result still requires a fresh authentic capture.
