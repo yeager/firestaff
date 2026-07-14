@@ -8,6 +8,14 @@
   relation evidence withdraws the packet. Verification:
   `nexus_v1_dgn_geometry_readiness`.
 
+- 2026-07-14 DM2 G1 direct-DB0 door runtime gate: the visible G1
+  `tileTypeIndex == 4` route now requires an owned DB0 Door record before it
+  can reach `DRAW_DOOR_TILE`'s panel/frame/button GDAT transaction. A byte's
+  low state bits can no longer promote non-owned terrain into a door, and
+  source-material rendering blocks the complete door rather than drawing
+  fallback art. Verification: `dm2_v1_g1_center_ray_surface_gate` exercises
+  the G1 class-to-door handoff through the complete source material plan.
+
 - 2026-07-14 Nexus Structure3 complete opaque capture retention: after strict
   capture admission, the engine copies the exact typed face/vertex/normal rows
   together with all six opaque capture spans and their session/bundle identity

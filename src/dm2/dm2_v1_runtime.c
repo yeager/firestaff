@@ -514,6 +514,16 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int y,
                                   int raw) {
     int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
+
+    /* PC G1 byte squares carry tileTypeIndex in their high three bits.
+     * SKProject routes class 4 through the DB0 Door record before
+     * DRAW_DOOR_TILE resolves a panel.  Do not use the low state bits as a
+     * substitute door identity: a G1 class-4 tile without its direct DB0
+     * owner remains unavailable to the renderer. */
+    if (dd && dd->square_bytes == 1) {
+        return square_type == 4 &&
+               dm2_runtime_has_door_record_at(dd, level, x, y);
+    }
     return square_type == DM2_SQUARE_DOOR ||
            dm2_runtime_has_door_record_at(dd, level, x, y) ||
            dm2_runtime_raw_is_door_square((uint16_t)raw);
