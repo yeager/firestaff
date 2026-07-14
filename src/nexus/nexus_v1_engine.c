@@ -2108,6 +2108,186 @@ int nexus_v1_engine_consume_structure3_raw_capture_manifest(
     return receipt.runtime_source_consumed;
 }
 
+static int nexus_v1_structure3_capture_candidate_equal(
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *left,
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *right)
+{
+    return left && right &&
+        left->dgn_fnv1a64 == right->dgn_fnv1a64 &&
+        left->structure3_payload_fnv1a32 == right->structure3_payload_fnv1a32 &&
+        left->typed_mesh_corpus_fnv1a32 == right->typed_mesh_corpus_fnv1a32 &&
+        left->entry_index == right->entry_index &&
+        left->face_ordinal == right->face_ordinal &&
+        left->face_row_fnv1a32 == right->face_row_fnv1a32 &&
+        left->referenced_vertex_rows_fnv1a32 ==
+            right->referenced_vertex_rows_fnv1a32 &&
+        left->normal_row_fnv1a32 == right->normal_row_fnv1a32 &&
+        left->fill_selector == right->fill_selector;
+}
+
+static int nexus_v1_structure1a_structure3_capture_target_equal(
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *left,
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *right)
+{
+    return left && right && left->valid && right->valid &&
+        left->level_index == right->level_index &&
+        left->owner_x == right->owner_x && left->owner_y == right->owner_y &&
+        left->structure1f_entry_index == right->structure1f_entry_index &&
+        left->structure1f_family == right->structure1f_family &&
+        left->structure1f_tag == right->structure1f_tag &&
+        left->structure1f_face_selector == right->structure1f_face_selector &&
+        left->structure1a_index == right->structure1a_index &&
+        left->structure1a_kind == right->structure1a_kind &&
+        left->structure3_model_index == right->structure3_model_index &&
+        left->z_rotation == right->z_rotation &&
+        left->structure3_payload_fnv1a32 == right->structure3_payload_fnv1a32 &&
+        left->structure3_entry_mapping_proven == 0 &&
+        right->structure3_entry_mapping_proven == 0 &&
+        left->capture_producer_required && right->capture_producer_required &&
+        left->original_saturn_capture_required &&
+        right->original_saturn_capture_required &&
+        left->no_draw_only && right->no_draw_only &&
+        !left->fallback_visuals_permitted &&
+        !right->fallback_visuals_permitted &&
+        left->face_target.valid && right->face_target.valid &&
+        left->face_target.level_index == right->face_target.level_index &&
+        nexus_v1_structure3_capture_candidate_equal(&left->face_target.candidate,
+                                                     &right->face_target.candidate) &&
+        left->face_target.entry_byte_offset == right->face_target.entry_byte_offset &&
+        left->face_target.vertex_byte_offset == right->face_target.vertex_byte_offset &&
+        left->face_target.face_byte_offset == right->face_target.face_byte_offset &&
+        left->face_target.normal_byte_offset == right->face_target.normal_byte_offset &&
+        left->face_target.vertex_count == right->face_target.vertex_count &&
+        left->face_target.face_count == right->face_target.face_count &&
+        left->face_target.capture_producer_required &&
+        right->face_target.capture_producer_required &&
+        left->face_target.original_saturn_capture_required &&
+        right->face_target.original_saturn_capture_required &&
+        left->face_target.no_draw_only && right->face_target.no_draw_only &&
+        !left->face_target.fallback_visuals_permitted &&
+        !right->face_target.fallback_visuals_permitted;
+}
+
+int nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *target,
+    Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3TopologyCandidate owner;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt rebuilt;
+    Nexus_V1_DgnStructure3RuntimeSource *runtime;
+    const Nexus_V1_DgnStructure1FEntry *entry;
+    const Nexus_V1_DgnStructure1AModel *model;
+    Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !target || !engine->level_loaded ||
+        !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.active_canonical_lev_bound =
+        engine->current_level_structure2_source.level_index ==
+            engine->game.current_level &&
+        engine->current_level_structure2_source.canonical_hash_verified &&
+        engine->current_level_structure2_source.materialization_bound &&
+        engine->current_level_structure2_source.loaded_bytes_bound &&
+        nexus_v1_dgn_source_bytes_match(&engine->current_level_structure2_source,
+                                        engine->current_level_dgn_data,
+                                        engine->current_level_dgn_size);
+    runtime = &engine->structure3_runtime_source;
+    receipt.runtime_capture_attested = runtime->valid &&
+        runtime->level_index == engine->game.current_level &&
+        runtime->capture_bundle_hash_verified &&
+        runtime->capture_trace_order_verified &&
+        runtime->original_saturn_capture_verified &&
+        runtime->binding.complete_source_binding &&
+        !runtime->binding.renderer_handoff_ready &&
+        runtime->binding.blocks_real_dgn_mesh_render &&
+        runtime->blocks_real_dgn_mesh_render;
+    if (!receipt.active_canonical_lev_bound || !receipt.runtime_capture_attested ||
+        !target->valid || target->level_index != engine->game.current_level ||
+        target->structure3_entry_mapping_proven || !target->no_draw_only ||
+        target->fallback_visuals_permitted ||
+        target->structure1f_entry_index < 0 ||
+        target->structure1f_entry_index >=
+            engine->current_level.structure1f_entry_count ||
+        !engine->current_level.structure1a_table_valid ||
+        target->structure1a_index >=
+            (uint16_t)engine->current_level.structure1a_model_count ||
+        target->face_target.candidate.entry_index != runtime->entry_index ||
+        target->face_target.candidate.face_ordinal != runtime->face_ordinal) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry = &engine->current_level.structure1f_entries[
+        target->structure1f_entry_index];
+    model = &engine->current_level.structure1a_models[target->structure1a_index];
+    if (entry->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+        !entry->structure1a_relation_valid ||
+        entry->family != target->structure1f_family ||
+        entry->tag != target->structure1f_tag ||
+        entry->face != target->structure1f_face_selector ||
+        entry->structure1a_index != target->structure1a_index ||
+        entry->structure1a_owner_x != target->owner_x ||
+        entry->structure1a_owner_y != target->owner_y ||
+        entry->structure1a_structure3_model_index != target->structure3_model_index ||
+        entry->structure1a_z_rotation != target->z_rotation ||
+        model->kind != target->structure1a_kind ||
+        model->structure3_model_index != target->structure3_model_index ||
+        model->z_rotation != target->z_rotation) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&owner, 0, sizeof(owner));
+    owner.entry_index = target->structure1f_entry_index;
+    owner.owner_x = target->owner_x;
+    owner.owner_y = target->owner_y;
+    owner.structure1f_family = target->structure1f_family;
+    owner.structure1f_tag = target->structure1f_tag;
+    owner.structure1f_face_selector = target->structure1f_face_selector;
+    owner.structure1f_structure1a_index = target->structure1a_index;
+    owner.structure1f_binding_proven = 1;
+    owner.structure1a_kind = target->structure1a_kind;
+    owner.structure1a_row_binding_proven = 1;
+    owner.structure3_model_index = target->structure3_model_index;
+    owner.z_rotation = target->z_rotation;
+    owner.structure1a_model_rotation_binding_proven = 1;
+    owner.structure3_byte_size = engine->current_level.structure3_payload.byte_size;
+    owner.structure3_raw_payload_hash =
+        engine->current_level.structure3_payload.raw_payload_hash;
+    memset(&rebuilt, 0, sizeof(rebuilt));
+    if (!nexus_v1_dgn_structure1a_structure3_capture_target_build(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, engine->game.current_level, 1,
+            &owner, runtime->entry_index, runtime->face_ordinal, &rebuilt) ||
+        !nexus_v1_structure1a_structure3_capture_target_equal(target, &rebuilt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.target_source_revalidated = 1;
+    runtime->structure1a_owner_correlation_bound = 1;
+    runtime->structure1a_owner_x = target->owner_x;
+    runtime->structure1a_owner_y = target->owner_y;
+    runtime->structure1f_entry_index = target->structure1f_entry_index;
+    runtime->structure1f_family = target->structure1f_family;
+    runtime->structure1f_tag = target->structure1f_tag;
+    runtime->structure1f_face_selector = target->structure1f_face_selector;
+    runtime->structure1a_index = target->structure1a_index;
+    runtime->structure1a_kind = target->structure1a_kind;
+    runtime->structure3_model_index = target->structure3_model_index;
+    runtime->z_rotation = target->z_rotation;
+    runtime->structure3_owner_payload_fnv1a32 = target->structure3_payload_fnv1a32;
+    runtime->structure3_entry_mapping_proven = 0;
+    runtime->blocks_real_dgn_mesh_render = 1;
+    receipt.owner_context_bound = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_structure3_render_packet(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3RenderPacket *out_packet)
@@ -2170,6 +2350,21 @@ int nexus_v1_current_level_structure3_render_packet(
     out_packet->normal_culling_state_size = source->normal_culling_state_size;
     out_packet->vdp1_command = source->vdp1_command;
     out_packet->vdp1_command_size = source->vdp1_command_size;
+    out_packet->structure1a_owner_correlation_bound =
+        source->structure1a_owner_correlation_bound;
+    out_packet->structure1a_owner_x = source->structure1a_owner_x;
+    out_packet->structure1a_owner_y = source->structure1a_owner_y;
+    out_packet->structure1f_entry_index = source->structure1f_entry_index;
+    out_packet->structure1f_family = source->structure1f_family;
+    out_packet->structure1f_tag = source->structure1f_tag;
+    out_packet->structure1f_face_selector = source->structure1f_face_selector;
+    out_packet->structure1a_index = source->structure1a_index;
+    out_packet->structure1a_kind = source->structure1a_kind;
+    out_packet->structure3_model_index = source->structure3_model_index;
+    out_packet->z_rotation = source->z_rotation;
+    out_packet->structure3_owner_payload_fnv1a32 =
+        source->structure3_owner_payload_fnv1a32;
+    out_packet->structure3_entry_mapping_proven = 0;
     return 1;
 }
 
