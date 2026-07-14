@@ -160,6 +160,9 @@ typedef struct __attribute__((packed)) {
 int  dm2_v1_creature_ai_index_count(void);
 const char *dm2_v1_creature_ai_name(int ai_index);
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
+/* Replaces the current extended-mode table with rows from this GDAT session.
+ * Rows absent from the supplied CREATURE_AI category are cleared and cannot
+ * retain behavior from a previous graphics session. */
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);

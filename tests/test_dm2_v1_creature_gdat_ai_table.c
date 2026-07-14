@@ -180,6 +180,17 @@ int main(void) {
     CHECK(slot >= 0 && inst && inst->hp_max == 160 && inst->hp_current == 160,
           "spawn HP scales from imported BaseHP");
 
+    /* A mounted replacement GRAPHICS.DAT can legitimately provide a smaller
+     * CREATURE_AI set.  Its absent rows must not retain the former session's
+     * decoded combat flags. */
+    loader.entry_count = 1;
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 1 &&
+              dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 80 &&
+              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT)->BaseHP == 0 &&
+              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT)->AttacksSpells == 0 &&
+              dm2_v1_creature_attacks_party(DM2_AI_CAVE_BAT, 4) == 0,
+          "replacement GDAT session clears absent AI rows before combat routing");
+
     dm2_v1_creature_reset_ai_table();
     CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 0 &&
               dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT)->BaseHP == 0,
