@@ -22,6 +22,12 @@
   palette. Missing material fails closed and no ornament placement or
   substitute graphics is introduced. Focused dungeon-loader and M11-gate
   regressions pass.
+- 2026-07-14 Nexus Structure3 external capture-producer session: added a
+  source-owned launcher that creates one empty capture session, writes the
+  canonical LEV/Structure3 face target, passes target/manifest/lane paths to
+  a real external producer, and verifies the returned manifest correlates to
+  the requested source rows and lane sizes. It creates no raw trace bytes and
+  keeps capture output unattested, no-draw, and outside runtime import.
 
 - 2026-07-14 CSB ReDMCSB F0676/F0677 D3 side dispatcher: added PC D3L2/D3R2
   ordering for walls, stairs, doors, pits, corridors, and teleporters over

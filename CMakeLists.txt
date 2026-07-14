@@ -24445,6 +24445,23 @@ if(NOT MSVC)
     )
 endif()
 
+# Starts an external, instrumented Saturn capture producer from one canonical
+# Structure3 target. It cannot generate lanes, attest them, import them, or draw.
+add_executable(firestaff_nexus_v1_structure3_capture_session
+    probes/nexus/firestaff_nexus_v1_structure3_capture_session.c
+)
+target_link_libraries(firestaff_nexus_v1_structure3_capture_session PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_structure3_capture_session PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure3_capture_session PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Nexus PRS3 selected version-1 branch-flow receipt. This separate original
 # executable probe locks one low-bit branch and its byte-store fallthrough;
 # it never decodes or uploads a PRS3 surface.

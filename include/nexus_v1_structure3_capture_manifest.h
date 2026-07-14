@@ -192,6 +192,14 @@ int nexus_v1_dgn_structure3_capture_target_build(
 int nexus_v1_dgn_structure3_capture_target_write(
     const char *path, const Nexus_V1_DgnStructure3CaptureTargetReceipt *target);
 
+/* Checks that a producer's completed manifest correlates to the one exact
+ * source-bound target it was asked to capture. This is intentionally a
+ * bounded identity check only; it does not attest Saturn provenance, decode
+ * any lane, or permit renderer handoff. */
+int nexus_v1_dgn_structure3_capture_target_matches_manifest(
+    const Nexus_V1_DgnStructure3CaptureTargetReceipt *target,
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest);
+
 void nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt);
 void nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(

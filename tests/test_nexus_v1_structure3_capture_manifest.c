@@ -234,6 +234,18 @@ int main(void) {
                !receipt.renderer_handoff_ready &&
                receipt.blocks_real_dgn_mesh_render,
            "complete correlation manifest remains no-draw provenance only");
+    expect(!nexus_v1_dgn_structure3_capture_target_matches_manifest(
+               &target, &receipt),
+           "a producer manifest for another source face cannot satisfy the target");
+    receipt.candidate = target.candidate;
+    expect(nexus_v1_dgn_structure3_capture_target_matches_manifest(
+               &target, &receipt),
+           "a completed no-draw manifest must match every requested source row");
+    receipt.candidate.face_row_fnv1a32 ^= 1U;
+    expect(!nexus_v1_dgn_structure3_capture_target_matches_manifest(
+               &target, &receipt),
+           "a changed requested face row rejects the producer manifest");
+    receipt.candidate = target.candidate;
     expect(nexus_v1_dgn_structure3_capture_manifest_validate_spans(
                &receipt, 10U, 12U, 14U, 16U, 18U, 20U),
            "the admitted manifest requires every captured span size exactly");
