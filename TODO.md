@@ -515,6 +515,13 @@
     this adds no graphic decode, index fallback, synthetic event, DSA, or
     runtime selection. A real CSB graphics corpus still must bind the route
     to live HUD/viewport data.
+  - 2026-07-14 update: F0662/F0663 now route caller-owned bitmap prefixes
+    and palette-change bytes through the exact F0129 dimensions contract.
+    F0662 stays in-place; F0663 copies only the source's four-byte dimensions
+    prefix before the renderer dispatch. This does not validate, decode, or
+    substitute palette/graphic data, and it does not infer F0661 derived-cache
+    ownership, event, DSA, or runtime behavior. Real CSB palette and bitmap
+    corpus evidence remains necessary for live HUD/viewport binding.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
