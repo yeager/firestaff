@@ -92,6 +92,14 @@
   real plan hash and that all 13 chrome/portrait commands render directly
   from plan-owned GDAT pixels without an asset callback.
 
+- 2026-07-14 DM2 skproject creature-material M11 identity: visible direct
+  G1 DB4 creature sprites now carry an ordered receipt of their exact
+  `CREATURES/type/F9` bytes, local palette, ObjectID, map tile, direction,
+  and atlas placement through runtime, boot, and M11. Mixed dynamic-creature
+  frames are rejected until they have equivalent original ownership. Canonical
+  G1/GDAT coverage reports the real material identity and rejects an altered
+  palette; no generic type-index creature image can promote the frame.
+
 - 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
   sequential intake of the source's 22 caller-owned dungeon spans and the
   final F0421 byte-sum checksum word. The boundary stops at an unreadable

@@ -164,6 +164,9 @@ typedef struct {
     int hud_material_plan_required;
     uint32_t hud_material_plan_hash;
     int hud_material_plan_consumed;
+    int creature_material_plan_required;
+    uint32_t creature_material_plan_hash;
+    int creature_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;

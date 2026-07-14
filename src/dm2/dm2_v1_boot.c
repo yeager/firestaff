@@ -6901,6 +6901,15 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_hud_material_plan_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.hud_material_plan_consumed : 0;
+        out_receipt->runtime_m11_frame_creature_material_plan_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.creature_material_plan_required : 0;
+        out_receipt->runtime_m11_frame_creature_material_plan_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.creature_material_plan_hash : 0u;
+        out_receipt->runtime_m11_frame_creature_material_plan_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.creature_material_plan_consumed : 0;
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;

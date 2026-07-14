@@ -9059,6 +9059,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
             -Wall -Wextra -Werror -O2)
     endif()
+    add_test(NAME dm2_v1_g1_scene_creature_gdat_real_data
+             COMMAND test_dm2_v1_g1_scene_creature_gdat_real_data)
 
     # Canonical GRAPHICS.DAT dynamic-creature table proof. This stays
     # build-only: it scans user-owned media and creates no substitute state.
