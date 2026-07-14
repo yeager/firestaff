@@ -49,6 +49,13 @@ fallback plane.
 If a required material class cannot be resolved, the frame records a blocked
 no-draw receipt. It must not paint a conventional-color approximation.
 
+The direct G1 creature scene path is also corpus-gated: the root `DB4` record's
+`b4` creature type selects `CREATURES/<type>/F9` through the map-chip virtual
+address. The runtime handoff accepts only the decoded source image and its
+local palette. Generic terrain resolution is not consulted for this root
+class; an absent or rejected F9 image yields a blocked handoff rather than a
+substitute creature.
+
 ## Interface Tables
 
 `dt07/2` interface data is materialized as bounded primary, secondary, and
@@ -90,4 +97,6 @@ unit test for one material class is not a full-playability claim.
 ./build/test_dm2_v1_weather_no_synthetic_overlay
 FIRESTAFF_DM2_DATA_DIR="$HOME/.firestaff/data/dm2/data" \\
   ./build/test_dm2_v1_gdat_scene_plan_viewport_real_data
+FIRESTAFF_DM2_DATA_DIR="$HOME/.firestaff/data/dm2/data" \\
+  ./build/test_dm2_v1_g1_scene_creature_gdat_real_data
 ```

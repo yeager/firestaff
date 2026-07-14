@@ -7702,6 +7702,24 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical GRAPHICS.DAT + G1 proof for the direct DB4 creature route.
+    # This stays build-only because the original media belongs to the user.
+    add_executable(test_dm2_v1_g1_scene_creature_gdat_real_data
+        tests/test_dm2_v1_g1_scene_creature_gdat_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+    )
+    target_include_directories(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
