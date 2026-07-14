@@ -43,6 +43,23 @@ static uint8_t *read_file(const char *path, int *out_size) {
     return data;
 }
 
+/* Hash only the bounded, typed Structure3 source rows. This makes a future
+ * capture bind to the exact retail mesh corpus without assigning transform,
+ * texture, palette, or draw semantics to those rows. */
+static uint32_t fnv1a_byte(uint32_t hash, uint8_t value) {
+    return (hash ^ value) * 16777619u;
+}
+
+static uint32_t fnv1a_u16(uint32_t hash, uint16_t value) {
+    hash = fnv1a_byte(hash, (uint8_t)(value >> 8));
+    return fnv1a_byte(hash, (uint8_t)value);
+}
+
+static uint32_t fnv1a_u32(uint32_t hash, uint32_t value) {
+    hash = fnv1a_u16(hash, (uint16_t)(value >> 16));
+    return fnv1a_u16(hash, (uint16_t)value);
+}
+
 int main(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int level_index;
@@ -61,6 +78,7 @@ int main(void) {
     int animated_bound_total = 0;
     int animated_unique_selector_total = 0;
     int animated_reused_selector_total = 0;
+    uint32_t mesh_source_hash = 2166136261u;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -175,6 +193,23 @@ int main(void) {
                       mesh_entry.valid && mesh_entry.source_identity_valid &&
                       !mesh_entry.transform_or_draw_semantics_proven,
                       "mesh extractor copies bounded typed source rows without draw semantics");
+                mesh_source_hash = fnv1a_byte(mesh_source_hash,
+                                               (uint8_t)level_index);
+                mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                              (uint16_t)entry_index);
+                mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                              (uint16_t)mesh_entry.vertex_count);
+                mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                              (uint16_t)mesh_entry.face_count);
+                for (face_index = 0; face_index < mesh_entry.vertex_count;
+                     ++face_index) {
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)vertices[face_index].x);
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)vertices[face_index].y);
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)vertices[face_index].z);
+                }
                 extracted_vertex_total += mesh_entry.vertex_count;
                 extracted_face_total += mesh_entry.face_count;
                 extracted_normal_total += mesh_entry.normal_count;
@@ -183,11 +218,34 @@ int main(void) {
                     int slot_count = mesh_faces[face_index].triangle ? 3 : 4;
                     int slot;
 
+                    mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                                   mesh_faces[face_index].vertex_indexes[0]);
+                    mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                                   mesh_faces[face_index].vertex_indexes[1]);
+                    mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                                   mesh_faces[face_index].vertex_indexes[2]);
+                    mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                                   mesh_faces[face_index].vertex_indexes[3]);
+                    mesh_source_hash = fnv1a_byte(mesh_source_hash,
+                                                   mesh_faces[face_index].flags);
+                    mesh_source_hash = fnv1a_byte(mesh_source_hash,
+                                                   mesh_faces[face_index].raw_byte_9);
+                    mesh_source_hash = fnv1a_u16(mesh_source_hash,
+                                                   mesh_faces[face_index].fill_selector);
                     for (slot = 0; slot < slot_count; ++slot) {
                         CHECK(mesh_faces[face_index].vertex_indexes[slot] <
                                   mesh_entry.vertex_count,
                               "typed mesh face indexes remain entry-local and bounded");
                     }
+                }
+                for (face_index = 0; face_index < mesh_entry.normal_count;
+                     ++face_index) {
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)normals[face_index].x);
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)normals[face_index].y);
+                    mesh_source_hash = fnv1a_u32(mesh_source_hash,
+                        (uint32_t)normals[face_index].z);
                 }
                 free(vertices);
                 free(mesh_faces);
@@ -241,6 +299,7 @@ int main(void) {
            static_unique_selector_total, static_reused_selector_total,
            animated_bound_total, animated_selector_total,
            animated_unique_selector_total, animated_reused_selector_total);
+    printf("Structure3 typed mesh source hash: %08x\n", mesh_source_hash);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -261,5 +320,7 @@ int main(void) {
               animated_unique_selector_total == 44 &&
               animated_reused_selector_total == 376,
           "retail selector identity reuse remains corpus-locked without decoding textures");
+    CHECK(mesh_source_hash == 0xd3f42b1fu,
+          "typed mesh source rows retain the verified retail corpus identity");
     return g_fail == 0 ? 0 : 1;
 }
