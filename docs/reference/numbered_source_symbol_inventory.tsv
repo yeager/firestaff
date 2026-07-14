@@ -1888,8 +1888,8 @@ F	0942	F0942_InitDiskResource	EXEC.C	source_nonapplicable
 F	0943	F0943_ReleaseDiskResource	EXEC.C	source_nonapplicable
 F	0945	F0945_InitAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
 F	0946	F0946_ReleaseAudioData	EXEC.C;AMIGINIT.C;SOUND.C	referenced_not_verified
-F	0947	F0947_InitDiskData	EXEC.C	unmapped_or_unverified
-F	0948	F0948_ReleaseDiskData	EXEC.C	unmapped_or_unverified
+F	0947	F0947_InitDiskData	EXEC.C	source_nonapplicable
+F	0948	F0948_ReleaseDiskData	EXEC.C	source_nonapplicable
 F	0949	F0949_JAPANESE_	JAPANESE.C	unmapped_or_unverified
 F	0950	F0950_JAPANESE_	JAPANESE.C	unmapped_or_unverified
 F	0951	F0951_JAPANESE_GetCharacterPattern	JAPANESE.C	unmapped_or_unverified
