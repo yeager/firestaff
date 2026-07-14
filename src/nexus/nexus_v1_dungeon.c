@@ -6230,9 +6230,80 @@ int nexus_v1_dgn_structure1f_item_ibs_coverage(
     return 0;
 }
 
+int nexus_v1_item_ibs_bind_0008_vdp1_capture(
+    const Nexus_V1_ItemIbsFloorImage *floor,
+    const uint8_t *item_ibs, int item_ibs_size, int item_ibs_hash_verified,
+    const Nexus_V1_ItemIbs0008Vdp1CaptureCandidate *candidate,
+    const uint8_t *captured_texture_span, int captured_texture_span_size,
+    const uint8_t *captured_palette_state, int captured_palette_state_size,
+    const uint8_t *captured_vdp1_state, int captured_vdp1_state_size,
+    const uint8_t *captured_vdp1_command, int captured_vdp1_command_size,
+    Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt *out_receipt)
+{
+    Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt receipt;
+    uint32_t expected_bytes;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.fallback_visuals_permitted = 0;
+    if (!floor || !item_ibs || item_ibs_size != NEXUS_V1_ITEM_IBS_BYTES ||
+        !item_ibs_hash_verified || !candidate || !captured_texture_span ||
+        !captured_palette_state || !captured_vdp1_state ||
+        !captured_vdp1_command || captured_texture_span_size <= 0 ||
+        captured_palette_state_size <= 0 || captured_vdp1_state_size <= 0 ||
+        captured_vdp1_command_size <= 0) {
+        *out_receipt = receipt;
+        return -1;
+    }
+    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+    receipt.candidate_framing_valid = candidate->item_ibs_fnv1a64 != 0U &&
+        candidate->packed_span_fnv1a64 != 0U &&
+        candidate->palette_fnv1a64 != 0U && candidate->vdp1_state_fnv1a64 != 0U &&
+        candidate->vdp1_command_fnv1a64 != 0U &&
+        candidate->vdp1_texture_source_address != 0U &&
+        candidate->vdp1_texture_source_bytes == expected_bytes &&
+        candidate->texture_first_sequence != 0U &&
+        candidate->texture_first_sequence <= candidate->texture_last_sequence &&
+        candidate->texture_last_sequence < candidate->vdp1_command_sequence;
+    if (!receipt.candidate_framing_valid || floor->encoding != 8U ||
+        !floor->palette_bound || !floor->packed_4bpp_valid ||
+        floor->packed_4bpp_bytes != expected_bytes ||
+        captured_texture_span_size != (int)expected_bytes ||
+        captured_palette_state_size != 32) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.item_ibs_source_matches = nexus_v1_fnv1a64(item_ibs,
+        (size_t)item_ibs_size) == candidate->item_ibs_fnv1a64;
+    receipt.floor_descriptor_matches = candidate->image_id == floor->image_id &&
+        candidate->encoding == floor->encoding && candidate->width == floor->width &&
+        candidate->height == floor->height;
+    receipt.packed_span_matches = nexus_v1_fnv1a64(captured_texture_span,
+        (size_t)captured_texture_span_size) == candidate->packed_span_fnv1a64 &&
+        memcmp(captured_texture_span, floor->packed_4bpp_texels, expected_bytes) == 0;
+    receipt.palette_matches = nexus_v1_fnv1a64(captured_palette_state,
+        (size_t)captured_palette_state_size) == candidate->palette_fnv1a64 &&
+        memcmp(captured_palette_state, floor->palette_bgr555, 32U) == 0;
+    receipt.vdp1_state_matches = nexus_v1_fnv1a64(captured_vdp1_state,
+        (size_t)captured_vdp1_state_size) == candidate->vdp1_state_fnv1a64;
+    receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
+        (size_t)captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
+    receipt.sequence_order_valid = candidate->texture_first_sequence <=
+        candidate->texture_last_sequence && candidate->texture_last_sequence <
+        candidate->vdp1_command_sequence;
+    receipt.original_vdp1_capture_verified = receipt.candidate_framing_valid &&
+        receipt.item_ibs_source_matches && receipt.floor_descriptor_matches &&
+        receipt.packed_span_matches && receipt.palette_matches &&
+        receipt.vdp1_state_matches && receipt.vdp1_command_matches &&
+        receipt.sequence_order_valid;
+    receipt.decode_authorized = receipt.original_vdp1_capture_verified;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
     const Nexus_V1_ItemIbsFloorImage *floor,
-    const Nexus_V1_ItemIbs0008Vdp1Provenance *provenance,
+    const Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt *capture,
     uint8_t *out_texels, int max_texels,
     Nexus_V1_ItemIbs0008CodecReceipt *out_receipt)
 {
@@ -6254,10 +6325,8 @@ int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
         floor->packed_4bpp_valid && floor->packed_4bpp_bytes == expected_bytes;
     receipt.palette_bound = floor->palette_bound;
     texel_count = (int)(expected_bytes * 2U);
-    if (!provenance || !provenance->item_ibs_hash_verified ||
-        !provenance->original_vdp1_command_stream_verified ||
-        !provenance->vdp1_16_colour_mode_verified ||
-        !provenance->vdp1_high_nibble_first_verified) {
+    if (!capture || !capture->original_vdp1_capture_verified ||
+        !capture->decode_authorized || capture->fallback_visuals_permitted) {
         receipt.blocked_missing_vdp1_command_provenance = 1;
         *out_receipt = receipt;
         return 0;
