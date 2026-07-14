@@ -13401,3 +13401,13 @@ has pre-existing failures in unrelated synthetic-fixture assertions.
 - `test_dm2_v1_gdat_graphicsset_real_data` now audits all 256 possible source
   style values and checks each style actually referenced by the supplied
   dungeon against its exact GDAT floor, ceiling, and scene controls.
+
+# ✅ 2026-07-14 CSB compact ParameterB timer integration coverage
+
+The Phase 7 CSB runtime regression now materially exercises the existing
+CSBWin compact `LocalState=2` `DB3::ParameterB` route: `ParameterB=4` selects
+the authenticated action through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
+`TT_FALSEWALL` runners, while a widened high-bit value rejects before any DSA
+dispatch. Source: CSBWin `data.cpp` `DB3::MakeBig`/`ParameterB` and `DSA.cpp`
+`GetState`/`ProcessDSATimer6`. Verified by CTest
+`csb_v1_phase7_verification` and `csb_v1_dsa_queued_localstate2_timer`.

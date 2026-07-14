@@ -854,6 +854,12 @@ authenticating widened `LocalState=2` ParameterB records, a real slave-master
 route, source master-state/world effects, and a real-save corpus. Do not
 promote unsupported world or text opcodes from fixtures.
 
+The Phase 7 CSB runtime gate now also drives the same compact `LocalState=2`
+`ParameterB=4` state through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
+`TT_FALSEWALL` runner boundaries, then proves a widened high-bit value rejects
+before dispatch. This is regression coverage for the already admitted compact
+DB3 form, not evidence for widened ParameterB records or a generic DSA route.
+
 Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
 and palette decoder is proven; the next Nexus work is real DGN rendering.
