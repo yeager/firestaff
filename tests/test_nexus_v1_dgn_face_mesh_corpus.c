@@ -307,7 +307,7 @@ int main(void) {
 
             memset(&candidate, 0, sizeof(candidate));
             CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
-                      &level, data, size, &candidate, NULL, 0, NULL, 0,
+                      &level, data, size, 0, 0, &candidate, NULL, 0, NULL, 0,
                       NULL, 0, NULL, 0, NULL, 0, NULL, 0, &capture) != 0 &&
                   !capture.candidate_framing_valid &&
                   !capture.complete_source_binding && !capture.renderer_handoff_ready &&

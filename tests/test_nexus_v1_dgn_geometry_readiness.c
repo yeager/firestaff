@@ -2113,7 +2113,7 @@ static void test_structure3_entry_header_boundaries(void) {
     candidate.first_sequence = 1U;
     candidate.last_sequence = 2U;
     CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
-              &level, dgn, (int)sizeof(dgn), 0, &candidate,
+              &level, dgn, (int)sizeof(dgn), 0, 0, &candidate,
               texture_span, (int)sizeof(texture_span),
               palette_state, (int)sizeof(palette_state),
               vdp1_state, (int)sizeof(vdp1_state),
@@ -2124,14 +2124,15 @@ static void test_structure3_entry_header_boundaries(void) {
           !capture.complete_source_binding && capture.blocks_real_dgn_mesh_render,
           "Structure3 capture fingerprints cannot self-admit unverified DGN bytes");
     CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
-              &level, dgn, (int)sizeof(dgn), 1, &candidate,
+              &level, dgn, (int)sizeof(dgn), 1, 0, &candidate,
               texture_span, (int)sizeof(texture_span),
               palette_state, (int)sizeof(palette_state),
               vdp1_state, (int)sizeof(vdp1_state),
               transform_state, (int)sizeof(transform_state),
               culling_state, (int)sizeof(culling_state),
               vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
-          capture.dgn_source_hash_verified && capture.complete_source_binding &&
+          capture.dgn_source_hash_verified && !capture.capture_source_verified &&
+          !capture.complete_source_binding &&
           !capture.original_saturn_capture_verified &&
           !capture.renderer_handoff_ready && capture.blocks_real_dgn_mesh_render,
           "a fully bound Structure3 packet remains no-draw without Saturn provenance");

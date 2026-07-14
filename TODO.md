@@ -5141,6 +5141,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     arbitrary or fixture bytes by repeating their fingerprint. This remains a
     no-draw boundary; a genuine original-Saturn trace importer is still
     required.
+  - 2026-07-14 capture-admission follow-up: the trace source itself is now a
+    separate caller-owned gate. A hash-verified DGN plus matching fixture
+    bytes cannot form a complete binding without a verified original-Saturn
+    capture manifest. No such manifest or trace has been imported.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

@@ -1049,6 +1049,10 @@ typedef struct {
     /* Must come from the canonical asset scanner. A fingerprint carried by a
      * capture packet is correlation evidence, not source admission. */
     int dgn_source_hash_verified;
+    /* The capture itself must be admitted by a caller-owned original-Saturn
+     * source manifest. Matching byte fingerprints alone are never capture
+     * provenance. */
+    int capture_source_verified;
     int dgn_source_matches;
     int structure3_payload_matches;
     int typed_mesh_corpus_matches;
@@ -2238,7 +2242,7 @@ int nexus_v1_level_structure3_attachment_receipt(
     Nexus_V1_DgnStructure3AttachmentReceipt *out_receipt);
 int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
-    int dgn_source_hash_verified,
+    int dgn_source_hash_verified, int capture_source_verified,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const uint8_t *captured_texture_span, int captured_texture_span_size,
     const uint8_t *captured_palette_state, int captured_palette_state_size,
