@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0470_MEMORY_FreeAtHeapBottom`: source even-byte
+  rounding and available-heap release accounting now have a bounded
+  compatibility callable. Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `PRIM1.C F0934_ConvertValueToHexDigits`:
   uppercase hexadecimal digit formatting without an implicit terminator now
   has a source-locked callable. Verification: focused strict CTest.

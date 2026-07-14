@@ -687,8 +687,8 @@ F0468_MEMORY_Allocate	F	MEMORY	ACTIDRAW.C:240	-	MISSING	No exact numbered token 
 F468_ozzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:227	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0469_MEMORY_FreeAtHeapTop	F	MEMORY	ACTIDRAW.C:292	include/csb_v1_f0469_memory_free_at_heap_top_pc34_compat.h	IMPLEMENTED_NARROW	MEMORY.C source even-byte heap-top release accounting; focused CTest.
 F469_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:228	include/csb_v1_f0469_memory_free_at_heap_top_pc34_compat.h	IMPLEMENTED_NARROW	ABI alias for source-verified F0469 release accounting; focused CTest.
-F0470_MEMORY_FreeAtHeapBottom	F	MEMORY	ATARIST.H:229	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F470_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:229	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0470_MEMORY_FreeAtHeapBottom	F	MEMORY	ATARIST.H:229	include/redmcsb_f0470_memory_free_at_heap_bottom_pc34_compat.h	IMPLEMENTED_NARROW	MEMORY.C source even-byte available-heap release accounting; focused CTest.
+F470_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:229	include/redmcsb_f0470_memory_free_at_heap_bottom_pc34_compat.h	IMPLEMENTED_NARROW	ABI alias for source-verified F0470 accounting; focused CTest.
 F0471_CACHE_RemoveUnusedBlock	F	CACHE	DEFS.H:8743	include/memory_cache_unused_blocks_pc34_compat.h:10	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0472_CACHE_AddUnusedBlock	F	CACHE	DEFS.H:8744	include/memory_cache_unused_blocks_pc34_compat.h:14	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0473_MEMORY_SortValues	F	MEMORY	DEFS.H:8745	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
