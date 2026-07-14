@@ -24,15 +24,15 @@
  */
 
 enum {
-    kBoxX      = 0,
-    kBoxY      = 1,
-    kBoxW      = 2,
-    kBoxH      = 3,
+    kBoxLeft   = 0,
+    kBoxRight  = 1,
+    kBoxTop    = 2,
+    kBoxBottom = 3,
 
-    kActionX    = 224,
-    kActionY    = 319,
-    kActionW    = 77,
-    kActionH    = 121,
+    kActionLeft   = 224,
+    kActionRight  = 319,
+    kActionTop    = 77,
+    kActionBottom = 121,
 
     /* Sanity bounds. */
     kMaxInt16  = 32767
@@ -59,7 +59,7 @@ dm1_v1_box_action_area_get_pc34(int component, int *out_value)
     if (!out_value) {
         return 0;
     }
-    if (component < 0 || component > kBoxH) {
+    if (component < 0 || component > kBoxBottom) {
         *out_value = -1;
         return 0;
     }
@@ -68,13 +68,13 @@ dm1_v1_box_action_area_get_pc34(int component, int *out_value)
 }
 
 int
-dm1_v1_box_action_area_x_pc34(void) { return s_g0001[kBoxX]; }
+dm1_v1_box_action_area_x_pc34(void) { return s_g0001[kBoxLeft]; }
 int
-dm1_v1_box_action_area_y_pc34(void) { return s_g0001[kBoxY]; }
+dm1_v1_box_action_area_y_pc34(void) { return s_g0001[kBoxTop]; }
 int
-dm1_v1_box_action_area_w_pc34(void) { return s_g0001[kBoxW]; }
+dm1_v1_box_action_area_w_pc34(void) { return s_g0001[kBoxRight] - s_g0001[kBoxLeft] + 1; }
 int
-dm1_v1_box_action_area_h_pc34(void) { return s_g0001[kBoxH]; }
+dm1_v1_box_action_area_h_pc34(void) { return s_g0001[kBoxBottom] - s_g0001[kBoxTop] + 1; }
 
 int
 dm1_v1_box_action_area_run_pc34(
@@ -110,10 +110,10 @@ dm1_v1_box_action_area_run_pc34(
     out->tableMatchesDeclaration = table_matches_declaration;
 
     /* Phase 2: per-component structural invariants. */
-    if (s_g0001[kBoxX] != kActionX) x_is_224 = 0;
-    if (s_g0001[kBoxY] != kActionY) y_is_319 = 0;
-    if (s_g0001[kBoxW] != kActionW) w_is_77 = 0;
-    if (s_g0001[kBoxH] != kActionH) h_is_121 = 0;
+    if (s_g0001[kBoxLeft] != kActionLeft) x_is_224 = 0;
+    if (s_g0001[kBoxRight] != kActionRight) y_is_319 = 0;
+    if (s_g0001[kBoxTop] != kActionTop) w_is_77 = 0;
+    if (s_g0001[kBoxBottom] != kActionBottom) h_is_121 = 0;
     out->xIs224 = x_is_224;
     out->yIs319 = y_is_319;
     out->wIs77  = w_is_77;
@@ -128,28 +128,27 @@ dm1_v1_box_action_area_run_pc34(
     out->allComponentsNonNegative = all_components_non_negative;
 
     /* Phase 4: width and height positive. */
-    if (s_g0001[kBoxW] <= 0) width_positive = 0;
-    if (s_g0001[kBoxH] <= 0) height_positive = 0;
+    if (dm1_v1_box_action_area_w_pc34() <= 0) width_positive = 0;
+    if (dm1_v1_box_action_area_h_pc34() <= 0) height_positive = 0;
     out->widthPositive  = width_positive;
     out->heightPositive = height_positive;
 
     /* Phase 5: byte-aligned (all values are even, since they
      * represent byte coordinates in an 8bpp / byte-aligned frame
-     * buffer). The Y=319 is odd, so we relax the check to "no
+     * buffer). The right edge (319) is odd, so we relax the check to "no
      * constraints" — this contract is byte-coordinate-shaped but
      * not strictly byte-aligned.
      */
     byte_aligned = 1;
     out->byteAligned = byte_aligned;
 
-    /* Phase 6: within row range (Y = 319 is the byte width of the
-     * 320-line render buffer).
-     */
-    if (s_g0001[kBoxY] > 320 || s_g0001[kBoxY] < 0) within_row_range = 0;
+    /* ReDMCSB BOX is {left,right,top,bottom}, with inclusive endpoints. */
+    if (s_g0001[kBoxTop] < 0 || s_g0001[kBoxBottom] >= 200 ||
+        s_g0001[kBoxTop] > s_g0001[kBoxBottom]) within_row_range = 0;
     out->withinRowRange = within_row_range;
 
-    /* Phase 7: X + W within row range (X=224, W=42 → end=266 ≤ 320). */
-    if (s_g0001[kBoxX] + s_g0001[kBoxW] > 320) within_box_bounds = 0;
+    if (s_g0001[kBoxLeft] < 0 || s_g0001[kBoxRight] >= 320 ||
+        s_g0001[kBoxLeft] > s_g0001[kBoxRight]) within_box_bounds = 0;
     out->withinBoxBounds = within_box_bounds;
 
     out->accepted =

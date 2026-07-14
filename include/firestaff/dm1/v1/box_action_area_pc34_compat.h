@@ -5,15 +5,15 @@
  * ReDMCSB source-lock pin for Graphics.dat item 562 init var
  * G0001_ai_Graphic562_Box_ActionArea[4].
  *
- * G0001 is the {X, Y, W, H} byte-coordinate sub-rectangle used by
- * CASTER.C M520_F0021_MAIN_BlitToScreen to draw the action-area
- * background on the champion panel. The X coordinate is a byte
- * offset into the row, and Y is the byte width of the blit area.
+ * G0001 is the inclusive {left, right, top, bottom} byte-coordinate box used by
+ * ACTIDRAW.C M520_F0021_MAIN_BlitToScreen to draw the action-area
+ * background on the champion panel. Its physical rectangle is
+ * { x=224, y=77, w=96, h=45 }.
  * Init value (DATA.C:121 + DATA.C:541): { 224, 319, 77, 121 }.
  *
  * Read sites:
- * - ACTIDRAW.C:73 M520_F0021_MAIN_BlitToScreen(C009_GRAPHIC_MENU_
- *   SPELL_AREA_BACKGROUND, G0001, C048_BYTE_WIDTH, ...) — blit the
+ * - ACTIDRAW.C:73 M520_F0021_MAIN_BlitToScreen(C010_GRAPHIC_MENU_
+ *   ACTION_AREA, G0001, C048_BYTE_WIDTH, ...) — blit the
  *   action-area background.
  * - ACTIDRAW.C:320 M524_FillScreenBox(G0001, C00_COLOR_BLACK) — clear
  *   the action area to black.
@@ -492,6 +492,7 @@ dm1_v1_box_action_area_size_pc34(void);
 int
 dm1_v1_box_action_area_get_pc34(int component, int *out_value);
 
+/* Physical rectangle derived from the inclusive DATA.C source box. */
 int
 dm1_v1_box_action_area_x_pc34(void);
 

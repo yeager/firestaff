@@ -5,10 +5,10 @@
  * ReDMCSB source-lock pin for Graphics.dat item 562 init var
  * G0000_ai_Graphic562_Box_SpellArea[4].
  *
- * G0000 is the {X, Y, W, H} byte-coordinate sub-rectangle used by
+ * G0000 is the inclusive {left, right, top, bottom} byte-coordinate box used by
  * CASTER.C M520_F0021_MAIN_BlitToScreen to draw the spell-area
- * background on the champion panel. The X coordinate is a byte
- * offset into the row, and Y is the byte width of the blit area.
+ * background on the champion panel. Its physical rectangle is
+ * { x=224, y=42, w=96, h=33 }.
  * Init value (DATA.C:119 + DATA.C:539): { 224, 319, 42, 74 }.
  *
  * Read sites:
@@ -349,6 +349,7 @@ dm1_v1_box_spell_area_size_pc34(void);
 int
 dm1_v1_box_spell_area_get_pc34(int component, int *out_value);
 
+/* Physical rectangle derived from the inclusive DATA.C source box. */
 int
 dm1_v1_box_spell_area_x_pc34(void);
 
