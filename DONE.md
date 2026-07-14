@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 F0099 D0/D1 alias safety: D0L2/D0R2 and D1L2/D1R2 now use
+  row-local swaps when source and destination alias, preserving the distinct
+  buffer path. Verification: strict standalone two-lane regression.
+
 - 2026-07-14 DM1 F0099 D3R2 in-place flip: the row-local mirror now handles
   aliased source/destination buffers without overwriting later source pixels,
   matching the F0099 scratch-buffer route. The public header is in `include/`
