@@ -2220,8 +2220,6 @@ static int m11_apply_dm1_save_resume_receipt(
     }
     state->loadGameTick = receipt->loadGameTick;
     state->lastSaveTick = receipt->lastSaveTick;
-    state->dm1ViewportRuntimeOrigin =
-        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
     (void)M11_GameView_SetMusicEnabled(state, receipt->musicOn);
     m11_set_status(state, receipt->statusTitle, receipt->statusDetail);
     snprintf(state->inspectTitle,
@@ -5374,6 +5372,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     struct DM1SaveResumeReceipt resumeReceipt;
     DM1OriginalSaveClassifyResult originalSave;
     int usedBackup = 0;
+    int loadedOriginalPc34 = 0;
     int rc;
 
     if (outUsedBackup) {
@@ -5394,6 +5393,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
             path, &state->world, &loadedWorld, NULL, NULL);
         if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+            loadedOriginalPc34 = 1;
             memset(&saveHeader, 0, sizeof(saveHeader));
         }
     } else {
@@ -5410,8 +5410,12 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
     }
-    state->dm1ViewportRuntimeOrigin =
-        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
+    /* ReDMCSB LOADSAVE.C F0435 restores original PC34 parts into the live
+     * dungeon runtime. F0433/Firestaff-native saves use the normal resume
+     * path and must not inherit that external-original provenance. */
+    state->dm1ViewportRuntimeOrigin = loadedOriginalPc34
+        ? DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34
+        : DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34;
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);

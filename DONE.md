@@ -14007,3 +14007,13 @@ asset, decode texture pixels, assign palette/VDP semantics, choose a transform,
 or authorize drawing. Verification: focused
 `test_nexus_v1_dgn_face_mesh_corpus` against
 `/Users/bosse/.firestaff/data/nexus`.
+# ✅ 2026-07-14 DM1 F0435 original-save runtime provenance gate
+
+M11 now publishes `ORIGINAL_SAVE_PC34` only when the input was classified and
+materialized through the ReDMCSB `LOADSAVE.C F0435` PC34 handoff. Firestaff
+native F0433-style save loads instead retain `QUICKSAVE_RESUME_PC34`, so they
+cannot enter the external-original HoC/runtime presentation gate by sharing a
+generic resume path. `test_m11_quick_resume_roundtrip` asserts native,
+original-PC34, and re-exported-PC34 provenance separately; the fixture-free
+external HoC test remains the only corpus-backed proof of an externally
+supplied original runtime. Source boundary: ReDMCSB `LOADSAVE.C F0433/F0435`.
