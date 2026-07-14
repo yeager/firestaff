@@ -14,6 +14,13 @@
   original EVENT stride; this adds no C4 heap execution, DSA, allocation, or
   synthetic runtime. Focused strict-C11 regression passes.
 
+- 2026-07-14 DM2 skproject `CHECK_RECOMPUTE_LIGHT` M11 receipt: the exact
+  active `GRAPHICSSET` scene-control hash, `highest_light_level`, and
+  `ambient_darkness` now form one fail-closed scene/light identity through
+  runtime, boot, and M11. The canonical `GRAPHICS.DAT` CTest proves a real
+  admitted style and rejects an altered scene/light receipt. No light level,
+  palette, timer state, or weather image is synthesized.
+
 - 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
   sequential intake of the source's 22 caller-owned dungeon spans and the
   final F0421 byte-sum checksum word. The boundary stops at an unreadable

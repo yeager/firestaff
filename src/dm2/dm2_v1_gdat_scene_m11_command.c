@@ -122,6 +122,39 @@ void dm2_v1_gdat_scene_m11_command_plan_free(DM2_V1_GdatSceneM11CommandPlan *pla
     memset(plan, 0, sizeof(*plan));
 }
 
+int dm2_v1_gdat_scene_light_m11_receipt(
+    const DM2_V1_GdatSceneM11CommandPlan *plan,
+    DM2_V1_GdatSceneLightM11Receipt *out_receipt)
+{
+    DM2_V1_GdatSceneLightM11Receipt candidate;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!plan || !plan->valid || plan->command_hash == 0u ||
+        plan->commands[0].raw_hash == 0u || plan->commands[1].raw_hash == 0u ||
+        plan->ambient_darkness > 8u) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.graphicsset = plan->graphicsset;
+    candidate.highest_light_level = plan->highest_light_level;
+    candidate.ambient_darkness = plan->ambient_darkness;
+    candidate.scene_control_hash = plan->command_hash;
+    hash = hash_bytes(hash, &candidate.graphicsset, sizeof(candidate.graphicsset));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.scene_control_hash,
+                      sizeof(candidate.scene_control_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.highest_light_level,
+                      sizeof(candidate.highest_light_level));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.ambient_darkness,
+                      sizeof(candidate.ambient_darkness));
+    if (!hash) return 0;
+    candidate.receipt_hash = hash;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan)

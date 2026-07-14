@@ -49,6 +49,19 @@ typedef struct {
     uint32_t query_blit_rect_hash;
 } DM2_V1_GdatSceneM11CommandPlan;
 
+/* skproject CHECK_RECOMPUTE_LIGHT consumes these GRAPHICSSET control words
+ * with the selected scene transaction.  This receipt retains their exact
+ * source identity for the M11 frame boundary; it never manufactures a light
+ * level, palette, or weather state. */
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint16_t highest_light_level;
+    uint16_t ambient_darkness;
+    uint32_t scene_control_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GdatSceneLightM11Receipt;
+
 /* SKProject QUERY_BLIT_RECT obtains the ceiling and floor destinations from
  * INTERFACE_GENERAL/0/dt04/0 in that order. */
 #define DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER   701u
@@ -60,6 +73,9 @@ typedef struct {
 int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
+int dm2_v1_gdat_scene_light_m11_receipt(
+    const DM2_V1_GdatSceneM11CommandPlan *plan,
+    DM2_V1_GdatSceneLightM11Receipt *out_receipt);
 
 /* The receipt hashes records 700/701 only. Plan construction retains this
  * receipt and admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */

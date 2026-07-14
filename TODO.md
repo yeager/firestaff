@@ -3214,6 +3214,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: explicit palette-window inspection is now hash-gated and records MODE1/user-data provenance, a payload checksum, and strict HuC6270 syntax without scanning for or assigning palette offsets. Every inspected window remains semantically unbound and promotion-blocked until real Track 02 loader evidence ties it to title, stage, Soul Room, or forcefield.
   - 2026-07-11 update: M11 now stops after a completed Track 02 startup-atlas draw in every startup phase, so the synthetic render-plan border and text cannot overlay title, stage select, Soul Room, or forcefield graphics. Launch now rejects incomplete authoritative media and returns to the launcher with an explicit Track02-atlas status. Remaining work is identifying verified Track 02 palette payload offsets and promoting matching real windows beyond the startup level, including multi-level object rows and Mac/app capture.
 - 🔧 2026-07-11 DM2 GDAT render follow-up: the verified `dtPalIRGB`/`dtPalette16` chain now reaches the M11 title/menu presentation, HUD, indexed floor/ceiling, walls, door frames, real GDAT map-chip/HUD sprites, and the live outdoor sky/ground planes via the active map `GRAPHICSSET` records. Indoor wall plans carry `MapGraphicsStyle` into the GDAT address and cache key, matching the `iMapGfx` wall query in skproject; a style switch cannot reuse a different set's decoded wall bitmap. Live scene light plus rain/mist/thunder/darkness words are carried to the runtime receipt; an outdoor frame is not accepted unless both real material planes and HUD reach the host route with no fallback draws. The title/menu regression now follows skproject `SHOW_MENU_SCREEN`: it consumes `TITLE/0 dt07/4` when present and otherwise verifies the decoded image fallback. Next menu/HUD gap is consuming the real `INTERFACE_GENERAL/0 dt07/0x0A` Rect14 placement records; remaining scene work is real GDAT weather-overlay assets and additional dungeon material classes. Do not promote palette metadata or synthetic HUD colours as real-data consumption.
+  - 2026-07-14 update: `CHECK_RECOMPUTE_LIGHT`'s admitted active
+    `GRAPHICSSET` inputs (`highest_light_level` and `ambient_darkness`) now
+    have a separate source receipt bound to the selected scene control plan.
+    Runtime and boot carry that hash to M11, which rejects a frame whose
+    light receipt differs. The canonical `GRAPHICS.DAT` CTest proves the
+    receipt from a real style and rejects its alteration. This does not infer
+    a dynamic source, timer state, or weather overlay: weather remains
+    no-draw until original `DistantEnvironment` slots are available.
   - 2026-07-14 update: the active `GRAPHICSSET` floor, ceiling, and indoor
     `WALL_GFX` command identities now travel in the runtime receipt and must
     match M11's boot receipt exactly. The canonical `GRAPHICS.DAT` regression
