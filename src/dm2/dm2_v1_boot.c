@@ -24,13 +24,11 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
-#include "dm2_v1_dialogue_gdat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
-#include "dm2_v1_sound.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
@@ -49,12 +47,7 @@
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 #define DM2_GDAT_TITLE_MENU_SCREEN_FIELD 4
-/* skproject/SKWIN/SkWinCore.cpp LOAD_LOCALLEVEL_DYN (2676:07E9-084E)
- * preserves MapGraphicsStyle as U8, then uses that exact byte in the
- * GRAPHICSSET and ENVIRONMENT MARK_DYN_LOAD selectors.  The cache must cover
- * that source address domain; a local 16-style limit would reject a valid
- * custom or later-corpus map before its GDAT image can be verified. */
-#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 0x100
+#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 16
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 
@@ -121,19 +114,6 @@ typedef struct {
     int ccm_program_count;
     int ccm_program_field;
 } DM2_V1_BootGraphicsDat;
-
-int dm2_v1_boot_dialogue_box_draw_plan(
-    const DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueBoxDrawPlan *out)
-{
-    const DM2_V1_BootGraphicsDat *gfx;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dialogue_box_draw_plan(&gfx->loader, out);
-}
 
 static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
@@ -689,7 +669,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     profile->dungeon_size = 0U;
     profile->assets_verified = 0;
     profile->use_dm2_filenames = 0;
-    dm2_v1_sound_bind_verified_music_assets(NULL, 0);
 
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
@@ -794,8 +773,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
 
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
-        dm2_v1_sound_bind_verified_music_assets(profile->asset_root,
-                                                profile->assets_verified);
         return 0;  /* success */
     }
     return -1;  /* missing assets */
@@ -1320,56 +1297,6 @@ int dm2_v1_boot_startup_execute_pointer_from_snapshot(
         apply_session,
         apply_userdata,
         out_execution,
-        out_receipt);
-}
-
-static int dm2_v1_boot_startup_rect_contains(
-    const DM2_V1_InterfaceRect *rect,
-    int x,
-    int y)
-{
-    return rect && rect->w > 0 && rect->h > 0 &&
-           x >= rect->x && x < rect->x + rect->w &&
-           y >= rect->y && y < rect->y + rect->h;
-}
-
-int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
-    int x,
-    int y,
-    int (*apply_session)(void *userdata, const DM2_V1_SessionState *session),
-    void *apply_userdata,
-    DM2_V1_StartupExecution *out_execution,
-    DM2_V1_StartupHostActionReceipt *out_receipt)
-{
-    DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupMenuPointerLayout layout;
-    DM2_V1_StartupAction action;
-
-    if (!out_receipt || !startup_menu_active ||
-        !dm2_v1_boot_startup_host_facts_from_runtime_state(
-            profile, startup_menu_active, startup_save_root, resume_available,
-            slot_mask, selected_row, &facts) ||
-        !dm2_v1_boot_startup_menu_pointer_layout(
-            (DM2_V1_BootProfile *)profile, &layout) ||
-        !dm2_v1_boot_startup_rect_contains(&layout.new_game, x, y)) {
-        return 0;
-    }
-
-    /* skproject SkWinCore.cpp HANDLE_UI_EVENT:32001-32007 maps 0xD7 to
-     * NEW GAME. The original 0xD9 resume selector is not bound yet, so it
-     * remains unavailable rather than being redirected to a synthetic row. */
-    memset(&action, 0, sizeof(action));
-    action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
-    action.row = -1;
-    action.slot = -1;
-    return dm2_v1_startup_execute_action_from_host_facts_with_receipt(
-        &action, &facts, apply_session, apply_userdata, out_execution,
         out_receipt);
 }
 
@@ -2466,10 +2393,6 @@ int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
         return 0;
     }
     *out_receipt = view_model.host_view_receipt;
-    out_receipt->interface_rect14_host_ready =
-        dm2_v1_boot_interface_rect14_host_receipt(
-            (DM2_V1_BootProfile *)profile,
-            &out_receipt->interface_rect14);
     return 1;
 }
 
@@ -3566,23 +3489,20 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
     }
 
     out_receipt->real_gdat_capture_breadth_ready =
-        /* fe7299 SHOW_MENU_SCREEN keeps one original TITLE surface while
-         * startup HUD is suppressed.  The probe intentionally samples that
-         * static surface once; requiring invented frames 2/7 would turn an
-         * original-data route into a synthetic-animation requirement. */
-        out_receipt->sampled_title_timing_capture_count >= 1 &&
-        out_receipt->sampled_title_pixel_capture_count >= 1 &&
+        out_receipt->sampled_title_timing_capture_count >= 3 &&
+        out_receipt->sampled_title_pixel_capture_count >= 3 &&
         out_receipt->sampled_title_unique_pixel_hash_count >= 1 &&
         out_receipt->sampled_title_pixel_hash != 0u &&
         (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
-        /* Menu navigation is input state over a static original screen.  The
-         * sole captured selection must therefore be an original GDAT
-         * composite with no generated rows, not three fabricated variants. */
-        out_receipt->sampled_menu_selection_capture_count >= 1 &&
-        out_receipt->sampled_menu_composite_capture_count >= 1 &&
-        out_receipt->sampled_menu_unique_composite_hash_count >= 1 &&
+        (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
+        (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
+        out_receipt->sampled_menu_selection_capture_count >= 3 &&
+        out_receipt->sampled_menu_composite_capture_count >= 3 &&
+        (out_receipt->menu_raw_screen_route_ready
+             ? out_receipt->sampled_menu_unique_composite_hash_count >= 1
+             : out_receipt->sampled_menu_unique_composite_hash_count >= 3) &&
         out_receipt->sampled_menu_composite_hash != 0u &&
-        (out_receipt->sampled_menu_selection_mask & 0x1) == 0x1 &&
+        (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7 &&
         out_receipt->sampled_runtime_hud_handoff_capture_ready;
     return out_receipt->real_gdat_capture_breadth_ready;
 }
@@ -3724,60 +3644,6 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
                                                    out_hash,
                                                    out_byte_count) &&
            *out_hash != 0u && *out_byte_count > 0u;
-}
-
-int dm2_v1_boot_champion_hero_type_source_ready(
-    DM2_V1_BootProfile *profile,
-    uint8_t hero_type,
-    char out_first_name[8])
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *name;
-    const uint8_t *hero_data;
-    size_t name_size = 0u;
-    size_t hero_data_size = 0u;
-    uint8_t *pixels = NULL;
-    int width = 0;
-    int height = 0;
-    int stride = 0;
-    size_t copied = 0u;
-
-    if (out_first_name) out_first_name[0] = '\0';
-    if (!profile || !profile->graphics_dat || !out_first_name) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-
-    /* skproject/SKWIN/SkWinCore.cpp REVIVE_PLAYER (20573-20627) stores the
-     * mirror's actuator HeroType, reads CHAMPIONS/type dtText/0x18 and
-     * dt08/0, then DRAW_CHAMPION_PICTURE (12866-12880) draws dtImage/0.
-     * Keep all three source records present before M11 admits the portrait. */
-    name = dm2_v1_asset_load_text_sized(&gfx->loader,
-                                        DM2_GDAT_CATEGORY_CHAMPIONS,
-                                        hero_type, 0x18, &name_size);
-    hero_data = dm2_v1_asset_load_typed_sized(&gfx->loader,
-                                               DM2_GDAT_CATEGORY_CHAMPIONS,
-                                               hero_type,
-                                               DM2_GDAT_ENTRY_TYPE_RAW8,
-                                               0x00, &hero_data_size);
-    if (!name || name_size == 0u || !hero_data || hero_data_size == 0u) {
-        return 0;
-    }
-    while (copied < 7u && copied < name_size && name[copied] != 0u &&
-           name[copied] != ' ') {
-        out_first_name[copied] = (char)name[copied];
-        ++copied;
-    }
-    if (copied == 0u) return 0;
-    out_first_name[copied] = '\0';
-    if (dm2_v1_boot_gdat_image_asset_fetch(
-            profile, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type, 0x00,
-            &pixels, &width, &height, &stride) != 0 || !pixels ||
-        width <= 0 || height <= 0 || stride < width) {
-        dm2_v1_boot_gdat_image_asset_free(pixels);
-        out_first_name[0] = '\0';
-        return 0;
-    }
-    dm2_v1_boot_gdat_image_asset_free(pixels);
-    return 1;
 }
 
 static int dm2_v1_boot_runtime_raw_gdat_hash_add(
@@ -4127,13 +3993,10 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
 
-    /* skproject/SKWIN/SkWinCore.cpp queries GRAPHICSSET dtWordValue fields
-     * through the current map graphics-set id (`glbMapGraphicsSet`).  The
-     * startup seed may not match every data variant, so probe the requested
-     * index first and then fall forward to the first real graphics-set that
-     * carries the same render-control fields. */
-    for (int attempt = 0; attempt < 257; ++attempt) {
-        int candidate = attempt == 0 ? graphicsset_index : attempt - 1;
+    /* SKWIN queries the active map graphics-set directly.  A control word
+     * from another set is not a valid render handoff for this map. */
+    for (int attempt = 0; attempt < 1; ++attempt) {
+        int candidate = graphicsset_index;
         uint32_t hash = 0x32475756u;
         uint32_t mask = 0u;
         uint32_t count = 0u;
@@ -4149,9 +4012,6 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
         uint32_t ambient_darkness = 0u;
         int ready;
 
-        if (attempt > 0 && candidate == graphicsset_index) {
-            continue;
-        }
         for (uint32_t i = 0u;
              i < (uint32_t)(sizeof(k_fields) / sizeof(k_fields[0])); ++i) {
             uint16_t value = 0u;
@@ -4195,7 +4055,7 @@ static int dm2_v1_boot_runtime_graphicsset_word_values_receipt(
         ready = count >= 4u &&
                 (mask & (1u << 0)) != 0u &&
                 (mask & (1u << 1)) != 0u &&
-                (mask & (1u << 3)) != 0u &&
+                (mask & (1u << 2)) != 0u &&
                 (mask & (1u << 4)) != 0u;
         if (ready || count > best_count) {
             best_hash = hash;
@@ -4266,106 +4126,6 @@ int dm2_v1_boot_graphicsset_scene_control(
         out_misty_map,
         out_thunder_position,
         out_ambient_darkness);
-}
-
-int dm2_v1_boot_gdat_scene_m11_command_plan(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_GdatSceneM11CommandPlan *out_plan)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
-    if (!profile || !profile->graphics_dat || !out_plan ||
-        graphicsset_index < 0 || graphicsset_index > 0xff) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_gdat_scene_m11_command_plan_build(
-        &gfx->loader, (uint8_t)graphicsset_index, out_plan);
-}
-
-int dm2_v1_boot_weather_gdat_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_WeatherGdatReceipt *out_receipt)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!profile || !profile->graphics_dat || !out_receipt ||
-        graphicsset_index < 0 || graphicsset_index > 0xff) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_weather_gdat_receipt(
-        &gfx->loader, (uint8_t)graphicsset_index, out_receipt);
-}
-
-int dm2_v1_boot_weather_gdat_destination_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_BootWeatherDestinationReceipt *out_receipt)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    DM2_V1_WeatherGdatReceipt weather;
-    const uint8_t *rect_table;
-    size_t rect_table_size = 0u;
-    unsigned int i;
-    uint32_t hash = 2166136261u;
-
-    if (!out_receipt) return 0;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!profile || !profile->graphics_dat || graphicsset_index < 0 ||
-        graphicsset_index > 0xff ||
-        !dm2_v1_boot_weather_gdat_receipt(profile, graphicsset_index,
-                                           &weather) ||
-        !weather.valid) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    rect_table = dm2_v1_asset_load_typed_sized(
-        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &rect_table_size);
-    if (!rect_table || rect_table_size == 0u) return 0;
-    for (i = 0u; i < rect_table_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, rect_table[i]);
-    }
-    for (i = 0u; i < 6u; ++i) {
-        if (!dm2_v1_weather_gdat_destination_clip(
-                rect_table, rect_table_size, &weather.commands[i],
-                &out_receipt->clips[i])) {
-            memset(out_receipt, 0, sizeof(*out_receipt));
-            return 0;
-        }
-        out_receipt->destination_mask |= (1u << i);
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, weather.commands[i].material_hash);
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, out_receipt->clips[i].table_hash);
-    }
-    out_receipt->graphicsset = (uint8_t)graphicsset_index;
-    out_receipt->rect_table_hash = out_receipt->clips[0].table_hash;
-    out_receipt->receipt_hash = hash;
-    out_receipt->valid = out_receipt->rect_table_hash != 0u && hash != 0u;
-    return out_receipt->valid;
-}
-
-int dm2_v1_boot_dialogue_gdat_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    uint8_t shell_field,
-    DM2_V1_DialogueGdatReceipt *out_receipt)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!profile || !profile->graphics_dat || !out_receipt ||
-        graphicsset_index < 0 || graphicsset_index > 0xff) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dialogue_gdat_receipt(&gfx->loader,
-                                         (uint8_t)graphicsset_index,
-                                         shell_field, out_receipt);
 }
 
 static int dm2_v1_boot_runtime_wall_gfx_image_offsets_receipt(
@@ -4645,57 +4405,6 @@ static int dm2_v1_boot_runtime_interface_rect14_placement_receipt(
     return placement_count >= 4u && rotated_mask != 0u && hash != 0u;
 }
 
-static int dm2_v1_boot_parse_interface_action_table(
-    const uint8_t *raw,
-    size_t raw_size,
-    DM2_V1_InterfaceActionTable *out_table)
-{
-    size_t cursor;
-    uint32_t hash = 0x32494132u;
-    uint32_t group_count;
-    uint32_t entry_count = 0u;
-
-    if (!out_table) return 0;
-    memset(out_table, 0, sizeof(*out_table));
-    if (!raw || raw_size < 2u || raw_size > UINT32_MAX) return 0;
-    group_count = raw[0];
-    if (group_count == 0u || group_count > DM2_V1_INTERFACE_ACTION_GROUP_MAX ||
-        raw_size < 1u + (size_t)group_count) {
-        return 0;
-    }
-    cursor = 1u + (size_t)group_count;
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].length = raw[1u + i];
-        entry_count += raw[1u + i];
-    }
-    if (entry_count > (raw_size - cursor) / 2u) return 0;
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].primary_offset = (uint32_t)cursor;
-        cursor += out_table->groups[i].length;
-    }
-    for (uint32_t i = 0; i < group_count; ++i) {
-        out_table->groups[i].secondary_offset = (uint32_t)cursor;
-        cursor += out_table->groups[i].length;
-    }
-    for (size_t i = 0; i < raw_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
-    }
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
-    hash = dm2_v1_boot_packaged_capture_hash_step(hash, (uint32_t)cursor);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)(raw_size - cursor));
-    out_table->valid = 1;
-    out_table->raw = raw;
-    out_table->raw_size = (uint32_t)raw_size;
-    out_table->hash = hash;
-    out_table->group_count = group_count;
-    out_table->entry_count = entry_count;
-    out_table->tail_offset = (uint32_t)cursor;
-    out_table->tail_size = (uint32_t)(raw_size - cursor);
-    return 1;
-}
-
 static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootProfile *profile,
     uint32_t *out_hash,
@@ -4707,7 +4416,10 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
     DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
     size_t raw_size = 0;
-    DM2_V1_InterfaceActionTable table;
+    uint32_t hash = 0x32494132u;
+    uint32_t group_count;
+    uint32_t entry_count = 0u;
+    size_t min_payload;
 
     if (out_hash) *out_hash = 0u;
     if (out_byte_count) *out_byte_count = 0u;
@@ -4727,16 +4439,40 @@ static int dm2_v1_boot_runtime_interface_action_table_receipt(
         DM2_GDAT_ENTRY_TYPE_RAW7,
         DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
         &raw_size);
-    if (!dm2_v1_boot_parse_interface_action_table(raw, raw_size, &table)) {
+    if (!raw || raw_size < 2 || raw_size > UINT32_MAX) {
         return 0;
     }
 
-    *out_hash = table.hash;
-    *out_byte_count = table.raw_size;
-    *out_group_count = table.group_count;
-    *out_entry_count = table.entry_count;
-    *out_tail_byte_count = table.tail_size;
-    return table.entry_count > 0u;
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 reads the
+     * first byte as group count, copies one length byte per group into
+     * _4976_4bde[].b0, then binds two variable-length blocks (pv1/pv5)
+     * before the trailing _4976_4be2 command table. */
+    group_count = raw[0];
+    if (group_count == 0u || raw_size < 1u + (size_t)group_count) {
+        return 0;
+    }
+    for (uint32_t i = 0; i < group_count; ++i) {
+        entry_count += raw[1u + i];
+    }
+    min_payload = 1u + (size_t)group_count + ((size_t)entry_count * 2u);
+    if (raw_size < min_payload) {
+        return 0;
+    }
+    for (size_t i = 0; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, group_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash, entry_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash,
+        (uint32_t)(raw_size - min_payload));
+
+    *out_hash = hash;
+    *out_byte_count = (uint32_t)raw_size;
+    *out_group_count = group_count;
+    *out_entry_count = entry_count;
+    *out_tail_byte_count = (uint32_t)(raw_size - min_payload);
+    return entry_count > 0u;
 }
 
 static int dm2_v1_boot_runtime_interface_font_table_receipt(
@@ -4858,542 +4594,6 @@ int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
         DM2_GDAT_INTERFACE_PALETTE_FIELD, out_palette);
 }
 
-int dm2_v1_boot_interface_action_table(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_InterfaceActionTable *out_table)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-
-    if (!out_table) return 0;
-    memset(out_table, 0, sizeof(*out_table));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    raw = dm2_v1_asset_load_typed_sized(
-        &gfx->loader,
-        DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-        0,
-        DM2_GDAT_ENTRY_TYPE_RAW7,
-        DM2_GDAT_INTERFACE_RAW_ACTION_TABLE,
-        &raw_size);
-    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 binds the
-     * two group spans and command tail directly from this original dt07/2
-     * payload. Firestaff retains those offsets without inventing actions. */
-    return dm2_v1_boot_parse_interface_action_table(raw, raw_size, out_table);
-}
-
-int dm2_v1_interface_action_table_remap_palette(
-    const DM2_V1_InterfaceActionTable *table,
-    uint8_t *palette,
-    uint32_t palette_count,
-    uint8_t darkness_0_to_64,
-    int colorkey1,
-    int colorkey2)
-{
-    uint32_t attenuation;
-
-    if (!table || !table->valid || !table->raw || !palette ||
-        palette_count == 0u || palette_count > 256u ||
-        table->tail_size < 512u ||
-        table->tail_offset > table->raw_size - 512u) {
-        return 0;
-    }
-    attenuation = darkness_0_to_64 > 64u ? 0u :
-        64u - (uint32_t)darkness_0_to_64;
-    for (uint32_t i = 0; i < palette_count; ++i) {
-        uint8_t color;
-        uint32_t pair_offset;
-        uint8_t group_index;
-        uint8_t threshold_index;
-        const DM2_V1_InterfaceActionGroup *group;
-        uint32_t target;
-        uint32_t selected = 0u;
-
-        if ((int)i == colorkey1 || (int)i == colorkey2) continue;
-        color = palette[i];
-        pair_offset = table->tail_offset + (uint32_t)color * 2u;
-        group_index = table->raw[pair_offset];
-        threshold_index = table->raw[pair_offset + 1u];
-        if (group_index >= table->group_count) return 0;
-        group = &table->groups[group_index];
-        if (group->length == 0u || threshold_index >= group->length ||
-            group->primary_offset > table->raw_size - group->length ||
-            group->secondary_offset > table->raw_size - group->length) {
-            return 0;
-        }
-        /* skproject _0b36_037e (0B36:03E6-04EB): scale the selected pv1
-         * threshold, then choose the closest source pv1 entry. */
-        target = ((uint32_t)table->raw[group->primary_offset + threshold_index] *
-                  attenuation) >> 6;
-        for (; selected + 1u < group->length; ++selected) {
-            uint32_t left = table->raw[group->primary_offset + selected];
-            uint32_t right = table->raw[group->primary_offset + selected + 1u];
-            if (left <= target && right >= target) {
-                if (target - left > right - target) ++selected;
-                break;
-            }
-        }
-        palette[i] = table->raw[group->secondary_offset + selected];
-    }
-    return 1;
-}
-
-int dm2_v1_boot_interface_font_table(
-    DM2_V1_BootProfile *profile,
-    const uint8_t **out_rows,
-    uint32_t *out_hash)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *rows;
-    size_t byte_count = 0u;
-    uint32_t hash = 2166136261u;
-
-    if (out_rows) *out_rows = NULL;
-    if (out_hash) *out_hash = 0u;
-    if (!profile || !profile->graphics_dat || !out_rows || !out_hash) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    rows = dm2_v1_asset_load_typed_sized(
-        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE,
-        &byte_count);
-    if (!rows || byte_count != 0x300u) {
-        return 0;
-    }
-    /* skproject/SKWIN/SkWinCore.cpp QUERY_FONT indexes exactly six rows of
-     * 128 bytes: `(row << 7) + character`.  Keep the source payload whole;
-     * no Firestaff font or inferred glyph shape is substituted. */
-    for (size_t i = 0; i < byte_count; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, rows[i]);
-    }
-    *out_rows = rows;
-    *out_hash = hash;
-    return hash != 0u;
-}
-
-static int dm2_v1_boot_g1_wall_gfx_scalar_read(
-    void *userdata,
-    int entry_type,
-    int category,
-    int index,
-    int field,
-    uint16_t *out_value)
-{
-    const DM2_V1_BootGraphicsDat *gfx =
-        (const DM2_V1_BootGraphicsDat *)userdata;
-
-    if (!gfx || !out_value) return 0;
-    if (entry_type == DM2_GDAT_ENTRY_TYPE_WORD_VALUE) {
-        return dm2_v1_asset_load_word_value(&gfx->loader, category, index,
-                                            field, out_value);
-    }
-    if (entry_type == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
-        return dm2_v1_asset_load_image_offset(&gfx->loader, category, index,
-                                               field, out_value);
-    }
-    return 0;
-}
-
-static int dm2_v1_boot_g1_raw_read(
-    void *userdata,
-    int entry_type,
-    int category,
-    int index,
-    int field,
-    const uint8_t **out_data,
-    uint32_t *out_byte_count)
-{
-    const DM2_V1_BootGraphicsDat *gfx =
-        (const DM2_V1_BootGraphicsDat *)userdata;
-    size_t byte_count = 0u;
-    const uint8_t *data;
-
-    if (out_data) *out_data = NULL;
-    if (out_byte_count) *out_byte_count = 0u;
-    if (!gfx || !out_data || !out_byte_count) return 0;
-    data = dm2_v1_asset_load_typed_sized(&gfx->loader, category, index,
-                                          entry_type, field, &byte_count);
-    if (!data || byte_count == 0u || byte_count > UINT32_MAX) return 0;
-    *out_data = data;
-    *out_byte_count = (uint32_t)byte_count;
-    return 1;
-}
-
-static int dm2_v1_boot_g1_text_read(
-    void *userdata,
-    int category,
-    int index,
-    int field,
-    const uint8_t **out_data,
-    uint32_t *out_byte_count)
-{
-    const DM2_V1_BootGraphicsDat *gfx =
-        (const DM2_V1_BootGraphicsDat *)userdata;
-    size_t byte_count = 0u;
-    const uint8_t *data;
-
-    if (out_data) *out_data = NULL;
-    if (out_byte_count) *out_byte_count = 0u;
-    if (!gfx || !out_data || !out_byte_count) return 0;
-    data = dm2_v1_asset_load_text_sized(&gfx->loader, category, index, field,
-                                        &byte_count);
-    if (!data || byte_count == 0u || byte_count > UINT32_MAX) return 0;
-    *out_data = data;
-    *out_byte_count = (uint32_t)byte_count;
-    return 1;
-}
-
-static int dm2_v1_boot_g1_image_metadata_read(
-    void *userdata,
-    int category,
-    int index,
-    int field,
-    int *out_width,
-    int *out_height,
-    int *out_format)
-{
-    const DM2_V1_BootGraphicsDat *gfx =
-        (const DM2_V1_BootGraphicsDat *)userdata;
-    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
-    uint8_t *pixels;
-    int width = 0;
-    int height = 0;
-
-    if (out_width) *out_width = 0;
-    if (out_height) *out_height = 0;
-    if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
-    if (!gfx || !out_width || !out_height || !out_format) return 0;
-    pixels = dm2_v1_asset_load_image_field(&gfx->loader, category, index,
-                                            field, &width, &height, &format);
-    if (!pixels || width <= 0 || height <= 0 ||
-        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4 &&
-         format != DM2_IMG_FMT_U8 && format != DM2_IMG_FMT_IMG9)) {
-        dm2_v1_asset_free_pixels(pixels);
-        return 0;
-    }
-    dm2_v1_asset_free_pixels(pixels);
-    *out_width = width;
-    *out_height = height;
-    *out_format = format;
-    return 1;
-}
-
-static int dm2_v1_boot_g1_image_local_palette_read(
-    void *userdata,
-    int category,
-    int index,
-    int field,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash)
-{
-    const DM2_V1_BootGraphicsDat *gfx =
-        (const DM2_V1_BootGraphicsDat *)userdata;
-
-    if (out_hash) *out_hash = 0u;
-    if (out_palette16) memset(out_palette16, 0, 16u);
-    if (!gfx || !out_palette16 || !out_hash) return 0;
-    return dm2_v1_asset_load_image_local_palette(
-        &gfx->loader, category, index, field, out_palette16, out_hash);
-}
-
-int dm2_v1_boot_g1_text_wall_gfx_materials(
-    DM2_V1_BootProfile *profile,
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
-        texts, dm2_v1_boot_g1_wall_gfx_scalar_read,
-        dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
-}
-
-int dm2_v1_boot_g1_gdat_text_materials(
-    DM2_V1_BootProfile *profile,
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatTextMessageRuntimeReceipt *out)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_map5_gdat_text_messages(
-        texts, dm2_v1_boot_g1_text_read, gfx, out);
-}
-
-int dm2_v1_boot_g1_actuator_wall_gfx_materials(
-    DM2_V1_BootProfile *profile,
-    int map,
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
-        (const DM2_V1_DungeonData *)profile->dungeon_data, map,
-        dm2_v1_boot_g1_wall_gfx_scalar_read,
-        dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
-}
-
-int dm2_v1_boot_g1_creature_map_chip_materials(
-    DM2_V1_BootProfile *profile,
-    int map,
-    DM2_V1_G1CreatureMapChipRuntimeReceipt *out)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
-        (const DM2_V1_DungeonData *)profile->dungeon_data, map,
-        dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
-}
-
-static uint16_t dm2_v1_boot_le16(const uint8_t *p)
-{
-    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
-}
-
-static int dm2_v1_boot_rect_raw(const uint8_t *raw, size_t raw_size,
-                                uint16_t rect_id, DM2_V1_InterfaceRect *out)
-{
-    uint16_t groups;
-    size_t pos;
-    if (!raw || raw_size < 4u || !out || dm2_v1_boot_le16(raw) != 0xfc0du) return 0;
-    groups = dm2_v1_boot_le16(raw + 2);
-    if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
-    pos = 4u + (size_t)groups * 4u;
-    for (uint16_t group = 0; group < groups; ++group) {
-        uint16_t first = dm2_v1_boot_le16(raw + 4u + (size_t)group * 4u);
-        uint16_t last = dm2_v1_boot_le16(raw + 6u + (size_t)group * 4u);
-        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
-        if (count == 0u || pos + count * 8u > raw_size) return 0;
-        if (rect_id >= first && rect_id <= last) {
-            const uint8_t *row = raw + pos + (size_t)(rect_id - first) * 8u;
-            out->x = (int16_t)dm2_v1_boot_le16(row);
-            out->y = (int16_t)dm2_v1_boot_le16(row + 2);
-            out->w = (int16_t)dm2_v1_boot_le16(row + 4);
-            out->h = (int16_t)dm2_v1_boot_le16(row + 6);
-            return 1;
-        }
-        pos += count * 8u;
-    }
-    return 0;
-}
-
-static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
-                                       uint16_t rect_id,
-                                       DM2_V1_InterfaceRect *out)
-{
-    DM2_V1_InterfaceRect current, next;
-    int anchor, x, y, w, h;
-    if (!dm2_v1_boot_rect_raw(raw, raw_size, rect_id, &current) ||
-        current.y == 0 || !dm2_v1_boot_rect_raw(raw, raw_size,
-                                                  (uint16_t)current.y, &next) ||
-        next.x != 9) return 0;
-    anchor = current.x; x = current.w; y = current.h; w = next.w; h = next.h;
-    for (int guard = 0; current.y != 0 && guard < 16; ++guard) {
-        if (!dm2_v1_boot_rect_raw(raw, raw_size, (uint16_t)current.y, &next)) return 0;
-        if (next.x == 1) { x += next.w; y += next.h; }
-        else if (next.x == 9) {
-            int dx, dy;
-            switch (current.x) {
-            case 1: dx = current.w; dy = current.h; break;
-            case 4: dx = current.w; dy = current.h - (next.h - 1); break;
-            case 7: dx = current.w - ((next.w + 1) >> 1); dy = current.h - (next.h - 1); break;
-            default: return 0;
-            }
-            x += dx; y += dy;
-        } else return 0;
-        current = next;
-    }
-    if (current.y != 0 || anchor < 1 || anchor > 8 || w <= 0 || h <= 0) return 0;
-    if (anchor == 1 || anchor == 4 || anchor == 8) out->x = x;
-    else out->x = x - ((w + 1) >> 1);
-    if (anchor == 1 || anchor == 2 || anchor == 5) out->y = y;
-    else out->y = y - (h - 1);
-    out->w = w; out->h = h;
-    return 1;
-}
-
-int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
-                                     DM2_V1_InterfaceHudLayout *out_layout)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-    uint32_t hash = 2166136261u;
-    if (!out_layout) return 0;
-    memset(out_layout, 0, sizeof(*out_layout));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    raw = dm2_v1_asset_load_typed_sized(&gfx->loader, 1, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
-    if (!raw || raw_size < 4u) return 0;
-    for (size_t i = 0; i < raw_size; ++i) hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
-    for (uint16_t slot = 0; slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT; ++slot) {
-        if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(173u + slot), &out_layout->portrait[slot]) ||
-            !dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(165u + slot), &out_layout->name[slot])) return 0;
-        for (uint16_t stat = 0; stat < 3u; ++stat)
-            if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(185u + slot + stat * 4u), &out_layout->status[slot][stat])) return 0;
-    }
-    out_layout->table_hash = hash; out_layout->valid = 1; return 1;
-}
-
-int dm2_v1_boot_dialogue_box_host_command(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueBoxHostCommand *out_command)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-    uint32_t hash = 2166136261u;
-
-    if (!out_command) return 0;
-    memset(out_command, 0, sizeof(*out_command));
-    if (!profile || !profile->graphics_dat ||
-        !dm2_v1_boot_dialogue_box_draw_plan(profile, &out_command->draw)) {
-        return 0;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    raw = dm2_v1_asset_load_typed_sized(
-        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
-    if (!raw || raw_size < 4u ||
-        !dm2_v1_boot_expand_hud_rect(
-            raw, raw_size, out_command->draw.expanded_rect_index,
-            &out_command->rect)) {
-        memset(out_command, 0, sizeof(*out_command));
-        return 0;
-    }
-
-    /* skproject/SKULLWIN/c_dialog.cpp:57-64 expands RECT_453, then blits
-     * DIALOG_BOXES/0x81/0 at exactly that origin with its local palette. */
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_command->draw.plan_hash);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)out_command->rect.x);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)out_command->rect.y);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)out_command->rect.w);
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, (uint32_t)out_command->rect.h);
-    out_command->command_hash = hash ? hash : 1u;
-    out_command->valid = 1;
-    return 1;
-}
-
-int dm2_v1_boot_dialogue_open_panel_host_command(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueOpenPanelHostCommand *out_command)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *raw;
-    const DM2_V1_InterfaceRect *rects[5];
-    size_t raw_size = 0u;
-    uint32_t hash = 2166136261u;
-
-    if (!out_command) return 0;
-    memset(out_command, 0, sizeof(*out_command));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    if (!dm2_v1_dialogue_open_panel_receipt(&gfx->loader, &out_command->draw))
-        return 0;
-    raw = dm2_v1_asset_load_typed_sized(
-        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
-    if (!raw || raw_size < 4u ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.panel_rect_index, &out_command->panel_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.version_rect_index, &out_command->version_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.primary_button_rect_index,
-            &out_command->primary_button_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.secondary_button_rect_index,
-            &out_command->secondary_button_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.save_list_rect_index,
-            &out_command->save_list_rect)) {
-        memset(out_command, 0, sizeof(*out_command));
-        return 0;
-    }
-
-    /* skproject/SKULLWIN/c_dialog.cpp:375-415 consumes the GDAT button
-     * labels, panel image/local palette and raw4 rectangles together. */
-    hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_command->draw.receipt_hash);
-    rects[0] = &out_command->panel_rect;
-    rects[1] = &out_command->version_rect;
-    rects[2] = &out_command->primary_button_rect;
-    rects[3] = &out_command->secondary_button_rect;
-    rects[4] = &out_command->save_list_rect;
-    for (unsigned int i = 0; i < 5u; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, (uint32_t)rects[i]->x);
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, (uint32_t)rects[i]->y);
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, (uint32_t)rects[i]->w);
-        hash = dm2_v1_boot_packaged_capture_hash_step(
-            hash, (uint32_t)rects[i]->h);
-    }
-    out_command->command_hash = hash ? hash : 1u;
-    out_command->valid = 1;
-    return 1;
-}
-
-int dm2_v1_boot_startup_menu_pointer_layout(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_StartupMenuPointerLayout *out_layout)
-{
-    DM2_V1_BootGraphicsDat *gfx;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-    uint32_t hash = 2166136261u;
-
-    if (!out_layout) return 0;
-    memset(out_layout, 0, sizeof(*out_layout));
-    if (!profile || !profile->graphics_dat) return 0;
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    raw = dm2_v1_asset_load_typed_sized(
-        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
-    if (!raw || raw_size < 4u) return 0;
-    for (size_t i = 0; i < raw_size; ++i) {
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
-    }
-    /* skproject _098d_1208 -> LOAD_RECTS_AND_COMPRESS loads raw4, then
-     * HANDLE_UI_EVENT uses the title-menu event codes 0xD7 and 0xD9. */
-    if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d7u,
-                                     &out_layout->new_game) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size, 0x00d9u,
-                                     &out_layout->resume_game)) {
-        return 0;
-    }
-    out_layout->table_hash = hash;
-    out_layout->valid = 1;
-    return 1;
-}
-
 int dm2_v1_boot_interface_rect14_table(
     DM2_V1_BootProfile *profile,
     const uint8_t **out_rows,
@@ -5424,33 +4624,6 @@ int dm2_v1_boot_interface_rect14_table(
     *out_row_count = (uint32_t)(byte_count / 14u);
     *out_hash = hash;
     return *out_row_count > 0u;
-}
-
-int dm2_v1_boot_interface_rect14_host_receipt(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_InterfaceRect14HostReceipt *out_receipt)
-{
-    const uint8_t *rows;
-
-    if (!out_receipt) return 0;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_boot_interface_rect14_table(profile, &rows,
-                                             &out_receipt->row_count,
-                                             &out_receipt->table_hash) ||
-        !rows ||
-        !dm2_v1_boot_runtime_interface_rect14_placement_receipt(
-            profile,
-            &out_receipt->placement_hash,
-            &out_receipt->placement_count,
-            &out_receipt->rotated_cell_mask,
-            &out_receipt->max_stretched_size)) {
-        memset(out_receipt, 0, sizeof(*out_receipt));
-        return 0;
-    }
-    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A supplies the
-     * 14-byte rows; the host receives only its bounded placement proof. */
-    out_receipt->valid = 1;
-    return 1;
 }
 
 static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
@@ -5844,26 +5017,9 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_gdat_capture_ready &&
         out_receipt->menu_capture_ready &&
-        /* skproject SHOW_MENU_SCREEN may consume the complete menu through
-         * its verified raw screen instead of emitting Firestaff text/rect
-         * commands.  That route has one title image command; accept it only
-         * when the raw screen is actually consumed and the later composite
-         * receipt proves no synthetic overlay. */
-        ((out_receipt->menu_raw_screen_route_ready &&
-          out_receipt->menu_raw_screen_consumed &&
-          !out_receipt->menu_image_field_fallback_used &&
-          out_receipt->menu_gdat_command_count >= 1) ||
-         /* This verified PC GDAT uses the decoded IMAGE field when no raw
-          * SHOW_MENU_SCREEN record is present.  It is still an original
-          * 320x200 menu surface; the composite gate below remains responsible
-          * for rejecting any generated text/rect overlay. */
-         (!out_receipt->menu_raw_screen_route_ready &&
-          out_receipt->menu_image_field_fallback_used &&
-          out_receipt->menu_gdat_command_count >= 1) ||
-         (!out_receipt->menu_raw_screen_route_ready &&
-          !out_receipt->menu_image_field_fallback_used &&
-          out_receipt->menu_gdat_command_count == 2 &&
-          out_receipt->menu_rect_command_count >= 2 &&
+        out_receipt->menu_gdat_command_count == 2 &&
+        (out_receipt->menu_raw_screen_route_ready ||
+         (out_receipt->menu_rect_command_count >= 2 &&
           out_receipt->menu_text_command_count >=
               out_receipt->menu_row_count &&
           out_receipt->selected_highlight_count >= 1));
@@ -6478,8 +5634,6 @@ int dm2_v1_boot_runtime_render_frame(
     DM2_V1_BootRuntimeRenderReceipt *out_receipt)
 {
     DM2_V1_BootRuntimeReceipt runtime;
-    DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
-    DM2_V1_ViewportM11FrameReceipt m11_frame;
     int rendered = -1;
     dm2_v1_boot_runtime_render_receipt_clear(out_receipt);
     if (!profile || !profile->dm2_state || !framebuffer) {
@@ -6526,13 +5680,6 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->v1_succeeded = 1;
         }
     }
-    /* Keep the ownership decision for the exact frame this API presented.
-     * The later raw/decoded HUD probes render independent sample frames and
-     * must not replace this frame's no-fallback/no-block decision. */
-    memset(&frame_ownership, 0, sizeof(frame_ownership));
-    memset(&m11_frame, 0, sizeof(m11_frame));
-    (void)dm2_v1_runtime_last_frame_ownership(&frame_ownership);
-    (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_frame);
     if (out_receipt) {
         out_receipt->render_result = rendered;
         out_receipt->startup_render_ready =
@@ -6622,10 +5769,6 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
-        out_receipt->runtime_render_blocked_material_draw_count =
-            frame_ownership.blocked_material_draws;
-        out_receipt->runtime_render_blocked_material_mask =
-            frame_ownership.blocked_material_mask;
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
@@ -6636,23 +5779,10 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_render_fallback_item_count == 0 &&
             out_receipt->runtime_render_fallback_creature_possession_item_count == 0 &&
             out_receipt->runtime_render_fallback_carried_item_count == 0 &&
-            out_receipt->runtime_render_fallback_projectile_count == 0 &&
-            out_receipt->runtime_render_blocked_material_draw_count == 0 &&
-            out_receipt->runtime_render_blocked_material_mask == 0u;
+            out_receipt->runtime_render_fallback_projectile_count == 0;
         out_receipt->runtime_render_real_asset_ready =
             out_receipt->runtime_hud_capture_ready &&
             out_receipt->runtime_render_no_core_fallbacks;
-        out_receipt->runtime_m11_frame_receipt_consumed =
-            m11_frame.valid && m11_frame.m11_consume_frame;
-        out_receipt->runtime_m11_frame_map_load_token =
-            out_receipt->runtime_m11_frame_receipt_consumed ?
-            m11_frame.map_load_token : 0u;
-        out_receipt->runtime_m11_frame_scene_control_hash =
-            out_receipt->runtime_m11_frame_receipt_consumed ?
-            m11_frame.scene_control_hash : 0u;
-        out_receipt->runtime_m11_frame_palette_hash =
-            out_receipt->runtime_m11_frame_receipt_consumed ?
-            m11_frame.palette_hash : 0u;
     }
     return rendered == 0;
 }
@@ -7857,10 +6987,10 @@ void dm2_v1_boot_startup_launch_cleanup(
     memset(launch, 0, sizeof(*launch));
 }
 
-int dm2_v1_boot_hud_core_asset_address(int field,
-                                       int *out_category,
-                                       int *out_index,
-                                       int *out_field)
+static int dm2_v1_boot_hud_core_asset_address(int field,
+                                              int *out_category,
+                                              int *out_index,
+                                              int *out_field)
 {
     if (!out_category || !out_index || !out_field ||
         field < 0 || field > DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
@@ -8421,35 +7551,6 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         return 0;
     }
     return *out_field >= 0;
-}
-
-int dm2_v1_boot_viewport_asset_palette_fetch(
-    void *user,
-    int gdat_index,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash)
-{
-    DM2_V1_BootProfile *profile = (DM2_V1_BootProfile *)user;
-    DM2_V1_BootGraphicsDat *gfx;
-    int category;
-    int index;
-    int field;
-
-    if (out_hash) *out_hash = 0u;
-    if (out_palette16) memset(out_palette16, 0, 16u);
-    if (!profile || !profile->graphics_dat || !out_palette16 ||
-        !dm2_v1_boot_viewport_asset_address(gdat_index, &category, &index,
-                                             &field)) {
-        return -1;
-    }
-    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    /* skproject/SKWIN/SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT (29EE:0BCC)
-     * pairs the selected dtImage with QUERY_GDAT_IMAGE_LOCALPAL before every
-     * DRAW_CHIP_OF_MAGIC_MAP call.  No interface/global-palette substitution
-     * is valid for source-owned viewport pixels. */
-    return dm2_v1_asset_load_image_local_palette(
-               &gfx->loader, category, index, field, out_palette16,
-               out_hash) ? 0 : -1;
 }
 
 int dm2_v1_boot_viewport_asset_evidence(
