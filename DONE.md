@@ -10,6 +10,14 @@
   `./build/test_dm1_v1_original_save_pc34_handoff` passed; the opt-in real
   corpus section skipped because `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
 
+- ✅ 2026-07-14 Theron Soul Room Stage 2 handoff atomicity: a known Track 02
+  profile now validates its complete startup bitmap receipt and source-locked
+  `$4090 -> $3800` stage-two loader chain before the forcefield can alter the
+  selected party, startup flow, or world. Rejected/incomplete original media
+  remains in the Soul Room with fallback visuals blocked; no positive media
+  route is constructed. Verification: focused CTest
+   `theron_v1_startup_flow_probe` passed 1/1.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API

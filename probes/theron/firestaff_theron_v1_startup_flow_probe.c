@@ -2780,6 +2780,7 @@ int main(void) {
                 "PENTAI-JP"
             };
             char runtime_receipt[256];
+            int preflight_party_count;
 
             theron_v1_startup_runtime_entry_request_init(&runtime_request);
             theron_v1_startup_runtime_entry_result_init(&runtime_result);
@@ -2813,8 +2814,48 @@ int main(void) {
             check_int("runtime wrapper select mirror rc",
                       result,
                       THERON_STARTUP_OK);
+
+            /* A known Track 02 identity with incomplete original bytes must
+             * fail before the Soul Room forcefield changes flow, party, or
+             * world state. This is rejection-only: it creates no media route. */
+            runtime_request.hucard_rom = (const uint8_t *)"x";
+            runtime_request.hucard_rom_size = 1u;
+            runtime_request.md5_hex = THERON_TRACK02_MD5_US_BIN;
+            preflight_party_count = world.party.champion_count;
+            runtime_receipt[0] = '\0';
+            check_int("runtime wrapper preflight rejects incomplete Track02",
+                      theron_v1_startup_runtime_enter_from_forcefield(
+                          &flow,
+                          &world,
+                          &runtime_request,
+                          &runtime_result,
+                          runtime_receipt,
+                          sizeof(runtime_receipt)),
+                      0);
+            check_int("runtime wrapper preflight result",
+                      runtime_result.result,
+                      THERON_STARTUP_ERR_LEVEL_LOAD);
+            check_int("runtime wrapper preflight keeps Soul Room",
+                      flow.phase,
+                      THERON_STARTUP_PHASE_READY);
+            check_int("runtime wrapper preflight keeps forcefield closed",
+                      flow.forcefield_entered,
+                      0);
+            check_int("runtime wrapper preflight keeps party count",
+                      world.party.champion_count,
+                      preflight_party_count);
+            check_int("runtime wrapper preflight keeps world unloaded",
+                      world.level_loaded[
+                          THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      0);
+            check_contains("runtime wrapper preflight receipt",
+                           runtime_receipt,
+                           "missing authenticated Soul Room handoff");
             runtime_request.roster_names = runtime_roster;
             runtime_request.roster_name_count = 8;
+            runtime_request.hucard_rom = NULL;
+            runtime_request.hucard_rom_size = 0u;
+            runtime_request.md5_hex = NULL;
             runtime_receipt[0] = '\0';
             check_int("runtime wrapper enter rc",
                       theron_v1_startup_runtime_enter_from_forcefield(
@@ -2843,6 +2884,7 @@ int main(void) {
             check_contains("runtime wrapper receipt",
                            runtime_receipt,
                            "fallback room stage=1");
+
             {
                 Theron_StartupAction forcefield_action;
                 Theron_StartupActionPlan forcefield_plan;
