@@ -14724,6 +14724,11 @@ Verification: focused `csb_v1_dsa_trigger_single_step_pc34_compat` CTest.
 
 # ✅ 2026-07-14 Theron Track 02 later loader-to-local-RAM capture contract
 
+- ✅ 2026-07-14 CSB PC V1 startup decode: literal assets bypass LZW and
+  compressed assets use ReDMCSB-compatible chunk-width LZW before IMAGE3
+  expansion. This restores original C001 title and entrance assets. Verification:
+  real-data title/import and launch probes.
+
 The coalesced original Mednafen receipt now requires the later `$e009`
 dispatch's observed local-RAM destination plus a 32-byte post-return RAM
 fingerprint. Firestaff compares that fingerprint with the selected MODE1

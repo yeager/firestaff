@@ -5,6 +5,7 @@
 #include "memory_graphics_dat_pc34_compat.h"
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
+#include "csb_v1_graphics_lzw_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,11 +70,13 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     struct MemoryGraphicsDatHeader_Compat header;
     struct MemoryGraphicsDatSelection_Compat selection;
     unsigned char *compressed = NULL;
+    unsigned char *decompressed = NULL;
     unsigned char *packed_storage = NULL;
     unsigned char *pixels = NULL;
     size_t packed_stride;
     size_t packed_size;
     size_t pixel_count;
+    size_t decompressed_size = 0u;
     int ok = 0;
     int x;
     int y;
@@ -103,14 +106,29 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     packed_size = packed_stride * selection.widthHeight.Height;
     if (pixel_count == 0u || pixel_count > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
         packed_size > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
-        selection.compressedByteCount == 0u) goto done;
+        selection.compressedByteCount == 0u ||
+        selection.decompressedByteCount == 0u) goto done;
     compressed = (unsigned char *)calloc((size_t)selection.compressedByteCount + 16u, 1u);
+    decompressed = (unsigned char *)calloc((size_t)selection.decompressedByteCount, 1u);
     packed_storage = (unsigned char *)calloc(packed_size + 4u + 4096u, 1u);
     pixels = (unsigned char *)malloc(pixel_count);
-    if (!compressed || !packed_storage || !pixels ||
+    if (!compressed || !decompressed || !packed_storage || !pixels ||
         !F0474_MEMORY_LoadGraphic_CPSDF_Compat(selection.offset,
             selection.compressedByteCount, &file_state, compressed)) goto done;
-    F0488_MEMORY_ExpandGraphicToBitmap_Compat(compressed, packed_storage + 4u,
+
+    /* ReDMCSB MEMORY.C F0490 runs F0497 LZW before F0466/IMAGE3 expands
+     * C001-C005. Passing the archive bytes straight to IMAGE3 makes the
+     * title and entrance look like random nibbles despite a valid archive. */
+    if (selection.compressedByteCount == selection.decompressedByteCount) {
+        memcpy(decompressed, compressed, (size_t)selection.decompressedByteCount);
+    } else if (csb_v1_graphics_lzw_decode_pc34_compat(
+                   compressed, (size_t)selection.compressedByteCount,
+                   decompressed, (size_t)selection.decompressedByteCount,
+                   &decompressed_size) != 0 ||
+               decompressed_size != (size_t)selection.decompressedByteCount) {
+        goto done;
+    }
+    F0488_MEMORY_ExpandGraphicToBitmap_Compat(decompressed, packed_storage + 4u,
                                                &selection.widthHeight);
     for (y = 0; y < (int)selection.widthHeight.Height; ++y) {
         for (x = 0; x < (int)selection.widthHeight.Width; ++x) {
@@ -128,6 +146,7 @@ static int csb_v1_startup_surface_load_graphic_pc34(
 done:
     free(pixels);
     free(packed_storage);
+    free(decompressed);
     free(compressed);
     F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&file_state);
     F0479_MEMORY_FreeGraphicsDatState_Compat(&runtime_state);
