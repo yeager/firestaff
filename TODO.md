@@ -99,7 +99,10 @@
   The active canonical LEV now also exposes its bounded Structure3 directory
   to capture tooling with exact source bytes/FNV. Entry offsets remain source
   framing only; texture, palette, transform, VDP1, and draw semantics remain
-  unimplemented.
+  unimplemented. Active canonical LEVs also expose their verified
+  Structure3 topology/vector/face-normal receipt through the same byte-bound
+  gate. This supplies no renderer permission: original capture, texture,
+  palette, transform, VDP1, and draw semantics remain blocked.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette

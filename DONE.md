@@ -15764,6 +15764,15 @@ source-owned no-draw catalog only; it does not decode texture, palette, VDP1,
 transform, or drawing semantics. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-14 Nexus active LEV Structure3 mesh semantic receipt
+
+The engine now publishes the active canonical LEV's bounded Structure3
+topology, signed-vector, and face/normal evidence only when the retained bytes
+still match the package-bound source receipt. The receipt withdraws on a stale
+level or any byte mutation. It remains explicitly no-draw: no original capture,
+texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the

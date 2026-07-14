@@ -2225,6 +2225,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnStructure3MeshEntryReceipt live_mesh;
         Nexus_V1_DgnActiveLevelRendererSourceReceipt active_source;
         Nexus_V1_DgnActiveStructure3DirectoryReceipt active_directory;
+        Nexus_V1_DgnActiveStructure3MeshSemanticReceipt active_mesh_semantics;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_Viewport viewport;
 
@@ -2253,6 +2254,26 @@ static void test_structure3_entry_header_boundaries(void) {
               active_directory.no_draw_only &&
               !active_directory.fallback_visuals_permitted,
               "active canonical LEV exposes a bounded Structure3 directory without texture or draw semantics");
+        CHECK(nexus_v1_current_level_structure3_mesh_semantic_receipt(
+                  &engine, &active_mesh_semantics) == 1 &&
+              active_mesh_semantics.valid && active_mesh_semantics.level_index == 0 &&
+              active_mesh_semantics.source_byte_count == (int)sizeof(dgn) &&
+              active_mesh_semantics.source_bytes_fnv1a64 ==
+                  fnv1a64(dgn, sizeof(dgn)) &&
+              active_mesh_semantics.mesh_semantics.source_facts_complete &&
+              active_mesh_semantics.mesh_semantics.entry_count == 2 &&
+              active_mesh_semantics.mesh_semantics.vertex_count == 5 &&
+              active_mesh_semantics.mesh_semantics.face_count == 4 &&
+              active_mesh_semantics.mesh_semantics.normal_count == 4 &&
+              active_mesh_semantics.mesh_semantics.original_capture_required &&
+              !active_mesh_semantics.mesh_semantics.original_capture_available &&
+              !active_mesh_semantics.mesh_semantics.texture_palette_semantics_proven &&
+              !active_mesh_semantics.mesh_semantics.draw_semantics_proven &&
+              !active_mesh_semantics.mesh_semantics.renderer_handoff_ready &&
+              active_mesh_semantics.mesh_semantics.blocks_real_dgn_mesh_render &&
+              active_mesh_semantics.no_draw_only &&
+              !active_mesh_semantics.fallback_visuals_permitted,
+              "active canonical LEV exposes only source-bound Structure3 mesh facts");
         memset(&active_source, 0, sizeof(active_source));
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 1 &&
@@ -2290,6 +2311,11 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_source.valid && active_source.no_draw_only &&
               active_source.blocks_real_dgn_mesh_render,
               "active LEV source receipt withdraws renderer provenance after retained bytes change");
+        CHECK(nexus_v1_current_level_structure3_mesh_semantic_receipt(
+                  &engine, &active_mesh_semantics) == 0 &&
+              !active_mesh_semantics.valid && active_mesh_semantics.no_draw_only &&
+              !active_mesh_semantics.fallback_visuals_permitted,
+              "active mesh semantics withdraw when retained LEV bytes change");
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
                   &engine, 0, live_vertices, 4, live_faces, 2,
                   live_normals, 2, &live_mesh) == -1 &&
