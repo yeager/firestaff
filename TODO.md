@@ -11,7 +11,8 @@
   capture with original DM1 assets; no new artwork or synthetic material route
   is required. Nested configured output directories are created before capture,
   and repeated captures in one second receive distinct filenames instead of
-  replacing an earlier presented frame.
+  replacing an earlier presented frame. Asset-free fallback frames are
+  rejected before capture.
 
 - 2026-07-14 DM1 original-PC34 save/HoC follow-up: tail-backed external C13
   rows now have an explicit F0435-to-runtime-to-adoption receipt for the

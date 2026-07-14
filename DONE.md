@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 V2.1 F12 real-asset capture admission: F12 rejects an
+  asset-free fallback frame and preserves the original TITLE palette in its
+  selected-resolution capture. Verification:
+  `dm1_v21_special_palette_capture_probe`.
+
 - 2026-07-14 DM1 original-PC34 `PARTY_INFO` FirstScentIndex runtime handoff:
   F0435 now restores the source-owned byte 84 `FirstScentIndex` after the
   opaque scent records and strengths into the existing F0412 Footprints-window

@@ -2498,6 +2498,13 @@ static void m11_capture_user_screenshot(const M11_GameViewState* gameView,
     }
     if (m11_game_view_is_dm1(gameView) &&
         gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        /* V2.1 only enlarges DM1's original indexed graphics.  Do not turn
+         * an asset-free fallback frame into a user-facing capture receipt. */
+        if (!gameView->assetsAvailable || !gameView->assetLoader.fileState) {
+            fprintf(stderr,
+                    "SCREENSHOT FAILED: DM1 V2.1 requires loaded original assets\n");
+            return;
+        }
         captured = M11_Screenshot_CapturePresentedRGBA(outputDir,
                                                         outPath,
                                                         (int)sizeof(outPath));
