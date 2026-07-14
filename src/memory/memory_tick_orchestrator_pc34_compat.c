@@ -11371,6 +11371,20 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                             }
                             champ->hp.current =
                                 (unsigned short)((int)champ->hp.current - damage);
+                            if (damage > 0) {
+                                /* ReDMCSB TIMELINE.C C75 calls CHAMPION.C
+                                 * F0322 for this poison hit. M10 owns the
+                                 * HP write above; M11 consumes this existing
+                                 * live-damage signal for its panel overlay.
+                                 * C75 owns neither a wound mask nor a display
+                                 * cell, so those optional payloads are zero. */
+                                emit(result,
+                                     EMIT_CHAMPION_DAMAGED,
+                                     championIndex,
+                                     0,
+                                     damage,
+                                     0);
+                            }
                             if (resched.kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
                                     resched.aux0 == LIFECYCLE_STATUS_POISON &&
                                     resched.aux1 > 0) {

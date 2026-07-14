@@ -12,8 +12,11 @@
   rows now have an explicit F0435-to-runtime-to-adoption receipt for the
   source-owned Vi Altar fields. M11 also consumes the single due F0887 result
   on movement ticks, so admitted C11 action-enable rows reach the existing
-  F0253/F0259 state consumer before F0891 republishes the live hash. Remaining
-  work is authentic corpus coverage for additional C13 states and original-PC34
+  F0253/F0259 state consumer before F0891 republishes the live hash. A
+  source-owned C75 poison expiry now also emits M11's existing champion-damage
+  signal only after its F0322-shaped HP decrement, so a saved poison tick can
+  update the live champion-damage overlay. Remaining work is authentic corpus
+  coverage for positive C75 and additional C13 states, plus original-PC34
   capture evidence; this does not establish original executable parity.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: raw original candidates now
