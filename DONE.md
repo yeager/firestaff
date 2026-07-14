@@ -14975,6 +14975,15 @@ asset, decode texture pixels, assign palette/VDP semantics, choose a transform,
 or authorize drawing. Verification: focused
 `test_nexus_v1_dgn_face_mesh_corpus` against
 `/Users/bosse/.firestaff/data/nexus`.
+# 2026-07-14 DM1 V1 message-area physical font clipping
+
+M11 now clips each C015 message row by the measured pixel width of the active
+original font, rather than an assumed fixed character width. This preserves
+ReDMCSB TEXT.C's 320-pixel bottom surface and prevents wide original glyphs
+from overrunning the right edge. Verification: `test_dm1_v1_text_message_pc34_compat`,
+`test_m11_dialog_choice_overlay_fit_pc34_compat`, and
+`test_m11_open_door_spell_runtime_pc34_compat`.
+
 # ✅ 2026-07-14 DM1 F0435 original-save runtime provenance gate
 
 M11 now publishes `ORIGINAL_SAVE_PC34` only when the input was classified and
