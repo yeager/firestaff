@@ -22396,14 +22396,19 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                 cell->relForward, cell->relSide, cell->floorItemCells[ii])) {
             continue;
         }
-        /* ReDMCSB F0115 reaches F0791 through C2548, not the ordinary
-         * C2500 placement consumed by m11_draw_item_sprite().  Until the
-         * original PC34 C2548 layout record is bound, drawing this candidate
-         * would place it in the wrong lane and can show a chest/item in midair.
-         * Fail closed: no substitute geometry, font, or bitmap is permitted. */
+        /* ReDMCSB F0115 reaches F0791 through C2548, not C2500. */
         if (!material.coordinate_binding_ready) {
             continue;
         }
+        (void)m11_draw_item_sprite_material(
+            state, framebuffer, fbW, fbH,
+            M11_VIEWPORT_X + material.clip_x,
+            M11_VIEWPORT_Y + material.clip_y,
+            material.clip_w, material.clip_h,
+            cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+            alcoveCellRelativeToParty, ii, cell->relForward - 1,
+            material.source_zone, material.source_zone,
+            material.transparent_color, 1, 0);
     }
 }
 

@@ -674,6 +674,32 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
     return 1;
 }
 
+int dm1_viewport_3d_c2548_alcove_object_zone_point(int coordinate_set,
+                                                    int alcove_row,
+                                                    int *out_x,
+                                                    int *out_y)
+{
+    /* Graphic 558 / layout-696 C2548..C2568.  F0115 indexes these as
+     * coordinateSet * 7 + G2029[viewSquare]; C2548 is an anchor family,
+     * so it must never be substituted with C2500's four-cell floor rows. */
+    static const short k_c2548[3][7][2] = {
+        {{113, 62}, { 46, 61}, {180, 61}, {115, 74},
+         {  8, 73}, {220, 74}, {115, 92}},
+        {{112, 60}, { 45, 61}, {179, 60}, {114, 73},
+         {  4, 73}, {219, 73}, {114, 88}},
+        {{113, 63}, { 45, 62}, {181, 62}, {114, 74},
+         { 11, 73}, {218, 74}, {114, 88}}
+    };
+
+    if (coordinate_set < 0 || coordinate_set >= 3 ||
+        alcove_row < 0 || alcove_row >= 7) {
+        return 0;
+    }
+    if (out_x) *out_x = k_c2548[coordinate_set][alcove_row][0];
+    if (out_y) *out_y = k_c2548[coordinate_set][alcove_row][1];
+    return 1;
+}
+
 int dm1_viewport_3d_c2900_projectile_zone_point(int scale_index,
                                                 int relative_cell,
                                                 int *out_x,

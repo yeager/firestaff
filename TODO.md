@@ -1355,8 +1355,12 @@ DM1 V2.2 now consumes boot's finished-art decision in M11 and has no
 placeholder-overlay route. The in-place cache independently requires the
 same `FINISHED_REAL` decision, and its real-asset gate is skip-safe when no
 operator-reviewed original-art pack is installed; no placeholder cache can
-activate V2.2. Remaining work is external: a complete, operator-reviewed
-real-art pack and packaged Mac/app capture.
+activate V2.2. V2.2 selection and cache admission now additionally require
+a hash-matched `finish_receipt.json` whose reviewed slots cover the complete
+finished manifest; boot records the resulting receipt state so missing,
+stale, or partial review evidence has an explicit V2.1 fallback receipt.
+Remaining work is external: a complete, operator-reviewed real-art pack,
+matching receipt, and packaged Mac/app capture.
 
 CSB V2.0 now applies its real indexed filter chain to an M11 presentation
 copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real
@@ -3511,7 +3515,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: the last direct M11 host-only C026 front-portrait blit helper and its public M11 diagnostic probe were removed; C026 drawing now enters through the DM1 HoC owned-host-draw receipt, and the test consumes the DM1 C127/C026 render receipt directly. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions.
   - 2026-07-11 update: the public M11 HoC startup-render-consumer diagnostic probe was removed; the M11 regression now builds the DM1 first-frame, C127/C026 viewport-render, F0115 thing-layer, and HoC render-consumer receipts directly. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
   - 2026-07-11 update: the public M11 HoC full-graphics ownership diagnostic probe and its duplicate M11 regression were removed; full-graphics HoC ownership stays covered by the DM1 startup receipt tests instead of a host-only adapter. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
-  - 2026-07-13 update: M11's actual F0115 floor-object draw path now publishes the HoC host receipt only from the explicit floor lane, carrying the ReDMCSB C10/F0791 material decision and final geometry. F0121/F0124 alcove objects now use a DM1-owned G2029/C2548 material receipt, including the source chest alcove bitmap variant, and refuse the unrelated C2500 placement path. Remaining alcove work is decoding and binding the original PC34 C2548 coordinate/clip record from Graphic 558 before any host draw is allowed; broader viewport work remains real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
+  - 2026-07-13 update: M11's actual F0115 floor-object draw path now publishes the HoC host receipt only from the explicit floor lane, carrying the ReDMCSB C10/F0791 material decision and final geometry. F0121/F0124 alcove objects now use a DM1-owned G2029/C2548 material receipt, including the source chest alcove bitmap variant, and refuse the unrelated C2500 placement path.
+  - 2026-07-14 update: the live F0121/F0124 alcove lane now binds the three PC34 Graphic 558 C2548 coordinate sets and their seven G2029 rows, carries the authenticated viewport clip through the DM1 material plan, and sends its C10/F0791 blit through M11's production item renderer. Invalid C2548 rows still fail closed; C2500 cannot service an alcove route. Remaining viewport work is real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
   - 2026-07-11 update: public M11 DM1 door-panel, side-door, primary-side-wall, and wall-ornament diagnostic probes were removed; M11 action/runtime tests now consume the DM1 ReDMCSB-locked viewport/door/ornament APIs directly. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.
   - 2026-07-11 update: public M11 DM1 center-lane blocker/content-mask probes and the unused V2 live-effect seed probe were removed; the overlay regression now samples cells through M11 but computes blocker and visibility masks through DM1 ReDMCSB-locked viewport APIs. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.
   - 2026-07-11 update: public M11 DM1 viewport-cell, side-wall eligibility, and side-wall runtime-blit diagnostic exports were removed; M11 tests now use local harness sampling plus DM1 viewport/fakewall/wall-spec APIs. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.

@@ -59,6 +59,10 @@ int dm1_v2_boot_startup_prepare_pc34(
         out_receipt->modern_pack_available = mode_state
             ? mode_state->modernPackAvailable
             : 0;
+        out_receipt->v22_finished_pack_receipt_state =
+            dm1_v22_fpr_state();
+        out_receipt->v22_finished_pack_receipt_promoted =
+            dm1_v22_fpr_is_promoted();
         out_receipt->render_decision = dm1_v2_phase_gate_decide(
             &gate,
             DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION);
@@ -87,7 +91,8 @@ const char *dm1_v2_boot_source_evidence_pc34(void)
 {
     return
         "DM1 V2 boot startup prepare: sets DM1 V2/V22 asset roots before "
-        "presentation-mode resolve, then gates V2 render/input/config through "
+        "presentation-mode resolve, records the hash-bound finished-pack "
+        "review receipt, then gates V2 render/input/config through "
         "dm1_v2_phase_gate_pc34. Source-lock anchors: ReDMCSB COMMAND.C "
         "F0359 LoadGameSettings and DUNVIEW.C F0128 viewport presentation.";
 }
