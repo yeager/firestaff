@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 Nexus Structure3 entry framing: the original
+  `LEV00.DGN`--`LEV15.DGN` corpus now proves all 1,144 directory spans begin
+  with a fixed 40-byte header. Two packed big-endian count fields and three
+  in-payload big-endian boundaries describe two consecutive, fully bounded
+  12-byte regions; observed tags are only `0x00000000` or `0x00000100`.
+  The decoder retains framing counts and bounds only. Neither region is
+  assigned face, vertex, mesh, texture, palette, or pixel semantics, and the
+  existing no-fallback render gate is unchanged. Verification: rebuilt
+  `firestaff_nexus` and ran `test_nexus_v1_dgn_geometry_readiness` against
+  `/Users/bosse/.firestaff/data/nexus/LEV00.DGN`--`LEV15.DGN`.
+
 - ✅ 2026-07-14 DM2 selected-SKSave runtime handoff: runtime restore now
   accepts an explicit scanner-issued candidate receipt, mirroring skproject
   `DM2_SELECT_LOAD_GAME` selection before `DM2_GAME_LOAD` opens the save.

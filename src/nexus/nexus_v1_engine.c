@@ -476,6 +476,8 @@ int nexus_v1_inspect_dgn_material_corpus(
         ++receipt.parsed_level_count;
         receipt.structure3_payloads[level_index] = level.structure3_payload;
         receipt.structure3_directories[level_index] = level.structure3_directory;
+        receipt.structure3_entry_headers[level_index] =
+            level.structure3_entry_headers;
         (void)nexus_v1_level_structure3_model_reference_receipt(
             &level, &receipt.structure3_model_references[level_index]);
         (void)nexus_v1_level_structure1a_transform_selector_receipt(
@@ -564,6 +566,15 @@ int nexus_v1_inspect_dgn_material_corpus(
             ++receipt.structure3_directory_valid_level_count;
             receipt.structure3_directory_entry_count +=
                 level.structure3_directory.entry_count;
+        }
+        if (level.structure3_entry_headers.valid) {
+            ++receipt.structure3_entry_header_valid_level_count;
+            receipt.structure3_entry_header_entry_count +=
+                level.structure3_entry_headers.entry_count;
+            receipt.structure3_entry_header_first_region_element_count +=
+                level.structure3_entry_headers.first_region_element_count;
+            receipt.structure3_entry_header_second_region_element_count +=
+                level.structure3_entry_headers.second_region_element_count;
         }
         if (receipt.structure3_model_references[level_index].complete) {
             ++receipt.structure3_model_reference_complete_level_count;
