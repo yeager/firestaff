@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `MEMORY.C F0481`: source first-used cache
+  eviction loop is now a bounded compatibility callable. Verification:
+  focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0480`, `TEXT.C F0051` and `VBLANK.C F0693`:
   source-bounded cache release, line-feed and VBlank gate callables added.
   Verification: focused strict CTests.

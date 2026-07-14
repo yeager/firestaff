@@ -705,7 +705,7 @@ F0479_MEMORY_ReadGraphicsDatHeader	F	MEMORY	ATARIST.H:234	src/csb/csb_v1_startup
 F479_izzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:234	src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c:44	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0480_CACHE_ReleaseBlock	F	CACHE	MEMORY.C:1487	include/redmcsb_f0480_cache_release_state_transition_pc34_compat.h	IMPLEMENTED_NARROW	Native/derived lookup, used/unused-list transition, coalescing and cache-top contraction; focused CTest.
 F480_AA07_	F	Atari ST / PRIM ABI alias	ATARIST.H:235	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0481_CACHE_FreeMemory	F	CACHE	DEFS.H:8823	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0481_CACHE_FreeMemory	F	CACHE	MEMORY.C:1588	include/redmcsb_f0481_cache_free_memory_pc34_compat.h	IMPLEMENTED_NARROW	Source first-used release loop through a bounded release callback; focused CTest.
 F0482_CACHE_Defragment	F	CACHE	DEFS.H:8824	include/csb_hint_oracle_htc_real_scan.h:84	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0483_CACHE_GetNewBlock	F	CACHE	DEFS.H:8825	include/memory_cache_allocator_pc34_compat.h:15	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0484_MEMORY_LoadGraphics_CPSDEF	F	MEMORY	ATARIST.H:236	include/memory_graphics_dat_slots_pc34_compat.h:12	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
