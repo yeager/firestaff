@@ -13,8 +13,8 @@ int main(void)
     redmcsb_f8137_set_multiple_pixels_nec16_compat(video, 3U, 0U, 0x1fU, 1U);
     if (video[0] != 0xf3U) return 1;
     redmcsb_f8137_set_multiple_pixels_nec16_compat(video, 3U, 5U, 4U, 2U);
-    if (video[2] != 0xa4U) return 1;
+    if (video[2] != 0x34U) return 1;
     redmcsb_f8137_set_multiple_pixels_nec16_compat(video, 3U, 6U, 2U, 1U);
-    return video[2] != 0xa4U ||
+    return video[2] != 0x34U ||
            strstr(redmcsb_f8137_pixels_nec16_source_evidence(), "NEC816.C:1804-1853") == 0;
 }

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB F8137 packed pixels: added the source-linked
+  MEDIA457_P20JA 4bpp packed-nibble fill from `NEC816.C`. Odd and even pixel
+  starts, odd and even fill lengths, nibble masking, and bounded writes are
+  covered by the focused strict-C11 test. This is not a claim for the
+  different MEDIA472 byte-per-pixel branch or a live framebuffer binding.
+
 - 2026-07-14 CSB ReDMCSB F7064 champion save text: added PC34 post-load NUL
   padding for fixed 8-byte name and 20-byte title fields. Full fields remain
   byte-identical; only bytes after the first NUL are cleared. No champion
