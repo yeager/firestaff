@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define NEXUS_V1_PRS3_CAPTURE_MENU_BPK_MD5 "c2776768ff25287c79013a1452253ca0"
 #define NEXUS_V1_PRS3_CAPTURE_DM_BIN_MD5 "e88d60859f65f08fa622e1992b02280f"
@@ -715,6 +716,85 @@ done:
     receipt.runtime_import_permitted = 0;
     *out_receipt = receipt;
     return receipt.provenance_complete;
+}
+
+int nexus_v1_prs3_vdp1_capture_write_provenance_ledger(
+    const char *ledger_path, const char *trace_path,
+    const char *menu_bpk_path, const char *dm_bin_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, const char *producer_binary_path,
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt receipt;
+    uint8_t *trace = NULL, *output = NULL, *command = NULL, *palette = NULL;
+    uint8_t *producer = NULL;
+    size_t trace_size = 0U, output_size = 0U, command_size = 0U;
+    size_t palette_size = 0U, producer_size = 0U;
+    char temporary_path[1024];
+    FILE *file = NULL;
+    int written = 0;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!ledger_path || !trace_path || !menu_bpk_path || !dm_bin_path ||
+        !output_path || !vdp1_command_path || !palette_path ||
+        !producer_binary_path || strcmp(ledger_path, trace_path) == 0 ||
+        strcmp(ledger_path, output_path) == 0 ||
+        strcmp(ledger_path, vdp1_command_path) == 0 ||
+        strcmp(ledger_path, palette_path) == 0 ||
+        strcmp(ledger_path, producer_binary_path) == 0) goto done;
+    if (!nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+            trace_path, menu_bpk_path, dm_bin_path, output_path,
+            vdp1_command_path, palette_path, &receipt)) goto done;
+    trace = read_capture_file(trace_path, NEXUS_V1_PRS3_CAPTURE_TRACE_MAX_BYTES,
+                              &trace_size);
+    output = read_capture_file(output_path, 16U * 1024U * 1024U, &output_size);
+    command = read_capture_file(vdp1_command_path, 64U * 1024U, &command_size);
+    palette = read_capture_file(palette_path, 1024U * 1024U, &palette_size);
+    producer = read_capture_file(producer_binary_path, 512U * 1024U * 1024U,
+                                 &producer_size);
+    if (!trace || !output || !command || !palette || !producer ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp.%ld",
+                 ledger_path, (long)getpid()) >= (int)sizeof(temporary_path))
+        goto done;
+    file = fopen(temporary_path, "wb");
+    if (!file) goto done;
+    if (fprintf(file,
+                "NEXUS_PRS3_V3_PROVENANCE_V1\n"
+                "trace_fnv1a64=%llx\n"
+                "output_fnv1a64=%llx\n"
+                "vdp1_command_fnv1a64=%llx\n"
+                "palette_fnv1a64=%llx\n"
+                "producer_binary_fnv1a64=%llx\n",
+                (unsigned long long)fnv1a64(trace, trace_size),
+                (unsigned long long)fnv1a64(output, output_size),
+                (unsigned long long)fnv1a64(command, command_size),
+                (unsigned long long)fnv1a64(palette, palette_size),
+                (unsigned long long)fnv1a64(producer, producer_size)) < 0) {
+        fclose(file);
+        file = NULL;
+        remove(temporary_path);
+        goto done;
+    }
+    if (fclose(file) != 0) {
+        file = NULL;
+        remove(temporary_path);
+        goto done;
+    }
+    file = NULL;
+    if (rename(temporary_path, ledger_path) != 0) {
+        remove(temporary_path);
+        goto done;
+    }
+    written = 1;
+done:
+    if (file) {
+        fclose(file);
+        remove(temporary_path);
+    }
+    free(trace); free(output); free(command); free(palette); free(producer);
+    *out_receipt = receipt;
+    return written;
 }
 
 int nexus_v1_prs3_vdp1_capture_validate_producer_attestation(
