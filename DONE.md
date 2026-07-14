@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0746`, `F0747` and `F0749`: source-locked
+  PC 3.4 EMS routes preserve EMMXXXX0 detection/IOCTL gates, EMS version
+  high-nibble extraction, and non-clearing handle release behavior. Focused
+  strict C11 tests pass; `F0746` also passes its registered CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0745`: `FILENAME.C:84-105` is source-locked
   for English/French/German mutation of the dungeon, expansion, bonus, save
   and backup filename templates. Focused strict C11 coverage passes.
