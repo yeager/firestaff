@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `DIALOG.C F0426`: the source 30-character dialog
+  split rule is now a callable compatibility adapter. Verification: focused
+  strict CTest.
+
 - 2026-07-14 DM1 ReDMCSB `DUNVIEW.C F0106`: source CPSF reset-to-step-one
   transition is now a bounded compatibility callable. Verification: focused
   strict CTest.

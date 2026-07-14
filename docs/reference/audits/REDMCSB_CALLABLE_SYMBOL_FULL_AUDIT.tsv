@@ -630,7 +630,7 @@ F0422_SAVEUTIL_IsWriteBytesWithChecksumSuccessful	F	SAVEUTIL	DEFS.H:8489	src/dm1
 F0423_SAVEUTIL_FixClonedThings	F	SAVEUTIL	DEFS.H:8496	src/dm1/dm1_v1_save_load_system_pc34_compat.c:192	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0424_DIALOG_GetChoice	F	DIALOG	DEFS.H:8497	src/dm1/dm1_v1_dialog_layout_pc34_compat.c:33	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0425_DIALOG_PrintCenteredChoice	F	DIALOG	DEFS.H:8507	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0426_DIALOG_IsMessageOnTwoLines	F	DIALOG	DEFS.H:8508	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0426_DIALOG_IsMessageOnTwoLines	F	DIALOG	DEFS.H:8508	include/csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat.h	IMPLEMENTED_NARROW	Source 30-character dialog split rule; focused CTest.
 F0427_DIALOG_Draw	F	DIALOG	DEFS.H:3176	src/csb/csb_v1_character_pc34_compat.c:779	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0428_DIALOG_RequireGameDiskInDrive_NoDialogDrawn	F	DIALOG	ATARIST.H:215	src/dm2/dm2_v1_new_game.c:1286	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F428_AA39_	F	Atari ST / PRIM ABI alias	ATARIST.H:215	src/dm2/dm2_v1_new_game.c:1286	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
