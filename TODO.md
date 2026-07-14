@@ -480,6 +480,13 @@
     transaction. It does not create a second queue, add or dispatch an event,
     or execute a DSA action. Real CSB media remains required before this
     helper can be selected by a live restored queue.
+  - 2026-07-14 update: F0655/F0656 now provide the source-defined PC34
+    bitmap-prefix copy/flip and F0635-resolved transparent viewport-blit
+    boundary. Both accept only caller-owned real bitmap pointers, layout
+    resolution, and F0132 renderer state; neither decodes a graphic, selects
+    a layout, or creates a fallback event/DSA/runtime. Real CSB graphics and
+    save corpus evidence is still required before this boundary is bound to a
+    restored live viewport.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
