@@ -235,6 +235,28 @@ int main(void)
         failures = 1;
         goto done;
     }
+    {
+        static const int side_squares[] = {
+            DM2_SQ_D3L, DM2_SQ_D3R, DM2_SQ_D2L, DM2_SQ_D2R
+        };
+        for (size_t side = 0; side < sizeof(side_squares) / sizeof(side_squares[0]); ++side) {
+            const DM2_V1_GdatWallM11Command *command = NULL;
+            for (int i = 0; i < wall_plan.command_count; ++i) {
+                if (wall_plan.commands[i].view_square == side_squares[side]) {
+                    command = &wall_plan.commands[i];
+                    break;
+                }
+            }
+            if (!command || command->field !=
+                    dm2_v1_viewport_wall_field_for_square(side_squares[side]) ||
+                !command->raw_hash || !command->decoded_hash ||
+                !command->palette_hash || !command->width || !command->height) {
+                fputs("FAIL: canonical side-wall command lacks source pixels\n", stderr);
+                failures = 1;
+                goto done;
+            }
+        }
+    }
 
     memset(&trace, 0, sizeof(trace));
     memset(framebuffer, 0, sizeof(framebuffer));
