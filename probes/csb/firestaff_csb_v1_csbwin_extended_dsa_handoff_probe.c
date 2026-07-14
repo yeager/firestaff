@@ -57,6 +57,31 @@ static unsigned long action_fingerprint(const CSB_V1_DSAImportedAction *action)
     return hash;
 }
 
+static uint32_t tail_fingerprint(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash = (hash ^ bytes[i]) * 16777619u;
+    }
+    return hash;
+}
+
+static int extended_dsa_tail_is_current(const CSB_V1_RuntimeProfile *profile)
+{
+    return profile && profile->csbwin_extended_features_valid &&
+           profile->csbwin_appended_tail_valid &&
+           !profile->csbwin_appended_tail_truncated &&
+           profile->csbwin_appended_tail_size != 0u &&
+           profile->csbwin_appended_tail_size ==
+               profile->csbwin_appended_tail_preserved_size &&
+           profile->csbwin_appended_tail_fnv1a == tail_fingerprint(
+               profile->csbwin_appended_tail,
+               profile->csbwin_appended_tail_preserved_size);
+}
+
 static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
                                       int action_index);
 
@@ -323,6 +348,8 @@ int main(int argc, char **argv)
     state = &profile.csbwin_extended_dsa_state;
     CHECK(profile.csbwin_extended_features_valid,
           "resume publishes CSBWin Extended Features into runtime state");
+    CHECK(extended_dsa_tail_is_current(&profile),
+          "runtime retains the byte-authenticated Extended Features tail");
     CHECK(profile.csbwin_extended_level_index_present,
           "resume publishes the source DSA level-index table");
     CHECK(saved_timer_queue_matches_runtime(&profile),
@@ -374,7 +401,7 @@ int main(int argc, char **argv)
         source_binding_found = find_source_dsa_binding(
             &profile, dungeon, &source_binding);
         CHECK(source_binding_found,
-              "a decoded source type-47 actuator resolves through the saved DSA index");
+              "a decoded source type-47 actuator resolves through the current saved DSA index");
         if (source_binding_found) {
             const CSB_V1_DSAImportedAction *bound_action = NULL;
 

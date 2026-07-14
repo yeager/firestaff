@@ -15719,6 +15719,25 @@ static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+/* CSBWin SaveGame.cpp publishes the level index and DSA stream together from
+ * one Extended Features tail. Do not let a decoded catalog outlive the bytes
+ * that authenticated it. */
+static int csb_v1_runtime_has_verified_csbwin_extended_dsa_tail(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    return profile && profile->csbwin_extended_features_valid &&
+           profile->csbwin_appended_tail_valid &&
+           !profile->csbwin_appended_tail_truncated &&
+           profile->csbwin_appended_tail_size != 0u &&
+           profile->csbwin_appended_tail_size ==
+               profile->csbwin_appended_tail_preserved_size &&
+           profile->csbwin_appended_tail_preserved_size <=
+               CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES &&
+           profile->csbwin_appended_tail_fnv1a == csb_v1_runtime_fnv1a32(
+               profile->csbwin_appended_tail,
+               profile->csbwin_appended_tail_preserved_size);
+}
+
 /* Persist the one CSBWin DSA state store that has a complete source-owned
  * representation here: DSA::m_state (LocalState 1).  CSBWin DSA.cpp
  * ProcessDSATimer6 (lines 5315-5465) obtains a state through GetState(),
@@ -16598,7 +16617,7 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     int i;
 
     if (!profile || !dungeon || !location || !out_binding ||
-        !profile->csbwin_extended_features_valid ||
+        !csb_v1_runtime_has_verified_csbwin_extended_dsa_tail(profile) ||
         !profile->csbwin_extended_level_index_present ||
         location->level < 0 || location->level >= 64 ||
         location->actuator_thing == 0xffffu) {
@@ -16629,6 +16648,10 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
     /* ProcessDSATimer6 rejects an undefined DSA after the selector lookup.
      * A real runtime binding is useful only when the staged authenticated
      * extension actually owns at least one action for that absolute DSA. */
+    if (!profile->csbwin_extended_dsa_state.imported_headers[
+            candidate.dsa_id].valid) {
+        return 0;
+    }
     for (i = 0; i < profile->csbwin_extended_dsa_state.imported_action_count;
          ++i) {
         if (profile->csbwin_extended_dsa_state.imported_actions[i].dsa_id ==

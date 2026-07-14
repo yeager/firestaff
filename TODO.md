@@ -1014,6 +1014,14 @@ authenticating widened `LocalState=2` ParameterB records, a real slave-master
 route, source master-state/world effects, and a real-save corpus. Do not
 promote unsupported world or text opcodes from fixtures.
 
+CSBWin type-47 DSA binding now also requires the current complete
+FNV-authenticated Extended Features tail that published its saved level index
+and action catalog. A stale, truncated, or headerless retained catalog cannot
+resolve a timer or filter callback. Remaining DSA work is still authentic
+widened `LocalState=2` ParameterB records, a real slave-master route,
+master-state/world effects, and a real-save corpus; no fallback catalog or
+generated DSA state is accepted.
+
 The Phase 7 CSB runtime gate now also drives the same compact `LocalState=2`
 `ParameterB=4` state through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
 `TT_FALSEWALL` runner boundaries, then proves a widened high-bit value rejects
