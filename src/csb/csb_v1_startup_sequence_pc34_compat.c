@@ -1121,22 +1121,11 @@ static void csb_v1_startup_set_title_rect_pc34(
     }
     plan->source_asset_id = CSB_V1_GRAPHIC_TITLE_PC34;
     csb_v1_startup_clear_title_rect_pc34(plan);
-    plan->fallback_title_x = 38;
-    plan->fallback_title_y = 52;
-    plan->fallback_title_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
-    plan->fallback_title_text = "FTL PRESENTS";
-    plan->fallback_subtitle_x = 38;
-    plan->fallback_subtitle_y = 86;
-    plan->fallback_subtitle_style = CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34;
-    plan->fallback_subtitle_text = "CHAOS";
-    plan->fallback_prompt_x = 38;
-    plan->fallback_prompt_y = 112;
-    plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
-    plan->fallback_prompt_text = "STRIKES BACK";
-    plan->blink_prompt_visible = 1;
-    csb_v1_startup_rebuild_fallback_text_rows_pc34(plan);
     /* ReDMCSB TITLE.C F0437 lines 430, 433-457, and 461 draw the title
-     * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. */
+     * through C424 PRESENTS, C425 CHAOS, and C426 STRIKES BACK zones. The
+     * source plan must not also manufacture text to replace a missing C001
+     * region: a real-asset session either presents that region or fails
+     * closed at the host-surface boundary. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
         /* ReDMCSB TITLE.C F0437:113-132 draws C424 on the CSB dark-blue
          * base, then promotes index 15 to white. This is not DM1 C12. */
@@ -1153,10 +1142,6 @@ static void csb_v1_startup_set_title_rect_pc34(
         plan->title_dest_h = 16;
         plan->title_blit_kind = CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34;
         plan->title_transparent_color = -1;
-        plan->title_empty_fallback_x = 38;
-        plan->title_empty_fallback_y = 90;
-        plan->title_empty_fallback_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
-        plan->title_empty_fallback_text = "FTL PRESENTS";
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&

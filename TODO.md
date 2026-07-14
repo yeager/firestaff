@@ -6139,3 +6139,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   presents only the verified session-owned C001-C005/C017/C040 host surface.
   Remaining work is real package/app capture across all title and entrance
   phases, plus real DSA/save corpus evidence.
+
+- 🔧 2026-07-15 CSB C001 title-plan cleanup: PRESENTS/CHAOS/STRIKES plans
+  now contain only their ReDMCSB C424/C425/C426 source regions and palettes;
+  they no longer construct replacement text. Remaining work is capture of
+  those real title phases in a packaged app, not a synthetic title route.
