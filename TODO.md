@@ -4,14 +4,14 @@
   initial-level admission receipt can join a coalesced, identity-locked
   later `$e009` observation to the already source-locked record `0x0b52`
   startup envelope. It remains unavailable until an operator supplies that
-  authenticated coalesced capture. Its contract now additionally requires the
-  later call's observed local-RAM destination, the fetched `JSR $e009` caller
-  opcode/target, and a post-return 32-byte user-data fingerprint checked
-  against the selected record. The next admissible capture must establish an
-  original caller-to-transition relationship beyond this call/return control
-  evidence. Remaining semantic boundary: no gameplay-transition causality,
-  and no object-tail,
-  bitmap, palette, or broader dungeon-record semantics.
+  authenticated coalesced capture. Its contract recomputes the later call's
+  observed 32-byte local-RAM fingerprint from the selected record before
+  admission, requires the fetched `JSR $e009` caller opcode/target, and
+  retains the returned-PC-to-next-PC control edge without interpreting the
+  observed instruction. Remaining evidence: repeated authenticated original
+  captures that distinguish a record format and a separately source-owned
+  dungeon route. No gameplay-transition causality, object-tail, bitmap,
+  palette, map, or broader dungeon-record semantics are admitted.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one

@@ -10,6 +10,15 @@
   `test_theron_v1_later_e009_raw_sector_order_trace` and the focused,
   raw-media-gated `theron_v1_raw_loader_trace_initial_level_handoff` CTest.
 
+- 2026-07-14 Theron Track 02 source-span revalidation: initial-level handoff
+  admission now recomputes the traced 32-byte local-RAM fingerprint from the
+  selected hash-verified raw Track 02 user-data span. A copied receipt with a
+  nonzero but mismatched fingerprint is rejected before the existing
+  `0x0b52` loader/CD receipt can compose. The focused raw-media-gated
+  `theron_v1_raw_loader_trace_initial_level_handoff` CTest covers that
+  fail-closed case. This proves only the recorded byte span, not a dungeon
+  transition, map, object, visual, palette, or payload format.
+
 - 2026-07-14 Nexus PRS3 VDP1 texture-consumption capture boundary: versioned
   SH-2-to-VDP1 V2 trace receipts now require an observed post-command VDP1
   texture-read interval to begin at the decoder-output base, exactly cover its

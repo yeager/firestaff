@@ -958,6 +958,29 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         return 0;
     }
 
+    /* Keep the final admission bound to the bytes that the trace claims
+     * reached local RAM, rather than trusting a checksum copied from a
+     * prior receipt. */
+    if (coalesced_receipt->later_track02_record >
+            track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        (size_t)coalesced_receipt->later_track02_record *
+            THERON_TRACK02_RAW_SECTOR_BYTES > track02_size ||
+        THERON_TRACK02_RAW_USER_DATA_OFFSET >
+            track02_size - (size_t)coalesced_receipt->later_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES ||
+        coalesced_receipt->later_destination_span_bytes >
+            track02_size - ((size_t)coalesced_receipt->later_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET) ||
+        tqr_trace_fnv1a_bytes(track02_data +
+            (size_t)coalesced_receipt->later_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET,
+            coalesced_receipt->later_destination_span_bytes) !=
+            coalesced_receipt->later_destination_span_checksum) {
+        return 0;
+    }
+
     out->valid = 1;
     out->variant = coalesced_receipt->variant;
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
