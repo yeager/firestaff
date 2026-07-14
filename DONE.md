@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject G1 scene identity: M11 frame tokens now retain
+  both the G1 level and its MapGraphicsStyle before presenting GDAT scene/HUD.
+
 - 2026-07-15 DM2 skproject scene command integrity: real GRAPHICSSET floor
   and ceiling M11 commands now retain decoded-pixel plus QUERY_BLIT_RECT
   geometry hashes. A changed source bitmap or plane destination blocks the

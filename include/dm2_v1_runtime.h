@@ -315,6 +315,8 @@ int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
 int dm2_v1_runtime_last_m11_frame_receipt(
     DM2_V1_ViewportM11FrameReceipt *out_receipt);
+uint32_t dm2_v1_runtime_g1_scene_map_token(int level, int graphicsset,
+                                            int outdoor);
 int dm2_v1_runtime_graphicsset_scene_receipt(
     DM2_V1_RuntimeGraphicsSetSceneReceipt *out_receipt);
 void dm2_v1_runtime_set_viewport_asset_provider(
