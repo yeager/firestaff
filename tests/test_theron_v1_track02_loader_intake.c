@@ -6,6 +6,15 @@
 
 static int failures;
 
+typedef struct {
+    int calls;
+    uint32_t grid_hash;
+    uint32_t grid_bytes;
+    uint8_t first_byte;
+    uint8_t last_byte;
+    int accept;
+} RuntimeConsumerCapture;
+
 #define CHECK(condition) do { \
     if (!(condition)) { \
         fprintf(stderr, "failed: %s (%s:%d)\n", #condition, __FILE__, __LINE__); \
@@ -46,6 +55,19 @@ static unsigned char *read_real_track02(const char *path, size_t *out_bytes) {
     return bytes;
 }
 
+static int capture_runtime_grid(const Theron_V1Track02RawGridReceipt *grid,
+                                void *context) {
+    RuntimeConsumerCapture *capture = context;
+
+    if (!grid || !capture) return 0;
+    ++capture->calls;
+    capture->grid_hash = grid->raw_grid_hash;
+    capture->grid_bytes = grid->raw_grid_bytes;
+    capture->first_byte = grid->raw_grid[0];
+    capture->last_byte = grid->raw_grid[grid->raw_grid_bytes - 1u];
+    return capture->accept;
+}
+
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1TraceProvenanceReceipt trace = {
@@ -78,7 +100,9 @@ int main(void) {
     Theron_V1Track02RawGridCoordinateReceipt coordinate_receipt;
     Theron_V1Track02RawGridRowReceipt row_receipt;
     Theron_V1Track02RawGridReceipt grid_receipt;
+    Theron_V1Track02RawGridRuntimeReceipt runtime_receipt;
     const char *real_track02_path;
+    const char *real_track02_md5 = NULL;
     unsigned char *real_track02;
     size_t real_track02_bytes;
     unsigned char *synthetic_raw;
@@ -105,42 +129,84 @@ int main(void) {
     real_track02_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     real_track02 = read_real_track02(real_track02_path, &real_track02_bytes);
     if (real_track02) {
+        RuntimeConsumerCapture consumer = {0};
+        int is_us = theron_v1_track02_raw_bytes_match_md5(
+            real_track02, real_track02_bytes, THERON_V1_TRACK02_MD5_US_BIN);
+
+        real_track02_md5 = is_us ? THERON_V1_TRACK02_MD5_US_BIN :
+            THERON_V1_TRACK02_MD5_JP_BIN;
+        CHECK(theron_v1_track02_raw_bytes_match_md5(
+            real_track02, real_track02_bytes, real_track02_md5));
+        initial_envelope.cue_track02_index01_raw_sector = is_us ? 225u : 224u;
+        initial_envelope.track02_raw_sector = is_us ? 3123u : 3122u;
         CHECK(theron_v1_track02_loader_intake_decode_initial_envelope(
             &receipt, &initial_envelope, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, &decoded_receipt));
+            real_track02_md5, &decoded_receipt));
         CHECK(decoded_receipt.payload_intake_admitted);
         CHECK(decoded_receipt.initial_envelope_decoded);
         CHECK(decoded_receipt.decoded_grid_row_count == 0x001bu);
         CHECK(decoded_receipt.decoded_grid_row_bytes == 0x0020u);
-        CHECK(decoded_receipt.decoded_grid_raw_sector == 3123u);
+        CHECK(decoded_receipt.decoded_grid_raw_sector ==
+              initial_envelope.track02_raw_sector);
         CHECK(decoded_receipt.decoded_grid_raw_sector_offset == 0x130u);
-        CHECK(decoded_receipt.decoded_grid_first_row_hash == 0x4b97e3abu);
-        CHECK(decoded_receipt.decoded_grid_last_row_hash == 0x0b2ae445u);
+        if (is_us) {
+            CHECK(decoded_receipt.decoded_grid_first_row_hash == 0x4b97e3abu);
+            CHECK(decoded_receipt.decoded_grid_last_row_hash == 0x0b2ae445u);
+        }
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, &grid_receipt));
+            real_track02_md5, &grid_receipt));
         CHECK(grid_receipt.handed_off);
         CHECK(grid_receipt.raw_grid_width == 0x0020u);
         CHECK(grid_receipt.raw_grid_height == 0x001bu);
         CHECK(grid_receipt.raw_grid_bytes == 0x0360u);
-        CHECK(grid_receipt.raw_grid[0] == 0x84u);
-        CHECK(grid_receipt.raw_grid[31] == 0x56u);
-        CHECK(grid_receipt.raw_grid[0x035fu] == 0u);
-        CHECK(grid_receipt.raw_track02_sector == 3123u);
+        if (is_us) {
+            CHECK(grid_receipt.raw_grid[0] == 0x84u);
+            CHECK(grid_receipt.raw_grid[31] == 0x56u);
+            CHECK(grid_receipt.raw_grid[0x035fu] == 0u);
+        }
+        CHECK(grid_receipt.raw_track02_sector == initial_envelope.track02_raw_sector);
         CHECK(grid_receipt.raw_sector_offset == 0x130u);
         CHECK(grid_receipt.raw_track02_offset == 0x7015c0u);
         CHECK(grid_receipt.raw_grid_hash == decoded_receipt.decoded_grid_hash);
         CHECK(strcmp(grid_receipt.status,
                      "initial_envelope_raw_grid_handoff_no_semantics") == 0);
+        consumer.accept = 1;
+        CHECK(theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
+            &decoded_receipt, real_track02, real_track02_bytes,
+            real_track02_md5, capture_runtime_grid, &consumer,
+            &runtime_receipt));
+        CHECK(runtime_receipt.delivered && runtime_receipt.no_fallback);
+        CHECK(runtime_receipt.raw_grid_bytes == grid_receipt.raw_grid_bytes);
+        CHECK(runtime_receipt.raw_grid_hash == grid_receipt.raw_grid_hash);
+        CHECK(runtime_receipt.raw_track02_offset == grid_receipt.raw_track02_offset);
+        CHECK(strcmp(runtime_receipt.status,
+                     "initial_envelope_raw_grid_delivered_no_fallback") == 0);
+        CHECK(consumer.calls == 1);
+        CHECK(consumer.grid_hash == grid_receipt.raw_grid_hash);
+        CHECK(consumer.grid_bytes == grid_receipt.raw_grid_bytes);
+        CHECK(consumer.first_byte == grid_receipt.raw_grid[0]);
+        CHECK(consumer.last_byte == grid_receipt.raw_grid[
+            grid_receipt.raw_grid_bytes - 1u]);
+        consumer.accept = 0;
+        CHECK(!theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
+            &decoded_receipt, real_track02, real_track02_bytes,
+            real_track02_md5, capture_runtime_grid, &consumer,
+            &runtime_receipt));
+        CHECK(!runtime_receipt.delivered && !runtime_receipt.no_fallback);
+        CHECK(runtime_receipt.status == NULL);
+        CHECK(consumer.calls == 2);
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid_row(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, &row_receipt));
+            real_track02_md5, 0u, &row_receipt));
         CHECK(row_receipt.handed_off);
         CHECK(row_receipt.raw_grid_y == 0u);
         CHECK(row_receipt.raw_grid_bytes == 0x20u);
-        CHECK(row_receipt.raw_grid_row[0] == 0x84u);
-        CHECK(row_receipt.raw_grid_row[31] == 0x56u);
-        CHECK(row_receipt.raw_track02_sector == 3123u);
+        if (is_us) {
+            CHECK(row_receipt.raw_grid_row[0] == 0x84u);
+            CHECK(row_receipt.raw_grid_row[31] == 0x56u);
+        }
+        CHECK(row_receipt.raw_track02_sector == initial_envelope.track02_raw_sector);
         CHECK(row_receipt.raw_sector_offset == 0x130u);
         CHECK(row_receipt.raw_track02_offset == 0x7015c0u);
         CHECK(row_receipt.raw_grid_row_hash == 0x4b97e3abu);
@@ -148,68 +214,73 @@ int main(void) {
                      "initial_envelope_raw_grid_row_handoff_no_semantics") == 0);
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid_row(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 26u, &row_receipt));
-        CHECK(row_receipt.raw_grid_row[0] == 0u);
+            real_track02_md5, 26u, &row_receipt));
         CHECK(row_receipt.raw_sector_offset == 0x470u);
-        CHECK(row_receipt.raw_grid_row_hash == 0x0b2ae445u);
+        if (is_us) {
+            CHECK(row_receipt.raw_grid_row[0] == 0u);
+            CHECK(row_receipt.raw_grid_row_hash == 0x0b2ae445u);
+        }
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid_row(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 27u, &row_receipt));
+            real_track02_md5, 27u, &row_receipt));
         CHECK(!row_receipt.handed_off);
         CHECK(row_receipt.status == NULL);
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, 0u, &coordinate_receipt));
+            real_track02_md5, 0u, 0u, &coordinate_receipt));
         CHECK(coordinate_receipt.handed_off);
-        CHECK(coordinate_receipt.raw_grid_byte == 0x84u);
-        CHECK(coordinate_receipt.raw_track02_sector == 3123u);
+        if (is_us) CHECK(coordinate_receipt.raw_grid_byte == 0x84u);
+        CHECK(coordinate_receipt.raw_track02_sector ==
+              initial_envelope.track02_raw_sector);
         CHECK(coordinate_receipt.raw_sector_offset == 0x130u);
         CHECK(coordinate_receipt.raw_track02_offset == 0x7015c0u);
         CHECK(strcmp(coordinate_receipt.status,
                      "initial_envelope_raw_grid_coordinate_handoff_no_semantics") == 0);
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 31u, 0u, &coordinate_receipt));
-        CHECK(coordinate_receipt.raw_grid_byte == 0x56u);
+            real_track02_md5, 31u, 0u, &coordinate_receipt));
+        if (is_us) CHECK(coordinate_receipt.raw_grid_byte == 0x56u);
         CHECK(coordinate_receipt.raw_sector_offset == 0x14fu);
         CHECK(theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, 26u, &coordinate_receipt));
-        CHECK(coordinate_receipt.raw_grid_byte == 0u);
+            real_track02_md5, 0u, 26u, &coordinate_receipt));
+        if (is_us) CHECK(coordinate_receipt.raw_grid_byte == 0u);
         CHECK(coordinate_receipt.raw_sector_offset == 0x470u);
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 32u, 0u, &coordinate_receipt));
+            real_track02_md5, 32u, 0u, &coordinate_receipt));
         CHECK(!coordinate_receipt.handed_off);
         CHECK(coordinate_receipt.status == NULL);
         ++decoded_receipt.decoded_grid_hash;
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, 0u, &coordinate_receipt));
+            real_track02_md5, 0u, 0u, &coordinate_receipt));
         CHECK(!coordinate_receipt.handed_off);
         CHECK(coordinate_receipt.status == NULL);
         --decoded_receipt.decoded_grid_hash;
         ++decoded_receipt.decoded_grid_row_bytes;
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid_row(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, &row_receipt));
+            real_track02_md5, 0u, &row_receipt));
         CHECK(!row_receipt.handed_off);
         CHECK(row_receipt.status == NULL);
         --decoded_receipt.decoded_grid_row_bytes;
         ++decoded_receipt.decoded_grid_row_count;
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, &grid_receipt));
+            real_track02_md5, &grid_receipt));
         CHECK(!grid_receipt.handed_off);
         CHECK(grid_receipt.status == NULL);
         --decoded_receipt.decoded_grid_row_count;
         ++decoded_receipt.decoded_grid_raw_sector;
         CHECK(!theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             &decoded_receipt, real_track02, real_track02_bytes,
-            THERON_V1_TRACK02_MD5_US_BIN, 0u, 0u, &coordinate_receipt));
+            real_track02_md5, 0u, 0u, &coordinate_receipt));
         CHECK(!coordinate_receipt.handed_off);
         CHECK(coordinate_receipt.status == NULL);
         free(real_track02);
+        initial_envelope.cue_track02_index01_raw_sector = 225u;
+        initial_envelope.track02_raw_sector = 3123u;
     }
 
     /* A header-shaped local fixture cannot substitute for the canonical BIN. */
