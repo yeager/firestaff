@@ -43,6 +43,13 @@ typedef struct {
     /* Exact externally captured ordinals for the six opaque observations.
      * Their relative order is recorded, never inferred from lane names. */
     uint64_t trace_sequence[NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT];
+    /* Source-only Structure3 entry framing. These are not VDP1 fields. */
+    uint32_t entry_byte_offset;
+    uint32_t vertex_byte_offset;
+    uint32_t face_byte_offset;
+    uint32_t normal_byte_offset;
+    uint16_t vertex_count;
+    uint16_t face_count;
     Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
     /* Parsing a manifest never makes it an original-Saturn capture. */
     int original_saturn_capture_verified;
@@ -58,6 +65,12 @@ typedef struct {
     int valid;
     int level_index;
     Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
+    uint32_t entry_byte_offset;
+    uint32_t vertex_byte_offset;
+    uint32_t face_byte_offset;
+    uint32_t normal_byte_offset;
+    uint16_t vertex_count;
+    uint16_t face_count;
     int capture_producer_required;
     int original_saturn_capture_required;
     int no_draw_only;

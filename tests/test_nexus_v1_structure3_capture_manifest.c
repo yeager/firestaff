@@ -21,7 +21,9 @@ static const char valid_manifest[] =
     "typed_mesh_corpus_fnv1a32=d3f42b1f\n"
     "entry_index=4\nface_ordinal=5\nface_row_fnv1a32=6\n"
     "referenced_vertex_rows_fnv1a32=7\nnormal_row_fnv1a32=8\n"
-    "fill_selector=9\ntexture_span_bytes=a\ntexture_span_fnv1a64=b\n"
+    "fill_selector=9\nentry_byte_offset=10\nvertex_byte_offset=38\n"
+    "face_byte_offset=5c\nnormal_byte_offset=68\nvertex_count=3\nface_count=1\n"
+    "texture_span_bytes=a\ntexture_span_fnv1a64=b\n"
     "palette_state_bytes=c\npalette_state_fnv1a64=d\n"
     "vdp1_state_bytes=e\nvdp1_state_fnv1a64=f\n"
     "transform_state_bytes=10\ntransform_state_fnv1a64=11\n"
@@ -199,6 +201,11 @@ int main(void) {
                target.candidate.entry_index == 0U &&
                target.candidate.face_ordinal == 0U &&
                target.candidate.fill_selector == 1U &&
+               target.entry_byte_offset == 16U &&
+               target.vertex_byte_offset == 56U &&
+               target.face_byte_offset == 92U &&
+               target.normal_byte_offset == 104U &&
+               target.vertex_count == 3U && target.face_count == 1U &&
                target.capture_producer_required &&
                target.original_saturn_capture_required && target.no_draw_only &&
                !target.fallback_visuals_permitted,
@@ -226,6 +233,8 @@ int main(void) {
         fclose(target_file);
         expect(strstr(target_text, NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC) != NULL &&
                    strstr(target_text, "required_lanes=texture_span,palette_state,vdp1_state,transform_state,normal_culling_state,vdp1_command") != NULL &&
+                   strstr(target_text, "entry_byte_offset=10") != NULL &&
+                   strstr(target_text, "normal_byte_offset=68") != NULL &&
                    strstr(target_text, "no_draw_only=1") != NULL,
                "capture target names every required raw lane without manufacturing bytes");
     }
@@ -238,6 +247,11 @@ int main(void) {
                receipt.candidate.entry_index == 4U &&
                receipt.candidate.face_ordinal == 5U &&
                receipt.candidate.fill_selector == 9U &&
+               receipt.entry_byte_offset == 16U &&
+               receipt.vertex_byte_offset == 56U &&
+               receipt.face_byte_offset == 92U &&
+               receipt.normal_byte_offset == 104U &&
+               receipt.vertex_count == 3U && receipt.face_count == 1U &&
                receipt.texture_span_bytes == 10U &&
                receipt.palette_state_bytes == 12U &&
                receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_TEXTURE_SPAN] ==
@@ -320,7 +334,9 @@ int main(void) {
         "typed_mesh_corpus_fnv1a32=d3f42b1f\nentry_index=4\n"
         "face_ordinal=5\nface_row_fnv1a32=6\n"
         "referenced_vertex_rows_fnv1a32=7\nnormal_row_fnv1a32=8\n"
-        "fill_selector=9\ntexture_span_bytes=%zx\ntexture_span_fnv1a64=%llx\n"
+        "fill_selector=9\nentry_byte_offset=10\nvertex_byte_offset=38\n"
+        "face_byte_offset=5c\nnormal_byte_offset=68\nvertex_count=3\nface_count=1\n"
+        "texture_span_bytes=%zx\ntexture_span_fnv1a64=%llx\n"
         "palette_state_bytes=%zx\npalette_state_fnv1a64=%llx\n"
         "vdp1_state_bytes=%zx\nvdp1_state_fnv1a64=%llx\n"
         "transform_state_bytes=%zx\ntransform_state_fnv1a64=%llx\n"
