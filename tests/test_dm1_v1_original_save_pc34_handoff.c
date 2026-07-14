@@ -4682,6 +4682,8 @@ static void test_original_pc34_party_info_runtime_materialization(void)
               ORIGINAL_PC34_ACTIVE_GROUP_COUNT) == SAVEGAME_PC34_OK,
           "PARTY_INFO runtime fixture build succeeds");
     wr16le(party_info + 0u, (uint16_t)(int16_t)-12);
+    party_info[2u] = 3u;
+    party_info[3u] = 5u;
     wr16le(party_info + 4u, 17u);
     wr16le(party_info + 6u, 19u);
     wr16le(party_info + 8u, 23u);
@@ -4692,6 +4694,9 @@ static void test_original_pc34_party_info_runtime_materialization(void)
         bytes, (size_t)written, &world, &queue, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
           world.magic.magicalLightAmount == -12 &&
+          world.magic.event73CountThievesEye == 3 &&
+          world.magic.event79CountFootprints == 5 &&
+          world.magic.magicFootprintsActive &&
           world.magic.partyShieldDefense == 17 &&
           world.magic.fireShieldDefense == 19 &&
           world.magic.spellShieldDefense == 23 &&
@@ -4710,6 +4715,8 @@ static void test_original_pc34_party_info_runtime_materialization(void)
               exported, (size_t)exported_size, &reimported, &report) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 0u) == -12 &&
+          reimported_party.pc34PartyInfoBytes[2u] == 3u &&
+          reimported_party.pc34PartyInfoBytes[3u] == 5u &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 4u) == 17 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 6u) == 19 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23,
