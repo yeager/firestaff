@@ -2227,6 +2227,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveStructure3DirectoryReceipt active_directory;
         Nexus_V1_DgnActiveStructure3MeshSemanticReceipt active_mesh_semantics;
         Nexus_V1_DgnActiveStructure3FaceFramingReceipt active_face_framing;
+        Nexus_V1_DgnActiveTransformCameraFramingReceipt active_camera_framing;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_Viewport viewport;
 
@@ -2245,6 +2246,9 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(dgn, sizeof(dgn));
+        engine.game.party_x = 0;
+        engine.game.party_y = 0;
+        engine.game.party_dir = 2;
         CHECK(nexus_v1_current_level_structure3_directory_receipt(
                   &engine, &active_directory) == 1 && active_directory.valid &&
               active_directory.level_index == 0 &&
@@ -2291,6 +2295,28 @@ static void test_structure3_entry_header_boundaries(void) {
               active_face_framing.no_draw_only &&
               !active_face_framing.fallback_visuals_permitted,
               "active canonical LEV exposes source-bound Structure3 face framing only");
+        CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
+                  &engine, &active_camera_framing) == 1 &&
+              active_camera_framing.valid && active_camera_framing.level_index == 0 &&
+              active_camera_framing.source_byte_count == (int)sizeof(dgn) &&
+              active_camera_framing.source_bytes_fnv1a64 ==
+                  fnv1a64(dgn, sizeof(dgn)) &&
+              active_camera_framing.party_x == 0 &&
+              active_camera_framing.party_y == 0 &&
+              active_camera_framing.party_dir == 2 &&
+              active_camera_framing.party_cell_geometry_valid &&
+              !active_camera_framing.saturn_camera_semantics_proven &&
+              !active_camera_framing.saturn_transform_semantics_proven &&
+              active_camera_framing.no_draw_only &&
+              !active_camera_framing.fallback_visuals_permitted,
+              "active canonical LEV exposes camera input provenance without Saturn camera semantics");
+        engine.game.party_x = engine.current_level.width;
+        CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
+                  &engine, &active_camera_framing) == 0 &&
+              !active_camera_framing.valid && active_camera_framing.no_draw_only &&
+              !active_camera_framing.fallback_visuals_permitted,
+              "out-of-bounds pose cannot enter the active camera framing route");
+        engine.game.party_x = 0;
         memset(&active_source, 0, sizeof(active_source));
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 1 &&
@@ -2338,6 +2364,11 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_face_framing.valid && active_face_framing.no_draw_only &&
               !active_face_framing.fallback_visuals_permitted,
               "active face framing withdraws when retained LEV bytes change");
+        CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
+                  &engine, &active_camera_framing) == 0 &&
+              !active_camera_framing.valid && active_camera_framing.no_draw_only &&
+              !active_camera_framing.fallback_visuals_permitted,
+              "active camera framing withdraws when retained LEV bytes change");
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
                   &engine, 0, live_vertices, 4, live_faces, 2,
                   live_normals, 2, &live_mesh) == -1 &&

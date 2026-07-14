@@ -2427,6 +2427,48 @@ int nexus_v1_current_level_structure3_face_framing_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_transform_camera_framing_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    Nexus_V1_DgnCellGeometry cell;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        nexus_v1_level_get_cell_geometry(&engine->current_level,
+                                         engine->game.party_x,
+                                         engine->game.party_y, &cell) != 0 ||
+        nexus_v1_level_structure1a_transform_selector_receipt(
+            &engine->current_level, &out_receipt->transform_selectors) != 0)
+        return 0;
+    out_receipt->valid = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    out_receipt->party_x = engine->game.party_x;
+    out_receipt->party_y = engine->game.party_y;
+    out_receipt->party_dir = engine->game.party_dir & 3;
+    out_receipt->party_cell_geometry_valid = 1;
+    out_receipt->party_square_type = cell.square_type;
+    out_receipt->party_collision_ref = cell.collision_ref;
+    out_receipt->party_post_grid_0x30_ref = cell.post_grid_0x30_ref;
+    out_receipt->transform_selector_source_bound =
+        out_receipt->transform_selectors.complete ? 1 : 0;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
