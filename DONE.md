@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 Theron Stage 3 CD_READ sector receipt: added an immutable,
+  fail-closed join between the observed Mednafen `$4090 -> $4093` `$3800`
+  transfer and the matching hash-verified MODE1/2048 Stage 3 sector receipt.
+  It retains canonical media identity, record, physical sector/raw and
+  user-data offsets, full user-data hash, and the observed destination-span
+  checksum. This proves only the original loader handoff record, never a
+  Soul Room selection, dungeon record, or payload decode. Verification:
+  focused CTest `theron_v1_raw_loader_trace_(ingest|import|stage3_sector|preflight)`
+  plus `theron_v1_capture_preflight_chain` passed 5/5; the opt-in preflight
+  correctly skip-passed without explicit original media and trace inputs.
+
 - ✅ 2026-07-14 CSB PC34 post-door HUD presented-frame capture: the real-data
   startup path now composes the original opaque C017 224x136 viewport at
   screen `(0,33)` with the original C040 144x73 resurrect panel at `(80,85)`

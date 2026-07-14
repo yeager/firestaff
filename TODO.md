@@ -666,6 +666,12 @@ sector before final startup-media binding. This proves only the observed
 record-to-RAM transfer; it does not classify palette bytes, bitmap data,
 objects, or a later dungeon record. A fresh authentic combined capture still
 must pass this gate before any positive runtime route is accepted.
+2026-07-14 Stage 3 sector-receipt update: the bound live CD_READ trace now
+also joins the hash-verified Stage 3 MODE1/2048 receipt, preserving the
+physical sector, raw offset, user-data offset, full user-data hash, and
+observed `$3800` span checksum as one fail-closed handoff boundary. This
+proves the executed loader record only; a Soul Room selection-to-dungeon
+record relationship remains unobserved and must not be inferred.
 2026-07-13 register-provenance update: a dynamic CD_READ receipt must now
 carry the observed `CL/DL/CH` bytes and reconstruct its accepted Track 02
 record exactly before raw-media binding. The existing startup bitmap receipt

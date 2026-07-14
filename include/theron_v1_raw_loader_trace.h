@@ -65,6 +65,28 @@ typedef struct {
     uint32_t bitmap_atlas_checksum;
 } Theron_V1RawLoaderTraceReceipt;
 
+/* Immutable join of two already-authenticated facts: the original runtime's
+ * observed $4090 CD_READ receipt and the matching MODE1/2048 Stage 3 sector
+ * receipt from the hash-verified Track 02.  `stage3_handoff_record_proven`
+ * establishes only the loader's executed record boundary.  In particular it
+ * does not identify a Soul Room selection, a dungeon record, or any payload
+ * format within the Stage 3 user-data window. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t stage3_track02_record;
+    size_t stage3_raw_sector;
+    size_t stage3_raw_offset;
+    size_t stage3_user_data_offset;
+    size_t stage3_user_data_bytes;
+    uint32_t stage3_user_data_hash;
+    size_t observed_destination_span_bytes;
+    uint32_t observed_destination_span_checksum;
+    int observed_cd_read_to_media_span_verified;
+    int stage3_handoff_record_proven;
+} Theron_V1RawLoaderTraceStage3SectorReceipt;
+
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
  * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores and
  * completed HuC6260 colour-table words that appear after that read in the
@@ -91,6 +113,14 @@ int theron_v1_raw_loader_trace_bind_track02_destination_span(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceReceipt *out);
+
+/* Joins an existing media-bound trace with the existing Stage 3 MODE1 receipt.
+ * The caller must obtain both inputs from the hash-verified raw Track 02;
+ * this helper neither reads media nor decodes the user-data payload. */
+int theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const Theron_Track02Stage2DynamicPayloadReceipt *payload,
+    Theron_V1RawLoaderTraceStage3SectorReceipt *out);
 
 /* Binds only compatible real-media startup bitmap receipts. In addition to
  * preserving the existing bitmap-route contract, this binds the inspected

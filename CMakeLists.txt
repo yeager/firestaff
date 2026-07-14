@@ -24328,6 +24328,43 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_raw_loader_trace_import_probe
     )
 
+    add_executable(firestaff_theron_v1_raw_loader_trace_stage3_sector_probe
+        probes/theron/firestaff_theron_v1_raw_loader_trace_stage3_sector_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_raw_loader_trace_stage3_sector_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_raw_loader_trace_stage3_sector_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_raw_loader_trace_stage3_sector_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_raw_loader_trace_stage3_sector
+        COMMAND firestaff_theron_v1_raw_loader_trace_stage3_sector_probe
+    )
+
+    add_executable(firestaff_theron_v1_raw_loader_trace_preflight_probe
+        probes/theron/firestaff_theron_v1_raw_loader_trace_preflight_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_raw_loader_trace_preflight_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_raw_loader_trace_preflight_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_raw_loader_trace_preflight_probe PRIVATE firestaff_m12)
+    endif()
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_raw_loader_trace_preflight_probe PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME theron_v1_raw_loader_trace_preflight
+        COMMAND firestaff_theron_v1_raw_loader_trace_preflight_probe
+    )
+
     add_executable(firestaff_theron_v1_capture_preflight_chain_probe
         probes/theron/firestaff_theron_v1_capture_preflight_chain_probe.c
     )

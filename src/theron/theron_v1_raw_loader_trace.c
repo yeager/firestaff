@@ -284,6 +284,65 @@ int theron_v1_raw_loader_trace_bind_track02_destination_span(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const Theron_Track02Stage2DynamicPayloadReceipt *payload,
+    Theron_V1RawLoaderTraceStage3SectorReceipt *out)
+{
+    const char *expected_md5;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!trace || !payload || !out || !trace->valid || !payload->valid ||
+        !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_registers_verified ||
+        !trace->dynamic_cd_read_destination_span_verified ||
+        !trace->dynamic_cd_read_media_span_verified ||
+        trace->dynamic_cd_read_destination != 0x3800u ||
+        !trace->dynamic_cd_read_destination_span_bytes ||
+        !trace->dynamic_cd_read_destination_span_checksum ||
+        (payload->variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         payload->variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        trace->variant != payload->variant ||
+        trace->dynamic_cd_read_record != payload->track02_record ||
+        trace->dynamic_cd_read_raw_sector != payload->raw_sector ||
+        trace->dynamic_cd_read_raw_offset != payload->raw_offset ||
+        trace->dynamic_cd_read_user_data_offset != payload->user_data_offset ||
+        trace->dynamic_cd_read_destination_span_bytes >
+            payload->user_data_bytes ||
+        payload->user_data_bytes !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES ||
+        payload->raw_sector > SIZE_MAX / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        payload->raw_offset !=
+            payload->raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES ||
+        payload->raw_offset > SIZE_MAX - 16u ||
+        payload->user_data_offset != payload->raw_offset + 16u ||
+        !payload->user_data_hash) {
+        return 0;
+    }
+
+    expected_md5 = payload->variant == THERON_TRACK02_VARIANT_JP_BIN
+        ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    if (strcmp(trace->track02_md5, expected_md5) != 0) return 0;
+
+    out->valid = 1;
+    out->variant = payload->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+             trace->track02_md5);
+    out->stage3_track02_record = payload->track02_record;
+    out->stage3_raw_sector = payload->raw_sector;
+    out->stage3_raw_offset = payload->raw_offset;
+    out->stage3_user_data_offset = payload->user_data_offset;
+    out->stage3_user_data_bytes = payload->user_data_bytes;
+    out->stage3_user_data_hash = payload->user_data_hash;
+    out->observed_destination_span_bytes =
+        trace->dynamic_cd_read_destination_span_bytes;
+    out->observed_destination_span_checksum =
+        trace->dynamic_cd_read_destination_span_checksum;
+    out->observed_cd_read_to_media_span_verified = 1;
+    out->stage3_handoff_record_proven = 1;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_final_bind(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_StartupMediaStateReceipt *media,
