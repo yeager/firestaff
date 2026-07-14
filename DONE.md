@@ -15330,6 +15330,17 @@ trace's MENU.BPK span to real bytes and reports the VDP1-command/palette
 witnesses, while leaving runtime import, decoder promotion, and fallback
 visuals disabled. It does not manufacture a trace or attest the capture
 producer. Verification: `nexus_v1_prs3_capture_trace_schema`.
+
+# ✅ 2026-07-14 Nexus PRS3 V3 raw-sidecar admission
+
+The V3 validator now optionally accepts three read-only capture sidecars:
+decoder output, raw VDP1 command bytes, and raw palette bytes. Admission
+requires each sidecar's exact recorded size and FNV witness to match the
+hash-bound V3 trace after canonical `MENU.BPK`/`DM.BIN` validation. The CLI
+accepts all six inputs and reports each binding separately. It does not claim
+that a file was produced by an original Saturn/emulator, decode any sidecar,
+or permit runtime import, rendering, or fallback. Verification:
+`nexus_v1_prs3_capture_trace_schema`.
 # ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
 
 `dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`

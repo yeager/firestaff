@@ -2,6 +2,8 @@
  *
  * Usage:
  *   firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN
+ *   firestaff_nexus_v1_prs3_v3_capture_validator TRACE MENU.BPK DM.BIN \
+ *       OUTPUT.BIN VDP1-COMMAND.BIN PALETTE.BIN
  *
  * The program deliberately does not emit decoded bytes or render a surface.
  * It only reports whether an externally recorded trace is internally complete
@@ -14,14 +16,29 @@
 int main(int argc, char **argv)
 {
     Nexus_V1_Prs3Vdp1CaptureFileReceipt receipt;
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecars;
     int accepted;
 
-    if (argc != 4) {
-        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN\n", argv[0]);
+    if (argc != 4 && argc != 7) {
+        fprintf(stderr, "usage: %s TRACE MENU.BPK DM.BIN [OUTPUT VDP1-COMMAND PALETTE]\n",
+                argv[0]);
         return 2;
     }
+    if (argc == 7) {
+        accepted = nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+            argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], &sidecars);
+        receipt = sidecars.trace_file;
+        printf("output_sidecar_bound=%d\n", sidecars.output_sidecar_bound);
+        printf("vdp1_command_sidecar_bound=%d\n",
+               sidecars.vdp1_command_sidecar_bound);
+        printf("palette_sidecar_bound=%d\n", sidecars.palette_sidecar_bound);
+        printf("raw_sidecars_bound=%d\n", sidecars.raw_sidecars_bound);
+        printf("capture_producer_authenticated=%d\n",
+               sidecars.capture_producer_authenticated);
+    } else {
     accepted = nexus_v1_prs3_vdp1_capture_validate_files(
         argv[1], argv[2], argv[3], &receipt);
+    }
     printf("trace_file_read=%d\n", receipt.trace_file_read);
     printf("menu_bpk_original_hash_verified=%d\n",
            receipt.menu_bpk_original_hash_verified);

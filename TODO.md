@@ -104,6 +104,12 @@
   itself. Remaining work is a positive trace recorded from an original Saturn
   or independently authenticated emulator capture, then separate proof of
   PRS3 opcode, palette, and VDP1 semantics.
+  The validator now also accepts raw output, VDP1-command, and palette
+  sidecars and requires their exact byte lengths/FNV witnesses to match the
+  V3 trace. No local authentic Nexus trace or sidecar corpus was found, and
+  the sidecar gate deliberately does not claim producer authenticity. Needed
+  next: a trace/sidecar set recorded from an original Saturn or an
+  independently authenticated emulator run, followed by semantic decoding.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked
