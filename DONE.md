@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1071: available graphics-library open route is
+  Amiga-only. The focused PC 3.4 boundary is intentionally a no-op.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1069-F1070: available DOS-library open/close
   routes are Amiga-only. Focused PC 3.4 boundaries are intentionally no-ops.
 

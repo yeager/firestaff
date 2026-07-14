@@ -1943,7 +1943,7 @@ F	1067	F1067_InitAmigaStuff	AMIGA.H;AMIGINIT.C;HINTMAIN.C;HINT001.C;STARTUP2.C	s
 F	1068	F1068_FreeAmigaStuff	AMIGINIT.C;HINTMAIN.C;HINT001.C	source_nonapplicable
 F	1069	F1069_OpenDosLibrary	AMIGINIT.C	source_nonapplicable
 F	1070	F1070_CloseDosLibrary	AMIGINIT.C	source_nonapplicable
-F	1071	F1071_OpenGraphicsLibrary	AMIGINIT.C	unmapped_or_unverified
+F	1071	F1071_OpenGraphicsLibrary	AMIGINIT.C	source_nonapplicable
 F	1072	F1072_CloseGraphicsLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1073	F1073_OpenIntuitionLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1074	F1074_CloseIntuitionLibrary	AMIGINIT.C	unmapped_or_unverified
