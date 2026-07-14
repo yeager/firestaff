@@ -10,6 +10,19 @@
   `dm1_v1_original_save_pc34_external_hoc_runtime` (skip-safe without an
   operator corpus or original media).
 
+- DONE 2026-07-14 Theron Track02 later-loader Mednafen envelope gate: the
+  standalone trace verifier and opt-in paired JP/US `$e009` dispatch/return
+  probe now self-test their strict trace parsers before examining media. They
+  accept one complete original `source` + `$4090/$4093` dynamic receipt +
+  `$e009` envelope and reject duplicate return rows and changed return-record
+  bytes. The media path still requires both known-MD5 raw tracks, in-range
+  reconstructed records, the same stage-three selector ordinal, and the same
+  caller/return anchor. This proves only bounded loader-coordinate correlation;
+  no payload, dungeon, object, graphics, palette, or transition semantics are
+  assigned. Verification: `verify_theron_later_e009_loader_trace.sh` and
+  `firestaff_theron_v1_later_cd_read_layout_probe` self-tests pass; absent
+  explicit paired authentic inputs skip the media assertion.
+
 - ✅ 2026-07-14 DM1 PC34 F0435 runtime queue-adoption gate: the final
   candidate-to-live transfer now verifies the staged F0238 queue belongs to
   the restored F0435 GameTime, has unique live C4 entries, and has the same

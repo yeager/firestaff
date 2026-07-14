@@ -799,16 +799,18 @@ meaning. Continue only from a later explicit original data transaction.
 
 2026-07-14 later-loader capture gate: the authenticated US raw Track 02 is
 available locally, but the inspected historical Mednafen traces contain no
-later `$e009` dispatch/return envelope. The trace patch now records the first post-stage-two
-HuC6280 `JSR $e009` as raw caller/return PC plus `CL/DL/CH` record bytes. The
-new opt-in probe accepts only a paired hash-verified JP/US corpus and trace
-pair whose trace also retains its observed `$4090/$4093` JP/US variant receipt,
-whose later records are in raw-sector bounds, reconstruct from those bytes,
-resolve to the same existing stage-three selector ordinal, and retain the same
-caller/return transition anchor. Duplicate, mismatched, or standalone later
-rows reject. It assigns no CD payload, object, graphics, palette, level, or
-gameplay-transition semantics. A fresh matched JP/US capture remains required
-before any positive record correlation is claimed.
+later `$e009` dispatch/return envelope. The trace patch records the first
+post-stage-two HuC6280 `JSR $e009` as raw caller/return PC plus `CL/DL/CH`
+record bytes. A standalone trace verifier and the opt-in paired-corpus probe
+independently exercise the envelope parser and accept only a paired
+hash-verified JP/US corpus and trace pair whose trace also retains its observed
+`$4090/$4093` JP/US variant receipt, whose later records are in raw-sector
+bounds, reconstruct from those bytes, resolve to the same existing stage-three
+selector ordinal, and retain the same caller/return transition anchor.
+Duplicate, mismatched, or standalone later rows reject. It assigns no CD
+payload, object, graphics, palette, level, or gameplay-transition semantics. A
+fresh matched JP/US capture remains required before any positive record
+correlation is claimed.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
