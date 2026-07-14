@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7089/F7090 imported-party normalization: added the
+  PC34 new-adventure transition after portrait transfer, including header-tail
+  carry, party rotation, champion status reset, modifier removal callback and
+  source-order free-cell repair. The boundary fails closed without its random
+  and modifier dependencies; full original-media save interop remains open.
+
 - 2026-07-14 CSB ReDMCSB F7088 portrait transfer: added the source-proven
   PC34 `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` path for exactly four
   464-byte portrait spans, followed by F7066 slot rebinding. Format/count
