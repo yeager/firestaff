@@ -923,6 +923,10 @@ ReDMCSB WIP 2021-02-06 source tree.
   - 2026-07-14 VIDEODRV.C F8155 now preserves the PC 3.4 C25 hatch box:
     `((x ^ y) & 1) == 0` aperture pixels clear to zero and the others are
     retained. Live Mac/SDL aperture consumption remains separately unproven.
+  - 2026-07-14 VIDEODRV.C F8166 now consumes the real C25 F8165 aperture
+    snapshot format directly: three 16-bit prefix words and raw 320-stride
+    rows are replayed without palette conversion. Binding the host aperture to
+    the live SDL/Mac framebuffer remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8165 now preserves C25's real aperture snapshot
     layout: a 6-byte partial-box prefix followed by raw byte-per-pixel rows at
     the original 320-byte stride. The capture source is still an explicit host

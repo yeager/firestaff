@@ -1972,7 +1972,7 @@ F8162_VIDRV_10_ScrollMessageAreaUp	F	VIDRV	NEC816.C:2438	include/redmcsb_f8162_v
 F8163_VIDRV_00_CopyPixelsToScreenWithoutTransparency	F	VIDRV	NEC816.C:2468	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8164_VIDRV_13_InitializeUnusedGlobalVariables	F	VIDRV	NEC816.C:2514	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8165_VIDRV_14_GetPrefixedBitmapByteCountOrBlitFromScreenNoTransparency	F	VIDRV	NEC816.C:2522	include/redmcsb_f8165_prefixed_bitmap_c25_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 C25 operation zero reports width*height+6; capture writes the three 16-bit prefix fields and raw byte-per-pixel A000h rows at a 320-byte stride; focused strict C11 test.
-F8166_VIDRV_15_BlitToScreenNoTransparency	F	VIDRV	NEC816.C:2618	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8166_VIDRV_15_BlitToScreenNoTransparency	F	VIDRV	NEC816.C:2618	include/redmcsb_f8166_blit_prefixed_bitmap_c25_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 C25 reads F8165's three 16-bit prefix fields and restores raw byte-per-pixel payload rows to A000h at a 320-byte stride; focused strict C11 test.
 F8167_VIDRV_03_BlitMousePointerPrefixedBitmapFromScreen	F	VIDRV	NEC816.C:2061	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8168_VIDRV_04_BlitMousePointerPrefixedBitmapToScreen	F	VIDRV	NEC816.C:2136	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8169_VIDRV_19_BlackenAllPixelsOneByOne	F	VIDRV	VIDEODRV.C:36	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.

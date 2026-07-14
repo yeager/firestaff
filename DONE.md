@@ -192,6 +192,11 @@
   14-by-6 creature set into the selected entry of palette tables 0..5, while
   retaining each `COLOR_DEF.Index`. Focused strict-C11 test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8166: source-locked PC 3.4 C25 aperture
+  playback. The adapter reads F8165's little-endian width/height/offset
+  prefix and restores the raw payload in 320-byte aperture rows. Focused
+  strict-C11 test covers both rows and truncated-data rejection.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8165: source-locked PC 3.4 C25 aperture
   capture. Operation zero reports the real `width * height + 6` size; capture
   emits the original little-endian width/height/offset prefix and raw 320-byte
