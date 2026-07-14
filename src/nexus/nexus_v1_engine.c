@@ -3163,6 +3163,10 @@ int nexus_v1_engine_admit_slev_execution_trace(
                                     sizeof(value)) ||
         !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
         (int)source_byte_count != target.level_index ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "canonical_slev_name", value,
+                                    sizeof(value)) ||
+        strcmp(value, target.canonical_slev_name) != 0 ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "canonical_slev_md5",
                                     value, sizeof(value)) ||
         strcmp(value, target.canonical_slev_md5) != 0 ||
@@ -3173,7 +3177,21 @@ int nexus_v1_engine_admit_slev_execution_trace(
         !nexus_v1_slev_trace_value(trace_text, trace_size, "entry_opcode", value,
                                     sizeof(value)) ||
         !nexus_v1_slev_trace_hex_u32(value, &entry_opcode) ||
-        (int)entry_opcode != target.first_opcode) {
+        (int)entry_opcode != target.first_opcode ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "task_header_size",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
+        (int)source_byte_count != target.task_header_size ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "primary_literal_address", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
+        (int)source_byte_count != target.primary_literal_address ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "auxiliary_literal_address", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
+        (int)source_byte_count != target.auxiliary_literal_address) {
         receipt.status = NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH;
         *out_receipt = receipt;
         return 0;
