@@ -192,38 +192,30 @@ done:
 int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
     const Theron_V1_BootProfile *profile) {
     Theron_Track02Variant expected_variant;
-    const Theron_V1Irq2FullMediaTraceReceipt *handoff;
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *initial_level;
 
     if (!profile || !profile->track02_runtime_trace_handoff_ready) {
         return 0;
     }
     expected_variant = theron_v1_track02_variant_for_md5(
         profile->graphics_md5);
-    handoff = &profile->track02_runtime_trace_handoff;
+    initial_level = &profile->track02_initial_level_handoff;
     return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
             expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
            theron_v1_boot_md5_is_canonical(
                profile->track02_runtime_system_card_md5) &&
            theron_v1_boot_md5_is_canonical(
                profile->track02_runtime_trace_md5) &&
-           handoff->valid && handoff->variant == expected_variant &&
-           handoff->stage3_track02_record != 0u &&
-           handoff->stage3_user_data_hash != 0u &&
-           handoff->stage3_track02_record ==
-               ((uint32_t)handoff->cd_read_record_cl |
-                ((uint32_t)handoff->cd_read_record_dl << 8) |
-                ((uint32_t)handoff->cd_read_record_ch << 16)) &&
-           handoff->stage3_user_data_offset /
-                   THERON_TRACK02_RAW_SECTOR_BYTES ==
-               handoff->stage3_raw_sector &&
-           handoff->stage3_user_data_offset %
-                   THERON_TRACK02_RAW_SECTOR_BYTES ==
-               THERON_TRACK02_RAW_USER_DATA_OFFSET &&
-           handoff->stage3_user_data_bytes ==
-               THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES &&
-           handoff->handler_address != 0u &&
-           handoff->cd_state_address != 0u &&
-           handoff->cd_state_branch_address != 0u && handoff->branch.valid;
+           initial_level->valid &&
+           initial_level->variant == expected_variant &&
+           strcmp(initial_level->track02_md5, profile->graphics_md5) == 0 &&
+           initial_level->coalesced_loader_cd_receipt_proven &&
+           initial_level->initial_level_record_proven &&
+           initial_level->complete_initial_level_envelope_proven &&
+           initial_level->observed_track02_record == 0x0b52u &&
+           !initial_level->object_tail_semantics_proven &&
+           !initial_level->fallback_visuals_allowed &&
+           initial_level->receipt_hash != 0u;
 }
 
 /* ── PC Engine file candidates ───────────────────────────────────── */
@@ -5727,6 +5719,9 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     memset(&launch->profile->track02_runtime_trace_handoff,
            0,
            sizeof(launch->profile->track02_runtime_trace_handoff));
+    memset(&launch->profile->track02_initial_level_handoff,
+           0,
+           sizeof(launch->profile->track02_initial_level_handoff));
     if (!theron_v1_boot_track02_runtime_trace_intake_from_files(
             launch->profile->graphics_path,
             launch->profile->graphics_md5,
@@ -5800,16 +5795,83 @@ done:
 int theron_v1_boot_startup_launch_apply_track02_runtime_capture_manifest_from_file(
     Theron_V1_BootStartupLaunch *launch,
     const char *manifest_path) {
-    Theron_V1CaptureManifest manifest;
+    return theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
+        launch, manifest_path);
+}
 
-    if (!launch || !launch->profile ||
-        !theron_v1_boot_runtime_capture_manifest_from_file(
-            launch->profile, manifest_path, &manifest)) {
+int theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *manifest_path) {
+    Theron_V1CaptureManifest manifest;
+    unsigned char *track02 = NULL;
+    unsigned char *trace = NULL;
+    size_t track02_size = 0u;
+    size_t trace_size = 0u;
+    char observed_track02_md5[33];
+    char observed_system_card_md5[33];
+    char observed_trace_md5[33];
+    Theron_V1RawLoaderTraceCoalescedLaterReceipt coalesced;
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt initial_level;
+    int accepted = 0;
+
+    if (!launch || !launch->profile) return 0;
+    memset(&launch->profile->track02_initial_level_handoff, 0,
+           sizeof(launch->profile->track02_initial_level_handoff));
+    launch->profile->track02_runtime_trace_handoff_ready = 0;
+    memset(launch->profile->track02_runtime_system_card_md5, 0,
+           sizeof(launch->profile->track02_runtime_system_card_md5));
+    memset(launch->profile->track02_runtime_trace_md5, 0,
+           sizeof(launch->profile->track02_runtime_trace_md5));
+    memset(&launch->profile->track02_runtime_trace_handoff, 0,
+           sizeof(launch->profile->track02_runtime_trace_handoff));
+    if (!theron_v1_boot_runtime_capture_manifest_from_file(
+            launch->profile, manifest_path, &manifest) ||
+        !m12_file_md5_hex(launch->profile->graphics_path,
+                          observed_track02_md5) ||
+        !m12_file_md5_hex(manifest.system_card_path,
+                          observed_system_card_md5) ||
+        !m12_file_md5_hex(manifest.trace_path, observed_trace_md5) ||
+        !theron_v1_raw_loader_trace_capture_manifest_matches(
+            &manifest, launch->profile->graphics_path,
+            observed_track02_md5, manifest.system_card_path,
+            observed_system_card_md5, manifest.trace_path,
+            observed_trace_md5)) {
         return 0;
     }
-    return theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
-        launch, manifest.system_card_path, manifest.system_card_md5,
-        manifest.trace_path, manifest.trace_md5);
+    track02 = theron_v1_boot_read_evidence_file(
+        launch->profile->graphics_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES,
+        &track02_size);
+    trace = theron_v1_boot_read_evidence_file(
+        manifest.trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
+    if (!track02 || !trace || memchr(trace, '\0', trace_size) != NULL ||
+        !theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
+            (const char *)trace, track02, track02_size,
+            launch->profile->graphics_md5, &coalesced) ||
+        !theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, track02, track02_size,
+            launch->profile->graphics_md5, &initial_level)) {
+        goto done;
+    }
+    launch->profile->track02_initial_level_handoff = initial_level;
+    snprintf(launch->profile->track02_runtime_system_card_md5,
+             sizeof(launch->profile->track02_runtime_system_card_md5), "%s",
+             observed_system_card_md5);
+    snprintf(launch->profile->track02_runtime_trace_md5,
+             sizeof(launch->profile->track02_runtime_trace_md5), "%s",
+             observed_trace_md5);
+    launch->profile->track02_runtime_trace_handoff_ready = 1;
+    accepted = theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+        launch->profile);
+    if (!accepted) {
+        memset(&launch->profile->track02_initial_level_handoff, 0,
+               sizeof(launch->profile->track02_initial_level_handoff));
+        launch->profile->track02_runtime_trace_handoff_ready = 0;
+    }
+
+done:
+    free(track02);
+    free(trace);
+    return accepted;
 }
 
 void theron_v1_boot_startup_launch_cleanup(

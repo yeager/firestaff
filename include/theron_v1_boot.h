@@ -163,6 +163,11 @@ typedef struct {
     char track02_runtime_system_card_md5[33];
     char track02_runtime_trace_md5[33];
     Theron_V1Irq2FullMediaTraceReceipt track02_runtime_trace_handoff;
+    /* Dungeon entry additionally requires one manifest-bound, coalesced
+     * later $e009 receipt. The older Stage 3 receipt remains diagnostic and
+     * must not by itself authorize the Soul Room transition. */
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt
+        track02_initial_level_handoff;
 } Theron_V1_BootProfile;
 
 /* Explicit runtime-evidence intake for an instrumented Mednafen capture. The
@@ -302,11 +307,20 @@ int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
     const char *trace_path,
     const char *trace_md5_hex);
 
+/* Applies a manifest-bound, coalesced Mednafen transcript to the prepared
+ * launch. It is the only capture path that can authorize the Soul Room
+ * transition: the transcript must bind the later original $e009 call,
+ * returned control edge, and its 32-byte local-RAM span to selected Track 02
+ * record 0x0b52. */
+int theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
+    Theron_V1_BootStartupLaunch *launch,
+    const char *manifest_path);
+
 /* Reads a bounded V2 capture manifest and binds it to the already selected
  * hash-verified Track 02 profile. The selected Track 02 file is rehashed
  * before the manifest is accepted, so a stale profile path cannot hand a
- * capture receipt to the runtime. The normal runtime-trace gate still
- * rehashes every referenced artifact before consuming trace evidence. */
+ * capture receipt to the runtime. The coalesced runtime gate rehashes every
+ * referenced artifact before consuming trace evidence. */
 int theron_v1_boot_runtime_capture_manifest_from_file(
     const Theron_V1_BootProfile *profile,
     const char *manifest_path,

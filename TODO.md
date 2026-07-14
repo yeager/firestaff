@@ -994,6 +994,13 @@ verifier records only observation order and rejects separate, reordered,
 duplicated, unmarked, malformed, or cross-variant rows. It does not infer a
 destination, payload format, dungeon, map, object, graphics, or palette
 meaning. Existing split CPU/CD sidecars remain insufficient for this boundary.
+2026-07-14 production coalesced-handoff follow-up: the Soul Room runtime
+transition now rejects the earlier Stage 3/IRQ2 receipt by itself. It admits
+only the manifest-bound coalesced `$e009` transcript after its later record,
+32-byte local-RAM span, caller/return edge, and initial-level envelope all
+rehash against the selected original Track 02. No synthetic transition,
+graphics, map, object, palette, or format semantics were added. A fresh
+authentic coalesced JP/US capture remains required for the positive route.
 2026-07-14 manifest-bound coalesced follow-up: a future positive JP/US pair
 must also supply one V2 capture manifest per transcript. Each manifest is
 rehash-checked against its exact raw Track 02, System Card 3.0, and coalesced
