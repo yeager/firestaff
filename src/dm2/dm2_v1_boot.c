@@ -119,6 +119,9 @@ typedef struct {
     uint8_t *floor_gfx_map_chip_pixels[0x100];
     int floor_gfx_map_chip_w[0x100];
     int floor_gfx_map_chip_h[0x100];
+    uint8_t *wall_gfx_map_chip_pixels[0x100];
+    int wall_gfx_map_chip_w[0x100];
+    int wall_gfx_map_chip_h[0x100];
     uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
@@ -373,6 +376,7 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     dm2_v1_asset_free_pixels(gfx->teleporter_pixels);
     for (int i = 0; i < 0x100; ++i) {
         dm2_v1_asset_free_pixels(gfx->floor_gfx_map_chip_pixels[i]);
+        dm2_v1_asset_free_pixels(gfx->wall_gfx_map_chip_pixels[i]);
     }
     for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
@@ -6939,6 +6943,15 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_floor_gfx_map_chip_material_plan_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.floor_gfx_map_chip_material_plan_consumed : 0;
+        out_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.wall_gfx_map_chip_material_plan_required : 0;
+        out_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.wall_gfx_map_chip_material_plan_hash : 0u;
+        out_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.wall_gfx_map_chip_material_plan_consumed : 0;
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;
@@ -8279,6 +8292,13 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->floor_gfx_map_chip_h[index];
         category = DM2_GDAT_CATEGORY_FLOOR_GFX;
         field = DM2_GDAT_IMG_MAP_CHIP;
+    } else if (dm2_v1_viewport_wall_gfx_map_chip_graphic_address(
+                   gdat_index, &index)) {
+        cache_pixels = &gfx->wall_gfx_map_chip_pixels[index];
+        cache_w = &gfx->wall_gfx_map_chip_w[index];
+        cache_h = &gfx->wall_gfx_map_chip_h[index];
+        category = DM2_GDAT_CATEGORY_WALL_GFX;
+        field = DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ||
                gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         int material_field = gdat_index == DM2_V1_VIEWPORT_GFX_CEILING ?
@@ -8662,6 +8682,10 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     } else if (dm2_v1_viewport_floor_gfx_map_chip_graphic_address(
                    gdat_index, out_index)) {
         *out_category = DM2_GDAT_CATEGORY_FLOOR_GFX;
+        *out_field = DM2_GDAT_IMG_MAP_CHIP;
+    } else if (dm2_v1_viewport_wall_gfx_map_chip_graphic_address(
+                   gdat_index, out_index)) {
+        *out_category = DM2_GDAT_CATEGORY_WALL_GFX;
         *out_field = DM2_GDAT_IMG_MAP_CHIP;
     } else if (gdat_index == DM2_V1_VIEWPORT_GFX_FLOOR) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;

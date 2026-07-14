@@ -307,6 +307,9 @@ typedef struct {
     int runtime_m11_frame_floor_gfx_map_chip_material_plan_required;
     uint32_t runtime_m11_frame_floor_gfx_map_chip_material_plan_hash;
     int runtime_m11_frame_floor_gfx_map_chip_material_plan_consumed;
+    int runtime_m11_frame_wall_gfx_map_chip_material_plan_required;
+    uint32_t runtime_m11_frame_wall_gfx_map_chip_material_plan_hash;
+    int runtime_m11_frame_wall_gfx_map_chip_material_plan_consumed;
     uint32_t runtime_m11_frame_palette_hash;
     uint32_t runtime_m11_frame_interface_action_palette_hash;
     int runtime_m11_frame_interface_action_palette_consumed;
