@@ -462,6 +462,40 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelSoundRouteReceipt;
 
+/* Active-level ownership for the corpus-verified SLEV SH-2 entry profile.
+ * This binds only the observed entry framing and literal locations to the
+ * engine's current level. It does not identify task-body opcodes, callback
+ * targets, trigger semantics, or permission to dispatch a script. */
+typedef enum {
+    NEXUS_V1_LEVEL_SCRIPT_ROUTE_MISSING = 0,
+    NEXUS_V1_LEVEL_SCRIPT_ROUTE_BLOCKED_SOURCE = 1,
+    NEXUS_V1_LEVEL_SCRIPT_ROUTE_BLOCKED_PROFILE = 2,
+    NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE = 3
+} Nexus_V1_LevelScriptRouteStatus;
+
+typedef struct {
+    Nexus_V1_LevelScriptRouteStatus status;
+    int level_index;
+    int canonical_slev_source_verified;
+    int candidate_source_bytes;
+    int task_header_size;
+    int task_word_count;
+    int first_opcode;
+    int setup_immediate;
+    Nexus_SlevSetupImmediateProvenance setup_immediate_provenance;
+    int primary_literal_offset;
+    int primary_literal_address;
+    Nexus_SlevLiteralProvenance primary_literal_provenance;
+    int auxiliary_literal_offset;
+    int auxiliary_literal_address;
+    Nexus_SlevLiteralProvenance auxiliary_literal_provenance;
+    int task_header_profile_bound;
+    int saturn_task_dispatch_proven;
+    int dispatch_permitted;
+    int blocks_real_script_dispatch;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelScriptRouteReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -849,6 +883,9 @@ int nexus_v1_current_level_aux_runtime_receipt(
 int nexus_v1_current_level_sound_route_receipt(
     const Nexus_V1_Engine *engine, int raw_map_selector,
     Nexus_V1_LevelSoundRouteReceipt *out_receipt);
+int nexus_v1_current_level_script_route_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptRouteReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
