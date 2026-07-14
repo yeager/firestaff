@@ -932,14 +932,16 @@ static int pack_party(unsigned char* dst, int dstCap,
                 state->magic->scentCount < 0 ||
                 state->magic->scentCount > 255 ||
                 state->magic->freezeLifeTicks < 0 ||
-                state->magic->freezeLifeTicks > 255) {
+                state->magic->freezeLifeTicks > 255 ||
+                state->magic->firstScentIndex < 0 ||
+                state->magic->firstScentIndex > 255) {
                 return -1;
             }
             /* ReDMCSB DEFS.H PARTY_INFO: signed MagicalLightAmount at 0,
              * C73/C79 counters at 2/3, party/fire/spell shields at 4/6/8,
-             * ScentCount at 10 and FreezeLifeTicks at 11. F0412 owns the
-             * count used for the Footprints window; the scent arrays remain
-             * preserved source bytes until their own runtime owner exists. */
+             * ScentCount at 10 and FreezeLifeTicks at 11. The opaque scent
+             * records and strengths occupy 12..83, and F0412 owns
+             * FirstScentIndex at 84. */
             write_u16_le(party_info + 0u,
                          (uint16_t)(int16_t)state->magic->magicalLightAmount);
             party_info[2u] = (unsigned char)state->magic->event73CountThievesEye;
@@ -952,6 +954,7 @@ static int pack_party(unsigned char* dst, int dstCap,
                          (uint16_t)(int16_t)state->magic->spellShieldDefense);
             party_info[10u] = (unsigned char)state->magic->scentCount;
             party_info[11u] = (unsigned char)state->magic->freezeLifeTicks;
+            party_info[84u] = (unsigned char)state->magic->firstScentIndex;
         }
     }
     return needed;

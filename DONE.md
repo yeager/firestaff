@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 original-PC34 `PARTY_INFO` FirstScentIndex runtime handoff:
+  F0435 now restores the source-owned byte 84 `FirstScentIndex` after the
+  opaque scent records and strengths into the existing F0412 Footprints-window
+  owner. F0433 writes only the validated `[0,255]` runtime value back to that
+  retained source byte. The authenticated-PC34 regression covers import, a
+  live periodic tick, and export/reimport; scent records, strengths, and
+  `LastScentIndex` remain unowned. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-14 DM1 HoC C127/C2548 saved-runtime render admission: M11 now
   applies the same DM1-owned F0115 payload gate to the C2548 alcove route as
   to ordinary C2500 floor objects. A visible C127 mirror after original-PC34

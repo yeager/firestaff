@@ -363,6 +363,7 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
 #define DM1_PC34_PARTY_INFO_SPELL_SHIELD_DEFENSE_OFFSET 8u
 #define DM1_PC34_PARTY_INFO_SCENT_COUNT_OFFSET 10u
 #define DM1_PC34_PARTY_INFO_FREEZE_LIFE_TICKS_OFFSET 11u
+#define DM1_PC34_PARTY_INFO_FIRST_SCENT_INDEX_OFFSET 84u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT 16u
 #define DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT 10u
 #define DM1_PC34_ORIGINAL_ACTIVE_GROUP_FIXTURE_COUNT 3u
@@ -3569,8 +3570,9 @@ static int load_world_from_bytes_uncommitted(
 
     /* ReDMCSB DEFS.H PARTY_INFO starts with MagicalLightAmount, C73/C79
      * counters, then ShieldDefense/FireShieldDefense/SpellShieldDefense,
-     * ScentCount and FreezeLifeTicks. ScentCount is the existing F0412
-     * Footprints-window owner; do not infer the scent arrays or BUG0_00
+     * ScentCount and FreezeLifeTicks. After the opaque scent records and
+     * strengths, FirstScentIndex is the existing F0412 Footprints-window
+     * owner. Do not infer the scent arrays, LastScentIndex, or BUG0_00
      * bytes. */
     if (!world->party.pc34PartyInfoBytesValid) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
@@ -3600,6 +3602,8 @@ static int load_world_from_bytes_uncommitted(
     world->freezeLifeTicks = world->party.pc34PartyInfoBytes[
         DM1_PC34_PARTY_INFO_FREEZE_LIFE_TICKS_OFFSET];
     world->magic.freezeLifeTicks = world->freezeLifeTicks;
+    world->magic.firstScentIndex = world->party.pc34PartyInfoBytes[
+        DM1_PC34_PARTY_INFO_FIRST_SCENT_INDEX_OFFSET];
     world->lifecycle.status.partyShieldDefense =
         (int16_t)world->magic.partyShieldDefense;
     world->lifecycle.status.partyFireShieldDefense =

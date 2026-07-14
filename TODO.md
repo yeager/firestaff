@@ -1840,9 +1840,10 @@ and real community-save corpus round-trip evidence.
     the bounded byte back to the retained source record. The targeted
     authenticated-PC34 regression covers import, a live periodic tick, and
     export/reimport. F0435/F0433 now also own the one-byte `ScentCount` at
-    offset 10 through the existing F0412 Footprints-window runtime owner;
-    scent indices and arrays, Event71, and unreferenced `PARTY_INFO` bytes
-    remain opaque pending their own owners.
+    offset 10 through the existing F0412 Footprints-window runtime owner.
+    F0435/F0433 now also own `FirstScentIndex` at byte 84 through that same
+    runtime field; scent arrays, `LastScentIndex`, Event71, and unreferenced
+    `PARTY_INFO` bytes remain opaque pending their own owners.
   - 2026-07-14 update: the fixture-free external-corpus M11 runtime gate now
     drives every F0435-admitted original PC34 save through the live game view,
     checks the source party pose/tick and owned dungeon against an independent
