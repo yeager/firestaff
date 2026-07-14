@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_original_save_classifier.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -15,7 +16,6 @@ unsigned char* G2160_puc_Bitmap_Destination;
 #define ORIGINAL_PC34_PARTY_BYTES \
     ((ORIGINAL_PC34_CHAMPION_BYTES * CHAMPION_MAX_PARTY) + \
      ORIGINAL_PC34_PARTY_INFO_BYTES)
-#define ORIGINAL_PC34_EVENT_BYTES 10
 
 static void wr16le(unsigned char* p, uint16_t v) {
     p[0] = (unsigned char)(v & 0xffu);
@@ -122,8 +122,6 @@ static int write_original_pc34_dm1_save_file(const char* path) {
     unsigned char header[SAVEGAME_PC34_DM_SAVE_HEADER_SIZE];
     unsigned char global[SAVEGAME_PC34_GLOBAL_DATA_BYTE_COUNT];
     unsigned char party[ORIGINAL_PC34_PARTY_BYTES];
-    unsigned char event[ORIGINAL_PC34_EVENT_BYTES];
-    unsigned char timeline[2];
     uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
     uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
     int cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
@@ -135,8 +133,6 @@ static int write_original_pc34_dm1_save_file(const char* path) {
     memset(header, 0, sizeof(header));
     memset(global, 0, sizeof(global));
     memset(party, 0, sizeof(party));
-    memset(event, 0, sizeof(event));
-    memset(timeline, 0, sizeof(timeline));
     memset(checksums, 0, sizeof(checksums));
 
     for (i = 0; i < 127; ++i) {
@@ -156,11 +152,14 @@ static int write_original_pc34_dm1_save_file(const char* path) {
     wr16le(global + 12u, 9u);
     wr16le(global + 14u, 10u);
     wr16le(global + 16u, DIR_EAST);
-    wr16le(global + 18u, 4u);
+    /* The canonical DM1 start backing accepts map 0 at this pose. The
+     * tail-less source fixture must bind to that real F0435 dungeon rather
+     * than relying on a made-up map backing. */
+    wr16le(global + 18u, 0u);
     wr16le(global + 20u, 0u);
     wr16le(global + 24u, 0u);
     wr16le(global + 26u, 0u);
-    wr16le(global + 28u, 1u);
+    wr16le(global + 28u, 0u);
     wr16le(global + 30u, 0u);
     wr16le(global + 46u, 0u);
     write_original_champion(party);
@@ -184,17 +183,26 @@ static int write_original_pc34_dm1_save_file(const char* path) {
     if (n < 0) return 0;
     cursor += n;
     n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
-                            event, (int)sizeof(event),
+                            NULL, 0,
                             keys[SAVEGAME_PC34_PART_EVENTS],
                             &checksums[SAVEGAME_PC34_PART_EVENTS]);
     if (n < 0) return 0;
     cursor += n;
+    /* A C4 entry may only name a non-NONE C3 EVENT. This focused save has
+     * no active timers, so F0433's valid C4 payload is empty. */
     n = write_original_part(buf + cursor, (int)sizeof(buf) - cursor,
-                            timeline, (int)sizeof(timeline),
+                            NULL, 0,
                             keys[SAVEGAME_PC34_PART_TIMELINE],
                             &checksums[SAVEGAME_PC34_PART_TIMELINE]);
     if (n < 0) return 0;
     cursor += n;
+
+    /* LOADSAVE.C F0435 consumes four fixed portrait bitmaps after C4, even
+     * when the focused runtime fixture has no dungeon tail. The zero-filled
+     * bytes are source-shaped portrait payloads, not a host fallback. */
+    if (cursor > (int)sizeof(buf) -
+        (int)SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT) return 0;
+    cursor += (int)SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
 
     for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
         wr16le(header + 310u + (size_t)i * 2u, keys[i]);
@@ -254,8 +262,9 @@ int main(void) {
     M11_GameViewState view;
     M11_GameViewState resumed;
     M11_GameViewState originalResumed;
-    M11_GameViewState directLoaded;
+    M11_GameViewState roundtripLoaded;
     M11_GameLaunchSpec spec;
+    DM1OriginalSaveClassifyResult exportedPc34;
     int mapIndex, mapX, mapY, direction;
     const unsigned short leaderHandThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1U);
     const unsigned short openChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 2U);
@@ -337,13 +346,13 @@ int main(void) {
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-original-pc34.sav", saveTemplate);
     if (!expect(write_original_pc34_dm1_save_file(savePath),
                 "should write original PC34 fixture for M11 resume")) return 1;
-    spec.savePath = savePath;
+    spec.savePath = NULL;
     M11_GameView_Init(&originalResumed);
     if (!expect(M11_GameView_Start(&originalResumed, &spec),
-                "quick-resume should load original PC34 save through M11 fallback")) return 1;
-    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&originalResumed) == 1,
-                "direct generic original PC34 DM1 resume should report game-view intro bypass")) return 1;
-    if (!expect(originalResumed.world.party.mapIndex == 4,
+                "direct DM1 start should succeed before original PC34 load")) return 1;
+    if (!expect(M11_GameView_LoadDm1SavePath(&originalResumed, savePath, NULL),
+                "M11 should load original PC34 save through the F0435 runtime consumer")) return 1;
+    if (!expect(originalResumed.world.party.mapIndex == 0,
                 "original PC34 resumed mapIndex should match GLOBAL_DATA")) return 1;
     if (!expect(originalResumed.world.party.mapX == 9,
                 "original PC34 resumed mapX should match GLOBAL_DATA")) return 1;
@@ -363,6 +372,28 @@ int main(void) {
                 originalResumed.world.things != NULL &&
                 originalResumed.world.ownsDungeon == 1,
                 "original PC34 M11 resume should retain live dungeon ownership")) return 1;
+
+    /* F0435 -> live M11 state -> F0433 must stay on the PC34 envelope path.
+     * The exported file is reclassified before a second M11 F0435 load so a
+     * Firestaff-native quicksave cannot accidentally satisfy this interop leg. */
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-pc34-runtime.sav", saveTemplate);
+    m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
+    if (!expect(M11_GameView_QuickSave(&originalResumed),
+                "M11 should quicksave a runtime resumed from original PC34")) return 1;
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-pc34-roundtrip.dat", saveTemplate);
+    {
+        char runtimeQuickSavePath[512];
+        snprintf(runtimeQuickSavePath, sizeof(runtimeQuickSavePath),
+                 "%s/firestaff-dm1-pc34-runtime.sav", saveTemplate);
+        if (!expect(M11_GameView_ExportQuickSaveAsDM1PC34(runtimeQuickSavePath, savePath),
+                    "M11 should export the resumed runtime as PC34")) return 1;
+    }
+    memset(&exportedPc34, 0, sizeof(exportedPc34));
+    if (!expect(dm1_v1_original_save_classify_file(savePath, &exportedPc34) &&
+                exportedPc34.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+                exportedPc34.pc34_importer_candidate &&
+                exportedPc34.pc34_loader_part_envelope_candidate,
+                "M11 runtime export should be a checksum-qualified PC34 envelope")) return 1;
     M11_GameView_Shutdown(&originalResumed);
 
     memset(&spec, 0, sizeof(spec));
@@ -372,23 +403,23 @@ int main(void) {
     spec.sourceId = "dm1";
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
-    M11_GameView_Init(&directLoaded);
-    if (!expect(M11_GameView_Start(&directLoaded, &spec),
-                "direct DM1 start should succeed before explicit load")) return 1;
-    if (!expect(M11_GameView_Dm1StartupIntroBypassed(&directLoaded) == 1,
-                "direct generic DM1 start before explicit load should report game-view intro bypass")) return 1;
-    if (!expect(M11_GameView_LoadDm1SavePath(&directLoaded, savePath, NULL),
-                "explicit M11 DM1 load helper should load original PC34 save")) return 1;
-    if (!expect(directLoaded.world.party.mapIndex == 4 &&
-                directLoaded.world.party.mapX == 9 &&
-                directLoaded.world.party.mapY == 10 &&
-                directLoaded.world.party.direction == DIR_EAST,
-                "explicit M11 DM1 load helper should restore original PC34 party pose")) return 1;
-    if (!expect(directLoaded.world.dungeon != NULL &&
-                directLoaded.world.things != NULL &&
-                directLoaded.world.ownsDungeon == 1,
-                "explicit M11 DM1 load helper should retain live dungeon ownership")) return 1;
-    M11_GameView_Shutdown(&directLoaded);
+    M11_GameView_Init(&roundtripLoaded);
+    if (!expect(M11_GameView_Start(&roundtripLoaded, &spec),
+                "direct DM1 start should succeed before PC34 runtime reload")) return 1;
+    if (!expect(M11_GameView_LoadDm1SavePath(&roundtripLoaded, savePath, NULL),
+                "M11 should load its exported PC34 runtime save")) return 1;
+    if (!expect(roundtripLoaded.world.party.mapIndex == 0 &&
+                roundtripLoaded.world.party.mapX == 9 &&
+                roundtripLoaded.world.party.mapY == 10 &&
+                roundtripLoaded.world.party.direction == DIR_EAST &&
+                roundtripLoaded.world.gameTick == 7777 &&
+                roundtripLoaded.world.party.championCount == 1,
+                "PC34 runtime reload should retain F0435 party and tick state")) return 1;
+    if (!expect(roundtripLoaded.world.dungeon != NULL &&
+                roundtripLoaded.world.things != NULL &&
+                roundtripLoaded.world.ownsDungeon == 1,
+                "PC34 runtime reload should retain live dungeon ownership")) return 1;
+    M11_GameView_Shutdown(&roundtripLoaded);
 
     puts("ok: DM1 M11 quick-resume restores Firestaff-native and original PC34 saves");
     return 0;

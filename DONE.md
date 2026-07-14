@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 M11 PC34 runtime load-save interop: the focused M11
+  resume path now proves a checksum-qualified original PC34 F0435 load can
+  pass through the live host, be quicksaved, exported by F0433 as a PC34
+  envelope, reclassified, and loaded by M11 again with party pose, game tick,
+  champion count, and dungeon ownership preserved. It does not run the
+  external-corpus admission target. Source-lock: ReDMCSB `LOADSAVE.C
+  F0433/F0435` and `SAVEHEAD.C F0429/F0430`.
+
 - ✅ 2026-07-14 DM2 M11 GDAT wall-plan consumption receipt: direct
   `GRAPHICSSET` wall commands now increment a distinct M11-visible counter
   only after their plan-owned pixels are blitted. Canonical-media verification

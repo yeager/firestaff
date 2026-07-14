@@ -1459,6 +1459,12 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-14 update: the focused M11 runtime interop route now proves a
+    checksum-qualified original PC34 F0435 load can be quicksaved by the live
+    host, exported through F0433 as a new PC34 envelope, reclassified, and
+    loaded through M11 again with party pose, tick, champion count, and live
+    dungeon ownership intact. This is a bounded host load-save bridge; it
+    neither admits an external corpus nor substitutes a tail/dungeon.
   - 2026-07-14 update: checksum-authenticated C4 data must now also preserve
     ReDMCSB `TIMELINE.C F0234` heap order, not only its C3 membership. The
     importer rejects the first parent/child ordering violation before staged
