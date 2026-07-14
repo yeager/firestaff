@@ -14,6 +14,12 @@ typedef struct CSB_V1_StartupSessionTerminalReceipt_PC34 {
     unsigned int session_generation;
 } CSB_V1_StartupSessionTerminalReceipt_PC34;
 
+/* ReDMCSB PANEL.C F0347 hands C017/C040 to the live dungeon only as their
+ * original PC34 crops.  This surface-only predicate is usable immediately
+ * before the entrance -> HUD stage transition. */
+int csb_v1_startup_session_hud_surface_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+
 /* The terminal F0807 handoff is only usable when the complete C001 title and
  * C017/C040 HUD package was consumed from the same hash-verified session. */
 typedef struct CSB_V1_StartupSessionTerminalPackageReceipt_PC34 {

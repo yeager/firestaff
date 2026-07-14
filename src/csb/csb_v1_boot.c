@@ -7,6 +7,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
@@ -1675,6 +1676,14 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         session->hud_resurrect_binding.graphic_index != 40u ||
         strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0 ||
         strcmp(session->hud_resurrect_binding.path, profile->graphics_path) != 0) {
+        return 0;
+    }
+
+    /* ReDMCSB PANEL.C F0347 restores the fixed C017/C040 HUD bitmaps after
+     * ENTRANCE.C F0806 releases the prison doors.  The profile path alone is
+     * insufficient: malformed crops from that package must not become live
+     * HUD surfaces at the F0806 -> dungeon handoff. */
+    if (!csb_v1_startup_session_hud_surface_contract_pc34(session)) {
         return 0;
     }
 
