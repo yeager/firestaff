@@ -2042,6 +2042,14 @@ and real community-save corpus round-trip evidence.
     union through F0433/F0435, then proves TIMELINE.C F0242's occupied-square
     CLEAR deferral and later mutation. A malformed C07 cannot become a generic
     attribute write on a corridor, door, or other square type.
+  - DONE 2026-07-14: F0435 C02 door-destruction materialization now requires
+    the saved `B.Location` to name a loaded door square with source Priority
+    zero, matching PROJEXPL.C F0232's only C02 producer before TIMELINE.C
+    F0243 consumes Location. M10 emits the destruction receipt only after it
+    changes that door. The focused authenticated-PC34 regression preserves
+    C02 Location through F0433/F0435, rejects a corridor target, and proves
+    the due event reaches C5_DOOR_STATE_DESTROYED. Remaining work is authentic
+    community-save corpus coverage and other source event unions.
   - 2026-07-13 update: saved C040 HoC panel state now reopens only for the
     last appended party slot, the same candidate position consumed by
     `REVIVE.C` F0282. A stale sidecar cannot bind a mirror panel to an older

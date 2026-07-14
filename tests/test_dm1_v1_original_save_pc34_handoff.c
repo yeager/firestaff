@@ -5954,6 +5954,141 @@ static void test_original_fakewall_event_materializes_and_defers_clear(void)
           "deferred C07 clear mutates only after the party leaves");
 }
 
+static void test_original_door_destruction_event_materializes_on_door(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char square_data[3][32 * 32];
+    char path[512];
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct GameWorld_Compat rejected_world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    struct DungeonThings_Compat things;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    struct TickResult_Compat tick_result;
+    struct TimelineEvent_Compat event;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+    int exported_size = 0;
+    int rc;
+    int i;
+    int found = 0;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 2, 21, 22, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              rewrite_fixture_event_type(bytes, (size_t)written, 1,
+                                         DM1_EVENT_DOOR_DESTRUCTION) &&
+              rewrite_fixture_event_priority(bytes, (size_t)written, 1, 0),
+          "C02 fixture remains checksum-authenticated");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&rejected_world, 0, sizeof(rejected_world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(square_data, 0, sizeof(square_data));
+    memset(&things, 0, sizeof(things));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    for (i = 0; i < 3; ++i) {
+        maps[i].width = 32;
+        maps[i].height = 32;
+        tiles[i].squareData = square_data[i];
+        tiles[i].squareCount = 32 * 32;
+    }
+    square_data[2][21 * 32 + 22] =
+        (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x04u);
+    start_world.dungeon = &dungeon;
+    start_world.things = &things;
+
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written), "C02 fixture writes");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0435 materializes a C02 only on the saved door square");
+    square_data[2][21 * 32 + 22] =
+        (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    CHECK(dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+              path, &start_world, &rejected_world, NULL, NULL) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "F0435 rejects a C02 whose source location is not a door");
+    square_data[2][21 * 32 + 22] =
+        (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x04u);
+    remove(path);
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        const struct TimelineEvent_Compat *event = &loaded_world.timeline.events[i];
+        if (event->kind == TIMELINE_EVENT_DOOR_DESTRUCTION) {
+            found = event->mapIndex == 2 && event->mapX == 21 &&
+                    event->mapY == 22 && event->aux0 ==
+                    DM1_EVENT_DOOR_DESTRUCTION && event->aux2 ==
+                    DM1_EVENT_DOOR_DESTRUCTION;
+            break;
+        }
+    }
+    CHECK(found, "C02 retains its source Location through F0435");
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    imported.party = &imported_party;
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              dm1_v1_original_save_pc34_handoff_bytes(
+                  exported, (size_t)exported_size, &imported, &report) ==
+                  DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0433 exports the staged C02 event");
+    found = 0;
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_DOOR_DESTRUCTION) {
+            found = report.events[i].priority == 0 &&
+                    report.events[i].b_mapX == 21 &&
+                    report.events[i].b_mapY == 22;
+            break;
+        }
+    }
+    CHECK(found, "F0435 to F0433 to F0435 preserves C02's source Location");
+
+    loaded_world.gameTick = 123470u;
+    memset(&tick_result, 0, sizeof(tick_result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world,
+                                                     &tick_result) > 0 &&
+              (square_data[2][21 * 32 + 22] & 0x07u) == 5u &&
+              tick_result.emissionCount == 1 &&
+              tick_result.emissions[0].kind == EMIT_DOOR_STATE,
+          "due C02 destroys the restored door and emits its source receipt");
+
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_DOOR_DESTRUCTION;
+    event.fireAtTick = 123471u;
+    event.mapIndex = 2;
+    event.mapX = 20;
+    event.mapY = 22;
+    square_data[2][20 * 32 + 22] =
+        (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "malformed C02 host event schedules for defensive dispatch");
+    loaded_world.gameTick = 123471u;
+    memset(&tick_result, 0, sizeof(tick_result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world,
+                                                     &tick_result) > 0 &&
+              square_data[2][20 * 32 + 22] ==
+                  (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5) &&
+              tick_result.emissionCount == 0,
+          "M10 cannot emit a door destruction for a non-door square");
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -6006,6 +6141,7 @@ int main(void)
     test_world_export_roundtrips_c13_vi_altar_union();
     test_original_square_state_events_materialize_and_roundtrip();
     test_original_fakewall_event_materializes_and_defers_clear();
+    test_original_door_destruction_event_materializes_on_door();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;

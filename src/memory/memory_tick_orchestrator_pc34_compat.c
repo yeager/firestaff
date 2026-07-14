@@ -11144,10 +11144,13 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_DOOR_DESTRUCTION:
             /* ReDMCSB PROJEXPL.C F0232 lines 1578-1589 schedules C02
              * when Ticks is non-zero; TIMELINE later applies
-             * C5_DOOR_STATE_DESTROYED to the map square. */
-            (void)orch_set_door_state_compat(
-                world, ev.mapIndex, ev.mapX, ev.mapY, 5);
-            emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, 5, ev.mapIndex);
+             * C5_DOOR_STATE_DESTROYED to that door square.  Do not emit a
+             * host transition when a malformed caller names another tile. */
+            if (orch_set_door_state_compat(
+                    world, ev.mapIndex, ev.mapX, ev.mapY, 5)) {
+                emit(result, EMIT_DOOR_STATE, ev.mapX, ev.mapY, 5,
+                     ev.mapIndex);
+            }
             break;
         case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
             /* ReDMCSB TIMELINE.C C11:1927-1932 first invokes F0253 for
