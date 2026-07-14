@@ -13513,3 +13513,17 @@ the authenticated action through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
 dispatch. Source: CSBWin `data.cpp` `DB3::MakeBig`/`ParameterB` and `DSA.cpp`
 `GetState`/`ProcessDSATimer6`. Verified by CTest
 `csb_v1_phase7_verification` and `csb_v1_dsa_queued_localstate2_timer`.
+
+# ✅ 2026-07-14 Theron Track02 loader/dungeon record separation
+
+`verify_theron_track02_loader_dungeon_separation.sh` now accepts only an
+instrumented Mednafen dynamic CD_READ receipt for the source-locked stage-two
+loader transaction: JP `0x0004df` or US `0x0004e0`, one sector to `$3800`.
+It explicitly rejects the separate real-media initial-level record `0x0b52`
+as that loader transaction. The companion probe proves both rejections. This
+is a non-correlation boundary, not a dungeon parser or object-table claim:
+the trace still provides no later read, destination, byte count, or payload
+meaning for `0x0b52`. Source: authenticated Mednafen facts in
+`tqr_v1_track02_ipl_loader_2026-07-11.md` and the hash-verified initial-level
+receipt in `tqr_v1_track02_bank_signal_2026-06-03.md`. Verification:
+`firestaff_theron_v1_track02_loader_dungeon_separation_probe.sh` passes.

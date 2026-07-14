@@ -4676,3 +4676,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   2 and 3. Remaining dungeon/HUD material work must bind only further
   source-proven GDAT category/field queries to runtime consumers; unknown
   IMG3 selector bytes remain no-draw.
+
+- 🔧 2026-07-14 Theron Track02 loader/dungeon separation: the authenticated
+  Mednafen stage-two transfer remains only `jp_bin:0004df` or
+  `us_bin:0004e0`, one sector to `$3800`. The hash-verified initial-level
+  envelope is separately record `0x0b52`; the new verifier rejects collapsing
+  the two. This establishes no Track02 dungeon, object, or payload semantics.
+  Next evidence must be a later original loader read that reaches the level
+  record and exposes its destination/byte count before any handoff can widen.
