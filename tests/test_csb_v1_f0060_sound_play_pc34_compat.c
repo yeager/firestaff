@@ -62,11 +62,37 @@ static void test_malformed_and_short_output_are_rejected(void)
                                                 16, &level, 1, &result) == -1);
 }
 
+static void test_f0061_loud_table_and_index_mask(void)
+{
+    CsbV1PsgChannelAmplitudes amplitudes;
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes(8);
+    CHECK(amplitudes.channelA == 14);
+    CHECK(amplitudes.channelB == 8);
+    CHECK(amplitudes.channelC == 0);
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes(15);
+    CHECK(amplitudes.channelA == 14);
+    CHECK(amplitudes.channelB == 14);
+    CHECK(amplitudes.channelC == 14);
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes(24);
+    CHECK(amplitudes.channelA == 14);
+    CHECK(amplitudes.channelB == 8);
+    CHECK(amplitudes.channelC == 0);
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes(-1);
+    CHECK(amplitudes.channelA == 14);
+    CHECK(amplitudes.channelB == 14);
+    CHECK(amplitudes.channelC == 14);
+}
+
 int main(void)
 {
     test_high_nibble_first_and_repeat_runs();
     test_leading_repeat_uses_existing_psg_level();
     test_malformed_and_short_output_are_rejected();
+    test_f0061_loud_table_and_index_mask();
     printf("test_csb_v1_f0060_sound_play_pc34_compat: %d failures\n", failures);
     return failures != 0;
 }
