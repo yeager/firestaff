@@ -108,7 +108,9 @@ typedef struct {
     uint32_t output_write_bytes;
     uint64_t output_fnv1a64;
     uint64_t first_opcode_sequence;
+    uint64_t first_input_read_sequence;
     uint64_t last_input_read_sequence;
+    uint64_t first_output_write_sequence;
     uint64_t last_output_write_sequence;
     uint64_t decoder_return_sequence;
     uint64_t vdp1_command_sequence;

@@ -358,7 +358,9 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
         !read_u32(&cursor, "output_write_bytes=", &receipt.output_write_bytes) ||
         !read_u64(&cursor, "output_fnv1a64=", &receipt.output_fnv1a64) ||
         !read_u64(&cursor, "first_opcode_sequence=", &receipt.first_opcode_sequence) ||
+        !read_u64(&cursor, "first_input_read_sequence=", &receipt.first_input_read_sequence) ||
         !read_u64(&cursor, "last_input_read_sequence=", &receipt.last_input_read_sequence) ||
+        !read_u64(&cursor, "first_output_write_sequence=", &receipt.first_output_write_sequence) ||
         !read_u64(&cursor, "last_output_write_sequence=", &receipt.last_output_write_sequence) ||
         !read_u64(&cursor, "decoder_return_sequence=", &receipt.decoder_return_sequence) ||
         !read_u64(&cursor, "vdp1_command_sequence=", &receipt.vdp1_command_sequence) ||
@@ -380,8 +382,11 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
         receipt.last_output_write_address != receipt.output_ram_address +
             receipt.output_write_bytes - 1U || !receipt.output_fnv1a64 ||
         !receipt.first_opcode_sequence ||
-        receipt.last_input_read_sequence < receipt.first_opcode_sequence ||
+        receipt.first_input_read_sequence <= receipt.first_opcode_sequence ||
+        receipt.first_input_read_sequence > receipt.last_input_read_sequence ||
         receipt.last_output_write_sequence < receipt.first_opcode_sequence ||
+        receipt.first_output_write_sequence <= receipt.first_opcode_sequence ||
+        receipt.first_output_write_sequence > receipt.last_output_write_sequence ||
         receipt.last_input_read_sequence >= receipt.decoder_return_sequence ||
         receipt.last_output_write_sequence >= receipt.decoder_return_sequence ||
         receipt.vdp1_command_sequence <= receipt.decoder_return_sequence ||

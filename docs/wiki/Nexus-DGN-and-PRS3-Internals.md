@@ -96,6 +96,18 @@ bit order, opcode grammar, literal/back-reference layout, output size handling,
 or palette semantics. No synthetic or retail PRS3 surface is materialized from
 them.
 
+## Saturn VDP1 Capture Gate
+
+DONE: the VDP1 capture schema now requires first and last SH-2 input-read and
+output-write sequence numbers. Each interval must start after the first loader
+opcode, end before its observed return, and the VDP1 command must follow that
+return. The capture still binds only to the exact `MENU.BPK` stream plan and
+`DM.BIN` fingerprint; it does not authorize PRS3 decoding or drawing.
+
+TODO: ingest a real Saturn/emulator capture containing those ordered events,
+the output fingerprint, and the VDP1 command/source range. Until then there is
+no accepted capture and no VDP1 texture route.
+
 ## SLEV Task Receipt
 
 DONE: `tests/test_nexus_v1_script_vm.c` consumes every `SLEV00.BIN` through
