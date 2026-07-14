@@ -971,9 +971,13 @@ int dm2_v1_startup_execute_plan(
         return 1;
     }
     if (plan->kind == DM2_V1_STARTUP_PLAN_NEW_GAME) {
-        dm2_v1_session_new(&out_execution->session);
-        out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
-        out_execution->status = plan->success_status;
+        /* skproject/SKWIN/SkWinCore.cpp::HANDLE_UI_EVENT (31920-32045)
+         * maps UI_EVENTCODE_START_NEW_GAME to glbSpecialScreen = 1. Its
+         * SHOW_MENU_SCREEN loop then returns and INIT calls GAME_LOAD(),
+         * which invokes LOAD_NEW_DUNGEON(). Do not replace that original
+         * DUNGEON.DAT path with dm2_v1_session_new() or a synthetic party. */
+        out_execution->kind = DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED;
+        out_execution->status = "DM2 GAME_LOAD DATA REQUIRED";
         return 1;
     }
     if (plan->kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER) {
@@ -1036,6 +1040,14 @@ int dm2_v1_startup_execution_input_outcome(
         out_outcome->status = execution->status
             ? execution->status
             : "DM2 START SELECT";
+        return 1;
+    }
+    if (execution->kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED) {
+        out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
+        out_outcome->status_scope = "GAME_LOAD";
+        out_outcome->status = execution->status
+            ? execution->status
+            : "DM2 GAME_LOAD DATA REQUIRED";
         return 1;
     }
     if (execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
@@ -1269,8 +1281,11 @@ static void dm2_v1_startup_host_menu_route_set(
         menu_receipt ? menu_receipt->selected_row : facts->selected_row;
     route->runtime_menu_ready =
         !route->return_to_launcher && !route->close_startup_menu;
+    /* A menu action is not a runtime action. Only a future source-verified
+     * GAME_LOAD receipt may close the title/menu boundary. */
     route->runtime_action_ready =
-        execution->kind != DM2_V1_STARTUP_EXEC_IGNORE ? 1 : 0;
+        execution->kind != DM2_V1_STARTUP_EXEC_IGNORE &&
+        execution->kind != DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED;
     route->first_hud_frame_ready =
         route->close_startup_menu &&
         route->apply_session &&

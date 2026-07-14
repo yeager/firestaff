@@ -2540,10 +2540,10 @@ int main(void) {
                         DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup pointer consumes original NEW rectangle");
-        expect_true(view.dm2State.startup_menu_active == 0,
-                    "M11 DM2 startup NEW pointer dismisses the title menu");
-        expect_true(strstr(view.lastOutcome, "DM2 NEW GAME") != NULL,
-                    "M11 DM2 startup NEW pointer reports source event result");
+        expect_true(view.dm2State.startup_menu_active == 1,
+                    "M11 DM2 startup NEW pointer keeps title menu until GAME_LOAD");
+        expect_true(strstr(view.lastOutcome, "DM2 GAME_LOAD DATA REQUIRED") != NULL,
+                    "M11 DM2 startup NEW pointer reports the source load boundary");
     }
     M11_GameView_Shutdown(&view);
 
