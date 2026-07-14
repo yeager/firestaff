@@ -17,8 +17,8 @@
  * the caster identity or symbol buffer changes.
  *
  * The plan mirrors the ReDMCSB code path:
- *   1. F0394 short-circuits when the new caster equals the previous
- *      caster (REJECT_SAME_CASTER).
+ *   1. F0394 short-circuits when the requested caster equals the previous
+ *      caster, including CM1_CHAMPION_NONE (REJECT_SAME_CASTER).
  *   2. F0394 rejects a non-NONE caster with CurrentHealth == 0
  *      (REJECT_DEAD_CHAMPION).
  *   3. On a NONE caster F0394 clears the spell-area box to black and
@@ -309,9 +309,7 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     plan.valid = 1;
 
     /* CASTER.C:18-21 F0394 same-caster short-circuit. */
-    if (input->requested_caster_index == input->previous_caster_index &&
-        input->requested_caster_index !=
-            DM1_V1_CPSAO_CHAMPION_NONE_PC34) {
+    if (input->requested_caster_index == input->previous_caster_index) {
         plan_reject(&plan, DM1_V1_CPSAO_REJECT_SAME_CASTER_PC34,
                     input->previous_caster_index);
         *out_plan = plan;
