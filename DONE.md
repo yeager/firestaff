@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
+  sequential intake of the source's 22 caller-owned dungeon spans and the
+  final F0421 byte-sum checksum word. The boundary stops at an unreadable
+  part or a mismatching checksum and preserves zero-byte ThingData pools; it
+  allocates, decodes, and publishes no dungeon or synthetic runtime. Focused
+  strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0435 EVENTS/TIMELINE/dungeon-tail admission:
   added the source-ordered continuation after an accepted HINTLOAD F1918
   receipt. It derives only C3/C4 key and checksum words from the decrypted
