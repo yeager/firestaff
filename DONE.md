@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 sound source gate: source `c_sfx.cpp` query handling and
+  `c_sound.cpp` queue lifecycle establish that `xsndptr2` is runtime storage,
+  not a GDAT table. Unbound SFX identifiers, direct playback, and positional
+  playback now explicitly report unavailable instead of inventing a lookup,
+  attenuation, or successful backend delivery. Focused strict-C11 test passes.
+
 - 2026-07-14 Theron Track 02 initial-level payload handoff: the boot profile
   now retains the exact, hash-checked 2048-byte payload from the authentic
   `$e009` record `0x0b52` receipt. The payload copy is atomic and fail-closed;
