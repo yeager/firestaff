@@ -731,6 +731,28 @@ typedef struct {
     int draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceReceipt;
 
+/* DMWeb's Saturn DGN reference assigns texture-flagged Structure3b fills
+ * with a 00xx prefix to Structure2 texture IDs and 08xx fills to Structure1G
+ * animated-texture IDs. This receipt validates those identifier joins only.
+ * It neither decodes the selected payload nor authorizes palette, VDP1, mesh,
+ * transform, clipping, or draw behaviour. */
+typedef struct {
+    int face_receipt_valid;
+    int face_count;
+    int textured_face_count;
+    int non_textured_face_count;
+    int static_texture_selector_count;
+    int static_texture_bound_count;
+    int static_texture_unbound_count;
+    int animated_texture_selector_count;
+    int animated_texture_bound_count;
+    int animated_texture_unbound_count;
+    int unsupported_textured_fill_count;
+    int selector_bindings_complete;
+    int valid;
+    int material_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3FaceMaterialReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1036,6 +1058,7 @@ typedef struct {
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
+    Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1120,6 +1143,7 @@ typedef struct {
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
+    Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1790,6 +1814,9 @@ int nexus_v1_level_structure3_entry_header_receipt(
 int nexus_v1_level_structure3_face_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceReceipt *out_receipt);
+int nexus_v1_level_structure3_face_material_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);

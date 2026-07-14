@@ -454,6 +454,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_transition_total = 0;
     int structure3_nonzero_byte_run_total = 0;
     int structure3_longest_nonzero_byte_run = 0;
+    int structure3_static_face_selector_total = 0;
+    int structure3_animated_face_selector_total = 0;
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
     int structure3_nonzero_block_total = 0;
@@ -630,6 +632,17 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_faces.normal_count_matches_face_count &&
               handoff.structure3_faces.unclassified_fill_count == 0 &&
               !handoff.structure3_faces.draw_semantics_proven &&
+              handoff.structure3_face_materials.face_receipt_valid &&
+              handoff.structure3_face_materials.valid &&
+              handoff.structure3_face_materials.face_count ==
+                  handoff.structure3_faces.face_count &&
+              handoff.structure3_face_materials.textured_face_count ==
+                  handoff.structure3_faces.textured_face_count &&
+              handoff.structure3_face_materials.static_texture_unbound_count == 0 &&
+              handoff.structure3_face_materials.animated_texture_unbound_count == 0 &&
+              handoff.structure3_face_materials.unsupported_textured_fill_count == 0 &&
+              handoff.structure3_face_materials.selector_bindings_complete &&
+              !handoff.structure3_face_materials.material_or_draw_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
@@ -639,6 +652,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
               "real Structure3 face topology and fill lanes remain bounded no-draw provenance");
+        structure3_static_face_selector_total +=
+            handoff.structure3_face_materials.static_texture_selector_count;
+        structure3_animated_face_selector_total +=
+            handoff.structure3_face_materials.animated_texture_selector_count;
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==
@@ -851,6 +868,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
           structure3_longest_nonzero_byte_run <= structure3_nonzero_byte_total &&
           structure3_transition_total >= 0,
           "retail Structure3 corpus retains only raw zero-separated byte and block spans");
+    CHECK(structure3_static_face_selector_total > 0 &&
+          structure3_animated_face_selector_total > 0,
+          "retail Structure3 texture and animated selectors bind only to documented tables");
 }
 
 static void test_structure1c_record_table_bounds(void) {
@@ -1715,6 +1735,7 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_Level level;
     Nexus_V1_DgnStructure3EntryHeaderReceipt headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
+    Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
@@ -1771,6 +1792,14 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_vertex_indexes_valid && faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
           "Structure3 face rows retain bounded topology without authorizing a draw");
+    CHECK(nexus_v1_level_structure3_face_material_receipt(&level, &materials) == 0 &&
+          materials.face_receipt_valid && materials.valid &&
+          materials.textured_face_count == 1 &&
+          materials.static_texture_selector_count == 1 &&
+          materials.static_texture_unbound_count == 1 &&
+          !materials.selector_bindings_complete &&
+          !materials.material_or_draw_semantics_proven,
+          "an unbound Structure3 texture selector stays blocked without a draw claim");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
