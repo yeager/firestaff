@@ -7797,6 +7797,22 @@ if(BUILD_TESTING)
             -Wall -Wextra -Werror -O2)
     endif()
 
+    # Canonical GRAPHICS.DAT dynamic-creature table proof. This stays
+    # build-only: it scans user-owned media and creates no substitute state.
+    add_executable(test_dm2_v1_creature_animation_gdat_real_data
+        tests/test_dm2_v1_creature_animation_gdat_real_data.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+    )
+    target_include_directories(test_dm2_v1_creature_animation_gdat_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_animation_gdat_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_animation_gdat_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+
     # Canonical G1 DB4 -> CREATURES/F9 scene-material corpus proof.
     # This stays build-only because the original media belongs to the user.
     add_executable(test_dm2_v1_g1_creature_scene_corpus_real_data

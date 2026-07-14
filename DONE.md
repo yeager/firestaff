@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 real GDAT dynamic-creature animation-table boundary: added a
+  bounded V5 decoder for SKProject's `GET_CREATURE_ANIMATION_FRAME` data path.
+  For a GDAT-backed non-static AI type, it resolves only the complete
+  `CREATURES/type` `dtRaw8/FB`, `dtRaw7/FC`, and `dtRaw7/FD` triad: command
+  attribution, terminal-bounded mutable-frame step, and one directional image
+  id. The focused canonical-media target scans actual `GRAPHICS.DAT` and skips
+  when its variant has no admitted source AI classification. It creates no art,
+  pixel surface, save, AI command, timing, random branch, or creature state.
+  Static DB4/F9 candidates remain deliberately excluded until an original
+  mutable creature context is admitted.
+
 - 2026-07-14 Theron Track 02 e009 caller-control receipt: the coalesced
   later `$e009` dispatch now retains the source-observed HuC6280 `JSR` opcode
   (`0x20`) and its `$e009` target, and the bounded initial-level admission
