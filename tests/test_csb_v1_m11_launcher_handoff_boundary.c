@@ -116,6 +116,44 @@ static int count_changed_pixels(const unsigned char* a,
     return changed;
 }
 
+static unsigned int indexed_frame_hash(const unsigned char* pixels,
+                                       size_t count) {
+    unsigned int hash = 2166136261u;
+    size_t i;
+
+    if (!pixels || count == 0u) {
+        return 0u;
+    }
+    for (i = 0u; i < count; ++i) {
+        hash ^= pixels[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+/* The production loop records the indexed M11 framebuffer only after it has
+ * presented. Exercise that same receipt with each real package phase rather
+ * than treating a decoded source surface as presentation evidence. */
+static void record_presented_real_package_frame(M11_GameViewState* view,
+                                                const unsigned char* frame,
+                                                const char* message) {
+    M11_BootProbeReceipt probe;
+    unsigned int expected_hash;
+
+    if (!view || !frame) {
+        expect_true(0, message);
+        return;
+    }
+    expected_hash = indexed_frame_hash(frame, 320u * 200u);
+    M11_GameView_RecordCSBPresentedIndexedFrame(view, frame, 320, 200, 0, 0);
+    expect_true(M11_GameView_GetBootProbeReceipt(view, &probe) == 1 &&
+                    probe.csbPresentedFrameCaptureReady == 1 &&
+                    probe.csbPresentedFrameWidth == 320 &&
+                    probe.csbPresentedFrameHeight == 200 &&
+                    probe.csbPresentedFrameHash == expected_hash,
+                message);
+}
+
 static int count_nonzero_pixels_in_rows(const unsigned char* pixels,
                                         int first_row,
                                         int last_row) {
@@ -386,6 +424,9 @@ static void run_real_launcher_handoff_if_available(void) {
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB launcher PRESENTS frame keeps C001 special palette");
     memcpy(title_presents_frame, framebuffer, sizeof(title_presents_frame));
+    record_presented_real_package_frame(
+        &view, title_presents_frame,
+        "M11 CSB launcher records the presented C001 PRESENTS package frame");
 
     tick_before = view.csbState.tick_count;
     entrance_frame_before = view.csbState.startup_entrance_frame;
@@ -427,6 +468,9 @@ static void run_real_launcher_handoff_if_available(void) {
                                      title_chaos_frame,
                                      sizeof(title_chaos_frame)) > 64,
                 "M11 CSB title phases are visually distinct");
+    record_presented_real_package_frame(
+        &view, title_chaos_frame,
+        "M11 CSB launcher records the presented C001 CHAOS package frame");
     for (int i = 0;
          i < csb_v1_startup_title_chaos_zoom_ticks_pc34() +
                  csb_v1_startup_title_chaos_hold_ticks_pc34() &&
@@ -474,6 +518,9 @@ static void run_real_launcher_handoff_if_available(void) {
                                      title_strikes_frame,
                                      sizeof(title_strikes_frame)) > 64,
                 "M11 CSB CHAOS and STRIKES BACK title captures are visually distinct");
+    record_presented_real_package_frame(
+        &view, title_strikes_frame,
+        "M11 CSB launcher records the presented C001 STRIKES BACK package frame");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 CSB launcher title/entrance ignores Enter before source wait loop");
@@ -501,6 +548,9 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 CSB launcher entrance draws a nonblank wait-loop frame");
     memcpy(entrance_closed_frame, framebuffer, sizeof(entrance_closed_frame));
+    record_presented_real_package_frame(
+        &view, entrance_closed_frame,
+        "M11 CSB launcher records the presented closed-door package frame");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
@@ -522,6 +572,9 @@ static void run_real_launcher_handoff_if_available(void) {
                                      entrance_opening_frame,
                                      sizeof(entrance_opening_frame)) > 64,
                 "M11 CSB entrance opening visibly changes the door frame");
+    record_presented_real_package_frame(
+        &view, entrance_opening_frame,
+        "M11 CSB launcher records the presented opening-door package frame");
     {
         const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
             (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -593,6 +646,9 @@ static void run_real_launcher_handoff_if_available(void) {
         }
         expect_true(row_matches,
                     "M11 CSB inventory consumes the terminal C017 bytes at the source viewport geometry");
+        record_presented_real_package_frame(
+            &view, framebuffer,
+            "M11 CSB launcher records the presented terminal C017 HUD package frame");
         expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
                     "M11 CSB post-entrance input closes the live inventory surface");
     }

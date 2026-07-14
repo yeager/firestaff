@@ -14234,3 +14234,16 @@ original-PC34, and re-exported-PC34 provenance separately; the fixture-free
 external HoC test remains the only corpus-backed proof of an externally
 supplied original runtime. Source boundary: ReDMCSB `LOADSAVE.C F0433/F0435`.
 # ✅ 2026-07-14 DM1 original PC34 HoC/save/runtime source-backed idle-tick gate: strengthened `test_dm1_v1_original_save_pc34_external_hoc_runtime` without fixtures, generated saves, or substitute graphics. For every explicitly staged external PC34 candidate that passes F0435/F0433/F0435 admission, the test materializes an independent F0435 world and advances it with the same no-input `F0884_ORCH_AdvanceOneTick_Compat` route before M11 receives `M12_MENU_INPUT_NONE`. M11 must retain `ORIGINAL_SAVE_PC34`, advance exactly one tick, and match the staged source world's pre/post ticks, canonical post-tick world hash, timeline count, emission count, and full fixed emission receipt. It still requires a nonblank, byte-stable 224x136 viewport from original PC34 media, but makes no DOS pixel-parity claim. Source anchors: ReDMCSB `LOADSAVE.C F0435` (restored party/EVENTS/TIMELINE/dungeon), `GAMELOOP.C` idle command loop, and `TIMELINE.C F0261` event processing. The opt-in test skips cleanly without `FIRESTAFF_DM1_PC34_SAVE_CORPUS` and `FIRESTAFF_DM1_PC_DATA`.
+# ✅ 2026-07-14 CSB real-package presented title, door and HUD captures
+
+`test_csb_v1_m11_launcher_handoff_boundary` now records the actual M11
+320x200 indexed framebuffer after each package-driven C001 PRESENTS, CHAOS,
+and STRIKES BACK title phase, the closed and first-opening C002/C003 door
+states, and terminal C017 HUD. Every capture is bound to the production
+presentation receipt and its framebuffer hash, after existing source-byte and
+geometry checks. That receipt validates the complete C001-C005/C017/C040
+session so title and door frames can be recorded before the terminal HUD
+phase. The opt-in route still accepts only the hash-verified PC34
+`GRAPHICS.DAT` plus `DUNGEON.DAT` pair and does not create fallback art.
+Source boundary: ReDMCSB `TITLE.C F0437`, `ENTRANCE.C F0438/F0807`, and
+CSBWin `Graphics.cpp::ReadGraphic`.
