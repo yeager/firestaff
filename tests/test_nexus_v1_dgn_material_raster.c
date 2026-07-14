@@ -1,6 +1,7 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_dmdf_model.h"
+#include "nexus_v1_engine.h"
 #include "nexus_v1_game.h"
 
 #include <stdio.h>
@@ -130,6 +131,19 @@ int main(void) {
     uint8_t floor_pixel;
     uint8_t wall_pixel;
     uint8_t *structure1;
+    static const uint8_t canonical_dgn_bytes[] = {'a', 'b', 'c'};
+
+    expect(nexus_v1_dgn_bytes_match_canonical_md5(
+               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
+               "900150983cd24fb0d6963f7d28e17f72") == 1,
+           "canonical DGN bytes are accepted by the exact-buffer hash gate");
+    expect(nexus_v1_dgn_bytes_match_canonical_md5(
+               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
+               "00000000000000000000000000000000") == 0 &&
+               nexus_v1_dgn_bytes_match_canonical_md5(
+                   canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes) - 1,
+                   "900150983cd24fb0d6963f7d28e17f72") == 0,
+           "mismatched DGN bytes stay blocked before Structure3 binding");
 
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);

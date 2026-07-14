@@ -1154,11 +1154,15 @@ typedef enum {
     NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS = 12,
     /* Hash-bound SN_FLOOR/SN_WALL bytes are present, but no Saturn
      * executable/capture has proved how Structure1B selects their entries. */
-    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR = 13
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR = 13,
+    /* The engine must retain the canonical identity of the exact LEV bytes
+     * that supplied Structure3 face/material provenance. */
+    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE = 14
 } Nexus_V1_DgnRendererHandoffStatus;
 
 typedef struct {
     Nexus_V1_DgnRendererHandoffStatus status;
+    int canonical_source_verified;
     int dmweb_container;
     int mesh_ready;
     int can_render_dgn_mesh;
