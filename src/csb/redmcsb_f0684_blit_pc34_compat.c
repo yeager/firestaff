@@ -1,0 +1,4 @@
+#include "redmcsb_f0684_blit_pc34_compat.h"
+#include <stddef.h>
+int redmcsb_f0684_blit_pc34_compat(const redmcsb_f0684_box_pc34_compat *b,int16_t x,int16_t y,int16_t sw,int16_t dw,int16_t tc,int16_t flip,const redmcsb_f0684_runtime_pc34_compat *r){int w,h,i,sp,dp,step; redmcsb_f0684_line_pc34_compat line; if(b==NULL||r==NULL||r->forward==NULL||r->flipped==NULL)return 0; sw=(int16_t)((sw+1)&~1);dw=(int16_t)((dw+1)&~1);w=b->right-b->left+1;h=b->bottom-b->top+1;if(w<=0||h<=0)return 1;dp=b->top*dw+b->left;step=(flip&2)?-sw:sw;sp=((flip&2)?y+h-1:y)*sw+x;line=(flip&1)?r->flipped:r->forward;for(i=0;i<h;i++,sp+=step,dp+=dw)line(r->context,sp,dp,w,tc);return 1;}
+const char *redmcsb_f0684_blit_source_evidence_pc34(void){return "ReDMCSB IMAGE3.C F0684_Blit (831-939), PC I34E/I34M zone/stride/flip line dispatch";}

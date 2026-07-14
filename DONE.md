@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0684 blit: added PC I34 zone/stride/flip line
+  dispatch over caller-owned viewport line primitives. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0685 IMG3 line fill: added the PC I34 packed-4bpp
   caller-owned line-color fill used by image expansion. Focused strict-C11
   regression passes.

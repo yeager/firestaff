@@ -879,7 +879,7 @@ F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;N
 F	0681	F0681_CopyPixelLineToScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0682	F0682_CopyPixelLineToScreenWithTransparency	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0683	F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0684	F0684_Blit	BLIT.C;DEFS.H;NEC816.C;VIDEODRV.C;CEDT027.C;IMAGE3.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0684	F0684_Blit	BLIT.C;DEFS.H;NEC816.C;VIDEODRV.C;CEDT027.C;IMAGE3.C	implemented-narrow	implemented_narrow	IMAGE3.C F0684 PC caller-owned zone/stride/flip line dispatcher
 F	0685	F0685_IMG3_LineColorFilling	IMAGE4.C;ANIMIMG.C;SWITCH.C;IMAGE2.C;IMAGE3.C	implemented-narrow	implemented_narrow	IMAGE4.C F0685 PC caller-owned packed-4bpp IMG3 line fill
 F	0686	F0686_IMG_CopyFromPreviousLine	ANIMIMG.C;IMAGE2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0687	F0687_IMG3_GetNibble	IMAGE2.C;IMAGE3.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
