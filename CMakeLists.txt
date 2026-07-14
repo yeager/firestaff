@@ -10867,6 +10867,23 @@ if(BUILD_TESTING)
         COMMAND test_m11_quick_resume_roundtrip
     )
 
+    # Fixture-free external PC34 F0435 -> M11 runtime route. The test only
+    # accepts an operator-staged original corpus and original DM1 media.
+    add_executable(test_dm1_v1_original_save_pc34_external_hoc_runtime
+        tests/test_dm1_v1_original_save_pc34_external_hoc_runtime.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_pc34_external_hoc_runtime PRIVATE firestaff_m12 firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_pc34_external_hoc_runtime PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_external_hoc_runtime
+        COMMAND test_dm1_v1_original_save_pc34_external_hoc_runtime
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_external_hoc_runtime PROPERTIES
+        LABELS "tier2;dm1;save;interop;external-corpus;hoc;runtime"
+    )
+
     add_executable(test_dm1_v1_mirror_candidate_save_load_pc34_compat
         tests/test_dm1_v1_mirror_candidate_save_load_pc34_compat.c
     )
