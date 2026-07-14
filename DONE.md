@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 strict raw-capture import: one atomic import
+  boundary now binds a parsed face manifest to all six opaque raw spans. It
+  independently rechecks declared lengths, FNV witnesses, capture-session
+  identity, and a length-prefixed capture-bundle witness before invoking the
+  existing DGN face binder. Altered spans or bundle identity stop before the
+  binder. Local bytes cannot establish original-Saturn provenance; no VDP1,
+  texture, palette, transform, culling, or draw semantics are added and mesh
+  rendering remains blocked. Verification:
+  `test_nexus_v1_structure3_capture_manifest`.
+
 - 2026-07-14 DM2 original SKSave timer post-load ownership: after an atomic
   original raw-SKSave/G1 import, runtime now consumes each authenticated
   ten-byte timer as SKProject's `Timer { dw00, ttype, actor, value, w8 }` and
