@@ -78,6 +78,64 @@ static int action_is_first_for_column(const CSB_V1_ChaosMagicState *state,
     return 1;
 }
 
+/* Walk decoded source Thing chains.  A binding is useful only when the
+ * original package contains a type-47 actuator whose saved selector reaches
+ * one of the actions admitted from this exact save. */
+static int find_source_dsa_binding(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    CSB_V1_RuntimeDSAFilterBinding *out_binding)
+{
+    int level;
+
+    if (!profile || !dungeon || !out_binding) return 0;
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int x;
+
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            int y;
+
+            for (y = 0; y < dungeon->level_heights[level]; ++y) {
+                int thing = csb_v1_dungeon_get_first_thing(dungeon, level, x, y);
+                int remaining = 0;
+                int type;
+
+                for (type = 0; type < 16; ++type) {
+                    remaining += dungeon->thing_type_counts[type];
+                }
+                while (thing >= 0 && thing != 0xfffe && remaining-- > 0) {
+                    const uint8_t *record;
+                    CSB_V1_DSAFilterLocation location;
+                    int record_type;
+                    int record_size;
+
+                    record = csb_v1_dungeon_get_thing_record(
+                        dungeon, (uint16_t)thing, &record_type, NULL, &record_size);
+                    if (!record || record_size < 4) break;
+                    if (record_type == CSB_V1_THING_TYPE_ACTUATOR &&
+                        (((uint16_t)record[2] | ((uint16_t)record[3] << 8)) &
+                         0x007fu) == CSB_V1_DSA_FILTER_ACTUATOR_TYPE) {
+                        location.level = level;
+                        location.x = x;
+                        location.y = y;
+                        location.position = 0;
+                        location.party_level_only = 0;
+                        location.max_distance = 0;
+                        location.actuator_thing = (uint16_t)thing;
+                        if (csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
+                                profile, dungeon, &location, out_binding)) {
+                            return 1;
+                        }
+                    }
+                    thing = (int)((uint16_t)record[0] |
+                                  ((uint16_t)record[1] << 8));
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *dungeon_path = path_arg_or_env(
@@ -89,9 +147,11 @@ int main(int argc, char **argv)
     const CSB_V1_ChaosMagicState *state;
     const CSB_V1_DSAImportedAction *first_action;
     const CSB_V1_DSAImportedAction *first_action_after_tick;
+    CSB_V1_RuntimeDSAFilterBinding source_binding;
     unsigned long first_action_hash;
     int mapped_entries = 0;
     int mapped_actions = 0;
+    int source_binding_found;
     int i;
     int level;
     int selector;
@@ -171,6 +231,23 @@ int main(int argc, char **argv)
               "source DSA level index contains at least one selector entry");
         CHECK(mapped_actions > 0,
               "a source DSA selector reaches an authenticated runtime action");
+        source_binding_found = find_source_dsa_binding(
+            &profile, dungeon, &source_binding);
+        CHECK(source_binding_found,
+              "a decoded source type-47 actuator resolves through the saved DSA index");
+        if (source_binding_found) {
+            const CSB_V1_DSAImportedAction *bound_action = NULL;
+
+            for (i = 0; i < state->imported_action_count; ++i) {
+                if (state->imported_actions[i].dsa_id == source_binding.dsa_id) {
+                    bound_action = &state->imported_actions[i];
+                    break;
+                }
+            }
+            CHECK(bound_action != NULL &&
+                      state->imported_headers[source_binding.dsa_id].valid,
+                  "source actuator binding reaches an authenticated save-owned DSA");
+        }
 
         first_action = &state->imported_actions[0];
         first_action_hash = action_fingerprint(first_action);
