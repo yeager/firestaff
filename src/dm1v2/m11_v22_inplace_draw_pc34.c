@@ -40,6 +40,7 @@
 #include "m11_v22_shape_cache_pc34.h"
 #include "m11_v22_render_overlay_pc34.h"   /* M11_V22_CellRect shared coord */
 #include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -354,6 +355,10 @@ static int v22_load_cache_file(const char* path) {
 
 int m11_v22_inplace_draw_init(void) {
     if (g_v22_inplace_active) return 1;
+
+    /* A cache transports pixels but cannot itself promote generated or
+     * partial art into a real DM1 V2.2 session. */
+    if (!dm1_v22_famg_is_finished_real()) return 0;
 
     char cache_path[FSP_PATH_MAX];
     const char* modern_root = m11_v22_get_modern_asset_root();
