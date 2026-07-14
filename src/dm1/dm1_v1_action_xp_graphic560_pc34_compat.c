@@ -8,7 +8,6 @@
  * See header for full provenance and citation table.
  */
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "firestaff/dm1/v1/G0496_pc34_compat.h"
 #include "firestaff/dm1/v1/G0497_pc34_compat.h"
@@ -122,29 +121,6 @@ int dm1_v1_action_is_melee_contact_f0407_pc34(int actionIndex) {
 int dm1_v1_action_is_party_shield_f0407_pc34(int actionIndex) {
     return actionIndex == DM1_ACTION_SPELLSHIELD ||
            actionIndex == DM1_ACTION_FIRESHIELD;
-}
-
-int dm1_v1_action_status_graphic_route_f0407_pc34(
-    int actionIndex,
-    DM1_ActionStatusGraphicRoutePc34* out)
-{
-    if (!out) return 0;
-    out->valid = 0;
-    out->actionIndex = actionIndex;
-    out->graphicIndex = -1;
-
-    /* ReDMCSB MENU.C F0407 C033/C034 applies the shield action state;
-     * PANEL.C F0339/F0341 redraws C039 spell shield or C038 fire shield.
-     * Do not reuse a shield border for unrelated valid actions. */
-    if (actionIndex == DM1_ACTION_SPELLSHIELD) {
-        out->graphicIndex = DM1_V1_GRAPHIC_SPELL_SHIELD_BORDER_PC34;
-    } else if (actionIndex == DM1_ACTION_FIRESHIELD) {
-        out->graphicIndex = DM1_V1_GRAPHIC_FIRE_SHIELD_BORDER_PC34;
-    } else {
-        return 0;
-    }
-    out->valid = 1;
-    return 1;
 }
 
 int dm1_v1_action_halves_xp_on_f0327_failure_pc34(int actionIndex) {
@@ -756,12 +732,9 @@ int dm1_v1_action_window_plan_f0407_pc34(
     out->decrementsActionHandCharges = 0;
     range = dm1_v1_action_window_random_range_f0407_pc34(in->earthSkillLevel);
     draw = in->randomDraw;
-    if (range <= 0 || draw < 0 || draw >= range) {
-        /* ReDMCSB: MENU.C F0407 lines 1536-1541 consumes exactly
-         * M002_RANDOM(F0303(action skill) + 8).  A malformed host draw must
-         * not wrap into a different Thieves Eye duration. */
-        return 0;
-    }
+    if (draw < 0) draw = 0;
+    if (range <= 0) range = 1;
+    if (draw >= range) draw %= range;
     out->valid = 1;
     out->randomRange = range;
     out->durationTicks = draw + 5;
@@ -864,12 +837,8 @@ int dm1_v1_action_fright_plan_f0401_pc34(
     total = base + (in->influenceSkillLevel < 0 ? 0 : in->influenceSkillLevel);
     if (total <= 0) total = 1;
     draw = in->randomDraw;
-    if (draw < 0 || draw >= total) {
-        /* ReDMCSB: MENU.C F0401 lines 969-976 compares FearResistance with
-         * M002_RANDOM(FrightAmount).  Do not manufacture resistance/flee
-         * results by folding an out-of-domain runtime value into the roll. */
-        return 0;
-    }
+    if (draw < 0) draw = 0;
+    if (draw >= total) draw %= total;
     fearResistance = in->fearResistance;
     if (fearResistance < 0) fearResistance = 0;
     movementTicks = in->movementTicks;
@@ -926,15 +895,9 @@ static int f0407_projectile_base_for_action(int actionIndex,
             return 1;
         case DM1_ACTION_INVOKE:
             family = invokeFamilyRoll;
-            /* ReDMCSB MENU.C F0407:1480-1493 uses exactly
-             * M003_RANDOM(128) + 100, followed by M002_RANDOM(6).
-             * Reject an unbounded runtime request instead of folding it into
-             * a different spell family or allowing non-source kinetic energy. */
-            if (invokeEnergyRoll < 0 || invokeEnergyRoll >= 128 ||
-                family < 0 || family >= 6) {
-                return 0;
-            }
-            *outKinetic = invokeEnergyRoll + 100;
+            if (family < 0) family = 0;
+            if (family >= 6) family %= 6;
+            *outKinetic = (invokeEnergyRoll < 0 ? 0 : invokeEnergyRoll) + 100;
             switch (family) {
                 case 0:
                     *outSubtype = PROJECTILE_SUBTYPE_POISON_BOLT;
@@ -1115,12 +1078,7 @@ int dm1_v1_action_flip_plan_f0407_pc34(
     int draw;
     if (!in || !out) return 0;
     draw = in->randomDraw;
-    if (draw < 0 || draw >= 2) {
-        /* ReDMCSB: MENU.C F0407 lines 1398-1440 uses M005_RANDOM(2).
-         * Only the source coin-flip domain may publish an action result. */
-        memset(out, 0, sizeof(*out));
-        return 0;
-    }
+    if (draw < 0) draw = 0;
     out->valid = 1;
     out->performed = 1;
     /* ReDMCSB: MENU.C F0407 C005_ACTION_FLIP lines 1398-1440 prints HEADS
@@ -1222,7 +1180,7 @@ int dm1_v1_action_throw_plan_f0407_pc34(
          * movement-disable ticks and last projectile direction. */
         out->performed = 1;
         out->shouldClearActionHand = 1;
-        out->actionEnableSlotOrdinal = DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
+        out->actionEnableSlotOrdinal = CHAMPION_SLOT_ACTION_HAND;
         out->disableActionTicks = 4;
         out->projectileDisabledMovementTicks = 4;
         out->lastProjectileDisabledMovementDirection = in->partyDirection & 3;

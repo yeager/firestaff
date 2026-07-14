@@ -116,7 +116,6 @@ struct DM1CreatureInfo_Compat {
 
 /* Range extraction macros (source: DEFS.H lines 1651-1654) */
 #define DM1_SIGHT_RANGE(r)   ((r) & 0x000F)
-#define DM1_XXX_RANGE(r)     (((r) >> 4) & 0x000F)
 #define DM1_SMELL_RANGE(r)   (((r) >> 8) & 0x000F)
 #define DM1_ATTACK_RANGE(r)  ((r) >> 12)
 
@@ -214,25 +213,6 @@ struct DM1ActiveGroup_Compat {
     int aspect[4];           /* per-creature aspect flags */
 };
 
-/* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
- * decoding and supplies these facts; DM1 owns the original branch order. */
-struct DM1GroupMovementFacts_Compat {
-    int available;
-    int inBounds;
-    int isWall;
-    int isStairs;
-    int isOpenPit;
-    int isImaginaryPit;
-    int isFakeWall;
-    int isOpenFakeWall;
-    int isImaginaryFakeWall;
-    int hasFluxcage;
-    int teleporterBlocksCreature;
-    int occupiedByParty;
-    int doorBlocksCreature;
-    int occupiedByGroup;
-};
-
 /* ==========================================================
  *  DM1 V1 Group Behavior Context
  *
@@ -265,7 +245,6 @@ struct DM1GroupBehaviorContext_Compat {
 
     /* Movement testing results */
     int groupMovementTestedDirs[4];
-    struct DM1GroupMovementFacts_Compat groupMovementFacts[4];
 
     /* Distance to visible party (0 if not visible) */
     int distanceToVisibleParty;
@@ -539,30 +518,6 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     int creatureCount);
 
 /*
- * F0817a: Live-RNG form of GROUP.C F0205/F0206.  Unlike the legacy
- * single-creature adapter above, this consumes the original random gates:
- * F0206 visits the group from its highest creature index down and gives
- * non-zero indices the M005_RANDOM(2) gate; F0205 consumes M006_RANDOM(65536)
- * only for an opposite-direction turn.  M10 uses this form when it persists
- * ACTIVE_GROUP::Directions between C29-C41 events.
- */
-int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
-    struct DM1ActiveGroup_Compat* activeGroup,
-    int direction,
-    int creatureSize,
-    int creatureCount,
-    struct RngState_Compat* rng);
-
-/* F0817b is the single-creature F0205 form used by C38-C41. */
-int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-    struct DM1ActiveGroup_Compat* activeGroup,
-    int direction,
-    int creatureIndex,
-    int creatureSize,
-    int creatureCount,
-    struct RngState_Compat* rng);
-
-/*
  * F0818: Get distance to visible party considering sight/LoS.
  *
  * Source: GROUP.C F0200_GROUP_GetDistanceToVisibleParty
@@ -580,49 +535,6 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
 int F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
     const struct DM1GroupBehaviorContext_Compat* ctx,
     int* outDirectionOrdinal);
-
-/*
- * F0819a: Resolve F0201's direct-party scent branch from the already
- * source-walked F0199 smell route. A positive route distance means that
- * F0198/F0199 found no smell-path blocker. This never infers a route from
- * Manhattan distance.
- *
- * Source: ReDMCSB GROUP.C F0201 lines 1430-1437.
- */
-int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
-    const struct DM1GroupBehaviorContext_Compat* ctx,
-    int smellRouteDistance,
-    int* outDirectionOrdinal);
-
-/* F0201's stored-scent fallback. The caller supplies only an already-read
- * party scent entry; this DM1 layer never fabricates a scent trail. */
-struct DM1GroupScent_Compat {
-    int present;
-    int strength;
-    int mapX;
-    int mapY;
-};
-
-struct DM1GroupSmellDirectionPlan_Compat {
-    int valid;
-    int directionOrdinal;
-    int primaryDirection;
-    int secondaryDirection;
-    int usedDirectPartyRoute;
-    int usedStoredScent;
-};
-
-/*
- * F0819b: Complete F0201 direction choice after M10 supplies the F0199
- * direct smell-route result and, when available, the current-square scent.
- * Source: ReDMCSB GROUP.C F0201 and PROJEXPL.C F0228.
- */
-int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
-    const struct DM1GroupBehaviorContext_Compat* ctx,
-    int smellRouteDistance,
-    const struct DM1GroupScent_Compat* scent,
-    struct RngState_Compat* rng,
-    struct DM1GroupSmellDirectionPlan_Compat* out);
 
 /*
  * F0820: Calculate flee direction (opposite of toward-party).

@@ -52,19 +52,6 @@ typedef struct {
     int weather_intensity;/* 0-100, affects particle density */
 } DM2_V1_WeatherState;
 
-/* A bounded identity for weather that has already been restored into the
- * runtime state.  This deliberately contains no guessed save offsets or
- * timer payload: save/load owns byte parsing and this module owns only the
- * validated post-restore state consumed by c_weather-style rendering. */
-typedef struct {
-    int valid;
-    uint8_t weather;
-    uint8_t intensity;
-    uint16_t time_of_day;
-    uint32_t weather_seed;
-    uint32_t state_hash;
-} DM2_V1_WeatherRestoredStateReceipt;
-
 /* ── Timer IDs ─────────────────────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_tim_proc.cpp
  * DM2 has layered timers per-champion and per-world-state */
@@ -94,9 +81,6 @@ uint32_t dm2_v1_weather_advance_seed(uint32_t seed);
 int dm2_v1_weather_next_state(DM2_V1_WeatherState *state);
 int  dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state);
 int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
-int dm2_v1_weather_restored_state_receipt(
-    const DM2_V1_WeatherState *state,
-    DM2_V1_WeatherRestoredStateReceipt *out);
 const char *dm2_v1_weather_name(int weather);
 const char *dm2_v1_weather_source_evidence(void);
 

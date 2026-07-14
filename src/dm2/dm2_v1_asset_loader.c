@@ -262,31 +262,6 @@ static int dm2_img3_signed_offset(uint16_t value) {
     return (int)((int16_t)value >> 10);
 }
 
-static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t w4,
-                                   uint16_t *out_bits_per_pixel) {
-    int offset_y;
-
-    if (!out_bits_per_pixel) return 0;
-    offset_y = dm2_img3_signed_offset(cy);
-
-    /* skproject SKWIN/DME.h::IMG3::Getpf selects C8 solely from OffsetY()
-     * == 31, and C4 for every remaining compressed record.  The w4 member
-     * is only a bit-count for the explicit uncompressed OffsetY() == -32
-     * form.  Reject a malformed uncompressed header, but never reinterpret
-     * a valid C8 record's compression state as its bit count. */
-    if (offset_y == 31) {
-        *out_bits_per_pixel = 8u;
-        return 1;
-    }
-    if (offset_y == -32) {
-        if (w4 != 4u && w4 != 8u) return 0;
-        *out_bits_per_pixel = w4;
-        return 1;
-    }
-    *out_bits_per_pixel = 4u;
-    return 1;
-}
-
 static const DM2_V1_GdatEntry *dm2_gdat_find_entry(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -623,14 +598,6 @@ static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
     if (!pixels) return NULL;
     typex = raw[6];
 
-    /* skproject SKWIN/SkWinCore.cpp::DECODE_IMG9 has exactly the two
-     * back-reference layouts below. Treating an unknown selector as type 3
-     * would invent a pixel stream from unproven original bytes. */
-    if (typex != 2u && typex != 3u) {
-        free(pixels);
-        return NULL;
-    }
-
     while (out_pos < pixel_total) {
         uint8_t command;
         int bit;
@@ -661,7 +628,7 @@ static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
                 if (typex == 2u) {
                     negative_offset = (a >> 4) + (16 * b);
                     copy_length = (a & 0x0f) + 3;
-                } else { /* typex == 3, validated above */
+                } else {
                     negative_offset = (a >> 5) + (8 * b);
                     copy_length = (a & 0x1f) + 3;
                 }
@@ -801,21 +768,6 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     return dm2_gdat_raw_from_entry(loader, entry, out_size);
 }
 
-const uint8_t *dm2_v1_asset_load_text_sized(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    size_t *out_size)
-{
-    return dm2_v1_asset_load_typed_sized(loader,
-                                         category,
-                                         index,
-                                         DM2_GDAT_ENTRY_TYPE_TEXT,
-                                         field,
-                                         out_size);
-}
-
 int dm2_v1_asset_load_word_value(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -866,74 +818,6 @@ int dm2_v1_asset_load_image_offset(
     return 1;
 }
 
-int dm2_v1_asset_load_image_metadata(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    DM2_V1_GdatImageMetadata *out_metadata)
-{
-    const DM2_V1_GdatEntry *entry;
-    const DM2_V1_GdatEntry *graphicsset_offset_entry;
-    const DM2_V1_GdatEntry *image_offset_entry;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-    uint16_t graphicsset_offset;
-    uint16_t image_offset;
-    uint32_t hash = 2166136261u;
-
-    if (!out_metadata) return 0;
-    memset(out_metadata, 0, sizeof(*out_metadata));
-    entry = dm2_gdat_find_entry(loader, category, index,
-                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
-    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
-    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) {
-        return 0;
-    }
-    graphicsset_offset_entry = dm2_gdat_find_entry(
-        loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, 0xfe);
-    image_offset_entry = dm2_gdat_find_entry(
-        loader, category, index, DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET, field);
-    graphicsset_offset = graphicsset_offset_entry
-        ? graphicsset_offset_entry->data_index : 0u;
-    image_offset = image_offset_entry ? image_offset_entry->data_index : 0u;
-
-    /* skproject SKWIN/SkWinCore.cpp::QUERY_GDAT_SUMMARY_IMAGE applies the
-     * graphics-set 0xfe offset first, then QUERY_GDAT_PICT_OFFSET for this
-     * image field.  IMG3 owns the dimensions and its format is classified
-     * through IMG3::Getpf(), not by treating w4 as a universal bpp field. */
-    out_metadata->width = (uint16_t)(rd16le(raw + 0u) & 0x03ffu);
-    out_metadata->height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
-    if (!dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
-                                 &out_metadata->bits_per_pixel)) {
-        memset(out_metadata, 0, sizeof(*out_metadata));
-        return 0;
-    }
-    if (out_metadata->width == 0u || out_metadata->height == 0u ||
-        (out_metadata->bits_per_pixel != 4u &&
-         out_metadata->bits_per_pixel != 8u)) {
-        memset(out_metadata, 0, sizeof(*out_metadata));
-        return 0;
-    }
-    out_metadata->graphicsset_offset_present = graphicsset_offset_entry != NULL;
-    out_metadata->image_offset_present = image_offset_entry != NULL;
-    out_metadata->graphicsset_offset_x = (int8_t)(graphicsset_offset >> 8);
-    out_metadata->graphicsset_offset_y = (int8_t)graphicsset_offset;
-    out_metadata->image_offset_x = (int8_t)(image_offset >> 8);
-    out_metadata->image_offset_y = (int8_t)image_offset;
-    out_metadata->query_offset_x = (int16_t)(out_metadata->graphicsset_offset_x +
-                                              out_metadata->image_offset_x);
-    out_metadata->query_offset_y = (int16_t)(out_metadata->graphicsset_offset_y +
-                                              out_metadata->image_offset_y);
-    hash = (hash ^ out_metadata->width) * 16777619u;
-    hash = (hash ^ out_metadata->height) * 16777619u;
-    hash = (hash ^ out_metadata->bits_per_pixel) * 16777619u;
-    hash = (hash ^ graphicsset_offset) * 16777619u;
-    hash = (hash ^ image_offset) * 16777619u;
-    out_metadata->metadata_hash = hash ? hash : 1u;
-    return 1;
-}
-
 int dm2_v1_asset_load_interface_palette(
     const DM2_V1_AssetLoader *loader,
     int category,
@@ -976,66 +860,6 @@ int dm2_v1_asset_load_interface_palette(
         hash = (hash ^ out_palette->palette16[color]) * 16777619u;
     }
     out_palette->hash = hash ? hash : 1u;
-    return 1;
-}
-
-int dm2_v1_asset_load_image_local_palette(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash)
-{
-    const DM2_V1_GdatEntry *entry;
-    const DM2_V1_GdatEntry *fallback_entry;
-    const uint8_t *raw;
-    size_t raw_size = 0u;
-    uint32_t hash = 2166136261u;
-    uint16_t bits_per_pixel = 0u;
-    int i;
-
-    if (out_hash) *out_hash = 0u;
-    if (!out_palette16) return 0;
-    memset(out_palette16, 0, 16u);
-    entry = dm2_gdat_find_entry(loader, category, index,
-                                DM2_GDAT_ENTRY_TYPE_IMAGE, field);
-    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
-    if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u) {
-        return 0;
-    }
-
-    /* skproject/SKULLWIN/c_querydb.cpp QUERY_GDAT_IMAGE_LOCALPAL returns
-     * MISCELLANEOUS/FE/FE when the selected image has no four-bit local
-     * palette. This is source GDAT data, not an interface-palette or
-     * Firestaff fallback. Keep the same bounded lookup so U8/IMG9 wall
-     * ornaments do not become falsely undrawable while malformed/missing
-     * default data still fails closed. */
-    if (!dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
-                                 &bits_per_pixel) || bits_per_pixel != 4u) {
-        if (category == DM2_GDAT_CATEGORY_MISCELLANEOUS &&
-            index == 0xfe && field == 0xfe) {
-            return 0;
-        }
-        fallback_entry = dm2_gdat_find_entry(
-            loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe,
-            DM2_GDAT_ENTRY_TYPE_IMAGE, 0xfe);
-        raw = dm2_gdat_raw_from_entry(loader, fallback_entry, &raw_size);
-        if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + 16u ||
-            !dm2_img3_bits_per_pixel(rd16le(raw + 2u), rd16le(raw + 4u),
-                                     &bits_per_pixel) || bits_per_pixel != 4u) {
-            return 0;
-        }
-    }
-
-    /* skproject/SKWIN/SkWinCore.cpp QUERY_GDAT_IMAGE_LOCALPAL (3E74:521A)
-     * returns PTR_PADA(image, QUERY_GDAT_RAW_DATA_LENGTH(index) - 16), after
-     * the exact MISCELLANEOUS/FE/FE fallback above when required. */
-    memcpy(out_palette16, raw + raw_size - 16u, 16u);
-    for (i = 0; i < 16; ++i) {
-        hash = (hash ^ out_palette16[i]) * 16777619u;
-    }
-    if (out_hash) *out_hash = hash ? hash : 1u;
     return 1;
 }
 

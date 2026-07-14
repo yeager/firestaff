@@ -174,15 +174,6 @@ static const char *g_strings[FS_LANG_COUNT][FS_STR_COUNT] = {
         "Eşya ansiklopedisi", "Değişiklik günlüğü", "Ekran görüntüsü galerisi",
         "Dil", "Açık", "Kapalı"
     },
-    [FS_LANG_ID] = {
-        "MAIN", "PENGATURAN", "EKSTRA", "KELUAR",
-        "PILIH PERMAINAN", "Permainan baru (asli)", "Permainan baru (skala 10x)",
-        "Permainan baru (grafik modern)", "Lanjutkan permainan tersimpan", "Segera hadir",
-        "Kembali", "Tampilan", "Video", "Audio", "Kontrol", "Aksesibilitas",
-        "Museum pengetahuan", "Panduan / dokumen", "Bestiari", "Referensi mantra", "Penampil peta",
-        "Ensiklopedia benda", "Catatan perubahan", "Galeri tangkapan layar",
-        "Bahasa", "Aktif", "Nonaktif"
-    },
 };
 
 static const char *g_lang_names[FS_LANG_COUNT] = {
@@ -190,7 +181,7 @@ static const char *g_lang_names[FS_LANG_COUNT] = {
     "Español", "Italiano", "Português", "Nederlands",
     "Polski", "Čeština", "Русский", "日本語",
     "한국어", "简体中文", "Dansk", "Norsk",
-    "Suomi", "Magyar", "Türkçe", "Bahasa Indonesia"
+    "Suomi", "Magyar", "Türkçe"
 };
 
 void fs_l10n_set_language(FS_Language lang) {
@@ -215,69 +206,22 @@ const char *fs_l10n_language_name(FS_Language lang) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 #include <stdlib.h>
-#include <ctype.h>
-
-FS_Language fs_l10n_language_from_locale(const char* locale) {
-    char language[3] = {0, 0, 0};
-
-    if (!locale || !isalpha((unsigned char)locale[0]) ||
-        !isalpha((unsigned char)locale[1])) {
-        return FS_LANG_EN;
-    }
-    language[0] = (char)tolower((unsigned char)locale[0]);
-    language[1] = (char)tolower((unsigned char)locale[1]);
-
-    if (language[0] == 's' && language[1] == 'v') return FS_LANG_SV;
-    if (language[0] == 'd' && language[1] == 'e') return FS_LANG_DE;
-    if (language[0] == 'f' && language[1] == 'r') return FS_LANG_FR;
-    if (language[0] == 'e' && language[1] == 's') return FS_LANG_ES;
-    if (language[0] == 'i' && language[1] == 't') return FS_LANG_IT;
-    if (language[0] == 'p' && language[1] == 't') return FS_LANG_PT;
-    if (language[0] == 'n' && language[1] == 'l') return FS_LANG_NL;
-    if (language[0] == 'p' && language[1] == 'l') return FS_LANG_PL;
-    if (language[0] == 'c' && language[1] == 's') return FS_LANG_CS;
-    if (language[0] == 'r' && language[1] == 'u') return FS_LANG_RU;
-    if (language[0] == 'j' && language[1] == 'a') return FS_LANG_JA;
-    if (language[0] == 'k' && language[1] == 'o') return FS_LANG_KO;
-    if (language[0] == 'z' && language[1] == 'h') return FS_LANG_ZH;
-    if (language[0] == 'd' && language[1] == 'a') return FS_LANG_DA;
-    if ((language[0] == 'n' && language[1] == 'o') ||
-        (language[0] == 'n' && language[1] == 'b') ||
-        (language[0] == 'n' && language[1] == 'n')) return FS_LANG_NO;
-    if (language[0] == 'f' && language[1] == 'i') return FS_LANG_FI;
-    if (language[0] == 'h' && language[1] == 'u') return FS_LANG_HU;
-    if (language[0] == 't' && language[1] == 'r') return FS_LANG_TR;
-    if (language[0] == 'i' && language[1] == 'd') return FS_LANG_ID;
-    return FS_LANG_EN;
-}
 
 FS_Language fs_l10n_detect_system_language(void) {
-    /* POSIX locale precedence: LC_ALL overrides LC_MESSAGES, then LANG. */
+    /* Check LANG, LC_ALL, LC_MESSAGES environment variables */
     const char *env_vars[] = {"LC_ALL", "LC_MESSAGES", "LANG", NULL};
     int i;
     for (i = 0; env_vars[i]; i++) {
         const char *val = getenv(env_vars[i]);
         if (!val || !val[0]) continue;
-        return fs_l10n_language_from_locale(val);
+        /* Match language prefix: sv, de, fr */
+        if (val[0] == 's' && val[1] == 'v') return FS_LANG_SV;
+        if (val[0] == 'd' && val[1] == 'e') return FS_LANG_DE;
+        if (val[0] == 'f' && val[1] == 'r') return FS_LANG_FR;
+        if (val[0] == 'e' && val[1] == 'n') return FS_LANG_EN;
     }
     return FS_LANG_EN; /* default */
 }
 
 /* Map UI language → asset dungeon.dat language.
  * Swedish has no DM1 dungeon.dat, falls back to English. */
-
-int fs_l10n_to_asset_language(FS_Language ui_lang) {
-    switch (ui_lang) {
-        case FS_LANG_DE:
-        case FS_LANG_FR:
-        case FS_LANG_ES:
-        case FS_LANG_IT:
-            return (int)ui_lang;
-        default:
-            return FS_LANG_EN;
-    }
-}
-
-void fs_l10n_init_from_system(void) {
-    fs_l10n_set_language(fs_l10n_detect_system_language());
-}

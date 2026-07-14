@@ -29,11 +29,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <dirent.h>
-#include <errno.h>
 #include <sys/stat.h>
-#ifdef _WIN32
-#include <direct.h>
-#endif
 
 static const char* path_basename(const char* path) {
     const char* slash;
@@ -48,20 +44,6 @@ static const char* path_basename(const char* path) {
 static int file_exists(const char* path) {
     struct stat st;
     return path && stat(path, &st) == 0 && S_ISREG(st.st_mode);
-}
-
-static int ensure_dir_exists(const char* path) {
-    struct stat st;
-    if (!path || !*path) return -1;
-    if (stat(path, &st) == 0) {
-        return S_ISDIR(st.st_mode) ? 0 : -1;
-    }
-#ifdef _WIN32
-    if (_mkdir(path) == 0 || errno == EEXIST) return 0;
-#else
-    if (mkdir(path, 0755) == 0 || errno == EEXIST) return 0;
-#endif
-    return -1;
 }
 
 static int copy_file_bytes(const char* srcPath, const char* dstPath) {
@@ -1453,49 +1435,12 @@ static int save_browser_has_path(const M12_SaveBrowserState* state,
     return 0;
 }
 
-static int save_browser_add_file_path(M12_SaveBrowserState* state,
-                                      const char* fullPath,
-                                      const char* filename,
-                                      const char* forcedGameId,
-                                      int requireValid) {
-    struct stat st;
-    M12_SaveBrowserEntry* entry;
-
-    if (!state || !fullPath || !filename ||
-        state->entryCount >= SAVE_BROWSER_MAX_ENTRIES ||
-        strlen(fullPath) >= SAVE_BROWSER_FILENAME_MAX ||
-        save_browser_has_path(state, fullPath)) {
-        return 0;
-    }
-
-    entry = &state->entries[state->entryCount];
-    memset(entry, 0, sizeof(*entry));
-    snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX, "%s", filename);
-    snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX, "%s", fullPath);
-    if (forcedGameId && forcedGameId[0]) {
-        snprintf(entry->gameId, sizeof(entry->gameId), "%s", forcedGameId);
-    } else {
-        extract_game_id(filename, entry->gameId, (int)sizeof(entry->gameId));
-    }
-
-    if (stat(fullPath, &st) == 0) {
-        entry->fileModTime = st.st_mtime;
-        entry->fileSize = (long)st.st_size;
-    }
-
-    parse_save_entry(entry);
-    if (requireValid && !entry->valid) {
-        memset(entry, 0, sizeof(*entry));
-        return 0;
-    }
-    ++state->entryCount;
-    return 1;
-}
-
 int save_browser_scan_dir(M12_SaveBrowserState* state,
                                  const char* dirPath) {
     DIR* dir;
     struct dirent* ent;
+    struct stat st;
+    M12_SaveBrowserEntry* entry;
     char fullPath[512];
     int added = 0;
     int n;
@@ -1513,53 +1458,27 @@ int save_browser_scan_dir(M12_SaveBrowserState* state,
         if (n <= 0 || n >= (int)sizeof(fullPath)) continue;
         if ((size_t)n >= SAVE_BROWSER_FILENAME_MAX) continue;
         if (save_browser_has_path(state, fullPath)) continue;
-        added += save_browser_add_file_path(
-            state, fullPath, ent->d_name, NULL, 0);
-    }
-    closedir(dir);
-    return added;
-}
 
-static int save_browser_scan_dm1_corpus_dir_recursive(
-    M12_SaveBrowserState* state,
-    const char* dirPath,
-    int depth) {
-    DIR* dir;
-    struct dirent* ent;
-    int added = 0;
+        entry = &state->entries[state->entryCount];
+        snprintf(entry->filename, SAVE_BROWSER_FILENAME_MAX,
+                 "%s", ent->d_name);
+        snprintf(entry->fullPath, SAVE_BROWSER_FILENAME_MAX,
+                 "%s", fullPath);
 
-    if (!state || !dirPath || depth > 4 ||
-        state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) {
-        return 0;
-    }
+        extract_game_id(ent->d_name, entry->gameId,
+                        (int)sizeof(entry->gameId));
 
-    dir = opendir(dirPath);
-    if (!dir) return 0;
-    while ((ent = readdir(dir)) != NULL) {
-        char fullPath[512];
-        struct stat st;
-        int n;
-        if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
-        if (ent->d_name[0] == '.') continue;
-        n = snprintf(fullPath, sizeof(fullPath), "%s/%s",
-                     dirPath, ent->d_name);
-        if (n <= 0 || n >= (int)sizeof(fullPath)) continue;
-        if (stat(fullPath, &st) != 0) continue;
-        if (S_ISDIR(st.st_mode)) {
-            added += save_browser_scan_dm1_corpus_dir_recursive(
-                state, fullPath, depth + 1);
-            continue;
+        if (stat(fullPath, &st) == 0) {
+            entry->fileModTime = st.st_mtime;
+            entry->fileSize = (long)st.st_size;
+        } else {
+            entry->fileModTime = 0;
+            entry->fileSize = 0;
         }
-        if (!S_ISREG(st.st_mode)) continue;
-        /*
-         * ReDMCSB SAVEHEAD.C F0429/F0430 lines ~30-104 accepts the 512-byte
-         * header, while CEDTINCD.C F7051/F7057 lines ~226-294 loads the five
-         * checksum-protected save parts.  DM1 corpus directories may use
-         * arbitrary filenames, so M12 forces the DM1 parser here and keeps
-         * only files that pass the existing DM1 load/roundtrip gates.
-         */
-        added += save_browser_add_file_path(
-            state, fullPath, ent->d_name, "dm1", 1);
+
+        parse_save_entry(entry);
+        ++state->entryCount;
+        ++added;
     }
     closedir(dir);
     return added;
@@ -1599,20 +1518,12 @@ int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
                      dataDir, games[i]);
         if (n > 0 && n < (int)sizeof(saveDir)) {
             (void)save_browser_scan_dir(state, saveDir);
-            if (strcmp(games[i], "dm1") == 0) {
-                (void)save_browser_scan_dm1_corpus_dir_recursive(
-                    state, saveDir, 0);
-            }
         }
         if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
         n = snprintf(saveDir, sizeof(saveDir), "%s/saves/%s",
                      dataDir, games[i]);
         if (n > 0 && n < (int)sizeof(saveDir)) {
             (void)save_browser_scan_dir(state, saveDir);
-            if (strcmp(games[i], "dm1") == 0) {
-                (void)save_browser_scan_dm1_corpus_dir_recursive(
-                    state, saveDir, 0);
-            }
         }
     }
 
@@ -1722,11 +1633,12 @@ int M12_SaveBrowser_ExportSelected(const M12_SaveBrowserState* state,
     return 0;
 }
 
-static int save_browser_export_entry_as_dm1_pc34(
-    const M12_SaveBrowserEntry* entry,
+int M12_SaveBrowser_ExportSelectedAsDM1PC34(
+    const M12_SaveBrowserState* state,
     const char* exportDir,
     char* outPath,
     int outPathSize) {
+    const M12_SaveBrowserEntry* entry;
     struct GameWorld_Compat world;
     struct DM1SaveHeader hdr;
     struct DM1OriginalPC34RoundtripReceipt receipt;
@@ -1736,6 +1648,7 @@ static int save_browser_export_entry_as_dm1_pc34(
     int rc;
 
     if (outPath && outPathSize > 0) outPath[0] = '\0';
+    entry = M12_SaveBrowser_GetSelected(state);
     if (!entry || !exportDir || !*exportDir || !file_exists(entry->fullPath)) {
         return -1;
     }
@@ -1758,10 +1671,10 @@ static int save_browser_export_entry_as_dm1_pc34(
     }
 
     /*
-     * ReDMCSB SAVEHEAD.C F0430 lines ~57-109 writes the obfuscated header
-     * and CEDTINCD.C F7057 lines ~266-294 validates the five save parts on
-     * read.  Corpus export keeps the same per-entry PC34 roundtrip gate as
-     * selected export before advertising a file as exportable.
+     * ReDMCSB LOADSAVE.C F0433 writes the original GLOBAL_DATA,
+     * ACTIVE_GROUP, PARTY, EVENTS, and TIMELINE save parts; F0435 reads
+     * the same parts back. DM1_SaveGamePC34 owns that PC 3.4-shaped
+     * write-back from Firestaff's bounded GameWorld_Compat state.
      */
     gameID = hdr.gameID != 0u ? hdr.gameID : 0x44534D31u;
     rc = DM1_SaveGamePC34(&world, dst, gameID);
@@ -1782,137 +1695,6 @@ static int save_browser_export_entry_as_dm1_pc34(
         snprintf(outPath, (size_t)outPathSize, "%s", dst);
     }
     return 0;
-}
-
-int M12_SaveBrowser_ExportSelectedAsDM1PC34(
-    const M12_SaveBrowserState* state,
-    const char* exportDir,
-    char* outPath,
-    int outPathSize) {
-    const M12_SaveBrowserEntry* entry;
-
-    if (outPath && outPathSize > 0) outPath[0] = '\0';
-    entry = M12_SaveBrowser_GetSelected(state);
-    return save_browser_export_entry_as_dm1_pc34(
-        entry, exportDir, outPath, outPathSize);
-}
-
-int M12_SaveBrowser_ExportDM1PC34Corpus(
-    const M12_SaveBrowserState* state,
-    const char* exportDir,
-    int* outExportedCount,
-    int* outSkippedCount) {
-    int exported = 0;
-    int skipped = 0;
-    int i;
-
-    if (outExportedCount) *outExportedCount = 0;
-    if (outSkippedCount) *outSkippedCount = 0;
-    if (!state || !exportDir || !*exportDir) {
-        return -1;
-    }
-
-    for (i = 0; i < state->entryCount; ++i) {
-        const M12_SaveBrowserEntry* entry = &state->entries[i];
-        if (strcmp(entry->gameId, "dm1") != 0 || !entry->valid) {
-            continue;
-        }
-        if (save_browser_export_entry_as_dm1_pc34(
-                entry, exportDir, NULL, 0) == 0) {
-            ++exported;
-        } else {
-            ++skipped;
-        }
-    }
-
-    if (outExportedCount) *outExportedCount = exported;
-    if (outSkippedCount) *outSkippedCount = skipped;
-    if (exported <= 0) {
-        return -1;
-    }
-    return 0;
-}
-
-static const char* save_browser_dm1_pc34_corpus_source_evidence(void) {
-    return "ReDMCSB SAVEHEAD.C F0429/F0430 header gate plus CEDTINCD.C "
-           "F7057 five-part save envelope; Firestaff validates each DM1 "
-           "PC34 corpus import/export through the same roundtrip gate.";
-}
-
-static uint32_t save_browser_corpus_receipt_hash(
-    const M12_SaveBrowserDM1PC34CorpusReceipt* receipt) {
-    uint32_t h = 2166136261u;
-#define MIX_INT(v) do { h ^= (uint32_t)(v); h *= 16777619u; } while (0)
-    if (!receipt) return 0u;
-    MIX_INT(receipt->operation);
-    MIX_INT(receipt->sourceLockedDm1PC34Corpus);
-    MIX_INT(receipt->consumedF0429HeaderGate);
-    MIX_INT(receipt->consumedF7057EnvelopeGate);
-    MIX_INT(receipt->consumedRoundtripGate);
-    MIX_INT(receipt->sourceEntryCount);
-    MIX_INT(receipt->dm1CandidateCount);
-    MIX_INT(receipt->f7057ReadyCount);
-    MIX_INT(receipt->exportedCount);
-    MIX_INT(receipt->importedCount);
-    MIX_INT(receipt->skippedCount);
-#undef MIX_INT
-    return h ? h : 1u;
-}
-
-static void save_browser_dm1_pc34_corpus_receipt_init(
-    M12_SaveBrowserDM1PC34CorpusReceipt* receipt,
-    int operation) {
-    if (!receipt) return;
-    memset(receipt, 0, sizeof(*receipt));
-    receipt->operation = operation;
-    receipt->sourceLockedDm1PC34Corpus = 1;
-    receipt->consumedF0429HeaderGate = 1;
-    receipt->consumedF7057EnvelopeGate = 1;
-    receipt->consumedRoundtripGate = 1;
-    receipt->sourceEvidence = save_browser_dm1_pc34_corpus_source_evidence();
-}
-
-int M12_SaveBrowser_ExportDM1PC34CorpusReceipt(
-    const M12_SaveBrowserState* state,
-    const char* exportDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt) {
-    int exported = 0;
-    int skipped = 0;
-    int rc;
-    int i;
-
-    if (!outReceipt) {
-        return -1;
-    }
-    save_browser_dm1_pc34_corpus_receipt_init(outReceipt, 1);
-    if (!state) {
-        outReceipt->receiptHash =
-            save_browser_corpus_receipt_hash(outReceipt);
-        return -1;
-    }
-    outReceipt->sourceEntryCount = state->entryCount;
-    for (i = 0; i < state->entryCount; ++i) {
-        const M12_SaveBrowserEntry* entry = &state->entries[i];
-        if (strcmp(entry->gameId, "dm1") != 0 || !entry->valid) {
-            continue;
-        }
-        ++outReceipt->dm1CandidateCount;
-        if (entry->dm1PC34PartEnvelopeReady) {
-            ++outReceipt->f7057ReadyCount;
-        }
-    }
-    rc = M12_SaveBrowser_ExportDM1PC34Corpus(
-        state, exportDir, &exported, &skipped);
-    outReceipt->exportedCount = exported;
-    outReceipt->skippedCount = skipped;
-    outReceipt->valid =
-        rc == 0 && exported > 0 &&
-        outReceipt->sourceLockedDm1PC34Corpus &&
-        outReceipt->consumedF0429HeaderGate &&
-        outReceipt->consumedF7057EnvelopeGate &&
-        outReceipt->consumedRoundtripGate;
-    outReceipt->receiptHash = save_browser_corpus_receipt_hash(outReceipt);
-    return outReceipt->valid ? 0 : -1;
 }
 
 int M12_SaveBrowser_ImportFile(const char* dataDir,
@@ -1960,149 +1742,6 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
         snprintf(outPath, (size_t)outPathSize, "%s", dst);
     }
     return 0;
-}
-
-static int save_browser_import_dm1_pc34_corpus_file(
-    const char* dataDir,
-    const char* importPath) {
-    M12_SaveBrowserState probe;
-    const M12_SaveBrowserEntry* entry;
-    const char* base;
-    char saveRoot[512];
-    char dm1Root[512];
-    char dst[512];
-    int n;
-
-    if (!dataDir || !*dataDir || !importPath || !file_exists(importPath)) {
-        return 0;
-    }
-    memset(&probe, 0, sizeof(probe));
-    base = path_basename(importPath);
-    /*
-     * ReDMCSB SAVEHEAD.C F0429 lines ~30-54 accepts the 512-byte header,
-     * and CEDTINCD.C F7057 lines ~266-294 then requires the checksum-proven
-     * GLOBAL_DATA, ACTIVE_GROUP, and PARTY save parts before runtime import.
-     * DM1 corpus import therefore ignores filenames and copies only entries
-     * that pass Firestaff's same DM1 F7057/roundtrip save-browser gate.
-     */
-    if (save_browser_add_file_path(&probe, importPath, base, "dm1", 1) != 1 ||
-        probe.entryCount != 1) {
-        return 0;
-    }
-    entry = &probe.entries[0];
-    if (!entry->valid || !entry->dm1PC34PartEnvelopeReady ||
-        !entry->dm1PC34RoundtripReady ||
-        !entry->dm1PC34CoreStateMatches) {
-        return 0;
-    }
-
-    n = snprintf(saveRoot, sizeof(saveRoot), "%s/saves", dataDir);
-    if (n <= 0 || n >= (int)sizeof(saveRoot) ||
-        ensure_dir_exists(saveRoot) != 0) {
-        return 0;
-    }
-    n = snprintf(dm1Root, sizeof(dm1Root), "%s/dm1", saveRoot);
-    if (n <= 0 || n >= (int)sizeof(dm1Root) ||
-        ensure_dir_exists(dm1Root) != 0) {
-        return 0;
-    }
-    n = snprintf(dst, sizeof(dst), "%s/%s", dm1Root, base);
-    if (n <= 0 || n >= (int)sizeof(dst) || file_exists(dst)) {
-        return 0;
-    }
-    return copy_file_bytes(importPath, dst) == 0 ? 1 : 0;
-}
-
-static void save_browser_import_dm1_pc34_corpus_dir_recursive(
-    const char* dataDir,
-    const char* importDir,
-    int depth,
-    int* imported,
-    int* skipped) {
-    DIR* dir;
-    struct dirent* ent;
-
-    if (!dataDir || !importDir || depth > 4 || !imported || !skipped) {
-        return;
-    }
-    dir = opendir(importDir);
-    if (!dir) return;
-    while ((ent = readdir(dir)) != NULL) {
-        char fullPath[512];
-        struct stat st;
-        int n;
-        if (ent->d_name[0] == '.') continue;
-        n = snprintf(fullPath, sizeof(fullPath), "%s/%s",
-                     importDir, ent->d_name);
-        if (n <= 0 || n >= (int)sizeof(fullPath)) {
-            ++(*skipped);
-            continue;
-        }
-        if (stat(fullPath, &st) != 0) {
-            ++(*skipped);
-            continue;
-        }
-        if (S_ISDIR(st.st_mode)) {
-            save_browser_import_dm1_pc34_corpus_dir_recursive(
-                dataDir, fullPath, depth + 1, imported, skipped);
-            continue;
-        }
-        if (!S_ISREG(st.st_mode)) continue;
-        if (save_browser_import_dm1_pc34_corpus_file(dataDir, fullPath) == 1) {
-            ++(*imported);
-        } else {
-            ++(*skipped);
-        }
-    }
-    closedir(dir);
-}
-
-int M12_SaveBrowser_ImportDM1PC34Corpus(
-    const char* dataDir,
-    const char* importDir,
-    int* outImportedCount,
-    int* outSkippedCount) {
-    int imported = 0;
-    int skipped = 0;
-
-    if (outImportedCount) *outImportedCount = 0;
-    if (outSkippedCount) *outSkippedCount = 0;
-    if (!dataDir || !*dataDir || !importDir || !*importDir) {
-        return -1;
-    }
-    save_browser_import_dm1_pc34_corpus_dir_recursive(
-        dataDir, importDir, 0, &imported, &skipped);
-    if (outImportedCount) *outImportedCount = imported;
-    if (outSkippedCount) *outSkippedCount = skipped;
-    return imported > 0 ? 0 : -1;
-}
-
-int M12_SaveBrowser_ImportDM1PC34CorpusReceipt(
-    const char* dataDir,
-    const char* importDir,
-    M12_SaveBrowserDM1PC34CorpusReceipt* outReceipt) {
-    int imported = 0;
-    int skipped = 0;
-    int rc;
-
-    if (!outReceipt) {
-        return -1;
-    }
-    save_browser_dm1_pc34_corpus_receipt_init(outReceipt, 2);
-    rc = M12_SaveBrowser_ImportDM1PC34Corpus(
-        dataDir, importDir, &imported, &skipped);
-    outReceipt->importedCount = imported;
-    outReceipt->skippedCount = skipped;
-    outReceipt->dm1CandidateCount = imported;
-    outReceipt->f7057ReadyCount = imported;
-    outReceipt->valid =
-        rc == 0 && imported > 0 &&
-        outReceipt->sourceLockedDm1PC34Corpus &&
-        outReceipt->consumedF0429HeaderGate &&
-        outReceipt->consumedF7057EnvelopeGate &&
-        outReceipt->consumedRoundtripGate;
-    outReceipt->receiptHash = save_browser_corpus_receipt_hash(outReceipt);
-    return outReceipt->valid ? 0 : -1;
 }
 
 const M12_SaveBrowserEntry* M12_SaveBrowser_GetSelected(

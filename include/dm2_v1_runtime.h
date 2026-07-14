@@ -30,7 +30,6 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
-#include "dm2_v1_g1_scene_runtime_bridge.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -39,11 +38,6 @@ typedef struct {
     unsigned int generation;
     int runtime_frame_owned;
     int is_outdoor;
-    /* Exact live weather state forwarded into the V1 viewport.  This is
-     * state/command provenance only; the viewport remains fail-closed until
-     * skproject's source-backed weather material route is decoded. */
-    int runtime_weather;
-    int runtime_weather_intensity;
     int gdat_provider_bound;
     int startup_title_gdat_blits;
     int startup_menu_gdat_blits;
@@ -52,9 +46,6 @@ typedef struct {
     int door_gdat_blits;
     int creature_gdat_blits;
     int floor_ceiling_gdat_blits;
-    uint8_t floor_ceiling_material_required_mask;
-    uint8_t floor_ceiling_material_consumed_mask;
-    int floor_ceiling_materials_complete;
     int outdoor_sky_gdat_blits;
     int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
@@ -62,8 +53,6 @@ typedef struct {
     int projectile_gdat_blits;
     int total_runtime_gdat_blits;
     int total_runtime_fallback_draws;
-    int blocked_material_draws;
-    uint32_t blocked_material_mask;
     int full_gdat_frame_valid;
     int outdoor_gdat_frame_valid;
     int real_gdat_evidence_valid;
@@ -83,49 +72,11 @@ typedef struct {
     uint32_t gdat_misty_map;
     uint32_t gdat_thunder_position;
     uint32_t gdat_ambient_darkness;
-    int gdat_weather_receipt_ready;
-    uint32_t gdat_weather_receipt_hash;
-    uint32_t gdat_weather_material_mask;
-    int gdat_weather_destination_ready;
-    uint32_t gdat_weather_destination_hash;
-    uint32_t gdat_weather_destination_mask;
-    int gdat_dialogue_shell_receipt_ready;
-    uint32_t gdat_dialogue_shell_receipt_hash;
     int gdat_scene_light_consumed;
     int gdat_scene_weather_consumed;
     int gdat_sprite_palette_consumed;
-    int gdat_local_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
-    int gdat_interface_action_palette_ready;
-    int gdat_interface_action_palette_consumed;
-    uint32_t gdat_interface_action_palette_hash;
-    uint8_t gdat_interface_action_palette_darkness;
-    int gdat_interface_font_host_ready;
-    int gdat_interface_font_consumed;
-    uint32_t gdat_interface_font_hash;
-    /* The save/load panel is source-bound for this runtime, but not counted
-     * as drawn until the M11 dialogue owner opens it and expands RECT_453. */
-    int gdat_save_dialogue_material_bound;
-    int gdat_save_dialogue_host_command_ready;
-    int gdat_save_dialogue_open_panel_ready;
-    uint32_t gdat_save_dialogue_material_hash;
-    uint32_t gdat_save_dialogue_host_command_hash;
-    uint32_t gdat_save_dialogue_open_panel_hash;
-    uint32_t gdat_save_dialogue_rect_index;
-    uint32_t gdat_save_dialogue_open_panel_rect_index;
-    uint32_t gdat_save_dialogue_open_panel_save_list_rect_index;
-    int gdat_save_dialogue_x;
-    int gdat_save_dialogue_y;
-    int gdat_save_dialogue_w;
-    int gdat_save_dialogue_h;
-    int gdat_interface_hud_layout_ready;
-    uint32_t gdat_interface_hud_layout_hash;
-    int gdat_interface_rect14_host_ready;
-    int gdat_interface_rect14_consumed;
-    uint32_t gdat_interface_rect14_table_hash;
-    uint32_t gdat_interface_rect14_placement_hash;
-    uint32_t gdat_interface_rect14_placement_count;
     int gdat_material_palette_floor_ceiling_consumed;
     int gdat_material_palette_wall_consumed;
     int gdat_material_palette_door_frame_consumed;
@@ -139,21 +90,6 @@ typedef struct {
     uint32_t viewport_decoded_gdat_pixel_count;
     int valid;
 } DM2_V1_RuntimeFrameOwnershipReceipt;
-
-/* Atomic identity for the exact source-required viewport frame M11 is about
- * to present. The values come from the live GDAT scene and interface palette
- * receipts, never from a fallback frame. */
-typedef struct {
-    int valid;
-    int m11_consume_frame;
-    int source_materials_required;
-    uint32_t map_load_token;
-    uint32_t scene_control_hash;
-    uint32_t palette_hash;
-    uint8_t floor_ceiling_material_required_mask;
-    uint8_t floor_ceiling_material_consumed_mask;
-    int floor_ceiling_materials_complete;
-} DM2_V1_ViewportM11FrameReceipt;
 
 typedef struct {
     int ready;
@@ -186,38 +122,6 @@ extern "C" {
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile);
 int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
-/* Returns the map-0 bounded receipt when a canonical G1 partial world was
- * consumed. Only source-defined direct DB1 teleporter fields are available;
- * no generic object or link traversal is exposed through this API. */
-int dm2_v1_runtime_g1_first_map_receipt(
-    DM2_V1_G1FirstMapRuntimeReceipt *out_receipt);
-/* Returns the DB1 teleporter receipt for the current map-0 party pose. It
- * applies a transition only when the source and complete-world gates pass;
- * otherwise the receipt is a strict no-transition result. GenericRecord::w0
- * and blocked roots remain unavailable. */
-int dm2_v1_runtime_g1_map0_teleporter_transition_receipt(
-    DM2_V1_G1TeleporterTransitionReceipt *out_receipt);
-/* Returns the map-5 direct DB2 Text::w2 field receipt consumed at boot.
- * It exposes no text bytes, GenericRecord::w0 links, or non-DB2 records. */
-int dm2_v1_runtime_g1_map5_text_receipt(
-    DM2_V1_G1Map5TextRuntimeReceipt *out_receipt);
-/* Visible DB2 TextMode==0 strings decoded from the original G1 text table.
- * Mode-one GDAT messages and unknown phrase-bank escapes are not fabricated. */
-int dm2_v1_runtime_g1_map5_text_message_receipt(
-    DM2_V1_G1TextMessageRuntimeReceipt *out_receipt);
-int dm2_v1_runtime_g1_map5_gdat_text_message_receipt(
-    DM2_V1_G1GdatTextMessageRuntimeReceipt *out_receipt);
-int dm2_v1_runtime_g1_map5_text_wall_gfx_receipt(
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out_receipt);
-int dm2_v1_runtime_g1_actuator_wall_gfx_receipt(
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out_receipt);
-int dm2_v1_runtime_g1_creature_map_chip_receipt(
-    DM2_V1_G1CreatureMapChipRuntimeReceipt *out_receipt);
-/* Source-classified G1 tile/root handoff used by the live dungeon frame.
- * A direct class without a source material is reported blocked, never drawn
- * through a generic material. */
-int dm2_v1_runtime_g1_scene_handoff_receipt(
-    DM2_V1_G1SceneRuntimeHandoffReceipt *out_receipt);
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);
@@ -257,8 +161,6 @@ void dm2_v1_runtime_note_startup_frame_consumption(
     int title_gdat_blits, int menu_gdat_blits);
 int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
-int dm2_v1_runtime_last_m11_frame_receipt(
-    DM2_V1_ViewportM11FrameReceipt *out_receipt);
 int dm2_v1_runtime_graphicsset_scene_receipt(
     DM2_V1_RuntimeGraphicsSetSceneReceipt *out_receipt);
 void dm2_v1_runtime_set_viewport_asset_provider(
@@ -293,8 +195,6 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int frame_gdat_index;
     int button_gdat_index;
     int button_source_kind; /* 1=default door button, 2=wall-gfx button */
-    int button_clickable;
-    int button_rectno;
     int wall_button_index;
     int wall_button_field;
     int panel_blit_ready;
@@ -339,23 +239,6 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     DM2_V1_ViewportRect frame_asset_dst_rect;
     DM2_V1_ViewportRect button_asset_dst_rect;
 } DM2_V1_RuntimeDoorRenderReceipt;
-
-typedef enum { DM2_V1_RUNTIME_CORPUS_IMPORT_NONE = 0,
-               DM2_V1_RUNTIME_CORPUS_IMPORT_OK,
-               DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE,
-               DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED } DM2_V1_RuntimeCorpusImportResult;
-typedef struct {
-    DM2_V1_RuntimeCorpusImportResult result;
-    int restored;
-    int candidate_kind;
-    size_t selected_payload_size;
-    uint32_t selected_payload_hash;
-    /* Complete SKSave-file identity from the scanner receipt. Runtime restore
-     * rechecks this before it reads any payload bytes. */
-    uint32_t selected_source_file_hash;
-    int rejected_original_candidate;
-    char selected_path[256];
-} DM2_V1_RuntimeCorpusImportReceipt;
 int dm2_v1_runtime_last_door_render_receipt(
     DM2_V1_RuntimeDoorRenderReceipt *out_receipt);
 int dm2_v1_runtime_last_asset_item_count(void);
@@ -493,15 +376,6 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
-int dm2_v1_runtime_import_sksave_corpus(
-    const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
-/* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
- * DM2_GAME_LOAD. The caller selects one scanner-issued SKSave receipt; this
- * function revalidates its complete original file before any runtime state
- * can change. It never substitutes another corpus candidate. */
-int dm2_v1_runtime_import_sksave_receipted_candidate(
-    const DM2_SKSaveCandidateReceipt *candidate_receipt,
-    DM2_V1_RuntimeCorpusImportReceipt *out);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

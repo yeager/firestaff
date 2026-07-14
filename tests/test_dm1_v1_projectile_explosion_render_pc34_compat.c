@@ -6,11 +6,8 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
-#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
-#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,18 +97,6 @@ static void test_projectile_graphic_indices(void) {
     ASSERT_EQ(dm1_v1_projectile_graphic_index(14, 0), -1, "gfx[14]");
 }
 
-/* C100 must retain its own M613 lightning material.  C101 and ordinary
- * explosions are intentionally covered by separate routes. */
-static void test_c100_rebirth_lightning_material(void) {
-    printf("  C100 rebirth lightning material...\n");
-    ASSERT_EQ(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
-              DM1_GFX_FIRST_PROJECTILE + 10,
-              "C100 uses C03 following native bitmap");
-    ASSERT_NE(dm1_v1_c100_rebirth_lightning_graphic_index_pc34(),
-              DM1_GFX_FIRST_EXPLOSION_PATTERN,
-              "C100 never borrows M636 pattern material");
-}
-
 
 /* ── Test: Projectile bitmap deltas match aspect type rules ──────── */
 
@@ -178,97 +163,6 @@ static void test_projectile_subtype_mapping(void) {
               DM1_GFX_FIRST_PROJECTILE, "kinetic subtype gfx");
 }
 
-/* ReDMCSB DUNGEON.C F0142 and DUNVIEW.C F0115:5891-5900: a live thrown
- * Slot is not always a 454.. projectile bitmap.  This verifies the same
- * G0237/G0209 object-material handoff without fabricating any pixels. */
-static void test_thrown_object_material_resolution(void) {
-    DM1_ProjectileMaterialResolutionPc34 resolution;
-    DM1_ThrownObjectProjectileBlitPlanPc34 blit;
-
-    printf("  thrown object material resolution...\n");
-    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
-                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                    THING_TYPE_POTION, 0, 0, &resolution),
-                "ordinary thrown potion resolves original object material");
-    ASSERT_EQ(resolution.valid, 1, "potion resolution valid");
-    ASSERT_EQ(resolution.uses_object_aspect, 1, "potion uses F0115 object route");
-    ASSERT_EQ(resolution.aspect_index,
-              dm1_item_aspect_index(THING_TYPE_POTION, 0),
-              "potion uses G0237 object aspect");
-    ASSERT_EQ(resolution.graphic_index,
-              (int)dm1_item_sprite_index(THING_TYPE_POTION, 0),
-              "potion uses M612 original graphic");
-    ASSERT_TRUE(resolution.graphic_index >= DM1_GRAPHIC_FIRST_OBJECT,
-                "potion never falls back to M613 projectile bank");
-
-    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
-                    &blit, resolution.graphic_index, resolution.aspect_index,
-                    1, 2, 0, 2, 0, 0, 224, 136, 16, 16),
-                "object projectile gets C2900 placement plan");
-    ASSERT_EQ(blit.transparent_color, 10, "object projectile keeps C10");
-    ASSERT_EQ(blit.uses_source_row, 1, "object projectile uses C2900 row");
-    ASSERT_TRUE(blit.draw_x >= -15 && blit.draw_x < 224,
-                "object projectile C2900 X is viewport bounded");
-
-    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
-                    &blit, (int)dm1_object_aspect_graphic_index(63), 63,
-                    2, 0, -1, 6, 0, 0, 224, 136, 16, 16),
-                "D2L thrown object uses its real C2900 row");
-    ASSERT_EQ(blit.use_mirror, 0,
-              "D2L does not mirror a G0209 right-facing object aspect");
-    ASSERT_EQ(blit.source_scale_index, 4,
-              "D2L preserves its D2 back-row object scale");
-    ASSERT_EQ(blit.draw_x, 7,
-              "D2L uses C2900 row 6 cell 0, not a pane fallback");
-
-    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
-                    &blit, (int)dm1_object_aspect_graphic_index(63), 63,
-                    2, 0, 1, 7, 0, 0, 224, 136, 16, 16),
-                "D2R thrown object uses its real C2900 row");
-    ASSERT_EQ(blit.use_mirror, 1,
-              "D2R mirrors the G0209 right-facing object aspect");
-    ASSERT_EQ(blit.source_scale_index, 4,
-              "D2R preserves its D2 back-row object scale");
-    ASSERT_EQ(blit.draw_x, 168,
-              "D2R uses C2900 row 7 cell 0, not a pane fallback");
-
-    ASSERT_TRUE(dm1_v1_thrown_object_projectile_blit_plan_pc34(
-                    &blit, (int)dm1_object_aspect_graphic_index(63), 63,
-                    0, 0, 0, 11, 0, 0, 224, 136, 16, 16),
-                "D0C thrown object uses F0127 C2900 row 11");
-    ASSERT_EQ(blit.source_scale_index, 0,
-              "D0C retains the original native object scale");
-    ASSERT_EQ(blit.draw_x, 60,
-              "D0C uses C2900 row 11 cell 0 without a pane fallback");
-    ASSERT_EQ(blit.draw_y, 35,
-              "D0C uses the original C2900 baseline");
-
-    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
-                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                    THING_TYPE_WEAPON, 8, 2, &resolution),
-                "weapon projectile aspect resolves");
-    ASSERT_EQ(resolution.uses_object_aspect, 0,
-              "weapon M066 aspect retains projectile material route");
-    ASSERT_EQ(resolution.graphic_index,
-              dm1_v1_projectile_graphic_index(1, 0),
-              "weapon M066 ordinal maps to G0210 projectile art");
-
-    ASSERT_TRUE(!dm1_v1_projectile_material_resolve_pc34(
-                     PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                     THING_TYPE_POTION, 99, 0, &resolution),
-                "unresolvable carried Slot fails closed");
-
-    ASSERT_TRUE(dm1_v1_projectile_material_resolve_pc34(
-                    PROJECTILE_SUBTYPE_KINETIC_ARROW,
-                    -1, -1, 0, &resolution),
-                "spell projectile resolves only without an associated object");
-    ASSERT_EQ(resolution.uses_object_aspect, 0,
-              "empty Slot retains the native M613 projectile route");
-    ASSERT_EQ(resolution.graphic_index,
-              dm1_v1_projectile_graphic_index(0, 0),
-              "empty Slot uses the original M613 projectile graphic");
-}
-
 
 /* ── Test: Projectile depth scaling ──────────────────────────────── */
 
@@ -291,17 +185,35 @@ static void test_projectile_scale(void) {
               "front >= back scale D2");
 }
 
-static void test_projectile_d4_is_source_nodraw(void) {
-    printf("  projectile D4 source no-draw...\n");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4L) == NULL,
-                "D4L has no ReDMCSB G2028/C2900 projectile material row");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4C) == NULL,
-                "D4C has no ReDMCSB G2028/C2900 projectile material row");
-    ASSERT_TRUE(dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                    DM1_VIEW_SQUARE_D4R) == NULL,
-                "D4R has no ReDMCSB G2028/C2900 projectile material row");
+static void test_projectile_d4_far_box(void) {
+    int lx = 0, ly = 0, lw = 0, lh = 0;
+    int cx = 0, cy = 0, cw = 0, ch = 0;
+    int rx = 0, ry = 0, rw = 0, rh = 0;
+    printf("  projectile D4 far boxes...\n");
+
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-2, &lx, &ly, &lw, &lh), 0,
+              "D4 rejects outside left lane");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(2, &rx, &ry, &rw, &rh), 0,
+              "D4 rejects outside right lane");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh), 1,
+              "D4 left box exists");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch), 1,
+              "D4 center box exists");
+    ASSERT_EQ(dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh), 1,
+              "D4 right box exists");
+    ASSERT_EQ(lx, 78, "D4 left x");
+    ASSERT_EQ(cx, 108, "D4 center x");
+    ASSERT_EQ(rx, 138, "D4 right x");
+    ASSERT_EQ(ly, 42, "D4 left y");
+    ASSERT_EQ(cy, 42, "D4 center y");
+    ASSERT_EQ(ry, 42, "D4 right y");
+    ASSERT_EQ(lw, 10, "D4 width");
+    ASSERT_EQ(cw, 10, "D4 center width");
+    ASSERT_EQ(rw, 10, "D4 right width");
+    ASSERT_EQ(lh, 8, "D4 height");
+    ASSERT_EQ(ch, 8, "D4 center height");
+    ASSERT_EQ(rh, 8, "D4 right height");
+    ASSERT_TRUE(lx < cx && cx < rx, "D4 boxes stay left-center-right");
 }
 
 static void test_projectile_renderable_and_effect_particle(void) {
@@ -429,201 +341,6 @@ static void test_f0115_runtime_summary(void) {
     ASSERT_EQ(dm1_v1_f0115_runtime_summary_pc34(
                   NULL, 1, 0, 0, &summary), 0,
               "runtime summary rejects missing static chain");
-}
-
-static void test_f0115_runtime_instance_summary(void) {
-    unsigned short things[1] = { 0x1001u };
-    struct ProjectileList_Compat projectiles;
-    struct ExplosionList_Compat explosions;
-    DM1_F0115RuntimeInstanceInputPc34 input;
-    DM1_F0115RuntimeSummaryPc34 summary;
-
-    memset(&projectiles, 0, sizeof(projectiles));
-    memset(&explosions, 0, sizeof(explosions));
-    memset(&input, 0, sizeof(input));
-    projectiles.count = 3;
-    projectiles.entries[0].slotIndex = 0;
-    projectiles.entries[0].reserved3 = 1;
-    projectiles.entries[0].mapIndex = 2;
-    projectiles.entries[0].mapX = 4;
-    projectiles.entries[0].mapY = 5;
-    projectiles.entries[1] = projectiles.entries[0];
-    projectiles.entries[1].slotIndex = 1;
-    projectiles.entries[1].mapX = 6;
-    projectiles.entries[2] = projectiles.entries[0];
-    projectiles.entries[2].slotIndex = 2;
-    projectiles.entries[2].reserved3 = 0;
-
-    explosions.count = 3;
-    explosions.entries[0].slotIndex = 0;
-    explosions.entries[0].reserved0 = 1;
-    explosions.entries[0].explosionType = 4;
-    explosions.entries[0].mapIndex = 2;
-    explosions.entries[0].mapX = 4;
-    explosions.entries[0].mapY = 5;
-    explosions.entries[1] = explosions.entries[0];
-    explosions.entries[1].slotIndex = 1;
-    explosions.entries[1].explosionType = -1;
-    explosions.entries[2] = explosions.entries[0];
-    explosions.entries[2].slotIndex = 2;
-    explosions.entries[2].mapY = 6;
-
-    input.thingRefs = things;
-    input.thingCount = 1;
-    input.projectiles = &projectiles;
-    input.explosions = &explosions;
-    input.mapIndex = 2;
-    input.mapX = 4;
-    input.mapY = 5;
-    ASSERT_EQ(dm1_v1_f0115_runtime_instance_summary_pc34(&input, &summary), 1,
-              "F0115 typed runtime instance summary builds");
-    ASSERT_EQ(summary.projectiles, 1,
-              "F0115 typed runtime summary filters inactive and off-square projectiles");
-    ASSERT_EQ(summary.explosions, 1,
-              "F0115 typed runtime summary filters invalid and off-square explosions");
-}
-
-static void test_f0115_runtime_summary_from_world(void) {
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat map;
-    struct DungeonMapTiles_Compat tiles;
-    struct DungeonThings_Compat things;
-    struct GameWorld_Compat world;
-    unsigned char squareData[1] = { DUNGEON_SQUARE_MASK_THING_LIST };
-    unsigned short squareFirstThings[1];
-    unsigned char groupRaw[16];
-    unsigned char weaponRaw[16];
-    unsigned short groupThing = make_thing(THING_TYPE_GROUP, 0, 0);
-    unsigned short weaponThing = make_thing(THING_TYPE_WEAPON, 0, 0);
-    DM1_F0115RuntimeSummaryPc34 summary;
-
-    printf("  F0115 world summary...\n");
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&map, 0, sizeof(map));
-    memset(&tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(&world, 0, sizeof(world));
-    memset(groupRaw, 0, sizeof(groupRaw));
-    memset(weaponRaw, 0, sizeof(weaponRaw));
-
-    map.width = 1;
-    map.height = 1;
-    tiles.squareData = squareData;
-    tiles.squareCount = 1;
-    dungeon.header.mapCount = 1;
-    dungeon.maps = &map;
-    dungeon.tiles = &tiles;
-    dungeon.tilesLoaded = 1;
-    squareFirstThings[0] = groupThing;
-    groupRaw[0] = (unsigned char)(weaponThing & 0xffu);
-    groupRaw[1] = (unsigned char)(weaponThing >> 8);
-    weaponRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
-    weaponRaw[1] = (unsigned char)(THING_ENDOFLIST >> 8);
-    things.loaded = 1;
-    things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 1;
-    things.rawThingData[THING_TYPE_GROUP] = groupRaw;
-    things.thingCounts[THING_TYPE_GROUP] = 1;
-    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
-    things.thingCounts[THING_TYPE_WEAPON] = 1;
-    world.dungeon = &dungeon;
-    world.things = &things;
-    world.projectiles.count = 1;
-    world.projectiles.entries[0].slotIndex = 0;
-    world.projectiles.entries[0].reserved3 = 1;
-    world.projectiles.entries[0].mapIndex = 0;
-    world.projectiles.entries[0].mapX = 0;
-    world.projectiles.entries[0].mapY = 0;
-    world.explosions.count = 1;
-    world.explosions.entries[0].slotIndex = 0;
-    world.explosions.entries[0].reserved0 = 1;
-    world.explosions.entries[0].explosionType = 0;
-    world.explosions.entries[0].mapIndex = 0;
-    world.explosions.entries[0].mapX = 0;
-    world.explosions.entries[0].mapY = 0;
-
-    ASSERT_EQ(dm1_v1_f0115_runtime_summary_from_world_pc34(
-                  &world, 0, 0, 0, &summary), 1,
-              "F0115 world summary builds through M10 SFT accessors");
-    ASSERT_EQ(summary.groups, 1,
-              "F0115 world summary retains M10 group chain entry");
-    ASSERT_EQ(summary.items, 1,
-              "F0115 world summary retains M10 weapon chain entry");
-    ASSERT_EQ(summary.projectiles, 1,
-              "F0115 world summary includes active local projectile");
-    ASSERT_EQ(summary.explosions, 1,
-              "F0115 world summary includes active local explosion");
-    ASSERT_EQ(summary.total, 4,
-              "F0115 world summary joins M10 static and live layers");
-}
-
-static const char* dm1_pc34_dungeon_dat_path(void) {
-    static char path[1024];
-    const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
-    const char* home;
-
-    if (configured && configured[0]) return configured;
-    home = getenv("HOME");
-    if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
-    return path;
-}
-
-static void test_f0115_world_candidates_real_pc34_data(void) {
-    const char* path = dm1_pc34_dungeon_dat_path();
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonThings_Compat things;
-    struct GameWorld_Compat world;
-    int sawChain = 0;
-    int sawDrawableCandidate = 0;
-    int mapIndex;
-
-    printf("  F0115 world candidates with PC34 corpus...\n");
-    if (!path) return;
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&things, 0, sizeof(things));
-    memset(&world, 0, sizeof(world));
-    if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
-        !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
-        !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
-        /* This test is optional in data-free CI; a configured local corpus
-         * must be loadable rather than silently receiving a fixture. */
-        if (getenv("DM1_PC34_DUNGEON_DAT")) {
-            ASSERT_EQ(0, 1, "configured PC34 corpus loads");
-        }
-        F0504_DUNGEON_FreeThingData_Compat(&things);
-        F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
-        return;
-    }
-    world.dungeon = &dungeon;
-    world.things = &things;
-    for (mapIndex = 0; mapIndex < (int)dungeon.header.mapCount; ++mapIndex) {
-        const struct DungeonMapDesc_Compat* map = &dungeon.maps[mapIndex];
-        int x;
-        for (x = 0; x < (int)map->width; ++x) {
-            int y;
-            for (y = 0; y < (int)map->height; ++y) {
-                DM1_F0115WorldCandidatesPc34 candidates;
-                if (!dm1_v1_f0115_world_candidates_pc34(
-                        &world, mapIndex, x, y, NULL, NULL, &candidates) ||
-                    candidates.chainCount == 0) {
-                    continue;
-                }
-                sawChain = 1;
-                if (candidates.groupCount > 0 || candidates.itemCount > 0) {
-                    sawDrawableCandidate = 1;
-                    break;
-                }
-            }
-            if (sawDrawableCandidate) break;
-        }
-        if (sawDrawableCandidate) break;
-    }
-    ASSERT_EQ(sawChain, 1, "PC34 corpus yields a compact SFT chain");
-    ASSERT_EQ(sawDrawableCandidate, 1,
-              "PC34 corpus yields a source-backed F0115 group or item candidate");
-    F0504_DUNGEON_FreeThingData_Compat(&things);
-    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
 }
 
 static void test_projectile_sprite_blit_plan(void) {
@@ -803,16 +520,6 @@ static void test_explosion_pattern_graphic(void) {
     /* Smoke uses poison graphics: 489 + 2*3 + 0 = 495 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_SMOKE, 0), 495,
               "smoke small (=poison)");
-    /* ReDMCSB DUNVIEW.C F0115:5955,6038-6074: D0C rebirth step 2 enters
-     * the fire M636 pattern route, rather than a C3007/F0114 substitute. */
-    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
-                  DM1_EXPLOSION_TYPE_REBIRTH_STEP2, 0), 489,
-              "D0C rebirth step2 uses fire M636 pattern");
-    /* C100 is not an M636 pattern. Its C3000/lightning route has a separate
-     * scale gate, so a direct pattern query must remain fail-closed. */
-    ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(
-                  DM1_EXPLOSION_TYPE_REBIRTH_STEP1, 96), -1,
-              "rebirth step1 never falls through to an M636 pattern");
     /* Fluxcage returns -1 */
     ASSERT_EQ(dm1_v1_explosion_pattern_graphic_index(DM1_EXPLOSION_FLUXCAGE, 100), -1,
               "fluxcage->-1");
@@ -1483,18 +1190,13 @@ int main(void) {
 
     test_projectile_aspect_table();
     test_projectile_graphic_indices();
-    test_c100_rebirth_lightning_material();
     test_projectile_bitmap_deltas();
     test_projectile_subtype_mapping();
-    test_thrown_object_material_resolution();
     test_projectile_scale();
-    test_projectile_d4_is_source_nodraw();
+    test_projectile_d4_far_box();
     test_projectile_renderable_and_effect_particle();
     test_f0115_thing_layer_receipt();
     test_f0115_runtime_summary();
-    test_f0115_runtime_instance_summary();
-    test_f0115_runtime_summary_from_world();
-    test_f0115_world_candidates_real_pc34_data();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();

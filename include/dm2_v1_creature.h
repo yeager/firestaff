@@ -100,12 +100,6 @@ typedef struct __attribute__((packed)) {
 #define DM2_CCM_CAST_SPELL            0x15  /* monster spellcasting */
 #define DM2_CCM_CREATURE_ATTACKS_PARTY 0x17 /* fallback attack */
 #define DM2_CCM_EXPLODE_OR_SUMMON     0x26  /* self-destruct or spawn minion */
-#define DM2_CCM_TRANSFORM_STAGE       0x3b  /* transform phase, b_1f increments */
-#define DM2_CCM_TRANSFORM_FINAL       0x3c  /* post-transform state */
-#define DM2_CCM_EXPLODE_OR_SUMMON_PHASE 0x3d /* explode/summon family, b_20 mode */
-#define DM2_CCM_EXPLODE_OR_SUMMON_PHASE_3E 0x3e /* same source handler */
-#define DM2_CCM_EXPLODE_OR_SUMMON_PHASE_3F 0x3f /* same source handler */
-#define DM2_CCM_EXPLODE_OR_SUMMON_PHASE_40 0x40 /* same source handler */
 
 /* ── AI index table size ────────────────────────────────────────────────
  * Source: skproject/SKWIN/SkGlobal.h:636, SkWinCore.cpp:741-810 */
@@ -165,52 +159,8 @@ typedef struct __attribute__((packed)) {
 
 int  dm2_v1_creature_ai_index_count(void);
 const char *dm2_v1_creature_ai_name(int ai_index);
-/* Returns NULL when a mounted GDAT has no verified CREATURES[type] ->
- * CREATURE_AI row binding.  Callers must treat that as unavailable/no action. */
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
-
-/* skproject DRAW_PUT_DOWN_ITEM reads AIDefinition::w32 only after the
- * CREATURES[type] -> GDAT AI-row indirection has been bound from real data. */
-int dm2_v1_creature_item_click_rect_evidence(int creature_type,
-                                             uint16_t *out_rectno);
-
-typedef struct {
-    int valid;
-    int creature_type;
-    uint16_t ai_flags_w30;
-    uint16_t rectno_w32;
-} DM2_V1_CreatureItemClickEvidence;
-
-/* skproject DRAW_PUT_DOWN_ITEM permits QUERY_EXPANDED_RECT(w32) only when
- * `(w30 & 0x0400) == 0` and the w30 high-nibble gate is clear. */
-int dm2_v1_creature_item_click_evidence(
-    int creature_type,
-    DM2_V1_CreatureItemClickEvidence *out_evidence);
-
-/* Raw-only CCM corpus receipt. `CREATURE_AI/row/dt00` is the verified
- * AIDefinition owner; no original source assigns an adjacent GDAT field to a
- * CCM instruction stream. Thus the receipt hashes only dt00 rows and keeps
- * all command-byte counts at zero. */
-typedef struct {
-    int gdat_loaded;
-    int ai_definition_owner_proven;
-    int ai_definition_row_count;
-    uint32_t ai_definition_byte_count;
-    uint32_t ai_definition_hash;
-    int command_state_owner_proven;
-    int command_stream_owner_proven;
-    int opcode_32_present;
-    int opcode_33_present;
-    int opcode_34_present;
-    int decoder_permitted;
-} DM2_V1_CCMCorpusReceipt;
-
-int dm2_v1_creature_ccm_corpus_receipt(
-    const DM2_V1_AssetLoader *loader,
-    DM2_V1_CCMCorpusReceipt *out_receipt);
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
-/* This rejects every adjacent GDAT field until an original CCM stream
- * owner/grammar is proven. */
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);
 int  dm2_v1_creature_load_ccm_programs_from_gdat_auto(const DM2_V1_AssetLoader *loader,
@@ -247,8 +197,6 @@ typedef struct {
     int hp_max;            /* maximum hit points (BaseHP * healthMultiplier) */
     uint8_t b_1a;          /* CCM primary state register */
     uint8_t b_17;          /* CCM secondary context */
-    uint8_t ccm_transform_phase; /* skproject c_creature b_1f */
-    uint8_t ccm_explode_or_summon_mode; /* skproject c_creature b_20 */
     uint8_t alive;         /* 1=alive, 0=dead (pending drop removal) */
     uint8_t is_visible;    /* 1=visible, 0=invisible */
     int target_x;          /* last known target position (party) */
@@ -286,8 +234,6 @@ typedef struct {
     int ccm_flag_shoot;
     int ccm_flag_cast_spell;
     int ccm_flag_explode_or_summon;
-    int ccm_explode_or_summon_requested;
-    int ccm_explode_or_summon_mode;
     int ccm_flag_path;
     int ccm_flag_rotate;
     int ccm_flag_special;
@@ -400,10 +346,6 @@ void dm2_v1_creature_test_set_ccm_state(int instance_id,
                                         uint8_t b_17,
                                         int target_x,
                                         int target_y);
-void dm2_v1_creature_test_set_ccm_transform_phase(int instance_id,
-                                                   uint8_t phase);
-void dm2_v1_creature_test_set_ccm_explode_or_summon_mode(int instance_id,
-                                                          uint8_t mode);
 void dm2_v1_creature_test_reset_instances(void);
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 

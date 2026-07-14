@@ -18,10 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
-#if !defined(_WIN32)
-#include <dirent.h>
-#include <sys/stat.h>
-#endif
 
 /* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
  * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
@@ -217,85 +213,6 @@ typedef enum {
     DM2_SK_CORPUS_VALID = 2,
 } DM2_SKCorpusProbeStatus;
 
-#define DM2_SK_CORPUS_RECURSE_DEPTH 4
-#define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64
-
-static int dm2_ascii_tolower(int c)
-{
-    return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
-}
-
-static int dm2_ascii_strcasecmp(const char *a, const char *b)
-{
-    while (*a && *b) {
-        int ca = dm2_ascii_tolower((unsigned char)*a);
-        int cb = dm2_ascii_tolower((unsigned char)*b);
-        if (ca != cb) return ca - cb;
-        ++a;
-        ++b;
-    }
-    return dm2_ascii_tolower((unsigned char)*a) -
-           dm2_ascii_tolower((unsigned char)*b);
-}
-
-static int dm2_sksave_basename_is_slot_ci(const char *name, int *out_slot)
-{
-    int tens;
-    int ones;
-    if (out_slot) *out_slot = -1;
-    if (!name) return 0;
-    if (dm2_ascii_tolower((unsigned char)name[0]) != 's' ||
-        dm2_ascii_tolower((unsigned char)name[1]) != 'k' ||
-        dm2_ascii_tolower((unsigned char)name[2]) != 's' ||
-        dm2_ascii_tolower((unsigned char)name[3]) != 'a' ||
-        dm2_ascii_tolower((unsigned char)name[4]) != 'v' ||
-        dm2_ascii_tolower((unsigned char)name[5]) != 'e') {
-        return 0;
-    }
-    if (name[6] < '0' || name[6] > '9' ||
-        name[7] < '0' || name[7] > '9' ||
-        name[8] != '.' ||
-        dm2_ascii_tolower((unsigned char)name[9]) != 'd' ||
-        dm2_ascii_tolower((unsigned char)name[10]) != 'a' ||
-        dm2_ascii_tolower((unsigned char)name[11]) != 't' ||
-        name[12] != '\0') {
-        return 0;
-    }
-    tens = name[6] - '0';
-    ones = name[7] - '0';
-    if (out_slot) *out_slot = tens * 10 + ones;
-    return 1;
-}
-
-static int dm2_sksave_basename_is_candidate_ci(const char *name)
-{
-    int slot = -1;
-    if (!name || !name[0]) return 0;
-    if (dm2_ascii_strcasecmp(name, "SKSave.dat") == 0 ||
-        dm2_ascii_strcasecmp(name, "SKSave.bak") == 0) {
-        return 1;
-    }
-    return dm2_sksave_basename_is_slot_ci(name, &slot) &&
-           slot >= 0 && slot < DM2_SLOT_MAX;
-}
-
-static int dm2_sksave_basename_is_canonical_direct(const char *name)
-{
-    int slot = -1;
-    char canonical[16];
-    if (!name) return 0;
-    if (strcmp(name, "SKSave.dat") == 0 ||
-        strcmp(name, "SKSave.bak") == 0) {
-        return 1;
-    }
-    if (!dm2_sksave_basename_is_slot_ci(name, &slot) ||
-        slot < 0 || slot >= DM2_SLOT_MAX) {
-        return 0;
-    }
-    snprintf(canonical, sizeof(canonical), "SKSave%02d.dat", slot);
-    return strcmp(name, canonical) == 0;
-}
-
 static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
                                                       size_t *out_payload_size)
 {
@@ -344,49 +261,6 @@ static void dm2_sksave_corpus_accept(DM2_SKSaveCorpusReceipt *receipt,
     }
 }
 
-static uint32_t dm2_sksave_corpus_hash_step(uint32_t hash, uint32_t value)
-{
-    hash ^= value;
-    hash *= 16777619u;
-    return hash;
-}
-
-static uint32_t dm2_sksave_corpus_payload_hash(const uint8_t *payload,
-                                               size_t payload_size,
-                                               uint32_t seed)
-{
-    uint32_t hash = seed ? seed : 0x32434f52u;
-    size_t i;
-    if (!payload || payload_size == 0u) {
-        return hash;
-    }
-    for (i = 0; i < payload_size; ++i) {
-        hash = dm2_sksave_corpus_hash_step(hash, payload[i]);
-    }
-    return hash;
-}
-
-static uint32_t dm2_sksave_corpus_file_hash(const char *path)
-{
-    FILE *file;
-    uint8_t buffer[4096];
-    uint32_t hash = 2166136261u;
-    size_t read_count;
-
-    if (!path || !path[0] || !(file = fopen(path, "rb"))) {
-        return 0u;
-    }
-    while ((read_count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
-        hash = dm2_sksave_corpus_payload_hash(buffer, read_count, hash);
-    }
-    if (ferror(file)) {
-        fclose(file);
-        return 0u;
-    }
-    fclose(file);
-    return hash;
-}
-
 static void dm2_sksave_corpus_classify_payload(
     DM2_SKSaveCorpusReceipt *receipt,
     const char *path,
@@ -396,8 +270,6 @@ static void dm2_sksave_corpus_classify_payload(
     uint8_t *payload;
     DM2_V1_SaveCandidate candidate;
     int status = 0;
-    int importable_kind_ok = 0;
-    uint32_t source_file_hash;
 
     if (!receipt || !path || payload_size == 0u ||
         payload_size > (size_t)DM2_SESSION_MAX_SIZE) {
@@ -424,13 +296,9 @@ static void dm2_sksave_corpus_classify_payload(
         receipt->import_rejected_candidate_count++;
         return;
     }
-    source_file_hash = dm2_sksave_corpus_file_hash(path);
-    if (source_file_hash == 0u) {
-        free(payload);
-        fclose(f);
-        receipt->import_rejected_candidate_count++;
-        return;
-    }
+    free(payload);
+    fclose(f);
+
     receipt->importable_candidate_count++;
     receipt->total_importable_payload_size += payload_size;
     if (payload_size > receipt->largest_importable_payload_size) {
@@ -443,187 +311,18 @@ static void dm2_sksave_corpus_classify_payload(
     switch (candidate.kind) {
         case DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION:
             receipt->firestaff_session_candidate_count++;
-            importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE:
             receipt->original_envelope_candidate_count++;
-            importable_kind_ok = 1;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW:
             receipt->original_raw_candidate_count++;
-            importable_kind_ok = 1;
             break;
         default:
             receipt->import_rejected_candidate_count++;
             receipt->importable_candidate_count--;
             break;
     }
-    if (importable_kind_ok) {
-        if (receipt->candidate_receipt_count < DM2_SK_CORPUS_RECEIPT_MAX) {
-            DM2_SKSaveCandidateReceipt *entry =
-                &receipt->candidate_receipts[receipt->candidate_receipt_count++];
-            entry->kind = candidate.kind;
-            entry->import_rejected =
-                candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION;
-            entry->payload_size = payload_size;
-            entry->payload_hash = dm2_sksave_corpus_payload_hash(
-                payload, payload_size, 2166136261u);
-            entry->source_file_hash = source_file_hash;
-            snprintf(entry->path, sizeof(entry->path), "%s", path);
-        }
-        receipt->importable_kind_mask |=
-            1u << ((unsigned int)candidate.kind & 31u);
-        receipt->importable_payload_hash =
-            dm2_sksave_corpus_payload_hash(
-                payload,
-                payload_size,
-                receipt->importable_payload_hash
-                    ? receipt->importable_payload_hash
-                    : 0x32534b43u);
-    }
-    free(payload);
-    fclose(f);
-}
-
-static void dm2_sksave_corpus_probe_candidate(
-    DM2_SKSaveCorpusReceipt *receipt,
-    const char *path,
-    const char *basename,
-    int recursive,
-    int alternate_name)
-{
-    DM2_SKCorpusProbeStatus status;
-    size_t payload_size = 0u;
-    uint8_t before_importable;
-
-    if (!receipt || !path) return;
-    status = dm2_sksave_probe_path(path, &payload_size);
-    if (status == DM2_SK_CORPUS_VALID) {
-        if (recursive) receipt->recursive_candidate_count++;
-        if (alternate_name) receipt->alternate_name_candidate_count++;
-        dm2_sksave_corpus_accept(receipt, path, payload_size);
-        before_importable = receipt->importable_candidate_count;
-        dm2_sksave_corpus_classify_payload(receipt, path, payload_size);
-        if (receipt->importable_candidate_count > before_importable) {
-            if (recursive) receipt->recursive_importable_candidate_count++;
-        }
-        if (recursive || (basename && !dm2_sksave_basename_is_canonical_direct(basename))) {
-            receipt->extra_valid_candidate_count++;
-        }
-    } else if (status == DM2_SK_CORPUS_INVALID) {
-        if (recursive) receipt->recursive_candidate_count++;
-        if (alternate_name) receipt->alternate_name_candidate_count++;
-        receipt->invalid_candidate_count++;
-    }
-}
-
-#if !defined(_WIN32)
-static int dm2_sksave_is_dot_dir(const char *name)
-{
-    return name && (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
-}
-
-static void dm2_sksave_corpus_scan_recursive_impl(
-    const char *root,
-    const char *dir,
-    int depth,
-    DM2_SKSaveCorpusReceipt *receipt,
-    unsigned int *candidate_count)
-{
-    DIR *d;
-    struct dirent *ent;
-
-    if (!root || !dir || !receipt || !candidate_count ||
-        *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
-        if (receipt && candidate_count &&
-            *candidate_count >= DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
-            receipt->recursive_scan_truncated = 1u;
-        }
-        return;
-    }
-    if (depth > DM2_SK_CORPUS_RECURSE_DEPTH) {
-        receipt->recursive_scan_truncated = 1u;
-        return;
-    }
-    d = opendir(dir);
-    if (!d) return;
-    while ((ent = readdir(d)) != NULL &&
-           *candidate_count < DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
-        char path[512];
-        struct stat st;
-        int is_root_exact_canonical;
-        int alternate_name;
-
-        if (dm2_sksave_is_dot_dir(ent->d_name)) continue;
-        snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
-        if (stat(path, &st) != 0) continue;
-        if (S_ISDIR(st.st_mode)) {
-            if (depth + 1 > DM2_SK_CORPUS_RECURSE_DEPTH) {
-                receipt->recursive_scan_truncated = 1u;
-            } else {
-                dm2_sksave_corpus_scan_recursive_impl(root, path, depth + 1,
-                                                      receipt, candidate_count);
-            }
-            continue;
-        }
-        if (!S_ISREG(st.st_mode) ||
-            !dm2_sksave_basename_is_candidate_ci(ent->d_name)) {
-            continue;
-        }
-        /* Direct canonical names were already scanned in exact SKProject
-         * resume order above. Recursive pass adds nested or case-varied real
-         * corpus files without double-counting those primary candidates. */
-        is_root_exact_canonical =
-            depth == 0 &&
-            strcmp(dir, root) == 0 &&
-            dm2_sksave_basename_is_canonical_direct(ent->d_name);
-        if (is_root_exact_canonical) continue;
-        alternate_name = !dm2_sksave_basename_is_canonical_direct(ent->d_name);
-        (*candidate_count)++;
-        dm2_sksave_corpus_probe_candidate(receipt, path, ent->d_name,
-                                          1, alternate_name);
-    }
-    closedir(d);
-}
-#endif
-
-static int dm2_sksave_read_valid_payload(const char *path,
-                                         uint8_t *out_payload,
-                                         size_t out_capacity,
-                                         size_t *out_payload_size)
-{
-    FILE *f;
-    int status = 0;
-    long payload_start;
-    long end_pos;
-    size_t payload_size;
-
-    if (out_payload_size) *out_payload_size = 0u;
-    if (!path || !out_payload || out_capacity == 0u || !out_payload_size) {
-        return -1;
-    }
-    f = dm2_sl_open_valid_payload(path, &status);
-    if (!f) return -1;
-    payload_start = ftell(f);
-    if (payload_start < 0 || fseek(f, 0, SEEK_END) != 0) {
-        fclose(f);
-        return -1;
-    }
-    end_pos = ftell(f);
-    if (end_pos < payload_start) {
-        fclose(f);
-        return -1;
-    }
-    payload_size = (size_t)(end_pos - payload_start);
-    if (payload_size == 0u || payload_size > out_capacity ||
-        fseek(f, payload_start, SEEK_SET) != 0 ||
-        fread(out_payload, 1u, payload_size, f) != payload_size) {
-        fclose(f);
-        return -1;
-    }
-    fclose(f);
-    *out_payload_size = payload_size;
-    return 0;
 }
 
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
@@ -907,10 +606,6 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 
     if (!save_base || !out_receipt) return false;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->recursive_scan_depth_limit =
-        (uint16_t)DM2_SK_CORPUS_RECURSE_DEPTH;
-    out_receipt->recursive_scan_candidate_cap =
-        (uint16_t)DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP;
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.
@@ -954,263 +649,6 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         }
     }
 
-#if !defined(_WIN32)
-    {
-        unsigned int recursive_candidate_count = 0u;
-        dm2_sksave_corpus_scan_recursive_impl(save_base, save_base, 0,
-                                              out_receipt,
-                                              &recursive_candidate_count);
-    }
-#endif
-
-    return true;
-}
-
-bool dm2_v1_distant_environment_timer_corpus_probe(
-    const char *save_base,
-    DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt)
-{
-    DM2_SKSaveCorpusReceipt corpus;
-    uint32_t hash = 2166136261u;
-
-    if (!out_receipt) return false;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
-    out_receipt->scan_complete = 1;
-    out_receipt->has_header_verified_candidate =
-        corpus.has_last_session || corpus.has_last_session_backup ||
-        corpus.valid_slot_count != 0u || corpus.extra_valid_candidate_count != 0u;
-    if (corpus.total_importable_payload_size <= UINT32_MAX) {
-        out_receipt->verified_payload_bytes =
-            (uint32_t)corpus.total_importable_payload_size;
-    }
-    /* No skproject-correlated original byte offset or timer tag exists yet.
-     * Never scan heuristically or promote a header-valid save to runtime. */
-    out_receipt->skipped_missing_live_timer = 1;
-    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)out_receipt->scan_complete);
-    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)out_receipt->has_header_verified_candidate);
-    hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)corpus.total_payload_size);
-    hash = dm2_sksave_corpus_hash_step(hash, out_receipt->verified_payload_bytes);
-    out_receipt->corpus_hash = hash;
-    return true;
-}
-
-bool dm2_v1_original_timer_format_corpus_probe(
-    const char *save_base,
-    DM2_OriginalTimerFormatCorpusReceipt *out_receipt)
-{
-    DM2_SKSaveCorpusReceipt corpus;
-    uint32_t hash = 2166136261u;
-    uint8_t i;
-
-    if (!out_receipt) return false;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
-
-    /* skproject/SKULLWIN/c_timer.cpp and c_savegame.cpp establish that timer
-     * state exists, but do not identify an original save-record owner or wire
-     * layout. Retain only the already parsed, header-verified payload identity
-     * so a later trace can bind a precise row without heuristic scanning. */
-    out_receipt->scan_complete = 1;
-    out_receipt->has_header_verified_candidate =
-        corpus.has_last_session || corpus.has_last_session_backup ||
-        corpus.valid_slot_count != 0u || corpus.extra_valid_candidate_count != 0u;
-    out_receipt->original_candidate_list_complete =
-        corpus.candidate_receipt_count == corpus.importable_candidate_count;
-    out_receipt->original_candidate_count =
-        (uint16_t)(corpus.original_envelope_candidate_count +
-                   corpus.original_raw_candidate_count);
-    out_receipt->rejected_unowned_candidate_count =
-        out_receipt->original_candidate_count;
-
-    for (i = 0u; i < corpus.candidate_receipt_count; ++i) {
-        const DM2_SKSaveCandidateReceipt *source =
-            &corpus.candidate_receipts[i];
-        DM2_SKSaveCandidateReceipt *target;
-
-        if (source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
-            source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
-            continue;
-        }
-        if (source->payload_size <= UINT32_MAX &&
-            source->payload_size <=
-                (size_t)(UINT32_MAX -
-                         out_receipt->retained_original_payload_bytes)) {
-            out_receipt->retained_original_payload_bytes +=
-                (uint32_t)source->payload_size;
-        } else {
-            out_receipt->original_candidate_list_complete = 0;
-        }
-        if (out_receipt->candidate_receipt_count >=
-            DM2_SK_CORPUS_RECEIPT_MAX) {
-            out_receipt->original_candidate_list_complete = 0;
-            continue;
-        }
-        target = &out_receipt->candidate_receipts[
-            out_receipt->candidate_receipt_count++];
-        *target = *source;
-        target->import_rejected = 1;
-        hash = dm2_sksave_corpus_hash_step(hash, (uint32_t)target->kind);
-        hash = dm2_sksave_corpus_hash_step(hash,
-                                           (uint32_t)target->payload_size);
-        hash = dm2_sksave_corpus_hash_step(hash, target->payload_hash);
-    }
-
-    /* Fail closed: no skproject source or original trace binds any retained
-     * payload bytes to a timer record. This receipt is never a runtime input. */
-    out_receipt->timer_layout_owner_proven = 0;
-    out_receipt->matching_timer_record_count = 0;
-    hash = dm2_sksave_corpus_hash_step(hash,
-                                       out_receipt->retained_original_payload_bytes);
-    hash = dm2_sksave_corpus_hash_step(
-        hash, (uint32_t)out_receipt->original_candidate_list_complete);
-    out_receipt->corpus_hash = hash;
-    return true;
-}
-
-bool dm2_v1_original_save_state_corpus_probe(
-    const char *save_base,
-    DM2_OriginalSaveStateCorpusReceipt *out_receipt)
-{
-    DM2_SKSaveCorpusReceipt corpus;
-    uint32_t hash = 2166136261u;
-    uint8_t i;
-
-    if (!out_receipt) return false;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
-
-    /* skproject/SKWIN/SkWinCore.cpp GAME_LOAD ^2066:2F8C-319F opens the
-     * chosen SKSave, then reads skload_table_60, champions and 10-byte timer
-     * entries before READ_SKSAVE_DUNGEON.  Retain only those importer-owned
-     * values after the complete file-hash receipt has been revalidated. */
-    out_receipt->scan_complete = 1;
-    out_receipt->original_candidate_list_complete =
-        corpus.candidate_receipt_count == corpus.importable_candidate_count;
-    out_receipt->original_candidate_count =
-        (uint16_t)(corpus.original_envelope_candidate_count +
-                   corpus.original_raw_candidate_count);
-
-    for (i = 0u; i < corpus.candidate_receipt_count; ++i) {
-        const DM2_SKSaveCandidateReceipt *source =
-            &corpus.candidate_receipts[i];
-        DM2_OriginalSaveStateCorpusEntry *target;
-        DM2_V1_SaveCandidate candidate;
-        uint8_t payload[DM2_SESSION_MAX_SIZE];
-        size_t payload_size = 0u;
-
-        if (source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
-            source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
-            continue;
-        }
-        if (out_receipt->entry_count >= DM2_SK_CORPUS_RECEIPT_MAX) {
-            out_receipt->original_candidate_list_complete = 0;
-            out_receipt->rejected_candidate_count++;
-            continue;
-        }
-        if (!dm2_v1_sksave_corpus_load_receipted_candidate(
-                source, payload, sizeof(payload), &payload_size) ||
-            dm2_v1_session_parse_save_candidate(&candidate, payload,
-                                                 payload_size) != 0 ||
-            candidate.kind != (DM2_V1_SaveCandidateKind)source->kind) {
-            out_receipt->original_candidate_list_complete = 0;
-            out_receipt->rejected_candidate_count++;
-            continue;
-        }
-
-        target = &out_receipt->entries[out_receipt->entry_count++];
-        target->candidate = *source;
-        target->game_tick = candidate.session.game_tick;
-        target->rng_seed = candidate.session.rng_seed;
-        target->party_x = candidate.session.party_x;
-        target->party_y = candidate.session.party_y;
-        target->party_dir = candidate.session.party_dir;
-        target->party_map = candidate.session.party_level;
-        target->champion_count = candidate.session.champion_count;
-        target->timer_count = candidate.session.original_timer_count;
-        target->rain_intensity = candidate.session.rain_intensity;
-        hash = dm2_sksave_corpus_hash_step(hash, target->candidate.source_file_hash);
-        hash = dm2_sksave_corpus_hash_step(hash, target->game_tick);
-        hash = dm2_sksave_corpus_hash_step(hash, target->rng_seed);
-        hash = dm2_sksave_corpus_hash_step(
-            hash, ((uint32_t)target->party_x << 16) | target->party_y);
-        hash = dm2_sksave_corpus_hash_step(
-            hash, ((uint32_t)target->party_dir << 24) |
-                  ((uint32_t)target->party_map << 16) |
-                  ((uint32_t)target->champion_count << 8) |
-                  target->timer_count);
-        target->state_hash = dm2_sksave_corpus_hash_step(
-            hash, target->rain_intensity);
-        hash = target->state_hash;
-        out_receipt->parsed_candidate_count++;
-    }
-    hash = dm2_sksave_corpus_hash_step(
-        hash, (uint32_t)out_receipt->original_candidate_list_complete);
-    hash = dm2_sksave_corpus_hash_step(hash, out_receipt->original_candidate_count);
-    hash = dm2_sksave_corpus_hash_step(hash, out_receipt->rejected_candidate_count);
-    out_receipt->corpus_hash = hash;
-    return true;
-}
-
-bool dm2_v1_sksave_corpus_load_first_importable(
-    const char *save_base,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size,
-    DM2_SKSaveCorpusReceipt *out_receipt)
-{
-    DM2_SKSaveCorpusReceipt local_receipt;
-    DM2_SKSaveCorpusReceipt *receipt =
-        out_receipt ? out_receipt : &local_receipt;
-
-    if (out_payload_size) *out_payload_size = 0u;
-    if (!save_base || !out_payload || out_capacity == 0u ||
-        !out_payload_size) {
-        return false;
-    }
-    if (!dm2_v1_sksave_corpus_scan(save_base, receipt) ||
-        receipt->importable_candidate_count == 0 ||
-        receipt->first_importable_path[0] == '\0') {
-        return false;
-    }
-    for (uint8_t i = 0u; i < receipt->candidate_receipt_count; ++i) {
-        if (strcmp(receipt->candidate_receipts[i].path,
-                   receipt->first_importable_path) == 0) {
-            return dm2_v1_sksave_corpus_load_receipted_candidate(
-                &receipt->candidate_receipts[i], out_payload, out_capacity,
-                out_payload_size);
-        }
-    }
-    return false;
-}
-
-bool dm2_v1_sksave_corpus_load_receipted_candidate(
-    const DM2_SKSaveCandidateReceipt *candidate_receipt,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size)
-{
-    DM2_V1_SaveCandidate candidate;
-    size_t payload_size = 0u;
-
-    if (out_payload_size) *out_payload_size = 0u;
-    if (!candidate_receipt || !candidate_receipt->path[0] ||
-        !candidate_receipt->source_file_hash || !out_payload ||
-        out_capacity == 0u || !out_payload_size ||
-        dm2_sksave_corpus_file_hash(candidate_receipt->path) !=
-            candidate_receipt->source_file_hash ||
-        dm2_sksave_read_valid_payload(candidate_receipt->path, out_payload,
-                                      out_capacity, &payload_size) != 0 ||
-        payload_size != candidate_receipt->payload_size ||
-        dm2_sksave_corpus_payload_hash(out_payload, payload_size,
-                                       2166136261u) !=
-            candidate_receipt->payload_hash ||
-        dm2_v1_session_parse_save_candidate(&candidate, out_payload,
-                                             payload_size) != 0 ||
-        (int)candidate.kind != candidate_receipt->kind) {
-        return false;
-    }
-    *out_payload_size = payload_size;
     return true;
 }
 
@@ -1330,12 +768,6 @@ void dm2_suppress_champion_mask(uint8_t mask[261])
         mask[base + 2] = 0xFF;
         mask[base + 3] = 0xFF;
     }
-
-    /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the exact
-     * 261-byte saved record. DRAW_CHAMPION_PICTURE uses it as CHAMPIONS
-     * GDAT index, so an original save import must retain this byte even
-     * while the rest of the late record layout is still being catalogued. */
-    mask[255] = 0xFF;
 }
 
 int dm2_suppress_encode_champion(const DM2_ChampionRecord *c,

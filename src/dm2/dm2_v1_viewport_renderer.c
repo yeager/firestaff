@@ -385,6 +385,7 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->portrait_index =
             (uint8_t)(src->portrait_index % DM2_V1_HUD_PORTRAIT_COUNT);
         dst->portrait_type_source_bound = src->portrait_type_source_bound;
+        dst->state_source_bound = src->state_source_bound;
         dst->portrait_fill_color =
             (uint8_t)(8u + (dst->portrait_index & 7u));
         memcpy(dst->name, src->name, sizeof(dst->name));
@@ -542,37 +543,6 @@ int dm2_v1_viewport_scene_material_graphic_address(int gdat_index,
     }
     *out_graphicsset_index = graphicsset_index;
     *out_material_field = material_field;
-    return 1;
-}
-
-int dm2_v1_viewport_weather_environment_graphic_index(int graphicsset_index,
-                                                       int environment_field)
-{
-    if (graphicsset_index < 0 || graphicsset_index > 0xff ||
-        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
-        environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
-        return 0;
-    }
-    return DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE -
-           (graphicsset_index << 8) - environment_field;
-}
-
-int dm2_v1_viewport_weather_environment_graphic_address(
-    int gdat_index, int *out_graphicsset_index, int *out_environment_field)
-{
-    int packed = DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE - gdat_index;
-    int environment_field = packed & 0xff;
-    int graphicsset_index = (packed >> 8) & 0xff;
-
-    if (!out_graphicsset_index || !out_environment_field || packed < 0 ||
-        packed > 0xff6c ||
-        gdat_index > DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE ||
-        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
-        environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
-        return 0;
-    }
-    *out_graphicsset_index = graphicsset_index;
-    *out_environment_field = environment_field;
     return 1;
 }
 
@@ -888,6 +858,46 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_hud_hand_action_source(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_HudHandActionSource *source)
+{
+    DM2_V1_HudHandActionSource accepted;
+    int expected_entry;
+    int expected_rectno;
+
+    if (!s) return;
+    memset(&s->hud_hand_action_source, 0, sizeof(s->hud_hand_action_source));
+    if (!source || !source->valid || source->player_index >=
+        DM2_V1_HUD_CHAMPION_SLOT_COUNT || source->possession_index > 1u ||
+        source->left_or_right > 1u || source->player_position > 3u ||
+        source->party_direction > 3u ||
+        source->map_load_token == 0u || source->scene_control_hash == 0u ||
+        source->palette_hash == 0u ||
+        source->destination_rect.x < 0 || source->destination_rect.y < 0 ||
+        source->destination_rect.w <= 0 || source->destination_rect.h <= 0 ||
+        source->destination_rect.x + source->destination_rect.w > DM2_VP_WIDTH ||
+        source->destination_rect.y + source->destination_rect.h > DM2_VP_HEIGHT) {
+        s->dirty = 1;
+        return;
+    }
+    expected_entry = ((int)source->possession_index << 1) +
+        (int)source->left_or_right + 2;
+    expected_rectno = (source->possession_index == 1u ? 0x46 : 0x4a) +
+        (((int)source->player_position + 4 -
+          (int)source->party_direction) & 3);
+    if (source->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+        source->gdat_subcategory != 4u ||
+        source->gdat_entry != (uint8_t)expected_entry ||
+        source->rectno != (uint8_t)expected_rectno) {
+        s->dirty = 1;
+        return;
+    }
+    accepted = *source;
+    s->hud_hand_action_source = accepted;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                         DM2_V1_ViewportAssetFetch fetch,
                                         void *user)
@@ -898,18 +908,14 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
     s->dirty = 1;
 }
 
-void dm2_v1_viewport_set_asset_palette_provider(
+void dm2_v1_viewport_set_door_surface_view_provider(
     DM2_V1_ViewportState *s,
-    DM2_V1_ViewportAssetPaletteFetch fetch,
+    DM2_V1_ViewportDoorSurfaceViewFetch fetch,
     void *user)
 {
     if (!s) return;
-    s->asset_palette_fetch = fetch;
-    s->asset_palette_user = user;
-    s->active_asset_palette_ready = 0;
-    s->active_asset_palette_hash = 0u;
-    memset(s->active_asset_palette16, 0,
-           sizeof(s->active_asset_palette16));
+    s->door_surface_view_fetch = fetch;
+    s->door_surface_view_user = user;
     s->dirty = 1;
 }
 
@@ -937,7 +943,11 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t thunder_position,
     uint16_t ambient_darkness)
 {
+    int control_changed;
+
     if (!s) return;
+    control_changed = s->gdat_scene_control_ready != (ready ? 1 : 0) ||
+        s->gdat_scene_control_hash != (ready ? hash : 0u);
     s->gdat_scene_control_ready = ready ? 1 : 0;
     s->gdat_scene_material_index = ready && graphicsset_index >= 0 &&
         graphicsset_index <= 0xff ? graphicsset_index : 0;
@@ -952,31 +962,502 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_misty_map = ready ? misty_map : 0u;
     s->gdat_thunder_position = ready ? thunder_position : 0u;
     s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    if (control_changed) {
+        /* A new active GRAPHICSSET receipt cannot inherit a previous
+         * map-local static-light consumer bind. */
+        s->gdat_static_light_map_load_token = 0u;
+        s->gdat_static_light_scene_control_hash = 0u;
+        s->gdat_static_light_control_owned = 0;
+        s->gdat_static_ambient_light_map_load_token = 0u;
+        s->gdat_static_ambient_light_scene_control_hash = 0u;
+        s->gdat_static_ambient_light_control_owned = 0;
+        s->gdat_static_ambient_darkness_map_load_token = 0u;
+        s->gdat_static_ambient_darkness_scene_control_hash = 0u;
+        s->gdat_static_ambient_darkness_control_owned = 0;
+        s->gdat_static_scene_flags_map_load_token = 0u;
+        s->gdat_static_scene_flags_scene_control_hash = 0u;
+        s->gdat_static_scene_flags_control_owned = 0;
+        s->gdat_static_scene_colorkey_map_load_token = 0u;
+        s->gdat_static_scene_colorkey_scene_control_hash = 0u;
+        s->gdat_static_scene_colorkey_control_owned = 0;
+        s->gdat_static_scene_floor_material_map_load_token = 0u;
+        s->gdat_static_scene_floor_material_scene_control_hash = 0u;
+        s->gdat_static_scene_floor_material_owned = 0;
+        s->gdat_static_scene_ceiling_material_map_load_token = 0u;
+        s->gdat_static_scene_ceiling_material_scene_control_hash = 0u;
+        s->gdat_static_scene_ceiling_material_owned = 0;
+        s->gdat_static_scene_wall_material_map_load_token = 0u;
+        s->gdat_static_scene_wall_material_scene_control_hash = 0u;
+        s->gdat_static_scene_wall_material_owned = 0;
+        s->gdat_static_scene_wall_material_mask = 0u;
+        s->gdat_static_scene_wall_material_view_square = 0u;
+        s->gdat_static_scene_wall_material_field = 0u;
+        s->gdat_static_scene_door_frame_material_map_load_token = 0u;
+        s->gdat_static_scene_door_frame_material_scene_control_hash = 0u;
+        s->gdat_static_scene_door_frame_material_owned = 0;
+        s->gdat_static_scene_door_frame_d1c_material_map_load_token = 0u;
+        s->gdat_static_scene_door_frame_d1c_material_scene_control_hash = 0u;
+        s->gdat_static_scene_door_frame_d1c_material_owned = 0;
+        s->gdat_static_scene_door_frame_d2c_material_map_load_token = 0u;
+        s->gdat_static_scene_door_frame_d2c_material_scene_control_hash = 0u;
+        s->gdat_static_scene_door_frame_d2c_material_owned = 0;
+        memset(&s->gdat_static_scene_record, 0,
+               sizeof(s->gdat_static_scene_record));
+    }
+    dm2_v1_viewport_scene_light_control(
+        s->gdat_highest_light_level,
+        s->gdat_ambient_darkness,
+        &s->gdat_scene_light_floor,
+        &s->gdat_scene_light_search_depth,
+        &s->gdat_scene_light_recompute_enabled);
     s->dirty = 1;
 }
 
-void dm2_v1_viewport_set_gdat_scene_material_plan(
-    DM2_V1_ViewportState *s,
-    const DM2_V1_GdatSceneM11CommandPlan *plan)
+void dm2_v1_viewport_set_scene_map_load_token(
+    DM2_V1_ViewportState *s, uint32_t source_map_load_token)
 {
     if (!s) return;
-    s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
+    s->gdat_scene_map_load_token = source_map_load_token;
+    memset(&s->gdat_static_scene_record, 0,
+           sizeof(s->gdat_static_scene_record));
+    s->gdat_static_light_map_load_token = 0u;
+    s->gdat_static_light_scene_control_hash = 0u;
+    s->gdat_static_light_control_owned = 0;
+    s->gdat_static_ambient_light_map_load_token = 0u;
+    s->gdat_static_ambient_light_scene_control_hash = 0u;
+    s->gdat_static_ambient_light_control_owned = 0;
+    s->gdat_static_ambient_darkness_map_load_token = 0u;
+    s->gdat_static_ambient_darkness_scene_control_hash = 0u;
+    s->gdat_static_ambient_darkness_control_owned = 0;
+    s->gdat_static_scene_flags_map_load_token = 0u;
+    s->gdat_static_scene_flags_scene_control_hash = 0u;
+    s->gdat_static_scene_flags_control_owned = 0;
+    s->gdat_static_scene_colorkey_map_load_token = 0u;
+    s->gdat_static_scene_colorkey_scene_control_hash = 0u;
+    s->gdat_static_scene_colorkey_control_owned = 0;
+    s->gdat_static_scene_floor_material_map_load_token = 0u;
+    s->gdat_static_scene_floor_material_scene_control_hash = 0u;
+    s->gdat_static_scene_floor_material_owned = 0;
+    s->gdat_static_scene_ceiling_material_map_load_token = 0u;
+    s->gdat_static_scene_ceiling_material_scene_control_hash = 0u;
+    s->gdat_static_scene_ceiling_material_owned = 0;
+    s->gdat_static_scene_wall_material_map_load_token = 0u;
+    s->gdat_static_scene_wall_material_scene_control_hash = 0u;
+    s->gdat_static_scene_wall_material_owned = 0;
+    s->gdat_static_scene_wall_material_mask = 0u;
+    s->gdat_static_scene_wall_material_view_square = 0u;
+    s->gdat_static_scene_wall_material_field = 0u;
+    s->gdat_static_scene_door_frame_material_map_load_token = 0u;
+    s->gdat_static_scene_door_frame_material_scene_control_hash = 0u;
+    s->gdat_static_scene_door_frame_material_owned = 0;
+    s->gdat_static_scene_door_frame_d1c_material_map_load_token = 0u;
+    s->gdat_static_scene_door_frame_d1c_material_scene_control_hash = 0u;
+    s->gdat_static_scene_door_frame_d1c_material_owned = 0;
+    s->gdat_static_scene_door_frame_d2c_material_map_load_token = 0u;
+    s->gdat_static_scene_door_frame_d2c_material_scene_control_hash = 0u;
+    s->gdat_static_scene_door_frame_d2c_material_owned = 0;
+    memset(&s->floor_gfx_viewport_ownership, 0,
+           sizeof(s->floor_gfx_viewport_ownership));
     s->dirty = 1;
 }
 
-void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+int dm2_v1_viewport_bind_static_graphicsset_scene_record(
     DM2_V1_ViewportState *s,
-    uint8_t graphicsset_index,
-    const DM2_V1_WeatherRendererReceipt *receipt)
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
 {
-    if (!s) return;
-    s->gdat_weather_renderer_receipt = receipt && receipt->valid &&
-        receipt->renderer_hash != 0u && receipt->command_count <= 2u
-        ? receipt : NULL;
-    s->gdat_weather_renderer_graphicsset =
-        s->gdat_weather_renderer_receipt ? graphicsset_index : 0u;
-    s->asset_weather_drawn_count = 0;
+    DM2_V1_GraphicsSetStaticSceneReceipt *record;
+
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready || s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    record = &s->gdat_static_scene_record;
+    memset(record, 0, sizeof(*record));
+    record->valid = 1;
+    record->map_load_token = source_map_load_token;
+    record->scene_control_hash = source_scene_control_hash;
+    record->graphicsset = (uint8_t)s->gdat_scene_material_index;
+    record->scene_colorkey = s->gdat_scene_colorkey;
+    record->scene_flags = s->gdat_scene_flags;
+    record->ambient_light = s->gdat_ambient_light;
+    record->highest_light_level = s->gdat_highest_light_level;
+    record->ambient_darkness = s->gdat_ambient_darkness;
+    record->material_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    record->floor_field = DM2_GDAT_GFXSET_FLOOR;
+    record->ceiling_field = DM2_GDAT_GFXSET_CEIL;
+    record->door_frame_front_d1_field = DM2_GDAT_GFXSET_DOOR_FRAME_FRONT_D1;
+    record->door_frame_d1c_field = DM2_GDAT_GFXSET_DOOR_FRAME_D1C;
+    record->door_frame_d2c_field = DM2_GDAT_GFXSET_DOOR_FRAME_D2C;
     s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_light_map_load_token = source_map_load_token;
+    s->gdat_static_light_scene_control_hash = source_scene_control_hash;
+    s->gdat_static_light_control_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_ambient_light_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_ambient_light_map_load_token = source_map_load_token;
+    s->gdat_static_ambient_light_scene_control_hash = source_scene_control_hash;
+    s->gdat_static_ambient_light_control_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_ambient_darkness_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_ambient_darkness_map_load_token = source_map_load_token;
+    s->gdat_static_ambient_darkness_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_ambient_darkness_control_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_flags_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_flags_map_load_token = source_map_load_token;
+    s->gdat_static_scene_flags_scene_control_hash = source_scene_control_hash;
+    s->gdat_static_scene_flags_control_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_colorkey_control(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_colorkey_map_load_token = source_map_load_token;
+    s->gdat_static_scene_colorkey_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_colorkey_control_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_floor_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_floor_material_map_load_token = source_map_load_token;
+    s->gdat_static_scene_floor_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_floor_material_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_wall_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash,
+    int view_square)
+{
+    int field;
+
+    field = dm2_v1_viewport_wall_field_for_square(view_square);
+    if (!s || field < 0 || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready || s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_wall_material_map_load_token = source_map_load_token;
+    s->gdat_static_scene_wall_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_wall_material_owned = 1;
+    s->gdat_static_scene_wall_material_mask |=
+        (uint16_t)(1u << (unsigned)view_square);
+    s->gdat_static_scene_wall_material_view_square = (uint8_t)view_square;
+    s->gdat_static_scene_wall_material_field = (uint8_t)field;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_all_wall_materials(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    uint16_t wall_mask = 0u;
+
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready || s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    /* skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_WALL selects
+     * GRAPHICSSET[viewportCell + 0x22] separately for every visible panel.
+     * Validate the whole drawable set before publishing any ownership so a
+     * source-required frame cannot be authorized by one convenient panel. */
+    for (int view_square = 0; view_square < DM2_SQ_COUNT; ++view_square) {
+        if (dm2_v1_viewport_wall_field_for_square(view_square) >= 0) {
+            wall_mask |= (uint16_t)(1u << (unsigned)view_square);
+        }
+    }
+    if (wall_mask == 0u) {
+        return 0;
+    }
+    s->gdat_static_scene_wall_material_map_load_token = source_map_load_token;
+    s->gdat_static_scene_wall_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_wall_material_owned = 1;
+    s->gdat_static_scene_wall_material_mask = wall_mask;
+    s->gdat_static_scene_wall_material_view_square = DM2_SQ_D1C;
+    s->gdat_static_scene_wall_material_field =
+        (uint8_t)dm2_v1_viewport_wall_field_for_square(DM2_SQ_D1C);
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_ceiling_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_ceiling_material_map_load_token =
+        source_map_load_token;
+    s->gdat_static_scene_ceiling_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_ceiling_material_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_door_frame_material_map_load_token =
+        source_map_load_token;
+    s->gdat_static_scene_door_frame_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_door_frame_material_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_d1c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_door_frame_d1c_material_map_load_token =
+        source_map_load_token;
+    s->gdat_static_scene_door_frame_d1c_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_door_frame_d1c_material_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
+    DM2_V1_ViewportState *s,
+    uint32_t source_map_load_token,
+    uint32_t source_scene_control_hash)
+{
+    if (!s || source_map_load_token == 0u ||
+        source_map_load_token != s->gdat_scene_map_load_token ||
+        !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        source_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    s->gdat_static_scene_door_frame_d2c_material_map_load_token =
+        source_map_load_token;
+    s->gdat_static_scene_door_frame_d2c_material_scene_control_hash =
+        source_scene_control_hash;
+    s->gdat_static_scene_door_frame_d2c_material_owned = 1;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_set_floor_gfx_viewport_ownership(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_FloorGfxViewportOwnershipReceipt *ownership)
+{
+    if (!s || !ownership || !ownership->valid || !ownership->viewport_owned ||
+        ownership->map_load_token == 0u ||
+        ownership->map_load_token != s->gdat_scene_map_load_token ||
+        ownership->gdat_category != DM2_GDAT_CATEGORY_FLOOR_GFX) {
+        return 0;
+    }
+    s->floor_gfx_viewport_ownership = *ownership;
+    s->dirty = 1;
+    return 1;
+}
+
+int dm2_v1_viewport_floor_gfx_render_plan_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportFloorGfxRenderPlanReceipt *out_receipt)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    scene = s ? &s->gdat_static_scene_record : NULL;
+    if (!s || !s->gdat_scene_control_ready ||
+        s->gdat_scene_control_hash == 0u ||
+        !scene || !scene->valid ||
+        scene->map_load_token != s->gdat_scene_map_load_token ||
+        scene->scene_control_hash != s->gdat_scene_control_hash ||
+        !s->floor_gfx_viewport_ownership.valid ||
+        !s->floor_gfx_viewport_ownership.viewport_owned ||
+        s->gdat_scene_map_load_token == 0u ||
+        s->floor_gfx_viewport_ownership.map_load_token !=
+            s->gdat_scene_map_load_token) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->static_scene_control_owned = 1;
+    out_receipt->static_light_control_owned = 1;
+    out_receipt->static_ambient_light_control_owned = 1;
+    out_receipt->static_ambient_darkness_control_owned = 1;
+    out_receipt->static_scene_flags_control_owned = 1;
+    out_receipt->static_scene_colorkey_control_owned = 1;
+    out_receipt->static_scene_floor_material_owned = 1;
+    out_receipt->static_scene_ceiling_material_owned = 1;
+    out_receipt->static_scene_door_frame_material_owned = 1;
+    out_receipt->static_scene_door_frame_d1c_material_owned = 1;
+    out_receipt->static_scene_door_frame_d2c_material_owned = 1;
+    out_receipt->map_load_token = scene->map_load_token;
+    out_receipt->gdat_category =
+        s->floor_gfx_viewport_ownership.gdat_category;
+    out_receipt->floor_ornate_source_index =
+        s->floor_gfx_viewport_ownership.floor_ornate_source_index;
+    out_receipt->animated_frame_route =
+        s->floor_gfx_viewport_ownership.animated_frame_route;
+    out_receipt->scene_control_hash = scene->scene_control_hash;
+    out_receipt->scene_colorkey = scene->scene_colorkey;
+    out_receipt->scene_flags = scene->scene_flags;
+    out_receipt->outdoor_scene =
+        (scene->scene_flags & DM2_V1_GDAT_SCENE_FLAG_OUTDOOR) != 0u;
+    out_receipt->scene_floor_material_category = scene->material_category;
+    out_receipt->scene_floor_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_floor_material_field = scene->floor_field;
+    out_receipt->scene_ceiling_material_category = scene->material_category;
+    out_receipt->scene_ceiling_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_ceiling_material_field = scene->ceiling_field;
+    out_receipt->scene_door_frame_material_category = scene->material_category;
+    out_receipt->scene_door_frame_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_door_frame_material_field =
+        scene->door_frame_front_d1_field;
+    out_receipt->scene_door_frame_d1c_material_category = scene->material_category;
+    out_receipt->scene_door_frame_d1c_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_door_frame_d1c_material_field =
+        scene->door_frame_d1c_field;
+    out_receipt->scene_door_frame_d2c_material_category = scene->material_category;
+    out_receipt->scene_door_frame_d2c_material_graphicsset = scene->graphicsset;
+    out_receipt->scene_door_frame_d2c_material_field =
+        scene->door_frame_d2c_field;
+    out_receipt->ambient_light = scene->ambient_light;
+    out_receipt->highest_light_level = scene->highest_light_level;
+    out_receipt->ambient_darkness = scene->ambient_darkness;
+    return 1;
+}
+
+void dm2_v1_viewport_scene_light_control(uint16_t highest_light_level,
+                                         uint16_t ambient_darkness,
+                                         uint8_t *out_light_floor,
+                                         uint8_t *out_search_depth,
+                                         int *out_recompute_enabled)
+{
+    uint8_t floor = highest_light_level > 5u ? 5u :
+        (uint8_t)highest_light_level;
+    uint8_t depth = ambient_darkness > 8u ? 8u :
+        (uint8_t)ambient_darkness;
+
+    if (out_light_floor) *out_light_floor = floor;
+    if (out_search_depth) *out_search_depth = depth;
+    if (out_recompute_enabled) *out_recompute_enabled = depth != 0u;
 }
 
 void dm2_v1_viewport_set_gdat_interface_palette(
@@ -999,26 +1480,6 @@ void dm2_v1_viewport_set_gdat_interface_palette(
     s->dirty = 1;
 }
 
-void dm2_v1_viewport_set_gdat_interface_text_palette(
-    DM2_V1_ViewportState *s,
-    int ready,
-    uint32_t hash,
-    const uint8_t palette16[16])
-{
-    if (!s) return;
-    s->gdat_interface_text_palette_ready = ready && hash != 0u && palette16;
-    s->gdat_interface_text_palette_hash =
-        s->gdat_interface_text_palette_ready ? hash : 0u;
-    if (s->gdat_interface_text_palette_ready) {
-        memcpy(s->gdat_interface_text_palette16, palette16,
-               sizeof(s->gdat_interface_text_palette16));
-    } else {
-        memset(s->gdat_interface_text_palette16, 0,
-               sizeof(s->gdat_interface_text_palette16));
-    }
-    s->dirty = 1;
-}
-
 void dm2_v1_viewport_set_gdat_interface_font(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
@@ -1037,28 +1498,6 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     if (!s) return;
     s->g1_creature_map_chip_materials =
         receipt && receipt->valid ? receipt : NULL;
-    s->dirty = 1;
-}
-
-void dm2_v1_viewport_set_g1_scene_creature_material(
-    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
-    int creature_type, int gdat_index, int width, int height, int stride,
-    uint32_t palette_hash)
-{
-    if (!s) return;
-    s->g1_scene_creature_material_ready =
-        ready && creature_type >= 0 && creature_type <= 0xff &&
-        gdat_index != 0 && width > 0 && height > 0 && stride >= width &&
-        palette_hash != 0u;
-    s->g1_scene_creature_material_map_x = map_x;
-    s->g1_scene_creature_material_map_y = map_y;
-    s->g1_scene_creature_material_type = creature_type;
-    s->g1_scene_creature_material_gdat_index = gdat_index;
-    s->g1_scene_creature_material_width = width;
-    s->g1_scene_creature_material_height = height;
-    s->g1_scene_creature_material_stride = stride;
-    s->g1_scene_creature_material_palette_hash = palette_hash;
-    s->g1_scene_creature_material_consumed_count = 0;
     s->dirty = 1;
 }
 
@@ -1248,6 +1687,21 @@ int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
     int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
     if (field < 0) return 0;
     return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+}
+
+int dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+    int graphicsset_index, int view_square)
+{
+    int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
+
+    if (field < 0 || graphicsset_index < 0 || graphicsset_index > 0xff) {
+        return 0;
+    }
+    if (graphicsset_index == DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET) {
+        return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+    }
+    return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE -
+        (graphicsset_index << 8) - field;
 }
 
 int dm2_v1_viewport_door_panel_field_for_square(int view_square)
@@ -1483,6 +1937,36 @@ int dm2_v1_viewport_hud_core_graphic_index(int field)
         return 0;
     }
     return DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - field;
+}
+
+int dm2_v1_viewport_hud_hand_action_graphic_index(int possession_index,
+                                                   int left_or_right)
+{
+    int entry;
+
+    if (possession_index < 0 || possession_index > 1 ||
+        left_or_right < 0 || left_or_right > 1) {
+        return 0;
+    }
+    entry = (possession_index << 1) + left_or_right + 2;
+    return DM2_V1_VIEWPORT_GFX_HUD_HAND_ACTION_BASE - entry;
+}
+
+int dm2_v1_viewport_hud_hand_action_graphic_address(
+    int gdat_index,
+    int *out_possession_index,
+    int *out_left_or_right,
+    int *out_entry)
+{
+    int entry = DM2_V1_VIEWPORT_GFX_HUD_HAND_ACTION_BASE - gdat_index;
+
+    if (entry < 2 || entry > 5) {
+        return 0;
+    }
+    if (out_possession_index) *out_possession_index = (entry - 2) >> 1;
+    if (out_left_or_right) *out_left_or_right = (entry - 2) & 1;
+    if (out_entry) *out_entry = entry;
+    return 1;
 }
 
 int dm2_v1_viewport_hud_action_icon_graphic_index(int icon_index)
@@ -1833,8 +2317,11 @@ int dm2_v1_viewport_build_door_render_plan(
             row->panel_gdat_index =
                 dm2_v1_viewport_door_panel_graphic_index_for_square(square);
         }
-        row->frame_gdat_index =
-            dm2_v1_viewport_door_frame_graphic_index_for_square(square);
+        row->frame_gdat_index = dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+            s && s->gdat_scene_control_ready
+                ? s->gdat_scene_material_index
+                : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET,
+            square);
         row->door_open_pct = vs->door_open_pct;
         row->door_state = vs->door_state;
         row->ornate_gdat_index =
@@ -1979,6 +2466,204 @@ int dm2_v1_viewport_door_frame_asset_blit(
                                                 out_blit);
 }
 
+int dm2_v1_viewport_last_original_material_gate_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalMaterialGateReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !s->last_original_material_gate.valid) return 0;
+    *out_receipt = s->last_original_material_gate;
+    return 1;
+}
+
+int dm2_v1_viewport_last_original_door_surface_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorSurfaceRequest *out_request)
+{
+    if (!out_request) return 0;
+    memset(out_request, 0, sizeof(*out_request));
+    if (!s || !s->last_original_door_surface_request.valid) return 0;
+    *out_request = s->last_original_door_surface_request;
+    return 1;
+}
+
+int dm2_v1_viewport_last_original_door_surface_binding(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorSurfaceBinding *out_binding)
+{
+    if (!out_binding) return 0;
+    memset(out_binding, 0, sizeof(*out_binding));
+    if (!s || !s->last_original_door_surface_binding.valid) return 0;
+    *out_binding = s->last_original_door_surface_binding;
+    return 1;
+}
+
+int dm2_v1_viewport_last_original_door_opening_frame_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_OriginalDoorOpeningFrameRequest *out_request)
+{
+    if (!out_request) return 0;
+    memset(out_request, 0, sizeof(*out_request));
+    if (!s || !s->last_original_door_opening_frame_request.valid) return 0;
+    *out_request = s->last_original_door_opening_frame_request;
+    return 1;
+}
+
+int dm2_v1_viewport_last_original_door_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDoorPresentationCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_original_door_presentation_command.valid) return 0;
+    *out_command = s->last_original_door_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_hud_top_bar_material_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudMaterialRequest *out_request)
+{
+    if (!out_request) return 0;
+    memset(out_request, 0, sizeof(*out_request));
+    if (!s || !s->last_hud_top_bar_material_request.valid) return 0;
+    *out_request = s->last_hud_top_bar_material_request;
+    return 1;
+}
+
+int dm2_v1_viewport_last_hud_top_bar_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_hud_top_bar_presentation_command.valid) return 0;
+    *out_command = s->last_hud_top_bar_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_hud_status_panel_material_request(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudMaterialRequest *out_request)
+{
+    if (!out_request) return 0;
+    memset(out_request, 0, sizeof(*out_request));
+    if (!s || !s->last_hud_status_panel_material_request.valid) return 0;
+    *out_request = s->last_hud_status_panel_material_request;
+    return 1;
+}
+
+int dm2_v1_viewport_last_hud_status_panel_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_hud_status_panel_presentation_command.valid) return 0;
+    *out_command = s->last_hud_status_panel_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_hud_hand_action_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_hud_hand_action_presentation_command.valid) return 0;
+    *out_command = s->last_hud_hand_action_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_dungeon_floor_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_dungeon_floor_presentation_command.valid) return 0;
+    *out_command = s->last_dungeon_floor_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_dungeon_ceiling_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_dungeon_ceiling_presentation_command.valid) return 0;
+    *out_command = s->last_dungeon_ceiling_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_dungeon_wall_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportDungeonMaterialCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_dungeon_wall_presentation_command.valid) return 0;
+    *out_command = s->last_dungeon_wall_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_scene_control_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportSceneControlCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_scene_control_presentation_command.valid) return 0;
+    *out_command = s->last_scene_control_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_creature_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportCreatureMaterialCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_creature_presentation_command.valid) return 0;
+    *out_command = s->last_creature_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_item_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportItemMaterialCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_item_presentation_command.valid) return 0;
+    *out_command = s->last_item_presentation_command;
+    return 1;
+}
+
+int dm2_v1_viewport_last_frame_composition_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportFrameCompositionReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !s->last_frame_composition.valid) return 0;
+    *out_receipt = s->last_frame_composition;
+    return 1;
+}
+
+int dm2_v1_viewport_last_m11_frame_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportM11FrameReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !s->last_m11_frame_receipt.valid) return 0;
+    *out_receipt = s->last_m11_frame_receipt;
+    return 1;
+}
+
 int dm2_v1_viewport_door_button_asset_blit(
     const DM2_V1_DoorRender *render,
     int src_w,
@@ -2049,60 +2734,16 @@ static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
     if (out_w) *out_w = 0;
     if (out_h) *out_h = 0;
     if (out_stride) *out_stride = 0;
-    if (s) {
-        s->active_asset_palette_ready = 0;
-        s->active_asset_palette_hash = 0u;
-        memset(s->active_asset_palette16, 0,
-               sizeof(s->active_asset_palette16));
-    }
     if (s && s->asset_fetch &&
-        s->asset_fetch(s->asset_user, gdat_index, out_pixels, out_w, out_h,
+        s->asset_fetch(s->asset_user,
+                       gdat_index,
+                       out_pixels,
+                       out_w,
+                       out_h,
                        out_stride) == 0) {
-        if (s->asset_palette_fetch) {
-            if (s->asset_palette_fetch(s->asset_palette_user, gdat_index,
-                                       s->active_asset_palette16,
-                                       &s->active_asset_palette_hash) != 0 ||
-                s->active_asset_palette_hash == 0u) {
-                memset(s->active_asset_palette16, 0,
-                       sizeof(s->active_asset_palette16));
-                s->active_asset_palette_hash = 0u;
-                if (s->source_materials_required) return -1;
-            } else {
-                s->active_asset_palette_ready = 1;
-            }
-        }
         return 0;
     }
     return dm2_v1_gfx_fetch(gdat_index, out_pixels, out_w, out_h, out_stride);
-}
-
-/* skproject SKWIN/SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT resolves the
- * decoded map-chip image together with QUERY_GDAT_IMAGE_LOCALPAL before
- * DRAW_CHIP_OF_MAGIC_MAP. It is part of material lookup, not an optional
- * presentation transform: source-owned walls, doors, creatures, floor objects,
- * possession and carried items, projectiles, and CHAMPIONS portraits must not
- * borrow INTERFACE_GENERAL when their per-IMG3 receipt is unavailable. */
-static int dm2_v1_fetch_viewport_local_material(
-    DM2_V1_ViewportState *s,
-    int gdat_index,
-    const uint8_t **out_pixels,
-    int *out_w,
-    int *out_h,
-    int *out_stride)
-{
-    if (dm2_v1_fetch_viewport_asset(s, gdat_index, out_pixels, out_w, out_h,
-                                    out_stride) != 0) {
-        return -1;
-    }
-    if (s && s->source_materials_required &&
-        !s->active_asset_palette_ready) {
-        if (out_pixels) *out_pixels = NULL;
-        if (out_w) *out_w = 0;
-        if (out_h) *out_h = 0;
-        if (out_stride) *out_stride = 0;
-        return -1;
-    }
-    return 0;
 }
 
 static void __attribute__((unused)) dm2_v1_blit_tiled_bitmap(uint8_t *dst,
@@ -2181,30 +2822,17 @@ static void __attribute__((unused)) dm2_v1_blit_scaled_bitmap(uint8_t *dst,
     }
 }
 
-/* skproject QUERY_GDAT_IMAGE_LOCALPAL supplies the per-IMG3 16-byte palette
- * to every dungeon map-chip blit.  The global interface table is only the
- * compatibility fallback used by non-source test providers. */
+/* skproject/SKWIN initializes dtPalIRGB and dtPalette16 before indexed GDAT
+ * material is drawn. Material pixels below 16 are logical colours and must
+ * reach the framebuffer through that real logical-to-IRGB index table. */
 static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
                                              uint8_t logical_color,
                                              int *consumed_count)
 {
-    if (!s || logical_color >= 16u) {
+    if (!s || !s->gdat_interface_palette_ready || logical_color >= 16u) {
         return logical_color;
     }
     if (consumed_count) ++*consumed_count;
-    if (s->gdat_scene_control_ready &&
-        (s->gdat_ambient_light != 0u ||
-         s->gdat_highest_light_level != 0u ||
-         s->gdat_ambient_darkness != 0u)) {
-        ++s->gdat_scene_light_consumed_count;
-    }
-    if (s->active_asset_palette_ready) {
-        ++s->gdat_local_palette_consumed_count;
-        return s->active_asset_palette16[logical_color];
-    }
-    if (!s->gdat_interface_palette_ready) {
-        return logical_color;
-    }
     return s->gdat_interface_palette16[logical_color];
 }
 
@@ -2304,6 +2932,80 @@ static void dm2_v1_blit_scaled_material_bitmap_region(
                 dm2_v1_material_palette_color(s, pixel, consumed_count);
         }
     }
+}
+
+/* skproject/SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES binds the active
+ * dtPalette16 before it presents GRAPHICSSET door frames. The source-required
+ * path must consume that exact indexed view, never the viewport's mutable
+ * palette state. Preflight every U4 index before touching the destination. */
+static int dm2_v1_blit_door_presentation_command(
+    uint8_t *dst,
+    int dst_stride,
+    const DM2_V1_ViewportDoorPresentationCommand *command,
+    int *consumed_count)
+{
+    const DM2_V1_OriginalDoorSurfaceBinding *binding;
+    const DM2_V1_ViewportRect *src_rect;
+    const DM2_V1_ViewportRect *dst_rect;
+
+    if (!dst || !command || !command->valid || !command->u4_pixels ||
+        !command->palette16 || dst_stride <= 0 ||
+        command->palette_stride != 16 || command->format != DM2_IMG_FMT_U4 ||
+        command->scene_colorkey >= 16u ||
+        command->colorkey_palette_index !=
+            command->palette16[command->scene_colorkey]) {
+        return 0;
+    }
+    binding = &command->opening_frame.material;
+    src_rect = &command->source_rect;
+    dst_rect = &command->destination_rect;
+    if (!binding->valid || binding->request.decoded_pixels != command->u4_pixels ||
+        binding->request.palette16 != command->palette16 ||
+        binding->request.format != DM2_IMG_FMT_U4 ||
+        binding->request.stride < binding->request.width ||
+        binding->request.scene_colorkey != command->scene_colorkey ||
+        binding->palette_stride != command->palette_stride ||
+        binding->colorkey_palette_index != command->colorkey_palette_index ||
+        src_rect->x < 0 || src_rect->y < 0 || src_rect->w <= 0 ||
+        src_rect->h <= 0 || src_rect->x + src_rect->w > binding->request.width ||
+        src_rect->y + src_rect->h > binding->request.height ||
+        dst_rect->w <= 0 || dst_rect->h <= 0 ||
+        src_rect->x != binding->blit.src_rect.x ||
+        src_rect->y != binding->blit.src_rect.y ||
+        src_rect->w != binding->blit.src_rect.w ||
+        src_rect->h != binding->blit.src_rect.h ||
+        dst_rect->x != binding->blit.dst_rect.x ||
+        dst_rect->y != binding->blit.dst_rect.y ||
+        dst_rect->w != binding->blit.dst_rect.w ||
+        dst_rect->h != binding->blit.dst_rect.h ||
+        binding->blit.transparent_color != (int)command->scene_colorkey) {
+        return 0;
+    }
+    for (int y = 0; y < src_rect->h; ++y) {
+        for (int x = 0; x < src_rect->w; ++x) {
+            if (command->u4_pixels[(src_rect->y + y) *
+                                       binding->request.stride +
+                                   src_rect->x + x] >= 16u) {
+                return 0;
+            }
+        }
+    }
+    for (int y = 0; y < dst_rect->h; ++y) {
+        int fy = dst_rect->y + y;
+        int sy = src_rect->y + (y * src_rect->h) / dst_rect->h;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < dst_rect->w; ++x) {
+            int fx = dst_rect->x + x;
+            int sx = src_rect->x + (x * src_rect->w) / dst_rect->w;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = command->u4_pixels[sy * binding->request.stride + sx];
+            if (pixel == command->scene_colorkey) continue;
+            dst[fy * dst_stride + fx] = command->palette16[pixel];
+            if (consumed_count) ++*consumed_count;
+        }
+    }
+    return 1;
 }
 
 /* skproject/SKWIN/SkWinCore.cpp routes map-chip and HUD sprites through the
@@ -2459,8 +3161,6 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;
-        row->map_x = src->map_x;
-        row->map_y = src->map_y;
         row->center_x = src->screen_x;
         row->center_y = src->screen_y;
         row->gdat_index = dm2_v1_viewport_creature_graphic_index(
@@ -3167,24 +3867,62 @@ void dm2_v1_render_background(DM2_V1_ViewportState *s)
 
 /* ── Floor and ceiling ───────────────────────────────────────────── */
 
-static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
-                                         uint32_t material_mask);
+static int dm2_v1_viewport_ceiling_material_owned(
+    const DM2_V1_ViewportState *s)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+
+    if (!s || !s->source_materials_required ||
+        !s->gdat_scene_control_ready || s->gdat_scene_map_load_token == 0u ||
+        s->gdat_scene_control_hash == 0u ||
+        !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u ||
+        !s->gdat_static_scene_ceiling_material_owned ||
+        s->gdat_static_scene_ceiling_material_map_load_token !=
+            s->gdat_scene_map_load_token ||
+        s->gdat_static_scene_ceiling_material_scene_control_hash !=
+            s->gdat_scene_control_hash || !s->gdat_static_light_control_owned ||
+        s->gdat_static_light_map_load_token != s->gdat_scene_map_load_token ||
+        s->gdat_static_light_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    scene = &s->gdat_static_scene_record;
+    return scene->valid && scene->map_load_token == s->gdat_scene_map_load_token &&
+        scene->scene_control_hash == s->gdat_scene_control_hash &&
+        scene->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        scene->material_category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+        scene->ceiling_field == DM2_GDAT_GFXSET_CEIL;
+}
+
+static int dm2_v1_viewport_floor_material_owned(
+    const DM2_V1_ViewportState *s)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+
+    if (!s || !s->source_materials_required ||
+        !s->gdat_scene_control_ready || s->gdat_scene_map_load_token == 0u ||
+        s->gdat_scene_control_hash == 0u ||
+        !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u ||
+        !s->gdat_static_scene_floor_material_owned ||
+        s->gdat_static_scene_floor_material_map_load_token !=
+            s->gdat_scene_map_load_token ||
+        s->gdat_static_scene_floor_material_scene_control_hash !=
+            s->gdat_scene_control_hash || !s->gdat_static_light_control_owned ||
+        s->gdat_static_light_map_load_token != s->gdat_scene_map_load_token ||
+        s->gdat_static_light_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    scene = &s->gdat_static_scene_record;
+    return scene->valid && scene->map_load_token == s->gdat_scene_map_load_token &&
+        scene->scene_control_hash == s->gdat_scene_control_hash &&
+        scene->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        scene->material_category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+        scene->floor_field == DM2_GDAT_GFXSET_FLOOR;
+}
 
 void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 {
-    typedef struct {
-        const uint8_t *pixels;
-        int width;
-        int height;
-        int stride;
-        uint8_t palette16[16];
-        uint32_t palette_hash;
-        int ready;
-    } DM2_V1_ScenePlaneMaterial;
-    enum {
-        DM2_SCENE_PLANE_FLOOR = 1u << 0,
-        DM2_SCENE_PLANE_CEILING = 1u << 1
-    };
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -3202,126 +3940,32 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
         s->gdat_scene_material_index,
         DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
-    DM2_V1_ScenePlaneMaterial ceiling_material = { 0 };
-    DM2_V1_ScenePlaneMaterial floor_material = { 0 };
-    int ceiling_asset;
-    int floor_asset;
+    int ceiling_source_owned = !s->source_materials_required ||
+        dm2_v1_viewport_ceiling_material_owned(s);
+    int ceiling_asset = ceiling_source_owned &&
+        dm2_v1_fetch_viewport_asset(s,
+                                    ceiling_gdat_index,
+                                    &ceiling_pixels,
+                                    &ceiling_w,
+                                    &ceiling_h_src,
+                                    &ceiling_stride) == 0 &&
+        ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
+    int floor_source_owned = !s->source_materials_required ||
+        dm2_v1_viewport_floor_material_owned(s);
+    int floor_asset = floor_source_owned &&
+        dm2_v1_fetch_viewport_asset(s,
+                                    floor_gdat_index,
+                                    &floor_pixels,
+                                    &floor_w,
+                                    &floor_h_src,
+                                    &floor_stride) == 0 &&
+        floor_pixels && floor_w > 0 && floor_h_src > 0;
 
-    s->last_floor_ceiling_material_required_mask = 0u;
-    s->last_floor_ceiling_material_consumed_mask = 0u;
-    if (s->source_materials_required) {
-        const DM2_V1_GdatSceneM11CommandPlan *plan =
-            s->gdat_scene_material_plan;
-        int graphicsset_index = 0;
-        int material_field = 0;
-
-        s->last_floor_ceiling_material_required_mask =
-            DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
-        /* skproject c_gui_vp consumes the decoded UPDATE_GFXSET result. When
-         * M11 has that exact boot-owned plan, do not re-query GDAT or permit a
-         * callback to substitute another graphics set. */
-        if (plan) {
-            const DM2_V1_GdatSceneM11Command *floor = &plan->commands[0];
-            const DM2_V1_GdatSceneM11Command *ceiling = &plan->commands[1];
-            if (!s->gdat_scene_control_ready ||
-                plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
-                plan->command_hash != s->gdat_scene_control_hash ||
-                floor->field != DM2_GDAT_GFXSET_FLOOR ||
-                ceiling->field != DM2_GDAT_GFXSET_CEIL ||
-                !floor->pixels || !ceiling->pixels ||
-                floor->width == 0u || floor->height == 0u ||
-                ceiling->width == 0u || ceiling->height == 0u ||
-                floor->palette_hash == 0u || ceiling->palette_hash == 0u) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-                return;
-            }
-            floor_material.pixels = floor->pixels;
-            floor_material.width = floor->width;
-            floor_material.height = floor->height;
-            floor_material.stride = floor->width;
-            memcpy(floor_material.palette16, floor->palette16,
-                   sizeof(floor_material.palette16));
-            floor_material.palette_hash = floor->palette_hash;
-            floor_material.ready = 1;
-            ceiling_material.pixels = ceiling->pixels;
-            ceiling_material.width = ceiling->width;
-            ceiling_material.height = ceiling->height;
-            ceiling_material.stride = ceiling->width;
-            memcpy(ceiling_material.palette16, ceiling->palette16,
-                   sizeof(ceiling_material.palette16));
-            ceiling_material.palette_hash = ceiling->palette_hash;
-            ceiling_material.ready = 1;
-            ceiling_pixels = ceiling_material.pixels;
-            ceiling_w = ceiling_material.width;
-            ceiling_h_src = ceiling_material.height;
-            ceiling_stride = ceiling_material.stride;
-            memcpy(s->active_asset_palette16, ceiling_material.palette16,
-                   sizeof(s->active_asset_palette16));
-            s->active_asset_palette_hash = ceiling_material.palette_hash;
-            s->active_asset_palette_ready = 1;
-            ceiling_asset = 1;
-        } else {
-            /* Legacy callback route for focused renderer tests. The live M11
-             * runtime supplies the validated UPDATE_GFXSET plan above. */
-        if (!dm2_v1_viewport_scene_material_graphic_address(
-                ceiling_gdat_index, &graphicsset_index, &material_field) ||
-            graphicsset_index != s->gdat_scene_material_index ||
-            material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING ||
-            dm2_v1_fetch_viewport_local_material(
-                s, ceiling_gdat_index, &ceiling_material.pixels,
-                &ceiling_material.width, &ceiling_material.height,
-                &ceiling_material.stride) != 0 ||
-            !ceiling_material.pixels || ceiling_material.width <= 0 ||
-            ceiling_material.height <= 0 || !s->active_asset_palette_ready ||
-            s->active_asset_palette_hash == 0u) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-            return;
-        }
-        memcpy(ceiling_material.palette16, s->active_asset_palette16,
-               sizeof(ceiling_material.palette16));
-        ceiling_material.palette_hash = s->active_asset_palette_hash;
-        ceiling_material.ready = 1;
-
-        if (!dm2_v1_viewport_scene_material_graphic_address(
-                floor_gdat_index, &graphicsset_index, &material_field) ||
-            graphicsset_index != s->gdat_scene_material_index ||
-            material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR ||
-            dm2_v1_fetch_viewport_local_material(
-                s, floor_gdat_index, &floor_material.pixels,
-                &floor_material.width, &floor_material.height,
-                &floor_material.stride) != 0 ||
-            !floor_material.pixels || floor_material.width <= 0 ||
-            floor_material.height <= 0 || !s->active_asset_palette_ready ||
-            s->active_asset_palette_hash == 0u) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-            return;
-        }
-        memcpy(floor_material.palette16, s->active_asset_palette16,
-               sizeof(floor_material.palette16));
-        floor_material.palette_hash = s->active_asset_palette_hash;
-        floor_material.ready = 1;
-        ceiling_pixels = ceiling_material.pixels;
-        ceiling_w = ceiling_material.width;
-        ceiling_h_src = ceiling_material.height;
-        ceiling_stride = ceiling_material.stride;
-        memcpy(s->active_asset_palette16, ceiling_material.palette16,
-               sizeof(s->active_asset_palette16));
-        s->active_asset_palette_hash = ceiling_material.palette_hash;
-        s->active_asset_palette_ready = ceiling_material.ready;
-        ceiling_asset = 1;
-        }
-    } else {
-        ceiling_asset = dm2_v1_fetch_viewport_asset(
-                            s, ceiling_gdat_index, &ceiling_pixels,
-                            &ceiling_w, &ceiling_h_src, &ceiling_stride) == 0 &&
-            ceiling_pixels && ceiling_w > 0 && ceiling_h_src > 0;
-    }
-
-    /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as
-     * DM1. Source: ReDMCSB DUNVIEW.C:126-127. */
+    /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as DM1.
+     * Source: DUNVIEW.C:126-127 (G2108_Floor=-1, G2109_Ceiling=-2).
+     * Ceiling: lines 0-28, Floor: lines 66-135.
+     * Actual floor/ceiling graphics are provided by dm2_v1_gfx_fetch().
+     * For now: fill with solid color (actual graphics deferred to asset system). */
 
     int ceiling_h = DM2_CEILING_H;
     if (ceiling_asset) {
@@ -3341,8 +3985,34 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
         if (s->source_materials_required) {
-            s->last_floor_ceiling_material_consumed_mask |=
-                DM2_SCENE_PLANE_CEILING;
+            DM2_V1_ViewportDungeonMaterialCommand command;
+
+            memset(&command, 0, sizeof(command));
+            command.gdat_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+            command.graphicsset = (uint8_t)s->gdat_scene_material_index;
+            command.field = DM2_GDAT_GFXSET_CEIL;
+            command.gdat_index = ceiling_gdat_index;
+            command.map_load_token = s->gdat_scene_map_load_token;
+            command.scene_control_hash = s->gdat_scene_control_hash;
+            command.palette_hash = s->gdat_interface_palette_hash;
+            command.indexed_pixels = ceiling_pixels;
+            command.palette16 = s->gdat_interface_palette16;
+            command.palette_stride = 16;
+            command.width = ceiling_w;
+            command.height = ceiling_h_src;
+            command.stride = ceiling_stride > 0 ? ceiling_stride : ceiling_w;
+            command.transparent_color = -1;
+            command.source_rect = (DM2_V1_ViewportRect){
+                0, 0, ceiling_w, ceiling_h_src };
+            command.destination_rect = (DM2_V1_ViewportRect){
+                0, 0, DM2_VP_WIDTH, ceiling_h };
+            command.valid = command.indexed_pixels && command.palette16 &&
+                command.palette_hash != 0u && command.palette_stride == 16 &&
+                command.width > 0 && command.height > 0 &&
+                command.stride >= command.width && ceiling_source_owned;
+            if (command.valid) {
+                s->last_dungeon_ceiling_presentation_command = command;
+            }
         }
     } else {
         if (s->source_materials_required) {
@@ -3362,27 +4032,6 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
-    /* QUERY_GDAT_IMAGE_LOCALPAL belongs to the decoded IMG3 being drawn.
-     * Fetch the floor only after the ceiling blit: the viewport intentionally
-     * keeps one active palette binding, so prefetching both would present the
-     * ceiling through the floor's palette.  skproject DRAW_DUNGEON executes
-     * the image/local-palette query immediately before each material blit. */
-    if (s->source_materials_required) {
-        floor_pixels = floor_material.pixels;
-        floor_w = floor_material.width;
-        floor_h_src = floor_material.height;
-        floor_stride = floor_material.stride;
-        memcpy(s->active_asset_palette16, floor_material.palette16,
-               sizeof(s->active_asset_palette16));
-        s->active_asset_palette_hash = floor_material.palette_hash;
-        s->active_asset_palette_ready = floor_material.ready;
-        floor_asset = 1;
-    } else {
-        floor_asset = dm2_v1_fetch_viewport_asset(
-                          s, floor_gdat_index, &floor_pixels, &floor_w,
-                          &floor_h_src, &floor_stride) == 0 &&
-            floor_pixels && floor_w > 0 && floor_h_src > 0;
-    }
     if (floor_asset) {
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
@@ -3400,8 +4049,34 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
         if (s->source_materials_required) {
-            s->last_floor_ceiling_material_consumed_mask |=
-                DM2_SCENE_PLANE_FLOOR;
+            DM2_V1_ViewportDungeonMaterialCommand command;
+
+            memset(&command, 0, sizeof(command));
+            command.gdat_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+            command.graphicsset = (uint8_t)s->gdat_scene_material_index;
+            command.field = DM2_GDAT_GFXSET_FLOOR;
+            command.gdat_index = floor_gdat_index;
+            command.map_load_token = s->gdat_scene_map_load_token;
+            command.scene_control_hash = s->gdat_scene_control_hash;
+            command.palette_hash = s->gdat_interface_palette_hash;
+            command.indexed_pixels = floor_pixels;
+            command.palette16 = s->gdat_interface_palette16;
+            command.palette_stride = 16;
+            command.width = floor_w;
+            command.height = floor_h_src;
+            command.stride = floor_stride > 0 ? floor_stride : floor_w;
+            command.transparent_color = -1;
+            command.source_rect = (DM2_V1_ViewportRect){
+                0, 0, floor_w, floor_h_src };
+            command.destination_rect = (DM2_V1_ViewportRect){
+                0, floor_y, DM2_VP_WIDTH, floor_h };
+            command.valid = command.indexed_pixels && command.palette16 &&
+                command.palette_hash != 0u && command.palette_stride == 16 &&
+                command.width > 0 && command.height > 0 &&
+                command.stride >= command.width && floor_source_owned;
+            if (command.valid) {
+                s->last_dungeon_floor_presentation_command = command;
+            }
         }
     } else {
         if (s->source_materials_required) {
@@ -3418,13 +4093,6 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
             }
             ++s->fallback_floor_ceiling_drawn_count;
         }
-    }
-
-    if (s->source_materials_required &&
-        s->last_floor_ceiling_material_required_mask !=
-            s->last_floor_ceiling_material_consumed_mask) {
-        dm2_v1_block_source_material(
-            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
     }
 
     /* DM2 distinctive: vertical wall frame area between ceiling and floor.
@@ -3517,6 +4185,93 @@ static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
     s->blocked_material_mask |= material_mask;
 }
 
+static int dm2_v1_viewport_wall_material_owned(
+    const DM2_V1_ViewportState *s)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+    int expected_field;
+
+    if (!s || !s->source_materials_required ||
+        !s->gdat_scene_control_ready || s->gdat_scene_map_load_token == 0u ||
+        s->gdat_scene_control_hash == 0u ||
+        !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u ||
+        s->gdat_scene_colorkey > 15u ||
+        !s->gdat_static_scene_wall_material_owned ||
+        s->gdat_static_scene_wall_material_map_load_token !=
+            s->gdat_scene_map_load_token ||
+        s->gdat_static_scene_wall_material_scene_control_hash !=
+            s->gdat_scene_control_hash || !s->gdat_static_light_control_owned ||
+        s->gdat_static_light_map_load_token != s->gdat_scene_map_load_token ||
+        s->gdat_static_light_scene_control_hash != s->gdat_scene_control_hash) {
+        return 0;
+    }
+    expected_field = dm2_v1_viewport_wall_field_for_square(
+        s->gdat_static_scene_wall_material_view_square);
+    scene = &s->gdat_static_scene_record;
+    return expected_field >= 0 &&
+        expected_field == s->gdat_static_scene_wall_material_field &&
+        scene->valid && scene->map_load_token == s->gdat_scene_map_load_token &&
+        scene->scene_control_hash == s->gdat_scene_control_hash &&
+        scene->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        scene->material_category == DM2_GDAT_CATEGORY_GRAPHICSSET;
+}
+
+static int dm2_v1_viewport_wall_material_owned_for_square(
+    const DM2_V1_ViewportState *s,
+    int view_square)
+{
+    int expected_field;
+
+    if (view_square < 0 || view_square >= DM2_SQ_COUNT ||
+        !dm2_v1_viewport_wall_material_owned(s)) {
+        return 0;
+    }
+    expected_field = dm2_v1_viewport_wall_field_for_square(view_square);
+    return expected_field >= 0 &&
+        (s->gdat_static_scene_wall_material_mask &
+         (uint16_t)(1u << (unsigned)view_square)) != 0u;
+}
+
+/* skproject/SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES 46277-46334 reads the
+ * current GRAPHICSSET plus glbSceneColorKey before it draws either side of a
+ * door frame. Keep every gate visible to the production caller: the boot
+ * provider has already established U4 format facts when its fetch succeeds. */
+static void dm2_v1_source_door_frame_gate_receipt(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_DoorRender *door,
+    DM2_V1_OriginalMaterialGateReceipt *out_receipt)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+    int expected_index = 0;
+
+    if (!out_receipt) return;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !door) return;
+    out_receipt->valid = 1;
+    out_receipt->original_material_required = s->source_materials_required;
+    out_receipt->gdat_index = door->frame_gdat_index;
+    out_receipt->map_load_token = s->gdat_scene_map_load_token;
+    out_receipt->scene_control_hash = s->gdat_scene_control_hash;
+    out_receipt->scene_colorkey = s->gdat_scene_colorkey;
+    out_receipt->palette_ready = s->gdat_interface_palette_ready;
+    out_receipt->colorkey_ready = s->gdat_scene_colorkey <= 15u;
+    scene = &s->gdat_static_scene_record;
+    if (s->gdat_scene_control_ready && s->gdat_scene_control_hash != 0u &&
+        s->gdat_scene_map_load_token != 0u && scene->valid &&
+        scene->map_load_token == s->gdat_scene_map_load_token &&
+        scene->scene_control_hash == s->gdat_scene_control_hash &&
+        scene->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        scene->material_category == DM2_GDAT_CATEGORY_GRAPHICSSET) {
+        out_receipt->scene_record_ready = 1;
+        expected_index =
+            dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+                scene->graphicsset, door->view_square);
+        out_receipt->active_graphicsset_frame =
+            expected_index != 0 && door->frame_gdat_index == expected_index;
+    }
+}
+
 static int dm2_v1_wall_button_receipt_matches(
     const DM2_V1_ViewportState *s,
     const DM2_V1_DoorRender *door)
@@ -3537,14 +4292,7 @@ static int dm2_v1_wall_button_receipt_matches(
             if (material->x == door->wall_button_x &&
                 material->y == door->wall_button_y &&
                 material->object_id == door->wall_button_object_id &&
-                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
-                (!s->source_materials_required ||
-                 (material->front_image_ready &&
-                  material->front_image_width > 0u &&
-                  material->front_image_height > 0u &&
-                  material->local_palette_hash != 0u &&
-                  material->local_palette_hash ==
-                      s->active_asset_palette_hash))) {
+                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
                 return 1;
             }
         }
@@ -3559,14 +4307,7 @@ static int dm2_v1_wall_button_receipt_matches(
             if (material->x == door->wall_button_x &&
                 material->y == door->wall_button_y &&
                 material->object_id == door->wall_button_object_id &&
-                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
-                (!s->source_materials_required ||
-                 (material->front_image_ready &&
-                  material->front_image_width > 0u &&
-                  material->front_image_height > 0u &&
-                  material->local_palette_hash != 0u &&
-                  material->local_palette_hash ==
-                      s->active_asset_palette_hash))) {
+                material->wall_gfx_index == (uint8_t)door->wall_button_index) {
                 return 1;
             }
         }
@@ -3576,24 +4317,15 @@ static int dm2_v1_wall_button_receipt_matches(
 
 void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 {
-    typedef struct {
-        const uint8_t *pixels;
-        int width;
-        int height;
-        int stride;
-        uint8_t palette16[16];
-        uint32_t palette_hash;
-        int ready;
-    } DM2_V1_WallMaterial;
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
     int wall_asset_count = 0;
     int wall_fallback_count = 0;
     DM2_V1_WallPanelRenderPlan plan;
-    DM2_V1_WallMaterial materials[DM2_V1_WALL_PANEL_RENDER_MAX];
 
-    memset(materials, 0, sizeof(materials));
+    memset(&s->last_dungeon_wall_presentation_command, 0,
+           sizeof(s->last_dungeon_wall_presentation_command));
     s->last_dungeon_wall_material_required_mask = 0u;
     s->last_dungeon_wall_material_consumed_mask = 0u;
 
@@ -3621,53 +4353,24 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         return;
     }
 
-    /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
-     * The default set is only a data-free renderer convenience; it must not
-     * substitute for a missing source-owned scene-control receipt. */
-    if (s->source_materials_required && !s->gdat_scene_control_ready) {
-        dm2_v1_block_source_material(
-            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
-        return;
-    }
-
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
         return;
     }
 
-    /* skproject/SKULLWIN/c_gui_vp.cpp DM2_DRAW_WALL resolves
-     * GRAPHICSSET[viewportCell + 0x22] for every visible panel before its
-     * blits.  Cache the complete source set before drawing the first pixel:
-     * a missing later cell must block the frame, never leave an invented or
-     * partially materialized dungeon wall behind. */
-    if (s->source_materials_required) {
-        for (int i = 0; i < plan.panel_count; ++i) {
-            const DM2_V1_WallPanelRender *panel = &plan.panels[i];
-            DM2_V1_WallMaterial *material = &materials[i];
-            int graphicsset_index = 0;
-            int field = 0;
+    for (int i = 0; i < plan.panel_count; ++i) {
+        const int view_square = plan.panels[i].view_square;
 
-            s->last_dungeon_wall_material_required_mask |=
-                (uint16_t)(1u << (unsigned)panel->view_square);
-            if (!dm2_v1_viewport_wall_graphic_address(
-                    panel->gdat_index, &graphicsset_index, &field) ||
-                graphicsset_index != s->gdat_scene_material_index ||
-                field != dm2_v1_viewport_wall_field_for_square(
-                    panel->view_square) ||
-                dm2_v1_fetch_viewport_local_material(
-                    s, panel->gdat_index, &material->pixels,
-                    &material->width, &material->height,
-                    &material->stride) != 0 ||
-                !material->pixels || material->width <= 0 ||
-                material->height <= 0 || !s->active_asset_palette_ready ||
-                s->active_asset_palette_hash == 0u) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
-                return;
-            }
-            memcpy(material->palette16, s->active_asset_palette16,
-                   sizeof(material->palette16));
-            material->palette_hash = s->active_asset_palette_hash;
-            material->ready = 1;
+        s->last_dungeon_wall_material_required_mask |=
+            (uint16_t)(1u << (unsigned)view_square);
+        /* skproject DRAW_WALL queries GRAPHICSSET with the live
+         * MapGraphicsStyle.  The default set is only a data-free renderer
+         * convenience; it must not substitute for any missing source-owned
+         * panel in a source-required frame. */
+        if (s->source_materials_required &&
+            !dm2_v1_viewport_wall_material_owned_for_square(s, view_square)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+            return;
         }
     }
 
@@ -3678,24 +4381,12 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int wall_h = 0;
         int wall_stride = 0;
 
-        if (s->source_materials_required) {
-            const DM2_V1_WallMaterial *material = &materials[i];
-            wall_pixels = material->pixels;
-            wall_w = material->width;
-            wall_h = material->height;
-            wall_stride = material->stride;
-            memcpy(s->active_asset_palette16, material->palette16,
-                   sizeof(s->active_asset_palette16));
-            s->active_asset_palette_hash = material->palette_hash;
-            s->active_asset_palette_ready = material->ready;
-        }
-        if ((!s->source_materials_required &&
-             dm2_v1_fetch_viewport_local_material(s,
-                                                   panel->gdat_index,
-                                                   &wall_pixels,
-                                                   &wall_w,
-                                                   &wall_h,
-                                                   &wall_stride) != 0) ||
+        if (dm2_v1_fetch_viewport_asset(s,
+                                        panel->gdat_index,
+                                        &wall_pixels,
+                                        &wall_w,
+                                        &wall_h,
+                                        &wall_stride) != 0 ||
             !wall_pixels || wall_w <= 0 || wall_h <= 0) {
             if (s->source_materials_required) {
                 ++s->blocked_material_draw_count;
@@ -3731,18 +4422,62 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             ++s->gdat_scene_control_consumed_count;
         }
         if (s->source_materials_required) {
-            s->last_dungeon_wall_material_consumed_mask |=
-                (uint16_t)(1u << (unsigned)panel->view_square);
+            int graphicsset_index = 0;
+            int field = 0;
+            DM2_V1_ViewportDungeonMaterialCommand command;
+
+            if (!dm2_v1_viewport_wall_graphic_address(
+                    panel->gdat_index, &graphicsset_index, &field) ||
+                graphicsset_index != s->gdat_scene_material_index ||
+                field != dm2_v1_viewport_wall_field_for_square(
+                    panel->view_square)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+                continue;
+            }
+            memset(&command, 0, sizeof(command));
+            command.gdat_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+            command.graphicsset = (uint8_t)graphicsset_index;
+            command.field = (uint8_t)field;
+            command.gdat_index = panel->gdat_index;
+            command.map_load_token = s->gdat_scene_map_load_token;
+            command.scene_control_hash = s->gdat_scene_control_hash;
+            command.palette_hash = s->gdat_interface_palette_hash;
+            command.indexed_pixels = wall_pixels;
+            command.palette16 = s->gdat_interface_palette16;
+            command.palette_stride = 16;
+            command.width = wall_w;
+            command.height = wall_h;
+            command.stride = wall_stride > 0 ? wall_stride : wall_w;
+            command.transparent_color = (int)s->gdat_scene_colorkey;
+            command.colorkey_palette_index =
+                command.palette16[command.transparent_color];
+            command.source_rect = (DM2_V1_ViewportRect){ 0, 0, wall_w, wall_h };
+            command.destination_rect = panel->dst_rect;
+            command.valid = command.indexed_pixels && command.palette16 &&
+                command.palette_hash != 0u && command.palette_stride == 16 &&
+                command.width > 0 && command.height > 0 &&
+                command.stride >= command.width &&
+                command.transparent_color >= 0 &&
+                command.transparent_color < command.palette_stride &&
+                command.colorkey_palette_index ==
+                    command.palette16[command.transparent_color];
+            if (command.valid) {
+                s->last_dungeon_wall_presentation_command = command;
+                s->last_dungeon_wall_material_consumed_mask |=
+                    (uint16_t)(1u << (unsigned)panel->view_square);
+            }
         }
         ++wall_asset_count;
     }
 
     if (s->source_materials_required &&
-        s->last_dungeon_wall_material_required_mask !=
-            s->last_dungeon_wall_material_consumed_mask) {
+        s->last_dungeon_wall_material_consumed_mask !=
+            s->last_dungeon_wall_material_required_mask) {
+        memset(&s->last_dungeon_wall_presentation_command, 0,
+               sizeof(s->last_dungeon_wall_presentation_command));
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
-        return;
     }
 
     if (wall_asset_count > 0) {
@@ -3755,24 +4490,6 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 {
-    typedef struct {
-        const uint8_t *pixels;
-        int width;
-        int height;
-        int stride;
-        uint8_t palette16[16];
-        uint32_t palette_hash;
-        int required;
-        int consumed;
-    } DM2_V1_DoorMaterial;
-    enum {
-        DM2_DOOR_MATERIAL_PANEL = 0,
-        DM2_DOOR_MATERIAL_ORNATE,
-        DM2_DOOR_MATERIAL_DESTROYED_MASK,
-        DM2_DOOR_MATERIAL_FRAME,
-        DM2_DOOR_MATERIAL_BUTTON,
-        DM2_DOOR_MATERIAL_COUNT
-    };
     if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -3782,8 +4499,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     int door_button_asset_count = 0;
     int door_fallback_count = 0;
     DM2_V1_DoorRenderPlan plan;
-    DM2_V1_DoorMaterial materials[DM2_V1_DOOR_RENDER_MAX]
-                                   [DM2_DOOR_MATERIAL_COUNT];
 
     /* DM2 door rendering: overlays on wall squares.
      * Source: DUNVIEW.C:3082-3095 F0102_DrawDoorBitmap,
@@ -3797,65 +4512,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
         return;
-    }
-    memset(materials, 0, sizeof(materials));
-    s->last_door_material_required_mask = 0u;
-    s->last_door_material_consumed_mask = 0u;
-
-    /* skproject/SKWIN/SkWinCore.cpp DM2_DRAW_DOOR resolves the selected
-     * panel, overlays, frame, and button IMG3s before submitting its door
-     * blits. Keep the complete transaction renderer-owned: a later missing
-     * local palette must not leave a partly invented door on the scene. */
-    if (s->source_materials_required) {
-        for (int i = 0; i < plan.door_count; ++i) {
-            const DM2_V1_DoorRender *door = &plan.doors[i];
-            const int gdat_indices[DM2_DOOR_MATERIAL_COUNT] = {
-                door->panel_gdat_index,
-                door->ornate_gdat_index,
-                door->destroyed_mask_gdat_index,
-                door->frame_gdat_index,
-                door->button_gdat_index
-            };
-            const int required[DM2_DOOR_MATERIAL_COUNT] = {
-                door->panel_visible_rect.w > 0 && door->panel_visible_rect.h > 0,
-                door->ornate_gdat_index != 0 &&
-                    door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                door->destroyed_mask_gdat_index != 0 &&
-                    door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                door->frame_rect.w > 0 && door->frame_rect.h > 0,
-                door->button_gdat_index != 0 &&
-                    door->button_rect.w > 0 && door->button_rect.h > 0
-            };
-
-            for (int kind = 0; kind < DM2_DOOR_MATERIAL_COUNT; ++kind) {
-                DM2_V1_DoorMaterial *material = &materials[i][kind];
-
-                if (!required[kind]) {
-                    continue;
-                }
-                material->required = 1;
-                s->last_door_material_required_mask |=
-                    (uint8_t)(1u << (unsigned)kind);
-                if (gdat_indices[kind] == 0 ||
-                    dm2_v1_fetch_viewport_local_material(
-                        s, gdat_indices[kind], &material->pixels,
-                        &material->width, &material->height,
-                        &material->stride) != 0 ||
-                    !material->pixels || material->width <= 0 ||
-                    material->height <= 0 || !s->active_asset_palette_ready ||
-                    s->active_asset_palette_hash == 0u ||
-                    (kind == DM2_DOOR_MATERIAL_BUTTON &&
-                     door->button_source_kind == 2 &&
-                     !dm2_v1_wall_button_receipt_matches(s, door))) {
-                    dm2_v1_block_source_material(
-                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
-                    return;
-                }
-                memcpy(material->palette16, s->active_asset_palette16,
-                       sizeof(material->palette16));
-                material->palette_hash = s->active_asset_palette_hash;
-            }
-        }
     }
     s->last_door_panel_asset_blit_valid = 0;
     s->last_door_ornate_asset_blit_valid = 0;
@@ -3902,28 +4558,14 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int panel_h = 0;
             int panel_stride = 0;
             int panel_drawn_asset = 0;
-            if (s->source_materials_required) {
-                const DM2_V1_DoorMaterial *material =
-                    &materials[i][DM2_DOOR_MATERIAL_PANEL];
-                panel_pixels = material->pixels;
-                panel_w = material->width;
-                panel_h = material->height;
-                panel_stride = material->stride;
-                memcpy(s->active_asset_palette16, material->palette16,
-                       sizeof(s->active_asset_palette16));
-                s->active_asset_palette_hash = material->palette_hash;
-                s->active_asset_palette_ready = material->palette_hash != 0u;
-            }
-            if (((s->source_materials_required && panel_pixels &&
-                  panel_w > 0 && panel_h > 0) ||
-                 (!s->source_materials_required && door->panel_gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(s,
-                                                      door->panel_gdat_index,
-                                                      &panel_pixels,
-                                                      &panel_w,
-                                                      &panel_h,
-                                                      &panel_stride) == 0 &&
-                  panel_pixels && panel_w > 0 && panel_h > 0))) {
+            if (door->panel_gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s,
+                                            door->panel_gdat_index,
+                                            &panel_pixels,
+                                            &panel_w,
+                                            &panel_h,
+                                            &panel_stride) == 0 &&
+                panel_pixels && panel_w > 0 && panel_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR lines
                  * ~46402-46457 draws the panel through GDAT_CATEGORY_DOORS
@@ -3958,9 +4600,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_panel_asset_src_stride =
                         panel_stride > 0 ? panel_stride : panel_w;
                     panel_drawn_asset = 1;
-                    if (s->source_materials_required) {
-                        materials[i][DM2_DOOR_MATERIAL_PANEL].consumed = 1;
-                    }
                 }
             }
             if (!panel_drawn_asset) {
@@ -3987,30 +4626,15 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 int overlay_w = 0;
                 int overlay_h = 0;
                 int overlay_stride = 0;
-                const int material_kind = overlay_i == 0
-                    ? DM2_DOOR_MATERIAL_ORNATE
-                    : DM2_DOOR_MATERIAL_DESTROYED_MASK;
-                if (s->source_materials_required &&
-                    materials[i][material_kind].required) {
-                    const DM2_V1_DoorMaterial *material =
-                        &materials[i][material_kind];
-                    overlay_pixels = material->pixels;
-                    overlay_w = material->width;
-                    overlay_h = material->height;
-                    overlay_stride = material->stride;
-                    memcpy(s->active_asset_palette16, material->palette16,
-                           sizeof(s->active_asset_palette16));
-                    s->active_asset_palette_hash = material->palette_hash;
-                    s->active_asset_palette_ready = material->palette_hash != 0u;
-                }
-                if (((s->source_materials_required && overlay_pixels &&
-                      overlay_w > 0 && overlay_h > 0) ||
-                     (!s->source_materials_required && overlay_indices[overlay_i] != 0 &&
+                if (overlay_indices[overlay_i] != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0 &&
-                    dm2_v1_fetch_viewport_local_material(
-                        s, overlay_indices[overlay_i], &overlay_pixels,
-                        &overlay_w, &overlay_h, &overlay_stride) == 0 &&
-                      overlay_pixels && overlay_w > 0 && overlay_h > 0))) {
+                    dm2_v1_fetch_viewport_asset(s,
+                                                overlay_indices[overlay_i],
+                                                &overlay_pixels,
+                                                &overlay_w,
+                                                &overlay_h,
+                                                &overlay_stride) == 0 &&
+                    overlay_pixels && overlay_w > 0 && overlay_h > 0) {
                     DM2_V1_DoorAssetBlit blit;
                     if (dm2_v1_viewport_full_rect_asset_blit(
                             overlay_indices[overlay_i],
@@ -4040,9 +4664,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                             blit.transparent_color,
                             &s->gdat_sprite_palette_consumed_count);
                         ++door_overlay_asset_count;
-                        if (s->source_materials_required) {
-                            materials[i][material_kind].consumed = 1;
-                        }
                         if (overlay_i == 0) {
                             ornate_drawn_asset = 1;
                             s->last_door_ornate_asset_blit_valid = 1;
@@ -4082,66 +4703,229 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int door_w = 0;
             int door_h = 0;
             int door_stride = 0;
+            DM2_V1_OriginalMaterialGateReceipt gate;
+            DM2_V1_BootViewportSurfaceView surface_view;
+            DM2_V1_OriginalDoorSurfaceRequest request;
+            DM2_V1_OriginalDoorSurfaceBinding binding;
+            DM2_V1_OriginalDoorOpeningFrameRequest opening_frame_request;
+            DM2_V1_ViewportDoorPresentationCommand presentation_command;
+            int source_frame_facts;
+            int surface_view_ready = 0;
+            int binding_ready = 0;
+            int presentation_command_ready = 0;
 
-            if (s->source_materials_required) {
-                const DM2_V1_DoorMaterial *material =
-                    &materials[i][DM2_DOOR_MATERIAL_FRAME];
-                door_pixels = material->pixels;
-                door_w = material->width;
-                door_h = material->height;
-                door_stride = material->stride;
-                memcpy(s->active_asset_palette16, material->palette16,
-                       sizeof(s->active_asset_palette16));
-                s->active_asset_palette_hash = material->palette_hash;
-                s->active_asset_palette_ready = material->palette_hash != 0u;
-            }
-            if (((s->source_materials_required && door_pixels && door_w > 0 &&
-                  door_h > 0) ||
-                 (!s->source_materials_required && door->frame_gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(s,
-                                                      door->frame_gdat_index,
-                                                      &door_pixels,
-                                                      &door_w,
-                                                      &door_h,
-                                                      &door_stride) == 0 &&
-                  door_pixels && door_w > 0 && door_h > 0))) {
+            dm2_v1_source_door_frame_gate_receipt(s, door, &gate);
+            source_frame_facts = gate.scene_record_ready &&
+                gate.palette_ready && gate.colorkey_ready &&
+                gate.active_graphicsset_frame;
+
+            if ((!s->source_materials_required || source_frame_facts) &&
+                door->frame_gdat_index != 0 &&
+                dm2_v1_fetch_viewport_asset(s,
+                                            door->frame_gdat_index,
+                                            &door_pixels,
+                                            &door_w,
+                                            &door_h,
+                                            &door_stride) == 0 &&
+                door_pixels && door_w > 0 && door_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
+                memset(&surface_view, 0, sizeof(surface_view));
+                if (!s->source_materials_required) {
+                    surface_view_ready = 1;
+                } else if (s->door_surface_view_fetch &&
+                           s->door_surface_view_fetch(
+                               s->door_surface_view_user,
+                               door->frame_gdat_index,
+                               &surface_view) &&
+                           surface_view.pixels == door_pixels &&
+                           surface_view.width == door_w &&
+                           surface_view.height == door_h &&
+                           surface_view.stride == door_stride &&
+                           surface_view.format == DM2_IMG_FMT_U4) {
+                    surface_view_ready = 1;
+                }
+                gate.decoded_format_gate_ready = surface_view_ready;
                 /* skproject GRAPHICSSET fields 0x06/0x07/0x09 are the
                  * first boot-bound door-frame images for front, D1C and D2C.
                  * This pass scales them into the current bounded DM2 frame
                  * rectangles; exact DRAW_DUNGEON_GRAPHIC offsets remain open. */
-                if (dm2_v1_viewport_door_frame_asset_blit(door,
+                if (surface_view_ready &&
+                    dm2_v1_viewport_door_frame_asset_blit(door,
                                                           door_w,
                                                           door_h,
                                                           door_stride,
                                                           &blit)) {
-                    dm2_v1_blit_scaled_material_bitmap_region(
-                        s, vp,
-                        stride,
-                        blit.dst_rect.x,
-                        blit.dst_rect.y,
-                        blit.dst_rect.w,
-                        blit.dst_rect.h,
-                        door_pixels,
-                        blit.src_rect.x,
-                        blit.src_rect.y,
-                        blit.src_rect.w,
-                        blit.src_rect.h,
-                        blit.src_stride,
-                        blit.transparent_color,
-                        &s->gdat_material_palette_door_frame_consumed_count);
-                    ++door_asset_count;
-                    s->last_door_frame_asset_blit_valid = 1;
-                    s->last_door_frame_asset_blit = blit;
-                    s->last_door_frame_asset_src_w = door_w;
-                    s->last_door_frame_asset_src_h = door_h;
-                    s->last_door_frame_asset_src_stride =
-                        door_stride > 0 ? door_stride : door_w;
-                    frame_drawn_asset = 1;
-                    if (s->source_materials_required) {
-                        materials[i][DM2_DOOR_MATERIAL_FRAME].consumed = 1;
+                    if (source_frame_facts) {
+                        blit.transparent_color = (int)gate.scene_colorkey;
+                    }
+                    if (!s->source_materials_required) {
+                        binding_ready = 1;
+                    } else if (source_frame_facts) {
+                        /* skproject/SKWIN/SkWinCore.cpp DRAW_DOOR_FRAMES
+                         * lines 46311-46334 consumes a GRAPHICSSET U4 image
+                         * with the active interface palette and transparency
+                         * index. Keep that borrowed GDAT view whole here. */
+                        memset(&request, 0, sizeof(request));
+                        request.valid = 1;
+                        request.gdat_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+                        request.graphicsset =
+                            (uint8_t)s->gdat_scene_material_index;
+                        request.field = (uint8_t)
+                            dm2_v1_viewport_door_frame_field_for_square(
+                                door->view_square);
+                        request.gdat_index = door->frame_gdat_index;
+                        request.map_load_token = gate.map_load_token;
+                        request.scene_control_hash = gate.scene_control_hash;
+                        request.palette_hash = s->gdat_interface_palette_hash;
+                        request.scene_colorkey = gate.scene_colorkey;
+                        request.decoded_pixels = surface_view.pixels;
+                        request.palette16 = s->gdat_interface_palette16;
+                        request.width = surface_view.width;
+                        request.height = surface_view.height;
+                        request.stride = surface_view.stride;
+                        request.format = surface_view.format;
+                        memset(&binding, 0, sizeof(binding));
+                        binding.request = request;
+                        binding.blit = blit;
+                        binding.palette_stride = 16;
+                        binding.colorkey_palette_index =
+                            request.palette16[request.scene_colorkey];
+                        binding.valid = request.palette_hash != 0u &&
+                            request.scene_colorkey < 16u &&
+                            request.format == DM2_IMG_FMT_U4 &&
+                            request.stride >= request.width &&
+                            blit.gdat_index == request.gdat_index &&
+                            blit.src_rect.x == 0 && blit.src_rect.y == 0 &&
+                            blit.src_rect.w == request.width &&
+                            blit.src_rect.h == request.height &&
+                            blit.src_stride == request.stride &&
+                            blit.transparent_color ==
+                                (int)request.scene_colorkey;
+                        binding_ready = binding.valid;
+                        memset(&opening_frame_request, 0,
+                               sizeof(opening_frame_request));
+                        opening_frame_request.view_square = door->view_square;
+                        opening_frame_request.skproject_cell = door->skproject_cell;
+                        opening_frame_request.door_state = door->door_state;
+                        opening_frame_request.door_open_pct = door->door_open_pct;
+                        opening_frame_request.door_opening_dir =
+                            door->door_opening_dir;
+                        opening_frame_request.opening_visible_rect =
+                            door->panel_visible_rect;
+                        opening_frame_request.frame_rect = door->frame_rect;
+                        opening_frame_request.source_rect = binding.blit.src_rect;
+                        opening_frame_request.destination_rect = binding.blit.dst_rect;
+                        opening_frame_request.material = binding;
+                        opening_frame_request.valid = binding.valid &&
+                            opening_frame_request.frame_rect.x ==
+                                opening_frame_request.destination_rect.x &&
+                            opening_frame_request.frame_rect.y ==
+                                opening_frame_request.destination_rect.y &&
+                            opening_frame_request.frame_rect.w ==
+                                opening_frame_request.destination_rect.w &&
+                            opening_frame_request.frame_rect.h ==
+                                opening_frame_request.destination_rect.h &&
+                            opening_frame_request.source_rect.x == 0 &&
+                            opening_frame_request.source_rect.y == 0 &&
+                            opening_frame_request.source_rect.w == request.width &&
+                            opening_frame_request.source_rect.h == request.height &&
+                            opening_frame_request.door_open_pct <= 100u;
+                        memset(&presentation_command, 0,
+                               sizeof(presentation_command));
+                        presentation_command.opening_frame = opening_frame_request;
+                        presentation_command.u4_pixels = request.decoded_pixels;
+                        presentation_command.palette16 = request.palette16;
+                        presentation_command.palette_stride =
+                            binding.palette_stride;
+                        presentation_command.scene_colorkey =
+                            (uint8_t)request.scene_colorkey;
+                        presentation_command.colorkey_palette_index =
+                            binding.colorkey_palette_index;
+                        presentation_command.format = request.format;
+                        presentation_command.source_rect =
+                            opening_frame_request.source_rect;
+                        presentation_command.destination_rect =
+                            opening_frame_request.destination_rect;
+                        presentation_command.valid = opening_frame_request.valid &&
+                            presentation_command.u4_pixels &&
+                            presentation_command.palette16 &&
+                            presentation_command.palette_stride == 16 &&
+                            presentation_command.scene_colorkey < 16u &&
+                            presentation_command.colorkey_palette_index ==
+                                presentation_command.palette16[
+                                    presentation_command.scene_colorkey] &&
+                            presentation_command.format == DM2_IMG_FMT_U4 &&
+                            presentation_command.source_rect.w == request.width &&
+                            presentation_command.source_rect.h == request.height &&
+                            presentation_command.destination_rect.x ==
+                                binding.blit.dst_rect.x &&
+                            presentation_command.destination_rect.y ==
+                                binding.blit.dst_rect.y &&
+                            presentation_command.destination_rect.w ==
+                                binding.blit.dst_rect.w &&
+                            presentation_command.destination_rect.h ==
+                                binding.blit.dst_rect.h;
+                        presentation_command_ready = presentation_command.valid;
+                    }
+                    if (s->source_materials_required &&
+                        !presentation_command_ready) {
+                        binding_ready = 0;
+                    }
+                    if (binding_ready) {
+                        const DM2_V1_ViewportDoorPresentationCommand *command =
+                            s->source_materials_required
+                                ? &presentation_command : NULL;
+                        int presented = 0;
+                        if (command) {
+                            presented = dm2_v1_blit_door_presentation_command(
+                                vp, stride, command,
+                                &s->gdat_material_palette_door_frame_consumed_count);
+                        } else {
+                            dm2_v1_blit_scaled_material_bitmap_region(
+                                s, vp,
+                                stride,
+                                blit.dst_rect.x,
+                                blit.dst_rect.y,
+                                blit.dst_rect.w,
+                                blit.dst_rect.h,
+                                door_pixels,
+                                blit.src_rect.x,
+                                blit.src_rect.y,
+                                blit.src_rect.w,
+                                blit.src_rect.h,
+                                blit.src_stride,
+                                blit.transparent_color,
+                                &s->gdat_material_palette_door_frame_consumed_count);
+                            presented = 1;
+                        }
+                        if (presented) {
+                            ++door_asset_count;
+                            s->last_door_frame_asset_blit_valid = 1;
+                            s->last_door_frame_asset_blit = blit;
+                            s->last_door_frame_asset_src_w = door_w;
+                            s->last_door_frame_asset_src_h = door_h;
+                            s->last_door_frame_asset_src_stride =
+                                door_stride > 0 ? door_stride : door_w;
+                            frame_drawn_asset = 1;
+                        }
                     }
                 }
+            }
+            gate.accepted = !s->source_materials_required ||
+                (source_frame_facts && gate.decoded_format_gate_ready &&
+                 frame_drawn_asset);
+            s->last_original_material_gate = gate;
+            if (s->source_materials_required && gate.accepted &&
+                source_frame_facts && frame_drawn_asset) {
+                DM2_V1_OriginalDoorSurfaceRequest *request =
+                    &s->last_original_door_surface_request;
+                DM2_V1_OriginalDoorOpeningFrameRequest *stored_opening_request =
+                    &s->last_original_door_opening_frame_request;
+                *request = binding.request;
+                s->last_original_door_surface_binding = binding;
+                *stored_opening_request = opening_frame_request;
+                s->last_original_door_presentation_command =
+                    presentation_command;
             }
             if (s->source_materials_required &&
                 !frame_drawn_asset) {
@@ -4156,50 +4940,28 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_h = 0;
             int button_stride = 0;
             int wall_button_material_bound =
-                door->button_source_kind != 2;
+                door->button_source_kind != 2 ||
+                dm2_v1_wall_button_receipt_matches(s, door);
 
             /* skproject DRAW_DEFAULT_DOOR_BUTTON reaches the custom button
              * through the current WALL_GFX owner. Do not let the generic
              * view-square helper pick a same-numbered GDAT image unless the
              * direct DB2/DB3 receipt proves that ownership. */
-            if (s->source_materials_required) {
-                const DM2_V1_DoorMaterial *material =
-                    &materials[i][DM2_DOOR_MATERIAL_BUTTON];
-                button_pixels = material->pixels;
-                button_w = material->width;
-                button_h = material->height;
-                button_stride = material->stride;
-                memcpy(s->active_asset_palette16, material->palette16,
-                       sizeof(s->active_asset_palette16));
-                s->active_asset_palette_hash = material->palette_hash;
-                s->active_asset_palette_ready = material->palette_hash != 0u;
-            }
-            if (((s->source_materials_required && button_pixels && button_w > 0 &&
-                  button_h > 0) ||
-                 (!s->source_materials_required &&
-                  dm2_v1_fetch_viewport_local_material(s,
-                                                      door->button_gdat_index,
-                                                      &button_pixels,
-                                                      &button_w,
-                                                      &button_h,
-                                                      &button_stride) == 0 &&
-                  button_pixels && button_w > 0 && button_h > 0))) {
+            if ((!s->source_materials_required || wall_button_material_bound) &&
+                dm2_v1_fetch_viewport_asset(s,
+                                            door->button_gdat_index,
+                                            &button_pixels,
+                                            &button_w,
+                                            &button_h,
+                                            &button_stride) == 0 &&
+                button_pixels && button_w > 0 && button_h > 0) {
                 DM2_V1_DoorAssetBlit blit;
-                if (door->button_source_kind == 2) {
-                    /* The palette query belongs to this exact image fetch,
-                     * so match only after it has populated the active IMG3
-                     * palette receipt. */
-                    wall_button_material_bound =
-                        dm2_v1_wall_button_receipt_matches(s, door);
-                }
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
                  * lines ~46243-46264 renders both default door buttons and
                  * custom wall-gfx buttons through the same rectno path. Exact
                  * viewport-cell placement is isolated in
                  * dm2_v1_viewport_door_button_rect_for_square(). */
-                if ((!s->source_materials_required ||
-                     wall_button_material_bound) &&
-                    dm2_v1_viewport_door_button_asset_blit(door,
+                if (dm2_v1_viewport_door_button_asset_blit(door,
                                                            button_w,
                                                            button_h,
                                                            button_stride,
@@ -4228,9 +4990,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     s->last_door_button_asset_src_stride =
                         button_stride > 0 ? button_stride : button_w;
                     button_drawn_asset = 1;
-                    if (s->source_materials_required) {
-                        materials[i][DM2_DOOR_MATERIAL_BUTTON].consumed = 1;
-                    }
                 }
             }
             if (s->source_materials_required &&
@@ -4238,29 +4997,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }
-        }
-    }
-    if (s->source_materials_required) {
-        for (int kind = 0; kind < DM2_DOOR_MATERIAL_COUNT; ++kind) {
-            int complete = 1;
-            for (int i = 0; i < plan.door_count; ++i) {
-                const DM2_V1_DoorMaterial *material = &materials[i][kind];
-                if (material->required && !material->consumed) {
-                    complete = 0;
-                    break;
-                }
-            }
-            if ((s->last_door_material_required_mask &
-                 (uint8_t)(1u << (unsigned)kind)) != 0u && complete) {
-                s->last_door_material_consumed_mask |=
-                    (uint8_t)(1u << (unsigned)kind);
-            }
-        }
-        if (s->last_door_material_required_mask !=
-            s->last_door_material_consumed_mask) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
-            return;
         }
     }
     s->asset_door_panel_drawn_count += door_panel_asset_count;
@@ -4317,32 +5053,15 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (c->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, c->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_asset(s, c->gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
                 if (c->source_kind == 2 &&
                     s->g1_creature_map_chip_materials &&
                     !dm2_v1_g1_creature_map_chip_matches_decoded_material(
                         s->g1_creature_map_chip_materials,
-                        c->creature_type, src_w, src_h,
-                        s->active_asset_palette_hash)) {
-                    dm2_v1_block_source_material(
-                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                    continue;
-                }
-                if (c->source_kind == 2 &&
-                    s->g1_scene_creature_material_ready &&
-                    c->map_x == s->g1_scene_creature_material_map_x &&
-                    c->map_y == s->g1_scene_creature_material_map_y &&
-                    (c->creature_type != s->g1_scene_creature_material_type ||
-                     c->gdat_index != s->g1_scene_creature_material_gdat_index ||
-                     src_w != s->g1_scene_creature_material_width ||
-                     src_h != s->g1_scene_creature_material_height ||
-                     src_stride != s->g1_scene_creature_material_stride ||
-                     s->active_asset_palette_hash !=
-                         s->g1_scene_creature_material_palette_hash)) {
+                        c->creature_type, src_w, src_h)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
                     continue;
@@ -4371,12 +5090,6 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_drawn_count;
-                    if (c->source_kind == 2 &&
-                        s->g1_scene_creature_material_ready &&
-                        c->map_x == s->g1_scene_creature_material_map_x &&
-                        c->map_y == s->g1_scene_creature_material_map_y) {
-                        ++s->g1_scene_creature_material_consumed_count;
-                    }
                     s->last_creature_asset_blit_valid = 1;
                     s->last_creature_asset_render = *c;
                     s->last_creature_asset_blit = blit;
@@ -4390,6 +5103,56 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         /* Count only a rendered source-selected row, not a
                          * parsed table or a speculative creature plan. */
                         ++s->gdat_interface_rect14_consumed_count;
+                    }
+                    if (s->source_materials_required) {
+                        DM2_V1_ViewportCreatureMaterialCommand command;
+
+                        memset(&command, 0, sizeof(command));
+                        command.gdat_category = DM2_GDAT_CATEGORY_CREATURES;
+                        command.creature_type = c->creature_type;
+                        command.field = DM2_GDAT_IMG_MAP_CHIP;
+                        command.gdat_index = c->gdat_index;
+                        command.map_load_token = s->gdat_scene_map_load_token;
+                        command.scene_control_hash = s->gdat_scene_control_hash;
+                        command.palette_hash = s->gdat_interface_palette_hash;
+                        command.indexed_pixels = pixels;
+                        command.palette16 = s->gdat_interface_palette16;
+                        command.palette_stride = 16;
+                        command.width = src_w;
+                        command.height = src_h;
+                        command.stride = src_stride > 0 ? src_stride : src_w;
+                        command.transparent_color = blit.transparent_color;
+                        command.colorkey_palette_index =
+                            command.transparent_color >= 0 &&
+                            command.transparent_color < 16
+                                ? command.palette16[command.transparent_color]
+                                : 0u;
+                        command.source_rect = (DM2_V1_ViewportRect){
+                            blit.frame_x, blit.frame_y,
+                            blit.frame_w, blit.frame_h };
+                        command.destination_rect = blit.dst_rect;
+                        command.valid = s->last_scene_control_presentation_command.valid &&
+                            command.map_load_token != 0u &&
+                            command.scene_control_hash != 0u &&
+                            command.palette_hash != 0u && command.indexed_pixels &&
+                            command.palette16 && command.palette_stride == 16 &&
+                            command.width > 0 && command.height > 0 &&
+                            command.stride >= command.width &&
+                            command.transparent_color >= 0 &&
+                            command.transparent_color < 16 &&
+                            command.colorkey_palette_index ==
+                                command.palette16[command.transparent_color] &&
+                            command.source_rect.w > 0 && command.source_rect.h > 0 &&
+                            command.source_rect.x + command.source_rect.w <=
+                                command.width &&
+                            command.source_rect.y + command.source_rect.h <=
+                                command.height;
+                        if (command.valid) {
+                            s->last_creature_presentation_command = command;
+                        } else {
+                            dm2_v1_block_source_material(
+                                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
+                        }
                     }
                 }
             }
@@ -4475,9 +5238,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (it->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, it->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
                 if (dm2_v1_viewport_item_asset_blit(it,
@@ -4512,6 +5274,61 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                     s->last_item_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
                     drawn_asset = 1;
+                    if (s->source_materials_required) {
+                        DM2_V1_ViewportItemMaterialCommand command;
+
+                        /* skproject SkWinCore.cpp DRAW_ITEM routes a record's
+                         * cls1/cls2 map chip through DRAW_CHIP_OF_MAGIC_MAP. */
+                        memset(&command, 0, sizeof(command));
+                        command.gdat_category = (uint8_t)it->item_category;
+                        command.item_type = (uint8_t)it->item_type;
+                        command.field = DM2_GDAT_IMG_MAP_CHIP;
+                        command.gdat_index = it->gdat_index;
+                        command.map_load_token = s->gdat_scene_map_load_token;
+                        command.scene_control_hash = s->gdat_scene_control_hash;
+                        command.palette_hash = s->gdat_interface_palette_hash;
+                        command.indexed_pixels = pixels;
+                        command.palette16 = s->gdat_interface_palette16;
+                        command.palette_stride = 16;
+                        command.width = src_w;
+                        command.height = src_h;
+                        command.stride = src_stride > 0 ? src_stride : src_w;
+                        command.transparent_color = blit.transparent_color;
+                        command.colorkey_palette_index =
+                            command.transparent_color >= 0 &&
+                            command.transparent_color < 16
+                                ? command.palette16[command.transparent_color]
+                                : 0u;
+                        command.source_rect = (DM2_V1_ViewportRect){
+                            blit.frame_x, blit.frame_y,
+                            blit.frame_w, blit.frame_h };
+                        command.destination_rect = blit.dst_rect;
+                        command.valid =
+                            s->last_scene_control_presentation_command.valid &&
+                            command.map_load_token != 0u &&
+                            command.scene_control_hash != 0u &&
+                            command.palette_hash != 0u &&
+                            command.indexed_pixels && command.palette16 &&
+                            command.palette_stride == 16 && command.width > 0 &&
+                            command.height > 0 &&
+                            command.stride >= command.width &&
+                            command.transparent_color >= 0 &&
+                            command.transparent_color < 16 &&
+                            command.colorkey_palette_index ==
+                                command.palette16[command.transparent_color] &&
+                            command.source_rect.w > 0 &&
+                            command.source_rect.h > 0 &&
+                            command.source_rect.x + command.source_rect.w <=
+                                command.width &&
+                            command.source_rect.y + command.source_rect.h <=
+                                command.height;
+                        if (command.valid) {
+                            s->last_item_presentation_command = command;
+                        } else {
+                            dm2_v1_block_source_material(
+                                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
+                        }
+                    }
                 }
             }
         }
@@ -4577,9 +5394,8 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (it->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, it->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
                 if (dm2_v1_viewport_item_asset_blit(it,
@@ -4682,9 +5498,8 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
         int src_h = 0;
         int src_stride = 0;
         if (it->gdat_index != 0 &&
-            dm2_v1_fetch_viewport_local_material(
-                s, it->gdat_index, &pixels, &src_w, &src_h,
-                &src_stride) == 0 &&
+            dm2_v1_fetch_viewport_asset(s, it->gdat_index, &pixels,
+                                        &src_w, &src_h, &src_stride) == 0 &&
             pixels && src_w > 0 && src_h > 0) {
             DM2_V1_ItemAssetBlit blit;
             if (dm2_v1_viewport_item_asset_blit(it,
@@ -4785,9 +5600,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (p->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, p->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+                dm2_v1_fetch_viewport_asset(s, p->gdat_index, &pixels,
+                                            &src_w, &src_h, &src_stride) == 0 &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ProjectileAssetBlit blit;
                 if (dm2_v1_viewport_projectile_asset_blit(
@@ -4853,74 +5667,11 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
 
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 {
-    const DM2_V1_WeatherRendererReceipt *receipt;
-    const uint8_t *pixels[2] = { NULL, NULL };
-    int widths[2] = { 0, 0 };
-    int heights[2] = { 0, 0 };
-    int strides[2] = { 0, 0 };
-    unsigned int i;
-
-    if (!s || !s->is_outdoor || !s->gdat_weather_renderer_receipt) return;
-    receipt = s->gdat_weather_renderer_receipt;
-    if (receipt->command_count == 0u) return;
-
-    /* skproject c_weather.cpp:221-266 fills cloud then rain slots; each is
-     * realized through c_querydb.cpp DM2_QUERY_TEMP_PICST:2381. Preflight
-     * the complete source transaction so a later missing ENVIRONMENT image
-     * cannot leave an earlier cloud layer on the frame. */
-    for (i = 0u; i < receipt->command_count; ++i) {
-        const DM2_V1_WeatherDrawPlan *draw = &receipt->draws[i];
-        const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
-        int gdat_index;
-        if (!draw->valid || !clip->valid || draw->material_hash == 0u ||
-            draw->image_field < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
-            draw->image_field > DM2_V1_WEATHER_RAIN_STORM_CMD ||
-            draw->source_right <= draw->source_left ||
-            draw->source_bottom <= draw->source_top ||
-            draw->scale_x == 0u || draw->scale_x > 0x40u ||
-            draw->scale_y == 0u || draw->scale_y > 0x40u ||
-            clip->w <= 0 || clip->h <= 0 ||
-            dm2_v1_viewport_calc_stretched_size(clip->w, draw->scale_x) <= 0 ||
-            dm2_v1_viewport_calc_stretched_size(clip->h, draw->scale_y) <= 0) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
-            return;
-        }
-        gdat_index = dm2_v1_viewport_weather_environment_graphic_index(
-            s->gdat_weather_renderer_graphicsset, draw->image_field);
-        if (gdat_index == 0 || dm2_v1_fetch_viewport_local_material(
-                s, gdat_index, &pixels[i], &widths[i], &heights[i],
-                &strides[i]) != 0 || !pixels[i] ||
-            widths[i] != draw->source_right - draw->source_left ||
-            heights[i] != draw->source_bottom - draw->source_top ||
-            strides[i] < widths[i]) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
-            return;
-        }
-    }
-    for (i = 0u; i < receipt->command_count; ++i) {
-        const DM2_V1_WeatherDrawPlan *draw = &receipt->draws[i];
-        const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
-        int dst_w = dm2_v1_viewport_calc_stretched_size(
-            clip->w, draw->scale_x);
-        int dst_h = dm2_v1_viewport_calc_stretched_size(
-            clip->h, draw->scale_y);
-
-        /* skproject c_bkgrnd.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT passes
-         * the source slot's offset, stretch and FW-selected mirror through
-         * DRAW_TEMP_PICST.  The receipt has already bound its original CD
-         * clip and IMG3 bounds; consume those exact transform values here
-         * instead of silently treating every layer as an unmirrored 1:1 blit.
-         */
-        dm2_v1_blit_scaled_material_bitmap_region_ex(
-            s, s->framebuffer, s->fb_stride,
-            clip->x + draw->draw_offset_x, clip->y + draw->draw_offset_y,
-            dst_w, dst_h, pixels[i], 0, 0, widths[i], heights[i], strides[i],
-            DM2_COLOR_TRANSPARENT, draw->mirror_flip ? 1 : 0,
-            &s->gdat_scene_weather_consumed_count);
-        ++s->asset_weather_drawn_count;
-    }
+    /* skproject's weather pass is a source-material blitline route. The
+     * GRAPHICSSET words only select/control it; they are not pixels. Until a
+     * source-backed weather image address is proven, do not fabricate rain,
+     * fog, or lightning over a real GDAT material frame. */
+    (void)s;
 }
 
 /* ── UI Chrome ────────────────────────────────────────────────────── */
@@ -4949,15 +5700,62 @@ static uint8_t dm2_v1_hud_palette_color(DM2_V1_ViewportState *s,
     return s->gdat_interface_palette16[logical_color];
 }
 
-static uint8_t dm2_v1_hud_text_palette_color(DM2_V1_ViewportState *s,
-                                             uint8_t logical_color)
+static int dm2_v1_blit_hud_presentation_command(
+    uint8_t *dst,
+    int dst_stride,
+    const DM2_V1_ViewportHudPresentationCommand *command,
+    int *consumed_count)
 {
-    if (!s || logical_color >= 16u) return logical_color;
-    if (s->gdat_interface_text_palette_ready) {
-        ++s->gdat_interface_action_palette_consumed_count;
-        return s->gdat_interface_text_palette16[logical_color];
+    const DM2_V1_ViewportHudMaterialRequest *material;
+
+    if (!dst || !command || !command->valid || !command->indexed_pixels ||
+        !command->palette16 || dst_stride <= 0) {
+        return 0;
     }
-    return dm2_v1_hud_palette_color(s, logical_color);
+    material = &command->material;
+    if (!material->valid || material->indexed_pixels != command->indexed_pixels ||
+        material->palette16 != command->palette16 ||
+        material->palette_hash == 0u || material->palette_entry_count != 16 ||
+        material->width <= 0 || material->height <= 0 ||
+        material->stride < material->width ||
+        material->transparent_color != command->transparent_color ||
+        material->transparent_color < 0 || material->transparent_color > 255 ||
+        material->colorkey_palette_index !=
+            command->palette16[material->transparent_color] ||
+        command->source_rect.x != material->source_rect.x ||
+        command->source_rect.y != material->source_rect.y ||
+        command->source_rect.w != material->source_rect.w ||
+        command->source_rect.h != material->source_rect.h ||
+        command->destination_rect.x != material->destination_rect.x ||
+        command->destination_rect.y != material->destination_rect.y ||
+        command->destination_rect.w != material->destination_rect.w ||
+        command->destination_rect.h != material->destination_rect.h ||
+        command->source_rect.x < 0 || command->source_rect.y < 0 ||
+        command->source_rect.w <= 0 || command->source_rect.h <= 0 ||
+        command->source_rect.x + command->source_rect.w > material->width ||
+        command->source_rect.y + command->source_rect.h > material->height ||
+        command->destination_rect.w <= 0 || command->destination_rect.h <= 0) {
+        return 0;
+    }
+    for (int y = 0; y < command->destination_rect.h; ++y) {
+        int fy = command->destination_rect.y + y;
+        int sy = command->source_rect.y +
+            (y * command->source_rect.h) / command->destination_rect.h;
+        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        for (int x = 0; x < command->destination_rect.w; ++x) {
+            int fx = command->destination_rect.x + x;
+            int sx = command->source_rect.x +
+                (x * command->source_rect.w) / command->destination_rect.w;
+            uint8_t pixel;
+            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            pixel = command->indexed_pixels[sy * material->stride + sx];
+            if (pixel == (uint8_t)command->transparent_color) continue;
+            dst[fy * dst_stride + fx] = pixel < 16u
+                ? command->palette16[pixel] : pixel;
+            if (pixel < 16u && consumed_count) ++*consumed_count;
+        }
+    }
+    return 1;
 }
 
 static int dm2_v1_render_hud_source_font(
@@ -4988,8 +5786,8 @@ static int dm2_v1_render_hud_source_font(
                     rect->x + glyph * 3 + column, rect->y + row, 1, 1
                 };
                 uint8_t color = (bits & (0x10u >> (column * 2)))
-                    ? dm2_v1_hud_text_palette_color(s, foreground)
-                    : dm2_v1_hud_text_palette_color(s, background);
+                    ? dm2_v1_hud_palette_color(s, foreground)
+                    : dm2_v1_hud_palette_color(s, background);
                 dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel, color);
             }
         }
@@ -5007,8 +5805,12 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     int w = 0;
     int h = 0;
     int stride = 0;
+    int hud_request_field = -1;
     if (!s || !s->framebuffer || !rect || rect->w <= 0 || rect->h <= 0 ||
         gdat_index == 0 ||
+        (s->source_materials_required &&
+         (!s->gdat_interface_palette_ready ||
+          s->gdat_interface_palette_hash == 0u)) ||
         dm2_v1_fetch_viewport_asset(s,
                                     gdat_index,
                                     &pixels,
@@ -5018,24 +5820,82 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         !pixels || w <= 0 || h <= 0) {
         return 0;
     }
-    dm2_v1_blit_scaled_material_bitmap(s,
-                              s->framebuffer,
-                              s->fb_stride,
-                              rect->x,
-                              rect->y,
-                              rect->w,
-                              rect->h,
-                              pixels,
-                              w,
-                              h,
-                              stride > 0 ? stride : w,
-                              DM2_COLOR_TRANSPARENT,
-                              /* skproject LOAD_GDAT_INTERFACE_00_02
-                               * initializes the INTERFACE_GENERAL palette
-                               * used by these chrome images.  Keep its
-                               * consumption distinct from map-chip sprite
-                               * palettes in the frame ownership receipt. */
-                              &s->gdat_interface_palette_consumed_count);
+    if (s->source_materials_required &&
+        gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR)) {
+        hud_request_field = DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR;
+    } else if (s->source_materials_required &&
+               gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+                   DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL)) {
+        hud_request_field = DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL;
+    }
+    if (hud_request_field >= 0) {
+        DM2_V1_ViewportHudMaterialRequest request;
+        DM2_V1_ViewportHudPresentationCommand command;
+
+        memset(&request, 0, sizeof(request));
+        request.gdat_index = gdat_index;
+        request.field = (uint8_t)hud_request_field;
+        request.indexed_pixels = pixels;
+        request.palette16 = s->gdat_interface_palette16;
+        request.palette_hash = s->gdat_interface_palette_hash;
+        request.palette_entry_count = 16;
+        request.width = w;
+        request.height = h;
+        request.stride = stride > 0 ? stride : w;
+        request.transparent_color = DM2_COLOR_TRANSPARENT;
+        request.colorkey_palette_index =
+            request.palette16[request.transparent_color];
+        request.source_rect = (DM2_V1_ViewportRect){ 0, 0, w, h };
+        request.destination_rect = *rect;
+        request.valid = request.palette_hash != 0u && request.width > 0 &&
+            request.height > 0 && request.stride >= request.width;
+        memset(&command, 0, sizeof(command));
+        command.material = request;
+        command.indexed_pixels = request.indexed_pixels;
+        command.palette16 = request.palette16;
+        command.transparent_color = request.transparent_color;
+        command.source_rect = request.source_rect;
+        command.destination_rect = request.destination_rect;
+        command.valid = request.valid && command.indexed_pixels &&
+            command.palette16 && command.transparent_color >= 0 &&
+            command.transparent_color < request.palette_entry_count &&
+            request.colorkey_palette_index ==
+                command.palette16[command.transparent_color];
+        if (!dm2_v1_blit_hud_presentation_command(
+                s->framebuffer, s->fb_stride, &command,
+                &s->gdat_interface_palette_consumed_count)) {
+            return 0;
+        }
+        if (hud_request_field == DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) {
+            s->last_hud_top_bar_material_request = request;
+            s->last_hud_top_bar_presentation_command = command;
+        } else {
+            /* skproject DRAW_CHAMPION_PICTURE enters through the static
+             * INTERFACE_GENERAL status-panel before champion imagery. */
+            s->last_hud_status_panel_material_request = request;
+            s->last_hud_status_panel_presentation_command = command;
+        }
+    } else {
+        dm2_v1_blit_scaled_material_bitmap(s,
+                                  s->framebuffer,
+                                  s->fb_stride,
+                                  rect->x,
+                                  rect->y,
+                                  rect->w,
+                                  rect->h,
+                                  pixels,
+                                  w,
+                                  h,
+                                  stride > 0 ? stride : w,
+                                  DM2_COLOR_TRANSPARENT,
+                                  /* skproject LOAD_GDAT_INTERFACE_00_02
+                                   * initializes the INTERFACE_GENERAL palette
+                                   * used by these chrome images.  Keep its
+                                   * consumption distinct from map-chip sprite
+                                   * palettes in the frame ownership receipt. */
+                                  &s->gdat_interface_palette_consumed_count);
+    }
     /* skproject binds dtPalIRGB/dtPalette16 before selecting the chrome
      * bitmap.  Count that source palette binding even if this particular
      * image contains no logical index below 16 (where the pixel loop above
@@ -5053,10 +5913,107 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     return 1;
 }
 
+/* ReDMCSB/skproject SKWINSPX/src/v4/skguidrw.cpp DRAW_HAND_ACTION_ICONS
+ * (0x29EE:026C) selects INTERFACE_GENERAL/4 entry
+ * (possession<<1)+side+2 and expands the matching 0x46/0x4a rectangle
+ * before DRAW_ICON_PICT_ENTRY. The source receipt supplies that rectangle;
+ * do not replace it with Firestaff strip geometry. */
+static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
+{
+    const DM2_V1_HudHandActionSource *source;
+    DM2_V1_ViewportHudMaterialRequest request;
+    DM2_V1_ViewportHudPresentationCommand command;
+    const uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int gdat_index;
+
+    if (!s || !s->framebuffer) return 0;
+    source = &s->hud_hand_action_source;
+    if (!source->valid || !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u || !s->hud_party_valid ||
+        source->player_index >= (uint8_t)s->hud_party.champion_count ||
+        !s->hud_party.champions[source->player_index].occupied ||
+        source->map_load_token != s->gdat_scene_map_load_token ||
+        source->scene_control_hash != s->gdat_scene_control_hash ||
+        source->palette_hash != s->gdat_interface_palette_hash ||
+        !s->gdat_static_scene_record.valid ||
+        s->gdat_static_scene_record.map_load_token != source->map_load_token ||
+        s->gdat_static_scene_record.scene_control_hash !=
+            source->scene_control_hash || !s->gdat_static_light_control_owned ||
+        s->gdat_static_light_map_load_token != source->map_load_token ||
+        s->gdat_static_light_scene_control_hash !=
+            source->scene_control_hash) {
+        return 0;
+    }
+    gdat_index = dm2_v1_viewport_hud_hand_action_graphic_index(
+        source->possession_index, source->left_or_right);
+    if (gdat_index == 0 ||
+        dm2_v1_fetch_viewport_asset(s, gdat_index, &pixels, &width, &height,
+                                    &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width) {
+        return 0;
+    }
+    memset(&request, 0, sizeof(request));
+    request.gdat_index = gdat_index;
+    request.gdat_category = source->gdat_category;
+    request.gdat_subcategory = source->gdat_subcategory;
+    request.gdat_entry = source->gdat_entry;
+    request.field = source->gdat_entry;
+    request.indexed_pixels = pixels;
+    request.palette16 = s->gdat_interface_palette16;
+    request.palette_hash = s->gdat_interface_palette_hash;
+    request.palette_entry_count = 16;
+    request.width = width;
+    request.height = height;
+    request.stride = stride;
+    request.transparent_color = DM2_COLOR_TRANSPARENT;
+    request.colorkey_palette_index =
+        request.palette16[request.transparent_color];
+    request.source_rect = (DM2_V1_ViewportRect){ 0, 0, width, height };
+    request.destination_rect = source->destination_rect;
+    request.valid = request.width > 0 && request.height > 0 &&
+        request.stride >= request.width && request.palette_hash != 0u &&
+        request.destination_rect.w > 0 && request.destination_rect.h > 0;
+    memset(&command, 0, sizeof(command));
+    command.material = request;
+    command.indexed_pixels = request.indexed_pixels;
+    command.palette16 = request.palette16;
+    command.transparent_color = request.transparent_color;
+    command.source_rect = request.source_rect;
+    command.destination_rect = request.destination_rect;
+    command.valid = request.valid && command.indexed_pixels &&
+        command.palette16 && command.transparent_color >= 0 &&
+        command.transparent_color < request.palette_entry_count &&
+        request.colorkey_palette_index ==
+            command.palette16[command.transparent_color];
+    if (!dm2_v1_blit_hud_presentation_command(
+            s->framebuffer, s->fb_stride, &command,
+            &s->gdat_interface_palette_consumed_count)) {
+        return 0;
+    }
+    s->last_hud_hand_action_material_request = request;
+    s->last_hud_hand_action_presentation_command = command;
+    return 1;
+}
+
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
     if (!s || !s->framebuffer) return;
+    memset(&s->last_hud_top_bar_material_request, 0,
+           sizeof(s->last_hud_top_bar_material_request));
+    memset(&s->last_hud_top_bar_presentation_command, 0,
+           sizeof(s->last_hud_top_bar_presentation_command));
+    memset(&s->last_hud_status_panel_material_request, 0,
+           sizeof(s->last_hud_status_panel_material_request));
+    memset(&s->last_hud_status_panel_presentation_command, 0,
+           sizeof(s->last_hud_status_panel_presentation_command));
+    memset(&s->last_hud_hand_action_material_request, 0,
+           sizeof(s->last_hud_hand_action_material_request));
+    memset(&s->last_hud_hand_action_presentation_command, 0,
+           sizeof(s->last_hud_hand_action_presentation_command));
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
 
@@ -5177,7 +6134,6 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             }
         }
     }
-
     if (!plan.outdoor) {
         if (!s->source_materials_required) {
             dm2_v1_fill_rect(vp, stride, &plan.portrait_separator_dark_rect,
@@ -5208,6 +6164,13 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                      s, plan.champion_slots[slot].fill_color));
             }
             if (plan.champion_slots[slot].occupied) {
+                int source_state_bound =
+                    !s->source_materials_required ||
+                    (plan.champion_slots[slot].state_source_bound &&
+                     s->gdat_interface_hud_layout &&
+                     s->gdat_interface_palette_ready &&
+                     s->gdat_interface_font_rows &&
+                     s->gdat_interface_font_hash != 0u);
                 const uint8_t *portrait_pixels = NULL;
                 int portrait_w = 0;
                 int portrait_h = 0;
@@ -5224,9 +6187,12 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
                 } else if (portrait_gdat != 0 &&
-                    dm2_v1_fetch_viewport_local_material(
-                        s, portrait_gdat, &portrait_pixels, &portrait_w,
-                        &portrait_h, &portrait_stride) == 0 &&
+                    dm2_v1_fetch_viewport_asset(s,
+                                                portrait_gdat,
+                                                &portrait_pixels,
+                                                &portrait_w,
+                                                &portrait_h,
+                                                &portrait_stride) == 0 &&
                     portrait_pixels && portrait_w > 0 && portrait_h > 0 &&
                     portrait_stride >= portrait_w) {
                     dm2_v1_blit_scaled_material_bitmap(s,
@@ -5256,6 +6222,16 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                          plan.champion_slots[slot].portrait_fill_color);
                         ++s->fallback_hud_portrait_drawn_count;
                     }
+                }
+                if (!source_state_bound) {
+                    /* skproject DRAW_CHAMPION_PICTURE and
+                     * DRAW_PLAYER_3STAT_HEALTH_BAR consume
+                     * glbChampionSquad fields. Firestaff's session snapshot
+                     * is not original-save provenance, so it cannot paint
+                     * source-coloured names, bars, or leader state. */
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                    continue;
                 }
                 if (!dm2_v1_render_hud_source_font(
                         s, &plan.champion_slots[slot].name_marker_rect,
@@ -5300,10 +6276,98 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 }
             }
         }
+        /* skproject DRAW_HAND_ACTION_ICONS follows the static interface
+         * material path. Keep the hand command after the top-bar and
+         * champion/status-panel receipts in this bounded stage-11 pass. */
+        if (s->hud_hand_action_source.valid &&
+            !dm2_v1_render_hud_hand_action_asset(s) &&
+            s->source_materials_required) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        }
     }
 }
 
+/* skproject/SKWIN/SkWinCore.cpp CHECK_RECOMPUTE_LIGHT (30416-30439) binds
+ * map-local GRAPHICSSET light before later dungeon draws, including
+ * DRAW_DOOR_FRAMES. Keep the composition gate token- and hash-bound. */
+static int dm2_v1_viewport_frame_light_palette_owned(
+    const DM2_V1_ViewportState *s)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+
+    if (!s || !s->gdat_scene_control_ready ||
+        s->gdat_scene_map_load_token == 0u ||
+        s->gdat_scene_control_hash == 0u ||
+        !s->gdat_interface_palette_ready ||
+        s->gdat_interface_palette_hash == 0u) {
+        return 0;
+    }
+    scene = &s->gdat_static_scene_record;
+    return scene->valid &&
+        scene->map_load_token == s->gdat_scene_map_load_token &&
+        scene->scene_control_hash == s->gdat_scene_control_hash &&
+        s->gdat_static_light_control_owned &&
+        s->gdat_static_light_map_load_token == s->gdat_scene_map_load_token &&
+        s->gdat_static_light_scene_control_hash ==
+            s->gdat_scene_control_hash;
+}
+
+static int dm2_v1_viewport_scene_control_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportSceneControlCommand *out_command)
+{
+    const DM2_V1_GraphicsSetStaticSceneReceipt *scene;
+
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->source_materials_required ||
+        !dm2_v1_viewport_frame_light_palette_owned(s) ||
+        s->gdat_scene_colorkey > 15u ||
+        !s->gdat_static_ambient_darkness_control_owned ||
+        s->gdat_static_ambient_darkness_map_load_token !=
+            s->gdat_scene_map_load_token ||
+        s->gdat_static_ambient_darkness_scene_control_hash !=
+            s->gdat_scene_control_hash ||
+        !s->gdat_static_scene_colorkey_control_owned ||
+        s->gdat_static_scene_colorkey_map_load_token !=
+            s->gdat_scene_map_load_token ||
+        s->gdat_static_scene_colorkey_scene_control_hash !=
+            s->gdat_scene_control_hash) {
+        return 0;
+    }
+    scene = &s->gdat_static_scene_record;
+    if (!scene->valid || scene->map_load_token != s->gdat_scene_map_load_token ||
+        scene->scene_control_hash != s->gdat_scene_control_hash ||
+        scene->graphicsset != (uint8_t)s->gdat_scene_material_index ||
+        scene->material_category != DM2_GDAT_CATEGORY_GRAPHICSSET ||
+        scene->ambient_darkness != s->gdat_ambient_darkness) {
+        return 0;
+    }
+    out_command->gdat_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    out_command->graphicsset = scene->graphicsset;
+    out_command->field = DM2_GDAT_GFXSET_AMBIANT_DARKNESS;
+    out_command->map_load_token = s->gdat_scene_map_load_token;
+    out_command->scene_control_hash = s->gdat_scene_control_hash;
+    out_command->palette_hash = s->gdat_interface_palette_hash;
+    out_command->scene_colorkey = s->gdat_scene_colorkey;
+    out_command->colorkey_palette_index =
+        s->gdat_interface_palette16[out_command->scene_colorkey];
+    out_command->ambient_darkness = s->gdat_ambient_darkness;
+    out_command->light_floor = s->gdat_scene_light_floor;
+    out_command->walk_path_depth = s->gdat_scene_light_search_depth;
+    out_command->light_check_enabled = s->gdat_scene_light_recompute_enabled;
+    out_command->valid = out_command->palette_hash != 0u &&
+        out_command->colorkey_palette_index ==
+            s->gdat_interface_palette16[out_command->scene_colorkey];
+    return out_command->valid;
+}
+
 /* ── Main render entry ─────────────────────────────────────────────── */
+
+static int dm2_v1_viewport_build_m11_frame_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportM11FrameReceipt *out_receipt);
 
 void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
 {
@@ -5326,6 +6390,46 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_door_frame_drawn_count = 0;
     s->asset_door_button_drawn_count = 0;
     s->fallback_door_drawn_count = 0;
+    memset(&s->last_original_material_gate, 0,
+           sizeof(s->last_original_material_gate));
+    memset(&s->last_original_door_surface_request, 0,
+           sizeof(s->last_original_door_surface_request));
+    memset(&s->last_original_door_surface_binding, 0,
+           sizeof(s->last_original_door_surface_binding));
+    memset(&s->last_original_door_opening_frame_request, 0,
+           sizeof(s->last_original_door_opening_frame_request));
+    memset(&s->last_original_door_presentation_command, 0,
+           sizeof(s->last_original_door_presentation_command));
+    memset(&s->last_hud_top_bar_material_request, 0,
+           sizeof(s->last_hud_top_bar_material_request));
+    memset(&s->last_hud_top_bar_presentation_command, 0,
+           sizeof(s->last_hud_top_bar_presentation_command));
+    memset(&s->last_hud_status_panel_material_request, 0,
+           sizeof(s->last_hud_status_panel_material_request));
+    memset(&s->last_hud_status_panel_presentation_command, 0,
+           sizeof(s->last_hud_status_panel_presentation_command));
+    memset(&s->last_hud_hand_action_material_request, 0,
+           sizeof(s->last_hud_hand_action_material_request));
+    memset(&s->last_hud_hand_action_presentation_command, 0,
+           sizeof(s->last_hud_hand_action_presentation_command));
+    memset(&s->last_dungeon_floor_presentation_command, 0,
+           sizeof(s->last_dungeon_floor_presentation_command));
+    memset(&s->last_dungeon_ceiling_presentation_command, 0,
+           sizeof(s->last_dungeon_ceiling_presentation_command));
+    memset(&s->last_dungeon_wall_presentation_command, 0,
+           sizeof(s->last_dungeon_wall_presentation_command));
+    s->last_dungeon_wall_material_required_mask = 0u;
+    s->last_dungeon_wall_material_consumed_mask = 0u;
+    memset(&s->last_scene_control_presentation_command, 0,
+           sizeof(s->last_scene_control_presentation_command));
+    memset(&s->last_creature_presentation_command, 0,
+           sizeof(s->last_creature_presentation_command));
+    memset(&s->last_item_presentation_command, 0,
+           sizeof(s->last_item_presentation_command));
+    memset(&s->last_frame_composition, 0,
+           sizeof(s->last_frame_composition));
+    memset(&s->last_m11_frame_receipt, 0,
+           sizeof(s->last_m11_frame_receipt));
     s->asset_creature_drawn_count = 0;
     s->fallback_creature_drawn_count = 0;
     s->asset_item_drawn_count = 0;
@@ -5358,7 +6462,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_hud_core_drawn_count = 0;
     s->fallback_hud_core_drawn_count = 0;
     s->gdat_interface_palette_consumed_count = 0;
-    s->gdat_interface_action_palette_consumed_count = 0;
     s->gdat_interface_font_consumed_count = 0;
     s->gdat_material_palette_floor_ceiling_consumed_count = 0;
     s->gdat_material_palette_wall_consumed_count = 0;
@@ -5367,9 +6470,42 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->gdat_scene_material_consumed_count = 0;
     s->gdat_scene_weather_consumed_count = 0;
     s->gdat_sprite_palette_consumed_count = 0;
-    s->gdat_local_palette_consumed_count = 0;
-    s->last_outdoor_scene_material_required_mask = 0u;
-    s->last_outdoor_scene_material_consumed_mask = 0u;
+    if (s->gdat_scene_control_ready) {
+        /* skproject/SKWIN/SkWinCore.cpp CHECK_RECOMPUTE_LIGHT (30416-30439)
+         * binds GRAPHICSSET darkness to the active map before viewport work.
+         * Preserve the original level scale and bounded walk-path depth here;
+         * actual palette selection remains blocked until its source table is
+         * decoded rather than inventing a screen-darkening overlay. */
+        dm2_v1_viewport_scene_light_control(
+            s->gdat_highest_light_level,
+            s->gdat_ambient_darkness,
+            &s->gdat_scene_light_floor,
+            &s->gdat_scene_light_search_depth,
+            &s->gdat_scene_light_recompute_enabled);
+        if (s->gdat_ambient_light != 0u ||
+            s->gdat_scene_light_floor != 0u ||
+            s->gdat_scene_light_search_depth != 0u) {
+            ++s->gdat_scene_light_consumed_count;
+        }
+    }
+    s->last_frame_composition.indoor_viewport = !s->is_outdoor;
+    s->last_frame_composition.scene_record_owned =
+        s->gdat_static_scene_record.valid &&
+        s->gdat_static_scene_record.map_load_token ==
+            s->gdat_scene_map_load_token &&
+        s->gdat_static_scene_record.scene_control_hash ==
+            s->gdat_scene_control_hash;
+    s->last_frame_composition.scene_light_owned =
+        dm2_v1_viewport_frame_light_palette_owned(s);
+    s->last_frame_composition.palette_owned =
+        s->gdat_interface_palette_ready &&
+        s->gdat_interface_palette_hash != 0u;
+    s->last_frame_composition.map_load_token = s->gdat_scene_map_load_token;
+    s->last_frame_composition.scene_control_hash = s->gdat_scene_control_hash;
+    s->last_frame_composition.palette_hash = s->gdat_interface_palette_hash;
+    s->last_frame_composition.light_floor = s->gdat_scene_light_floor;
+    s->last_frame_composition.light_search_depth =
+        s->gdat_scene_light_search_depth;
     s->last_hud_core_gdat_hash = 2166136261u;
     s->last_hud_core_pixel_count = 0u;
     s->asset_hud_portrait_drawn_count = 0;
@@ -5382,19 +6518,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
      * Source: SKULL.ASM T560 (dungeon), SKULL.ASM T600 (outdoor) */
 
     if (s->is_outdoor) {
-        typedef struct {
-            const uint8_t *pixels;
-            int width;
-            int height;
-            int stride;
-            uint8_t palette16[16];
-            uint32_t palette_hash;
-            int ready;
-        } DM2_V1_OutdoorSceneMaterial;
-        enum {
-            DM2_OUTDOOR_SCENE_SKY = 1u << 0,
-            DM2_OUTDOOR_SCENE_GROUND = 1u << 1
-        };
         /* DM2 outdoor rendering:
          * Source: SKULL.ASM T600 (outdoor tick, sky and ground draw)
          *         skproject/SKWIN/SkWinCore.cpp GRAPHICSSET material route
@@ -5406,9 +6529,13 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         uint8_t *vp = s->framebuffer;
         int stride = s->fb_stride;
         const uint8_t *sky_pixels = NULL;
+        const uint8_t *ground_pixels = NULL;
         int sky_w = 0;
         int sky_h_src = 0;
         int sky_stride = 0;
+        int ground_w = 0;
+        int ground_h_src = 0;
+        int ground_stride = 0;
         int sky_h = DM2_VP_HEIGHT / 2;
         int sky_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
@@ -5416,76 +6543,23 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int ground_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
-        DM2_V1_OutdoorSceneMaterial sky_material = { 0 };
-        DM2_V1_OutdoorSceneMaterial ground_material = { 0 };
-        int sky_asset;
-        int ground_asset;
-        /* T600 resolves each GRAPHICSSET IMG3 with its own local palette;
-         * source-required outdoor frames must not borrow an interface palette. */
-        if (s->source_materials_required) {
-            int graphicsset_index = 0;
-            int material_field = 0;
+        int sky_asset =
+            dm2_v1_fetch_viewport_asset(s,
+                                        sky_gdat_index,
+                                        &sky_pixels,
+                                        &sky_w,
+                                        &sky_h_src,
+                                        &sky_stride) == 0 &&
+            sky_pixels && sky_w > 0 && sky_h_src > 0;
+        int ground_asset =
+            dm2_v1_fetch_viewport_asset(s,
+                                        ground_gdat_index,
+                                        &ground_pixels,
+                                        &ground_w,
+                                        &ground_h_src,
+                                        &ground_stride) == 0 &&
+            ground_pixels && ground_w > 0 && ground_h_src > 0;
 
-            s->last_outdoor_scene_material_required_mask =
-                DM2_OUTDOOR_SCENE_SKY | DM2_OUTDOOR_SCENE_GROUND;
-            /* skproject T600 resolves both active GRAPHICSSET materials
-             * before it presents the outdoor scene. Cache the real IMG3 plus
-             * local-palette pairs, so a rejected ground cannot leave a sky
-             * rendered through an invented or stale palette. */
-            if (!dm2_v1_viewport_scene_material_graphic_address(
-                    sky_gdat_index, &graphicsset_index, &material_field) ||
-                graphicsset_index != s->gdat_scene_material_index ||
-                material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING ||
-                dm2_v1_fetch_viewport_local_material(
-                    s, sky_gdat_index, &sky_material.pixels,
-                    &sky_material.width, &sky_material.height,
-                    &sky_material.stride) != 0 ||
-                !sky_material.pixels || sky_material.width <= 0 ||
-                sky_material.height <= 0 || !s->active_asset_palette_ready ||
-                s->active_asset_palette_hash == 0u) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-                return;
-            }
-            memcpy(sky_material.palette16, s->active_asset_palette16,
-                   sizeof(sky_material.palette16));
-            sky_material.palette_hash = s->active_asset_palette_hash;
-            sky_material.ready = 1;
-
-            if (!dm2_v1_viewport_scene_material_graphic_address(
-                    ground_gdat_index, &graphicsset_index, &material_field) ||
-                graphicsset_index != s->gdat_scene_material_index ||
-                material_field != DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR ||
-                dm2_v1_fetch_viewport_local_material(
-                    s, ground_gdat_index, &ground_material.pixels,
-                    &ground_material.width, &ground_material.height,
-                    &ground_material.stride) != 0 ||
-                !ground_material.pixels || ground_material.width <= 0 ||
-                ground_material.height <= 0 || !s->active_asset_palette_ready ||
-                s->active_asset_palette_hash == 0u) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-                return;
-            }
-            memcpy(ground_material.palette16, s->active_asset_palette16,
-                   sizeof(ground_material.palette16));
-            ground_material.palette_hash = s->active_asset_palette_hash;
-            ground_material.ready = 1;
-            sky_pixels = sky_material.pixels;
-            sky_w = sky_material.width;
-            sky_h_src = sky_material.height;
-            sky_stride = sky_material.stride;
-            memcpy(s->active_asset_palette16, sky_material.palette16,
-                   sizeof(s->active_asset_palette16));
-            s->active_asset_palette_hash = sky_material.palette_hash;
-            s->active_asset_palette_ready = sky_material.ready;
-            sky_asset = 1;
-        } else {
-            sky_asset = dm2_v1_fetch_viewport_local_material(
-                            s, sky_gdat_index, &sky_pixels, &sky_w,
-                            &sky_h_src, &sky_stride) == 0 &&
-                sky_pixels && sky_w > 0 && sky_h_src > 0;
-        }
         if (sky_asset) {
             dm2_v1_blit_tiled_material_bitmap(
                 s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
@@ -5495,36 +6569,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
             ++s->gdat_scene_material_consumed_count;
-            if (s->source_materials_required) {
-                s->last_outdoor_scene_material_consumed_mask |=
-                    DM2_OUTDOOR_SCENE_SKY;
-            }
-        } else if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-        }
-        /* Keep the ground query after the sky draw for the same reason as
-         * indoor ceiling/floor: its local IMG3 palette must not replace the
-         * palette paired with already-decoded sky pixels. */
-        const uint8_t *ground_pixels = NULL;
-        int ground_w = 0;
-        int ground_h_src = 0;
-        int ground_stride = 0;
-        if (s->source_materials_required) {
-            ground_pixels = ground_material.pixels;
-            ground_w = ground_material.width;
-            ground_h_src = ground_material.height;
-            ground_stride = ground_material.stride;
-            memcpy(s->active_asset_palette16, ground_material.palette16,
-                   sizeof(s->active_asset_palette16));
-            s->active_asset_palette_hash = ground_material.palette_hash;
-            s->active_asset_palette_ready = ground_material.ready;
-            ground_asset = 1;
-        } else {
-            ground_asset = dm2_v1_fetch_viewport_local_material(
-                               s, ground_gdat_index, &ground_pixels,
-                               &ground_w, &ground_h_src, &ground_stride) == 0 &&
-                ground_pixels && ground_w > 0 && ground_h_src > 0;
         }
         if (ground_asset) {
             dm2_v1_blit_tiled_material_bitmap(
@@ -5536,20 +6580,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
             ++s->gdat_scene_material_consumed_count;
-            if (s->source_materials_required) {
-                s->last_outdoor_scene_material_consumed_mask |=
-                    DM2_OUTDOOR_SCENE_GROUND;
-            }
-        } else if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-        }
-        if (s->source_materials_required &&
-            s->last_outdoor_scene_material_required_mask !=
-                s->last_outdoor_scene_material_consumed_mask) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
-            return;
         }
     } else {
         /* DM2 indoor dungeon rendering:
@@ -5561,39 +6591,296 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
 
         /* 2. Floor and ceiling */
         dm2_v1_render_floor_ceiling(s);
+        if (s->source_materials_required &&
+            s->last_dungeon_ceiling_presentation_command.valid) {
+            s->last_frame_composition.dungeon_ceiling_presentation_stage = 1;
+            s->last_frame_composition.dungeon_ceiling_command_consumed = 1;
+            s->last_frame_composition.dungeon_ceiling_command =
+                s->last_dungeon_ceiling_presentation_command;
+        }
+        if (s->source_materials_required &&
+            s->last_dungeon_floor_presentation_command.valid) {
+            s->last_frame_composition.dungeon_floor_presentation_stage = 2;
+            s->last_frame_composition.dungeon_floor_command_consumed = 1;
+            s->last_frame_composition.dungeon_floor_command =
+                s->last_dungeon_floor_presentation_command;
+        }
 
         /* 3. Walls — placeholder pass (real walls need GRAPHICS.DAT) */
         dm2_v1_render_walls(s);
+        if (s->source_materials_required &&
+            s->last_dungeon_wall_presentation_command.valid) {
+            s->last_frame_composition.dungeon_wall_presentation_stage = 3;
+            s->last_frame_composition.dungeon_wall_command_consumed = 1;
+            s->last_frame_composition.dungeon_wall_command =
+                s->last_dungeon_wall_presentation_command;
+            s->last_frame_composition.dungeon_wall_material_required_mask =
+                s->last_dungeon_wall_material_required_mask;
+            s->last_frame_composition.dungeon_wall_material_consumed_mask =
+                s->last_dungeon_wall_material_consumed_mask;
+        }
 
-        /* 4. Doors */
-        dm2_v1_render_doors(s);
+        /* 4. Doors. skproject's map light/palette bind precedes this pass;
+         * a required source door cannot be composed without that ownership. */
+        if (s->source_materials_required &&
+            !s->last_frame_composition.scene_light_owned) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+        } else {
+            dm2_v1_render_doors(s);
+            if (s->source_materials_required &&
+                s->last_original_door_presentation_command.valid) {
+                s->last_frame_composition.door_presentation_stage = 4;
+                s->last_frame_composition.door_command_consumed = 1;
+                s->last_frame_composition.door_command =
+                    s->last_original_door_presentation_command;
+            }
+        }
 
-        /* 5. Floor items */
-        dm2_v1_render_items(s);
+        if (s->source_materials_required) {
+            DM2_V1_ViewportSceneControlCommand command;
+
+            if (dm2_v1_viewport_scene_control_command(s, &command)) {
+                s->last_scene_control_presentation_command = command;
+                s->last_frame_composition.scene_control_presentation_stage = 5;
+                s->last_frame_composition.scene_control_command_consumed = 1;
+                s->last_frame_composition.scene_control_command = command;
+            } else {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_SCENE_CONTROL);
+            }
+        }
 
         /* 6. Creatures */
         dm2_v1_render_creatures(s);
+        if (s->source_materials_required &&
+            s->last_creature_presentation_command.valid) {
+            s->last_frame_composition.creature_presentation_stage = 6;
+            s->last_frame_composition.creature_command_consumed = 1;
+            s->last_frame_composition.creature_command =
+                s->last_creature_presentation_command;
+        }
 
-        /* 7. Creature possession/item overlays */
+        /* 7. Floor objects/items */
+        dm2_v1_render_items(s);
+        if (s->source_materials_required &&
+            s->last_item_presentation_command.valid) {
+            s->last_frame_composition.item_presentation_stage = 7;
+            s->last_frame_composition.item_command_consumed = 1;
+            s->last_frame_composition.item_command =
+                s->last_item_presentation_command;
+        }
+
+        /* 8. Creature possession/item overlays */
         dm2_v1_render_creature_possession_items(s);
 
-        /* 8. Projectiles */
+        /* 9. Projectiles */
         dm2_v1_render_projectiles(s);
     }
 
-    /* 9. Carried leader-hand item overlay */
+    /* Carried leader-hand item overlay */
     dm2_v1_render_carried_item(s);
 
-    /* 10. Weather overlay (applies to both indoor and outdoor) */
+    /* Weather overlay (applies to both indoor and outdoor) */
     dm2_v1_render_weather_overlay(s);
 
-    /* 11. UI chrome (always on top) */
+    /* Stage 11: UI chrome (always on top) */
     dm2_v1_render_ui_chrome(s);
+    if (!s->is_outdoor) {
+        s->last_frame_composition.hud_presentation_stage = 11;
+        if (s->source_materials_required &&
+            s->last_hud_top_bar_material_request.valid) {
+            s->last_frame_composition.hud_top_bar_material_consumed = 1;
+            s->last_frame_composition.hud_top_bar_request =
+                s->last_hud_top_bar_material_request;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_top_bar_presentation_command.valid) {
+            s->last_frame_composition.hud_top_bar_command_consumed = 1;
+            s->last_frame_composition.hud_top_bar_command =
+                s->last_hud_top_bar_presentation_command;
+            s->last_frame_composition.hud_top_bar_order = 1;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_status_panel_material_request.valid) {
+            s->last_frame_composition.hud_status_panel_material_consumed = 1;
+            s->last_frame_composition.hud_status_panel_request =
+                s->last_hud_status_panel_material_request;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_status_panel_presentation_command.valid) {
+            s->last_frame_composition.hud_status_panel_command_consumed = 1;
+            s->last_frame_composition.hud_status_panel_command =
+                s->last_hud_status_panel_presentation_command;
+            s->last_frame_composition.hud_status_panel_order = 2;
+        }
+        if (s->source_materials_required &&
+            s->hud_hand_action_source.valid &&
+            s->last_hud_hand_action_material_request.valid) {
+            s->last_frame_composition.hud_hand_action_command_consumed = 1;
+            s->last_frame_composition.hud_hand_action_request =
+                s->last_hud_hand_action_material_request;
+            s->last_frame_composition.hud_hand_action_order = 3;
+        }
+        if (s->source_materials_required &&
+            s->hud_hand_action_source.valid &&
+            s->last_hud_hand_action_presentation_command.valid) {
+            s->last_frame_composition.hud_hand_action_command =
+                s->last_hud_hand_action_presentation_command;
+        }
+        s->last_frame_composition.valid =
+            !s->source_materials_required ||
+            (s->last_frame_composition.scene_light_owned &&
+             s->last_frame_composition.dungeon_ceiling_command_consumed &&
+             s->last_frame_composition.dungeon_ceiling_command.valid &&
+             s->last_frame_composition.dungeon_ceiling_presentation_stage <
+                 s->last_frame_composition.dungeon_floor_presentation_stage &&
+             s->last_frame_composition.dungeon_floor_command_consumed &&
+             s->last_frame_composition.dungeon_floor_command.valid &&
+             s->last_frame_composition.dungeon_floor_presentation_stage <
+                 s->last_frame_composition.hud_presentation_stage &&
+             s->last_frame_composition.dungeon_wall_command_consumed &&
+             s->last_frame_composition.dungeon_wall_command.valid &&
+             s->last_frame_composition.dungeon_wall_material_required_mask !=
+                 0u &&
+             s->last_frame_composition.dungeon_wall_material_required_mask ==
+                 s->last_frame_composition.dungeon_wall_material_consumed_mask &&
+             s->last_frame_composition.dungeon_floor_presentation_stage <
+                 s->last_frame_composition.dungeon_wall_presentation_stage &&
+             s->last_frame_composition.dungeon_wall_presentation_stage <
+                 s->last_frame_composition.hud_presentation_stage &&
+             s->last_frame_composition.scene_control_command_consumed &&
+             s->last_frame_composition.scene_control_command.valid &&
+             s->last_frame_composition.dungeon_wall_presentation_stage <
+                 s->last_frame_composition.scene_control_presentation_stage &&
+             s->last_frame_composition.scene_control_presentation_stage <
+                 s->last_frame_composition.hud_presentation_stage &&
+             (!s->last_creature_render_valid ||
+              (s->last_frame_composition.creature_command_consumed &&
+               s->last_frame_composition.creature_command.valid &&
+               s->last_frame_composition.scene_control_presentation_stage <
+                   s->last_frame_composition.creature_presentation_stage &&
+               s->last_frame_composition.creature_presentation_stage <
+                   s->last_frame_composition.hud_presentation_stage)) &&
+             (!s->item_count ||
+              (s->last_frame_composition.item_command_consumed &&
+               s->last_frame_composition.item_command.valid &&
+               s->last_frame_composition.creature_presentation_stage <
+                   s->last_frame_composition.item_presentation_stage &&
+               s->last_frame_composition.item_presentation_stage <
+                   s->last_frame_composition.hud_presentation_stage)) &&
+             s->last_frame_composition.hud_top_bar_material_consumed &&
+             s->last_frame_composition.hud_top_bar_command_consumed &&
+             (s->is_outdoor ||
+              (s->last_frame_composition.hud_status_panel_material_consumed &&
+               s->last_frame_composition.hud_status_panel_command_consumed)) &&
+             (!s->hud_hand_action_source.valid ||
+             (s->last_frame_composition.hud_hand_action_command_consumed &&
+               s->last_frame_composition.hud_hand_action_command.valid &&
+               s->last_frame_composition.hud_top_bar_order <
+                   s->last_frame_composition.hud_status_panel_order &&
+                   s->last_frame_composition.hud_status_panel_order <
+                   s->last_frame_composition.hud_hand_action_order)));
+    }
+
+    (void)dm2_v1_viewport_build_m11_frame_receipt(
+        s, &s->last_m11_frame_receipt);
 
     s->dirty = 0;
 }
 
 /* ── GDAT-backed graphic fetch ───────────────────────────────────── */
+
+static int dm2_v1_viewport_build_m11_frame_receipt(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportM11FrameReceipt *out_receipt)
+{
+    const DM2_V1_ViewportFrameCompositionReceipt *c;
+    int door_required = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s) return 0;
+    for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+        if (s->squares[i].flags & DM2_SQF_HAS_DOOR) {
+            door_required = 1;
+            break;
+        }
+    }
+
+    c = &s->last_frame_composition;
+    out_receipt->source_materials_required = s->source_materials_required;
+    out_receipt->map_load_token = c->map_load_token;
+    out_receipt->scene_control_hash = c->scene_control_hash;
+    out_receipt->palette_hash = c->palette_hash;
+    out_receipt->composition = *c;
+
+    /* skproject's indoor draw sequence consumes geometry, door, map chips
+     * and interface GDAT under one active map/palette context. M11 receives
+     * nothing if any requested source route is absent or belongs to another
+     * scene generation. */
+    out_receipt->valid =
+        s->source_materials_required && c->valid && c->indoor_viewport &&
+        c->scene_record_owned &&
+        c->scene_light_owned && c->palette_owned &&
+        c->map_load_token != 0u && c->scene_control_hash != 0u &&
+        c->palette_hash != 0u &&
+        c->dungeon_ceiling_command_consumed &&
+        c->dungeon_ceiling_command.valid &&
+        c->dungeon_ceiling_command.map_load_token == c->map_load_token &&
+        c->dungeon_ceiling_command.scene_control_hash ==
+            c->scene_control_hash &&
+        c->dungeon_ceiling_command.palette_hash == c->palette_hash &&
+        c->dungeon_floor_command_consumed && c->dungeon_floor_command.valid &&
+        c->dungeon_floor_command.map_load_token == c->map_load_token &&
+        c->dungeon_floor_command.scene_control_hash == c->scene_control_hash &&
+        c->dungeon_floor_command.palette_hash == c->palette_hash &&
+        c->dungeon_wall_command_consumed && c->dungeon_wall_command.valid &&
+        c->dungeon_wall_material_required_mask != 0u &&
+        c->dungeon_wall_material_required_mask ==
+            c->dungeon_wall_material_consumed_mask &&
+        c->dungeon_wall_command.map_load_token == c->map_load_token &&
+        c->dungeon_wall_command.scene_control_hash == c->scene_control_hash &&
+        c->dungeon_wall_command.palette_hash == c->palette_hash &&
+        c->scene_control_command_consumed && c->scene_control_command.valid &&
+        c->scene_control_command.map_load_token == c->map_load_token &&
+        c->scene_control_command.scene_control_hash == c->scene_control_hash &&
+        c->scene_control_command.palette_hash == c->palette_hash &&
+        (!door_required ||
+         (c->door_command_consumed && c->door_command.valid &&
+          c->door_command.opening_frame.material.valid &&
+          c->door_command.opening_frame.material.request.map_load_token ==
+              c->map_load_token &&
+          c->door_command.opening_frame.material.request.scene_control_hash ==
+              c->scene_control_hash &&
+          c->door_command.opening_frame.material.request.palette_hash ==
+              c->palette_hash)) &&
+        (!s->creature_count ||
+         (c->creature_command_consumed && c->creature_command.valid &&
+          c->creature_command.map_load_token == c->map_load_token &&
+          c->creature_command.scene_control_hash == c->scene_control_hash &&
+          c->creature_command.palette_hash == c->palette_hash)) &&
+        (!s->item_count ||
+         (c->item_command_consumed && c->item_command.valid &&
+          c->item_command.map_load_token == c->map_load_token &&
+          c->item_command.scene_control_hash == c->scene_control_hash &&
+          c->item_command.palette_hash == c->palette_hash)) &&
+        c->hud_top_bar_material_consumed && c->hud_top_bar_request.valid &&
+        c->hud_top_bar_request.palette_hash == c->palette_hash &&
+        c->hud_top_bar_command_consumed && c->hud_top_bar_command.valid &&
+        c->hud_status_panel_material_consumed &&
+        c->hud_status_panel_request.valid &&
+        c->hud_status_panel_request.palette_hash == c->palette_hash &&
+        c->hud_status_panel_command_consumed &&
+        c->hud_status_panel_command.valid &&
+        (!s->hud_hand_action_source.valid ||
+         (c->hud_hand_action_command_consumed &&
+          c->hud_hand_action_request.valid &&
+          c->hud_hand_action_request.palette_hash == c->palette_hash &&
+          c->hud_hand_action_command.valid));
+    out_receipt->m11_consume_frame = out_receipt->valid;
+    return out_receipt->valid;
+}
 
 int dm2_v1_gfx_fetch(int gdat_index,
                      const uint8_t **out_pixels,

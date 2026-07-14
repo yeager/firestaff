@@ -51,34 +51,35 @@ static const unsigned char kObjectAspectFirstNative[85] = {
     17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
     33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
     49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
-    65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-    81, 82, 83, 84, 85
+    65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82,
+    84, 85, 86, 87, 88
 };
 
 int dm1_item_aspect_index(int thingType, int subtype) {
     int objectInfoIndex;
+    if (subtype < 0) subtype = 0;
     switch (thingType) {
         case THING_TYPE_WEAPON:
-            if (subtype < 0 || subtype > 45) return -1;
+            if (subtype > 45) subtype = 0;
             objectInfoIndex = 23 + subtype;
             break;
         case THING_TYPE_ARMOUR:
-            if (subtype < 0 || subtype > 57) return -1;
+            if (subtype > 57) subtype = 0;
             objectInfoIndex = 69 + subtype;
             break;
         case THING_TYPE_SCROLL:
             objectInfoIndex = 0;
             break;
         case THING_TYPE_POTION:
-            if (subtype < 0 || subtype > 20) return -1;
+            if (subtype > 20) subtype = 0;
             objectInfoIndex = 2 + subtype;
             break;
         case THING_TYPE_CONTAINER:
-            if (subtype != 0) return -1;
+            if (subtype > 0) subtype = 0;
             objectInfoIndex = 1 + subtype;
             break;
         case THING_TYPE_JUNK:
-            if (subtype < 0 || subtype > 52) return -1;
+            if (subtype > 52) subtype = 0;
             objectInfoIndex = 127 + subtype;
             break;
         default:
@@ -88,15 +89,11 @@ int dm1_item_aspect_index(int thingType, int subtype) {
     return (int)kObjectInfoAspect[objectInfoIndex];
 }
 
-unsigned int dm1_object_aspect_graphic_index(int aspectIndex) {
+unsigned int dm1_item_sprite_index(int thingType, int subtype) {
+    int aspectIndex = dm1_item_aspect_index(thingType, subtype);
     if (aspectIndex < 0 || aspectIndex >= 85) return 0u;
     return DM1_GRAPHIC_FIRST_OBJECT +
            (unsigned int)kObjectAspectFirstNative[aspectIndex];
-}
-
-unsigned int dm1_item_sprite_index(int thingType, int subtype) {
-    return dm1_object_aspect_graphic_index(
-        dm1_item_aspect_index(thingType, subtype));
 }
 
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex) {
@@ -193,58 +190,6 @@ int dm1_v1_front_mirror_c127_ordinal_pc34(
         return -1;
     }
     return sensorData;
-}
-
-int dm1_v1_f0115_alcove_item_material_plan_pc34(
-    DM1_F0115AlcoveItemMaterialPlanPc34 *out_plan,
-    int thing_type,
-    int subtype,
-    int relative_forward,
-    int relative_side,
-    int relative_cell)
-{
-    /* ReDMCSB DUNVIEW.C F0115:4808-4824 sets C04_VIEW_CELL_ALCOVE,
-     * M018_OPPOSITE(direction), and G2029[viewSquare].  The PC34/I34
-     * object pass then resolves G0209, optionally advances to the alcove
-     * native bitmap, and passes C2548 + coordinateSet * 7 + G2029 through
-     * F0791 at :4932-5078.  C2500 is not a valid substitute. */
-    static const signed char k_g2029_view_square_to_alcove_row[23] = {
-        -1, -1, -1, 6, -1, -1, 3, 4, 5, -1, -1,
-         0,  1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1
-    };
-    DM1_F0115AlcoveItemMaterialPlanPc34 plan;
-    int view_square;
-    unsigned int graphic_info;
-
-    if (!out_plan || !dm1_v1_thing_type_is_floor_item_pc34(thing_type) ||
-        relative_cell != 2) {
-        return 0;
-    }
-    memset(&plan, 0, sizeof(plan));
-    plan.aspect_index = dm1_item_aspect_index(thing_type, subtype);
-    if (plan.aspect_index < 0) {
-        return 0;
-    }
-    view_square = dm1_viewport_3d_f0115_view_square_index(relative_forward,
-                                                            relative_side);
-    if (view_square < 0 || view_square >= 23 ||
-        k_g2029_view_square_to_alcove_row[view_square] < 0) {
-        return 0;
-    }
-    graphic_info = dm1_object_aspect_graphic_info(plan.aspect_index);
-    plan.use_alcove_object_image = (graphic_info & 0x0010u) ? 1 : 0;
-    plan.graphic_index = dm1_object_aspect_graphic_index(plan.aspect_index) +
-        (unsigned int)plan.use_alcove_object_image;
-    plan.coordinate_set = dm1_object_aspect_coordinate_set(plan.aspect_index);
-    plan.view_square_index = view_square;
-    plan.alcove_view_row = k_g2029_view_square_to_alcove_row[view_square];
-    plan.source_zone = 2548 + plan.coordinate_set * 7 + plan.alcove_view_row;
-    plan.transparent_color = 10;
-    /* The source has a real C2548 coordinate/clip record.  Do not map it
-     * onto the unrelated C2500 rows or invent pane geometry. */
-    plan.coordinate_binding_ready = 0;
-    *out_plan = plan;
-    return 1;
 }
 
 int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,

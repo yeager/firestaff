@@ -145,32 +145,15 @@ static void seed_party(M11_GameViewState* game, int partyDirection) {
  * palette index.  Skips asset pixels equal to the configured
  * transparent color.  Returns 1 if >=80% of the opaque source
  * pixels match the on-screen pixel. */
-static int probe_M11_GameView_GetV1ChampionIconGraphicId(void) {
-    return dm1_v1_graphic_champion_icons_pc34();
-}
-
-static int probe_M11_GameView_GetV1ChampionIconSourceIndex(
-    const M11_GameViewState* game,
-    int slot) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    if (!champ->present) return -1;
-    return ((int)champ->direction - ((int)game->world.party.direction & 3) + 4) & 3;
-}
-
 static int check_icon_cell_pixels(const M11_GameViewState* game,
                                   const unsigned char* fb,
                                   int slot,
                                   int cellIndex) {
-    int gfx = probe_M11_GameView_GetV1ChampionIconGraphicId();
+    int gfx = M11_GameView_GetV1ChampionIconGraphicId();
     const M11_AssetSlot* strip = M11_AssetLoader_Load(
         (M11_AssetLoader*)&game->assetLoader, (unsigned int)gfx);
     int x, y, w, h;
-    int sourceIndex = probe_M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
+    int sourceIndex = M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
     int matched = 0;
     int expected = 0;
     int xx, yy;

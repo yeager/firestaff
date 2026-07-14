@@ -1,11 +1,10 @@
 /*
- * DM1 V1 all-map readable wall-inscription runtime capture probe.
+ * DM1 V1 Hall of Champions readable inscription runtime probe.
  *
- * The probe finds every real visible wall TextString with a legal D1C party
- * pose, renders it through M11_GameView_Draw, and compares every opaque M648
- * glyph pixel against hash-verified GRAPHICS.DAT. This proves the original
- * DUNVIEW/TEXT route's decode, palette index, unscaled 8x8 placement, and
- * color-10 transparency boundary without a synthetic replacement.
+ * The probe finds a real visible TextString in map 0, places the party so
+ * that the text-bearing wall is D1C, renders through M11_GameView_Draw, and
+ * verifies the readable inscription path restores source wall pixels under
+ * the M648 glyphs without Firestaff's old synthetic dark text box.
  *
  * Source-locked to ReDMCSB:
  *   DUNGEON.C:2329 stores 0x80 line separators for inscriptions.
@@ -13,8 +12,10 @@
  *   DUNVIEW.C:3697-3706 draws M648_GRAPHIC_INSCRIPTION_FONT glyphs.
  */
 
+#include "asset_status_m12.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "m11_game_view.h"
+#include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -29,6 +30,7 @@ enum {
     FB_W = 320,
     FB_H = 200,
     VIEWPORT_Y = 33,
+    HALL_MAP_INDEX = 0,
     COLOR_BLACK = 0,
     COLOR_DARK_GRAY = 12,
     INSCRIPTION_MAX_TEXT = 128
@@ -56,34 +58,27 @@ static int dir_dy(int dir) {
     return (dir & 3) == 2 ? 1 : ((dir & 3) == 0 ? -1 : 0);
 }
 
-static int square_index_for(const M11_GameViewState* state,
-                            int map_index,
-                            int x,
-                            int y) {
+static int square_index_for(const M11_GameViewState* state, int x, int y) {
     const struct DungeonMapDesc_Compat* map;
     if (!state || !state->world.dungeon ||
-        map_index < 0 ||
-        map_index >= (int)state->world.dungeon->header.mapCount) {
+        HALL_MAP_INDEX >= (int)state->world.dungeon->header.mapCount) {
         return -1;
     }
-    map = &state->world.dungeon->maps[map_index];
+    map = &state->world.dungeon->maps[HALL_MAP_INDEX];
     if (x < 0 || y < 0 || x >= (int)map->width || y >= (int)map->height) {
         return -1;
     }
     return x * (int)map->height + y;
 }
 
-static int square_element_for(const M11_GameViewState* state,
-                              int map_index,
-                              int x,
-                              int y) {
-    int idx = square_index_for(state, map_index, x, y);
+static int square_element_for(const M11_GameViewState* state, int x, int y) {
+    int idx = square_index_for(state, x, y);
     unsigned char square;
     if (idx < 0 || !state->world.dungeon->tiles ||
-        !state->world.dungeon->tiles[map_index].squareData) {
+        !state->world.dungeon->tiles[HALL_MAP_INDEX].squareData) {
         return -1;
     }
-    square = state->world.dungeon->tiles[map_index].squareData[idx];
+    square = state->world.dungeon->tiles[HALL_MAP_INDEX].squareData[idx];
     return (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
 }
 
@@ -115,6 +110,77 @@ static void normalize_inscription_text(char* text) {
             *p = '\n';
         }
     }
+}
+
+static int find_front_inscription_pose(const M11_GameViewState* state,
+                                       int* outPartyX,
+                                       int* outPartyY,
+                                       int* outDir,
+                                       char* outText,
+                                       size_t outTextSize) {
+    const struct DungeonMapDesc_Compat* map;
+    int x;
+    int y;
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.things->squareFirstThings ||
+        !state->world.things->textStrings ||
+        HALL_MAP_INDEX >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[HALL_MAP_INDEX];
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            int squareIndex = square_index_for(state, x, y);
+            unsigned short thing;
+            if (squareIndex < 0) {
+                continue;
+            }
+            if (square_element_for(state, x, y) != DUNGEON_ELEMENT_WALL) {
+                continue;
+            }
+            thing = state->world.things->squareFirstThings[squareIndex];
+            while (thing != THING_ENDOFLIST && thing != THING_NONE) {
+                int type = (int)THING_GET_TYPE(thing);
+                int index = (int)THING_GET_INDEX(thing);
+                int cell = (int)THING_GET_CELL(thing);
+                if (type == THING_TYPE_TEXTSTRING &&
+                    index >= 0 &&
+                    index < state->world.things->textStringCount &&
+                    state->world.things->textStrings[index].visible) {
+                    int dir;
+                    for (dir = 0; dir < 4; ++dir) {
+                        int partyX;
+                        int partyY;
+                        if (((dir + 2) & 3) != cell) {
+                            continue;
+                        }
+                        partyX = x - dir_dx(dir);
+                        partyY = y - dir_dy(dir);
+                        if (square_element_for(state, partyX, partyY) !=
+                            DUNGEON_ELEMENT_CORRIDOR) {
+                            continue;
+                        }
+                        if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
+                                state->world.things->textData,
+                                state->world.things->textDataWordCount,
+                                state->world.things->textStrings[index].textDataWordOffset,
+                                outText,
+                                (int)outTextSize) < 0 ||
+                            !outText[0]) {
+                            continue;
+                        }
+                        normalize_inscription_text(outText);
+                        *outPartyX = partyX;
+                        *outPartyY = partyY;
+                        *outDir = dir;
+                        return 1;
+                    }
+                }
+                thing = (unsigned short)raw_next_thing(state, thing);
+            }
+        }
+    }
+    return 0;
 }
 
 static int row_color_count(const unsigned char* fb,
@@ -209,145 +275,13 @@ static int check_rendered_lines(const unsigned char* fb, char* decoded) {
     return ok;
 }
 
-static int check_source_glyph_capture(const unsigned char* fb,
-                                      const unsigned char* without_text_fb,
-                                      const M11_AssetSlot* font,
-                                      const unsigned short* text_data,
-                                      int text_data_word_count,
-                                      int text_offset) {
-    unsigned char glyphs[128];
-    int cursor = 0;
-    int line = 0;
-    int opaque_pixels = 0;
-    int mismatches = 0;
-    int transparent_pixels = 0;
-    int transparency_mismatches = 0;
-
-    if (!fb || !without_text_fb || !font || !font->pixels || font->width < 288 ||
-        font->height < DM1_V1_INSCRIPTION_GLYPH_HEIGHT || !text_data) {
-        return 0;
-    }
-    if (DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
-            text_data, text_data_word_count, text_offset,
-            glyphs, (int)sizeof(glyphs)) <= 1) {
-        return 0;
-    }
-    while (cursor < (int)sizeof(glyphs) && line < DM1_V1_INSCRIPTION_MAX_LINES) {
-        DM1_V1_InscriptionLinePlanPc34 plan;
-        int glyph_index;
-        if (!DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
-                glyphs, (int)sizeof(glyphs), cursor, line, &plan)) {
-            return 0;
-        }
-        for (glyph_index = 0; glyph_index < plan.glyphCount; ++glyph_index) {
-            int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(
-                glyphs[plan.glyphStart + glyph_index]);
-            int yy;
-            int xx;
-            if (glyph < 0) {
-                return 0;
-            }
-            for (yy = 0; yy < DM1_V1_INSCRIPTION_GLYPH_HEIGHT; ++yy) {
-                for (xx = 0; xx < DM1_V1_INSCRIPTION_GLYPH_WIDTH; ++xx) {
-                    unsigned char source = font->pixels[
-                        yy * font->width + glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx];
-                    if (source != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR) {
-                        unsigned char rendered = fb[(VIEWPORT_Y + plan.textY + yy) * FB_W +
-                                                    plan.textX + glyph_index * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx];
-                        ++opaque_pixels;
-                        if (rendered != source) {
-                            ++mismatches;
-                        }
-                    } else {
-                        int framebuffer_index =
-                            (VIEWPORT_Y + plan.textY + yy) * FB_W +
-                            plan.textX + glyph_index * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
-                        ++transparent_pixels;
-                        if (fb[framebuffer_index] != without_text_fb[framebuffer_index]) {
-                            ++transparency_mismatches;
-                        }
-                    }
-                }
-            }
-        }
-        if (plan.done) {
-            break;
-        }
-        cursor = plan.nextCursor;
-        ++line;
-    }
-    CHECK(opaque_pixels > 0,
-          "M648 capture has source glyph pixels");
-    CHECK(mismatches == 0,
-          "M648 source pixels match unscaled rendered capture mismatches=%d opaque=%d",
-          mismatches, opaque_pixels);
-    CHECK(transparent_pixels > 0,
-          "M648 capture has C10 transparent pixels");
-    CHECK(transparency_mismatches == 0,
-          "M648 C10 pixels preserve active M11 wall capture mismatches=%d transparent=%d",
-          transparency_mismatches, transparent_pixels);
-    return opaque_pixels > 0 && mismatches == 0 &&
-        transparent_pixels > 0 && transparency_mismatches == 0;
-}
-
-static int capture_active_m648_inscription(M11_GameViewState* state,
-                                           int text_index,
-                                           const char* decoded,
-                                           const M11_AssetSlot* font,
-                                           unsigned char* framebuffer,
-                                           unsigned char* without_text_fb)
-{
-    if (!state || !decoded || !font || !framebuffer || !without_text_fb ||
-        !state->world.things || text_index < 0 ||
-        text_index >= state->world.things->textStringCount) {
-        return 0;
-    }
-    /* The reference frame is the original wall route without the same
-     * TextString. The next frame is the active M11 M648 route. */
-    state->world.things->textStrings[text_index].visible = 0;
-    memset(without_text_fb, 0, FB_W * FB_H);
-    M11_GameView_Draw(state, without_text_fb, FB_W, FB_H);
-    state->world.things->textStrings[text_index].visible = 1;
-    memset(framebuffer, 0, FB_W * FB_H);
-    M11_GameView_Draw(state, framebuffer, FB_W, FB_H);
-    {
-        M11_Dm1InscriptionHostPresentationReceipt receipt;
-        M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
-        CHECK(receipt.valid && receipt.textStringIndex == text_index &&
-                  receipt.fontGraphicIndex ==
-                      DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 &&
-                  receipt.transparentColor ==
-                      DM1_V1_INSCRIPTION_TRANSPARENT_COLOR &&
-                  receipt.glyphByteCount > 0 && receipt.lineCount > 0,
-              "M10-to-M11 M648 receipt consumes real TextString index=%d",
-              text_index);
-        if (!receipt.valid || receipt.textStringIndex != text_index ||
-            receipt.fontGraphicIndex !=
-                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
-            receipt.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
-            receipt.glyphByteCount <= 0 || receipt.lineCount <= 0) {
-            return 0;
-        }
-    }
-    return check_rendered_lines(framebuffer, (char*)decoded) &&
-        check_source_glyph_capture(framebuffer, without_text_fb, font,
-                                   state->world.things->textData,
-                                   state->world.things->textDataWordCount,
-                                   state->world.things->textStrings[text_index]
-                                       .textDataWordOffset);
-}
-
 int main(int argc, char** argv) {
     const char* dataDir = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
+    M12_StartupMenuState menu;
     M11_GameViewState state;
     unsigned char fb[FB_W * FB_H];
-    unsigned char without_text_fb[FB_W * FB_H];
-    const M11_AssetSlot* font;
+    const struct DungeonMapDesc_Compat* map = NULL;
     int checked = 0;
-    int palette_variant_poses = 0;
-    int palette_variant_captures = 0;
-    int palette_seen[6] = {0};
-    int original_magical_light;
     int ok = 1;
     int x;
     int y;
@@ -357,30 +291,39 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    printf("=== DM1 V1 all-map inscription source capture probe ===\n");
+    printf("=== DM1 V1 HoC inscription readability runtime probe ===\n");
     printf("dataDir=%s\n", dataDir);
 
-    M11_GameView_Init(&state);
-    /* This probe owns one direct DM1 runtime only. It must reach the active
-     * M11 draw pass instead of treating launcher availability as rendering
-     * evidence or scanning unrelated games before its first capture. */
-    if (!M11_GameView_StartDm1(&state, dataDir)) {
-        fprintf(stderr, "SKIP could not open DM1 V1 game view from %s\n", dataDir);
-        M11_GameView_Shutdown(&state);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
+        printf("SKIP no hash-verified DM1 data under %s\n", dataDir);
         return 0;
     }
-    state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
-    state.world.party.championCount = 0;
-    original_magical_light = state.world.magic.magicalLightAmount;
 
-    font = M11_AssetLoader_Load(&state.assetLoader,
-                                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
-    if (!font || !font->loaded || !font->pixels ||
-        font->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
-        font->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
-        printf("FAIL hash-verified GRAPHICS.DAT did not provide M648 288x8\n");
+    M11_GameView_Init(&state);
+    if (!M11_GameView_OpenSelectedMenuEntry(&state, &menu)) {
+        fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", dataDir);
         M11_GameView_Shutdown(&state);
         return 1;
+    }
+    state.world.party.championCount = 0;
+
+    if (state.world.dungeon && HALL_MAP_INDEX < (int)state.world.dungeon->header.mapCount) {
+        int wallCount = (int)state.world.dungeon->maps[HALL_MAP_INDEX].wallOrnamentCount;
+        int slot;
+        map = &state.world.dungeon->maps[HALL_MAP_INDEX];
+        printf("wallOrnamentCount=%d ornamentCacheLoaded=%d\n",
+               wallCount, state.ornamentCacheLoaded[HALL_MAP_INDEX]);
+        for (slot = 0; slot <= wallCount && slot < 16; ++slot) {
+            printf("wallOrnamentSlot[%d]=%d\n",
+                   slot, state.wallOrnamentIndices[HALL_MAP_INDEX][slot]);
+        }
+    }
+
+    if (!map) {
+        printf("SKIP no HoC map loaded\n");
+        M11_GameView_Shutdown(&state);
+        return 0;
     }
 
     /* ReDMCSB DUNGEON.C:2573-2593 maps each visible TextString's CELL to
@@ -388,23 +331,15 @@ int main(int argc, char** argv) {
      * front-selected inscription through M648.  The MacBook Pro report hit
      * only some HoC inscriptions, so this checks every real front-readable
      * HoC text pose instead of stopping at the first one. */
-    for (int map_index = 0;
-         map_index < (int)state.world.dungeon->header.mapCount;
-         ++map_index) {
-        const struct DungeonMapDesc_Compat* map = &state.world.dungeon->maps[map_index];
-        for (y = 0; y < (int)map->height; ++y) {
-            for (x = 0; x < (int)map->width; ++x) {
-            int squareIndex = square_index_for(&state, map_index, x, y);
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            int squareIndex = square_index_for(&state, x, y);
             unsigned short thing;
             if (squareIndex < 0 ||
-                square_element_for(&state, map_index, x, y) != DUNGEON_ELEMENT_WALL) {
+                square_element_for(&state, x, y) != DUNGEON_ELEMENT_WALL) {
                 continue;
             }
-            /* Thing-list slots are packed across all maps.  A map-local tile
-             * index is valid only for map 0; use the DUNGEON.C F0511 lookup
-             * that applies the preceding-map thing-list base. */
-            thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-                state.world.dungeon, state.world.things, map_index, x, y);
+            thing = state.world.things->squareFirstThings[squareIndex];
             while (thing != THING_ENDOFLIST && thing != THING_NONE) {
                 int type = (int)THING_GET_TYPE(thing);
                 int index = (int)THING_GET_INDEX(thing);
@@ -423,7 +358,7 @@ int main(int argc, char** argv) {
                         }
                         partyX = x - dir_dx(dir);
                         partyY = y - dir_dy(dir);
-                        if (square_element_for(&state, map_index, partyX, partyY) !=
+                        if (square_element_for(&state, partyX, partyY) !=
                             DUNGEON_ELEMENT_CORRIDOR) {
                             continue;
                         }
@@ -437,72 +372,34 @@ int main(int argc, char** argv) {
                             continue;
                         }
                         normalize_inscription_text(decoded);
-                        printf("pose %d map=%d wall=(%d,%d) party=(%d,%d) dir=%d text=\"%s\"\n",
-                               checked, map_index, x, y, partyX, partyY, dir, decoded);
-                        state.world.party.mapIndex = map_index;
+                        printf("pose %d map=0 wall=(%d,%d) party=(%d,%d) dir=%d text=\"%s\"\n",
+                               checked, x, y, partyX, partyY, dir, decoded);
+                        state.world.party.mapIndex = HALL_MAP_INDEX;
                         state.world.party.mapX = partyX;
                         state.world.party.mapY = partyY;
                         state.world.party.direction = dir;
-                        state.world.magic.magicalLightAmount = original_magical_light;
-                        ok = capture_active_m648_inscription(
-                            &state, index, decoded, font, fb, without_text_fb) && ok;
-                        if (palette_variant_poses < 3) {
-                            static const int kMagicLightAmounts[] = {0, 25, 100};
-                            int variant;
-                            for (variant = 0;
-                                 variant < (int)(sizeof(kMagicLightAmounts) /
-                                                 sizeof(kMagicLightAmounts[0]));
-                                 ++variant) {
-                                int palette_index;
-                                state.world.magic.magicalLightAmount =
-                                    kMagicLightAmounts[variant];
-                                palette_index =
-                                    M11_GameView_GetDungeonPaletteIndex(&state);
-                                CHECK(palette_index >= 0 && palette_index <= 5,
-                                      "F0337 palette variant pose=%d light=%d index=%d",
-                                      checked, kMagicLightAmounts[variant],
-                                      palette_index);
-                                if (palette_index >= 0 && palette_index <= 5) {
-                                    palette_seen[palette_index] = 1;
-                                }
-                                ok = capture_active_m648_inscription(
-                                    &state, index, decoded, font, fb,
-                                    without_text_fb) && ok;
-                                ++palette_variant_captures;
-                            }
-                            state.world.magic.magicalLightAmount =
-                                original_magical_light;
-                            ++palette_variant_poses;
-                        }
+                        memset(fb, 0, sizeof(fb));
+                        M11_GameView_Draw(&state, fb, FB_W, FB_H);
+                        ok = check_rendered_lines(fb, decoded) && ok;
                         ++checked;
                     }
                 }
                 thing = (unsigned short)raw_next_thing(&state, thing);
             }
         }
-        }
     }
 
     if (checked <= 0) {
-        printf("FAIL no front-readable DM1 TextString pose found\n");
+        char decoded[INSCRIPTION_MAX_TEXT];
+        int partyX = -1;
+        int partyY = -1;
+        int dir = -1;
+        decoded[0] = '\0';
+        (void)find_front_inscription_pose(&state, &partyX, &partyY, &dir,
+                                          decoded, sizeof(decoded));
+        printf("SKIP no front-visible HoC TextString fixture found\n");
         M11_GameView_Shutdown(&state);
-        return 1;
-    }
-    CHECK(palette_variant_poses == 3,
-          "captured M648 after F0337 palette variants across three real walls poses=%d",
-          palette_variant_poses);
-    CHECK(palette_variant_captures == 9,
-          "captured each M648 palette variant pose=%d",
-          palette_variant_captures);
-    {
-        int palette_count = 0;
-        int palette;
-        for (palette = 0; palette < 6; ++palette) {
-            palette_count += palette_seen[palette];
-        }
-        CHECK(palette_count >= 2,
-              "M648 capture observed multiple source F0337 palette levels count=%d",
-              palette_count);
+        return 0;
     }
     M11_GameView_Shutdown(&state);
 

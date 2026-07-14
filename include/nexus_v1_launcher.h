@@ -66,11 +66,6 @@ typedef struct {
     int faces_fallback;
     int menu_bpk_upload_receipt_valid;
     Nexus_V1_BpkRuntimeUploadRoute menu_bpk_upload_route;
-    int menu_bpk_archive_entries;
-    int menu_bpk_surface_entries;
-    int menu_bpk_directory_trailer_found;
-    int menu_bpk_directory_trailer_at_entry_zero;
-    int menu_bpk_directory_trailer_valid;
     int menu_bpk_planned_rows;
     int menu_bpk_blocked_prs3_uploads;
     int menu_bpk_blocks_real_menu_surface_render;
@@ -285,17 +280,13 @@ typedef struct {
     Nexus_V1_LauncherStartupAssetsReceipt assets;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
-    Nexus_V1_DgnStructure1HostProvenanceReceipt structure1_host_provenance;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
-    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
-    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
     Nexus_ScriptRuntimeReceipt script_receipt;
     int runtime_ready;
     int dgn_render_ready;
     int dgn_viewport_render_ready;
     int hud_ready;
     int dgn_render_blocked;
-    int structure1_host_provenance_consumed;
     int script_runtime_ready;
     int script_runtime_blocked;
     int level_loaded;
@@ -322,15 +313,11 @@ typedef struct {
     int dgn_ceiling_material_command_count;
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
-    int structure2_source_materialization_bound;
-    int dgn_static_material_source_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
-    int dgn_command_buffer_exact;
-    uint32_t dgn_command_buffer_hash;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int viewport_written_pixels;
@@ -366,8 +353,6 @@ typedef struct {
     int dgn_ceiling_material_command_count;
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
-    int structure2_source_materialization_bound;
-    int dgn_static_material_source_consumed;
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_material_surface_count;
@@ -386,8 +371,6 @@ typedef struct {
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
-    int dgn_command_buffer_exact;
-    uint32_t dgn_command_buffer_hash;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int dgn_viewport_written_pixels;
@@ -723,12 +706,6 @@ typedef struct {
     Nexus_V1_MenuBpkRendererHandoffReceipt menu_bpk_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt dgn_render_plan;
-    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
-    /* The ownership pass builds this immutable plan once. Host callers copy
-     * it rather than re-running the action route while assembling a frame. */
-    Nexus_V1_DgnRenderCommand
-        dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    int copied_dgn_command_count;
     int receipt_owner_is_nexus;
     int title_menu_receipt_owned;
     int capture_receipt_owned;
@@ -825,7 +802,6 @@ typedef struct {
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int runtime_dgn_material_path_consumed;
-    int dgn_static_material_source_consumed;
     int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
@@ -959,25 +935,6 @@ typedef struct {
     const char *status;
 } Nexus_V1_StartupHostCallerReceipt;
 
-/* M11 consumes this immutable title-transition receipt immediately before
- * drawing a boot frame. It is intentionally limited to verified WARNING.BIN
- * and TITLE.CG routing; MENU.BPK remains a separately fail-closed route. */
-typedef struct {
-    int active_frame;
-    int warning_boundary;
-    int title_boundary;
-    int start_ready_boundary;
-    int warning_surface_verified;
-    int title_surface_verified;
-    int timing_verified;
-    int command_verified;
-    int menu_bpk_prs3_blocked;
-    int consumer_ready;
-    Nexus_V1_StartupDrawKind expected_draw_kind;
-    int expected_title_frame;
-    const char *status;
-} Nexus_V1_StartupTitleTransitionCaptureReceipt;
-
 typedef struct {
     Nexus_V1_StartupHostCallerReceipt title_host;
     Nexus_V1_StartupHostCallerReceipt save_host;
@@ -990,7 +947,6 @@ typedef struct {
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
     int dgn_material_path_consumed;
-    int dgn_static_material_source_consumed;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
@@ -1006,14 +962,6 @@ typedef struct {
     int startup_package_consumed_by_all_routes;
     int host_route_matrix_complete;
     int saturn_timing_matrix_complete;
-    int saturn_title_capture_frame;
-    int saturn_save_capture_frame;
-    int saturn_champion_capture_frame;
-    int saturn_dungeon_capture_frame;
-    unsigned int saturn_non_title_capture_mask;
-    unsigned int saturn_expected_capture_mask;
-    int saturn_non_title_capture_count;
-    int saturn_non_title_capture_complete;
     int no_fallback_visuals_enforced;
     int fallback_visuals_permitted;
     unsigned int complete_route_mask;
@@ -1053,14 +1001,6 @@ void nexus_v1_launcher_startup_real_asset_ownership_receipt_clear(
     Nexus_V1_StartupRealAssetOwnershipReceipt *receipt);
 void nexus_v1_launcher_startup_host_caller_receipt_clear(
     Nexus_V1_StartupHostCallerReceipt *receipt);
-void nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
-    Nexus_V1_StartupTitleTransitionCaptureReceipt *receipt);
-int nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-    const Nexus_V1_StartupHostCallerReceipt *host,
-    int active_frame,
-    const Nexus_V1_StartupDrawCommand *commands,
-    int command_count,
-    Nexus_V1_StartupTitleTransitionCaptureReceipt *out_receipt);
 void nexus_v1_launcher_complete_support_receipt_clear(
     Nexus_V1_CompleteSupportReceipt *receipt);
 const char *nexus_v1_launcher_startup_real_asset_ownership_route_name(
@@ -1070,10 +1010,7 @@ int nexus_v1_launcher_complete_support_receipt_from_host_routes(
     const Nexus_V1_StartupHostCallerReceipt *save_host,
     const Nexus_V1_StartupHostCallerReceipt *champion_host,
     Nexus_V1_CompleteSupportReceipt *out_receipt);
-/* M12 availability is only a pre-launch data gate. It must not manufacture a
- * render/capture-ready Saturn route; that comes from the canonical runtime
- * full-start package below. */
-int nexus_v1_launcher_m12_startup_package_from_data_gate(
+int nexus_v1_launcher_m12_startup_package_from_flags(
     int supported,
     int data_ready,
     int version_ready,

@@ -18,18 +18,11 @@
 
 #include "m11_game_view.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
-#include "dm1_v1_center_door_render_pc34_compat.h"
-#include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
-#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
-#include "dm1_v1_viewport_fakewall_pc34_compat.h"
-#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
-#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
@@ -76,188 +69,6 @@ static unsigned short pack_text3(int a, int b, int c) {
 
 static unsigned char square_for_test(int elementType, int attributes) {
     return (unsigned char)(((elementType & 0x07) << 5) | (attributes & 0x1f));
-}
-
-/* These assertions belong to the source-locked DM1 helpers, not to M11's
- * public runtime API. Keep the test-local names explicit so a missing M11
- * probe cannot silently become an implicit external call on GCC/Clang. */
-#define M11_GameView_ProbeViewportArtifactCounts test_viewport_artifact_counts
-#define M11_GameView_GetV1EndgameRestartBox test_endgame_restart_box
-#define M11_GameView_GetV1EndgameQuitBox test_endgame_quit_box
-#define M11_GameView_ProbeDm1PrimarySideWallMaxForward dm1_viewport_3d_primary_side_wall_max_forward_pc34
-#define M11_GameView_ProbeViewportCellClass test_viewport_cell_class
-#define M11_GameView_ProbeSideWallDrawEligibility test_side_wall_draw_eligibility
-#define M11_GameView_ProbeSideWallRuntimeBlit test_side_wall_runtime_blit
-#define M11_GameView_ProbeDm1D1CThievesEyeMaskBlit test_d1c_thieves_eye_mask_blit
-#define M11_GameView_ProbeDm1CenterDoorPanelBlit test_center_door_panel_blit
-#define M11_GameView_ProbeDm1SideDoorPanelBlit test_side_door_panel_blit
-#define M11_GameView_ProbeDm1WallOrnamentFlip test_wall_ornament_flip
-
-static int test_endgame_restart_box(int inner, int* x, int* y, int* w, int* h)
-{
-    DM1_V1_EndgameRectPc34 rect;
-    if (!dm1_v1_endgame_restart_box_pc34(inner, &rect)) return 0;
-    if (x) *x = rect.x; if (y) *y = rect.y;
-    if (w) *w = rect.w; if (h) *h = rect.h;
-    return 1;
-}
-
-static int test_endgame_quit_box(int inner, int* x, int* y, int* w, int* h)
-{
-    DM1_V1_EndgameRectPc34 rect;
-    if (!dm1_v1_endgame_quit_box_pc34(inner, &rect)) return 0;
-    if (x) *x = rect.x; if (y) *y = rect.y;
-    if (w) *w = rect.w; if (h) *h = rect.h;
-    return 1;
-}
-
-static int test_viewport_cell_class(const M11_GameViewState* state, int relForward,
-                                    int relSide, int* outX, int* outY,
-                                    unsigned char* outRaw, int* outElement,
-                                    int* outEffective, int* outWallLike, int* outOpen)
-{
-    const struct DungeonMapDesc_Compat* map;
-    const struct DungeonMapTiles_Compat* tiles;
-    int16_t x = 0, y = 0;
-    int index;
-    unsigned char square;
-    if (!state || !state->active || !state->world.dungeon ||
-        state->world.party.mapIndex < 0 ||
-        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount ||
-        !state->world.dungeon->maps || !state->world.dungeon->tiles ||
-        !state->world.dungeon->tilesLoaded ||
-        !dm1_viewport_3d_resolve_relative_map_xy(state->world.party.direction,
-            relForward, relSide, state->world.party.mapX, state->world.party.mapY, &x, &y)) return 0;
-    map = &state->world.dungeon->maps[state->world.party.mapIndex];
-    tiles = &state->world.dungeon->tiles[state->world.party.mapIndex];
-    if (x < 0 || y < 0 || x >= map->width || y >= map->height || !tiles->squareData) return 0;
-    index = (int)x * map->height + (int)y;
-    if (index < 0 || index >= tiles->squareCount) return 0;
-    square = tiles->squareData[index];
-    if (outX) *outX = x; if (outY) *outY = y;
-    if (outRaw) *outRaw = square;
-    if (outElement) *outElement = (square >> 5) & 7;
-    if (outEffective) *outEffective = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(square);
-    if (outWallLike) *outWallLike = DM1_V1_Viewport_SquareIsWallLikePc34Compat(square);
-    if (outOpen) *outOpen = DM1_V1_Viewport_SquareIsOpenPc34Compat(square);
-    return 1;
-}
-
-static int test_viewport_artifact_counts(const M11_GameViewState* state, int relForward,
-                                         int relSide, int* outX, int* outY, int* outElement,
-                                         int* outProjectiles, int* outExplosions,
-                                         int* outProjectileGraphic, int* outExplosionType)
-{
-    DM1_V1_ViewportRuntimeMaterializationInputPc34 input;
-    DM1_V1_ViewportRuntimeMaterializationDecisionPc34 decision;
-    int x = 0, y = 0, element = 0;
-    if (!test_viewport_cell_class(state, relForward, relSide, &x, &y, NULL,
-            &element, NULL, NULL, NULL)) return 0;
-    memset(&input, 0, sizeof(input));
-    input.relativeForward = relForward;
-    input.relativeSide = relSide;
-    input.elementType = element;
-    input.mapIndex = state->world.party.mapIndex;
-    input.mapX = x;
-    input.mapY = y;
-    input.partyDirection = state->world.party.direction;
-    input.liveProjectiles = &state->world.projectiles;
-    input.liveExplosions = &state->world.explosions;
-    input.suppressFluxcages = M11_GameView_GetEndgameDoNotDrawFluxcages(state);
-    input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
-    if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &decision)) return 0;
-    if (outX) *outX = x; if (outY) *outY = y; if (outElement) *outElement = element;
-    if (outProjectiles) *outProjectiles = decision.liveVisibleProjectileCount;
-    if (outExplosions) *outExplosions = decision.liveExplosionCount;
-    if (outProjectileGraphic) *outProjectileGraphic = decision.liveProjectileSubtype;
-    if (outExplosionType) *outExplosionType = decision.liveExplosionType;
-    return 1;
-}
-
-static int test_side_wall_draw_eligibility(const M11_GameViewState* state, int relForward,
-                                           int relSide, int* outLegacyLaneClear, int* outDraws)
-{
-    int centerValid[3] = {0}, centerOpen[3] = {0}, centerDoor[3] = {0};
-    int leftOpen[3] = {0}, rightOpen[3] = {0}, depth, element, wallLike = 0;
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
-    if (!state || relSide == 0 || relForward < 0) return 0;
-    for (depth = 0; depth < 3; ++depth) {
-        element = -1;
-        (void)test_viewport_cell_class(state, depth + 1, 0, NULL, NULL, NULL,
-            &element, NULL, NULL, &centerOpen[depth]);
-        centerValid[depth] = element >= 0;
-        centerDoor[depth] = element == DUNGEON_ELEMENT_DOOR;
-        (void)test_viewport_cell_class(state, depth + 1, -1, NULL, NULL, NULL,
-            NULL, NULL, NULL, &leftOpen[depth]);
-        (void)test_viewport_cell_class(state, depth + 1, 1, NULL, NULL, NULL,
-            NULL, NULL, NULL, &rightOpen[depth]);
-    }
-    visibility = dm1_viewport_3d_lane_visibility_from_cells_pc34(centerValid, centerOpen,
-        centerDoor, leftOpen, rightOpen);
-    if (!test_viewport_cell_class(state, relForward, relSide, NULL, NULL, NULL,
-            NULL, NULL, &wallLike, NULL)) return 0;
-    if (outLegacyLaneClear) *outLegacyLaneClear =
-        dm1_viewport_3d_side_lane_clear_from_visibility_pc34(&visibility, relForward, relSide);
-    if (outDraws) *outDraws = wallLike;
-    return 1;
-}
-
-static int test_side_wall_runtime_blit(int relForward, int relSide, int* outGraphic,
-                                       int* outX, int* outY, int* outW, int* outH)
-{
-    const DM1_ViewportWallDrawSpec* spec =
-        dm1_viewport_3d_get_side_wall_draw_spec_for_rel(relForward, relSide);
-    if (!spec) return 0;
-    if (outGraphic) *outGraphic = 93 + (int)spec->native_wall;
-    if (outX) *outX = spec->runtime_dst_x; if (outY) *outY = spec->runtime_dst_y;
-    if (outW) *outW = spec->runtime_width; if (outH) *outH = spec->runtime_height;
-    return 1;
-}
-
-static int test_d1c_thieves_eye_mask_blit(int state, int* sx, int* sy, int* dx,
-                                           int* dy, int* width, int* height)
-{
-    DM1_CenterDoorBlitPc34 panels[2];
-    if (dm1_v1_center_door_panel_blits_for_cell_pc34(0, state, 1, panels) <= 0) return 0;
-    if (sx) *sx = panels[0].srcX; if (sy) *sy = panels[0].srcY;
-    if (dx) *dx = panels[0].dstX; if (dy) *dy = panels[0].dstY;
-    if (width) *width = panels[0].width; if (height) *height = panels[0].height;
-    return 1;
-}
-
-static int test_center_door_panel_blit(int depth, int state, int vertical, int index,
-                                       int* sx, int* sy, int* dx, int* dy, int* width, int* height)
-{
-    DM1_CenterDoorBlitPc34 panels[2];
-    int count = dm1_v1_center_door_panel_blits_for_cell_pc34(depth, state, vertical, panels);
-    if (index < 0) return count;
-    if (count <= 0 || index >= count) return 0;
-    if (sx) *sx = panels[index].srcX; if (sy) *sy = panels[index].srcY;
-    if (dx) *dx = panels[index].dstX; if (dy) *dy = panels[index].dstY;
-    if (width) *width = panels[index].width; if (height) *height = panels[index].height;
-    return 1;
-}
-
-static int test_side_door_panel_blit(int forward, int side, int state, int vertical, int index,
-                                     int* sx, int* sy, int* dx, int* dy, int* width, int* height)
-{
-    DM1_SideDoorRenderPlanPc34 plan;
-    DM1_SideDoorBlitPc34 panels[2];
-    int count;
-    if (!dm1_v1_side_door_render_plan_for_rel_pc34(forward, side, &plan)) return 0;
-    count = dm1_v1_side_door_panel_blits_for_draw_pc34(&plan, state, vertical, panels);
-    if (index < 0) return count;
-    if (count <= 0 || index >= count) return 0;
-    if (sx) *sx = panels[index].srcX; if (sy) *sy = panels[index].srcY;
-    if (dx) *dx = panels[index].dstX; if (dy) *dy = panels[index].dstY;
-    if (width) *width = panels[index].width; if (height) *height = panels[index].height;
-    return 1;
-}
-
-static int test_wall_ornament_flip(int viewWallIndex)
-{
-    return (viewWallIndex < 0 || viewWallIndex >= 13) ? -1 :
-        dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex);
 }
 
 static void mark_raw_object_slots_unused_for_test(unsigned char* raw, int count) {
@@ -2285,8 +2096,7 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW keeps the inner F0328/F0330 disable after the action tick decrements it");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "THROW has no F0407 disabled-action index when G0491 is zero");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
-              DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
               "THROW stores C01 action-hand slot ordinal on the enable-action event");
 }
 
@@ -2353,8 +2163,7 @@ static void test_throw_full_projectile_list_still_accepts_f0328(void) {
               "full-list THROW keeps the inner F0328/F0330 disable");
     ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
               "full-list THROW has no F0407 disabled-action overwrite");
-    ASSERT_EQ(state.actionEnableSlotOrdinal[0],
-              DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL,
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], CHAMPION_SLOT_ACTION_HAND,
               "full-list THROW keeps the C01 action-hand enable slot");
 }
 

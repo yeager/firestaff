@@ -24,8 +24,6 @@
 #define TIMELINE_EVENT_DOOR_ANIMATE     2
 #define TIMELINE_EVENT_PROJECTILE_MOVE  3
 #define TIMELINE_EVENT_EXPLOSION_ADVANCE 4
-/* Legacy compatibility carrier for typed F0412/F0763 status receipts;
- * original PC34 uses native C71/C73/C74/C77/C78/C79 instead. */
 #define TIMELINE_EVENT_SPELL_TICK       5
 #define TIMELINE_EVENT_HUNGER_THIRST    6
 #define TIMELINE_EVENT_MAGIC_LIGHT_DECAY 7
@@ -41,16 +39,6 @@
 #define TIMELINE_EVENT_MOVE_GROUP_SILENT 17
 #define TIMELINE_EVENT_MOVE_GROUP_AUDIBLE 18
 #define TIMELINE_EVENT_CREATURE_REACTION 19
-/* ReDMCSB TIMELINE.C C11_EVENT_ENABLE_CHAMPION_ACTION.  The source
- * event carries a champion priority and optionally a quiver slot ordinal. */
-#define TIMELINE_EVENT_ENABLE_CHAMPION_ACTION 20
-/* ReDMCSB TIMELINE.C F0255: C13 Vi Altar rebirth retains its own
- * Location/Cell/Effect union; never fold it into generic square state. */
-#define TIMELINE_EVENT_VI_ALTAR_REBIRTH 21
-/* ReDMCSB TIMELINE.C C22_EVENT_CPSE is a copy-protection check.  Builds
- * compiled with NOCOPYPROTECTION consume it without a game-side effect, but
- * original-save import/export must retain its Map_Time receipt. */
-#define TIMELINE_EVENT_CPSE_CHECK       22
 
 #define TIMELINE_QUEUE_CAPACITY 256
 #define TIMELINE_EVENT_SERIALIZED_SIZE 44

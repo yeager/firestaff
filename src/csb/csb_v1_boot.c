@@ -1195,12 +1195,6 @@ int csb_v1_boot_render_viewport_frame_pc34(
     if (drawer_binding) {
         csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
     }
-    /* ReDMCSB DUNVIEW.C F0115 consumes original GRAPHICS.DAT materials.
-     * Once the boot profile has accepted that paired CSB media, a failed
-     * material draw is a missing-data receipt, never permission to paint a
-     * Firestaff diagnostic marker into the live viewport. */
-    cfg.real_graphics_session =
-        profile->assets_verified && profile->graphics_verified ? 1 : 0;
     cfg.csbgraphics_plan = csb_v1_boot_csbgraphics_runtime_plan(profile);
     cfg.csbgraphics_cache = csb_v1_boot_csbgraphics_cache(profile);
     cfg.custom_background_skin_def_words =
@@ -1651,42 +1645,6 @@ void csb_v1_boot_startup_door_runtime_receipt_init_pc34(
     csb_v1_runtime_m11_mirror_receipt_init_pc34(&receipt->runtime_mirror);
 }
 
-static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
-    const CSB_V1_BootProfile *profile,
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
-{
-    const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
-    const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
-
-    if (!profile || !session || !profile->assets_verified ||
-        !profile->graphics_verified || !profile->dungeon_verified ||
-        !profile->graphics_path[0] || !session->valid ||
-        !session->real_asset_matched || !session->full_startup_ready ||
-        !session->rejects_legacy_wrappers ||
-        !session->playback.no_fallback_routes ||
-        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
-        !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
-        !session->hud_resurrect_binding.verified ||
-        session->hud_inventory_binding.source !=
-            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
-        session->hud_resurrect_binding.source !=
-            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
-        session->hud_inventory_binding.graphic_index != 17u ||
-        session->hud_resurrect_binding.graphic_index != 40u ||
-        strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0 ||
-        strcmp(session->hud_resurrect_binding.path, profile->graphics_path) != 0) {
-        return 0;
-    }
-
-    inventory = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-    resurrect = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    return inventory->valid && inventory->pixels &&
-        inventory->source_asset_id == 17 && resurrect->valid &&
-        resurrect->pixels && resurrect->source_asset_id == 40;
-}
-
 int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -1717,13 +1675,9 @@ int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     out_receipt->door_opening_finished = 1;
     /* ReDMCSB ENTRANCE.C F0806 lines 857-889 and CSBWin CSBCode.cpp
      * lines 9515-9535 only return from the entrance after the door action.
-     * C017/C040 must remain bound to the verified GRAPHICS.DAT that supplied
-     * this boot profile. Build the live dungeon/HUD mirror before changing
-     * the media owner so a swapped session or failed mirror cannot expose a
-     * HUD with stale entrance state. */
-    if (!csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
-            profile, session) ||
-        !csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+     * Build the live dungeon/HUD mirror before changing the media owner so a
+     * failed runtime mirror cannot expose a HUD with stale entrance state. */
+    if (!csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
             &profile->runtime, &out_receipt->runtime_mirror) ||
         !out_receipt->runtime_mirror.valid ||
         !out_receipt->runtime_mirror.view.level_loaded) {
@@ -4001,14 +3955,14 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             boot_profile,
             out_receipt->source_title_presents_ticks +
                 out_receipt->source_title_chaos_zoom_ticks,
-            21,
+            19,
             CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
             &out_receipt->title_sample_hashes[2]);
     out_receipt->title_strikes_back_capture_ready =
         csb_v1_boot_startup_visual_title_sample_pc34(
             boot_profile,
             csb_v1_startup_title_total_ticks_pc34() - 1,
-            22,
+            20,
             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             &out_receipt->title_sample_hashes[3]);
     out_receipt->title_sample_count =
@@ -4223,8 +4177,8 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     static const int title_source_steps[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
         1,
         2,
-        21,
-        22
+        19,
+        20
     };
     int title_frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34];
     uint32_t runtime_hash = 2166136261u;
@@ -6633,54 +6587,6 @@ int csb_v1_boot_runtime_load_game_from_path_pc34(
         *out_game_time = profile->runtime.game_time;
     }
     return result;
-}
-
-int csb_v1_boot_runtime_load_original_save_receipt_pc34(
-    CSB_V1_BootProfile *profile,
-    const char *path,
-    CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt)
-{
-    CSB_V1_SaveHeader header;
-    int load_result;
-
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->source_evidence =
-        "ReDMCSB LOADSAVE.C F0435; DUNGEON.C F0173/F0174";
-    if (!profile || !path || path[0] == '\0') {
-        return 0;
-    }
-    out_receipt->boot_profile_ready =
-        profile->state == CSB_V1_BOOT_STATE_RUNTIME_READY &&
-        profile->assets_verified && profile->graphics_verified &&
-        profile->dungeon_verified;
-    snprintf(out_receipt->save_path, sizeof(out_receipt->save_path), "%s", path);
-    memset(&header, 0, sizeof(header));
-    out_receipt->native_csb_header_valid =
-        csb_v1_load_game(path, NULL, 0, &header) == CSB_V1_LOAD_OK &&
-        header.Magic == CSB_V1_SAVE_MAGIC_CSB;
-    if (!out_receipt->boot_profile_ready ||
-        !out_receipt->native_csb_header_valid) {
-        return 0;
-    }
-
-    /* Never route an original CSB save through CSBWin or roster fallback. */
-    load_result = csb_v1_runtime_load_game_from_path(&profile->runtime, path);
-    out_receipt->runtime_load_succeeded = load_result == CSB_V1_LOAD_OK;
-    out_receipt->runtime_dungeon_ready = profile->runtime.dungeon_handle != NULL;
-    /* A legal original save can preserve an empty party at an entrance or
-     * mirror boundary; LOADSAVE.C still owns its live dungeon handoff. */
-    out_receipt->runtime_party_ready =
-        profile->runtime.champion_count >= 0 &&
-        profile->runtime.champion_count <= CSB_V1_MAX_CHAMPIONS;
-    out_receipt->runtime_current_level_after = profile->runtime.current_level;
-    out_receipt->runtime_champion_count_after = profile->runtime.champion_count;
-    out_receipt->runtime_game_time_after = profile->runtime.game_time;
-    out_receipt->valid = out_receipt->runtime_load_succeeded &&
-        out_receipt->runtime_dungeon_ready && out_receipt->runtime_party_ready;
-    return out_receipt->valid;
 }
 
 static void csb_v1_boot_copy_receipt_path_pc34(char *dst,

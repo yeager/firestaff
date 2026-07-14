@@ -2,9 +2,6 @@
 #define FIRESTAFF_M11_GAME_VIEW_H
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
-#include "dm1_v1_center_door_render_pc34_compat.h"
-#include "dm1_v1_inscription_host_material_pc34_compat.h"
-#include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <stdint.h>
 #include "menu_startup_m12.h"
@@ -19,15 +16,8 @@
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
-#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
-#include "dialog_frontend_pc34_compat.h"
-#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "firestaff_retroachievements.h"
 #include "firestaff/dm1/v1/resurrection_rename_ui_gate_pc34_compat.h"
@@ -36,223 +26,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS
-/*
- * Legacy M11 probe spellings.  The production input and layout paths use
- * the DM1_V1_* names directly; retaining these aliases keeps the independent
- * source-lock probes tied to those same values instead of duplicating them.
- */
-#define M11_DM1_MOUSE_MASK_LEFT DM1_V1_MOUSE_MASK_LEFT_PC34
-#define M11_DM1_MOUSE_MASK_RIGHT DM1_V1_MOUSE_MASK_RIGHT_PC34
-#define M11_DM1_MOUSE_LIST_INVENTORY DM1_V1_MOUSE_LIST_INVENTORY_PC34
-#define M11_DM1_MOUSE_LIST_INTERFACE DM1_V1_MOUSE_LIST_INTERFACE_PC34
-#define M11_DM1_MOUSE_LIST_MOVEMENT DM1_V1_MOUSE_LIST_MOVEMENT_PC34
-#define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
-#define M11_DM1_MOUSE_SPACE_SCREEN DM1_V1_MOUSE_SPACE_SCREEN_PC34
-#define M11_DM1_MOUSE_SPACE_NONE DM1_V1_MOUSE_SPACE_NONE_PC34
-#define M11_GameView_SetV1LeaderHandObject \
-    DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat
-#define M11_GameView_ClearV1LeaderHandObject \
-    DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat
-#define M11_GameView_GetV1LeaderHandThing \
-    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat
-#define M11_GameView_OpenV1ActionHandChest \
-    DM1_V1_M11Runtime_OpenActionHandChestPc34Compat
-#define M11_GameView_GetV1OpenChestThing \
-    DM1_V1_M11Runtime_GetOpenChestThingPc34Compat
-#define M11_GameView_CloseV1OpenChest \
-    DM1_V1_M11Runtime_CloseOpenChestPc34Compat
-
-static inline int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
-    return dm1_v1_graphic_champion_damage_small_pc34();
-}
-
-static inline int M11_GameView_GetV1ChampionBigDamageGraphicId(void) {
-    return dm1_v1_graphic_champion_damage_big_pc34();
-}
-
-static inline int M11_GameView_GetV1ChampionPortraitGraphicId(void) {
-    return dm1_v1_graphic_champion_portraits_pc34();
-}
-
-static inline int M11_GameView_GetV1ObjectIconSourceZone(
-    int iconIndex, int* outGraphic, int* outX, int* outY, int* outW,
-    int* outH) {
-    DM1_V1_ObjectIconSourceZonePc34 zone;
-    if (!outGraphic || !outX || !outY || !outW || !outH ||
-        !dm1_v1_object_icon_source_zone_pc34(iconIndex, &zone)) return 0;
-    *outGraphic = zone.graphic_index;
-    *outX = zone.x; *outY = zone.y; *outW = zone.w; *outH = zone.h;
-    return 1;
-}
-
-static inline int M11_GameView_GetF0115C2500C2900Row(
-    int relForward, int relSide) {
-    return dm1_viewport_3d_f0115_c2500_c2900_row(relForward, relSide);
-}
-
-static inline int M11_GameView_GetC2500ObjectRawZonePoint(
-    int rowIndex, int relativeCell, int* outX, int* outY) {
-    return dm1_viewport_3d_c2500_object_raw_zone_point(
-        rowIndex, relativeCell, outX, outY);
-}
-
-int M11_GameView_GetV1StatusHandSlotBoxZone(
-    int championSlot, int handIndex, int* outX, int* outY, int* outW,
-    int* outH);
-
-static inline int M11_GameView_GetV1StatusHandIconZone(
-    int championSlot, int handIndex, int* outX, int* outY, int* outW,
-    int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_champion_status_hand_icon_rect_pc34(
-            championSlot, handIndex, &rect)) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-static inline int M11_GameView_GetV1InventorySourceSlotBoxZone(
-    int sourceSlotBoxIndex, int* outX, int* outY, int* outW, int* outH) {
-    return dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
-        sourceSlotBoxIndex, outX, outY, outW, outH);
-}
-
-static inline int M11_GameView_GetV1InventoryBackpackSlotZone(
-    int backpackOrdinal, int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_InventorySlotBoxZonePc34 zone;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_inventory_backpack_slot_zone_pc34(backpackOrdinal, &zone)) {
-        return 0;
-    }
-    *outX = zone.x;
-    *outY = zone.y;
-    *outW = zone.w;
-    *outH = zone.h;
-    return 1;
-}
-
-static inline int M11_GameView_GetV1InventoryPanelZone(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!outX || !outY || !outW || !outH) return 0;
-    rect = dm1_v1_inventory_panel_rect_pc34();
-    if (rect.w <= 0 || rect.h <= 0) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-/* Test-facing adapters retained over the source-owned DM1 helpers.  These
- * expose no M11-local geometry: ReDMCSB PANEL.C uses C023/C025, C503 and
- * C537..C544 through the PC34 compatibility tables. */
-static inline int M11_GameView_GetV1OpenScrollPanelGraphicId(void) {
-    return dm1_v1_graphic_panel_open_scroll_pc34();
-}
-
-static inline int M11_GameView_GetV1ChestSlotBoxZoneCount(void) {
-    return dm1_v1_inventory_chest_slot_box_zone_count_pc34();
-}
-
-static inline int M11_GameView_GetV1ChestSlotBoxZone(
-    int chestOrdinal, int* outX, int* outY, int* outW, int* outH) {
-    return dm1_v1_inventory_chest_slot_box_zone_xywh_pc34(
-        chestOrdinal, outX, outY, outW, outH);
-}
-
-static inline int M11_GameView_GetV1ArrowOrEyeZone(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!outX || !outY || !outW || !outH) return 0;
-    rect = dm1_v1_arrow_or_eye_rect_pc34();
-    if (rect.w <= 0 || rect.h <= 0) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-/* ReDMCSB: DUNVIEW.C inventory-view backdrop is the viewport rectangle.
- * Keep the legacy probe export source-owned by the DM1 layout helper. */
-static inline int M11_GameView_GetV1InventoryBackdropZone(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!outX || !outY || !outW || !outH) return 0;
-    rect = dm1_v1_inventory_backdrop_rect_pc34();
-    if (rect.w <= 0 || rect.h <= 0) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-/* Legacy source-lock probes use the old M11 spelling, while production
- * rendering owns the coordinate table in the DM1 helper. */
-static inline int M11_GameView_GetDm1WallOrnamentZone(
-    int coordSet, int viewWallIndex, int* outX, int* outY, int* outW,
-    int* outH) {
-    return dm1_v1_wall_ornament_zone_xywh_pc34(
-        coordSet, viewWallIndex, outX, outY, outW, outH);
-}
-
-static inline int M11_GameView_GetV1MouseCommandForPoint(
-    int mouseInputList, int screenX, int screenY, int buttonMask,
-    int* outCoordinateSpace, int* outZoneId) {
-    return DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
-        mouseInputList, screenX, screenY, buttonMask, outCoordinateSpace,
-        outZoneId);
-}
-
-static inline int M11_GameView_GetV1DamageIndicatorZoneId(int championSlot) {
-    return dm1_v1_champion_damage_indicator_zone_id_pc34(championSlot);
-}
-
-static inline int M11_GameView_GetV1InventoryDamageIndicatorZoneId(
-    int championSlot) {
-    return dm1_v1_champion_inventory_damage_indicator_zone_id_pc34(
-        championSlot);
-}
-
-static inline int M11_GameView_GetV1DamageIndicatorZone(
-    int championSlot, int indicatorW, int indicatorH, int* outX, int* outY,
-    int* outW, int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_champion_damage_indicator_rect_pc34(
-            championSlot, indicatorW, indicatorH, &rect)) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-static inline int M11_GameView_GetV1InventoryDamageIndicatorZone(
-    int championSlot, int indicatorW, int indicatorH, int* outX, int* outY,
-    int* outW, int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_champion_inventory_damage_indicator_rect_pc34(
-            championSlot, indicatorW, indicatorH, &rect)) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
-
-static inline int M11_GameView_GetV1MessageAreaZone(
-    int* outX, int* outY, int* outW, int* outH) {
-    if (!outX || !outY || !outW || !outH) return 0;
-    *outX = 0; *outY = 173; *outW = 320; *outH = 27;
-    return 1;
-}
-
-static inline int M11_GameView_GetV1DialogChoiceTextZone(
-    int choiceCount, int choiceIndex, int* outX, int* outY, int* outW,
-    int* outH) {
-    DialogCompatChoiceLayout layout;
-    if (!outX || !outY || !outW || !outH || choiceIndex < 0 ||
-        !DIALOG_Compat_GetChoiceLayout((unsigned int)choiceCount,
-                                       (unsigned int)choiceIndex + 1u,
-                                       &layout)) return 0;
-    *outW = choiceCount <= 2 ? 192 : 86;
-    *outH = 7;
-    *outX = layout.centerX - *outW / 2;
-    *outY = layout.centerY - 4;
-    return 1;
-}
 #endif
 
 enum {
@@ -489,12 +262,6 @@ typedef struct {
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;
     int startupHudRuntimeReady;
-    int csbPresentedFrameCaptureReady;
-    int csbPresentedFrameRunningFromMacOSApp;
-    int csbPresentedFrameMacWindowReady;
-    int csbPresentedFrameWidth;
-    int csbPresentedFrameHeight;
-    unsigned int csbPresentedFrameHash;
     int levelLoaded;
     int mapIndex;
     int partyX;
@@ -620,11 +387,6 @@ typedef struct {
     int championDamageTimer[4];  /* per-slot countdown */
     int championDamageAmount[4]; /* last damage dealt */
 
-    /* ReDMCSB CHAMPION.C F0319 turns a zero-health champion into a single
-     * bones record.  M11 can observe that zero over more than one host tick,
-     * so retain the completed source transition per party slot. */
-    unsigned char championDeathHandledMask;
-
     /* Front-cell attack indicator timer.  Set to M11_ATTACK_CUE_DURATION
      * when a creature in the front cell (depth 0) attacks.  Decremented
      * each tick.  While > 0, draw slash-mark overlay on the viewport. */
@@ -685,12 +447,16 @@ typedef struct {
     int endgameFuseSequenceReplayTypes[M11_ENDGAME_F0445_REPLAY_CAPACITY];
     int endgameFuseSequenceReplayAttacks[M11_ENDGAME_F0445_REPLAY_CAPACITY];
     int endgameFuseSequenceReplayCreatureTypes[M11_ENDGAME_F0445_REPLAY_CAPACITY];
+    /* F0446 waits 780 ticks immediately after each source text-message
+     * F0445 redraw, rather than batching all message delays at the end. */
+    int endgameFuseSequenceReplayDelayTicks[M11_ENDGAME_F0445_REPLAY_CAPACITY];
     int endgameFuseSequenceCurrentReplayType;
     int endgameFuseSequenceCurrentReplayAttack;
     int endgameFuseSequenceCurrentReplayCreatureType;
     int endgameTextMessageDelayTicks;
     int endgameFuseSequenceDelayTicks;
     int endgameFuseSequenceDelayRemainingTicks;
+    int endgameFinalDelayPendingTicks;
     int endgameFinalHandoffReady;
     int endgameBuzzRequestCount;
 
@@ -814,9 +580,6 @@ typedef struct {
      * Tracks ESC-triggered save dialog matching ReDMCSB
      * C140_COMMAND (LOADSAVE.C F0433). */
     struct DM1SaveMenuContext saveMenu;
-    /* DM2 save/load dialogue presentation is separate from generic plaque
-     * overlays: M11 may paint it only from c_dialog.cpp's GDAT/RAW4 command. */
-    int dm2SaveDialoguePanelActive;
     uint32_t dm1GameID;  /* Persistent game ID for save file matching */
     int dm1MusicOn;      /* ReDMCSB G2024_B_PendingMusicOn runtime state */
 
@@ -1048,8 +811,15 @@ typedef struct {
      * csbBootProfile owns the live CSB_V1_RuntimeProfile and any loaded
      * DUNGEON.DAT handle. */
     void *csbBootProfile;     /* CSB_V1_BootProfile* */
-    /* Opaque CSB-owned C001-C005/C017/C040 source surface session. */
-    void *csbStartupRuntimeAssetSession;
+    /* Fresh CSB starts retain the source-owned C001--C040 session until
+     * ENTRANCE.C F0807 has published the terminal live-HUD receipt. A
+     * direct PC34 save restore is the documented LOADSAVE.C route and does
+     * not replay title/entrance media. */
+    void *csbStartupRuntimeSession; /* CSB_V1_StartupRuntimeAssetSession_PC34* */
+    int csbStartupTimelineRequired;
+    int csbStartupLiveHudAuthorized;
+    uint32_t csbStartupTerminalSourceTick;
+    uint32_t csbStartupTerminalGeneration;
     struct {
         int level_loaded;
         int current_level;
@@ -1069,12 +839,6 @@ typedef struct {
         int startup_title_active;
         int startup_title_frame;
         int startup_title_source_step;
-        int presented_frame_capture_ready;
-        int presented_frame_running_from_macos_app;
-        int presented_frame_mac_window_ready;
-        int presented_frame_width;
-        int presented_frame_height;
-        uint32_t presented_frame_hash;
         int startup_entrance_active;
         int startup_entrance_frame;
         int startup_entrance_source_step;
@@ -1096,14 +860,6 @@ typedef struct {
         int startup_import_preview_active;
         char startup_import_dm1_save_path[512];
         char startup_import_utility_prompt[192];
-        /* ReDMCSB PANEL.C F0346/F0347: C040 may clear back to C017 only
-         * through the terminal source session that presented it. */
-        int c040_panel_session_active;
-        unsigned int c040_panel_source_tick;
-        unsigned int c040_panel_session_generation;
-        int c040_clear_live_hud_ready;
-        unsigned int c040_clear_source_tick;
-        unsigned int c040_clear_session_generation;
     } csbState;
 
     /* DM2 (Skullkeep) V1 runtime — active when sourceKind ==
@@ -1199,15 +955,7 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out);
-/* Record the already-rendered CSB source framebuffer after M11 presents it.
- * The CSB package layer verifies C001-C005/C017/C040 before retaining facts. */
-void M11_GameView_RecordCSBPresentedIndexedFrame(
-    M11_GameViewState* state,
-    const unsigned char* indexedPixels,
-    int width,
-    int height,
-    int runningFromMacOSAppBundle,
-    int macWindowCaptureReady);
+
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);
@@ -1558,15 +1306,6 @@ int M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
     int mapIndex,
     int mapX,
     int mapY);
-/* Probe-only F0190 final-group route. Retains the production ordering:
- * F0188 drops, F0189 deletes, then GROUP.C F0190 creates source C040 smoke. */
-int M11_GameView_ProbeCheckCreatureGroupDeathAndDropWithF0190Afterplay(
-    M11_GameViewState* state,
-    unsigned short groupThing,
-    int mapIndex,
-    int mapX,
-    int mapY,
-    int killedCell);
 
 /* Drives the production CHAMPION.C F0319 death check without advancing an
  * unrelated timeline tick.  Probe-only: callers must provide the live M11
@@ -1604,18 +1343,6 @@ int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId);
-int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
-    const M11_GameViewState* state,
-    int* outObjectSpriteCount,
-    int* outObjectIconCount,
-    int* outObjectMarkerCount,
-    int* outGroupSpriteCount,
-    int* outGroupMarkerCount,
-    int* outProjectileSpriteCount,
-    int* outProjectileMaterialCount,
-    int* outProjectileMarkerCount,
-    int* outExplosionSpriteCount,
-    int* outExplosionMarkerCount);
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,
@@ -1767,10 +1494,9 @@ int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
 int M11_GameView_RecruitChampionByMirrorName(M11_GameViewState* state,
                                              const char* name);
 int M11_GameView_GetFrontMirrorOrdinal(const M11_GameViewState* state);
-/* ReDMCSB DUNVIEW.C F0107/G0205: front D1C mirror backing rectangle.
- * Exposed for runtime capture probes; this does not invent host geometry. */
-int M11_GameView_GetD1CWallOrnamentZone(const M11_GameViewState* state,
-                                        int* outX,
+/* Probe compatibility adapter for the source-owned D1C champion-mirror
+ * C346 wall-ornament destination.  Coordinates remain viewport-relative. */
+int M11_GameView_GetDm1WallOrnamentZone(int* outX,
                                         int* outY,
                                         int* outW,
                                         int* outH);
@@ -1787,14 +1513,11 @@ int M11_GameView_GetV1ChampionIconZone(int slot,
                                        int* outW, int* outH);
 int M11_GameView_GetV1StatusHandSlotGraphic(
     const M11_GameViewState* state, int slot, int hand);
-int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
-int M11_GameView_GetV1SlotBoxActingHandGraphicId(void);
-int M11_GameView_GetV1ActionIconCellZone(int championSlot,
-                                         int* outX, int* outY,
-                                         int* outW, int* outH);
-int M11_GameView_GetV1ActionMenuRowZone(int rowIndex,
-                                        int* outX, int* outY,
-                                        int* outW, int* outH);
+/* Read-only M11 viewport inspection for HoC false-item regression probes. */
+int M11_GameView_ProbeViewportFloorItemCounts(
+    const M11_GameViewState* state, int relForward, int relSide,
+    int* outMapX, int* outMapY, int* outElementType,
+    int* outFloorItemCount, int* outSummaryItemCount);
 int M11_GameView_GetDm1HocMenuRouteReceipt(
     const M11_GameViewState* state,
     DM1_V1_EntranceMenuRouteReceiptPc34* outReceipt);
@@ -1810,67 +1533,6 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
                                                   int x,
                                                   int y);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
-
-/* Legacy champion-panel probe adapters.  Runtime code uses the DM1 V1
- * layout and panel helpers directly; these exports keep CI probes bound to
- * those same source-locked helpers rather than duplicating PC34 geometry. */
-int M11_GameView_GetV1StatusNameColor(const M11_GameViewState* state,
-                                      int championSlot);
-int M11_GameView_GetV1StatusNameClearColor(void);
-int M11_GameView_GetV1StatusBoxFillColor(void);
-int M11_GameView_GetV1StatusBoxZoneId(int championSlot);
-int M11_GameView_GetV1StatusBoxZone(int championSlot,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1StatusNameClearZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameTextZoneId(int championSlot);
-int M11_GameView_GetV1StatusNameZone(int championSlot,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1StatusNameTextZone(int championSlot,
-                                         int* outX,
-                                         int* outY,
-                                         int* outW,
-                                         int* outH);
-int M11_GameView_GetV1StatusHandParentZoneId(int championSlot);
-int M11_GameView_GetV1StatusHandZoneId(int championSlot, int handIndex);
-int M11_GameView_GetV1StatusHandZone(int championSlot,
-                                     int handIndex,
-                                     int* outX,
-                                     int* outY,
-                                     int* outW,
-                                     int* outH);
-int M11_GameView_GetV1StatusBarGraphZoneId(int championSlot);
-int M11_GameView_GetV1StatusBarZoneId(int statIndex);
-int M11_GameView_GetV1StatusBarValueZoneId(int championSlot, int statIndex);
-int M11_GameView_GetV1StatusBarZone(int championSlot,
-                                    int statIndex,
-                                    int* outX,
-                                    int* outY,
-                                    int* outW,
-                                    int* outH);
-int M11_GameView_GetV1ChampionBarColor(int championSlot);
-int M11_GameView_GetV1StatusBarBlankColor(void);
-int M11_GameView_GetV1StatusHandIconIndex(const M11_GameViewState* state,
-                                          int championSlot,
-                                          int handIndex);
-int M11_GameView_GetV1PartyShieldBorderGraphicId(void);
-int M11_GameView_GetV1FireShieldBorderGraphicId(void);
-int M11_GameView_GetV1SpellShieldBorderGraphicId(void);
-int M11_GameView_GetV1StatusShieldBorderZone(int championSlot,
-                                             int* outX,
-                                             int* outY,
-                                             int* outW,
-                                             int* outH);
-int M11_GameView_GetV1StatusBoxBaseGraphic(const M11_GameViewState* state,
-                                           int championSlot);
-int M11_GameView_GetV1StatusBoxGraphicId(void);
-int M11_GameView_GetV1DeadStatusBoxGraphicId(void);
-int M11_GameView_GetV1CreatureDamageGraphicId(void);
 int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,
@@ -1904,29 +1566,6 @@ int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
 int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
 void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
 unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(const M11_GameViewState* state);
-
-static inline int M11_GameView_GetV1LeaderHandObjectIconIndex(
-    const M11_GameViewState* state) {
-    return DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(state);
-}
-
-static inline int M11_GameView_GetV1LeaderHandObjectName(
-    const M11_GameViewState* state, char* out, int outSize) {
-    return DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
-        state, out, outSize);
-}
-
-static inline int M11_GameView_DecodeV1InventoryActionHandScrollText(
-    const M11_GameViewState* state, char* out, int outSize) {
-    return DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
-        state, out, outSize);
-}
-
-static inline int M11_GameView_GetV1InventorySlotIconIndex(
-    const M11_GameViewState* state, int championSlot) {
-    return DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(
-        state, championSlot);
-}
 
 /* M11_DM1 V1 sub-cell hit mask (BUG-111).  Source-locked per
  * ReDMCSB DEFS.H M550 (DUNGEON.C:1085).  Full-square creatures
@@ -2041,12 +1680,39 @@ int M11_GameView_ReturnConfirmDialogLayoutMaxTextPixelWidth(
  */
 int m11_point_in_source_box(int px, int py, const int box[4]);
 
+/* Probe-only C708 ownership trace. Hashes cover the exact F0679 destination
+ * rectangle (x=216..223, y=57..108) after successive V1 viewport passes. */
+typedef struct M11_D2R2WriteTrace {
+    unsigned int count;
+    unsigned int hashes[16];
+    int c707_graphic;
+    int c708_graphic;
+    int c707_flipped;
+    int c708_flipped;
+    int c708_materialized_graphic;
+    int c708_source_width;
+    int c708_source_height;
+    int c708_transparent_color;
+    unsigned int c708_source_index_writes[16];
+    unsigned char c708_source_raw_sample[16];
+    unsigned int c708_source_non_nibble_writes;
+    unsigned int c708_flipped_immediate_expected;
+    unsigned int c708_flipped_immediate_matched;
+    unsigned int side_blit_count;
+    int side_blit_rel_forward[16];
+    int side_blit_rel_side[16];
+    int side_blit_graphic[16];
+    unsigned int side_blit_hashes[16];
+    unsigned int checkpoint_c708_matches[16];
+} M11_D2R2WriteTrace;
+
+void M11_GameView_ProbeGetD2R2WriteTrace(M11_D2R2WriteTrace* outTrace);
+
 /* Read-only observation from the last actual DM1 F0115 floor-item blit.
  * It remains invalid until the real M11 asset/material path reaches its
  * final destination geometry. */
 typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int valid;
-    int floorItemLane;
     int graphicsId;
     int transparentColor;
     int usesF0791Blit;
@@ -2062,195 +1728,6 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
 
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
-
-/* Probe the exact receipt predicate consumed by the HoC capture facts.
- * itemPresent must come from the current F0115 floor-item pass. */
-int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
-
-/* Read-only view of the production F0115 viewport cell.  HoC probes use
- * this to verify that compact square lists and mirror filtering do not
- * surface candidate payloads as ordinary floor items. */
-int M11_GameView_ProbeViewportFloorItemCounts(
-    const M11_GameViewState* state,
-    int relativeForward,
-    int relativeSide,
-    int* outMapX,
-    int* outMapY,
-    int* outElementType,
-    int* outFloorItems,
-    int* outSummaryItems);
-
-/* Test probes for the actual F0115 item and projectile blitters. They do not
- * synthesize a receipt; callers must provide an M11 asset-loader cache slot. */
-int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-
-/* Read-only evidence from a completed DM1 F0115 creature material blit.
- * It records the original GRAPHICS.DAT bitmap and the G0221/G0222 palette
- * selected by the DM1 route; it is invalid until that host blit succeeds. */
-typedef struct M11_Dm1CreatureHostPresentationReceipt {
-    int valid;
-    int creatureLane;
-    int creatureType;
-    int depthIndex;
-    int graphicsId;
-    int transparentColor;
-    int mirrored;
-    int destinationX;
-    int destinationY;
-    int destinationW;
-    int destinationH;
-    int assetWidth;
-    int assetHeight;
-    unsigned int paletteChecksum;
-} M11_Dm1CreatureHostPresentationReceipt;
-
-void M11_GameView_GetDm1CreatureHostPresentationReceipt(
-    M11_Dm1CreatureHostPresentationReceipt* outReceipt);
-
-/* Test-only entry to the production F0115 creature material route.  The
- * caller must provide a real initialized GRAPHICS.DAT asset loader. */
-int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-
-/* Read-only evidence from a completed DM1 F0115 C2900 projectile blit.
- * `objectMaterial` distinguishes the F0142 -> G0209 thrown-object branch
- * from the native M613 projectile bitmap branch. */
-typedef struct M11_Dm1ProjectileHostPresentationReceipt {
-    int valid;
-    int projectileLane;
-    int objectMaterial;
-    int graphicsId;
-    int objectAspectIndex;
-    int transparentColor;
-    int flipFlags;
-    int sourceZoneRow;
-    int destinationX;
-    int destinationY;
-    int destinationW;
-    int destinationH;
-    int assetWidth;
-    int assetHeight;
-} M11_Dm1ProjectileHostPresentationReceipt;
-
-void M11_GameView_GetDm1ProjectileHostPresentationReceipt(
-    M11_Dm1ProjectileHostPresentationReceipt* outReceipt);
-
-/* Test-only entry to the production F0115 thrown-object projectile route.
- * The caller must provide a real initialized GRAPHICS.DAT asset loader. */
-int M11_GameView_ProbeDrawDm1ThrownObjectProjectileHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-
-typedef struct M11_Dm1DoorHostPresentationReceipt {
-    int valid;
-    int depthIndex;
-    int doorState;
-    int panelVisible;
-    int frameCount;
-    int blitCount;
-    int graphicsId[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
-    int destinationX[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
-    int destinationY[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
-    int width[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
-    int height[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
-} M11_Dm1DoorHostPresentationReceipt;
-
-void M11_GameView_GetDm1DoorHostPresentationReceipt(
-    M11_Dm1DoorHostPresentationReceipt* outReceipt);
-
-/* Test-only entry to the production F0111 center-door material route.
- * It consumes a DM1 receipt and requires real GRAPHICS.DAT assets. */
-int M11_GameView_ProbeDrawDm1CenterDoorHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-
-typedef struct M11_Dm1WallOrnamentHostPresentationReceipt {
-    int valid;
-    int globalOrnamentIndex;
-    int viewWallIndex;
-    int graphicIndex;
-    int destinationX;
-    int destinationY;
-    int width;
-    int height;
-    int transparentColor;
-    int flipHorizontal;
-    int paletteMapValid;
-    unsigned char paletteMap[16];
-} M11_Dm1WallOrnamentHostPresentationReceipt;
-
-void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
-    M11_Dm1WallOrnamentHostPresentationReceipt* outReceipt);
-
-typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
-    int valid;
-    int textStringIndex;
-    int viewWallIndex;
-    int relativeForward;
-    int relativeSide;
-    int lineCount;
-    int boxHeight;
-    int graphicIndex;
-    int destinationX;
-    int destinationY;
-    int width;
-    int height;
-    int transparentColor;
-} M11_Dm1UnreadableInscriptionHostPresentationReceipt;
-
-void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
-    M11_Dm1UnreadableInscriptionHostPresentationReceipt* outReceipt);
-
-/* Test-only entry to the production F0107 side-wall ornament route.
- * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
-int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
-    M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight);
-
-/* Test-only read-only count for the production V2 effect seed scan. */
-int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
-    const M11_GameViewState* state);
-
-typedef struct M11_Dm1InscriptionHostPresentationReceipt {
-    int valid;
-    int textStringIndex;
-    int fontGraphicIndex;
-    int transparentColor;
-    int glyphByteCount;
-    int lineCount;
-    unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
-    /* Final M11 viewport destinations after consuming the M10 F0168/F0107
-     * material receipt.  Entries with glyphCount == 0 are unused. */
-    int lineDestinationX[DM1_V1_INSCRIPTION_MAX_LINES];
-    int lineDestinationY[DM1_V1_INSCRIPTION_MAX_LINES];
-    int lineGlyphCount[DM1_V1_INSCRIPTION_MAX_LINES];
-} M11_Dm1InscriptionHostPresentationReceipt;
-
-void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
-    M11_Dm1InscriptionHostPresentationReceipt* outReceipt);
 
 #ifdef __cplusplus
 }

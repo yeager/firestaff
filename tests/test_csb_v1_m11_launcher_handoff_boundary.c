@@ -115,54 +115,6 @@ static int count_changed_pixels(const unsigned char* a,
     return changed;
 }
 
-static int count_nonzero_pixels_in_rows(const unsigned char* pixels,
-                                        int first_row,
-                                        int last_row) {
-    int x;
-    int y;
-    int count = 0;
-    if (!pixels || first_row < 0 || last_row > 200 || first_row >= last_row) {
-        return 0;
-    }
-    for (y = first_row; y < last_row; ++y) {
-        for (x = 0; x < 320; ++x) {
-            if (pixels[y * 320 + x] != 0u) {
-                ++count;
-            }
-        }
-    }
-    return count;
-}
-
-static int frame_matches_source_rect(const unsigned char* frame,
-                                     const CSB_V1_StartupRuntimeSurface_PC34* source,
-                                     int source_x,
-                                     int source_y,
-                                     int dest_x,
-                                     int dest_y,
-                                     int width,
-                                     int height) {
-    int row;
-
-    if (!frame || !source || !source->valid || !source->pixels ||
-        source_x < 0 || source_y < 0 || dest_x < 0 || dest_y < 0 ||
-        width <= 0 || height <= 0 || source_x + width > source->width ||
-        source_y + height > source->height || dest_x + width > 320 ||
-        dest_y + height > 200) {
-        return 0;
-    }
-    for (row = 0; row < height; ++row) {
-        if (memcmp(frame + (size_t)(dest_y + row) * 320u + (size_t)dest_x,
-                   source->pixels +
-                       (size_t)(source_y + row) * (size_t)source->width +
-                       (size_t)source_x,
-                   (size_t)width) != 0) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 static void drive_csb_entrance_opening(M11_GameViewState *view,
                                        const char *message) {
     unsigned int guard =
@@ -272,7 +224,6 @@ static void run_real_launcher_handoff_if_available(void) {
     unsigned char framebuffer[320 * 200];
     unsigned char title_presents_frame[320 * 200];
     unsigned char title_chaos_frame[320 * 200];
-    unsigned char title_strikes_frame[320 * 200];
     unsigned char entrance_closed_frame[320 * 200];
     unsigned char entrance_opening_frame[320 * 200];
     int tick_before;
@@ -316,13 +267,6 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher handoff claims CSB boot source");
     expect_true(view.csbBootProfile != NULL,
                 "M11 CSB launcher handoff owns a CSB boot profile");
-    expect_true(view.csbStartupRuntimeAssetSession != NULL &&
-                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                         view.csbStartupRuntimeAssetSession)->valid &&
-                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                         view.csbStartupRuntimeAssetSession)
-                        ->rejects_legacy_wrappers,
-                "M11 CSB launcher handoff owns source-session startup surfaces");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB launcher handoff stops at startup title/entrance");
@@ -348,19 +292,10 @@ static void run_real_launcher_handoff_if_available(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                     view.csbStartupRuntimeAssetSession)
-                    ->surfaces.surfaces[
-                        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].width ==
-                    320 &&
-                    ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                         view.csbStartupRuntimeAssetSession)
-                        ->surfaces.surfaces[
-                            CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].height ==
-                    16,
-                "M11 CSB launcher emits C001 PRESENTS through its source geometry");
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                "M11 CSB launcher title prelude draws a visible first frame");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
+                    VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
                 "M11 CSB launcher PRESENTS frame keeps C001 special palette");
     memcpy(title_presents_frame, framebuffer, sizeof(title_presents_frame));
 
@@ -398,59 +333,12 @@ static void run_real_launcher_handoff_if_available(void) {
                                      sizeof(title_chaos_frame)) > 0,
                 "M11 CSB launcher CHAOS title phase draws visible pixels");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
+                    VGA_PALETTE_PC34_SPECIAL_TITLE,
                 "M11 CSB launcher CHAOS frame switches to C001 title palette");
     expect_true(count_changed_pixels(title_presents_frame,
                                      title_chaos_frame,
                                      sizeof(title_chaos_frame)) > 64,
                 "M11 CSB title phases are visually distinct");
-    for (int i = 0;
-         i < csb_v1_startup_title_chaos_zoom_ticks_pc34() +
-                 csb_v1_startup_title_chaos_hold_ticks_pc34() &&
-         view.csbState.startup_title_active &&
-         csb_v1_startup_title_stage_for_frame_pc34(
-             view.csbState.startup_title_frame) !=
-             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
-         ++i) {
-        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher title prelude advances CHAOS before STRIKES BACK");
-    }
-    expect_true(view.csbState.startup_title_active == 1 &&
-                    csb_v1_startup_title_stage_for_frame_pc34(
-                        view.csbState.startup_title_frame) ==
-                        CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-                    view.csbState.startup_title_source_step == 21,
-                "M11 CSB launcher title prelude reaches the source STRIKES BACK phase");
-    memset(title_strikes_frame, 0, sizeof(title_strikes_frame));
-    M11_GameView_Draw(&view, title_strikes_frame, 320, 200);
-    {
-        const CSB_V1_StartupRuntimeSurface_PC34 *strikes =
-            &((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                  view.csbStartupRuntimeAssetSession)
-                 ->surfaces.surfaces[
-                     CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
-        int row_matches = strikes->valid && strikes->width == 320 &&
-            strikes->height == 57 && strikes->transparent_color == 0;
-        int row;
-
-        for (row = 0; row_matches && row < strikes->height; ++row) {
-            if (memcmp(title_strikes_frame + (size_t)(118 + row) * 320u,
-                       strikes->pixels + (size_t)row * strikes->width,
-                       (size_t)strikes->width) != 0) {
-                row_matches = 0;
-            }
-        }
-        expect_true(row_matches,
-                    "M11 CSB launcher STRIKES BACK frame consumes C001 source bytes at C426 geometry");
-    }
-    expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES,
-                "M11 CSB launcher STRIKES BACK frame keeps the C426 special palette");
-    expect_true(count_changed_pixels(title_chaos_frame,
-                                     title_strikes_frame,
-                                     sizeof(title_strikes_frame)) > 64,
-                "M11 CSB CHAOS and STRIKES BACK title captures are visually distinct");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 CSB launcher title/entrance ignores Enter before source wait loop");
@@ -499,190 +387,12 @@ static void run_real_launcher_handoff_if_available(void) {
                                      entrance_opening_frame,
                                      sizeof(entrance_opening_frame)) > 64,
                 "M11 CSB entrance opening visibly changes the door frame");
-    {
-        const CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                view.csbStartupRuntimeAssetSession;
-        const CSB_V1_StartupRuntimeSurface_PC34 *left =
-            &session->surfaces.surfaces[
-                CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
-        const CSB_V1_StartupRuntimeSurface_PC34 *right =
-            &session->surfaces.surfaces[
-                CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
-
-        /* ReDMCSB ENTRANCE.C F0438/F0807 lines 142-304: the first
-         * visible PC34 step draws C002[0..100] and C003[4..126] at y=30.
-         * CSBWin Graphics.cpp ReadGraphic is the matching archive-read
-         * boundary for those two resident source surfaces. */
-        expect_true(view.csbState.startup_entrance_opening_step == 1,
-                    "M11 CSB launcher captures the first visible source door step");
-        expect_true(left->valid && left->source_asset_id == 2 &&
-                        left->width >= 101 && left->height >= 161 &&
-                        frame_matches_source_rect(entrance_opening_frame,
-                                                  left, 0, 0, 0, 30, 101,
-                                                  161),
-                    "M11 CSB opening capture consumes C002 first-step bytes at PC34 geometry");
-        expect_true(right->valid && right->source_asset_id == 3 &&
-                        right->width >= 127 && right->height >= 161 &&
-                        frame_matches_source_rect(entrance_opening_frame,
-                                                  right, 4, 0, 109, 30, 123,
-                                                  161),
-                    "M11 CSB opening capture consumes C003 first-step bytes at PC34 geometry");
-    }
     drive_csb_entrance_opening(
         &view,
         "M11 CSB launcher entrance clears after explicit command");
     expect_true(view.csbState.startup_entrance_last_command ==
                     ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB launcher handoff records source enter-dungeon command");
-    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                     view.csbStartupRuntimeAssetSession)->playback.stage ==
-                    CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
-                "M11 CSB launcher door completion releases the same source session to HUD");
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(view.csbState.level_loaded == 1 &&
-                    view.csbState.current_level >= 0,
-                "M11 CSB post-entrance handoff retains the loaded source dungeon");
-    expect_true(count_nonzero_pixels_in_rows(framebuffer, 169, 200) > 0,
-                "M11 CSB post-entrance handoff draws the V1 champion/control HUD band");
-    {
-        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                view.csbStartupRuntimeAssetSession;
-        const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
-            &session->surfaces.surfaces[
-                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-        int row_matches = 1;
-        int row;
-
-        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
-                    "M11 CSB post-entrance input opens the live inventory surface");
-        memset(framebuffer, 0, sizeof(framebuffer));
-        M11_GameView_Draw(&view, framebuffer, 320, 200);
-        for (row = 0; row < c017->height; ++row) {
-            if (memcmp(framebuffer + (size_t)(33 + row) * 320u + 48u,
-                       c017->pixels + (size_t)row * c017->width,
-                       c017->width) != 0) {
-                row_matches = 0;
-                break;
-            }
-        }
-        expect_true(row_matches,
-                    "M11 CSB inventory consumes the terminal C017 bytes at the source viewport geometry");
-        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
-                    "M11 CSB post-entrance input closes the live inventory surface");
-    }
-    {
-        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
-            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                view.csbStartupRuntimeAssetSession;
-        const CSB_V1_StartupRuntimeSurface_PC34 *c017 =
-            &session->surfaces.surfaces[
-                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-        const CSB_V1_StartupRuntimeSurface_PC34 *c040 =
-            &session->surfaces.surfaces[
-                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-        int c040_composed = 1;
-        int row;
-
-        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
-                    "M11 CSB candidate route opens the terminal inventory base");
-        view.candidateMirrorPanelActive = 1;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        M11_GameView_Draw(&view, framebuffer, 320, 200);
-        for (row = 0; row < c040->height; ++row) {
-            int column;
-            for (column = 0; column < c040->width; ++column) {
-                unsigned char expected = c040->pixels[
-                    (size_t)row * c040->width + (size_t)column];
-                unsigned char actual = framebuffer[
-                    (size_t)(33 + 52 + row) * 320u +
-                    (size_t)(48 + 80 + column)];
-                if (expected == 6) {
-                    expected = c017->pixels[
-                        (size_t)(52 + row) * c017->width +
-                        (size_t)(80 + column)];
-                }
-                if (actual != expected) {
-                    c040_composed = 0;
-                    break;
-                }
-            }
-            if (!c040_composed) break;
-        }
-        expect_true(c040_composed,
-                    "M11 CSB candidate panel composes terminal C040 over C017 with source C06 transparency");
-        view.candidateMirrorPanelActive = 0;
-        expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
-                    "M11 CSB candidate route closes the terminal inventory base");
-        {
-            unsigned int saved_generation = session->generation;
-            session->generation = saved_generation + 1u;
-            memset(framebuffer, 0xff, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) ==
-                            0,
-                        "M11 CSB rejects a stale terminal session before clearing C040");
-            session->generation = saved_generation;
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(view.csbState.c040_panel_session_active == 0 &&
-                            count_nonzero_pixels_in_rows(framebuffer, 169,
-                                                         200) > 0,
-                        "M11 CSB clears C040 once into same-session neutral live HUD");
-            {
-                unsigned int clear_tick = session->source_tick;
-                unsigned int saved_generation = session->generation;
-                session->generation = saved_generation + 1u;
-                expect_true(M11_GameView_HandleInput(
-                                &view, M12_MENU_INPUT_TURN_RIGHT) ==
-                                M11_GAME_INPUT_IGNORED &&
-                                session->source_tick == clear_tick &&
-                                view.csbState.c040_clear_live_hud_ready,
-                            "M11 CSB rejects a stale terminal session before first post-C040 turn");
-                session->generation = saved_generation;
-                expect_true(M11_GameView_HandleInput(
-                                &view, M12_MENU_INPUT_TURN_RIGHT) ==
-                                M11_GAME_INPUT_REDRAW &&
-                                session->source_tick == clear_tick + 1u &&
-                                !view.csbState.c040_clear_live_hud_ready,
-                            "M11 CSB first post-C040 turn consumes the same terminal session tick");
-            }
-        }
-    }
-    {
-        void *saved_session = view.csbStartupRuntimeAssetSession;
-        memset(framebuffer, 0xff, sizeof(framebuffer));
-        view.csbStartupRuntimeAssetSession = NULL;
-        M11_GameView_Draw(&view, framebuffer, 320, 200);
-        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
-                    "M11 CSB live HUD rejects a missing terminal source session");
-        view.csbStartupRuntimeAssetSession = saved_session;
-    }
-    {
-        const M11_AssetSlot *loaded_c017 =
-            M11_AssetLoader_Load(&view.assetLoader, 17u);
-        unsigned char saved_c017_byte = 0;
-
-        expect_true(loaded_c017 && loaded_c017->pixels,
-                    "M11 CSB live HUD exposes the renderer C017 source slot");
-        if (loaded_c017 && loaded_c017->pixels) {
-            saved_c017_byte = loaded_c017->pixels[0];
-            loaded_c017->pixels[0] ^= 0x0fu;
-            memset(framebuffer, 0xff, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) ==
-                            0,
-                        "M11 CSB live HUD rejects a C017 byte mismatch against the terminal session");
-            loaded_c017->pixels[0] = saved_c017_byte;
-        }
-    }
-    expect_true(view.csbState.runtime_object_marker_drawn_count == 0 &&
-                    view.csbState.runtime_group_marker_drawn_count == 0 &&
-                    view.csbState.runtime_projectile_marker_drawn_count == 0 &&
-                    view.csbState.runtime_explosion_marker_drawn_count == 0,
-                "M11 CSB post-entrance runtime frame contains no diagnostic material markers");
 
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);

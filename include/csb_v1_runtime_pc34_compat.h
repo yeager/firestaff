@@ -52,7 +52,6 @@
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 #include "csb_v1_chaos_magic_pc34_compat.h"
-#include "csb_v1_monster_pc34_compat.h"
 #include "csb_v1_skin_cache_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -75,10 +74,6 @@ extern "C" {
 #define CSB_V1_MAX_PARTY_X  32
 #define CSB_V1_MAX_PARTY_Y  32
 #define CSB_V1_RUNTIME_ACTIVE_GROUP_CAP 110
-/* CSBWin SaveGame.cpp serializes the active overlay palette as twenty-four
- * consecutive EDT_Palette EXPOOL records: 3 channels * 512 entries. */
-#define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
-#define CSB_V1_CSBWIN_TIMER_QUEUE_NONE 0xffffu
 
 /* ── Deterministic tick config ────────────────────────────────────────── */
 /*
@@ -332,43 +327,6 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
-    /* CSBWin data.cpp SKIN_CACHE caches EDT_Skins columns. Remember the
-     * save-tail receipt that populated Firestaff's cache so a resumed or
-     * replaced verified EXPOOL tail cannot reuse stale HUD skin bytes. */
-    int                     csbwin_skin_cache_tail_receipt_valid;
-    int                     csbwin_skin_cache_tail_valid;
-    size_t                  csbwin_skin_cache_tail_size;
-    uint32_t                csbwin_skin_cache_tail_fnv1a;
-    /* CSBWin SaveGame.cpp reads contiguous 16-word EDT_Database /
-     * EDBT_GlobalVariables EXPOOL records before DSAINDEX::ReadTracing.
-     * This is the save-owned source bank supplied to authenticated DSA
-     * GLOBALFETCH/GLOBALSTORE actions; it is re-derived from the preserved
-     * EXPOOL tail rather than serialized as Firestaff-owned state. */
-    int                     csbwin_global_variables_valid;
-    uint16_t                csbwin_global_variable_count;
-    uint32_t                csbwin_global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
-    /* CSBWin SaveGame.cpp restores all 24 EDT_Palette records atomically.
-     * This byte-exact RGB lookup table remains unavailable to the renderer
-     * until every source record and the appended-tail receipt verify. */
-    int                     csbwin_overlay_palette_valid;
-    uint32_t                csbwin_overlay_palette_tail_fnv1a;
-    uint8_t                 csbwin_overlay_palette[
-        CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES];
-    /* CSBWin SaveGame.cpp reads EDBT_DisableSaves from EXPOOL. It is a
-     * source save-policy gate, not a Firestaff preference. */
-    int                     csbwin_saves_disabled;
-    /* CSBWin SaveGame.cpp:1978-2034 restores these DB11/EXPOOL policy
-     * records after the palette. They are source save state, never inferred
-     * from Firestaff configuration or asset filenames. */
-    uint32_t                csbwin_delete_duplicate_timers;
-    uint32_t                csbwin_debugging_data;
-    uint32_t                csbwin_csbgraphics_signature_data;
-    uint32_t                csbwin_graphics_signature_data;
-    uint32_t                csbwin_version_data;
-    /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores this EXPOOL-owned
-     * eight-word bitmap after the save body. It is source trace state only:
-     * no Firestaff diagnostic mode or DSA execution is enabled from it. */
-    CSB_V1_CSBWinDSATracingReport csbwin_dsa_tracing;
     /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
      * owns this separately from the regular GAMEBLOCK sections. Imported DSA
      * programs remain opaque source words; no compatibility opcode runner
@@ -413,10 +371,6 @@ typedef struct {
     uint16_t                csbwin_timer_queue_summary_count;
     uint16_t                csbwin_timer_queue_summary_total;
     uint16_t                csbwin_timer_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
-    /* Runtime-only receipt from a materialized DM1 timeline event index to
-     * its original CSBWin timer-queue slot. It is rebuilt on every verified
-     * CSBWin resume and is never a caller-provided timer identity. */
-    uint16_t                csbwin_timeline_event_queue_slot[DM1_EVENT_MAX_COUNT];
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
@@ -635,399 +589,6 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
-int csb_v1_runtime_get_csbwin_dsa_tracing(
-    const CSB_V1_RuntimeProfile *profile,
-    CSB_V1_CSBWinDSATracingReport *out_report);
-/* Rebuild the CSBWin save-owned global-variable bank from the complete
- * appended EXPOOL tail. A missing first record is a valid empty bank; a
- * malformed present record leaves the prior profile bank unchanged. */
-int csb_v1_runtime_restore_csbwin_expool_global_variables(
-    CSB_V1_RuntimeProfile *profile);
-/* Restore CSBWin's complete 24-record EDT_Palette bundle from a verified
- * appended EXPOOL tail. A partial, altered, or absent bundle is not exposed
- * as a renderer palette. */
-int csb_v1_runtime_restore_csbwin_expool_overlay_palette(
-    CSB_V1_RuntimeProfile *profile);
-/* Return the byte-exact CSBWin overlay palette only when the complete source
- * bundle was restored from the current appended-tail receipt. */
-int csb_v1_runtime_get_csbwin_expool_overlay_palette(
-    const CSB_V1_RuntimeProfile *profile,
-    const uint8_t **out_palette,
-    size_t *out_size);
-/* Persist a complete CSBWin SaveGame.cpp EDT_Palette bundle. This writes only
- * the existing 24 source-owned 16-word records in a complete,
- * FNV-authenticated EXPOOL tail; it never allocates a DB11 node or creates a
- * palette record. */
-int csb_v1_runtime_set_csbwin_expool_overlay_palette(
-    CSB_V1_RuntimeProfile *profile,
-    const uint8_t *palette,
-    size_t palette_size);
-int csb_v1_runtime_csbwin_saves_disabled(
-    const CSB_V1_RuntimeProfile *profile);
-int csb_v1_runtime_restore_csbwin_save_policy(
-    CSB_V1_RuntimeProfile *profile);
-/* Read the post-palette CSBWin SaveGame.cpp EXPOOL policy records. The
- * values are restored only from a complete, receipt-authenticated save tail. */
-int csb_v1_runtime_get_csbwin_save_policy(
-    const CSB_V1_RuntimeProfile *profile,
-    uint32_t *out_delete_duplicate_timers,
-    uint32_t *out_debugging_data,
-    uint32_t *out_csbgraphics_signature,
-    uint32_t *out_graphics_signature,
-    uint32_t *out_version);
-
-/* CSBWin Monster.cpp resolves a type-47 filter actuator from Expool, then
- * obtains its DSAselector from DB3::word2 bits 7..11 and maps that slot
- * through the save-owned DSALevelIndex[level][selector] table.  This receipt
- * binds those already-decoded source values without executing an opcode. */
-typedef struct {
-    CSB_V1_DSAFilterLocation location;
-    uint8_t dsa_selector;
-    uint8_t dsa_id;
-} CSB_V1_RuntimeDSAFilterBinding;
-
-/* Exact, bounded receipt for CSBWin DSA.cpp ProcessDSATimer6.  The current
- * CSBWin FindMaster implementation returns the slave itself only when its
- * DSA is a master (LocalState != 3); it explicitly reports slave DSAs as not
- * implemented.  Keep both identities here so a later original slave route
- * cannot silently be mistaken for the self-master route. */
-typedef struct {
-    CSB_V1_RuntimeDSAFilterBinding slave;
-    CSB_V1_RuntimeDSAFilterBinding master;
-    uint32_t master_location;
-    uint32_t state_index;
-    uint32_t input_column;
-    int action_ordinal;
-} CSB_V1_RuntimeCSBWinDSATimer6Resolution;
-
-int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *location,
-    CSB_V1_RuntimeDSAFilterBinding *out_binding);
-
-/* Resolve one authenticated ProcessDSATimer6 dispatch without executing it.
- * CSBWin DSA.cpp:534-575,5363-5416 maps the slave selector, applies the
- * implemented self-master FindMaster branch, gets saved state, and selects
- * column `3 * timerPosition + timerFunction`.  LocalState 0 uses the DB3
- * DSAstate nibble and LocalState 1 uses serialized DSA::m_state. LocalState
- * 2 needs the complete DB3 ParameterB/word8 record and LocalState 3 is an
- * explicitly unimplemented source slave route, so both fail closed. */
-int csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    int timer_function,
-    int timer_position,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-/* Bind one restored CSBWin TT_STONEROOM (function 6) timer to the exact
- * ProcessDSATimer6 receipt for a concrete type-47 actuator on its target
- * square.  Timer.cpp ProcessTT_STONEROOM passes timerUByte9 through the
- * configured SET/CLEAR/TOGGLE map and uses timerUByte8 as the input position;
- * Firestaff's source save summary preserves the default 0/1/2 mapping and
- * validates the timer level and coordinates before selecting a DSA action.
- * TT_ParameterMessage and non-stone-room functions remain outside this
- * bounded route because their EXPOOL parameter payload has not been wired. */
-int csb_v1_runtime_resolve_csbwin_stoneroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-int csb_v1_runtime_resolve_csbwin_falsewall_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-/* Prepare only the source-selected pure-stack action for a restored
- * TT_FALSEWALL -> ProcessDSATimer7 timer.  This mirrors the source timer
- * handoff without promoting fake-wall state mutation, parameter payloads,
- * or the unproven LocalState 2/3 paths. */
-int csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* Consume one restored TT_STONEROOM receipt into the existing authenticated
- * pure-stack runner.  The returned action is the exact source-owned item
- * selected by ProcessDSATimer6; callers cannot substitute compatible-looking
- * DSA words.  This deliberately does not persist a resulting master state or
- * execute world/filter opcodes.  LocalState 2/3 remain rejected by the
- * receipt resolver. */
-int csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* Bind one restored CSBWin TT_OPENROOM (function 5) timer to the exact
- * ProcessDSATimer5 -> ProcessDSATimer6 receipt for a concrete type-47
- * actuator on its target square. Timer.cpp does not alter a normal
- * TT_OPENROOM timer before calling ProcessDSATimer5, so the saved
- * SET/CLEAR/TOGGLE action, position, level, and coordinates are the direct
- * source inputs. TT_ParameterMessage remains excluded until its EXPOOL
- * parameter record has an authenticated runtime owner. */
-int csb_v1_runtime_resolve_csbwin_openroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-/* Prepare the existing authenticated pure-stack runner only from the exact
- * action selected through TT_OPENROOM -> ProcessDSATimer5. This bridge does
- * not execute world opcodes, text updates, or unknown LocalState 2/3 paths. */
-int csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* CSBWin CSBCode.cpp dispatches TT_DESSAGE (102) through
- * ProcessTT_OPENROOM. That path deliberately skips text, counter, and
- * generator work, but still invokes ProcessDSATimer5 for type-47 actuators.
- * Bind only this saved DSA handoff; parameter-message payloads and world
- * mutation remain outside this receipt. */
-int csb_v1_runtime_resolve_csbwin_dessage_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-int csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* CSBWin Timer.cpp::ProcessTT_DOOR invokes ActivateDSA with the decoded
- * SET/CLEAR/TOGGLE action, which constructs a source-shaped timer and calls
- * ProcessDSATimer5 for every type-47 actuator on the door square.  This
- * receipt covers only that saved function-10 -> DSA path; door cell flags,
- * TT_1 rescheduling, and unsupported LocalState 2/3 remain outside it. */
-int csb_v1_runtime_resolve_csbwin_door_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-int csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* CSBWin Timer.cpp::ProcessTT_TELEPORTER and ProcessTT_PITROOM each invoke
- * ActivateDSA before changing the square's bit-3 state. ActivateDSA creates
- * the same type-47 ProcessDSATimer5 input as TT_DOOR. These receipts bind
- * only that original DSA handoff: the later teleporter/pit state mutation,
- * WiggleEverything, parameter messages, and LocalState 2/3 stay out of this
- * bounded saved-timer path. */
-int csb_v1_runtime_resolve_csbwin_teleporter_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-int csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-int csb_v1_runtime_resolve_csbwin_pitroom_dsa_timer_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_RuntimeCSBWinDSATimer6Resolution *out_resolution);
-
-int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
-    const CSB_V1_DSAImportedAction **out_action);
-
-/* Execute the fully proven, parameter-free ProcessDSATimer5 action for one
- * restored TT_DESSAGE, TT_DOOR, TT_TELEPORTER, or TT_PITROOM timer.  CSBWin
- * Timer.cpp's ActivateDSA constructs NEWDSAPARAMETERS with count zero before
- * entering ProcessDSATimer5.  Only the existing authenticated pure-stack
- * subset runs here; LocalState 2/3, master-state writes, cell mutation, and
- * all unsupported world opcodes fail closed. */
-int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer);
-
-/* Execute one CSBWin TT_ParameterMessage (101) saved DSA route. The timer
- * must be the exact serialized TIMER slot retained by this profile; its
- * EDT_MessageParameters EXPOOL record is FNV-authenticated, source-sized,
- * and limited to the runner's 26-word ABI before ProcessTimers' source
- * stone/open-room dispatch is reproduced. Missing, malformed, stale, or
- * over-cap records fail closed with no global or EXPOOL publication.
- * Source: CSBWin CSBCode.cpp ProcessTimers:6436-6454; Timer.cpp
- * ProcessTT_OPENROOM:1641-1711 / ProcessTT_STONEROOM:2118-2185;
- * data.cpp EXPOOL::Read:1542-1568. */
-int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer);
-
-/* Execute one normal saved CSBWin timer selected by its authenticated timer
- * queue entry. This admits only TT_OPENROOM (5), TT_STONEROOM (6), and
- * TT_FALSEWALL (7), after the queue/TIMER-array identity and the selected
- * type-47 DSA receipt are proven. It deliberately excludes parameter
- * messages, ActivateDSA families, world/cell effects, and unsupported DSA
- * state/opcode surfaces. Source: CSBWin SaveGame.cpp:1844-1858,
- * CSBCode.cpp ProcessTimers:6430-6470, Timer.cpp:1343-1405,1641-1711,
- * 2118-2185. */
-int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_DSAFilterLocation *slave_location,
-    uint16_t queue_index);
-
-/* Resolve the source's complete Monster.cpp attack-filter handoff: the
- * verified SpecialLocations actuator, saved level selector, serialized DSA
- * LocalState, actuator DSAstate, and timer column 0.  It only returns an
- * already authenticated action and never synthesizes a DSA program. */
-int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
-    CSB_V1_RuntimeDSAFilterBinding *out_binding,
-    uint32_t *out_state_index,
-    int *out_action_ordinal,
-    uint32_t *out_master_location);
-
-/* Prepare the source-authenticated pure-stack runner only after a concrete
- * imported action was selected. World opcodes, DSA master-state persistence,
- * and movement post-filter flags remain outside this bounded bridge. */
-int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
-    const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner);
-/* Execute one prepared authenticated pure-stack action against the profile's
- * save-owned global bank. Publication and the existing global EXPOOL records
- * update only after complete execution; world/filter opcodes remain outside. */
-int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-    CSB_V1_RuntimeProfile *profile,
-    CSB_V1_CSBWinDSAFilterStackRunnerContext *runner,
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2]);
-
-/* Source-owned callback bridge for CSBWin Monster.cpp's ProcessDSAFilter
- * call shape. The adapter may execute only a runner prepared from the same
- * runtime profile and authenticated DSA action; it adds no opcode support or
- * world/filter side effects. */
-typedef struct {
-    CSB_V1_RuntimeProfile *profile;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
-} CSB_V1_RuntimeDSAFilterStackAdapter;
-
-#define CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP 12
-
-typedef struct {
-    CSB_V1_RuntimeDSAFilterBinding binding;
-    uint32_t state_index;
-    int action_ordinal;
-    uint32_t master_location;
-} CSB_V1_RuntimeDSAMovementFilterRequest;
-
-/* A single Monster.cpp movement callback can service multiple source levels
- * only when every selected DSAAction was independently authenticated. */
-typedef struct {
-    CSB_V1_RuntimeProfile *profile;
-    int runner_count;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext
-        runners[CSB_V1_RUNTIME_CSBWIN_MOVEMENT_FILTER_CAP];
-} CSB_V1_RuntimeDSAMovementFilterStackAdapter;
-
-int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_adapter(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
-
-int csb_v1_runtime_csbwin_dsa_filter_stack_runner_callback(
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2],
-    void *user);
-
-/* Install the authenticated callback in the concrete Monster.cpp attack
- * filter runtime. This is deliberately limited to one already-resolved
- * type-47 attack filter and one imported action; it neither creates DSA
- * bytecode nor expands the admitted opcode subset. */
-int csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
-
-/* Install one resolved CSBWin Monster.cpp movement filter in its source level
- * slot. Unbound levels remain explicitly disabled; this admits only the
- * existing authenticated pure-stack/transfer action subset. */
-int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAFilterBinding *binding,
-    uint32_t state_index,
-    int action_ordinal,
-    uint32_t master_location,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter);
-
-int csb_v1_runtime_bind_csbwin_movement_filter_stack_runtime_multi(
-    CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_RuntimeDSAMovementFilterRequest *requests,
-    size_t request_count,
-    int loaded_level,
-    CSB_V1_DSAFilterRuntime *out_filter,
-    CSB_V1_RuntimeDSAMovementFilterStackAdapter *out_adapter);
-
-int csb_v1_runtime_csbwin_movement_filter_stack_runner_callback(
-    const CSB_V1_DSAImportedAction *action,
-    int *parameters,
-    int parameter_count,
-    int flgs_inout[2],
-    void *user);
-
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
@@ -1125,18 +686,6 @@ int csb_v1_runtime_custom_background_skin_grid(
     int *out_height,
     int *out_loaded_level,
     int *out_default_skin);
-
-/* Persist one CSBWin DSA SETSKIN change through the complete,
- * FNV-authenticated appended EXPOOL tail. This mirrors CSBWin data.cpp
- * SKIN_CACHE::SetSkin and EXPOOL::Read/Write: it may remove an all-zero
- * column or consume a source-owned exact-size DB11 free node for a changed
- * column. It never calls EXPOOL::enlarge or invents a new DB11 block. */
-int csb_v1_runtime_set_csbwin_saved_skin(
-    CSB_V1_RuntimeProfile *profile,
-    int level,
-    int x,
-    int y,
-    uint8_t skin_num);
 
 /* Queue one source-locked timeline event for the CSB V1 runtime.
  * The underlying event heap is the shared V1 ReDMCSB TIMELINE.C model used
@@ -1465,13 +1014,6 @@ typedef struct {
 
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
-struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34;
-struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
-struct CSB_V1_StartupSessionPackageTitleReceipt_PC34;
-struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34;
-struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34;
-struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34;
-
 typedef enum {
     CSB_V1_RUNTIME_STARTUP_PLAN_NONE_PC34 = 0,
     CSB_V1_RUNTIME_STARTUP_PLAN_ENTER_DUNGEON_PC34 = 1,
@@ -1493,77 +1035,6 @@ typedef struct {
     int sync_profile_state;
     int sync_leader_hand;
 } CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34;
-/* ReDMCSB TITLE.C F0437 retains C001 through the complete title, while
- * ENTRANCE.C F0806 owns C002-C005 until it exits its input loop.  Keep the
- * real package and surface identities coupled to that input/runtime boundary;
- * this receipt contains no replacement pixels or callback route. */
-typedef struct {
-    int valid;
-    int real_package_matched;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    int input_runtime_transition_ready;
-    int door_opening_transition;
-    int hud_runtime_transition;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int full_title_to_hud_package_bound;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int full_title_to_opening_package_bound;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int real_title_opening_consumption;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t opening_host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34;
-
-typedef struct {
-    int valid;
-    int real_hud_door_input_consumption;
-    int same_session_generation;
-    int no_legacy_wrappers;
-    int no_synthetic_surface;
-    uint32_t session_generation;
-    uint32_t hud_host_surface_hash;
-    uint64_t real_asset_receipt_hash;
-    uint64_t consumed_surface_hash;
-    const char *source_evidence;
-} CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34;
 typedef struct {
     int level_loaded;
     int current_level;
@@ -1632,32 +1103,6 @@ int csb_v1_runtime_apply_startup_sequence_plan_pc34(
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,
     const char *resume_path,
     CSB_V1_RuntimeStartupRuntimePlanReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_package_handoff_receipt_from_transition_pc34(
-    const struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
-    const struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
-    const CSB_V1_StartupEntranceInputOutcome_PC34 *input_outcome,
-    const CSB_V1_StartupRuntimeApplyReceipt_PC34 *runtime_apply,
-    const CSB_V1_StartupCommandStateReceipt_PC34 *state,
-    CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_package_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 *title_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitlePackageHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_door_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionPackageTitleReceipt_PC34 *title_receipt,
-    const struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34 *opening_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitleDoorHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_title_opening_consumption_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34
-        *consumption_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupTitleOpeningConsumptionHandoffReceipt_PC34 *out_receipt);
-int csb_v1_runtime_startup_hud_door_input_handoff_receipt_pc34(
-    const struct CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34
-        *package_receipt,
-    const CSB_V1_RuntimeStartupPackageHandoffReceipt_PC34 *runtime_receipt,
-    CSB_V1_RuntimeStartupHudDoorInputHandoffReceipt_PC34 *out_receipt);
 int csb_v1_runtime_apply_startup_sequence_plan_from_state_facts_with_receipts_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct CSB_V1_StartupRuntimePlan_PC34 *startup_plan,

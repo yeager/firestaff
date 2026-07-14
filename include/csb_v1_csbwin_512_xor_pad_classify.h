@@ -117,10 +117,7 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
-/* CSBWin SaveGame.cpp writes EDT_Palette as 24 complete 256-byte DB11
- * EXPOOL blocks (6144 bytes). Keep room for that source bundle plus the
- * adjacent DSA/database records. */
-#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 8192u
+#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
 #define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
 #define CSB_V1_CSBWIN_DSA_TRACING_WORDS 8u
 /* CSBWin CSB.h: EDT_Database=5, EDBT_DSAtraces=7. */
@@ -343,9 +340,6 @@ typedef struct {
 typedef struct {
     int valid;
     int truncated;
-    /* Index in CSBWin's serialized TIMER array. ProcessTimers passes this
-     * unchanged to TT_ParameterMessage's EXPOOL lookup. */
-    uint16_t source_index;
     uint32_t time;
     uint8_t function;
     uint8_t ubyte5;

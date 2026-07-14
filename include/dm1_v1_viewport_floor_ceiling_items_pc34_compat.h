@@ -61,7 +61,6 @@ extern "C" {
 #define DM1_GRAPHIC_FIRST_OBJECT        498
 #define DM1_GRAPHIC_FIRST_CREATURE      584
 #define DM1_GRAPHIC_ITEM_SCROLL         500
-#define DM1_GRAPHIC_OBJECT_LAST          (DM1_GRAPHIC_FIRST_CREATURE - 1)
 
 /* Compute floor panel GRAPHICS.DAT index for a given floor set.
  * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet. */
@@ -114,7 +113,6 @@ static inline int dm1_is_alcove_ornament(int globalIndex) {
 }
 
 int dm1_item_aspect_index(int thingType, int subtype);
-unsigned int dm1_object_aspect_graphic_index(int aspectIndex);
 unsigned int dm1_item_sprite_index(int thingType, int subtype);
 unsigned int dm1_object_aspect_graphic_info(int aspectIndex);
 int dm1_object_aspect_coordinate_set(int aspectIndex);
@@ -146,30 +144,6 @@ typedef struct DM1_ItemSpriteBlitPlan {
     int draw_w;
     int draw_h;
 } DM1_ItemSpriteBlitPlan;
-
-/* ReDMCSB DUNVIEW.C F0115:4808-4824 and :4932-5078 route wall-alcove
- * objects through G2029 and C2548, not the ordinary G2028/C2500 floor
- * coordinate rows.  `coordinate_binding_ready` is deliberately false until
- * Firestaff decodes the matching original PC34 C2548 layout record. */
-typedef struct DM1_F0115AlcoveItemMaterialPlanPc34 {
-    unsigned int graphic_index;
-    int aspect_index;
-    int coordinate_set;
-    int view_square_index;
-    int alcove_view_row;
-    int source_zone;
-    int transparent_color;
-    int use_alcove_object_image;
-    int coordinate_binding_ready;
-} DM1_F0115AlcoveItemMaterialPlanPc34;
-
-int dm1_v1_f0115_alcove_item_material_plan_pc34(
-    DM1_F0115AlcoveItemMaterialPlanPc34 *out_plan,
-    int thing_type,
-    int subtype,
-    int relative_forward,
-    int relative_side,
-    int relative_cell);
 
 int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                               int thingType,

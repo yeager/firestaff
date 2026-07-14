@@ -57,9 +57,7 @@
  *   ReDMCSB layout-696 C113..C116 champion-icon zone IDs.
  */
 #include "m11_game_view.h"
-#include "dm1_v1_champion_panel_hud_pc34_compat.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
+#include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -176,118 +174,6 @@ static int expect_int(const char* label, int got, int want) {
     return 1;
 }
 
-static int probe_dm1_status_rect_xywh(const DM1_V1_ChampionStatusRectPc34* rect,
-                                      int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH) {
-    if (!rect) return 0;
-    if (outX) *outX = rect->x;
-    if (outY) *outY = rect->y;
-    if (outW) *outW = rect->w;
-    if (outH) *outH = rect->h;
-    return 1;
-}
-
-static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
-                                      int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH) {
-    if (rect.w <= 0 || rect.h <= 0) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int probe_M11_GameView_GetV1StatusBoxZone(int slot,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_box_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusNameTextZone(int slot,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_name_text_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
-                                             int slot) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    return dm1_v1_champion_status_name_color_pc34(
-        champ->present,
-        champ->hp.current,
-        slot == game->world.party.activeChampionIndex);
-}
-
-static int probe_M11_GameView_GetV1StatusBarZone(int slot,
-                                           int stat,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_bar_rect_pc34(slot, stat, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1ChampionIconZone(int slot,
-                                              int* outX,
-                                              int* outY,
-                                              int* outW,
-                                              int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!dm1_v1_champion_icon_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_layout_rect_xywh(rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusHandSlotBoxZone(int slot,
-                                                   int hand,
-                                                   int* outX,
-                                                   int* outY,
-                                                   int* outW,
-                                                   int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(slot, hand, &rect)) {
-        return 0;
-    }
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusHandSlotGraphic(
-    const M11_GameViewState* game,
-    int slot,
-    int hand) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        hand < 0 || hand > 1 ||
-        slot >= game->world.party.championCount) {
-        return 0;
-    }
-    champ = &game->world.party.champions[slot];
-    if (!champ->present || champ->hp.current == 0) return 0;
-    return dm1_v1_champion_status_hand_slot_graphic_pc34(
-        hand,
-        (uint16_t)champ->wounds,
-        hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
-}
-
 static void seed_champion(struct ChampionState_Compat* champ,
                           const char* name,
                           int direction,
@@ -360,7 +246,7 @@ static int check_alive_slot(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "%s slot%d status box populated",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
         w == 67 && h == 29 &&
         count_nonblack(fb, PROBE_FB_W, x, y, w, h) >=
             PROBE_STATUS_BOX_MIN_NONBLACK);
@@ -368,22 +254,22 @@ static int check_alive_slot(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "%s slot%d status-box stride 69",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
         x == slot * 69);
 
     snprintf(label, sizeof(label), "%s slot%d name color present",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1StatusNameTextZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1StatusNameTextZone(slot, &x, &y, &w, &h) &&
         count_color(fb, PROBE_FB_W, x, y, w, h,
-                    probe_M11_GameView_GetV1StatusNameColor(game, slot)) >=
+                    M11_GameView_GetV1StatusNameColor(game, slot)) >=
             PROBE_NAME_COLOR_MIN_COUNT);
 
     for (stat = 0; stat < 3; ++stat) {
         snprintf(label, sizeof(label), "%s slot%d stat%d bar populated",
                  partyLabel, slot, stat);
         ok &= expect_true(label,
-            probe_M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
+            M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
             w == 4 && h == 25 &&
             count_nonblack(fb, PROBE_FB_W, x, y, w, h) ==
                 PROBE_STAT_BAR_NONBLACK_FULL);
@@ -392,7 +278,7 @@ static int check_alive_slot(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "%s slot%d champion icon populated",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
         count_nonblack(fb, PROBE_FB_W, x, y, w, h) >=
             PROBE_CHAMPION_ICON_MIN_NONBLACK);
 
@@ -401,12 +287,12 @@ static int check_alive_slot(const M11_GameViewState* game,
                  "%s slot%d hand%d slot-box graphic available",
                  partyLabel, slot, hand);
         ok &= expect_true(label,
-            probe_M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand) != 0);
+            M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand) != 0);
         snprintf(label, sizeof(label),
                  "%s slot%d hand%d slot-box populated",
                  partyLabel, slot, hand);
         ok &= expect_true(label,
-            probe_M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
+            M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
                                                     &x, &y, &w, &h) &&
             w == 18 && h == 18 &&
             count_nonblack(fb, PROBE_FB_W, x, y, w, h) >=
@@ -430,24 +316,24 @@ static int check_empty_slot(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "%s slot%d status box empty",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
         count_nonblack(fb, PROBE_FB_W, x, y, w, h) == 0);
 
     snprintf(label, sizeof(label), "%s slot%d name color unavailable",
              partyLabel, slot);
-    ok &= expect_int(label, probe_M11_GameView_GetV1StatusNameColor(game, slot), -1);
+    ok &= expect_int(label, M11_GameView_GetV1StatusNameColor(game, slot), -1);
 
     snprintf(label, sizeof(label), "%s slot%d champion icon empty",
              partyLabel, slot);
     ok &= expect_true(label,
-        probe_M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+        M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
         count_nonblack(fb, PROBE_FB_W, x, y, w, h) == 0);
 
     for (stat = 0; stat < 3; ++stat) {
         snprintf(label, sizeof(label), "%s slot%d stat%d bar empty",
                  partyLabel, slot, stat);
         ok &= expect_true(label,
-            probe_M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
+            M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
             count_nonblack(fb, PROBE_FB_W, x, y, w, h) == 0);
     }
     for (hand = 0; hand < 2; ++hand) {
@@ -455,14 +341,14 @@ static int check_empty_slot(const M11_GameViewState* game,
                  "%s slot%d hand%d slot-box graphic unavailable",
                  partyLabel, slot, hand);
         ok &= expect_int(label,
-                         probe_M11_GameView_GetV1StatusHandSlotGraphic(game,
+                         M11_GameView_GetV1StatusHandSlotGraphic(game,
                                                                  slot,
                                                                  hand),
                          0);
         snprintf(label, sizeof(label), "%s slot%d hand%d zone empty",
                  partyLabel, slot, hand);
         ok &= expect_true(label,
-            probe_M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
+            M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
                                                     &x, &y, &w, &h) &&
             count_nonblack(fb, PROBE_FB_W, x, y, w, h) == 0);
     }
@@ -570,6 +456,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
@@ -580,10 +467,9 @@ int main(int argc, char** argv) {
     }
     dataDir = argv[1];
 
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
-    /* The regression owns one hash-verified DM1 session.  M12 launcher
-     * scanning is not evidence for an active C151..C154/C113..C116 HUD. */
-    if (!M11_GameView_StartDm1(&game, dataDir)) {
+    if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr,
                 "SKIP dm1 v1 full_party_hud_runtime_pairing_probe: "
                 "could not open DM1 V1 game view from %s\n",
@@ -591,7 +477,6 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 2;
     }
-    game.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     if (!game.assetsAvailable) {
         fprintf(stderr,
                 "SKIP dm1 v1 full_party_hud_runtime_pairing_probe: "

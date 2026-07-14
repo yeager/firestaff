@@ -3,10 +3,6 @@
 
 #include <stdint.h>
 #include "dm2_v1_asset_loader.h"
-#include "dm2_v1_dialogue_gdat.h"
-#include "dm2_v1_dungeon_loader.h"
-#include "dm2_v1_gdat_scene_m11_command.h"
-#include "dm2_v1_weather_gdat.h"
 #include <stddef.h>
 
 typedef struct DM2_V1_StartupHostFacts DM2_V1_StartupHostFacts;
@@ -117,13 +113,6 @@ typedef struct {
     void   *dungeon_data;      /* DM2_V1_DungeonData* — parsed dungeon */
     void   *graphics_dat;      /* graphics data handle */
 } DM2_V1_BootProfile;
-
-/* Returns only the verified source material and source draw semantics for
- * skproject's save/load dialogue. The host must expand RECT_453 before it
- * can render the plan. */
-int dm2_v1_boot_dialogue_box_draw_plan(
-    const DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueBoxDrawPlan *out);
 
 typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_OK = 0,
@@ -272,18 +261,7 @@ typedef struct {
     int runtime_render_fallback_carried_item_count;
     int runtime_render_asset_projectile_count;
     int runtime_render_fallback_projectile_count;
-    /* The runtime owns this receipt after the viewport has decided whether
-     * every requested GDAT material was available.  A zero fallback count is
-     * insufficient: a source-required frame can intentionally leave missing
-     * pixels untouched instead of painting a substitute. */
-    int runtime_render_blocked_material_draw_count;
-    uint32_t runtime_render_blocked_material_mask;
     int runtime_render_no_core_fallbacks;
-    /* Atomic source-required frame identity consumed by M11. */
-    int runtime_m11_frame_receipt_consumed;
-    uint32_t runtime_m11_frame_map_load_token;
-    uint32_t runtime_m11_frame_scene_control_hash;
-    uint32_t runtime_m11_frame_palette_hash;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -981,16 +959,6 @@ typedef struct {
 
 typedef struct {
     int valid;
-    uint32_t table_hash;
-    uint32_t row_count;
-    uint32_t placement_hash;
-    uint32_t placement_count;
-    uint32_t rotated_cell_mask;
-    uint32_t max_stretched_size;
-} DM2_V1_InterfaceRect14HostReceipt;
-
-typedef struct {
-    int valid;
     int draw_startup_menu;
     int command_count;
     int selected_row;
@@ -1034,8 +1002,6 @@ typedef struct {
     int first_hud_frame_ready;
     int startup_hud_handoff_ready;
     int runtime_handoff_ready;
-    int interface_rect14_host_ready;
-    DM2_V1_InterfaceRect14HostReceipt interface_rect14;
     int m11_host_view_ready;
     const char *status_scope;
     const char *status;
@@ -1191,20 +1157,6 @@ int dm2_v1_boot_startup_execute_pointer_from_runtime_state(
     struct DM2_V1_StartupHostActionReceipt *out_receipt);
 int dm2_v1_boot_startup_execute_pointer_from_snapshot(
     const DM2_V1_BootRuntimeStartupSnapshot *snapshot,
-    int x,
-    int y,
-    int (*apply_session)(void *userdata,
-                         const struct DM2_V1_SessionState *session),
-    void *apply_userdata,
-    struct DM2_V1_StartupExecution *out_execution,
-    struct DM2_V1_StartupHostActionReceipt *out_receipt);
-int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
-    const DM2_V1_BootProfile *profile,
-    int startup_menu_active,
-    const char *startup_save_root,
-    int resume_available,
-    unsigned int slot_mask,
-    int selected_row,
     int x,
     int y,
     int (*apply_session)(void *userdata,
@@ -1436,133 +1388,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
 int dm2_v1_boot_interface_palette(DM2_V1_BootProfile *profile,
                                   DM2_V1_InterfacePalette *out_palette);
 
-/* skproject LOAD_GDAT_INTERFACE_00_02 materialises dt07/2 as a group-count
- * byte, one length byte per group, one primary and one secondary variable
- * span per group, then a command tail. Storage is owned by graphics_dat. */
-#define DM2_V1_INTERFACE_ACTION_GROUP_MAX 255u
-typedef struct {
-    uint8_t length;
-    uint32_t primary_offset;
-    uint32_t secondary_offset;
-} DM2_V1_InterfaceActionGroup;
-
-typedef struct {
-    int valid;
-    const uint8_t *raw;
-    uint32_t raw_size;
-    uint32_t hash;
-    uint32_t group_count;
-    uint32_t entry_count;
-    uint32_t tail_offset;
-    uint32_t tail_size;
-    DM2_V1_InterfaceActionGroup groups[DM2_V1_INTERFACE_ACTION_GROUP_MAX];
-} DM2_V1_InterfaceActionTable;
-
-int dm2_v1_boot_interface_action_table(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_InterfaceActionTable *out_table);
-
-/* ReDMCSB/skproject SkWinCore.cpp _0b36_037e uses the dt07/2 tail as 256
- * (group, threshold) pairs, then selects the nearest source threshold in
- * that group's pv1 span and returns the matching pv5 palette entry. */
-int dm2_v1_interface_action_table_remap_palette(
-    const DM2_V1_InterfaceActionTable *table,
-    uint8_t *palette,
-    uint32_t palette_count,
-    uint8_t darkness_0_to_64,
-    int colorkey1,
-    int colorkey2);
-
-/* skproject QUERY_FONT reads this six-row, 128-glyph dt07/0 table directly.
- * Storage remains boot-owned and is valid while profile->graphics_dat lives. */
-int dm2_v1_boot_interface_font_table(
-    DM2_V1_BootProfile *profile,
-    const uint8_t **out_rows,
-    uint32_t *out_hash);
-
-/* Bridges a source-proven G1 DB2 text receipt to boot-owned GDAT only. */
-int dm2_v1_boot_g1_text_wall_gfx_materials(
-    DM2_V1_BootProfile *profile,
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out);
-int dm2_v1_boot_g1_gdat_text_materials(
-    DM2_V1_BootProfile *profile,
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatTextMessageRuntimeReceipt *out);
-int dm2_v1_boot_g1_actuator_wall_gfx_materials(
-    DM2_V1_BootProfile *profile,
-    int map,
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out);
-int dm2_v1_boot_g1_creature_map_chip_materials(
-    DM2_V1_BootProfile *profile,
-    int map,
-    DM2_V1_G1CreatureMapChipRuntimeReceipt *out);
-
-#define DM2_V1_INTERFACE_HUD_CHAMPION_COUNT 4u
-typedef struct {
-    int x;
-    int y;
-    int w;
-    int h;
-} DM2_V1_InterfaceRect;
-
-/* Source-owned host command for c_dialog.cpp::DM2_dialog_2066_3820.  The
- * panel image/palette come from DIALOG_BOXES/0x81/0 and its destination comes
- * from the original INTERFACE_GENERAL raw4 rectangle table. */
-typedef struct {
-    int valid;
-    DM2_V1_DialogueBoxDrawPlan draw;
-    DM2_V1_InterfaceRect rect;
-    uint32_t command_hash;
-} DM2_V1_DialogueBoxHostCommand;
-
-int dm2_v1_boot_dialogue_box_host_command(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueBoxHostCommand *out_command);
-
-/* Source-owned opening orchestration for DM2_dialog_OPEN_DIALOG_PANEL.
- * All placement comes from the original INTERFACE_GENERAL raw4 table. */
-typedef struct {
-    int valid;
-    DM2_V1_DialogueOpenPanelReceipt draw;
-    DM2_V1_InterfaceRect panel_rect;
-    DM2_V1_InterfaceRect version_rect;
-    DM2_V1_InterfaceRect primary_button_rect;
-    DM2_V1_InterfaceRect secondary_button_rect;
-    DM2_V1_InterfaceRect save_list_rect;
-    uint32_t command_hash;
-} DM2_V1_DialogueOpenPanelHostCommand;
-
-int dm2_v1_boot_dialogue_open_panel_host_command(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_DialogueOpenPanelHostCommand *out_command);
-typedef struct {
-    int valid;
-    uint32_t table_hash;
-    DM2_V1_InterfaceRect portrait[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
-    DM2_V1_InterfaceRect name[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
-    DM2_V1_InterfaceRect status[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT][3];
-} DM2_V1_InterfaceHudLayout;
-
-/* skproject _098d_1208 loads INTERFACE_GENERAL/0/dt04/0 and expands these
- * champion rect IDs: names 165..168, portraits 173..176, status 185..204. */
-int dm2_v1_boot_interface_hud_layout(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_InterfaceHudLayout *out_layout);
-
-typedef struct {
-    int valid;
-    uint32_t table_hash;
-    DM2_V1_InterfaceRect new_game;
-    DM2_V1_InterfaceRect resume_game;
-} DM2_V1_StartupMenuPointerLayout;
-
-/* skproject SHOW_MENU_SCREEN installs the raw4 rect table before handling
- * event 0xD7 (NEW) and 0xD9 (RESUME). */
-int dm2_v1_boot_startup_menu_pointer_layout(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_StartupMenuPointerLayout *out_layout);
-
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
 int dm2_v1_boot_interface_rect14_table(
@@ -1570,12 +1395,6 @@ int dm2_v1_boot_interface_rect14_table(
     const uint8_t **out_rows,
     uint32_t *out_row_count,
     uint32_t *out_hash);
-
-/* Host-facing dt07/0x0A receipt. It carries only proven placement metadata;
- * pixel decode and drawing remain owned by the original GDAT material path. */
-int dm2_v1_boot_interface_rect14_host_receipt(
-    DM2_V1_BootProfile *profile,
-    DM2_V1_InterfaceRect14HostReceipt *out_receipt);
 
 /* Viewport asset provider backed by profile->graphics_dat.
  * Pass the DM2_V1_BootProfile as the user pointer. */
@@ -1585,22 +1404,6 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
                                      int *out_w,
                                      int *out_h,
                                      int *out_stride);
-
-/* Resolve Firestaff's renderer-private HUD key to the exact skproject
- * INTERFACE_GENERAL dtImage address. The mapping is shared by the live
- * viewport provider and the fail-closed M11 HUD command bridge. */
-int dm2_v1_boot_hud_core_asset_address(int field,
-                                       int *out_category,
-                                       int *out_index,
-                                       int *out_field);
-
-/* Retrieve the source IMG3 local palette for a virtual viewport image.
- * Runtime GDAT presentation must consume this palette with its pixels. */
-int dm2_v1_boot_viewport_asset_palette_fetch(
-    void *user,
-    int gdat_index,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash);
 
 /* Fetch a DM2 object icon image from the boot-owned GRAPHICS.DAT handle.
  * The returned pixel buffer is owned by the caller and must be freed with
@@ -1650,15 +1453,6 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
-/* Validate one skproject Champion::HeroType against its complete original
- * GDAT family and return the first-name spelling REVIVE_PLAYER copies from
- * CHAMPIONS[type]/dtText/0x18.  This is deliberately a source gate: a
- * renderer may not turn a Firestaff-local portrait ordinal into HeroType. */
-int dm2_v1_boot_champion_hero_type_source_ready(
-    DM2_V1_BootProfile *profile,
-    uint8_t hero_type,
-    char out_first_name[8]);
-
 int dm2_v1_boot_graphicsset_scene_control(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,
@@ -1675,47 +1469,6 @@ int dm2_v1_boot_graphicsset_scene_control(
     uint32_t *out_misty_map,
     uint32_t *out_thunder_position,
     uint32_t *out_ambient_darkness);
-
-/* Loads the complete live GRAPHICSSET scene/light command family directly
- * from boot-owned canonical GDAT. Missing source pixels, palettes, or control
- * words fail closed before a dungeon frame is admitted. */
-int dm2_v1_boot_gdat_scene_m11_command_plan(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_GdatSceneM11CommandPlan *out_plan);
-
-/* c_weather.cpp resolves ENVIRONMENT command text and the matching IMG3 by
- * the live MapGraphicsStyle. The returned receipt remains boot-owned evidence;
- * callers must not infer a viewport destination from it. */
-int dm2_v1_boot_weather_gdat_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_WeatherGdatReceipt *out_receipt);
-
-/* Source-only weather destination evidence. c_bkgrnd.cpp passes CD into
- * QUERY_TEMP_PICST, which resolves the original INTERFACE_GENERAL dt04
- * rectangle route before DRAW_TEMP_PICST. This receipt does not draw. */
-typedef struct {
-    int valid;
-    uint8_t graphicsset;
-    uint32_t destination_mask;
-    uint32_t rect_table_hash;
-    uint32_t receipt_hash;
-    DM2_V1_WeatherDestinationClip clips[6];
-} DM2_V1_BootWeatherDestinationReceipt;
-
-int dm2_v1_boot_weather_gdat_destination_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    DM2_V1_BootWeatherDestinationReceipt *out_receipt);
-
-/* c_gui_vp.cpp dialogue shell/glyph evidence only. The receipt does not
- * authorize text layout or a DRAW_PICST call. */
-int dm2_v1_boot_dialogue_gdat_receipt(
-    DM2_V1_BootProfile *profile,
-    int graphicsset_index,
-    uint8_t shell_field,
-    DM2_V1_DialogueGdatReceipt *out_receipt);
 
 /* Raw-byte and decoded-pixel evidence for one virtual viewport resource.
  * The virtual index is the one used by DM2_V1_ViewportAssetFetch. */

@@ -1,10 +1,6 @@
 #ifndef FIRESTAFF_DM1_V1_INSCRIPTION_FONT_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_INSCRIPTION_FONT_PC34_COMPAT_H
 
-#include "memory_dungeon_dat_pc34_compat.h"
-
-#include <string.h>
-
 /* DM1 PC34 wall inscriptions use a dedicated GRAPHICS.DAT font,
  * not the generic message/scroll font.  ReDMCSB DUNVIEW.C:3619 loads
  * M648_GRAPHIC_INSCRIPTION_FONT, DUNVIEW.C:3627 centers with count << 2,
@@ -27,20 +23,6 @@ typedef struct DM1_V1_InscriptionLinePlanPc34 {
     int nextCursor;
     int done;
 } DM1_V1_InscriptionLinePlanPc34;
-
-typedef struct DM1_V1_InscriptionFrontWallLineDrawPlanPc34 {
-    int glyphStart;
-    int glyphCount;
-    int textX;
-    int textY;
-    int textWidth;
-    int nextCursor;
-    int done;
-} DM1_V1_InscriptionFrontWallLineDrawPlanPc34;
-
-typedef unsigned short (*DM1_V1_InscriptionNextThingFnPc34)(
-    void* user,
-    unsigned short thing);
 
 static inline int DM1_V1_InscriptionGlyphIndexFromSourceByte(unsigned char ch) {
     /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit decoded inscription
@@ -271,61 +253,6 @@ static inline int DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
     return pos;
 }
 
-static inline int DM1_V1_InscriptionDecodeVisibleRawGlyphsPc34(
-        const struct DungeonThings_Compat* things,
-        int preferredTextIndex,
-        unsigned short firstThing,
-        DM1_V1_InscriptionNextThingFnPc34 nextThing,
-        void* nextThingUser,
-        unsigned char* outGlyphs,
-        int outGlyphCapacity) {
-    unsigned short thing;
-    int safety = 0;
-    if (!things || !outGlyphs || outGlyphCapacity < 2 ||
-        !things->textStrings || !things->textData ||
-        things->textDataWordCount <= 0) {
-        if (outGlyphs && outGlyphCapacity > 0) {
-            outGlyphs[0] = 0x81U;
-        }
-        return 0;
-    }
-    if (preferredTextIndex >= 0 &&
-        preferredTextIndex < things->textStringCount) {
-        const struct DungeonTextString_Compat* text =
-            &things->textStrings[preferredTextIndex];
-        if (text->visible) {
-            return DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
-                things->textData,
-                things->textDataWordCount,
-                (int)text->textDataWordOffset,
-                outGlyphs,
-                outGlyphCapacity) > 1;
-        }
-    }
-    thing = firstThing;
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
-        if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING) {
-            int textIdx = (int)THING_GET_INDEX(thing);
-            if (textIdx >= 0 && textIdx < things->textStringCount) {
-                const struct DungeonTextString_Compat* text =
-                    &things->textStrings[textIdx];
-                if (text->visible) {
-                    return DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
-                        things->textData,
-                        things->textDataWordCount,
-                        (int)text->textDataWordOffset,
-                        outGlyphs,
-                        outGlyphCapacity) > 1;
-                }
-            }
-        }
-        thing = nextThing ? nextThing(nextThingUser, thing) : THING_ENDOFLIST;
-        ++safety;
-    }
-    outGlyphs[0] = 0x81U;
-    return 0;
-}
-
 static inline int DM1_V1_InscriptionUnreadableBoxHeightPc34(
         int relForward,
         int relSide,
@@ -385,44 +312,6 @@ static inline int DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
     outPlan->textY = kLineBottomY[line] - 7;
     outPlan->done = (cursor >= glyphCapacity || glyphs[cursor] == 0x81U);
     outPlan->nextCursor = outPlan->done ? cursor : cursor + 1;
-    return 1;
-}
-
-static inline int DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
-        const unsigned char* decoded,
-        int decodedCapacity,
-        int cursor,
-        int line,
-        int wallWidth,
-        int wallHeight,
-        DM1_V1_InscriptionFrontWallLineDrawPlanPc34* outPlan) {
-    DM1_V1_InscriptionLinePlanPc34 linePlan;
-    DM1_V1_InscriptionFrontWallLineDrawPlanPc34 plan;
-    if (!outPlan) {
-        return 0;
-    }
-    memset(&plan, 0, sizeof(plan));
-    if (!DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
-            decoded, decodedCapacity, cursor, line, &linePlan)) {
-        *outPlan = plan;
-        return 0;
-    }
-    plan.glyphStart = linePlan.glyphStart;
-    plan.glyphCount = linePlan.glyphCount;
-    plan.textX = linePlan.textX;
-    plan.textY = linePlan.textY;
-    plan.textWidth = linePlan.textWidth;
-    /* ReDMCSB DUNVIEW.C F0107:3682 restores the PC 3.4 C735 zone from
-     * M712_NEGGRAPHIC_ before it blits M648.  M11 does not first paint the
-     * unreadable-inscription ornament for a readable D1C inscription, so
-     * its already-composed source wall is that zone.  Do not manufacture a
-     * per-line wall patch from unrelated coordinates: it displaces genuine
-     * GRAPHICS.DAT pixels and makes the original 8x8 glyphs look blurred. */
-    (void)wallWidth;
-    (void)wallHeight;
-    plan.nextCursor = linePlan.nextCursor;
-    plan.done = linePlan.done;
-    *outPlan = plan;
     return 1;
 }
 

@@ -72,13 +72,6 @@ typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     unsigned int entrance_door_step_count;
     unsigned int entrance_vblank_ms;
     unsigned int entrance_pre_open_delay_ms;
-    int entrance_palette;
-    unsigned int entrance_palette_entry_count;
-    unsigned int entrance_palette_fingerprint;
-    unsigned int entrance_credits_wait_ticks;
-    int entrance_credits_palette;
-    unsigned int entrance_credits_palette_entry_count;
-    unsigned int entrance_credits_palette_fingerprint;
     const char* source_evidence;
 } DM1_V1_StartupFullGraphicsMediaReceipt_PC34;
 
@@ -91,59 +84,6 @@ typedef struct DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 {
     int fallback_is_visible_last_resort;
     const char* source_evidence;
 } DM1_V1_StartupTitleRuntimeSourceReceipt_PC34;
-
-/* ReDMCSB TITLE.C F0437 PC/F20 consumes C001 in three separate source
- * regions: DUNGEON (y=0..79), MASTER/STRIKES BACK (y=80..136), and PRESENTS
- * (y=137..152). This receipt validates the decoded PC34 C001 pixels that M11
- * will actually present; it never supplies substitute title art. */
-typedef struct DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 {
-    int handled;
-    int graphics_c001_dimensions_valid;
-    int dungeon_source_pixels_present;
-    int master_source_pixels_present;
-    int presents_source_pixels_present;
-    unsigned int graphics_c001_pixel_fingerprint;
-    int release_c001_ready;
-    const char* source_evidence;
-} DM1_V1_StartupTitleRuntimeAssetReceipt_PC34;
-
-/* One source-visible PC34 TITLE.C F0437 event as consumed by M11. This is
- * deliberately DM1-only: no CSB title phase, palette, or fallback frame can
- * enter this receipt. `present_frame` is false for the two post-zoom waits
- * and final guard, which still retain their original pre-event VBlank wait. */
-typedef struct DM1_V1_StartupTitlePresentationCommand_PC34 {
-    int handled;
-    unsigned int source_step;
-    int present_frame;
-    int clear_before_present;
-    int special_palette;
-    /* TITLE.C:362-387 loads C13/C14 before the first zoom VBlank. */
-    int palette_before_pre_present_delay;
-    unsigned int pre_present_delay_ms;
-    unsigned int post_present_delay_ms;
-    int source_timing_receipt_consumed;
-    int source_asset_receipt_consumed;
-    const char* source_evidence;
-} DM1_V1_StartupTitlePresentationCommand_PC34;
-
-/* One source-visible SWSH.C event retained by the DM1 PC34 startup route.
- * M11 may execute only these verified commands for DM1; it must not derive a
- * replacement palette program or cadence from a generic V1 intro path. */
-typedef struct DM1_V1_StartupSwooshPresentationCommand_PC34 {
-    int handled;
-    unsigned int source_step;
-    unsigned int source_event_kind;
-    int load_logo_bitmap;
-    int start_sound;
-    int set_palette_color;
-    unsigned int palette_color_index;
-    unsigned int palette_color_value;
-    int wait_vblanks;
-    unsigned int vblank_count;
-    unsigned int delay_ms;
-    int run_start_program;
-    const char* source_evidence;
-} DM1_V1_StartupSwooshPresentationCommand_PC34;
 
 typedef enum DM1_V1_StartupEntranceRenderKind_PC34 {
     DM1_V1_STARTUP_ENTRANCE_RENDER_NONE_PC34 = 0,
@@ -167,8 +107,6 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     unsigned int audio_volume;
     unsigned int source_step;
     unsigned int door_animation_step;
-    int entrance_palette;
-    unsigned int entrance_palette_fingerprint;
     int door_geometry_ready;
     unsigned int door_left_box_x;
     unsigned int door_left_box_y;
@@ -182,36 +120,6 @@ typedef struct DM1_V1_StartupEntranceRenderAudioCommand_PC34 {
     unsigned int door_right_source_x;
     unsigned int delay_ms;
 } DM1_V1_StartupEntranceRenderAudioCommand_PC34;
-
-/* ReDMCSB ENTRANCE.C F0442 presents C005, selects the PC34 credits palette,
- * then waits up to 1800 VBlanks. This receipt has no CSB phase or fallback
- * surface: the supplied C005 pixels must be the real decoded PC34 asset. */
-typedef struct DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 {
-    int handled;
-    int present_credits_frame;
-    int source_asset_receipt_consumed;
-    int source_palette_receipt_consumed;
-    int source_timing_receipt_consumed;
-    int special_palette;
-    unsigned int credits_wait_ticks;
-    unsigned int vblank_delay_ms;
-    unsigned int graphics_c005_pixel_fingerprint;
-    const char* source_evidence;
-} DM1_V1_StartupEntranceCreditsPresentationCommand_PC34;
-
-/* F0441's outer loop redraws C004 plus C002/C003 after F0442 returns. Keep
- * this distinct DM1 PC34 phase receipt so M11 cannot replay title/fade steps,
- * carry the credits palette into the entrance, or share a CSB transition. */
-typedef struct DM1_V1_StartupEntranceCreditsReturnCommand_PC34 {
-    int handled;
-    int credits_phase_receipt_consumed;
-    int redraw_closed_entrance;
-    int discard_pending_input;
-    int present_entrance_palette;
-    int special_palette;
-    unsigned int wait_vblank_delay_ms;
-    const char* source_evidence;
-} DM1_V1_StartupEntranceCreditsReturnCommand_PC34;
 
 typedef struct DM1_V1_StartupHandoffPreludePlan_PC34 {
     int required;
@@ -306,9 +214,6 @@ typedef struct DM1_V1_StartupSaveResumeCaptureFacts_PC34 {
     int observed_user_save_corpus_classified;
     int observed_user_save_corpus_pc34;
     int observed_user_save_corpus_part_envelope;
-    int observed_user_save_corpus_roundtrip_verified;
-    int observed_user_save_corpus_roundtrip_failed;
-    unsigned int observed_user_save_corpus_roundtrip_hash;
     int observed_user_save_corpus_rejected;
     int observed_user_save_corpus_truncated;
     const char* observed_user_save_corpus_first_pc34_path;
@@ -341,9 +246,6 @@ typedef struct DM1_V1_StartupSaveResumeCaptureReceipt_PC34 {
     int user_save_corpus_classified;
     int user_save_corpus_pc34;
     int user_save_corpus_part_envelope;
-    int user_save_corpus_roundtrip_verified;
-    int user_save_corpus_roundtrip_failed;
-    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
@@ -540,18 +442,6 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34 {
     int blocked_enter_until_champion_selected;
 } DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34;
 
-typedef struct DM1_V1_StartupHoCHostCaptureObservation_PC34 {
-    int host_window_present;
-    int presented_capture_ready;
-    int started_from_launcher;
-    int intro_not_bypassed;
-    int captured_from_real_assets;
-    int observed_c026_portrait_asset;
-    int observed_c346_mirror_backing_asset;
-    int observed_required_graphics_hash_match;
-    int observed_required_dungeon_hash_match;
-} DM1_V1_StartupHoCHostCaptureObservation_PC34;
-
 typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int handled;
     int ready;
@@ -561,8 +451,6 @@ typedef struct DM1_V1_StartupHoCFullGraphicsCaptureProofReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int required_asset_capture;
@@ -599,8 +487,6 @@ typedef struct DM1_V1_StartupHoCFullGraphicsRuntimeApplyReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -670,8 +556,6 @@ typedef struct DM1_V1_StartupHoCFullGraphicsProductionConsumerReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -719,11 +603,6 @@ typedef struct DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34 {
     int captured_from_release_app;
     int observed_c026_portrait_asset;
     int observed_c346_mirror_backing_asset;
-    /* Live DUNVIEW.C material observation, distinct from startup's static
-     * C127/C026/C346 receipt. M11 leaves both false until it has sampled an
-     * actual Hall viewport cell after ENTRANCE.C hands off. */
-    int observed_live_hoc_c127_material_request;
-    int observed_live_hoc_f0115_material_request;
     int observed_required_graphics_hash_match;
     int observed_required_dungeon_hash_match;
     int observed_host_window_present;
@@ -769,11 +648,8 @@ typedef struct DM1_V1_StartupHoCReleaseAppCaptureOwnershipReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
-    int observed_live_hoc_material_request;
     int required_asset_capture;
     int host_window_capture;
     int presented_capture;
@@ -907,8 +783,6 @@ typedef struct DM1_V1_StartupHoCSaveCaptureHostReadinessReceipt_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int hoc_asset_capture;
     int host_window_capture;
@@ -954,10 +828,6 @@ typedef struct DM1_V1_CompleteSupportReceipt_PC34 {
     int user_save_corpus_scan_consumed;
     int user_save_corpus_pc34_ready;
     int user_save_corpus_part_envelope_ready;
-    int user_save_corpus_roundtrip_ready;
-    int user_save_corpus_roundtrip_verified;
-    int user_save_corpus_roundtrip_failed;
-    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
@@ -1004,8 +874,6 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;
@@ -1039,9 +907,6 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int map_width;
     int map_height;
     int render_command_count;
-    int consumed_hoc_save_capture_host_readiness;
-    int hoc_save_capture_ready;
-    int hoc_original_save_capture_ready;
     int complete_support_ready;
     int complete_source_visible_startup;
     int complete_entrance_to_hoc;
@@ -1051,10 +916,6 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
     int complete_original_save_roundtrip_route;
     int user_save_corpus_pc34_ready;
     int user_save_corpus_part_envelope_ready;
-    int user_save_corpus_roundtrip_ready;
-    int user_save_corpus_roundtrip_verified;
-    int user_save_corpus_roundtrip_failed;
-    unsigned int user_save_corpus_roundtrip_hash;
     int user_save_corpus_rejected;
     int user_save_corpus_truncated;
     char user_save_corpus_first_pc34_path[512];
@@ -1063,8 +924,7 @@ typedef struct DM1_V1_StartupHoCBootProbeSummary_PC34 {
 
 typedef enum DM1_V1_StartupHoCBootProbeExpectation_PC34 {
     DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_COMPLETE_SUPPORT_PC34 = 1,
-    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34 = 2,
-    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_ORIGINAL_SAVE_CORPUS_PC34 = 3
+    DM1_V1_STARTUP_HOC_BOOT_PROBE_EXPECT_RELEASE_APP_CAPTURE_PC34 = 2
 } DM1_V1_StartupHoCBootProbeExpectation_PC34;
 
 typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
@@ -1073,7 +933,6 @@ typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
     int ready;
     int complete_support_ready;
     int release_app_capture_ready;
-    int original_save_corpus_ready;
     char diagnostic[1536];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34;
@@ -1081,7 +940,7 @@ typedef struct DM1_V1_StartupHoCBootProbeExpectationReceipt_PC34 {
 typedef struct DM1_V1_StartupHoCBootProbeLogReceipt_PC34 {
     int handled;
     int ready;
-    char fields[3072];
+    char fields[2048];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeLogReceipt_PC34;
 
@@ -1096,8 +955,6 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int real_asset_capture;
     int mac_window_capture;
     int release_app_capture;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_matches;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;
@@ -1131,9 +988,6 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int map_width;
     int map_height;
     int render_command_count;
-    int consumed_hoc_save_capture_host_readiness;
-    int hoc_save_capture_ready;
-    int hoc_original_save_capture_ready;
     int complete_support_ready;
     int complete_source_visible_startup;
     int complete_entrance_to_hoc;
@@ -1141,28 +995,8 @@ typedef struct DM1_V1_StartupHoCBootProbeHostFields_PC34 {
     int complete_host_app_capture_route;
     int complete_save_corpus_route;
     int complete_original_save_roundtrip_route;
-    int user_save_corpus_pc34_ready;
-    int user_save_corpus_part_envelope_ready;
-    int user_save_corpus_roundtrip_ready;
-    int user_save_corpus_roundtrip_verified;
-    int user_save_corpus_roundtrip_failed;
-    unsigned int user_save_corpus_roundtrip_hash;
-    int user_save_corpus_rejected;
-    int user_save_corpus_truncated;
-    char user_save_corpus_first_pc34_path[512];
     const char* source_evidence;
 } DM1_V1_StartupHoCBootProbeHostFields_PC34;
-
-typedef struct DM1_V1_StartupHoCM12CapturePackageFacts_PC34 {
-    const char* source_id;
-    int data_ready;
-    int version_ready;
-    int startup_contract_ready;
-    int required_graphics_asset_ready;
-    int required_dungeon_asset_ready;
-    const DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34*
-        presented_capture;
-} DM1_V1_StartupHoCM12CapturePackageFacts_PC34;
 
 typedef struct DM1_V1_StartupHoCM12CaptureFields_PC34 {
     int handled;
@@ -1170,8 +1004,6 @@ typedef struct DM1_V1_StartupHoCM12CaptureFields_PC34 {
     int real_asset_capture_ready;
     int mac_window_capture_ready;
     int release_app_capture_ready;
-    int release_app_identity_ready;
-    unsigned int release_app_identity_hash;
     int host_capture_route_ready;
     int release_capture_ownership_ready;
     int host_render_consumer_ready;
@@ -1586,12 +1418,6 @@ int dm1_v1_startup_hoc_host_probe_facts_set_presented_hash_pc34(
     int byte_count,
     unsigned int presented_hash,
     unsigned int consumer_mask);
-int dm1_v1_startup_hoc_capture_facts_apply_host_observation_pc34(
-    DM1_V1_StartupHoCFullGraphicsCaptureFacts_PC34* facts,
-    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation);
-int dm1_v1_startup_hoc_host_probe_facts_apply_host_observation_pc34(
-    DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
-    const DM1_V1_StartupHoCHostCaptureObservation_PC34* observation);
 int dm1_v1_startup_launch_path_bypasses_intro_pc34(
     DM1_V1_StartupLaunchPath_PC34 path);
 int dm1_v1_startup_source_visible_handoff_required_pc34(const char* game_id);
@@ -1759,9 +1585,6 @@ int dm1_v1_startup_hoc_boot_probe_host_fields_pc34(
 int dm1_v1_startup_hoc_m12_capture_fields_pc34(
     const DM1_V1_StartupHoCFullGraphicsHostProbeFacts_PC34* facts,
     DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields);
-int dm1_v1_startup_hoc_m12_capture_fields_from_package_pc34(
-    const DM1_V1_StartupHoCM12CapturePackageFacts_PC34* facts,
-    DM1_V1_StartupHoCM12CaptureFields_PC34* out_fields);
 int dm1_v1_startup_hoc_render_consumer_from_first_frame_and_thing_pc34(
     const DM1_V1_StartupHoCFirstFrameReceipt_PC34* first_frame,
     const DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34* thing_consumer,
@@ -1822,8 +1645,6 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
 int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
-int dm1_v1_startup_title_timing_receipt_valid_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt);
 int dm1_v1_startup_title_runtime_source_receipt_pc34(
     const char* source_id,
     int graphics_c001_candidate_available,
@@ -1831,23 +1652,6 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     unsigned int graphics_c001_height,
     int title_dat_fallback_available,
     DM1_V1_StartupTitleRuntimeSourceReceipt_PC34* out_receipt);
-
-int dm1_v1_startup_title_runtime_asset_receipt_pc34(
-    const char* source_id,
-    const unsigned char* graphics_c001_pixels,
-    unsigned int graphics_c001_width,
-    unsigned int graphics_c001_height,
-    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt);
-
-int dm1_v1_startup_title_presentation_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* asset_receipt,
-    unsigned int source_step,
-    DM1_V1_StartupTitlePresentationCommand_PC34* out_command);
-int dm1_v1_startup_swoosh_presentation_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    unsigned int source_step,
-    DM1_V1_StartupSwooshPresentationCommand_PC34* out_command);
 unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
     int entrance_event_kind,
@@ -1862,17 +1666,6 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     unsigned int delay_ticks,
     unsigned int vblank_loop_count,
     DM1_V1_StartupEntranceRenderAudioCommand_PC34* out_command);
-int dm1_v1_startup_entrance_credits_presentation_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const unsigned char* graphics_c005_pixels,
-    unsigned int graphics_c005_width,
-    unsigned int graphics_c005_height,
-    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34* out_command);
-int dm1_v1_startup_entrance_credits_return_command_pc34(
-    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
-    const DM1_V1_StartupEntranceCreditsPresentationCommand_PC34*
-        credits_command,
-    DM1_V1_StartupEntranceCreditsReturnCommand_PC34* out_command);
 int dm1_v1_startup_sequence_source_order_valid_pc34(void);
 const char* dm1_v1_startup_sequence_source_evidence_pc34(void);
 unsigned int dm1_v1_startup_title_zoom_steps_pc34(void);

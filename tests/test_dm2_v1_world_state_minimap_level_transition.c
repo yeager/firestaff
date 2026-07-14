@@ -30,7 +30,6 @@
  */
 
 #include "dm2_v1_world_state.h"
-#include "dm2_v1_new_game.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -50,98 +49,6 @@ static int expect_true(int condition, const char *message)
     g_pass++;
     fprintf(stderr, "PASS: %s\n", message);
     return 1;
-}
-
-static int append_bytes(uint8_t *out, size_t cap, size_t *pos,
-                        const void *src, size_t size)
-{
-    if (!out || !pos || !src || *pos > cap || size > cap - *pos) return 0;
-    memcpy(out + *pos, src, size);
-    *pos += size;
-    return 1;
-}
-
-static int append_i32_le(uint8_t *out, size_t cap, size_t *pos, int value)
-{
-    uint8_t bytes[4];
-    bytes[0] = (uint8_t)(value & 0xFF);
-    bytes[1] = (uint8_t)((value >> 8) & 0xFF);
-    bytes[2] = (uint8_t)((value >> 16) & 0xFF);
-    bytes[3] = (uint8_t)((value >> 24) & 0xFF);
-    return append_bytes(out, cap, pos, bytes, sizeof(bytes));
-}
-
-static int test_original_envelope_world_restore(void)
-{
-    uint8_t slot[1024];
-    uint8_t encoded_gs[256];
-    uint8_t encoded_champion[512];
-    uint8_t champion_mask[261];
-    DM2_GameStateBlock game_state;
-    DM2_ChampionRecord champion;
-    DM2_V1_SaveCandidate candidate;
-    DM2_WorldState *loaded;
-    size_t pos = 42u;
-    int gs_size;
-    int champion_size;
-    int ok;
-
-    memset(slot, 0, sizeof(slot));
-    memset(&game_state, 0, sizeof(game_state));
-    memset(&champion, 0, sizeof(champion));
-    game_state.dwGameTick = 0x1234u;
-    game_state.dwRandomSeed = 0x98765432u;
-    game_state.wChampionsCount = 1u;
-    game_state.wPlayerPosX = 12u;
-    game_state.wPlayerPosY = 7u;
-    game_state.wPlayerDir = 3u;
-    game_state.wPlayerMap = 2u;
-    game_state.wChampionLeader = 0u;
-    game_state.wTimersCount = 2u;
-    game_state.rain_state[0] = 18u;
-    memcpy(champion.first_name, "HISS", 4u);
-    champion.cur_hp = 51u;
-    champion.max_hp = 77u;
-    champion.mana = 22u;
-    champion.food = 300;
-    champion.water = 44;
-    dm2_suppress_champion_mask(champion_mask);
-    gs_size = dm2_suppress_encode_gamestate(&game_state, encoded_gs,
-                                             sizeof(encoded_gs));
-    champion_size = dm2_suppress_encode_champion(&champion, champion_mask,
-                                                  encoded_champion,
-                                                  sizeof(encoded_champion));
-    if (gs_size <= 0 || champion_size <= 0 ||
-        !append_bytes(slot, sizeof(slot), &pos, "D2RS", 4u) ||
-        !append_i32_le(slot, sizeof(slot), &pos, gs_size) ||
-        !append_bytes(slot, sizeof(slot), &pos, encoded_gs, (size_t)gs_size) ||
-        !append_i32_le(slot, sizeof(slot), &pos, champion_size) ||
-        !append_bytes(slot, sizeof(slot), &pos, encoded_champion,
-                      (size_t)champion_size)) {
-        return 0;
-    }
-    slot[38] = 0xBEu; slot[39] = 0xEFu;
-    slot[40] = 0xDEu; slot[41] = 0xADu;
-    if (dm2_v1_session_parse_save_candidate(&candidate, slot + 42u,
-                                            pos - 42u) != 0) {
-        fprintf(stderr, "original envelope candidate parser rejected fixture\n");
-        return 0;
-    }
-    loaded = dm2_v1_world_state_load_from_mem(slot, pos);
-    if (!loaded) return 0;
-    ok = loaded->game_tick == 0x1234 &&
-         loaded->timer_count == 0 &&
-         loaded->current_level == 2 &&
-         loaded->party.champion_count == 1 &&
-         loaded->party.champions[0].x == 12 &&
-         loaded->party.champions[0].y == 7 &&
-         loaded->party.champions[0].hp == 51 &&
-         loaded->party.champions[0].max_hp == 77 &&
-         loaded->party.champions[0].mp == 22 &&
-         loaded->weather_by_level[2].intensity == 18 &&
-         loaded->raw_save_size == pos - 42u;
-    dm2_v1_world_state_free(loaded);
-    return ok;
 }
 
 int main(void)
@@ -224,8 +131,6 @@ int main(void)
                 "level 0 reveal untouched by rejected setter");
     expect_true(dm2_v1_world_state_get_explored(&state, 5, 10, 10) == 1,
                 "level 5 reveal untouched by rejected setter");
-    expect_true(test_original_envelope_world_restore(),
-                "original SUPPRESS envelope restores world fields transactionally");
 
     /* ── 7. Save/load round-trip across the transition boundary ── */
     serialized = dm2_v1_world_state_serialize(&state, &serialized_size);

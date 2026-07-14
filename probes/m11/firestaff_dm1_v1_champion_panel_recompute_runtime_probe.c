@@ -56,25 +56,8 @@ unsigned char* G2160_puc_Bitmap_Destination;
 enum {
     PROBE_FB_W = 320,
     PROBE_FB_H = 200,
-    PROBE_CHAMPION_COUNT = 4,
-    PROBE_GRAPHIC_FOOD_LABEL = 30,
-    PROBE_GRAPHIC_WATER_LABEL = 31,
-    PROBE_GRAPHIC_POISON_LABEL = 32
+    PROBE_CHAMPION_COUNT = 4
 };
-
-/* ReDMCSB PANEL.C F0345: C030/C031 are unconditional and C032 is the
- * conditional poisoned overlay.  These are probe-only asset IDs. */
-static int probe_M11_GameView_GetV1FoodLabelGraphicId(void) {
-    return PROBE_GRAPHIC_FOOD_LABEL;
-}
-
-static int probe_M11_GameView_GetV1WaterLabelGraphicId(void) {
-    return PROBE_GRAPHIC_WATER_LABEL;
-}
-
-static int probe_M11_GameView_GetV1PoisonLabelGraphicId(void) {
-    return PROBE_GRAPHIC_POISON_LABEL;
-}
 
 /* ---------------------------------------------------------------------- *
  * Framebuffer helpers
@@ -347,7 +330,7 @@ static int check_state_a_well_fed(M11_GameViewState* game,
 
     /* Caller is responsible for setting state and re-rendering. */
     foodLabelMatched = label_pixels_present(
-        game, fb, probe_M11_GameView_GetV1FoodLabelGraphicId(),
+        game, fb, M11_GameView_GetV1FoodLabelGraphicId(),
         /* M11 blits at M11_VIEWPORT_X+panelX+32, */
         /* M11_VIEWPORT_Y+panelY+13-((food->height+1)/2). */
         /* panelX=80 panelY=52 food->height=9 → (112, 60+5) = (112, 60) */
@@ -359,7 +342,7 @@ static int check_state_a_well_fed(M11_GameViewState* game,
     ok &= expect_true(label, foodLabelMatched >= 5);
 
     waterLabelMatched = label_pixels_present(
-        game, fb, probe_M11_GameView_GetV1WaterLabelGraphicId(),
+        game, fb, M11_GameView_GetV1WaterLabelGraphicId(),
         /* water at (panelX+32, panelY+36-5) = (112, 83), absolute (112, 116). */
         112, 116, 46, 9, 5);
     snprintf(label, sizeof(label),
@@ -377,7 +360,7 @@ static int check_state_a_well_fed(M11_GameViewState* game,
      * Report the state-A baseline through outPoisonMatched for delta
      * comparison in state D. */
     poisonLabelMatched = label_pixels_present(
-        game, fb, probe_M11_GameView_GetV1PoisonLabelGraphicId(),
+        game, fb, M11_GameView_GetV1PoisonLabelGraphicId(),
         112, 135, 96, 15, 1);
     if (outPoisonMatched) {
         *outPoisonMatched = poisonLabelMatched;
@@ -459,7 +442,7 @@ static int check_state_d_poisoned(M11_GameViewState* game,
      * baseline (C020 pre-printed "POISONED" text) and require a
      * positive delta of at least 50 pixels for the C032 overlay. */
     poisonLabelMatched = label_pixels_present(
-        game, fb, probe_M11_GameView_GetV1PoisonLabelGraphicId(),
+        game, fb, M11_GameView_GetV1PoisonLabelGraphicId(),
         112, 135, 96, 15, 1);
     poisonDelta = poisonLabelMatched - stateAPoisonMatched;
     snprintf(label, sizeof(label),

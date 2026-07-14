@@ -410,15 +410,14 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
         return 0;
     }
 
-    /* Start unpopulated. Only source-verified Track 02 palette data may be
-     * installed before a game view is presented. */
+    /* Init palette state with defaults */
     tqr_palette_init_defaults(&vp->palette);
 
     vp->viewport_x = 0;
     vp->viewport_y = 0;
     vp->initialized = 1;
 
-    printf("[TQR] viewport initialized: %dx%d planar fb, original palette pending\n",
+    printf("[TQR] viewport initialized: %dx%d planar fb, palette ready\n",
            TQR_FB_W, TQR_FB_H);
     return 1;
 }

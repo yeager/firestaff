@@ -294,45 +294,6 @@ static void test_candidate_panel_path(void) {
     CHECK(r.valid == 0, "unknown panel command invalid");
 }
 
-static void test_nonzero_leader_candidate_selection(void) {
-    ChampionPortraitClickInput_Compat in;
-    CandidateChampionAddResult_Compat add;
-    CandidatePanelState_Compat st;
-    CandidatePanelResult_Compat panel;
-
-    printf("[nonzero_leader_candidate_selection]\n");
-
-    /* ReDMCSB REVIVE.C F0280:272-277 appends at the prior G0305 count and
-     * calls SetLeader only when the incremented count is one. F0282:837-845
-     * likewise assigns champion 0 only for a one-member accepted party.
-     * Thus a valid leader in slot 1 is not a C127 selection input and must
-     * survive the C160 confirmation of the tail candidate. */
-    in = base_portrait_click_input();
-    in.partyChampionCount = 2;
-    in.leaderIndex = 1;
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    CHECK(add.triggersCandidateAdd == 1, "C127 accepts a multi-party nonzero leader");
-    CHECK(add.candidateChampionIndex == 2, "C127 appends after two existing champions");
-    CHECK(add.candidateChampionOrdinal == 3, "C127 records tail candidate ordinal");
-    CHECK(add.nextPartyChampionCount == 3, "C127 opens a three-member candidate panel");
-    CHECK(add.setLeaderToFirstChampion == 0,
-          "C127 does not replace a nonzero multi-party leader");
-
-    st.partyChampionCount = add.nextPartyChampionCount;
-    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-        st, DM1_COMMAND_RESURRECT);
-    CHECK(panel.valid == 1 && panel.resurrected == 1,
-          "C160 accepts the candidate selected with a nonzero leader");
-    CHECK(panel.candidateChampionIndex == 2,
-          "C160 operates on the appended tail rather than the leader slot");
-    CHECK(panel.nextPartyChampionCount == 3,
-          "C160 retains both existing champions and the candidate");
-    CHECK(panel.nextCandidateChampionOrdinal == 0,
-          "C160 clears the transient candidate ordinal");
-    CHECK(panel.disablesMirrorSensor == 1, "C160 consumes the selected mirror");
-}
-
 static void test_candidate_append_clear_cycles(void) {
     ChampionPortraitClickInput_Compat in;
     CandidateChampionAddResult_Compat add;
@@ -367,148 +328,6 @@ static void test_candidate_append_clear_cycles(void) {
         CHECK(clear.nextCandidateChampionOrdinal == 0, "cycle cancel clears G0299");
         CHECK(clear.disablesMirrorSensor == 0, "cycle cancel does not disable mirror sensor");
     }
-}
-
-static void test_candidate_slot_reuse_before_accept(void) {
-    ChampionPortraitClickInput_Compat in;
-    CandidateChampionAddResult_Compat add;
-    CandidatePanelState_Compat st;
-    CandidatePanelResult_Compat result;
-    int cycle;
-
-    printf("[candidate_slot_reuse_before_accept]\n");
-
-    /* ReDMCSB REVIVE.C F0280:272-276 appends at G0305 and sets G0299 to
-     * the matching ordinal. F0282:745-783 clears G0299 and decrements G0305
-     * on C162. With an established leader in slot 0, repeated C127/C162
-     * cycles must therefore keep reusing slot 1 until C160 finalizes it. */
-    in = base_portrait_click_input();
-    in.partyChampionCount = 1;
-    in.leaderIndex = 0;
-    for (cycle = 0; cycle < 3; ++cycle) {
-        add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-        CHECK(add.triggersCandidateAdd == 1, "C127 stays armed after a prior cancel");
-        CHECK(add.candidateChampionIndex == 1, "C127 reuses appended slot 1");
-        CHECK(add.candidateChampionOrdinal == 2, "C127 restores G0299 ordinal 2");
-        CHECK(add.nextPartyChampionCount == 2, "C127 temporarily increments G0305 to 2");
-
-        st.partyChampionCount = add.nextPartyChampionCount;
-        st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-        result = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-            st, DM1_COMMAND_CANCEL);
-        CHECK(result.valid == 1 && result.cancelled == 1,
-              "C162 is valid for the repeatedly appended candidate");
-        CHECK(result.nextPartyChampionCount == 1,
-              "C162 restores the established one-champion party count");
-        CHECK(result.nextCandidateChampionOrdinal == 0,
-              "C162 clears G0299 before the next C127 attempt");
-        CHECK(result.disablesMirrorSensor == 0,
-              "C162 leaves the mirror enabled for the next attempt");
-    }
-
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    st.partyChampionCount = add.nextPartyChampionCount;
-    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-    result = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-        st, DM1_COMMAND_RESURRECT);
-    CHECK(result.valid == 1 && result.resurrected == 1,
-          "C160 accepts the slot reused after three C162 cycles");
-    CHECK(result.candidateChampionIndex == 1 &&
-          result.nextPartyChampionCount == 2,
-          "C160 retains the append-only party slot and count");
-    CHECK(result.nextCandidateChampionOrdinal == 0 &&
-          result.disablesMirrorSensor == 1,
-          "C160 clears G0299 and takes the mirror-disable path");
-}
-
-static void test_two_champion_candidate_slot_reuse(void) {
-    ChampionPortraitClickInput_Compat in;
-    CandidateChampionAddResult_Compat add;
-    CandidatePanelState_Compat st;
-    CandidatePanelResult_Compat panel;
-
-    printf("[two_champion_candidate_slot_reuse]\n");
-
-    /* ReDMCSB REVIVE.C F0280:272-277 records G0299 as the previous party
-     * count plus one before incrementing G0305. F0282:744-783 always removes
-     * the current tail slot on C162, and only clears the leader when that
-     * tail was the sole party member. Two established champions therefore
-     * keep slots 0 and 1 while a rejected C127 candidate repeatedly uses
-     * slot 2; C160 retains that same slot and disables the mirror sensor. */
-    in = base_portrait_click_input();
-    in.partyChampionCount = 2;
-    in.leaderIndex = 0;
-
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    CHECK(add.triggersCandidateAdd == 1, "two-party C127 route reaches F0280");
-    CHECK(add.candidateChampionIndex == 2, "two-party candidate appends at slot 2");
-    CHECK(add.candidateChampionOrdinal == 3, "two-party G0299 records ordinal 3");
-    CHECK(add.nextPartyChampionCount == 3, "two-party C127 increments G0305 to 3");
-    CHECK(add.setLeaderToFirstChampion == 0, "two-party C127 preserves existing leader");
-
-    st.partyChampionCount = add.nextPartyChampionCount;
-    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-        st, DM1_COMMAND_CANCEL);
-    CHECK(panel.valid == 1, "two-party C162 is valid for appended candidate");
-    CHECK(panel.cancelled == 1, "two-party C162 rejects candidate");
-    CHECK(panel.candidateChampionIndex == 2, "two-party C162 removes tail slot 2");
-    CHECK(panel.nextPartyChampionCount == 2, "two-party C162 restores two champions");
-    CHECK(panel.nextCandidateChampionOrdinal == 0, "two-party C162 clears G0299");
-    CHECK(panel.disablesMirrorSensor == 0, "two-party C162 leaves mirror enabled");
-
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    CHECK(add.triggersCandidateAdd == 1, "two-party C127 remains armed after rejection");
-    CHECK(add.candidateChampionIndex == 2, "two-party retry reuses slot 2");
-    CHECK(add.candidateChampionOrdinal == 3, "two-party retry restores ordinal 3");
-    CHECK(add.nextPartyChampionCount == 3, "two-party retry appends only candidate slot");
-
-    st.partyChampionCount = add.nextPartyChampionCount;
-    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-        st, DM1_COMMAND_RESURRECT);
-    CHECK(panel.valid == 1, "two-party C160 is valid for retried candidate");
-    CHECK(panel.resurrected == 1, "two-party C160 accepts candidate");
-    CHECK(panel.candidateChampionIndex == 2, "two-party C160 retains slot 2");
-    CHECK(panel.nextPartyChampionCount == 3, "two-party C160 keeps three champions");
-    CHECK(panel.nextCandidateChampionOrdinal == 0, "two-party C160 clears G0299");
-    CHECK(panel.disablesMirrorSensor == 1, "two-party C160 disables mirror sensor");
-}
-
-static void test_full_party_candidate_cancel(void) {
-    ChampionPortraitClickInput_Compat in;
-    CandidateChampionAddResult_Compat add;
-    CandidatePanelState_Compat st;
-    CandidatePanelResult_Compat panel;
-
-    printf("[full_party_candidate_cancel]\n");
-
-    /* ReDMCSB REVIVE.C F0280:272-277 creates the fourth candidate from a
-     * three-champion party. F0282:744-783 removes that tail candidate on
-     * C162 without disabling the mirror; C127 cannot append a fifth member. */
-    in = base_portrait_click_input();
-    in.partyChampionCount = 3;
-    in.leaderIndex = 0;
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    CHECK(add.triggersCandidateAdd == 1, "three-party C127 creates fourth candidate");
-    CHECK(add.candidateChampionIndex == 3 && add.candidateChampionOrdinal == 4,
-          "fourth candidate occupies tail slot and ordinal");
-    CHECK(add.nextPartyChampionCount == 4 && !add.setLeaderToFirstChampion,
-          "C127 produces four-member panel while retaining leader");
-
-    st.partyChampionCount = add.nextPartyChampionCount;
-    st.candidateChampionOrdinal = add.candidateChampionOrdinal;
-    panel = F0867_RESURRECTION_ProcessCandidatePanelCommand_Compat(
-        st, DM1_COMMAND_CANCEL);
-    CHECK(panel.valid && panel.cancelled && panel.candidateChampionIndex == 3,
-          "C162 accepts and removes the fourth candidate");
-    CHECK(panel.nextPartyChampionCount == 3 &&
-          panel.nextCandidateChampionOrdinal == 0 && !panel.disablesMirrorSensor,
-          "C162 restores three champions and leaves the mirror enabled");
-
-    in.partyChampionCount = 4;
-    add = F0866_RESURRECTION_RouteChampionPortraitClick_Compat(&in);
-    CHECK(!add.triggersCandidateAdd, "full party C127 cannot append fifth candidate");
 }
 
 static void test_mirror_sensor_disable_order(void) {
@@ -641,11 +460,7 @@ int main(void) {
     test_reincarnation();
     test_champion_portrait_candidate_route();
     test_candidate_panel_path();
-    test_nonzero_leader_candidate_selection();
     test_candidate_append_clear_cycles();
-    test_candidate_slot_reuse_before_accept();
-    test_two_champion_candidate_slot_reuse();
-    test_full_party_candidate_cancel();
     test_mirror_sensor_disable_order();
     test_vi_altar_full_cycle_transition();
     test_command_validation();

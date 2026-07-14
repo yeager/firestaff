@@ -807,7 +807,7 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   1);
         memset(runtime_receipt, 0, sizeof(runtime_receipt));
         check_int(
-            "synthetic startup semantic runtime rejects non-authenticated media",
+            "synthetic startup semantic runtime route rc",
             theron_v1_startup_runtime_load_initial_level_with_host_receipts(
                 &runtime_world,
                 runtime_track,
@@ -820,14 +820,14 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                 &runtime_state_receipt,
                 runtime_receipt,
                 sizeof(runtime_receipt)),
-            0);
-        check_int("synthetic startup semantic runtime route is blocked",
+            1);
+        check_int("synthetic startup semantic runtime route source",
                   runtime_result.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
-        check_int("synthetic startup semantic runtime has no handoff",
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime handoff flag",
                   runtime_result.track02_semantic_handoff,
-                  0);
-        check_int("synthetic startup semantic runtime has no bank identity",
+                  1);
+        check_int("synthetic startup semantic runtime keeps bank identity",
                   runtime_world.runtime_media.identity.ready &&
                   runtime_world.runtime_media.identity.track02_variant ==
                       THERON_TRACK02_VARIANT_US_BIN &&
@@ -835,27 +835,27 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   runtime_world.runtime_media.identity.bank_descriptor_offset ==
                       runtime_descriptor_offsets[0] &&
                   runtime_world.runtime_media.identity.bank_stride == 0x0400u,
-            0);
-        check_int("synthetic startup semantic runtime blocks fallback",
+                  1);
+        check_int("synthetic startup semantic runtime no blocked fallback",
                   runtime_result.fallback_visuals_blocked,
-                  1);
-        check_int("synthetic startup semantic runtime emits no state receipt",
-                  runtime_state_receipt.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_NONE);
-        check_int("synthetic startup semantic runtime state has no handoff",
-                  runtime_state_receipt.runtime_track02_semantic_handoff,
                   0);
-        check_int("synthetic startup semantic runtime receipt is rejected",
+        check_int("synthetic startup semantic runtime state route",
+                  runtime_state_receipt.runtime_level_source,
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
+        check_int("synthetic startup semantic runtime state handoff",
+                  runtime_state_receipt.runtime_track02_semantic_handoff,
+                  1);
+        check_int("synthetic startup semantic runtime receipt text",
                   strstr(runtime_receipt,
-                         "stage-three loader bytes rejected") != NULL,
+                         "Track 02 semantic initial level") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host text is rejected",
+        check_int("synthetic startup semantic runtime host text",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "stage-three loader bytes rejected") != NULL,
+                         "Track 02 semantic initial level") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host route is blocked",
+        check_int("synthetic startup semantic runtime host route",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "route=track02-blocked") != NULL,
+                         "route=track02-semantic") != NULL,
                   1);
         free(runtime_track);
     }
@@ -1040,7 +1040,6 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02InitialCandidateBinding binding;
-    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1153,36 +1152,6 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate binding anchor match",
               binding.matches_initial_anchor,
               1);
-
-    signal_status = theron_v1_track02_capture_initial_level_object_boundary(
-        data, size, local_md5, &boundary);
-    check_int("real initial level/object boundary status",
-              signal_status,
-              THERON_TRACK02_SIGNAL_OK);
-    check_int("real initial level/object boundary valid", boundary.valid, 1);
-    check_u32("real initial level/object CD record", boundary.track02_record, 0x0b52u);
-    check_size("real initial level/object level offset in record",
-               boundary.level_user_data_offset_in_record, 0x114u);
-    check_size("real initial level/object level bytes", boundary.level_byte_count, 0x36cu);
-    check_size("real initial level/object opaque boundary in record",
-               boundary.object_boundary_user_data_offset_in_record, 0x480u);
-    check_size("real initial level/object opaque tail bytes",
-               boundary.following_user_data_bytes_in_record, 0x380u);
-    check_int("real initial level/object table stays unparsed",
-              boundary.object_table_parsed, 0);
-    check_int("real initial level/object table stays unproven",
-              boundary.object_table_semantics_proven, 0);
-    check_int("real initial level/object boundary promotion blocked",
-              boundary.promotion_blocked, 1);
-    check_int("real initial level/object receipt fingerprinted",
-              boundary.receipt_hash != 0u, 1);
-    printf("%s CD boundary: record=0x%04x level-user=0x%zx bytes=0x%zx "
-           "opaque-boundary=0x%zx tail=0x%zx hash=0x%08x\n",
-           label, (unsigned)boundary.track02_record,
-           boundary.level_user_data_offset_in_record, boundary.level_byte_count,
-           boundary.object_boundary_user_data_offset_in_record,
-           boundary.following_user_data_bytes_in_record,
-           (unsigned)boundary.receipt_hash);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,

@@ -79,7 +79,6 @@
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
-#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 
 /* ================================================================
@@ -145,11 +144,6 @@
 #define EMIT_ACTION_DISABLED  0x0E  /* payload: champion, ticks, action index, slot */
 #define EMIT_CREATURE_ATTACK  0x0F  /* payload: group, creature, damage/projectile slot, ranged */
 #define EMIT_CHAMPION_DAMAGED 0x10  /* payload: champion, party cell, damage, wound mask */
-#define EMIT_TEXT_MESSAGE     0x11  /* F0245: TextString index, map, x, y */
-#define EMIT_ACTION_ENABLED   0x12  /* payload: champion, source slot ordinal */
-/* ReDMCSB TIMELINE.C F0254: C12 hides the saved champion damage graphic.
- * payload[0] is EVENT.Priority, the original champion index. */
-#define EMIT_CHAMPION_DAMAGE_HIDDEN 0x13
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the
@@ -442,24 +436,6 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
     int doubledMapDifficulty,
     struct CombatantCreatureSnapshot_Compat* outSnapshot);
 
-/* ReDMCSB CHAMPION.C F0330 creates one pending C11 per champion. MENU.C
- * F0407 mutates that exact event to C01's one-based SlotOrdinal after a
- * successful F0328 throw. These helpers own only that live M10 receipt. */
-int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
-    struct GameWorld_Compat* world,
-    int championIndex,
-    int ticks);
-int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
-    struct GameWorld_Compat* world,
-    int championIndex);
-/* ReDMCSB REVIVE.C C162 candidate cancellation removes a temporary party
- * slot before that ordinal can be reused.  Drop only the stale F0330 C11
- * owner at that boundary; F0407's C04 is a C20 sound receipt, not a
- * champion-owned action receipt. */
-void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
-    struct GameWorld_Compat* world,
-    int championIndex);
-
 void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
@@ -467,14 +443,6 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
 void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
-
-/* ReDMCSB GROUP.C F0200/F0199 runtime sight query.  The creature-event
- * dispatcher uses this exact route; it is public so M10 callers and
- * regressions cannot substitute a straight-line approximation. */
-int F0890c_ORCH_GetGroupVisibleDistance_Compat(
-    struct GameWorld_Compat* world,
-    const struct DM1GroupBehaviorContext_Compat* context,
-    const struct DungeonGroup_Compat* group);
 
 int F0890b_ORCH_ComputeDungeonViewLight_Compat(
     const struct GameWorld_Compat* world,

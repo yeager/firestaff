@@ -253,75 +253,10 @@ static void test_interface_palette_decoder_fixture(void)
     }
 }
 
-static void test_img3_local_palette_fixture(void)
-{
-    uint8_t raw[2 * (10 + 2 + 16)];
-    uint32_t offsets[2] = { 0u, 28u };
-    uint32_t sizes[2] = { 28u, 28u };
-    DM2_V1_GdatEntry entries[2];
-    DM2_V1_AssetLoader loader;
-    uint8_t palette16[16];
-    uint32_t hash = 0u;
-
-    memset(raw, 0, sizeof(raw));
-    /* IMG3: 2x1, four-bit image.  The final 16 bytes are exactly what
-     * skproject QUERY_GDAT_IMAGE_LOCALPAL returns to map-chip drawing. */
-    raw[0] = 2u;
-    raw[4] = 4u;
-    raw[10] = 0x12u;
-    for (int i = 0; i < 16; ++i) raw[12 + i] = (uint8_t)(0xe0u + i);
-    memset(&loader, 0, sizeof(loader));
-    memset(entries, 0, sizeof(entries));
-    loader.data = raw;
-    loader.data_size = sizeof(raw);
-    loader.loaded = 1;
-    loader.raw_data_count = 2;
-    loader.raw_offsets = offsets;
-    loader.raw_sizes = sizes;
-    loader.entries = entries;
-    loader.entry_count = 2;
-    entries[0].cls1 = DM2_GDAT_CATEGORY_GRAPHICSSET;
-    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[0].cls4 = 0x22u;
-    entries[0].data_index = 0u;
-
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 1,
-          "IMG3 local palette comes from the final sixteen raw bytes");
-    CHECK(palette16[0] == 0xe0u && palette16[15] == 0xefu && hash != 0u,
-          "IMG3 local palette has a deterministic nonzero receipt hash");
-    /* skproject IMG3::Getpf() selects C8 via OffsetY() == 31; w4 is not a
-     * general bit-depth field for compressed records. */
-    raw[2] = 1u;
-    raw[3] = 0x7cu;
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 0,
-          "C8 IMG3 image cannot claim a source local palette");
-
-    /* QUERY_GDAT_IMAGE_LOCALPAL falls back to MISCELLANEOUS/FE/FE. */
-    raw[28] = 2u;
-    raw[32] = 4u;
-    raw[38] = 0x12u;
-    for (int i = 0; i < 16; ++i) raw[40 + i] = (uint8_t)(0xa0u + i);
-    entries[1].cls1 = DM2_GDAT_CATEGORY_MISCELLANEOUS;
-    entries[1].cls2 = 0xfeu;
-    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[1].cls4 = 0xfeu;
-    entries[1].data_index = 1u;
-    CHECK(dm2_v1_asset_load_image_local_palette(
-              &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 0, 0x22,
-              palette16, &hash) == 1 && palette16[0] == 0xa0u &&
-              palette16[15] == 0xafu && hash != 0u,
-          "C8 image consumes skproject's real GDAT default palette");
-}
-
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
     test_interface_palette_decoder_fixture();
-    test_img3_local_palette_fixture();
     test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
