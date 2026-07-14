@@ -69,6 +69,12 @@ int theron_v1_track02_loader_intake_bind_initial_envelope(
         initial_envelope->record_user_data_offset !=
             receipt.record_user_data_offset ||
         initial_envelope->envelope_bytes != THERON_V1_INITIAL_ENVELOPE_BYTES ||
+        initial_envelope->header_width !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        initial_envelope->header_height !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        initial_envelope->header_seed !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_SEED ||
         initial_envelope->header_identifier !=
             THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER ||
         initial_envelope->track02_raw_sector !=

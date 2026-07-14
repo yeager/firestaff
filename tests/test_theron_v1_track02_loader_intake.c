@@ -33,6 +33,9 @@ int main(void) {
         .record_user_data_offset =
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
         .envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES,
+        .header_width = THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH,
+        .header_height = THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT,
+        .header_seed = THERON_V1_INITIAL_ENVELOPE_HEADER_SEED,
         .header_identifier = THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER,
         .cue_track02_index01_raw_sector = 225u,
         .track02_raw_sector = 3123u,
@@ -68,6 +71,18 @@ int main(void) {
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
         &receipt, &initial_envelope, &receipt));
     initial_envelope.envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES;
+    initial_envelope.header_width = 0x001fu;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.header_width = THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH;
+    initial_envelope.header_height = 0x001au;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.header_height = THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT;
+    initial_envelope.header_seed = 0x0108e939u;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.header_seed = THERON_V1_INITIAL_ENVELOPE_HEADER_SEED;
     initial_envelope.record = 0x04e0u;
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
         &receipt, &initial_envelope, &receipt));
