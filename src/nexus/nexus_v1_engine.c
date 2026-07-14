@@ -2108,6 +2108,66 @@ int nexus_v1_current_level_structure3_render_packet(
     return 1;
 }
 
+int nexus_v1_current_level_dgn_renderer_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveLevelRendererSourceReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    Nexus_V1_DgnStructure3RenderPacket packet;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    out_receipt->blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !nexus_v1_dgn_source_bytes_match(source,
+                                         engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size)) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->package_source_bound = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    out_receipt->structure3_payload_bound =
+        engine->current_level.structure3_payload.valid &&
+        engine->current_level.structure3_payload.byte_size > 0;
+    if (out_receipt->structure3_payload_bound) {
+        out_receipt->structure3_payload_byte_count =
+            engine->current_level.structure3_payload.byte_size;
+        out_receipt->structure3_payload_fnv1a32 =
+            engine->current_level.structure3_payload.raw_payload_hash;
+    }
+
+    memset(&packet, 0, sizeof(packet));
+    if (nexus_v1_current_level_structure3_render_packet(engine, &packet) > 0) {
+        out_receipt->original_saturn_capture_bound = 1;
+        out_receipt->texture_span_bound = packet.texture_span_size > 0;
+        out_receipt->palette_state_bound = packet.palette_state_size > 0;
+        out_receipt->vdp1_state_bound = packet.vdp1_state_size > 0;
+        out_receipt->transform_state_bound = packet.transform_state_size > 0;
+        out_receipt->normal_culling_state_bound =
+            packet.normal_culling_state_size > 0;
+        out_receipt->vdp1_command_bound = packet.vdp1_command_size > 0;
+    }
+
+    /* The opaque capture may be source-bound, but the Saturn codecs and VDP1
+     * command meaning are not known. Keep every renderer consumer fail-closed. */
+    out_receipt->texture_decode_unproven = 1;
+    out_receipt->palette_decode_unproven = 1;
+    out_receipt->vdp1_draw_unproven = 1;
+    out_receipt->transform_culling_unproven = 1;
+    return 1;
+}
+
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];

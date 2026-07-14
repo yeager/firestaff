@@ -15597,6 +15597,18 @@ draw semantics are granted, and the no-draw barrier remains active.
 Verification: `test_nexus_v1_dgn_geometry_readiness` covers the active route
 and mutation rejection.
 
+# ✅ 2026-07-14 Nexus active LEV renderer-source receipt
+
+The DGN viewport now consumes an active-LEV renderer receipt that carries the
+canonical package-bound LEV byte count/FNV and Structure3 payload hash to the
+renderer boundary. It withdraws the receipt when retained bytes change. When
+an original-capture packet is admitted, the receipt names each opaque source
+span while retaining independent blockers for texture decoding, palette
+application, VDP1 command semantics, and transform/culling semantics. The
+route stays no-draw with fallback visuals disabled; it creates no pixels or
+host interpretation of Saturn state. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 - ✅ 2026-07-14 CSB PC V1 startup decode: literal assets bypass LZW and
   compressed assets use ReDMCSB-compatible chunk-width LZW before IMAGE3
   expansion. This restores original C001 title and entrance assets. Verification:

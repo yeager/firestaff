@@ -69,6 +69,13 @@
   retained `LEVxx.DGN` byte buffer at load time and rechecked by both launcher
   and engine before capture intake; this closes package-receipt reuse across
   different in-memory DGN data but does not infer Saturn rendering semantics.
+  The active renderer boundary now consumes that same exact LEV byte count and
+  FNV receipt, plus the bounded Structure3 payload hash, before it can stage a
+  capture packet. Remaining blockers are explicit: no proven texture byte
+  codec/pixel order, no proven palette format/state application, no VDP1
+  command/order semantics, and no transform or culling semantics. Even an
+  authenticated opaque capture keeps all four blockers set and remains
+  no-draw; no synthetic pixels may replace those missing Saturn facts.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked

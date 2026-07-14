@@ -241,6 +241,34 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3RenderPacket;
 
+/* Renderer-bound provenance for the active canonical LEV entry.  This makes
+ * the package-to-viewport boundary inspectable without assigning a Saturn
+ * decoding or drawing meaning to any captured bytes. */
+typedef struct {
+    int valid;
+    int package_source_bound;
+    int structure3_payload_bound;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int structure3_payload_byte_count;
+    uint32_t structure3_payload_fnv1a32;
+    int original_saturn_capture_bound;
+    int texture_span_bound;
+    int palette_state_bound;
+    int vdp1_state_bound;
+    int transform_state_bound;
+    int normal_culling_state_bound;
+    int vdp1_command_bound;
+    int texture_decode_unproven;
+    int palette_decode_unproven;
+    int vdp1_draw_unproven;
+    int transform_culling_unproven;
+    int no_draw_only;
+    int blocks_real_dgn_mesh_render;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveLevelRendererSourceReceipt;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -606,6 +634,13 @@ int nexus_v1_engine_consume_structure3_capture(
 int nexus_v1_current_level_structure3_render_packet(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3RenderPacket *out_packet);
+/* Bind the active canonical LEV byte receipt to the viewport boundary. A
+ * valid receipt remains no-draw even when an authenticated opaque capture is
+ * present: texture, palette, VDP1, transform, and culling semantics are not
+ * inferred here. */
+int nexus_v1_current_level_dgn_renderer_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveLevelRendererSourceReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
