@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "theron_v1_track02_loader_intake.h"
@@ -49,6 +50,9 @@ int main(void) {
         THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET, 0x3800u, 0x800u
     };
     Theron_V1Track02LoaderIntakeReceipt receipt;
+    Theron_V1Track02LoaderIntakeReceipt decoded_receipt;
+    unsigned char *synthetic_raw;
+    size_t synthetic_raw_bytes;
 
     CHECK(theron_v1_track02_loader_intake_observe(&facts, &receipt));
     CHECK(receipt.observed);
@@ -66,6 +70,30 @@ int main(void) {
     CHECK(!receipt.payload_intake_admitted);
     CHECK(strcmp(receipt.status,
                  "initial_envelope_loader_read_source_bound_payload_blocked") == 0);
+
+    /* A header-shaped local fixture cannot substitute for the canonical BIN. */
+    synthetic_raw_bytes = ((size_t)initial_envelope.track02_raw_sector + 1u) *
+        THERON_V1_TRACK02_RAW_SECTOR_BYTES;
+    synthetic_raw = calloc(1u, synthetic_raw_bytes);
+    CHECK(synthetic_raw != NULL);
+    if (synthetic_raw) {
+        size_t raw_offset = (size_t)initial_envelope.track02_raw_sector *
+            THERON_V1_TRACK02_RAW_SECTOR_BYTES + initial_envelope.raw_sector_offset;
+        unsigned char header[] = {
+            0x00, 0x20, 0x00, 0x1b, 0x01, 0x08,
+            0xe9, 0x38, 0x00, 0x26, 0x01, 0x03
+        };
+
+        memcpy(synthetic_raw + raw_offset, header, sizeof(header));
+        CHECK(!theron_v1_track02_loader_intake_decode_initial_envelope(
+            &receipt, &initial_envelope, synthetic_raw, synthetic_raw_bytes,
+            THERON_V1_TRACK02_MD5_US_BIN, &decoded_receipt));
+        CHECK(!decoded_receipt.payload_intake_admitted);
+        CHECK(!decoded_receipt.initial_envelope_decoded);
+        CHECK(decoded_receipt.status == NULL);
+        CHECK(receipt.initial_envelope_source_bound);
+        free(synthetic_raw);
+    }
 
     initial_envelope.envelope_bytes = facts.byte_count + 1u;
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
