@@ -3549,12 +3549,15 @@ static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
 
 static int dm2_v1_wall_button_receipt_matches(
     const DM2_V1_ViewportState *s,
-    const DM2_V1_DoorRender *door)
+    const DM2_V1_DoorRender *door,
+    int image_width,
+    int image_height)
 {
     int i;
 
     if (!s || !door || door->button_source_kind != 2 ||
-        door->wall_button_field != 1) {
+        door->wall_button_field != 1 || image_width <= 0 ||
+        image_height <= 0) {
         return 0;
     }
     if (s->g1_text_wall_gfx_materials &&
@@ -3570,8 +3573,8 @@ static int dm2_v1_wall_button_receipt_matches(
                 material->wall_gfx_index == (uint8_t)door->wall_button_index &&
                 (!s->source_materials_required ||
                  (material->front_image_ready &&
-                  material->front_image_width > 0u &&
-                  material->front_image_height > 0u &&
+                  material->front_image_width == (uint16_t)image_width &&
+                  material->front_image_height == (uint16_t)image_height &&
                   material->local_palette_hash != 0u &&
                   material->local_palette_hash ==
                       s->active_asset_palette_hash))) {
@@ -3592,8 +3595,8 @@ static int dm2_v1_wall_button_receipt_matches(
                 material->wall_gfx_index == (uint8_t)door->wall_button_index &&
                 (!s->source_materials_required ||
                  (material->front_image_ready &&
-                  material->front_image_width > 0u &&
-                  material->front_image_height > 0u &&
+                  material->front_image_width == (uint16_t)image_width &&
+                  material->front_image_height == (uint16_t)image_height &&
                   material->local_palette_hash != 0u &&
                   material->local_palette_hash ==
                       s->active_asset_palette_hash))) {
@@ -3949,7 +3952,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                       s->active_asset_palette_hash == 0u)) ||
                     (kind == DM2_DOOR_MATERIAL_BUTTON &&
                      door->button_source_kind == 2 &&
-                     !dm2_v1_wall_button_receipt_matches(s, door))) {
+                     !dm2_v1_wall_button_receipt_matches(
+                         s, door, material->width, material->height))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
                     return;
@@ -4295,7 +4299,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                      * so match only after it has populated the active IMG3
                      * palette receipt. */
                     wall_button_material_bound =
-                        dm2_v1_wall_button_receipt_matches(s, door);
+                        dm2_v1_wall_button_receipt_matches(
+                            s, door, button_w, button_h);
                 }
                 /* skproject SKWIN/SkWinCore.cpp DRAW_DEFAULT_DOOR_BUTTON
                  * lines ~46243-46264 renders both default door buttons and

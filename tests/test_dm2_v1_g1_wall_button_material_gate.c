@@ -10,6 +10,7 @@
 static int checks;
 static int passed;
 static int custom_button_fetches;
+static int wrong_sized_custom_button;
 
 #define CHECK(label, condition) do { \
     ++checks; \
@@ -29,9 +30,9 @@ static int fetch_asset(void *user,
     (void)user;
     if (gdat_index == expected) ++custom_button_fetches;
     *out_pixels = pixels;
-    *out_w = 2;
-    *out_h = 2;
-    *out_stride = 2;
+    *out_w = wrong_sized_custom_button ? 1 : 2;
+    *out_h = wrong_sized_custom_button ? 4 : 2;
+    *out_stride = wrong_sized_custom_button ? 1 : 2;
     return 0;
 }
 
@@ -93,6 +94,21 @@ int main(void)
     text_receipt.materials[0].front_image_width = 2;
     text_receipt.materials[0].front_image_height = 2;
     text_receipt.materials[0].local_palette_hash = 0x47443150u;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    setup_custom_button(&viewport, framebuffer);
+    dm2_v1_viewport_set_level(&viewport, 5);
+    dm2_v1_viewport_set_g1_wall_gfx_materials(
+        &viewport, &text_receipt, NULL);
+    wrong_sized_custom_button = 1;
+    custom_button_fetches = 0;
+    dm2_v1_render_doors(&viewport);
+    CHECK("same-palette WALL_GFX with receipt-mismatched dimensions blocks",
+          custom_button_fetches == 1 &&
+              viewport.asset_door_button_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0u);
+    wrong_sized_custom_button = 0;
     CHECK("text receipt accepts source WALL_GFX field one",
           dm2_v1_g1_text_wall_gfx_allows_button_material(
               &text_receipt, 0x2a, 1) &&
