@@ -59,6 +59,7 @@ typedef struct {
     int outdoor_sky_gdat_blits;
     int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
+    int gdat_wall_material_plan_consumed;
     int item_gdat_blits;
     int projectile_gdat_blits;
     int total_runtime_gdat_blits;
@@ -154,6 +155,7 @@ typedef struct {
     uint8_t floor_ceiling_material_required_mask;
     uint8_t floor_ceiling_material_consumed_mask;
     int floor_ceiling_materials_complete;
+    int gdat_wall_material_plan_consumed;
 } DM2_V1_ViewportM11FrameReceipt;
 
 typedef struct {

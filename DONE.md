@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 M11 GDAT wall-plan consumption receipt: direct
+  `GRAPHICSSET` wall commands now increment a distinct M11-visible counter
+  only after their plan-owned pixels are blitted. Canonical-media verification
+  disables both provider callbacks and proves every wall blit consumes the
+  decoded plan. Source: skproject `c_gui_vp.cpp` `DM2_DRAW_WALL` /
+  `QUERY_TEMP_PICST`.
+
 - ✅ 2026-07-14 DM2 GDAT wall material-plan handoff: the active map's visible
   `GRAPHICSSET` wall fields are decoded once into a boot-owned plan with their
   original local palettes and consumed directly by the M11 wall pass. A
