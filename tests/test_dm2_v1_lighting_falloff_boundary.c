@@ -1058,7 +1058,10 @@ static void test_sprite_asset_provider(void)
 
     {
         DM2_V1_HudPartyState party;
+        DM2_V1_HudChromeRenderPlan hud;
+        uint8_t palette16[16];
 
+        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0xa0 + i);
         memset(&party, 0, sizeof(party));
         party.champion_count = 1;
         party.leader_index = 0;
@@ -1109,6 +1112,35 @@ static void test_sprite_asset_provider(void)
                   framebuffer[34 * 320 + 262] == 4 &&
                   framebuffer[44 * 320 + 250] == 5 &&
                   framebuffer[44 * 320 + 262] == 6);
+
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, 320);
+        viewport.source_materials_required = 1;
+        party.champions[0].state_source_bound = 0;
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 source-only HUD blocks unproven dynamic state without drawing bars",
+              viewport.blocked_material_mask &
+                      DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE &&
+                  framebuffer[39 * 320 + 270] == 0 &&
+                  framebuffer[44 * 320 + 292] == 0 &&
+                  framebuffer[49 * 320 + 272] == 0);
+
+        party.champions[0].state_source_bound = 1;
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        CHECK("DM2 dynamic HUD proof requires source state and all GDAT owners",
+              dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party,
+                                                               &hud) == 1 &&
+                  !dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
+                                                              &hud.champion_slots[0]));
+        viewport.gdat_interface_hud_layout = (const void *)(uintptr_t)1;
+        dm2_v1_viewport_set_gdat_interface_palette(
+            &viewport, 1, 0x51a7c0deu, palette16);
+        dm2_v1_viewport_set_gdat_interface_font(
+            &viewport, (const uint8_t[768]){ 0 }, 0x4a7d3c91u);
+        CHECK("DM2 dynamic HUD accepts only the complete real-data receipt",
+              dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
+                                                         &hud.champion_slots[0]));
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

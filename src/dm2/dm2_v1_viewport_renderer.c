@@ -1523,6 +1523,21 @@ void dm2_v1_viewport_set_gdat_interface_hud_layout(
     s->dirty = 1;
 }
 
+int dm2_v1_viewport_hud_dynamic_overlay_ready(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_HudChampionSlotRender *champion)
+{
+    /* SKWIN/SkWinCore.cpp draws the active champion data through the expanded
+     * dt04 rectangles, the interface palette, and QUERY_FONT's dt07 rows.
+     * All four inputs must stay boot/session-owned in a source-only frame. */
+    return s && champion && champion->state_source_bound &&
+        s->gdat_interface_hud_layout &&
+        s->gdat_interface_palette_ready &&
+        s->gdat_interface_palette_hash != 0u &&
+        s->gdat_interface_font_rows &&
+        s->gdat_interface_font_hash != 0u;
+}
+
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
@@ -6164,13 +6179,16 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                      s, plan.champion_slots[slot].fill_color));
             }
             if (plan.champion_slots[slot].occupied) {
-                int source_state_bound =
-                    !s->source_materials_required ||
-                    (plan.champion_slots[slot].state_source_bound &&
-                     s->gdat_interface_hud_layout &&
-                     s->gdat_interface_palette_ready &&
-                     s->gdat_interface_font_rows &&
-                     s->gdat_interface_font_hash != 0u);
+                if (s->source_materials_required &&
+                    !dm2_v1_viewport_hud_dynamic_overlay_ready(
+                        s, &plan.champion_slots[slot])) {
+                    /* A live state value without its source dt04/dt07/palette
+                     * contract is not drawable HUD material.  In particular,
+                     * do not turn health percentages into host-colour bars. */
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                    continue;
+                }
                 const uint8_t *portrait_pixels = NULL;
                 int portrait_w = 0;
                 int portrait_h = 0;
@@ -6222,16 +6240,6 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                          plan.champion_slots[slot].portrait_fill_color);
                         ++s->fallback_hud_portrait_drawn_count;
                     }
-                }
-                if (!source_state_bound) {
-                    /* skproject DRAW_CHAMPION_PICTURE and
-                     * DRAW_PLAYER_3STAT_HEALTH_BAR consume
-                     * glbChampionSquad fields. Firestaff's session snapshot
-                     * is not original-save provenance, so it cannot paint
-                     * source-coloured names, bars, or leader state. */
-                    dm2_v1_block_source_material(
-                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-                    continue;
                 }
                 if (!dm2_v1_render_hud_source_font(
                         s, &plan.champion_slots[slot].name_marker_rect,

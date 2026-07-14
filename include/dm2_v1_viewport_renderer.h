@@ -1489,6 +1489,12 @@ void dm2_v1_viewport_set_g1_wall_gfx_materials(
 void dm2_v1_viewport_set_gdat_interface_hud_layout(
     DM2_V1_ViewportState *s,
     const DM2_V1_InterfaceHudLayout *layout);
+/* skproject draws the live name/status overlay only after the original
+ * INTERFACE_GENERAL geometry, palette, font and champion state are owned.
+ * Callers leave the overlay untouched when this proof is incomplete. */
+int dm2_v1_viewport_hud_dynamic_overlay_ready(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_HudChampionSlotRender *champion);
 void dm2_v1_viewport_set_gdat_interface_rect14(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
