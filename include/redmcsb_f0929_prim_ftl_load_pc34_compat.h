@@ -9,7 +9,11 @@
 extern "C" {
 #endif
 
-/* ReDMCSB PRIM2B.C F0929_PRIM_05_FTL_Load, PC 3.4 route. */
+/*
+ * ReDMCSB PRIM2B.C F0929_PRIM_05_FTL_Load source adapter.
+ * The available original route is not PC 3.4; this callback surface records
+ * its loader contract without claiming a PC 3.4 implementation.
+ */
 #define REDMCSB_F0929_FTL_HEADER_SIZE_PC34 20u
 #define REDMCSB_F0929_FTL_SEGMENT_HEADER_SIZE_PC34 12u
 #define REDMCSB_F0929_FTL_JUMP_HEADER_SIZE_PC34 40u
