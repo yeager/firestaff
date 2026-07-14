@@ -869,6 +869,41 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt;
 
+/* Typed source rows from one documented Structure3 entry.  Coordinates and
+ * normals retain their original signed 16.16 values; face indexes remain
+ * entry-local.  These rows deliberately do not carry transforms, UVs,
+ * palette data, VDP1 state, or draw permission. */
+typedef struct {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} Nexus_V1_DgnStructure3Vector;
+
+typedef struct {
+    uint16_t vertex_indexes[4];
+    uint8_t flags;
+    uint8_t raw_byte_9;
+    uint16_t fill_selector;
+    int triangle;
+} Nexus_V1_DgnStructure3Face;
+
+/* The caller owns all row buffers.  A zero-capacity call reports the exact
+ * required counts; insufficient buffers fail without decoding a partial
+ * entry.  `data` must match the bounded Structure3 source that loaded
+ * `level`, which keeps an arbitrary or mutated payload from being promoted. */
+typedef struct {
+    int entry_index;
+    int vertex_count;
+    int face_count;
+    int normal_count;
+    int vertex_capacity_sufficient;
+    int face_capacity_sufficient;
+    int normal_capacity_sufficient;
+    int source_identity_valid;
+    int valid;
+    int transform_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3MeshEntryReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1953,6 +1988,12 @@ int nexus_v1_level_structure3_face_normal_pair_receipt(
 int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt *out_receipt);
+int nexus_v1_level_extract_structure3_mesh_entry(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    int entry_index, Nexus_V1_DgnStructure3Vector *out_vertices,
+    int max_vertices, Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
+    Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
+    Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);
