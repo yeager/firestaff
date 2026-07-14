@@ -10,6 +10,32 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 
+static uint32_t nexus_v1_fnv1a32(const uint8_t *data, int size)
+{
+    uint32_t hash = 2166136261u;
+    int index;
+
+    if (!data || size <= 0) return 0U;
+    for (index = 0; index < size; ++index) {
+        hash ^= data[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint64_t nexus_v1_fnv1a64(const uint8_t *data, int size)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int index;
+
+    if (!data || size <= 0) return 0U;
+    for (index = 0; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static int32_t rbs32(const uint8_t *p) {
     uint32_t value = rb32(p);
     return value <= INT32_MAX ? (int32_t)value :
@@ -3739,6 +3765,153 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     receipt.transform_or_draw_semantics_proven = 0;
     *out_receipt = receipt;
     return 0;
+}
+
+int nexus_v1_dgn_bind_structure3_face_capture_candidate(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
+    const uint8_t *captured_texture_span, int captured_texture_span_size,
+    const uint8_t *captured_palette_state, int captured_palette_state_size,
+    const uint8_t *captured_vdp1_state, int captured_vdp1_state_size,
+    const uint8_t *captured_transform_state, int captured_transform_state_size,
+    const uint8_t *captured_normal_culling_state,
+    int captured_normal_culling_state_size,
+    const uint8_t *captured_vdp1_command, int captured_vdp1_command_size,
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt receipt;
+    const Nexus_V1_DgnStructure3PayloadReceipt *payload;
+    const uint8_t *header;
+    const uint8_t *face;
+    const uint8_t *normal;
+    uint32_t entry_offset;
+    uint32_t vertex_offset;
+    uint32_t face_offset;
+    uint32_t normal_offset;
+    uint16_t vertex_count;
+    uint16_t face_count;
+    uint16_t indexes[4];
+    uint32_t vertex_hash = 2166136261u;
+    int slot_count;
+    int slot;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.blocks_real_dgn_mesh_render = 1;
+    *out_receipt = receipt;
+    if (!level || !dgn_data || dgn_size <= 0 || !candidate ||
+        captured_texture_span_size <= 0 || captured_palette_state_size <= 0 ||
+        captured_vdp1_state_size <= 0 || captured_transform_state_size <= 0 ||
+        captured_normal_culling_state_size <= 0 || captured_vdp1_command_size <= 0 ||
+        !captured_texture_span || !captured_palette_state || !captured_vdp1_state ||
+        !captured_transform_state || !captured_normal_culling_state ||
+        !captured_vdp1_command) return -1;
+    payload = &level->structure3_payload;
+    if (!payload->valid || !level->structure3_directory.valid ||
+        !level->structure3_entry_headers.valid || !level->structure3_faces.valid ||
+        !level->structure3_vectors.valid || !level->structure3_face_normal_pairs.valid ||
+        payload->byte_offset < 0 || payload->byte_size < 4 ||
+        payload->byte_offset > dgn_size ||
+        payload->byte_size > dgn_size - payload->byte_offset ||
+        candidate->entry_index >= (uint32_t)level->structure3_directory.entry_count ||
+        candidate->dgn_fnv1a64 == 0U ||
+        candidate->structure3_payload_fnv1a32 == 0U ||
+        candidate->typed_mesh_corpus_fnv1a32 !=
+            NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32 ||
+        candidate->face_row_fnv1a32 == 0U ||
+        candidate->referenced_vertex_rows_fnv1a32 == 0U ||
+        candidate->normal_row_fnv1a32 == 0U ||
+        candidate->texture_span_fnv1a64 == 0U ||
+        candidate->palette_state_fnv1a64 == 0U ||
+        candidate->vdp1_state_fnv1a64 == 0U ||
+        candidate->transform_state_fnv1a64 == 0U ||
+        candidate->normal_culling_state_fnv1a64 == 0U ||
+        candidate->vdp1_command_fnv1a64 == 0U ||
+        candidate->first_sequence == 0U ||
+        candidate->first_sequence >= candidate->last_sequence) return -1;
+    receipt.candidate_framing_valid = 1;
+    receipt.dgn_source_matches = nexus_v1_fnv1a64(dgn_data, dgn_size) ==
+        candidate->dgn_fnv1a64;
+    receipt.structure3_payload_matches =
+        payload->raw_payload_hash == candidate->structure3_payload_fnv1a32;
+    receipt.typed_mesh_corpus_matches = 1;
+    if (!receipt.dgn_source_matches || !receipt.structure3_payload_matches) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry_offset = rb32(dgn_data + payload->byte_offset + 4 +
+                        candidate->entry_index * 4U);
+    if (entry_offset > (uint32_t)payload->byte_size ||
+        (uint32_t)payload->byte_size - entry_offset < 40U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    header = dgn_data + payload->byte_offset + entry_offset;
+    vertex_count = rb16(header + 4);
+    face_count = rb16(header + 6);
+    vertex_offset = rb32(header + 8);
+    face_offset = rb32(header + 16);
+    normal_offset = rb32(header + 20);
+    if (candidate->face_ordinal >= (uint32_t)face_count ||
+        vertex_offset > (uint32_t)payload->byte_size ||
+        face_offset > (uint32_t)payload->byte_size ||
+        normal_offset > (uint32_t)payload->byte_size ||
+        (uint32_t)face_count > ((uint32_t)payload->byte_size - face_offset) / 12U ||
+        (uint32_t)face_count > ((uint32_t)payload->byte_size - normal_offset) / 12U ||
+        (uint32_t)vertex_count > ((uint32_t)payload->byte_size - vertex_offset) / 12U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.entry_face_matches = 1;
+    face = dgn_data + payload->byte_offset + face_offset +
+        candidate->face_ordinal * 12U;
+    normal = dgn_data + payload->byte_offset + normal_offset +
+        candidate->face_ordinal * 12U;
+    receipt.face_row_matches = nexus_v1_fnv1a32(face, 12) ==
+        candidate->face_row_fnv1a32;
+    receipt.normal_row_matches = nexus_v1_fnv1a32(normal, 12) ==
+        candidate->normal_row_fnv1a32;
+    for (slot = 0; slot < 4; ++slot) indexes[slot] = rb16(face + slot * 2);
+    slot_count = indexes[2] == indexes[3] ? 3 : 4;
+    for (slot = 0; slot < slot_count; ++slot) {
+        const uint8_t *vertex;
+        int byte;
+        if (indexes[slot] >= vertex_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        vertex = dgn_data + payload->byte_offset + vertex_offset + indexes[slot] * 12U;
+        for (byte = 0; byte < 12; ++byte) {
+            vertex_hash ^= vertex[byte];
+            vertex_hash *= 16777619u;
+        }
+    }
+    receipt.referenced_vertex_rows_match = vertex_hash ==
+        candidate->referenced_vertex_rows_fnv1a32;
+    receipt.fill_selector_matches = rb16(face + 10) == candidate->fill_selector;
+    receipt.texture_span_matches = nexus_v1_fnv1a64(captured_texture_span,
+        captured_texture_span_size) == candidate->texture_span_fnv1a64;
+    receipt.palette_state_matches = nexus_v1_fnv1a64(captured_palette_state,
+        captured_palette_state_size) == candidate->palette_state_fnv1a64;
+    receipt.vdp1_state_matches = nexus_v1_fnv1a64(captured_vdp1_state,
+        captured_vdp1_state_size) == candidate->vdp1_state_fnv1a64;
+    receipt.transform_state_matches = nexus_v1_fnv1a64(captured_transform_state,
+        captured_transform_state_size) == candidate->transform_state_fnv1a64;
+    receipt.normal_culling_state_matches = nexus_v1_fnv1a64(
+        captured_normal_culling_state, captured_normal_culling_state_size) ==
+        candidate->normal_culling_state_fnv1a64;
+    receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
+        captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
+    receipt.complete_source_binding = receipt.dgn_source_matches &&
+        receipt.structure3_payload_matches && receipt.typed_mesh_corpus_matches &&
+        receipt.entry_face_matches && receipt.face_row_matches &&
+        receipt.referenced_vertex_rows_match && receipt.normal_row_matches &&
+        receipt.fill_selector_matches && receipt.texture_span_matches &&
+        receipt.palette_state_matches && receipt.vdp1_state_matches &&
+        receipt.transform_state_matches && receipt.normal_culling_state_matches &&
+        receipt.vdp1_command_matches;
+    *out_receipt = receipt;
+    return receipt.complete_source_binding ? 0 : -1;
 }
 
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
