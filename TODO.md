@@ -541,11 +541,12 @@ ReDMCSB WIP 2021-02-06 source tree.
   receipt can separately rule out zero- and one-based direct model-index
   byte/block/run ordinals. The verified retail corpus also has a bounded,
   strictly increasing Structure3 offset directory and a fixed 40-byte entry
-  header with two count-bounded 12-byte regions, but those regions remain
-  opaque. Next: obtain original Saturn execution or capture evidence that
-  identifies one region's record role, face list, vertex coordinates, and
-  texture binding before any draw route; do not infer positions, geometry,
-  textures, pixels, palettes, triggers, or fallback art.
+  header with three count-bounded 12-byte regions. The tracked DMWeb Saturn
+  reference identifies their vertex/face/per-face-normal layout, while the
+  parser verifies only their bounded framing. Next: obtain original Saturn
+  execution or capture evidence that validates record fields, face lists,
+  vertex coordinates, and texture binding before any draw route; do not infer
+  positions, geometry, textures, pixels, palettes, triggers, or fallback art.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
     render-plan receipts only through complete Structure1F owner relations.
     Its raw reuse is counted, but its grammar remains unassigned; it cannot

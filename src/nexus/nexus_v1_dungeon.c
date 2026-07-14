@@ -256,6 +256,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint32_t third_boundary;
             uint64_t expected_second;
             uint64_t expected_third;
+            uint64_t expected_entry_end;
 
             if (entry_end < entry_offset ||
                 entry_end - entry_offset <
@@ -274,6 +275,8 @@ static int nexus_v1_level_copy_structure3_payload(
                 (uint64_t)first_count * 12U;
             expected_third = expected_second +
                 (uint64_t)second_count * 12U;
+            expected_entry_end = expected_third +
+                (uint64_t)second_count * 12U;
             if (tag == 0U) ++entry_headers.zero_tag_entry_count;
             else if (tag == 0x100U) ++entry_headers.tag_0x100_entry_count;
             else ++entry_headers.other_tag_entry_count;
@@ -281,18 +284,26 @@ static int nexus_v1_level_copy_structure3_payload(
                     NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES ||
                 expected_second > UINT32_MAX ||
                 expected_third > UINT32_MAX ||
+                expected_entry_end > UINT32_MAX ||
                 second_boundary != (uint32_t)expected_second ||
                 third_boundary != (uint32_t)expected_third ||
                 first_boundary > second_boundary ||
                 second_boundary > third_boundary ||
-                third_boundary > entry_end) {
+                expected_entry_end > entry_end) {
                 entry_headers.boundaries_valid = 0;
+                entry_headers.third_region_boundaries_valid = 0;
                 break;
             }
             ++entry_headers.bounded_entry_count;
             entry_headers.first_region_element_count += first_count;
             entry_headers.second_region_element_count += second_count;
+            entry_headers.third_region_element_count += second_count;
+            ++entry_headers.complete_third_region_entry_count;
         }
+        entry_headers.third_region_boundaries_valid =
+            entry_headers.boundaries_valid &&
+            entry_headers.complete_third_region_entry_count ==
+                entry_headers.entry_count;
         entry_headers.valid = entry_headers.boundaries_valid &&
             entry_headers.bounded_entry_count == entry_headers.entry_count;
     }

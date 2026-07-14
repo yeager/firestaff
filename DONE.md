@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 Nexus Structure3 trailing-region bound: the tracked DMWeb
+  Saturn DGN reference identifies each Structure3 entry's three 12-byte
+  regions as vertices, faces, and count-matched per-face normals. The parser
+  now proves the third region fits inside every bounded directory span and
+  carries that fact through the retail-corpus receipt. It does not decode a
+  vertex, face index, normal, flag, material, texture, palette, or draw
+  command; the existing no-draw gate remains unchanged. Verification:
+  `test_nexus_v1_dgn_geometry_readiness` covers valid and truncated third
+  regions and checks the `LEV00.DGN`--`LEV15.DGN` assertion when the
+  hash-verified retail corpus is staged.
+
 - ✅ 2026-07-14 Nexus Structure3 entry framing: the original
   `LEV00.DGN`--`LEV15.DGN` corpus now proves all 1,144 directory spans begin
   with a fixed 40-byte header. Two packed big-endian count fields and three
