@@ -1929,7 +1929,7 @@ F	1041	F1041_GetMousePointerType	IO.C;DEFS.H	source_nonapplicable
 F	1046	F1046_OpenLibraries	GAMELOOP.C;MAINLIB.C	source_nonapplicable
 F	1047	F1047_CloseLibraries	GAMELOOP.C;MAINLIB.C	source_nonapplicable
 F	1048	F1048_setjmp	DEFS.H	unmapped_or_unverified
-F	1049	F1049_longjmp	DEFS.H	unmapped_or_unverified
+F	1049	F1049_longjmp	DEFS.H	source_nonapplicable
 F	1050	F1050_AlertCSBSystemError	AMIGA.H;PALETTE.C;AMIGINIT.C;FLOPPYAM.C;IO.C;COPYPROE.C;SOUND.C	referenced_not_verified
 F	1052	F1052_WaitForScanLine	FILLBOX.C	unmapped_or_unverified
 F	1053	F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC	AMIGA.H;COMMAND.C	unmapped_or_unverified

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1049: numbered alias is commented out and
+  jump-buffer declarations are non-PC-only. The focused boundary does not
+  synthesize longjmp behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1047: available code closes Amiga FTL libraries
   only. The focused PC 3.4 boundary records unavailable rather than synthesizing
   teardown behavior.

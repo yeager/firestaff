@@ -1063,7 +1063,7 @@ F1041_GetMousePointerType	F	GetMousePointerType	IO.C:3318-3394	include/redmcsb_f
 F1046_OpenLibraries	F	OpenLibraries	MAINLIB.C:4-47;GAMELOOP.C:318-320	include/redmcsb_f1046_open_libraries_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route opens Amiga FTL libraries only; focused PC 3.4 boundary records unavailable rather than synthesizing library loading.
 F1047_CloseLibraries	F	CloseLibraries	MAINLIB.C:4-60;GAMELOOP.C:334-336	include/redmcsb_f1047_close_libraries_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route closes Amiga FTL libraries only; focused PC 3.4 boundary records unavailable rather than synthesizing teardown.
 F1048_setjmp	F	setjmp	DEFS.H:3209	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1049_longjmp	F	longjmp	DEFS.H:3210	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1049_longjmp	F	longjmp	DEFS.H:3208-3215;3399-3408	include/redmcsb_f1049_longjmp_pc34_compat.h	SOURCE_NONAPPLICABLE	Numbered alias is commented out and jump-buffer declarations are non-PC-only; focused boundary does not synthesize longjmp behavior.
 F1050_AlertCSBSystemError	F	AlertCSBSystemError	AMIGA.H:396	src/dm1/dm1_v1_input_poll_pc34_compat.c:371	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1052_WaitForScanLine	F	WaitForScanLine	FILLBOX.C:17	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC	F	Pre	AMIGA.H:400	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
