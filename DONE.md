@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 F0435 runtime queue-adoption gate: the final
+  candidate-to-live transfer now verifies the staged F0238 queue belongs to
+  the restored F0435 GameTime, has unique live C4 entries, and has the same
+  active count as the materialized timeline before moving either live owner.
+  An incoherent candidate leaves both live runtime owners and both candidate
+  owners unchanged; no queue is repaired or synthesized. Source-lock:
+  ReDMCSB `LOADSAVE.C F0435` and `TIMELINE.C F0238/F0651`. Verification:
+  Ninja `test_dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-14 DM1 M11 PC34 runtime load-save interop: the focused M11
   resume path now proves a checksum-qualified original PC34 F0435 load can
   pass through the live host, be quicksaved, exported by F0433 as a PC34

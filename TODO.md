@@ -1488,6 +1488,12 @@ and real community-save corpus round-trip evidence.
     remains visible as non-runtime-ready. Remaining work is still an
     independently collected, provenance-recorded PC34 corpus and original
     executable load evidence, not synthetic saves.
+  - 2026-07-14 update: the F0435 candidate-to-live commit now rejects an
+    incoherent F0238 queue before moving either live owner. The staged queue
+    must retain the restored GameTime, C4 active-entry uniqueness, and event
+    count shared with the materialized timeline. Remaining work is authentic
+    external tail/save coverage, not repairing or synthesizing a queue after
+    adoption.
   - 2026-07-14 update: the focused C13 runtime regression now follows
     `TIMELINE.C F0255` from step 2 through the matching-bones step 1 unlink
     and the one-tick-later step 0 rebirth. A bones-missing live step 1 ends

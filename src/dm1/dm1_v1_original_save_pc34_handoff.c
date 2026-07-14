@@ -3591,6 +3591,44 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 restores GameTime, EVENTS, and TIMELINE as one
+ * resumed-runtime state before F0651 exposes the queue.  The candidate-world
+ * materializer has already checked source C3/C4 bytes; repeat the ownership
+ * invariants here so no caller can publish a separately damaged queue after
+ * the world has moved. */
+static int original_pc34_runtime_queue_matches_world(
+    const struct GameWorld_Compat *world,
+    const struct DM1_EventQueue_V1 *queue)
+{
+    uint8_t seen[DM1_EVENT_MAX_COUNT];
+    int i;
+
+    if (!world || !queue ||
+        queue->maxEvents != DM1_EVENT_MAX_COUNT ||
+        queue->eventCount < 0 || queue->eventCount > DM1_EVENT_MAX_COUNT ||
+        queue->firstUnusedIndex < 0 ||
+        queue->firstUnusedIndex > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY ||
+        world->timeline.nowTick != world->gameTick ||
+        queue->gameTick != world->gameTick ||
+        queue->eventCount != world->timeline.count) {
+        return 0;
+    }
+
+    memset(seen, 0, sizeof(seen));
+    for (i = 0; i < queue->eventCount; ++i) {
+        const uint16_t event_index = queue->timeline[i];
+
+        if (event_index >= DM1_EVENT_MAX_COUNT || seen[event_index] ||
+            queue->events[event_index].type == DM1_EVENT_NONE) {
+            return 0;
+        }
+        seen[event_index] = 1;
+    }
+    return 1;
+}
+
 int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
     struct GameWorld_Compat *runtime_world,
     struct DM1_EventQueue_V1 *runtime_queue,
@@ -3602,6 +3640,10 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
     if (!runtime_world || !runtime_queue || !loaded_world || !loaded_queue ||
         runtime_world == loaded_world || runtime_queue == loaded_queue) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    if (!original_pc34_runtime_queue_matches_world(loaded_world,
+                                                   loaded_queue)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
     result = dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
