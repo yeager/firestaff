@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0661 derived bitmap cache bridge: added the exact
+  cache-hit return and cache-miss native/derived lookup, dimension write,
+  F0129 dispatch, then cache-admission order. Bitmap/cache/palette ownership
+  remains caller-owned real data; no derived storage, graphics fallback,
+  event, DSA, or runtime was introduced. Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0662/F0663 palette bitmap bridge: added the exact
   in-place F0662 and dimensions-prefix-copy F0663 F0129 dispatches. Palette
   bytes, bitmap pixels, and final renderer remain caller-owned real data;
