@@ -298,6 +298,11 @@
   `G8177 | nibble` writes, including unnormalized OR behavior. Focused
   strict-C11 transfer and bounds test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8137 C25: source-locked PC 3.4 VGA aperture
+  fill. The adapter writes exact `G8177 | color` bytes across the requested
+  span, directly compatible with a 320x200 indexed host framebuffer. Focused
+  strict-C11 odd/even-span, no-op and bounds test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
   unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused
