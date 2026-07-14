@@ -80,6 +80,17 @@ $1 == "later_system_card_e009_return" {
     }
     return_caller = hex(field($2, "caller_pc")); return_pc = hex(field($3, "return_pc")); return_record = hex(field($4, "record"))
     if (return_caller != caller || return_pc != returned || return_record != record) bad = "later e009 return row does not match dispatch"
+    next
+}
+$1 == "later_system_card_e009_post_return_step" {
+    ++post_return
+    post_return_line = NR
+    if (NF != 5 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "record") == "" || field($5, "next_pc") == "") {
+        bad = "malformed later e009 post-return step row"
+        next
+    }
+    post_return_caller = hex(field($2, "caller_pc")); post_return_return = hex(field($3, "return_pc")); post_return_record = hex(field($4, "record")); post_return_next = hex(field($5, "next_pc"))
+    if (post_return_caller != caller || post_return_return != returned || post_return_record != record || post_return_next < 0 || post_return_next > 65535) bad = "later e009 post-return step row does not match return"
 }
 END {
     if (source != 1) bad = "expected exactly one coalesced Mednafen provenance row"
@@ -88,9 +99,10 @@ END {
     else if (sector != 1) bad = "expected exactly one complete raw-sector row"
     else if (destination != 1) bad = "expected exactly one later e009 destination-span row"
     else if (returned_row != 1) bad = "expected exactly one later e009 return row"
-    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < destination_line && destination_line < return_line)) bad = "loader-to-RAM observation order is incomplete"
+    else if (post_return != 1) bad = "expected exactly one later e009 post-return step row"
+    else if (!(dynamic_line < dispatch_line && dispatch_line < sector_line && sector_line < destination_line && destination_line < return_line && return_line < post_return_line)) bad = "loader-to-RAM control-resumption order is incomplete"
     if (bad != "") { print "FAIL: " bad > "/dev/stderr"; exit 1 }
 }
 ' "$trace"
 
-printf 'PASS: coalesced original Mednafen trace retains the later loader-to-local-RAM order; no payload, dungeon, or transition semantics assigned\n'
+printf 'PASS: coalesced original Mednafen trace retains the later loader-to-local-RAM control-resumption order; no payload or dungeon semantics assigned\n'

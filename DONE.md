@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 local-RAM control-resumption receipt: the
+  coalesced later `$e009` trace now requires one raw CPU step after the
+  authenticated System Card return and binds that step to the same
+  caller/return/record tuple. Initial-level admission also rejects receipts
+  without the prior 32-byte local-RAM/media match or this post-return step.
+  The receipt establishes only loader-to-local-RAM control resumption; it
+  assigns no gameplay transition, dungeon, object, bitmap, or palette meaning.
+  Coverage: fail-closed
+  `test_theron_v1_later_e009_raw_sector_order_trace` and the focused,
+  raw-media-gated `theron_v1_raw_loader_trace_initial_level_handoff` CTest.
+
 - 2026-07-14 DM1 F0435 same-tick timeline materialization: original PC34 C4
   is a ReDMCSB `TIMELINE.C F0234` heap, rather than a linear execution list.
   F0435 now linearizes its admitted C3/C4 event pairs by the source comparator

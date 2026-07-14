@@ -136,6 +136,7 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceLaterE009Record;
 +static uint32 TheronIrq2TraceLaterE009Destination;
 +static uint32 TheronIrq2TraceLaterE009DestinationMode;
++static bool TheronIrq2TraceLaterE009PostReturnStepPending;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -150,6 +151,19 @@ index 347482c4..61d4758e 100644
 + if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
 +  return;
 +const uint32 logical_pc = PC & 0xffff;
++
++ /* Once the System Card return is observed, retain exactly the next CPU
++  * step. This is raw control-resumption evidence only; it does not classify
++  * the caller, target, or any game transition. */
++ if(TheronIrq2TraceLaterE009PostReturnStepPending)
++ {
++  TheronIrq2Trace->print_format("later_system_card_e009_post_return_step caller_pc=%04x return_pc=%04x record=%06x next_pc=%04x\\n",
++                                TheronIrq2TraceLaterE009CallerPC,
++                                TheronIrq2TraceLaterE009CallerPC + 3,
++                                TheronIrq2TraceLaterE009Record, logical_pc);
++  TheronIrq2TraceLaterE009PostReturnStepPending = false;
++  FlushTheronIrq2Trace();
++ }
 +
 + if(TheronIrq2TraceReturnTransferPending)
 + {
@@ -1161,6 +1175,7 @@ index 347482c4..61d4758e 100644
 +                                TheronIrq2TraceLaterE009CallerPC, logical_pc,
 +                                TheronIrq2TraceLaterE009Record);
 +  TheronIrq2TraceLaterE009ReturnSeen = true;
++  TheronIrq2TraceLaterE009PostReturnStepPending = true;
 +  FlushTheronIrq2Trace();
 + }
 + if(logical_pc == 0xe736 && TheronIrq2TraceDynamicReadReturnSeen &&

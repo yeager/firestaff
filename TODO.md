@@ -6,8 +6,10 @@
   startup envelope. It remains unavailable until an operator supplies that
   authenticated coalesced capture. Its contract now additionally requires the
   later call's observed local-RAM destination and a post-return 32-byte
-  user-data fingerprint checked against the selected record. Remaining semantic
-  boundary: no game-transition causality, and no object-tail,
+  user-data fingerprint checked against the selected record. Its next capture
+  revision also requires the first observed CPU step after the System Card
+  return, retaining only a raw control-resumption edge. Remaining semantic
+  boundary: no gameplay-transition causality, and no object-tail,
   bitmap, palette, or broader dungeon-record semantics.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
