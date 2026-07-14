@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 capture source-admission gate: the face-capture
+  binder now requires caller-owned canonical DGN hash admission in addition
+  to all packet/source fingerprints. A trace candidate cannot self-certify
+  arbitrary bytes by echoing their FNV value. The focused DGN geometry test
+  verifies rejection without source admission. This does not import a Saturn
+  trace, decode texture or palette data, or permit a DGN mesh draw.
+
 - 2026-07-14 DM2 GDAT plane flip: bound G1 map offsets and active party state
   to SKProject `SET_GRAPHICS_FLIP_FROM_POSITION` for decoded ceiling rect 700
   and floor rect 701 material plans. Focused coverage proves their distinct

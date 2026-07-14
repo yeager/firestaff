@@ -5131,6 +5131,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     binding cannot verify original-Saturn provenance and always blocks DGN
     mesh rendering. The next increment is importing a genuine capture packet,
     not constructing palette, pixel, VDP1, or fallback evidence.
+  - 2026-07-14 follow-up: the candidate binder now also requires separate,
+    caller-owned canonical-DGN hash admission. A packet cannot self-admit
+    arbitrary or fixture bytes by repeating their fingerprint. This remains a
+    no-draw boundary; a genuine original-Saturn trace importer is still
+    required.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named
