@@ -204,6 +204,8 @@ int main(void) {
         sizeof(culling), fnv1a64(culling, sizeof(culling)),
         sizeof(command), fnv1a64(command, sizeof(command)));
     capture.original_saturn_capture_verified = 1;
+    capture.capture_trace_order_fnv1a64 = trace_order_hash(&receipt);
+    capture.capture_trace_order_verified = 1;
     expect(!nexus_v1_dgn_structure3_capture_host_intake(
                &level, texture, (int)sizeof(texture), 1,
                imported_manifest, strlen(imported_manifest), &capture,

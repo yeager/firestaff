@@ -2251,7 +2251,9 @@ static void test_structure3_entry_header_boundaries(void) {
         import.capture_session_fnv1a64 = UINT64_C(0x1234);
         import.capture_bundle_fnv1a64 =
             structure3_capture_bundle_fnv1a64(&import);
+        import.capture_trace_order_fnv1a64 = UINT64_C(0x5678);
         import.capture_bundle_hash_verified = 1;
+        import.capture_trace_order_verified = 1;
         import.original_saturn_capture_verified = 1;
         bound.complete_source_binding = 1;
         bound.candidate_framing_valid = 1;
@@ -2311,7 +2313,10 @@ static void test_structure3_entry_header_boundaries(void) {
                   import.capture_session_fnv1a64 &&
               engine.structure3_runtime_source.capture_bundle_fnv1a64 ==
                   import.capture_bundle_fnv1a64 &&
+              engine.structure3_runtime_source.capture_trace_order_fnv1a64 ==
+                  import.capture_trace_order_fnv1a64 &&
               engine.structure3_runtime_source.capture_bundle_hash_verified &&
+              engine.structure3_runtime_source.capture_trace_order_verified &&
               engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
@@ -2329,6 +2334,13 @@ static void test_structure3_entry_header_boundaries(void) {
                   import.capture_bundle_fnv1a64,
               "the engine rejects a stale bundle receipt before a raw capture packet can replace its owned source");
         import.capture_bundle_fnv1a64 ^= UINT64_C(1);
+        import.capture_trace_order_verified = 0;
+        CHECK(!nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, &import) &&
+              engine.structure3_runtime_source.valid &&
+              engine.structure3_runtime_source.capture_trace_order_verified,
+              "the engine rejects a byte-complete capture without trace-order verification");
+        import.capture_trace_order_verified = 1;
         memset(&packet, 0, sizeof(packet));
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 1 &&
               packet.valid && packet.source_geometry_bound &&

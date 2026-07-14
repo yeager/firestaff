@@ -5483,6 +5483,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     their exact lane-to-ordinal relation. Missing, duplicate, out-of-window,
     or mismatched order evidence blocks before host intake. This validates
     transport chronology only; actual Saturn render semantics remain unknown.
+  - 2026-07-14 runtime-provenance follow-up: the attested trace-order identity
+    now survives raw import, host intake, engine-owned Structure3 storage, and
+    the viewport packet gate. An otherwise byte-complete packet lacking that
+    verification is rejected. This preserves evidence transport only; it does
+    not establish any Saturn graphics semantics or relax no-draw.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

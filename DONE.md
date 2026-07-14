@@ -5,6 +5,13 @@
   The focused strict-C11 test keeps FCB/DTA lookup and clock provenance as
   caller-owned boundaries without inventing DOS services.
 
+- 2026-07-14 Nexus Structure3 trace-order runtime provenance: the raw trace
+  order identity and its external-verification flag now travel with the
+  opaque import through DGN host intake into engine-owned Structure3 storage.
+  Engine and viewport packets reject an otherwise byte-complete source when
+  this provenance is missing. No Saturn VDP1, pixel, palette, or draw meaning
+  is assigned; the retained runtime packet remains no-draw.
+
 - 2026-07-14 Nexus Structure3 trace-order attestation: the strict capture
   manifest now records six explicit opaque observation ordinals. The reader
   rejects missing, duplicate, out-of-window, or externally mismatched order

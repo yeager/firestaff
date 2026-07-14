@@ -1911,7 +1911,9 @@ int nexus_v1_engine_consume_structure3_capture(
         capture->normal_culling_state_size > (size_t)INT_MAX ||
         capture->vdp1_command_size > (size_t)INT_MAX ||
         !capture->capture_session_fnv1a64 || !capture->capture_bundle_fnv1a64 ||
+        !capture->capture_trace_order_fnv1a64 ||
         !capture->capture_bundle_hash_verified ||
+        !capture->capture_trace_order_verified ||
         !capture->original_saturn_capture_verified || !engine->level_loaded ||
         !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
         !engine->current_level_structure2_source.canonical_hash_verified ||
@@ -2022,8 +2024,11 @@ int nexus_v1_engine_consume_structure3_capture(
     }
     source.capture_session_fnv1a64 = capture->capture_session_fnv1a64;
     source.capture_bundle_fnv1a64 = capture->capture_bundle_fnv1a64;
+    source.capture_trace_order_fnv1a64 = capture->capture_trace_order_fnv1a64;
     source.capture_bundle_hash_verified =
         capture->capture_bundle_hash_verified != 0;
+    source.capture_trace_order_verified =
+        capture->capture_trace_order_verified != 0;
     source.original_saturn_capture_verified =
         capture->original_saturn_capture_verified != 0;
     source.binding = rebound;
@@ -2054,6 +2059,8 @@ int nexus_v1_current_level_structure3_render_packet(
     binding = &source->binding;
     if (!source->valid || source->level_index != engine->game.current_level ||
         !source->capture_bundle_hash_verified ||
+        !source->capture_trace_order_fnv1a64 ||
+        !source->capture_trace_order_verified ||
         !source->original_saturn_capture_verified ||
         !binding->candidate_framing_valid ||
         !binding->dgn_source_hash_verified ||

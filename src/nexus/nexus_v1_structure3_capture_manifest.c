@@ -235,6 +235,7 @@ int nexus_v1_dgn_structure3_raw_capture_read(
     packet->capture_session_fnv1a64 = attestation->capture_session_fnv1a64;
     packet->capture_bundle_fnv1a64 = capture_bundle_fnv1a64(packet);
     receipt.capture_trace_order_fnv1a64 = capture_trace_order_fnv1a64(manifest);
+    packet->capture_trace_order_fnv1a64 = receipt.capture_trace_order_fnv1a64;
     receipt.attestation_session_matches =
         attestation->capture_session_fnv1a64 != 0U &&
         attestation->capture_session_fnv1a64 == manifest->capture_session_fnv1a64;
@@ -252,6 +253,8 @@ int nexus_v1_dgn_structure3_raw_capture_read(
     packet->original_saturn_capture_verified =
         packet->capture_bundle_hash_verified &&
         receipt.original_saturn_source_attested;
+    packet->capture_trace_order_verified =
+        receipt.attestation_trace_order_matches;
     receipt.import_ready = packet->original_saturn_capture_verified;
     *out_receipt = receipt;
     return receipt.import_ready;
@@ -456,12 +459,20 @@ int nexus_v1_dgn_structure3_capture_manifest_bind_import(
     bundle_hash = capture_bundle_fnv1a64(capture);
     receipt.capture_bundle_matches = bundle_hash != 0U &&
         bundle_hash == capture->capture_bundle_fnv1a64;
+    receipt.capture_trace_order_matches =
+        capture->capture_trace_order_fnv1a64 != 0U &&
+        capture->capture_trace_order_fnv1a64 ==
+            capture_trace_order_fnv1a64(manifest);
     receipt.capture_bundle_hash_verified =
         capture->capture_bundle_hash_verified != 0;
+    receipt.capture_trace_order_verified =
+        capture->capture_trace_order_verified != 0;
     receipt.original_saturn_capture_verified =
         capture->original_saturn_capture_verified != 0;
     if (!receipt.raw_span_hashes_match || !receipt.capture_session_matches ||
-        !receipt.capture_bundle_matches || !receipt.capture_bundle_hash_verified) {
+        !receipt.capture_bundle_matches || !receipt.capture_trace_order_matches ||
+        !receipt.capture_bundle_hash_verified ||
+        !receipt.capture_trace_order_verified) {
         *out_receipt = receipt;
         return 0;
     }
@@ -474,7 +485,8 @@ int nexus_v1_dgn_structure3_capture_manifest_bind_import(
         *out_receipt = receipt;
         return 0;
     }
-    capture_source_verified = receipt.original_saturn_capture_verified;
+    capture_source_verified = receipt.original_saturn_capture_verified &&
+        receipt.capture_trace_order_verified;
     receipt.binder_invoked = 1;
     (void)nexus_v1_dgn_bind_structure3_face_capture_candidate(
         level, dgn_data, dgn_size, receipt.dgn_source_hash_verified,
@@ -508,7 +520,8 @@ int nexus_v1_dgn_structure3_capture_host_intake(
         return 0;
     receipt.host_dgn_source_verified = dgn_source_hash_verified != 0;
     receipt.capture_source_verified =
-        capture->original_saturn_capture_verified != 0;
+        capture->original_saturn_capture_verified != 0 &&
+        capture->capture_trace_order_verified != 0;
     receipt.manifest_parsed = nexus_v1_dgn_structure3_capture_manifest_parse(
         manifest_text, manifest_size, &receipt.manifest);
     /* The external Saturn verdict is an admission precondition, not a byte
