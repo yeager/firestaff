@@ -8049,6 +8049,19 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                       combat.damageApplied > 0)
                 ? combat.damageApplied
                 : 0;
+            if (damage > 0) {
+                int filtered_damage;
+
+                /* CSBWin Monster.cpp:4541-4545 passes its final C38 damage,
+                 * selected wound mask, and descriptor attack type through
+                 * Character.cpp::DamageCharacter before mutating the hero. */
+                if (csb_v1_runtime_execute_csbwin_damage_character_filter(
+                        profile, champion_index, damage,
+                        (uint16_t)combat.woundMaskAdded,
+                        (uint16_t)attacker.attackType, &filtered_damage)) {
+                    damage = filtered_damage;
+                }
+            }
             if (damage <= 0) {
                 if (!profile->game_over) {
                     csb_v1_runtime_schedule_c38_followup_event(
@@ -19020,6 +19033,39 @@ int csb_v1_runtime_execute_csbwin_equip_filter(
             return 0;
         }
     }
+    return 1;
+}
+
+int csb_v1_runtime_execute_csbwin_damage_character_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index, int requested_damage,
+    uint16_t wound_mask, uint16_t attack_type, int *out_final_damage)
+{
+    int parameters[7];
+    int final_damage;
+
+    if (!profile || !out_final_damage || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS || requested_damage < 0 ||
+        requested_damage > 32767) {
+        return 0;
+    }
+    /* Character.cpp:2611-2800 assigns the seven A..G words after defense,
+     * then uses only DSA parameter E as its pending-damage increment. */
+    parameters[0] = champion_index;
+    parameters[1] = profile->party_state.Champions[champion_index].Fingerprint;
+    parameters[2] = requested_damage;
+    parameters[3] = requested_damage;
+    parameters[4] = (int)wound_mask;
+    parameters[5] = (int)attack_type;
+    parameters[6] = 0;
+    if (!csb_v1_runtime_execute_csbwin_special_filter_action(
+            profile, CSB_V1_EXPOOL_ESL_DAMAGE_CHAR_FILTER, 0,
+            parameters, 7)) {
+        return 0;
+    }
+    final_damage = (int)(int16_t)parameters[3];
+    if (final_damage < 0) return 0;
+    *out_final_damage = final_damage;
     return 1;
 }
 

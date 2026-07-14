@@ -8,6 +8,16 @@
   their existing direct DB0 route; unsupported terrain remains unavailable.
   Verification: `dm2_v1_g1_center_ray_surface_gate` proves a G1 wall consumes
   only source-backed wall material with no fallback draw.
+- 2026-07-14 CSBWin `DamageCharFilter` C38 runtime handoff: the live
+  creature-damage mutation path now calls the save-owned
+  `EDT_SpecialLocations/ESL_DAMAGECHARFILTER` actuator after the existing
+  source-shaped C38 resolver produces a positive hit. It preserves
+  `Character.cpp::DamageCharacter`'s seven-word callback ABI and applies only
+  the authenticated pure-stack action's non-negative signed-16 final-damage
+  result. The dedicated CMake regression proves callback-selected suppression
+  and FNV-tail tamper rejection. Scope remains deliberately bounded: no
+   generic damage hook, synthetic DSA program, widened `LocalState=2`,
+   master-state/world opcode, or unproven pending-damage behavior was added.
 
 - 2026-07-14 Nexus Structure3 startup capture intake: Nexus startup now
   reopens the loaded canonical `LEVxx.DGN` only after its engine-owned source
