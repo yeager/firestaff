@@ -13,7 +13,7 @@ later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 rec
 cd_interface_raw_sector_read lba=1296 bytes=2352 sector_fnv1a=1234abcd span_offset=0 span_bytes=32 span_fnv1a=5678ef90
 later_system_card_e009_destination_span caller_pc=ea00 return_pc=ea03 record=510 destination=3800 bytes=32 fnv1a=90abcdef
 later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510
-later_system_card_e009_post_return_step caller_pc=ea00 return_pc=ea03 record=510 next_pc=ea04
+later_system_card_e009_post_return_step caller_pc=ea00 return_pc=ea03 record=510 resume_pc=ea03 next_pc=ea04
 EOF
 
 "$script" "$work/valid.trace" us_bin >/dev/null
@@ -57,6 +57,13 @@ sed 's/next_pc=ea04/next_pc=10000/' "$work/valid.trace" \
     >"$work/invalid-post-return-pc.trace"
 if "$script" "$work/invalid-post-return-pc.trace" us_bin >/dev/null 2>&1; then
     printf 'FAIL: verifier accepted an out-of-range post-return PC\n' >&2
+    exit 1
+fi
+
+sed 's/resume_pc=ea03/resume_pc=ea04/' "$work/valid.trace" \
+    >"$work/mismatched-post-return-target.trace"
+if "$script" "$work/mismatched-post-return-target.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a post-return edge from another return target\n' >&2
     exit 1
 fi
 

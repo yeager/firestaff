@@ -152,15 +152,17 @@ index 347482c4..61d4758e 100644
 +  return;
 +const uint32 logical_pc = PC & 0xffff;
 +
-+ /* Once the System Card return is observed, retain exactly the next CPU
-+  * step. This is raw control-resumption evidence only; it does not classify
-+  * the caller, target, or any game transition. */
++ /* Once the System Card return is observed, retain the raw control edge from
++  * its return target to the next observed CPU PC. This does not classify the
++  * caller, target, or any game transition. */
 + if(TheronIrq2TraceLaterE009PostReturnStepPending)
 + {
-+  TheronIrq2Trace->print_format("later_system_card_e009_post_return_step caller_pc=%04x return_pc=%04x record=%06x next_pc=%04x\\n",
++  TheronIrq2Trace->print_format("later_system_card_e009_post_return_step caller_pc=%04x return_pc=%04x record=%06x resume_pc=%04x next_pc=%04x\\n",
 +                                TheronIrq2TraceLaterE009CallerPC,
 +                                TheronIrq2TraceLaterE009CallerPC + 3,
-+                                TheronIrq2TraceLaterE009Record, logical_pc);
++                                TheronIrq2TraceLaterE009Record,
++                                TheronIrq2TraceLaterE009CallerPC + 3,
++                                logical_pc);
 +  TheronIrq2TraceLaterE009PostReturnStepPending = false;
 +  FlushTheronIrq2Trace();
 + }

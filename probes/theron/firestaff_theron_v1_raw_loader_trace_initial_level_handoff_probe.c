@@ -42,12 +42,15 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->later_track02_record = 0x0b52u;
     out->descriptor_selector = 0x067cu;
     out->descriptor_selector_ordinal = 0u;
+    out->caller_pc = 0xea00u;
+    out->return_pc = 0xea03u;
     out->sector_count = 1u;
     out->later_local_destination = 0x3800u;
     out->later_destination_span_bytes = 32u;
     out->later_destination_span_checksum = 1u;
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
+    out->later_post_return_resume_pc = 0xea03u;
     out->later_post_return_next_pc = 0xea04u;
     out->later_post_return_step_verified = 1;
     out->observation_order_verified = 1;
@@ -94,6 +97,14 @@ int main(void)
         return 1;
     }
     coalesced.later_post_return_step_verified = 1;
+    coalesced.later_post_return_resume_pc = 0xea04u;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt without the returned-PC control edge admitted the level route\n");
+        return 1;
+    }
+    coalesced.later_post_return_resume_pc = coalesced.return_pc;
     coalesced.later_track02_record = 0x0b53u;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {

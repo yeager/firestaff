@@ -160,8 +160,9 @@ typedef struct {
     uint32_t later_destination_span_checksum;
     int later_destination_local_ram_verified;
     int later_destination_media_span_verified;
-    /* The first observed PC after the System Card returned to the caller.
-     * This is a raw control-resumption edge only, not a gameplay transition. */
+    /* One observed caller control edge after the System Card return. The
+     * resume PC must equal return_pc; neither PC assigns gameplay meaning. */
+    uint16_t later_post_return_resume_pc;
     uint16_t later_post_return_next_pc;
     int later_post_return_step_verified;
     int observation_order_verified;
@@ -259,8 +260,8 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
 /* Consumes exactly one coalesced original Mednafen transcript and a
  * hash-verified Track 02 image identity. The transcript must retain the
  * authenticated Stage 2 $4090->$4093 row before the later $e009 dispatch,
- * a raw-sector fingerprint, its matching return, and the first caller step
- * after that return. */
+ * a raw-sector fingerprint, its matching return, and one observed raw caller
+ * control edge from that return target. */
 int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     const char *capture,
     const uint8_t *track02_data,

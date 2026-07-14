@@ -85,12 +85,12 @@ $1 == "later_system_card_e009_return" {
 $1 == "later_system_card_e009_post_return_step" {
     ++post_return
     post_return_line = NR
-    if (NF != 5 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "record") == "" || field($5, "next_pc") == "") {
+    if (NF != 6 || field($2, "caller_pc") == "" || field($3, "return_pc") == "" || field($4, "record") == "" || field($5, "resume_pc") == "" || field($6, "next_pc") == "") {
         bad = "malformed later e009 post-return step row"
         next
     }
-    post_return_caller = hex(field($2, "caller_pc")); post_return_return = hex(field($3, "return_pc")); post_return_record = hex(field($4, "record")); post_return_next = hex(field($5, "next_pc"))
-    if (post_return_caller != caller || post_return_return != returned || post_return_record != record || post_return_next < 0 || post_return_next > 65535) bad = "later e009 post-return step row does not match return"
+    post_return_caller = hex(field($2, "caller_pc")); post_return_return = hex(field($3, "return_pc")); post_return_record = hex(field($4, "record")); post_return_resume = hex(field($5, "resume_pc")); post_return_next = hex(field($6, "next_pc"))
+    if (post_return_caller != caller || post_return_return != returned || post_return_record != record || post_return_resume != returned || post_return_next < 0 || post_return_next > 65535) bad = "later e009 post-return step row does not retain the return-target control edge"
 }
 END {
     if (source != 1) bad = "expected exactly one coalesced Mednafen provenance row"
