@@ -11,6 +11,16 @@
   `test_nexus_v1_dgn_face_mesh_corpus` with
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
 
+- 2026-07-14 CSBWin DSA binding retained-save guard: type-47 selector
+  resolution now requires the current complete FNV-authenticated Extended
+  Features tail, saved DSA level index, and authenticated DSA header. A stale
+  or truncated tail and an orphaned decoded action catalog fail before any
+  timer/filter dispatch is prepared. The compact `LocalState=2` queued-timer
+  regression covers both rejection paths, and the opt-in real `Dungeon.dat` +
+  extended `csbgame` probe verifies the retained-tail receipt before accepting
+  a source actuator binding. No save, dungeon, DSA record, or fallback action
+  is synthesized.
+
 - 2026-07-14 DM1 PC34 external-save first-runtime-tick gate: the fixture-free
   HoC runtime probe now advances each authenticated external F0435 world once
   through M11's `CMD_NONE` path and requires exactly one tick, a published M10

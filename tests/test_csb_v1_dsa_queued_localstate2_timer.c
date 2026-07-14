@@ -120,6 +120,22 @@ int main(void)
               profile.csbwin_global_variables[1] == 0x55aau,
           "queued TT_STONEROOM executes the compact ParameterB-selected action");
 
+    profile.csbwin_extended_dsa_state.imported_headers[7].valid = 0;
+    check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+              &profile, &dungeon, &location, 0u) == 0 &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "missing authenticated DSA header rejects before queued dispatch");
+    profile.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
+
+    profile.csbwin_appended_tail_fnv1a ^= 1u;
+    check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+              &profile, &dungeon, &location, 0u) == 0 &&
+              profile.csbwin_global_variables[1] == 0x55aau,
+          "stale Extended Features tail rejects before queued dispatch");
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(
+        profile.csbwin_appended_tail,
+        profile.csbwin_appended_tail_preserved_size);
+
     before = profile.csbwin_global_variables[1];
     raw[15] = 0x80u;
     check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
