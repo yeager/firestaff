@@ -61,7 +61,10 @@
   relation remains verified. The packet remains no-draw. Next required
   evidence is Saturn render semantics for the captured command/read spans;
   PRS3, pixel, palette, VDP1, transform, culling, and mesh semantics remain
-  unimplemented.
+  unimplemented. The canonical package receipt is now also bound to the exact
+  retained `LEVxx.DGN` byte buffer at load time and rechecked by both launcher
+  and engine before capture intake; this closes package-receipt reuse across
+  different in-memory DGN data but does not infer Saturn rendering semantics.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked

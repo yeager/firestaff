@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus DGN package-to-capture byte identity: each successfully
+  materialized canonical `LEVxx.DGN` now records the size and FNV-1a identity
+  of the exact bytes retained by the engine. Structure3 capture admission
+  rechecks that identity in both the launcher and engine before accepting an
+  original-Saturn capture packet. A mutated retained DGN cannot reuse a
+  package receipt; the route fails closed with no fallback rendering.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1081-F1084: available NIL-device and
   AMISTRUCT allocation routes are Amiga-only. Focused PC 3.4 boundaries are
   intentionally unavailable.

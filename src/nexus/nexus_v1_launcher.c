@@ -40,6 +40,20 @@ static uint32_t nexus_v1_launcher_dgn_command_buffer_hash(
     return hash;
 }
 
+static uint64_t nexus_v1_launcher_dgn_bytes_fnv1a64(
+    const uint8_t *data, int size)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int index;
+
+    if (!data || size <= 0) return 0U;
+    for (index = 0; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 /* ── Public API ─────────────────────────────────────────────────────── */
 
 int nexus_v1_launcher_init(const char *data_dir) {
@@ -111,7 +125,12 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
     (void)nexus_v1_current_level_structure2_source_receipt(&s_engine, &source);
     source_verified = source.canonical_hash_verified &&
         source.materialization_bound &&
-        source.level_index == s_engine.game.current_level;
+        source.level_index == s_engine.game.current_level &&
+        source.loaded_bytes_bound &&
+        source.loaded_dgn_size == s_engine.current_level_dgn_size &&
+        source.loaded_dgn_fnv1a64 != 0U &&
+        source.loaded_dgn_fnv1a64 == nexus_v1_launcher_dgn_bytes_fnv1a64(
+            s_engine.current_level_dgn_data, s_engine.current_level_dgn_size);
     if (!source_verified) return 0;
     if (!s_engine.current_level_dgn_data ||
         s_engine.current_level_dgn_size <= 0) return 0;

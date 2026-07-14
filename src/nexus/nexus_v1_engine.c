@@ -129,6 +129,29 @@ static const char *nexus_known_boot_file_md5(const char *name) {
 
 static int nexus_path_is_file(const char *path);
 
+static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int index;
+
+    if (!data || size <= 0) return 0U;
+    for (index = 0; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static int nexus_v1_dgn_source_bytes_match(
+    const Nexus_V1_DgnStructure2SourceReceipt *source,
+    const uint8_t *data, int size)
+{
+    return source && source->loaded_bytes_bound &&
+        source->loaded_dgn_size == size &&
+        source->loaded_dgn_fnv1a64 != 0U &&
+        source->loaded_dgn_fnv1a64 == nexus_v1_dgn_bytes_fnv1a64(data, size);
+}
+
 static int nexus_v1_level_aux_source_receipt(
     Nexus_V1_Engine *engine, const char *name,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt) {
@@ -189,6 +212,7 @@ static int nexus_v1_level_aux_source_receipt(
 
 static int nexus_v1_structure2_source_receipt(
     Nexus_V1_Engine *engine, int level_index, const Nexus_V1_Level *level,
+    const uint8_t *loaded_dgn_data, int loaded_dgn_size,
     Nexus_V1_DgnStructure2SourceReceipt *out_receipt) {
     char name[16];
     char path[512];
@@ -265,6 +289,14 @@ static int nexus_v1_structure2_source_receipt(
     out_receipt->materialization_bound =
         out_receipt->canonical_hash_verified &&
         out_receipt->structure2_payload_envelope_valid;
+    if (out_receipt->materialization_bound && loaded_dgn_data &&
+        loaded_dgn_size > 0) {
+        out_receipt->loaded_dgn_size = loaded_dgn_size;
+        out_receipt->loaded_dgn_fnv1a64 =
+            nexus_v1_dgn_bytes_fnv1a64(loaded_dgn_data, loaded_dgn_size);
+        out_receipt->loaded_bytes_bound =
+            out_receipt->loaded_dgn_fnv1a64 != 0U;
+    }
     return 0;
 }
 
@@ -777,7 +809,7 @@ int nexus_v1_inspect_dgn_material_corpus(
             }
         }
         (void)nexus_v1_structure2_source_receipt(
-            engine, level_index, &level,
+            engine, level_index, &level, NULL, 0,
             &receipt.structure2_sources[level_index]);
         if (receipt.structure2_sources[level_index].canonical_hash_verified) {
             ++receipt.structure2_canonical_source_verified_level_count;
@@ -1870,6 +1902,9 @@ int nexus_v1_engine_consume_structure3_capture(
         !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
         !engine->current_level_structure2_source.canonical_hash_verified ||
         !engine->current_level_structure2_source.materialization_bound ||
+        !nexus_v1_dgn_source_bytes_match(
+            &engine->current_level_structure2_source,
+            engine->current_level_dgn_data, engine->current_level_dgn_size) ||
         engine->current_level_structure2_source.level_index !=
             engine->game.current_level ||
         !binding->dgn_source_hash_verified || !binding->capture_source_verified ||
@@ -2091,7 +2126,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->current_level_dgn_data = data;
     engine->current_level_dgn_size = size;
     (void)nexus_v1_structure2_source_receipt(
-        engine, level, &engine->current_level,
+        engine, level, &engine->current_level, data, size,
         &engine->current_level_structure2_source);
 
     /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
