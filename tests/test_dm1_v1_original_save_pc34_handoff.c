@@ -3003,20 +3003,58 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
     struct DungeonThings_Compat things;
+    struct DungeonJunk_Compat junks[1];
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
+    unsigned char square_data[2][32 * 32];
+    unsigned short square_first_things[32 * 32];
+    unsigned char raw_junk[4];
     int i;
     int found_step1 = 0;
+    int found_step0 = 0;
+    int champion_health_before_missing_bones;
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
+    memset(junks, 0, sizeof(junks));
+    memset(square_data, 0, sizeof(square_data));
+    memset(raw_junk, 0, sizeof(raw_junk));
+    for (i = 0; i < (int)(sizeof(square_first_things) /
+                          sizeof(square_first_things[0])); ++i) {
+        square_first_things[i] = THING_ENDOFLIST;
+    }
     maps[1].width = 32;
     maps[1].height = 32;
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    tiles[0].squareData = square_data[0];
+    tiles[0].squareCount = 32 * 32;
+    tiles[1].squareData = square_data[1];
+    tiles[1].squareCount = 32 * 32;
+    square_data[1][2 * 32 + 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    square_first_things[2 * 32 + 3] =
+        (unsigned short)((1u << 14) | (THING_TYPE_JUNK << 10));
+    wr16le(raw_junk, THING_ENDOFLIST);
+    raw_junk[2] = (unsigned char)(DM1_JUNK_TYPE_BONES | 0x80u);
+    raw_junk[3] = 0x80u; /* PC34 JUNK ChargeCount = champion index 2. */
+    junks[0].next = THING_ENDOFLIST;
+    junks[0].type = DM1_JUNK_TYPE_BONES;
+    junks[0].doNotDiscard = 1u;
+    junks[0].chargeCount = 2u;
+    things.squareFirstThings = square_first_things;
+    things.squareFirstThingCount = 32 * 32;
+    things.junks = junks;
+    things.junkCount = 1;
+    things.rawThingData[THING_TYPE_JUNK] = raw_junk;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    things.loaded = 1;
     world.dungeon = &dungeon;
     world.things = &things;
     world.party.championCount = 3;
@@ -3053,13 +3091,22 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
     }
     CHECK(found_step1, "C13 step 2 stages its five-tick bones transition");
 
-    memset(&world.timeline, 0, sizeof(world.timeline));
-    CHECK(F0720_TIMELINE_Init_Compat(&world.timeline, 56u),
-          "C13 rebirth terminal timeline initializes");
-    event.fireAtTick = 56u;
-    event.aux1 = 0;
-    CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
-          "C13 terminal event schedules");
+    /* ReDMCSB TIMELINE.C F0255:1677-1695 consumes the matching bones only
+     * in step 1, unlinks it, and queues the terminal step for the next tick. */
+    world.gameTick = 55u;
+    memset(&result, 0, sizeof(result));
+    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) > 0 &&
+              square_first_things[2 * 32 + 3] == THING_ENDOFLIST,
+          "C13 step 1 unlinks its exact PC34 bones owner");
+    for (i = 0; i < world.timeline.count; ++i) {
+        if (world.timeline.events[i].kind == TIMELINE_EVENT_VI_ALTAR_REBIRTH &&
+            world.timeline.events[i].aux1 == 0 &&
+            world.timeline.events[i].fireAtTick == 56u) {
+            found_step0 = 1;
+        }
+    }
+    CHECK(found_step0, "C13 step 1 stages terminal rebirth one tick later");
+
     world.gameTick = 56u;
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     CHECK(world.party.champions[2].hp.maximum == 98 &&
@@ -3067,6 +3114,23 @@ static void test_original_c13_vi_altar_runtime_sequence(void)
               world.party.champions[2].direction == 3 &&
               world.party.champions[2].inventory[0] == THING_NONE,
           "C13 step 0 applies the source F0283 rebirth state");
+
+    /* F0255 simply ends a live step-1 event when another action has already
+     * removed its bones. It must not synthesize terminal rebirth from the
+     * saved Priority/Location fields alone. */
+    champion_health_before_missing_bones = world.party.champions[2].hp.current;
+    CHECK(F0720_TIMELINE_Init_Compat(&world.timeline, 57u),
+          "C13 missing-bones timeline initializes");
+    event.fireAtTick = 57u;
+    event.aux1 = 1;
+    CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
+          "C13 missing-bones step 1 schedules");
+    world.gameTick = 57u;
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    CHECK(world.timeline.count == 0 &&
+              world.party.champions[2].hp.current ==
+                  champion_health_before_missing_bones,
+          "C13 missing bones consumes step 1 without synthetic rebirth");
 }
 
 static void test_runtime_materializer_binds_original_explosion_union(void)

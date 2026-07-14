@@ -161,6 +161,17 @@
   `./build/test_dm1_v1_original_save_pc34_handoff` passed; the opt-in real
   corpus section skipped because `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
 
+- ✅ 2026-07-14 DM1 PC34 C13 live timeline-sequence validation: the focused
+  original-save handoff regression now drives ReDMCSB `TIMELINE.C F0255`
+  through its real step-2, step-1, and step-0 order. It proves step 1 unlinks
+  only the matching JUNK bones owner before scheduling step 0 one tick later;
+  it also proves that a live step-1 event whose bones were already removed is
+  consumed without a synthetic rebirth. This is runtime behavior only; the
+  separate source-save materializer remains fail-closed for a saved step-1
+  record without its required owner. Verification: direct C11 syntax check
+  passed; the focused CMake target could not generate because the shared
+  volume ran out of space.
+
 - ✅ 2026-07-14 Theron Soul Room Stage 2 handoff atomicity: a known Track 02
   profile now validates its complete startup bitmap receipt and source-locked
   `$4090 -> $3800` stage-two loader chain before the forcefield can alter the
