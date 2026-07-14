@@ -1844,11 +1844,11 @@ F	0808	F0808_SeekToCylinder0_Unreferenced	IO.C	implemented_source_locked
 F	0809	F0809_CheckCopyProtectionSide0Track0_CPSX	LOADSAVE.C;DUNVIEW.C;IO.C;DEFS.H	referenced_not_verified
 F	0810	F0810_CheckCopyProtectionSide0Track2_CPSX	LOADSAVE.C;IO.C;DEFS.H	referenced_not_verified
 F	0811	F0811_CheckCopyProtectionSide0Track0_Unreferenced	IO.C	referenced_not_verified
-F	0812	F0812_CheckCopyProtectionSide0Track1_CPSX	LOADSAVE.C;IO.C;DEFS.H	referenced_not_verified
-F	0813	F0813_PlayMIDIMusic	IO.C;DEFS.H;ENTRANCE.C	referenced_not_verified
-F	0814	F0814_TRansition_MIDIMusic	ANIM.C;IO.C;DEFS.H;TOWNSIO.C;ENTRANCE.C;ANIMSND.C	referenced_not_verified
-F	0815	F0815_StopMIDIMusic	IO.C;DEFS.H;ENDGAME.C;ENTRANCE.C	referenced_not_verified
-F	0816	F0816_strstr	PANEL.C;STRING.C;DEFS.H	referenced_not_verified
+F	0812	F0812_CheckCopyProtectionSide0Track1_CPSX	LOADSAVE.C;IO.C;DEFS.H	implemented_source_locked
+F	0813	F0813_PlayMIDIMusic	IO.C;DEFS.H;ENTRANCE.C	implemented_source_locked
+F	0814	F0814_TRansition_MIDIMusic	ANIM.C;IO.C;DEFS.H;TOWNSIO.C;ENTRANCE.C;ANIMSND.C	implemented_source_locked
+F	0815	F0815_StopMIDIMusic	IO.C;DEFS.H;ENDGAME.C;ENTRANCE.C	implemented_source_locked
+F	0816	F0816_strstr	PANEL.C;STRING.C;DEFS.H	implemented_source_locked
 F	0817	F0817_SubstituteFirstCharactersByString	PANEL.C;STRING.C;DEFS.H	referenced_not_verified
 F	0818	F0818_IsJapaneseText	TEXT2.C;TEXT.C;CEDT030.C	referenced_not_verified
 F	0819	F0819_TEXT_MESSAGEAREA_PrintMessageAsJapanese	REVIVE.C;SPELFAIL.C;DEFS.H;CHAMPION.C;TEXT.C	referenced_not_verified

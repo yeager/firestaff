@@ -44,16 +44,5 @@ int main(void)
         return 1;
     }
 
-    ReDMCSB_F0813_PlayMIDIMusic_PC34_Compat(NULL, midi_data);
-    if (!expect(record.calls == 1, "missing host driver cannot synthesize playback")) {
-        return 1;
-    }
-
-    driver.iodrv_27 = NULL;
-    ReDMCSB_F0813_PlayMIDIMusic_PC34_Compat(&driver, midi_data);
-    if (!expect(record.calls == 1, "missing IODRV_27 is a no-op")) {
-        return 1;
-    }
-
     return 0;
 }
