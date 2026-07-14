@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 external-save full-runtime handoff gate: the
+  fixture-free HoC runtime probe now hashes an independently materialized
+  F0435 world from each admitted external save and requires M11's
+  post-adoption canonical world hash to match before inspecting pixels. This
+  prevents a pose-correct viewport from standing in for the restored party,
+  active state, timeline, or dungeon-backed runtime. No save, dungeon, or
+  graphics fixture is created; unset corpus/media inputs still skip.
+  Source-lock: ReDMCSB `LOADSAVE.C F0435`. Verification: CTest
+  `dm1_v1_original_save_pc34_external_hoc_runtime`.
+
 - ✅ 2026-07-14 DM1 PC34 external-save viewport-consumption gate: the
   fixture-free HoC runtime probe now requires M11 to retain the
   `ORIGINAL_SAVE_PC34` runtime origin and to produce a nonblank, byte-stable

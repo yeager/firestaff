@@ -315,6 +315,12 @@ ReDMCSB WIP 2021-02-06 source tree.
     satisfy this rendering receipt. This records Firestaff consumption of an
     admitted save's live dungeon state; it remains neither a DOS pixel-parity
     claim nor a replacement for provenance-recorded original executable runs.
+  - 2026-07-14 update: the same fixture-free HoC runtime gate now requires
+    M11's canonical post-adoption world hash to match an independently staged
+    F0435 world from the identical external save snapshot. This binds the
+    live handoff to its restored party, active state, timeline, and
+    dungeon-backed runtime rather than only its pose or viewport. It remains
+    host-runtime evidence, not original-PC execution or pixel-parity proof.
   - 2026-07-13 update: F0435 tail validation now verifies the persisted
     per-column cumulative SquareFirstThings table against raw-map thing-list
     flags before M10 can reconstruct its lookup. The remaining requirement is
