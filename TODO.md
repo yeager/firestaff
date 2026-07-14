@@ -6154,3 +6154,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now contain only their ReDMCSB C424/C425/C426 source regions and palettes;
   they no longer construct replacement text. Remaining work is capture of
   those real title phases in a packaged app, not a synthetic title route.
+
+- 🔧 2026-07-15 CSB presented-frame capture: M11 now hashes the exact
+  indexed frame passed to the renderer after a successful presentation,
+  including the CSB V2 presentation filter when selected. Remaining work is
+  a real packaged-app/Mac capture, not another host-side frame substitute.
