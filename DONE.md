@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `SWSH.C F0902`: FTL-logo presentation now gates
+  on a caller-supplied original 320x200 frame and its 16-color palette;
+  missing or truncated data authorizes no substitute. Verification: focused
+  strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `PRIM1.C F0931/F0932`: source 16-bit wrapping
   word and byte checksums now have bounded compatibility callables.
   Verification: focused strict CTest.
