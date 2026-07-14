@@ -77,13 +77,6 @@ typedef enum {
 
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
-    /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
-     * type; it must not be confused with a drawable environment image. */
-    DM2_GDAT_ENTRY_TYPE_TEXT         = 0x05,
-    /* skproject/SKWIN/DME.h dtIndex: dtRectangle/dt04 = 4.
-     * LOAD_RECTS_AND_COMPRESS reads this exact typed payload before it
-     * expands the title-menu and HUD rectangle tables. */
-    DM2_GDAT_ENTRY_TYPE_RAW4         = 0x04,
     DM2_GDAT_ENTRY_TYPE_RAW6         = 0x06,
     DM2_GDAT_ENTRY_TYPE_RAW7         = 0x07,
     DM2_GDAT_ENTRY_TYPE_RAW8         = 0x08,
@@ -101,8 +94,8 @@ typedef enum {
 
 #define DM2_GDAT_GFXSET_SCENE_COLORKEY       0x64
 #define DM2_GDAT_GFXSET_SCENE_FLAGS          0x65
-#define DM2_GDAT_GFXSET_SCENE_RAIN           0x66
-#define DM2_GDAT_GFXSET_AMBIANT_LIGHT        0x67
+#define DM2_GDAT_GFXSET_AMBIANT_LIGHT        0x66
+#define DM2_GDAT_GFXSET_SCENE_RAIN           0x67
 #define DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL  0x68
 #define DM2_GDAT_GFXSET_MISTY_MAP            0x69
 #define DM2_GDAT_GFXSET_VOID_RANDOM_FALL     0x6A
@@ -172,25 +165,6 @@ typedef struct {
     uint32_t hash;
 } DM2_V1_InterfacePalette;
 
-/* Exact non-pixel portion of the original IMG3 record consumed by
- * QUERY_GDAT_SUMMARY_IMAGE/QUERY_TEMP_PICST.  Width and height come from
- * the IMG3 header; the two offsets are the category-wide field 0xfe and the
- * image-specific field.  No image decoder or generated surface is involved. */
-typedef struct {
-    uint16_t width;
-    uint16_t height;
-    uint16_t bits_per_pixel;
-    int graphicsset_offset_present;
-    int image_offset_present;
-    int8_t graphicsset_offset_x;
-    int8_t graphicsset_offset_y;
-    int8_t image_offset_x;
-    int8_t image_offset_y;
-    int16_t query_offset_x;
-    int16_t query_offset_y;
-    uint32_t metadata_hash;
-} DM2_V1_GdatImageMetadata;
-
 /* ── Public API ─────────────────────────────────────────────────── */
 
 /* Initialize asset loader with GRAPHICS.DAT data.
@@ -227,16 +201,6 @@ const uint8_t *dm2_v1_asset_load_typed_sized(
     int field,
     size_t *out_size);
 
-/* Load an exact skproject dtText payload.  The returned bytes retain their
- * original encoding; callers must not treat them as decoded C strings until
- * the relevant QUERY_GDAT_TEXT/FORMAT_SKSTR contract has been proven. */
-const uint8_t *dm2_v1_asset_load_text_sized(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    size_t *out_size);
-
 /* Read a skproject dtWordValue field by exact category/index/field.
  * Returns 1 on success and 0 when the typed entry is absent. */
 int dm2_v1_asset_load_word_value(
@@ -255,16 +219,6 @@ int dm2_v1_asset_load_image_offset(
     int field,
     uint16_t *out_value);
 
-/* Read only the source metadata that QUERY_TEMP_PICST receives before image
- * realization. Returns zero unless the exact dtImage record is present;
- * absent original dtImageOffset fields retain the source's zero offset. */
-int dm2_v1_asset_load_image_metadata(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    DM2_V1_GdatImageMetadata *out_metadata);
-
 /* Decode INTERFACE_GENERAL's paired dtPalIRGB/dtPalette16 entries.  The
  * original stores 256 four-byte IRGB rows and 16 one-byte palette indices;
  * only an exact typed pair is accepted. */
@@ -274,17 +228,6 @@ int dm2_v1_asset_load_interface_palette(
     int index,
     int field,
     DM2_V1_InterfacePalette *out_palette);
-
-/* Read the 16-byte palette stored at the tail of one four-bit IMG3 GDAT
- * image.  skproject QUERY_GDAT_IMAGE_LOCALPAL returns this exact payload to
- * DRAW_CHIP_OF_MAGIC_MAP; it is not the global INTERFACE palette. */
-int dm2_v1_asset_load_image_local_palette(
-    const DM2_V1_AssetLoader *loader,
-    int category,
-    int index,
-    int field,
-    uint8_t out_palette16[16],
-    uint32_t *out_hash);
 
 /* Load image asset and decode to pixel buffer.
  * out_width, out_height set dimensions, out_format sets format.

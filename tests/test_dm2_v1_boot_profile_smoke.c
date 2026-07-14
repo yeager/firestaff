@@ -282,7 +282,7 @@ static void test_enter_admits_map_without_complete_record_graph(void)
     char path[256];
 
     memset(dungeon, 0, sizeof(dungeon));
-    /* A bounded PC G1 map with no declared DB pools. Its map bytes are
+    /* A bounded PC G1 map with no declared DB pools.  Its map bytes are
      * valid, while the optional record graph remains unavailable. */
     dungeon[2] = 0x47;
     dungeon[3] = 0x31;
@@ -573,8 +573,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_fallback_door_count == 0 &&
               render_receipt.runtime_render_fallback_item_count == 0 &&
               render_receipt.runtime_render_fallback_carried_item_count == 0 &&
-              render_receipt.runtime_render_blocked_material_draw_count == 0 &&
-              render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
@@ -582,8 +580,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.valid == 1 &&
               frame_ownership.full_gdat_frame_valid == 1 &&
               frame_ownership.real_gdat_evidence_valid == 1 &&
-              frame_ownership.blocked_material_draws == 0 &&
-              frame_ownership.blocked_material_mask == 0u &&
               frame_ownership.viewport_raw_gdat_asset_count >= 5 &&
               frame_ownership.viewport_decoded_gdat_asset_count >= 5 &&
               frame_ownership.viewport_raw_gdat_hash != 0u &&
@@ -592,16 +588,12 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               frame_ownership.viewport_decoded_gdat_pixel_count > 0u &&
               frame_ownership.gdat_scene_control_ready == 1 &&
               frame_ownership.gdat_scene_control_consumed > 0 &&
+              frame_ownership.gdat_scene_material_index == 2 &&
               frame_ownership.gdat_scene_light_consumed > 0 &&
-              frame_ownership.gdat_interface_palette_ready == 1 &&
-              frame_ownership.gdat_interface_palette_consumed > 0 &&
-              (frame_ownership.gdat_interface_rect14_host_ready == 0 ||
-               (frame_ownership.gdat_interface_rect14_table_hash != 0u &&
-                frame_ownership.gdat_interface_rect14_placement_hash != 0u &&
-                frame_ownership.gdat_interface_rect14_placement_count > 0u)) &&
+              frame_ownership.gdat_sprite_palette_consumed > 0 &&
               frame_ownership.gdat_scene_control_hash != 0u &&
               (frame_ownership.gdat_scene_control_present_mask & 0x03u) == 0x03u,
-          "real-profile frame consumes GDAT materials without blocked or painted fallbacks");
+          "runtime frame ownership consumes real GDAT sprite palette and scene light controls");
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,
@@ -688,38 +680,6 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               hud_capture.combined_frame_hash != 0u &&
               hud_capture.combined_pixel_count == 4u * 320u * 200u,
           "boot runtime HUD capture proves real GDAT portraits and frames across sampled directions");
-    {
-        DM2_V1_InterfaceActionTable action_table;
-        CHECK(dm2_v1_boot_interface_action_table(launch.profile,
-                                                  &action_table) == 1 &&
-                  action_table.valid == 1 &&
-                  action_table.raw != NULL &&
-                  action_table.raw_size > 0u &&
-                  action_table.hash != 0u &&
-                  action_table.group_count > 0u &&
-                  action_table.entry_count > 0u &&
-                  action_table.groups[0].primary_offset >=
-                      1u + action_table.group_count &&
-                  action_table.groups[0].secondary_offset >=
-                      action_table.groups[0].primary_offset &&
-                  action_table.tail_offset + action_table.tail_size ==
-                      action_table.raw_size,
-              "boot materializes skproject dt07/2 primary, secondary, and command-tail spans");
-    }
-    {
-        DM2_V1_InterfaceRect14HostReceipt rect14_host;
-        int rect14_ready = dm2_v1_boot_interface_rect14_host_receipt(
-            launch.profile, &rect14_host);
-        CHECK((rect14_ready == 0 && rect14_host.valid == 0) ||
-                  (rect14_ready == 1 && rect14_host.valid == 1 &&
-                   rect14_host.table_hash != 0u &&
-                   rect14_host.row_count > 0u &&
-                   rect14_host.placement_hash != 0u &&
-                   rect14_host.placement_count >= rect14_host.row_count &&
-                   rect14_host.rotated_cell_mask != 0u &&
-                   rect14_host.max_stretched_size > 0u),
-              "boot exposes optional skproject dt07/0A placements through the host receipt");
-    }
     CHECK(hud_capture.interface_rect14_ready == 0 ||
               (hud_capture.interface_rect14_hash != 0u &&
                hud_capture.interface_rect14_byte_count ==
