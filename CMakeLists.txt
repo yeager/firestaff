@@ -31272,3 +31272,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0738_music_continue_p
         COMMAND test_redmcsb_f0738_music_continue_pc34_compat
     )
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0746_is_ems_present_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f0746_is_ems_present_pc34_compat.c")
+    add_executable(test_redmcsb_f0746_is_ems_present_pc34_compat
+        tests/test_redmcsb_f0746_is_ems_present_pc34_compat.c
+    )
+    target_link_libraries(test_redmcsb_f0746_is_ems_present_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0746_is_ems_present_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME redmcsb_f0746_is_ems_present_pc34_compat
+        COMMAND test_redmcsb_f0746_is_ems_present_pc34_compat
+    )
+endif()
