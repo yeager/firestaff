@@ -78,6 +78,10 @@ int main(void) {
     check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
               &profile),
           "Soul Room route rejects a receipt without the bound full payload witness");
+    check(!theron_v1_boot_track02_capture_admission_allows_initial_level(
+              &profile, &hucard_byte, 1u,
+              THERON_DUNGEON_1_HALL_OF_RECORDS, 0),
+          "dungeon admission rejects an incomplete capture receipt before route load");
     theron_v1_boot_profile_init(&profile);
     memset(&flow, 0, sizeof(flow));
     memset(&world, 0, sizeof(world));
@@ -88,8 +92,9 @@ int main(void) {
               runtime_receipt, sizeof(runtime_receipt)) &&
               runtime_result.result == THERON_STARTUP_ERR_DUNGEON_ENTRY &&
               host_receipt.status &&
-              strcmp(host_receipt.status, "AUTHENTIC LIVE TRACE REQUIRED") == 0,
-          "forcefield entry refuses to mutate Soul Room without live evidence");
+              strcmp(host_receipt.status,
+                     "AUTHENTIC CAPTURE ADMISSION REQUIRED") == 0,
+          "forcefield entry refuses to mutate Soul Room without capture admission");
     memset(&receipt, 0xa5, sizeof(receipt));
     check(!theron_v1_boot_track02_runtime_trace_intake_from_files(
               "/missing/track02.bin", "f23601102138f87c33025877767ebf76",

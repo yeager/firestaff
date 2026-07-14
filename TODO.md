@@ -74,6 +74,11 @@
   prepared-launch intake before runtime publication. A missing or
   unauthenticated manifest rejects the launch; this does not provide a
   positive capture or establish any dungeon transition semantics.
+  The production forcefield boundary now also rehashes the selected Track 02
+  file and compares the in-memory Hall of Records level-0 loader route with
+  the immutable capture receipt before it mutates the startup flow or world.
+  This is capture-to-route admission only; a positive original transition,
+  object-tail meaning, bitmap, or palette evidence is still required.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
