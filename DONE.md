@@ -13541,3 +13541,12 @@ contains no object table, header-extension interpretation, transition, bitmap,
 or fallback-visual claim; later dungeon requests reject. The focused Track 02
 handoff probe checks the real-media route and its refusal of an unproven
 dungeon ID.
+
+# 2026-07-14 Nexus Structure3 face-pair multiplicity corpus receipt
+
+The DGN face receipt now partitions each entry-local unordered vertex pair by
+whether it co-occurs in one or multiple bounded face rows and retains the
+maximum local occurrence count. The hash-verified LEV00.DGN through LEV15.DGN
+retail corpus validates the partition. This is no-draw row incidence only; it
+does not establish an edge, winding, surface, normal-plane, transform,
+texture, palette, or drawing behavior.

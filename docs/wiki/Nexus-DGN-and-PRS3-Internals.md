@@ -61,6 +61,11 @@ indexes that co-occurs in a face row, separating distinct pairs from repeated
 occurrences. This is row-incidence accounting only, not an edge direction,
 winding, surface, normal-plane, transform, material, palette, or drawing rule.
 
+It also partitions those distinct pairs into one-row and multiple-row
+occurrences, retaining the maximum observed occurrence count per entry. This
+still does not turn a shared pair into an edge or establish winding, surface,
+normal-plane, transform, material, palette, or drawing behavior.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
