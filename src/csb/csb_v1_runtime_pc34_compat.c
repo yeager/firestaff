@@ -19855,7 +19855,7 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
     int current_dir;
     int i;
 
-    if (!profile) return -1;
+    if (!profile || !profile->dungeon_handle) return -1;
     /* ReDMCSB CHAMPION.C F0284 always writes G0308_i_PartyDirection after
      * its bounded champion loop.  A new PC34 game reaches its first input
      * before a party has been imported, so ChampionCount may be zero here;

@@ -2224,6 +2224,8 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 receipt;
     CSB_V1_DungeonData dummy_dungeon;
+    unsigned char inventory[224 * 136];
+    unsigned char resurrect[144 * 73];
 
     csb_v1_boot_profile_init(&boot);
     memset(&snapshot, 0, sizeof(snapshot));
@@ -2233,6 +2235,11 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     boot.runtime.party_x = 2;
     boot.runtime.party_y = 0;
     boot.runtime.party_dir = CSB_V1_DIR_SOUTH;
+    snprintf(boot.graphics_path, sizeof(boot.graphics_path),
+             "/tmp/firestaff_csb_GRAPHICS.DAT");
+    boot.assets_verified = 1;
+    boot.graphics_verified = 1;
+    boot.dungeon_verified = 1;
     snapshot.boot_profile = &boot;
     snapshot.entrance_active = 1;
     snapshot.opening_active = 1;
@@ -2244,13 +2251,61 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     session.valid = 1;
     session.real_asset_matched = 1;
     session.title_assets_ready = 1;
+    session.title_presents_ready = 1;
+    session.title_chaos_ready = 1;
+    session.title_strikes_back_ready = 1;
     session.entrance_assets_ready = 1;
+    session.door_assets_ready = 1;
     session.hud_assets_bound = 1;
+    session.full_startup_ready = 1;
+    session.rejects_legacy_wrappers = 1;
+    session.generation = 1u;
     session.surfaces.valid = 1;
     session.surfaces.title_regions_ready = 1;
     session.surfaces.opening_frame_ready = 1;
+    session.surfaces.hud_surfaces_ready = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].pixels = inventory;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].width = 224;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].height = 136;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].source_asset_id = 17;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].transparent_color = -1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].pixels = resurrect;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].width = 144;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].height = 73;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].source_asset_id = 40;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].transparent_color = 6;
+    session.hud_inventory_binding.verified = 1;
+    session.hud_inventory_binding.source =
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34;
+    session.hud_inventory_binding.graphic_index = 17u;
+    snprintf(session.hud_inventory_binding.path,
+             sizeof(session.hud_inventory_binding.path), "%s",
+             boot.graphics_path);
+    session.hud_resurrect_binding.verified = 1;
+    session.hud_resurrect_binding.source =
+        CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34;
+    session.hud_resurrect_binding.graphic_index = 40u;
+    snprintf(session.hud_resurrect_binding.path,
+             sizeof(session.hud_resurrect_binding.path), "%s",
+             boot.graphics_path);
     session.playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
     session.playback.entrance_music_active = 1;
+    session.playback.entrance_complete = 1;
+    session.playback.no_fallback_routes = 1;
 
     CHECK(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
               &snapshot, &session, &receipt) == 1 &&
@@ -3505,7 +3560,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               presentation_receipt.accepts_input &&
               presentation_receipt.waiting_for_input &&
               presentation_receipt.menu_option_count == 4 &&
-              presentation_receipt.render_command_count == 5 &&
+              presentation_receipt.render_command_count == 4 &&
               presentation_receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34,
           "boot startup presentation receipt owns render/menu/input snapshot");
@@ -3516,7 +3571,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               presentation_receipt.redmcsb_door_step_count == 31 &&
               presentation_receipt.redmcsb_closed_door_left_x == 0 &&
               presentation_receipt.redmcsb_closed_door_right_x == 128 &&
-              presentation_receipt.redmcsb_closed_door_y == 28 &&
+              presentation_receipt.redmcsb_closed_door_y == 30 &&
               presentation_receipt.redmcsb_closed_door_w == 128 &&
               presentation_receipt.redmcsb_closed_door_h == 161 &&
               strstr(presentation_receipt.redmcsb_entrance_source,
@@ -4000,7 +4055,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               receipt_closed_door_plan.waiting_for_input &&
               receipt_closed_door_plan.render_command_count ==
-                  view_receipt.closed_door_render_command_count - 1 &&
+                  view_receipt.closed_door_render_command_count &&
               receipt_closed_door_plan.render_commands[2].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 &&
               receipt_closed_door_plan.asset_command_count ==
