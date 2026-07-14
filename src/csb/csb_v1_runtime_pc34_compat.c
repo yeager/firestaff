@@ -17415,6 +17415,19 @@ int csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(
         profile, dungeon, slave_location, timer, 9u, out_runner, out_action);
 }
 
+static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512TimerSummary *timer);
+
+static int csb_v1_runtime_find_saved_timer_queue_slot(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    uint16_t *out_queue_slot);
+
+static void csb_v1_runtime_record_saved_timer_dsa_execution(
+    CSB_V1_RuntimeProfile *profile, uint16_t queue_slot,
+    uint16_t timer_index, const CSB_V1_DSAImportedAction *action);
+
 int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
@@ -17423,9 +17436,14 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
 {
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action = NULL;
+    uint16_t queue_slot;
     int prepared = 0;
 
-    if (!profile || !dungeon || !slave_location || !timer) return 0;
+    if (!profile || !dungeon || !slave_location || !timer ||
+        !csb_v1_runtime_find_saved_timer_queue_slot(
+            profile, timer, &queue_slot)) {
+        return 0;
+    }
     memset(&runner, 0, sizeof(runner));
 
     /* CSBWin Timer.cpp:1453-1491 constructs a new TIMER and a
@@ -17455,9 +17473,14 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     default:
         return 0;
     }
-    if (!prepared || !action) return 0;
-    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
-        profile, &runner, action, NULL, 0, NULL);
+    if (!prepared || !action ||
+        !csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+            profile, &runner, action, NULL, 0, NULL)) {
+        return 0;
+    }
+    csb_v1_runtime_record_saved_timer_dsa_execution(
+        profile, queue_slot, timer->source_index, action);
+    return 1;
 }
 
 static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
@@ -17479,6 +17502,41 @@ static int csb_v1_runtime_csbwin_timer_matches_saved_slot(
         saved->ubyte7 == timer->ubyte7 && saved->ubyte8 == timer->ubyte8 &&
         saved->ubyte9 == timer->ubyte9 && saved->sequence == timer->sequence &&
         saved->level == timer->level;
+}
+
+static int csb_v1_runtime_find_saved_timer_queue_slot(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    uint16_t *out_queue_slot)
+{
+    uint16_t found_queue_slot = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    size_t i;
+
+    /* CSBWin SaveGame.cpp restores TIMER and m_timerQueue as one state.
+     * A value-shaped TIMER from a caller is not enough to enter
+     * ProcessDSATimer5: it must retain one unique serialized queue owner. */
+    if (!profile || !timer || !out_queue_slot ||
+        !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue_summary_total !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_timer_queue_summary_count !=
+            profile->csbwin_timer_summary_count ||
+        !csb_v1_runtime_csbwin_timer_matches_saved_slot(profile, timer)) {
+        return 0;
+    }
+    for (i = 0u; i < profile->csbwin_timer_queue_summary_count; ++i) {
+        if (profile->csbwin_timer_queue[i] == timer->source_index) {
+            if (found_queue_slot != CSB_V1_CSBWIN_TIMER_QUEUE_NONE) {
+                return 0;
+            }
+            found_queue_slot = (uint16_t)i;
+        }
+    }
+    if (found_queue_slot == CSB_V1_CSBWIN_TIMER_QUEUE_NONE) return 0;
+    *out_queue_slot = found_queue_slot;
+    return 1;
 }
 
 static void csb_v1_runtime_record_saved_timer_dsa_execution(
