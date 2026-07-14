@@ -16154,6 +16154,17 @@ receipt withdraws on stale source identity. It assigns no placement,
 transform, material, pixel, palette, VDP1, or draw semantics and permits no
 fallback visuals. Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus active Structure2 descriptor-envelope receipt
+
+`nexus_v1_current_level_structure2_descriptor_receipt()` now consumes the
+active canonical LEV's bounded Structure2 descriptor table and post-FFFF
+opaque span, together with complete optional Structure1G global-to-local
+descriptor bindings. Source hash/size/FNV identity and the measured aligned
+descriptor-offset envelope are required; stale identity withdraws the route.
+No payload encoding, pixels, palette, animation, VDP1, or drawing semantics
+are assigned, and fallback visuals remain disabled. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 mesh semantic receipt
 
 The engine now publishes the active canonical LEV's bounded Structure3

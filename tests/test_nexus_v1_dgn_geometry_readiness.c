@@ -609,6 +609,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnActiveStructure1FFaceMeshReceipt active_face_mesh;
         Nexus_V1_DgnActiveStructure3FaceMaterialReceipt active_face_material;
         Nexus_V1_DgnActiveStructure1AOwnerChainReceipt active_owner_chain;
+        Nexus_V1_DgnActiveStructure2DescriptorReceipt active_structure2;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -887,6 +888,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         active_engine.current_level_structure2_source.level_index = level;
         active_engine.current_level_structure2_source.canonical_hash_verified = 1;
         active_engine.current_level_structure2_source.materialization_bound = 1;
+        active_engine.current_level_structure2_source
+            .structure2_payload_envelope_valid = 1;
         active_engine.current_level_structure2_source.loaded_bytes_bound = 1;
         active_engine.current_level_structure2_source.loaded_dgn_size = (int)size;
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
@@ -942,6 +945,23 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_owner_chain.no_draw_only &&
               !active_owner_chain.fallback_visuals_permitted,
               "active retail LEV exposes the complete Structure1F-to-Structure1A owner chain only");
+        CHECK(nexus_v1_current_level_structure2_descriptor_receipt(
+                  &active_engine, &active_structure2) == 1 &&
+              active_structure2.valid && active_structure2.level_index == level &&
+              active_structure2.source_byte_count == (int)size &&
+              active_structure2.source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+              active_structure2.descriptor_count ==
+                  loaded_level.structure2_texture_count &&
+              active_structure2.structure1g_entry_count ==
+                  loaded_level.structure1g_entry_count &&
+              active_structure2.structure1g_structure2_bindings_complete &&
+              active_structure2.payload.valid &&
+              active_structure2.payload.descriptor_offset_envelope_valid &&
+              !active_structure2.payload.material_or_image_data_proven &&
+              active_structure2.descriptor_layout_complete &&
+              active_structure2.no_draw_only &&
+              !active_structure2.fallback_visuals_permitted,
+              "active retail LEV exposes the bounded Structure2 descriptor envelope only");
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 ^= 1U;
         CHECK(nexus_v1_current_level_structure3_face_material_receipt(
                   &active_engine, &active_face_material) == 0 &&
@@ -953,6 +973,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               !active_owner_chain.valid && active_owner_chain.no_draw_only &&
               !active_owner_chain.fallback_visuals_permitted,
               "active Structure1A owner chain withdraws on stale LEV identity");
+        CHECK(nexus_v1_current_level_structure2_descriptor_receipt(
+                  &active_engine, &active_structure2) == 0 &&
+              !active_structure2.valid && active_structure2.no_draw_only &&
+              !active_structure2.fallback_visuals_permitted,
+              "active Structure2 descriptor envelope withdraws on stale LEV identity");
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(

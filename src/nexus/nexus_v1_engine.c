@@ -2878,6 +2878,47 @@ int nexus_v1_current_level_structure1a_owner_chain_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_structure2_descriptor_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    const Nexus_V1_Level *level;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    source = &engine->current_level_structure2_source;
+    level = &engine->current_level;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->structure2_payload_envelope_valid ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        !level->structure2_texture_table_valid ||
+        level->structure2_texture_count <= 0 ||
+        !nexus_v1_level_structure2_source_envelope_valid(level) ||
+        level->structure2_payload.material_or_image_data_proven ||
+        !level->structure1g_structure2_bindings_complete) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    out_receipt->descriptor_count = level->structure2_texture_count;
+    out_receipt->structure1g_entry_count = level->structure1g_entry_count;
+    out_receipt->structure1g_structure2_bindings_complete = 1;
+    out_receipt->payload = level->structure2_payload;
+    out_receipt->descriptor_layout_complete = 1;
+    return 1;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)
