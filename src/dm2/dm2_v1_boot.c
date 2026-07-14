@@ -977,12 +977,14 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
                 uint8_t *dat = (uint8_t *)malloc((size_t)fsize);
                 if (dat) {
                     size_t got = fread(dat, 1, (size_t)fsize, f);
-                    if (dm2_v1_dungeon_load(dd, dat, (int)got) != 0 ||
-                        !dm2_v1_dungeon_validate_record_pools(dd)) {
-                        /* skproject READ_DUNGEON_STRUCTURE owns the c_record
-                         * pool transform before map use. G1 GenericRecord::w0
-                         * links remain separately gated by the stricter graph
-                         * validator, so map boot never guesses a chain. */
+                    if (dm2_v1_dungeon_load(dd, dat, (int)got) != 0) {
+                        /* The real game may only leave the title/menu after
+                         * its GDAT startup surface is ready. A malformed
+                         * map is fatal, but record-graph completeness is a
+                         * later world capability, not boot admission.
+                         * SKProject SkWinCore::INIT reaches
+                         * SHOW_MENU_SCREEN before GAME_LOAD reads the
+                         * dungeon structure. */
                         dm2_v1_dungeon_free(dd);
                         free(dat);
                         fclose(f);
