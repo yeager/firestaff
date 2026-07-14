@@ -76,6 +76,7 @@ typedef struct {
     int sub_level_index;
     uint32_t route_hash;
     uint32_t payload_checksum;
+    uint32_t envelope_checksum;
     const char *status;
 } Theron_V1StartupRuntimeInitialRouteReceipt;
 

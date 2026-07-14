@@ -11,6 +11,7 @@
 #define THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET 0x114u
 #define THERON_V1_INITIAL_ENVELOPE_DESTINATION 0x3800u
 #define THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES 2048u
+#define THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES (12u + 32u * 27u)
 
 /* This is an observation boundary, not a payload decoder. The destination and
  * byte count are retained only when an original later loader read reports
@@ -54,6 +55,21 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderPayloadReceipt;
 
+/* Exact record-local slice of the witnessed payload that is already proven
+ * to be the initial level envelope. It is a byte handoff only: callers still
+ * need independently source-locked level-loader evidence before treating it
+ * as a runtime route. */
+typedef struct {
+    int handed_off;
+    int no_fallback;
+    uint32_t record;
+    uint32_t record_user_data_offset;
+    uint32_t envelope_bytes;
+    uint32_t envelope_checksum;
+    uint8_t envelope[THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES];
+    const char *status;
+} Theron_V1Track02LoaderLevelEnvelopeReceipt;
+
 /* Accepts only a provenance-authenticated later read of the source-locked
  * initial envelope. It deliberately leaves payload intake blocked until
  * authenticated trace must also retain the observed $3800 one-sector payload
@@ -71,5 +87,15 @@ int theron_v1_track02_loader_intake_handoff_complete_payload(
     const uint8_t *payload,
     size_t payload_bytes,
     Theron_V1Track02LoaderPayloadReceipt *out_receipt);
+
+/* Copies a source-locked subrange from the witnessed original sector. The
+ * caller supplies the independently decoded record coordinate and checksum;
+ * malformed, out-of-range, or changed bytes fail closed. */
+int theron_v1_track02_loader_intake_handoff_level_envelope(
+    const Theron_V1Track02LoaderPayloadReceipt *payload,
+    uint32_t record_user_data_offset,
+    uint32_t envelope_bytes,
+    uint32_t envelope_checksum,
+    Theron_V1Track02LoaderLevelEnvelopeReceipt *out_receipt);
 
 #endif
