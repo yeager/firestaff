@@ -38,6 +38,7 @@
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_world_model.h"
 #include <string.h>
 #include <stdlib.h>
@@ -898,6 +899,15 @@ void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
     s->asset_fetch = fetch;
     s->asset_user = user;
     s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_door_overlay_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan)
+{
+    if (!s) return;
+    s->gdat_door_overlay_material_plan = plan;
+    s->gdat_door_overlay_material_plan_consumed_count = 0;
 }
 
 void dm2_v1_viewport_set_asset_palette_provider(
@@ -3889,14 +3899,49 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 material->required = 1;
                 s->last_door_material_required_mask |=
                     (uint8_t)(1u << (unsigned)kind);
+                if ((kind == DM2_DOOR_MATERIAL_ORNATE ||
+                     kind == DM2_DOOR_MATERIAL_DESTROYED_MASK) &&
+                    s->gdat_door_overlay_material_plan) {
+                    const DM2_V1_GdatDoorOverlayM11CommandPlan *overlay_plan =
+                        s->gdat_door_overlay_material_plan;
+                    const int wanted_kind = kind == DM2_DOOR_MATERIAL_ORNATE
+                        ? DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
+                        : DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK;
+                    const DM2_V1_GdatDoorOverlayM11Command *command = NULL;
+                    for (int j = 0; overlay_plan->valid &&
+                         j < overlay_plan->command_count; ++j) {
+                        const DM2_V1_GdatDoorOverlayM11Command *candidate =
+                            &overlay_plan->commands[j];
+                        if (candidate->gdat_index == gdat_indices[kind] &&
+                            candidate->view_square == door->view_square &&
+                            candidate->kind == wanted_kind) {
+                            command = candidate;
+                            break;
+                        }
+                    }
+                    if (command) {
+                        material->pixels = command->pixels;
+                        material->width = command->width;
+                        material->height = command->height;
+                        material->stride = command->width;
+                        memcpy(material->palette16, command->palette16,
+                               sizeof(material->palette16));
+                        material->palette_hash = command->palette_hash;
+                        ++s->gdat_door_overlay_material_plan_consumed_count;
+                    }
+                }
                 if (gdat_indices[kind] == 0 ||
-                    dm2_v1_fetch_viewport_local_material(
+                    ((!material->pixels || material->width <= 0 ||
+                      material->height <= 0) &&
+                     dm2_v1_fetch_viewport_local_material(
                         s, gdat_indices[kind], &material->pixels,
                         &material->width, &material->height,
-                        &material->stride) != 0 ||
+                        &material->stride) != 0) ||
                     !material->pixels || material->width <= 0 ||
-                    material->height <= 0 || !s->active_asset_palette_ready ||
-                    s->active_asset_palette_hash == 0u ||
+                    material->height <= 0 ||
+                    (!material->palette_hash &&
+                     (!s->active_asset_palette_ready ||
+                      s->active_asset_palette_hash == 0u)) ||
                     (kind == DM2_DOOR_MATERIAL_BUTTON &&
                      door->button_source_kind == 2 &&
                      !dm2_v1_wall_button_receipt_matches(s, door))) {
@@ -3904,9 +3949,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
                     return;
                 }
-                memcpy(material->palette16, s->active_asset_palette16,
-                       sizeof(material->palette16));
-                material->palette_hash = s->active_asset_palette_hash;
+                if (!material->palette_hash) {
+                    memcpy(material->palette16, s->active_asset_palette16,
+                           sizeof(material->palette16));
+                    material->palette_hash = s->active_asset_palette_hash;
+                }
             }
         }
     }

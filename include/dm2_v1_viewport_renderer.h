@@ -6,6 +6,7 @@
 
 typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
 typedef struct DM2_V1_GdatWallM11CommandPlan DM2_V1_GdatWallM11CommandPlan;
+typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan DM2_V1_GdatDoorOverlayM11CommandPlan;
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Viewport Renderer — Skullkeep rendering pipeline
@@ -299,7 +300,7 @@ typedef struct {
     uint8_t door_state;
 } DM2_V1_DoorRender;
 
-typedef struct {
+typedef struct DM2_V1_DoorRenderPlan {
     DM2_V1_DoorRender doors[DM2_V1_DOOR_RENDER_MAX];
     int door_count;
 } DM2_V1_DoorRenderPlan;
@@ -810,6 +811,8 @@ typedef struct {
      * plan. These are never synthesized and are preferred over a second GDAT
      * lookup during the same M11 frame. */
     const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *gdat_door_overlay_material_plan;
+    int gdat_door_overlay_material_plan_consumed_count;
     const DM2_V1_GdatWallM11CommandPlan *gdat_wall_material_plan;
     int gdat_scene_material_consumed_count;
     /* Counts only wall blits supplied by the boot-owned GRAPHICSSET plan. */
@@ -943,6 +946,9 @@ void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                          DM2_V1_ViewportAssetFetch fetch,
                                          void *user);
+void dm2_v1_viewport_set_gdat_door_overlay_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan);
 void dm2_v1_viewport_set_asset_palette_provider(
     DM2_V1_ViewportState *s,
     DM2_V1_ViewportAssetPaletteFetch fetch,
