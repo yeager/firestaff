@@ -5920,6 +5920,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
+- 🔧 2026-07-15 Track 02 live SCSI caller/destination boundary: a fresh
+  authentic US CUE + System Card 3.0 capture records every `$1801` SCSI CDB
+  byte with its HuC6280 caller, alongside each decoded READ(6) packet and raw
+  sector binding. All 48 observed READ(6) packets, including later reads
+  through generation 48 / LBA 4265, were issued by System Card `$e981`
+  (command bytes) after `$e90d` selection; FIFO bytes were copied only by
+  `$ea50` into System Card RAM `$1f:2256+`. No non-System-Card CD caller,
+  dynamic `$e009`, or game-owned destination was observed, so none of those
+  later records may enter the dungeon handoff. Next admissible evidence is a
+  real game-code caller and destination after the System Card returns, tied
+  to a hash-verified Track 02 sector and an original level/object consumer.
+
 - 🔧 2026-07-14 Track 02 initial-level payload handoff: the one complete,
   trace-witnessed 2048-byte `$e009` payload is now copied atomically from the
   rehashed original MODE1 user-data sector into the runtime boot receipt.
