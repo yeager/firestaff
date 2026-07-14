@@ -2,6 +2,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int read_u64(const char **cursor, const char *label, uint64_t *out) {
@@ -72,6 +73,140 @@ static uint64_t capture_bundle_fnv1a64(
                          capture->normal_culling_state_size);
     return fnv1a64_span(hash, capture->vdp1_command,
                          capture->vdp1_command_size);
+}
+
+static uint8_t *read_raw_capture_span(const char *path, size_t expected_size)
+{
+    FILE *file;
+    long file_size;
+    uint8_t *bytes;
+
+    if (!path || expected_size == 0U ||
+        expected_size > NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES) {
+        return NULL;
+    }
+    file = fopen(path, "rb");
+    if (!file) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (file_size = ftell(file)) < 0L ||
+        (size_t)file_size != expected_size || fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc(expected_size);
+    if (!bytes || fread(bytes, 1U, expected_size, file) != expected_size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    return bytes;
+}
+
+void nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->no_draw_only = 1;
+}
+
+void nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt)
+{
+    if (!receipt) return;
+    free(receipt->texture_span_storage);
+    free(receipt->palette_state_storage);
+    free(receipt->vdp1_state_storage);
+    free(receipt->transform_state_storage);
+    free(receipt->normal_culling_state_storage);
+    free(receipt->vdp1_command_storage);
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(receipt);
+}
+
+int nexus_v1_dgn_structure3_raw_capture_read(
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt receipt;
+    Nexus_V1_DgnStructure3CaptureImport *packet;
+
+    if (!out_receipt) return 0;
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!manifest || !paths || !attestation || !manifest->valid ||
+        !manifest->complete || manifest->original_saturn_capture_verified ||
+        manifest->renderer_handoff_ready ||
+        !manifest->blocks_real_dgn_mesh_render) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_accepted = 1;
+    receipt.texture_span_storage = read_raw_capture_span(
+        paths->texture_span_path, manifest->texture_span_bytes);
+    receipt.palette_state_storage = read_raw_capture_span(
+        paths->palette_state_path, manifest->palette_state_bytes);
+    receipt.vdp1_state_storage = read_raw_capture_span(
+        paths->vdp1_state_path, manifest->vdp1_state_bytes);
+    receipt.transform_state_storage = read_raw_capture_span(
+        paths->transform_state_path, manifest->transform_state_bytes);
+    receipt.normal_culling_state_storage = read_raw_capture_span(
+        paths->normal_culling_state_path, manifest->normal_culling_state_bytes);
+    receipt.vdp1_command_storage = read_raw_capture_span(
+        paths->vdp1_command_path, manifest->vdp1_command_bytes);
+    if (!receipt.texture_span_storage || !receipt.palette_state_storage ||
+        !receipt.vdp1_state_storage || !receipt.transform_state_storage ||
+        !receipt.normal_culling_state_storage || !receipt.vdp1_command_storage) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.all_spans_read = 1;
+    packet = &receipt.import_packet;
+    packet->texture_span = receipt.texture_span_storage;
+    packet->texture_span_size = manifest->texture_span_bytes;
+    packet->palette_state = receipt.palette_state_storage;
+    packet->palette_state_size = manifest->palette_state_bytes;
+    packet->vdp1_state = receipt.vdp1_state_storage;
+    packet->vdp1_state_size = manifest->vdp1_state_bytes;
+    packet->transform_state = receipt.transform_state_storage;
+    packet->transform_state_size = manifest->transform_state_bytes;
+    packet->normal_culling_state = receipt.normal_culling_state_storage;
+    packet->normal_culling_state_size = manifest->normal_culling_state_bytes;
+    packet->vdp1_command = receipt.vdp1_command_storage;
+    packet->vdp1_command_size = manifest->vdp1_command_bytes;
+    receipt.raw_span_hashes_match =
+        fnv1a64(packet->texture_span, packet->texture_span_size) ==
+            manifest->candidate.texture_span_fnv1a64 &&
+        fnv1a64(packet->palette_state, packet->palette_state_size) ==
+            manifest->candidate.palette_state_fnv1a64 &&
+        fnv1a64(packet->vdp1_state, packet->vdp1_state_size) ==
+            manifest->candidate.vdp1_state_fnv1a64 &&
+        fnv1a64(packet->transform_state, packet->transform_state_size) ==
+            manifest->candidate.transform_state_fnv1a64 &&
+        fnv1a64(packet->normal_culling_state,
+                packet->normal_culling_state_size) ==
+            manifest->candidate.normal_culling_state_fnv1a64 &&
+        fnv1a64(packet->vdp1_command, packet->vdp1_command_size) ==
+            manifest->candidate.vdp1_command_fnv1a64;
+    packet->capture_session_fnv1a64 = attestation->capture_session_fnv1a64;
+    packet->capture_bundle_fnv1a64 = capture_bundle_fnv1a64(packet);
+    receipt.attestation_session_matches =
+        attestation->capture_session_fnv1a64 != 0U &&
+        attestation->capture_session_fnv1a64 == manifest->capture_session_fnv1a64;
+    receipt.attestation_bundle_matches = packet->capture_bundle_fnv1a64 != 0U &&
+        packet->capture_bundle_fnv1a64 == attestation->capture_bundle_fnv1a64;
+    receipt.original_saturn_source_attested =
+        attestation->original_saturn_source_attested != 0;
+    packet->capture_bundle_hash_verified = receipt.raw_span_hashes_match &&
+        receipt.attestation_session_matches && receipt.attestation_bundle_matches;
+    packet->original_saturn_capture_verified =
+        packet->capture_bundle_hash_verified &&
+        receipt.original_saturn_source_attested;
+    receipt.import_ready = packet->original_saturn_capture_verified;
+    *out_receipt = receipt;
+    return receipt.import_ready;
 }
 
 void nexus_v1_dgn_structure3_capture_host_receipt_clear(

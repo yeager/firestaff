@@ -5432,6 +5432,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     in-memory level therefore blocks the host route rather than reusing a
     file receipt. This is package-consumption hardening only; it does not
     establish the required Saturn texture/palette or mesh semantics.
+  - 2026-07-14 raw-trace tooling follow-up: the capture path can now read six
+    immutable raw trace spans from files and atomically validate their exact
+    manifest hashes, session, and externally attested bundle before exposing
+    the existing no-draw import packet. There is still no local genuine
+    Saturn trace, and the reader deliberately assigns no VDP1, palette,
+    transform, culling, texture, or draw semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

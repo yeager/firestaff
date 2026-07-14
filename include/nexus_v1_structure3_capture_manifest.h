@@ -12,6 +12,7 @@
  * capture provenance before passing the candidate to the DGN binder. */
 #define NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1"
+#define NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES (16U * 1024U * 1024U)
 
 typedef struct {
     int valid;
@@ -54,6 +55,44 @@ typedef struct {
     int original_saturn_capture_verified;
 } Nexus_V1_DgnStructure3CaptureImport;
 
+/* File locations are deliberately six independent raw spans. The reader
+ * treats each as opaque bytes; neither path names nor byte content establish
+ * VDP1, palette, transform, culling, or draw semantics. */
+typedef struct {
+    const char *texture_span_path;
+    const char *palette_state_path;
+    const char *vdp1_state_path;
+    const char *transform_state_path;
+    const char *normal_culling_state_path;
+    const char *vdp1_command_path;
+} Nexus_V1_DgnStructure3RawCapturePaths;
+
+/* This attestation is supplied by an original-Saturn trace/capture verifier
+ * outside Firestaff. The reader refuses to manufacture it from local files. */
+typedef struct {
+    uint64_t capture_session_fnv1a64;
+    uint64_t capture_bundle_fnv1a64;
+    int original_saturn_source_attested;
+} Nexus_V1_DgnStructure3RawCaptureAttestation;
+
+typedef struct {
+    int manifest_accepted;
+    int all_spans_read;
+    int raw_span_hashes_match;
+    int attestation_session_matches;
+    int attestation_bundle_matches;
+    int original_saturn_source_attested;
+    int import_ready;
+    int no_draw_only;
+    Nexus_V1_DgnStructure3CaptureImport import_packet;
+    uint8_t *texture_span_storage;
+    uint8_t *palette_state_storage;
+    uint8_t *vdp1_state_storage;
+    uint8_t *transform_state_storage;
+    uint8_t *normal_culling_state_storage;
+    uint8_t *vdp1_command_storage;
+} Nexus_V1_DgnStructure3RawCaptureReaderReceipt;
+
 typedef struct {
     int manifest_valid;
     int spans_match_manifest;
@@ -85,6 +124,22 @@ typedef struct {
 
 void nexus_v1_dgn_structure3_capture_host_receipt_clear(
     Nexus_V1_DgnStructure3CaptureHostReceipt *receipt);
+
+void nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt);
+void nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt);
+
+/* Reads six raw original-capture spans and validates them atomically against
+ * a parsed manifest plus an externally supplied capture attestation. A local
+ * byte match is insufficient: without the external original-Saturn verdict
+ * this function returns 0 and leaves a no-draw receipt. Call release before
+ * reusing a receipt that previously accepted file-backed spans. */
+int nexus_v1_dgn_structure3_raw_capture_read(
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RawCaptureReaderReceipt *out_receipt);
 
 /* Parse one complete, single-face correlation envelope. The manifest retains
  * opaque byte fingerprints and ordering only. It assigns no texture, palette,
