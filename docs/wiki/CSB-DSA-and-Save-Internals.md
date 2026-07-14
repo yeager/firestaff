@@ -85,7 +85,9 @@ CSBWin evidence. They must not be filled in with a generic VM.
 `firestaff_csb_v1_csbwin_extended_dsa_handoff_probe` accepts only an original
 CSBWin `Dungeon.dat` and an original extended `csbgame*.dat` save. It verifies
 the production resume path publishes authenticated DSA actions and the saved
-level-index table into the same runtime owner, then confirms that owner stays
-stable through one tick. It does not generate a save, DSA record, selector, or
-fallback action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON`
+level-index table into the same runtime owner, then scans decoded source Thing
+chains for a type-47 actuator whose selector resolves through that restored
+table to an authenticated action. It also confirms the owner stays stable
+through one tick. It does not generate a save, DSA record, selector, actuator,
+or fallback action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON`
 and `FIRESTAFF_CSBWIN_SAVE`), it skips.
