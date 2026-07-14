@@ -862,6 +862,13 @@ gate, and retains that selector plus ordinal. Synthetic or raw-sector-only
 records cannot publish this receipt. This remains a coordinate constraint,
 not a descriptor-format, dungeon, object, palette, bitmap, or transition
 claim; a fresh matched JP/US Mednafen capture is still required.
+2026-07-14 raw-sector witness follow-up: the next admissible positive receipt
+must pair one selector-resolved later `$e009` record with its exact 32-byte
+provenance-marked Mednafen SCSI raw-sector span and the matching hash-verified
+Track 02 BIN. This establishes only an independent physical CD/media match,
+not `$e009` causality, capture-session identity, a payload format, or
+dungeon/object/palette/bitmap semantics. A matching JP/US capture pair remains
+required before any dungeon handoff can be considered.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 

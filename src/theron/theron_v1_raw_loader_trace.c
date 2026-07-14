@@ -133,6 +133,26 @@ static int tqr_trace_parse_later_e009_return(const char *line, size_t length,
            *out_return_pc <= 0xffffu && *out_record <= 0xffffffu;
 }
 
+static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
+                                           unsigned int *out_lba,
+                                           unsigned int *out_bytes,
+                                           unsigned int *out_span_offset,
+                                           unsigned int *out_span_bytes,
+                                           unsigned int *out_checksum)
+{
+    int consumed = 0;
+
+    if (!line || !out_lba || !out_bytes || !out_span_offset ||
+        !out_span_bytes || !out_checksum) return 0;
+    return sscanf(line,
+                  "cd_interface_raw_sector_read lba=%u bytes=%u span_offset=%u span_bytes=%u span_fnv1a=%x%n",
+                  out_lba, out_bytes, out_span_offset, out_span_bytes,
+                  out_checksum, &consumed) == 5 && consumed == (int)length &&
+           *out_bytes == THERON_TRACK02_RAW_SECTOR_BYTES &&
+           *out_span_offset == 0u && *out_span_bytes == 32u &&
+           *out_checksum != 0u;
+}
+
 static uint32_t tqr_trace_fnv1a_user_data_range(const uint8_t *track02_data,
                                                  size_t first_raw_sector,
                                                  size_t sector_count)
@@ -521,6 +541,79 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     out->later_e009_return_verified = 1;
     out->later_cd_read_to_media_verified = 1;
     out->descriptor_selector_bound = 1;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
+    const Theron_V1RawLoaderTraceLaterSectorReceipt *later_receipt,
+    const char *cd_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceLaterRawSectorWitness *out)
+{
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t source_count = 0u;
+    size_t matching_span_count = 0u;
+    unsigned int lba = 0u;
+    unsigned int bytes = 0u;
+    unsigned int span_offset = 0u;
+    unsigned int span_bytes = 0u;
+    unsigned int checksum = 0u;
+    unsigned int matched_lba = 0u;
+    uint32_t expected_checksum;
+    const char *expected_md5;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!later_receipt || !cd_capture || !track02_data || !track02_md5 ||
+        !out || !later_receipt->valid ||
+        !later_receipt->later_e009_return_verified ||
+        !later_receipt->later_cd_read_to_media_verified ||
+        !later_receipt->descriptor_selector_bound ||
+        strcmp(later_receipt->track02_md5, track02_md5) != 0 ||
+        later_receipt->first_raw_offset > track02_size ||
+        32u > track02_size - later_receipt->first_raw_offset ||
+        (later_receipt->variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         later_receipt->variant != THERON_TRACK02_VARIANT_US_BIN)) {
+        return 0;
+    }
+    expected_md5 = later_receipt->variant == THERON_TRACK02_VARIANT_JP_BIN
+        ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    if (strcmp(track02_md5, expected_md5) != 0) return 0;
+
+    expected_checksum = tqr_trace_fnv1a_bytes(
+        track02_data + later_receipt->first_raw_offset, 32u);
+    cursor = cd_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-cd") &&
+            memcmp(line, "source=mednafen-pce-instrumented-cd", length) == 0) {
+            ++source_count;
+        } else if (length >= strlen("cd_interface_raw_sector_read ") &&
+                   memcmp(line, "cd_interface_raw_sector_read ",
+                          strlen("cd_interface_raw_sector_read ")) == 0) {
+            if (!tqr_trace_parse_raw_sector_span(line, length, &lba, &bytes,
+                                                  &span_offset, &span_bytes,
+                                                  &checksum)) return 0;
+            if (checksum == expected_checksum) {
+                ++matching_span_count;
+                matched_lba = lba;
+            }
+        }
+    }
+    if (source_count != 1u || matching_span_count != 1u) return 0;
+
+    out->valid = 1;
+    out->variant = later_receipt->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->later_track02_record = later_receipt->later_track02_record;
+    out->descriptor_selector = later_receipt->descriptor_selector;
+    out->descriptor_selector_ordinal = later_receipt->descriptor_selector_ordinal;
+    out->observed_raw_sector_lba = (int)matched_lba;
+    out->observed_raw_sector_span_bytes = 32u;
+    out->observed_raw_sector_span_checksum = expected_checksum;
+    out->same_capture_raw_sector_span_verified = 1;
     return 1;
 }
 

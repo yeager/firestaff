@@ -13918,6 +13918,19 @@ dungeon, object, palette, bitmap, or transition semantics. Verification:
 `theron_v1_raw_loader_trace_stage3_sector` passes; the paired original-media
 layout probe remains skip-safe until matching JP/US Mednafen traces exist.
 
+# ✅ 2026-07-14 Theron later `$e009` raw-sector witness boundary
+
+The selector-coordinate receipt can now be paired with exactly one
+provenance-marked Mednafen SCSI raw-sector sidecar span whose bounded FNV-1a
+matches the corresponding hash-verified Track 02 raw sector. The receipt
+retains only the observed disc LBA, selector coordinate, and span fingerprint.
+It does not claim that `$e009` caused that read, that both observations share
+one capture session, or assign a payload format, dungeon, object, palette,
+bitmap, or transition meaning. Noncanonical media, missing sidecars, duplicate
+matching spans, and changed bytes reject.
+Verification: `theron_v1_raw_loader_trace_stage3_sector` focused negative
+probe; a positive result requires original JP/US media and captures.
+
 Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
 first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
 hash-verified JP and US raw Track 02 images plus matching instrumented traces;
