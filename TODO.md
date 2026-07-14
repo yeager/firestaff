@@ -13,6 +13,14 @@
   require separate original-Saturn proof. A missing or altered lane cannot
   replace a previously admitted runtime source.
 
+- 2026-07-14 Nexus Structure3 entry-framing follow-up: each external capture
+  manifest must now echo the canonical entry, vertex, face, and normal offsets
+  plus vertex/face counts from the precise requested DGN entry. This binds a
+  future transform/camera trace to its source layout but assigns no Saturn
+  field meanings. Independent original-Saturn provenance and proven texture,
+  palette, VDP1, transform, culling, and raster rules remain required before
+  any renderer draw is allowed.
+
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,
   manifest, binary-bound attestation, and six lane files. Firestaff verifies

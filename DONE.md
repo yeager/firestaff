@@ -9,6 +9,12 @@
   video-driver line forwarder and validated source-backed IMG3 row expansion.
   Focused strict-C11 regression passes.
 
+- 2026-07-14 Nexus Structure3 source entry framing: extended the external
+  capture target/manifest correlation with the canonical Structure3 entry's
+  entry, vertex, face, and normal offsets and vertex/face counts. A producer
+  manifest for a different raw mesh layout now fails before lane intake; the
+  new fields remain source-only and preserve the existing no-draw gate.
+
 - 2026-07-14 CSB IMG3 asset presentation: connected successful source-backed
   F0689 expansion to a caller-owned presentation callback; malformed data
   never reaches the display route. Focused strict-C11 regression passes.

@@ -174,6 +174,12 @@ int nexus_v1_dgn_structure3_capture_target_build(
     receipt.candidate.referenced_vertex_rows_fnv1a32 = vertex_hash;
     receipt.candidate.normal_row_fnv1a32 = fnv1a32(normal, 12U);
     receipt.candidate.fill_selector = read_be16(face + 10U);
+    receipt.entry_byte_offset = entry_offset;
+    receipt.vertex_byte_offset = vertex_offset;
+    receipt.face_byte_offset = face_offset;
+    receipt.normal_byte_offset = normal_offset;
+    receipt.vertex_count = vertex_count;
+    receipt.face_count = face_count;
     receipt.capture_producer_required = 1;
     receipt.original_saturn_capture_required = 1;
     receipt.valid = receipt.candidate.dgn_fnv1a64 != 0U &&
@@ -211,6 +217,12 @@ int nexus_v1_dgn_structure3_capture_target_write(
                 "referenced_vertex_rows_fnv1a32=%x\n"
                 "normal_row_fnv1a32=%x\n"
                 "fill_selector=%x\n"
+                "entry_byte_offset=%x\n"
+                "vertex_byte_offset=%x\n"
+                "face_byte_offset=%x\n"
+                "normal_byte_offset=%x\n"
+                "vertex_count=%x\n"
+                "face_count=%x\n"
                 "capture_manifest_magic=" NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC "\n"
                 "required_lanes=texture_span,palette_state,vdp1_state,transform_state,normal_culling_state,vdp1_command\n"
                 "original_saturn_capture_required=1\n"
@@ -223,7 +235,10 @@ int nexus_v1_dgn_structure3_capture_target_write(
                 target->candidate.face_row_fnv1a32,
                 target->candidate.referenced_vertex_rows_fnv1a32,
                 target->candidate.normal_row_fnv1a32,
-                target->candidate.fill_selector) < 0) {
+                target->candidate.fill_selector, target->entry_byte_offset,
+                target->vertex_byte_offset, target->face_byte_offset,
+                target->normal_byte_offset, target->vertex_count,
+                target->face_count) < 0) {
         fclose(file);
         remove(temporary_path);
         return 0;
@@ -261,7 +276,13 @@ int nexus_v1_dgn_structure3_capture_target_matches_manifest(
         expected->referenced_vertex_rows_fnv1a32 ==
             observed->referenced_vertex_rows_fnv1a32 &&
         expected->normal_row_fnv1a32 == observed->normal_row_fnv1a32 &&
-        expected->fill_selector == observed->fill_selector;
+        expected->fill_selector == observed->fill_selector &&
+        target->entry_byte_offset == manifest->entry_byte_offset &&
+        target->vertex_byte_offset == manifest->vertex_byte_offset &&
+        target->face_byte_offset == manifest->face_byte_offset &&
+        target->normal_byte_offset == manifest->normal_byte_offset &&
+        target->vertex_count == manifest->vertex_count &&
+        target->face_count == manifest->face_count;
 }
 
 int nexus_v1_dgn_structure3_capture_producer_attestation_parse(
@@ -567,6 +588,8 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
         sizeof(NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC) - 1U;
     const char *cursor;
     uint32_t fill_selector;
+    uint32_t vertex_count;
+    uint32_t face_count;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -592,6 +615,12 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
         !read_u32(&cursor, "normal_row_fnv1a32=",
                   &receipt.candidate.normal_row_fnv1a32) ||
         !read_u32(&cursor, "fill_selector=", &fill_selector) ||
+        !read_u32(&cursor, "entry_byte_offset=", &receipt.entry_byte_offset) ||
+        !read_u32(&cursor, "vertex_byte_offset=", &receipt.vertex_byte_offset) ||
+        !read_u32(&cursor, "face_byte_offset=", &receipt.face_byte_offset) ||
+        !read_u32(&cursor, "normal_byte_offset=", &receipt.normal_byte_offset) ||
+        !read_u32(&cursor, "vertex_count=", &vertex_count) ||
+        !read_u32(&cursor, "face_count=", &face_count) ||
         !read_u32(&cursor, "texture_span_bytes=", &receipt.texture_span_bytes) ||
         !read_u64(&cursor, "texture_span_fnv1a64=",
                   &receipt.candidate.texture_span_fnv1a64) ||
@@ -630,7 +659,9 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
     if (!receipt.capture_session_fnv1a64 || !receipt.candidate.dgn_fnv1a64 ||
         !receipt.candidate.structure3_payload_fnv1a32 ||
         !receipt.candidate.typed_mesh_corpus_fnv1a32 ||
-        fill_selector > UINT16_MAX || !receipt.texture_span_bytes ||
+        fill_selector > UINT16_MAX || vertex_count > UINT16_MAX ||
+        face_count > UINT16_MAX || !vertex_count || !face_count ||
+        !receipt.texture_span_bytes ||
         !receipt.palette_state_bytes || !receipt.vdp1_state_bytes ||
         !receipt.transform_state_bytes || !receipt.normal_culling_state_bytes ||
         !receipt.vdp1_command_bytes || !receipt.candidate.face_row_fnv1a32 ||
@@ -645,6 +676,8 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
         !trace_sequence_is_valid(&receipt)) return 0;
 
     receipt.candidate.fill_selector = (uint16_t)fill_selector;
+    receipt.vertex_count = (uint16_t)vertex_count;
+    receipt.face_count = (uint16_t)face_count;
     receipt.valid = 1;
     receipt.complete = 1;
     receipt.original_saturn_capture_verified = 0;
