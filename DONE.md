@@ -269,6 +269,17 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
    provide both original package paths. Verification: Ninja and
    `csb_v1_csbwin_package_runtime_handoff`.
 
+- ✅ 2026-07-14 CSBWin package resume atomicity receipt: the fixture-free
+  package handoff probe now fingerprints caller-supplied decoded
+  `Dungeon.dat` bytes before the production save attempt. A rejected original
+  `csbgame*.dat` must preserve that live byte image as well as its owner,
+  level, and unmodified runtime-save state. When a supplied save is accepted,
+  its first runtime tick may consume or requeue source timers, but every live
+  event must still map one-to-one to its original serialized `TimerQueue`
+  slot and `TIMER` fields. No dungeon, save, or replacement timer is created.
+  Source-lock: CSBWin `SaveGame.cpp::LoadGame` and `Timer.cpp::CheckTimers` /
+  `ProcessTimers`; ReDMCSB `LOADSAVE.C F0435_STARTEND_LoadGame`.
+
 - ✅ 2026-07-14 DM1 HoC C346/C026 exact host linkage: M11 now consumes the
   C127 mirror receipt's C346 source origin, destination zone, palette mapping,
   and flip before it overlays C026. It retains ReDMCSB F0791 native-bitmap
