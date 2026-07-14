@@ -23,6 +23,8 @@ int main(void)
     Theron_V1CaptureManifest capture_manifest;
     Theron_V1RawLoaderTraceReceipt trace_receipt;
     Theron_V1RawLoaderTraceReceipt bound_receipt;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1RawLoaderTraceStage3SectorReceipt stage3_receipt;
 
     if (!raw || !system_card || !trace || stat(raw, &st) != 0 ||
         st.st_size <= 0) {
@@ -72,7 +74,12 @@ int main(void)
             trace, md5, &trace_receipt) ||
         !theron_v1_raw_loader_trace_bind_track02_destination_span(
             &trace_receipt, raw_bytes, (size_t)st.st_size, md5,
-            &bound_receipt)) {
+            &bound_receipt) ||
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            raw_bytes, (size_t)st.st_size, md5, &payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
+            &bound_receipt, &payload, &stage3_receipt)) {
         free(raw_bytes);
         printf("status=blocked reason=loader_trace_media_span_unproven\n");
         return 1;
@@ -83,6 +90,7 @@ int main(void)
         printf("status=blocked reason=unbound_trace_render_claim\n");
         return 1;
     }
-    printf("status=ready trace=validated_dynamic_loader_media_span=blocked_pending_palette_source_provenance\n");
+    printf("status=ready trace=validated_dynamic_loader_stage3_sector_receipt="
+           "blocked_pending_palette_source_provenance\n");
     return 0;
 }
