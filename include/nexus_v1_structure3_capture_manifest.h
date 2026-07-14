@@ -66,7 +66,9 @@ typedef struct {
     size_t vdp1_command_size;
     uint64_t capture_session_fnv1a64;
     uint64_t capture_bundle_fnv1a64;
+    uint64_t capture_trace_order_fnv1a64;
     int capture_bundle_hash_verified;
+    int capture_trace_order_verified;
     int original_saturn_capture_verified;
 } Nexus_V1_DgnStructure3CaptureImport;
 
@@ -117,7 +119,9 @@ typedef struct {
     int raw_span_hashes_match;
     int capture_session_matches;
     int capture_bundle_matches;
+    int capture_trace_order_matches;
     int capture_bundle_hash_verified;
+    int capture_trace_order_verified;
     int original_saturn_capture_verified;
     int dgn_source_hash_verified;
     int binder_invoked;
