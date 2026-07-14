@@ -2217,7 +2217,7 @@ static void test_runtime_handoff_is_transactional_on_rejected_tail(void)
           "adopt rejects self-transfer");
 }
 
-static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
+static void test_runtime_handoff_rejects_unknown_source_event(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
@@ -2230,10 +2230,10 @@ static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
                                      2, 3, 9, 10, 2, 1,
                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc == SAVEGAME_PC34_OK,
-          "unmaterialized-event fixture build succeeds");
+          "unknown-event fixture build succeeds");
     CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
-                                     DM1_EVENT_ENABLE_CHAMPION_ACTION),
-          "C11 event rewrite preserves the PC34 envelope");
+                                     80),
+          "unknown C80 event rewrite preserves the PC34 envelope");
 
     memset(&world, 0, sizeof(world));
     memset(&event_queue, 0, sizeof(event_queue));
@@ -2247,14 +2247,89 @@ static void test_runtime_handoff_rejects_unmaterialized_source_event(void)
     rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
         bytes, (size_t)written, &world, &event_queue, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
-          "active C11 without a materializer rejects runtime handoff");
+          "active unknown C80 event rejects runtime handoff");
     CHECK(world.gameTick == 777u && world.party.championCount == 1 &&
           world.party.mapIndex == 6,
-          "unmaterialized source event leaves live world untouched");
+          "unknown source event leaves live world untouched");
     CHECK(event_queue.gameTick == 888u && event_queue.eventCount == 1,
-          "unmaterialized source event leaves live queue untouched");
+          "unknown source event leaves live queue untouched");
     CHECK(report.original_game_time == 999u,
-          "unmaterialized source event leaves receipt untouched");
+          "unknown source event leaves receipt untouched");
+}
+
+static void test_runtime_handoff_materializes_original_c11_actions(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    struct GameWorld_Compat world;
+    struct DM1_EventQueue_V1 event_queue;
+    DM1OriginalSavePC34HandoffReport report;
+    struct TickInput_Compat input;
+    struct TickResult_Compat tick;
+    int emitted[CHAMPION_MAX_PARTY] = {0, 0, 0, 0};
+    int rc;
+
+    /* ReDMCSB CHAMPION.C F0330 creates C11 with the champion in Priority
+     * and SlotOrdinal 0; MENU.C F0407 changes that ordinal to 2 only for a
+     * successful throw.  Make every active C3/C4 entry a C11 so this test
+     * isolates the F0435 materializer without borrowing a dungeon owner. */
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     3, 3, 9, 10, 2, 2,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "C11 runtime fixture build succeeds");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 0,
+                                     DM1_EVENT_ENABLE_CHAMPION_ACTION) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 5, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 6, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 7, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 8, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 0, 9, 0),
+          "first C11 rewrite retains only its source-owned union");
+    CHECK(rewrite_fixture_event_type(bytes, (size_t)written, 1,
+                                     DM1_EVENT_ENABLE_CHAMPION_ACTION) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 1, 5, 1) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 1, 6, 2) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 1, 7, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 1, 8, 0) &&
+              rewrite_fixture_event_byte(bytes, (size_t)written, 1, 9, 0),
+          "throw C11 rewrite retains Priority and SlotOrdinal two");
+
+    memset(&world, 0, sizeof(world));
+    memset(&event_queue, 0, sizeof(event_queue));
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, (size_t)written, &world, &event_queue, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "source-shaped C11 records materialize through F0435");
+    CHECK(world.timeline.count == 3 && event_queue.eventCount == 3 &&
+              world.timeline.events[0].kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION,
+          "F0435 retains every C11 in both live timeline receipts");
+
+    while (world.gameTick <= 123500u) {
+        int i;
+        memset(&input, 0, sizeof(input));
+        memset(&tick, 0, sizeof(tick));
+        input.tick = (uint32_t)world.gameTick;
+        input.command = CMD_NONE;
+        CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) != ORCH_FAIL,
+              "C11 runtime accepts its idle tick");
+        for (i = 0; i < tick.emissionCount; ++i) {
+            if (tick.emissions[i].kind == EMIT_ACTION_ENABLED) {
+                CHECK(tick.emissions[i].payload[0] >= 0 &&
+                          tick.emissions[i].payload[0] < CHAMPION_MAX_PARTY &&
+                          (tick.emissions[i].payload[1] == 0 ||
+                           tick.emissions[i].payload[1] == 2) &&
+                          tick.emissions[i].payload[2] == 0 &&
+                          tick.emissions[i].payload[3] == 0,
+                      "C11 emits only its source-owned champion and ordinal");
+                ++emitted[tick.emissions[i].payload[0]];
+            }
+        }
+    }
+    CHECK(emitted[0] == 1 && emitted[1] == 1 && emitted[2] == 1 &&
+              emitted[3] == 0 && world.timeline.count == 0,
+          "all restored C11 actions fire once without synthetic followups");
 }
 
 static void test_runtime_materializer_binds_original_sound_union(void)
@@ -5577,7 +5652,8 @@ int main(void)
     test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
-    test_runtime_handoff_rejects_unmaterialized_source_event();
+    test_runtime_handoff_rejects_unknown_source_event();
+    test_runtime_handoff_materializes_original_c11_actions();
     test_runtime_materializer_binds_original_sound_union();
     test_original_c60_deferred_group_move_roundtrip();
     test_original_c61_audible_group_move_roundtrip();

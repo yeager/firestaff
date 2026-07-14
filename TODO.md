@@ -1904,6 +1904,13 @@ and real community-save corpus round-trip evidence.
     family without an M10 materializer. It never resumes by silently dropping
     an original event; remaining work is source-complete event-family breadth
     plus real community-save corpus round-trip evidence.
+  - 2026-07-14 update: source-shaped C11 `ENABLE_CHAMPION_ACTION` records now
+    have focused F0435 runtime coverage: all three valid Priority/SlotOrdinal
+    forms survive the C3/C4 handoff and emit only `EMIT_ACTION_ENABLED` on
+    their saved ticks, without a dungeon, action, or follow-up being invented.
+    An unknown active C80 still rejects transactionally. This is source-bound
+    host-runtime evidence, not an original PC34 trace; remaining work is
+    authentic community-save corpus coverage.
   - 2026-07-14 update: F0435 candidate materialization now rejects a restored
     PartyMapIndex/X/Y outside its checksum-qualified, materialized dungeon
     tail before world/report commit. The focused local-original-data regression
