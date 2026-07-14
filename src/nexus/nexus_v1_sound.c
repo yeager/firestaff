@@ -125,6 +125,7 @@ static void clear_map_route(Nexus_SoundEngine *eng) {
     eng->map_header_transition_count = 0;
     eng->map_record_table_supported = 0;
     eng->map_record_count = 0;
+    memset(eng->map_records, 0, sizeof(eng->map_records));
     eng->map_record_terminator_offset = -1;
     eng->map_first_record_event = -1;
     eng->map_min_record_event = -1;
@@ -217,10 +218,21 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
             return;
         }
 
+        if (eng->map_record_count >= NEXUS_SFX_MAP_MAX_RECORDS) {
+            return;
+        }
+
+        /* The first byte is retained as a raw selector. Its Saturn event
+         * meaning is not established; the legacy receipt fields below only
+         * describe the observed byte range. */
         event_id = r[0];
         size = read_u16_be(r + 2);
         sal_offset = read_u32_be(r + 4);
         end = sal_offset + size;
+        eng->map_records[eng->map_record_count].selector = event_id;
+        eng->map_records[eng->map_record_count].attribute = r[1];
+        eng->map_records[eng->map_record_count].sal_offset = sal_offset;
+        eng->map_records[eng->map_record_count].sal_size = size;
         sal_window_profile(eng->sal_data,
                            eng->sal_size,
                            sal_offset,
@@ -661,6 +673,38 @@ const char *nexus_sound_sfx_runtime_status_name(
     case NEXUS_SFX_RUNTIME_READY_DECODED: return "ready-decoded";
     default: return "unknown";
     }
+}
+
+int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
+                                        int selector,
+                                        Nexus_SoundMapWindow *out_window) {
+    int i;
+    int matches = 0;
+
+    if (out_window) memset(out_window, 0, sizeof(*out_window));
+    if (!eng || !out_window || !eng->map_record_table_supported ||
+        !eng->sal_data || eng->sal_size <= 0 || selector < 0 ||
+        selector > 0xff) {
+        return -1;
+    }
+
+    for (i = 0; i < eng->map_record_count; ++i) {
+        const Nexus_SoundMapWindow *window = &eng->map_records[i];
+        if (window->selector == selector) {
+            *out_window = *window;
+            matches++;
+        }
+    }
+
+    /* A duplicated selector has no source-backed precedence rule. */
+    if (matches != 1 || out_window->sal_size <= 0 ||
+        out_window->sal_offset < 0 ||
+        out_window->sal_offset > eng->sal_size ||
+        out_window->sal_size > eng->sal_size - out_window->sal_offset) {
+        memset(out_window, 0, sizeof(*out_window));
+        return -1;
+    }
+    return 0;
 }
 
 /* Play sound event — request only. The bounded MAP record grammar identifies
