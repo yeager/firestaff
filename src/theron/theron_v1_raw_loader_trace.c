@@ -153,6 +153,23 @@ static int tqr_trace_parse_later_e009_destination_span(
            *out_checksum != 0u;
 }
 
+static int tqr_trace_parse_later_e009_post_return_step(
+    const char *line, size_t length, unsigned int *out_caller_pc,
+    unsigned int *out_return_pc, unsigned int *out_record,
+    unsigned int *out_next_pc)
+{
+    int consumed = 0;
+
+    if (!line || !out_caller_pc || !out_return_pc || !out_record ||
+        !out_next_pc) return 0;
+    return sscanf(line,
+                  "later_system_card_e009_post_return_step caller_pc=%x return_pc=%x record=%x next_pc=%x%n",
+                  out_caller_pc, out_return_pc, out_record, out_next_pc,
+                  &consumed) == 4 && consumed == (int)length &&
+           *out_caller_pc <= 0xffffu && *out_return_pc <= 0xffffu &&
+           *out_record <= 0xffffffu && *out_next_pc <= 0xffffu;
+}
+
 static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
                                            unsigned int *out_lba,
                                            unsigned int *out_bytes,
@@ -684,11 +701,13 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t sector_count = 0u;
     size_t destination_count = 0u;
     size_t return_count = 0u;
+    size_t post_return_count = 0u;
     size_t dynamic_line = 0u;
     size_t dispatch_line = 0u;
     size_t sector_line = 0u;
     size_t destination_line = 0u;
     size_t return_line = 0u;
+    size_t post_return_line = 0u;
     size_t line_number = 0u;
     size_t ordinal;
     unsigned int caller_pc = 0u;
@@ -713,6 +732,10 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     unsigned int destination = 0u;
     unsigned int destination_bytes = 0u;
     unsigned int destination_checksum = 0u;
+    unsigned int post_return_caller_pc = 0u;
+    unsigned int post_return_return_pc = 0u;
+    unsigned int post_return_record = 0u;
+    unsigned int post_return_next_pc = 0u;
     uint32_t expected_span_checksum;
     uint32_t expected_sector_checksum;
     uint32_t derived_base;
@@ -791,16 +814,29 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
                     line, length, &return_caller_pc, &return_return_pc,
                     &return_record)) return 0;
             return_line = line_number;
+        } else if (length >= strlen("later_system_card_e009_post_return_step ") &&
+                   memcmp(line, "later_system_card_e009_post_return_step ",
+                          strlen("later_system_card_e009_post_return_step ")) == 0) {
+            if (++post_return_count != 1u ||
+                !tqr_trace_parse_later_e009_post_return_step(
+                    line, length, &post_return_caller_pc,
+                    &post_return_return_pc, &post_return_record,
+                    &post_return_next_pc)) return 0;
+            post_return_line = line_number;
         }
     }
     if (source_count != 1u || dynamic_count != 1u || dispatch_count != 1u ||
         sector_count != 1u || destination_count != 1u || return_count != 1u ||
+        post_return_count != 1u ||
         !(dynamic_line < dispatch_line && dispatch_line < sector_line &&
-          sector_line < destination_line && destination_line < return_line) ||
+          sector_line < destination_line && destination_line < return_line &&
+          return_line < post_return_line) ||
         return_pc != caller_pc + 3u ||
         return_caller_pc != caller_pc || return_return_pc != return_pc ||
         return_record != record || destination_caller_pc != caller_pc ||
         destination_return_pc != return_pc || destination_record != record ||
+        post_return_caller_pc != caller_pc ||
+        post_return_return_pc != return_pc || post_return_record != record ||
         record != (cl | (dl << 8) | (ch << 16)) ||
         read_count == 0u || record <= manifest.track02_record ||
         record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
@@ -847,6 +883,8 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->later_destination_span_checksum = destination_checksum;
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
+    out->later_post_return_next_pc = (uint16_t)post_return_next_pc;
+    out->later_post_return_step_verified = 1;
     out->observation_order_verified = 1;
     out->selector_sector_bytes_verified = 1;
     return 1;
@@ -868,6 +906,11 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !coalesced_receipt->valid ||
         !coalesced_receipt->observation_order_verified ||
         !coalesced_receipt->selector_sector_bytes_verified ||
+        !coalesced_receipt->later_destination_local_ram_verified ||
+        !coalesced_receipt->later_destination_media_span_verified ||
+        coalesced_receipt->later_destination_span_bytes != 32u ||
+        !coalesced_receipt->later_destination_span_checksum ||
+        !coalesced_receipt->later_post_return_step_verified ||
         coalesced_receipt->sector_count != 1u ||
         strcmp(coalesced_receipt->track02_md5, track02_md5) != 0 ||
         (coalesced_receipt->variant != THERON_TRACK02_VARIANT_JP_BIN &&

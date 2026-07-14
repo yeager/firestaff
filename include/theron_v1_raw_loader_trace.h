@@ -160,6 +160,10 @@ typedef struct {
     uint32_t later_destination_span_checksum;
     int later_destination_local_ram_verified;
     int later_destination_media_span_verified;
+    /* The first observed PC after the System Card returned to the caller.
+     * This is a raw control-resumption edge only, not a gameplay transition. */
+    uint16_t later_post_return_next_pc;
+    int later_post_return_step_verified;
     int observation_order_verified;
     int selector_sector_bytes_verified;
 } Theron_V1RawLoaderTraceCoalescedLaterReceipt;
@@ -255,7 +259,8 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
 /* Consumes exactly one coalesced original Mednafen transcript and a
  * hash-verified Track 02 image identity. The transcript must retain the
  * authenticated Stage 2 $4090->$4093 row before the later $e009 dispatch,
- * a raw-sector fingerprint, and its matching return. */
+ * a raw-sector fingerprint, its matching return, and the first caller step
+ * after that return. */
 int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     const char *capture,
     const uint8_t *track02_data,
@@ -265,8 +270,8 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
 
 /* Promotes the existing source-locked initial-level loader route only after
  * a coalesced original loader/CD receipt selects its exact one-sector record.
- * The trace receipt is not a substitute for a runtime destination or a
- * transition capture, and the returned route retains the existing opaque
+ * The trace receipt is not a substitute for a gameplay-transition capture,
+ * and the returned route retains the existing opaque
  * object-tail and no-fallback restrictions. */
 int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     const Theron_V1RawLoaderTraceCoalescedLaterReceipt *coalesced_receipt,
