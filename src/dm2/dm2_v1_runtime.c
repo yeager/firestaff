@@ -91,6 +91,7 @@ typedef struct {
     uint8_t map_door_gfx_list[2];
     int map_graphics_style;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
+    DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     int gdat_scene_control_ready;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
@@ -510,6 +511,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 
     if (!rt) return;
     dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
+    dm2_v1_gdat_wall_m11_command_plan_free(&rt->gdat_wall_material_plan);
     rt->map_graphics_style = -1;
     rt->gdat_scene_control_ready = 0;
     rt->gdat_scene_control_hash = 0u;
@@ -557,6 +559,13 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         !rt->gdat_scene_material_plan.valid ||
         rt->gdat_scene_material_plan.graphicsset !=
             (uint8_t)rt->map_graphics_style) {
+        return;
+    }
+    if (!dm2_v1_boot_gdat_wall_m11_command_plan(
+            rt->boot, rt->map_graphics_style, &rt->gdat_wall_material_plan) ||
+        !rt->gdat_wall_material_plan.valid ||
+        rt->gdat_wall_material_plan.graphicsset != (uint8_t)rt->map_graphics_style) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
         return;
     }
 
@@ -1279,6 +1288,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     if (!boot_profile) return;
     dm2_v1_gdat_scene_m11_command_plan_free(
         &g_dm2_runtime.gdat_scene_material_plan);
+    dm2_v1_gdat_wall_m11_command_plan_free(
+        &g_dm2_runtime.gdat_wall_material_plan);
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     g_dm2_runtime.boot = boot_profile;
@@ -2484,6 +2495,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_ambient_darkness);
     dm2_v1_viewport_set_gdat_scene_material_plan(
         &viewport, &rt->gdat_scene_material_plan);
+    dm2_v1_viewport_set_gdat_wall_material_plan(
+        &viewport, &rt->gdat_wall_material_plan);
     dm2_runtime_refresh_g1_scene_handoff(
         rt, rt->dungeon_level,
         party_x + forward_dx[party_dir & 3],

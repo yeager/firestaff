@@ -4,6 +4,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -187,6 +188,7 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_DungeonData dungeon;
     DM2_V1_GdatSceneM11CommandPlan scene_plan;
+    DM2_V1_GdatWallM11CommandPlan wall_plan;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     WallTrace trace;
@@ -201,6 +203,7 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&scene_plan, 0, sizeof(scene_plan));
+    memset(&wall_plan, 0, sizeof(wall_plan));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0) {
         fputs("FAIL: canonical DM2 GDAT/G1 input was not accepted\n", stderr);
@@ -221,6 +224,14 @@ int main(void)
     if (graphicsset < 0) {
         fputs("FAIL: no canonical MapGraphicsStyle has a complete wall plan\n",
               stderr);
+        failures = 1;
+        goto done;
+    }
+    if (!dm2_v1_gdat_wall_m11_command_plan_build(
+            &loader, (uint8_t)graphicsset, &wall_plan) || !wall_plan.valid ||
+        wall_plan.graphicsset != (uint8_t)graphicsset ||
+        wall_plan.command_count == 0 || wall_plan.command_hash == 0u) {
+        fputs("FAIL: canonical GRAPHICSSET wall command plan was incomplete\n", stderr);
         failures = 1;
         goto done;
     }
@@ -287,6 +298,7 @@ int main(void)
     free_wall_pixels(&trace);
 
 done:
+    dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
     dm2_v1_asset_loader_free(&loader);
     dm2_v1_dungeon_free(&dungeon);

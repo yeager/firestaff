@@ -5,6 +5,7 @@
 #include "dm2_v1_dungeon_loader.h"
 
 typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
+typedef struct DM2_V1_GdatWallM11CommandPlan DM2_V1_GdatWallM11CommandPlan;
 
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Viewport Renderer — Skullkeep rendering pipeline
@@ -809,6 +810,7 @@ typedef struct {
      * plan. These are never synthesized and are preferred over a second GDAT
      * lookup during the same M11 frame. */
     const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
+    const DM2_V1_GdatWallM11CommandPlan *gdat_wall_material_plan;
     int gdat_scene_material_consumed_count;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed_count;
@@ -966,6 +968,9 @@ void dm2_v1_viewport_set_gdat_scene_control(
 void dm2_v1_viewport_set_gdat_scene_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatSceneM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_wall_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatWallM11CommandPlan *plan);
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan);

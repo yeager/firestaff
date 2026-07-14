@@ -37,6 +37,7 @@
 
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_world_model.h"
 #include <string.h>
 #include <stdlib.h>
@@ -962,6 +963,14 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
 {
     if (!s) return;
     s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_wall_material_plan(
+    DM2_V1_ViewportState *s, const DM2_V1_GdatWallM11CommandPlan *plan)
+{
+    if (!s) return;
+    s->gdat_wall_material_plan = plan && plan->valid ? plan : NULL;
     s->dirty = 1;
 }
 
@@ -3655,9 +3664,38 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             DM2_V1_WallMaterial *material = &materials[i];
             int graphicsset_index = 0;
             int field = 0;
+            const DM2_V1_GdatWallM11Command *command = NULL;
 
             s->last_dungeon_wall_material_required_mask |=
                 (uint16_t)(1u << (unsigned)panel->view_square);
+            if (s->gdat_wall_material_plan) {
+                const DM2_V1_GdatWallM11CommandPlan *wall_plan =
+                    s->gdat_wall_material_plan;
+                if (!wall_plan->valid ||
+                    wall_plan->graphicsset != (uint8_t)s->gdat_scene_material_index) {
+                    dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+                    return;
+                }
+                for (int j = 0; j < wall_plan->command_count; ++j)
+                    if (wall_plan->commands[j].view_square == panel->view_square) {
+                        command = &wall_plan->commands[j]; break;
+                    }
+                if (!command || command->field !=
+                        dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
+                    !command->pixels || !command->width || !command->height ||
+                    !command->palette_hash) {
+                    dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+                    return;
+                }
+                material->pixels = command->pixels;
+                material->width = command->width;
+                material->height = command->height;
+                material->stride = command->width;
+                memcpy(material->palette16, command->palette16, sizeof(material->palette16));
+                material->palette_hash = command->palette_hash;
+                material->ready = 1;
+                continue;
+            }
             if (!dm2_v1_viewport_wall_graphic_address(
                     panel->gdat_index, &graphicsset_index, &field) ||
                 graphicsset_index != s->gdat_scene_material_index ||

@@ -31,6 +31,7 @@
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_g1_scene_runtime_bridge.h"
+#include "dm2_v1_gdat_wall_m11_command.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
