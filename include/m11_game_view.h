@@ -45,7 +45,9 @@ extern "C" {
  * source-lock probes tied to those same values instead of duplicating them.
  */
 #define M11_DM1_MOUSE_MASK_LEFT DM1_V1_MOUSE_MASK_LEFT_PC34
+#define M11_DM1_MOUSE_MASK_RIGHT DM1_V1_MOUSE_MASK_RIGHT_PC34
 #define M11_DM1_MOUSE_LIST_INVENTORY DM1_V1_MOUSE_LIST_INVENTORY_PC34
+#define M11_DM1_MOUSE_LIST_INTERFACE DM1_V1_MOUSE_LIST_INTERFACE_PC34
 #define M11_DM1_MOUSE_LIST_MOVEMENT DM1_V1_MOUSE_LIST_MOVEMENT_PC34
 #define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
 #define M11_DM1_MOUSE_SPACE_SCREEN DM1_V1_MOUSE_SPACE_SCREEN_PC34
@@ -60,6 +62,8 @@ extern "C" {
     DM1_V1_M11Runtime_OpenActionHandChestPc34Compat
 #define M11_GameView_GetV1OpenChestThing \
     DM1_V1_M11Runtime_GetOpenChestThingPc34Compat
+#define M11_GameView_CloseV1OpenChest \
+    DM1_V1_M11Runtime_CloseOpenChestPc34Compat
 
 static inline int M11_GameView_GetV1ChampionSmallDamageGraphicId(void) {
     return dm1_v1_graphic_champion_damage_small_pc34();
@@ -114,6 +118,20 @@ static inline int M11_GameView_GetV1InventorySourceSlotBoxZone(
     int sourceSlotBoxIndex, int* outX, int* outY, int* outW, int* outH) {
     return dm1_v1_inventory_source_slot_box_zone_xywh_pc34(
         sourceSlotBoxIndex, outX, outY, outW, outH);
+}
+
+static inline int M11_GameView_GetV1InventoryBackpackSlotZone(
+    int backpackOrdinal, int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_InventorySlotBoxZonePc34 zone;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_inventory_backpack_slot_zone_pc34(backpackOrdinal, &zone)) {
+        return 0;
+    }
+    *outX = zone.x;
+    *outY = zone.y;
+    *outW = zone.w;
+    *outH = zone.h;
+    return 1;
 }
 
 static inline int M11_GameView_GetV1InventoryPanelZone(
