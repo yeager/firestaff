@@ -1718,7 +1718,12 @@ typedef struct {
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
+    /* Renderer planning retains the complete bounded selector join and the
+     * face-to-normal ordinal receipt, but neither receipt permits a decode
+     * or a draw until original Saturn evidence establishes that route. */
+    Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;

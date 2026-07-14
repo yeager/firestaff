@@ -51,6 +51,7 @@ int main(void) {
     int face_total = 0;
     int unit_pair_total = 0;
     int non_unit_pair_total = 0;
+    int selector_complete_levels = 0;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -63,9 +64,12 @@ int main(void) {
         int size;
         Nexus_V1_Level level;
         Nexus_V1_DgnStructure3FaceReceipt faces;
+        Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
         Nexus_V1_DgnStructure3VectorReceipt vectors;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
         Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
+        Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+        Nexus_V1_DgnRenderPlanReceipt plan;
 
         snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
         data = read_file(path, &size);
@@ -76,6 +80,7 @@ int main(void) {
               "retail DGN level parses");
         free(data);
         if (nexus_v1_level_structure3_face_receipt(&level, &faces) != 0 ||
+            nexus_v1_level_structure3_face_material_receipt(&level, &materials) != 0 ||
             nexus_v1_level_structure3_vector_receipt(&level, &vectors) != 0 ||
             nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0 ||
             nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
@@ -92,6 +97,23 @@ int main(void) {
               pairs.unit_length_face_normal_pair_count == faces.normal_count &&
               pairs.non_unit_length_face_normal_pair_count == 0,
               "every retail Structure3 face has exactly one unit normal row");
+        CHECK(materials.face_receipt_valid && materials.valid &&
+              materials.textured_face_count == faces.textured_face_count &&
+              materials.selector_bindings_complete &&
+              !materials.material_or_draw_semantics_proven,
+              "retail Structure3 texture selectors are bounded but remain no-draw");
+        memset(commands, 0, sizeof(commands));
+        CHECK(nexus_v1_level_build_dgn_view_render_plan(
+                  &level, 0, 0, 0, commands,
+                  NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &plan) == 0 &&
+              plan.structure3_face_materials.valid &&
+              plan.structure3_face_materials.selector_bindings_complete &&
+              plan.structure3_face_normal_pairs.valid &&
+              plan.structure3_face_normal_pairs.face_normal_pair_count ==
+                  faces.face_count &&
+              !plan.structure3_face_materials.material_or_draw_semantics_proven &&
+              !plan.structure3_face_normal_pairs.normal_plane_or_draw_semantics_proven,
+              "renderer-facing plan preserves retail Structure3 no-draw receipts");
         CHECK(!pairs.normal_plane_or_draw_semantics_proven &&
               !vectors.transform_or_draw_semantics_proven &&
               !faces.draw_semantics_proven,
@@ -114,6 +136,7 @@ int main(void) {
         face_total += pairs.face_normal_pair_count;
         unit_pair_total += pairs.unit_length_face_normal_pair_count;
         non_unit_pair_total += pairs.non_unit_length_face_normal_pair_count;
+        if (materials.selector_bindings_complete) ++selector_complete_levels;
     }
 
     printf("Structure3 face-normal corpus: levels=%d entries=%d pairs=%d unit=%d nonunit=%d\n",
@@ -122,5 +145,7 @@ int main(void) {
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
           "retail face-normal pair totals remain corpus-verified and no-draw");
+    CHECK(selector_complete_levels == 16,
+          "all retail levels preserve selector joins through the renderer-facing receipt");
     return g_fail == 0 ? 0 : 1;
 }

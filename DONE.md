@@ -7,7 +7,18 @@
   before drawing; provider fetches remain only for data-free focused tests.
   Source: skproject `c_gui_vp.cpp` `DM2_DRAW_WALL` / `QUERY_TEMP_PICST`.
   Verification: Ninja `test_dm2_v1_runtime_handoff_smoke` passed 161/161 and
-  canonical-media `test_dm2_v1_gdat_wall_plan_viewport_real_data` passed.
+   canonical-media `test_dm2_v1_gdat_wall_plan_viewport_real_data` passed.
+
+- ✅ 2026-07-14 Nexus Structure3 renderer-facing receipt continuity: DGN
+  render plans now retain the handoff's bounded Structure3 texture-selector
+  and face-to-normal ordinal receipts before any no-draw exit. The focused
+  fixture rejects a material or normal receipt as rendering authority, while
+  the opt-in retail LEV00--LEV15 corpus verifies all 16 selector joins and
+  face-normal pairs survive the plan boundary. No texture/palette decode,
+  transform, clipping, or VDP1 draw ordering is inferred. Verification:
+  Ninja `nexus_v1_dgn_geometry_readiness` and
+   `nexus_v1_dgn_face_mesh_corpus`. Source-lock:
+   `docs/source-lock/nexus_v1_structure3_renderer_plan_receipt_2026-07-14.md`.
 
 - ✅ 2026-07-14 CSBWin Vi Altar `EDT_ChampionBones` runtime handoff: restored
   C13 state-1 timers now authenticate and consume the exact one-word saved
