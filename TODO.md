@@ -3,10 +3,9 @@
 - 2026-07-14 DM2 GDAT door-overlay follow-up: ornate and destroyed-door
   overlays now reach M11 through exact `DOOR_GFX`/`DOORS` material plans.
   Remaining dungeon work is source-owned plans for panels, frames, buttons,
-  creatures, and light; direct DB4 creatures now have a corpus-wide exact
-  `CREATURES/F9` scene-material receipt, but this does not yet materialize a
-  source-owned live DB4 instance. Do not replace missing GDAT entries with
-  generic art.
+  and light. Direct DB4 creature sprites now require their
+  exact original ObjectID/tile/material receipt before M11 can draw them.
+  Do not replace missing GDAT entries with generic art.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 

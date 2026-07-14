@@ -1651,6 +1651,7 @@ static void dm2_runtime_append_creature_sprite(
      * before DRAW_CHIP_OF_MAGIC_MAP. */
     dst->creature_type = record[4];
     dst->source_kind = 2;
+    dst->object_id = thing;
     dst->map_x = (int16_t)map_x;
     dst->map_y = (int16_t)map_y;
     dst->frame_index = 0;

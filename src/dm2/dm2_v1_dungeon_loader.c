@@ -3151,6 +3151,37 @@ int dm2_v1_g1_creature_map_chip_matches_decoded_material(
     return 0;
 }
 
+int dm2_v1_g1_creature_map_chip_matches_decoded_instance(
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
+    uint16_t object_id,
+    int x,
+    int y,
+    int creature_type,
+    int image_width,
+    int image_height,
+    uint32_t local_palette_hash)
+{
+    int i;
+
+    if (!receipt || !receipt->valid || object_id == 0xfffeu ||
+        creature_type < 0 || creature_type > 0xff || image_width <= 0 ||
+        image_height <= 0 || local_palette_hash == 0u) {
+        return 0;
+    }
+    for (i = 0; i < receipt->material_count; ++i) {
+        const DM2_V1_G1CreatureMapChipMaterial *material =
+            &receipt->materials[i];
+        if (material->object_id == object_id && material->x == x &&
+            material->y == y && material->creature_type == (uint8_t)creature_type &&
+            material->image_width == image_width &&
+            material->image_height == image_height &&
+            material->local_palette_hash == local_palette_hash) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out){
  static const int dx[4]={0,1,0,-1},dy[4]={-1,0,1,0};int raw;
  if(!out)return 0;memset(out,0,sizeof(*out));if(!d||(dir&~3)!=0)return 0;raw=dm2_v1_dungeon_get_tile_raw(d,level,x,y);if(raw<0)return 0;
