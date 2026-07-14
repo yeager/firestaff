@@ -510,6 +510,9 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           evidence.status == NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED &&
           evidence.raw_trace_bound && evidence.entry_observed &&
           evidence.task_body_observed && evidence.callback_or_write_observed &&
+          evidence.entry_raw_offset < evidence.task_body_raw_offset &&
+          evidence.task_body_raw_offset < evidence.callback_or_write_raw_offset &&
+          evidence.observation_order_proven &&
           evidence.callback_or_write_is_write &&
           !evidence.task_body_dispatch_proven && !evidence.dispatch_permitted &&
           evidence.blocks_real_script_dispatch &&
