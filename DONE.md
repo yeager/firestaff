@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 capture-source admission: a complete face
+  binding now also requires caller-owned verification of the capture source,
+  separately from the canonical DGN hash admission. Hash-verified DGN bytes
+  plus self-consistent fixture spans remain blocked and cannot form a
+  complete capture receipt. This does not add a Saturn trace, decode pixels
+  or palettes, infer VDP1 semantics, or permit DGN mesh drawing.
+
 - 2026-07-14 Theron Track 02 capture-intake atomicity: the manifest-bound
   coalesced `$e009` intake now validates into a staged boot profile and commits
   only after all files, hashes, trace control edges, and the original Track 02

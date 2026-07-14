@@ -4130,7 +4130,7 @@ int nexus_v1_level_structure3_attachment_receipt(
 
 int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
-    int dgn_source_hash_verified,
+    int dgn_source_hash_verified, int capture_source_verified,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const uint8_t *captured_texture_span, int captured_texture_span_size,
     const uint8_t *captured_palette_state, int captured_palette_state_size,
@@ -4194,7 +4194,9 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     /* The caller owns canonical-source admission. Do not let arbitrary data
      * self-admit by echoing its fingerprint inside a capture packet. */
     receipt.dgn_source_hash_verified = dgn_source_hash_verified != 0;
-    receipt.candidate_framing_valid = receipt.dgn_source_hash_verified;
+    receipt.capture_source_verified = capture_source_verified != 0;
+    receipt.candidate_framing_valid = receipt.dgn_source_hash_verified &&
+        receipt.capture_source_verified;
     if (!receipt.candidate_framing_valid) {
         *out_receipt = receipt;
         return 0;
@@ -4272,6 +4274,7 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
         captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
     receipt.complete_source_binding = receipt.dgn_source_hash_verified &&
+        receipt.capture_source_verified &&
         receipt.dgn_source_matches &&
         receipt.structure3_payload_matches && receipt.typed_mesh_corpus_matches &&
         receipt.entry_face_matches && receipt.face_row_matches &&
