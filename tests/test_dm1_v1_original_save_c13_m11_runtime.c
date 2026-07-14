@@ -130,6 +130,12 @@ int main(void)
               state.world.party.direction &&
               state.world.party.champions[0].inventory[0] == THING_NONE,
           "M11 C13 terminal step applies F0283 direction and inventory state");
+    {
+        uint32_t liveWorldHash = 0u;
+        CHECK(F0891_ORCH_WorldHash_Compat(&state.world, &liveWorldHash) &&
+                  state.lastWorldHash == liveWorldHash && liveWorldHash != 0u,
+              "M11 republishes the post-C13 F0887 world hash for live save and HoC state");
+    }
 
     M11_GameView_Shutdown(&state);
     if (failures != 0) {

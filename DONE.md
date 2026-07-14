@@ -61,6 +61,12 @@
   direction, and inventory mutation. Source: ReDMCSB `GAMELOOP.C`,
    `TIMELINE.C F0255`, and `REVIVE.C F0283`. This is deterministic host
    runtime coverage, not original-PC34 frame or executable parity.
+- 2026-07-14 DM1 PC34 C13 M11 post-dispatch world-state publication: after
+  F0887 mutates an admitted C13 during an M11 movement tick, M11 now
+  republishes the canonical F0891 live-world hash. This keeps HoC/save
+  observers synchronized with the terminal F0283 champion mutation instead
+  of retaining the pre-dispatch hash. Verification:
+  `dm1_v1_original_save_c13_m11_runtime`.
 
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap
