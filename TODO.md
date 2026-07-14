@@ -457,6 +457,12 @@
     trailing source checksum. It does not infer headers, map/ThingData sizes,
     allocations, or runtime publication. A real CSB tail is still required to
     bind this transaction to an actual media layout.
+  - 2026-07-14 update: the post-C4 F0651 free-list rebuild now scans only
+    caller-admitted raw EVENT records, rewrites `EVENT_NONE` overlays in
+    source order, and exposes the source first-free/largest-used result. It
+    does not admit a C4 heap, event dispatcher, DSA program, or runtime from
+    test data. A real CSB save still must establish the PC34 EVENT stride and
+    bind this result to a live load transaction.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
