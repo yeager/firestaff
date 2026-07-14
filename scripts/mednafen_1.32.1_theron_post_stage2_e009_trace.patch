@@ -1,0 +1,41 @@
+diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
+--- a/src/drivers/debugger.cpp
++++ b/src/drivers/debugger.cpp
+@@ -171,6 +171,8 @@ static bool TheronIrq2TraceLaterE009PostReturnStepPending;
+ static bool TheronIrq2TracePostStage2ExecutionActive;
+ static bool TheronIrq2TracePostStage2PhysicalPageSeen[8192];
+ static unsigned TheronIrq2TracePostStage2PhysicalPageCount;
++static unsigned TheronIrq2TracePostStage2NonSystemCardE009Count;
++static bool TheronIrq2TracePostStage2NonSystemCardE009Seen[65536];
+ 
+ static void FlushTheronIrq2Trace(void)
+ {
+@@ -216,6 +217,28 @@ static void DoTheronIrq2Trace(const uint32 PC)
+  }
+ }
+ 
++if(TheronIrq2TracePostStage2ExecutionActive &&
++   TheronIrq2TracePostStage2NonSystemCardE009Count < 16 &&
++   !TheronIrq2TracePostStage2NonSystemCardE009Seen[logical_pc] &&
++   logical_pc < 0xe000 &&
++   (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x20 &&
++   (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) == 0x09 &&
++   (CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) == 0xe0)
++{
++ const uint32 record = (CurGame->Debugger->MemPeek(0x00fc, 1, true, true) & 0xff) |
++                       ((CurGame->Debugger->MemPeek(0x00fd, 1, true, true) & 0xff) << 8) |
++                       ((CurGame->Debugger->MemPeek(0x00fe, 1, true, true) & 0xff) << 16);
++ const uint32 destination = (CurGame->Debugger->MemPeek(0x00fa, 1, true, true) & 0xff) |
++                            ((CurGame->Debugger->MemPeek(0x00fb, 1, true, true) & 0xff) << 8);
++ const uint32 destination_mode = CurGame->Debugger->MemPeek(0x00ff, 1, true, true) & 0xff;
++
++ TheronIrq2TracePostStage2NonSystemCardE009Count++;
++ TheronIrq2TracePostStage2NonSystemCardE009Seen[logical_pc] = true;
++ TheronIrq2Trace->print_format("post_stage2_non_system_card_e009_call caller_pc=%04x physical_pc=%08x record=%06x destination=%04x destination_mode=%02x\\n",
++                               logical_pc, PC, record, destination, destination_mode);
++ FlushTheronIrq2Trace();
++}
++
+  if(TheronIrq2TraceReturnTransferPending)
+  {
+   if(logical_pc < 0xcc00 || logical_pc >= 0xcd00)

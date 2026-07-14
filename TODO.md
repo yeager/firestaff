@@ -5946,6 +5946,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### Theron V1
 
+- 🔧 2026-07-15 Track 02 post-Stage-2 game-call boundary: an authentic
+  45-second US CUE + System Card 3.0 capture accepts two real host RUN
+  transitions, reaches two Stage-2 returns, and observes 61 physical code
+  pages afterwards. It contains exactly one direct non-System-Card
+  `$3840 -> $e009` call, but its record (`ff0000`), destination (`ffff`), and
+  mode (`ff`) are all sentinel values; it is not followed by a game-owned
+  `$1801` writer (only System Card `$e90d/$e92d/$e981` are observed). The
+  candidate therefore remains rejected and cannot be treated as a later
+  record or dungeon handoff. Next evidence must be a non-sentinel game call
+  correlated with a subsequent raw-sector/SCSI receipt and a verified return
+  destination.
+
 - 🔧 2026-07-15 Track 02 live SCSI caller/destination boundary: a fresh
   authentic US CUE + System Card 3.0 capture records every `$1801` SCSI CDB
   byte with its HuC6280 caller, alongside each decoded READ(6) packet and raw

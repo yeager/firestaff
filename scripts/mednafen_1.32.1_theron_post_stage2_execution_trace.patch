@@ -1,0 +1,36 @@
+diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
+--- a/src/drivers/debugger.cpp
++++ b/src/drivers/debugger.cpp
+@@ -168,6 +168,9 @@ static uint32 TheronIrq2TraceLaterE009Record;
+ static uint32 TheronIrq2TraceLaterE009Destination;
+ static uint32 TheronIrq2TraceLaterE009DestinationMode;
+ static bool TheronIrq2TraceLaterE009PostReturnStepPending;
++static bool TheronIrq2TracePostStage2ExecutionActive;
++static bool TheronIrq2TracePostStage2PhysicalPageSeen[8192];
++static unsigned TheronIrq2TracePostStage2PhysicalPageCount;
+ 
+ static void FlushTheronIrq2Trace(void)
+ {
+@@ -198,6 +201,22 @@ static void DoTheronIrq2Trace(const uint32 PC)
+   FlushTheronIrq2Trace();
+  }
+ 
++ if(logical_pc == 0x40d0 || logical_pc == 0x40a7)
++  TheronIrq2TracePostStage2ExecutionActive = true;
++ if(TheronIrq2TracePostStage2ExecutionActive)
++ {
++  const uint32 physical_page = (PC >> 8) & 0x1fff;
++
++  if(TheronIrq2TracePostStage2PhysicalPageCount < 128 &&
++     !TheronIrq2TracePostStage2PhysicalPageSeen[physical_page])
++  {
++   TheronIrq2TracePostStage2PhysicalPageSeen[physical_page] = true;
++   TheronIrq2TracePostStage2PhysicalPageCount++;
++   TheronIrq2Trace->print_format("post_stage2_execution_page logical_pc=%04x physical_pc=%08x physical_page=%04x\\n", logical_pc, PC, physical_page);
++   FlushTheronIrq2Trace();
++  }
++ }
++
+  if(TheronIrq2TraceReturnTransferPending)
+  {
+   if(logical_pc < 0xcc00 || logical_pc >= 0xcd00)
