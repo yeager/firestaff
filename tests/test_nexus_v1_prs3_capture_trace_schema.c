@@ -521,6 +521,21 @@ int main(void) {
                !vdp1_receipt.valid,
            "VDP1 output interval before the first opcode is rejected");
 
+    {
+        Nexus_V1_Prs3Vdp1CaptureFileReceipt file_receipt;
+        expect(!nexus_v1_prs3_vdp1_capture_validate_files(
+                   "/missing/nexus-v3.trace", "/missing/MENU.BPK",
+                   "/missing/DM.BIN", &file_receipt) &&
+                   !file_receipt.trace_file_read &&
+                   !file_receipt.menu_bpk_original_hash_verified &&
+                   !file_receipt.dm_bin_original_hash_verified &&
+                   !file_receipt.source_bound_capture &&
+                   !file_receipt.runtime_import_permitted &&
+                   !file_receipt.decoder_promoted &&
+                   !file_receipt.fallback_visuals_permitted,
+               "file validator rejects absent or non-canonical capture inputs without a runtime route");
+    }
+
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
     test_dm_bin_sh2_v1_execution_receipt();
