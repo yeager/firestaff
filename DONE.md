@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 renderer source-packet staging: the DGN
+  viewport now receives only an engine-owned Structure3 packet after every
+  existing capture, DGN, face, referenced-vertex, and normal-row relation is
+  still verified. The packet carries the typed geometry and opaque capture
+  spans without decoding any of them, and it is explicitly no-draw. Missing
+  relation evidence withdraws the packet. Verification:
+  `nexus_v1_dgn_geometry_readiness`.
+
 - 2026-07-14 Nexus Structure3 complete opaque capture retention: after strict
   capture admission, the engine copies the exact typed face/vertex/normal rows
   together with all six opaque capture spans and their session/bundle identity

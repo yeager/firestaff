@@ -20,6 +20,9 @@ typedef struct {
     int fallback_visuals_permitted;
     int no_draw_structure2_source;
     int no_draw_structure1f_semantics;
+    int structure3_source_packet_consumed;
+    int structure3_source_geometry_bound;
+    int structure3_source_no_draw;
     int party_x;
     int party_y;
     int party_dir;
@@ -101,6 +104,7 @@ typedef struct {
     uint8_t floor_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
     uint8_t wall_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
     int material_palette_valid;
+    Nexus_V1_DgnStructure3RenderPacket structure3_source_packet;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 

@@ -1919,6 +1919,69 @@ int nexus_v1_engine_consume_structure3_capture(
     return 1;
 }
 
+int nexus_v1_current_level_structure3_render_packet(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3RenderPacket *out_packet)
+{
+    const Nexus_V1_DgnStructure3RuntimeSource *source;
+    const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding;
+
+    if (!out_packet) return -1;
+    memset(out_packet, 0, sizeof(*out_packet));
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded) return 0;
+    source = &engine->structure3_runtime_source;
+    binding = &source->binding;
+    if (!source->valid || source->level_index != engine->game.current_level ||
+        !source->capture_bundle_hash_verified ||
+        !source->original_saturn_capture_verified ||
+        !binding->candidate_framing_valid ||
+        !binding->dgn_source_hash_verified ||
+        !binding->capture_source_verified || !binding->dgn_source_matches ||
+        !binding->structure3_payload_matches ||
+        !binding->typed_mesh_corpus_matches || !binding->entry_face_matches ||
+        !binding->face_row_matches ||
+        !binding->referenced_vertex_rows_match || !binding->normal_row_matches ||
+        !binding->fill_selector_matches || !binding->texture_span_matches ||
+        !binding->palette_state_matches || !binding->vdp1_state_matches ||
+        !binding->transform_state_matches ||
+        !binding->normal_culling_state_matches ||
+        !binding->vdp1_command_matches || !binding->complete_source_binding ||
+        binding->renderer_handoff_ready ||
+        !binding->blocks_real_dgn_mesh_render ||
+        source->vertex_slot_count < 3 || source->vertex_slot_count > 4 ||
+        !source->texture_span || source->texture_span_size <= 0 ||
+        !source->palette_state || source->palette_state_size <= 0 ||
+        !source->vdp1_state || source->vdp1_state_size <= 0 ||
+        !source->transform_state || source->transform_state_size <= 0 ||
+        !source->normal_culling_state || source->normal_culling_state_size <= 0 ||
+        !source->vdp1_command || source->vdp1_command_size <= 0) return 0;
+
+    out_packet->valid = 1;
+    out_packet->source_geometry_bound = 1;
+    out_packet->level_index = source->level_index;
+    out_packet->entry_index = source->entry_index;
+    out_packet->face_ordinal = source->face_ordinal;
+    out_packet->face = source->face;
+    out_packet->vertices = source->vertices;
+    out_packet->vertex_count = source->vertex_slot_count;
+    out_packet->normal = &source->normal;
+    out_packet->texture_span = source->texture_span;
+    out_packet->texture_span_size = source->texture_span_size;
+    out_packet->palette_state = source->palette_state;
+    out_packet->palette_state_size = source->palette_state_size;
+    out_packet->vdp1_state = source->vdp1_state;
+    out_packet->vdp1_state_size = source->vdp1_state_size;
+    out_packet->transform_state = source->transform_state;
+    out_packet->transform_state_size = source->transform_state_size;
+    out_packet->normal_culling_state = source->normal_culling_state;
+    out_packet->normal_culling_state_size = source->normal_culling_state_size;
+    out_packet->vdp1_command = source->vdp1_command;
+    out_packet->vdp1_command_size = source->vdp1_command_size;
+    return 1;
+}
+
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];

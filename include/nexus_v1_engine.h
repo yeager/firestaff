@@ -203,6 +203,36 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3RuntimeSource;
 
+/* The only Structure3 mesh input available to the DGN viewport.  All
+ * pointers remain owned by the engine and are valid until the next level
+ * replacement or shutdown.  This preserves the admitted face geometry and
+ * opaque capture packet without interpreting any Saturn render state. */
+typedef struct {
+    int valid;
+    int source_geometry_bound;
+    int no_draw_only;
+    int level_index;
+    uint32_t entry_index;
+    uint32_t face_ordinal;
+    Nexus_V1_DgnStructure3Face face;
+    const Nexus_V1_DgnStructure3Vector *vertices;
+    int vertex_count;
+    const Nexus_V1_DgnStructure3Vector *normal;
+    const uint8_t *texture_span;
+    int texture_span_size;
+    const uint8_t *palette_state;
+    int palette_state_size;
+    const uint8_t *vdp1_state;
+    int vdp1_state_size;
+    const uint8_t *transform_state;
+    int transform_state_size;
+    const uint8_t *normal_culling_state;
+    int normal_culling_state_size;
+    const uint8_t *vdp1_command;
+    int vdp1_command_size;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3RenderPacket;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -551,6 +581,12 @@ int nexus_v1_engine_consume_structure3_capture(
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
     const Nexus_V1_DgnStructure3CaptureImport *capture);
+/* Stages the engine-owned, already-bound Structure3 face for the viewport.
+ * This is a source/geometry handoff only: a successful packet always remains
+ * no-draw until independent Saturn render semantics are established. */
+int nexus_v1_current_level_structure3_render_packet(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3RenderPacket *out_packet);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
