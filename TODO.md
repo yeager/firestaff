@@ -740,6 +740,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     nibble fill, including odd/even start and bounded write behavior. The
     MEDIA472 byte-per-pixel path and the live framebuffer consumer remain
     separate, unproven work.
+  - 2026-07-14 NEC816.C F8140/F8162 now preserve the PC 3.4 source-defined
+    overlap-copy direction and 160-byte-stride multi-plane message-area
+    transfer. Binding those logical planes to the live Mac/SDL framebuffer
+    remains a separate presentation/capture task; no hardware aperture is
+    claimed by this narrow adapter.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette

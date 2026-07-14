@@ -1954,7 +1954,7 @@ F8133_ReadFloppySector	F	ReadFloppySector	IBMIO.C:2313	include/redmcsb_f8131_sys
 F8134_ExecuteProgramWithParameters	F	ExecuteProgramWithParameters	IBMIO.C:2318	include/redmcsb_f8134_execute_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 builds the defined Pascal command-tail prefix and accepts only normal DOS termination; execution and AX status remain a host callback boundary; focused strict C11 test.
 F8137_SetMultiplePixels	F	SetMultiplePixels	NEC816.C:1804	redmcsb_f8137_set_multiple_pixels_nec16_compat	IMPLEMENTED_NARROW	MEDIA457_P20JA 4bpp packed-nibble fill is source-linked and bounds-tested; other media variants and live framebuffer binding remain outside this adapter.
 F8139_Unreferenced	F	Unreferenced	VIDEODRV.C:1224	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8140_ScrollMessageAreaUp	F	ScrollMessageAreaUp	NEC816.C:463	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8140_ScrollMessageAreaUp	F	ScrollMessageAreaUp	NEC816.C:463	include/redmcsb_f8140_scroll_message_area_up_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 source-defined direction-selected overlap copy is ported exactly; focused strict C11 test covers both overlap directions, identical starts and zero length.
 F8143_CopyPixelLineFromScreenWithoutTransparency	F	CopyPixelLineFromScreenWithoutTransparency	NEC816.C:1549	-	SOURCE_NONAPPLICABLE	NEC816.C:1549-1552 has an empty body and commented parameters only; no portable copy contract is present.
 F8144_CopyPixelLineFromScreenWithoutTransparencyFlippedHorizontally	F	CopyPixelLineFromScreenWithoutTransparencyFlippedHorizontally	NEC816.C:1554	-	SOURCE_NONAPPLICABLE	NEC816.C:1554-1557 has an empty body and commented parameters only; no portable flip contract is present.
 F8151_VIDRV_02_Blit	F	VIDRV	IMAGE3.C:831	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
@@ -1968,7 +1968,7 @@ F8158_VIDRV_18_SetSingleColorInPalette	F	VIDRV	VIDEODRV.C:3474	-	MISSING	No exac
 F8159_VIDRV_11_PALETTE_SetCurtain	F	VIDRV	NEC816.C:2340	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8160_VIDRV_12_SetCreatureReplacementColors	F	VIDRV	CEDT027.C:1422	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8161_VIDRV_09_BlitViewPort	F	VIDRV	NEC816.C:2424	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F8162_VIDRV_10_ScrollMessageAreaUp	F	VIDRV	NEC816.C:2438	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8162_VIDRV_10_ScrollMessageAreaUp	F	VIDRV	NEC816.C:2438	include/redmcsb_f8162_vidrv_scroll_message_area_up_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 source-defined 160-byte-stride A8/B0/B8/E0 plane scroll is ported through F8140; focused strict C11 test covers four planes, source-width transfer and exposed-row preservation.
 F8163_VIDRV_00_CopyPixelsToScreenWithoutTransparency	F	VIDRV	NEC816.C:2468	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8164_VIDRV_13_InitializeUnusedGlobalVariables	F	VIDRV	NEC816.C:2514	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8165_VIDRV_14_GetPrefixedBitmapByteCountOrBlitFromScreenNoTransparency	F	VIDRV	NEC816.C:2522	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
