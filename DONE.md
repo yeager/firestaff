@@ -9,6 +9,15 @@
   `dm1_v1_original_save_pc34_external_hoc_runtime` remains skip-safe without
   operator-supplied original PC34 save/media inputs.
 
+- DONE 2026-07-14 Nexus Structure3 face-edge incidence receipt: the bounded
+  LEV00-LEV15 parser now measures entry-local consecutive face-index pairs,
+  incidence multiplicity, and paired raw traversal direction. The receipt is
+  carried through renderer planning but asserts no winding, manifold,
+  surface, transform, culling, UV, texture, palette, VDP1, or draw semantics;
+  the original-Saturn capture gate still blocks real DGN mesh rendering.
+  Verification: `test_nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - 2026-07-14 DM1 PC34 external-save queued-runtime gate: the fixture-free
   HoC runtime probe now follows the next persisted F0435 C4 timeline event
   when its source timestamp falls inside a 1024-tick test horizon. It advances

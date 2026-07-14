@@ -1449,6 +1449,14 @@ texture/palette encoding, or a material bridge from descriptor correlation
 alone. The next admissible work is an independently evidenced payload-record
 grammar or Saturn executable route.
 
+2026-07-14 update: Structure3 now retains an entry-local face-row edge
+incidence receipt across the hash-verified LEV00-LEV15 corpus. It counts only
+consecutive bounded vertex-index pairs, their multiplicity, and whether paired
+rows traverse the same or opposite raw index direction. This does not prove
+winding, manifoldness, surface continuity, transforms, culling, UVs, texture
+or palette decoding, VDP1 state, or a draw command. Original Saturn execution
+evidence remains required before any mesh rendering route can be promoted.
+
 2026-07-13 update: the LEV00-LEV15 verification gate now checks all 1,678
 Structure2 descriptors and the observed 2,944 nonzero targets as aligned,
 two-byte-bounded addresses inside their own opaque spans. This strengthens the
