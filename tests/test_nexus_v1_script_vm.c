@@ -290,13 +290,16 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
           "malformed task bytes are not promoted to real-profile evidence");
 }
 
-static void test_optional_real_slev_corpus_profile(void) {
-    const char *home = getenv("HOME");
+static void test_real_slev_corpus_profile(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int seen = 0;
     int profiled = 0;
     int level;
 
-    if (!home || home[0] == '\0') return;
+    if (!data_dir || data_dir[0] == '\0') {
+        puts("test_nexus_v1_script_vm: SKIP corpus (FIRESTAFF_NEXUS_DATA_DIR unset)");
+        return;
+    }
 
     for (level = 0; level < 16; ++level) {
         char path[512];
@@ -306,9 +309,9 @@ static void test_optional_real_slev_corpus_profile(void) {
         Nexus_ScriptVM vm;
         Nexus_ScriptRuntimeReceipt receipt;
 
-        snprintf(path, sizeof(path),
-                 "%s/.firestaff/data/nexus/SLEV%02d.BIN", home, level);
+        snprintf(path, sizeof(path), "%s/SLEV%02d.BIN", data_dir, level);
         fp = fopen(path, "rb");
+        CHECK(fp != NULL, "configured SLEV corpus file is present");
         if (!fp) continue;
         if (fseek(fp, 0, SEEK_END) != 0) {
             fclose(fp);
@@ -335,23 +338,23 @@ static void test_optional_real_slev_corpus_profile(void) {
         nexus_script_vm_init(&vm);
         CHECK(nexus_script_vm_load_canonical_level(&vm, level, data,
                                                    (int)size, 1) == 0,
-              "optional real SLEV corpus file loads");
+              "real SLEV corpus file loads");
         CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
-              "optional real SLEV corpus file emits receipt");
+              "real SLEV corpus file emits receipt");
         if (receipt.real_task_profile_supported) {
             profiled++;
             CHECK(receipt.status ==
                       NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT &&
                   receipt.blocks_real_script_dispatch == 1 &&
                   receipt.dispatch_enabled == 0,
-                  "optional real SLEV profile stays no-dispatch");
+                  "real SLEV profile stays no-dispatch");
             CHECK(receipt.real_task_word_count == (int)(size / 2) &&
                   receipt.real_task_first_opcode == 0x2fe6 &&
                   receipt.real_task_rts_count > 0 &&
                   receipt.real_task_jsr_count > 0 &&
                   receipt.real_task_pc_relative_load_count > 0 &&
                   receipt.real_task_checksum16 != 0,
-                  "optional real SLEV profile records SH-2 call/operand shape");
+                  "real SLEV profile records SH-2 call/operand shape");
             CHECK(receipt.real_task_header_supported == 1 &&
                   receipt.real_task_header_size == 36 &&
                   receipt.real_task_primary_literal_instruction_offset == 4 &&
@@ -370,21 +373,20 @@ static void test_optional_real_slev_corpus_profile(void) {
                       NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3 &&
                   receipt.real_task_aux_literal_provenance ==
                       NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0,
-                  "optional real SLEV corpus matches bounded entry provenance");
+                  "real SLEV corpus matches bounded entry provenance");
             if (receipt.real_task_literal_pointer_count > 0) {
                 CHECK(receipt.real_task_first_literal_offset >= 0 &&
                       receipt.real_task_first_literal_address >= 0x00200000 &&
                       receipt.real_task_last_literal_address >= 0x00200000,
-                      "optional real SLEV profile records literal table operands");
+                      "real SLEV profile records literal table operands");
             }
         }
         free(data);
     }
 
-    if (seen > 0) {
-        CHECK(profiled == seen,
-              "all staged real SLEV corpus files match the task profile");
-    }
+    CHECK(seen == 16, "configured corpus contains all 16 SLEV files");
+    CHECK(profiled == seen,
+          "all real SLEV corpus files match the task profile");
 }
 
 int main(void) {
@@ -393,7 +395,7 @@ int main(void) {
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();
     test_real_slev_task_profile_blocks_dispatch();
-    test_optional_real_slev_corpus_profile();
+    test_real_slev_corpus_profile();
 
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_script_vm: %d failure(s)\n", g_failures);
