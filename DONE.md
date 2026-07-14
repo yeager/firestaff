@@ -45,6 +45,12 @@
   source-order free-cell repair. The boundary fails closed without its random
   and modifier dependencies; full original-media save interop remains open.
 
+- 2026-07-14 Theron Track 02 post-envelope raw witness: added the exact
+  fingerprint for the 0x380-byte user-data span following the source-locked
+  Hall of Records envelope. Mutating a real-media tail byte invalidates both
+  the tail and boundary receipts. This is integrity provenance only, not an
+  object-table decoder, object claim, or fallback visual route.
+
 - 2026-07-14 Theron Track 02 authenticated Hall of Records handoff: repaired
   INDEX 01 record-to-raw-media consumption, alias-safe transactional manifest
   binding, and the runtime payload receipt. The source-locked US Track 02 raw

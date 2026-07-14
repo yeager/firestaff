@@ -13,6 +13,8 @@
   object-table layout, object semantics, and a positive live transition still
   require independently authenticated loader captures. No fallback world,
   object, visual, or inferred layout is permitted.
+  The adjacent 0x380-byte post-envelope span is now hash-witnessed from raw
+  JP/US media, but remains opaque until a loader capture assigns its role.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1

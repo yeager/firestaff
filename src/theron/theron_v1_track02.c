@@ -5357,6 +5357,9 @@ theron_v1_track02_capture_initial_level_object_boundary(
     out_receipt->following_user_data_bytes_in_record =
         TQR_RAW_SECTOR_USER_DATA_BYTES -
         out_receipt->object_boundary_user_data_offset_in_record;
+    out_receipt->following_user_data_hash = tqr_hash_bytes(
+        track02_data + out_receipt->object_boundary_raw_offset,
+        out_receipt->following_user_data_bytes_in_record);
     out_receipt->level_width = binding.candidate.header_width;
     out_receipt->level_height = binding.candidate.header_height;
     out_receipt->level_seed = binding.candidate.header_seed;
@@ -5384,6 +5387,8 @@ theron_v1_track02_capture_initial_level_object_boundary(
     hash ^= out_receipt->level_payload_hash;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->object_boundary_user_data_offset_in_record;
+    hash *= 16777619u;
+    hash ^= out_receipt->following_user_data_hash;
     hash *= 16777619u;
     out_receipt->receipt_hash = hash;
     return THERON_TRACK02_SIGNAL_OK;

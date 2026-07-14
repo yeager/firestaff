@@ -105,6 +105,9 @@ int main(void)
     Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
     Theron_V1_World world;
     Theron_V1CaptureManifest manifest;
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02InitialLevelObjectBoundaryReceipt mutated_boundary;
+    uint8_t saved_tail_byte;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
 
@@ -119,6 +122,28 @@ int main(void)
         printf("FAIL: supplied US Track 02 is not the source-locked raw corpus\n");
         return 1;
     }
+
+    if (theron_v1_track02_capture_initial_level_object_boundary(
+            raw, raw_size, md5, &boundary) != THERON_TRACK02_SIGNAL_OK ||
+        !boundary.valid || boundary.following_user_data_bytes_in_record != 0x380u ||
+        !boundary.following_user_data_hash ||
+        boundary.object_boundary_raw_offset >= raw_size) {
+        free(raw);
+        printf("FAIL: raw Track 02 did not retain the opaque post-level witness\n");
+        return 1;
+    }
+    saved_tail_byte = raw[boundary.object_boundary_raw_offset];
+    raw[boundary.object_boundary_raw_offset] ^= 0x01u;
+    if (theron_v1_track02_capture_initial_level_object_boundary(
+            raw, raw_size, md5, &mutated_boundary) != THERON_TRACK02_SIGNAL_OK ||
+        mutated_boundary.following_user_data_hash ==
+            boundary.following_user_data_hash ||
+        mutated_boundary.receipt_hash == boundary.receipt_hash) {
+        free(raw);
+        printf("FAIL: opaque post-level bytes did not invalidate their raw receipt\n");
+        return 1;
+    }
+    raw[boundary.object_boundary_raw_offset] = saved_tail_byte;
 
     fixture_receipt(&coalesced, md5, raw, raw_size);
     if (!theron_v1_raw_loader_trace_bind_initial_level_handoff(
