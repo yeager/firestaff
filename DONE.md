@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2: dynamic champion HUD material admission now requires
+  real GDAT layout, palette, font, champion provenance, and original pixels;
+  no fallback pixels are admitted. Verification: focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `LZW.C F0496`: source `0x90` repeat-escape
   emission now has a bounded decoder-state callable. Verification: focused
   strict CTest.
