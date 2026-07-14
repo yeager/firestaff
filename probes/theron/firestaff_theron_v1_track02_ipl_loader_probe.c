@@ -224,7 +224,9 @@ static void check_real_cue_boot_handoff(const char *cue_path, const char *md5) {
         printf("FAIL real CUE payload resolve\n");
         return;
     }
-    required = ((size_t)THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US + 1u) *
+    required = ((size_t)THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+                (size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
+                (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
         RAW_SECTOR_BYTES;
     file = fopen(payload, "rb");
     if (!file || fseek(file, 0L, SEEK_END) != 0 ||

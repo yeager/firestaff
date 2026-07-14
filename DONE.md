@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 raw CUE IPL receipt: M12 retains INDEX 01 pregap
+  bytes before receipt validation, fixing the false invalid startup graphics
+  gate for verified raw JP/US BIN media.
+
 - 2026-07-14 DM1 V2.1 Scale2x capture delivery: the selected-resolution
   presentation and BMP prove a non-uniform source edge survives EPX.
   Verification: `dm1_v21_special_palette_capture_probe`.

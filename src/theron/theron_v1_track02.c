@@ -8370,8 +8370,6 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * JP INDEX 01 00:02:74 = sector 224; US INDEX 01 00:03:00 = sector 225.
  * The bytes and API setup below were inspected from the known-MD5 original
  * media.  They are not inferred from any candidate graphics window. */
-#define TQR_IPL_JP_INDEX01_RAW_SECTOR 224u
-#define TQR_IPL_US_INDEX01_RAW_SECTOR 225u
 #define TQR_IPL_INFORMATION_SECTOR_DELTA 1u
 #define TQR_IPL_JP_EXECUTABLE_SECTORS 3u
 #define TQR_IPL_US_EXECUTABLE_SECTORS 4u
@@ -8500,10 +8498,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     }
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
-        index01_sector = TQR_IPL_JP_INDEX01_RAW_SECTOR;
+        index01_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR;
         executable_sector_count = TQR_IPL_JP_EXECUTABLE_SECTORS;
     } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
-        index01_sector = TQR_IPL_US_INDEX01_RAW_SECTOR;
+        index01_sector = THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
         executable_sector_count = TQR_IPL_US_EXECUTABLE_SECTORS;
     } else {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
