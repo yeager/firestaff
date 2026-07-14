@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB CEDTINC8 five-part save write: added the source
+  sequence that precomputes five keyed checksums, emits the corresponding
+  obfuscated bytes, checks the emitted checksum, and restores plaintext. Keys
+  and output buffers remain caller-owned; no RNG, file transport, save layout,
+  CSBWin extension, DSA, or timer behavior is invented. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F7063 LoadDungeon stream boundary: added the exact
   22-part PC34 byte-checksum verdict over header, maps, tables, 16 ThingData
   pools, and RawMapData. Empty pools retain their source zero-byte behavior;

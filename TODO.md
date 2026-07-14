@@ -345,6 +345,11 @@
     header, maps, three table blocks, 16 ThingData pools, and RawMapData.
     The parts remain opaque; this neither allocates nor decodes DUNGEON_HEADER,
     MAP, ThingData, CSBWin, DSA, timer, or runtime layouts.
+  - 2026-07-14 update: `CEDTINC8.C` now prepares the five original save
+    parts in source order from header-owned keys: all checksums are calculated
+    before any part is emitted, each emitted part is obfuscated, and caller
+    plaintext is restored. Missing, empty, or odd parts have no partial output.
+    This does not identify the five part layouts or decode CSBWin DSA/timers.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
