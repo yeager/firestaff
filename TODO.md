@@ -539,8 +539,9 @@ ReDMCSB WIP 2021-02-06 source tree.
   payload selectors plus direct floor-sensor control/destination and floor-
   decoration payload/rotation receipts now reach the optional retail DGN corpus. The
   receipt can separately rule out zero- and one-based direct model-index
-  byte/block/run ordinals, but Structure3 record and face grammar remain
-  unparsed. Prove original record boundaries and face attachment before any
+  byte/block/run ordinals. The verified retail corpus also has a bounded,
+  strictly increasing Structure3 offset directory, but its entries remain
+  opaque. Prove original record boundaries and face attachment before any
   draw route; do not infer positions, geometry, textures, pixels, palettes,
   triggers, or fallback art.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and

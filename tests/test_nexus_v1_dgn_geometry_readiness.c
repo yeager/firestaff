@@ -587,6 +587,18 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.valid &&
               handoff.structure3_payload.raw_payload_hash ==
                   loaded_level.structure3_payload.raw_payload_hash &&
+              handoff.structure3_directory.payload_valid &&
+              handoff.structure3_directory.directory_declared &&
+              handoff.structure3_directory.valid &&
+              handoff.structure3_directory.entry_count > 0 &&
+              handoff.structure3_directory.directory_byte_count ==
+                  4 + handoff.structure3_directory.entry_count * 4 &&
+              handoff.structure3_directory.first_entry_offset >=
+                  handoff.structure3_directory.directory_byte_count &&
+              handoff.structure3_directory.last_entry_offset <
+                  loaded_level.structure3_payload.byte_size &&
+              handoff.structure3_directory.offsets_strictly_increasing &&
+              !handoff.structure3_directory.entry_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
@@ -608,6 +620,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure3_payload.nonzero_byte_run_count &&
               correlation.structure3_nonzero_block_run_count ==
                   loaded_level.structure3_payload.nonzero_block_run_count &&
+              correlation.structure3_directory_valid &&
+              correlation.structure3_directory_entry_count ==
+                  handoff.structure3_directory.entry_count &&
               correlation.direct_block_ordinal_mapping_disproven ==
                   (correlation.zero_based_block_ordinal_mapping_disproven &&
                    correlation.one_based_block_ordinal_mapping_disproven) &&
@@ -617,6 +632,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               correlation.direct_run_ordinal_mapping_disproven ==
                   (correlation.zero_based_run_ordinal_mapping_disproven &&
                    correlation.one_based_run_ordinal_mapping_disproven) &&
+              correlation.direct_directory_ordinal_mapping_disproven ==
+                  (correlation.zero_based_directory_ordinal_mapping_disproven &&
+                   correlation.one_based_directory_ordinal_mapping_disproven) &&
               !correlation.face_semantics_proven,
               "retail Structure3 correlation rules out only disproven direct ordinals");
         if (loaded_level.structure3_payload.declared) {
