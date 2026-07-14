@@ -205,11 +205,20 @@ launch=(
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
 mednafen_pid=$!
+mednafen_ui_pid=0
 if [[ -n "$host_key" ]]; then
     sleep "$host_key_delay"
+    # The launcher PID belongs to timeout/env; focus the actual SDL process.
+    mednafen_ui_pid=$(pgrep -f "$mednafen_bin" | tail -n 1 || true)
+    if [[ ! "$mednafen_ui_pid" =~ ^[1-9][0-9]*$ ]]; then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: could not resolve the launched Mednafen UI process' >&2
+        exit 1
+    fi
     if ! osascript <<APPLESCRIPT
 tell application "System Events"
-    set targetProcess to first application process whose name is "mednafen"
+    set targetProcess to first application process whose unix id is $mednafen_ui_pid
     set frontmost of targetProcess to true
     delay 0.2
     if "$host_key" is "return" then
@@ -261,6 +270,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     trace_input_order_receipt "$input_trace"
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
+        printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
     fi

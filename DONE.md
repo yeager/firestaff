@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron authentic-capture provenance: the Mednafen host-input
+  helper now resolves the launched SDL process by PID and records that PID in
+  its transition receipt. A real US CUE/System Card run confirmed the PID
+  receipt but did not report a `host_key_event`; it therefore remains blocked
+  and cannot promote a later CD_READ, dungeon, object, or fallback route.
+
 - 2026-07-14 CSB ReDMCSB F0657/F0658 bitmap-index viewport bridge: added
   the PC34 F0630 `STRUCT2` bitmap-origin path and the F0658 F0635-relative
   zone-offset path before F0132 dispatch. Bitmap lookup, layout resolution,
