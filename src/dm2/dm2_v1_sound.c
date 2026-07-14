@@ -374,18 +374,14 @@ static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
     /* Tracks 16-27 (0x10-0x1b) additional dungeon/building themes */
 };
 
-/* ── DM2_QUERY_SND_ENTRY_INDEX stub ─────────────────────────────────────
- * Source: docs/dm2_audio.md
- * DM2_QUERY_SND_ENTRY_INDEX(cat, cls1, cls2, sfx) → entry index
- * Real: GDAT lookup via c_sound::querySoundEntry() at runtime.
- * Stub: always returns sfx id (no GDAT table). */
+/* DM2_QUERY_SND_ENTRY_INDEX is a GDAT-backed lookup in c_sfx.cpp.  The
+ * source-owned xsndptr2 table is runtime state, not a materialized GDAT
+ * table, so no caller may derive an entry index from an arbitrary sound id. */
 
 int dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx) {
     (void)cat; (void)c1; (void)c2;
-    /* Stub: accepts sound IDs 0-127. Real GDAT lookup deferred.
-     * Accept same range that sound_play() accepts: IDs < 128.
-     * DM2 SFX IDs 0x81, 0x84-0x89, 0x8A, 0x8E, etc. are all < 128. */
-    return (sfx < 128u) ? (int)sfx : -1;
+    (void)sfx;
+    return -1;
 }
 
 /* dm2_v1_sound_play — play a sound effect
@@ -396,9 +392,10 @@ int dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx) {
 int dm2_v1_sound_play(int sound_id, int volume) {
     if (sound_id < 0) return -1;
     (void)volume;
-    /* Stub: would call SDL_QueueAudio or allegro_play_sample()
-     * with glbSoundFreq_13ce playback rate and distance attenuation. */
-    return 0;
+    /* c_sound.cpp needs a resolved source queue entry and its sample payload.
+     * Neither is available through this adapter, so successful playback would
+     * be synthetic. */
+    return -1;
 }
 
 /* dm2_v1_sound_play_positional — world-coordinate spatial audio
@@ -408,13 +405,11 @@ int dm2_v1_sound_play(int sound_id, int volume) {
 int dm2_v1_sound_play_positional(int sound_id,
     int world_x, int world_y, int listener_x, int listener_y) {
     if (sound_id < 0) return -1;
-    int dx = world_x - listener_x;
-    int dy = world_y - listener_y;
-    /* Simple distance: approximate tile distance */
-    float dist = (float)((dx < 0 ? -dx : dx) + (dy < 0 ? -dy : dy));
-    float atten = 1.0f / (1.0f + dist * 0.25f);
-    int vol = (int)(atten * 127.0f);
-    return dm2_v1_sound_play(sound_id, vol);
+    (void)world_x;
+    (void)world_y;
+    (void)listener_x;
+    (void)listener_y;
+    return -1;
 }
 
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
