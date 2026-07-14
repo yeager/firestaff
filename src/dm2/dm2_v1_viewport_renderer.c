@@ -1377,6 +1377,8 @@ int dm2_v1_viewport_door_panel_field_for_square(int view_square)
         return DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D1C;
     case DM2_SQ_D2C:
         return DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C;
+    case DM2_SQ_D3C:
+        return 2;
     default:
         return -1;
     }
@@ -1461,7 +1463,7 @@ static const int8_t s_dm2_square_to_skproject_cell[DM2_SQ_COUNT] = {
      * kskval1.h line 62 defines tlbRectnoDoorButton for cells 0,3,6,11,13;
      * SkWinCore.cpp DRAW_DOOR_TILE lines ~46650-46700 dispatches center-door
      * cells 0,3,6 through DRAW_DOOR for the D0/D1/D2 startup path. */
-    /* D3C */ -1, /* D3L */ -1, /* D3R */ -1,
+    /* D3C */ 11, /* D3L */ -1, /* D3R */ -1,
     /* D2C */  6, /* D2L */ -1, /* D2R */ -1,
     /* D1C */  3, /* D1L */ -1, /* D1R */ -1,
     /* D0C */  0, /* D0L */ -1, /* D0R */ -1,
