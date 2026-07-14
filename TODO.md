@@ -964,6 +964,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     real 16-bit LFSR order, including its explicit final write to pixel zero
     and `G8177 | black` aperture value. The live host framebuffer consumer
     and frame pacing remain separately unproven.
+  - 2026-07-14 VIDEODRV.C F8230 now preserves the C25 single-colour palette
+    mutation: real RGB4 components become `(component << 2) + 3` RGB6 bytes,
+    then publish through F8156 only while the curtain is active. The live
+    SDL/Mac DAC consumer remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8166 now consumes the real C25 F8165 aperture
     snapshot format directly: three 16-bit prefix words and raw 320-stride
     rows are replayed without palette conversion. Binding the host aperture to
