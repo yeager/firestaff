@@ -4593,6 +4593,12 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(report.pc34_candidate_count == 3, "corpus selects only PC34 files");
     CHECK(report.roundtrip_attempted_count == 3,
           "corpus roundtrips every eligible file");
+    CHECK(report.runtime_stage_attempted_count == 3 &&
+              report.runtime_stage_succeeded_count == 0 &&
+              report.runtime_adopt_attempted_count == 0 &&
+              report.runtime_adopt_succeeded_count == 0 &&
+              report.runtime_adopt_failed_count == 0,
+          "tail-less fixture corpus cannot reach no-fallback adoption");
     CHECK(report.roundtrip_succeeded_count == 0,
           "corpus does not certify raw C3/C4 mismatch");
     CHECK(report.core_state_match_count == 0,
@@ -4603,6 +4609,10 @@ static void test_corpus_roundtrip_proof(void)
           "corpus retains one provenance receipt per classified PC34 envelope");
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        if (receipt->source_runtime_adopt_attempted ||
+            receipt->source_runtime_adopted) {
+            receipts_valid = 0;
+        }
         if (receipt->source_handoff_result ==
             DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT) {
             if (receipt->source_importer_result !=
@@ -4743,6 +4753,12 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                       report.runtime_stage_failed_count ==
                   report.runtime_stage_attempted_count,
           "real PC34 corpus records one no-fallback runtime stage per candidate");
+    CHECK(report.runtime_adopt_attempted_count ==
+              report.runtime_stage_succeeded_count &&
+              report.runtime_adopt_succeeded_count ==
+                  report.runtime_adopt_attempted_count &&
+              report.runtime_adopt_failed_count == 0,
+          "tail-backed real PC34 corpus adopts only owned no-fallback worlds");
     for (int i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
         CHECK(receipt->roundtrip_receipts_committed &&
@@ -4849,6 +4865,15 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                       DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
                   receipt->source_runtime_stage_committed &&
                   receipt->source_runtime_stage_owns_dungeon &&
+                  receipt->source_runtime_adopt_attempted &&
+                  receipt->source_runtime_adopt_result ==
+                      DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+                  receipt->source_runtime_adopted &&
+                  receipt->source_runtime_adopt_owns_dungeon &&
+                  receipt->source_runtime_adopt_event_count ==
+                      receipt->source_runtime_stage_event_count &&
+                  receipt->source_runtime_adopt_timeline_count ==
+                      receipt->source_runtime_stage_timeline_count &&
                   receipt->source_runtime_stage_c13_event_count ==
                       receipt->source_c13_event_count &&
                   receipt->source_runtime_stage_event_count >=
@@ -4864,6 +4889,9 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   !receipt->source_runtime_stage_committed &&
                   !receipt->source_runtime_stage_owns_dungeon,
                   "tail-less real PC34 save cannot borrow a runtime dungeon");
+            CHECK(!receipt->source_runtime_adopt_attempted &&
+                  !receipt->source_runtime_adopted,
+                  "tail-less real PC34 save cannot reach no-fallback adoption");
         }
     }
 }

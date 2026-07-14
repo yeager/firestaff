@@ -162,6 +162,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     DM1OriginalSavePC34CorpusReceipt *receipt)
 {
     struct GameWorld_Compat staged_world;
+    struct GameWorld_Compat adopted_world;
     struct DM1_EventQueue_V1 staged_queue;
     DM1OriginalSavePC34HandoffReport staged_report;
     int i;
@@ -170,6 +171,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         return;
     }
     memset(&staged_world, 0, sizeof(staged_world));
+    memset(&adopted_world, 0, sizeof(adopted_world));
     memset(&staged_queue, 0, sizeof(staged_queue));
     memset(&staged_report, 0, sizeof(staged_report));
     receipt->source_runtime_stage_attempted = 1;
@@ -190,8 +192,26 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         }
         receipt->source_runtime_stage_committed =
             receipt->source_runtime_stage_owns_dungeon;
+        if (receipt->source_runtime_stage_committed) {
+            receipt->source_runtime_adopt_attempted = 1;
+            receipt->source_runtime_adopt_result =
+                dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+                    &adopted_world, &staged_world);
+            if (receipt->source_runtime_adopt_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                receipt->source_runtime_adopted = 1;
+                receipt->source_runtime_adopt_owns_dungeon =
+                    adopted_world.ownsDungeon && adopted_world.dungeon != NULL &&
+                    adopted_world.things != NULL;
+                receipt->source_runtime_adopt_event_count =
+                    adopted_world.timeline.count;
+                receipt->source_runtime_adopt_timeline_count =
+                    staged_queue.eventCount;
+            }
+        }
     }
     F0883_WORLD_Free_Compat(&staged_world);
+    F0883_WORLD_Free_Compat(&adopted_world);
 }
 
 /* C13/C24/C25 are subtype receipts. Core corpus proof instead requires the
@@ -5047,6 +5067,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             ++report.runtime_stage_unavailable_count;
         } else {
             ++report.runtime_stage_failed_count;
+        }
+        if (receipt->source_runtime_adopt_attempted) {
+            ++report.runtime_adopt_attempted_count;
+            if (receipt->source_runtime_adopted &&
+                receipt->source_runtime_adopt_result ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                ++report.runtime_adopt_succeeded_count;
+            } else {
+                ++report.runtime_adopt_failed_count;
+            }
         }
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;

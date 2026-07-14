@@ -93,6 +93,21 @@ rule applies to backup promotion and original export/reload checks.
 In particular, a malformed EVENT/TIMELINE record cannot leave a partly updated
 live queue. This is a correctness invariant, not merely input hardening.
 
+## Original Save Corpus Runtime Gate
+
+An externally supplied PC34 save corpus is validated independently of the
+normal resume path. Each qualified source is read from an immutable snapshot,
+staged through the F0435 order, exported only to transient memory, and
+reloaded. A source reaches the corpus runtime receipt only when its own saved
+dungeon tail materializes an owned dungeon. That candidate is then adopted
+into a blank runtime world; no start-world dungeon is supplied at either step.
+
+Tail-less saves may still use the ordinary resume route with the verified
+DM1 start dungeon, but they are reported as unavailable for corpus runtime
+proof. This keeps the corpus evidence honest: a successful receipt means the
+external source, not host fallback state, supplied the world, timeline, and
+active runtime ownership.
+
 ## Focused Verification
 
 ```bash
