@@ -129,6 +129,11 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8161: source-locked PC 3.4 C25 viewport
+  blit. The adapter preserves the temporary `0x10` viewport palette bank and
+  exact opaque, unflipped F8151 parameters: source origin `(0,0)`, width 224,
+  destination stride 320. Focused strict-C11 test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8159: source-locked PC 3.4 C25 RGB6
   palette curtain. The adapter preserves black's VBlank-gated 32-entry zero
   write, normal F8156 restore, and final curtain-state assignment; focused
