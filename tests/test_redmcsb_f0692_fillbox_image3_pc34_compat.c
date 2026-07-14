@@ -26,7 +26,7 @@ int main(void)
     uint8_t before[24];
     const int16_t box[4] = {1, 6, 1, 2};
     const int16_t single_line_box[4] = {2, 5, 0, 0};
-    const int16_t shaded_box[4] = {1, 4, 0, 1};
+    const int16_t high_bit_color_box[4] = {1, 4, 0, 1};
     const int16_t bad_box[4] = {7, 8, 0, 0};
     int ok = 1;
 
@@ -52,17 +52,17 @@ int main(void)
 
     memset(bitmap, 0x00, sizeof(bitmap));
     ok &= check(redmcsb_f0692_fillbox_image3_pc34_compat(
-                    bitmap, sizeof(bitmap), 4u, 3u, shaded_box, 0x8009u) == 1,
-                "accepts the source alternate-pixel color flag");
+                    bitmap, sizeof(bitmap), 4u, 3u, high_bit_color_box, 0x8009u) == 1,
+                "fills every pixel when upper color bits are present");
     ok &= check(pixel_at(bitmap, 4u, 1, 0) == 9u &&
-                    pixel_at(bitmap, 4u, 2, 0) == 0u &&
+                    pixel_at(bitmap, 4u, 2, 0) == 9u &&
                     pixel_at(bitmap, 4u, 3, 0) == 9u &&
-                    pixel_at(bitmap, 4u, 4, 0) == 0u &&
-                    pixel_at(bitmap, 4u, 1, 1) == 0u &&
+                    pixel_at(bitmap, 4u, 4, 0) == 9u &&
+                    pixel_at(bitmap, 4u, 1, 1) == 9u &&
                     pixel_at(bitmap, 4u, 2, 1) == 9u &&
-                    pixel_at(bitmap, 4u, 3, 1) == 0u &&
+                    pixel_at(bitmap, 4u, 3, 1) == 9u &&
                     pixel_at(bitmap, 4u, 4, 1) == 9u,
-                "reverses the alternate-pixel phase on each filled line");
+                "uses F0685's low-nibble color semantics without color flags");
 
     memcpy(before, bitmap, sizeof(bitmap));
     ok &= check(redmcsb_f0692_fillbox_image3_pc34_compat(
