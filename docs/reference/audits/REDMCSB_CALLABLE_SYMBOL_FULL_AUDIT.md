@@ -27,8 +27,8 @@ The inventory includes four-digit named callable symbols, documented unnamed F r
 
 | Status | Count |
 | --- | ---: |
-| IMPLEMENTED_NARROW | 186 |
-| MISSING | 860 |
+| IMPLEMENTED_NARROW | 188 |
+| MISSING | 858 |
 | SOURCE_NONAPPLICABLE | 61 |
 | UNCERTAIN_NUMBERED_EVIDENCE | 1030 |
 | **Total** | **2137** |

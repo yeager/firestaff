@@ -657,6 +657,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     the device-specific raw sound-progress query. F8128 remains unavailable:
     its hardware/ISR polling has no portable progress contract without the
     PC34 timing evidence required above.
+  - 2026-07-14 IBMIO.C F8129/F8130 now preserve the defined device-type table
+    and three-attempt first-sector probe through host I/O callbacks. The DOS
+    IOCTL/BIOS transports and source-undefined device types outside 0–7 remain
+    external evidence boundaries.
 
 - REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
   mouse interrupt path.** The source records a platform/version race fix for
