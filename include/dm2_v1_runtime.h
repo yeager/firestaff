@@ -161,6 +161,9 @@ typedef struct {
     int door_material_plan_required;
     uint32_t door_material_plan_hash;
     int door_material_plan_consumed;
+    int hud_material_plan_required;
+    uint32_t hud_material_plan_hash;
+    int hud_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;

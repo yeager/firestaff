@@ -2587,6 +2587,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t font_hash = 0u;
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
+    uint32_t hud_material_plan_hash = 0u;
+    int hud_material_plan_required = 0;
+    int hud_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
@@ -2788,6 +2791,21 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
      * one accepted-move presentation frame, so consume the proven 700/701
      * offsets once instead of inventing additional animation samples. */
     rt->scene_movement_pending = 0;
+    /* LOAD_GDAT_INTERFACE_00_02 must hand the full original command family
+     * to M11. The count proves all chrome and four party portraits consumed
+     * their plan-owned pixels; a partial plan cannot fall through to a
+     * generic HUD image lookup. */
+    hud_material_plan_required =
+        viewport.asset_hud_core_drawn_count +
+        viewport.asset_hud_portrait_drawn_count > 0;
+    hud_material_plan_consumed =
+        hud_material_plan_required && hud_material_plan.valid &&
+        hud_material_plan.command_count > 0 &&
+        hud_material_plan.command_hash != 0u &&
+        viewport.gdat_hud_material_plan_consumed_count ==
+            hud_material_plan.command_count;
+    hud_material_plan_hash = hud_material_plan_consumed
+        ? hud_material_plan.command_hash : 0u;
     dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
@@ -3219,6 +3237,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.door_material_plan_hash =
         g_dm2_last_m11_frame.door_material_plan_consumed
             ? rt->gdat_door_material_plan.command_hash : 0u;
+    g_dm2_last_m11_frame.hud_material_plan_required =
+        hud_material_plan_required;
+    g_dm2_last_m11_frame.hud_material_plan_hash = hud_material_plan_hash;
+    g_dm2_last_m11_frame.hud_material_plan_consumed =
+        hud_material_plan_consumed;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3246,6 +3269,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.door_material_plan_required ||
          (g_dm2_last_m11_frame.door_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.door_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.hud_material_plan_required ||
+         (g_dm2_last_m11_frame.hud_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.hud_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

@@ -217,13 +217,16 @@ int main(void)
      * image-family proof below excludes that known no-draw lookup. */
     if (viewport.asset_hud_core_drawn_count != 9 ||
         viewport.asset_hud_portrait_drawn_count != 4 ||
+        viewport.gdat_hud_material_plan_consumed_count !=
+            DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         viewport.fallback_hud_core_drawn_count != 0 ||
         viewport.fallback_hud_portrait_drawn_count != 0) {
         fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
               stderr);
-        fprintf(stderr, "core=%d portrait=%d fallback-core=%d fallback-portrait=%d callbacks=%d\n",
+        fprintf(stderr, "core=%d portrait=%d consumed=%d fallback-core=%d fallback-portrait=%d callbacks=%d\n",
                 viewport.asset_hud_core_drawn_count,
                 viewport.asset_hud_portrait_drawn_count,
+                viewport.gdat_hud_material_plan_consumed_count,
                 viewport.fallback_hud_core_drawn_count,
                 viewport.fallback_hud_portrait_drawn_count, unexpected_fetches);
         ++failures;

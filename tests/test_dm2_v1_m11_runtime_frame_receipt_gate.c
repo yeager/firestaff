@@ -33,6 +33,9 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_door_material_plan_required = 1;
     receipt.runtime_m11_frame_door_material_plan_hash = 0x444f4f52u;
     receipt.runtime_m11_frame_door_material_plan_consumed = 1;
+    receipt.runtime_m11_frame_hud_material_plan_required = 1;
+    receipt.runtime_m11_frame_hud_material_plan_hash = 0x48554431u;
+    receipt.runtime_m11_frame_hud_material_plan_consumed = 1;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -60,6 +63,9 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.door_material_plan_required = 1;
     receipt.door_material_plan_hash = 0x444f4f52u;
     receipt.door_material_plan_consumed = 1;
+    receipt.hud_material_plan_required = 1;
+    receipt.hud_material_plan_hash = 0x48554431u;
+    receipt.hud_material_plan_consumed = 1;
     receipt.palette_hash = 0x50414c31u;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
@@ -105,6 +111,16 @@ int main(void)
     runtime.door_material_plan_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects an unconsumed GDAT door material plan");
+    runtime = make_runtime_receipt();
+
+    runtime.hud_material_plan_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale GDAT HUD material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.hud_material_plan_consumed = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects an unconsumed GDAT HUD material plan");
     runtime = make_runtime_receipt();
 
     runtime.interface_action_palette_hash++;

@@ -67,6 +67,14 @@
   hash and command count after panel, ornate overlay, frame, and button
   consumption.
 
+- 2026-07-14 DM2 skproject HUD material M11 identity: the complete
+  `LOAD_GDAT_INTERFACE_00_02` GDAT HUD plan now retains its exact command
+  hash and full-consumption count through viewport, runtime, boot, and M11.
+  M11 rejects stale or partial chrome/portrait plans; a frame without an
+  occupied HUD does not invent one. Canonical `GRAPHICS.DAT` tests prove the
+  real plan hash and that all 13 chrome/portrait commands render directly
+  from plan-owned GDAT pixels without an asset callback.
+
 - 2026-07-14 CSB ReDMCSB F0434 dungeon-tail byte boundary: added exact
   sequential intake of the source's 22 caller-owned dungeon spans and the
   final F0421 byte-sum checksum word. The boundary stops at an unreadable

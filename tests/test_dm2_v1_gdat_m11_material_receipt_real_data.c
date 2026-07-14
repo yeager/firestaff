@@ -3,6 +3,7 @@
  * graphics set participates in this receipt. */
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 
@@ -48,6 +49,7 @@ int main(void)
     DM2_V1_GdatSceneM11CommandPlan scene;
     DM2_V1_GdatSceneLightM11Receipt light;
     DM2_V1_GdatWallM11CommandPlan wall;
+    DM2_V1_GdatHudM11CommandPlan hud;
     DM2_V1_BootRuntimeRenderReceipt boot;
     DM2_V1_ViewportM11FrameReceipt frame;
     int style = -1;
@@ -69,6 +71,7 @@ int main(void)
     memset(&scene, 0, sizeof(scene));
     memset(&light, 0, sizeof(light));
     memset(&wall, 0, sizeof(wall));
+    memset(&hud, 0, sizeof(hud));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
         fputs("FAIL: canonical GRAPHICS.DAT was not admitted\n", stderr);
         free(graphics);
@@ -91,6 +94,16 @@ int main(void)
         fputs("FAIL: no complete canonical GDAT material family\n", stderr);
         dm2_v1_gdat_scene_m11_command_plan_free(&scene);
         dm2_v1_gdat_wall_m11_command_plan_free(&wall);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
+    if (!dm2_v1_gdat_hud_m11_command_plan_build(&loader, &hud) ||
+        !hud.valid || hud.command_count != 9 || hud.command_hash == 0u) {
+        fputs("FAIL: no complete canonical GDAT HUD material plan\n", stderr);
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene);
+        dm2_v1_gdat_wall_m11_command_plan_free(&wall);
+        dm2_v1_gdat_hud_m11_command_plan_free(&hud);
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         return 1;
@@ -121,6 +134,9 @@ int main(void)
     boot.runtime_m11_frame_floor_material_hash = scene.commands[0].raw_hash;
     boot.runtime_m11_frame_ceiling_material_hash = scene.commands[1].raw_hash;
     boot.runtime_m11_frame_wall_material_plan_hash = wall.command_hash;
+    boot.runtime_m11_frame_hud_material_plan_required = 1;
+    boot.runtime_m11_frame_hud_material_plan_hash = hud.command_hash;
+    boot.runtime_m11_frame_hud_material_plan_consumed = 1;
     boot.runtime_m11_frame_palette_hash = scene.commands[0].palette_hash;
     boot.runtime_m11_frame_interface_action_palette_hash = 1u;
     boot.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -135,6 +151,9 @@ int main(void)
     frame.floor_material_hash = scene.commands[0].raw_hash;
     frame.ceiling_material_hash = scene.commands[1].raw_hash;
     frame.wall_material_plan_hash = wall.command_hash;
+    frame.hud_material_plan_required = 1;
+    frame.hud_material_plan_hash = hud.command_hash;
+    frame.hud_material_plan_consumed = 1;
     frame.palette_hash = scene.commands[0].palette_hash;
     frame.interface_action_palette_hash = 1u;
     frame.interface_action_palette_consumed = 1;
@@ -160,12 +179,19 @@ int main(void)
         fputs("FAIL: M11 accepted mismatched canonical wall material\n", stderr);
         return 1;
     }
-    printf("PASS: GDAT style=%d light=%08x floor=%08x ceiling=%08x wall=%08x\n", style,
+    frame.wall_material_plan_hash--;
+    frame.hud_material_plan_hash++;
+    if (M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &frame)) {
+        fputs("FAIL: M11 accepted mismatched canonical HUD material\n", stderr);
+        return 1;
+    }
+    printf("PASS: GDAT style=%d light=%08x floor=%08x ceiling=%08x wall=%08x hud=%08x\n", style,
            light.receipt_hash,
            scene.commands[0].raw_hash, scene.commands[1].raw_hash,
-           wall.command_hash);
+           wall.command_hash, hud.command_hash);
     dm2_v1_gdat_scene_m11_command_plan_free(&scene);
     dm2_v1_gdat_wall_m11_command_plan_free(&wall);
+    dm2_v1_gdat_hud_m11_command_plan_free(&hud);
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
     return 0;
