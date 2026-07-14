@@ -1417,6 +1417,14 @@ and real community-save corpus round-trip evidence.
     the staged timeline; a tail-less source remains explicitly not runtime
     ready and never borrows a host start dungeon. Remaining work is broader
     authentic tail coverage and independently collected community saves.
+  - 2026-07-14 update: startup, boot-summary, host-field, expectation, and
+    diagnostic receipts now carry the F0435 candidate-to-live adoption counts
+    separately from byte-roundtrip evidence. Only an external corpus whose
+    every qualified PC34 candidate adopts its owned dungeon/timeline can pass
+    the explicit runtime-corpus expectation; a tail-less or failed adoption
+    remains visible as non-runtime-ready. Remaining work is still an
+    independently collected, provenance-recorded PC34 corpus and original
+    executable load evidence, not synthetic saves.
   - 2026-07-14 update: the focused C13 runtime regression now follows
     `TIMELINE.C F0255` from step 2 through the matching-bones step 1 unlink
     and the one-tick-later step 0 rebirth. A bones-missing live step 1 ends

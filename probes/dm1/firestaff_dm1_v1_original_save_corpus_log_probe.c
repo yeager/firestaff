@@ -73,6 +73,9 @@ static DM1_V1_StartupHoCBootProbeSummary_PC34 base_summary(void) {
     summary.user_save_corpus_roundtrip_ready = 1;
     summary.user_save_corpus_roundtrip_verified = 2;
     summary.user_save_corpus_roundtrip_hash = 0x0badc0deu;
+    summary.user_save_corpus_runtime_ready = 1;
+    summary.user_save_corpus_runtime_adopt_attempted = 2;
+    summary.user_save_corpus_runtime_adopt_succeeded = 2;
     snprintf(summary.user_save_corpus_first_pc34_path,
              sizeof(summary.user_save_corpus_first_pc34_path),
              "fixtures/dm1/DMSAVE.DAT");
@@ -111,6 +114,12 @@ int main(void) {
                           "dm1UserSaveCorpusRoundtripHash=0badc0de",
                           "roundtrip hash");
     ok &= expect_contains(receipt.fields,
+                          "dm1UserSaveCorpusRuntimeReady=1",
+                          "runtime readiness");
+    ok &= expect_contains(receipt.fields,
+                          "dm1UserSaveCorpusRuntimeAdopted=2",
+                          "runtime adoption count");
+    ok &= expect_contains(receipt.fields,
                           "dm1UserSaveCorpusFirstPC34Path=fixtures/dm1/"
                           "DMSAVE.DAT",
                           "first PC34 path");
@@ -118,8 +127,10 @@ int main(void) {
     failed_summary.complete_support_ready = 0;
     failed_summary.complete_original_save_roundtrip_route = 0;
     failed_summary.user_save_corpus_roundtrip_ready = 0;
+    failed_summary.user_save_corpus_runtime_ready = 0;
     failed_summary.user_save_corpus_roundtrip_verified = 1;
     failed_summary.user_save_corpus_roundtrip_failed = 1;
+    failed_summary.user_save_corpus_runtime_adopt_failed = 1;
     failed_summary.user_save_corpus_roundtrip_hash = 0x00f00badu;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -142,6 +153,9 @@ int main(void) {
     ok &= expect_contains(receipt.fields,
                           "dm1UserSaveCorpusRoundtripHash=00f00bad",
                           "failed roundtrip hash");
+    ok &= expect_contains(receipt.fields,
+                          "dm1UserSaveCorpusRuntimeFailed=1",
+                          "failed runtime adoption count");
 
     return ok ? 0 : 1;
 }

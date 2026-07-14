@@ -12,6 +12,19 @@
   1660-1669. Verification: focused
   `test_csb_v1_csbwin_champion_bones_expool_runtime`.
 
+- ✅ 2026-07-14 DM1 PC34 corpus runtime-adoption receipt handoff: the
+  no-fallback F0435 candidate-to-live adoption counts now flow through the
+  DM1 startup, complete-support, boot-summary, host-field, expectation, and
+  log receipts. Byte-roundtrip evidence remains distinct: the explicit
+  original-corpus runtime gate requires every qualified candidate to adopt its
+  own dungeon/timeline, while tail-less or failed candidates remain visibly
+  non-runtime-ready. Source-lock: ReDMCSB `LOADSAVE.C F0435` staged load and
+  return-to-game sequence. Verification: Ninja `firestaff_m10` and
+  `test_dm1_v1_original_save_pc34_handoff` passed; focused expectation,
+  host-fields, and log probes passed by direct C11 compile/run against the
+  Ninja-built M10 archive. The opt-in real-corpus leg skipped because
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
+
 - ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
   map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
   retained by the runtime and consumed directly by M11 with its original
