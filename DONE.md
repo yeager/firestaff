@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 original SKSave corpus renamed-artifact admission: recursive
+  corpus discovery now accepts a noncanonical filename only after the same
+  complete 42-byte SKSave header gate used by load plus the existing
+  source-bound payload parser. The retained candidate is still complete-file
+  hash receipted and must revalidate before runtime import. Focused save/load
+  coverage proves a renamed original-envelope artifact is discovered while an
+  extension alone is never trusted. This does not assign timer, dungeon DB,
+  or post-load rebuild semantics.
+
 - 2026-07-14 Theron complete `$e009` payload witness: the coalesced Mednafen
   contract now records the full 2048-byte local-RAM payload after the observed
   System Card return and requires its FNV fingerprint to match the selected

@@ -121,6 +121,10 @@ typedef struct {
     uint16_t recursive_candidate_count;
     uint16_t recursive_importable_candidate_count;
     uint16_t alternate_name_candidate_count;
+    /* A corpus artifact may have been renamed outside SKProject's direct
+     * resume path.  Retain only files independently admitted by the exact
+     * 42-byte SKSave header and payload parser, never by extension alone. */
+    uint16_t header_discovered_candidate_count;
     uint16_t extra_valid_candidate_count;
     uint16_t recursive_scan_depth_limit;
     uint16_t recursive_scan_candidate_cap;

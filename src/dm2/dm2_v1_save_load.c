@@ -574,8 +574,11 @@ static void dm2_sksave_corpus_scan_recursive_impl(
            *candidate_count < DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP) {
         char path[512];
         struct stat st;
+        DM2_SKCorpusProbeStatus status;
+        size_t payload_size = 0u;
         int is_root_exact_canonical;
         int alternate_name;
+        int named_candidate;
 
         if (dm2_sksave_is_dot_dir(ent->d_name)) continue;
         snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
@@ -589,8 +592,7 @@ static void dm2_sksave_corpus_scan_recursive_impl(
             }
             continue;
         }
-        if (!S_ISREG(st.st_mode) ||
-            !dm2_sksave_basename_is_candidate_ci(ent->d_name)) {
+        if (!S_ISREG(st.st_mode)) {
             continue;
         }
         /* Direct canonical names were already scanned in exact SKProject
@@ -601,6 +603,19 @@ static void dm2_sksave_corpus_scan_recursive_impl(
             strcmp(dir, root) == 0 &&
             dm2_sksave_basename_is_canonical_direct(ent->d_name);
         if (is_root_exact_canonical) continue;
+        named_candidate = dm2_sksave_basename_is_candidate_ci(ent->d_name);
+        if (!named_candidate) {
+            /* SKProject opens canonical names for live resume, but an
+             * external original-save corpus is often archived or renamed.
+             * Admit such a file only after the same header gate used by
+             * DM2_GAME_LOAD and then the existing source-bound payload
+             * parser.  Arbitrary files never consume the corpus cap. */
+            status = dm2_sksave_probe_path(path, &payload_size);
+            if (status != DM2_SK_CORPUS_VALID) {
+                continue;
+            }
+            ++receipt->header_discovered_candidate_count;
+        }
         alternate_name = !dm2_sksave_basename_is_canonical_direct(ent->d_name);
         (*candidate_count)++;
         dm2_sksave_corpus_probe_candidate(receipt, path, ent->d_name,
