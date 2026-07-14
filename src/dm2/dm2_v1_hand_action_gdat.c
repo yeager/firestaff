@@ -13,6 +13,17 @@ static uint16_t dm2_v1_hand_action_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+static int dm2_v1_hand_action_is_c4_img3(const uint8_t *raw)
+{
+    int offset_y;
+
+    if (!raw) return 0;
+    offset_y = (int)((int16_t)dm2_v1_hand_action_le16(raw + 2u) >> 10);
+    /* SKProject IMG3::Getpf reserves -32 for U4/U8 and 31 for C8.  The
+     * remaining offset classes, including the hand-action records, are C4. */
+    return offset_y != -32 && offset_y != 31;
+}
+
 static int dm2_v1_hand_action_image_metadata(
     const DM2_V1_AssetLoader *loader, const DM2_V1_HandActionGdatRoute *route,
     DM2_V1_HandActionImageMetadata *out)
@@ -32,12 +43,12 @@ static int dm2_v1_hand_action_image_metadata(
     if (!raw || raw_size < 10u) return 0;
     out->width = (uint16_t)(dm2_v1_hand_action_le16(raw) & 0x03ffu);
     out->height = (uint16_t)(dm2_v1_hand_action_le16(raw + 2u) & 0x03ffu);
-    out->bits_per_pixel = (uint8_t)dm2_v1_hand_action_le16(raw + 4u);
     if (out->width == 0u || out->height == 0u ||
-        out->bits_per_pixel != 4u) {
+        !dm2_v1_hand_action_is_c4_img3(raw)) {
         memset(out, 0, sizeof(*out));
         return 0;
     }
+    out->bits_per_pixel = 4u;
     /* QUERY_GDAT_SUMMARY_IMAGE treats missing category/image offsets as the
      * original zero offset; that is not a substitute placement. */
     (void)dm2_v1_asset_load_image_offset(loader, route->category,
@@ -73,8 +84,9 @@ static int dm2_v1_hand_action_local_palette(
     raw = dm2_v1_asset_load_typed_sized(
         loader, route->category, route->subcategory,
         DM2_GDAT_ENTRY_TYPE_IMAGE, route->entry, &raw_size);
-    if (!raw || raw_size < 26u ||
-        dm2_v1_hand_action_le16(raw + 4u) != 4u) return 0;
+    if (!raw || raw_size < 26u || !dm2_v1_hand_action_is_c4_img3(raw)) {
+        return 0;
+    }
     memcpy(out_palette16, raw + raw_size - 16u, 16u);
     for (int i = 0; i < 16; ++i) {
         hash = dm2_v1_hand_action_hash_step(hash, out_palette16[i]);
