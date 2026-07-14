@@ -15,7 +15,10 @@ int theron_v1_track02_loader_intake_observe(
         facts->track02_record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
         facts->record_user_data_offset !=
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
-        facts->byte_count == 0u) {
+        facts->destination != THERON_V1_INITIAL_ENVELOPE_DESTINATION ||
+        facts->byte_count != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        !facts->complete_payload_witness_verified ||
+        facts->complete_payload_checksum == 0u) {
         return 0;
     }
 
@@ -24,7 +27,8 @@ int theron_v1_track02_loader_intake_observe(
     receipt.record_user_data_offset = facts->record_user_data_offset;
     receipt.observed_destination = facts->destination;
     receipt.observed_byte_count = facts->byte_count;
-    receipt.status = "initial_envelope_loader_read_observed_payload_blocked";
+    receipt.status =
+        "initial_envelope_loader_read_observed_media_bound_payload_blocked";
     *out_receipt = receipt;
     return 1;
 }
