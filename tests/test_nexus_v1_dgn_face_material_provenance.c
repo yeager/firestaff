@@ -28,6 +28,8 @@ int main(void)
     input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN;
     input.dgn_bytes = retail_dgn;
     input.dgn_size = (int)sizeof(retail_dgn);
+    input.canonical_dgn_bytes = retail_dgn;
+    input.canonical_dgn_size = (int)sizeof(retail_dgn);
     input.canonical_source_verified = 1;
     input.bindings = bindings;
     input.face_count = 3;
@@ -36,11 +38,35 @@ int main(void)
     expect(nexus_v1_dgn_face_material_validate(&input, &receipt) == 1 &&
                receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_READY &&
                receipt.canonical_source_verified &&
+               receipt.reopened_bytes_match_canonical &&
+               receipt.canonical_dgn_size == (int)sizeof(retail_dgn) &&
                receipt.face_count == 3 && receipt.static_selector_count == 2 &&
                receipt.animated_selector_count == 1 &&
                receipt.selector_bindings_complete &&
                receipt.can_submit_raster_input && !receipt.permits_fallback_visuals,
            "canonical retail DGN bindings alone reach the raster-input boundary");
+
+    {
+        uint8_t reopened_dgn[sizeof(retail_dgn)];
+
+        memcpy(reopened_dgn, retail_dgn, sizeof(reopened_dgn));
+        reopened_dgn[2] ^= 0x01U;
+        input.dgn_bytes = reopened_dgn;
+        expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
+                   receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE &&
+                   !receipt.reopened_bytes_match_canonical &&
+                   !receipt.can_submit_raster_input &&
+                   !receipt.permits_fallback_visuals,
+               "a changed launcher-reopened DGN buffer cannot inherit canonical admission");
+        input.dgn_bytes = retail_dgn;
+    }
+
+    input.canonical_dgn_size = (int)sizeof(retail_dgn) - 1;
+    expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
+               receipt.status == NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE &&
+               !receipt.can_submit_raster_input,
+           "a shortened canonical catalog buffer cannot admit a reopened DGN buffer");
+    input.canonical_dgn_size = (int)sizeof(retail_dgn);
 
     input.source = NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_SYNTHETIC;
     expect(!nexus_v1_dgn_face_material_validate(&input, &receipt) &&
