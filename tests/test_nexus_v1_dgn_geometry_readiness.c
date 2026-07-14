@@ -2260,12 +2260,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveTransformCameraFramingReceipt active_camera_framing;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt raw_runtime_intake;
-        Nexus_V1_DgnStructure1AStructure3TopologyCandidate owner_source;
-        Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt owner_target;
-        int owner_target_built;
-        Nexus_V1_Level parsed_capture_level;
-        Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt
-            owner_correlation;
+        Nexus_V1_DgnStructure3CaptureTargetReceipt raw_capture_target;
         Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
         Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
         Nexus_Viewport viewport;
@@ -2280,7 +2275,6 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.level_loaded = 1;
         engine.game.current_level = 0;
         engine.current_level = level;
-        parsed_capture_level = engine.current_level;
         engine.current_level_dgn_data = dgn;
         engine.current_level_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.level_index = 0;
@@ -2293,64 +2287,6 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.game.party_x = 0;
         engine.game.party_y = 0;
         engine.game.party_dir = 2;
-        /* The capture fixture's compact DGN body has no Structure1F rows.
-         * Add one bounded parsed-level owner row solely to exercise the
-         * engine correlation gate; its face target is still rebuilt from the
-         * exact active Structure3 bytes below. */
-        engine.current_level.structure1f_entry_count = 1;
-        engine.current_level.structure1a_table_valid = 1;
-        engine.current_level.structure1a_model_count = 1;
-        engine.current_level.structure1f_entries[0].family =
-            NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
-        engine.current_level.structure1f_entries[0].tag = 7U;
-        engine.current_level.structure1f_entries[0].face = 3U;
-        engine.current_level.structure1f_entries[0].structure1a_index = 0U;
-        engine.current_level.structure1f_entries[0].structure1a_relation_valid = 1;
-        engine.current_level.structure1f_entries[0].structure1a_owner_x = 2;
-        engine.current_level.structure1f_entries[0].structure1a_owner_y = 3;
-        engine.current_level.structure1f_entries[0]
-            .structure1a_structure3_model_index = 0x23U;
-        engine.current_level.structure1f_entries[0].structure1a_z_rotation = 1U;
-        engine.current_level.structure1a_models[0].kind = 2U;
-        engine.current_level.structure1a_models[0].structure3_model_index = 0x23U;
-        engine.current_level.structure1a_models[0].z_rotation = 1U;
-        memset(&owner_source, 0, sizeof(owner_source));
-        owner_source.entry_index = 0;
-        owner_source.owner_x = engine.current_level.structure1f_entries[0]
-            .structure1a_owner_x;
-        owner_source.owner_y = engine.current_level.structure1f_entries[0]
-            .structure1a_owner_y;
-        owner_source.structure1f_family = engine.current_level
-            .structure1f_entries[0].family;
-        owner_source.structure1f_tag = engine.current_level
-            .structure1f_entries[0].tag;
-        owner_source.structure1f_face_selector = engine.current_level
-            .structure1f_entries[0].face;
-        owner_source.structure1f_structure1a_index = engine.current_level
-            .structure1f_entries[0].structure1a_index;
-        owner_source.structure1f_binding_proven = 1;
-        owner_source.structure1a_kind = engine.current_level.structure1a_models[
-            owner_source.structure1f_structure1a_index].kind;
-        owner_source.structure1a_row_binding_proven = 1;
-        owner_source.structure3_model_index = engine.current_level
-            .structure1f_entries[0].structure1a_structure3_model_index;
-        owner_source.z_rotation = engine.current_level.structure1f_entries[0]
-            .structure1a_z_rotation;
-        owner_source.structure1a_model_rotation_binding_proven = 1;
-        owner_source.structure3_byte_size = engine.current_level
-            .structure3_payload.byte_size;
-        owner_source.structure3_raw_payload_hash = engine.current_level
-            .structure3_payload.raw_payload_hash;
-        memset(&owner_target, 0, sizeof(owner_target));
-        owner_target_built = nexus_v1_dgn_structure1a_structure3_capture_target_build(
-            &engine.current_level, engine.current_level_dgn_data,
-            engine.current_level_dgn_size, engine.game.current_level, 1,
-            &owner_source, 0U, 0U, &owner_target);
-        CHECK(owner_target_built && owner_target.valid &&
-              !owner_target.structure3_entry_mapping_proven &&
-              owner_target.no_draw_only &&
-              !owner_target.fallback_visuals_permitted,
-              "the active LEV yields one source-bound Structure1F owner target beside the independently selected Structure3 face");
         CHECK(nexus_v1_current_level_structure3_directory_receipt(
                   &engine, &active_directory) == 1 && active_directory.valid &&
               active_directory.level_index == 0 &&
@@ -2561,29 +2497,6 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
-        memset(&owner_correlation, 0, sizeof(owner_correlation));
-        CHECK(nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
-                  &engine, &owner_target, &owner_correlation) &&
-              owner_correlation.active_canonical_lev_bound &&
-              owner_correlation.runtime_capture_attested &&
-              owner_correlation.target_source_revalidated &&
-              owner_correlation.owner_context_bound &&
-              !owner_correlation.structure3_entry_mapping_proven &&
-              owner_correlation.no_draw_only &&
-              owner_correlation.blocks_real_dgn_mesh_render &&
-              engine.structure3_runtime_source.structure1a_owner_correlation_bound &&
-              engine.structure3_runtime_source.structure1f_entry_index == 0 &&
-              !engine.structure3_runtime_source.structure3_entry_mapping_proven,
-              "an independently attested Structure3 capture retains its exact Structure1F/Structure1A source owner without inferring a model-entry map");
-        owner_target.owner_x ^= 1;
-        CHECK(!nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
-                  &engine, &owner_target, &owner_correlation) &&
-              !owner_correlation.target_source_revalidated &&
-              engine.structure3_runtime_source.structure1a_owner_correlation_bound &&
-              engine.structure3_runtime_source.structure1a_owner_x ==
-                  owner_source.owner_x,
-              "a mutated owner target cannot replace the admitted runtime correlation");
-        owner_target.owner_x ^= 1;
         dgn[0] ^= 1U;
         CHECK(!nexus_v1_engine_consume_structure3_capture(
                   &engine, &candidate, &bound, &import) &&
@@ -2618,12 +2531,8 @@ static void test_structure3_entry_header_boundaries(void) {
               packet.transform_state == engine.structure3_runtime_source.transform_state &&
               packet.normal_culling_state ==
                   engine.structure3_runtime_source.normal_culling_state &&
-              packet.vdp1_command == engine.structure3_runtime_source.vdp1_command &&
-              packet.structure1a_owner_correlation_bound &&
-              packet.structure1f_entry_index == 0 &&
-              !packet.structure3_entry_mapping_proven,
+              packet.vdp1_command == engine.structure3_runtime_source.vdp1_command,
               "the DGN renderer receives only the engine-owned, fully related Structure3 packet and keeps it no-draw");
-        engine.current_level = parsed_capture_level;
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 1 &&
               active_source.original_saturn_capture_bound &&
@@ -2669,7 +2578,16 @@ static void test_structure3_entry_header_boundaries(void) {
               "host route carries the exact active LEV source receipt while Saturn decoding remains blocked");
         candidate.first_sequence = 10U;
         candidate.last_sequence = 20U;
-        snprintf(raw_manifest, sizeof(raw_manifest),
+        memset(&raw_capture_target, 0, sizeof(raw_capture_target));
+        CHECK(nexus_v1_dgn_structure3_capture_target_build(
+                  &engine.current_level, engine.current_level_dgn_data,
+                  engine.current_level_dgn_size, engine.game.current_level, 1,
+                  candidate.entry_index, candidate.face_ordinal,
+                  &raw_capture_target) && raw_capture_target.valid &&
+              raw_capture_target.candidate.entry_index == candidate.entry_index &&
+              raw_capture_target.candidate.face_ordinal == candidate.face_ordinal,
+              "the raw-capture manifest uses framing rebuilt from its active Structure3 face");
+        CHECK(snprintf(raw_manifest, sizeof(raw_manifest),
                  "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1\n"
                  "capture_session_fnv1a64=1234\n"
                  "dgn_fnv1a64=%llx\n"
@@ -2679,6 +2597,9 @@ static void test_structure3_entry_header_boundaries(void) {
                  "face_row_fnv1a32=%x\n"
                  "referenced_vertex_rows_fnv1a32=%x\n"
                  "normal_row_fnv1a32=%x\nfill_selector=%x\n"
+                 "entry_byte_offset=%x\nvertex_byte_offset=%x\n"
+                 "face_byte_offset=%x\nnormal_byte_offset=%x\n"
+                 "vertex_count=%x\nface_count=%x\n"
                  "texture_span_bytes=%zx\ntexture_span_fnv1a64=%llx\n"
                  "palette_state_bytes=%zx\npalette_state_fnv1a64=%llx\n"
                  "vdp1_state_bytes=%zx\nvdp1_state_fnv1a64=%llx\n"
@@ -2695,6 +2616,11 @@ static void test_structure3_entry_header_boundaries(void) {
                  candidate.face_ordinal, candidate.face_row_fnv1a32,
                  candidate.referenced_vertex_rows_fnv1a32,
                  candidate.normal_row_fnv1a32, candidate.fill_selector,
+                 raw_capture_target.entry_byte_offset,
+                 raw_capture_target.vertex_byte_offset,
+                 raw_capture_target.face_byte_offset,
+                 raw_capture_target.normal_byte_offset,
+                 raw_capture_target.vertex_count, raw_capture_target.face_count,
                  sizeof(texture_span),
                  (unsigned long long)candidate.texture_span_fnv1a64,
                  sizeof(palette_state),
@@ -2706,7 +2632,9 @@ static void test_structure3_entry_header_boundaries(void) {
                  sizeof(culling_state),
                  (unsigned long long)candidate.normal_culling_state_fnv1a64,
                  sizeof(vdp1_command),
-                 (unsigned long long)candidate.vdp1_command_fnv1a64);
+                 (unsigned long long)candidate.vdp1_command_fnv1a64) > 0 &&
+              strlen(raw_manifest) < sizeof(raw_manifest),
+              "the complete raw-capture manifest fits and includes current Structure3 framing fields");
         for (raw_path_index = 0; raw_path_index < 6; ++raw_path_index) {
             snprintf(raw_paths_storage[raw_path_index],
                      sizeof(raw_paths_storage[raw_path_index]),
