@@ -6,6 +6,11 @@
   F0924 are source-nonapplicable: their available ReDMCSB routes require Atari
   ST/Amiga hardware.
 
+- 2026-07-14 DM1/CSB ReDMCSB F0920/F0925/F0930: source-locked exact-count
+  file read, utility-disk signature gate, and header checksum loops. Focused
+  strict C11 tests pass. F0926 is source-nonapplicable: the available routine
+  directly installs Atari ST media-change vectors.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
   copy-protection BIOS callback, MIDI IODRV commands and substring routine.
   Focused strict C11 tests pass without synthetic disk or audio behavior.
