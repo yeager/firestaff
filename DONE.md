@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0711`, `F0713`, and `F0714`: PC 3.4
+  scan-code conversion, I/O-interrupt initialization and first-sector result
+  routes are source-locked. This includes literal original scan-code tables,
+  vector-254/VBlank/DS initialization order, and signed IODRV_18 result
+  propagation. Focused strict C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0709`: PC 3.4 start-sound dispatch preserves
   the original signed 16-bit index and volume at the host audio boundary.
   Focused strict C11 test passes.
