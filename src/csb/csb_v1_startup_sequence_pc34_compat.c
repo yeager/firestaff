@@ -7,9 +7,11 @@
 
 enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
+    /* ReDMCSB TITLE.C F0437:438-450 allocates 20 CHAOS rasters, from
+     * 320x80 down to 16x4, before F0437:455-459 presents them in reverse. */
     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
-    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 2,
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
         CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
         CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
@@ -213,8 +215,8 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     /* ReDMCSB: TITLE.C F0437 lines 425-463 uses the CSB title path:
      * CM58 PRESENTS is blitted, then TITLE.C waits until
      * G0317_i_WaitForInputVerticalBlankCount + 60. The PC path builds 20
-     * shrinked CHAOS bitmaps, blits them in reverse order, delays 20 ticks
-     * on the full CHAOS image, then draws STRIKES BACK and delays two ticks. */
+     * shrinked CHAOS bitmaps, blits them in reverse order, waits two
+     * vertical blanks, then draws STRIKES BACK for one visible vblank. */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }
