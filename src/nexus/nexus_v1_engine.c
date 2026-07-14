@@ -2824,6 +2824,45 @@ int nexus_v1_current_level_transform_camera_framing_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_structure1f_face_mesh_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure1FFaceMeshReceipt *out_receipt)
+{
+    Nexus_V1_DgnActiveStructure1FFaceMeshReceipt receipt;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    receipt.level_index = engine->game.current_level;
+    receipt.canonical_lev_source_bound = source->level_index == receipt.level_index &&
+        source->canonical_hash_verified && source->materialization_bound &&
+        nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                        engine->current_level_dgn_size);
+    if (!receipt.canonical_lev_source_bound ||
+        nexus_v1_level_structure3_attachment_receipt(&engine->current_level,
+                                                     &receipt.attachment) != 0 ||
+        !receipt.attachment.complete ||
+        !receipt.attachment.record_to_face_normal_semantics_proven ||
+        receipt.attachment.normal_plane_transform_or_draw_semantics_proven) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = engine->current_level_dgn_size;
+    receipt.face_mesh_ordinal_relation_proven = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
