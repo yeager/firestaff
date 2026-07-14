@@ -822,21 +822,45 @@ static void test_runtime_csbwin_dsa_filter_binding(void)
               0u, &selected_state, &selected_ordinal) == NULL,
           "CSBWin non-actuator LocalState is not promoted through the master filter bridge");
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 2u;
+    /* CSBWin data.cpp DB3::MakeBig makes ParameterB wide only when its
+     * upper two bits are populated. The compact DB3 record owns this exact
+     * state-4 form; exercise it through the same timer runners used by a
+     * restored CSBWin save. */
+    actuator_record[6] = 4u;
+    actuator_record[7] = 0u;
+    stoneroom_timer.function = 6u;
+    stoneroom_timer.ubyte9 = 0u;
+    openroom_timer.function = 5u;
+    openroom_timer.ubyte9 = 0u;
+    falsewall_timer.function = 7u;
+    falsewall_timer.ubyte9 = 0u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
-              &profile, &dungeon, &location, 0, 0, &timer6) == 0,
-          "CSBWin ParameterB state route stays blocked without authenticated widened DB3 data");
+              &profile, &dungeon, &location, 0, 0, &timer6) == 1 &&
+              timer6.state_index == 4u && timer6.action_ordinal == 0,
+          "CSBWin compact ParameterB state selects its authenticated timer action");
+    selected_action = NULL;
     CHECK(csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
               &profile, &dungeon, &location, &stoneroom_timer, &runner,
-              &selected_action) == 0,
-          "CSBWin TT_STONEROOM runner keeps ParameterB LocalState blocked");
+              &selected_action) == 1 && selected_action == &action &&
+              runner.state_index == 4u,
+          "CSBWin TT_STONEROOM runner admits compact ParameterB state");
+    selected_action = NULL;
     CHECK(csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
               &profile, &dungeon, &location, &openroom_timer, &runner,
-              &selected_action) == 0,
-          "CSBWin TT_OPENROOM runner keeps ParameterB LocalState blocked");
+              &selected_action) == 1 && selected_action == &action &&
+              runner.state_index == 4u,
+          "CSBWin TT_OPENROOM runner admits compact ParameterB state");
+    selected_action = NULL;
     CHECK(csb_v1_runtime_prepare_csbwin_falsewall_dsa_timer_stack_runner(
               &profile, &dungeon, &location, &falsewall_timer, &runner,
-              &selected_action) == 0,
-          "CSBWin TT_FALSEWALL runner keeps ParameterB LocalState blocked");
+              &selected_action) == 1 && selected_action == &action &&
+              runner.state_index == 4u,
+          "CSBWin TT_FALSEWALL runner admits compact ParameterB state");
+    actuator_record[7] = 0x80u;
+    CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+              &profile, &dungeon, &location, 0, 0, &timer6) == 0,
+          "CSBWin widened ParameterB state rejects before timer dispatch");
+    actuator_record[7] = 0u;
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 3u;
     CHECK(csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
               &profile, &dungeon, &location, 0, 0, &timer6) == 0,
