@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 original PC34 save/HoC snapshot runtime gate: the
+  fixture-free external runtime target now reads each corpus-certified save
+  once, validates its exact source size/hash, and gives those same immutable
+  bytes to independent F0435 staging and M11 adoption. It rehashes the source
+  path after replay, rejecting a changed file rather than mixing its earlier
+  corpus receipt with later runtime evidence. The M11 byte entry remains
+  F0435-only and retains the path solely for its resume diagnostic receipt;
+  it never reopens it. Source-lock: ReDMCSB `LOADSAVE.C F0435` staged load
+  and `GAMELOOP.C` runtime route. Verification:
+  `dm1_v1_original_save_pc34_external_hoc_runtime` is skip-safe without
+  operator-supplied original PC34 save/media inputs. This is host runtime
+  evidence, not original DOS execution or capture parity.
+
 - 2026-07-14 Theron Track 02 initial-level loader/CD admission receipt: a
   coalesced, ordered original `$e009` complete-sector receipt now composes
   with the hash/anchor-gated initial-level envelope only when it observes

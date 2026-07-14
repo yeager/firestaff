@@ -5438,6 +5438,57 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     return 1;
 }
 
+int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
+                                              const uint8_t* bytes,
+                                              size_t size,
+                                              const char* sourcePath)
+{
+    struct GameWorld_Compat loadedWorld;
+    struct DM1SaveResumeRequest resumeRequest;
+    struct DM1SaveResumeReceipt resumeReceipt;
+    DM1OriginalSaveClassifyResult originalSave;
+
+    if (!state || !state->active || !bytes || size == 0u ||
+        !DM1_SaveResumeSourceAllowed(state->sourceId)) {
+        return 0;
+    }
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    memset(&originalSave, 0, sizeof(originalSave));
+    if (!dm1_v1_original_save_classify_bytes(bytes, size, &originalSave) ||
+        originalSave.shape != DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 ||
+        !originalSave.pc34_importer_candidate ||
+        dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+            bytes, size, &loadedWorld, NULL, NULL) !=
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+    if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+            &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+    /* F0435 consumes these bytes directly. A receipt path is diagnostic only;
+     * reopening it here would allow a later replacement save to affect M11. */
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_discard_transient_dm1_action_effects_after_resume(state);
+    m11_refresh_hash(state);
+    m11_mark_explored(state);
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = sourcePath ? sourcePath : "original-pc34-snapshot";
+    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
+    resumeRequest.worldHash = state->lastWorldHash;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+        return 0;
+    }
+    return 1;
+}
+
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
                                           const char* exportPath)
 {

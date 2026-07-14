@@ -1214,6 +1214,13 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup);
+/* Adopt an already authenticated, immutable original PC34 F0435 snapshot.
+ * `sourcePath` is retained only for the resume receipt; M11 never reopens it.
+ */
+int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
+                                              const uint8_t* bytes,
+                                              size_t size,
+                                              const char* sourcePath);
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
                                           const char* exportPath);
 int M11_GameView_QuickSave(M11_GameViewState* state);

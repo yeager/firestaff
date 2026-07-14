@@ -57,6 +57,54 @@ typedef struct PC34ExternalRuntimeTraceStep {
     M12_MenuInput input;
 } PC34ExternalRuntimeTraceStep;
 
+typedef struct PC34ExternalSaveSnapshot {
+    uint8_t *bytes;
+    size_t size;
+    uint32_t hash;
+} PC34ExternalSaveSnapshot;
+
+static uint32_t snapshot_hash(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static int read_external_save_snapshot(const char *path,
+                                       PC34ExternalSaveSnapshot *snapshot)
+{
+    FILE *file;
+    long length;
+
+    if (!path || !path[0] || !snapshot) return 0;
+    memset(snapshot, 0, sizeof(*snapshot));
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    snapshot->size = (size_t)length;
+    snapshot->bytes = (uint8_t *)malloc(snapshot->size);
+    if (!snapshot->bytes ||
+        fread(snapshot->bytes, 1u, snapshot->size, file) != snapshot->size) {
+        free(snapshot->bytes);
+        memset(snapshot, 0, sizeof(*snapshot));
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    snapshot->hash = snapshot_hash(snapshot->bytes, snapshot->size);
+    return snapshot->hash != 0u;
+}
+
 static int trace_input_from_name(const char *name, M12_MenuInput *out_input)
 {
     if (!name || !out_input) return 0;
@@ -207,6 +255,7 @@ int main(void)
 
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        PC34ExternalSaveSnapshot snapshot;
         struct GameWorld_Compat expected_world;
         M11_GameViewState state;
         unsigned char framebuffer[320 * 200];
@@ -224,19 +273,24 @@ int main(void)
 
         CHECK(receipt_is_runtime_admitted(receipt),
               "external save owns an admitted F0435 runtime");
+        CHECK(read_external_save_snapshot(receipt->path, &snapshot) &&
+                  snapshot.size == receipt->source_byte_count &&
+                  snapshot.hash == receipt->source_hash,
+              "external runtime consumes the corpus-certified source snapshot");
         memset(&expected_world, 0, sizeof(expected_world));
         M11_GameView_Init(&state);
         CHECK(M11_GameView_StartDm1(&state, data_dir),
               "M11 starts against original PC34 data");
-        CHECK(dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
-                  receipt->path, &state.world, &expected_world, NULL, NULL) ==
+        CHECK(dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+                  snapshot.bytes, snapshot.size, &expected_world, NULL, NULL) ==
                   DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
-              "F0435 materializes an owned expected world");
+              "F0435 materializes the certified expected world");
         CHECK(F0891_ORCH_WorldHash_Compat(&expected_world,
                                            &expected_world_hash),
               "F0435 materializes a serializable expected runtime world");
-        CHECK(M11_GameView_LoadDm1SavePath(&state, receipt->path, NULL),
-              "M11 adopts the same external F0435 runtime");
+        CHECK(M11_GameView_LoadDm1OriginalPc34SaveBytes(
+                  &state, snapshot.bytes, snapshot.size, receipt->path),
+              "M11 adopts the same certified F0435 runtime");
         CHECK(state.dm1ViewportRuntimeOrigin ==
                   DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
               "M11 marks the viewport as an original-save runtime");
@@ -452,6 +506,15 @@ int main(void)
                state.world.party.mapY, state.world.party.direction,
                (unsigned int)state.world.gameTick,
                state.world.party.championCount, post_tick_viewport_hash);
+        {
+            PC34ExternalSaveSnapshot final_snapshot;
+            CHECK(read_external_save_snapshot(receipt->path, &final_snapshot) &&
+                      final_snapshot.size == snapshot.size &&
+                      final_snapshot.hash == snapshot.hash,
+                  "external save remains the certified snapshot through runtime replay");
+            free(final_snapshot.bytes);
+        }
+        free(snapshot.bytes);
         F0883_WORLD_Free_Compat(&expected_world);
         M11_GameView_Shutdown(&state);
     }
