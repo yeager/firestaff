@@ -15784,6 +15784,15 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
+
+The engine now binds Structure3 entry-header boundaries and face-row local
+vertex-index evidence to the exact active canonical LEV bytes. Any stale or
+mutated source withdraws the receipt. This remains a no-draw framing boundary:
+it proves neither Saturn transforms nor surfaces, materials, textures,
+palettes, VDP1 commands, or rendering. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the

@@ -2226,6 +2226,7 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveLevelRendererSourceReceipt active_source;
         Nexus_V1_DgnActiveStructure3DirectoryReceipt active_directory;
         Nexus_V1_DgnActiveStructure3MeshSemanticReceipt active_mesh_semantics;
+        Nexus_V1_DgnActiveStructure3FaceFramingReceipt active_face_framing;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_Viewport viewport;
 
@@ -2274,6 +2275,22 @@ static void test_structure3_entry_header_boundaries(void) {
               active_mesh_semantics.no_draw_only &&
               !active_mesh_semantics.fallback_visuals_permitted,
               "active canonical LEV exposes only source-bound Structure3 mesh facts");
+        CHECK(nexus_v1_current_level_structure3_face_framing_receipt(
+                  &engine, &active_face_framing) == 1 &&
+              active_face_framing.valid && active_face_framing.level_index == 0 &&
+              active_face_framing.source_byte_count == (int)sizeof(dgn) &&
+              active_face_framing.source_bytes_fnv1a64 == fnv1a64(dgn, sizeof(dgn)) &&
+              active_face_framing.entry_headers.valid &&
+              active_face_framing.entry_headers.entry_count == 2 &&
+              active_face_framing.entry_headers.boundaries_valid &&
+              active_face_framing.faces.valid &&
+              active_face_framing.faces.entry_headers_valid &&
+              active_face_framing.faces.face_count == 4 &&
+              active_face_framing.faces.face_vertex_indexes_valid &&
+              !active_face_framing.transform_semantics_proven &&
+              active_face_framing.no_draw_only &&
+              !active_face_framing.fallback_visuals_permitted,
+              "active canonical LEV exposes source-bound Structure3 face framing only");
         memset(&active_source, 0, sizeof(active_source));
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 1 &&
@@ -2316,6 +2333,11 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_mesh_semantics.valid && active_mesh_semantics.no_draw_only &&
               !active_mesh_semantics.fallback_visuals_permitted,
               "active mesh semantics withdraw when retained LEV bytes change");
+        CHECK(nexus_v1_current_level_structure3_face_framing_receipt(
+                  &engine, &active_face_framing) == 0 &&
+              !active_face_framing.valid && active_face_framing.no_draw_only &&
+              !active_face_framing.fallback_visuals_permitted,
+              "active face framing withdraws when retained LEV bytes change");
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
                   &engine, 0, live_vertices, 4, live_faces, 2,
                   live_normals, 2, &live_mesh) == -1 &&

@@ -2394,6 +2394,39 @@ int nexus_v1_current_level_structure3_mesh_semantic_receipt(
     return 1;
 }
 
+int nexus_v1_current_level_structure3_face_framing_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure3FaceFramingReceipt *out_receipt)
+{
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        nexus_v1_level_structure3_entry_header_receipt(
+            &engine->current_level, &out_receipt->entry_headers) != 0 ||
+        !out_receipt->entry_headers.valid ||
+        nexus_v1_level_structure3_face_receipt(
+            &engine->current_level, &out_receipt->faces) != 0 ||
+        !out_receipt->faces.valid || !out_receipt->faces.entry_headers_valid ||
+        !out_receipt->faces.face_vertex_indexes_valid) return 0;
+    out_receipt->valid = 1;
+    out_receipt->level_index = engine->game.current_level;
+    out_receipt->source_byte_count = engine->current_level_dgn_size;
+    out_receipt->source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
