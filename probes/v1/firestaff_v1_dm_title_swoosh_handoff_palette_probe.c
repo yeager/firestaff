@@ -91,6 +91,17 @@ static int find_title_sample(const unsigned char* framebuffer,
     return 0;
 }
 
+static uint32_t hash_indexed_frame(const unsigned char* framebuffer) {
+    uint32_t hash = 2166136261u;
+
+    if (!framebuffer) return 0u;
+    for (int i = 0; i < M11_FB_BYTES; ++i) {
+        hash ^= framebuffer[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 int main(int argc, char** argv) {
     const char* graphicsPath;
     FILE* graphicsFile;
@@ -108,6 +119,8 @@ int main(int argc, char** argv) {
     int presentedW = 0;
     int presentedH = 0;
     unsigned char readbackRgb[3] = {0, 0, 0};
+    unsigned char filteredRgb[3] = {0, 0, 0};
+    uint32_t sourceHash;
     ProbeStats stats = {0, 0, 0};
 
     if (argc < 2) {
@@ -216,6 +229,7 @@ int main(int argc, char** argv) {
                                       (int)blitPlan.srcW,
                                       (int)blitPlan.srcH,
                                       blitPlan.transparentColor);
+    sourceHash = hash_indexed_frame(framebuffer);
     record(&stats,
            "TITLE_SWOOSH_HANDOFF_SAMPLE_FOUND",
            find_title_sample(framebuffer, &sampleX, &sampleY, &sampleIndex),
@@ -261,6 +275,65 @@ int main(int argc, char** argv) {
         record(&stats, "TITLE_SWOOSH_HANDOFF_SDL_READBACK_RGB", 0,
                "SDL renderer readback unavailable");
     }
+
+    /* V2.0 is allowed to filter only the RGBA presentation copy after the
+     * original C001 palette expansion. The original indexed C001 frame must
+     * remain intact and a disabled filter returns the exact source RGB. */
+    M11_Render_SetV2PresentationActive(1);
+    (void)M11_Render_SetV2Filters(0, 0, 1, 100, -25, 0,
+                                  0, 0, 0, 0, 0);
+    record(&stats,
+           "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PRESENT",
+           M11_Render_PresentIndexedWithSpecialPalette(
+               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+               VGA_PALETTE_PC34_SPECIAL_TITLE) == M11_RENDER_OK,
+           "V2.0 filters the expanded C001 special-palette presentation");
+    presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+    if (presented && sampleX >= 0 && sampleY >= 0 &&
+        sampleX < presentedW && sampleY < presentedH) {
+        const unsigned char* px = presented +
+            ((sampleY * presentedW + sampleX) * 4);
+        filteredRgb[0] = px[0];
+        filteredRgb[1] = px[1];
+        filteredRgb[2] = px[2];
+        record(&stats,
+               "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PIXELS",
+               filteredRgb[0] != readbackRgb[0] ||
+                   filteredRgb[1] != readbackRgb[1] ||
+                   filteredRgb[2] != readbackRgb[2],
+               "V2.0 changes only the presented C001 RGB sample");
+    } else {
+        record(&stats, "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PIXELS", 0,
+               "filtered C001 sample unavailable");
+    }
+    record(&stats,
+           "TITLE_SWOOSH_HANDOFF_SOURCE_INDEXED_UNCHANGED",
+           hash_indexed_frame(framebuffer) == sourceHash,
+           "V2.0 never rewrites the source C001 indexed frame");
+
+    (void)M11_Render_SetV2Filters(0, 0, 0, 100, 0, 0,
+                                  0, 0, 0, 0, 0);
+    record(&stats,
+           "TITLE_SWOOSH_HANDOFF_V1_PALETTE_RESTORED",
+           M11_Render_PresentIndexedWithSpecialPalette(
+               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+               VGA_PALETTE_PC34_SPECIAL_TITLE) == M11_RENDER_OK,
+           "disabling V2.0 restores the source special-palette route");
+    presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+    if (presented && expected && sampleX >= 0 && sampleY >= 0 &&
+        sampleX < presentedW && sampleY < presentedH) {
+        const unsigned char* px = presented +
+            ((sampleY * presentedW + sampleX) * 4);
+        record(&stats,
+               "TITLE_SWOOSH_HANDOFF_V1_PALETTE_EXACT",
+               px[0] == expected[0] && px[1] == expected[1] &&
+                   px[2] == expected[2],
+               "unfiltered C001 sample is byte-identical to the original palette");
+    } else {
+        record(&stats, "TITLE_SWOOSH_HANDOFF_V1_PALETTE_EXACT", 0,
+               "restored C001 sample unavailable");
+    }
+    M11_Render_SetV2PresentationActive(0);
 
     printf("summary=%d passed %d failed total=%d\n",
            stats.passed, stats.failed, stats.total);
