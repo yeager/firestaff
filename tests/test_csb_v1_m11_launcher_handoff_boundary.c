@@ -243,6 +243,7 @@ static void run_real_launcher_handoff_if_available(void) {
     unsigned char framebuffer[320 * 200];
     unsigned char title_presents_frame[320 * 200];
     unsigned char title_chaos_frame[320 * 200];
+    unsigned char title_strikes_frame[320 * 200];
     unsigned char entrance_closed_frame[320 * 200];
     unsigned char entrance_opening_frame[320 * 200];
     int tick_before;
@@ -374,6 +375,53 @@ static void run_real_launcher_handoff_if_available(void) {
                                      title_chaos_frame,
                                      sizeof(title_chaos_frame)) > 64,
                 "M11 CSB title phases are visually distinct");
+    for (int i = 0;
+         i < csb_v1_startup_title_chaos_zoom_ticks_pc34() +
+                 csb_v1_startup_title_chaos_hold_ticks_pc34() &&
+         view.csbState.startup_title_active &&
+         csb_v1_startup_title_stage_for_frame_pc34(
+             view.csbState.startup_title_frame) !=
+             CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+         ++i) {
+        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 CSB launcher title prelude advances CHAOS before STRIKES BACK");
+    }
+    expect_true(view.csbState.startup_title_active == 1 &&
+                    csb_v1_startup_title_stage_for_frame_pc34(
+                        view.csbState.startup_title_frame) ==
+                        CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+                    view.csbState.startup_title_source_step == 21,
+                "M11 CSB launcher title prelude reaches the source STRIKES BACK phase");
+    memset(title_strikes_frame, 0, sizeof(title_strikes_frame));
+    M11_GameView_Draw(&view, title_strikes_frame, 320, 200);
+    {
+        const CSB_V1_StartupRuntimeSurface_PC34 *strikes =
+            &((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                  view.csbStartupRuntimeAssetSession)
+                 ->surfaces.surfaces[
+                     CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+        int row_matches = strikes->valid && strikes->width == 320 &&
+            strikes->height == 57 && strikes->transparent_color == 0;
+        int row;
+
+        for (row = 0; row_matches && row < strikes->height; ++row) {
+            if (memcmp(title_strikes_frame + (size_t)(118 + row) * 320u,
+                       strikes->pixels + (size_t)row * strikes->width,
+                       (size_t)strikes->width) != 0) {
+                row_matches = 0;
+            }
+        }
+        expect_true(row_matches,
+                    "M11 CSB launcher STRIKES BACK frame consumes C001 source bytes at C426 geometry");
+    }
+    expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES,
+                "M11 CSB launcher STRIKES BACK frame keeps the C426 special palette");
+    expect_true(count_changed_pixels(title_chaos_frame,
+                                     title_strikes_frame,
+                                     sizeof(title_strikes_frame)) > 64,
+                "M11 CSB CHAOS and STRIKES BACK title captures are visually distinct");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 CSB launcher title/entrance ignores Enter before source wait loop");
