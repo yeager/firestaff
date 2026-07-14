@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- DONE 2026-07-14 Nexus Structure3 face-normal geometry receipt: the bounded
+  LEV00-LEV15 parser now cross-checks each documented face/normal pair against
+  the signed-16.16 source vertices under an overflow-safe envelope. The retail
+  corpus preserves 18,478 measured faces: 11,876 exactly orthogonal to their
+  tested base edges, 6,602 nonorthogonal, and cross/normal orientation counts
+  of 15,877 positive and 2,601 negative. The receipt is carried through the
+  mesh handoff and render plan but explicitly proves no normal-use, winding,
+  culling, transform, texture, palette, VDP1, or draw behavior. Verification:
+  `test_nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - 2026-07-14 DM1 PC34 C11 save-runtime materialization: the focused F0435
   regression now stages three source-valid `ENABLE_CHAMPION_ACTION` records,
   including MENU.C F0407's ordinal-two throw form, and drives them through

@@ -892,6 +892,31 @@ typedef struct {
     int normal_plane_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceNormalPairReceipt;
 
+/* This is an arithmetic cross-check over the already paired Structure3b/3c
+ * rows. It measures whether each fixed-point normal is orthogonal to every
+ * distinct edge from its face's first vertex, and records the sign of its dot
+ * product with one non-collinear face cross product. This is neither a Saturn
+ * normal-use rule nor a culling, transform, lighting, texture, palette, VDP1,
+ * or draw rule. */
+typedef struct {
+    int face_receipt_valid;
+    int vector_receipt_valid;
+    int face_normal_pairing_valid;
+    int face_count;
+    int measured_face_count;
+    int orthogonal_face_count;
+    int nonorthogonal_face_count;
+    int edge_test_count;
+    int orthogonal_edge_test_count;
+    int positive_cross_normal_dot_count;
+    int negative_cross_normal_dot_count;
+    int zero_cross_normal_dot_count;
+    int arithmetic_envelope_safe;
+    int accounting_valid;
+    int valid;
+    int normal_plane_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3FaceNormalGeometryReceipt;
+
 /* This is the renderer-facing boundary for the bounded Structure3 mesh
  * evidence. It aggregates only topology, vector, and face/normal-row facts.
  * An original Saturn capture remains mandatory before a normal plane,
@@ -901,6 +926,7 @@ typedef struct {
     int source_vectors_valid;
     int source_face_geometry_valid;
     int source_face_normal_pairing_valid;
+    int source_face_normal_geometry_valid;
     int source_facts_complete;
     int entry_count;
     int vertex_count;
@@ -1314,6 +1340,8 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt structure3_face_edges;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
+    Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
+        structure3_face_normal_geometry;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1403,6 +1431,8 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt structure3_face_edges;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
+    Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
+        structure3_face_normal_geometry;
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt structure3_mesh_semantics;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1873,6 +1903,8 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceEdgeReceipt structure3_face_edges;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
+    Nexus_V1_DgnStructure3FaceNormalGeometryReceipt
+        structure3_face_normal_geometry;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -2097,6 +2129,10 @@ int nexus_v1_level_structure3_face_edge_receipt(
 int nexus_v1_level_structure3_face_normal_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt);
+
+int nexus_v1_level_structure3_face_normal_geometry_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceNormalGeometryReceipt *out_receipt);
 int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt *out_receipt);

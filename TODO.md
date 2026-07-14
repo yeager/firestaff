@@ -1457,6 +1457,15 @@ winding, manifoldness, surface continuity, transforms, culling, UVs, texture
 or palette decoding, VDP1 state, or a draw command. Original Saturn execution
 evidence remains required before any mesh rendering route can be promoted.
 
+2026-07-14 update: the paired Structure3 face/normal rows now also have an
+overflow-bounded fixed-point arithmetic receipt. Across the verified retail
+corpus it measures exact base-edge orthogonality and one non-collinear
+cross-product/normal-dot sign per face, preserving the observed mixed result
+instead of inventing a winding or normal-use convention. It remains no-draw:
+only an original Saturn execution trace or frame capture may establish normal
+use, transforms, texture/palette decoding, culling, VDP1 ordering, or a host
+mesh command.
+
 2026-07-13 update: the LEV00-LEV15 verification gate now checks all 1,678
 Structure2 descriptors and the observed 2,944 nonzero targets as aligned,
 two-byte-bounded addresses inside their own opaque spans. This strengthens the
