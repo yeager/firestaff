@@ -127,6 +127,18 @@ int theron_v1_track02_raw_bytes_match_md5(const uint8_t *bytes, size_t count,
     return strcmp(actual_hex, expected_hex) == 0;
 }
 
+Theron_V1Track02Variant theron_v1_track02_variant_from_md5(
+    const char *track02_md5) {
+    if (!track02_md5) return THERON_V1_TRACK02_VARIANT_NONE;
+    if (strcmp(track02_md5, THERON_V1_TRACK02_MD5_JP_BIN) == 0) {
+        return THERON_V1_TRACK02_VARIANT_JP_BIN;
+    }
+    if (strcmp(track02_md5, THERON_V1_TRACK02_MD5_US_BIN) == 0) {
+        return THERON_V1_TRACK02_VARIANT_US_BIN;
+    }
+    return THERON_V1_TRACK02_VARIANT_NONE;
+}
+
 int theron_v1_dungeon_handoff_select_initial_level(
     const Theron_V1DungeonHandoffFacts *facts,
     Theron_V1DungeonHandoffReceipt *out_receipt) {
@@ -140,6 +152,7 @@ int theron_v1_dungeon_handoff_select_initial_level(
     uint16_t header_height;
     uint32_t header_seed;
     uint16_t header_identifier;
+    Theron_V1Track02Variant variant;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!facts || !out_receipt || !facts->runtime_admission ||
@@ -150,11 +163,12 @@ int theron_v1_dungeon_handoff_select_initial_level(
         return 0;
     }
 
-    if (strcmp(facts->track02_md5, THERON_V1_TRACK02_MD5_JP_BIN) == 0) {
+    variant = theron_v1_track02_variant_from_md5(facts->track02_md5);
+    if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
         candidate_offset = TQR_JP_CANDIDATE_RAW_OFFSET;
         descriptor_offset = TQR_JP_DESCRIPTOR_RAW_OFFSET;
         cue_index01_sector = TQR_JP_CUE_INDEX01_RAW_SECTOR;
-    } else if (strcmp(facts->track02_md5, THERON_V1_TRACK02_MD5_US_BIN) == 0) {
+    } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
         candidate_offset = TQR_US_CANDIDATE_RAW_OFFSET;
         descriptor_offset = TQR_US_DESCRIPTOR_RAW_OFFSET;
         cue_index01_sector = TQR_US_CUE_INDEX01_RAW_SECTOR;
@@ -210,6 +224,7 @@ int theron_v1_dungeon_handoff_select_initial_level(
     receipt.track02_raw_sector = raw_sector;
     receipt.raw_sector_offset = raw_sector_offset;
     receipt.raw_track02_md5_verified = 1;
+    receipt.raw_track02_variant = variant;
     receipt.adjacent_boundary_opaque = 1;
     receipt.route = "raw_track02_initial_envelope";
     *out_receipt = receipt;
