@@ -137,6 +137,7 @@ int main(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_GdatSceneM11CommandPlan plan;
     DM2_V1_GdatSceneM11CommandPlan mismatched;
+    DM2_V1_GdatSceneQueryBlitRectReceipt rect_receipt;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     uint8_t seen_styles[256];
@@ -153,10 +154,23 @@ int main(void)
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&plan, 0, sizeof(plan));
     memset(&mismatched, 0, sizeof(mismatched));
+    memset(&rect_receipt, 0, sizeof(rect_receipt));
     memset(seen_styles, 0, sizeof(seen_styles));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0) {
         fputs("FAIL: canonical DM2 GDAT/G1 input was not accepted\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    if (!dm2_v1_gdat_scene_query_blit_rect_receipt(&loader, &rect_receipt) ||
+        !rect_receipt.valid ||
+        rect_receipt.floor_rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+        rect_receipt.ceiling_rect_number !=
+            DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+        rect_receipt.table_hash == 0u || rect_receipt.floor_row_hash == 0u ||
+        rect_receipt.ceiling_row_hash == 0u) {
+        fputs("FAIL: canonical GDAT lacks source-owned QUERY_BLIT_RECT 700/701 rows\n",
+              stderr);
         failures = 1;
         goto done;
     }
