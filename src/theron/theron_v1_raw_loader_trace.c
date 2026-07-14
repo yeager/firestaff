@@ -1,6 +1,7 @@
 #include "theron_v1_raw_loader_trace.h"
 
 #include "theron_v1_irq2_live_trace_gate.h"
+#include "theron_v1_stage3_manifest_evidence.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -424,7 +425,12 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     size_t returned_count = 0u;
     size_t raw_sector_count;
     size_t first_raw_offset;
+    size_t selector_ordinal;
     const char *expected_md5;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3ManifestEvidence manifest;
+    uint32_t derived_record_base;
+    uint32_t selector;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!trace || !capture || !track02_data || !track02_md5 || !out ||
@@ -443,6 +449,15 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     expected_md5 = trace->variant == THERON_TRACK02_VARIANT_JP_BIN
         ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
     if (strcmp(track02_md5, expected_md5) != 0) return 0;
+    if (theron_v1_track02_inspect_stage2_dynamic_payload(
+            track02_data, track02_size, track02_md5, &payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_stage3_manifest_evidence_from_payload(
+            track02_data, track02_size, &payload, &manifest) ||
+        manifest.variant != trace->variant ||
+        manifest.track02_record != trace->dynamic_cd_read_record ||
+        manifest.first_descriptor.word2 == 0u ||
+        manifest.track02_record < manifest.first_descriptor.word2) return 0;
 
     cursor = capture;
     while (tqr_trace_next_line(&cursor, &line, &length)) {
@@ -472,6 +487,17 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     raw_sector_count = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
     if (record >= raw_sector_count || sector_count > raw_sector_count - record)
         return 0;
+    derived_record_base = manifest.track02_record -
+        manifest.first_descriptor.word2;
+    if (record < derived_record_base ||
+        record - derived_record_base > UINT16_MAX) return 0;
+    selector = record - derived_record_base;
+    for (selector_ordinal = 0u;
+         selector_ordinal < manifest.descriptor_count;
+         ++selector_ordinal) {
+        if (manifest.descriptors[selector_ordinal].word2 == selector) break;
+    }
+    if (selector_ordinal == manifest.descriptor_count) return 0;
     first_raw_offset = (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES;
 
     out->valid = 1;
@@ -479,6 +505,8 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
     out->stage3_track02_record = trace->dynamic_cd_read_record;
     out->later_track02_record = record;
+    out->descriptor_selector = (uint16_t)selector;
+    out->descriptor_selector_ordinal = selector_ordinal;
     out->caller_pc = (uint16_t)caller_pc;
     out->return_pc = (uint16_t)return_pc;
     out->sector_count = (uint8_t)sector_count;
@@ -492,6 +520,7 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
         track02_data, record, sector_count);
     out->later_e009_return_verified = 1;
     out->later_cd_read_to_media_verified = 1;
+    out->descriptor_selector_bound = 1;
     return 1;
 }
 

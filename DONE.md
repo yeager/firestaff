@@ -13868,6 +13868,18 @@ dungeon ID.
 
 # ✅ 2026-07-14 Theron later `$e009` capture correlation gate
 
+# ✅ 2026-07-14 Theron later `$e009` production selector-coordinate gate
+
+The production later-loader media receipt now derives the captured `$e009`
+record from the authenticated Stage 3 descriptor coordinate base and accepts
+it only when it resolves to an existing descriptor selector. It retains the
+opaque selector and ordinal with the raw-sector receipt. A raw-sector-only or
+synthetic media buffer cannot publish the receipt. This is still only an
+executed loader-coordinate constraint: it assigns no descriptor format,
+dungeon, object, palette, bitmap, or transition semantics. Verification:
+`theron_v1_raw_loader_trace_stage3_sector` passes; the paired original-media
+layout probe remains skip-safe until matching JP/US Mednafen traces exist.
+
 Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
 first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
 hash-verified JP and US raw Track 02 images plus matching instrumented traces;

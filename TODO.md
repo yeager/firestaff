@@ -853,6 +853,13 @@ coordinates, and a user-data hash. This is a positive executed
 loader-to-media fact, not a dungeon/map/object/palette/bitmap meaning; a
 positive dungeon route still needs an authentic executed range whose format
 and route relationship are independently observed.
+2026-07-14 selector-coordinate update: the production later-loader receipt
+now additionally requires its captured record to resolve through the same
+hash-verified Stage 3 descriptor selector table used by the paired-corpus
+gate, and retains that selector plus ordinal. Synthetic or raw-sector-only
+records cannot publish this receipt. This remains a coordinate constraint,
+not a descriptor-format, dungeon, object, palette, bitmap, or transition
+claim; a fresh matched JP/US Mednafen capture is still required.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
