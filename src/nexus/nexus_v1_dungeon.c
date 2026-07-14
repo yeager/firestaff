@@ -1671,10 +1671,14 @@ static void nexus_v1_level_bind_structure3_face_materials(
     Nexus_V1_Level *level, const uint8_t *data, int size)
 {
     Nexus_V1_DgnStructure3FaceMaterialReceipt receipt;
+    uint8_t static_selector_seen[256];
+    uint8_t animated_selector_seen[256];
     int entry;
 
     if (!level || !data || size <= 0) return;
     memset(&receipt, 0, sizeof(receipt));
+    memset(static_selector_seen, 0, sizeof(static_selector_seen));
+    memset(animated_selector_seen, 0, sizeof(animated_selector_seen));
     receipt.face_receipt_valid = level->structure3_faces.valid;
     receipt.face_count = level->structure3_faces.face_count;
     receipt.valid = receipt.face_receipt_valid &&
@@ -1706,22 +1710,37 @@ static void nexus_v1_level_bind_structure3_face_materials(
             if ((face[8] & 0x40U) == 0U) {
                 ++receipt.non_textured_face_count;
             } else if ((fill & 0xff00U) == 0U) {
+                uint8_t selector = (uint8_t)(fill & 0xffU);
+
                 ++receipt.textured_face_count;
                 ++receipt.static_texture_selector_count;
-                if (nexus_v1_level_find_structure2_texture(level, fill & 0xffU))
+                if (static_selector_seen[selector])
+                    ++receipt.static_texture_reused_selector_count;
+                else {
+                    static_selector_seen[selector] = 1;
+                    ++receipt.static_texture_unique_selector_count;
+                }
+                if (nexus_v1_level_find_structure2_texture(level, selector))
                     ++receipt.static_texture_bound_count;
                 else
                     ++receipt.static_texture_unbound_count;
             } else if ((fill & 0xff00U) == 0x0800U) {
+                uint8_t selector = (uint8_t)(fill & 0xffU);
                 int animation;
                 int bound = 0;
 
                 ++receipt.textured_face_count;
                 ++receipt.animated_texture_selector_count;
+                if (animated_selector_seen[selector])
+                    ++receipt.animated_texture_reused_selector_count;
+                else {
+                    animated_selector_seen[selector] = 1;
+                    ++receipt.animated_texture_unique_selector_count;
+                }
                 for (animation = 0; animation < level->structure1g_entry_count;
                      ++animation) {
                     if (level->structure1g_entries[animation].animation_id ==
-                        (uint8_t)(fill & 0xffU)) {
+                        selector) {
                         bound = 1;
                         break;
                     }
@@ -1739,6 +1758,13 @@ static void nexus_v1_level_bind_structure3_face_materials(
         receipt.static_texture_unbound_count == 0 &&
         receipt.animated_texture_unbound_count == 0 &&
         receipt.unsupported_textured_fill_count == 0;
+    receipt.selector_reuse_accounting_valid =
+        receipt.static_texture_unique_selector_count +
+                receipt.static_texture_reused_selector_count ==
+            receipt.static_texture_selector_count &&
+        receipt.animated_texture_unique_selector_count +
+                receipt.animated_texture_reused_selector_count ==
+            receipt.animated_texture_selector_count;
     receipt.material_or_draw_semantics_proven = 0;
     level->structure3_face_materials = receipt;
 }

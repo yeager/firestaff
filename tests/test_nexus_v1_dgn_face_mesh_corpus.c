@@ -55,8 +55,12 @@ int main(void) {
     int textured_face_total = 0;
     int static_selector_total = 0;
     int static_bound_total = 0;
+    int static_unique_selector_total = 0;
+    int static_reused_selector_total = 0;
     int animated_selector_total = 0;
     int animated_bound_total = 0;
+    int animated_unique_selector_total = 0;
+    int animated_reused_selector_total = 0;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -105,6 +109,7 @@ int main(void) {
         CHECK(materials.face_receipt_valid && materials.valid &&
               materials.textured_face_count == faces.textured_face_count &&
               materials.selector_bindings_complete &&
+              materials.selector_reuse_accounting_valid &&
               !materials.material_or_draw_semantics_proven,
               "retail Structure3 texture selectors are bounded but remain no-draw");
         memset(commands, 0, sizeof(commands));
@@ -144,16 +149,22 @@ int main(void) {
         textured_face_total += materials.textured_face_count;
         static_selector_total += materials.static_texture_selector_count;
         static_bound_total += materials.static_texture_bound_count;
+        static_unique_selector_total += materials.static_texture_unique_selector_count;
+        static_reused_selector_total += materials.static_texture_reused_selector_count;
         animated_selector_total += materials.animated_texture_selector_count;
         animated_bound_total += materials.animated_texture_bound_count;
+        animated_unique_selector_total += materials.animated_texture_unique_selector_count;
+        animated_reused_selector_total += materials.animated_texture_reused_selector_count;
         if (materials.selector_bindings_complete) ++selector_complete_levels;
     }
 
     printf("Structure3 face-normal corpus: levels=%d entries=%d pairs=%d unit=%d nonunit=%d\n",
            checked, entry_total, face_total, unit_pair_total, non_unit_pair_total);
-    printf("Structure3 texture-selector corpus: textured=%d static=%d/%d animated=%d/%d\n",
+    printf("Structure3 texture-selector corpus: textured=%d static=%d/%d unique=%d reused=%d animated=%d/%d unique=%d reused=%d\n",
            textured_face_total, static_bound_total, static_selector_total,
-           animated_bound_total, animated_selector_total);
+           static_unique_selector_total, static_reused_selector_total,
+           animated_bound_total, animated_selector_total,
+           animated_unique_selector_total, animated_reused_selector_total);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -164,5 +175,15 @@ int main(void) {
               static_selector_total == 17401 && static_bound_total == 17401 &&
               animated_selector_total == 420 && animated_bound_total == 420,
           "retail texture selector joins remain corpus-verified without decoding pixels");
+    CHECK(static_unique_selector_total + static_reused_selector_total ==
+              static_selector_total &&
+              animated_unique_selector_total + animated_reused_selector_total ==
+                  animated_selector_total,
+          "retail selector reuse remains completely accounted without texture semantics");
+    CHECK(static_unique_selector_total == 1291 &&
+              static_reused_selector_total == 16110 &&
+              animated_unique_selector_total == 44 &&
+              animated_reused_selector_total == 376,
+          "retail selector identity reuse remains corpus-locked without decoding textures");
     return g_fail == 0 ? 0 : 1;
 }
