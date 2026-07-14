@@ -138,19 +138,21 @@ static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
                                            unsigned int *out_bytes,
                                            unsigned int *out_span_offset,
                                            unsigned int *out_span_bytes,
-                                           unsigned int *out_checksum)
+                                           unsigned int *out_span_checksum,
+                                           unsigned int *out_sector_checksum)
 {
     int consumed = 0;
 
     if (!line || !out_lba || !out_bytes || !out_span_offset ||
-        !out_span_bytes || !out_checksum) return 0;
+        !out_span_bytes || !out_span_checksum || !out_sector_checksum) return 0;
     return sscanf(line,
-                  "cd_interface_raw_sector_read lba=%u bytes=%u span_offset=%u span_bytes=%u span_fnv1a=%x%n",
-                  out_lba, out_bytes, out_span_offset, out_span_bytes,
-                  out_checksum, &consumed) == 5 && consumed == (int)length &&
+                  "cd_interface_raw_sector_read lba=%u bytes=%u sector_fnv1a=%x span_offset=%u span_bytes=%u span_fnv1a=%x%n",
+                  out_lba, out_bytes, out_sector_checksum, out_span_offset,
+                  out_span_bytes, out_span_checksum, &consumed) == 6 &&
+           consumed == (int)length &&
            *out_bytes == THERON_TRACK02_RAW_SECTOR_BYTES &&
            *out_span_offset == 0u && *out_span_bytes == 32u &&
-           *out_checksum != 0u;
+           *out_span_checksum != 0u && *out_sector_checksum != 0u;
 }
 
 static uint32_t tqr_trace_fnv1a_user_data_range(const uint8_t *track02_data,
@@ -562,8 +564,10 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
     unsigned int span_offset = 0u;
     unsigned int span_bytes = 0u;
     unsigned int checksum = 0u;
+    unsigned int sector_checksum = 0u;
     unsigned int matched_lba = 0u;
-    uint32_t expected_checksum;
+    uint32_t expected_span_checksum;
+    uint32_t expected_sector_checksum;
     const char *expected_md5;
 
     if (out) memset(out, 0, sizeof(*out));
@@ -574,7 +578,8 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
         !later_receipt->descriptor_selector_bound ||
         strcmp(later_receipt->track02_md5, track02_md5) != 0 ||
         later_receipt->first_raw_offset > track02_size ||
-        32u > track02_size - later_receipt->first_raw_offset ||
+        THERON_TRACK02_RAW_SECTOR_BYTES >
+            track02_size - later_receipt->first_raw_offset ||
         (later_receipt->variant != THERON_TRACK02_VARIANT_JP_BIN &&
          later_receipt->variant != THERON_TRACK02_VARIANT_US_BIN)) {
         return 0;
@@ -583,8 +588,11 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
         ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
     if (strcmp(track02_md5, expected_md5) != 0) return 0;
 
-    expected_checksum = tqr_trace_fnv1a_bytes(
+    expected_span_checksum = tqr_trace_fnv1a_bytes(
         track02_data + later_receipt->first_raw_offset, 32u);
+    expected_sector_checksum = tqr_trace_fnv1a_bytes(
+        track02_data + later_receipt->first_raw_offset,
+        THERON_TRACK02_RAW_SECTOR_BYTES);
     cursor = cd_capture;
     while (tqr_trace_next_line(&cursor, &line, &length)) {
         if (length == strlen("source=mednafen-pce-instrumented-cd") &&
@@ -595,8 +603,9 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
                           strlen("cd_interface_raw_sector_read ")) == 0) {
             if (!tqr_trace_parse_raw_sector_span(line, length, &lba, &bytes,
                                                   &span_offset, &span_bytes,
-                                                  &checksum)) return 0;
-            if (checksum == expected_checksum) {
+                                                  &checksum, &sector_checksum)) return 0;
+            if (checksum == expected_span_checksum &&
+                sector_checksum == expected_sector_checksum) {
                 ++matching_span_count;
                 matched_lba = lba;
             }
@@ -611,8 +620,10 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
     out->descriptor_selector = later_receipt->descriptor_selector;
     out->descriptor_selector_ordinal = later_receipt->descriptor_selector_ordinal;
     out->observed_raw_sector_lba = (int)matched_lba;
+    out->observed_raw_sector_bytes = THERON_TRACK02_RAW_SECTOR_BYTES;
+    out->observed_raw_sector_checksum = expected_sector_checksum;
     out->observed_raw_sector_span_bytes = 32u;
-    out->observed_raw_sector_span_checksum = expected_checksum;
+    out->observed_raw_sector_span_checksum = expected_span_checksum;
     out->same_capture_raw_sector_span_verified = 1;
     return 1;
 }

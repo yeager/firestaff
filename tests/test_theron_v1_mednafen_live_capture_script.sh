@@ -36,9 +36,10 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
     printf 'FAIL: capture script must keep the opt-in macOS Return focus/input gate\n' >&2
     exit 1
 fi
-if ! grep -Fq 'dynamic CPU receipts lack a bounded authentic raw-sector span' "$script" ||
+if ! grep -Fq 'dynamic CPU receipts lack a complete authentic raw-sector receipt' "$script" ||
+   ! grep -Fq 'sector_fnv1a=' "$script" ||
    ! grep -Fq 'span_offset=0 span_bytes=32 span_fnv1a=' "$script"; then
-    printf 'FAIL: capture script must gate dynamic reads on an authentic raw-sector span\n' >&2
+    printf 'FAIL: capture script must gate dynamic reads on a complete authentic raw-sector receipt\n' >&2
     exit 1
 fi
 if ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$script"; then

@@ -13,7 +13,8 @@ if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x addre
    ! grep -Fq 'system_card_cd_register_store pc=%04x physical_pc=%08x opcode=%02x address=%04x accumulator=%02x value_before=%02x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_result_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x value_before=%02x' "$patch_file" ||
    ! grep -Fq 'system_card_controller_result_memory_write logical=222d physical=%08x value=%02x' "$patch_file" ||
-   ! grep -Fq 'cd_interface_raw_sector_read lba=%d bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=%08x' "$patch_file" ||
+   ! grep -Fq 'cd_interface_raw_sector_read lba=%d bytes=2352 sector_fnv1a=%08x span_offset=0 span_bytes=32 span_fnv1a=%08x' "$patch_file" ||
+   ! grep -Fq 'for(unsigned i = 0; i < 2352; i++)' "$patch_file" ||
    ! grep -Fq 'system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x' "$patch_file" ||
    ! grep -Fq 'TheronIrq2TraceWatchedPC' "$patch_file" ||
    ! grep -Fq 'stage2_4090=%02x%02x%02x stage2_fc=%02x' "$patch_file" ||
