@@ -32,10 +32,22 @@ static void test_table_values(void)
 
 static void test_accessor_functions(void)
 {
+    /* DATA.C stores BOX as inclusive {left,right,top,bottom}, not x/y/w/h. */
     CHECK(dm1_v1_box_action_area_x_pc34() == 224);
-    CHECK(dm1_v1_box_action_area_y_pc34() == 319);
-    CHECK(dm1_v1_box_action_area_w_pc34() == 77);
-    CHECK(dm1_v1_box_action_area_h_pc34() == 121);
+    CHECK(dm1_v1_box_action_area_y_pc34() == 77);
+    CHECK(dm1_v1_box_action_area_w_pc34() == 96);
+    CHECK(dm1_v1_box_action_area_h_pc34() == 45);
+}
+
+static void test_source_box_matches_c010_destination(void)
+{
+    DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
+
+    CHECK(rect.x == dm1_v1_box_action_area_x_pc34());
+    CHECK(rect.y == dm1_v1_box_action_area_y_pc34());
+    CHECK(rect.w == dm1_v1_box_action_area_w_pc34());
+    CHECK(rect.h == dm1_v1_box_action_area_h_pc34());
+    CHECK(DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 == 10);
 }
 
 static void test_get_function(void)
@@ -270,6 +282,7 @@ int main(void)
 {
     test_table_values();
     test_accessor_functions();
+    test_source_box_matches_c010_destination();
     test_get_function();
     test_components_non_negative();
     test_run_accepted();

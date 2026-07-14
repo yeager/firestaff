@@ -32,10 +32,23 @@ static void test_table_values(void)
 
 static void test_accessor_functions(void)
 {
+    /* DATA.C stores BOX as inclusive {left,right,top,bottom}, not x/y/w/h. */
     CHECK(dm1_v1_box_spell_area_x_pc34() == 224);
-    CHECK(dm1_v1_box_spell_area_y_pc34() == 319);
-    CHECK(dm1_v1_box_spell_area_w_pc34() == 42);
-    CHECK(dm1_v1_box_spell_area_h_pc34() == 74);
+    CHECK(dm1_v1_box_spell_area_y_pc34() == 42);
+    CHECK(dm1_v1_box_spell_area_w_pc34() == 96);
+    CHECK(dm1_v1_box_spell_area_h_pc34() == 33);
+}
+
+static void test_source_box_matches_c009_destination(void)
+{
+    DM1_V1_SpellAreaRectPc34 rect =
+        dm1_v1_spell_area_source_box_rect_pc34();
+
+    CHECK(rect.x == dm1_v1_box_spell_area_x_pc34());
+    CHECK(rect.y == dm1_v1_box_spell_area_y_pc34());
+    CHECK(rect.w == dm1_v1_box_spell_area_w_pc34());
+    CHECK(rect.h == dm1_v1_box_spell_area_h_pc34());
+    CHECK(DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 == 9);
 }
 
 static void test_screen_contract_helpers(void)
@@ -282,6 +295,7 @@ int main(void)
 {
     test_table_values();
     test_accessor_functions();
+    test_source_box_matches_c009_destination();
     test_screen_contract_helpers();
     test_rune_contract_helpers();
     test_spell_panel_state_receipts();
