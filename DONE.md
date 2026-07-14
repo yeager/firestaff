@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject side-wall command delivery: the real D3L/D3R/D2L/
+  D2R M11 wall receipts now include G0163 source-crop and destination-panel
+  geometry. The source-required renderer consumes that destination and blocks
+  the complete frame before a draw when any receipt geometry differs.
+
 - 2026-07-15 CSB ReDMCSB title source path: removed manufactured title text
   and corrected the title receipt to the 18 real CHAOS rasters (48x12 through
   320x80), followed by the source-backed PRESENTS and STRIKES regions.

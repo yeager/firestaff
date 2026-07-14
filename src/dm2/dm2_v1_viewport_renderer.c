@@ -3904,6 +3904,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int stride;
         uint8_t palette16[16];
         uint32_t palette_hash;
+        DM2_V1_ViewportRect destination_rect;
         int ready;
     } DM2_V1_WallMaterial;
     if (!s || !s->framebuffer) return;
@@ -3987,7 +3988,16 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                 if (!command || command->field !=
                         dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
                     !command->pixels || !command->width || !command->height ||
-                    !command->decoded_hash || !command->palette_hash) {
+                    !command->decoded_hash || !command->palette_hash ||
+                    !command->geometry_hash ||
+                    command->source_x != panel->src_rect.x ||
+                    command->source_y != panel->src_rect.y ||
+                    command->source_width != panel->src_rect.w ||
+                    command->source_height != panel->src_rect.h ||
+                    command->destination_x != panel->dst_rect.x ||
+                    command->destination_y != panel->dst_rect.y ||
+                    command->destination_width != panel->dst_rect.w ||
+                    command->destination_height != panel->dst_rect.h) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
                     return;
                 }
@@ -3997,6 +4007,10 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                 material->stride = command->width;
                 memcpy(material->palette16, command->palette16, sizeof(material->palette16));
                 material->palette_hash = command->palette_hash;
+                material->destination_rect = (DM2_V1_ViewportRect){
+                    command->destination_x, command->destination_y,
+                    command->destination_width, command->destination_height
+                };
                 material->ready = 1;
                 continue;
             }
@@ -4019,6 +4033,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             memcpy(material->palette16, s->active_asset_palette16,
                    sizeof(material->palette16));
             material->palette_hash = s->active_asset_palette_hash;
+            material->destination_rect = panel->dst_rect;
             material->ready = 1;
         }
     }
@@ -4029,6 +4044,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int wall_w = 0;
         int wall_h = 0;
         int wall_stride = 0;
+        const DM2_V1_ViewportRect *destination_rect = &panel->dst_rect;
 
         if (s->source_materials_required) {
             const DM2_V1_WallMaterial *material = &materials[i];
@@ -4036,6 +4052,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             wall_w = material->width;
             wall_h = material->height;
             wall_stride = material->stride;
+            destination_rect = &material->destination_rect;
             memcpy(s->active_asset_palette16, material->palette16,
                    sizeof(s->active_asset_palette16));
             s->active_asset_palette_hash = material->palette_hash;
@@ -4067,10 +4084,10 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         dm2_v1_blit_scaled_material_bitmap(s,
                                   vp,
                                   stride,
-                                  panel->dst_rect.x,
-                                  panel->dst_rect.y,
-                                  panel->dst_rect.w,
-                                  panel->dst_rect.h,
+                                  destination_rect->x,
+                                  destination_rect->y,
+                                  destination_rect->w,
+                                  destination_rect->h,
                                   wall_pixels,
                                   wall_w,
                                   wall_h,

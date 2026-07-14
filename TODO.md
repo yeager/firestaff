@@ -8,6 +8,11 @@
   geometry, distance stretch/light palette selection, and broader door-type
   coverage need direct skproject bindings. No generic panel/frame fallback.
 
+- 2026-07-15 DM2 skproject wall follow-up: D2/D3 side-wall M11 commands now
+  own G0163 source and destination geometry and fail closed on a mismatch.
+  Remaining work is source-proven panel compositing/light behavior, not a
+  renderer-local rectangle or synthetic material path.
+
 - 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
   the verified terminal surface. Do not reopen substitute presentation paths.
 
