@@ -2,6 +2,7 @@
 #define NEXUS_V1_DGN_MESH_H
 
 #include <stdint.h>
+#include "nexus_v1_dgn_face_material_provenance.h"
 
 /*
  * A renderer-neutral packet for parser-validated Structure3 geometry.  This

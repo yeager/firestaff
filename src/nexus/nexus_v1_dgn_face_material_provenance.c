@@ -45,14 +45,20 @@ int nexus_v1_dgn_face_material_validate(
         const Nexus_V1_DgnFaceMaterialBinding *binding = &input->bindings[i];
         if (binding->face_ordinal >= (uint16_t)input->face_count ||
             seen[binding->face_ordinal] ||
-            binding->material_selector >= input->material_selector_count ||
-            (binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
-             binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED)) {
+            (binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR &&
+             binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC &&
+             binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED) ||
+            (binding->selector_kind != NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR &&
+             binding->material_selector >= input->material_selector_count) ||
+            (binding->selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR &&
+             binding->material_selector != 0U)) {
             set_status(out_receipt, NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING);
             return 0;
         }
         seen[binding->face_ordinal] = 1;
-        if (binding->selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC)
+        if (binding->selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_COLOR)
+            ++out_receipt->color_selector_count;
+        else if (binding->selector_kind == NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC)
             ++out_receipt->static_selector_count;
         else
             ++out_receipt->animated_selector_count;

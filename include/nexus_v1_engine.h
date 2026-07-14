@@ -24,6 +24,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_dgn_face_material_provenance.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include <stdint.h>
@@ -83,6 +84,8 @@ typedef struct {
     uint32_t rebuild_count;
     uint32_t cache_hit_count;
     uint32_t invalidation_count;
+    Nexus_V1_DgnFaceMaterialReceipt structure3_face_material_source;
+    int structure3_face_material_source_consumed;
     int valid;
 } Nexus_V1_DgnMaterialPlan;
 
@@ -139,6 +142,10 @@ struct Nexus_V1_Engine {
     Nexus_V1_Level current_level;
     int level_loaded;
     int current_level_dgn_bytes_canonical;
+    /* Retained exact bytes selected and authenticated by the launcher. */
+    uint8_t *current_level_dgn_bytes;
+    int current_level_dgn_size;
+    char current_level_dgn_canonical_md5[33];
 
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
@@ -295,6 +302,10 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
+/* Returns the active level's source-locked Structure3 selector receipt. */
+int nexus_v1_current_level_dgn_face_material_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnFaceMaterialReceipt *out_receipt);
 int nexus_v1_current_level_script_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_ScriptRuntimeReceipt *out_receipt);
