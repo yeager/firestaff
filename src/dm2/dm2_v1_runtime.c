@@ -114,6 +114,10 @@ typedef struct {
     int gdat_interface_palette_ready;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
+    int gdat_interface_action_palette_ready;
+    uint32_t gdat_interface_action_palette_hash;
+    uint8_t gdat_interface_action_palette_darkness;
+    uint8_t gdat_interface_action_palette16[16];
     DM2_V1_G1FirstMapRuntimeReceipt g1_first_map_runtime;
     DM2_V1_G1TeleporterTransitionReceipt g1_map0_teleporter_transition;
     DM2_V1_G1Map5TextRuntimeReceipt g1_map5_text_runtime;
@@ -531,6 +535,11 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->gdat_interface_palette_hash = 0u;
     memset(rt->gdat_interface_palette16, 0,
            sizeof(rt->gdat_interface_palette16));
+    rt->gdat_interface_action_palette_ready = 0;
+    rt->gdat_interface_action_palette_hash = 0u;
+    rt->gdat_interface_action_palette_darkness = 0u;
+    memset(rt->gdat_interface_action_palette16, 0,
+           sizeof(rt->gdat_interface_action_palette16));
     if (!rt->boot || !rt->boot->dungeon_data) return;
 
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
@@ -594,10 +603,29 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         rt->gdat_dialogue_shell_receipt_hash = dialogue_shell.receipt_hash;
     }
     if (dm2_v1_boot_interface_palette(rt->boot, &palette)) {
+        DM2_V1_InterfaceActionTable action_table;
+
         rt->gdat_interface_palette_ready = 1;
         rt->gdat_interface_palette_hash = palette.hash;
         memcpy(rt->gdat_interface_palette16, palette.palette16,
                sizeof(rt->gdat_interface_palette16));
+        memcpy(rt->gdat_interface_action_palette16, palette.palette16,
+               sizeof(rt->gdat_interface_action_palette16));
+        memset(&action_table, 0, sizeof(action_table));
+        /* skproject DISPLAY_VIEWPORT (32CB:5D13) derives the palette
+         * darkness from glbLightLevel * 10.  Until dynamic light sources
+         * are source-owned, the active GRAPHICSSET lower bound is the only
+         * verified light level available to this renderer. */
+        rt->gdat_interface_action_palette_darkness =
+            (uint8_t)((rt->gdat_scene_highest_light_level > 5u ? 5u :
+                       rt->gdat_scene_highest_light_level) * 10u);
+        if (dm2_v1_boot_interface_action_table(rt->boot, &action_table) &&
+            dm2_v1_interface_action_table_remap_palette(
+                &action_table, rt->gdat_interface_action_palette16, 16u,
+                rt->gdat_interface_action_palette_darkness, -1, -1)) {
+            rt->gdat_interface_action_palette_ready = 1;
+            rt->gdat_interface_action_palette_hash = action_table.hash;
+        }
     }
 }
 
@@ -2480,6 +2508,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready,
         rt->gdat_interface_palette_hash,
         rt->gdat_interface_palette16);
+    dm2_v1_viewport_set_gdat_interface_text_palette(
+        &viewport,
+        rt->gdat_interface_action_palette_ready,
+        rt->gdat_interface_action_palette_hash,
+        rt->gdat_interface_action_palette_ready
+            ? rt->gdat_interface_action_palette16 : NULL);
     /* skproject LOAD_GDAT_INTERFACE_00_02 loads dt07/0 before
      * DRAW_PLAYER_3STAT_HEALTH_BAR and DRAW_STRING consume it.  Pass only
      * the exact boot-owned six-row table; a missing table leaves text absent
@@ -2798,6 +2832,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready;
     g_dm2_frame_ownership.gdat_interface_palette_consumed =
         viewport.gdat_interface_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_action_palette_ready =
+        rt->gdat_interface_action_palette_ready;
+    g_dm2_frame_ownership.gdat_interface_action_palette_consumed =
+        viewport.gdat_interface_action_palette_consumed_count;
+    g_dm2_frame_ownership.gdat_interface_action_palette_hash =
+        rt->gdat_interface_action_palette_hash;
+    g_dm2_frame_ownership.gdat_interface_action_palette_darkness =
+        rt->gdat_interface_action_palette_darkness;
     g_dm2_frame_ownership.gdat_interface_font_host_ready =
         font_rows != NULL && font_hash != 0u;
     g_dm2_frame_ownership.gdat_interface_font_consumed =

@@ -9,6 +9,19 @@
   export from local original `DUNGEON.DAT`, recomputes its F0417/F0430
   checksums, and proves the failed candidate publishes no state.
 
+- ✅ 2026-07-14 DM2 dt07/2 runtime text-palette consumption: the boot-owned
+  `INTERFACE_GENERAL/0/dt07/2` table now remaps the source-font HUD palette
+  through skproject `SkWinCore.cpp::_0b36_037e`'s group/threshold/replacement
+  algorithm. The runtime uses the active `GRAPHICSSET` verified
+  `HIGHEST_LIGHT_LEVEL` lower bound with `DISPLAY_VIEWPORT`'s `* 10` scale,
+  preserving indexed dungeon-material palettes and their transparent keys.
+  The frame receipt retains table hash, readiness, baseline darkness, and
+  rendered text-palette consumption. Verification: focused
+  `test_dm2_v1_lighting_falloff_boundary` passed 153/153 and
+   `test_dm2_v1_runtime_handoff_smoke` passed 161/161. The real-data boot
+   smoke has four pre-existing weather no-draw failures on both this branch
+   and untouched `origin/main`.
+
 - ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
   census revalidates each scanner-issued original envelope/raw candidate
   against its complete-file FNV receipt before parsing it, then retains only

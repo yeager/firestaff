@@ -97,6 +97,10 @@ typedef struct {
     int gdat_local_palette_consumed;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed;
+    int gdat_interface_action_palette_ready;
+    int gdat_interface_action_palette_consumed;
+    uint32_t gdat_interface_action_palette_hash;
+    uint8_t gdat_interface_action_palette_darkness;
     int gdat_interface_font_host_ready;
     int gdat_interface_font_consumed;
     uint32_t gdat_interface_font_hash;

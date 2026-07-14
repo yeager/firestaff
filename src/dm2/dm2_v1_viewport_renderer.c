@@ -990,6 +990,26 @@ void dm2_v1_viewport_set_gdat_interface_palette(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_interface_text_palette(
+    DM2_V1_ViewportState *s,
+    int ready,
+    uint32_t hash,
+    const uint8_t palette16[16])
+{
+    if (!s) return;
+    s->gdat_interface_text_palette_ready = ready && hash != 0u && palette16;
+    s->gdat_interface_text_palette_hash =
+        s->gdat_interface_text_palette_ready ? hash : 0u;
+    if (s->gdat_interface_text_palette_ready) {
+        memcpy(s->gdat_interface_text_palette16, palette16,
+               sizeof(s->gdat_interface_text_palette16));
+    } else {
+        memset(s->gdat_interface_text_palette16, 0,
+               sizeof(s->gdat_interface_text_palette16));
+    }
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_interface_font(
     DM2_V1_ViewportState *s,
     const uint8_t *rows,
@@ -4859,6 +4879,17 @@ static uint8_t dm2_v1_hud_palette_color(DM2_V1_ViewportState *s,
     return s->gdat_interface_palette16[logical_color];
 }
 
+static uint8_t dm2_v1_hud_text_palette_color(DM2_V1_ViewportState *s,
+                                             uint8_t logical_color)
+{
+    if (!s || logical_color >= 16u) return logical_color;
+    if (s->gdat_interface_text_palette_ready) {
+        ++s->gdat_interface_action_palette_consumed_count;
+        return s->gdat_interface_text_palette16[logical_color];
+    }
+    return dm2_v1_hud_palette_color(s, logical_color);
+}
+
 static int dm2_v1_render_hud_source_font(
     DM2_V1_ViewportState *s,
     const DM2_V1_ViewportRect *rect,
@@ -4887,8 +4918,8 @@ static int dm2_v1_render_hud_source_font(
                     rect->x + glyph * 3 + column, rect->y + row, 1, 1
                 };
                 uint8_t color = (bits & (0x10u >> (column * 2)))
-                    ? dm2_v1_hud_palette_color(s, foreground)
-                    : dm2_v1_hud_palette_color(s, background);
+                    ? dm2_v1_hud_text_palette_color(s, foreground)
+                    : dm2_v1_hud_text_palette_color(s, background);
                 dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel, color);
             }
         }
@@ -5257,6 +5288,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_hud_core_drawn_count = 0;
     s->fallback_hud_core_drawn_count = 0;
     s->gdat_interface_palette_consumed_count = 0;
+    s->gdat_interface_action_palette_consumed_count = 0;
     s->gdat_interface_font_consumed_count = 0;
     s->gdat_material_palette_floor_ceiling_consumed_count = 0;
     s->gdat_material_palette_wall_consumed_count = 0;
