@@ -1902,6 +1902,26 @@ static DM2_V1_ViewportRect dm2_v1_viewport_door_visible_panel_rect(
     return rect;
 }
 
+/* skproject DRAW_DOOR_FRAMES consults the DOORS no-frames word before
+ * requesting either side frame. The M11 panel receipt is the sole source for
+ * that per-door-type gate; an absent receipt cannot make a frame disappear. */
+static int dm2_v1_viewport_door_m11_has_no_frames(
+    const DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
+    const DM2_V1_DoorRender *door)
+{
+    if (!plan || !plan->valid || !door) return 0;
+    for (int i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatDoorOverlayM11Command *command =
+            &plan->commands[i];
+        if (command->kind == DM2_V1_GDAT_DOOR_PANEL &&
+            command->gdat_index == door->panel_gdat_index &&
+            command->view_square == door->view_square) {
+            return command->no_frames != 0u;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_viewport_build_door_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_DoorRenderPlan *out_plan)
@@ -4135,6 +4155,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     if (s->source_materials_required) {
         for (int i = 0; i < plan.door_count; ++i) {
             const DM2_V1_DoorRender *door = &plan.doors[i];
+            const int source_no_frames =
+                dm2_v1_viewport_door_m11_has_no_frames(
+                    s->gdat_door_overlay_material_plan, door);
             const int gdat_indices[DM2_DOOR_MATERIAL_COUNT] = {
                 door->panel_gdat_index,
                 door->ornate_gdat_index,
@@ -4148,7 +4171,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
                 door->destroyed_mask_gdat_index != 0 &&
                     door->panel_rect.w > 0 && door->panel_rect.h > 0,
-                door->frame_rect.w > 0 && door->frame_rect.h > 0,
+                !source_no_frames && door->frame_rect.w > 0 &&
+                    door->frame_rect.h > 0,
                 door->button_gdat_index != 0 &&
                     door->button_rect.w > 0 && door->button_rect.h > 0
             };
@@ -4265,6 +4289,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
     for (int i = 0; i < plan.door_count; i++) {
         const DM2_V1_DoorRender *door = &plan.doors[i];
+        const int source_no_frames = s->source_materials_required &&
+            dm2_v1_viewport_door_m11_has_no_frames(
+                s->gdat_door_overlay_material_plan, door);
         int ornate_drawn_asset = 0;
         int destroyed_mask_drawn_asset = 0;
         int frame_drawn_asset = 0;
@@ -4457,7 +4484,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
             }
         }
-        if (door->frame_rect.w > 0 && door->frame_rect.h > 0) {
+        if (!source_no_frames && door->frame_rect.w > 0 &&
+            door->frame_rect.h > 0) {
             const uint8_t *door_pixels = NULL;
             int door_w = 0;
             int door_h = 0;

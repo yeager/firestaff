@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM2 DRAW_DOOR remaining: D3 panel evidence, split-panel
+  geometry, distance stretch/light palette selection, and broader door-type
+  coverage need direct skproject bindings. No generic panel/frame fallback.
+
 - 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
   the verified terminal surface. Do not reopen substitute presentation paths.
 
