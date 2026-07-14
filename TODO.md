@@ -1,5 +1,19 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
+  receipt inspection is deliberately separate from the live Soul Room
+  Stage 2/3 admission. The latter still requires original physical-media
+  proof before a runtime transition. A positive authentic capture must expose
+  a host event, emulated controller change, non-System-Card CD read, and raw
+  sector receipt in order; no object, dungeon, palette, bitmap, or fallback
+  path is unlocked by the inspection receipt.
+  Quartz preflight now confirms that macOS authorizes and posts the HID pair,
+  while the authentic US run still has zero Mednafen SDL events. Investigate
+  the SDL-window delivery boundary or obtain a later original CD_READ trace;
+  do not inject an emulated controller state.
+  Receipt-only inspection now uses an isolated staging world; direct runtime
+  mutation continues to require the original Stage 2/3 physical-media gate.
+
 - 2026-07-14 DM1 ReDMCSB F8144: `NEC816.C:1554-1557` and C25
   `VIDEODRV.C:1529-1532` have empty bodies and only commented parameter
   names; no horizontal readback-flip contract exists to port without

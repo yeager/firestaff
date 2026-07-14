@@ -17,6 +17,21 @@
   out-of-memory UI routes. Buffers remain caller-owned and no localization,
   allocation, dialog, or menu fallback was introduced. Focused strict-C11
   regression passes.
+=======
+- 2026-07-14 Theron Track 02 staging receipt split: direct
+  `try_track02_initial_level` again requires the complete original Stage 2/3
+  preflight before it can publish any world state. A distinct public
+  receipt-only API builds the bounded Hall-of-Records evidence in an isolated
+  staging world. The startup test proves synthetic bytes yield receipts only
+  through that API and are rejected by every direct runtime load.
+
+- 2026-07-14 Theron Quartz delivery observability: the checked-in macOS
+  keypair helper now preflights CGEvent posting and emits an exact receipt for
+  authorized, posted HID down/up pairs. The capture harness copies that receipt
+  only after every requested attempt succeeds. A fresh authentic US CUE +
+  System Card run reported Quartz access granted and keypairs posted, but zero
+  Mednafen SDL key events; no emulated input, CD_READ, dungeon, object, or
+  graphics claim was promoted.
 
 - 2026-07-14 CSB ReDMCSB F0666 PC endgame handoff: added the source pointer
   hide loop, double graphics-close, CPSX restore, and caller-owned nonlocal

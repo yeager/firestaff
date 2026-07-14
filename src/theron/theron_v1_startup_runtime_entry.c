@@ -130,7 +130,10 @@ static int theron_v1_startup_runtime_level_load_callback(
                                                         receipt_cap);
 }
 
-static int theron_v1_startup_runtime_try_track02_initial_level(
+/* Receipt collection may load only into a caller-owned staging world. It does
+ * not authorize publication or a live transition; those go through the
+ * preflighted wrapper below. */
+static int theron_v1_startup_runtime_inspect_track02_initial_level(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -176,19 +179,8 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
         return 0;
     }
-    /* A known MD5 string alone cannot admit synthetic bytes. Every direct
-     * runtime consumer must repeat the original Stage 2/3 physical-media
-     * preflight before the level handoff can mutate a world. */
-    if (!theron_v1_startup_runtime_stage3_loader_ready(
-            hucard_rom, hucard_rom_size, md5_hex)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "stage-three loader bytes rejected; Track 02 runtime route blocked");
-        }
-        return 0;
-    }
-    /* This helper owns the source-checked semantic record route and is also
-     * used by all-dungeon receipt collection. */
+    /* This staging-only helper is intentionally usable by bounded receipt
+     * fixtures. It cannot authorize a live Track 02 transition. */
     signal_status = theron_v1_track02_find_bank_signal(hucard_rom,
                                                        hucard_rom_size,
                                                        md5_hex,
@@ -375,6 +367,28 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
                  startup_text_jp_count);
     }
     return 0;
+}
+
+static int theron_v1_startup_runtime_try_track02_initial_level(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    char *receipt,
+    size_t receipt_cap) {
+
+    if (!theron_v1_startup_runtime_stage3_loader_ready(
+            hucard_rom, hucard_rom_size, md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "stage-three loader bytes rejected; Track 02 runtime route blocked");
+        }
+        return 0;
+    }
+    return theron_v1_startup_runtime_inspect_track02_initial_level(
+        world, hucard_rom, hucard_rom_size, md5_hex, dungeon_id, receipt,
+        receipt_cap);
 }
 
 static int theron_v1_startup_runtime_publish_track02_route(
@@ -1358,7 +1372,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         receipt[0] = '\0';
         if (!theron_v1_startup_media_bind_runtime_receipt(
                 &world, media_receipt) ||
-            !theron_v1_startup_runtime_try_track02_initial_level(
+            !theron_v1_startup_runtime_inspect_track02_initial_level(
                 &world,
                 hucard_rom,
                 hucard_rom_size,
@@ -1973,7 +1987,7 @@ int theron_v1_startup_runtime_entry_state_receipt_from_result(
     return 1;
 }
 
-int theron_v1_startup_runtime_load_initial_level_with_receipts(
+static int theron_v1_startup_runtime_initial_level_with_receipts_impl(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -1984,7 +1998,8 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
     Theron_StartupStateReceipt *out_state_receipt,
     char *receipt,
-    size_t receipt_cap) {
+    size_t receipt_cap,
+    int receipt_only) {
 
     Theron_V1StartupRuntimeEntryResult local_result;
     Theron_V1StartupRuntimeEntryResult *result =
@@ -1993,6 +2008,8 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     Theron_StartupFlow flow;
     int verified_track02_request;
     Theron_StartupMediaStateReceipt media_receipt;
+    Theron_V1_World inspection_world;
+    Theron_V1_World *result_world = world;
 
     theron_v1_startup_runtime_entry_result_init(result);
     theron_v1_startup_runtime_entry_apply_receipt_init(&apply_receipt);
@@ -2008,7 +2025,24 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         theron_v1_startup_runtime_has_verified_track02_request(md5_hex);
     theron_v1_startup_media_capture_track02_state_receipt(
         hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
-    if (!theron_v1_startup_runtime_load_initial_level(world,
+    if (receipt_only) {
+        if (!world) return 0;
+        inspection_world = *world;
+        if (!theron_v1_startup_media_bind_runtime_receipt(
+                &inspection_world, &media_receipt) ||
+            !theron_v1_startup_runtime_inspect_track02_initial_level(
+                &inspection_world, hucard_rom, hucard_rom_size, md5_hex,
+                dungeon_id, receipt, receipt_cap)) {
+            result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+            theron_v1_startup_runtime_entry_capture_failure_route(
+                receipt, verified_track02_request, &media_receipt, result);
+            theron_v1_startup_runtime_entry_failure_apply_receipt(
+                plan, result, receipt, &apply_receipt);
+            if (out_apply_receipt) *out_apply_receipt = apply_receipt;
+            return 0;
+        }
+        result_world = &inspection_world;
+    } else if (!theron_v1_startup_runtime_load_initial_level(world,
                                                       hucard_rom,
                                                       hucard_rom_size,
                                                       md5_hex,
@@ -2031,7 +2065,7 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         return 0;
     }
 
-    theron_v1_startup_runtime_entry_capture_result(world,
+    theron_v1_startup_runtime_entry_capture_result(result_world,
                                                    receipt,
                                                    verified_track02_request,
                                                    verified_track02_request,
@@ -2123,6 +2157,42 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
         *out_apply_receipt = apply_receipt;
     }
     return 1;
+}
+
+int theron_v1_startup_runtime_load_initial_level_with_receipts(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+    return theron_v1_startup_runtime_initial_level_with_receipts_impl(
+        world, hucard_rom, hucard_rom_size, md5_hex, dungeon_id, plan,
+        out_result, out_apply_receipt, out_state_receipt, receipt, receipt_cap,
+        0);
+}
+
+int theron_v1_startup_runtime_inspect_initial_level_with_receipts(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    const Theron_StartupActionPlan *plan,
+    Theron_V1StartupRuntimeEntryResult *out_result,
+    Theron_V1StartupRuntimeEntryApplyReceipt *out_apply_receipt,
+    Theron_StartupStateReceipt *out_state_receipt,
+    char *receipt,
+    size_t receipt_cap) {
+    return theron_v1_startup_runtime_initial_level_with_receipts_impl(
+        world, hucard_rom, hucard_rom_size, md5_hex,
+        dungeon_id, plan, out_result, out_apply_receipt, out_state_receipt,
+        receipt, receipt_cap, 1);
 }
 
 int theron_v1_startup_runtime_load_initial_level_with_host_receipts(
