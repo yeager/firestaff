@@ -366,6 +366,12 @@ typedef struct {
     int source_runtime_stage_owns_dungeon;
     int source_runtime_stage_event_count;
     int source_runtime_stage_c13_event_count;
+    /* A C13 count alone cannot prove that F0435 retained its source-owned
+     * Location/Cell/Effect/Priority state.  These fields are set only when
+     * every raw C13 row is found in the tail-backed runtime timeline. */
+    int source_runtime_stage_c13_admitted_count;
+    int source_runtime_stage_c13_admission_ok;
+    uint32_t source_runtime_stage_c13_fingerprint;
     int source_runtime_stage_timeline_count;
     /* A tail-backed source must also cross the final candidate-to-live
      * ownership transfer with no start-world argument. */
@@ -374,6 +380,9 @@ typedef struct {
     int source_runtime_adopted;
     int source_runtime_adopt_owns_dungeon;
     int source_runtime_adopt_event_count;
+    int source_runtime_adopt_c13_admitted_count;
+    int source_runtime_adopt_c13_admission_ok;
+    uint32_t source_runtime_adopt_c13_fingerprint;
     int source_runtime_adopt_timeline_count;
     /* The F0238 queue is a separate runtime owner from world.timeline.
      * Corpus adoption must move that validated C3/C4 queue with the world,

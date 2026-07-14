@@ -120,6 +120,85 @@ static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
     return hash;
 }
 
+static int dm1_original_save_c13_runtime_event_matches(
+    const struct DM1_Event_V1 *source,
+    const struct TimelineEvent_Compat *runtime)
+{
+    if (!source || !runtime ||
+        source->type != DM1_EVENT_VI_ALTAR_REBIRTH) {
+        return 0;
+    }
+    return runtime->kind == TIMELINE_EVENT_VI_ALTAR_REBIRTH &&
+           runtime->fireAtTick == (source->map_time & 0x00ffffffu) &&
+           runtime->mapIndex == (int)((source->map_time >> 24) & 0xffu) &&
+           runtime->mapX == source->b_mapX &&
+           runtime->mapY == source->b_mapY &&
+           runtime->cell == source->c_cell &&
+           runtime->aux0 == DM1_EVENT_VI_ALTAR_REBIRTH &&
+           runtime->aux1 == source->c_effect &&
+           runtime->aux4 == source->priority;
+}
+
+/* A tail-backed C13 is admissible only if its F0255-owned state reaches the
+ * runtime timeline unchanged. This operates on externally supplied source
+ * records after F0435 has materialized the saved dungeon; it never creates a
+ * C13 candidate or treats a host timeline event as corpus evidence. */
+static int dm1_original_save_c13_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_admitted_count,
+    uint32_t *out_fingerprint)
+{
+    int consumed[TIMELINE_QUEUE_CAPACITY] = {0};
+    uint32_t fingerprint = 2166136261u;
+    int source_count = 0;
+    int i;
+
+    if (out_admitted_count) *out_admitted_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    for (i = 0; i < source_report->decoded_event_count; ++i) {
+        const struct DM1_Event_V1 *source = &source_report->events[i];
+        int runtime_index;
+
+        if (source->type != DM1_EVENT_VI_ALTAR_REBIRTH) continue;
+        ++source_count;
+        for (runtime_index = 0; runtime_index < world->timeline.count;
+             ++runtime_index) {
+            if (!consumed[runtime_index] &&
+                dm1_original_save_c13_runtime_event_matches(
+                    source, &world->timeline.events[runtime_index])) {
+                consumed[runtime_index] = 1;
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->map_time);
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->priority);
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->b_mapX);
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->b_mapY);
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->c_cell);
+                fingerprint = dm1_original_save_corpus_hash_step(
+                    fingerprint, source->c_effect);
+                break;
+            }
+        }
+        if (runtime_index == world->timeline.count) return 0;
+    }
+    if (out_admitted_count) *out_admitted_count = source_count;
+    if (out_fingerprint && source_count > 0) {
+        *out_fingerprint = fingerprint ? fingerprint : 1u;
+    }
+    return 1;
+}
+
 /* ReDMCSB LOADSAVE.C F0435 authenticates each length-prefixed part before it
  * reaches later runtime materializers. A corpus failure needs that boundary
  * for diagnosis, but this probe owns only local staging objects. */
@@ -192,8 +271,14 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 ++receipt->source_runtime_stage_c13_event_count;
             }
         }
+        receipt->source_runtime_stage_c13_admission_ok =
+            dm1_original_save_c13_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_c13_admitted_count,
+                &receipt->source_runtime_stage_c13_fingerprint);
         receipt->source_runtime_stage_committed =
-            receipt->source_runtime_stage_owns_dungeon;
+            receipt->source_runtime_stage_owns_dungeon &&
+            receipt->source_runtime_stage_c13_admission_ok;
         if (receipt->source_runtime_stage_committed) {
             receipt->source_runtime_adopt_attempted = 1;
             receipt->source_runtime_adopt_result =
@@ -202,19 +287,28 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     &staged_world, &staged_queue);
             if (receipt->source_runtime_adopt_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
-                receipt->source_runtime_adopted = 1;
                 receipt->source_runtime_adopt_owns_dungeon =
                     adopted_world.ownsDungeon && adopted_world.dungeon != NULL &&
                     adopted_world.things != NULL;
                 receipt->source_runtime_adopt_event_count =
                     adopted_world.timeline.count;
+                receipt->source_runtime_adopt_c13_admission_ok =
+                    dm1_original_save_c13_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_c13_admitted_count,
+                        &receipt->source_runtime_adopt_c13_fingerprint);
+                receipt->source_runtime_adopted =
+                    receipt->source_runtime_adopt_owns_dungeon &&
+                    receipt->source_runtime_adopt_c13_admission_ok;
                 receipt->source_runtime_adopt_timeline_count =
                     adopted_queue.eventCount;
-                receipt->source_runtime_adopt_queue_committed = 1;
-                receipt->source_runtime_adopt_queue_event_count =
-                    adopted_queue.eventCount;
-                receipt->source_runtime_adopt_queue_first_unused_index =
-                    adopted_queue.firstUnusedIndex;
+                if (receipt->source_runtime_adopted) {
+                    receipt->source_runtime_adopt_queue_committed = 1;
+                    receipt->source_runtime_adopt_queue_event_count =
+                        adopted_queue.eventCount;
+                    receipt->source_runtime_adopt_queue_first_unused_index =
+                        adopted_queue.firstUnusedIndex;
+                }
             }
         }
     }

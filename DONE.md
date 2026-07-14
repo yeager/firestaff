@@ -8,6 +8,13 @@
   importer/binder. No texture, palette, mesh, VDP1, or draw semantics were
   added. Focused `nexus_v1_structure3_capture_manifest` coverage pins the
   fail-closed path.
+- 2026-07-14 DM1 PC34 external C13 tail-runtime admission: the F0435
+  corpus runtime receipt now admits a tail-backed C13 only when its raw
+  `Map_Time`, `B.Location`, `C.Cell`, `C.Effect`, and `Priority` all reach
+  the materialized Vi Altar timeline event, and repeats that check after the
+  candidate-to-live ownership transfer. This is exercised only for
+  user-supplied external PC34 corpus saves carrying C13; no C13 fixture,
+  generated tail, or parity claim is added.
 
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap
