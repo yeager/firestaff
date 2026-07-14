@@ -4,8 +4,9 @@
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
   ReDMCSB-shaped idle runtime tick, and, when an admitted save's C4 queue has
   a pending event within the bounded external-test horizon, drives the exact
-  no-input prefix through that event while matching every M10 receipt from an
-  independently staged F0435 world. M11 now assigns ORIGINAL_SAVE_PC34 only
+  no-input prefix through that event while matching every M10 receipt and
+  recomputed live-world hash from an independently staged F0435 world. M11
+  now assigns ORIGINAL_SAVE_PC34 only
   after its F0435 classifier/materializer route succeeds; native F0433-style
   saves retain QUICKSAVE_RESUME_PC34 provenance. Retain broader original PC34
   interactive route/capture comparison as an external-corpus task.
