@@ -32,7 +32,7 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     session->generation = 9u;
     session->source_tick = 413u;
     session->playback.no_fallback_routes = 1;
-    session->playback.title_phase_mask = 0x0b;
+    session->playback.title_phase_mask = 0x0f;
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34;
     session->playback.entrance_complete = 1;
     c017 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
@@ -86,6 +86,8 @@ int main(void)
     package_receipt.c001_title_consumed = 1;
     package_receipt.c001_presents_consumed = 1;
     package_receipt.c001_chaos_consumed = 1;
+    package_receipt.c001_chaos_zoom_consumed = 1;
+    package_receipt.c001_chaos_hold_consumed = 1;
     package_receipt.c001_strikes_back_consumed = 1;
     package_receipt.c017_hud_consumed = package_receipt.c040_hud_consumed = 1;
     package_receipt.title_to_hud_same_session = 1;
@@ -113,6 +115,16 @@ int main(void)
               terminal_package.consumed_surface_hash ==
                   package_receipt.consumed_surface_hash,
           "terminal F0807 retains the hash-verified C001/C017/C040 package");
+    session.playback.title_phase_mask = 0x0b;
+    check(!csb_v1_startup_session_terminal_package_receipt_pc34(
+              &session, &package_receipt, &terminal_package),
+          "missing TITLE.C full-CHAOS hold cannot authorize the terminal HUD session");
+    session.playback.title_phase_mask = 0x0f;
+    package_receipt.c001_chaos_hold_consumed = 0;
+    check(!csb_v1_startup_session_terminal_package_receipt_pc34(
+              &session, &package_receipt, &terminal_package),
+          "missing package-owned full-CHAOS hold cannot authorize the terminal HUD session");
+    package_receipt.c001_chaos_hold_consumed = 1;
     ++package_receipt.source_tick;
     check(!csb_v1_startup_session_terminal_package_receipt_pc34(
                &session, &package_receipt, &terminal_package),

@@ -356,6 +356,11 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
         !full_runtime.no_legacy_wrappers || session->generation == 0u) {
         return 0;
     }
+    /* TITLE.C F0437 has separate zoom and full-size CHAOS waits. A resident
+     * C001 region alone is not evidence that the runtime consumed both. */
+    if (session->playback.title_phase_mask != 0x0f) {
+        return 0;
+    }
     title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
     presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
     chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
@@ -405,6 +410,8 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     out_receipt->c001_title_consumed = 1;
     out_receipt->c001_presents_consumed = 1;
     out_receipt->c001_chaos_consumed = 1;
+    out_receipt->c001_chaos_zoom_consumed = 1;
+    out_receipt->c001_chaos_hold_consumed = 1;
     out_receipt->c001_strikes_back_consumed = 1;
     out_receipt->c002_left_door_consumed = 1;
     out_receipt->c003_right_door_consumed = 1;

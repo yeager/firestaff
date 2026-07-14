@@ -161,6 +161,16 @@ int main(int argc, char **argv)
           "CHAOS receives TITLE.C source geometry from the production receipt");
     host_surface(&session, &plan, 60u, 1, "CHAOS presents decoded C001 only");
 
+    CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan,
+                                                         &audio) == 1 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
+              plan.title_source_step == 21,
+          "full CHAOS hold retains TITLE.C's distinct source step");
+    CHECK(title_plan(80, &plan) == 1 && plan.title_source_step == 21,
+          "full CHAOS hold receives TITLE.C source geometry from the production receipt");
+    host_surface(&session, &plan, 80u, 1,
+                 "full CHAOS hold presents decoded C001 only");
+
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 100, &plan,
                                                          &audio) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
@@ -214,7 +224,10 @@ int main(int argc, char **argv)
     CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
               &real_package, &session, &consumption) == 1 && consumption.valid &&
               consumption.no_fallback_routes && consumption.c001_presents_consumed &&
-              consumption.c001_chaos_consumed && consumption.c001_strikes_back_consumed &&
+              consumption.c001_chaos_consumed &&
+              consumption.c001_chaos_zoom_consumed &&
+              consumption.c001_chaos_hold_consumed &&
+              consumption.c001_strikes_back_consumed &&
               consumption.c002_left_door_consumed &&
               consumption.c003_right_door_consumed &&
               consumption.c004_entrance_consumed &&

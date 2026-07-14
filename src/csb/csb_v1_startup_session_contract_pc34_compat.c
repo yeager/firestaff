@@ -23,7 +23,7 @@ int csb_v1_startup_session_terminal_receipt_pc34(
         !session->entrance_assets_ready || !session->door_assets_ready ||
         !session->rejects_legacy_wrappers ||
         !session->playback.no_fallback_routes ||
-        session->playback.title_phase_mask != 0x0b ||
+        session->playback.title_phase_mask != 0x0f ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
         !session->hud_assets_bound || session->generation == 0u) return 0;
@@ -67,6 +67,8 @@ int csb_v1_startup_session_terminal_package_receipt_pc34(
         !package_receipt->c001_title_consumed ||
         !package_receipt->c001_presents_consumed ||
         !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_chaos_zoom_consumed ||
+        !package_receipt->c001_chaos_hold_consumed ||
         !package_receipt->c001_strikes_back_consumed ||
         !package_receipt->c017_hud_consumed ||
         !package_receipt->c040_hud_consumed ||
@@ -117,6 +119,8 @@ int csb_v1_startup_session_package_title_receipt_pc34(
         !package_receipt->c001_title_consumed ||
         !package_receipt->c001_presents_consumed ||
         !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_chaos_zoom_consumed ||
+        !package_receipt->c001_chaos_hold_consumed ||
         !package_receipt->c001_strikes_back_consumed ||
         !package_receipt->title_to_hud_same_session ||
         !package_receipt->no_legacy_wrappers ||
@@ -245,6 +249,8 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         !package_receipt->valid || !package_receipt->real_package_matched ||
         !package_receipt->c001_presents_consumed ||
         !package_receipt->c001_chaos_consumed ||
+        !package_receipt->c001_chaos_zoom_consumed ||
+        !package_receipt->c001_chaos_hold_consumed ||
         !package_receipt->c001_strikes_back_consumed ||
         !package_receipt->no_legacy_wrappers ||
         !package_receipt->no_fallback_routes ||
