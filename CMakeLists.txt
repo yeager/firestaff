@@ -7797,6 +7797,22 @@ if(BUILD_TESTING)
             -Wall -Wextra -Werror -O2)
     endif()
 
+    # Canonical G1 DB4 -> CREATURES/F9 scene-material corpus proof.
+    # This stays build-only because the original media belongs to the user.
+    add_executable(test_dm2_v1_g1_creature_scene_corpus_real_data
+        tests/test_dm2_v1_g1_creature_scene_corpus_real_data.c
+    )
+    target_include_directories(test_dm2_v1_g1_creature_scene_corpus_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_g1_creature_scene_corpus_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_creature_scene_corpus_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+
     # Canonical-only SKProject creature-animation ownership proof. This is
     # build-only because original GRAPHICS.DAT remains user-owned media.
     add_executable(test_dm2_v1_gdat_creature_animation_real_data

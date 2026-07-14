@@ -9,6 +9,16 @@
   ReDMCSB `LOADSAVE.C F0435` and `TIMELINE.C F0238/F0651`. Verification:
   Ninja `test_dm1_v1_original_save_pc34_handoff`.
 
+- ✅ 2026-07-14 DM2 canonical DB4 creature scene-material corpus receipt: the
+  opt-in G1 corpus target now scans every direct source creature root whose
+  type owns `CREATURES/F9`, then hands each exact decoded map chip and local
+  palette through the runtime scene bridge. A missing image, palette, or
+  mismatched virtual GDAT handle blocks that root; no animation data or
+  substitute creature is admitted. Source: skproject `c_map.cpp`
+  `QUERY_DUNGEON_MAP_CHIP_PICT` and `SkWinCore.cpp`
+  `DRAW_CHIP_OF_MAGIC_MAP`. Verification: Ninja
+   `test_dm2_v1_g1_creature_scene_corpus_real_data`.
+
 - ✅ 2026-07-14 DM1 M11 PC34 runtime load-save interop: the focused M11
   resume path now proves a checksum-qualified original PC34 F0435 load can
   pass through the live host, be quicksaved, exported by F0433 as a PC34
