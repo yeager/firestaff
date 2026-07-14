@@ -11,7 +11,11 @@
   observed instruction. Remaining evidence: repeated authenticated original
   captures that distinguish a record format and a separately source-owned
   dungeon route. No gameplay-transition causality, object-tail, bitmap,
-  palette, map, or broader dungeon-record semantics are admitted.
+  palette, map, or broader dungeon-record semantics are admitted. Capture
+  retries now stage their candidate profile before commit, so a malformed,
+  missing, or replaced manifest cannot erase a prior accepted receipt. This is
+  transactional intake only; it does not make an absent positive capture
+  available.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one

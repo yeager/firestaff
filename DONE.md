@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 capture-intake atomicity: the manifest-bound
+  coalesced `$e009` intake now validates into a staged boot profile and commits
+  only after all files, hashes, trace control edges, and the original Track 02
+  span have passed. A rejected retry preserves the previously authenticated
+  Soul Room handoff intact. Coverage: focused
+  `theron_v1_runtime_trace_intake` probe. This does not create an authentic
+  capture or assign dungeon, object, bitmap, palette, or transition semantics.
+
 - 2026-07-14 Nexus Structure3 capture source-admission gate: the face-capture
   binder now requires caller-owned canonical DGN hash admission in addition
   to all packet/source fingerprints. A trace candidate cannot self-certify

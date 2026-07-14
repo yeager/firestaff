@@ -24,6 +24,10 @@ int main(void) {
     Theron_V1StartupRuntimeEntryResult runtime_result;
     Theron_StartupHostReceipt host_receipt;
     Theron_StartupStateReceipt state_receipt;
+    Theron_V1_BootStartupLaunch launch;
+    TrAssetBundle assets;
+    Theron_V1_BootProfile profile_before;
+    unsigned char hucard_byte = 0u;
     char runtime_receipt[128];
 
     theron_v1_boot_profile_init(&profile);
@@ -101,6 +105,36 @@ int main(void) {
               !receipt.trace_file_hash_verified && !receipt.trace_file_consumed &&
               !receipt.runtime_handoff.valid,
           "absent runtime evidence input cannot construct a handoff");
+
+    /* A failed capture retry must not tear down a previously authenticated
+     * Soul Room boundary.  The missing manifest reaches the real intake
+     * rejection path after the launch/profile preflight. */
+    theron_v1_boot_profile_init(&profile);
+    memset(&launch, 0, sizeof(launch));
+    memset(&assets, 0, sizeof(assets));
+    assets.hucard_rom = &hucard_byte;
+    launch.profile = &profile;
+    launch.assets = &assets;
+    profile.assets_verified = 1;
+    snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s",
+             "/missing/authentic-track02.bin");
+    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
+             THERON_TRACK02_MD5_US_BIN);
+    profile.track02_runtime_trace_handoff_ready = 1;
+    snprintf(profile.track02_runtime_system_card_md5,
+             sizeof(profile.track02_runtime_system_card_md5), "%s",
+             "ff1a674273fe3540ccef576376407d1d");
+    snprintf(profile.track02_runtime_trace_md5,
+             sizeof(profile.track02_runtime_trace_md5), "%s",
+             "04a75036e9d520bb983c5ed03b8d0182");
+    profile.track02_initial_level_handoff.valid = 1;
+    profile.track02_initial_level_handoff.variant = THERON_TRACK02_VARIANT_US_BIN;
+    profile.track02_initial_level_handoff.observed_track02_record = 0x0b52u;
+    profile_before = profile;
+    check(!theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
+              &launch, "/missing/authentic-capture.manifest") &&
+              memcmp(&profile, &profile_before, sizeof(profile)) == 0,
+          "rejected capture retry preserves the prior authenticated handoff");
     printf("--- %d failed ---\n", g_failures);
     return g_failures ? 1 : 0;
 }
