@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 canonical DB4 creature GDAT draw-consumption gate: the
+  existing source-classified G1 `Creature::b4 -> CREATURES/type/F9` route is
+  now proven through the viewport, not just its bridge receipt. The focused
+  real-data target keeps the decoded canonical map-chip and its local palette
+  alive through one source-material-required draw, binds the same G1 root's
+  ObjectID and coordinate, and requires one asset blit with zero fallback and
+  zero blocked-material draws. It creates no art, GDAT, dungeon, save, or
+  timing fixture. Source-lock: SKProject `c_map.cpp`
+  `QUERY_DUNGEON_MAP_CHIP_PICT`, `DME.h::Creature::CreatureType`, and
+  `SkWinCore.cpp::DRAW_CHIP_OF_MAGIC_MAP`. Verification:
+  `test_dm2_v1_g1_scene_creature_gdat_real_data` with canonical user media.
+  This does not select animation frames: that route still requires the
+  separately-unadmitted mutable sequence state, random branch, and AI/static
+  classification from `GET_CREATURE_ANIMATION_FRAME`.
+
 - 2026-07-14 Theron Track 02 local-RAM control-resumption receipt: the
   coalesced later `$e009` trace now requires one raw CPU step after the
   authenticated System Card return and binds that step to the same
