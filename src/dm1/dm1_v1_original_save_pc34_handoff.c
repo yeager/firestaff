@@ -3,6 +3,7 @@
 #include "dm1_v1_resurrection_pc34_compat.h"
 
 #include "memory_door_action_pc34_compat.h"
+#include "memory_savegame_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -524,26 +525,6 @@ static uint16_t skill_level_from_base_experience(uint32_t experience)
     return level;
 }
 
-static uint16_t f0417_xor_checksum_bytes(uint8_t *bytes,
-                                         size_t word_count,
-                                         uint16_t key)
-{
-    size_t i;
-    uint16_t checksum = key;
-    uint16_t rolling_key = key;
-    for (i = 0u; i < word_count; ++i) {
-        uint8_t *word = bytes + i * 2u;
-        uint16_t value = read_u16_le(word);
-        checksum = (uint16_t)(checksum + value);
-        value = (uint16_t)(value ^ rolling_key);
-        word[0] = (uint8_t)(value & 0xffu);
-        word[1] = (uint8_t)((value >> 8) & 0xffu);
-        checksum = (uint16_t)(checksum + value);
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
-    }
-    return checksum;
-}
-
 static int write_original_part(uint8_t *dst,
                                size_t dst_capacity,
                                const uint8_t *plain,
@@ -564,7 +545,8 @@ static int write_original_part(uint8_t *dst,
 
     write_u16_le(dst, (uint16_t)byte_count);
     memcpy(dst + 2u, plain, byte_count);
-    checksum = f0417_xor_checksum_bytes(dst + 2u, byte_count / 2u, key);
+    checksum = F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        dst + 2u, byte_count / 2u, key);
     *out_checksum = checksum;
     return (int)(2u + byte_count);
 }
@@ -705,7 +687,7 @@ static int read_original_part(const uint8_t *bytes,
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     memcpy(out_plain, bytes + *cursor, (size_t)byte_count);
-    actual_checksum = f0417_xor_checksum_bytes(
+    actual_checksum = F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
         out_plain, (size_t)byte_count / 2u, key);
     *cursor += (size_t)byte_count;
     *out_size = (size_t)byte_count;
@@ -2870,7 +2852,7 @@ static int import_original_pc34_global_data(
 
     key = read_u16_le(bytes + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u);
     memcpy(meta, bytes + 256u, sizeof(meta));
-    (void)f0417_xor_checksum_bytes(
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
         meta, SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS, key);
 
     game_id = read_u32_le(meta + 50u);
@@ -3239,7 +3221,7 @@ int dm1_v1_original_save_pc34_build_handoff_fixture_bytes(
                        second_sum);
         write_u16_le(header + 254u, last);
     }
-    (void)f0417_xor_checksum_bytes(
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
         header + 256u, SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS,
         read_u16_le(header + SAVEGAME_PC34_DM_HEADER_DECRYPTION_KEY_INDEX * 2u));
     memcpy(out_bytes, header, sizeof(header));
@@ -4090,10 +4072,10 @@ static int dm1_original_save_inactive_champion_records_match(
     memcpy(exported_part,
            exported_bytes + exported_report->pc34_party_part_byte_offset,
            sizeof(exported_part));
-    (void)f0417_xor_checksum_bytes(source_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(source_part,
                                    sizeof(source_part) / 2u,
                                    source_report->pc34_party_part_key);
-    (void)f0417_xor_checksum_bytes(exported_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(exported_part,
                                    sizeof(exported_part) / 2u,
                                    exported_report->pc34_party_part_key);
     source_count = source_report->imported_champion_count;
@@ -4154,9 +4136,9 @@ static int dm1_original_save_m516_champion_records_match(
     memcpy(exported_part,
            exported_bytes + exported_report->pc34_party_part_byte_offset,
            sizeof(exported_part));
-    (void)f0417_xor_checksum_bytes(source_part, sizeof(source_part) / 2u,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(source_part, sizeof(source_part) / 2u,
                                    source_report->pc34_party_part_key);
-    (void)f0417_xor_checksum_bytes(exported_part, sizeof(exported_part) / 2u,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(exported_part, sizeof(exported_part) / 2u,
                                    exported_report->pc34_party_part_key);
     out_report->m516_champion_record_receipt_available = 1;
     out_report->source_m516_champion_record_count = CHAMPION_MAX_PARTY;
@@ -4217,10 +4199,10 @@ static int dm1_original_save_c13_champion_records_match(
     memcpy(exported_part,
            exported_bytes + exported_report->pc34_party_part_byte_offset,
            sizeof(exported_part));
-    (void)f0417_xor_checksum_bytes(source_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(source_part,
                                    sizeof(source_part) / 2u,
                                    source_report->pc34_party_part_key);
-    (void)f0417_xor_checksum_bytes(exported_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(exported_part,
                                    sizeof(exported_part) / 2u,
                                    exported_report->pc34_party_part_key);
     out_report->c13_champion_record_byte_receipt_available = 1;
@@ -4285,10 +4267,10 @@ static int dm1_original_save_party_info_bytes_match(
     memcpy(exported_part,
            exported_bytes + exported_report->pc34_party_part_byte_offset,
            sizeof(exported_part));
-    (void)f0417_xor_checksum_bytes(source_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(source_part,
                                    sizeof(source_part) / 2u,
                                    source_report->pc34_party_part_key);
-    (void)f0417_xor_checksum_bytes(exported_part,
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(exported_part,
                                    sizeof(exported_part) / 2u,
                                    exported_report->pc34_party_part_key);
     out_report->party_info_byte_receipt_available = 1;
@@ -4331,7 +4313,7 @@ static int dm1_original_save_c4_timeline_bytes_match(
                 sizeof(decoded[which])) return 0;
         key = read_u16_le(inputs[which] + 20u);
         memcpy(meta, inputs[which] + 256u, sizeof(meta));
-        (void)f0417_xor_checksum_bytes(meta,
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(meta,
                                        SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS,
                                        key);
         for (part = 0; part < SAVEGAME_PC34_PART_TIMELINE; ++part) {
@@ -4350,7 +4332,7 @@ static int dm1_original_save_c4_timeline_bytes_match(
             (byte_counts[which] & 1u) != 0u ||
             cursor + byte_counts[which] > sizes[which]) return 0;
         memcpy(decoded[which], inputs[which] + cursor, byte_counts[which]);
-        (void)f0417_xor_checksum_bytes(decoded[which], byte_counts[which] / 2u,
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(decoded[which], byte_counts[which] / 2u,
             read_u16_le(meta + 54u + SAVEGAME_PC34_PART_TIMELINE * 2u));
     }
     out_report->c4_timeline_layout_receipt_available = 1;
@@ -4399,7 +4381,7 @@ static int dm1_original_save_c3_event_bytes_match(
                 sizeof(decoded[which])) return 0;
         key = read_u16_le(inputs[which] + 20u);
         memcpy(meta, inputs[which] + 256u, sizeof(meta));
-        (void)f0417_xor_checksum_bytes(meta,
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(meta,
                                        SAVEGAME_PC34_DM_SAVE_HEADER_HALF_WORDS,
                                        key);
         for (part = 0; part < SAVEGAME_PC34_PART_EVENTS; ++part) {
@@ -4418,7 +4400,7 @@ static int dm1_original_save_c3_event_bytes_match(
             byte_counts[which] % DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT != 0u ||
             cursor + byte_counts[which] > sizes[which]) return 0;
         memcpy(decoded[which], inputs[which] + cursor, byte_counts[which]);
-        (void)f0417_xor_checksum_bytes(decoded[which], byte_counts[which] / 2u,
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(decoded[which], byte_counts[which] / 2u,
             read_u16_le(meta + 54u + SAVEGAME_PC34_PART_EVENTS * 2u));
     }
     out_report->c3_event_layout_receipt_available = 1;
