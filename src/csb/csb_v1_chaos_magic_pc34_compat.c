@@ -941,6 +941,14 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 97u: /* STKOP_TimeFetch */
+        /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
+        if (!context->game_time_valid ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                           context->game_time)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
     case 40u: /* STKOP_ParamFetch */
         /* CSBWin DSA.cpp:2956-2999 copies the first N source parameters to
          * DSAVARS starting at I.  Missing logical parameters become zero and
@@ -1030,6 +1038,16 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             v = (uint32_t)(-sw);
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
+        break;
+    case 133u: /* STKOP_ThisDSAId, reached via AMPERSAND2 + 128 */
+        /* DSA.cpp:4822-4828 pushes exPkt.m_RNslave.ConvertToInteger().
+         * The runner admits that raw Thing identity only after the runtime
+         * binding has verified the source type-47 actuator. */
+        if (!context->dsa_slave_thing_valid ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                           context->dsa_slave_thing)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
         break;
     case 136u: /* STKOP_VSET, reached via AMPERSAND2 + 128 */
         /* DSA.cpp:4850-4887 consumes N, destination, and source from the
@@ -1416,6 +1434,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.party_level = runner->party_level;
     context.party_x = runner->party_x;
     context.party_y = runner->party_y;
+    context.game_time_valid = runner->game_time_valid;
+    context.game_time = runner->game_time;
+    context.dsa_slave_thing_valid = runner->dsa_slave_thing_valid;
+    context.dsa_slave_thing = runner->dsa_slave_thing;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;

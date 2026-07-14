@@ -16984,6 +16984,7 @@ int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
          ++i) {
         if (profile->csbwin_extended_dsa_state.imported_actions[i].dsa_id ==
             candidate.dsa_id) {
+            candidate.actuator_identity_valid = 1;
             *out_binding = candidate;
             return 1;
         }
@@ -19314,6 +19315,10 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.party_level = profile->current_level;
     candidate.party_x = profile->party_x;
     candidate.party_y = profile->party_y;
+    candidate.game_time_valid = 1;
+    candidate.game_time = profile->game_time;
+    candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
+    candidate.dsa_slave_thing = binding->location.actuator_thing;
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =
             profile->csbwin_global_variable_count;
