@@ -21404,60 +21404,53 @@ static void m11_apply_dungeon_palette_level(unsigned char* framebuffer,
     }
 }
 
-/* Draw the source-backed DM1 floor/ceiling base for the 224x136
- * viewport.  ReDMCSB DUNVIEW.C F0128_DUNGEONVIEW_Draw_CPSF draws
- * graphic 79 (ceiling, 224x39) into C700_ZONE_VIEWPORT_CEILING_AREA
- * and graphic 78 (floor, 224x97) into C701_ZONE_VIEWPORT_FLOOR_AREA.
- *
- * Older Firestaff code incorrectly used graphic 0 as a full viewport
- * background; that asset is a UI/panel graphic, which is why the
- * dungeon looked like a random room/control panel instead of DM1. */
-static void m11_blit_viewport_region_maybe_flip(const M11_AssetSlot* slot,
-                                                int srcX,
-                                                int srcY,
-                                                int srcW,
-                                                int srcH,
-                                                unsigned char* framebuffer,
-                                                int fbW,
-                                                int fbH,
-                                                int dstX,
-                                                int dstY,
-                                                int flipHorizontal) {
-    int y;
-    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
-        srcW <= 0 || srcH <= 0) {
-        return;
-    }
-    if (!flipHorizontal) {
-        M11_AssetLoader_BlitRegion(slot, srcX, srcY, srcW, srcH,
-                                   framebuffer, fbW, fbH, dstX, dstY, -1);
-        return;
-    }
-    if (srcX < 0 || srcY < 0 ||
-        srcX + srcW > (int)slot->width ||
-        srcY + srcH > (int)slot->height) {
-        return;
-    }
-    for (y = 0; y < srcH; ++y) {
-        int fbY = dstY + y;
-        int x;
-        if (fbY < 0 || fbY >= fbH) continue;
-        for (x = 0; x < srcW; ++x) {
-            int fbX = dstX + x;
-            int sx;
-            unsigned char pixel;
-            if (fbX < 0 || fbX >= fbW) continue;
-            sx = srcX + (srcW - 1 - x);
-            pixel = slot->pixels[(srcY + y) * (int)slot->width + sx];
-            framebuffer[fbY * fbW + fbX] = pixel;
-        }
-    }
-}
-
 /* Forward declarations for floor-set-aware graphic index helpers.
  * Definitions follow m11_current_map_floor_set below. */
 static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state);
 static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state);
+
+/* F0094 loads the current map's floor/ceiling pair into the two negative
+ * F0098 cached-bitmap slots.  Keep the M11 loader at this narrow boundary:
+ * the DM1 viewport must not know about M11 cache internals, and M11 must not
+ * select a default floor set when the current pair cannot be decoded. */
+typedef struct M11_DM1F0098GraphicProvider {
+    const M11_GameViewState* state;
+    unsigned int floor_graphic;
+    unsigned int ceiling_graphic;
+} M11_DM1F0098GraphicProvider;
+
+static int m11_dm1_f0098_graphic_provider(void* user_data,
+                                           int graphic_index,
+                                           const uint8_t** out_pixels,
+                                           int* out_width,
+                                           int* out_height)
+{
+    const M11_DM1F0098GraphicProvider* provider =
+        (const M11_DM1F0098GraphicProvider*)user_data;
+    const M11_AssetSlot* slot;
+    unsigned int source_graphic;
+
+    if (!provider || !provider->state || !provider->state->assetsAvailable ||
+        !out_pixels || !out_width || !out_height) {
+        return 0;
+    }
+    if (graphic_index == -1) {
+        source_graphic = provider->floor_graphic;
+    } else if (graphic_index == -2) {
+        source_graphic = provider->ceiling_graphic;
+    } else {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&provider->state->assetLoader,
+                                source_graphic);
+    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    *out_pixels = slot->pixels;
+    *out_width = (int)slot->width;
+    *out_height = (int)slot->height;
+    return 1;
+}
 
 static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
@@ -21467,52 +21460,55 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                                          int vpY,
                                          int vpW,
                                          int vpH) {
-    if (state->assetsAvailable) {
-        /* ReDMCSB DUNVIEW.C F0094: select floor/ceiling bitmaps from the
-         * current map's floor set.  Floor set 0 = entries 78/79, floor
-         * set 1 = 80/81, etc.  An authoritative GRAPHICS.DAT session must
-         * not substitute a different floor set or procedural art when an
-         * exact source bitmap is unavailable. */
-        unsigned int floorGfx = m11_floor_set_floor_graphic(state);
-        unsigned int ceilingGfx = m11_floor_set_ceiling_graphic(state);
-        const M11_AssetSlot* ceilingSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, ceilingGfx);
-        const M11_AssetSlot* floorSlot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, floorGfx);
-        if (ceilingSlot && floorSlot &&
-            ceilingSlot->width == 224 && ceilingSlot->height == 39 &&
-            floorSlot->width == 224 && floorSlot->height == 97 &&
-            vpW == 224 && vpH == 136) {
-            int parityFlip = ((state->world.party.mapX +
-                               state->world.party.mapY +
-                               state->world.party.direction) & 1) ? 1 : 0;
-            /* ReDMCSB F0128 alternates horizontal flip between ceiling
-             * and floor based on (mapX + mapY + direction) parity.  This
-             * breaks repeated dither seams in the 224-wide viewport base
-             * and matches the original CPSF draw order. */
-            m11_blit_viewport_region_maybe_flip(ceilingSlot,
-                                                0, 0, 224, 39,
-                                                framebuffer, fbW, fbH,
-                                                vpX, vpY,
-                                                parityFlip ? 0 : 1);
-            m11_blit_viewport_region_maybe_flip(floorSlot,
-                                                0, 0, 224, 97,
-                                                framebuffer, fbW, fbH,
-                                                vpX, vpY + 39,
-                                                parityFlip ? 1 : 0);
-        }
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t flipped[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_FLOOR_H];
+    DM1_Viewport3DState f0098;
+    M11_DM1F0098GraphicProvider provider;
+
+    if (!state || !state->assetsAvailable || !framebuffer ||
+        vpW != DM1_VIEWPORT_WIDTH || vpH != DM1_VIEWPORT_HEIGHT ||
+        vpX < 0 || vpY < 0 || vpX + vpW > fbW || vpY + vpH > fbH) {
         return;
     }
-    /* F0098 consumes the real current-map floor/ceiling pair. The viewport
-     * was cleared to black by F0128's host entry; a gray host corridor is
-     * not an original-PC34 substitute when either material is unavailable. */
-    (void)framebuffer;
-    (void)fbW;
-    (void)fbH;
-    (void)vpX;
-    (void)vpY;
-    (void)vpW;
-    (void)vpH;
+
+    /* Preserve the already-cleared host viewport.  F0098 owns only its
+     * source black band and the two cached source bitmaps; absent assets are
+     * consequently no-draw, never an invented backing texture. */
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        memcpy(viewport + y * DM1_VIEWPORT_WIDTH,
+               framebuffer + (vpY + y) * fbW + vpX,
+               DM1_VIEWPORT_WIDTH);
+    }
+    provider.state = state;
+    provider.floor_graphic = m11_floor_set_floor_graphic(state);
+    provider.ceiling_graphic = m11_floor_set_ceiling_graphic(state);
+    dm1_viewport_3d_init(&f0098, viewport, DM1_VIEWPORT_WIDTH);
+    f0098.graphic_provider_callback = m11_dm1_f0098_graphic_provider;
+    f0098.graphic_provider_user_data = &provider;
+    dm1_viewport_3d_draw_floor_ceiling(&f0098);
+    /* F0128 alternates the base texture orientation after F0098. The odd
+     * parity branch flips floor; the even branch flips ceiling. F0099 keeps
+     * the copy/flip operation DM1-owned and prevents M11 from inventing a
+     * differently oriented replacement bitmap. */
+    if ((state->world.party.mapX + state->world.party.mapY +
+         state->world.party.direction) & 1) {
+        dm1_viewport_3d_copy_and_flip_h(
+            viewport + DM1_PC34_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH,
+            flipped, DM1_VIEWPORT_WIDTH, DM1_PC34_VIEWPORT_FLOOR_H);
+        memcpy(viewport + DM1_PC34_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH,
+               flipped, sizeof(flipped));
+    } else {
+        dm1_viewport_3d_copy_and_flip_h(viewport, flipped,
+                                        DM1_VIEWPORT_WIDTH,
+                                        DM1_PC34_VIEWPORT_CEILING_H);
+        memcpy(viewport, flipped,
+               (size_t)DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_CEILING_H);
+    }
+    for (int y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+        memcpy(framebuffer + (vpY + y) * fbW + vpX,
+               viewport + y * DM1_VIEWPORT_WIDTH,
+               DM1_VIEWPORT_WIDTH);
+    }
 }
 
 typedef struct M11_DM1WallFrontBlit {

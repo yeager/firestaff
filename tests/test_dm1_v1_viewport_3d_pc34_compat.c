@@ -31,6 +31,8 @@ static void check_nonnull(const char *id, const void *ptr)
 typedef struct FloorCeilingProviderFixture {
     const uint8_t *ceiling;
     const uint8_t *floor;
+    int ceiling_height;
+    int floor_height;
 } FloorCeilingProviderFixture;
 
 static int floor_ceiling_graphic_provider(
@@ -46,13 +48,15 @@ static int floor_ceiling_graphic_provider(
     if (graphic_index == -2 && fixture->ceiling) {
         *out_pixels = fixture->ceiling;
         *out_width = DM1_VIEWPORT_WIDTH;
-        *out_height = DM1_VIEWPORT_CEILING_H;
+        *out_height = fixture->ceiling_height > 0 ? fixture->ceiling_height :
+                                                   DM1_VIEWPORT_CEILING_H;
         return 1;
     }
     if (graphic_index == -1 && fixture->floor) {
         *out_pixels = fixture->floor;
         *out_width = DM1_VIEWPORT_WIDTH;
-        *out_height = DM1_VIEWPORT_FLOOR_H;
+        *out_height = fixture->floor_height > 0 ? fixture->floor_height :
+                                                 DM1_VIEWPORT_FLOOR_H;
         return 1;
     }
     return 0;
@@ -940,7 +944,7 @@ static void test_floor_ceiling_uses_real_provider_pixels(void)
     uint8_t ceiling[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_CEILING_H];
     uint8_t floor[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_FLOOR_H];
     DM1_Viewport3DState state;
-    FloorCeilingProviderFixture fixture;
+    FloorCeilingProviderFixture fixture = {0};
 
     memset(viewport, 0x5a, sizeof(viewport));
     memset(ceiling, 0x03, sizeof(ceiling));
@@ -960,6 +964,41 @@ static void test_floor_ceiling_uses_real_provider_pixels(void)
               viewport[DM1_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 111], 0x0c);
     check_int("F0098.provider.floor_last_real_pixel",
               viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 111], 0x0c);
+}
+
+static void test_floor_ceiling_uses_complete_pc34_provider_pair(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t ceiling[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_CEILING_H];
+    uint8_t floor[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_FLOOR_H];
+    DM1_Viewport3DState state;
+    FloorCeilingProviderFixture fixture = {0};
+
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(ceiling, 0x03, sizeof(ceiling));
+    memset(floor, 0x0c, sizeof(floor));
+    fixture.ceiling = ceiling;
+    fixture.floor = floor;
+    fixture.ceiling_height = DM1_PC34_VIEWPORT_CEILING_H;
+    fixture.floor_height = DM1_PC34_VIEWPORT_FLOOR_H;
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    state.graphic_provider_callback = floor_ceiling_graphic_provider;
+    state.graphic_provider_user_data = &fixture;
+
+    /* The fixture callback deliberately advertises the PC34 source pair. */
+    dm1_viewport_3d_draw_floor_ceiling(&state);
+    check_int("F0098.pc34.ceiling_h", DM1_PC34_VIEWPORT_CEILING_H, 39);
+    check_int("F0098.pc34.floor_y", DM1_PC34_VIEWPORT_FLOOR_Y, 39);
+    check_int("F0098.pc34.floor_h", DM1_PC34_VIEWPORT_FLOOR_H, 97);
+    check_int("F0098.pc34.ceiling_last_pixel",
+              viewport[(DM1_PC34_VIEWPORT_CEILING_H - 1) *
+                       DM1_VIEWPORT_WIDTH + 111], 0x03);
+    check_int("F0098.pc34.floor_first_pixel",
+              viewport[DM1_PC34_VIEWPORT_FLOOR_Y * DM1_VIEWPORT_WIDTH + 111],
+              0x0c);
+    check_int("F0098.pc34.floor_last_pixel",
+              viewport[(DM1_VIEWPORT_HEIGHT - 1) * DM1_VIEWPORT_WIDTH + 111],
+              0x0c);
 }
 
 
@@ -4559,6 +4598,7 @@ int main(void)
     test_wall_frame_bitmap_global_null_guard();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
+    test_floor_ceiling_uses_complete_pc34_provider_pair();
     test_d0_d1_visible_square_draw_order_gate();
     test_post_command_redraw_contract();
     test_same_viewport_capture_contract();
