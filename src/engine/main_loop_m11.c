@@ -390,6 +390,19 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
                                                            &capture);
 }
 
+static int m11_running_from_macos_app_bundle(void)
+{
+#ifdef __APPLE__
+    const char *base_path = SDL_GetBasePath();
+    int running_from_bundle =
+        base_path && strstr(base_path, ".app/Contents/MacOS/") != NULL;
+    SDL_free((void *)base_path);
+    return running_from_bundle;
+#else
+    return 0;
+#endif
+}
+
 /* ReDMCSB ENTRANCE.C F0797/F0441 hands the opened Hall to DRAWVIEW before
  * input. Keep every later materialized HoC frame on this same M11->M12 edge:
  * capture may observe only a successfully presented game frame, never a
@@ -399,6 +412,20 @@ static int m11_present_game_frame_and_publish_dm1_hoc_capture(
     M12_StartupMenuState* menuState) {
     if (!m11_present_game_frame(gameView)) {
         return 0;
+    }
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        M11_GameView_RecordCSBPresentedIndexedFrame(
+            (M11_GameViewState *)gameView,
+            M11_Render_GetFramebuffer(),
+            M11_FB_WIDTH,
+            M11_FB_HEIGHT,
+            m11_running_from_macos_app_bundle(),
+#ifdef __APPLE__
+            M11_Render_GetWindow() != NULL
+#else
+            0
+#endif
+        );
     }
     m11_publish_dm1_hoc_presented_capture_to_m12(gameView, menuState);
     return 1;

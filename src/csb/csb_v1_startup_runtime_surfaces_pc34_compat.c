@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #include "memory_frontend_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"
@@ -794,6 +795,58 @@ void csb_v1_boot_startup_presented_app_capture_receipt_init_pc34(
         "ReDMCSB TITLE.C F0437 lines 424-463; "
         "ENTRANCE.C F0441/F0806 lines 620-883; "
         "CSBWin Graphics.cpp ReadGraphic and Viewport.cpp host presentation";
+}
+
+int csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const unsigned char *indexed_pixels,
+    int width,
+    int height,
+    int running_from_macos_app_bundle,
+    int mac_window_capture_ready,
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 *out_facts)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    uint32_t hash = 2166136261u;
+    size_t pixel_count;
+    size_t i;
+
+    if (out_facts) {
+        memset(out_facts, 0, sizeof(*out_facts));
+    }
+    if (!session || !indexed_pixels || !out_facts || width != 320 ||
+        height != 200 ||
+        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !terminal.valid || !terminal.c001_complete ||
+        !terminal.terminal_f0807_complete || !terminal.c017_ready ||
+        !terminal.c040_ready) {
+        return 0;
+    }
+
+    pixel_count = (size_t)width * (size_t)height;
+    for (i = 0; i < pixel_count; ++i) {
+        hash ^= indexed_pixels[i];
+        hash *= 16777619u;
+    }
+    if (hash == 0u) {
+        hash = 1u;
+    }
+
+    /* ReDMCSB TITLE.C F0437 retains C001 through PRESENTS/CHAOS/STRIKES;
+     * ENTRANCE.C F0438/F0807 reaches C017/C040 only after its door frames.
+     * A host may record that exact indexed M11 raster, but cannot supply a
+     * substitute buffer or bypass the terminal session. */
+    out_facts->running_from_macos_app_bundle =
+        running_from_macos_app_bundle ? 1 : 0;
+    out_facts->mac_window_capture_ready =
+        mac_window_capture_ready ? 1 : 0;
+    out_facts->presented_frame_captured = 1;
+    out_facts->presented_frame_width = width;
+    out_facts->presented_frame_height = height;
+    out_facts->presented_frame_indexed_pixels = 1;
+    out_facts->presented_frame_uses_real_csb_assets = 1;
+    out_facts->presented_frame_hash = hash;
+    return 1;
 }
 
 int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
