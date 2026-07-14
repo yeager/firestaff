@@ -58,8 +58,9 @@ int m11_v22_inplace_draw_active(void);
 
 /* Get the cached RGBA bitmap for a V22 cell. depth in {1,2,3},
  * lateral in {-1,0,1}. Sets *out_w, *out_h to the bitmap dimensions.
- * Returns NULL if the cell has no V22 shape, the shape has no
- * mapped asset_id, or in-place has not been initialized.
+ * Returns NULL if the cell has no V22 shape, the shape has no reviewed
+ * mapped asset_id (including item shapes without a V2.2 item material),
+ * or in-place has not been initialized.
  *
  * The returned pointer is owned by the in-place cache and remains
  * valid until m11_v22_inplace_draw_shutdown(). */
