@@ -1643,6 +1643,10 @@ typedef struct {
     Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
+    /* Retain validated Structure3b fill-selector joins in blocked plans so
+     * later mesh work consumes the original DGN data rather than recreating
+     * it. This is still not a material decoder or draw permission. */
+    Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
