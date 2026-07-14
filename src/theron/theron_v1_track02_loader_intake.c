@@ -2,6 +2,30 @@
 
 #include <string.h>
 
+enum {
+    TQR_INITIAL_ENVELOPE_HEADER_BYTES = 12u
+};
+
+static uint16_t read_be16(const uint8_t *bytes) {
+    return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
+}
+
+static uint32_t read_be32(const uint8_t *bytes) {
+    return ((uint32_t)bytes[0] << 24u) | ((uint32_t)bytes[1] << 16u) |
+        ((uint32_t)bytes[2] << 8u) | bytes[3];
+}
+
+static uint32_t hash_bytes(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 int theron_v1_track02_loader_intake_observe(
     const Theron_V1Track02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
@@ -25,6 +49,81 @@ int theron_v1_track02_loader_intake_observe(
     receipt.observed_destination = facts->destination;
     receipt.observed_byte_count = facts->byte_count;
     receipt.status = "initial_envelope_loader_read_observed_payload_blocked";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int theron_v1_track02_loader_intake_decode_initial_envelope(
+    const Theron_V1Track02LoaderIntakeReceipt *source_bound_receipt,
+    const Theron_V1DungeonHandoffReceipt *initial_envelope,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
+    Theron_V1Track02LoaderIntakeReceipt receipt;
+    size_t raw_offset;
+    const uint8_t *envelope;
+    uint32_t grid_bytes;
+
+    if (!source_bound_receipt || !initial_envelope || !out_receipt) return 0;
+    receipt = *source_bound_receipt;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!receipt.observed || !receipt.initial_envelope_source_bound ||
+        receipt.payload_intake_admitted || receipt.initial_envelope_decoded ||
+        !raw_track02 || !raw_track02_md5 ||
+        raw_track02_bytes % THERON_V1_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        (strcmp(raw_track02_md5, THERON_V1_TRACK02_MD5_JP_BIN) != 0 &&
+         strcmp(raw_track02_md5, THERON_V1_TRACK02_MD5_US_BIN) != 0) ||
+        !theron_v1_track02_raw_bytes_match_md5(raw_track02,
+                                                raw_track02_bytes,
+                                                raw_track02_md5) ||
+        !initial_envelope->selected ||
+        !initial_envelope->runtime_route_consumed ||
+        !initial_envelope->raw_track02_md5_verified ||
+        initial_envelope->record != receipt.record ||
+        initial_envelope->record_user_data_offset !=
+            receipt.record_user_data_offset ||
+        initial_envelope->envelope_bytes != THERON_V1_INITIAL_ENVELOPE_BYTES ||
+        initial_envelope->track02_raw_sector <
+            initial_envelope->cue_track02_index01_raw_sector ||
+        initial_envelope->track02_raw_sector -
+            initial_envelope->cue_track02_index01_raw_sector != receipt.record ||
+        initial_envelope->raw_sector_offset !=
+            receipt.record_user_data_offset + THERON_V1_TRACK02_MODE1_HEADER_BYTES ||
+        receipt.observed_byte_count < initial_envelope->envelope_bytes) {
+        return 0;
+    }
+
+    raw_offset = (size_t)initial_envelope->track02_raw_sector *
+        THERON_V1_TRACK02_RAW_SECTOR_BYTES + initial_envelope->raw_sector_offset;
+    if (raw_offset > raw_track02_bytes ||
+        initial_envelope->envelope_bytes > raw_track02_bytes - raw_offset ||
+        initial_envelope->envelope_bytes < TQR_INITIAL_ENVELOPE_HEADER_BYTES) {
+        return 0;
+    }
+
+    envelope = raw_track02 + raw_offset;
+    grid_bytes = (uint32_t)read_be16(envelope) * read_be16(envelope + 2u);
+    if (read_be16(envelope) != initial_envelope->header_width ||
+        read_be16(envelope + 2u) != initial_envelope->header_height ||
+        read_be32(envelope + 4u) != initial_envelope->header_seed ||
+        read_be16(envelope + 8u) != initial_envelope->header_identifier ||
+        grid_bytes != initial_envelope->envelope_bytes -
+            TQR_INITIAL_ENVELOPE_HEADER_BYTES) {
+        return 0;
+    }
+
+    receipt.payload_intake_admitted = 1;
+    receipt.initial_envelope_decoded = 1;
+    receipt.decoded_header_width = read_be16(envelope);
+    receipt.decoded_header_height = read_be16(envelope + 2u);
+    receipt.decoded_header_seed = read_be32(envelope + 4u);
+    receipt.decoded_header_identifier = read_be16(envelope + 8u);
+    receipt.decoded_header_extension = read_be16(envelope + 10u);
+    receipt.decoded_grid_bytes = grid_bytes;
+    receipt.decoded_grid_hash = hash_bytes(envelope + TQR_INITIAL_ENVELOPE_HEADER_BYTES,
+                                           grid_bytes);
+    receipt.status = "initial_envelope_loader_read_decoded_no_semantic_handoff";
     *out_receipt = receipt;
     return 1;
 }

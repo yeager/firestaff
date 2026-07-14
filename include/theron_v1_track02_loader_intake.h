@@ -22,10 +22,18 @@ typedef struct {
     int observed;
     int payload_intake_admitted;
     int initial_envelope_source_bound;
+    int initial_envelope_decoded;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t observed_destination;
     uint32_t observed_byte_count;
+    uint16_t decoded_header_width;
+    uint16_t decoded_header_height;
+    uint32_t decoded_header_seed;
+    uint16_t decoded_header_identifier;
+    uint16_t decoded_header_extension;
+    uint32_t decoded_grid_bytes;
+    uint32_t decoded_grid_hash;
     const char *status;
 } Theron_V1Track02LoaderIntakeReceipt;
 
@@ -59,6 +67,19 @@ int theron_v1_track02_loader_intake_observe_authenticated_trace(
 int theron_v1_track02_loader_intake_bind_initial_envelope(
     const Theron_V1Track02LoaderIntakeReceipt *observation,
     const Theron_V1DungeonHandoffReceipt *initial_envelope,
+    Theron_V1Track02LoaderIntakeReceipt *out_receipt);
+
+/* Decodes the source-bound initial envelope only from the complete, canonical
+ * raw Track 02 image. The raw bytes are independently rehashed and must still
+ * agree with the selected receipt and runtime-admitted loader observation.
+ * It promotes the literal header and 32x27 grid span, but assigns no grid,
+ * object, visual, or post-grid-tail semantics. */
+int theron_v1_track02_loader_intake_decode_initial_envelope(
+    const Theron_V1Track02LoaderIntakeReceipt *source_bound_receipt,
+    const Theron_V1DungeonHandoffReceipt *initial_envelope,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt);
 
 #endif
