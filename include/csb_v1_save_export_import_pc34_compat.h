@@ -133,7 +133,9 @@ typedef enum {
     CSB_V1_SAVE_EXPORT_ERR_BAD_VERSION      = -4, /* unknown manifest ver */
     CSB_V1_SAVE_EXPORT_ERR_BAD_PAYLOAD_KIND = -5, /* unknown payload_kind */
     CSB_V1_SAVE_EXPORT_ERR_BAD_CRC          = -6, /* CRC-32 mismatch */
-    CSB_V1_SAVE_EXPORT_ERR_IO               = -7  /* fopen / fread / fwrite */
+    CSB_V1_SAVE_EXPORT_ERR_IO               = -7, /* fopen / fread / fwrite */
+    /* Envelope payload_kind disagrees with the embedded CSBGAME version. */
+    CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH = -8
 } CSB_V1_SaveExportResult;
 
 /* ── Classification API ─────────────────────────────────────────────── */
@@ -198,6 +200,14 @@ int csb_v1_save_export_parse_header(const uint8_t *raw,
  * only want to confirm "this is a well-formed FSSB envelope". */
 int csb_v1_save_export_validate_envelope(const uint8_t *raw,
                                           size_t raw_size);
+
+/* Validate an envelope for CSB runtime resume. In addition to the envelope
+ * integrity checks, this binds payload_kind to the embedded CSBGAME version:
+ * kind 0 must contain v2.0 and kind 1 must contain v2.1. This prevents a
+ * CRC-valid, relabelled save from crossing the resume boundary. The existing
+ * validate_envelope() deliberately remains container-only for archive tools. */
+int csb_v1_save_export_validate_importable_envelope(const uint8_t *raw,
+                                                     size_t raw_size);
 
 /* ── Round-trip: export a CSB_V1_PartyState as a full envelope ────── */
 

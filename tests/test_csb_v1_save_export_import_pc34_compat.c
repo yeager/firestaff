@@ -603,6 +603,45 @@ int main(void)
               "import_envelope(< header) -> ERR_BUF_TOO_SMALL");
     }
 
+    /* ── Resume admission binds the envelope kind to CSBGAME version ── */
+    {
+        CSB_V1_PartyState party;
+        uint8_t payload[CSB_SAVE_HEADER_SIZE + CSB_SAVE_CHAMP_SIZE];
+        uint8_t envelope[CSB_V1_SAVE_EXPORT_HEADER_LEN + sizeof(payload)];
+
+        make_synthetic_party(&party, 1);
+        rc_long = csb_v1_build_csb_save_buffer(
+            &party, CSB_SAVE_VERSION_V20, payload, (long)sizeof(payload));
+        CHECK(rc_long == (long)sizeof(payload),
+              "build v2.0 payload for resume-admission check");
+
+        rc_long = csb_v1_save_export_build_envelope(
+            payload, sizeof(payload), 1u, "/tmp/mislabeled.csbsave",
+            envelope, sizeof(envelope));
+        CHECK(rc_long == (long)sizeof(envelope),
+              "build CRC-valid cross-labeled envelope");
+        CHECK(csb_v1_save_export_validate_envelope(envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_OK,
+              "container-only validation permits an archived cross-label");
+        CHECK(csb_v1_save_export_validate_importable_envelope(
+                  envelope, sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH,
+              "resume admission rejects v2.0 payload labeled v2.1");
+        CHECK(csb_v1_save_export_import_envelope(&party, envelope,
+                                                  sizeof(envelope))
+                  == CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH,
+              "runtime import rejects cross-labeled envelope before loader");
+
+        rc_long = csb_v1_save_export_build_envelope(
+            payload, sizeof(payload), 0u, "/tmp/correct.csbsave",
+            envelope, sizeof(envelope));
+        CHECK(rc_long == (long)sizeof(envelope),
+              "build correctly labeled v2.0 envelope");
+        CHECK(csb_v1_save_export_validate_importable_envelope(
+                  envelope, sizeof(envelope)) == CSB_V1_SAVE_EXPORT_OK,
+              "resume admission accepts matching v2.0 payload label");
+    }
+
     /* ── File I/O: write_envelope / read_envelope round-trip ── */
     {
         CSB_V1_PartyState export_party;
