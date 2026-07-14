@@ -55,7 +55,10 @@
 - 2026-07-14 Nexus M11 startup regression: moved the large local test fixtures
   and the raw-capture NULL-rejection receipt to static test storage. This prevents
   `test_m11_nexus_startup_gate` from exceeding the macOS main-thread stack
-  before it can exercise the launcher; the launcher route remains no-draw.
+  before it can exercise the launcher. The optional real-media route now runs
+  only when `FIRESTAFF_NEXUS_V1_DATA_DIR` is explicitly set, so ambient local
+  game data cannot stall a deterministic regression run; the launcher route
+  remains no-draw.
 
 - 2026-07-14 Nexus Structure3 launcher raw-capture route: the launcher can
   now feed the strict six-lane reader directly into its currently owned,

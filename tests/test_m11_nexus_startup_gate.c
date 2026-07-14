@@ -674,16 +674,11 @@ static void expect_failed_start_is_inactive(const char* data_dir,
 
 static const char* nexus_data_dir(char fallback[512]) {
     const char* data_dir = getenv("FIRESTAFF_NEXUS_V1_DATA_DIR");
-    const char* home;
     if (data_dir && data_dir[0]) {
         return data_dir;
     }
-    home = getenv("HOME");
-    if (!home || !home[0]) {
-        return NULL;
-    }
-    snprintf(fallback, 512, "%s/.firestaff/data/nexus", home);
-    return fallback;
+    (void)fallback;
+    return NULL;
 }
 
 static void expect_canonical_face_media_is_blocked(const char* data_dir) {
