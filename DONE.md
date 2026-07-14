@@ -19,6 +19,10 @@
   target. Focused adapters preserve the original callback order without claiming
   PC behavior.
 
+- 2026-07-14 DM1/CSB ReDMCSB F0940/F0942-F0944: source review identified
+  Amiga copper, disk.resource and Exec-vector routes. They are recorded as
+  source-nonapplicable to PC 3.4; focused host-boundary tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
   copy-protection BIOS callback, MIDI IODRV commands and substring routine.
   Focused strict C11 tests pass without synthetic disk or audio behavior.
