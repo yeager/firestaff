@@ -37,9 +37,13 @@
   canonical `LEVxx.DGN`, requires its hash-bound source receipt, and refuses
   to invoke the importer unless the capture reader explicitly attests an
   original-Saturn source. The result is receipt-only and remains no-draw.
-  Next required evidence is an authenticated original-Saturn capture manifest
-  plus separately scanner-verified retail DGN media and observed command/read
-  spans; only then may the existing no-draw binder evaluate byte identity.
+  The admitted packet is now copied into engine-owned storage, including all
+  six opaque spans and its session/bundle identities, so callers cannot alter
+  it after handoff. Next required evidence is an authenticated original-Saturn
+  capture manifest plus separately scanner-verified retail DGN media and
+  observed command/read spans; only then may the existing no-draw binder
+  evaluate byte identity. Pixel, palette, VDP1, transform, culling, and mesh
+  semantics remain unimplemented.
 
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked

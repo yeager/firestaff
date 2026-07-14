@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 complete opaque capture retention: after strict
+  capture admission, the engine copies the exact typed face/vertex/normal rows
+  together with all six opaque capture spans and their session/bundle identity
+  into engine-owned storage. It still rejects a missing external-Saturn verdict
+  and remains no-draw; no texture, palette, VDP1, transform, culling, or mesh
+  semantics were inferred. Verification:
+  `nexus_v1_dgn_geometry_readiness` and
+  `nexus_v1_structure3_capture_manifest`.
+
 - 2026-07-14 DM2 G1 side-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now populates D0/D1/D2 left and right wall rays, using the
   party-relative SKProject viewport coordinates, before the existing GDAT
