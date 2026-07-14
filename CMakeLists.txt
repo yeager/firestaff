@@ -418,6 +418,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materi
     add_executable(test_dm1_v1_viewport_runtime_materialization_pc34_compat
         tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c
         src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_runtime_materialization_pc34_compat PRIVATE firestaff_m10)

@@ -17787,6 +17787,21 @@ static int m11_viewport_cell_has_renderable_explosion(
            cell->dm1MaterializationDecision.liveRenderableExplosionCount > 0;
 }
 
+/* F0115 reaches alcoves through C2548 rather than C2500, but that changes
+ * only the placement material. C127 payload ownership still applies before
+ * either object route reaches an M11 blitter. */
+static int m11_dm1_floor_item_material_allowed(const M11_ViewportCell* cell,
+                                                int alcoveRoute)
+{
+    if (!cell || !cell->dm1MaterializationDecisionReady ||
+        (!alcoveRoute && !cell->dm1MaterializationDecision.drawFloorItems)) {
+        return 0;
+    }
+    return !cell->dm1RuntimeRenderDecisionReady ||
+           !cell->dm1RuntimeRenderDecision.suppressMaterializedItemPayload ||
+           cell->dm1RuntimeRenderDecision.drawFloorObject;
+}
+
 static int m11_viewport_cell_explosion_material(
     const M11_ViewportCell* cell,
     int index,
@@ -20928,11 +20943,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
     /* Layer 1: Floor items (lowest physical objects — on the ground).
      * Skip wall squares — items on walls are in alcoves, rendered
      * separately by m11_draw_dm1_alcove_wall_items. */
-    if (cell->floorItemCount > 0 && cell->dm1MaterializationDecisionReady &&
-        cell->dm1MaterializationDecision.drawFloorItems &&
-        (!cell->dm1RuntimeRenderDecisionReady ||
-         !cell->dm1RuntimeRenderDecision.suppressMaterializedItemPayload ||
-         cell->dm1RuntimeRenderDecision.drawFloorObject) &&
+    if (cell->floorItemCount > 0 &&
+        m11_dm1_floor_item_material_allowed(cell, 0) &&
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
@@ -22387,7 +22399,8 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
     (void)fbH;
     (void)blit;
     (void)sourceZoneRow;
-    if (!state || !cell || !blit || cell->floorItemCount <= 0) {
+    if (!state || !cell || !blit || cell->floorItemCount <= 0 ||
+        !m11_dm1_floor_item_material_allowed(cell, 1)) {
         return;
     }
 
