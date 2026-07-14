@@ -551,6 +551,10 @@ ReDMCSB WIP 2021-02-06 source tree.
   TT_12 now clears only its exact saved hide-damage receipt; its source
   inventory/status-panel redraw branches remain blocked until their live
   inventory-champion identity is restored.
+  The opt-in real-package DSA probe now snapshots every decoded action and
+  source selector before one runtime tick, then requires the entire catalog to
+  remain save-owned after the tick. It still skips without an explicit original
+  package and does not create a substitute save, DSA, or timer fixture.
 
 - 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
   candidate-panel receipt fail-closed as additional real-save variants are

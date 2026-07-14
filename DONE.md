@@ -13648,6 +13648,18 @@ changing its time. Multiple type-47 entries, failed/unsupported DSA actions,
 and all world-mutating DSA behavior remain fail-closed. Verification:
 `csb_v1_csbwin_dsa_door_timer_handoff`.
 
+# ✅ 2026-07-14 CSBWin real-package DSA catalog tick receipt
+
+The opt-in `csb_v1_csbwin_extended_dsa_handoff` probe now fingerprints every
+authenticated `DSA::Read` action from a supplied original package, including
+its `(DSA, state, column)` selector, before advancing the production runtime
+one tick. It accepts the tick only when every action keeps its original owned
+address and words and every unique selector still resolves to that same
+save-owned action. No package path means `SKIP`; no save, DSA, timer, or
+fallback action is constructed. Source boundary: CSBWin `SaveGame.cpp`
+`ReadExtendedFeatures`/`ReadDSAs`, `DSA.cpp` `DSA::Read`, and ReDMCSB
+`LOADSAVE.C F0435_STARTEND_LoadGame`.
+
 # DM2 GDAT MapGraphicsStyle Corpus (2026-07-14)
 
 - DM2's boot-owned scene-material cache now spans the original unsigned-byte
