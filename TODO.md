@@ -6059,13 +6059,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original-Saturn capture is still required for render semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
-  - 2026-07-15 update: an independently attested Structure3 raw capture can
-    now retain one revalidated Structure1F/Structure1A owner context in the
-    engine-owned runtime packet. The active canonical LEV bytes, exact owner
-    row, Structure1A model row, and independently selected face target are
-    rebuilt before storage; a changed target cannot replace an admitted
-    correlation. This still proves no model-index-to-entry relation and keeps
-    texture, palette, VDP1, transform, and draw semantics fail-closed.
   establish one original Saturn execution-to-VDP1 receipt for a named
   `(LEVxx.DGN, Structure3 entry, face ordinal)` from the hash-verified retail
   corpus. The receipt must bind the exact typed mesh-row corpus identity
