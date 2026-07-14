@@ -2534,6 +2534,16 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   its existing real GRAPHICSSET plane handoff. The compressed grammar and
   runtime call order remain intentionally unavailable. No save corpus files.
 
+- ✅ 2026-07-14 DM2 GDAT static floor/ceiling M11 program binding: each
+  decoded GRAPHICSSET plane plan now carries the exact
+  `INTERFACE_GENERAL/0/dt04` `QUERY_BLIT_RECT` 700/701 table and row hashes,
+  and includes them in its command hash. M11 draws the static ceiling-then-
+  floor route only when that source program receipt survives intact; a missing
+  or altered receipt blocks both planes without callback, fallback, or generic
+  art. Source: skproject `SkWinCore.cpp DRAW_DUNGEON_GRAPHIC` and
+  `c_xrect.cpp DM2_QUERY_BLIT_RECT`. Verification: focused canonical-data
+  M10-to-M11 plan test, including altered-receipt no-draw coverage. No saves.
+
 - 2026-07-13 CSBWin restored TT_11 action-enable timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the source busy
   timer, disable-action bit, action-defense word, and action index for the

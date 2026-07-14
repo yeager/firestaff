@@ -185,7 +185,12 @@ int main(void)
             !plan.valid || plan.graphicsset != (uint8_t)candidate ||
             plan.command_hash == 0u || plan.commands[0].raw_hash == 0u ||
             plan.commands[1].raw_hash == 0u || plan.commands[0].palette_hash == 0u ||
-            plan.commands[1].palette_hash == 0u) {
+            plan.commands[1].palette_hash == 0u ||
+            !plan.query_blit_rect.valid ||
+            plan.query_blit_rect_hash == 0u ||
+            plan.query_blit_rect.table_hash != rect_receipt.table_hash ||
+            plan.query_blit_rect.floor_row_hash != rect_receipt.floor_row_hash ||
+            plan.query_blit_rect.ceiling_row_hash != rect_receipt.ceiling_row_hash) {
             fprintf(stderr, "FAIL: G1 MapGraphicsStyle %d yielded no complete "
                     "GRAPHICSSET plane plan\n", candidate);
             failures = 1;
@@ -242,6 +247,30 @@ int main(void)
         (viewport.blocked_material_mask &
          DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
         fputs("FAIL: mismatched MapGraphicsStyle plan was not a callback-free no-draw\n",
+              stderr);
+        failures = 1;
+    }
+
+    mismatched.graphicsset = (uint8_t)first_style;
+    mismatched.query_blit_rect.floor_row_hash ^= 1u;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    unexpected_fetches = 0;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, unexpected_palette_fetch, NULL);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, first_style, mismatched.command_hash, mismatched.scene_colorkey,
+        mismatched.scene_flags, 0u, mismatched.highest_light_level, 0u, 0u, 0u,
+        0u, 0u, mismatched.ambient_darkness);
+    dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
+    dm2_v1_render_floor_ceiling(&viewport);
+    if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+        viewport.fallback_floor_ceiling_drawn_count != 0 ||
+        (viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
+        fputs("FAIL: altered QUERY_BLIT_RECT receipt was not a callback-free no-draw\n",
               stderr);
         failures = 1;
     }
