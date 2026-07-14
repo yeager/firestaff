@@ -12,9 +12,9 @@ extern "C" {
  *
  * bitmap is a caller-owned, packed 4bpp raster: each scanline has row_bytes
  * bytes, with the left pixel in the high nibble. box is {left, right, top,
- * bottom}; all endpoints are inclusive. Color uses its low four bits. When
- * bit 15 is set, the routine writes alternate pixels, beginning at box[0]
- * on the first scanline and reversing phase on each later scanline.
+ * bottom}; all endpoints are inclusive. F0692 delegates each scanline to
+ * F0685_IMG3_LineColorFilling, whose char color is reduced to its low four
+ * bits when it writes packed nibbles. No color flag behavior is modelled.
  *
  * Returns 1 on a complete fill. Invalid arguments or a box outside the
  * caller-provided raster return 0 without modifying the bitmap.

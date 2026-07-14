@@ -50,7 +50,6 @@ int redmcsb_f0692_fillbox_image3_pc34_compat(
     int bottom;
     int y;
     const uint8_t pixel = (uint8_t)(color & 0x000fu);
-    const int alternate_pixels = (color & 0x8000u) != 0;
 
     if (!bitmap || !box || row_bytes == 0 || pixel_height == 0 ||
         pixel_height > SIZE_MAX / row_bytes) {
@@ -77,17 +76,7 @@ int redmcsb_f0692_fillbox_image3_pc34_compat(
     for (y = top; y <= bottom; ++y) {
         uint8_t *line = bitmap + (size_t)y * row_bytes;
 
-        if (!alternate_pixels) {
-            redmcsb_f0692_fill_line(line, left, right, pixel);
-        } else {
-            int x;
-
-            for (x = left; x <= right; ++x) {
-                if (((x - left) + (y - top)) % 2 == 0) {
-                    redmcsb_f0692_set_pixel(line, x, pixel);
-                }
-            }
-        }
+        redmcsb_f0692_fill_line(line, left, right, pixel);
     }
 
     return 1;
