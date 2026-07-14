@@ -6818,6 +6818,83 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
         : (profile->game_time >= 127u ? profile->game_time - 127u : 0u);
 }
 
+int csb_v1_runtime_f0195_group_add_all_active_groups(
+    CSB_V1_RuntimeProfile *profile)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int map_x;
+    int map_y;
+    int added = 0;
+
+    if (!profile || !profile->dungeon_handle) return -1;
+    dungeon = profile->dungeon_handle;
+    level = profile->current_level;
+    if (!dungeon->raw_data || level < 0 || level >= dungeon->level_count ||
+        dungeon->level_widths[level] <= 0 ||
+        dungeon->level_heights[level] <= 0) {
+        return -1;
+    }
+
+    /* ReDMCSB GROUP.C F0195 walks every square on the party map and adds
+     * each C04 group to ActiveGroups. The dungeon accessors preserve the
+     * native square-first-thing table and compact Next links. */
+    for (map_x = 0; map_x < dungeon->level_widths[level]; ++map_x) {
+        for (map_y = 0; map_y < dungeon->level_heights[level]; ++map_y) {
+            int thing = csb_v1_dungeon_get_first_thing(
+                dungeon, level, map_x, map_y);
+            int guard;
+
+            if (thing < 0 || thing == THING_NONE ||
+                thing == THING_ENDOFLIST) {
+                continue;
+            }
+            for (guard = 0;
+                 guard < 128 && thing != THING_NONE &&
+                     thing != THING_ENDOFLIST;
+                 ++guard) {
+                const uint8_t *record;
+                int thing_type = -1;
+                int record_size = 0;
+                int was_active;
+
+                record = csb_v1_dungeon_get_thing_record(
+                    dungeon,
+                    (uint16_t)thing,
+                    &thing_type,
+                    NULL,
+                    &record_size);
+                if (!record || record_size < 2) return -1;
+                if (thing_type == CSB_V1_THING_TYPE_GROUP) {
+                    if (record_size < 16) return -1;
+                    was_active = csb_v1_runtime_active_group_state_for_thing(
+                        profile, (uint16_t)thing) != NULL;
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile,
+                        (uint16_t)thing,
+                        record,
+                        level,
+                        map_x,
+                        map_y,
+                        0,
+                        0);
+                    if (!was_active &&
+                        csb_v1_runtime_active_group_state_for_thing(
+                            profile, (uint16_t)thing)) {
+                        ++added;
+                    }
+                }
+                thing = (int)csb_v1_runtime_read_u16(record);
+            }
+            if (guard == 128 && thing != THING_NONE &&
+                thing != THING_ENDOFLIST) {
+                return -1;
+            }
+        }
+    }
+    return added;
+}
+
 static void csb_v1_runtime_set_active_group_target(
     CSB_V1_RuntimeProfile *profile,
     uint16_t group_thing,
