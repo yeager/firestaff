@@ -27,5 +27,5 @@ if [[ -z "$source_tree" || ! -d "$source_tree" ]]; then
     exit 0
 fi
 
-patch --dry-run --forward -p1 -d "$source_tree" < "$patch_file"
+git -C "$source_tree" apply --check --whitespace=nowarn "$patch_file"
 printf 'PASS: Mednafen patch dry-runs and retains dynamic CD_READ RAM and HuC6260 store receipts\n'

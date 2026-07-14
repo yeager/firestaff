@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -40,2 +40,1268 @@
+@@ -40,3 +40,1269 @@
 +static std::unique_ptr<FileStream> TheronIrq2Trace;
 +static bool TheronIrq2TraceSeen[768];
 +static unsigned TheronIrq2TraceCallbackCount;
@@ -1271,6 +1271,7 @@ index 347482c4..61d4758e 100644
 +}
  static bool NeedInit;
  static bool WatchLogical; // Watch logical memory addresses, not physical
+ static bool IsActive;
 @@ -162,10 +817,10 @@ static void UpdateCoreHooks(void)
  {
   bool BPInUse = PCBreakPoints.size() || ReadBreakpoints.size() || WriteBreakpoints.size() || IOReadBreakpoints.size() ||
@@ -1294,7 +1295,7 @@ index 347482c4..61d4758e 100644
 + if(TheronIrq2Trace)
 +  DoTheronIrq2Trace(PC);
  }
-@@ -1873,5 +2530,65 @@ void Debugger_Init(void)
+@@ -1873,6 +2530,69 @@ void Debugger_Init(void)
  	TraceLogSpec = "";
  	TraceLogEnd = 0;
  	TraceLogRTO = 0;
@@ -1358,25 +1359,27 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
 +	  FlushTheronIrq2Trace();
 +	 }
- 	NeedInit = true;
- 	WatchLogical = true;
-@@ -1896,0 +2591,3 @@ void Debugger_Init(void)
+-
 +
 +	if(TheronIrq2Trace)
 +	 UpdateCoreHooks();
-@@ -1916,5 +2614,7 @@ void Debugger_Kill(void)
++
+ 	NeedInit = true;
+ 	WatchLogical = true;
+@@ -1916,6 +2614,8 @@ void Debugger_Kill(void)
  {
  	if(TraceLog)
  	 TraceLog.reset(nullptr);
+-
++
 +	if(TheronIrq2Trace)
 +	 TheronIrq2Trace.reset(nullptr);
-	if(memdbg != NULL)
-	{
-
+ 	if(memdbg != NULL)
+ 	{
 diff --git a/src/pce/huc.cpp b/src/pce/huc.cpp
 --- a/src/pce/huc.cpp
 +++ b/src/pce/huc.cpp
-@@ -110,4 +110,29 @@ static DECLFW(SysCardRAMWrite)
+@@ -110,5 +110,30 @@ static DECLFW(SysCardRAMWrite)
  static DECLFW(SysCardRAMWrite)
  {
 + static FILE *theron_memory_trace = NULL;

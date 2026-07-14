@@ -22,8 +22,11 @@ fi
 rm -rf "$build_root"
 mkdir -p "$build_root"
 cp -R "$source_root/." "$build_root/source"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
+# macOS's BSD patch rejects the large debugger hunk despite a clean 1.32.1
+# source tree; git apply validates that hunk exactly. The smaller legacy
+# patches intentionally retain their original BSD-patch format.
+git -C "$build_root/source" apply --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

@@ -63,7 +63,7 @@ fi
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-controller-patch.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
 cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
-patch -d "$scratch/source" -p1 --batch --forward <"$patch_file"
+git -C "$scratch/source" apply --whitespace=nowarn "$patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
