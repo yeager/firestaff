@@ -6131,3 +6131,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   in the source-ordered PANEL.C terminal-session consumer and cannot replace
   every dungeon frame. Remaining work is an actual CSB package/app capture
   across the title, door, HUD, and panel transitions.
+
+- 🔧 2026-07-15 CSB startup fallback cleanup: the obsolete M11 render-plan
+  executor, including its black entrance-aperture path, is removed. Startup
+  presents only the verified session-owned C001-C005/C017/C040 host surface.
+  Remaining work is real package/app capture across all title and entrance
+  phases, plus real DSA/save corpus evidence.
