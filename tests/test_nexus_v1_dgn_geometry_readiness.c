@@ -392,9 +392,9 @@ static void test_variable_grid_and_mesh_ready(void) {
           "level carries bounded Structure1 geometry span");
     CHECK(nexus_v1_level_get_collision_ref(&level, 3, 2) == 5,
           "level keeps Structure1B collision refs for renderer route");
-    CHECK(level.geometry_size ==
-          ((int)sizeof(dgn) - level.geometry_offset),
-          "legacy level.geometry_size remains full file tail");
+    CHECK(level.geometry_size == geometry_bytes &&
+          level.geometry_size == level.geometry_info.geometry_size,
+          "level geometry span excludes trailing Structure2/3 container blocks");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0,
           "DGN renderer handoff receipt builds for mesh-ready level");
     CHECK(handoff.status == NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH,

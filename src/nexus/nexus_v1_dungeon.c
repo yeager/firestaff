@@ -1795,7 +1795,10 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
              * later evidence; never turn opaque bytes into collision shapes. */
             level->has_3d_geometry = 1;
             level->geometry_offset = info.geometry_offset;
-            level->geometry_size = size - info.geometry_offset;
+            /* Structure1's useful-size field ends the DGN geometry span.
+             * Later container blocks can hold Structure2/3 data and must not
+             * be exposed through the Structure1 geometry boundary. */
+            level->geometry_size = info.geometry_size;
             level->geometry_info = info;
             if (nexus_v1_dgn_structure1_layout(&layout, data, size) == 0) {
                 if (nexus_v1_level_copy_structure2_textures(level, data, size) != 0) {
