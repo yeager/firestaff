@@ -1,0 +1,40 @@
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -278,8 +278,11 @@ static void TheronTraceSCSIReadCommand(uint32 start_lba, uint32 sector_count)
+  TheronSCSIReadCommandStartLBA = start_lba;
+  TheronSCSIReadCommandSectorCount = sector_count;
+  fprintf(trace,
+-         "scsi_read_command generation=%u start_lba=%u sector_count=%u\n",
+-         TheronSCSIReadCommandGeneration, start_lba, sector_count);
++         "scsi_read_command generation=%u opcode=%02x cdb=%02x%02x%02x%02x%02x%02x start_lba=%u sector_count=%u\n",
++         TheronSCSIReadCommandGeneration, cd.command_buffer[0],
++         cd.command_buffer[0], cd.command_buffer[1], cd.command_buffer[2],
++         cd.command_buffer[3], cd.command_buffer[4], cd.command_buffer[5],
++         start_lba, sector_count);
+  fflush(trace);
+ }
+
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -717,7 +717,7 @@ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
+ 	const uint8 V = data;
+  static FILE *theron_cd_register_trace = NULL;
+  static unsigned theron_cd_register_trace_count = 0;
+- if((physAddr & 0xf) <= 4 && theron_cd_register_trace_count < 32)
++ if((physAddr & 0xf) == 1 && theron_cd_register_trace_count < 4096)
+  {
+   if(!theron_cd_register_trace)
+   {
+@@ -734,7 +734,9 @@ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
+   }
+   if(theron_cd_register_trace)
+   {
+-   fprintf(theron_cd_register_trace, "pce_cd_register_write physical=%08x data=%02x\n", physAddr, data);
++   fprintf(theron_cd_register_trace,
++           "pce_cd_register_write cpu_pc=%04x physical=%08x data=%02x\n",
++           HuCPU.GetRegister(HuC6280::GSREG_PC), physAddr, data);
+    fflush(theron_cd_register_trace);
+    theron_cd_register_trace_count++;
+   }
