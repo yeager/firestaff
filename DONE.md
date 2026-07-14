@@ -1,13 +1,5 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-14 DM1 V2.2 finished-art cache admission: the M11 in-place modern
-  material cache now requires the same `FINISHED_REAL` manifest decision as
-  V2.2 presentation-mode selection. A cache file by itself can no longer
-  activate generated, placeholder, or partial art through a direct caller;
-  the original-data V2.1 route remains active until every required real
-  material is verified. Verification: `m11_v22_inplace_draw_pc34` and
-  `dm1_v22_real_asset_material_gate_pc34`.
-
 - 2026-07-14 Nexus Structure3 renderer source-packet staging: the DGN
   viewport now receives only an engine-owned Structure3 packet after every
   existing capture, DGN, face, referenced-vertex, and normal-row relation is
