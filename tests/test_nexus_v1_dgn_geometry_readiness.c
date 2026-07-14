@@ -1908,6 +1908,52 @@ static void test_structure3_entry_header_boundaries(void) {
           "out-of-range Structure3 face indexes remain fail-closed");
 }
 
+static void test_structure3_extreme_vector_arithmetic(void) {
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 24];
+    uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnStructure3VectorReceipt vectors;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
+
+    CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
+          "extreme Structure3 vector fixture builds");
+    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1e, 4U);
+    wb32(payload, 1U);
+    wb32(payload + 4, 8U);
+    wb32(payload + 8, 0x100U);
+    wb16(payload + 12, 3U);
+    wb16(payload + 14, 1U);
+    wb32(payload + 16, 48U);
+    wb32(payload + 24, 84U);
+    wb32(payload + 28, 96U);
+
+    /* The face lies in the Y/Z plane. Its signed 16.16 coordinates make
+     * the raw cross product exceed int64 while retaining an exact +X normal. */
+    wb32(payload + 48 + 4, 0x80000000U);
+    wb32(payload + 48 + 8, 0x80000000U);
+    wb32(payload + 60 + 4, 0x7fffffffU);
+    wb32(payload + 60 + 8, 0x80000000U);
+    wb32(payload + 72 + 4, 0x80000000U);
+    wb32(payload + 72 + 8, 0x7fffffffU);
+    wb16(payload + 84, 0U);
+    wb16(payload + 86, 1U);
+    wb16(payload + 88, 2U);
+    wb16(payload + 90, 2U);
+    wb32(payload + 96, 65536U);
+
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
+          nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
+          faces.valid && faces.triangle_count == 1 &&
+          vectors.valid && vectors.normal_face_plane_pair_count == 2 &&
+          vectors.normal_face_plane_within_tolerance_count == 2 &&
+          vectors.positive_winding_triangle_count == 1 &&
+          vectors.maximum_normal_face_plane_error == 0 &&
+          !vectors.transform_or_draw_semantics_proven,
+          "extreme Structure3 vectors keep exact no-draw geometry validation without signed overflow");
+}
+
 static void test_visible_structure1f_semantics_block_render_plan(void) {
     uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 20];
     const int structure1b_rel = 0x40;
@@ -3088,6 +3134,7 @@ int main(void) {
     test_structure1c_record_table_bounds();
     test_structure1f_semantics_and_bounds();
     test_structure3_entry_header_boundaries();
+    test_structure3_extreme_vector_arithmetic();
     test_visible_structure1f_semantics_block_render_plan();
     test_direct_structure1f_mesh_command_provenance();
     test_structure1g_semantics_and_bounds();
