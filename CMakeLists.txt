@@ -8619,6 +8619,8 @@ if(BUILD_TESTING)
         target_compile_options(test_dm2_v1_gdat_door_overlay_plan_real_data
             PRIVATE -Wall -Wextra -Werror -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_door_overlay_plan_real_data
+             COMMAND test_dm2_v1_gdat_door_overlay_plan_real_data)
 
     add_executable(test_dm2_v1_g1_wall_button_material_gate
         tests/test_dm2_v1_g1_wall_button_material_gate.c

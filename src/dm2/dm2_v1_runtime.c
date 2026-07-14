@@ -3205,6 +3205,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.wall_material_plan_hash =
         rt->gdat_wall_material_plan.valid
             ? rt->gdat_wall_material_plan.command_hash : 0u;
+    /* skproject DM2_DRAW_DOOR/DRAW_DOOR_FRAMES resolve a multi-category
+     * material plan before the viewport blits it.  Carry that exact plan to
+     * M11 only when the presented frame actually used a door material; a
+     * doorless dungeon frame has no original door identity to invent. */
+    g_dm2_last_m11_frame.door_material_plan_required =
+        g_dm2_frame_ownership.door_gdat_blits > 0;
+    g_dm2_last_m11_frame.door_material_plan_consumed =
+        g_dm2_last_m11_frame.door_material_plan_required &&
+        rt->gdat_door_material_plan.valid &&
+        rt->gdat_door_material_plan.command_hash != 0u &&
+        viewport.gdat_door_overlay_material_plan_consumed_count > 0;
+    g_dm2_last_m11_frame.door_material_plan_hash =
+        g_dm2_last_m11_frame.door_material_plan_consumed
+            ? rt->gdat_door_material_plan.command_hash : 0u;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3229,6 +3243,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.floor_material_hash != 0u &&
         g_dm2_last_m11_frame.ceiling_material_hash != 0u &&
         (rt->outdoor || g_dm2_last_m11_frame.wall_material_plan_hash != 0u) &&
+        (!g_dm2_last_m11_frame.door_material_plan_required ||
+         (g_dm2_last_m11_frame.door_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.door_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

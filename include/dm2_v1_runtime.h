@@ -155,6 +155,12 @@ typedef struct {
     uint32_t floor_material_hash;
     uint32_t ceiling_material_hash;
     uint32_t wall_material_plan_hash;
+    /* DRAW_DOOR/DRAW_DOOR_FRAMES only participate when this exact frame
+     * presented source-owned door material.  Keeping the conditional bit
+     * prevents a no-door frame from needing a made-up door identity. */
+    int door_material_plan_required;
+    uint32_t door_material_plan_hash;
+    int door_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;
