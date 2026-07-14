@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `DUNGEON.C F0148`: source C04 group-direction
+  storage now selects the active-group lane on the party map or the packed
+  final-word lane elsewhere. Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `DUNGEON.C F0165`: discard search now skips
   the party's visible 11x11 area, honours enabled sensors and protected
   records, dispatches source-specific discard ownership, and returns a
