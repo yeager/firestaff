@@ -180,6 +180,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP (-0x1100000)
 #define DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE (-0x1200000)
 #define DM2_V1_VIEWPORT_GFX_WALL_GFX_MAP_CHIP_BASE (-0x1300000)
+#define DM2_V1_VIEWPORT_GFX_DOOR_MAP_CHIP_BASE (-0x1400000)
 
 int dm2_v1_viewport_wall_field_for_square(int view_square);
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square);
@@ -239,6 +240,9 @@ int dm2_v1_viewport_floor_gfx_map_chip_graphic_address(
 int dm2_v1_viewport_wall_gfx_map_chip_graphic_index(int wall_gfx_index);
 int dm2_v1_viewport_wall_gfx_map_chip_graphic_address(
     int gdat_index, int *out_wall_gfx_index);
+int dm2_v1_viewport_door_map_chip_graphic_index(int door_gfx_index);
+int dm2_v1_viewport_door_map_chip_graphic_address(
+    int gdat_index, int *out_door_gfx_index);
 int dm2_v1_viewport_map_chip_frame_width(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_count(int src_w, int src_h);
 int dm2_v1_viewport_map_chip_frame_index(int requested_frame,

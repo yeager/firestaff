@@ -19,6 +19,13 @@
   F0689 expansion to a caller-owned presentation callback; malformed data
   never reaches the display route. Focused strict-C11 regression passes.
 
+- 2026-07-14 DM2 skproject map-local DOORS M11 bridge: `UseDoor0/1` and
+  `DoorType0/1` from each `Map_definitions` header now form a distinct
+  `DOORS/type/F9` receipt plan. A present chip requires raw/decoded GDAT
+  material and its local palette before M11 may accept the frame; disabled
+  slots and absent source chips never receive a synthetic door substitute.
+  Focused map-header and M11 receipt-gate regressions pass.
+
 - 2026-07-14 CSB ReDMCSB F0689 IMG3 expansion: added source-backed bounded
   even-stride IMG3 header/palette/command expansion using F0685-F0688. Focused
   strict-C11 regression passes.

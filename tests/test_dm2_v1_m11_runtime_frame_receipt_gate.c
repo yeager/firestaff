@@ -48,6 +48,9 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_wall_gfx_map_chip_material_plan_required = 1;
     receipt.runtime_m11_frame_wall_gfx_map_chip_material_plan_hash = 0x57474d43u;
     receipt.runtime_m11_frame_wall_gfx_map_chip_material_plan_consumed = 1;
+    receipt.runtime_m11_frame_door_map_chip_material_plan_required = 1;
+    receipt.runtime_m11_frame_door_map_chip_material_plan_hash = 0x44474d43u;
+    receipt.runtime_m11_frame_door_map_chip_material_plan_consumed = 1;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -90,6 +93,9 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.wall_gfx_map_chip_material_plan_required = 1;
     receipt.wall_gfx_map_chip_material_plan_hash = 0x57474d43u;
     receipt.wall_gfx_map_chip_material_plan_consumed = 1;
+    receipt.door_map_chip_material_plan_required = 1;
+    receipt.door_map_chip_material_plan_hash = 0x44474d43u;
+    receipt.door_map_chip_material_plan_consumed = 1;
     receipt.palette_hash = 0x50414c31u;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
@@ -135,6 +141,16 @@ int main(void)
     runtime.wall_gfx_map_chip_material_plan_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects an unconsumed local WALL_GFX map-chip material plan");
+    runtime = make_runtime_receipt();
+
+    runtime.door_map_chip_material_plan_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale local DOORS map-chip material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.door_map_chip_material_plan_consumed = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects an unconsumed local DOORS map-chip material plan");
     runtime = make_runtime_receipt();
 
     runtime.floor_material_hash++;
