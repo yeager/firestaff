@@ -54,6 +54,16 @@ static void wb32(uint8_t *p, uint32_t v) {
     p[3] = (uint8_t)(v & 0xffU);
 }
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t i;
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static uint8_t *cell_at(uint8_t *structure1, int structure1b_rel, int x, int y) {
     return structure1 + structure1b_rel +
            ((y * NEXUS_MAX_MAP_SIZE + x) *
@@ -3013,7 +3023,8 @@ static void test_structure1f_item_ibs_material_binding(void) {
     Nexus_V1_DgnCommandPacked4BppMaterial materials[2];
     Nexus_V1_DgnCommandPacked4BppMaterialReceipt material_receipt;
     Nexus_V1_DgnStructure1FItemIbsCoverageReceipt coverage;
-    Nexus_V1_ItemIbs0008Vdp1Provenance provenance;
+    Nexus_V1_ItemIbs0008Vdp1CaptureCandidate candidate;
+    Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt capture;
     Nexus_V1_ItemIbs0008CodecReceipt codec_receipt;
     uint8_t decoded[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS];
     int i;
@@ -3105,13 +3116,60 @@ static void test_structure1f_item_ibs_material_binding(void) {
           !codec_receipt.decode_authorized && decoded[0] == 0xa5U &&
           !codec_receipt.fallback_visuals_permitted,
           "ITEM.IBS alone cannot authorize a VDP1 nibble-order decode");
-    memset(&provenance, 0, sizeof(provenance));
-    provenance.item_ibs_hash_verified = 1;
-    provenance.original_vdp1_command_stream_verified = 1;
-    provenance.vdp1_16_colour_mode_verified = 1;
-    provenance.vdp1_high_nibble_first_verified = 1;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.item_ibs_fnv1a64 = fnv1a64(ibs, NEXUS_V1_ITEM_IBS_BYTES);
+    candidate.image_id = bindings[1].special_floor_image->image_id;
+    candidate.encoding = bindings[1].special_floor_image->encoding;
+    candidate.width = bindings[1].special_floor_image->width;
+    candidate.height = bindings[1].special_floor_image->height;
+    candidate.packed_span_fnv1a64 = fnv1a64(
+        bindings[1].special_floor_image->packed_4bpp_texels, 128U);
+    candidate.palette_fnv1a64 = fnv1a64(
+        (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32U);
+    candidate.vdp1_state_fnv1a64 = fnv1a64((const uint8_t *)"state", 5U);
+    candidate.vdp1_command_fnv1a64 = fnv1a64((const uint8_t *)"command", 7U);
+    candidate.texture_first_sequence = 10U;
+    candidate.texture_last_sequence = 11U;
+    candidate.vdp1_command_sequence = 12U;
+    candidate.vdp1_texture_source_address = 0x25c00000U;
+    candidate.vdp1_texture_source_bytes = 128U;
+    CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
+              bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
+              &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
+              (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
+              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              &capture) == 0 && capture.original_vdp1_capture_verified &&
+          capture.decode_authorized && !capture.fallback_visuals_permitted,
+          "descriptor-0008 requires one atomically bound VDP1 capture receipt");
+    candidate.vdp1_command_fnv1a64 ^= UINT64_C(1);
+    CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
+              bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
+              &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
+              (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
+              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              &capture) == 0 && !capture.vdp1_command_matches &&
+          !capture.original_vdp1_capture_verified && !capture.decode_authorized,
+          "a changed VDP1 command fingerprint rejects descriptor-0008 decoding");
+    candidate.vdp1_command_fnv1a64 ^= UINT64_C(1);
+    ibs[0] ^= 1U;
+    CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
+              bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
+              &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
+              (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
+              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              &capture) == 0 && !capture.item_ibs_source_matches &&
+          !capture.original_vdp1_capture_verified && !capture.decode_authorized,
+          "a changed ITEM.IBS source byte rejects descriptor-0008 decoding");
+    ibs[0] ^= 1U;
+    CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
+              bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
+              &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
+              (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
+              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              &capture) == 0 && capture.decode_authorized,
+          "only the unmodified capture binding may authorize descriptor-0008 decoding");
     CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
-              bindings[1].special_floor_image, &provenance, decoded,
+              bindings[1].special_floor_image, &capture, decoded,
               (int)sizeof(decoded), &codec_receipt) == 0 &&
           codec_receipt.source_hash_verified && codec_receipt.decode_authorized &&
           codec_receipt.decoded_texel_count == 256 && decoded[0] == 6U &&

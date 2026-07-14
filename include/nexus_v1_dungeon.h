@@ -1783,15 +1783,38 @@ typedef struct {
 } Nexus_V1_ItemIbsFloorImage;
 
 /* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
- * has not yet been tied to an original VDP1 command stream.  This receipt
- * keeps those two facts separate so a caller cannot mistake generic Saturn
- * knowledge for a game-specific image decode. */
+ * has not yet been tied to an original VDP1 command stream. These records
+ * keep generic Saturn knowledge separate from an asset-bound observation. */
 typedef struct {
-    int item_ibs_hash_verified;
-    int original_vdp1_command_stream_verified;
-    int vdp1_16_colour_mode_verified;
-    int vdp1_high_nibble_first_verified;
-} Nexus_V1_ItemIbs0008Vdp1Provenance;
+    uint64_t item_ibs_fnv1a64;
+    uint16_t image_id;
+    uint16_t encoding;
+    uint16_t width;
+    uint16_t height;
+    uint64_t packed_span_fnv1a64;
+    uint64_t palette_fnv1a64;
+    uint64_t vdp1_state_fnv1a64;
+    uint64_t vdp1_command_fnv1a64;
+    uint64_t texture_first_sequence;
+    uint64_t texture_last_sequence;
+    uint64_t vdp1_command_sequence;
+    uint32_t vdp1_texture_source_address;
+    uint32_t vdp1_texture_source_bytes;
+} Nexus_V1_ItemIbs0008Vdp1CaptureCandidate;
+
+typedef struct {
+    int candidate_framing_valid;
+    int item_ibs_source_matches;
+    int floor_descriptor_matches;
+    int packed_span_matches;
+    int palette_matches;
+    int vdp1_state_matches;
+    int vdp1_command_matches;
+    int sequence_order_valid;
+    int original_vdp1_capture_verified;
+    int decode_authorized;
+    int fallback_visuals_permitted;
+} Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt;
 
 typedef struct {
     int source_hash_verified;
@@ -2295,12 +2318,24 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
 int nexus_v1_dgn_structure1f_item_ibs_coverage(
     const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
     Nexus_V1_DgnStructure1FItemIbsCoverageReceipt *out_receipt);
-/* Expands descriptor-0008 bytes only after an original Nexus VDP1 command
- * stream has positively established the colour mode and byte/nibble route.
- * The VDP1 high-nibble rule alone never authorizes an ITEM.IBS decode. */
+/* Atomically binds one descriptor-0008 image to original Saturn capture
+ * bytes. The source ITEM.IBS, packed span, palette, VDP1 state/command, and
+ * texture-before-command ordering all have to match. It never authorizes a
+ * draw. */
+int nexus_v1_item_ibs_bind_0008_vdp1_capture(
+    const Nexus_V1_ItemIbsFloorImage *floor,
+    const uint8_t *item_ibs, int item_ibs_size, int item_ibs_hash_verified,
+    const Nexus_V1_ItemIbs0008Vdp1CaptureCandidate *candidate,
+    const uint8_t *captured_texture_span, int captured_texture_span_size,
+    const uint8_t *captured_palette_state, int captured_palette_state_size,
+    const uint8_t *captured_vdp1_state, int captured_vdp1_state_size,
+    const uint8_t *captured_vdp1_command, int captured_vdp1_command_size,
+    Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt *out_receipt);
+/* Expands descriptor-0008 bytes only after the asset-bound original Nexus
+ * VDP1 capture above establishes the byte/nibble route. */
 int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
     const Nexus_V1_ItemIbsFloorImage *floor,
-    const Nexus_V1_ItemIbs0008Vdp1Provenance *provenance,
+    const Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt *capture,
     uint8_t *out_texels, int max_texels,
     Nexus_V1_ItemIbs0008CodecReceipt *out_receipt);
 

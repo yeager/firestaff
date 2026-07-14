@@ -14274,6 +14274,16 @@ decode a texture or palette, assign a transform, or authorize DGN drawing.
 Verification: `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus
 ./build-nexus/test_nexus_v1_dgn_face_mesh_corpus`.
 
+# 2026-07-14 Nexus ITEM.IBS 0008 VDP1 capture-binding gate
+
+The documented packed-4bpp parser now requires an atomic capture receipt before
+it expands any descriptor-`0008` texels: hash-verified complete `ITEM.IBS`
+bytes, selected descriptor metadata, exact packed span and BGR555 palette,
+VDP1 state/command fingerprints, texture-source extent, and strict
+texture-before-command sequence all have to match. The codec remains no-draw
+and retail ITEM.IBS remains blocked because no original Saturn packet is
+present. Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Theron Track 02 route-receipt probe repair
 
 The focused Track 02 handoff probe now constructs a complete hash-profiled
