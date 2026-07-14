@@ -274,6 +274,11 @@
   requested aperture index. Focused strict-C11 bank, bounds and retained-byte
   test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8153: source-locked PC 3.4 C25 VGA vertical
+  blank synchronization. The adapter preserves the original 0x3DA bit-3 poll
+  order: wait out an existing blank, then wait for the next blank. Focused
+  strict-C11 polling-order test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
   unchanged indices/count to F0680 for byte-per-pixel aperture output. Focused

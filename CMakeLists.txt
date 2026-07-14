@@ -32027,3 +32027,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8213_set_single_pixel
     add_test(NAME redmcsb_f8213_set_single_pixel_c25_pc34_compat
              COMMAND test_redmcsb_f8213_set_single_pixel_c25_pc34_compat)
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f8153_wait_vertical_blank_c25_pc34_compat.c")
+    add_executable(test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat
+        tests/test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat.c
+        src/shared/redmcsb_f8153_wait_vertical_blank_c25_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f8153_wait_vertical_blank_c25_pc34_compat
+             COMMAND test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat)
+endif()
