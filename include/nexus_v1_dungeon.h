@@ -820,6 +820,23 @@ typedef struct {
     int transform_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3VectorReceipt;
 
+/* Structure3c is documented as one normal row for each Structure3b face
+ * row. This retains only that entry-local ordinal correspondence and the
+ * already bounded fixed-point unit check. It does not infer a normal plane,
+ * winding, surface, visibility, transform, palette, texture, or draw rule. */
+typedef struct {
+    int face_receipt_valid;
+    int vector_receipt_valid;
+    int entry_count;
+    int complete_entry_pair_count;
+    int face_normal_pair_count;
+    int unit_length_face_normal_pair_count;
+    int non_unit_length_face_normal_pair_count;
+    int pairing_valid;
+    int valid;
+    int normal_plane_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3FaceNormalPairReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1127,6 +1144,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1213,6 +1231,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1890,6 +1909,9 @@ int nexus_v1_level_structure3_face_material_receipt(
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt);
+int nexus_v1_level_structure3_face_normal_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);

@@ -1800,6 +1800,7 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
@@ -1924,6 +1925,14 @@ static void test_structure3_entry_header_boundaries(void) {
           vectors.maximum_normal_length_error == 0 &&
           !vectors.transform_or_draw_semantics_proven,
           "Structure3 signed 16.16 vectors remain bounded without a transform or draw claim");
+    CHECK(nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) == 0 &&
+          pairs.face_receipt_valid && pairs.vector_receipt_valid && pairs.valid &&
+          pairs.entry_count == 2 && pairs.complete_entry_pair_count == 2 &&
+          pairs.face_normal_pair_count == 4 &&
+          pairs.unit_length_face_normal_pair_count == 4 &&
+          pairs.non_unit_length_face_normal_pair_count == 0 &&
+          !pairs.normal_plane_or_draw_semantics_proven,
+          "Structure3 face/normal ordinals remain bounded no-draw correspondence");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
@@ -1933,9 +1942,12 @@ static void test_structure3_entry_header_boundaries(void) {
     wb32(payload + 128, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
+          nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) == 0 &&
           !vectors.valid && vectors.normal_non_unit_length_count == 1 &&
+          !pairs.vector_receipt_valid && !pairs.valid &&
+          pairs.non_unit_length_face_normal_pair_count == 1 &&
           !vectors.transform_or_draw_semantics_proven,
-          "a non-unit Structure3 normal remains fail-closed without a draw claim");
+          "a non-unit Structure3 normal invalidates its no-draw pair receipt");
     wb32(payload + 128, 65536U);
 
     wb32(payload + 36, 124U);

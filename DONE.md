@@ -103,6 +103,17 @@
    receipt does not expose a mesh, select transforms, decode UVs or pixels,
    issue VDP1 commands, or relax the no-draw gate.
 
+- ✅ 2026-07-14 Nexus Structure3 face-normal pair receipt: the documented
+  count-matched Structure3b/Structure3c regions now retain their entry-local
+  ordinal correspondence, so face row `n` is paired only with normal row `n`
+  inside the same bounded entry. The focused retail-corpus test validates all
+  16 `LEV00.DGN`--`LEV15.DGN` files: 1,144 entries and 18,478 pairs, all within
+  the existing signed-16.16 unit tolerance. This is not a plane, orientation,
+  surface, palette, texture, transform, VDP1, or draw claim; the no-draw gate
+  remains in force. Verification: external Ninja build and
+  `ctest -R nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-07-14 CSBWin package dungeon/save boundary handoff: added an
   opt-in real-package probe that attaches only a caller-supplied original
   `Dungeon.dat` to the runtime-owned CSB world, ticks that live world, then

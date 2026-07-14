@@ -88,6 +88,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt face_normal_pairs;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -119,6 +120,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&entry_headers, 0, sizeof(entry_headers));
     memset(&faces, 0, sizeof(faces));
     memset(&vectors, 0, sizeof(vectors));
+    memset(&face_normal_pairs, 0, sizeof(face_normal_pairs));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
@@ -703,6 +705,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint32_t vertex_offset = rb32(header + 8);
             uint32_t normal_offset = rb32(header + 20);
             int vector_index;
+            int entry_pairs_unit_length = 1;
 
             for (vector_index = 0; vector_index < (int)vertex_count;
                  ++vector_index) {
@@ -729,11 +732,18 @@ static int nexus_v1_level_copy_structure3_payload(
                 }
                 if (error <= rounding_tolerance) {
                     ++vectors.normal_unit_length_count;
+                    ++face_normal_pairs.unit_length_face_normal_pair_count;
                 } else {
                     ++vectors.normal_non_unit_length_count;
+                    ++face_normal_pairs.non_unit_length_face_normal_pair_count;
                     vectors.fixed_point_vectors_valid = 0;
+                    entry_pairs_unit_length = 0;
                 }
                 ++vectors.normal_vector_count;
+                ++face_normal_pairs.face_normal_pair_count;
+            }
+            if (entry_pairs_unit_length) {
+                ++face_normal_pairs.complete_entry_pair_count;
             }
         }
     }
@@ -743,6 +753,20 @@ static int nexus_v1_level_copy_structure3_payload(
         vectors.normal_unit_length_count == vectors.normal_count;
     vectors.transform_or_draw_semantics_proven = 0;
     level->structure3_vectors = vectors;
+    face_normal_pairs.face_receipt_valid = faces.valid;
+    face_normal_pairs.vector_receipt_valid = vectors.valid;
+    face_normal_pairs.entry_count = faces.entry_count;
+    face_normal_pairs.pairing_valid = faces.valid &&
+        face_normal_pairs.face_normal_pair_count == faces.face_count &&
+        face_normal_pairs.face_normal_pair_count == vectors.normal_vector_count &&
+        face_normal_pairs.unit_length_face_normal_pair_count +
+                face_normal_pairs.non_unit_length_face_normal_pair_count ==
+            face_normal_pairs.face_normal_pair_count;
+    face_normal_pairs.valid = face_normal_pairs.pairing_valid &&
+        face_normal_pairs.complete_entry_pair_count == faces.entry_count &&
+        face_normal_pairs.non_unit_length_face_normal_pair_count == 0;
+    face_normal_pairs.normal_plane_or_draw_semantics_proven = 0;
+    level->structure3_face_normal_pairs = face_normal_pairs;
     return 0;
 }
 
@@ -3426,6 +3450,16 @@ int nexus_v1_level_structure3_vector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_face_normal_pair_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_face_normal_pairs;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3696,6 +3730,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_face_materials);
     (void)nexus_v1_level_structure3_vector_receipt(
         level, &out_receipt->structure3_vectors);
+    (void)nexus_v1_level_structure3_face_normal_pair_receipt(
+        level, &out_receipt->structure3_face_normal_pairs);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
