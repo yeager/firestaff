@@ -89,6 +89,28 @@ typedef struct {
     const char *status;
 } Theron_V1Track02RawGridReceipt;
 
+/* A runtime consumer receives the exact source-verified startup grid.  The
+ * bytes are read-only and remain deliberately unclassified: the loader trace
+ * proves their transfer, not cell, object, tile, palette, or visual meaning.
+ * A consumer must explicitly accept the receipt; rejection leaves the caller
+ * without a route rather than enabling any generated substitute. */
+typedef int (*Theron_V1Track02RawGridConsumer)(
+    const Theron_V1Track02RawGridReceipt *grid,
+    void *context);
+
+typedef struct {
+    int delivered;
+    int no_fallback;
+    uint16_t raw_grid_width;
+    uint16_t raw_grid_height;
+    uint32_t raw_grid_bytes;
+    uint32_t raw_grid_hash;
+    uint32_t raw_track02_sector;
+    uint32_t raw_sector_offset;
+    uint32_t raw_track02_offset;
+    const char *status;
+} Theron_V1Track02RawGridRuntimeReceipt;
+
 /* This binds an observed read to the existing accepted-trace provenance
  * boundary.  The transfer facts remain opaque observations. */
 typedef struct {
@@ -169,5 +191,18 @@ int theron_v1_track02_loader_intake_handoff_raw_grid(
     size_t raw_track02_bytes,
     const char *raw_track02_md5,
     Theron_V1Track02RawGridReceipt *out_receipt);
+
+/* Delivers the complete, rehashed initial grid to a caller-owned runtime
+ * consumer. This is the final original-media boundary before a future
+ * evidence-backed dungeon decoder: it never creates a level, object list, or
+ * visual fallback, and a rejecting consumer leaves no successful receipt. */
+int theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    Theron_V1Track02RawGridConsumer consumer,
+    void *consumer_context,
+    Theron_V1Track02RawGridRuntimeReceipt *out_receipt);
 
 #endif

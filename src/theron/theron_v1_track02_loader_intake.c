@@ -406,6 +406,44 @@ int theron_v1_track02_loader_intake_handoff_raw_grid(
     return 1;
 }
 
+int theron_v1_track02_loader_intake_deliver_raw_grid_to_runtime(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    Theron_V1Track02RawGridConsumer consumer,
+    void *consumer_context,
+    Theron_V1Track02RawGridRuntimeReceipt *out_receipt) {
+    Theron_V1Track02RawGridReceipt grid;
+    Theron_V1Track02RawGridRuntimeReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!decoded_receipt || !raw_track02 || !raw_track02_md5 || !consumer ||
+        !out_receipt ||
+        !theron_v1_track02_loader_intake_handoff_raw_grid(
+            decoded_receipt, raw_track02, raw_track02_bytes, raw_track02_md5,
+            &grid)) {
+        return 0;
+    }
+
+    /* The consumer sees only the exact rehashed grid receipt. It cannot cause
+     * a fallback route: refusal leaves this entrypoint with a zero receipt. */
+    if (!consumer(&grid, consumer_context)) return 0;
+
+    receipt.delivered = 1;
+    receipt.no_fallback = 1;
+    receipt.raw_grid_width = grid.raw_grid_width;
+    receipt.raw_grid_height = grid.raw_grid_height;
+    receipt.raw_grid_bytes = grid.raw_grid_bytes;
+    receipt.raw_grid_hash = grid.raw_grid_hash;
+    receipt.raw_track02_sector = grid.raw_track02_sector;
+    receipt.raw_sector_offset = grid.raw_sector_offset;
+    receipt.raw_track02_offset = grid.raw_track02_offset;
+    receipt.status = "initial_envelope_raw_grid_delivered_no_fallback";
+    *out_receipt = receipt;
+    return 1;
+}
+
 int theron_v1_track02_loader_intake_observe_authenticated_trace(
     const Theron_V1AuthenticatedTrack02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
