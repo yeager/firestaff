@@ -579,6 +579,12 @@
     the caller-owned endgame jump boundary. It does not recreate credits,
     endgame bitmaps, media loading, or a replacement nonlocal transfer.
     Real CSB endgame runtime/capture evidence remains required.
+  - 2026-07-14 update: F0670/F0671 now cover the source text helper pair
+    used by save-path and out-of-memory UI routes: replace only the first
+    caller-selected character with a caller-owned string, and format signed
+    PC-long values as decimal text. Destination ownership/capacity remains
+    with the caller; this adds no localization, allocation, dialog, or menu
+    fallback. Real CSB UI binding remains required for end-to-end evidence.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
