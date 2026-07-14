@@ -13575,3 +13575,12 @@ maximum local occurrence count. The hash-verified LEV00.DGN through LEV15.DGN
 retail corpus validates the partition. This is no-draw row incidence only; it
 does not establish an edge, winding, surface, normal-plane, transform,
 texture, palette, or drawing behavior.
+
+# ✅ 2026-07-14 Theron Track 02 route-receipt probe repair
+
+The focused Track 02 handoff probe now constructs a complete hash-profiled
+startup-media receipt before it exercises the existing media-gated bank
+selection. This restores the real JP/US Hall of Records level-0 loader route
+as a green target while retaining the Stage 3 `$4090 -> $4093` CD_READ receipt
+as transport-only: it does not claim a later level, object layout, visual
+decode, or transition.

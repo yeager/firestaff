@@ -1543,6 +1543,8 @@ static void probe_media_gated_level_bank_selection(void) {
     size_t i;
 
     memset(&media, 0, sizeof(media));
+    media.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    strcpy(media.track02_md5, THERON_TRACK02_MD5_US_BIN);
     media.startup_media_ready = 1;
     media.startup_bitmap_decode_status = THERON_TRACK02_SIGNAL_OK;
     media.startup_bitmap_sample_count = 48;
@@ -1558,6 +1560,9 @@ static void probe_media_gated_level_bank_selection(void) {
     media.startup_bitmap_wide_route_count = 4u;
     media.startup_bitmap_wide_route_mask = 0x0fu;
     media.startup_bitmap_wide_atlas_tile_count = 48u;
+    media.startup_bitmap_raw_route_count = 4u;
+    media.startup_bitmap_raw_route_mask = 0x0fu;
+    media.startup_bitmap_raw_atlas_tile_count = 48u;
     media.startup_bitmap_title_route_ready = 1;
     media.startup_bitmap_stage_route_ready = 1;
     media.startup_bitmap_soul_room_route_ready = 1;
@@ -1582,6 +1587,7 @@ static void probe_media_gated_level_bank_selection(void) {
     media.startup_bitmap_stage_atlas_width = 96u;
     media.startup_bitmap_soul_room_atlas_width = 96u;
     media.startup_bitmap_forcefield_atlas_width = 96u;
+    media.startup_bitmap_atlas.variant = THERON_TRACK02_VARIANT_US_BIN;
     media.startup_bitmap_atlas.route_count = 4u;
     for (i = 0u; i < 4u; ++i) {
         Theron_Track02StartupBitmapAtlasRoute *route =
@@ -1592,6 +1598,9 @@ static void probe_media_gated_level_bank_selection(void) {
         route->height = 8u;
         route->nonzero_pixel_count = 32u;
         route->checksum = (uint32_t)(i + 1u);
+        route->first_raw_offset = 0x1000u + i * 0x100u;
+        route->last_raw_offset = route->first_raw_offset + 0x1fu;
+        route->first_user_data_offset = 0x2000u + i * 0x100u;
         route->pixels[0] = (uint8_t)(i + 1u);
     }
     media.runtime_media_identity.ready = 1;
