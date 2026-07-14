@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0049`: unsigned 16-bit decimal output
+  now follows the source's backwards formatter through a bounded callback.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `MEMORY.C F0481`: source first-used cache
   eviction loop is now a bounded compatibility callable. Verification:
   focused strict CTest.
