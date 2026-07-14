@@ -11634,6 +11634,10 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
         &world->disabledMovementTicks,
         &world->projectileDisabledMovementTicks);
     if (world->freezeLifeTicks > 0) world->freezeLifeTicks--;
+    /* ReDMCSB MAIN.C decrements PARTY.FreezeLifeTicks. Keep the M10 magic
+     * mirror on that saved-runtime owner rather than letting a resumed save
+     * retain a stale value after its first periodic tick. */
+    world->magic.freezeLifeTicks = world->freezeLifeTicks;
     /* ReDMCSB: GAMELOOP.C lines 124-126 increments G0313_ul_GameTime,
      * then calls PANEL.C F0338 lines 434-473 when !(GameTime & 511).
      * F0338 scans party action/ready hands for lit torch weapons and

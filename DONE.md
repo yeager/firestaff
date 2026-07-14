@@ -21,6 +21,15 @@
    is generated, and this is not original executable or frame parity.
    Verification: `dm1_v1_original_save_pc34_external_hoc_runtime`.
 
+- 2026-07-14 DM1 original-PC34 `PARTY_INFO` freeze-life runtime handoff:
+  F0435 now restores ReDMCSB `PARTY.FreezeLifeTicks` from byte 11 after the
+  C2 champion records into both M10 owners. The live periodic tick mirrors
+  the ReDMCSB decrement, and F0433 writes only the validated `[0,255]`
+  runtime value back to the preserved source byte. The source-backed test
+  covers authenticated C2 import, a live periodic tick, and PC34
+   export/reimport (`37 -> 36`); scent arrays and unowned `PARTY_INFO` fields
+   remain untouched. Verification: `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-14 Nexus Structure3 renderer source-packet staging: the DGN
   viewport now receives only an engine-owned Structure3 packet after every
   existing capture, DGN, face, referenced-vertex, and normal-row relation is
