@@ -1,9 +1,9 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-14 DM2 GDAT wall-plan follow-up: M11 now records direct consumption
-  of the boot-owned visible `GRAPHICSSET` wall plan. Remaining dungeon work is
-  source-owned plans for door overlays and other record-specific material
-  families; do not replace missing GDAT entries with generic walls.
+- 2026-07-14 DM2 GDAT door-overlay follow-up: ornate and destroyed-door
+  overlays now reach M11 through exact `DOOR_GFX`/`DOORS` material plans.
+  Remaining dungeon work is source-owned plans for panels, frames, buttons,
+  creatures, and light; do not replace missing GDAT entries with generic art.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 

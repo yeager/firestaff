@@ -7,6 +7,13 @@
   decoded plan. Source: skproject `c_gui_vp.cpp` `DM2_DRAW_WALL` /
   `QUERY_TEMP_PICST`.
 
+- ✅ 2026-07-14 DM2 GDAT door-overlay material plan: skproject
+  `DM2_DRAW_DOOR`'s `Door::OrnateIndex()` and destroyed-door branches now
+  decode their exact `DOOR_GFX` or `DOORS` IMG3 plus local palette before M11
+  draws. The direct plan is matched by view cell, branch, and source handle;
+  a missing command remains fail-closed and cannot borrow a generic door.
+  Verification: Ninja `test_dm2_v1_gdat_door_overlay_plan_real_data`.
+
 - ✅ 2026-07-14 DM2 GDAT wall material-plan handoff: the active map's visible
   `GRAPHICSSET` wall fields are decoded once into a boot-owned plan with their
   original local palettes and consumed directly by the M11 wall pass. A
