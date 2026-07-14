@@ -527,6 +527,13 @@
     substitute palette/graphic data, and it does not infer F0661 derived-cache
     ownership, event, DSA, or runtime behavior. Real CSB palette and bitmap
     corpus evidence remains necessary for live HUD/viewport binding.
+  - 2026-07-14 update: F0661 now follows the source-derived bitmap cache
+    branch exactly: a cache hit returns the caller-owned derived bitmap
+    unchanged; a miss obtains caller-owned native/derived bitmaps, writes the
+    requested dimensions, dispatches F0129, then admits the derived index to
+    the caller-owned cache. It creates no cache storage, image, palette,
+    event, DSA, or runtime fallback. Real CSB cache/graphics corpus evidence
+    is still required for a live HUD binding.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
