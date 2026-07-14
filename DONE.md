@@ -13758,6 +13758,18 @@ fixture: unavailable or non-PC34 media skips, and any non-package route fails.
 It records the existing ReDMCSB TITLE.C/ENTRANCE.C and CSBWin indexed-graphics
 contract boundary without promoting a custom CSBgraphics.dat override.
 
+# ✅ 2026-07-14 CSB package CHAOS hold consumption gate
+
+The terminal PC34 package receipt now requires the complete four-phase
+`TITLE.C F0437` playback mask and distinct C001 CHAOS zoom/hold consumption
+facts before it can authorize the F0807 C017/C040 HUD handoff. The fixture-free
+package probe advances an authenticated session through source step 21, the
+full-size CHAOS hold, and samples its package-backed C001 surface. Terminal
+session coverage rejects both an omitted hold phase and a missing hold receipt;
+no title pixels, palettes, or fallback surfaces are generated. Source boundary:
+ReDMCSB `TITLE.C F0437`; indexed asset ownership follows CSBWin
+`Graphics.cpp::ReadGraphic`.
+
 # ✅ 2026-07-14 CSBWin DSA door timer handoff
 
 CSBWin restored `TT_DOOR` now retains its source queue slot through one

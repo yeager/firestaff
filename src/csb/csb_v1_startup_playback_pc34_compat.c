@@ -11,10 +11,17 @@ static void csb_v1_startup_playback_clear_action_pc34(
 }
 
 static int csb_v1_startup_playback_title_phase_mask_pc34(
-    CSB_V1_StartupStage_PC34 stage)
+    CSB_V1_StartupStage_PC34 stage, int title_frame)
 {
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) return 0x01;
-    if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) return 0x02;
+    if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
+        /* TITLE.C F0437 retains the CHAOS render stage through its full-size
+         * wait. Source step 21 begins that distinct post-zoom hold. */
+        return csb_v1_startup_title_source_step_for_frame_pc34(title_frame) ==
+                   21u
+            ? 0x04
+            : 0x02;
+    }
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) return 0x08;
     return 0;
 }
@@ -89,7 +96,7 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     if (title_frame >= csb_v1_startup_title_total_ticks_pc34()) {
         /* ReDMCSB TITLE.C F0437 must have presented all C001 phase routes
          * before ENTRANCE.C F0806 owns the next screen/session. */
-        if (session->playback.title_phase_mask != 0x0b) {
+        if (session->playback.title_phase_mask != 0x0f) {
             return 0;
         }
         /* ReDMCSB ENTRANCE.C F0806:733 starts entrance music as its owned
@@ -117,7 +124,7 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
     session->playback.title_frame = title_frame;
     session->playback.title_stage = title_stage;
     session->playback.title_phase_mask |=
-        csb_v1_startup_playback_title_phase_mask_pc34(title_stage);
+        csb_v1_startup_playback_title_phase_mask_pc34(title_stage, title_frame);
     return 1;
 }
 
