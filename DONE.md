@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0053`: logical-screen text now forwards
+  C160 byte stride, C200 height and caller colours through a bounded callback.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0054`: PC 3.4 message cursor, permanent
   allocation, font-load and expiry initialization now use bounded callbacks.
   Verification: focused strict CTest.
