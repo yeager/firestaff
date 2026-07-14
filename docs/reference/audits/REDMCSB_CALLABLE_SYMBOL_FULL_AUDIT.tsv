@@ -986,7 +986,7 @@ F0816_strstr	F	strstr	DEFS.H:9482	src/dm1/dm1_v1_creature_ai_behavior_pc34_compa
 F0817_SubstituteFirstCharactersByString	F	SubstituteFirstCharactersByString	DEFS.H:9492	src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c:33	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0818_IsJapaneseText	F	IsJapaneseText	CEDT030.C:11	src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c:18	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0819_TEXT_MESSAGEAREA_PrintMessageAsJapanese	F	TEXT	CHAMPION.C:1016	src/dm1/dm1_v1_combat_pc34_compat.c:1088	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F0902_DrawFTLLogo	F	DrawFTLLogo	SWSH.C:357	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0902_DrawFTLLogo	F	DrawFTLLogo	SWSH.C:357	include/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.h	IMPLEMENTED_NARROW	Original 320x200 packed frame and palette presentation gate; focused CTest.
 F0903_DrawErrorMessage	F	DrawErrorMessage	SWSH.C:1103	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0904_PaletteAnimation	F	PaletteAnimation	SWSH.C:1104	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0906_CheckOriginalDisk	F	CheckOriginalDisk	SWSH.C:1106	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
