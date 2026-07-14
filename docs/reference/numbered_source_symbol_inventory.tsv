@@ -1748,7 +1748,7 @@ F	0679	F0679_DrawD2R2	DUNVIEW.C	referenced_not_verified
 F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
 F	0681	F0681_CopyPixelLineToScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
 F	0682	F0682_CopyPixelLineToScreenWithTransparency	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
-F	0683	F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	unmapped_or_unverified
+F	0683	F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
 F	0684	F0684_Blit	BLIT.C;DEFS.H;NEC816.C;VIDEODRV.C;CEDT027.C;IMAGE3.C	referenced_not_verified
 F	0685	F0685_IMG3_LineColorFilling	IMAGE4.C;ANIMIMG.C;SWITCH.C;IMAGE2.C;IMAGE3.C	referenced_not_verified
 F	0686	F0686_IMG_CopyFromPreviousLine	ANIMIMG.C;IMAGE2.C	referenced_not_verified
@@ -1760,9 +1760,9 @@ F	0691	F0691_IMG_ExpandGraphicToScreen	DEFS.H;SWITCH.C;EXPAND.C;IMAGE3.C;SELECTO
 F	0692	F0692_FillBox	FILLBOX.C;DEFS.H;CEDT027.C;IMAGE3.C;SELECTOR.C	implemented_source_locked
 F	0693	F0693_WaitVerticalBlank	PALETTE.C;CEDT025.C;VBLANK.C;FMTOWNS.H;DRAWVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;SWITCH.C;IMAGE.C;ANIMTOWN.C;CEDT027.C;JAPANESE.C;SWSH.C	referenced_not_verified
 F	0694	F0694_SetMultipleColorsInPalette	LOADSAVE.C;FMTOWNS.H;DRAWVIEW.C;DEFS.H;SWITCH.C;TIMELINE.C;IMAGE.C;ANIMTOWN.C;STARTUP2.C;CEDT027.C;CEDT018.C;ENDGAME.C;ENTRANCE.C;TITLE.C;SWSH.C;DIALOG.C	referenced_not_verified
-F	0695	F0695_SetCreatureReplacementColors	FMTOWNS.H;DUNVIEW.C;DRAWVIEW.C;IMAGE.C	referenced_not_verified
-F	0696	F0696_UpdateMessageArea	FMTOWNS.H;IIGS.H;DEFS.H;DRAWMSGA.C;TEXT.C	referenced_not_verified
-F	0697	F0697_HatchScreenBox	FMTOWNS.H;BLITFILL.C;IMAGE.C;TOWNSSCR.C	referenced_not_verified
+F	0695	F0695_SetCreatureReplacementColors	FMTOWNS.H;DUNVIEW.C;DRAWVIEW.C;IMAGE.C	implemented_source_locked
+F	0696	F0696_UpdateMessageArea	FMTOWNS.H;IIGS.H;DEFS.H;DRAWMSGA.C;TEXT.C	implemented_source_locked
+F	0697	F0697_HatchScreenBox	FMTOWNS.H;BLITFILL.C;IMAGE.C;TOWNSSCR.C	implemented_source_locked
 F	0698	F0698_InvertBox	FMTOWNS.H;CLIKMENU.C;DEFS.H;IMAGE.C;CEDT027.C;TOWNSSCR.C;INVRTZON.C;CEDTINCN.C;UTILITY.H	referenced_not_verified
 F	0699	F0699_InitVideoInterrupt	CEDT028.C;DEFS.H;IMAGE.C;CEDT027.C;STARTUP1.C	referenced_not_verified
 F	0700	F0700_TriggerImmediateMouseEvent	PANEL.C;FMTOWNS.H;REVIVE.C;IO.C;DEFS.H;CHAMPION.C	referenced_not_verified
