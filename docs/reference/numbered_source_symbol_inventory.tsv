@@ -1836,9 +1836,9 @@ F	0797	F0797_STARTEND_DrawEntranceMicroDungeon	IIGS.H;DEFS.H;ENTRANCE.C	implemen
 F	0798	F0798_COMMAND_IsPointInZone	CLIKVIEW.C;COORD.C;COMMAND.C;DEFS.H;SWITCH.C	implemented_source_locked
 F	0799	F0799_SOUND_DisableUnavailableSounds	DEFS.H;STARTUP2.C;SOUND.C	implemented_source_locked
 F	0802	F0802_IsMagicMap	PANEL.C;MENU.C;DEFS.H	implemented_source_locked
-F	0803	F0803_DrawMagicMapIcon	PANEL.C	referenced_not_verified
-F	0804	F0804_DrawMagicMap	PANEL.C	referenced_not_verified
-F	0805	F0805_CreatureNameScroll	PANEL.C	referenced_not_verified
+F	0803	F0803_DrawMagicMapIcon	PANEL.C	implemented_source_locked
+F	0804	F0804_DrawMagicMap	PANEL.C	implemented_source_locked
+F	0805	F0805_CreatureNameScroll	PANEL.C	implemented_source_locked
 F	0807	F0807_ENTRANCE_DrawAnimationStep	ENTRANCE.C	referenced_not_verified
 F	0808	F0808_SeekToCylinder0_Unreferenced	IO.C	referenced_not_verified
 F	0809	F0809_CheckCopyProtectionSide0Track0_CPSX	LOADSAVE.C;DUNVIEW.C;IO.C;DEFS.H	referenced_not_verified
