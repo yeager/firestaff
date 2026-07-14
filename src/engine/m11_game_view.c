@@ -17766,16 +17766,24 @@ static int m11_viewport_cell_is_wall_free(const M11_ViewportCell* cell);
 
 static int m11_viewport_cell_has_renderable_projectile(
     const M11_ViewportCell* cell) {
-    return cell &&
-           cell->firstProjectileMaterialReady &&
-           dm1_v1_projectile_renderable_pc34(cell->summary.projectiles,
-                                             cell->firstProjectileGfxIndex);
+    if (!cell || !cell->firstProjectileMaterialReady ||
+        !dm1_v1_projectile_renderable_pc34(cell->summary.projectiles,
+                                            cell->firstProjectileGfxIndex)) {
+        return 0;
+    }
+    /* C127/C026 belongs to DUNVIEW's wall-overlay route. The live F0115
+     * receipt may still admit an independent projectile on that square, but
+     * a mirror payload may never reach M11's generic projectile blitter. */
+    return !cell->dm1RuntimeRenderDecisionReady ||
+           !cell->dm1RuntimeRenderDecision.suppressMirrorAsProjectile ||
+           cell->dm1RuntimeRenderDecision.drawRuntimeProjectile;
 }
 
 static int m11_viewport_cell_has_renderable_explosion(
     const M11_ViewportCell* cell) {
     return cell &&
            cell->dm1MaterializationDecisionReady &&
+           cell->dm1MaterializationDecision.drawDeferredSpellEffects &&
            cell->dm1MaterializationDecision.liveRenderableExplosionCount > 0;
 }
 
@@ -20922,6 +20930,9 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
      * separately by m11_draw_dm1_alcove_wall_items. */
     if (cell->floorItemCount > 0 && cell->dm1MaterializationDecisionReady &&
         cell->dm1MaterializationDecision.drawFloorItems &&
+        (!cell->dm1RuntimeRenderDecisionReady ||
+         !cell->dm1RuntimeRenderDecision.suppressMaterializedItemPayload ||
+         cell->dm1RuntimeRenderDecision.drawFloorObject) &&
         cell->elementType != DUNGEON_ELEMENT_WALL) {
         int ii;
         int itemsToShow = cell->floorItemCount;
@@ -20993,7 +21004,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
 
     /* Layer 3: Projectiles and explosions (in flight, topmost) */
     if (cell->dm1MaterializationDecisionReady &&
-        cell->dm1MaterializationDecision.drawRuntimeProjectiles) {
+        cell->dm1MaterializationDecision.drawRuntimeProjectiles &&
+        m11_viewport_cell_has_renderable_projectile(cell)) {
         m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                             faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
                             depthIndex, sourceZoneRow);

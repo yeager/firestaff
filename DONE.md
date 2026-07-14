@@ -36,6 +36,13 @@
    frame instead of overwriting the previous one. This changes only capture
    delivery; it does not create, replace, or synthesize DM1 artwork.
 
+- 2026-07-14 DM1 HoC C127 live F0115 occlusion handoff: M11's generic
+  floor-object/projectile and deferred-effect passes now consume the
+  ReDMCSB-backed DM1 mirror/materialization decisions. A visible C026 mirror
+  cannot re-enter the generic payload paths, while a separately admitted
+   F0115 object or live projectile remains renderable. Verification:
+   `firestaff_dm1_v1_hoc_floor_runtime_no_false_items_probe`.
+
 - 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
   now admits pixels only when the finished-art material gate resolves the
   boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that
