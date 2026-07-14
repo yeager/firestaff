@@ -3,7 +3,11 @@
 
 #include <stdint.h>
 
-#include "theron_v1_dungeon_handoff.h"
+/* The original loader trace identifies this later Track 02 envelope before
+ * its payload format is known. Keep the physical record facts here rather
+ * than depending on an unimplemented dungeon-handoff API. */
+#define THERON_V1_INITIAL_ENVELOPE_RECORD 0x0b52u
+#define THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET 0x114u
 
 /* This is an observation boundary, not a payload decoder. The destination and
  * byte count are retained only when an original later loader read reports
