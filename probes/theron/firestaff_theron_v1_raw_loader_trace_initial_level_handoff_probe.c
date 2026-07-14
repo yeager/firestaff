@@ -93,6 +93,8 @@ int main(void)
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt handoff;
     Theron_V1_BootProfile profile;
     Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
+    Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
+    Theron_V1_World world;
     Theron_V1CaptureManifest manifest;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
@@ -178,6 +180,28 @@ int main(void)
         printf("FAIL: boot receipt did not retain the exact runtime payload\n");
         return 1;
     }
+    theron_v1_world_init(&world);
+    if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
+            &profile, &world, raw, raw_size,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt) ||
+        !route_receipt.received || !route_receipt.no_fallback ||
+        route_receipt.route_hash != handoff.initial_level_route.route_hash ||
+        route_receipt.payload_checksum != handoff.complete_payload_checksum ||
+        world.current_dungeon != THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        !world.level_loaded[0][0] || world.levels[0][0].thing_count != 0) {
+        free(raw);
+        printf("FAIL: authenticated initial-level route did not reach runtime\n");
+        return 1;
+    }
+    ++profile.track02_initial_level_handoff.initial_level_route.route_hash;
+    if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
+            &profile, &world, raw, raw_size,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+        free(raw);
+        printf("FAIL: altered initial-level route reached runtime\n");
+        return 1;
+    }
+    --profile.track02_initial_level_handoff.initial_level_route.route_hash;
     ++raw[payload_receipt.raw_track02_offset];
     if (theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             &profile, raw, raw_size, &payload_receipt)) {
