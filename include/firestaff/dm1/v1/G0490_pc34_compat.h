@@ -16,6 +16,8 @@
  */
 
 #define DM1_V1_G0490_PC34_COMPAT_SIZE 300
+#define DM1_V1_ACTION_NAME_COUNT_PC34 44
+#define DM1_V1_ACTION_NONE_PC34 0xff
 
 typedef struct DM1_V1_G0490ResultPc34 {
     int accepted;
@@ -39,6 +41,10 @@ dm1_v1_g0490_size_pc34(void);
 
 int
 dm1_v1_g0490_get_pc34(int byte_index);
+
+/* ReDMCSB MENU.C F0384_MENUS_GetActionName. */
+const char *
+dm1_v1_action_name_f0384_pc34(unsigned char action_index);
 
 int
 dm1_v1_g0490_run_pc34(
