@@ -227,6 +227,22 @@ bool dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_flip_row_pc34(
     size_t row;
 
     if (!source || !destination || width == 0u || row_count == 0u) return false;
+    if (source == destination) {
+        for (row = 0u; row < row_count; ++row) {
+            size_t left = 0u;
+            size_t right = width - 1u;
+            const size_t base = row * width;
+
+            while (left < right) {
+                const uint8_t pixel = destination[base + left];
+                destination[base + left] = destination[base + right];
+                destination[base + right] = pixel;
+                ++left;
+                --right;
+            }
+        }
+        return true;
+    }
     for (row = 0u; row < row_count; ++row) {
         size_t col;
         const size_t base = row * width;
