@@ -217,6 +217,9 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameViewState view;
     M11_BootProbeReceipt boot_receipt;
     const M12_MenuEntry* entry;
+    const M12_AssetVersionStatus* version;
+    const Theron_Track02StartupLoaderReceipt* loader_receipt;
+    unsigned int expected_index01_sector;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
     unsigned char framebuffer[320 * 200];
@@ -251,12 +254,25 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
+    version = M12_AssetStatus_GetFirstMatchedVersion(&menu.assetStatus, "theron");
+    loader_receipt = M12_AssetStatus_GetTheronTrack02LoaderReceipt(
+        &menu.assetStatus);
+    expected_index01_sector = version &&
+            strcmp(version->matchedMd5, THERON_TRACK02_MD5_JP_BIN) == 0
+        ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
+        : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
+    expect_true(version && loader_receipt && loader_receipt->valid == 1 &&
+                    strcmp(loader_receipt->track02_path, version->matchedPath) == 0 &&
+                    loader_receipt->ipl_loader.data_track_index01_raw_sector ==
+                        expected_index01_sector,
+                "M12 scanner retains the raw Track 02 pregap through the IPL receipt");
+
     M11_GameView_Init(&view);
     opened = M11_GameView_OpenSelectedMenuEntry(&view, &menu);
     if (!opened) {
         expect_true(!view.active,
                     "M11 releases rejected Track02 startup before launcher return");
-        expect_skip("staged Track02 startup atlas routes are incomplete or invalid");
+        expect_skip("staged Track02 runtime handoff remains unavailable");
         M11_GameView_Shutdown(&view);
         return;
     }

@@ -852,8 +852,11 @@ static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
         theron_v1_track02_variant_for_md5(version->matchedMd5) ==
             THERON_TRACK02_VARIANT_UNKNOWN) return;
 
-    /* The largest inspected sector is the second-stage IPL body. */
-    required = ((size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
+    /* The raw BIN IPL records are relative to Track 02 INDEX 01.  The
+     * verified JP/US CUEs place that index at raw sectors 224/225, so the
+     * scanner must retain the pregap as well as the stage-two body. */
+    required = ((size_t)THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+                (size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
                 (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
                THERON_TRACK02_RAW_SECTOR_BYTES;
     file = fopen(version->matchedPath, "rb");
