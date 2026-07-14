@@ -1767,9 +1767,11 @@ F	0698	F0698_InvertBox	FMTOWNS.H;CLIKMENU.C;DEFS.H;IMAGE.C;CEDT027.C;TOWNSSCR.C;
 F	0699	F0699_InitVideoInterrupt	CEDT028.C;DEFS.H;IMAGE.C;CEDT027.C;STARTUP1.C	referenced_not_verified
 F	0700	F0700_TriggerImmediateMouseEvent	PANEL.C;FMTOWNS.H;REVIVE.C;IO.C;DEFS.H;CHAMPION.C	referenced_not_verified
 F	0702	F0702_BuildObjectMousePointerIcon	FMTOWNS.H;IO.C	implemented_source_locked
-F	0703	F0703_ReleaseChampionIcon	FMTOWNS.H;COMMAND.C;IO.C;DEFS.H;STARTUP2.C	referenced_not_verified
-F	0706	F0706_GetMouseState	PANEL.C;CEDT020.C;FMTOWNS.H;CLIKVIEW.C;DRAWVIEW.C;IO.C;DEFS.H;CEDT026.C;SELECTOR.C;IO2.C	referenced_not_verified
-F	0707	F0707_ResetSoundBufferAddress	DUNVIEW.C;IO.C;DEFS.H;TOWNSIO.C;SOUND.C;ENTRANCE.C	referenced_not_verified
+F	0703	F0703_ReleaseChampionIcon	FMTOWNS.H;COMMAND.C;IO.C;DEFS.H;STARTUP2.C	implemented_source_locked
+F	0704	F0704_	IO.C;DEFS.H	implemented_source_locked
+F	0705	F0705_	IO.C;DEFS.H	implemented_source_locked
+F	0706	F0706_GetMouseState	PANEL.C;CEDT020.C;FMTOWNS.H;CLIKVIEW.C;DRAWVIEW.C;IO.C;DEFS.H;CEDT026.C;SELECTOR.C;IO2.C	implemented_source_locked
+F	0707	F0707_ResetSoundBufferAddress	DUNVIEW.C;IO.C;DEFS.H;TOWNSIO.C;SOUND.C;ENTRANCE.C	implemented_source_locked
 F	0709	F0709_StartSound	IO.C;DEFS.H;TOWNSIO.C;SOUND.C;ENTRANCE.C	referenced_not_verified
 F	0710	F0710_WaitSoundPlayComplete	ANIM.C;FMTOWNS.H;DUNVIEW.C;IO.C;DEFS.H;TOWNSIO.C;SOUND.C;ENTRANCE.C;ANIMSND.C;SWSH.C	referenced_not_verified
 F	0711	F0711_ConvertScanCodeToASCII	MEMORY.C;DEFS.H;SELECTOR.C;IO2.C	referenced_not_verified

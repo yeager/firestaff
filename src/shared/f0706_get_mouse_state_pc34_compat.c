@@ -7,5 +7,9 @@ void ReDMCSB_F0706_GetMouseStatePc34Compat(
     int16_t *outButtons)
 {
     /* ReDMCSB IO.C F0706: direct IODRV_13 call, no local policy. */
+    if (ioDriver == 0 || ioDriver->getMouseState == 0) {
+        return;
+    }
+
     ioDriver->getMouseState(outX, outY, outButtons);
 }

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0703`-`F0707`: PC 3.4 source-locked modules
+  now cover champion-icon release, IODRV_03/IODRV_04 dispatch, mouse state,
+  and sound-buffer reset. Strict C11 tests pass. F0703/F0706/F0707 move from
+  uncertain to implemented in the canonical callable audit; F0704/F0705 are
+  recorded in the full numbered inventory but are outside its 2,137 rows.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0698`–`F0700`: PC 3.4 invert-box, video-vector
   and immediate mouse-event routes are source-locked. Verification: focused strict C11 tests.
 

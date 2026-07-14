@@ -48,5 +48,8 @@ int main(void)
     ok &= expect_int("driver y preserved", y, 203);
     ok &= expect_int("driver buttons preserved", (unsigned short)buttons, 0x8003);
 
+    ReDMCSB_F0706_GetMouseStatePc34Compat(0, &x, &y, &buttons);
+    ok &= expect_int("missing driver is a no-op", callCount, 1);
+
     return ok ? 0 : 1;
 }
