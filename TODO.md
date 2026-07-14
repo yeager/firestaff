@@ -10,6 +10,14 @@
   callback invents selector, state, and opcode semantics. Independent source:
   CSBWin `DSA.cpp`, `data.cpp`, and `SaveGame.cpp`; required corpus: a
   checksum-valid CSBWin extended save containing DSA index/action records.
+  - 2026-07-14 update: the opt-in package handoff now loads an original
+    `Dungeon.dat` into the runtime owner and ticks it before attempting the
+    paired `csbgame*.dat`. The checked CSBWin corpus `csbgame2.dat`
+    (`105104b30dde164e7000d388f251f3d6d3f83a56959f28f56220711d1e9f3a9e`)
+    has no supported GAMEBLOCK1/Extended Features start and rejects without
+    publishing party, timer, or DSA state. This is an observed unavailable
+    route, not a substitute format; a checksum-valid DSA-bearing save remains
+    required for positive DSA handoff proof.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

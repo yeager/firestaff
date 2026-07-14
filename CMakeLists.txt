@@ -3415,6 +3415,21 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Opt-in CSBWin package handoff: original Dungeon.dat plus an original
+# csbgame*.dat are attached to the runtime and resumed through the production
+# path. It has no synthetic fallback and skips when no explicit paths are set.
+add_executable(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
+    probes/csb/firestaff_csb_v1_csbwin_package_runtime_handoff_probe.c
+)
+target_include_directories(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 CSBWin 512-byte XOR-pad save-header classifier probe
 # Real-asset CSBWin / DM1 save -> csb_v1_csbwin_512_xor_pad_classify
 # verdict gate. The probe runs the data-free synthetic-fixture
