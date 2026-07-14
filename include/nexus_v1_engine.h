@@ -581,6 +581,17 @@ int nexus_v1_inspect_dgn_material_corpus(
 int nexus_v1_current_level_structure2_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2SourceReceipt *out_receipt);
+/* Read one bounded Structure3 mesh entry from the exact canonical LEV bytes
+ * currently owned by the engine. This is the renderer-facing source route:
+ * it refuses a stale level, an unverified package, or mutated bytes before
+ * delegating to the typed entry decoder. It establishes no Saturn transform,
+ * texture, palette, VDP1, or draw semantics. */
+int nexus_v1_current_level_extract_structure3_mesh_entry(
+    const Nexus_V1_Engine *engine, int entry_index,
+    Nexus_V1_DgnStructure3Vector *out_vertices, int max_vertices,
+    Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
+    Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
+    Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt);
 /* Commit one already-bound original-capture face and its complete opaque
  * capture packet into engine-owned source storage. This is the renderer's
  * source-data route, not a decode or draw route. */
