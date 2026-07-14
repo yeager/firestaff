@@ -108,7 +108,6 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
         { 16, 3, 218,  74 }
     };
     static const int expected_square_rows[][4] = {
-        { 0,  0,  0, 11 },
         { 1, -1,  4,  9 },
         { 1,  0,  3,  8 },
         { 1,  1,  5, 10 },
@@ -160,16 +159,16 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
                       expected_square_rows[i][0], expected_square_rows[i][1]),
                   expected_square_rows[i][3]);
     }
-    check_int("F0115.object.view_square.d0_side_rejected",
-              dm1_viewport_3d_f0115_view_square_index(0, -1), -1);
+    check_int("F0115.object.view_square.invalid_depth_low",
+              dm1_viewport_3d_f0115_view_square_index(0, 0), -1);
     check_int("F0115.object.view_square.invalid_depth_high",
               dm1_viewport_3d_f0115_view_square_index(4, 0), -1);
     check_int("F0115.object.view_square.invalid_d2_far_left",
               dm1_viewport_3d_f0115_view_square_index(2, -2), -1);
     check_int("F0115.object.view_square.invalid_d2_far_right",
               dm1_viewport_3d_f0115_view_square_index(2, 2), -1);
-    check_int("F0115.object.g2028_row.d0_side_rejected",
-              dm1_viewport_3d_f0115_c2500_c2900_row(0, -1), -1);
+    check_int("F0115.object.g2028_row.invalid_depth_low",
+              dm1_viewport_3d_f0115_c2500_c2900_row(0, 0), -1);
     check_int("F0115.object.g2028_row.invalid_depth_high",
               dm1_viewport_3d_f0115_c2500_c2900_row(4, 0), -1);
     check_int("F0115.object.g2028_row.invalid_d2_far_left",
@@ -1090,91 +1089,6 @@ static void test_explosion_occlusion_zone_mapping(void)
     check_int("explosion_occlusion.out_of_range", dm1_viewport_3d_get_explosion_occlusion_spec(17) == NULL, 1);
     check_int("explosion_occlusion.null_zone", dm1_viewport_3d_explosion_centered_zone(NULL), -1);
     check_int("explosion_occlusion.bad_cell", dm1_viewport_3d_explosion_two_cell_zone(dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D3C), 2), -1);
-
-    {
-        struct {
-            DM1_ViewSquareIndex square;
-            int zone;
-            int x;
-            int y;
-        } c100_expected[] = {
-            { DM1_VIEW_SQUARE_D3C, 3000, 112, 53 },
-            { DM1_VIEW_SQUARE_D3L, 3001,  24, 53 },
-            { DM1_VIEW_SQUARE_D3L2, 3003, 112, 59 },
-            { DM1_VIEW_SQUARE_D2L, 3006, 112, 70 },
-            { DM1_VIEW_SQUARE_D1R, 3010, 112, 63 },
-            { DM1_VIEW_SQUARE_D0C, 3011,  12, 63 }
-        };
-        for (size_t i = 0; i < sizeof(c100_expected) / sizeof(c100_expected[0]); ++i) {
-            const DM1_ViewportExplosionOcclusionSpec *spec =
-                dm1_viewport_3d_get_explosion_occlusion_spec_for_square(c100_expected[i].square);
-            int zone = -1;
-            int x = -1;
-            int y = -1;
-            char id[112];
-            snprintf(id, sizeof(id), "c100_geometry.%zu.valid", i);
-            check_int(id, dm1_viewport_3d_c100_rebirth_lightning_geometry(spec, &zone, &x, &y), 1);
-            snprintf(id, sizeof(id), "c100_geometry.%zu.zone", i);
-            check_int(id, zone, c100_expected[i].zone);
-            snprintf(id, sizeof(id), "c100_geometry.%zu.x", i);
-            check_int(id, x, c100_expected[i].x);
-            snprintf(id, sizeof(id), "c100_geometry.%zu.y", i);
-            check_int(id, y, c100_expected[i].y);
-        }
-        check_int("c100_geometry.null", dm1_viewport_3d_c100_rebirth_lightning_geometry(NULL, NULL, NULL, NULL), 0);
-        check_int("c100_geometry.d4_rejected",
-                  dm1_viewport_3d_c100_rebirth_lightning_geometry(
-                      dm1_viewport_3d_get_explosion_occlusion_spec_for_square(DM1_VIEW_SQUARE_D4C),
-                      NULL, NULL, NULL), 0);
-
-        {
-            struct {
-                DM1_ViewSquareIndex square;
-                int scale;
-            } c100_scale_expected[] = {
-                { DM1_VIEW_SQUARE_D3C, 15 },
-                { DM1_VIEW_SQUARE_D3R, 15 },
-                { DM1_VIEW_SQUARE_D3L2, 20 },
-                { DM1_VIEW_SQUARE_D2C, 20 },
-                { DM1_VIEW_SQUARE_D2L, 32 }
-            };
-            for (size_t i = 0; i < sizeof(c100_scale_expected) / sizeof(c100_scale_expected[0]); ++i) {
-                const DM1_ViewportExplosionOcclusionSpec *spec =
-                    dm1_viewport_3d_get_explosion_occlusion_spec_for_square(c100_scale_expected[i].square);
-                int scale = -1;
-                char id[112];
-                snprintf(id, sizeof(id), "c100_scale.%zu.valid", i);
-                check_int(id, dm1_viewport_3d_c100_rebirth_lightning_scale(spec, &scale), 1);
-                snprintf(id, sizeof(id), "c100_scale.%zu.value", i);
-                check_int(id, scale, c100_scale_expected[i].scale);
-            }
-            {
-                static const DM1_ViewSquareIndex c100_unproven_rows[] = {
-                    /* G2028 maps these visible C100 routes to rows 7..11,
-                     * beyond the seven bytes that original G2037 owns. */
-                    DM1_VIEW_SQUARE_D2R,
-                    DM1_VIEW_SQUARE_D1C,
-                    DM1_VIEW_SQUARE_D1L,
-                    DM1_VIEW_SQUARE_D1R,
-                    DM1_VIEW_SQUARE_D0C
-                };
-                for (size_t i = 0;
-                     i < sizeof(c100_unproven_rows) /
-                             sizeof(c100_unproven_rows[0]);
-                     ++i) {
-                    char id[112];
-                    snprintf(id, sizeof(id), "c100_scale.row%zu_rejected", i + 7);
-                    check_int(id, dm1_viewport_3d_c100_rebirth_lightning_scale(
-                                       dm1_viewport_3d_get_explosion_occlusion_spec_for_square(
-                                           c100_unproven_rows[i]),
-                                       NULL),
-                              0);
-                }
-            }
-            check_int("c100_scale.null",
-                      dm1_viewport_3d_c100_rebirth_lightning_scale(NULL, NULL), 0);
-        }
-    }
 }
 
 static void test_projectile_wall_zone_movement_visibility_gate(void)
@@ -1923,28 +1837,6 @@ static void test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip(void)
         snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.zone", cases[i].id);
         check_int(check, spec->pc34_zone, cases[i].zone);
 
-        {
-            DM1_ViewportD3SideWallHostHandoffPc34 handoff;
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff", cases[i].id);
-            check_int(check,
-                      dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
-                          cases[i].square, false, true, false, &handoff),
-                      1);
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_zone", cases[i].id);
-            check_int(check, handoff.pc34_zone, cases[i].zone);
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_c10", cases[i].id);
-            check_int(check, handoff.transparent_color, 10);
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_return", cases[i].id);
-            check_int(check, handoff.falls_through_to_f0115 ? 1 : 0, 0);
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_alcove", cases[i].id);
-            check_int(check,
-                      dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
-                          cases[i].square, false, true, true, &handoff),
-                      1);
-            snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.handoff_alcove_f0115", cases[i].id);
-            check_int(check, handoff.falls_through_to_f0115 ? 1 : 0, 1);
-        }
-
         gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);
         snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.visible", cases[i].id);
         check_int(check, gate.visible ? 1 : 0, 1);
@@ -2001,25 +1893,6 @@ static void test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip(void)
         snprintf(check, sizeof(check), "d3_far_side_wall_pixel.%s.after_source_clip_untouched", cases[i].id);
         check_int(check, viewport[25 * DM1_VIEWPORT_WIDTH + cases[i].after_x], 0xee);
     }
-}
-
-static void test_center_door_button_host_plan(void)
-{
-    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
-    check_int("center_door_button.d2.plan",
-              dm1_viewport_3d_center_door_button_host_plan_pc34(1, &plan), 1);
-    check_int("center_door_button.d2.view", plan.view_index,
-              DM1_VIEW_DOOR_BUTTON_D2C);
-    check_int("center_door_button.d2.c10", plan.transparent_color, 10);
-    check_int("center_door_button.d2.palette", plan.palette_remap != NULL, 1);
-    check_int("center_door_button.d3.plan",
-              dm1_viewport_3d_center_door_button_host_plan_pc34(2, &plan), 1);
-    check_int("center_door_button.d3.view", plan.view_index,
-              DM1_VIEW_DOOR_BUTTON_D3C);
-    check_int("center_door_button.d3.c10", plan.transparent_color, 10);
-    check_int("center_door_button.d3.palette", plan.palette_remap != NULL, 1);
-    check_int("center_door_button.invalid_depth",
-              dm1_viewport_3d_center_door_button_host_plan_pc34(3, &plan), 0);
 }
 
 static void test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip(void)
@@ -4038,7 +3911,7 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
           "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
           "pass404.side_contents_blocker_gate" },
         { "src/engine/m11_game_view.c",
-          "m11_draw_dm1_f0115_floor_item_sprite(",
+          "m11_draw_item_sprite(g_drawState, framebuffer",
           "pass404.side_contents_item_draw" },
         { "src/engine/m11_game_view.c",
           "static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state",
@@ -4166,9 +4039,9 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
         { "src/engine/m11_game_view.c",
           "the native center-wall graphic flipped horizontally.",
           "pass510.center_wall_flip_path" },
-        { "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-          "dm1_viewport_3d_build_side_wall_host_receipt_pc34(",
-          "pass510.side_wall_receipt_owner" },
+        { "src/engine/m11_game_view.c",
+          "metadata selects the parity bitmap and asks M11 to mirror",
+          "pass510.side_wall_lr_swap_path" },
         { "src/engine/m11_game_view.c",
           "static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(",
           "pass643.d3l2_d3r2_f0111_runtime_consumer" },
@@ -4436,7 +4309,6 @@ int main(void)
     test_f0099_copy_and_flip_h_preserves_row_boundaries();
     test_d3c_far_center_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d3l_d3r_far_side_wall_pixel_routes_use_redmcsb_frame_clip();
-    test_center_door_button_host_plan();
     test_d2l_side_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2r_right_wall_pixel_slice_uses_redmcsb_frame_clip();
     test_d2c_center_wall_pixel_slice_uses_redmcsb_frame_clip();

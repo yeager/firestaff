@@ -142,6 +142,45 @@ static int compact_item_count_for_cell(const M11_GameViewState* state,
     return count_item_chain(state->world.things, firstThing);
 }
 
+static int probe_viewport_relative_square(const M11_GameViewState* state,
+                                          int relForward,
+                                          int relSide,
+                                          int* outMapX,
+                                          int* outMapY,
+                                          int* outElementType,
+                                          unsigned short* outFirstThing) {
+    int dx = 0;
+    int dy = 0;
+    int mapX;
+    int mapY;
+    int elementType;
+    unsigned short firstThing;
+    if (!state || !state->world.dungeon || !state->world.things) {
+        return 0;
+    }
+    switch (state->world.party.direction & 3) {
+        case DIR_NORTH: dx = relSide; dy = -relForward; break;
+        case DIR_EAST:  dx = relForward; dy = relSide; break;
+        case DIR_SOUTH: dx = -relSide; dy = relForward; break;
+        case DIR_WEST:  dx = -relForward; dy = -relSide; break;
+        default: return 0;
+    }
+    mapX = state->world.party.mapX + dx;
+    mapY = state->world.party.mapY + dy;
+    elementType = square_element_for(state, mapX, mapY);
+    if (elementType < 0) {
+        return 0;
+    }
+    firstThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things,
+        state->world.party.mapIndex, mapX, mapY);
+    if (outMapX) *outMapX = mapX;
+    if (outMapY) *outMapY = mapY;
+    if (outElementType) *outElementType = elementType;
+    if (outFirstThing) *outFirstThing = firstThing;
+    return 1;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     M12_StartupMenuState menu;

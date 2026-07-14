@@ -19,7 +19,6 @@
  */
 
 #include "font_m11.h"
-#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 
@@ -317,7 +316,7 @@ static void test_pointer_hit_layout_reuse(void) {
             &state,
             layout.boxX + layout.choiceW / 2,
             layout.choiceY,
-            DM1_V1_MOUSE_MASK_LEFT_PC34);
+            M11_DM1_MOUSE_MASK_LEFT);
         snprintf(label, sizeof(label),
                  "scale=%d left choice returns to menu", scale);
         check_int(label, result, M11_GAME_INPUT_RETURN_TO_MENU);
@@ -329,7 +328,7 @@ static void test_pointer_hit_layout_reuse(void) {
             &state,
             layout.boxX + layout.choiceW + layout.choiceW / 2,
             layout.choiceY,
-            DM1_V1_MOUSE_MASK_LEFT_PC34);
+            M11_DM1_MOUSE_MASK_LEFT);
         snprintf(label, sizeof(label),
                  "scale=%d right choice cancels modal", scale);
         check_int(label, result, M11_GAME_INPUT_REDRAW);

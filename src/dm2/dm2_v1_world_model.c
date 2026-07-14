@@ -208,7 +208,6 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
         DM2_V1_DungeonData loaded;
         if (dm2_v1_dungeon_load(&loaded, decoded, (int)decoded_size) == 0) {
             int mc = loaded.level_count;
-            int tiles_complete = 1;
             if (mc > DM2_MAX_LEVELS) mc = DM2_MAX_LEVELS;
 
             world->map_count = mc;
@@ -236,51 +235,29 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
                                    (size_t)loaded.level_heights[i];
                     world->levels[i].tiles =
                         (dm2_tile_t *)malloc(count * sizeof(dm2_tile_t));
-                    if (!world->levels[i].tiles) {
-                        tiles_complete = 0;
-                        break;
-                    }
-                    for (int y = 0; y < loaded.level_heights[i]; ++y) {
-                        for (int x = 0; x < loaded.level_widths[i]; ++x) {
-                            int raw = dm2_v1_dungeon_get_tile_raw(
-                                &loaded, i, x, y);
-                            int type = dm2_v1_dungeon_get_square_type(
-                                &loaded, i, x, y);
-                            dm2_tile_t tile;
-                            tile.raw = (uint16_t)(raw < 0 ? 0 : raw);
-                            tile.type = (uint8_t)(type < 0 ? 0 : type);
-                            tile.flags = (uint8_t)
-                                (loaded.square_bytes == 1
-                                     ? (tile.raw & 0x1fu)
-                                     : ((tile.raw &
-                                         ~DM2_SQUARE_TYPE_MASK) >> 5));
-                            world->levels[i].tiles
-                                [y * loaded.level_widths[i] + x] = tile;
+                    if (world->levels[i].tiles) {
+                        for (int y = 0; y < loaded.level_heights[i]; ++y) {
+                            for (int x = 0; x < loaded.level_widths[i]; ++x) {
+                                int raw = dm2_v1_dungeon_get_tile_raw(
+                                    &loaded, i, x, y);
+                                int type = dm2_v1_dungeon_get_square_type(
+                                    &loaded, i, x, y);
+                                dm2_tile_t tile;
+                                tile.raw = (uint16_t)(raw < 0 ? 0 : raw);
+                                tile.type = (uint8_t)(type < 0 ? 0 : type);
+                                tile.flags = (uint8_t)
+                                    (loaded.square_bytes == 1
+                                         ? (tile.raw & 0x1fu)
+                                         : ((tile.raw &
+                                             ~DM2_SQUARE_TYPE_MASK) >> 5));
+                                world->levels[i].tiles
+                                    [y * loaded.level_widths[i] + x] = tile;
+                            }
                         }
                     }
                 }
             }
-            if (!tiles_complete) {
-                dm2_v1_dungeon_free(&loaded);
-                dm2_world_free(world);
-                return NULL;
-            }
-
-            /* Keep the source-locked G1 map/c_record address receipt alive
-             * for future world consumers.  This transfer retains raw bytes
-             * and exact pool bases, but does not make GenericRecord::w0
-             * traversal available.  See skproject c_record.cpp
-             * DM2_GET_ADDRESS_OF_RECORD and SkWinCore.cpp
-             * READ_DUNGEON_STRUCTURE. */
-            world->g1_record_pool_addresses_valid =
-                loaded.square_bytes == 1 &&
-                loaded.partial_map_boot.committed == 1 &&
-                loaded.partial_map_boot.incomplete == 1 &&
-                dm2_v1_dungeon_validate_record_pools(&loaded);
-            world->g1_record_graph_complete = loaded.record_graph_complete;
-            world->source_dungeon = loaded;
-            world->source_dungeon_valid = 1;
-            memset(&loaded, 0, sizeof(loaded));
+            dm2_v1_dungeon_free(&loaded);
             return world;
         }
     }
@@ -455,22 +432,6 @@ int dm2_world_is_outdoor(const dm2_dungeon_world_t *world, int level) {
     return world->levels[level].level_type == 0;
 }
 
-const DM2_V1_DungeonData *dm2_world_get_verified_g1_map_source(
-    const dm2_dungeon_world_t *world) {
-    if (!world || !world->source_dungeon_valid ||
-        !world->g1_record_pool_addresses_valid ||
-        world->source_dungeon.square_bytes != 1 ||
-        !world->source_dungeon.partial_map_boot.committed ||
-        !world->source_dungeon.partial_map_boot.incomplete) {
-        return NULL;
-    }
-    return &world->source_dungeon;
-}
-
-int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world) {
-    return dm2_world_get_verified_g1_map_source(world) != NULL;
-}
-
 void dm2_world_free(dm2_dungeon_world_t *world) {
     if (!world) return;
     for (int i = 0; i < DM2_MAX_LEVELS; i++) {
@@ -486,10 +447,6 @@ void dm2_world_free(dm2_dungeon_world_t *world) {
     if (world->raw_decompressed) {
         free(world->raw_decompressed);
         world->raw_decompressed = NULL;
-    }
-    if (world->source_dungeon_valid) {
-        dm2_v1_dungeon_free(&world->source_dungeon);
-        world->source_dungeon_valid = 0;
     }
     free(world);
 }

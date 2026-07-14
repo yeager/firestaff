@@ -90,9 +90,6 @@ static void seed_world(M11_GameViewState* state,
     dead->hp.maximum = 100;
     dead->wounds = 0xffffu;
     dead->poisonDose = 12;
-    dead->direction = 0;
-    state->world.lifecycle.champions[0].poisonEventCount = 2;
-    state->world.party.direction = 3;
     for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
         dead->inventory[slot] = THING_NONE;
     }
@@ -139,20 +136,12 @@ static void test_surviving_party_death_route(void)
     CHECK(state.world.party.champions[0].wounds == 0 &&
               state.world.party.champions[0].poisonDose == 0,
           "F0319 clears wounds and poison");
-    CHECK(state.world.lifecycle.champions[0].poisonEventCount == 0,
-          "F0319 clears the live poison-event record through F0323");
-    CHECK(state.world.party.champions[0].direction == 3,
-          "F0319 stores the current party direction in the dead champion record");
     CHECK(state.inventoryPanelActive == 0 && state.spellPanelOpen == 0,
           "F0319 clears dead champion UI ownership");
     CHECK(state.world.party.activeChampionIndex == 1,
           "F0319 selects the first surviving champion as leader");
     CHECK(state.partyDead == 0 && state.world.partyDead == 0,
           "a surviving champion prevents the party-dead flag");
-
-    M11_GameView_ProbeCheckPartyDeath(&state);
-    CHECK(square_first_things[0] == bones && junks[1].next == dropped_weapon,
-          "a second host death check cannot create duplicate F0319 bones or drops");
 }
 
 static void test_last_champion_sets_party_dead(void)

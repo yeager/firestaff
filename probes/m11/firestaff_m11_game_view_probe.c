@@ -1,6 +1,5 @@
-#define FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS 1
 #include "m11_game_view.h"
-#undef FIRESTAFF_M11_GAME_VIEW_PROBE_PRIVATE_HELPERS
+#include "dm1_v1_probe_assets.h"
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
@@ -82,35 +81,6 @@ static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
     if (outW) *outW = rect.w;
     if (outH) *outH = rect.h;
     return 1;
-}
-
-/* Probe adapters keep the checks on the public DM1 contracts rather than
- * depending on a retired, non-existent probe-only header. */
-static const M11_AssetSlot* dm1_v1_probe_load_c026_champion_portrait_atlas(
-    M11_AssetLoader* loader)
-{
-    if (!loader) return NULL;
-    return M11_AssetLoader_Load(
-        loader,
-        (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
-}
-
-static int dm1_v1_inventory_panel_zone_xywh_pc34(int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH)
-{
-    return probe_dm1_layout_rect_xywh(
-        dm1_v1_inventory_panel_rect_pc34(), outX, outY, outW, outH);
-}
-
-static int dm1_v1_inventory_backdrop_zone_xywh_pc34(int* outX,
-                                                      int* outY,
-                                                      int* outW,
-                                                      int* outH)
-{
-    return probe_dm1_layout_rect_xywh(
-        dm1_v1_inventory_backdrop_rect_pc34(), outX, outY, outW, outH);
 }
 
 static int probe_dm1_movement_rect_xywh(DM1_V1_MovementArrowRectPc34 rect,
@@ -379,9 +349,7 @@ static int probe_m11_object_icon_index_for_thing(
     return iconIndex;
 }
 
-/* Kept as an independent probe oracle.  The public M11 helper now has the
- * same name, so this local source-lock implementation must not shadow it. */
-static int probe_v1_status_hand_icon_index(
+static int M11_GameView_GetV1StatusHandIconIndex(
     const M11_GameViewState* state,
     int championSlot,
     int handIndex) {
@@ -517,7 +485,7 @@ static int M11_GameView_GetV1ChampionIconZoneId(int championSlot) {
     return dm1_v1_champion_icon_zone_id_pc34(championSlot);
 }
 
-static int probe_M11_GameView_GetV1ChampionIconZone(int championSlot,
+static int M11_GameView_GetV1ChampionIconZone(int championSlot,
                                               int* outX,
                                               int* outY,
                                               int* outW,
@@ -3942,28 +3910,28 @@ int main(int argc, char** argv) {
 
     probe_record(&tally,
                  "INV_GV_15K",
-                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 212 &&
-                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 214,
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
                  "V1 champion HUD empty normal hands use source icons 212/214");
 
     syntheticView.world.party.champions[0].wounds = 0x0001u;
     probe_record(&tally,
                  "INV_GV_15L",
-                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 213 &&
-                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 214,
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 213 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 214,
                  "V1 champion HUD ready-hand wound advances empty icon to 213 only");
 
     syntheticView.world.party.champions[0].wounds = 0x0002u;
     probe_record(&tally,
                  "INV_GV_15M",
-                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 212 &&
-                     probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 215,
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 212 &&
+                     M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
                  "V1 champion HUD action-hand wound advances empty icon to 215 only");
 
     syntheticView.actingChampionOrdinal = 1;
     probe_record(&tally,
                  "INV_GV_15N",
-                 probe_v1_status_hand_icon_index(&syntheticView, 0, 1) == 215,
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 1) == 215,
                  "V1 champion HUD acting hand changes the box graphic but keeps the source wounded empty icon");
     syntheticView.actingChampionOrdinal = 0;
     syntheticView.world.party.champions[0].wounds = 0;
@@ -3973,7 +3941,7 @@ int main(int argc, char** argv) {
     syntheticView.world.party.champions[0].wounds = 0x0001u;
     probe_record(&tally,
                  "INV_GV_15O",
-                 probe_v1_status_hand_icon_index(&syntheticView, 0, 0) == 16,
+                 M11_GameView_GetV1StatusHandIconIndex(&syntheticView, 0, 0) == 16,
                  "V1 champion HUD occupied wounded hand uses F0033 object icon instead of empty-hand icon");
     syntheticView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
     syntheticView.world.party.champions[0].wounds = 0;
@@ -7231,21 +7199,26 @@ int main(int argc, char** argv) {
                      dm1_viewport_3d_f0115_c2500_c2900_row(3, 1) == 2,
                      "relative viewport cells source-map through ReDMCSB F0115 G2028 rows");
 
-        /* INV_GV_114C2B2: F0128 calls F0115 for D4 object ordering, but
-         * F0115 exits before projectile handling and G2028 has no D4 C2900
-         * row. D4 must therefore remain a no-draw projectile route. */
-        probe_record(&tally,
-                     "INV_GV_114C2B2",
-                     dm1_viewport_3d_f0115_c2500_c2900_row(4, -1) == -1 &&
-                     dm1_viewport_3d_f0115_c2500_c2900_row(4, 0) == -1 &&
-                     dm1_viewport_3d_f0115_c2500_c2900_row(4, 1) == -1 &&
-                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                         DM1_VIEW_SQUARE_D4L) == NULL &&
-                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                         DM1_VIEW_SQUARE_D4C) == NULL &&
-                     dm1_viewport_3d_get_projectile_occlusion_spec_for_square(
-                         DM1_VIEW_SQUARE_D4R) == NULL,
-                     "D4 has no PC34 C2900 projectile material and draws no substitute box");
+        /* INV_GV_114C2B2: F0128 D4 projectile pass is intentionally
+         * outside the C2900 row map but has explicit far-pass boxes so
+         * D4 fireball pixels are drawn before D3 wall overpaint. */
+        {
+            int lx = 0, ly = 0, lw = 0, lh = 0;
+            int cx = 0, cy = 0, cw = 0, ch = 0;
+            int rx = 0, ry = 0, rw = 0, rh = 0;
+            int leftOk = dm1_v1_projectile_d4_far_box(-1, &lx, &ly, &lw, &lh);
+            int centerOk = dm1_v1_projectile_d4_far_box(0, &cx, &cy, &cw, &ch);
+            int rightOk = dm1_v1_projectile_d4_far_box(1, &rx, &ry, &rw, &rh);
+            probe_record(&tally,
+                         "INV_GV_114C2B2",
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, -1) == -1 &&
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 0) == -1 &&
+                         dm1_viewport_3d_f0115_c2500_c2900_row(4, 1) == -1 &&
+                         leftOk && lx == 78 && ly == 42 && lw == 10 && lh == 8 &&
+                         centerOk && cx == 108 && cy == 42 && cw == 10 && ch == 8 &&
+                         rightOk && rx == 138 && ry == 42 && rw == 10 && rh == 8,
+                         "D4 far projectile pass has explicit pre-D3 boxes while C2900 rows stay D1-D3 only");
+        }
 
         /* INV_GV_114C2C: DM1/PC 3.4 floor ornaments use ReDMCSB
          * DUNVIEW.C G0206 coordinate-set 0: 9 floor slots only, with
@@ -11926,8 +11899,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1ChampionIconZoneId(3) == 116 &&
                              M11_GameView_GetV1ChampionIconZoneId(-1) == 0 &&
                              M11_GameView_GetV1ChampionIconZoneId(4) == 0 &&
-                             probe_M11_GameView_GetV1ChampionIconZone(0, &icon0X, &icon0Y, &icon0W, &icon0H) &&
-                             probe_M11_GameView_GetV1ChampionIconZone(3, &icon3X, &icon3Y, &icon3W, &icon3H) &&
+                             M11_GameView_GetV1ChampionIconZone(0, &icon0X, &icon0Y, &icon0W, &icon0H) &&
+                             M11_GameView_GetV1ChampionIconZone(3, &icon3X, &icon3Y, &icon3W, &icon3H) &&
                              icon0X == 281 && icon0Y == 0 && icon0W == 19 && icon0H == 14 &&
                              icon3X == 281 && icon3Y == 15 && icon3W == 19 && icon3H == 14,
                          "champion icon zones expose layout-696 C113-C116 ids and 19x14 source geometry");

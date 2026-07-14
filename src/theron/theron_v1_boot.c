@@ -35,14 +35,11 @@
 
 #include "theron_v1_boot.h"
 #include "asset_find_by_hash.h"
-#include "asset_status_m12.h"
 #include "theron_v1_mechanics.h"
-#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include <stdio.h>
-#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -54,177 +51,6 @@
 #else
 #define TRV_PATH_SEP '/'
 #endif
-
-#define THERON_V1_RUNTIME_TRACE_MAX_BYTES (1024u * 1024u)
-#define THERON_V1_RUNTIME_MEDIA_MAX_BYTES (512u * 1024u * 1024u)
-#define THERON_V1_RUNTIME_CAPTURE_MANIFEST_MAX_BYTES 4096u
-
-static unsigned char *theron_v1_boot_read_evidence_file(
-    const char *path, size_t maximum_bytes, size_t *out_size) {
-    struct stat st;
-    FILE *file = NULL;
-    unsigned char *bytes;
-
-    if (!path || !path[0] || !out_size || stat(path, &st) != 0 ||
-        !S_ISREG(st.st_mode) || st.st_size <= 0 ||
-        (uintmax_t)st.st_size > maximum_bytes ||
-        !(file = fopen(path, "rb")) ||
-        !(bytes = (unsigned char *)malloc((size_t)st.st_size + 1u))) {
-        if (file) fclose(file);
-        return NULL;
-    }
-    if (fread(bytes, 1u, (size_t)st.st_size, file) != (size_t)st.st_size) {
-        fclose(file);
-        free(bytes);
-        return NULL;
-    }
-    fclose(file);
-    bytes[st.st_size] = '\0';
-    *out_size = (size_t)st.st_size;
-    return bytes;
-}
-
-static int theron_v1_boot_md5_is_canonical(const char *md5_hex) {
-    size_t index;
-
-    if (!md5_hex || strlen(md5_hex) != 32u) return 0;
-    for (index = 0u; index < 32u; ++index) {
-        const char value = md5_hex[index];
-        if (!((value >= '0' && value <= '9') ||
-              (value >= 'a' && value <= 'f'))) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-int theron_v1_boot_runtime_trace_files_match_declared_hashes(
-    const char *track02_path,
-    const char *track02_md5_hex,
-    const char *system_card_path,
-    const char *system_card_md5_hex,
-    const char *trace_path,
-    const char *trace_md5_hex) {
-    char actual_track02_md5[33];
-    char actual_system_card_md5[33];
-    char actual_trace_md5[33];
-
-    if (!track02_path || !track02_md5_hex || !system_card_path ||
-        !system_card_md5_hex || !trace_path || !trace_md5_hex ||
-        !m12_file_md5_hex(track02_path,
-                                                   actual_track02_md5) ||
-        !m12_file_md5_hex(system_card_path, actual_system_card_md5) ||
-        !m12_file_md5_hex(trace_path, actual_trace_md5)) {
-        return 0;
-    }
-    return strcmp(actual_track02_md5, track02_md5_hex) == 0 &&
-           strcmp(actual_system_card_md5, system_card_md5_hex) == 0 &&
-           strcmp(actual_trace_md5, trace_md5_hex) == 0;
-}
-
-int theron_v1_boot_track02_runtime_trace_intake_from_files(
-    const char *track02_path,
-    const char *track02_md5_hex,
-    const char *system_card_path,
-    const char *system_card_md5_hex,
-    const char *trace_path,
-    const char *trace_md5_hex,
-    Theron_V1_BootTrack02RuntimeTraceIntakeReceipt *out_receipt) {
-    unsigned char *trace = NULL;
-    unsigned char *track02 = NULL;
-    unsigned char *system_card = NULL;
-    size_t trace_size = 0u;
-    size_t track02_size = 0u;
-    size_t system_card_size = 0u;
-    int accepted = 0;
-
-    if (!out_receipt) return 0;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    /* The parser below receives bytes after these hashes are checked. The
-     * explicit rehash prevents a caller from pairing a known hash label with
-     * changed Track 02, System Card, or Mednafen trace evidence. */
-    if (!theron_v1_boot_runtime_trace_files_match_declared_hashes(
-            track02_path, track02_md5_hex, system_card_path,
-            system_card_md5_hex, trace_path, trace_md5_hex)) {
-        return 0;
-    }
-    out_receipt->trace_file_hash_verified = 1;
-    snprintf(out_receipt->trace_md5, sizeof(out_receipt->trace_md5), "%s",
-             trace_md5_hex);
-    out_receipt->system_card_file_hash_verified = 1;
-    snprintf(out_receipt->system_card_md5,
-             sizeof(out_receipt->system_card_md5), "%s",
-             system_card_md5_hex);
-    trace = theron_v1_boot_read_evidence_file(
-        trace_path, THERON_V1_RUNTIME_TRACE_MAX_BYTES, &trace_size);
-    if (!trace || trace_size == 0u) goto done;
-    (void)theron_v1_system_card_controller_wait_from_mednafen_capture(
-        (const char *)trace, &out_receipt->controller_wait);
-    track02 = theron_v1_boot_read_evidence_file(
-        track02_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES, &track02_size);
-    system_card = theron_v1_boot_read_evidence_file(
-        system_card_path, THERON_V1_RUNTIME_MEDIA_MAX_BYTES,
-        &system_card_size);
-    if (!track02 || !system_card ||
-        !theron_v1_irq2_live_branch_from_mednafen_capture_and_full_track02_media(
-            track02, track02_size, track02_md5_hex, system_card,
-            system_card_size, system_card_md5_hex, (const char *)trace,
-            &out_receipt->runtime_handoff)) {
-        /* Preserve only the independently proven controller wait.  It is a
-         * diagnostic receipt and cannot be mistaken for a runtime handoff. */
-        out_receipt->valid = 0;
-        out_receipt->trace_file_consumed = 0;
-        memset(&out_receipt->runtime_handoff, 0,
-               sizeof(out_receipt->runtime_handoff));
-        goto done;
-    }
-    out_receipt->valid = 1;
-    out_receipt->trace_file_consumed = 1;
-    accepted = 1;
-
-done:
-    free(trace);
-    free(track02);
-    free(system_card);
-    return accepted;
-}
-
-int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
-    const Theron_V1_BootProfile *profile) {
-    Theron_Track02Variant expected_variant;
-    const Theron_V1Irq2FullMediaTraceReceipt *handoff;
-
-    if (!profile || !profile->track02_runtime_trace_handoff_ready) {
-        return 0;
-    }
-    expected_variant = theron_v1_track02_variant_for_md5(
-        profile->graphics_md5);
-    handoff = &profile->track02_runtime_trace_handoff;
-    return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
-            expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
-           theron_v1_boot_md5_is_canonical(
-               profile->track02_runtime_system_card_md5) &&
-           theron_v1_boot_md5_is_canonical(
-               profile->track02_runtime_trace_md5) &&
-           handoff->valid && handoff->variant == expected_variant &&
-           handoff->stage3_track02_record != 0u &&
-           handoff->stage3_user_data_hash != 0u &&
-           handoff->stage3_track02_record ==
-               ((uint32_t)handoff->cd_read_record_cl |
-                ((uint32_t)handoff->cd_read_record_dl << 8) |
-                ((uint32_t)handoff->cd_read_record_ch << 16)) &&
-           handoff->stage3_user_data_offset /
-                   THERON_TRACK02_RAW_SECTOR_BYTES ==
-               handoff->stage3_raw_sector &&
-           handoff->stage3_user_data_offset %
-                   THERON_TRACK02_RAW_SECTOR_BYTES ==
-               THERON_TRACK02_RAW_USER_DATA_OFFSET &&
-           handoff->stage3_user_data_bytes ==
-               THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES &&
-           handoff->handler_address != 0u &&
-           handoff->cd_state_address != 0u &&
-           handoff->cd_state_branch_address != 0u && handoff->branch.valid;
-}
 
 /* ── PC Engine file candidates ───────────────────────────────────── */
 
@@ -878,10 +704,6 @@ int theron_v1_boot_prepare_startup_profile(
         result = THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED;
         goto fail;
     }
-    assets->assets_verified = profile->assets_verified ? 1 : 0;
-    if (profile->assets_verified) {
-        tr_asset_block_synthetic_rendering_for_verified_media(assets);
-    }
 
     if (out_result) {
         *out_result = result;
@@ -893,154 +715,6 @@ fail:
         *out_result = result;
     }
     return 0;
-}
-
-int theron_v1_boot_validate_track02_loader_receipt(
-    const Theron_Track02StartupLoaderReceipt *receipt,
-    const char *verified_md5) {
-    char payload[THERON_TRACK02_MOUNT_PATH_CAPACITY];
-    char md5[33];
-    FILE *file;
-    unsigned char *bytes;
-    size_t required;
-    size_t stage2_required;
-    uint32_t expected_dynamic_record;
-    Theron_Track02Variant variant;
-    Theron_Track02IplLoaderReceipt observed;
-    Theron_Track02Stage2DynamicPayloadReceipt dynamic_observed;
-    Theron_V1Stage2RuntimeHandoff stage2_handoff;
-
-    if (!receipt || !receipt->valid || !receipt->cue_backed ||
-        !receipt->track02_md5_verified || !receipt->mode1_2352 ||
-        !receipt->no_synthetic_cache || !verified_md5 ||
-        strcmp(receipt->track02_md5, verified_md5) != 0 ||
-        receipt->cue_path[0] == '\0' || receipt->track02_path[0] == '\0') return 0;
-    if (theron_v1_track02_resolve_media_path(receipt->cue_path, payload) !=
-            THERON_TRACK02_SIGNAL_OK ||
-        strcmp(payload, receipt->track02_path) != 0 ||
-        !m12_file_md5_hex(payload, md5) || strcmp(md5, verified_md5) != 0) return 0;
-    variant = theron_v1_track02_variant_for_md5(verified_md5);
-    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
-        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP;
-    } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
-        expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
-    } else {
-        /* The dynamic $4090 trace is proven only for raw JP/US media. */
-        return 0;
-    }
-    if (!receipt->ipl_loader.stage2_cd_read_record_proven ||
-        receipt->ipl_loader.stage2_cd_read_record != expected_dynamic_record) {
-        return 0;
-    }
-    required = ((size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
-                (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
-               THERON_TRACK02_RAW_SECTOR_BYTES;
-    stage2_required = ((size_t)expected_dynamic_record + 1u) *
-        THERON_TRACK02_RAW_SECTOR_BYTES;
-    if (stage2_required > required) required = stage2_required;
-    file = fopen(payload, "rb");
-    if (!file) return 0;
-    bytes = (unsigned char*)malloc(required);
-    if (!bytes || fread(bytes, 1u, required, file) != required) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    memset(&observed, 0, sizeof(observed));
-    if (theron_v1_track02_find_ipl_loader(bytes, required, verified_md5,
-                                           &observed) != THERON_TRACK02_SIGNAL_OK ||
-        !observed.valid ||
-        observed.executable_user_data_hash != receipt->ipl_loader.executable_user_data_hash ||
-        observed.stage2_user_data_hash != receipt->ipl_loader.stage2_user_data_hash ||
-        observed.stage2_record != receipt->ipl_loader.stage2_record ||
-        observed.stage2_sector_count != receipt->ipl_loader.stage2_sector_count ||
-        observed.stage2_destination != receipt->ipl_loader.stage2_destination ||
-        observed.stage2_load_address != receipt->ipl_loader.stage2_load_address ||
-        observed.stage2_entry_address != receipt->ipl_loader.stage2_entry_address ||
-        observed.stage2_cd_read_cpu_address !=
-            receipt->ipl_loader.stage2_cd_read_cpu_address ||
-        observed.stage2_cd_read_sector_count !=
-            receipt->ipl_loader.stage2_cd_read_sector_count ||
-        observed.stage2_cd_read_destination !=
-            receipt->ipl_loader.stage2_cd_read_destination ||
-        observed.stage2_cd_read_local_destination !=
-            receipt->ipl_loader.stage2_cd_read_local_destination ||
-        observed.stage2_cd_read_record !=
-            receipt->ipl_loader.stage2_cd_read_record ||
-        observed.stage2_cd_read_raw_sector !=
-            receipt->ipl_loader.stage2_cd_read_raw_sector ||
-        observed.stage2_cd_read_record_proven !=
-            receipt->ipl_loader.stage2_cd_read_record_proven ||
-        observed.stage2_cd_read_dynamic_boundary_valid !=
-            receipt->ipl_loader.stage2_cd_read_dynamic_boundary_valid ||
-        observed.stage2_cd_read_live_record_register_mask !=
-            receipt->ipl_loader.stage2_cd_read_live_record_register_mask ||
-        observed.vram_transfer_proven != receipt->ipl_loader.vram_transfer_proven) {
-        free(bytes);
-        return 0;
-    }
-    memset(&dynamic_observed, 0, sizeof(dynamic_observed));
-    memset(&stage2_handoff, 0, sizeof(stage2_handoff));
-    if (theron_v1_track02_inspect_stage2_dynamic_payload(
-            bytes, required, verified_md5, &dynamic_observed) !=
-            THERON_TRACK02_SIGNAL_OK ||
-        !dynamic_observed.valid ||
-        dynamic_observed.track02_record != expected_dynamic_record ||
-        dynamic_observed.raw_sector != receipt->ipl_loader.stage2_cd_read_raw_sector ||
-        dynamic_observed.user_data_bytes !=
-            THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES ||
-        dynamic_observed.header_word0 != 0x00ffu ||
-        dynamic_observed.header_word1 != 0x0308u ||
-        dynamic_observed.manifest_bytes !=
-            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_BYTES ||
-        dynamic_observed.manifest_entry_count !=
-            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT ||
-        dynamic_observed.user_data_hash == 0u) {
-        free(bytes);
-        return 0;
-    }
-    /* CUE/M11 boot reaches runtime only through the same authentic stage-two
-     * transfer contract as direct Track 02 entry: cleared work RAM then the
-     * physical $3800 BRK $ff dispatch. */
-    if (!theron_v1_stage2_runtime_handoff_from_original_media(
-            bytes, required, verified_md5, &stage2_handoff) ||
-        stage2_handoff.track02_record != dynamic_observed.track02_record ||
-        stage2_handoff.user_data_hash != dynamic_observed.user_data_hash ||
-        !stage2_handoff.ipl_preload_local_read_verified ||
-        stage2_handoff.ipl_preload_cpu_address != 0x40cdu ||
-        stage2_handoff.ipl_preload_destination != 0x3000u ||
-        !stage2_handoff.ipl_preload_record_proven ||
-        stage2_handoff.ipl_preload_record != 0x0003e3u ||
-        stage2_handoff.ipl_preload_sector_count != 2u ||
-        !stage2_handoff.ipl_preload_returns_to_ipl_proven ||
-        stage2_handoff.ipl_preload_user_data_bytes != 4096u ||
-        stage2_handoff.ipl_preload_first_nonzero_offset != 243u ||
-        stage2_handoff.ipl_preload_nonzero_byte_count != 2911u ||
-        stage2_handoff.ipl_preload_user_data_hash == 0u ||
-        !stage2_handoff.stage2_cd_exec_table_verified ||
-        !stage2_handoff.stage2_cd_read_setup_verified ||
-        !stage2_handoff.stage2_post_read_transfer_verified ||
-        !stage2_handoff.work_ram_cleared_before_entry ||
-        stage2_handoff.cleared_work_ram_start != 0x2700u ||
-        stage2_handoff.cleared_work_ram_bytes != 0x1100u ||
-        stage2_handoff.cleared_work_ram_end != 0x3800u ||
-        !stage2_handoff.physical_stage3_entry_verified ||
-        stage2_handoff.stage3_entry_opcode != 0x00u ||
-        stage2_handoff.stage3_irq2_selector != 0xffu ||
-        stage2_handoff.stage3_continuation_address != 0x3802u ||
-        !stage2_handoff.stage3_mode1_header_verified ||
-        !stage2_handoff.stage3_selector_catalog_complete ||
-        stage2_handoff.stage3_resolved_descriptor_selector_count == 0u ||
-        stage2_handoff.stage3_out_of_bounds_descriptor_selector_count != 0u ||
-        stage2_handoff.stage3_resolved_descriptor_selector_count !=
-            stage2_handoff.stage3_nonzero_descriptor_selector_count ||
-        stage2_handoff.stage3_resolved_descriptor_selector_hash == 0u) {
-        free(bytes);
-        return 0;
-    }
-    free(bytes);
-    return 1;
 }
 
 const char *theron_v1_boot_startup_prepare_result_name(
@@ -1923,16 +1597,6 @@ void theron_v1_boot_startup_render_route_receipt_init(
     receipt->status = "NO RENDER ROUTE";
 }
 
-static int theron_v1_boot_startup_has_track02_not_bound_block(
-    const Theron_V1_BootStartupViewModel *view_model) {
-
-    return view_model && view_model->runtime_fallback_visuals_blocked &&
-           view_model->runtime_level_source ==
-               THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
-           view_model->object_table_no_fallback_ready &&
-           view_model->object_table_blocked_anchor_mask != 0u;
-}
-
 int theron_v1_boot_startup_render_route_receipt_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_V1_BootStartupRenderRouteReceipt *out_receipt)
@@ -1994,12 +1658,8 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         view_model->object_table_route_hash;
     out_receipt->level_route_hash = view_model->level_route_hash;
     out_receipt->startup_menu_render_allowed =
-        view_model->render_plan_valid &&
-                !theron_v1_boot_startup_has_track02_not_bound_block(view_model)
-            ? 1
-            : 0;
+        view_model->render_plan_valid ? 1 : 0;
     out_receipt->track02_title_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         view_model->startup_media_state_valid &&
                 view_model->startup_media_state_receipt.startup_media_ready
             ? 1
@@ -2025,7 +1685,6 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
         out_receipt->runtime_level_render_allowed &&
         out_receipt->hud_ready ? 1 : 0;
     out_receipt->title_menu_runtime_handoff_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
         out_receipt->track02_title_menu_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
     out_receipt->save_resume_claim = view_model->resume_claim;
@@ -2034,10 +1693,7 @@ int theron_v1_boot_startup_render_route_receipt_from_view_model(
     out_receipt->save_resume_srm_import_status =
         view_model->srm_import_status;
     out_receipt->save_resume_start_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE
-            ? 1
-            : 0;
+        view_model->resume_claim != THERON_V1_STARTUP_RESUME_NONE ? 1 : 0;
     out_receipt->save_resume_runtime_handoff_ready =
         out_receipt->save_resume_start_ready &&
         out_receipt->runtime_readiness_ready ? 1 : 0;
@@ -3741,13 +3397,6 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status_scope = "STARTUP";
         out_receipt->status = "TRACK02 ATLAS ROUTE MISSING";
         return 0;
-    } else if (plan.required_bitmap_route_mask != 0u) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "RAW TRACK02 BITMAP REQUIRED";
-        return 0;
     } else {
         out_receipt->graphics_executed =
             theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
@@ -3775,141 +3424,6 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = "TRACK02 ATLAS GRAPHICS EXECUTED";
     }
     return out_receipt->graphics_executed;
-}
-
-void theron_v1_boot_startup_raw_media_graphics_receipt_init(
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *receipt)
-{
-    if (!receipt) {
-        return;
-    }
-    memset(receipt, 0, sizeof(*receipt));
-    receipt->status = "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-}
-
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    int cd_read_receipt_verified,
-    int palette_descriptor_relation_verified,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
-{
-    Theron_Track02Variant variant;
-
-    theron_v1_boot_startup_raw_media_graphics_receipt_init(out_receipt);
-    if (!startup_media_receipt || !out_receipt) {
-        return 0;
-    }
-    variant = (Theron_Track02Variant)startup_media_receipt->track02_variant;
-    out_receipt->track02_variant = (int)variant;
-    snprintf(out_receipt->track02_md5, sizeof(out_receipt->track02_md5), "%s",
-             startup_media_receipt->track02_md5);
-    out_receipt->raw_track02_verified =
-        startup_media_receipt->startup_media_ready &&
-                (variant == THERON_TRACK02_VARIANT_JP_BIN ||
-                 variant == THERON_TRACK02_VARIANT_US_BIN)
-            ? 1
-            : 0;
-    out_receipt->cd_read_receipt_verified = cd_read_receipt_verified ? 1 : 0;
-    out_receipt->bitmap_route_mask =
-        startup_media_receipt->startup_bitmap_raw_route_mask;
-    out_receipt->bitmap_atlas_checksum =
-        startup_media_receipt->startup_bitmap_atlas_checksum;
-    out_receipt->bitmap_route_receipt_verified =
-        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            startup_media_receipt) &&
-                out_receipt->bitmap_route_mask != 0u &&
-                out_receipt->bitmap_atlas_checksum != 0u
-            ? 1
-            : 0;
-    out_receipt->palette_descriptor_relation_verified =
-        palette_descriptor_relation_verified ? 1 : 0;
-    out_receipt->no_fallback_visuals = 1;
-    out_receipt->valid = out_receipt->raw_track02_verified &&
-                         out_receipt->cd_read_receipt_verified &&
-                         out_receipt->bitmap_route_receipt_verified;
-    out_receipt->status = out_receipt->valid
-                              ? (out_receipt->palette_descriptor_relation_verified
-                                     ? "TRACK02 RAW MEDIA GRAPHICS READY"
-                                     : "TRACK02 PALETTE DESCRIPTOR UNPROVEN")
-                              : "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-    return out_receipt->valid;
-}
-
-int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
-    const Theron_StartupMediaStateReceipt *startup_media_receipt,
-    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
-    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
-{
-    Theron_V1RawLoaderTraceReceipt bound;
-
-    if (!startup_media_receipt) {
-        return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-            NULL, 0, 0, out_receipt);
-    }
-    if (!theron_v1_raw_loader_trace_final_bind(trace_receipt,
-                                                startup_media_receipt,
-                                                &bound)) {
-        return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-            startup_media_receipt, 0, 0, out_receipt);
-    }
-    return theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-        startup_media_receipt,
-        bound.valid,
-        bound.palette_descriptor_relation_verified,
-        out_receipt);
-}
-
-int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
-    const Theron_V1_BootStartupViewModel *view_model,
-    const Theron_V1_BootStartupRawMediaGraphicsReceipt *raw_media_receipt,
-    const Theron_StartupGraphicExecutor *executor,
-    Theron_V1_BootStartupGraphicsRouteReceipt *out_receipt)
-{
-    Theron_StartupRenderPlan plan;
-    const Theron_StartupMediaStateReceipt *media;
-
-    if (out_receipt) {
-        theron_v1_boot_startup_graphics_route_receipt_init(out_receipt);
-    }
-    if (!view_model || !raw_media_receipt || !executor || !out_receipt ||
-        !view_model->startup_media_state_valid ||
-        !theron_v1_boot_startup_render_plan_from_view_model(view_model, &plan)) {
-        return 0;
-    }
-    media = &view_model->startup_media_state_receipt;
-    out_receipt->host_consumes_view_model = 1;
-    out_receipt->graphics_plan_valid = 1;
-    out_receipt->track02_real_media_ready = media->startup_media_ready ? 1 : 0;
-    out_receipt->required_bitmap_route_mask = plan.required_bitmap_route_mask;
-    out_receipt->required_bitmap_route_count = plan.required_bitmap_route_count;
-    if (!raw_media_receipt->valid ||
-        !raw_media_receipt->raw_track02_verified ||
-        !raw_media_receipt->cd_read_receipt_verified ||
-        !raw_media_receipt->bitmap_route_receipt_verified ||
-        !raw_media_receipt->no_fallback_visuals ||
-        raw_media_receipt->track02_variant != media->track02_variant ||
-        strcmp(raw_media_receipt->track02_md5, media->track02_md5) != 0 ||
-        (raw_media_receipt->bitmap_route_mask & plan.required_bitmap_route_mask) !=
-            plan.required_bitmap_route_mask ||
-        raw_media_receipt->bitmap_atlas_checksum !=
-            media->startup_bitmap_atlas_checksum) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "TRACK02 RAW MEDIA RECEIPT REQUIRED";
-        return 0;
-    }
-    if (!raw_media_receipt->palette_descriptor_relation_verified) {
-        out_receipt->graphics_blocked = 1;
-        out_receipt->no_fallback_startup_graphics_proof = 1;
-        out_receipt->fallback_visuals_allowed = 0;
-        out_receipt->status_scope = "STARTUP";
-        out_receipt->status = "TRACK02 PALETTE DESCRIPTOR UNPROVEN";
-        return 0;
-    }
-    return theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_receipt(
-        view_model, executor, out_receipt);
 }
 
 int theron_v1_boot_startup_execute_graphics_plan_from_snapshot_with_media_receipt(
@@ -3962,21 +3476,14 @@ int theron_v1_boot_startup_full_start_receipt_from_view_model(
     out_receipt->view_model_valid = 1;
     out_receipt->view_model = *view_model;
     out_receipt->stage_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                view_model->startup_phase != THERON_STARTUP_PHASE_TITLE
-            ? 1
-            : 0;
+        view_model->startup_phase != THERON_STARTUP_PHASE_TITLE ? 1 : 0;
     out_receipt->soul_room_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
-                (view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
-                 view_model->startup_phase == THERON_STARTUP_PHASE_READY)
-            ? 1
-            : 0;
-    out_receipt->forcefield_menu_ready =
-        !theron_v1_boot_startup_has_track02_not_bound_block(view_model) &&
+        view_model->startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
                 view_model->startup_phase == THERON_STARTUP_PHASE_READY
             ? 1
             : 0;
+    out_receipt->forcefield_menu_ready =
+        view_model->startup_phase == THERON_STARTUP_PHASE_READY ? 1 : 0;
 
     if (theron_v1_boot_startup_host_view_receipt_from_view_model(
             view_model,
@@ -4370,15 +3877,6 @@ int theron_v1_boot_startup_execute_input_from_full_start_receipt(
         }
         return 0;
     }
-    if (theron_v1_boot_startup_has_track02_not_bound_block(
-            &receipt->view_model)) {
-        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
-        out_receipt->host_receipt.input_result =
-            THERON_STARTUP_INPUT_RESULT_REDRAW;
-        out_receipt->host_receipt.status_scope = "TRACK02";
-        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
-        return 0;
-    }
     return theron_v1_boot_startup_execute_input_from_view_model_with_host_receipt(
         &receipt->view_model,
         input,
@@ -4402,15 +3900,6 @@ int theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
             out_receipt->host_receipt.status_scope = "STARTUP";
             out_receipt->host_receipt.status = "FULL START RECEIPT MISSING";
         }
-        return 0;
-    }
-    if (theron_v1_boot_startup_has_track02_not_bound_block(
-            &receipt->view_model)) {
-        out_receipt->result = THERON_STARTUP_ERR_NOT_READY;
-        out_receipt->host_receipt.input_result =
-            THERON_STARTUP_INPUT_RESULT_REDRAW;
-        out_receipt->host_receipt.status_scope = "TRACK02";
-        out_receipt->host_receipt.status = "TRACK02 NOT_BOUND BLOCKED";
         return 0;
     }
     return theron_v1_boot_startup_execute_pointer_from_view_model_with_host_receipt(
@@ -5497,9 +4986,6 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return 0;
     }
-    if (!tr_asset_generated_v1_rendering_allowed(assets)) {
-        return 0;
-    }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
     theron_vp_render_dungeon(viewport, world);
@@ -5678,140 +5164,6 @@ static void theron_v1_boot_startup_launch_build_host_receipt(
     }
 }
 
-int theron_v1_boot_startup_launch_apply_irq2_preflight_receipt(
-    Theron_V1_BootStartupLaunch *launch,
-    const char *redacted_receipt) {
-    Theron_V1Irq2PreflightLauncherReceipt receipt;
-
-    if (!launch || !theron_v1_irq2_preflight_launcher_receipt_from_redacted_receipt(
-            redacted_receipt, &receipt) || !receipt.runtime_blocked) {
-        return 0;
-    }
-    launch->irq2_preflight_receipt = receipt;
-    /* Preserve the normal profile/media state for diagnosis, but do not let
-     * this capture-only boundary detach a runtime. */
-    theron_v1_boot_startup_launch_host_receipt_init(&launch->launch_host_receipt);
-    launch->launch_host_receipt.input_result = THERON_STARTUP_INPUT_RESULT_IGNORED;
-    launch->launch_host_receipt.status_scope = "IRQ2 PREFLIGHT";
-    launch->launch_host_receipt.status =
-        theron_v1_irq2_preflight_status_name(receipt.status);
-    launch->launch_host_receipt.inspect_scope = "IRQ2 PREFLIGHT";
-    snprintf(launch->launch_host_receipt.inspect_detail,
-             sizeof(launch->launch_host_receipt.inspect_detail),
-             "%s",
-             launch->launch_host_receipt.status);
-    launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_STATE_FAILED;
-    return 1;
-}
-
-int theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
-    Theron_V1_BootStartupLaunch *launch,
-    const char *system_card_path,
-    const char *system_card_md5_hex,
-    const char *trace_path,
-    const char *trace_md5_hex) {
-    Theron_V1_BootTrack02RuntimeTraceIntakeReceipt intake;
-    Theron_Track02Variant expected_variant;
-
-    if (!launch || !launch->profile || !launch->assets ||
-        !launch->assets->hucard_rom || !launch->profile->graphics_path[0] ||
-        !launch->profile->graphics_md5[0]) {
-        return 0;
-    }
-    memset(&intake, 0, sizeof(intake));
-    launch->profile->track02_runtime_trace_handoff_ready = 0;
-    memset(launch->profile->track02_runtime_system_card_md5, 0,
-           sizeof(launch->profile->track02_runtime_system_card_md5));
-    memset(launch->profile->track02_runtime_trace_md5, 0,
-           sizeof(launch->profile->track02_runtime_trace_md5));
-    memset(&launch->profile->track02_runtime_trace_handoff,
-           0,
-           sizeof(launch->profile->track02_runtime_trace_handoff));
-    if (!theron_v1_boot_track02_runtime_trace_intake_from_files(
-            launch->profile->graphics_path,
-            launch->profile->graphics_md5,
-            system_card_path,
-            system_card_md5_hex,
-            trace_path,
-            trace_md5_hex,
-            &intake)) {
-        return 0;
-    }
-    expected_variant = theron_v1_track02_variant_for_md5(
-        launch->profile->graphics_md5);
-    if (!intake.valid || !intake.trace_file_hash_verified ||
-        !intake.system_card_file_hash_verified ||
-        !intake.trace_file_consumed ||
-        intake.runtime_handoff.variant != expected_variant) {
-        return 0;
-    }
-    launch->profile->track02_runtime_trace_handoff = intake.runtime_handoff;
-    snprintf(launch->profile->track02_runtime_system_card_md5,
-             sizeof(launch->profile->track02_runtime_system_card_md5), "%s",
-             intake.system_card_md5);
-    snprintf(launch->profile->track02_runtime_trace_md5,
-             sizeof(launch->profile->track02_runtime_trace_md5), "%s",
-             intake.trace_md5);
-    launch->profile->track02_runtime_trace_handoff_ready = 1;
-    return theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
-        launch->profile);
-}
-
-int theron_v1_boot_runtime_capture_manifest_from_file(
-    const Theron_V1_BootProfile *profile,
-    const char *manifest_path,
-    Theron_V1CaptureManifest *out_manifest) {
-    unsigned char *text;
-    size_t text_size = 0u;
-    Theron_V1CaptureManifest parsed;
-    char observed_track02_md5[33];
-    int accepted = 0;
-
-    if (out_manifest) memset(out_manifest, 0, sizeof(*out_manifest));
-    if (!profile || !manifest_path || !out_manifest ||
-        !profile->assets_verified || !profile->graphics_path[0] ||
-        !profile->graphics_md5[0]) {
-        return 0;
-    }
-    /* A capture manifest is not allowed to revive a profile whose Track 02
-     * bytes changed after boot discovery. This is provenance only: no
-     * Track 02 record, bitmap, palette, or dungeon semantics are inferred. */
-    if (!m12_file_md5_hex(profile->graphics_path, observed_track02_md5) ||
-        strcmp(observed_track02_md5, profile->graphics_md5) != 0) {
-        return 0;
-    }
-    text = theron_v1_boot_read_evidence_file(
-        manifest_path, THERON_V1_RUNTIME_CAPTURE_MANIFEST_MAX_BYTES,
-        &text_size);
-    if (!text || text_size == 0u ||
-        !theron_v1_capture_manifest_parse((const char *)text, &parsed) ||
-        strcmp(parsed.track02_path, profile->graphics_path) != 0 ||
-        strcmp(parsed.track02_md5, profile->graphics_md5) != 0) {
-        goto done;
-    }
-    *out_manifest = parsed;
-    accepted = 1;
-
-done:
-    free(text);
-    return accepted;
-}
-
-int theron_v1_boot_startup_launch_apply_track02_runtime_capture_manifest_from_file(
-    Theron_V1_BootStartupLaunch *launch,
-    const char *manifest_path) {
-    Theron_V1CaptureManifest manifest;
-
-    if (!launch || !launch->profile ||
-        !theron_v1_boot_runtime_capture_manifest_from_file(
-            launch->profile, manifest_path, &manifest)) {
-        return 0;
-    }
-    return theron_v1_boot_startup_launch_apply_track02_runtime_trace_from_files(
-        launch, manifest.system_card_path, manifest.system_card_md5,
-        manifest.trace_path, manifest.trace_md5);
-}
-
 void theron_v1_boot_startup_launch_cleanup(
     Theron_V1_BootStartupLaunch *launch) {
     if (!launch) {
@@ -5961,13 +5313,6 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
         out_launch->profile->graphics_md5,
         &out_launch->startup_media_state_receipt);
-    /* CUE Track 01 provenance is an audio-only handoff.  Do not couple it
-     * to the Track 02 bitmap receipt: an unbound graphics route must not
-     * suppress original narration, and no unavailable path gets a fallback. */
-    theron_v1_track01_cdda_handoff_from_verified_media(
-        verified_path && verified_path[0] ? verified_path : out_launch->profile->graphics_path,
-        out_launch->profile->graphics_md5,
-        &out_launch->track01_cdda_handoff);
     theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;
 }
@@ -5980,8 +5325,7 @@ int theron_v1_boot_startup_launch_detach_runtime(
         return 0;
     }
     memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!launch || launch->irq2_preflight_receipt.runtime_blocked ||
-        !launch->profile || !launch->world ||
+    if (!launch || !launch->profile || !launch->world ||
         !launch->viewport || !launch->assets) {
         return 0;
     }
@@ -5994,7 +5338,6 @@ int theron_v1_boot_startup_launch_detach_runtime(
     out_receipt->save_resume_state_receipt = launch->save_resume_state_receipt;
     out_receipt->startup_media_state_receipt =
         launch->startup_media_state_receipt;
-    out_receipt->track01_cdda_handoff = launch->track01_cdda_handoff;
     out_receipt->launch_host_receipt = launch->launch_host_receipt;
     snprintf(out_receipt->boot_asset_md5,
              sizeof(out_receipt->boot_asset_md5),

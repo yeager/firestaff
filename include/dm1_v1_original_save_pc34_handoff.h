@@ -39,43 +39,6 @@ typedef struct {
     int aspect[4];
 } DM1OriginalSavePC34ActiveGroupRecord;
 
-/* ReDMCSB DEFS.H EVENT.C.Projectile is a packed 16-bit motion record. This
- * plan is the narrow source-bound bridge for a saved C48/C49 event; callers
- * must still validate the target map before publishing a runtime projectile. */
-typedef struct {
-    int valid;
-    int source_event_type;
-    int source_event_index;
-    int projectile_index;
-    int projectile_category;
-    int projectile_subtype;
-    int map_index;
-    int map_x;
-    int map_y;
-    int cell;
-    int direction;
-    int step_energy;
-    int first_move_grace;
-    int kinetic_energy;
-    int attack;
-    unsigned short associated_thing;
-} DM1OriginalSavePC34ProjectileEventPlan;
-
-/* ReDMCSB TIMELINE.C F0255 owns all of C13's union fields: B.Location,
- * C.A.Cell, C.A.Effect, and A.A.Priority. This plan preserves that exact
- * source surface for a later atomic bones/explosion/rebirth runtime commit. */
-typedef struct {
-    int valid;
-    int source_event_index;
-    int champion_index;
-    int map_index;
-    int map_x;
-    int map_y;
-    int cell;
-    int step;
-    uint32_t fire_at_tick;
-} DM1OriginalSavePC34ViAltarRebirthEventPlan;
-
 typedef struct {
     DM1OriginalSaveClassifyResult classify;
     int importer_result;
@@ -110,42 +73,13 @@ typedef struct {
     int decoded_event_count;
     int decoded_timeline_index_count;
     int event_decode_truncated_count;
-    /* C4 TIMELINE is a one-index-per-live-EVENT heap in the F0238/F0433
-     * path. Retain the first duplicate relation so rejected external saves
-     * have stable source provenance without publishing a candidate world. */
-    int timeline_duplicate_first_slot;
-    int timeline_duplicate_slot;
-    int timeline_duplicate_event_index;
-    int timeline_invalid_slot;
-    int timeline_invalid_event_index;
-    int timeline_invalid_event_is_none;
-    /* Every non-NONE C3 EVENT emitted by F0433 must appear once in the C4
-     * heap written by F0238. Retain the first missing row for rollback
-     * provenance before runtime materialization can drop it. */
-    int timeline_orphan_active_event_index;
-    int timeline_orphan_active_event_type;
-    int first_unused_event_index_points_to_active;
-    int first_unused_event_index_event_type;
-    uint32_t external_portrait_byte_count;
-    uint32_t external_portrait_byte_offset;
-    uint32_t external_portrait_fingerprint;
-    uint32_t pc34_party_part_byte_offset;
-    uint16_t pc34_party_part_key;
-    int external_portrait_payload_count;
-    int external_portrait_imported_count;
     int dungeon_tail_present;
     uint32_t dungeon_tail_byte_count;
-    uint32_t dungeon_tail_fingerprint;
     uint16_t dungeon_tail_expected_checksum;
     uint16_t dungeon_tail_actual_checksum;
     int dungeon_tail_checksum_ok;
     int dungeon_tail_map_count;
     int dungeon_tail_column_count;
-    /* ReDMCSB DUNGEON.C F0160 indexes SquareFirstThings through the saved
-     * per-column cumulative table.  F0435 must validate that table against
-     * the raw map before a host-side reconstructed lookup can consume it. */
-    int dungeon_tail_column_table_valid;
-    uint32_t dungeon_tail_column_terminal_sft_count;
     int dungeon_tail_square_first_thing_count;
     int dungeon_tail_text_data_word_count;
     uint32_t dungeon_tail_thing_data_byte_count;
@@ -197,343 +131,21 @@ typedef struct {
     int source_active_group_count;
     int exported_active_group_count;
     int reloaded_active_group_count;
-    /* F0433/F0435 source-owned DM_SAVE_HEADER identity and the five raw
-     * uint16 length prefixes. Noise/Keys/Checksums are intentionally not
-     * compared: F0433 regenerates them, while AdditionalData is Firestaff's
-     * manifest slot rather than an imported external-corpus mirror. */
-    int header_part_shape_receipt_available;
-    uint16_t source_header_format_id;
-    uint16_t exported_header_format_id;
-    uint16_t source_header_platform;
-    uint16_t exported_header_platform;
-    uint16_t source_header_dungeon_id;
-    uint16_t exported_header_dungeon_id;
-    uint32_t source_header_game_id;
-    uint32_t exported_header_game_id;
-    int header_identity_preservation_ok;
-    uint32_t source_part_byte_counts[5];
-    uint32_t exported_part_byte_counts[5];
-    int part_byte_count_preservation_ok;
-    /* ReDMCSB DEFS.H EVENT is the ten-byte on-disk record that F0433
-     * writes and F0435 reads.  C13 owns every B/C union byte, unlike
-     * several timer types with source-uninitialised union arms. */
-    int c13_byte_receipt_available;
-    int source_c13_event_count;
-    int exported_c13_event_count;
-    int c13_byte_preserved_count;
-    int c13_byte_mismatch_count;
-    int c13_byte_preservation_ok;
-    /* Canonical ten-byte C13 EVENT rows, sorted only for this receipt: F0651
-     * can reorder EVENT storage, but must not change any F0433 payload byte. */
-    uint32_t source_c13_event_byte_count;
-    uint32_t source_c13_event_fingerprint;
-    uint32_t exported_c13_event_byte_count;
-    uint32_t exported_c13_event_fingerprint;
-    int c13_timeline_byte_receipt_available;
-    int source_c13_timeline_reference_count;
-    int exported_c13_timeline_reference_count;
-    int c13_timeline_byte_preserved_count;
-    int c13_timeline_byte_mismatch_count;
-    int c13_timeline_byte_preservation_ok;
-    /* Raw little-endian C4 index bytes, retained in original timeline order. */
-    uint32_t source_c13_timeline_reference_byte_count;
-    uint32_t source_c13_timeline_reference_fingerprint;
-    uint32_t exported_c13_timeline_reference_byte_count;
-    uint32_t exported_c13_timeline_reference_fingerprint;
-    /* PROJEXPL.C F0213 owns C25's B.Location and C.Slot union bytes. Keep
-     * their four-byte record apart from generic EVENT fields. */
-    int c25_union_slot_byte_receipt_available;
-    int source_c25_event_count;
-    int exported_c25_event_count;
-    int c25_union_slot_byte_preserved_count;
-    int c25_union_slot_byte_mismatch_count;
-    int c25_union_slot_byte_preservation_ok;
-    uint32_t source_c25_union_slot_byte_count;
-    uint32_t source_c25_union_slot_fingerprint;
-    uint32_t exported_c25_union_slot_byte_count;
-    uint32_t exported_c25_union_slot_fingerprint;
-    /* PROJEXPL.C F0224 owns C24's B.Location and C.Slot union bytes for a
-     * linked fluxcage; retain no host explosion-index interpretation. */
-    int c24_union_slot_byte_receipt_available;
-    int source_c24_event_count;
-    int exported_c24_event_count;
-    int c24_union_slot_byte_preserved_count;
-    int c24_union_slot_byte_mismatch_count;
-    int c24_union_slot_byte_preservation_ok;
-    uint32_t source_c24_union_slot_byte_count;
-    uint32_t source_c24_union_slot_fingerprint;
-    uint32_t exported_c24_union_slot_byte_count;
-    uint32_t exported_c24_union_slot_fingerprint;
-    /* LOADSAVE.C F0433/F0435 owns the complete raw C3 EVENT array. This
-     * atomic receipt covers every C13/C24/C25 record at its original slot. */
-    int c3_event_layout_receipt_available;
-    uint32_t source_c3_event_record_count;
-    uint32_t source_c3_event_byte_count;
-    uint32_t source_c3_event_fingerprint;
-    uint32_t exported_c3_event_record_count;
-    uint32_t exported_c3_event_byte_count;
-    uint32_t exported_c3_event_fingerprint;
-    int c3_event_byte_preservation_ok;
-    int c4_timeline_layout_receipt_available;
-    uint32_t source_c4_timeline_index_count;
-    uint32_t source_c4_timeline_byte_count;
-    uint32_t source_c4_timeline_fingerprint;
-    uint32_t exported_c4_timeline_index_count;
-    uint32_t exported_c4_timeline_byte_count;
-    uint32_t exported_c4_timeline_fingerprint;
-    int c4_timeline_byte_preservation_ok;
-    /* CLIKVIEW.C F0374 writes C13.Priority from the dropped bones'
-     * ChargeCount, which names an active M516_CHAMPIONS slot. Keep that
-     * C13 -> C2 relation as an independent raw-record receipt. */
-    int c13_champion_record_byte_receipt_available;
-    int source_c13_champion_record_reference_count;
-    int c13_champion_record_byte_preserved_count;
-    int c13_champion_record_byte_mismatch_count;
-    int c13_champion_record_byte_preservation_ok;
-    int party_info_byte_receipt_available;
-    uint32_t source_party_info_byte_count;
-    uint32_t source_party_info_fingerprint;
-    uint32_t exported_party_info_byte_count;
-    uint32_t exported_party_info_fingerprint;
-    int party_info_byte_preservation_ok;
-    int external_portrait_byte_receipt_available;
-    uint32_t source_external_portrait_byte_count;
-    uint32_t source_external_portrait_fingerprint;
-    uint32_t exported_external_portrait_byte_count;
-    uint32_t exported_external_portrait_fingerprint;
-    int external_portrait_byte_preservation_ok;
-    int inactive_champion_record_byte_receipt_available;
-    int inactive_champion_record_count;
-    int inactive_champion_record_byte_preserved_count;
-    int inactive_champion_record_byte_preservation_ok;
-    int m516_champion_record_receipt_available;
-    uint32_t source_m516_champion_record_count;
-    uint32_t source_m516_champion_record_byte_count;
-    uint32_t source_m516_champion_record_fingerprint;
-    uint32_t exported_m516_champion_record_count;
-    uint32_t exported_m516_champion_record_byte_count;
-    uint32_t exported_m516_champion_record_fingerprint;
-    int m516_champion_record_byte_preservation_ok;
-    /* ReDMCSB F0433 appends the optional saved dungeon after portraits.
-     * The corpus receipt compares that raw original tail only when the
-     * external source actually carries one; an absent tail is also explicit. */
-    int dungeon_tail_byte_receipt_available;
-    uint32_t source_dungeon_tail_byte_count;
-    uint32_t source_dungeon_tail_fingerprint;
-    uint32_t exported_dungeon_tail_byte_count;
-    uint32_t exported_dungeon_tail_fingerprint;
-    int dungeon_tail_byte_preservation_ok;
     int core_state_matches;
 } DM1OriginalSavePC34RoundtripReport;
-
-#define DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP \
-    DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP
-
-/* One classifier-qualified corpus row. Its source and transient-export
- * hashes bind a round trip to an external PC34 file without retaining or
- * promoting unowned save bytes. */
-typedef struct {
-    int classified_loader_envelope;
-    int external_original;
-    int firestaff_manifest;
-    int roundtrip_attempted;
-    int roundtrip_result;
-    int core_state_matches;
-    /* Set only after the complete F0435 -> F0433 -> F0435 transaction
-     * succeeds. Failed rows can retain raw diagnostic evidence below, but
-     * must never present it as a committed C13/C24/C25 corpus receipt. */
-    int roundtrip_receipts_committed;
-    /* A corpus-only staging receipt for the original source bytes. It records
-     * which F0435 validation boundary rejected a candidate without exposing a
-     * partially imported runtime world or promoting optional-event evidence. */
-    int source_handoff_result;
-    int source_importer_result;
-    int source_part_checksum_ok_count;
-    /* A second, no-fallback F0435 receipt stages the exact source snapshot
-     * through the candidate runtime world. It commits only when that source
-     * carries and materializes its own dungeon; tail-less saves are never
-     * paired with a host-created or borrowed start dungeon for corpus proof. */
-    int source_runtime_stage_attempted;
-    int source_runtime_stage_result;
-    int source_runtime_stage_committed;
-    int source_runtime_stage_owns_dungeon;
-    int source_runtime_stage_event_count;
-    int source_runtime_stage_c13_event_count;
-    int source_runtime_stage_timeline_count;
-    uint32_t game_id;
-    uint32_t source_byte_count;
-    uint32_t source_hash;
-    uint32_t source_f7057_envelope_end_offset;
-    uint32_t source_f7057_trailing_byte_count;
-    uint32_t exported_byte_count;
-    uint32_t exported_hash;
-    int source_c13_event_count;
-    int exported_c13_event_count;
-    int c13_byte_preserved_count;
-    int c13_byte_mismatch_count;
-    int c13_byte_preservation_ok;
-    uint32_t source_c13_event_byte_count;
-    uint32_t source_c13_event_fingerprint;
-    uint32_t exported_c13_event_byte_count;
-    uint32_t exported_c13_event_fingerprint;
-    int header_part_shape_receipt_available;
-    uint16_t source_header_format_id;
-    uint16_t exported_header_format_id;
-    uint16_t source_header_platform;
-    uint16_t exported_header_platform;
-    uint16_t source_header_dungeon_id;
-    uint16_t exported_header_dungeon_id;
-    uint32_t source_header_game_id;
-    uint32_t exported_header_game_id;
-    int header_identity_preservation_ok;
-    uint32_t source_part_byte_counts[5];
-    uint32_t exported_part_byte_counts[5];
-    int part_byte_count_preservation_ok;
-    int source_c13_timeline_reference_count;
-    int exported_c13_timeline_reference_count;
-    int c13_timeline_byte_preserved_count;
-    int c13_timeline_byte_mismatch_count;
-    int c13_timeline_byte_preservation_ok;
-    uint32_t source_c13_timeline_reference_byte_count;
-    uint32_t source_c13_timeline_reference_fingerprint;
-    uint32_t exported_c13_timeline_reference_byte_count;
-    uint32_t exported_c13_timeline_reference_fingerprint;
-    int c25_union_slot_byte_receipt_available;
-    int source_c25_event_count;
-    int exported_c25_event_count;
-    int c25_union_slot_byte_preserved_count;
-    int c25_union_slot_byte_mismatch_count;
-    int c25_union_slot_byte_preservation_ok;
-    uint32_t source_c25_union_slot_byte_count;
-    uint32_t source_c25_union_slot_fingerprint;
-    uint32_t exported_c25_union_slot_byte_count;
-    uint32_t exported_c25_union_slot_fingerprint;
-    int c24_union_slot_byte_receipt_available;
-    int source_c24_event_count;
-    int exported_c24_event_count;
-    int c24_union_slot_byte_preserved_count;
-    int c24_union_slot_byte_mismatch_count;
-    int c24_union_slot_byte_preservation_ok;
-    uint32_t source_c24_union_slot_byte_count;
-    uint32_t source_c24_union_slot_fingerprint;
-    uint32_t exported_c24_union_slot_byte_count;
-    uint32_t exported_c24_union_slot_fingerprint;
-    int c3_event_layout_receipt_available;
-    uint32_t source_c3_event_record_count;
-    uint32_t source_c3_event_byte_count;
-    uint32_t source_c3_event_fingerprint;
-    uint32_t exported_c3_event_record_count;
-    uint32_t exported_c3_event_byte_count;
-    uint32_t exported_c3_event_fingerprint;
-    int c3_event_byte_preservation_ok;
-    int c4_timeline_layout_receipt_available;
-    uint32_t source_c4_timeline_index_count;
-    uint32_t source_c4_timeline_byte_count;
-    uint32_t source_c4_timeline_fingerprint;
-    uint32_t exported_c4_timeline_index_count;
-    uint32_t exported_c4_timeline_byte_count;
-    uint32_t exported_c4_timeline_fingerprint;
-    int c4_timeline_byte_preservation_ok;
-    int source_c13_champion_record_reference_count;
-    int c13_champion_record_byte_receipt_available;
-    int c13_champion_record_byte_preserved_count;
-    int c13_champion_record_byte_mismatch_count;
-    int c13_champion_record_byte_preservation_ok;
-    uint32_t source_party_info_byte_count;
-    uint32_t source_party_info_fingerprint;
-    uint32_t exported_party_info_byte_count;
-    uint32_t exported_party_info_fingerprint;
-    int party_info_byte_preservation_ok;
-    int external_portrait_byte_receipt_available;
-    uint32_t source_external_portrait_byte_count;
-    uint32_t source_external_portrait_fingerprint;
-    uint32_t exported_external_portrait_byte_count;
-    uint32_t exported_external_portrait_fingerprint;
-    int external_portrait_byte_preservation_ok;
-    int inactive_champion_record_byte_receipt_available;
-    int inactive_champion_record_count;
-    int inactive_champion_record_byte_preserved_count;
-    int inactive_champion_record_byte_preservation_ok;
-    int m516_champion_record_receipt_available;
-    uint32_t source_m516_champion_record_count;
-    uint32_t source_m516_champion_record_byte_count;
-    uint32_t source_m516_champion_record_fingerprint;
-    uint32_t exported_m516_champion_record_count;
-    uint32_t exported_m516_champion_record_byte_count;
-    uint32_t exported_m516_champion_record_fingerprint;
-    int m516_champion_record_byte_preservation_ok;
-    int dungeon_tail_byte_receipt_available;
-    uint32_t source_dungeon_tail_byte_count;
-    uint32_t source_dungeon_tail_fingerprint;
-    uint32_t exported_dungeon_tail_byte_count;
-    uint32_t exported_dungeon_tail_fingerprint;
-    int dungeon_tail_byte_preservation_ok;
-    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
-} DM1OriginalSavePC34CorpusReceipt;
-
-/* Discovery is deliberately separate from import receipts. It records every
- * regular file inspected below the explicitly supplied PC34 corpus root,
- * including header-only and rejected neighbours, without searching game-data
- * roots or handing any non-PC34 file to F0435. */
-typedef struct {
-    uint32_t source_byte_count;
-    uint32_t header_prefix_fingerprint;
-    int shape;
-    int readiness;
-    uint16_t save_format_id;
-    uint16_t save_platform;
-    uint16_t save_dungeon_id;
-    uint32_t save_game_id;
-    int pc34_version_platform_identity_ok;
-    int pc34_importer_candidate;
-    int pc34_loader_part_envelope_candidate;
-    uint32_t f7057_envelope_end_offset;
-    uint32_t f7057_trailing_byte_count;
-    int external_original;
-    int roundtrip_eligible;
-    int result;
-    char reason[96];
-    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
-} DM1OriginalSavePC34CorpusDiscoveryReceipt;
 
 /* Corpus proof is deliberately separate from the header-only classifier.
  * It never writes an export beside a user save: each eligible file is
  * imported, exported into transient memory, and reloaded from that buffer. */
 typedef struct {
     int scan_succeeded;
-    int discovery_root_error;
     int scanned_file_count;
-    int discovery_file_count;
-    int discovery_pc34_header_count;
-    int discovery_pc34_version_platform_identity_count;
-    int discovery_pc34_version_platform_rejected_count;
-    int discovery_loader_envelope_count;
-    int discovery_rejected_count;
-    int discovery_truncated_count;
     int pc34_candidate_count;
     int roundtrip_attempted_count;
     int roundtrip_succeeded_count;
     int core_state_match_count;
     int roundtrip_failed_count;
-    int runtime_stage_attempted_count;
-    int runtime_stage_succeeded_count;
-    int runtime_stage_unavailable_count;
-    int runtime_stage_failed_count;
-    /* Files below the corpus root that were deliberately not eligible for
-     * F0435 import, including truncated/non-PC34 payloads. */
-    int rejected_count;
-    /* Stable FNV-1a fingerprint of successful transient F0435->F0433
-     * exports. Zero means no original save completed the round trip. */
-    uint32_t roundtrip_hash;
-    int firestaff_manifest_rejected_count;
-    int nonoriginal_envelope_rejected_count;
     int first_failure_result;
-    int discovery_receipt_count;
-    DM1OriginalSavePC34CorpusDiscoveryReceipt
-        discovery_receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];
-    int receipt_count;
-    DM1OriginalSavePC34CorpusReceipt
-        receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];
     char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
     char first_roundtrip_path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusRoundtripReport;
@@ -577,27 +189,9 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
     DM1OriginalSavePC34HandoffReport *report,
     struct GameWorld_Compat *world);
 
-/* ReDMCSB LOADSAVE.C F0435 reads EVENTS/TIMELINE before F0651 exposes the
- * resumed timeline. This validates every source index and commits a fully
- * staged queue in one assignment; malformed reports leave `queue` unchanged.
- */
 int dm1_v1_original_save_pc34_handoff_apply_event_queue(
     const DM1OriginalSavePC34HandoffReport *report,
     struct DM1_EventQueue_V1 *queue);
-
-int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
-    const struct DM1_Event_V1 *event,
-    int source_event_index,
-    const struct DungeonThings_Compat *things,
-    DM1OriginalSavePC34ProjectileEventPlan *out_plan);
-
-/* ReDMCSB CLIKVIEW.C F0374 writes C13 with Effect=2, while TIMELINE.C F0255
- * consumes steps 2, 1, and 0. Reject all other values and invalid champion or
- * cell ownership rather than treating a saved C13 as a generic square event. */
-int dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
-    const struct DM1_Event_V1 *src,
-    int source_event_index,
-    DM1OriginalSavePC34ViAltarRebirthEventPlan *out_plan);
 
 int dm1_v1_original_save_pc34_handoff_load_world_from_file(
     const char *path,
@@ -690,13 +284,11 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
 
-/* Verify every external, classifier-qualified PC34 save below `root` through
- * the F0435 -> F0433 -> F0435 transient-memory round trip. Firestaff's own
- * versioned PC34 manifest is rejected as corpus provenance, and a CSBWin
- * GAMEBLOCK1 cannot qualify without ReDMCSB's five length/key/checksum save
- * parts. Header-only, rejected, and non-PC34 files are never handed to the
- * importer. A successful scan returns OK even when a candidate fails, so the
- * caller can inspect the complete corpus receipt. */
+/* Verify every classifier-qualified PC34 save below `root` through the
+ * F0435 -> F0433 -> F0435 transient-memory round trip. Header-only,
+ * rejected, and non-PC34 files are reported by the classifier but are never
+ * handed to the importer. A successful scan returns OK even when a candidate
+ * fails, so the caller can inspect the complete corpus receipt. */
 int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);

@@ -48,49 +48,6 @@ int main(void)
               !receipt.valid,
           "stale title source step cannot authorize a title receipt");
 
-    facts.title_frame = csb_v1_startup_title_presents_ticks_pc34();
-    facts.title_source_step =
-        (int)csb_v1_startup_title_source_step_for_frame_pc34(
-            facts.title_frame);
-    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
-              &facts, &receipt) &&
-              receipt.render_plan.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              receipt.render_plan.title_dest_w == 16 &&
-              receipt.render_plan.title_dest_h == 4,
-          "CHAOS begins with ReDMCSB's 16x4 first reverse-zoom bitmap");
-
-    facts.title_frame = csb_v1_startup_title_presents_ticks_pc34() +
-        csb_v1_startup_title_chaos_zoom_ticks_pc34() - 1;
-    facts.title_source_step =
-        (int)csb_v1_startup_title_source_step_for_frame_pc34(
-            facts.title_frame);
-    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
-              &facts, &receipt) && receipt.render_plan.title_dest_w == 320 &&
-              receipt.render_plan.title_dest_h == 80,
-          "CHAOS ends on ReDMCSB's full 320x80 bitmap");
-
-    ++facts.title_frame;
-    facts.title_source_step =
-        (int)csb_v1_startup_title_source_step_for_frame_pc34(
-            facts.title_frame);
-    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
-              &facts, &receipt) && receipt.render_plan.title_dest_w == 320 &&
-              receipt.render_plan.title_dest_h == 80,
-          "the two-vblank CHAOS hold preserves the full bitmap");
-
-    facts.title_frame = csb_v1_startup_title_total_ticks_pc34() - 1;
-    facts.title_source_step =
-        (int)csb_v1_startup_title_source_step_for_frame_pc34(
-            facts.title_frame);
-    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
-              &facts, &receipt) &&
-              receipt.render_plan.title_stage ==
-                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-              receipt.render_plan.title_dest_w == 320 &&
-              receipt.render_plan.title_dest_h == 57,
-          "STRIKES BACK follows the held full CHAOS bitmap");
-
     make_entrance_facts(&facts);
     facts.credits_active = 1;
     facts.credits_remaining_ticks = 1;

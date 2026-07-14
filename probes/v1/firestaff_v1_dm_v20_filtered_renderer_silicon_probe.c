@@ -129,8 +129,6 @@ int main(void) {
     ProbeStats stats;
     uint8_t framebuffer[M11_FB_BYTES];
     uint8_t source_before[M11_FB_BYTES];
-    uint8_t interpolation_framebuffer[M11_FB_BYTES];
-    uint8_t interpolation_before[M11_FB_BYTES];
     unsigned char palette_lut[DM1_V2_PALETTE_LEVELS][16][3];
     RgbSample baseline_even;
     RgbSample baseline_odd;
@@ -138,11 +136,6 @@ int main(void) {
     RgbSample filtered_odd;
     RgbSample filtered_even_repeat;
     RgbSample filtered_odd_repeat;
-    RgbSample interpolation_baseline;
-    RgbSample interpolation_filtered;
-    RgbSample interpolation_odd;
-    RgbSample inactive_even;
-    RgbSample inactive_odd;
     int rc;
     int crt_enabled = -1;
     int crt_strength = -1;
@@ -163,11 +156,6 @@ int main(void) {
     memset(&filtered_odd, 0, sizeof(filtered_odd));
     memset(&filtered_even_repeat, 0, sizeof(filtered_even_repeat));
     memset(&filtered_odd_repeat, 0, sizeof(filtered_odd_repeat));
-    memset(&interpolation_baseline, 0, sizeof(interpolation_baseline));
-    memset(&interpolation_filtered, 0, sizeof(interpolation_filtered));
-    memset(&interpolation_odd, 0, sizeof(interpolation_odd));
-    memset(&inactive_even, 0, sizeof(inactive_even));
-    memset(&inactive_odd, 0, sizeof(inactive_odd));
 
     if (!is_apple_silicon()) {
         printf("skip: not Apple Silicon (host is x86_64 / non-macOS); probe target is __APPLE__ + __arm64__\n");
@@ -226,39 +214,6 @@ int main(void) {
                      note);
     }
 
-    /* Palette interpolation is independently selectable from dither cleanup.
-     * Use a non-canonical light level at the sampled source pixel so the
-     * presentation result must change while source memory remains untouched. */
-    memcpy(interpolation_framebuffer, framebuffer, sizeof(interpolation_framebuffer));
-    interpolation_framebuffer[100 * M11_FB_WIDTH + 160] = M11_FB_ENCODE(9, 1);
-    memcpy(interpolation_before, interpolation_framebuffer,
-           sizeof(interpolation_before));
-    rc = M11_Render_PresentIndexed(interpolation_framebuffer,
-                                   M11_FB_WIDTH, M11_FB_HEIGHT);
-    if (rc != M11_RENDER_OK || !read_pixel_pair(&interpolation_baseline,
-                                                 &interpolation_odd)) {
-        fprintf(stderr, "FAIL interpolation baseline readback: rc=%d\n", rc);
-        M11_Render_Shutdown();
-        SDL_Quit();
-        return 1;
-    }
-    (void)M11_Render_SetV2Filters(0, 0, 0, 100, 0, 0,
-                                  1, 100, 0, 0, 0);
-    rc = M11_Render_PresentIndexed(interpolation_framebuffer,
-                                   M11_FB_WIDTH, M11_FB_HEIGHT);
-    if (rc != M11_RENDER_OK || !read_pixel_pair(&interpolation_filtered,
-                                                 &interpolation_odd)) {
-        fprintf(stderr, "FAIL interpolation filtered readback: rc=%d\n", rc);
-        M11_Render_Shutdown();
-        SDL_Quit();
-        return 1;
-    }
-    probe_record(&stats, "AS_V20_INTERPOLATION_WITHOUT_DITHER",
-                 !rgb_equal(interpolation_baseline, interpolation_filtered) &&
-                 memcmp(interpolation_before, interpolation_framebuffer,
-                        sizeof(interpolation_before)) == 0,
-                 "palette interpolation changes only the presented frame when dither is off");
-
     if (dm1_v2_filter_palette_build_lut(100, 20, 0, palette_lut) != 0) {
         fprintf(stderr, "FAIL dm1_v2_filter_palette_build_lut\n");
         M11_Render_Shutdown();
@@ -286,20 +241,6 @@ int main(void) {
                  dither_enabled == 0 && sharpen_enabled == 0 &&
                  sharpen_strength == 0,
                  "renderer accepted V2.0 CRT + palette correction config");
-
-    M11_Render_SetV2PresentationActive(0);
-    rc = M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-    if (rc != M11_RENDER_OK || !read_pixel_pair(&inactive_even, &inactive_odd)) {
-        fprintf(stderr, "FAIL inactive V2.0 gate readback: rc=%d\n", rc);
-        M11_Render_Shutdown();
-        SDL_Quit();
-        return 1;
-    }
-    probe_record(&stats, "AS_V20_ACTIVE_GATE",
-                 rgb_equal(inactive_even, baseline_even) &&
-                 rgb_equal(inactive_odd, baseline_odd),
-                 "persisted V2.0 filters are inert outside the V2.0 presentation route");
-    M11_Render_SetV2PresentationActive(1);
 
     rc = M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     if (rc != M11_RENDER_OK || !read_pixel_pair(&filtered_even, &filtered_odd)) {

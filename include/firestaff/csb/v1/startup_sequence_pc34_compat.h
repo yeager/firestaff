@@ -353,9 +353,7 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int opening_composite_right_box_w;
     int opening_composite_right_box_h;
     int opening_composite_left_source_x;
-    int opening_composite_left_source_y;
     int opening_composite_right_source_x;
-    int opening_composite_right_source_y;
     int fallback_title_x;
     int fallback_title_y;
     int fallback_title_style;
@@ -421,9 +419,7 @@ typedef struct CSB_V1_StartupOpeningComposite_PC34 {
     int right_box_w;
     int right_box_h;
     int left_source_x;
-    int left_source_y;
     int right_source_x;
-    int right_source_y;
 } CSB_V1_StartupOpeningComposite_PC34;
 
 typedef int (*CSB_V1_StartupOpeningCompositeExecutor_PC34)(
@@ -452,12 +448,6 @@ typedef struct CSB_V1_StartupRenderExecutor_PC34 {
                                const CSB_V1_StartupRenderPlan_PC34 *plan,
                                const struct CSB_V1_UtilRenderPlan *utility_plan);
 } CSB_V1_StartupRenderExecutor_PC34;
-
-/* ReDMCSB TITLE.C F0437 / ENTRANCE.C F0806 geometry, separated from the
- * host raster path so source-plan consumers can be tested without M10. */
-int csb_v1_startup_source_render_plan_from_state_pc34(
-    const CSB_V1_StartupRenderState_PC34 *state,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan);
 
 typedef struct CSB_V1_StartupCommandState_PC34 {
     int title_active;

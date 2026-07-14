@@ -22,8 +22,6 @@
 
 #include <stdint.h>
 
-#include "dm2_v1_asset_loader.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -84,29 +82,6 @@ typedef enum {
     DM2_DOOR_DESTROYED_YES       = 1,  /* Door was/will be destroyed */
     DM2_DOOR_DESTROYED_IMMUNE    = 2,  /* Door is immune to this attack type */
 } DM2_DoorDestroyResult;
-
-/* skproject SKWIN/SkWinCore.cpp DRAW_DOOR obtains this dtWordValue before
- * it enters QUERY_TEMP_PICST for the selected DOORS dtImage. */
-#define DM2_V1_DOOR_GDAT_COLORKEY_FIELD 0x04u
-
-/* A no-draw ownership receipt for one already-selected door image field.
- * The runtime supplies its source-selected image field; this module never
- * chooses a distance, frame, or substitute door surface. */
-typedef struct {
-    int valid;
-    uint8_t door_gfx_index;
-    uint8_t image_field;
-    uint16_t color_key;
-    DM2_V1_GdatImageMetadata image_metadata;
-    uint8_t local_palette16[16];
-    uint32_t local_palette_hash;
-    uint16_t decoded_width;
-    uint16_t decoded_height;
-    DM2_ImageFormat decoded_format;
-    uint32_t decoded_pixel_count;
-    uint32_t decoded_pixels_hash;
-    uint32_t material_hash;
-} DM2_V1_DoorGdatMaterialReceipt;
 
 /* ── Door Mechanics API ─────────────────────────────────────────────── */
 
@@ -269,14 +244,6 @@ int dm2_door_advance_close(int current_state);
  * Source: ReDMCSB TIMELINE.C:750   (DESTROYED is sticky)
  */
 int dm2_door_apply_toggle_step(int current_state, int direction);
-
-/* Source-only DOORS material gate for DRAW_DOOR. A missing colour key,
- * metadata, local palette, or decodable selected image fails closed. */
-int dm2_v1_door_gdat_material_receipt(
-    const DM2_V1_AssetLoader *loader,
-    uint8_t door_gfx_index,
-    uint8_t image_field,
-    DM2_V1_DoorGdatMaterialReceipt *out_receipt);
 
 /*
  * dm2_door_get_type_from_thing_record — get door type (0-3) from thing record.

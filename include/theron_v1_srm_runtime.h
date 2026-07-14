@@ -17,11 +17,7 @@ typedef enum {
     THERON_V1_SRM_RUNTIME_BAD_INPUT = -1,
     THERON_V1_SRM_RUNTIME_IO_FAILED = -2,
     THERON_V1_SRM_RUNTIME_UNSUPPORTED_BODY = -3,
-    THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED = -4,
-    /* Native Firestaff envelopes must never replace a pre-existing Save
-     * Disk artifact.  In particular, an original SRM stays available for
-     * the opaque corpus/import route until its body layout is source-bound. */
-    THERON_V1_SRM_RUNTIME_DESTINATION_EXISTS = -5
+    THERON_V1_SRM_RUNTIME_MEDIA_UNVERIFIED = -4
 } Theron_V1SrmRuntimeStatus;
 
 typedef struct {
@@ -35,25 +31,20 @@ typedef struct {
     uint8_t champion_count;
     uint32_t party_gold;
     Theron_RuntimeMediaIdentity track02_identity;
-    unsigned int track02_media_route_mask;
-    uint32_t track02_media_checksum;
-    Theron_RuntimeLevelBankSelection track02_level_bank;
 } Theron_V1SrmRuntimeReceipt;
 
-/* Writes one gzip-wrapped Firestaff FSTQPTY1 body through the same bounded
- * import route below.  Publication is atomic and no-replace: an existing
- * Save Disk path, including an original SRM under corpus investigation, is
- * left byte-for-byte untouched. */
+/* Writes one gzip-wrapped FSTQPTY1 .srm body.  It is intended for the
+ * same bounded import route below and never overwrites a destination until
+ * compression and the complete write have succeeded. */
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_export_path(
     const Theron_V1_World *world,
     const char *srm_path,
     Theron_V1SrmRuntimeReceipt *out_receipt);
 
 /* The single Continue runtime route: read/decode a real .srm file, restore
- * party/progression/quest/level bytes, then bind the complete hash-profiled
- * Track 02 startup media receipt from the supplied bytes.  An identity-only
- * or incomplete media receipt is rejected, so Continue cannot commit a
- * restored world that would draw fallback visuals. */
+ * party/progression/quest/level bytes, then derive and bind Track 02 media
+ * identity from the supplied hash-profiled Track 02 bytes.  No world state
+ * is changed until both restore and media identity verification succeed. */
 Theron_V1SrmRuntimeStatus theron_v1_srm_runtime_continue_path(
     Theron_V1_World *world,
     const char *srm_path,

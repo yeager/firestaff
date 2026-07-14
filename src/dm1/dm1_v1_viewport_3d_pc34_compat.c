@@ -12,53 +12,11 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include <string.h>
 #include <stdlib.h>
-
-int dm1_viewport_3d_wall_host_material_receipt_pc34(
-    int map_wall_set,
-    int wallset0_graphic_index,
-    int transparent_color,
-    bool flip_horizontally,
-    int expected_width,
-    int expected_height,
-    DM1_ViewportWallHostMaterialReceiptPc34 *out_receipt)
-{
-    DM1_ViewportWallHostMaterialReceiptPc34 receipt;
-    int graphic_index;
-
-    if (!out_receipt) {
-        return 0;
-    }
-    memset(&receipt, 0, sizeof(receipt));
-    /* ReDMCSB DUNVIEW.C F0096:2225-2464 materializes only C093..C107
-     * before F0100/F0101/F0104/F0105 consume a wall panel. A host-scaled
-     * substitute is not an original PC34 material decision. */
-    if (wallset0_graphic_index < 93 || wallset0_graphic_index > 107 ||
-        expected_width <= 0 || expected_height <= 0 ||
-        (transparent_color != -1 && transparent_color != 10)) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    graphic_index = dm1_v1_graphic_materialized_wallset_index_pc34(
-        map_wall_set, wallset0_graphic_index);
-    if (graphic_index < 0) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    receipt.valid = 1;
-    receipt.graphic_index = graphic_index;
-    receipt.transparent_color = transparent_color;
-    receipt.flip_horizontally = flip_horizontally;
-    receipt.expected_width = expected_width;
-    receipt.expected_height = expected_height;
-    *out_receipt = receipt;
-    return 1;
-}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Transparency color — ReDMCSB DEFS.H C10_COLOR_FLESH
@@ -571,7 +529,7 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
                                             int rel_side)
 {
     /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
-     * D0C = 0, D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
+     * D1C/L/R = 3/4/5, D2C/L/R = 6/7/8, D3C/L/R = 11/12/13.
      * D3L2/D3R2 = 14/15. DUNVIEW.C F0115 uses this square id with
      * G2028_ac_ViewSquareIndexTo for object/projectile source rows. */
     static const signed char k_view_square[3][3] = {
@@ -579,10 +537,6 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
         { 7,  6,  8 },
         {12, 11, 13 }
     };
-    /* F0127 calls F0115 for the party square with M609_VIEW_SQUARE_D0C.
-     * G2028[0] selects the final C2500/C2900 row (11); D0 side squares
-     * use their dedicated routines and do not enter this thing pass. */
-    if (rel_forward == 0 && rel_side == 0) return 0;
     if (rel_forward < 1 || rel_forward > 3) return -1;
     if (rel_side == -2 && rel_forward == 3) return 14;
     if (rel_side == 2 && rel_forward == 3) return 15;
@@ -2321,139 +2275,6 @@ uint16_t dm1_viewport_3d_wall_item_cell_order(const DM1_ViewportWallDrawSpec *sp
         : 0x0000u;
 }
 
-int dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(
-    DM1_ViewSquareIndex square,
-    bool parity_flip,
-    bool wall_like,
-    bool front_alcove,
-    DM1_ViewportD3SideWallHostHandoffPc34 *out_handoff)
-{
-    const DM1_ViewportWallDrawSpec *spec;
-    DM1_ViewportD3SideWallHostHandoffPc34 handoff;
-
-    if (!out_handoff ||
-        (square != DM1_VIEW_SQUARE_D3L2 && square != DM1_VIEW_SQUARE_D3R2 &&
-         square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
-        return 0;
-    }
-    spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
-    if (!spec) {
-        return 0;
-    }
-    memset(&handoff, 0, sizeof(handoff));
-    handoff.handled = true;
-    handoff.draw_wall = wall_like;
-    handoff.falls_through_to_f0115 =
-        !wall_like || (front_alcove && spec->front_alcove_reveals_contents);
-    handoff.selected_wall = dm1_viewport_3d_select_wall_bitmap(
-        spec, parity_flip, &handoff.flip_horizontally);
-    handoff.pc34_zone = spec->pc34_zone;
-    handoff.dst_x = spec->runtime_dst_x;
-    handoff.dst_y = spec->runtime_dst_y;
-    handoff.width = spec->runtime_width;
-    handoff.height = spec->runtime_height;
-    handoff.transparent_color = 10;
-    handoff.redmcsb_function = spec->redmcsb_function;
-    handoff.source_lines = spec->source_lines;
-    /* ReDMCSB DUNVIEW.C F0676:6254-6289 / F0677:6321-6356 select
-     * C702/C703, and F0116:6421-6437 / F0117:6554-6573 select C705/C706.
-     * All four use C10-transparent wall material, return for ordinary
-     * walls, and retain their source-defined F0115 fallthrough. */
-    *out_handoff = handoff;
-    return 1;
-}
-
-int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
-    DM1_ViewSquareIndex square,
-    int map_wall_set,
-    bool parity_flip,
-    bool wall_like,
-    bool front_alcove,
-    int max_visible_forward,
-    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
-    DM1_ViewportSideWallHostReceiptPc34 *out_receipt)
-{
-    const DM1_ViewportWallDrawSpec *spec;
-    DM1_ViewportSideWallHostReceiptPc34 receipt;
-    DM1_WallSetIndex selected_wall;
-    bool flip_horizontally = false;
-    int wallset0_graphic_index;
-
-    if (!out_receipt || !visibility) {
-        return 0;
-    }
-    memset(&receipt, 0, sizeof(receipt));
-    spec = dm1_viewport_3d_get_wall_draw_spec_for_square(square);
-    /* ReDMCSB DUNVIEW.C F0128:8466-8477 has D4 F0115 calls but no D4
-     * wall-zone case. F0115 exits on depth > 3 before choosing C702..C717,
-     * so an absent wall spec is deliberately a no-receipt/no-draw result. */
-    if (!spec || spec->center_wall) {
-        *out_receipt = receipt;
-        return 0;
-    }
-    receipt.handled = true;
-    receipt.square = square;
-    receipt.pc34_zone = spec->pc34_zone;
-    receipt.dst_x = spec->runtime_dst_x;
-    receipt.dst_y = spec->runtime_dst_y;
-    receipt.width = spec->runtime_width;
-    receipt.height = spec->runtime_height;
-    receipt.redmcsb_function = spec->redmcsb_function;
-    receipt.source_lines = spec->source_lines;
-
-    /* ReDMCSB DUNVIEW.C F0128:8478-8533 invokes each side square before
-     * its center square. The active replay ceiling is passed by the caller;
-     * lane masks keep the opposite/open side ownership in DM1 rather than
-     * leaving a host-specific clip decision in M11. */
-    if (!wall_like || spec->runtime_rel_forward > max_visible_forward ||
-        !dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
-            visibility, spec->runtime_rel_forward, spec->runtime_rel_side)) {
-        receipt.falls_through_to_f0115 =
-            !wall_like || (front_alcove && spec->front_alcove_reveals_contents);
-        *out_receipt = receipt;
-        return 1;
-    }
-
-    selected_wall = dm1_viewport_3d_select_wall_bitmap(
-        spec, parity_flip, &flip_horizontally);
-    if (selected_wall >= DM1_WALL_SET_COUNT) {
-        *out_receipt = receipt;
-        return 1;
-    }
-    wallset0_graphic_index =
-        dm1_v1_graphic_wallset0_index_pc34((int)selected_wall);
-    if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
-            map_wall_set, wallset0_graphic_index, 10, flip_horizontally,
-            receipt.width, receipt.height, &receipt.material)) {
-        *out_receipt = receipt;
-        return 1;
-    }
-    receipt.draw_wall = true;
-    *out_receipt = receipt;
-    return 1;
-}
-
-int dm1_viewport_3d_center_door_button_host_plan_pc34(
-    int depth_index,
-    DM1_ViewportCenterDoorButtonHostPlanPc34 *out_plan)
-{
-    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
-    if (!out_plan || depth_index < 0 || depth_index > 2) return 0;
-    memset(&plan, 0, sizeof(plan));
-    plan.view_index = depth_index == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
-        (depth_index == 1 ? DM1_VIEW_DOOR_BUTTON_D2C : DM1_VIEW_DOOR_BUTTON_D3C);
-    plan.frame = dm1_v1_viewport_get_door_button_frame_pc34(1, plan.view_index);
-    if (!plan.frame) return 0;
-    /* ReDMCSB DUNVIEW.C F0110:4163,4204-4210: G0208 selects the view
-     * frame, then F0132/F0791 blit it with C10 and D2/D3 palette changes. */
-    plan.palette_remap =
-        dm1_v1_viewport_get_door_button_palette_remap_pc34(plan.view_index);
-    plan.transparent_color = 10;
-    plan.valid = true;
-    *out_plan = plan;
-    return 1;
-}
-
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_set_wall_frame_bitmaps
  *
@@ -2594,59 +2415,6 @@ int dm1_viewport_3d_explosion_rebirth_step2_zone(const DM1_ViewportExplosionOccl
 {
     if (!spec || spec->d0c_pattern_zone || spec->rebirth_row < 0) return -1;
     return 3007 + spec->rebirth_row;
-}
-
-int dm1_viewport_3d_c100_rebirth_lightning_geometry(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_zone_index,
-    int *out_center_x,
-    int *out_center_y)
-{
-    /* ReDMCSB DUNVIEW.C F0115:4806-4812 sets L2476 from G2028.  The C100
-     * branches at :5948/:5999 use L2476, while G2034 belongs to ordinary
-     * explosion placement.  COORD.C G3025 layout-696 records C3000..C3011
-     * below are record-type 0: each pair is the real bitmap centre inside the
-     * 224x136 viewport.  Do not reuse these coordinates for C101. */
-    static const short k_c3000_c100_centres[12][2] = {
-        {112, 53}, { 24, 53}, {194, 53}, {112, 59}, { 15, 59},
-        {208, 59}, {112, 70}, {112, 57}, { 24, 57}, {194, 57},
-        {112, 63}, { 12, 63}
-    };
-    int row;
-
-    if (!spec) return 0;
-    row = spec->rebirth_row;
-    if (row < 0 || row >= (int)(sizeof(k_c3000_c100_centres) /
-                                sizeof(k_c3000_c100_centres[0]))) {
-        return 0;
-    }
-    if (out_zone_index) *out_zone_index = 3000 + row;
-    if (out_center_x) *out_center_x = (int)k_c3000_c100_centres[row][0];
-    if (out_center_y) *out_center_y = (int)k_c3000_c100_centres[row][1];
-    return 1;
-}
-
-int dm1_viewport_3d_c100_rebirth_lightning_scale(
-    const DM1_ViewportExplosionOcclusionSpec *spec,
-    int *out_scale)
-{
-    /* ReDMCSB DUNVIEW.C:5984 indexes G2037 by the same L2476/G2028 row used
-     * for C100's C3000 zone.  G2037 is physically seven bytes long: the
-     * original I34E symbol map places G0230 immediately after byte six.
-     * Never reinterpret those following mutable globals as a scale. */
-    static const unsigned char k_g2037_c100_scales[7] = {
-        15, 15, 15, 20, 20, 20, 32
-    };
-    int row;
-
-    if (!spec) return 0;
-    row = spec->rebirth_row;
-    if (row < 0 || row >= (int)(sizeof(k_g2037_c100_scales) /
-                                sizeof(k_g2037_c100_scales[0]))) {
-        return 0;
-    }
-    if (out_scale) *out_scale = (int)k_g2037_c100_scales[row];
-    return 1;
 }
 
 size_t dm1_viewport_3d_door_front_occlusion_spec_count(void)

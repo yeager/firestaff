@@ -18,6 +18,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
+#include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
@@ -13264,7 +13265,7 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                     record->mapY,
                     &square_type);
                 if (square && square_type == 4) {
-                    *square = (uint8_t)((*square & (uint8_t)~0x07u) | 5u);
+                    F0243_TIMELINE_ProcessEvent2_DoorDestruction(square);
                 }
             }
             break;

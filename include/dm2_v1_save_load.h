@@ -94,18 +94,6 @@ typedef struct {
     bool    initialized;
 } DM2_SL_State;
 
-#define DM2_SK_CORPUS_RECEIPT_MAX 16u
-typedef struct {
-    int kind;
-    int import_rejected;
-    size_t payload_size;
-    uint32_t payload_hash;
-    /* FNV-1a receipt over the complete original file, including the 42-byte
-     * SKSave header. It detects a changed corpus artifact before import. */
-    uint32_t source_file_hash;
-    char path[256];
-} DM2_SKSaveCandidateReceipt;
-
 typedef struct {
     uint8_t  valid_slot_count;
     uint16_t valid_slot_mask;
@@ -118,84 +106,13 @@ typedef struct {
     uint8_t  firestaff_session_candidate_count;
     uint8_t  original_envelope_candidate_count;
     uint8_t  original_raw_candidate_count;
-    uint16_t recursive_candidate_count;
-    uint16_t recursive_importable_candidate_count;
-    uint16_t alternate_name_candidate_count;
-    uint16_t extra_valid_candidate_count;
-    uint16_t recursive_scan_depth_limit;
-    uint16_t recursive_scan_candidate_cap;
-    uint8_t  recursive_scan_truncated;
     size_t   largest_payload_size;
     size_t   total_payload_size;
     size_t   largest_importable_payload_size;
     size_t   total_importable_payload_size;
-    uint32_t importable_kind_mask;
-    uint32_t importable_payload_hash;
-    uint8_t candidate_receipt_count;
-    DM2_SKSaveCandidateReceipt candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
     char     first_valid_path[256];
     char     first_importable_path[256];
 } DM2_SKSaveCorpusReceipt;
-
-/* Skip-safe provenance gate for the still-unmapped live weather timer area.
- * A valid SKSave header proves only a save candidate, never a timer layout. */
-typedef struct {
-    int scan_complete;
-    int has_header_verified_candidate;
-    int live_distant_environment_timer_present;
-    int skipped_missing_live_timer;
-    uint32_t verified_payload_bytes;
-    uint32_t matching_timer_record_count;
-    uint32_t corpus_hash;
-} DM2_DistantEnvironmentTimerCorpusReceipt;
-
-/* Raw-only inventory of original save candidates considered by a timer-format
- * probe. A slot header and a parsed envelope/raw candidate do not identify a
- * timer owner or wire layout, so every retained row remains rejected. */
-typedef struct {
-    int scan_complete;
-    int has_header_verified_candidate;
-    int timer_layout_owner_proven;
-    int matching_timer_record_count;
-    int original_candidate_list_complete;
-    uint16_t original_candidate_count;
-    uint16_t rejected_unowned_candidate_count;
-    uint32_t retained_original_payload_bytes;
-    uint32_t corpus_hash;
-    uint8_t candidate_receipt_count;
-    DM2_SKSaveCandidateReceipt
-        candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
-} DM2_OriginalTimerFormatCorpusReceipt;
-
-/* Read-only census of the original save fields already decoded by the
- * source-locked SKSave importer.  This is not a restore input: dungeon DB
- * records and timer payload ownership remain outside this receipt until their
- * original byte-level contracts are proven. */
-typedef struct {
-    DM2_SKSaveCandidateReceipt candidate;
-    uint32_t game_tick;
-    uint32_t rng_seed;
-    uint16_t party_x;
-    uint16_t party_y;
-    uint8_t party_dir;
-    uint8_t party_map;
-    uint8_t champion_count;
-    uint8_t timer_count;
-    uint8_t rain_intensity;
-    uint32_t state_hash;
-} DM2_OriginalSaveStateCorpusEntry;
-
-typedef struct {
-    int scan_complete;
-    int original_candidate_list_complete;
-    uint16_t original_candidate_count;
-    uint16_t parsed_candidate_count;
-    uint16_t rejected_candidate_count;
-    uint32_t corpus_hash;
-    uint8_t entry_count;
-    DM2_OriginalSaveStateCorpusEntry
-        entries[DM2_SK_CORPUS_RECEIPT_MAX];
-} DM2_OriginalSaveStateCorpusReceipt;
 
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
@@ -258,34 +175,6 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
  * byte totals without mutating live runtime state. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
-bool dm2_v1_distant_environment_timer_corpus_probe(
-    const char *save_base,
-    DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt);
-/* Enumerate only header-verified original envelope/raw candidates as raw
- * timer-format evidence. No unknown byte range is decoded or imported. */
-bool dm2_v1_original_timer_format_corpus_probe(
-    const char *save_base,
-    DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
-/* Revalidate and parse each original envelope/raw candidate into only the
- * source-owned state fields the current importer already decodes.  The
- * receipt is diagnostic evidence and cannot alter live runtime state. */
-bool dm2_v1_original_save_state_corpus_probe(
-    const char *save_base,
-    DM2_OriginalSaveStateCorpusReceipt *out_receipt);
-bool dm2_v1_sksave_corpus_load_first_importable(
-    const char *save_base,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size,
-    DM2_SKSaveCorpusReceipt *out_receipt);
-/* Read one previously scanned candidate only when its complete SKSave file
- * still matches the recorded hash and its parsed payload receipt. This reads
- * data but never applies it to runtime state. */
-bool dm2_v1_sksave_corpus_load_receipted_candidate(
-    const DM2_SKSaveCandidateReceipt *candidate_receipt,
-    uint8_t *out_payload,
-    size_t out_capacity,
-    size_t *out_payload_size);
 
 /* Run dm2_suppress_self_verification; returns true on success. */
 bool dm2_v1_save_suppress_self_test(void);

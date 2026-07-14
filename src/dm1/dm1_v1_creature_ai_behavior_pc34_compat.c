@@ -89,7 +89,6 @@ static int resolve_quarter_square_melee_cell_adjustment(
     int primaryDir;
     int currentCell;
     int candidateCell;
-    int selectedCell;
     int centered;
 
     if (!ctx || !activeGroup || !rng || !result) return 0;
@@ -124,24 +123,17 @@ static int resolve_quarter_square_melee_cell_adjustment(
         } else {
             candidateCell = (currentCell + 1) & 3;
         }
-        selectedCell = candidateCell;
         if (!packed_group_cell_is_occupied(activeGroup->cells,
                                            ctx->creatureCount,
                                            creatureIndex,
-                                           selectedCell) ||
+                                           candidateCell) ||
             (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0 &&
              !packed_group_cell_is_occupied(activeGroup->cells,
                                             ctx->creatureCount,
                                             creatureIndex,
-                                            (selectedCell =
-                                                 (candidateCell + 2) & 3)))) {
-            /* ReDMCSB GROUP.C F0209:2424-2432 assigns the opposite
-             * candidate through AL0446_i_Cell before F0178 commits it.
-             * Keeping candidateCell here would put a creature into an
-             * already occupied cell after the successful opposite-cell
-             * branch. */
+                                            (candidateCell + 2) & 3))) {
             activeGroup->cells = packed_group_cell_update(
-                activeGroup->cells, creatureIndex, selectedCell);
+                activeGroup->cells, creatureIndex, candidateCell);
         }
     }
 
@@ -155,6 +147,29 @@ static int resolve_quarter_square_melee_cell_adjustment(
     result->nextEventDelayTicks = max_val(1, (ctx->creatureInfo.movementTicks >> 1) +
                                           F0732_COMBAT_RngRandom_Compat(rng, 2));
     return 1;
+}
+
+static void apply_archenemy_double_move_f0204(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    struct DM1BehaviorResult_Compat* result)
+{
+    int dir;
+
+    if (!ctx || !result || !ctx->isArchenemy) return;
+    if (result->actionKind != DM1_ACTION_MOVE &&
+        result->actionKind != DM1_ACTION_FLEE_MOVE) return;
+    dir = result->moveDirection;
+    if (dir < 0 || dir > 3) return;
+
+    /* ReDMCSB GROUP.C F0204 lines 1576-1589 plus F0209 lines
+     * 2275-2283: archenemies move two squares in the chosen direction
+     * when the F0204 second-square path is taken. The pure F0810 context
+     * only carries first-ring movement blockers, so it emits the doubled
+     * target just like F0804/F0801b and leaves final world collision to
+     * the caller's map resolver. */
+    result->moveDestMapX = ctx->currentGroupMapX + (g_dx[dir] * 2);
+    result->moveDestMapY = ctx->currentGroupMapY + (g_dy[dir] * 2);
+    result->archenemyDoubleMove = 1;
 }
 
 static const int g_gigglerStealSlotsPc34[8] = {
@@ -549,7 +564,7 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
     int* outBlockedByParty,
     int* outBlockedByGroup)
 {
-    const struct DM1GroupMovementFacts_Compat* facts;
+    (void)allowImaginaryPitsAndFakeWalls; /* Caller pre-bakes into masks */
 
     if (!ctx || direction < 0 || direction > 3) return 0;
     if (outBlockedByWall)  *outBlockedByWall  = 0;
@@ -560,50 +575,14 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
     /* Source: F0202 checks immobility first */
     if (ctx->creatureInfo.movementTicks == DM1_IMMOBILE) return 0;
 
-    facts = &ctx->groupMovementFacts[direction];
-    if (!facts->available) {
-        /* Compatibility boundary for callers not yet upgraded to the typed
-         * M10 destination snapshot. A tested direction remains unavailable
-         * only on this legacy path; real F0202 marks it tested before it
-         * evaluates the destination. */
-        return ctx->groupMovementTestedDirs[direction] ? 0 : 1;
-    }
+    /* Source: F0202 wall/stairs/pit/fakewall check */
+    if (ctx->groupMovementTestedDirs[direction]) return 0;
 
-    /* ReDMCSB GROUP.C F0202 lines 1603-1623: bounds, wall, stairs, open
-     * pit, fakewall, then Fluxcage and creature-scoped teleporters. */
-    if (!facts->inBounds || facts->isWall || facts->isStairs ||
-        (facts->isOpenPit &&
-         !(facts->isImaginaryPit && allowImaginaryPitsAndFakeWalls) &&
-         !(ctx->creatureInfo.attributes & DM1_ATTR_LEVITATION)) ||
-        (facts->isFakeWall && !facts->isOpenFakeWall &&
-         !(facts->isImaginaryFakeWall && allowImaginaryPitsAndFakeWalls))) {
-        if (outBlockedByWall) *outBlockedByWall = 1;
-        return 0;
-    }
+    /* Party blocking (source: F0202 G0390 check) */
+    /* In the real engine this checks if dest == party pos.
+     * We use adjacency info from context. */
 
-    if ((ctx->creatureInfo.attributes & DM1_ATTR_ARCHENEMY) &&
-        facts->hasFluxcage) {
-        if (outBlockedByWall) *outBlockedByWall = 1;
-        return 0;
-    }
-    if (facts->teleporterBlocksCreature) {
-        if (outBlockedByWall) *outBlockedByWall = 1;
-        return 0;
-    }
-    if (facts->occupiedByParty) {
-        if (outBlockedByParty) *outBlockedByParty = 1;
-        return 0;
-    }
-    if (facts->doorBlocksCreature) {
-        if (outBlockedByDoor) *outBlockedByDoor = 1;
-        return 0;
-    }
-    if (facts->occupiedByGroup) {
-        if (outBlockedByGroup) *outBlockedByGroup = 1;
-        return 0;
-    }
-
-    return 1;
+    return 1; /* Movement is possible by default */
 }
 
 /* =========================================================================
@@ -670,7 +649,7 @@ int F0813_DM1_GROUP_PickSingleSquareMove_Compat(
     if (secondaryDir >= 0 && secondaryDir <= 3) {
         roll = F0732_COMBAT_RngRandom_Compat(rng, 2);
         if (F0811_DM1_GROUP_IsMovementPossible_Compat(
-                ctx, secondaryDir, allowFakeWalls && (roll != 0),
+                ctx, secondaryDir, allowFakeWalls && (roll == 0),
                 &bw, &bd, &bp, &bg)) {
             *outDirection = secondaryDir;
             return 1;
@@ -842,76 +821,6 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     return 1;
 }
 
-int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-    struct DM1ActiveGroup_Compat* activeGroup,
-    int direction,
-    int creatureIndex,
-    int creatureSize,
-    int creatureCount,
-    struct RngState_Compat* rng)
-{
-    if (!activeGroup || !rng || direction < 0 || direction > 3 ||
-        creatureCount < 0 || creatureCount > 3 || creatureIndex < 0 ||
-        creatureIndex > creatureCount) {
-        return 0;
-    }
-
-    {
-        int currentDir = (activeGroup->directions >> (creatureIndex * 2)) & 0x03;
-        int newDir = direction;
-        if (normalize_dir(currentDir - direction) == 2) {
-            newDir = next_dir((F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) +
-                              direction);
-        }
-        activeGroup->directions &= ~(0x03 << (creatureIndex * 2));
-        activeGroup->directions |= (newDir & 0x03) << (creatureIndex * 2);
-        if (creatureSize == DM1_SIZE_HALF_SQUARE && creatureCount > 0) {
-            int pairIndex = creatureIndex ^ 1;
-            if (pairIndex <= creatureCount) {
-                activeGroup->directions &= ~(0x03 << (pairIndex * 2));
-                activeGroup->directions |= (newDir & 0x03) << (pairIndex * 2);
-            }
-        }
-    }
-    return 1;
-}
-
-int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
-    struct DM1ActiveGroup_Compat* activeGroup,
-    int direction,
-    int creatureSize,
-    int creatureCount,
-    struct RngState_Compat* rng)
-{
-    int creatureIndex;
-    int twoHalfSquareCreatures;
-
-    if (!activeGroup || !rng || direction < 0 || direction > 3 ||
-        creatureCount < 0 || creatureCount > 3) {
-        return 0;
-    }
-
-    /* ReDMCSB GROUP.C F0206 lines 1620-1636: a two-creature half-square
-     * group starts at creature zero because F0205 writes its paired slot. */
-    twoHalfSquareCreatures = creatureCount != 0 &&
-        creatureSize == DM1_SIZE_HALF_SQUARE;
-    creatureIndex = twoHalfSquareCreatures ? creatureCount - 1 : creatureCount;
-
-    do {
-        /* F0206: slot zero always turns; each higher slot gets M005_RANDOM(2). */
-        if (creatureIndex != 0 && F0732_COMBAT_RngRandom_Compat(rng, 2) == 0) {
-            continue;
-        }
-        if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-                activeGroup, direction, creatureIndex, creatureSize,
-                creatureCount, rng)) {
-            return 0;
-        }
-    } while (creatureIndex-- != 0);
-
-    return 1;
-}
-
 /* =========================================================================
  *  F0818: Distance to visible party
  *
@@ -928,14 +837,6 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
     (void)creatureIndex; /* v1: uses group-level visibility from context */
 
     if (!ctx || !outDistance) return 0;
-
-    /* ReDMCSB GROUP.C F0200 only walks the current map. An active group
-     * outside the party's map cannot retain a stale visible-party distance
-     * across a teleporter/pit map handoff. */
-    if (ctx->currentMapIndex != ctx->partyMapIndex) {
-        *outDistance = 0;
-        return 1;
-    }
 
     /* Source: F0200 returns the pre-computed distance-to-visible-party.
      * The actual visibility walk (F0199/F0197/F0198) is done by the caller
@@ -974,122 +875,6 @@ int F0819_DM1_GROUP_GetSmelledPartyDirOrdinal_Compat(
         *outDirectionOrdinal = ctx->currentGroupPrimaryDirToParty + 1;
     }
 
-    return 1;
-}
-
-int F0819a_DM1_GROUP_GetSmelledPartyDirOrdinalFromRoute_Compat(
-    const struct DM1GroupBehaviorContext_Compat* ctx,
-    int smellRouteDistance,
-    int* outDirectionOrdinal)
-{
-    int smellRange;
-    int effectiveSmellRange;
-
-    if (!ctx || !outDirectionOrdinal) return 0;
-    *outDirectionOrdinal = 0;
-
-    /* ReDMCSB GROUP.C F0201: the direct scent branch requires both the
-     * half-smell-range gate and a non-zero F0199 walk using F0198. M10
-     * supplies that path result because this pure DM1 layer owns no map. */
-    smellRange = DM1_SMELL_RANGE(ctx->creatureInfo.ranges);
-    effectiveSmellRange = (smellRange + 1) >> 1;
-    if (smellRange != 0 &&
-        effectiveSmellRange >= ctx->currentGroupDistanceToParty &&
-        ctx->currentGroupDistanceToParty > 0 &&
-        smellRouteDistance > 0) {
-        *outDirectionOrdinal = (ctx->currentGroupPrimaryDirToParty & 3) + 1;
-    }
-
-    return 1;
-}
-
-static int f0228_group_direction_from_scent_pc34(
-    int sourceX, int sourceY, int destinationX, int destinationY,
-    struct RngState_Compat* rng, int* outPrimary, int* outSecondary)
-{
-    int primary;
-    int secondary;
-
-    if (!rng || !outPrimary || !outSecondary) return 0;
-
-    /* ReDMCSB PROJEXPL.C F0228 lines 1228-1282.  Its loop tests cardinal
-     * view cones in N/E/S/W order; the two diagonal cones are then randomly
-     * ordered with M005_RANDOM(2). */
-    if (sourceX == destinationX) {
-        primary = sourceY > destinationY ? 0 : 2;
-        secondary = (F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02) + 1;
-    } else if (sourceY == destinationY) {
-        primary = sourceX > destinationX ? 3 : 1;
-        secondary = F0732_COMBAT_RngRandom_Compat(rng, 65536) & 0x02;
-    } else {
-        if (destinationY < sourceY) {
-            primary = 0;
-            secondary = destinationX > sourceX ? 1 : 3;
-        } else if (destinationX > sourceX) {
-            primary = 1;
-            secondary = 2;
-        } else {
-            primary = 2;
-            secondary = 3;
-        }
-        if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
-            int swap = primary;
-            primary = secondary;
-            secondary = swap;
-        }
-    }
-
-    *outPrimary = primary;
-    *outSecondary = secondary;
-    return 1;
-}
-
-int F0819b_DM1_GROUP_BuildSmelledPartyDirectionPlan_Compat(
-    const struct DM1GroupBehaviorContext_Compat* ctx,
-    int smellRouteDistance,
-    const struct DM1GroupScent_Compat* scent,
-    struct RngState_Compat* rng,
-    struct DM1GroupSmellDirectionPlan_Compat* out)
-{
-    int smellRange;
-    int effectiveSmellRange;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!ctx) return 0;
-
-    out->valid = 1;
-    smellRange = DM1_SMELL_RANGE(ctx->creatureInfo.ranges);
-    if (smellRange == 0) return 1;
-
-    effectiveSmellRange = (smellRange + 1) >> 1;
-    if (effectiveSmellRange >= ctx->currentGroupDistanceToParty &&
-        ctx->currentGroupDistanceToParty > 0 &&
-        smellRouteDistance > 0) {
-        out->primaryDirection = ctx->currentGroupPrimaryDirToParty & 3;
-        out->secondaryDirection = ctx->currentGroupSecondaryDirToParty & 3;
-        out->directionOrdinal = out->primaryDirection + 1;
-        out->usedDirectPartyRoute = 1;
-        return 1;
-    }
-
-    /* GROUP.C F0201 only samples party scent after the direct F0199 branch
-     * failed. The strict comparison and M004_RANDOM(4) are source order. */
-    if (!scent || !scent->present || !rng ||
-        scent->strength + F0732_COMBAT_RngRandom_Compat(rng, 4) <=
-            30 - (smellRange << 1)) {
-        return 1;
-    }
-
-    if (!f0228_group_direction_from_scent_pc34(
-            ctx->currentGroupMapX, ctx->currentGroupMapY,
-            scent->mapX, scent->mapY, rng,
-            &out->primaryDirection, &out->secondaryDirection)) {
-        memset(out, 0, sizeof(*out));
-        return 0;
-    }
-    out->directionOrdinal = out->primaryDirection + 1;
-    out->usedStoredScent = 1;
     return 1;
 }
 
@@ -1322,6 +1107,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                         result->moveDirection = startDir;
                         result->moveDestMapX = destX;
                         result->moveDestMapY = destY;
+                        apply_archenemy_double_move_f0204(ctx, result);
                         found = 1;
                         break;
                     }
@@ -1446,6 +1232,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             ctx->currentGroupMapX + g_dx[dir];
                         result->moveDestMapY =
                             ctx->currentGroupMapY + g_dy[dir];
+                        apply_archenemy_double_move_f0204(ctx, result);
                     } else {
                         /* Delay the move */
                         result->actionKind = DM1_ACTION_NONE;
@@ -1480,6 +1267,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             result->moveDirection = startDir;
                             result->moveDestMapX = destX;
                             result->moveDestMapY = destY;
+                            apply_archenemy_double_move_f0204(ctx, result);
                         } else {
                             result->actionKind = DM1_ACTION_NONE;
                         }
@@ -1545,6 +1333,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                             ctx->currentGroupMapX + g_dx[dir];
                         result->moveDestMapY =
                             ctx->currentGroupMapY + g_dy[dir];
+                        apply_archenemy_double_move_f0204(ctx, result);
                     }
                 }
             } else {
@@ -1585,6 +1374,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                                 ctx->currentGroupMapX + g_dx[dir];
                             result->moveDestMapY =
                                 ctx->currentGroupMapY + g_dy[dir];
+                            apply_archenemy_double_move_f0204(ctx, result);
                         }
                     }
                 }
@@ -1633,6 +1423,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 result->moveDirection = dir;
                 result->moveDestMapX = ctx->currentGroupMapX + g_dx[dir];
                 result->moveDestMapY = ctx->currentGroupMapY + g_dy[dir];
+                apply_archenemy_double_move_f0204(ctx, result);
             }
 
             result->newBehavior = DM1_BEHAVIOR_FLEE;
@@ -1673,6 +1464,7 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 result->moveDirection = dir;
                 result->moveDestMapX = ctx->currentGroupMapX + g_dx[dir];
                 result->moveDestMapY = ctx->currentGroupMapY + g_dy[dir];
+                apply_archenemy_double_move_f0204(ctx, result);
             }
             result->newBehavior = DM1_BEHAVIOR_FLEE;
             int fleeTicks = ctx->movementTicks - (ctx->movementTicks >> 2);
@@ -1711,15 +1503,9 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
             int distY = ctx->currentGroupMapY - ctx->partyMapY;
             if (distY < 0) distY = -distY;
 
-            /* ReDMCSB GROUP.C F0209:2380-2387: PC 3.4 keeps the normal
-             * row/column attack line, but MEDIA720_I34E/I34M also admits a
-             * ranged (never melee) diagonal shot when M003_RANDOM(8) is
-             * zero. Consume that random value only for the diagonal case,
-             * before the source's M003_RANDOM(16) attack gate. */
+            /* In range and on same row/column */
             if (ctx->distanceToVisibleParty <= attackRange &&
-                ((distX == 0 || distY == 0) ||
-                 (attackRange > 1 &&
-                  F0732_COMBAT_RngRandom_Compat(rng, 8) == 0))) {
+                (distX == 0 || distY == 0)) {
 
                 /* Random attack probability — ReDMCSB F0209:
                  * Longer range creatures are more likely to attack.

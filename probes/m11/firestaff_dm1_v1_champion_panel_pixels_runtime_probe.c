@@ -22,13 +22,6 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
-#include "dm1_v1_champion_panel_hud_pc34_compat.h"
-#include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "dm1_v1_graphic_ids_pc34_compat.h"
-#include "dm1_v1_layout_zones_pc34_compat.h"
-#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
-#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -48,286 +41,6 @@ enum {
 
 static unsigned char px_index(const unsigned char* fb, int width, int x, int y) {
     return M11_FB_DECODE_INDEX(fb[y * width + x]);
-}
-
-static int probe_dm1_action_icon_cell_zone(int slot,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_ActionAreaRectPc34 rect;
-    if (!dm1_v1_action_icon_cell_zone_id_pc34(slot)) return 0;
-    rect = dm1_v1_action_icon_cell_rect_pc34(slot);
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int probe_dm1_action_icon_inner_zone(int slot,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH) {
-    DM1_V1_ActionAreaRectPc34 rect;
-    if (!dm1_v1_action_icon_inner_zone_id_pc34(slot)) return 0;
-    rect = dm1_v1_action_icon_inner_rect_pc34(slot);
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-static int probe_dm1_action_icon_cell_backdrop_color(
-    const M11_GameViewState* game,
-    int slot) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    return dm1_v1_champion_panel_action_icon_cell_backdrop_color_pc34(
-        champ->present != 0, champ->hp.current <= 0);
-}
-
-static int probe_dm1_status_rect_xywh(const DM1_V1_ChampionStatusRectPc34* rect,
-                                      int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH) {
-    if (!rect) return 0;
-    if (outX) *outX = rect->x;
-    if (outY) *outY = rect->y;
-    if (outW) *outW = rect->w;
-    if (outH) *outH = rect->h;
-    return 1;
-}
-
-static int probe_dm1_layout_rect_xywh(DM1_V1_LayoutZoneRectPc34 rect,
-                                      int* outX,
-                                      int* outY,
-                                      int* outW,
-                                      int* outH) {
-    if (rect.w <= 0 || rect.h <= 0) return 0;
-    if (outX) *outX = rect.x;
-    if (outY) *outY = rect.y;
-    if (outW) *outW = rect.w;
-    if (outH) *outH = rect.h;
-    return 1;
-}
-
-/* This probe keeps independent source-locked oracles for the status-panel
- * helpers.  M11 now exports the same API names, so give the local oracle
- * copies probe-private names without changing their assertions or M11. */
-#define probe_M11_GameView_GetV1StatusBoxFillColor probe_v1_status_box_fill_color
-#define probe_M11_GameView_GetV1StatusNameClearColor probe_v1_status_name_clear_color
-#define probe_M11_GameView_GetV1StatusNameColor probe_v1_status_name_color
-#define probe_M11_GameView_GetV1StatusBoxZone probe_v1_status_box_zone
-#define probe_M11_GameView_GetV1StatusNameZone probe_v1_status_name_zone
-#define probe_M11_GameView_GetV1StatusNameTextZone probe_v1_status_name_text_zone
-#define probe_M11_GameView_GetV1StatusBarZone probe_v1_status_bar_zone
-#define probe_M11_GameView_GetV1StatusHandSlotBoxZone probe_v1_status_hand_slot_box_zone
-#define M11_GameView_GetV1StatusHandIconZone probe_v1_status_hand_icon_zone
-#define probe_M11_GameView_GetV1ChampionBarColor probe_v1_champion_bar_color
-#define probe_M11_GameView_GetV1StatusBarBlankColor probe_v1_status_bar_blank_color
-#define M11_GameView_GetV1ObjectIconSourceZone probe_v1_object_icon_source_zone
-
-static int probe_M11_GameView_GetV1StatusBoxFillColor(void) {
-    return dm1_v1_champion_status_box_fill_color_pc34();
-}
-
-static int probe_M11_GameView_GetV1StatusNameClearColor(void) {
-    return dm1_v1_champion_status_name_clear_color_pc34();
-}
-
-static int probe_M11_GameView_GetV1StatusNameColor(const M11_GameViewState* game,
-                                             int slot) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    return dm1_v1_champion_status_name_color_pc34(
-        champ->present,
-        champ->hp.current,
-        slot == game->world.party.activeChampionIndex);
-}
-
-static int probe_M11_GameView_GetV1StatusBoxZone(int slot,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_box_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusNameZone(int slot,
-                                            int* outX,
-                                            int* outY,
-                                            int* outW,
-                                            int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_name_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusNameTextZone(int slot,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_name_text_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusBarZone(int slot,
-                                           int stat,
-                                           int* outX,
-                                           int* outY,
-                                           int* outW,
-                                           int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_bar_rect_pc34(slot, stat, &rect)) return 0;
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1StatusHandSlotBoxZone(int slot,
-                                                   int hand,
-                                                   int* outX,
-                                                   int* outY,
-                                                   int* outW,
-                                                   int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_hand_slot_box_rect_pc34(slot, hand, &rect)) {
-        return 0;
-    }
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int M11_GameView_GetV1StatusHandIconZone(int slot,
-                                                int hand,
-                                                int* outX,
-                                                int* outY,
-                                                int* outW,
-                                                int* outH) {
-    DM1_V1_ChampionStatusRectPc34 rect;
-    if (!dm1_v1_champion_status_hand_icon_rect_pc34(slot, hand, &rect)) {
-        return 0;
-    }
-    return probe_dm1_status_rect_xywh(&rect, outX, outY, outW, outH);
-}
-
-static int probe_M11_GameView_GetV1ChampionIconZone(int slot,
-                                              int* outX,
-                                              int* outY,
-                                              int* outW,
-                                              int* outH) {
-    DM1_V1_LayoutZoneRectPc34 rect;
-    if (!dm1_v1_champion_icon_rect_pc34(slot, &rect)) return 0;
-    return probe_dm1_layout_rect_xywh(rect, outX, outY, outW, outH);
-}
-
-static int M11_GameView_GetV1ChampionIconSourceIndex(
-    const M11_GameViewState* game,
-    int slot) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    if (!champ->present) return -1;
-    return ((int)champ->direction - ((int)game->world.party.direction & 3) + 4) & 3;
-}
-
-static int M11_GameView_GetV1ChampionIconGraphicId(void) {
-    return dm1_v1_graphic_champion_icons_pc34();
-}
-
-static int probe_M11_GameView_GetV1ChampionBarColor(int slot) {
-    if (slot < 0 || slot >= DM1_CHAMPION_COUNT) {
-        return DM1_COLOR_LIGHTEST_GRAY;
-    }
-    return DM1_ChampionColor[slot];
-}
-
-static int probe_M11_GameView_GetV1StatusBarBlankColor(void) {
-    return DM1_COLOR_DARKEST_GRAY;
-}
-
-static int probe_M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
-    return dm1_v1_graphic_slot_box_normal_pc34();
-}
-
-static int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
-    return dm1_v1_graphic_slot_box_wounded_pc34();
-}
-
-static int probe_M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
-    return dm1_v1_graphic_slot_box_acting_hand_pc34();
-}
-
-static int probe_M11_GameView_GetV1StatusHandSlotGraphic(
-    const M11_GameViewState* game,
-    int slot,
-    int hand) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        hand < 0 || hand > 1 ||
-        slot >= game->world.party.championCount) {
-        return 0;
-    }
-    champ = &game->world.party.champions[slot];
-    if (!champ->present || champ->hp.current == 0) return 0;
-    return dm1_v1_champion_status_hand_slot_graphic_pc34(
-        hand,
-        (uint16_t)champ->wounds,
-        hand == 1 && game->actingChampionOrdinal == (unsigned int)(slot + 1));
-}
-
-/* Local pixel-oracle helper; keep it distinct from the public M11 API. */
-static int probe_v1_status_hand_icon_index(
-    const M11_GameViewState* game,
-    int slot,
-    int hand) {
-    const struct ChampionState_Compat* champ;
-    if (!game || slot < 0 || slot >= CHAMPION_MAX_PARTY ||
-        hand < 0 || hand > 1 ||
-        slot >= game->world.party.championCount) {
-        return -1;
-    }
-    champ = &game->world.party.champions[slot];
-    if (!champ->present || champ->hp.current == 0) return -1;
-    return DM1_ChampionPanel_EmptyHandIconIndex(hand, (uint16_t)champ->wounds);
-}
-
-static int M11_GameView_GetV1ObjectIconSourceZone(int iconIndex,
-                                                  int* outGraphic,
-                                                  int* outX,
-                                                  int* outY,
-                                                  int* outW,
-                                                  int* outH) {
-    DM1_V1_ObjectIconSourceZonePc34 zone;
-    if (!dm1_v1_object_icon_source_zone_pc34(iconIndex, &zone)) return 0;
-    if (outGraphic) *outGraphic = zone.graphic_index;
-    if (outX) *outX = zone.x;
-    if (outY) *outY = zone.y;
-    if (outW) *outW = zone.w;
-    if (outH) *outH = zone.h;
-    return 1;
-}
-
-static int M11_GameView_MapV1ActionIconPaletteColor(int colorIndex,
-                                                    int applyActionPalette) {
-    if (applyActionPalette && ((colorIndex & 0x0F) == 12)) return 4;
-    return colorIndex;
 }
 
 static int count_color(const unsigned char* fb,
@@ -466,13 +179,13 @@ static int check_status_box_pixels(const M11_GameViewState* game,
     int x, y, w, h;
     int nx, ny, nw, nh;
     int nameTextX, nameTextY, nameTextW, nameTextH;
-    int fillColor = probe_M11_GameView_GetV1StatusBoxFillColor();
-    int nameClearColor = probe_M11_GameView_GetV1StatusNameClearColor();
-    int nameColor = probe_M11_GameView_GetV1StatusNameColor(game, slot);
+    int fillColor = M11_GameView_GetV1StatusBoxFillColor();
+    int nameClearColor = M11_GameView_GetV1StatusNameClearColor();
+    int nameColor = M11_GameView_GetV1StatusNameColor(game, slot);
     char label[128];
 
     snprintf(label, sizeof(label), "slot%d status box zone", slot);
-    ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
+    ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot, &x, &y, &w, &h) &&
                              w == 67 && h == 29);
 
     snprintf(label, sizeof(label), "slot%d status box fill visible", slot);
@@ -490,11 +203,11 @@ static int check_status_box_pixels(const M11_GameViewState* game,
                      0);
 
     snprintf(label, sizeof(label), "slot%d name clear zone", slot);
-    ok &= expect_true(label, probe_M11_GameView_GetV1StatusNameZone(slot, &nx, &ny, &nw, &nh) &&
+    ok &= expect_true(label, M11_GameView_GetV1StatusNameZone(slot, &nx, &ny, &nw, &nh) &&
                              count_color(fb, PROBE_FB_W, nx, ny, nw, nh, nameClearColor) > 90);
 
     snprintf(label, sizeof(label), "slot%d name text color", slot);
-    ok &= expect_true(label, probe_M11_GameView_GetV1StatusNameTextZone(slot,
+    ok &= expect_true(label, M11_GameView_GetV1StatusNameTextZone(slot,
                                                                   &nameTextX,
                                                                   &nameTextY,
                                                                   &nameTextW,
@@ -517,12 +230,12 @@ static int check_status_box_gutter_pixels(const unsigned char* fb) {
         int gutterX;
         int gutterW;
         snprintf(label, sizeof(label), "slot%d status box zone for gutter", slot);
-        ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot,
+        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot,
                                                                  &x, &y,
                                                                  &w, &h) &&
                                  w == 67 && h == 29);
         snprintf(label, sizeof(label), "slot%d next status box zone for gutter", slot);
-        ok &= expect_true(label, probe_M11_GameView_GetV1StatusBoxZone(slot + 1,
+        ok &= expect_true(label, M11_GameView_GetV1StatusBoxZone(slot + 1,
                                                                  &nextX, &nextY,
                                                                  &nextW, &nextH) &&
                                  nextY == y && nextW == 67 && nextH == 29);
@@ -556,8 +269,8 @@ static int check_bar_pixels(const M11_GameViewState* game,
     int x, y, w, h;
     int fillHeight;
     int blankHeight;
-    int fillColor = probe_M11_GameView_GetV1ChampionBarColor(slot);
-    int blankColor = probe_M11_GameView_GetV1StatusBarBlankColor();
+    int fillColor = M11_GameView_GetV1ChampionBarColor(slot);
+    int blankColor = M11_GameView_GetV1StatusBarBlankColor();
     int ok = 1;
     char label[128];
 
@@ -569,7 +282,7 @@ static int check_bar_pixels(const M11_GameViewState* game,
     maximum[2] = champ->mana.maximum;
 
     snprintf(label, sizeof(label), "slot%d stat%d bar zone", slot, stat);
-    ok &= expect_true(label, probe_M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
+    ok &= expect_true(label, M11_GameView_GetV1StatusBarZone(slot, stat, &x, &y, &w, &h) &&
                              w == 4 && h == 25);
     fillHeight = expected_fill_height(current[stat], maximum[stat], h);
     blankHeight = h - fillHeight;
@@ -595,7 +308,7 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
                                         const unsigned char* fb,
                                         int slot,
                                         int hand) {
-    int gfx = probe_M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand);
+    int gfx = M11_GameView_GetV1StatusHandSlotGraphic(game, slot, hand);
     const M11_AssetSlot* asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                                      (unsigned int)gfx);
     int x, y, w, h;
@@ -606,9 +319,9 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
     int ok = 1;
 
     snprintf(label, sizeof(label), "slot%d hand%d expected graphic", slot, hand);
-    ok &= expect_true(label, gfx == probe_M11_GameView_GetV1SlotBoxNormalGraphicId() ||
+    ok &= expect_true(label, gfx == M11_GameView_GetV1SlotBoxNormalGraphicId() ||
                              gfx == M11_GameView_GetV1SlotBoxWoundedGraphicId() ||
-                             gfx == probe_M11_GameView_GetV1SlotBoxActingHandGraphicId());
+                             gfx == M11_GameView_GetV1SlotBoxActingHandGraphicId());
     if (!ok) {
         return 0;
     }
@@ -616,7 +329,7 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
     ok &= expect_true(label, asset && asset->loaded && asset->pixels &&
                              asset->width == 18 && asset->height == 18);
     snprintf(label, sizeof(label), "slot%d hand%d slot-box zone", slot, hand);
-    ok &= expect_true(label, probe_M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
+    ok &= expect_true(label, M11_GameView_GetV1StatusHandSlotBoxZone(slot, hand,
                                                                      &x, &y, &w, &h) &&
                              w == 18 && h == 18);
     if (!ok) {
@@ -658,7 +371,7 @@ static int check_hand_slot_icon_pixels(const M11_GameViewState* game,
                                        const unsigned char* fb,
                                        int slot,
                                        int hand) {
-    int iconIndex = probe_v1_status_hand_icon_index(game, slot, hand);
+    int iconIndex = M11_GameView_GetV1StatusHandIconIndex(game, slot, hand);
     int graphicIndex;
     int srcX, srcY, srcW, srcH;
     const M11_AssetSlot* asset;
@@ -731,7 +444,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     int transparentMatch = 0;
     int transparentPixels = 0;
     const M11_AssetSlot* asset;
-    int baseColor = probe_M11_GameView_GetV1ChampionBarColor(slot);
+    int baseColor = M11_GameView_GetV1ChampionBarColor(slot);
     int xx;
     int yy;
     const int transparentColor = 12; /* M11_COLOR_DARK_GRAY */
@@ -741,7 +454,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     iconIndex = M11_GameView_GetV1ChampionIconSourceIndex(game, slot);
     ok &= expect_true(label, iconIndex >= 0);
     snprintf(label, sizeof(label), "slot%d champion icon zone", slot);
-    ok &= expect_true(label, probe_M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
+    ok &= expect_true(label, M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
                               w == 19 && h == 14);
     gfxId = M11_GameView_GetV1ChampionIconGraphicId();
     asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
@@ -825,15 +538,15 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
 
     snprintf(label, sizeof(label), "slot%d action icon cell id", slot);
     ok &= expect_int(label,
-                     dm1_v1_action_icon_cell_zone_id_pc34(slot),
+                     M11_GameView_GetV1ActionIconCellZoneId(slot),
                      89 + slot);
     snprintf(label, sizeof(label), "slot%d action icon inner id", slot);
     ok &= expect_int(label,
-                     dm1_v1_action_icon_inner_zone_id_pc34(slot),
+                     M11_GameView_GetV1ActionIconInnerZoneId(slot),
                      93 + slot);
     snprintf(label, sizeof(label), "slot%d action icon cell zone", slot);
     ok &= expect_true(label,
-                      probe_dm1_action_icon_cell_zone(slot,
+                      M11_GameView_GetV1ActionIconCellZone(slot,
                                                            &cellX,
                                                            &cellY,
                                                            &cellW,
@@ -841,7 +554,7 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
                       cellW == 20 && cellH == 35);
     snprintf(label, sizeof(label), "slot%d action icon inner zone", slot);
     ok &= expect_true(label,
-                      probe_dm1_action_icon_inner_zone(slot,
+                      M11_GameView_GetV1ActionIconInnerZone(slot,
                                                             &innerX,
                                                             &innerY,
                                                             &innerW,
@@ -849,7 +562,7 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
                       innerW == 16 && innerH == 16);
     snprintf(label, sizeof(label), "slot%d action icon backdrop color", slot);
     ok &= expect_int(label,
-                     probe_dm1_action_icon_cell_backdrop_color(game, slot),
+                     M11_GameView_GetV1ActionIconCellBackdropColor(game, slot),
                      PROBE_ACTION_CELL_CYAN);
     snprintf(label, sizeof(label), "slot%d action empty-hand source zone", slot);
     ok &= expect_true(label,
@@ -901,8 +614,8 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
     ok &= expect_true(label, total == 256 && matched == total);
     printf("slot%d action cell C%d inner C%d icon=%d gfx=%d cyan=%d pixels=%d/%d\n",
            slot,
-           dm1_v1_action_icon_cell_zone_id_pc34(slot),
-           dm1_v1_action_icon_inner_zone_id_pc34(slot),
+           M11_GameView_GetV1ActionIconCellZoneId(slot),
+           M11_GameView_GetV1ActionIconInnerZoneId(slot),
            PROBE_ACTION_EMPTY_HAND_ICON,
            graphicIndex,
            cyanPixels,
@@ -911,83 +624,9 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
     return ok;
 }
 
-/* ReDMCSB CASTER.C F0394 clears G0000 when there is no caster. When a
- * caster opens the panel it blits C009 at the 96px source box (224,42) and
- * copies rows 1 and 2 of C011 to (224,50)/(224,62) before TEXT.C writes the
- * cyan rune glyphs. This locks the real GRAPHICS.DAT composition instead of
- * accepting the old 87px click-zone crop or a generated spell frame. */
-static int check_spell_area_asset_composition(const M11_GameViewState* game,
-                                              const unsigned char* fb,
-                                              int spellOpen) {
-    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_graphic_rect_pc34();
-    const M11_AssetSlot* background;
-    const M11_AssetSlot* lines;
-    int ok = 1;
-    int x;
-    int y;
-    int matched = 0;
-    int total = 0;
-    char label[128];
-
-    snprintf(label, sizeof(label), "spell area physical source rectangle");
-    ok &= expect_true(label,
-                      rect.x == 224 && rect.y == 42 &&
-                      rect.w == 96 && rect.h == 33);
-    if (!spellOpen) {
-        snprintf(label, sizeof(label), "no-caster spell box is black");
-        ok &= expect_int(label,
-                         count_color(fb, PROBE_FB_W, rect.x, rect.y,
-                                     rect.w, rect.h, 0),
-                         rect.w * rect.h);
-        return ok;
-    }
-
-    background = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
-                                      DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34);
-    lines = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
-                                 DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
-    snprintf(label, sizeof(label), "C009 real spell background dimensions");
-    ok &= expect_true(label, background && background->loaded && background->pixels &&
-                             background->width == 87 && background->height == 25);
-    snprintf(label, sizeof(label), "C011 real spell line dimensions");
-    ok &= expect_true(label, lines && lines->loaded && lines->pixels &&
-                             lines->width == 14 && lines->height == 39);
-    snprintf(label, sizeof(label), "PC34 font loaded for spell glyphs");
-    ok &= expect_true(label, game->originalFontAvailable != 0);
-    if (!ok) return 0;
-
-    /* CASTER.C F0394 copies the 11 interior scanlines of its 12-row
-     * line bitmap at y=50..61; y=62 belongs to the next source line. */
-    for (y = 0; y < 12; ++y) {
-        for (x = 0; x < 14; ++x) {
-            unsigned char expected = (unsigned char)(lines->pixels[(13 + y) * 14 + x] & 0x0F);
-            unsigned char actual = px_index(fb, PROBE_FB_W, 224 + x, 50 + y);
-            ++total;
-            if (actual == expected) ++matched;
-        }
-    }
-    snprintf(label, sizeof(label), "C011 line 2 GRAPHICS.DAT pixel retention");
-    ok &= expect_true(label, total == 168 && matched == total);
-
-    matched = 0;
-    total = 0;
-    for (y = 0; y < 12; ++y) {
-        for (x = 0; x < 14; ++x) {
-            unsigned char expected = (unsigned char)(lines->pixels[(26 + y) * 14 + x] & 0x0F);
-            unsigned char actual = px_index(fb, PROBE_FB_W, 224 + x, 62 + y);
-            ++total;
-            if (actual == expected) ++matched;
-        }
-    }
-    snprintf(label, sizeof(label), "C011 line 3 GRAPHICS.DAT pixel retention");
-    ok &= expect_true(label, total == 168 && matched == total);
-    return ok;
-}
-
 int main(int argc, char** argv) {
     const char* dataDir;
     M12_StartupMenuState menu;
-    M12_StartupMenuInitOptions menuOptions;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     int slot;
@@ -1000,12 +639,7 @@ int main(int argc, char** argv) {
     }
     dataDir = argv[1];
 
-    memset(&menuOptions, 0, sizeof(menuOptions));
-    /* The pixel probe opens a selected DM1 entry directly.  Gallery I/O is
-     * unrelated to the real PC34 HUD frame and can block headless runs on
-     * an unavailable verification-screenshot volume. */
-    menuOptions.skipScreenshotGalleryScan = 1;
-    M12_StartupMenu_InitWithOptions(&menu, dataDir, NULL, &menuOptions);
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
         fprintf(stderr, "FAIL could not open selected DM1 V1 game view from %s\n", dataDir);
@@ -1046,16 +680,6 @@ int main(int argc, char** argv) {
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
         ok &= check_action_icon_cell_pixels(&game, fb, slot);
     }
-    ok &= check_spell_area_asset_composition(&game, fb, 0);
-
-    game.spellPanelOpen = 1;
-    game.spellRuneRow = 1;
-    game.spellBuffer.runeCount = 2;
-    game.spellBuffer.runes[0] = '`';
-    game.spellBuffer.runes[1] = 'a';
-    memset(fb, PROBE_STALE_PIXEL, sizeof(fb));
-    M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
-    ok &= check_spell_area_asset_composition(&game, fb, 1);
 
     M11_GameView_Shutdown(&game);
     printf("%s dm1 v1 champion panel runtime pixel probe (Firestaff-side evidence)\n",

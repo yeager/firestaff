@@ -403,20 +403,21 @@ int dm1_v1_spell_projectile_launch_plan_f0327_pc34(
         !receipt->createsProjectile) {
         return 1;
     }
-    if (!dm1_spell_f0412ValidateProjectileReceiptPc34(receipt) ||
-        context->championIndex < 0 || context->championCell < 0 ||
-        context->championCell > 3 ||
+    if (context->championIndex < 0 ||
         !dm1_v1_projectile_subtype_from_thing_pc34(
             receipt->projectileThing, &subtype)) {
         return 0;
     }
 
     kineticEnergy = receipt->projectileKineticEnergy;
-    stepEnergy = receipt->projectileStepEnergy;
+    stepEnergy = receipt->projectileStepEnergy > 0
+                     ? receipt->projectileStepEnergy
+                     : 1;
     if (kineticEnergy < (stepEnergy << 2)) {
         kineticEnergy += 3;
         --stepEnergy;
     }
+    if (stepEnergy < 1) stepEnergy = 1;
 
     /* ReDMCSB CHAMPION.C F0327:2091-2102 consumes F0412's projectile thing
      * and kinetic receipt, subtracts required mana, adjusts weak projectiles
@@ -1034,16 +1035,8 @@ int dm1_v1_projectile_materialization_receipt_f0215_pc34(
     outReceipt->handled = plan.handled;
     outReceipt->shouldDeleteProjectile = 1;
     outReceipt->shouldClearProjectileNext = 1;
-    /* ReDMCSB PROJEXPL.C F0217:607-608 unlinks the live C14 from its
-     * current square before F0215 relocates Projectile.Slot or clears the
-     * C14 record.  Keep this distinct from plan.map*, which is F0215's
-     * possible champion-impact materialization destination. */
-    outReceipt->shouldUnlinkProjectileFromSquare = 1;
     outReceipt->shouldConsumePotion = plan.shouldConsumePotion;
     outReceipt->shouldMaterialize = plan.shouldMaterialize;
-    outReceipt->cleanupMapIndex = projectile->mapIndex;
-    outReceipt->cleanupMapX = projectile->mapX;
-    outReceipt->cleanupMapY = projectile->mapY;
     outReceipt->mapIndex = plan.mapIndex;
     outReceipt->mapX = plan.mapX;
     outReceipt->mapY = plan.mapY;

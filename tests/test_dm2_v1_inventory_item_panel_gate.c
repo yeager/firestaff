@@ -14,7 +14,6 @@
  */
 
 #include "dm2_v1_inventory_panel.h"
-#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_object_model.h"
 
 #include <stdio.h>
@@ -197,176 +196,6 @@ static void test_empty_invalid_and_unresolved_slots(void)
           "unresolved neck-slot description stable");
 }
 
-static void test_source_selected_item_gdat_material(void)
-{
-    DM2_V1_AssetLoader loader;
-    DM2_V1_GdatEntry entries[2];
-    uint8_t raw[54];
-    uint32_t offsets[2] = {0u, 27u};
-    uint32_t sizes[2] = {27u, 27u};
-    DM2_ChampionRecord champ;
-    DM2_DB_State db;
-    DM2_V1_InventoryPanelItemView item;
-    DM2_V1_InventoryPanelGdatMaterialReceipt material;
-    DM2_V1_InventoryPanelHudReceipt hud;
-    DM2_V1_InventoryPanelHudBlit blit;
-    DM2_V1_InventoryPanelHudSurface surface;
-    DM2_V1_InventoryPanelHudConsumptionReceipt consumption;
-    DM2_V1_InventoryPanelSurveyPreviewReceipt preview;
-    DM2_V1_InventoryPanelHandReceipt hand;
-    uint8_t hud_pixels[16];
-    uint32_t powerblade;
-    int palette;
-
-    memset(&loader, 0, sizeof(loader));
-    memset(entries, 0, sizeof(entries));
-    memset(raw, 0, sizeof(raw));
-    memset(&champ, 0, sizeof(champ));
-    memset(&db, 0, sizeof(db));
-    raw[0] = 2u;
-    raw[2] = 1u;
-    raw[3] = 0x80u;
-    raw[4] = 4u;
-    raw[10] = 0x1cu;
-    for (palette = 0; palette < 16; ++palette) {
-        raw[11 + palette] = (uint8_t)(0x20 + palette);
-        raw[38 + palette] = (uint8_t)(0x40 + palette);
-    }
-    entries[0].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
-    entries[0].cls2 = 0x2au;
-    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[0].cls4 = 0x18u;
-    entries[0].data_index = 0u;
-    raw[27] = 2u;
-    raw[29] = 1u;
-    raw[30] = 0x80u;
-    raw[31] = 4u;
-    raw[37] = 0x1cu;
-    entries[1].cls1 = DM2_GDAT_CATEGORY_WEAPONS;
-    entries[1].cls2 = 0x2au;
-    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
-    entries[1].cls4 = DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD;
-    entries[1].data_index = 1u;
-    loader.loaded = 1;
-    loader.entries = entries;
-    loader.entry_count = 2u;
-    loader.raw_offsets = offsets;
-    loader.raw_sizes = sizes;
-    loader.raw_data_count = 2u;
-    loader.data = raw;
-    loader.data_size = sizeof(raw);
-    powerblade = dm2_db_make_handle(DM2_DB_WEAPON, 1u);
-    champ.inventory[DM2_V1_INV_SLOT_ACTION_HAND] = powerblade;
-
-    CHECK(dm2_v1_inventory_panel_select_item(
-              &champ, NULL, DM2_V1_INV_SLOT_ACTION_HAND,
-              &db, NULL, 0u, &item),
-          "source-selected action-hand item snapshot succeeds");
-    CHECK(dm2_v1_inventory_panel_gdat_material_receipt(
-              &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x18u,
-              &material) && material.valid &&
-              material.decoded_width == 2u && material.decoded_height == 1u &&
-              material.decoded_format == DM2_IMG_FMT_U4 &&
-              material.local_palette16[0] == 0x20u &&
-              material.local_palette16[15] == 0x2fu &&
-              material.material_hash != 0u,
-          "item material receipt binds exact GDAT image, pixels, and palette");
-    CHECK(dm2_v1_inventory_panel_hud_receipt(&item, &material, &hud) &&
-              hud.valid && hud.object_id == powerblade &&
-              hud.selected_slot == DM2_V1_INV_SLOT_ACTION_HAND &&
-              hud.receipt_hash != 0u,
-          "HUD receipt accepts only matching selected item material");
-    memset(hud_pixels, 0x7eu, sizeof(hud_pixels));
-    memset(&blit, 0, sizeof(blit));
-    blit.rect_number = 125u;
-    blit.destination_x = 1;
-    blit.destination_y = 2;
-    blit.width = 2u;
-    blit.height = 1u;
-    blit.transparent_index = 12u;
-    surface.pixels = hud_pixels;
-    surface.width = 4;
-    surface.height = 4;
-    surface.stride = 4;
-    CHECK(dm2_v1_inventory_panel_consume_hud_material(
-              &loader, &hud, &blit, &surface, &consumption) &&
-              consumption.valid && consumption.rect_number == 125u &&
-              consumption.drawn_pixel_count == 1u &&
-              consumption.transparent_pixel_count == 1u &&
-              hud_pixels[2 * 4 + 1] == 0x21u &&
-              hud_pixels[2 * 4 + 2] == 0x7eu,
-          "live HUD consumption blits exact item palette with source key 12");
-    {
-        uint8_t hand_pixels[2] = {0u, 0u};
-        DM2_V1_InventoryPanelHudSurface hand_surface;
-
-        hand_surface.pixels = hand_pixels;
-        hand_surface.width = 2;
-        hand_surface.height = 1;
-        hand_surface.stride = 2;
-        CHECK(dm2_v1_inventory_panel_hand_receipt(
-                  &loader, &item, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x18u,
-                  &hand) && hand.valid && hand.origin_width == 2u &&
-                  hand.origin_height == 1u,
-              "held selected item binds its exact record-selected GDAT field");
-        CHECK(dm2_v1_inventory_panel_consume_hand_item(
-                  &loader, &hand, &hand_surface, &consumption) &&
-                  consumption.valid && consumption.drawn_pixel_count == 2u &&
-                  consumption.transparent_pixel_count == 0u &&
-                  hand_pixels[0] == 0x21u && hand_pixels[1] == 0x2cu,
-              "held selected item copies the complete local-palette image");
-        hand_surface.width = 1;
-        CHECK(!dm2_v1_inventory_panel_consume_hand_item(
-                  &loader, &hand, &hand_surface, &consumption),
-              "held item rejects a non-origin destination surface");
-    }
-    blit.transparent_index = 0u;
-    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
-              &loader, &hud, &blit, &surface, &consumption),
-          "non-source transparency key cannot produce an item fallback blit");
-    blit.transparent_index = 12u;
-    blit.destination_x = 3;
-    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
-              &loader, &hud, &blit, &surface, &consumption),
-          "out-of-bounds source rect does not synthesize clipped HUD pixels");
-    blit.destination_x = 1;
-    raw[10] = 0x11u;
-    CHECK(!dm2_v1_inventory_panel_consume_hud_material(
-              &loader, &hud, &blit, &surface, &consumption),
-          "changed GDAT item pixels invalidate the live HUD receipt");
-    raw[10] = 0x1cu;
-    CHECK(dm2_v1_inventory_panel_survey_preview_receipt(
-              &loader, &item, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, &preview) &&
-              preview.valid &&
-              preview.expanded_rect_index == DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT &&
-              preview.transparent_index == DM2_V1_INVENTORY_SURVEY_TRANSPARENCY &&
-              preview.hud.material.image_field ==
-                  DM2_V1_INVENTORY_SURVEY_PREVIEW_FIELD,
-          "selected item survey binds only its source dtImage 0x11 preview");
-    memset(hud_pixels, 0x7eu, sizeof(hud_pixels));
-    blit.rect_number = DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT;
-    blit.destination_x = 1;
-    CHECK(dm2_v1_inventory_panel_consume_survey_preview(
-              &loader, &preview, &blit, &surface, &consumption) &&
-              consumption.valid && hud_pixels[2 * 4 + 1] == 0x41u &&
-              hud_pixels[2 * 4 + 2] == 0x7eu,
-          "selected item survey consumes its exact preview without fallback");
-    blit.rect_number = 0x01efu;
-    CHECK(!dm2_v1_inventory_panel_consume_survey_preview(
-              &loader, &preview, &blit, &surface, &consumption),
-          "survey preview rejects a non-source destination rect");
-    CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
-              &loader, powerblade, DM2_GDAT_CATEGORY_WEAPONS, 0x2au, 0x19u,
-              &material),
-          "missing source-selected item field fails closed");
-    CHECK(!dm2_v1_inventory_panel_gdat_material_receipt(
-              &loader, powerblade, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-              0x02u, 0u, &material),
-          "non-item GDAT category cannot become an inventory icon");
-    CHECK(!dm2_v1_inventory_panel_hud_receipt(&item, &material, &hud),
-          "failed material cannot produce a fallback HUD receipt");
-}
-
 static void test_source_evidence(void)
 {
     const char *e = dm2_v1_inventory_panel_source_evidence();
@@ -389,7 +218,6 @@ int main(void)
     test_slot_names_and_equipment_flags();
     test_inventory_selection_and_description();
     test_empty_invalid_and_unresolved_slots();
-    test_source_selected_item_gdat_material();
     test_source_evidence();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);

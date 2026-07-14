@@ -12,10 +12,7 @@ typedef enum {
     NEXUS_V1_AUDIO_KIND_UNKNOWN = 0,
     NEXUS_V1_AUDIO_KIND_SAL_BANK = 1,
     NEXUS_V1_AUDIO_KIND_MAP_TABLE = 2,
-    NEXUS_V1_AUDIO_KIND_CDDA_LAYOUT = 3,
-    /* Global Saturn sound-task image. This is an identity receipt only;
-     * it does not claim a driver ABI, codec, or playback protocol. */
-    NEXUS_V1_AUDIO_KIND_SOUND_DRIVER = 4
+    NEXUS_V1_AUDIO_KIND_CDDA_LAYOUT = 3
 } Nexus_V1_AudioKind;
 
 typedef enum {

@@ -1,5 +1,4 @@
 #include "csb_v1_boot.h"
-#include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #include "memory_frontend_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"
@@ -15,27 +14,6 @@
  * boundary. */
 
 #define CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 (1024u * 1024u)
-
-enum {
-    CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 = 224,
-    CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 = 136,
-    CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 = 144,
-    CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 = 73,
-    CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34 = 6
-};
-
-static int csb_v1_startup_hud_capture_surface_matches_pc34(
-    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
-    int source_asset_id,
-    int width,
-    int height,
-    int transparent_color)
-{
-    return surface && surface->valid && surface->pixels &&
-        surface->source_asset_id == source_asset_id &&
-        surface->width == width && surface->height == height &&
-        surface->transparent_color == transparent_color;
-}
 
 static int csb_v1_startup_surface_load_graphic_pc34(
     const char *path, unsigned int graphic_index,
@@ -252,10 +230,6 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
         return 0;
     }
-    /* ReDMCSB PANEL.C F0346/F0347 blits C040 with C06 transparency before
-     * returning the C017 panel.  This is distinct from C017's opaque base. */
-    surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
-        .transparent_color = 6;
     surfaces->title_regions_ready = 1;
     surfaces->opening_frame_ready = 1;
     surfaces->entrance_screen_ready = 1;
@@ -483,84 +457,6 @@ done:
     return 0;
 }
 
-int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
-    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
-    int draw_resurrect_panel,
-    CSB_V1_StartupRuntimeRaster_PC34 *out_raster)
-{
-    unsigned char *pixels;
-    int source_count = 0;
-
-    if (!out_raster) return 0;
-    memset(out_raster, 0, sizeof(*out_raster));
-    if (!frame || !frame->valid || !frame->real_asset_matched ||
-        !frame->no_legacy_wrappers || !frame->uses_verified_hud_bindings ||
-        !csb_v1_startup_hud_capture_surface_matches_pc34(
-            frame->hud_inventory_surface, 17,
-            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
-            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, -1) ||
-        (draw_resurrect_panel &&
-         !csb_v1_startup_hud_capture_surface_matches_pc34(
-             frame->hud_resurrect_surface, 40,
-             CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
-             CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34,
-             CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34))) {
-        return 0;
-    }
-
-    pixels = (unsigned char *)calloc(
-        CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 *
-            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
-        1u);
-    if (!pixels) return 0;
-
-    /* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport at
-     * (0,33). F0346 then blits C040 at panel-relative (80,52), hence
-     * screen (80,85), with dark-green key 6. CSBWin Character.cpp
-     * TAG0189a8 lines 3836-3844 independently uses basic graphic 40 with
-     * the same transparency key. */
-    if (!csb_v1_startup_raster_blit_pc34(
-            pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
-            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
-            frame->hud_inventory_surface, 0, 0,
-            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
-            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, 0, 33,
-            CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
-            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, -1)) {
-        free(pixels);
-        return 0;
-    }
-    source_count = 1;
-    if (draw_resurrect_panel && !csb_v1_startup_raster_blit_pc34(
-            pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
-            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34,
-            frame->hud_resurrect_surface, 0, 0,
-            CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
-            CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34, 80, 85,
-            CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
-            CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34,
-            frame->hud_resurrect_surface->transparent_color)) {
-        free(pixels);
-        return 0;
-    }
-    if (draw_resurrect_panel) source_count = 2;
-    out_raster->pixels = pixels;
-    out_raster->width = CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34;
-    out_raster->height = CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34;
-    out_raster->real_asset_matched = 1;
-    out_raster->entrance_composited = 1;
-    out_raster->source_surface_count = source_count;
-    out_raster->pixel_hash = csb_v1_startup_raster_hash_pc34(
-        pixels, (size_t)out_raster->width * (size_t)out_raster->height);
-    out_raster->route_hash = csb_v1_startup_frame_hash_step_pc34(
-        frame->hud_binding_hash, (uint32_t)draw_resurrect_panel);
-    out_raster->valid = out_raster->pixel_hash != 0u &&
-        out_raster->route_hash != 0u;
-    if (out_raster->valid) return 1;
-    csb_v1_boot_startup_runtime_raster_release_pc34(out_raster);
-    return 0;
-}
-
 static int csb_v1_startup_frame_title_phase_mask_pc34(
     CSB_V1_StartupStage_PC34 stage)
 {
@@ -609,28 +505,6 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     out_frame->hud_resurrect_surface = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    if (out_frame->hud_inventory_surface->valid &&
-        out_frame->hud_inventory_surface->pixels &&
-        out_frame->hud_inventory_surface->width > 0 &&
-        out_frame->hud_inventory_surface->height > 0) {
-        out_frame->hud_inventory_pixel_hash = csb_v1_startup_raster_hash_pc34(
-            out_frame->hud_inventory_surface->pixels,
-            (size_t)out_frame->hud_inventory_surface->width *
-                (size_t)out_frame->hud_inventory_surface->height);
-    }
-    if (out_frame->hud_resurrect_surface->valid &&
-        out_frame->hud_resurrect_surface->pixels &&
-        out_frame->hud_resurrect_surface->width > 0 &&
-        out_frame->hud_resurrect_surface->height > 0) {
-        out_frame->hud_resurrect_pixel_hash = csb_v1_startup_raster_hash_pc34(
-            out_frame->hud_resurrect_surface->pixels,
-            (size_t)out_frame->hud_resurrect_surface->width *
-                (size_t)out_frame->hud_resurrect_surface->height);
-    }
-    out_frame->hud_binding_hash = csb_v1_startup_frame_hash_step_pc34(
-        csb_v1_startup_frame_hash_step_pc34(2166136261u,
-                                            out_frame->hud_inventory_pixel_hash),
-        out_frame->hud_resurrect_pixel_hash);
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         out_frame->title_phase_tick = plan->title_source_step;
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
@@ -662,8 +536,6 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->opening_step);
     out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->title_phase_mask);
-    out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
-        out_frame->frame_route_hash, out_frame->hud_binding_hash);
     out_frame->valid =
         out_frame->real_asset_matched &&
         out_frame->title_sequence_ready &&
@@ -678,133 +550,6 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->hud_resurrect_surface->valid &&
         out_frame->frame_route_hash != 0u;
     return out_frame->valid;
-}
-
-void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt)
-{
-    if (!receipt) return;
-    csb_v1_boot_startup_runtime_raster_release_pc34(&receipt->raster);
-    memset(receipt, 0, sizeof(*receipt));
-}
-
-int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    uint32_t source_tick,
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt)
-{
-    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 receipt;
-    uint32_t hash = 2166136261u;
-
-    if (!out_receipt) return 0;
-    memset(out_receipt, 0, sizeof(*out_receipt));
-    memset(&receipt, 0, sizeof(receipt));
-    if (!session || !plan ||
-        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
-            session, plan, source_tick, &receipt.frame)) {
-        return 0;
-    }
-
-    receipt.real_asset_matched = receipt.frame.real_asset_matched;
-    receipt.no_legacy_wrappers = receipt.frame.no_legacy_wrappers;
-    receipt.no_synthetic_surface = 1;
-    receipt.uses_c017_inventory =
-        receipt.frame.hud_inventory_surface &&
-        receipt.frame.hud_inventory_surface->source_asset_id == 17 &&
-        receipt.frame.hud_inventory_pixel_hash != 0u;
-    receipt.uses_c040_resurrect =
-        receipt.frame.hud_resurrect_surface &&
-        receipt.frame.hud_resurrect_surface->source_asset_id == 40 &&
-        receipt.frame.hud_resurrect_surface->transparent_color == 6 &&
-        receipt.frame.hud_resurrect_pixel_hash != 0u;
-
-    if (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34) {
-        /* ReDMCSB ENTRANCE.C F0806 leaves the temporary entrance loop before
-         * PANEL.C consumes the live C017/C040 HUD. Capture that exact indexed
-         * presentation rather than handing the host an unpresented pair. */
-        if (session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
-            !receipt.frame.uses_verified_hud_bindings ||
-            !receipt.uses_c017_inventory || !receipt.uses_c040_resurrect) {
-            return 0;
-        }
-        if (!csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
-                &receipt.frame, 1, &receipt.raster) || !receipt.raster.valid ||
-            !receipt.raster.real_asset_matched ||
-            receipt.raster.source_surface_count != 2) {
-            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                &receipt);
-            return 0;
-        }
-        receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34;
-        receipt.runtime_hud_decision = 1;
-    } else {
-        if (!csb_v1_boot_startup_runtime_frame_rasterize_pc34(
-                &receipt.frame, plan, &receipt.raster) ||
-            !receipt.raster.valid || !receipt.raster.real_asset_matched) {
-            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                &receipt);
-            return 0;
-        }
-        if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-            if (!receipt.raster.title_composited ||
-                receipt.raster.source_surface_count != 1) {
-                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                    &receipt);
-                return 0;
-            }
-            receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34;
-        } else if (plan->surface ==
-                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-            if (!plan->opening_composite_valid || !receipt.raster.door_composited ||
-                receipt.raster.source_surface_count != 3) {
-                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                    &receipt);
-                return 0;
-            }
-            receipt.host_surface =
-                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
-            receipt.door_opening_decision = 1;
-        } else if (plan->surface ==
-                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
-            if (!receipt.raster.entrance_composited ||
-                !receipt.raster.door_composited ||
-                receipt.raster.source_surface_count != 3) {
-                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                    &receipt);
-                return 0;
-            }
-            receipt.host_surface =
-                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34;
-        } else {
-            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-                &receipt);
-            return 0;
-        }
-    }
-    hash = csb_v1_startup_frame_hash_step_pc34(hash,
-                                                 receipt.frame.frame_route_hash);
-    hash = csb_v1_startup_frame_hash_step_pc34(hash,
-                                                 receipt.raster.route_hash);
-    hash = csb_v1_startup_frame_hash_step_pc34(hash,
-                                                 (uint32_t)receipt.host_surface);
-    hash = csb_v1_startup_frame_hash_step_pc34(
-        hash, receipt.frame.hud_binding_hash);
-    receipt.host_surface_hash = hash;
-    receipt.source_evidence =
-        "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "
-        "721-826,850-889; DUNVIEW.C F0111 lines 4248-4313";
-    receipt.valid = receipt.real_asset_matched && receipt.no_legacy_wrappers &&
-        receipt.no_synthetic_surface && receipt.host_surface !=
-            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_NONE_PC34 &&
-        receipt.host_surface_hash != 0u;
-    if (!receipt.valid) {
-        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
-            &receipt);
-        return 0;
-    }
-    *out_receipt = receipt;
-    return 1;
 }
 
 int csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
@@ -901,58 +646,6 @@ void csb_v1_boot_startup_presented_app_capture_receipt_init_pc34(
         "ReDMCSB TITLE.C F0437 lines 424-463; "
         "ENTRANCE.C F0441/F0806 lines 620-883; "
         "CSBWin Graphics.cpp ReadGraphic and Viewport.cpp host presentation";
-}
-
-int csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
-    const unsigned char *indexed_pixels,
-    int width,
-    int height,
-    int running_from_macos_app_bundle,
-    int mac_window_capture_ready,
-    CSB_V1_StartupPresentedAppCaptureFacts_PC34 *out_facts)
-{
-    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
-    uint32_t hash = 2166136261u;
-    size_t pixel_count;
-    size_t i;
-
-    if (out_facts) {
-        memset(out_facts, 0, sizeof(*out_facts));
-    }
-    if (!session || !indexed_pixels || !out_facts || width != 320 ||
-        height != 200 ||
-        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
-        !terminal.valid || !terminal.c001_complete ||
-        !terminal.terminal_f0807_complete || !terminal.c017_ready ||
-        !terminal.c040_ready) {
-        return 0;
-    }
-
-    pixel_count = (size_t)width * (size_t)height;
-    for (i = 0; i < pixel_count; ++i) {
-        hash ^= indexed_pixels[i];
-        hash *= 16777619u;
-    }
-    if (hash == 0u) {
-        hash = 1u;
-    }
-
-    /* ReDMCSB TITLE.C F0437 retains C001 through PRESENTS/CHAOS/STRIKES;
-     * ENTRANCE.C F0438/F0807 reaches C017/C040 only after its door frames.
-     * A host may record that exact indexed M11 raster, but cannot supply a
-     * substitute buffer or bypass the terminal session. */
-    out_facts->running_from_macos_app_bundle =
-        running_from_macos_app_bundle ? 1 : 0;
-    out_facts->mac_window_capture_ready =
-        mac_window_capture_ready ? 1 : 0;
-    out_facts->presented_frame_captured = 1;
-    out_facts->presented_frame_width = width;
-    out_facts->presented_frame_height = height;
-    out_facts->presented_frame_indexed_pixels = 1;
-    out_facts->presented_frame_uses_real_csb_assets = 1;
-    out_facts->presented_frame_hash = hash;
-    return 1;
 }
 
 int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(

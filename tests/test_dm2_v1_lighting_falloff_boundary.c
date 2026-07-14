@@ -124,13 +124,9 @@ static int test_dm2_asset_fetch(void *user,
     if (s_fail_asset_index != 0 && gdat_index == s_fail_asset_index) {
         return -1;
     }
-    if (gdat_index == -2 ||
-        gdat_index == dm2_v1_viewport_scene_material_graphic_index(
-            0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING)) {
+    if (gdat_index == -2) {
         if (out_pixels) *out_pixels = ceiling;
-    } else if (gdat_index == -1 ||
-               gdat_index == dm2_v1_viewport_scene_material_graphic_index(
-                   0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR)) {
+    } else if (gdat_index == -1) {
         if (out_pixels) *out_pixels = floor;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
@@ -445,11 +441,10 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].streak_step == 3 &&
               commands.commands[0].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 rain metadata does not fabricate overlay pixels",
+    CHECK("DM2 rain overlay applies planned diagonal streak color",
           framebuffer[1] == 7 &&
-              framebuffer[4] == 7 &&
-              framebuffer[(3 * 320) + 4] == 7 &&
-              viewport.gdat_scene_weather_consumed_count == 0);
+              framebuffer[4] == 15 &&
+              framebuffer[(3 * 320) + 4] == 15);
 
     memset(framebuffer, 8, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -470,9 +465,8 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].alpha == 4 &&
               commands.commands[0].target_color == 0);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 fog metadata does not fabricate overlay pixels",
-          framebuffer[0] == 8 &&
-              viewport.gdat_scene_weather_consumed_count == 0);
+    CHECK("DM2 fog overlay applies planned alpha over framebuffer",
+          framebuffer[0] == 6);
 
     memset(framebuffer, 3, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -496,10 +490,9 @@ static void test_weather_overlay_render_plan(void)
                   DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
               commands.commands[1].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 storm metadata does not fabricate overlay pixels",
-          framebuffer[0] == 3 &&
-              framebuffer[(199 * 320) + 319] == 3 &&
-              viewport.gdat_scene_weather_consumed_count == 0);
+    CHECK("DM2 storm lightning applies planned full-screen flash",
+          framebuffer[0] == 15 &&
+              framebuffer[(199 * 320) + 319] == 15);
 
     memset(&plan, 0x55, sizeof(plan));
     CHECK("DM2 weather plan is null-state safe",
@@ -1064,42 +1057,6 @@ static void test_sprite_asset_provider(void)
     }
 
     {
-        uint8_t palette16[16];
-        DM2_V1_DoorRenderPlan door_plan;
-        int overlay_pixel_found = 0;
-        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0xa0 + i);
-        memset(framebuffer, 0, sizeof(framebuffer));
-        dm2_v1_viewport_init(&viewport, framebuffer, 320);
-        dm2_v1_viewport_set_asset_provider(&viewport, test_dm2_asset_fetch,
-                                            NULL);
-        dm2_v1_viewport_set_gdat_interface_palette(
-            &viewport, 1, 0x51a7c0deu, palette16);
-        viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
-        viewport.squares[DM2_SQ_D0C].ornament_index = 2;
-        /* Keep the synthetic opaque frame out of this focused overlay-palette
-         * sample. The production frame is a separate material pass and would
-         * otherwise cover this 2x2 fixture's ornament pixels. */
-        s_fail_asset_index =
-            dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
-        dm2_v1_render_doors(&viewport);
-        s_fail_asset_index = 0;
-        for (int i = 0; i < 320 * 200; ++i) {
-            if (framebuffer[i] == palette16[11]) {
-                overlay_pixel_found = 1;
-                break;
-            }
-        }
-        CHECK("DM2 GDAT door ornament uses bound palette16 material mapping",
-              dm2_v1_viewport_build_door_render_plan(&viewport,
-                                                      &door_plan) == 1 &&
-                  door_plan.door_count == 1 &&
-                  door_plan.doors[0].ornate_gdat_index != 0 &&
-                  viewport.asset_door_overlay_drawn_count == 1 &&
-                  viewport.gdat_sprite_palette_consumed_count > 0 &&
-                  overlay_pixel_found);
-    }
-
-    {
         DM2_V1_HudPartyState party;
 
         memset(&party, 0, sizeof(party));
@@ -1129,92 +1086,6 @@ static void test_sprite_asset_provider(void)
         CHECK("DM2 UI chrome tracks placeholder portrait fallback",
               viewport.asset_hud_portrait_drawn_count == 0 &&
                   viewport.fallback_hud_portrait_drawn_count == 1);
-
-        {
-            DM2_V1_InterfaceHudLayout layout;
-            memset(&layout, 0, sizeof(layout));
-            layout.valid = 1;
-            layout.table_hash = 0x098d1208u;
-            layout.portrait[0] = (DM2_V1_InterfaceRect){ 16, 8, 32, 28 };
-            layout.name[0] = (DM2_V1_InterfaceRect){ 8, 4, 48, 12 };
-            layout.status[0][0] = (DM2_V1_InterfaceRect){ 100, 10, 6, 26 };
-            layout.status[0][1] = (DM2_V1_InterfaceRect){ 116, 10, 6, 26 };
-            layout.status[0][2] = (DM2_V1_InterfaceRect){ 132, 10, 6, 26 };
-            memset(framebuffer, 0, sizeof(framebuffer));
-            dm2_v1_viewport_init(&viewport, framebuffer, 320);
-            dm2_v1_viewport_set_hud_party(&viewport, &party);
-            dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &layout);
-            dm2_v1_render_ui_chrome(&viewport);
-            CHECK("DM2 HUD consumes expanded dt04 champion placement rows",
-                  framebuffer[5 * 320 + 50] == 2 &&
-                      framebuffer[5 * 320 + 58] == 11 &&
-                      framebuffer[5 * 320 + 66] == 0);
-        }
-
-        {
-            uint8_t font_rows[6 * 128] = { 0 };
-            uint8_t palette16[16];
-            for (int i = 0; i < 16; ++i) {
-                palette16[i] = (uint8_t)(0xa0 + i);
-            }
-            /* QUERY_FONT samples bit 0x10, then 0x04, then 0x01. */
-            for (int row = 0; row < 6; ++row) {
-                font_rows[row * 128 + (unsigned char)'T'] = 0x15u;
-            }
-            memcpy(party.champions[0].name, "T", 2);
-            memset(framebuffer, 0, sizeof(framebuffer));
-            dm2_v1_viewport_init(&viewport, framebuffer, 320);
-            dm2_v1_viewport_set_hud_party(&viewport, &party);
-            dm2_v1_viewport_set_gdat_interface_palette(
-                &viewport, 1, 0x51a7c0deu, palette16);
-            dm2_v1_viewport_set_gdat_interface_font(
-                &viewport, font_rows, 0x470a0008u);
-            dm2_v1_render_ui_chrome(&viewport);
-            CHECK("DM2 champion HUD names consume source dt07/0 font pixels",
-                  viewport.gdat_interface_font_consumed_count == 1 &&
-                      framebuffer[32 * 320 + 270] == palette16[15] &&
-                      framebuffer[37 * 320 + 272] == palette16[15] &&
-                      viewport.gdat_interface_palette_consumed_count > 0);
-        }
-
-        {
-            uint8_t palette16[16];
-            for (int i = 0; i < 16; ++i) {
-                palette16[i] = (uint8_t)(0xa0 + i);
-            }
-            memset(framebuffer, 0, sizeof(framebuffer));
-            dm2_v1_viewport_init(&viewport, framebuffer, 320);
-            dm2_v1_viewport_set_hud_party(&viewport, &party);
-            dm2_v1_viewport_set_gdat_interface_palette(
-                &viewport, 1, 0x51a7c0deu, palette16);
-            dm2_v1_render_ui_chrome(&viewport);
-            CHECK("DM2 champion HUD state bars consume bound GDAT palette16",
-                  viewport.gdat_interface_palette_consumed_count > 0 &&
-                      framebuffer[33 * 320 + 246] == palette16[15] &&
-                      framebuffer[39 * 320 + 270] == palette16[2] &&
-                      framebuffer[44 * 320 + 292] == palette16[11] &&
-                      framebuffer[49 * 320 + 272] == palette16[12]);
-        }
-
-        memset(framebuffer, 0, sizeof(framebuffer));
-        dm2_v1_viewport_init(&viewport, framebuffer, 320);
-        dm2_v1_viewport_set_hud_party(&viewport, &party);
-        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-        dm2_v1_render_ui_chrome(&viewport);
-        CHECK("DM2 real-profile HUD blocks missing source surfaces but keeps state overlays",
-              viewport.asset_hud_core_drawn_count == 0 &&
-                  viewport.fallback_hud_core_drawn_count == 0 &&
-                  viewport.asset_hud_portrait_drawn_count == 0 &&
-                  viewport.fallback_hud_portrait_drawn_count == 0 &&
-                  (viewport.blocked_material_mask &
-                   (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE |
-                    DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT)) ==
-                      (DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE |
-                       DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT) &&
-                  framebuffer[0] == 0 &&
-                  framebuffer[39 * 320 + 270] == 2 &&
-                  framebuffer[44 * 320 + 292] == 11 &&
-                  framebuffer[49 * 320 + 272] == 12);
 
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1767,48 +1638,6 @@ int main(void)
               e != NULL && strstr(e, "creature possession item overlays") != NULL);
         CHECK("source evidence cites DM2 palette documentation",
               e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
-    }
-    {
-        uint8_t raw[1u + 1u + 3u + 3u + 512u] = { 0 };
-        uint8_t palette[4] = { 1u, 2u, 3u, 4u };
-        DM2_V1_InterfaceActionTable table;
-
-        raw[0] = 1u;
-        raw[1] = 3u;
-        raw[2] = 0u;
-        raw[3] = 32u;
-        raw[4] = 64u;
-        raw[5] = 10u;
-        raw[6] = 20u;
-        raw[7] = 30u;
-        for (int i = 0; i < 256; ++i) {
-            raw[8 + i * 2] = 0u;
-            raw[8 + i * 2 + 1] = 1u;
-        }
-        memset(&table, 0, sizeof(table));
-        table.valid = 1;
-        table.raw = raw;
-        table.raw_size = (uint32_t)sizeof(raw);
-        table.group_count = 1u;
-        table.tail_offset = 8u;
-        table.tail_size = 512u;
-        table.groups[0].length = 3u;
-        table.groups[0].primary_offset = 2u;
-        table.groups[0].secondary_offset = 5u;
-        CHECK("DM2 dt07/2 palette transform follows skproject nearest threshold",
-              dm2_v1_interface_action_table_remap_palette(
-                  &table, palette, 4u, 32u, -1, -1) == 1 &&
-                  palette[0] == 10u && palette[3] == 10u);
-        palette[0] = 1u;
-        palette[1] = 2u;
-        CHECK("DM2 dt07/2 palette transform preserves source colorkeys",
-              dm2_v1_interface_action_table_remap_palette(
-                  &table, palette, 2u, 0u, 1, -1) == 1 &&
-                  palette[0] == 20u && palette[1] == 2u);
-        table.tail_size = 511u;
-        CHECK("DM2 dt07/2 palette transform rejects a truncated mapping tail",
-              dm2_v1_interface_action_table_remap_palette(
-                  &table, palette, 2u, 0u, -1, -1) == 0);
     }
     test_door_rect_contracts();
     test_hud_chrome_render_plan();

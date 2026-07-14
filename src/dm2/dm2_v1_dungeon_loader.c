@@ -72,19 +72,6 @@ static uint16_t rd16le(const uint8_t *p) {
 
 #define RD16(p) rd16le(p)
 
-static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    uint32_t i;
-
-    if (!data || byte_count == 0u) return 0u;
-    for (i = 0u; i < byte_count; ++i) {
-        hash ^= data[i];
-        hash *= 16777619u;
-    }
-    return hash ? hash : 1u;
-}
-
 /* DUNGEON_HEADER field offsets */
 #define DM2_HDR_MAP_COUNT_OFFSET   6
 #define DM2_HDR_SEED_OFFSET       8
@@ -96,7 +83,6 @@ static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
-#define DM2_THING_NULL_MARKER 0xffffu
 #define DM2_THING_END_MARKER 0xfffeu
 
 /* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
@@ -106,9 +92,6 @@ static uint32_t dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
  * before dunGroundStacks, and c_map.cpp maps tile bit 0x10 through it. */
 #define DM2_PC_G1_MAP_EXTENSION_BYTES       256
 #define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
-#define DM2_PC_G1_DB3_EXTENDED_COUNT         1024
-#define DM2_PC_G1_DB4_EXTENDED_COUNT          300
-#define DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES 9
 
 static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08,
@@ -116,70 +99,6 @@ static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x08, 0x04, 0x00,
     0x00, 0x00, 0x08, 0x04
 };
-
-/* The canonical PC G1 continuation has two source-sized c_record runs after
- * the declared pools. c_map.cpp supplies raw ObjectIDs from dunGroundStacks;
- * c_record.cpp defines the 10-bit index and per-DB byte stride. The corpus
- * fixes DB3's continuation at the ObjectID ceiling, then DB4's at 300 rows.
- * Its final nine bytes are not records and remain deliberately untyped. */
-static void dm2_v1_configure_pc_g1_extension_records(
-    DM2_V1_DungeonData *d) {
-    int db3_bytes;
-    int db4_bytes;
-
-    if (!d) return;
-    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
-        d->g1_extension_record_bases[type] = -1;
-        d->g1_extension_record_counts[type] = 0;
-    }
-    if (d->square_bytes != 1 || d->g1_extension_base < 0 ||
-        d->thing_type_counts[3] != 299 || d->thing_type_counts[4] != 173) {
-        return;
-    }
-    db3_bytes = (DM2_PC_G1_DB3_EXTENDED_COUNT -
-                 d->thing_type_counts[3]) * s_dm2_db_record_size[3];
-    db4_bytes = (DM2_PC_G1_DB4_EXTENDED_COUNT -
-                 d->thing_type_counts[4]) * s_dm2_db_record_size[4];
-    if (d->g1_extension_size != db3_bytes + db4_bytes +
-                                DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES) {
-        return;
-    }
-    d->g1_extension_record_bases[3] = d->g1_extension_base;
-    d->g1_extension_record_counts[3] =
-        DM2_PC_G1_DB3_EXTENDED_COUNT - d->thing_type_counts[3];
-    d->g1_extension_record_bases[4] = d->g1_extension_base + db3_bytes;
-    d->g1_extension_record_counts[4] =
-        DM2_PC_G1_DB4_EXTENDED_COUNT - d->thing_type_counts[4];
-}
-
-static int dm2_v1_g1_extension_record_offset(const DM2_V1_DungeonData *d,
-                                              int type,
-                                              int index,
-                                              int *out_offset) {
-    int extension_index;
-    int record_size;
-    int offset;
-
-    if (!d || !out_offset || type < 0 || type >= DM2_THING_TYPE_COUNT ||
-        index < d->thing_type_counts[type] ||
-        d->g1_extension_record_bases[type] < 0) {
-        return 0;
-    }
-    extension_index = index - d->thing_type_counts[type];
-    record_size = s_dm2_db_record_size[type];
-    if (record_size <= 0 || extension_index < 0 ||
-        extension_index >= d->g1_extension_record_counts[type]) {
-        return 0;
-    }
-    offset = d->g1_extension_record_bases[type] +
-             extension_index * record_size;
-    if (offset < d->g1_extension_record_bases[type] ||
-        offset + record_size > d->g1_extension_base + d->g1_extension_size) {
-        return 0;
-    }
-    *out_offset = offset;
-    return 1;
-}
 
 static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
                                   int level,
@@ -240,8 +159,6 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
         return 0;
 
     memset(out, 0, sizeof(*out));
-    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i)
-        out->g1_extension_record_bases[i] = -1;
     out->level_count = map_count;
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
@@ -341,8 +258,6 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         return 0;
 
     memset(out, 0, sizeof(*out));
-    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i)
-        out->g1_extension_record_bases[i] = -1;
     out->level_count = map_count;
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
@@ -437,27 +352,16 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->column_index_base = column_index_base;
     out->square_first_thing_base = sft_base;
     out->text_data_base = text_base;
-    dm2_v1_configure_pc_g1_extension_records(out);
     out->raw_data = (uint8_t *)malloc((size_t)size);
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
-    /* First classify every map-owned root without following GenericRecord::w0.
-     * The canonical G1 corpus has five DB8/DB10 roots outside the direct and
-     * DB3/DB4 address transforms, so a complete graph must not be attempted
-     * for it.  ReDMCSB DUNGEON.C F0159 only follows Next after GetThingData;
-     * partial boot deliberately stops before that operation. */
-    {
-        DM2_V1_G1RecordPoolEvidence evidence;
-        if (dm2_v1_dungeon_collect_g1_record_pool_evidence(out, &evidence) &&
-            evidence.map_root_shape_invalid == 0) {
-            out->record_graph_complete = 1;
-            if (!dm2_v1_dungeon_validate_record_graph(out))
-                out->record_graph_complete = 0;
-        }
-    }
-    (void)dm2_v1_dungeon_materialize_g1_partial_map_boot(
-        out, &out->partial_map_boot);
+    /* The public validator intentionally rejects unpromoted graphs. Enable
+     * this candidate only for its complete bounded walk, then clear it again
+     * on the first invalid root/link/cycle. */
+    out->record_graph_complete = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(out))
+        out->record_graph_complete = 0;
     return 1;
 }
 
@@ -716,32 +620,15 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     if (out_type) *out_type = -1;
     if (out_index) *out_index = -1;
     if (out_size) *out_size = 0;
-    /* skproject/SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines
-     * 45-52 computes the DB address from the raw 16-bit value, while its
-     * callers (for example DM2_APPEND_RECORD_TO lines 67-68) reject both
-     * OBJECT_END_MARKER and OBJECT_NULL before that operation.  Keep that
-     * sentinel boundary here too: 0xffff otherwise decodes as DB15/index
-     * 1023 and a malformed G1 pool could turn the null marker into bytes. */
-    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER ||
-        thing == DM2_THING_NULL_MARKER)
+    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER)
         return NULL;
     type = (int)((thing >> 10) & 0x0fu);
     index = (int)(thing & 0x03ffu);
     if (type < 0 || type >= DM2_THING_TYPE_COUNT) return NULL;
     size = (int)s_dm2_db_record_size[type];
-    if (size <= 0 || index < 0)
+    if (size <= 0 || index < 0 || index >= d->thing_type_counts[type])
         return NULL;
-    if (index < d->thing_type_counts[type]) {
-        /* skproject/SKULLWIN/c_record.cpp init_global_records lines 33-38
-         * initializes every recordptr[] to NULL before the loader commits a
-         * pool. Do not let Firestaff's -1 sentinel become a positive byte
-         * address after index times table_recordsizes[type]. */
-        if (d->thing_data_bases[type] < 0)
-            return NULL;
-        offset = d->thing_data_bases[type] + index * size;
-    } else if (!dm2_v1_g1_extension_record_offset(d, type, index, &offset)) {
-        return NULL;
-    }
+    offset = d->thing_data_bases[type] + index * size;
     if (offset < 0 || offset + size > d->raw_size) return NULL;
     if (out_type) *out_type = type;
     if (out_index) *out_index = index;
@@ -752,15 +639,11 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
 int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
                                   uint16_t thing) {
     const uint8_t *record;
-    uint16_t next;
     int size = 0;
 
     /* skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK
      * returns GET_ADDRESS_OF_RECORD(rl)->w0; GenericRecord::w0 is the
-     * first little-endian word in every bounded DB pool record.  c_record.cpp
-     * DM2_APPEND_RECORD_TO/CUT_RECORD_FROM lines 66-68 and 126-127 reject
-     * OBJECT_NULL before a record address is used.  It is not a map-chain
-     * terminator, so do not pass it through to HUD/dungeon chain consumers. */
+     * first little-endian word in every bounded DB pool record. */
     /* The PC G1 corpus proves the pool addresses but not every ObjectID
      * shape in the ground-stack graph. Do not promote GenericRecord::w0
      * traversal for that variant until its complete graph validates. */
@@ -770,8 +653,7 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     }
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
-    next = RD16(record);
-    return next == DM2_THING_NULL_MARKER ? -1 : (int)next;
+    return (int)RD16(record);
 }
 
 static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
@@ -784,72 +666,6 @@ static int dm2_v1_g1_link_has_declared_shape(const DM2_V1_DungeonData *d,
     index = (int)(link & 0x03ffu);
     return s_dm2_db_record_size[type] > 0 &&
            index >= 0 && index < d->thing_type_counts[type];
-}
-
-static int dm2_v1_g1_link_has_extension_shape(const DM2_V1_DungeonData *d,
-                                               uint16_t link) {
-    int type;
-    int index;
-    int offset;
-
-    if (!d || link == DM2_THING_END_MARKER) return 0;
-    type = (int)((link >> 10) & 0x0fu);
-    index = (int)(link & 0x03ffu);
-    return dm2_v1_g1_extension_record_offset(d, type, index, &offset);
-}
-
-static int dm2_v1_g1_link_has_record_shape(const DM2_V1_DungeonData *d,
-                                            uint16_t link) {
-    return dm2_v1_g1_link_has_declared_shape(d, link) ||
-           dm2_v1_g1_link_has_extension_shape(d, link);
-}
-
-static int dm2_v1_dungeon_record_list_traversal_allowed(
-    const DM2_V1_DungeonData *d) {
-    /* skproject/SKULLWIN/c_map.cpp uses DM2_GET_TILE_RECORD_LINK before
-     * repeatedly calling c_record.cpp DM2_GET_NEXT_RECORD_LINK. Generic
-     * dungeon/HUD helpers must therefore consume a fully materialized map to
-     * record graph. The direct G1 runtime receipts below are the deliberately
-     * narrower, source-scoped alternative for an incomplete PC corpus. */
-    return d && (d->square_bytes != 1 || d->g1_extension_size <= 0 ||
-                 d->record_graph_complete);
-}
-
-static int dm2_v1_g1_read_teleporter_root(
-    const DM2_V1_DungeonData *d,
-    uint16_t object_id,
-    int x,
-    int y,
-    DM2_V1_G1TeleporterRoot *out) {
-    const uint8_t *record;
-    int offset;
-    int index;
-
-    /* skproject/SKULLWIN/c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines 45-52
-     * resolves a DB1 ObjectID by its 10-bit index and six-byte stride.
-     * skproject/SKWIN/DME.h Teleporter lines 367-382 fixes w2/w4, including
-     * destination coordinates/map, scope, sound, and rotation.
-     * This deliberately does not call GET_NEXT_RECORD_LINK or read w0. */
-    if (!d || !out || ((object_id >> 10) & 0x0fu) != 1u) return 0;
-    index = object_id & 0x03ffu;
-    if (index >= d->thing_type_counts[1]) {
-        return 0;
-    }
-    offset = d->thing_data_bases[1] + index * s_dm2_db_record_size[1];
-    if (offset < 0 || offset + s_dm2_db_record_size[1] > d->raw_size) return 0;
-    record = d->raw_data + offset;
-    out->x = x;
-    out->y = y;
-    out->object_id = object_id;
-    out->index = index;
-    out->destination_x = (uint8_t)(RD16(record + 2) & 0x001fu);
-    out->destination_y = (uint8_t)((RD16(record + 2) >> 5) & 0x001fu);
-    out->destination_map = (uint8_t)(RD16(record + 4) >> 8);
-    out->scope = (uint8_t)((RD16(record + 2) >> 13) & 0x0003u);
-    out->sound = (uint8_t)((RD16(record + 2) >> 15) & 0x0001u);
-    out->rotation = (uint8_t)((RD16(record + 2) >> 10) & 0x0003u);
-    out->rotation_type = (uint8_t)((RD16(record + 2) >> 12) & 0x0001u);
-    return 1;
 }
 
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
@@ -872,10 +688,32 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
              d->thing_data_bases[type] < 0)) {
             return 0;
         }
-        total_records += d->thing_type_counts[type] +
-                         d->g1_extension_record_counts[type];
+        total_records += d->thing_type_counts[type];
     }
     if (total_records <= 0) return 0;
+
+    /* READ_DUNGEON_STRUCTURE owns every declared c_record before map use.
+     * Do not promote a direct graph based solely on reachable roots: an
+     * unvisited pool record with a non-ObjectID w0 would leave ownership
+     * incomplete and invite guessed traversal later.  skproject
+     * SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE:40037-40056,
+     * SKWIN/DME.h GenericRecord::w0:831-847. */
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int record_size = (int)s_dm2_db_record_size[type];
+        for (int index = 0; index < d->thing_type_counts[type]; ++index) {
+            int offset;
+            uint16_t next;
+            if (record_size < 2 || d->thing_data_bases[type] < 0)
+                return 0;
+            offset = d->thing_data_bases[type] + index * record_size;
+            if (offset < 0 || offset + 1 >= d->raw_size) return 0;
+            next = RD16(d->raw_data + offset);
+            if (next != DM2_THING_END_MARKER &&
+                !dm2_v1_g1_link_has_declared_shape(d, next)) {
+                return 0;
+            }
+        }
+    }
 
     for (level = 0; level < d->level_count; ++level) {
         int x;
@@ -885,90 +723,24 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
                 int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
                 int thing;
                 int steps = 0;
-                uint8_t seen[DM2_THING_TYPE_COUNT][1024] = {{0}};
                 if (raw < 0) return 0;
                 if ((raw & 0x10) == 0) continue;
                 thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
                 while (thing != (int)DM2_THING_END_MARKER) {
                     int next;
-                    int type;
-                    int index;
-
-                    /* skproject SKWINSPX/src/v4/skcore.cpp:1184-1200 reads
-                     * GenericRecord::w0 only after GET_ADDRESS_OF_RECORD()
-                     * has accepted the ObjectID.  Therefore only records
-                     * reached from a map-owned root participate here; unused
-                     * pool slots are allocation state, not inferred links.
-                     * SKWIN/DME.h:831-847 names w0 the next ObjectID. */
-                    if (thing < 0 || !dm2_v1_g1_link_has_record_shape(
-                                         d, (uint16_t)thing) ||
-                        ++steps > total_records) {
-                        return 0;
-                    }
-                    type = ((uint16_t)thing >> 10) & 0x0f;
-                    index = (uint16_t)thing & 0x03ff;
-                    if (seen[type][index]) return 0;
-                    seen[type][index] = 1;
-                    if (!dm2_v1_dungeon_get_thing_record(
+                    if (thing < 0 || ++steps > total_records ||
+                        !dm2_v1_dungeon_get_thing_record(
                             d, (uint16_t)thing, NULL, NULL, NULL)) {
                         return 0;
                     }
                     next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
-                    if (next < 0 || (next != (int)DM2_THING_END_MARKER &&
-                                     !dm2_v1_g1_link_has_record_shape(
-                                         d, (uint16_t)next))) {
-                        return 0;
-                    }
+                    if (next < 0) return 0;
                     thing = next;
                 }
             }
         }
     }
     return 1;
-}
-
-int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d) {
-    int cursor;
-
-    /* ReDMCSB/skproject c_record.cpp DM2_GET_ADDRESS_OF_RECORD lines 46-52
-     * resolves recordptr[type] + glbItemSizePerDB[type] * (ObjectID & 0x3ff).
-     * skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE lines 40037-40056
-     * loads those recordptr bases consecutively after dunTextData. PC DOS G1
-     * proves this bounded pool transform, but not GenericRecord::w0 graph
-     * semantics, so boot may validate addresses without enabling traversal. */
-    if (!d || !d->raw_data || d->text_data_base < 0 ||
-        d->text_word_count < 0 || d->raw_size < 0) {
-        return 0;
-    }
-    cursor = d->text_data_base + d->text_word_count * 2;
-    if (cursor < d->text_data_base || cursor > d->raw_size) return 0;
-
-    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
-        int count = d->thing_type_counts[type];
-        int record_size = (int)s_dm2_db_record_size[type];
-        long pool_bytes;
-        int expected_base;
-
-        if (count < 0 || record_size < 0) return 0;
-        pool_bytes = (long)count * (long)record_size;
-        if (pool_bytes < 0 || pool_bytes > INT32_MAX ||
-            cursor + pool_bytes > d->raw_size) {
-            return 0;
-        }
-        expected_base = (count > 0 && record_size > 0) ? cursor : -1;
-        if (d->thing_data_bases[type] != expected_base) return 0;
-        cursor += (int)pool_bytes;
-    }
-
-    /* G1 has a proven untyped extension between c_record pools and map data.
-     * Other accepted layouts place map bytes immediately after the pools. */
-    if (d->square_bytes == 1 && d->g1_extension_base >= 0) {
-        return cursor == d->g1_extension_base &&
-               d->g1_extension_size >= 0 &&
-               d->g1_extension_base + d->g1_extension_size ==
-                   d->raw_map_data_base;
-    }
-    return cursor == d->raw_map_data_base;
 }
 
 int dm2_v1_dungeon_collect_g1_record_pool_evidence(
@@ -1036,60 +808,6 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
             ++out->root_shape_invalid;
     }
 
-    /* skproject/SKULLWIN/c_map.cpp DM2_GET_OBJECT_INDEX_FROM_TILE only
-     * indexes dunGroundStacks for squares whose raw map byte has bit 0x10.
-     * Do not infer map roots from unused capacity entries. c_record.h:10-11
-     * separately defines OBJECT_NULL (-1) and OBJECT_END_MARKER (-2). */
-    for (int level = 0; level < d->level_count; ++level) {
-        int column_index = 0;
-        for (int previous = 0; previous < level; ++previous)
-            column_index += d->level_widths[previous];
-        for (int x = 0; x < d->level_widths[level]; ++x) {
-            int thing_index;
-            int column_offset = d->column_index_base + (column_index + x) * 2;
-            int square_offset = d->raw_map_data_base + d->level_offsets[level] +
-                                x * d->level_heights[level];
-
-            if (column_offset < 0 || column_offset + 1 >= d->raw_size ||
-                square_offset < 0 ||
-                square_offset + d->level_heights[level] > d->raw_size) {
-                return 0;
-            }
-            thing_index = (int)RD16(d->raw_data + column_offset);
-            for (int y = 0; y < d->level_heights[level]; ++y) {
-                uint16_t link;
-                if ((d->raw_data[square_offset + y] & 0x10u) == 0)
-                    continue;
-                if (thing_index < 0 ||
-                    thing_index >= d->square_first_thing_count) {
-                    return 0;
-                }
-                link = RD16(d->raw_data + d->square_first_thing_base +
-                            thing_index * 2);
-                ++out->map_root_count;
-                ++out->map_root_count_by_map[level];
-                if (link == DM2_THING_END_MARKER)
-                    ++out->map_root_end_markers;
-                else if (link == DM2_THING_NULL_MARKER)
-                    ++out->map_root_null_markers;
-                else if (dm2_v1_g1_link_has_declared_shape(d, link)) {
-                    ++out->map_root_shape_valid;
-                    ++out->map_root_direct_by_type[(link >> 10) & 0x0f];
-                } else if (dm2_v1_g1_link_has_extension_shape(d, link)) {
-                    ++out->map_root_extension_shape_valid;
-                    ++out->map_root_extension_by_type[(link >> 10) & 0x0f];
-                    ++out->map_root_extension_by_map[level];
-                } else {
-                    ++out->map_root_shape_invalid;
-                    ++out->map_root_unresolved_after_extension;
-                    ++out->map_root_unresolved_by_type[(link >> 10) & 0x0f];
-                    ++out->map_root_unresolved_by_map[level];
-                }
-                ++thing_index;
-            }
-        }
-    }
-
     for (type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
         int base = out->candidate_pool_bases[type];
         int count = d->thing_type_counts[type];
@@ -1111,1580 +829,13 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     return 1;
 }
 
-int dm2_v1_dungeon_collect_g1_ground_stack_map_corpus_receipt(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1GroundStackMapCorpusReceipt *out)
-{
-    int column_words;
-    int column_bytes;
-    int ground_stack_bytes;
-    int map_bytes;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    out->g1_layout_absent = 1;
-
-    /* skproject/SKULLWIN/c_map.cpp:43-67 retains both meanings as TODO:
-     * ddat.v1e03f4 is only an index source and dunGroundStacks only returns
-     * an opaque t_record. Keep the source-proven byte spans as corpus
-     * evidence; do not turn either table into decoded map/object ownership. */
-    if (!d || !d->raw_data || d->square_bytes != 1 ||
-        d->column_index_base < 0 || d->square_first_thing_base < 0 ||
-        d->square_first_thing_count < 0 || d->raw_map_data_base < 0 ||
-        d->raw_size < 0) {
-        return 1;
-    }
-
-    column_words = (d->square_first_thing_base - d->column_index_base) / 2;
-    column_bytes = column_words * 2;
-    ground_stack_bytes = d->square_first_thing_count * 2;
-    map_bytes = d->raw_size - d->raw_map_data_base;
-    if (d->square_first_thing_base < d->column_index_base ||
-        column_words <= 0 || column_bytes <= 0 || ground_stack_bytes < 0 ||
-        map_bytes <= 0 ||
-        d->column_index_base + column_bytes != d->square_first_thing_base ||
-        d->square_first_thing_base + ground_stack_bytes > d->raw_size ||
-        d->raw_map_data_base + map_bytes != d->raw_size) {
-        return 1;
-    }
-
-    out->g1_layout_absent = 0;
-    out->raw_only = 1;
-    out->column_index_semantics_unresolved = 1;
-    out->ground_stack_semantics_unresolved = 1;
-    out->column_index_base = d->column_index_base;
-    out->column_index_word_count = column_words;
-    out->column_index_byte_count = (uint32_t)column_bytes;
-    out->column_index_hash = dm2_v1_g1_receipt_hash(
-        d->raw_data + d->column_index_base, out->column_index_byte_count);
-    out->ground_stack_base = d->square_first_thing_base;
-    out->ground_stack_word_count = d->square_first_thing_count;
-    out->ground_stack_byte_count = (uint32_t)ground_stack_bytes;
-    out->ground_stack_hash = dm2_v1_g1_receipt_hash(
-        d->raw_data + d->square_first_thing_base,
-        out->ground_stack_byte_count);
-    out->map_data_base = d->raw_map_data_base;
-    out->map_data_byte_count = (uint32_t)map_bytes;
-    out->map_data_hash = dm2_v1_g1_receipt_hash(
-        d->raw_data + d->raw_map_data_base, out->map_data_byte_count);
-    if (out->column_index_hash == 0u || out->ground_stack_hash == 0u ||
-        out->map_data_hash == 0u) {
-        memset(out, 0, sizeof(*out));
-        out->g1_layout_absent = 1;
-        return 1;
-    }
-    out->available = 1;
-    return 1;
-}
-
-int dm2_v1_dungeon_collect_g1_map_corpus_receipt(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1MapCorpusReceipt *out)
-{
-    uint32_t map_data_bytes;
-    int level;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    out->g1_layout_absent = 1;
-
-    /* skproject/SKWIN/DME.h Map_definitions proves only the raw offset and
-     * w8 dimensions.  Correlate that descriptor with a bounded byte span,
-     * but never promote the bytes into tile or record meaning. */
-    if (!d || !d->raw_data || d->square_bytes != 1 ||
-        d->g1_extension_base < 0 || d->raw_map_data_base < 0 ||
-        d->raw_size < 0 || d->level_count <= 0 ||
-        d->level_count > DM2_V1_MAX_LEVELS ||
-        d->raw_map_data_base > d->raw_size) {
-        return 1;
-    }
-
-    map_data_bytes = (uint32_t)(d->raw_size - d->raw_map_data_base);
-    if (map_data_bytes == 0u) return 1;
-
-    out->g1_layout_absent = 0;
-    out->raw_only = 1;
-    out->tile_semantics_unresolved = 1;
-    out->map_count = d->level_count;
-    out->map_data_base = d->raw_map_data_base;
-    out->map_data_byte_count = map_data_bytes;
-    out->map_data_hash = dm2_v1_g1_receipt_hash(
-        d->raw_data + d->raw_map_data_base, map_data_bytes);
-    if (out->map_data_hash == 0u) goto absent;
-
-    for (level = 0; level < d->level_count; ++level) {
-        DM2_V1_G1MapRawSpan *span = &out->maps[level];
-        int descriptor_base = DM2_DUNGEON_HEADER_SIZE +
-                              level * DM2_MAP_DESC_SIZE;
-        int map_offset = d->level_offsets[level];
-        int width = d->level_widths[level];
-        int height = d->level_heights[level];
-        long map_bytes = (long)width * (long)height;
-
-        if (descriptor_base < 0 ||
-            descriptor_base > d->raw_size - DM2_MAP_DESC_SIZE ||
-            map_offset < 0 || width <= 0 || height <= 0 ||
-            map_bytes <= 0 || map_bytes > (long)UINT32_MAX ||
-            map_offset > (int)map_data_bytes ||
-            map_bytes > (long)map_data_bytes - map_offset) {
-            goto absent;
-        }
-
-        span->map = level;
-        span->descriptor_base = descriptor_base;
-        span->map_data_offset = map_offset;
-        span->width = width;
-        span->height = height;
-        span->descriptor_hash = dm2_v1_g1_receipt_hash(
-            d->raw_data + descriptor_base, DM2_MAP_DESC_SIZE);
-        span->map_byte_count = (uint32_t)map_bytes;
-        span->map_hash = dm2_v1_g1_receipt_hash(
-            d->raw_data + d->raw_map_data_base + map_offset,
-            span->map_byte_count);
-        if (span->descriptor_hash == 0u || span->map_hash == 0u)
-            goto absent;
-    }
-
-    out->available = 1;
-    return 1;
-
-absent:
-    memset(out, 0, sizeof(*out));
-    out->g1_layout_absent = 1;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_partial_map_boot(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1PartialMapBootReceipt *out) {
-    DM2_V1_G1PartialMapBootReceipt candidate;
-    int column_index = 0;
-
-    if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
-        d->record_graph_complete || d->column_index_base < 0 ||
-        d->square_first_thing_base < 0 || d->raw_map_data_base < 0) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.level_count = d->level_count;
-
-    /* c_map.cpp selects dunGroundStacks only for bit 0x10 squares.  Read the
-     * root ObjectID once, classify its source-proven address transform, and
-     * never read its GenericRecord::w0. */
-    for (int level = 0; level < d->level_count; ++level) {
-        for (int x = 0; x < d->level_widths[level]; ++x) {
-            int stack = (int)RD16(d->raw_data + d->column_index_base +
-                                  (column_index + x) * 2);
-            for (int y = 0; y < d->level_heights[level]; ++y) {
-                int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
-                uint16_t root;
-                int type;
-                int index;
-
-                if (raw < 0) return 0;
-                if ((raw & 0x10) == 0) continue;
-                if (stack < 0 || stack >= d->square_first_thing_count)
-                    return 0;
-                root = RD16(d->raw_data + d->square_first_thing_base +
-                            stack * 2);
-                ++candidate.map_root_count;
-                type = (root >> 10) & 0x0f;
-                index = root & 0x03ff;
-                if (dm2_v1_g1_link_has_declared_shape(d, root)) {
-                    ++candidate.direct_root_count;
-                    ++candidate.direct_root_count_by_type[type];
-                    ++candidate.materialized_root_count;
-                } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
-                    if (type == 3) ++candidate.db3_root_count;
-                    else if (type == 4) ++candidate.db4_root_count;
-                    else return 0;
-                    ++candidate.materialized_root_count;
-                } else {
-                    DM2_V1_G1BlockedRoot *blocked;
-                    if ((type != 8 && type != 10) ||
-                        candidate.blocked_root_count >=
-                            DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS) {
-                        return 0;
-                    }
-                    blocked = &candidate.blocked_roots[
-                        candidate.blocked_root_count++];
-                    blocked->map = level;
-                    blocked->x = x;
-                    blocked->y = y;
-                    blocked->object_id = root;
-                    blocked->type = type;
-                    blocked->index = index;
-                    ++candidate.blocked_root_count_by_map[level];
-                }
-                ++stack;
-            }
-        }
-        column_index += d->level_widths[level];
-    }
-
-    if (candidate.map_root_count != 883 ||
-        candidate.direct_root_count != 676 || candidate.db3_root_count != 174 ||
-        candidate.db4_root_count != 28 || candidate.materialized_root_count != 878 ||
-        candidate.blocked_root_count != DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS) {
-        return 0;
-    }
-    candidate.incomplete = 1;
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_validate_g1_runtime_map(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapValidationReceipt *out) {
-    DM2_V1_G1PartialMapBootReceipt partial;
-    DM2_V1_G1MapCorpusReceipt corpus;
-    DM2_V1_G1RuntimeMapValidationReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp DM2_GET_OBJECT_INDEX_FROM_TILE and
-     * DM2_GET_TILE_RECORD_LINK select only the map's column and
-     * dunGroundStacks root. c_record.cpp DM2_GET_NEXT_RECORD_LINK is a later
-     * operation and is deliberately absent here. */
-    if (!out || !d || !d->raw_data || map < 0 || map >= d->level_count ||
-        !dm2_v1_dungeon_validate_record_pools(d) ||
-        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
-        !partial.committed || !partial.incomplete ||
-        !dm2_v1_dungeon_collect_g1_map_corpus_receipt(d, &corpus) ||
-        !corpus.available || corpus.g1_layout_absent) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-    if (column_index < 0 ||
-        column_index + d->level_widths[map] >
-            (d->square_first_thing_base - d->column_index_base) / 2) {
-        return 0;
-    }
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    candidate.width = d->level_widths[map];
-    candidate.height = d->level_heights[map];
-    candidate.map_data_base = d->raw_map_data_base;
-    candidate.map_data_offset = d->level_offsets[map];
-    candidate.map_data_byte_count = corpus.maps[map].map_byte_count;
-    candidate.map_data_hash = corpus.maps[map].map_hash;
-    if (candidate.width <= 0 || candidate.height <= 0 ||
-        candidate.map_data_byte_count == 0u || candidate.map_data_hash == 0u) {
-        return 0;
-    }
-
-    for (int x = 0; x < candidate.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < candidate.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            int type;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            type = (root >> 10) & 0x0f;
-            ++candidate.root_count;
-            if (dm2_v1_g1_link_has_declared_shape(d, root)) {
-                ++candidate.direct_root_count;
-            } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
-                if (type == 3) ++candidate.db3_root_count;
-                else if (type == 4) ++candidate.db4_root_count;
-                else return 0;
-            } else if (type == 8 || type == 10) {
-                ++candidate.blocked_root_count;
-            } else {
-                return 0;
-            }
-            ++stack;
-        }
-    }
-
-    if (candidate.root_count <= 0 ||
-        candidate.root_count != candidate.direct_root_count +
-            candidate.db3_root_count + candidate.db4_root_count +
-            candidate.blocked_root_count ||
-        candidate.blocked_root_count != partial.blocked_root_count_by_map[map]) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_resolve_g1_direct_root_record(
-    const DM2_V1_DungeonData *d,
-    int level,
-    int x,
-    int y,
-    DM2_V1_G1DirectRootRecordAddressReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1DirectRootRecordAddressReceipt candidate;
-    uint16_t root;
-    int type;
-    int index;
-    int record_size;
-    int record_offset;
-
-    /* skproject SKULLWIN/c_map.cpp selects dunGroundStacks for a tile, then
-     * c_record.cpp computes recordptr[type] + size[type] * index. Stop at
-     * that address: GET_NEXT_RECORD_LINK's w0 read is not part of this path. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, level, &validation) ||
-        !validation.committed || !validation.incomplete_world ||
-        x < 0 || x >= validation.width || y < 0 || y >= validation.height) {
-        return 0;
-    }
-    if (dm2_v1_dungeon_get_tile_raw(d, level, x, y) < 0) return 0;
-    root = (uint16_t)dm2_v1_dungeon_get_first_thing(d, level, x, y);
-    if (root == DM2_THING_END_MARKER || root == DM2_THING_NULL_MARKER ||
-        !dm2_v1_g1_link_has_declared_shape(d, root)) {
-        return 0;
-    }
-    type = (root >> 10) & 0x0f;
-    index = root & 0x03ff;
-    if (!((type >= 0 && type <= 5) || type == 9) ||
-        index < 0 || index >= d->thing_type_counts[type] ||
-        d->thing_data_bases[type] < 0) {
-        return 0;
-    }
-    record_size = (int)s_dm2_db_record_size[type];
-    record_offset = d->thing_data_bases[type] + index * record_size;
-    if (record_size <= 0 || record_offset < d->thing_data_bases[type] ||
-        record_offset + record_size > d->g1_extension_base ||
-        record_offset + record_size > d->raw_size) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.level = level;
-    candidate.x = x;
-    candidate.y = y;
-    candidate.object_id = root;
-    candidate.type = (uint8_t)type;
-    candidate.index = (uint16_t)index;
-    candidate.record_offset = record_offset;
-    candidate.record_size = record_size;
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_collect_g1_direct_root_chain(
-    const DM2_V1_DungeonData *d,
-    int level,
-    int x,
-    int y,
-    DM2_V1_G1DirectRootChainReceipt *out) {
-    DM2_V1_G1DirectRootRecordAddressReceipt address;
-    DM2_V1_G1DirectRootChainReceipt candidate;
-    uint16_t thing;
-
-    if (!out || !dm2_v1_dungeon_resolve_g1_direct_root_record(
-                    d, level, x, y, &address)) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.level = level;
-    candidate.x = x;
-    candidate.y = y;
-    thing = address.object_id;
-
-    /* skproject c_record.cpp GET_NEXT_RECORD_LINK is the only record-word
-     * read here. Do not decode node payloads or widen the direct DB set. */
-    for (;;) {
-        const uint8_t *record;
-        uint16_t next;
-        int type;
-        int index;
-        int record_size;
-        int record_offset;
-        DM2_V1_G1DirectChainNode *node;
-
-        if (thing == DM2_THING_END_MARKER || thing == DM2_THING_NULL_MARKER ||
-            !dm2_v1_g1_link_has_declared_shape(d, thing) ||
-            candidate.node_count >= DM2_V1_G1_DIRECT_CHAIN_MAX) {
-            return 0;
-        }
-        type = (thing >> 10) & 0x0f;
-        index = thing & 0x03ff;
-        if (!((type >= 0 && type <= 5) || type == 9) ||
-            index < 0 || index >= d->thing_type_counts[type] ||
-            d->thing_data_bases[type] < 0) {
-            return 0;
-        }
-        record_size = (int)s_dm2_db_record_size[type];
-        record_offset = d->thing_data_bases[type] + index * record_size;
-        if (record_size < 2 || record_offset < d->thing_data_bases[type] ||
-            record_offset + record_size > d->g1_extension_base ||
-            record_offset + record_size > d->raw_size) {
-            return 0;
-        }
-        for (int i = 0; i < candidate.node_count; ++i) {
-            if (candidate.nodes[i].object_id == thing) return 0;
-        }
-        record = d->raw_data + record_offset;
-        node = &candidate.nodes[candidate.node_count++];
-        node->object_id = thing;
-        node->type = (uint8_t)type;
-        node->index = (uint16_t)index;
-        node->record_offset = record_offset;
-        node->record_size = record_size;
-        next = RD16(record);
-        ++candidate.link_word_reads;
-        if (next == DM2_THING_END_MARKER) break;
-        thing = next;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_classify_g1_direct_root_scene(
-    const DM2_V1_DungeonData *d,
-    int level,
-    int x,
-    int y,
-    DM2_V1_G1DungeonSceneClassificationReceipt *out) {
-    DM2_V1_G1DungeonSceneClassificationReceipt candidate;
-    DM2_V1_G1DirectRootChainReceipt chain;
-    int raw_tile;
-
-    if (!out || !d ||
-        !dm2_v1_dungeon_collect_g1_direct_root_chain(
-            d, level, x, y, &chain)) {
-        return 0;
-    }
-    raw_tile = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
-    if (raw_tile < 0 || chain.node_count <= 0) return 0;
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.chain = chain;
-    candidate.incomplete_world = 1;
-    candidate.level = level;
-    candidate.x = x;
-    candidate.y = y;
-    candidate.raw_tile = (uint8_t)raw_tile;
-
-    /* skproject c_map.cpp obtains the byte square before c_record.cpp gets
-     * its root. DME.h::tileTypeIndex makes only these three scene classes
-     * explicit; no substitute is assigned to pit/stair/teleporter classes. */
-    switch ((candidate.raw_tile >> 5) & 0x07u) {
-    case 0:
-        candidate.tile_class = DM2_V1_G1_SCENE_TILE_WALL;
-        break;
-    case 1:
-        candidate.tile_class = DM2_V1_G1_SCENE_TILE_FLOOR;
-        break;
-    case 4:
-        candidate.tile_class = DM2_V1_G1_SCENE_TILE_DOOR;
-        break;
-    default:
-        return 0;
-    }
-    /* DME.h::dbIndex calls DB0 Door and DB4 Creature. This maps only the
-     * root ObjectID type; it never consumes a record payload or a later node. */
-    switch (candidate.chain.nodes[0].type) {
-    case 0:
-        candidate.root_class = DM2_V1_G1_SCENE_ROOT_DOOR;
-        break;
-    case 4:
-        candidate.root_class = DM2_V1_G1_SCENE_ROOT_CREATURE;
-        break;
-    default:
-        candidate.root_class = DM2_V1_G1_SCENE_ROOT_GENERIC;
-        break;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapDoorReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1RuntimeMapDoorReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp DM2_GET_TILE_RECORD_LINK selects the
-     * root. SKWIN/DME.h::Door fixes the six w2 fields below. c_record.cpp
-     * DM2_GET_NEXT_RECORD_LINK reads w0, which this source-bounded route
-     * deliberately never calls. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
-        !validation.committed || !validation.incomplete_world) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    for (int x = 0; x < validation.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < validation.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            const uint8_t *record;
-            uint16_t attributes;
-            DM2_V1_G1DirectDoorRoot *door;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            if (((root >> 10) & 0x0fu) == 0u) {
-                if (!dm2_v1_g1_link_has_declared_shape(d, root) ||
-                    candidate.door_root_count >=
-                        DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS) {
-                    return 0;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, NULL, NULL, NULL);
-                if (!record) return 0;
-                attributes = RD16(record + 2);
-                door = &candidate.doors[candidate.door_root_count++];
-                door->x = x;
-                door->y = y;
-                door->object_id = root;
-                door->index = root & 0x03ff;
-                door->direction = (uint8_t)(root >> 14);
-                door->button = (uint8_t)((attributes >> 6) & 1u);
-                door->door_type = (uint8_t)(attributes & 1u);
-                door->button_state = (uint8_t)((attributes >> 11) & 1u);
-                door->opening_dir = (uint8_t)((attributes >> 5) & 1u);
-                door->ornate_index = (uint8_t)((attributes >> 1) & 0x0fu);
-                door->destroyable_by_fireball =
-                    (uint8_t)((attributes >> 7) & 1u);
-                door->bashable_by_chopping =
-                    (uint8_t)((attributes >> 8) & 1u);
-                ++candidate.door_record_reads;
-            }
-            ++stack;
-        }
-    }
-    if (candidate.door_record_reads != candidate.door_root_count ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapActuatorReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1RuntimeMapActuatorReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp obtains the map root before
-     * c_record.cpp's GET_NEXT_RECORD_LINK. SKWIN/DME.h::Actuator defines the
-     * w2/w4/w6 field layout read below; this route never reads the w0 word. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
-        !validation.committed || !validation.incomplete_world) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    for (int x = 0; x < validation.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < validation.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            const uint8_t *record;
-            uint16_t w2;
-            uint16_t w4;
-            uint16_t w6;
-            DM2_V1_G1DirectActuatorRoot *actuator;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            if (((root >> 10) & 0x0fu) == 3u &&
-                dm2_v1_g1_link_has_declared_shape(d, root)) {
-                if (candidate.actuator_root_count >=
-                    DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) {
-                    return 0;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, NULL, NULL, NULL);
-                if (!record) return 0;
-                w2 = RD16(record + 2);
-                w4 = RD16(record + 4);
-                w6 = RD16(record + 6);
-                actuator = &candidate.actuators[candidate.actuator_root_count++];
-                actuator->x = x;
-                actuator->y = y;
-                actuator->object_id = root;
-                actuator->index = root & 0x03ff;
-                actuator->direction = (uint8_t)(root >> 14);
-                actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
-                actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
-                actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
-                actuator->disabled = (uint8_t)((w4 >> 11) & 1u);
-                actuator->delay = (uint8_t)((w4 >> 7) & 0x000fu);
-                actuator->sound_effect = (uint8_t)((w4 >> 6) & 1u);
-                actuator->revert_effect = (uint8_t)((w4 >> 5) & 1u);
-                actuator->action_type = (uint8_t)((w4 >> 3) & 3u);
-                actuator->once_only = (uint8_t)((w4 >> 2) & 1u);
-                actuator->active_status = (uint8_t)(w4 & 1u);
-                actuator->target_direction = (uint8_t)((w6 >> 4) & 3u);
-                actuator->target_x = (uint8_t)((w6 >> 6) & 0x001fu);
-                actuator->target_y = (uint8_t)((w6 >> 11) & 0x001fu);
-                ++candidate.actuator_record_reads;
-            }
-            ++stack;
-        }
-    }
-    if (candidate.actuator_record_reads != candidate.actuator_root_count ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapCreatureReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1RuntimeMapCreatureReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
-     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Creature names b4 CreatureType and
-     * w6 HP1; no link or possession ObjectID is read by this receipt. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
-        !validation.committed || !validation.incomplete_world) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    for (int x = 0; x < validation.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < validation.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            const uint8_t *record;
-            DM2_V1_G1DirectCreatureRoot *creature;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            if (((root >> 10) & 0x0fu) == 4u &&
-                dm2_v1_g1_link_has_declared_shape(d, root)) {
-                if (candidate.creature_root_count >=
-                    DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS) {
-                    return 0;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, NULL, NULL, NULL);
-                if (!record) return 0;
-                creature = &candidate.creatures[candidate.creature_root_count++];
-                creature->x = x;
-                creature->y = y;
-                creature->object_id = root;
-                creature->index = root & 0x03ff;
-                creature->direction = (uint8_t)(root >> 14);
-                creature->creature_type = record[4];
-                creature->hit_points_1 = RD16(record + 6);
-                ++candidate.creature_record_reads;
-            }
-            ++stack;
-        }
-    }
-    if (candidate.creature_record_reads != candidate.creature_root_count ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapWeaponReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1RuntimeMapWeaponReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
-     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Weapon defines the w2 fields below;
-     * this receipt does not read the w0 link. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
-        !validation.committed || !validation.incomplete_world) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    for (int x = 0; x < validation.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < validation.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            const uint8_t *record;
-            uint16_t attributes;
-            DM2_V1_G1DirectWeaponRoot *weapon;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            if (((root >> 10) & 0x0fu) == 5u &&
-                dm2_v1_g1_link_has_declared_shape(d, root)) {
-                if (candidate.weapon_root_count >=
-                    DM2_V1_G1_RUNTIME_MAP_MAX_WEAPON_ROOTS) {
-                    return 0;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, NULL, NULL, NULL);
-                if (!record) return 0;
-                attributes = RD16(record + 2);
-                weapon = &candidate.weapons[candidate.weapon_root_count++];
-                weapon->x = x;
-                weapon->y = y;
-                weapon->object_id = root;
-                weapon->index = root & 0x03ff;
-                weapon->direction = (uint8_t)(root >> 14);
-                weapon->item_type = (uint8_t)(attributes & 0x007fu);
-                weapon->important = (uint8_t)((attributes >> 7) & 1u);
-                weapon->charges = (uint8_t)((attributes >> 10) & 0x000fu);
-                ++candidate.weapon_record_reads;
-            }
-            ++stack;
-        }
-    }
-    if (candidate.weapon_record_reads != candidate.weapon_root_count ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_runtime_map_containers(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1RuntimeMapContainerReceipt *out) {
-    DM2_V1_G1RuntimeMapValidationReceipt validation;
-    DM2_V1_G1RuntimeMapContainerReceipt candidate;
-    int column_index = 0;
-
-    /* skproject SKULLWIN/c_map.cpp obtains the root before c_record.cpp's
-     * GET_NEXT_RECORD_LINK. SKWIN/DME.h::Container defines b4's open/type
-     * bits; this receipt does not read w0 or the w2 contained ObjectID. */
-    if (!out || !d || !d->raw_data ||
-        !dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
-        !validation.committed || !validation.incomplete_world) {
-        return 0;
-    }
-    for (int level = 0; level < map; ++level)
-        column_index += d->level_widths[level];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-    for (int x = 0; x < validation.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < validation.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            uint16_t root;
-            const uint8_t *record;
-            DM2_V1_G1DirectContainerRoot *container;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            if (((root >> 10) & 0x0fu) == 9u &&
-                dm2_v1_g1_link_has_declared_shape(d, root)) {
-                if (candidate.container_root_count >=
-                    DM2_V1_G1_RUNTIME_MAP_MAX_CONTAINER_ROOTS) {
-                    return 0;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, NULL, NULL, NULL);
-                if (!record) return 0;
-                container =
-                    &candidate.containers[candidate.container_root_count++];
-                container->x = x;
-                container->y = y;
-                container->object_id = root;
-                container->index = root & 0x03ff;
-                container->direction = (uint8_t)(root >> 14);
-                container->opened = (uint8_t)(record[4] & 1u);
-                container->container_type = (uint8_t)((record[4] >> 1) & 3u);
-                ++candidate.container_record_reads;
-            }
-            ++stack;
-        }
-    }
-    if (candidate.container_record_reads != candidate.container_root_count ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    candidate.committed = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_first_map_runtime(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1FirstMapRuntimeReceipt *out) {
-    DM2_V1_G1PartialMapBootReceipt partial;
-    DM2_V1_G1FirstMapRuntimeReceipt candidate;
-    int stack;
-
-    if (!out || !d || d->level_count < 1 || !d->raw_data ||
-        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
-        !partial.committed || !partial.incomplete) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.committed = 1;
-    candidate.incomplete_world = 1;
-    candidate.map = 0;
-    candidate.width = d->level_widths[0];
-    candidate.height = d->level_heights[0];
-    if (candidate.width <= 0 || candidate.height <= 0) return 0;
-
-    /* ReDMCSB c_map.cpp GET_TILE_RECORD_LINK: map squares select a
-     * dunGroundStacks word through the column index. Stop at that ObjectID;
-     * DUNGEON.C F0159 is the later boundary that reads GenericRecord::w0. */
-    stack = (int)RD16(d->raw_data + d->column_index_base);
-    for (int x = 0; x < candidate.width; ++x) {
-        for (int y = 0; y < candidate.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(d, 0, x, y);
-            uint16_t root;
-            int type;
-            DM2_V1_G1VerifiedRoot *verified;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            type = (root >> 10) & 0x0f;
-            if (candidate.root_count >= DM2_V1_G1_FIRST_MAP_MAX_ROOTS) {
-                return 0;
-            }
-            verified = &candidate.roots[candidate.root_count];
-            verified->x = x;
-            verified->y = y;
-            verified->object_id = root;
-            verified->type = type;
-            verified->index = root & 0x03ff;
-            ++candidate.root_count;
-            if (dm2_v1_g1_link_has_declared_shape(d, root)) {
-                ++candidate.direct_root_count;
-                ++candidate.verified_root_count;
-            } else if (dm2_v1_g1_link_has_extension_shape(d, root)) {
-                if (type == 3) ++candidate.db3_root_count;
-                else if (type == 4) ++candidate.db4_root_count;
-                else return 0;
-                ++candidate.verified_root_count;
-            } else {
-                /* Map 0 cannot consume an unresolved root. The five known
-                 * DB8/DB10 roots stay represented by the world receipt. */
-                ++candidate.blocked_root_count;
-                return 0;
-            }
-            if (type == 1) {
-                if (candidate.teleporter_root_count >=
-                    DM2_V1_G1_FIRST_MAP_MAX_ROOTS ||
-                    !dm2_v1_g1_read_teleporter_root(
-                        d, root, x, y,
-                        &candidate.teleporters[candidate.teleporter_root_count])) {
-                    return 0;
-                }
-                ++candidate.teleporter_root_count;
-                ++candidate.teleporter_record_reads;
-            }
-            ++stack;
-        }
-        if (x + 1 < candidate.width) {
-            stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (x + 1) * 2);
-        }
-    }
-    if (candidate.root_count <= 0 ||
-        candidate.verified_root_count != candidate.root_count ||
-        candidate.object_count != 0 || candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_map5_text_runtime(
-    const DM2_V1_DungeonData *d,
-    DM2_V1_G1Map5TextRuntimeReceipt *out) {
-    DM2_V1_G1PartialMapBootReceipt partial;
-    DM2_V1_G1Map5TextRuntimeReceipt candidate;
-    const int map = 5;
-    int column_index = 0;
-
-    if (!out || !d || d->level_count <= map || !d->raw_data ||
-        !dm2_v1_dungeon_materialize_g1_partial_map_boot(d, &partial) ||
-        !partial.committed || !partial.incomplete) {
-        return 0;
-    }
-    for (int previous = 0; previous < map; ++previous)
-        column_index += d->level_widths[previous];
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.committed = 1;
-    candidate.incomplete_world = 1;
-    candidate.map = map;
-
-    /* skproject/SKWIN/DME.h Text: w2 is visibility (bit 0), mode (1..2),
-     * and text-table index (3..15). c_map.cpp supplies the root ObjectID.
-     * Do not call GET_NEXT_RECORD_LINK or inspect the text-table payload. */
-    for (int x = 0; x < d->level_widths[map]; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
-        for (int y = 0; y < d->level_heights[map]; ++y) {
-            const uint8_t *record;
-            uint16_t root;
-            uint16_t w2;
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            int type;
-            int index;
-            DM2_V1_G1TextRoot *text;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
-            ++stack;
-            type = (root >> 10) & 0x0f;
-            if (type != 2) continue;
-            if (!dm2_v1_g1_link_has_declared_shape(d, root) ||
-                candidate.text_root_count >= DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
-                return 0;
-            }
-            index = root & 0x03ff;
-            record = d->raw_data + d->thing_data_bases[2] +
-                     index * s_dm2_db_record_size[2];
-            if (record + s_dm2_db_record_size[2] > d->raw_data + d->raw_size)
-                return 0;
-            w2 = RD16(record + 2);
-            text = &candidate.texts[candidate.text_root_count++];
-            text->x = x;
-            text->y = y;
-            text->object_id = root;
-            text->index = index;
-            text->direction = (uint8_t)(root >> 14);
-            text->visible = (uint8_t)(w2 & 0x0001u);
-            text->mode = (uint8_t)((w2 >> 1) & 0x0003u);
-            text->text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
-            ++candidate.text_record_reads;
-        }
-    }
-    if (candidate.text_root_count != 7 || candidate.text_record_reads != 7 ||
-        candidate.generic_record_reads != 0 ||
-        candidate.blocked_record_reads != 0) {
-        return 0;
-    }
-    *out = candidate;
-    return 1;
-}
-
-static int dm2_v1_g1_decode_dungeon_text(
-    const DM2_V1_DungeonData *d,
-    uint16_t text_index,
-    char out_text[DM2_V1_G1_TEXT_MESSAGE_CHARS],
-    uint16_t *out_word_count)
-{
-    int word_index;
-    int output = 0;
-
-    if (!d || !out_text || !out_word_count || !d->raw_data ||
-        d->text_data_base < 0 || d->text_word_count <= 0 ||
-        text_index >= (uint16_t)d->text_word_count) {
-        return 0;
-    }
-    out_text[0] = '\0';
-    *out_word_count = 0u;
-    for (word_index = (int)text_index;
-         word_index < d->text_word_count;
-         ++word_index) {
-        const uint8_t *word_ptr = d->raw_data + d->text_data_base +
-                                  word_index * 2;
-        uint16_t word;
-        int groups[3];
-
-        if (word_ptr < d->raw_data || word_ptr + 2 > d->raw_data + d->raw_size ||
-            word_index - (int)text_index >= UINT16_MAX) {
-            return 0;
-        }
-        /* skproject QUERY_MESSAGE_TEXT: dunTextData is host-endian U16 in
-         * memory after the file loader's little-endian read. */
-        word = RD16(word_ptr);
-        groups[0] = (word >> 10) & 0x1f;
-        groups[1] = (word >> 5) & 0x1f;
-        groups[2] = word & 0x1f;
-        for (int group = 0; group < 3; ++group) {
-            int code = groups[group];
-            char c;
-
-            if (code == 31) {
-                out_text[output] = '\0';
-                *out_word_count = (uint16_t)(word_index - (int)text_index + 1);
-                return output > 0;
-            }
-            /* Codes 29 and 30 expand through skproject's private phrase
-             * banks (_4976_0362/_4976_0262).  Do not substitute text. */
-            if (code == 29 || code == 30 || output + 1 >= DM2_V1_G1_TEXT_MESSAGE_CHARS) {
-                return 0;
-            }
-            if (code < 26) c = (char)('A' + code);
-            else if (code == 26) c = ' ';
-            else if (code == 27) c = '.';
-            else if (code == 28) c = '\n';
-            else return 0;
-            out_text[output++] = c;
-        }
-    }
-    return 0;
-}
-
-int dm2_v1_dungeon_materialize_g1_map5_text_messages(
-    const DM2_V1_DungeonData *d,
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1TextMessageRuntimeReceipt *out)
-{
-    DM2_V1_G1TextMessageRuntimeReceipt candidate;
-    int i;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!d || !texts || !texts->committed || !texts->incomplete_world ||
-        texts->map != 5 || texts->generic_record_reads != 0 ||
-        texts->blocked_record_reads != 0 || texts->text_root_count < 0 ||
-        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
-        return 0;
-    }
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.map = texts->map;
-    candidate.source_text_root_count = texts->text_root_count;
-    for (i = 0; i < texts->text_root_count; ++i) {
-        const DM2_V1_G1TextRoot *root = &texts->texts[i];
-        DM2_V1_G1TextMessage *message;
-
-        if (!root->visible) continue;
-        if (root->mode != 0u) {
-            ++candidate.skipped_non_dungeon_message_count;
-            continue;
-        }
-        if (candidate.decoded_message_count >= DM2_V1_G1_TEXT_MESSAGE_MAX) return 0;
-        message = &candidate.messages[candidate.decoded_message_count];
-        if (!dm2_v1_g1_decode_dungeon_text(d, root->text_index, message->text,
-                                            &message->source_word_count)) {
-            ++candidate.blocked_phrase_message_count;
-            memset(message, 0, sizeof(*message));
-            continue;
-        }
-        message->x = root->x;
-        message->y = root->y;
-        message->object_id = root->object_id;
-        message->text_index = root->text_index;
-        ++candidate.decoded_message_count;
-    }
-    candidate.valid = 1;
-    *out = candidate;
-    return 1;
-}
-
-static uint32_t dm2_v1_g1_gdat_text_hash(const uint8_t *data,
-                                          uint32_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    uint32_t i;
-
-    if (!data || byte_count == 0u) return 0u;
-    for (i = 0u; i < byte_count; ++i) {
-        hash = (hash ^ data[i]) * 16777619u;
-    }
-    return hash ? hash : 1u;
-}
-
-int dm2_v1_dungeon_materialize_g1_map5_gdat_text_messages(
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatTextRead read_text,
-    void *read_userdata,
-    DM2_V1_G1GdatTextMessageRuntimeReceipt *out)
-{
-    DM2_V1_G1GdatTextMessageRuntimeReceipt candidate;
-    int i;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    if (!texts || !read_text || !texts->committed ||
-        !texts->incomplete_world || texts->map != 5 ||
-        texts->generic_record_reads != 0 ||
-        texts->blocked_record_reads != 0 || texts->text_root_count < 0 ||
-        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
-        return 0;
-    }
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.map = texts->map;
-    candidate.source_text_root_count = texts->text_root_count;
-    for (i = 0; i < texts->text_root_count; ++i) {
-        const DM2_V1_G1TextRoot *root = &texts->texts[i];
-        const uint8_t *raw = NULL;
-        uint32_t raw_byte_count = 0u;
-        uint8_t extension_usage;
-        uint8_t field;
-        DM2_V1_G1GdatTextMessage *message;
-
-        if (!root->visible || root->mode != 1u) continue;
-        extension_usage = (uint8_t)((root->text_index >> 8) & 0x1fu);
-        if (extension_usage != 14u) continue;
-        if (candidate.material_count >= DM2_V1_G1_GDAT_TEXT_MESSAGE_MAX) {
-            return 0;
-        }
-        field = (uint8_t)(root->text_index & 0xffu);
-        /* skproject c_querydb.cpp DM2_QUERY_MESSAGE_TEXT E091-E146:
-         * extension usage 14 sets vb_90 to the low TextIndex byte, then
-         * queries GDAT category 3, index 0. Do not decode FORMAT_SKSTR here. */
-        if (!read_text(read_userdata, DM2_GDAT_CATEGORY_MESSAGES, 0, field,
-                       &raw, &raw_byte_count) || !raw || raw_byte_count == 0u) {
-            ++candidate.blocked_missing_text_count;
-            return 0;
-        }
-        message = &candidate.messages[candidate.material_count++];
-        message->x = root->x;
-        message->y = root->y;
-        message->object_id = root->object_id;
-        message->text_index = root->text_index;
-        message->gdat_field = field;
-        message->raw_byte_count = raw_byte_count;
-        message->raw_hash = dm2_v1_g1_gdat_text_hash(raw, raw_byte_count);
-        if (message->raw_hash == 0u) return 0;
-    }
-    candidate.valid = 1;
-    *out = candidate;
-    return 1;
-}
-
-typedef struct {
-    uint16_t colorkey;
-    uint16_t position;
-    uint16_t do_not_flip;
-    uint16_t alcove_type;
-    uint16_t image_offset;
-} DM2_V1_G1WallGfxScalars;
-
-static int dm2_v1_g1_read_wall_gfx_scalars(
-    DM2_V1_G1GdatScalarRead read_scalar,
-    void *read_userdata,
-    uint8_t wall_gfx_index,
-    DM2_V1_G1WallGfxScalars *out)
-{
-    if (!read_scalar || !out ||
-        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x04,
-                     &out->colorkey) ||
-        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x05,
-                     &out->position) ||
-        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x07,
-                     &out->do_not_flip) ||
-        !read_scalar(read_userdata, 0x0b, 0x09, wall_gfx_index, 0x0a,
-                     &out->alcove_type) ||
-        !read_scalar(read_userdata, 0x0c, 0x09, wall_gfx_index, 0xfd,
-                     &out->image_offset) ||
-        out->position > 24u || out->alcove_type > 3u) {
-        return 0;
-    }
-    return 1;
-}
-
-/* skproject/SKULLWIN/c_record.cpp DM2_QUERY_CLS2_OF_TEXT_RECORD
- * lines 1210-1256: a DB2 text only resolves to its low TextIndex byte when
- * TextMode()==1 and SimpleTextExtUsage() is 0, 2, 3, 5, or 13.  The other
- * mode-one encodings return 0xff and must not become WALL_GFX requests. */
-static int dm2_v1_g1_text_selects_wall_gfx(const DM2_V1_G1TextRoot *text)
-{
-    uint8_t extension_usage;
-
-    if (!text || text->mode != 1u) return 0;
-    extension_usage = (uint8_t)((text->text_index >> 8) & 0x1fu);
-    return extension_usage == 0u || extension_usage == 2u ||
-           extension_usage == 3u || extension_usage == 5u ||
-           extension_usage == 13u;
-}
-
-static int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
-    void *read_userdata,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
-{
-    DM2_V1_G1TextWallGfxRuntimeReceipt candidate;
-    int i;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    /* map5_text_runtime commits only after consuming direct DB2 w2 fields
-     * with no GenericRecord::w0 or blocked-root reads.  Keep that provenance
-     * at the GDAT boundary so a forged receipt cannot request WALL_GFX. */
-    if (!texts || !read_scalar || !texts->committed ||
-        !texts->incomplete_world || texts->map != 5 ||
-        texts->generic_record_reads != 0 ||
-        texts->blocked_record_reads != 0 ||
-        texts->text_root_count < 0 ||
-        texts->text_root_count > DM2_V1_G1_MAP5_MAX_TEXT_ROOTS) {
-        return 0;
-    }
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.map = texts->map;
-    candidate.source_text_root_count = texts->text_root_count;
-    for (i = 0; i < texts->text_root_count; ++i) {
-        const DM2_V1_G1TextRoot *text = &texts->texts[i];
-        DM2_V1_G1TextWallGfxMaterial *material;
-        DM2_V1_G1WallGfxScalars scalars;
-        uint8_t wall_gfx_index;
-
-        if (!dm2_v1_g1_text_selects_wall_gfx(text)) continue;
-        if (candidate.material_count >= DM2_V1_G1_TEXT_WALL_GFX_MAX) return 0;
-        wall_gfx_index = (uint8_t)(text->text_index & 0xffu);
-
-        /* skproject DRAW_WALL_ORNATE requires these scalar source inputs
-         * before it selects a picture. Do not produce a partial material. */
-        if (!dm2_v1_g1_read_wall_gfx_scalars(
-                read_scalar, read_userdata, wall_gfx_index, &scalars)) {
-            return 0;
-        }
-
-        material = &candidate.materials[candidate.material_count++];
-        material->x = text->x;
-        material->y = text->y;
-        material->object_id = text->object_id;
-        material->direction = text->direction;
-        material->text_index = text->text_index;
-        material->wall_gfx_index = wall_gfx_index;
-        material->colorkey = scalars.colorkey;
-        material->position = scalars.position;
-        material->do_not_flip = scalars.do_not_flip;
-        material->alcove_type = scalars.alcove_type;
-        material->image_offset = scalars.image_offset;
-        /* skproject SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE lines
-         * 23285-23306 selects dtImage/1 for a front-facing nonzero ornate.
-         * Decode the source bitmap now when the caller owns GDAT, so a later
-         * custom-button draw cannot be authorized by scalar metadata alone.
-         * WALL_GFX zero is the source text-panel branch at 23081-23133 and
-         * does not have a WALL_GFX ornate bitmap to claim here. */
-        if (read_image_metadata && wall_gfx_index != 0u) {
-            int width = 0;
-            int height = 0;
-            int format = 0;
-            if (read_image_metadata(read_userdata, 0x09, wall_gfx_index, 1,
-                                    &width, &height, &format) &&
-                width > 0 && height > 0 &&
-                width <= UINT16_MAX && height <= UINT16_MAX &&
-                format > 0 && format <= UINT8_MAX) {
-                material->front_image_width = (uint16_t)width;
-                material->front_image_height = (uint16_t)height;
-                material->front_image_format = (uint8_t)format;
-                /* skproject DRAW_WALL_ORNATE/DRAW_DEFAULT_DOOR_BUTTON calls
-                 * QUERY_GDAT_IMAGE_LOCALPAL for the same WALL_GFX image.
-                 * The strong path cannot promote an image whose palette is
-                 * absent or mismatched at the later viewport fetch. */
-                if (!read_local_palette ||
-                    (read_local_palette(read_userdata, 0x09,
-                                        wall_gfx_index, 1,
-                                        material->local_palette16,
-                                        &material->local_palette_hash) &&
-                     material->local_palette_hash != 0u)) {
-                    material->front_image_ready = 1u;
-                }
-            }
-        }
-    }
-    candidate.valid = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime(
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    void *read_userdata,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
-{
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-        texts, read_scalar, NULL, NULL, read_userdata, out);
-}
-
-int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_runtime(
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    void *read_userdata,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
-{
-    if (!read_image_metadata) {
-        if (out) memset(out, 0, sizeof(*out));
-        return 0;
-    }
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-        texts, read_scalar, read_image_metadata, NULL, read_userdata, out);
-}
-
-int dm2_v1_dungeon_materialize_g1_text_wall_gfx_image_material_runtime(
-    const DM2_V1_G1Map5TextRuntimeReceipt *texts,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
-    void *read_userdata,
-    DM2_V1_G1TextWallGfxRuntimeReceipt *out)
-{
-    if (!read_image_metadata || !read_local_palette) {
-        if (out) memset(out, 0, sizeof(*out));
-        return 0;
-    }
-    return dm2_v1_dungeon_materialize_g1_text_wall_gfx_runtime_impl(
-        texts, read_scalar, read_image_metadata, read_local_palette,
-        read_userdata, out);
-}
-
-static int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
-    void *read_userdata,
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
-{
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt candidate;
-    uint8_t wall_gfx_list[16];
-    int wall_gfx_count;
-    int x;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    /* skproject/SKWIN/c_map.cpp supplies the tile root, c_record.cpp
-     * addresses its DB3 record, and GET_WALL_DECORATION_OF_ACTUATOR consumes
-     * GraphicNumber through the map-local list. Classification-only G1 roots
-     * cannot issue the later GDAT WALL_GFX scalar requests. */
-    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
-        !d->raw_data || !read_scalar || d->square_bytes != 1 ||
-        map < 0 || map >= d->level_count) {
-        return 0;
-    }
-    wall_gfx_count = dm2_v1_dungeon_get_map_wall_gfx_list(
-        d, map, wall_gfx_list, (int)sizeof(wall_gfx_list));
-    if (wall_gfx_count <= 0) return 0;
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.map = map;
-    for (x = 0; x < d->level_widths[map]; ++x) {
-        int y;
-        for (y = 0; y < d->level_heights[map]; ++y) {
-            uint16_t root;
-            const uint8_t *record;
-            DM2_V1_G1ActuatorWallGfxMaterial *material;
-            DM2_V1_G1WallGfxScalars scalars;
-            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            int first_thing;
-            int ordinal;
-            uint8_t wall_gfx_index;
-
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            first_thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
-            if (first_thing < 0) return 0;
-            root = (uint16_t)first_thing;
-            if (root == DM2_THING_END_MARKER) return 0;
-            if (((root >> 10) & 0x0f) != 3) continue;
-            if (!dm2_v1_g1_link_has_record_shape(d, root)) return 0;
-            record = dm2_v1_dungeon_get_thing_record(d, root, NULL, NULL, NULL);
-            if (!record) return 0;
-            ++candidate.source_actuator_root_count;
-
-            /* skproject/SKWIN/DME.h Actuator::GraphicNumber is w4 bits
-             * 12..15. GET_WALL_DECORATION_OF_ACTUATOR maps it one-based. */
-            ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
-            if (ordinal == 0) continue;
-            if (ordinal > wall_gfx_count ||
-                candidate.material_count >= DM2_V1_G1_ACTUATOR_WALL_GFX_MAX) {
-                return 0;
-            }
-            wall_gfx_index = wall_gfx_list[ordinal - 1];
-            if (!dm2_v1_g1_read_wall_gfx_scalars(
-                    read_scalar, read_userdata, wall_gfx_index, &scalars)) {
-                return 0;
-            }
-            material = &candidate.materials[candidate.material_count++];
-            material->x = x;
-            material->y = y;
-            material->object_id = root;
-            material->direction = (uint8_t)(root >> 14);
-            material->graphic_ordinal = (uint8_t)ordinal;
-            material->wall_gfx_index = wall_gfx_index;
-            material->colorkey = scalars.colorkey;
-            material->position = scalars.position;
-            material->do_not_flip = scalars.do_not_flip;
-            material->alcove_type = scalars.alcove_type;
-            material->image_offset = scalars.image_offset;
-            if (read_image_metadata) {
-                int width = 0;
-                int height = 0;
-                int format = 0;
-                if (read_image_metadata(read_userdata, 0x09,
-                                        wall_gfx_index, 1,
-                                        &width, &height, &format) &&
-                    width > 0 && height > 0 &&
-                    width <= UINT16_MAX && height <= UINT16_MAX &&
-                    format > 0 && format <= UINT8_MAX) {
-                    material->front_image_width = (uint16_t)width;
-                    material->front_image_height = (uint16_t)height;
-                    material->front_image_format = (uint8_t)format;
-                    if (!read_local_palette ||
-                        (read_local_palette(read_userdata, 0x09,
-                                            wall_gfx_index, 1,
-                                            material->local_palette16,
-                                            &material->local_palette_hash) &&
-                         material->local_palette_hash != 0u)) {
-                        material->front_image_ready = 1u;
-                    }
-                }
-            }
-        }
-    }
-    candidate.valid = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    void *read_userdata,
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
-{
-    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
-        d, map, read_scalar, NULL, NULL, read_userdata, out);
-}
-
-int dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_image_material_runtime(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1GdatScalarRead read_scalar,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
-    void *read_userdata,
-    DM2_V1_G1ActuatorWallGfxRuntimeReceipt *out)
-{
-    if (!read_image_metadata || !read_local_palette) {
-        if (out) memset(out, 0, sizeof(*out));
-        return 0;
-    }
-    return dm2_v1_dungeon_materialize_g1_actuator_wall_gfx_runtime_impl(
-        d, map, read_scalar, read_image_metadata, read_local_palette,
-        read_userdata, out);
-}
-
-int dm2_v1_g1_text_wall_gfx_allows_button_material(
-    const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt,
-    int wall_gfx_index,
-    int image_field)
-{
-    int i;
-
-    if (!receipt || !receipt->valid || receipt->material_count < 0 ||
-        receipt->material_count > DM2_V1_G1_TEXT_WALL_GFX_MAX ||
-        wall_gfx_index < 0 || wall_gfx_index > 0xff || image_field != 1) {
-        return 0;
-    }
-    for (i = 0; i < receipt->material_count; ++i) {
-        if (receipt->materials[i].wall_gfx_index ==
-            (uint8_t)wall_gfx_index) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int dm2_v1_g1_actuator_wall_gfx_allows_button_material(
-    const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt,
-    int wall_gfx_index,
-    int image_field)
-{
-    int i;
-
-    if (!receipt || !receipt->valid || receipt->material_count < 0 ||
-        receipt->material_count > DM2_V1_G1_ACTUATOR_WALL_GFX_MAX ||
-        wall_gfx_index < 0 || wall_gfx_index > 0xff || image_field != 1) {
-        return 0;
-    }
-    for (i = 0; i < receipt->material_count; ++i) {
-        if (receipt->materials[i].wall_gfx_index ==
-            (uint8_t)wall_gfx_index) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
                                       uint16_t first_thing,
                                       int desired_type,
                                       int max_steps) {
     uint16_t thing = first_thing;
 
-    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
-        desired_type < 0 || desired_type >= DM2_THING_TYPE_COUNT)
+    if (!d || desired_type < 0 || desired_type >= DM2_THING_TYPE_COUNT)
         return -1;
     if (max_steps <= 0) max_steps = 32;
     for (int step = 0; step < max_steps; ++step) {
@@ -2701,21 +852,18 @@ int dm2_v1_dungeon_find_thing_of_type(const DM2_V1_DungeonData *d,
     return -1;
 }
 
-int dm2_v1_dungeon_find_text_wall_gfx_owner(const DM2_V1_DungeonData *d,
-                                            uint16_t first_thing,
-                                            int view_dir,
-                                            int side_index,
-                                            int max_steps,
-                                            int *out_wall_gfx_index,
-                                            int *out_wall_gfx_field,
-                                            uint16_t *out_object_id) {
+int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
+                                      uint16_t first_thing,
+                                      int view_dir,
+                                      int side_index,
+                                      int max_steps,
+                                      int *out_wall_gfx_index,
+                                      int *out_wall_gfx_field) {
     uint16_t thing = first_thing;
 
     if (out_wall_gfx_index) *out_wall_gfx_index = -1;
     if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
-    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
-        !out_wall_gfx_index || !out_wall_gfx_field) return -1;
+    if (!d || !out_wall_gfx_index || !out_wall_gfx_field) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
@@ -2779,7 +927,6 @@ int dm2_v1_dungeon_find_text_wall_gfx_owner(const DM2_V1_DungeonData *d,
                     packed = (frame << 10) | ornate;
                     *out_wall_gfx_index = packed & 0xff;
                     *out_wall_gfx_field = ((packed >> 8) & 0xff) + 1;
-                    if (out_object_id) *out_object_id = thing;
                     return 0;
                 }
             }
@@ -2792,18 +939,6 @@ int dm2_v1_dungeon_find_text_wall_gfx_owner(const DM2_V1_DungeonData *d,
     return -1;
 }
 
-int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
-                                      uint16_t first_thing,
-                                      int view_dir,
-                                      int side_index,
-                                      int max_steps,
-                                      int *out_wall_gfx_index,
-                                      int *out_wall_gfx_field) {
-    return dm2_v1_dungeon_find_text_wall_gfx_owner(
-        d, first_thing, view_dir, side_index, max_steps,
-        out_wall_gfx_index, out_wall_gfx_field, NULL);
-}
-
 int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,
@@ -2814,8 +949,7 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     uint16_t thing = first_thing;
 
     if (out_wall_gfx_ordinal) *out_wall_gfx_ordinal = -1;
-    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
-        !out_wall_gfx_ordinal) return -1;
+    if (!d || !out_wall_gfx_ordinal) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
@@ -2854,67 +988,6 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     return -1;
 }
 
-int dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    const uint8_t *wall_gfx_list,
-    int wall_gfx_count,
-    int *out_wall_gfx_index,
-    int *out_wall_gfx_field,
-    uint16_t *out_object_id) {
-    int ordinal = -1;
-    uint16_t thing = first_thing;
-
-    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
-    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (out_object_id) *out_object_id = DM2_THING_END_MARKER;
-    if (!wall_gfx_list || wall_gfx_count <= 0 ||
-        !out_wall_gfx_index || !out_wall_gfx_field) {
-        return -1;
-    }
-    if (dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
-            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
-        return -1;
-    }
-    /* Repeat only the bounded source-order search to retain the resolved
-     * record identity. The public ordinal helper intentionally exposes no
-     * record pointer. */
-    for (int step = 0; step < (max_steps > 0 ? max_steps : 32); ++step) {
-        int type = -1;
-        int size = 0;
-        const uint8_t *record;
-        int relative_side;
-        int candidate_ordinal;
-        int next;
-        if (thing == DM2_THING_END_MARKER) return -1;
-        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
-        if (!record || size < 8 || type > 3) return -1;
-        if (type == 3) {
-            candidate_ordinal = (int)((RD16(record + 4) >> 12) & 0x0fu);
-            relative_side = (((int)(thing >> 14) - (view_dir & 3)) & 3);
-            if (relative_side == side_index && candidate_ordinal == ordinal) {
-                if (out_object_id) *out_object_id = thing;
-                break;
-            }
-        }
-        next = dm2_v1_dungeon_get_next_thing(d, thing);
-        if (next < 0 || next == (int)thing) return -1;
-        thing = (uint16_t)next;
-    }
-    if (out_object_id && *out_object_id == DM2_THING_END_MARKER) return -1;
-    /* skproject GET_WALL_DECORATION_OF_ACTUATOR treats GraphicNumber() as
-     * one-based and returns current_map_wall_gfx_list[ordinal - 1].  The
-     * DRAW_DOOR_FRAMES custom-button path then uses field high-byte + 1;
-     * a plain resolved actuator graphic has no animation frame here. */
-    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
-    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
-    *out_wall_gfx_field = 1;
-    return 0;
-}
-
 int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     const DM2_V1_DungeonData *d,
     uint16_t first_thing,
@@ -2925,10 +998,26 @@ int dm2_v1_dungeon_resolve_actuator_wall_gfx(
     int wall_gfx_count,
     int *out_wall_gfx_index,
     int *out_wall_gfx_field) {
-    return dm2_v1_dungeon_resolve_actuator_wall_gfx_owner(
-        d, first_thing, view_dir, side_index, max_steps,
-        wall_gfx_list, wall_gfx_count,
-        out_wall_gfx_index, out_wall_gfx_field, NULL);
+    int ordinal = -1;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (!wall_gfx_list || wall_gfx_count <= 0 ||
+        !out_wall_gfx_index || !out_wall_gfx_field) {
+        return -1;
+    }
+    if (dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
+            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
+        return -1;
+    }
+    /* skproject GET_WALL_DECORATION_OF_ACTUATOR treats GraphicNumber() as
+     * one-based and returns current_map_wall_gfx_list[ordinal - 1].  The
+     * DRAW_DOOR_FRAMES custom-button path then uses field high-byte + 1;
+     * a plain resolved actuator graphic has no animation frame here. */
+    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
+    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
+    *out_wall_gfx_field = 1;
+    return 0;
 }
 
 int dm2_v1_dungeon_get_map_wall_gfx_list(
@@ -3003,161 +1092,6 @@ int dm2_v1_dungeon_get_map_graphics_style(
      * glbMapGraphicsSet before reading GRAPHICSSET scene words. */
     return (int)((RD16(map_desc + 14) >> 4) & 0x0fu);
 }
-
-static uint32_t dm2_v1_g1_raw_hash(const uint8_t *data, uint32_t byte_count)
-{
-    uint32_t hash = 2166136261u;
-    uint32_t i;
-
-    for (i = 0; i < byte_count; ++i) {
-        hash ^= data[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
-    const DM2_V1_DungeonData *d,
-    int map,
-    DM2_V1_G1GdatRawRead read_raw,
-    DM2_V1_G1GdatImageMetadataRead read_image_metadata,
-    DM2_V1_G1GdatImageLocalPaletteRead read_local_palette,
-    void *read_userdata,
-    DM2_V1_G1CreatureMapChipRuntimeReceipt *out)
-{
-    DM2_V1_G1CreatureMapChipRuntimeReceipt candidate;
-    int x;
-
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
-    /* skproject/SKWIN/c_map.cpp reaches a DB4 Creature through the tile
-     * record list, then DME.h Creature::CreatureType() feeds
-     * QUERY_DUNGEON_MAP_CHIP_PICT.  A partial G1 corpus may classify DB4
-     * roots, but it cannot promote one into a GDAT material request. */
-    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
-        !d->raw_data || !read_raw || !read_image_metadata ||
-        !read_local_palette ||
-        d->square_bytes != 1 ||
-        map < 0 || map >= d->level_count) {
-        return 0;
-    }
-
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.map = map;
-    for (x = 0; x < d->level_widths[map]; ++x) {
-        int y;
-        for (y = 0; y < d->level_heights[map]; ++y) {
-            int first_thing;
-            int raw;
-            uint16_t root;
-            const uint8_t *record;
-            const uint8_t *raw_map_chip = NULL;
-            uint32_t raw_byte_count = 0u;
-            uint8_t creature_type;
-            int image_width = 0;
-            int image_height = 0;
-            int image_format = 0;
-            DM2_V1_G1CreatureMapChipMaterial *material;
-
-            raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-            if (raw < 0) return 0;
-            if ((raw & 0x10) == 0) continue;
-            first_thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
-            if (first_thing < 0) return 0;
-            root = (uint16_t)first_thing;
-            if (((root >> 10) & 0x0f) != 4) continue;
-            if (!dm2_v1_g1_link_has_record_shape(d, root)) return 0;
-            record = dm2_v1_dungeon_get_thing_record(d, root, NULL, NULL, NULL);
-            if (!record || candidate.material_count >=
-                               DM2_V1_G1_CREATURE_MAP_CHIP_MAX) {
-                return 0;
-            }
-            ++candidate.source_creature_root_count;
-
-            /* skproject/SKWIN/DME.h Creature::CreatureType is DB4 b4.
-             * QUERY_DUNGEON_MAP_CHIP_PICT asks CREATURES/type dtImage F9
-             * for the original map-chip surface. */
-            creature_type = record[4];
-            if (!read_raw(read_userdata, 0x01, 0x0f, creature_type, 0xf9,
-                          &raw_map_chip, &raw_byte_count) ||
-                !raw_map_chip || raw_byte_count == 0u) {
-                return 0;
-            }
-            /* The actual GDAT image route must accept the original F9 data
-             * before it can become runtime material. Metadata only: decoded
-             * pixels are owned and discarded by the boot adapter. */
-            if (!read_image_metadata(read_userdata, 0x0f, creature_type,
-                                     0xf9, &image_width, &image_height,
-                                     &image_format) ||
-                image_width <= 0 || image_height <= 0 ||
-                (image_format != 3 && image_format != 4 &&
-                 image_format != 8 && image_format != 9)) {
-                return 0;
-            }
-            material = &candidate.materials[candidate.material_count++];
-            /* QUERY_DUNGEON_MAP_CHIP_PICT pairs CREATURES/type/F9 with
-             * QUERY_GDAT_IMAGE_LOCALPAL before DRAW_CHIP_OF_MAGIC_MAP.
-             * A DB4 root cannot borrow an interface or another creature's
-             * palette merely because its decoded image dimensions match. */
-            if (!read_local_palette(read_userdata, 0x0f, creature_type, 0xf9,
-                                    material->local_palette16,
-                                    &material->local_palette_hash) ||
-                material->local_palette_hash == 0u) {
-                return 0;
-            }
-            material->x = x;
-            material->y = y;
-            material->object_id = root;
-            material->direction = (uint8_t)(root >> 14);
-            material->creature_type = creature_type;
-            material->raw_byte_count = raw_byte_count;
-            material->raw_hash = dm2_v1_g1_raw_hash(raw_map_chip,
-                                                     raw_byte_count);
-            material->image_width = image_width;
-            material->image_height = image_height;
-            material->image_format = image_format;
-            if (material->raw_hash == 0u) return 0;
-        }
-    }
-    candidate.valid = 1;
-    *out = candidate;
-    return 1;
-}
-
-int dm2_v1_g1_creature_map_chip_matches_decoded_material(
-    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
-    int creature_type,
-    int image_width,
-    int image_height,
-    uint32_t local_palette_hash)
-{
-    int i;
-
-    if (!receipt || !receipt->valid || creature_type < 0 ||
-        creature_type > 0xff || image_width <= 0 || image_height <= 0 ||
-        local_palette_hash == 0u) {
-        return 0;
-    }
-    for (i = 0; i < receipt->material_count; ++i) {
-        const DM2_V1_G1CreatureMapChipMaterial *material =
-            &receipt->materials[i];
-        if (material->creature_type == (uint8_t)creature_type &&
-            material->image_width == image_width &&
-            material->image_height == image_height &&
-            material->local_palette_hash == local_palette_hash) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out){
- static const int dx[4]={0,1,0,-1},dy[4]={-1,0,1,0};int raw;
- if(!out)return 0;memset(out,0,sizeof(*out));if(!d||(dir&~3)!=0)return 0;raw=dm2_v1_dungeon_get_tile_raw(d,level,x,y);if(raw<0)return 0;
- out->dir=dir;out->x=x;out->y=y;out->tile_w2=(uint8_t)raw;out->tile_type=(uint8_t)((uint8_t)raw>>5);out->first_record_link=dm2_v1_dungeon_get_first_thing(d,level,x,y);
- for(int side=0;side<4;++side){out->oriented_bits[side]=(uint8_t)(raw&(1u<<((3-dir-side)&3)));int n=dm2_v1_dungeon_get_tile_raw(d,level,x+dx[(dir+side)&3],y+dy[(dir+side)&3]);if(n<0)return 0;out->neighbor_tile_w2[side]=(uint8_t)n;}out->valid=1;return 1;}
-
-int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
 
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;

@@ -12,9 +12,43 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
-#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <string.h>
+
+/* ── G0215_auc_Graphic558_ProjectileScales ───────────────────────────
+ * 7 scale units out of 32.
+ * Ref: DUNVIEW.C:5712 (ST source), scaleIndex computation at :5718.
+ * [0] = D1 native/back (32), [1] = D2 front (27), [2] = D2 back (21),
+ * [3] = D3 front (18), [4] = D3 back (14), [5] = D4 front (12),
+ * [6] = D4 back (9). */
+const unsigned char DM1_ProjectileScales[7] = {32, 27, 21, 18, 14, 12, 9};
+
+/* ── G0210_as_Graphic558_ProjectileAspects (14 entries) ──────────────
+ * Ref: DUNVIEW.C line 78-91 (Graphic558 data section), DEFS.H:2037-2044.
+ * Format: {FirstNativeBitmapRelativeIndex, FirstDerivedBitmapRelativeIndex,
+ *           GraphicInfo}.
+ * GraphicInfo bits:
+ *   [1:0] = aspect type (0-3)
+ *   [4]   = SIDE flag (MASK0x0010)
+ *   [8]   = SCALE_WITH_KINETIC_ENERGY (MASK0x0100)
+ *
+ * Cross-checked against m11_game_view.c kFirstNative[14] and kGraphicInfo[14]. */
+const DM1_ProjectileAspect DM1_ProjectileAspects[DM1_PROJECTILE_ASPECT_COUNT] = {
+    { 0, 0, 0x0011}, /*  0: Arrow/dart/shuriken — type0, SIDE */
+    { 3, 0, 0x0011}, /*  1: Sword/axe/club      — type0, SIDE */
+    { 6, 0, 0x0010}, /*  2: Dagger              — type0, no-SIDE? (SIDE=0x0010 set) */
+    { 9, 0, 0x0112}, /*  3: Lightning bolt      — type2, SCALE_KE */
+    {11, 0, 0x0011}, /*  4: weapon #1           — type0, SIDE */
+    {14, 0, 0x0010}, /*  5: weapon #2           — type0, SIDE=0x0010 */
+    {17, 0, 0x0010}, /*  6: weapon #3           — type0 */
+    {20, 0, 0x0011}, /*  7: weapon #4           — type0, SIDE */
+    {23, 0, 0x0011}, /*  8: weapon #5           — type0, SIDE */
+    {26, 0, 0x0012}, /*  9: weapon #6           — type2 */
+    {28, 0, 0x0103}, /* 10: Fireball            — type3, SCALE_KE */
+    {29, 0, 0x0103}, /* 11: Default spell       — type3, SCALE_KE */
+    {30, 0, 0x0103}, /* 12: Slime               — type3, SCALE_KE */
+    {31, 0, 0x0103}, /* 13: Poison bolt/cloud   — type3, SCALE_KE */
+};
 
 /* ── G0216_auc_Graphic558_ExplosionBaseScales ────────────────────────
  * 4 values indexed by view depth (0=D0 closest, 3=D3 farthest).
@@ -24,152 +58,63 @@
 const unsigned char DM1_ExplosionBaseScales[4] = {32, 21, 14, 9};
 
 
+/* ── Projectile rendering queries ────────────────────────────────── */
+
+int dm1_v1_projectile_aspect_type(int aspectIndex) {
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
+    return (int)(DM1_ProjectileAspects[aspectIndex].graphicInfo & 0x0003u);
+}
+
+int dm1_v1_projectile_aspect_first_native(int aspectIndex) {
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
+    return (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
+}
+
+unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex) {
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0u;
+    return (unsigned int)DM1_ProjectileAspects[aspectIndex].graphicInfo;
+}
+
+/* DUNVIEW.C:5746-5786, L0183_i_ProjectileBitmapIndexDelta. */
+int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir) {
+    int aspectType;
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0;
+    aspectType = (int)(DM1_ProjectileAspects[aspectIndex].graphicInfo & 0x0003u);
+    if (relativeDir < 0) relativeDir = 0;
+    relativeDir &= 3;
+
+    /* Type 3 (NO_BACK_NO_ROTATION): always delta=0 */
+    if (aspectType == 3) return 0;
+
+    /* Perpendicular to party facing (right or left) */
+    if (relativeDir == 1 || relativeDir == 3) {
+        /* Type 2 (NO_BACK_AND_ROTATION): delta=1 */
+        if (aspectType == 2) return 1;
+        /* Type 0/1 (HAS_BACK): delta=2 */
+        return 2;
+    }
+
+    /* Parallel (forward=0 or backward=2) */
+    if (aspectType >= 2) return 0;
+    /* Type 1 (HAS_BACK_NO_ROTATION): delta=0 unless facing backward */
+    if (aspectType == 1 && relativeDir != 0) return 0;
+    /* Type 0/1 facing away: delta=1 (back graphic) if applicable */
+    return 1;
+}
+
+int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir) {
+    int first;
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return -1;
+    first = (int)DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex;
+    return DM1_GFX_FIRST_PROJECTILE + first +
+           dm1_v1_projectile_bitmap_delta(aspectIndex, relativeDir);
+}
+
 int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     int aspectIndex = dm1_v1_projectile_subtype_to_aspect(subtype);
     int first = dm1_v1_projectile_aspect_first_native(aspectIndex);
     if (first < 0) return -1;
     return DM1_GFX_FIRST_PROJECTILE + first;
-}
-
-int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void)
-{
-    /* ReDMCSB DUNVIEW.C F0115:5965-5969,5977-5979 resolves the original
-     * lightning projectile aspect, then requests its following native bitmap:
-     * M613 (454) + G0210[C03].FirstNativeBitmapRelativeIndex (9) + 1.
-     * C100 remains distinct from C101's M636 fire-pattern route. */
-    return DM1_GFX_FIRST_PROJECTILE +
-           (int)DM1_ProjectileAspects[DM1_PROJ_ASPECT_LIGHTNING_BOLT]
-               .firstNativeBitmapRelativeIndex + 1;
-}
-
-int dm1_v1_projectile_material_resolve_pc34(
-    int projectileSubtype,
-    int associatedThingType,
-    int associatedThingSubtype,
-    int weaponProjectileAspectOrdinal,
-    DM1_ProjectileMaterialResolutionPc34 *outResolution)
-{
-    DM1_ProjectileMaterialResolutionPc34 resolution;
-    int aspect;
-
-    if (!outResolution) {
-        return 0;
-    }
-    memset(&resolution, 0, sizeof(resolution));
-    resolution.graphic_index = -1;
-    resolution.aspect_index = -1;
-    resolution.transparent_color = 10;
-
-    /* ReDMCSB DUNGEON.C F0142: weapons with M066's nonzero ordinal use
-     * G0210 projectile art; every other carried object uses G0237/G0209.
-     * DUNVIEW.C F0115:5896-5900 then enters the object draw path. */
-    if (associatedThingType >= THING_TYPE_WEAPON &&
-        associatedThingType <= THING_TYPE_JUNK) {
-        if (associatedThingType == THING_TYPE_WEAPON &&
-            weaponProjectileAspectOrdinal > 0) {
-            aspect = weaponProjectileAspectOrdinal - 1;
-            if (aspect < 0 || aspect >= DM1_PROJECTILE_ASPECT_COUNT) {
-                return 0;
-            }
-            resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
-            resolution.aspect_index = aspect;
-        } else {
-            aspect = dm1_item_aspect_index(associatedThingType,
-                                           associatedThingSubtype);
-            if (aspect < 0) {
-                return 0;
-            }
-            resolution.uses_object_aspect = 1;
-            resolution.graphic_index = (int)dm1_object_aspect_graphic_index(aspect);
-            resolution.aspect_index = aspect;
-            if (resolution.graphic_index <= 0) {
-                return 0;
-            }
-        }
-    } else {
-        aspect = dm1_v1_projectile_subtype_to_aspect(projectileSubtype);
-        if (aspect < 0) {
-            return 0;
-        }
-        resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
-        resolution.aspect_index = aspect;
-    }
-
-    resolution.valid = 1;
-    *outResolution = resolution;
-    return 1;
-}
-
-int dm1_v1_thrown_object_projectile_blit_plan_pc34(
-    DM1_ThrownObjectProjectileBlitPlanPc34 *outPlan,
-    int graphicIndex,
-    int objectAspectIndex,
-    int depthIndex,
-    int relativeCell,
-    int viewLane,
-    int sourceZoneRow,
-    int viewportX,
-    int viewportY,
-    int viewportW,
-    int viewportH,
-    int spriteW,
-    int spriteH)
-{
-    DM1_ThrownObjectProjectileBlitPlanPc34 plan;
-    int zoneX;
-    int zoneY;
-
-    if (!outPlan || graphicIndex < DM1_GRAPHIC_FIRST_OBJECT ||
-        objectAspectIndex < 0 || objectAspectIndex >= 85 ||
-        relativeCell < 0 || relativeCell > 3 || sourceZoneRow < 0 ||
-        viewLane < -1 || viewLane > 1 ||
-        viewportW <= 0 || viewportH <= 0 || spriteW <= 0 || spriteH <= 0 ||
-        !dm1_viewport_3d_c2900_projectile_raw_zone_point(
-            sourceZoneRow, relativeCell, &zoneX, &zoneY)) {
-        return 0;
-    }
-
-    memset(&plan, 0, sizeof(plan));
-    plan.graphic_index = graphicIndex;
-    plan.transparent_color = 10;
-    plan.source_scale_index = dm1_viewport_3d_object_source_scale_index(
-        depthIndex, relativeCell);
-    plan.scale_units = dm1_viewport_3d_object_source_scale_units(
-        plan.source_scale_index);
-    plan.draw_w = spriteW * plan.scale_units / 32;
-    plan.draw_h = spriteH * plan.scale_units / 32;
-    if (plan.draw_w < 3) plan.draw_w = 3;
-    if (plan.draw_h < 3) plan.draw_h = 3;
-    plan.draw_x = viewportX + zoneX - plan.draw_w / 2;
-    plan.draw_y = viewportY + zoneY - plan.draw_h + 1;
-    /* ReDMCSB DUNVIEW.C F0115:4862-4865 applies G0209's
-     * FLIP_ON_RIGHT flag to every right-side lane.  In the center lane it
-     * applies only to FRONT_RIGHT (C01) and BACK_RIGHT (C02), never
-     * BACK_LEFT (C03).  A thrown object re-enters this same object path at
-     * :5891-5900, so its C2900 material must use the identical predicate. */
-    plan.use_mirror =
-        (dm1_object_aspect_graphic_info(objectAspectIndex) & 0x0001u) &&
-        (viewLane > 0 ||
-         (viewLane == 0 && (relativeCell == 1 || relativeCell == 2)));
-    plan.uses_source_row = 1;
-
-    if (plan.draw_x < viewportX - plan.draw_w + 1) {
-        plan.draw_x = viewportX - plan.draw_w + 1;
-    }
-    if (plan.draw_y < viewportY - plan.draw_h + 1) {
-        plan.draw_y = viewportY - plan.draw_h + 1;
-    }
-    if (plan.draw_x >= viewportX + viewportW ||
-        plan.draw_y >= viewportY + viewportH) {
-        return 0;
-    }
-
-    /* ReDMCSB DUNVIEW.C F0115:5896-5900 sets the projectile C2900
-     * coordinate then jumps to T0115015_DrawProjectileAsObject.  The
-     * object keeps G0209/M612 material and C10 transparency, but skips the
-     * normal floor-pile shift. */
-    *outPlan = plan;
-    return 1;
 }
 
 /* DUNVIEW.C:5745-5806 flip flags.
@@ -264,6 +209,28 @@ int dm1_v1_projectile_effect_particle_pc34(int subtype,
     if (outSize) {
         *outSize = size;
     }
+    return 1;
+}
+
+int dm1_v1_projectile_d4_far_box(int relSide,
+                                 int *outX,
+                                 int *outY,
+                                 int *outW,
+                                 int *outH) {
+    int x;
+    if (relSide < -1 || relSide > 1) {
+        return 0;
+    }
+
+    /* ReDMCSB DUNVIEW.C F0128 lines 8466-8477 calls F0115 for D4L,
+     * D4R, then D4C before D3 walls overpaint it. PC34 does not expose
+     * a C2900 source-zone row for D4, so Firestaff binds a tiny far box
+     * behind D3 while preserving that draw order and occlusion model. */
+    x = (relSide < 0) ? 78 : ((relSide > 0) ? 138 : 108);
+    if (outX) *outX = x;
+    if (outY) *outY = 42;
+    if (outW) *outW = 10;
+    if (outH) *outH = 8;
     return 1;
 }
 
@@ -602,227 +569,6 @@ int dm1_v1_f0115_runtime_summary_pc34(
                     liveExplosionCount;
     summary.valid = 1;
     *outSummary = summary;
-    return 1;
-}
-
-int dm1_v1_f0115_runtime_instance_summary_pc34(
-    const DM1_F0115RuntimeInstanceInputPc34* input,
-    DM1_F0115RuntimeSummaryPc34* outSummary)
-{
-    int projectileCount = 0;
-    int explosionCount = 0;
-    int i;
-
-    if (!outSummary) return 0;
-    memset(outSummary, 0, sizeof(*outSummary));
-    if (!input || input->thingCount < 0 ||
-        (input->thingCount > 0 && !input->thingRefs)) {
-        return 0;
-    }
-
-    /* ReDMCSB DUNVIEW.C F0115:5668-5683 consumes only a live F0219
-     * projectile on the current map square. An allocated cache slot is not
-     * enough: reserved3 is the M10 active marker. */
-    if (input->projectiles) {
-        int count = input->projectiles->count;
-        if (count < 0) count = 0;
-        if (count > PROJECTILE_LIST_CAPACITY) count = PROJECTILE_LIST_CAPACITY;
-        for (i = 0; i < count; ++i) {
-            const struct ProjectileInstance_Compat* projectile =
-                &input->projectiles->entries[i];
-            if (projectile->slotIndex >= 0 && projectile->reserved3 != 0 &&
-                projectile->mapIndex == input->mapIndex &&
-                projectile->mapX == input->mapX &&
-                projectile->mapY == input->mapY) {
-                ++projectileCount;
-            }
-        }
-    }
-
-    /* ReDMCSB DUNVIEW.C F0115:5916-5933 similarly restarts for live F0220
-     * explosion records. Keep invalid/empty slots out of the render receipt. */
-    if (input->explosions) {
-        int count = input->explosions->count;
-        if (count < 0) count = 0;
-        if (count > EXPLOSION_LIST_CAPACITY) count = EXPLOSION_LIST_CAPACITY;
-        for (i = 0; i < count; ++i) {
-            const struct ExplosionInstance_Compat* explosion =
-                &input->explosions->entries[i];
-            if (explosion->slotIndex >= 0 && explosion->reserved0 != 0 &&
-                explosion->explosionType >= 0 &&
-                explosion->mapIndex == input->mapIndex &&
-                explosion->mapX == input->mapX &&
-                explosion->mapY == input->mapY) {
-                ++explosionCount;
-            }
-        }
-    }
-
-    return dm1_v1_f0115_runtime_summary_pc34(
-        input->thingRefs, input->thingCount, projectileCount, explosionCount,
-        outSummary);
-}
-
-int dm1_v1_f0115_runtime_summary_from_world_pc34(
-    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
-    DM1_F0115RuntimeSummaryPc34* outSummary)
-{
-    DM1_F0115RuntimeInstanceInputPc34 input;
-    unsigned short refs[32];
-    unsigned short thing;
-    int count = 0;
-    if (!outSummary) return 0;
-    memset(outSummary, 0, sizeof(*outSummary));
-    if (!world || !world->dungeon || !world->things) return 0;
-
-    /* ReDMCSB DUNVIEW.C F0115:4547-4581 walks the current square's SFT
-     * chain before its live F0219/F0220 passes.  DUNGEON.C F0160/F0161
-     * owns the compact SFT lookup and record-next decode, so this bridge
-     * deliberately consumes the M10 APIs rather than M11 raw records. */
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, mapIndex, mapX, mapY);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && count < 32) {
-        refs[count++] = thing;
-        thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
-    }
-
-    memset(&input, 0, sizeof(input));
-    input.thingRefs = refs;
-    input.thingCount = count;
-    input.projectiles = &world->projectiles;
-    input.explosions = &world->explosions;
-    input.mapIndex = mapIndex;
-    input.mapX = mapX;
-    input.mapY = mapY;
-    return dm1_v1_f0115_runtime_instance_summary_pc34(&input, outSummary);
-}
-
-static int dm1_f0115_item_subtype_from_thing_pc34(
-    const struct DungeonThings_Compat* things, unsigned short thing)
-{
-    int type = THING_GET_TYPE(thing);
-    int index = THING_GET_INDEX(thing);
-
-    if (!things || index < 0) return -1;
-    switch (type) {
-    case THING_TYPE_WEAPON:
-        return things->weapons && index < things->weaponCount
-            ? (int)things->weapons[index].type : -1;
-    case THING_TYPE_ARMOUR:
-        return things->armours && index < things->armourCount
-            ? (int)things->armours[index].type : -1;
-    case THING_TYPE_POTION:
-        return things->potions && index < things->potionCount
-            ? (int)things->potions[index].type : -1;
-    case THING_TYPE_JUNK:
-        return things->junks && index < things->junkCount
-            ? (int)things->junks[index].type : -1;
-    case THING_TYPE_CONTAINER:
-        return things->containers && index < things->containerCount
-            ? (int)things->containers[index].type : -1;
-    case THING_TYPE_SCROLL:
-        return 0;
-    default:
-        return -1;
-    }
-}
-
-int dm1_v1_f0115_world_candidates_pc34(
-    const struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
-    DM1_F0115MirrorOrdinalLookupPc34 mirrorOrdinalLookup, void* mirrorUser,
-    DM1_F0115WorldCandidatesPc34* outCandidates)
-{
-    DM1_F0115ThingRouteInputPc34 routeThings[32];
-    const struct DungeonMapDesc_Compat* map;
-    unsigned short thing;
-    int elementType;
-    int routeThingCount = 0;
-    int i;
-
-    if (!outCandidates) return 0;
-    memset(outCandidates, 0, sizeof(*outCandidates));
-    if (!world || !world->dungeon || !world->things ||
-        !world->dungeon->tilesLoaded || mapIndex < 0 ||
-        mapIndex >= (int)world->dungeon->header.mapCount) {
-        return 0;
-    }
-    map = &world->dungeon->maps[mapIndex];
-    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width ||
-        mapY >= (int)map->height || !world->dungeon->tiles ||
-        !world->dungeon->tiles[mapIndex].squareData) {
-        return 0;
-    }
-    elementType = (world->dungeon->tiles[mapIndex].squareData[
-        mapX * (int)map->height + mapY] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-
-    /* ReDMCSB DUNVIEW.C F0115:4547-4581, DUNGEON.C F0160/F0161:
-     * enumerate only the compact SFT chain belonging to this square. */
-    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        world->dungeon, world->things, mapIndex, mapX, mapY);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
-           routeThingCount < (int)(sizeof(routeThings) / sizeof(routeThings[0]))) {
-        int type = THING_GET_TYPE(thing);
-        int index = THING_GET_INDEX(thing);
-        int mirrorOrdinal = -1;
-
-        if (type == THING_TYPE_TEXTSTRING && mirrorOrdinalLookup &&
-            world->things->textStrings && index >= 0 &&
-            index < world->things->textStringCount) {
-            mirrorOrdinal = mirrorOrdinalLookup(mirrorUser, index);
-        }
-        routeThings[routeThingCount].thing = thing;
-        routeThings[routeThingCount].mirrorTextStringOrdinal = mirrorOrdinal;
-        ++routeThingCount;
-        thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
-    }
-    outCandidates->chainCount = routeThingCount;
-    outCandidates->overflow = thing != THING_NONE && thing != THING_ENDOFLIST;
-
-    if (!dm1_v1_f0115_thing_route_receipt_pc34(
-            routeThings, routeThingCount, -1, 0, mapIndex,
-            mapIndex == 0 && elementType != DUNGEON_ELEMENT_WALL,
-            &outCandidates->staticReceipt) ||
-        !outCandidates->staticReceipt.valid) {
-        return 0;
-    }
-
-    /* F0115 defers C04 groups until after floor objects.  Map 0 has no
-     * active groups in the PC34 dungeon and wall squares do not take the
-     * floor-creature route. */
-    if (mapIndex != 0 && elementType != DUNGEON_ELEMENT_WALL) {
-        for (i = 0; i < routeThingCount &&
-                    outCandidates->groupCount < DM1_F0115_MAX_WORLD_GROUPS; ++i) {
-            int index;
-            if (THING_GET_TYPE(routeThings[i].thing) != THING_TYPE_GROUP) continue;
-            index = THING_GET_INDEX(routeThings[i].thing);
-            if (world->things->groups && index >= 0 &&
-                index < world->things->groupCount) {
-                DM1_F0115WorldGroupCandidatePc34* group =
-                    &outCandidates->groups[outCandidates->groupCount++];
-                group->thing = routeThings[i].thing;
-                group->creatureType = (int)world->things->groups[index].creatureType;
-                group->creatureCount = (int)world->things->groups[index].count + 1;
-                group->direction = (int)world->things->groups[index].direction;
-            }
-        }
-    }
-
-    for (i = 0; i < outCandidates->staticReceipt.visibleFloorItemCount &&
-                outCandidates->itemCount < DM1_F0115_MAX_RECEIPT_ITEMS; ++i) {
-        unsigned short itemThing =
-            outCandidates->staticReceipt.visibleFloorItemThings[i];
-        int subtype = dm1_f0115_item_subtype_from_thing_pc34(
-            world->things, itemThing);
-        if (subtype >= 0) {
-            DM1_F0115WorldItemCandidatePc34* item =
-                &outCandidates->items[outCandidates->itemCount++];
-            item->thing = itemThing;
-            item->thingType = THING_GET_TYPE(itemThing);
-            item->subtype = subtype;
-            item->cell = THING_GET_CELL(itemThing);
-        }
-    }
-    outCandidates->valid = 1;
     return 1;
 }
 

@@ -1,7 +1,6 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_dmdf_model.h"
-#include "nexus_v1_engine.h"
 #include "nexus_v1_game.h"
 
 #include <stdio.h>
@@ -131,19 +130,6 @@ int main(void) {
     uint8_t floor_pixel;
     uint8_t wall_pixel;
     uint8_t *structure1;
-    static const uint8_t canonical_dgn_bytes[] = {'a', 'b', 'c'};
-
-    expect(nexus_v1_dgn_bytes_match_canonical_md5(
-               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
-               "900150983cd24fb0d6963f7d28e17f72") == 1,
-           "canonical DGN bytes are accepted by the exact-buffer hash gate");
-    expect(nexus_v1_dgn_bytes_match_canonical_md5(
-               canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes),
-               "00000000000000000000000000000000") == 0 &&
-               nexus_v1_dgn_bytes_match_canonical_md5(
-                   canonical_dgn_bytes, (int)sizeof(canonical_dgn_bytes) - 1,
-                   "900150983cd24fb0d6963f7d28e17f72") == 0,
-           "mismatched DGN bytes stay blocked before Structure3 binding");
 
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);
@@ -304,144 +290,25 @@ int main(void) {
             }
         }
     }
-    /* Hash identity and decoded MNS bytes do not establish Structure1B's
-     * wall-selector transform. The real retail corpus has raw bytes above
-     * the 15-entry wall bank, so this route must stay closed until a Saturn
-     * decoder/capture supplies a binding proof. */
-    nexus_v1_invalidate_dgn_material_plan(&engine);
-    nexus_viewport_render(&viewport, &engine);
-    expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
-               receipt.attempted && receipt.blocked &&
-               !receipt.fallback_visuals_permitted,
-           "unbound Structure1B wall selectors block the real MNS route");
-    expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
-               engine.dgn_material_plan.receipt.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR &&
-               engine.dgn_material_plan.receipt.static_mns_source_pair_bound &&
-               !engine.dgn_material_plan.receipt
-                    .structure1b_selector_binding_proven &&
-               !engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
-               !engine.dgn_material_plan.receipt.uses_bpk_material_route,
-           "material-plan package route names the unproved Structure1B selector blocker");
-
-    engine.dgn_static_material_sources.structure1b_selector_binding_proven = 1;
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
                receipt.ready && !receipt.blocked &&
-               receipt.bpk_material_surface_count == 0,
+               receipt.bpk_material_surface_count == 0 &&
+               receipt.static_mns_material_surface_count ==
+                   receipt.material_surface_count &&
+               receipt.static_mns_floor_material_surface_count ==
+                   receipt.floor_material_surface_count &&
+               receipt.static_mns_floor_material_surface_count > 0,
            "hash-bound SN_FLOOR/SN_WALL route renders without BPK substitution");
-    expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
-               !engine.dgn_material_plan.receipt.uses_bpk_material_route,
-           "bound Structure1B selectors admit one static MNS package route only");
-    /* A resolved Structure1A owner may retain only the bounded Structure3
-     * envelope. The plan keeps that source evidence while the absent face
-     * grammar remains a hard no-draw gate. */
-    engine.current_level.geometry_info.structure1f_declared = 1;
-    engine.current_level.geometry_info.structure1f_valid = 1;
-    engine.current_level.geometry_info.structure1f_total_entry_count = 1;
-    engine.current_level.structure1f_entry_count = 1;
-    engine.current_level.structure1f_entries[0].family =
-        NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
-    engine.current_level.structure1f_entries[0].tag = 0x20U;
-    engine.current_level.structure1f_entries[0].face = 3U;
-    engine.current_level.structure1f_entries[0].structure1a_index = 0;
-    engine.current_level.structure1f_entries[0].structure1a_relation_valid = 1;
-    engine.current_level.structure1f_entries[0].structure1a_owner_x = 3;
-    engine.current_level.structure1f_entries[0].structure1a_owner_y = 4;
-    engine.current_level.structure1f_entries[0]
-        .structure1a_structure3_model_index = 5U;
-    engine.current_level.structure1a_table_valid = 1;
-    engine.current_level.structure1a_model_count = 1;
-    engine.current_level.structure1a_models[0].kind = 0x6aU;
-    engine.current_level.structure1a_models[0].structure3_model_index = 5U;
-    engine.current_level.structure3_payload.declared = 1;
-    engine.current_level.structure3_payload.valid = 1;
-    engine.current_level.structure3_payload.block_offset = 20;
-    engine.current_level.structure3_payload.block_count = 4;
-    engine.current_level.structure3_payload.byte_size =
-        NEXUS_DGN_BLOCK_SIZE * 4;
-    engine.current_level.structure3_payload.complete_block_count = 4;
-    engine.current_level.structure3_payload.nonzero_byte_run_count = 3;
-    engine.current_level.structure3_payload.nonzero_block_run_count = 2;
-    engine.current_level.structure3_payload.raw_payload_hash = 0x6d358ca1U;
-    nexus_v1_invalidate_dgn_material_plan(&engine);
-    expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
-               engine.dgn_material_plan.receipt.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
-               engine.dgn_material_plan.receipt.command_count > 0 &&
-               !engine.dgn_material_plan.receipt.plan_ready &&
-               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               !engine.dgn_material_plan.receipt.fallback_visuals_permitted &&
-               engine.dgn_material_plan
-                   .structure1a_structure3_topology_candidates_consumed &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_complete &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_candidate_count == 1 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1f_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1f_face_selector_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1a_row_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1a_kind_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1a_model_rotation_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1a_model_rotation_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_binding_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_family == NEXUS_V1_DGN_STRUCTURE1F_ALCOVES &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_tag == 0x20U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_face_selector == 3U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_structure1a_index == 0U &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1f_face_selector_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_kind == 0x6aU &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_row_binding_proven &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1a_kind_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_structure3_model_index == 5U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_z_rotation == 0U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_model_rotation_binding_proven &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1a_model_rotation_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count ==
-                       1 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_block_offset == 20 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_block_count == 4 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_nonzero_byte_run_count == 3 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_nonzero_block_run_count == 2 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_raw_hash == 0x6d358ca1U,
-           "Structure1A/Structure3 topology reaches a blocked no-draw plan with only envelope runs and hash evidence");
-    engine.current_level.structure1f_entry_count = 0;
-    engine.current_level.geometry_info.structure1f_declared = 0;
-    engine.current_level.geometry_info.structure1f_valid = 0;
-    memset(&engine.current_level.structure3_payload, 0,
-           sizeof(engine.current_level.structure3_payload));
+    expect(viewport.material_palette_valid &&
+               viewport.fb.palette[16] != viewport.base_palette[16],
+           "hash-bound MNS render installs its transient material palette");
     {
         Nexus_V1_DgnStaticMaterialSourceReceipt source_receipt;
         expect(nexus_v1_dgn_static_material_source_receipt(
                    &engine, &source_receipt) == 0 &&
                    source_receipt.canonical_pair_bound &&
-                   source_receipt.structure1b_selector_binding_proven &&
                    strcmp(source_receipt.floor_mns.canonical_name,
                           "SN_FLOOR.MNS") == 0 &&
                    strcmp(source_receipt.wall_mns.canonical_name,
@@ -472,6 +339,10 @@ int main(void) {
                 receipt.first_missing_material_kind ==
                     NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT),
            "DGN material plan reports the first missing wall material instead of falling back");
+    expect(!viewport.material_palette_valid &&
+               viewport.material_engine == NULL &&
+               viewport.fb.palette[16] == viewport.base_palette[16],
+           "blocked DGN handoff clears the previous MNS material palette");
 
     return failures ? 1 : 0;
 }

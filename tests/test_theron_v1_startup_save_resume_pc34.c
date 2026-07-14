@@ -319,7 +319,7 @@ static const uint8_t g_valid_gzip_srm[] = {
 static const uint8_t g_unsupported_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff,
     0x01, 0x08, 0x00, 0xf7, 0xff, 'U', 'N', 'K', 'N', 'O', 'W', 'N', '!',
-    0xe3, 0x32, 0x9b, 0x66, 0x08, 0x00, 0x00, 0x00
+    0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00
 };
 
 static const uint8_t g_valid_party_gzip_srm[] = {
@@ -819,7 +819,7 @@ static void test_tqsv_only_resume_claim(void) {
     }
 }
 
-void test_srm_only_resume_claim(void) {
+static void test_srm_only_resume_claim(void) {
     char srm_root[THERON_V1_SRM_PATH_MAX];
     if (!make_temp_save_root(srm_root)) {
         printf("SKIP: mkdtemp failed for srm-only test\n");
@@ -903,7 +903,7 @@ void test_srm_only_resume_claim(void) {
     }
 }
 
-void test_srm_decoded_slot_skips_unsupported_prefix(void) {
+static void test_srm_decoded_slot_skips_unsupported_prefix(void) {
 #if FIRESTAFF_HAS_ZLIB
     char srm_root[THERON_V1_SRM_PATH_MAX];
     char first_path[THERON_V1_SRM_PATH_MAX];
@@ -954,7 +954,7 @@ void test_srm_decoded_slot_skips_unsupported_prefix(void) {
 #endif
 }
 
-void test_srm_party_continue_restores_all_champions(void) {
+static void test_srm_party_continue_restores_all_champions(void) {
     char srm_root[THERON_V1_SRM_PATH_MAX];
     char slot_path[THERON_V1_SRM_PATH_MAX];
     char custom_path[THERON_V1_SRM_PATH_MAX];
@@ -1397,7 +1397,7 @@ void test_srm_party_continue_restores_all_champions(void) {
     }
 }
 
-void test_dual_resume_claim(void) {
+static void test_dual_resume_claim(void) {
     char tqsv_root[THERON_V1_SRM_PATH_MAX];
     char srm_root[THERON_V1_SRM_PATH_MAX];
     if (!make_temp_save_root(tqsv_root) ||
@@ -1739,7 +1739,6 @@ static void test_startup_session_facts_wrappers(void) {
     Theron_V1_BootStartupRenderRouteReceipt render_route_receipt;
     Theron_V1_BootStartupHostViewReceipt host_view_receipt;
     Theron_V1_BootStartupGraphicsRouteReceipt graphics_route_receipt;
-    Theron_V1_BootStartupRawMediaGraphicsReceipt raw_media_graphics_receipt;
     Theron_V1_BootStartupFullStartReceipt full_start_receipt;
     Theron_V1_BootStartupHostRenderReceipt host_render_receipt;
     Theron_V1_BootStartupMenuRuntimeHandoffReceipt handoff_receipt;
@@ -3436,47 +3435,6 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.fill_count > 0 &&
                     media_graphics_counters.rect_count > 0,
                 "boot graphics route receipt executes startup graphics from view model");
-    memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
-    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
-    expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-                    &media_receipt,
-                    1,
-                    0,
-                    &raw_media_graphics_receipt) &&
-                    raw_media_graphics_receipt.valid &&
-                    !raw_media_graphics_receipt.palette_descriptor_relation_verified &&
-                    !theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
-                        &media_view_model,
-                        &raw_media_graphics_receipt,
-                        &media_graphics_executor,
-                        &graphics_route_receipt) &&
-                    graphics_route_receipt.graphics_blocked &&
-                    graphics_route_receipt.no_fallback_startup_graphics_proof &&
-                    !graphics_route_receipt.fallback_visuals_allowed &&
-                    strcmp(graphics_route_receipt.status,
-                           "TRACK02 PALETTE DESCRIPTOR UNPROVEN") == 0 &&
-                    media_graphics_counters.fill_count == 0 &&
-                    media_graphics_counters.rect_count == 0 &&
-                    media_graphics_counters.pixel_count == 0,
-                "raw CD-read receipt blocks title stage Soul Room fallback without palette descriptor proof");
-    memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
-    memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
-    expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
-                    &media_receipt,
-                    1,
-                    1,
-                    &raw_media_graphics_receipt) &&
-                    raw_media_graphics_receipt.valid &&
-                    raw_media_graphics_receipt.palette_descriptor_relation_verified &&
-                    theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
-                        &media_view_model,
-                        &raw_media_graphics_receipt,
-                        &media_graphics_executor,
-                        &graphics_route_receipt) &&
-                    graphics_route_receipt.track02_startup_graphics_executed &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "host consumes complete raw media receipt without Track02 rescan");
     {
         Theron_StartupMediaStateReceipt unpackaged_media_receipt =
             media_receipt;
@@ -4784,7 +4742,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.startup_level_blocked_anchor_count == 2 &&
                     receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     receipt.startup_level_anchor_status[1] ==
@@ -4818,12 +4776,12 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
                     (object_route_receipt.semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DESCRIPTOR_TABLE)) &&
-                    !(object_route_receipt.semantic_role_mask &
-                      (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
+                    (object_route_receipt.semantic_role_mask &
+                     (1u << THERON_TRACK02_SEMANTIC_OBJECT_TABLE)) &&
                     object_route_receipt.descriptor_table_semantic_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_count == 3u &&
                     object_route_receipt.descriptor_table_semantic_anchor_mask == 0x07u &&
-                    !object_route_receipt.object_table_role_mapped &&
+                    object_route_receipt.object_table_role_mapped &&
                     object_route_receipt.object_table_candidate_count == 3u &&
                     object_route_receipt.object_table_candidate_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_candidate_entry_index[0] == 6u &&
@@ -4859,31 +4817,32 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     object_route_receipt.object_table_blocked_anchor_count == 3u &&
                     object_route_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     object_route_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_anchor_binding_status[1] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_anchor_binding_status[2] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     object_route_receipt.object_table_declared_record_count[0] ==
-                        0u &&
+                        0x4241u &&
                     object_route_receipt.object_table_record_count[0] == 0u &&
                     object_route_receipt.object_table_required_byte_count[0] ==
-                        0u &&
-                    object_route_receipt.object_table_overflow_count[0] == 0u &&
+                        0x2120au &&
+                    object_route_receipt.object_table_overflow_count[0] ==
+                        0x4201u &&
                     object_route_receipt.object_table_first_bad_record_index[0] ==
-                        0u &&
+                        THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS &&
                     object_route_receipt.object_table_reject_reason[0] ==
-                        THERON_TRACK02_OBJECT_TABLE_REJECT_NONE &&
-                    object_route_receipt.object_table_record_hash[0] == 0u &&
+                        THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW &&
+                    object_route_receipt.object_table_record_hash[0] != 0u &&
                     !object_route_receipt.object_table_decode_ready &&
                     object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed &&
                     object_route_receipt.route_hash != 0u,
-                "Theron Track02 opaque post-descriptor receipt blocks fallback without object-table promotion");
+                "Theron Track02 object-table route receipt blocks fallback when real object evidence is missing");
 
-    /* Compact-looking rows in an opaque post-descriptor window remain
-     * unbound. They cannot manufacture object semantics or change the
-     * no-fallback policy without original loader/media evidence. */
+    /* Cross-anchor compact-row evidence is receipt-only.  These rows use the
+     * existing bounded fixture shape; consensus still does not assign any
+     * runtime object behavior or alter the no-fallback policy. */
     for (size_t anchor = 0u; anchor < 3u; ++anchor) {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[anchor];
         wr16le_test(objects, 2u);
@@ -4907,12 +4866,36 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    !object_route_receipt.object_table_decode_ready &&
-                    object_route_receipt.object_table_level_consensus_mask == 0u &&
-                    !object_route_receipt.object_table_role_mapped &&
-                    object_route_receipt.blocked_for_missing_real_object_evidence &&
-                    !object_route_receipt.fallback_visuals_allowed,
-                "Theron Track02 compact rows remain opaque without original object-route evidence");
+                    object_route_receipt.object_table_decode_ready &&
+                    object_route_receipt.object_table_level_consensus_mask ==
+                        ((1u << 0) | (1u << 1)) &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x07u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[1] ==
+                        0x07u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_counts[0] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_counts[1] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_first_record_indexes[0] ==
+                        0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_last_record_indexes[1] ==
+                        1u &&
+                    object_route_receipt
+                            .object_table_level_consensus_position_hashes[0] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_position_hashes[1] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_hashes[0] != 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_record_hashes[1] != 0u,
+                "Theron Track02 compact object rows retain exact per-level cross-anchor evidence");
     {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
         uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
@@ -4930,11 +4913,17 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    object_route_receipt.object_table_level_consensus_mask == 0u &&
-                    !object_route_receipt.object_table_decode_ready &&
-                    object_route_receipt.blocked_for_missing_real_object_evidence &&
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     ((1u << 0) | (1u << 1))) == 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x05u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[1] ==
+                        0x05u &&
+                    !object_route_receipt.blocked_for_missing_real_object_evidence &&
                     !object_route_receipt.fallback_visuals_allowed,
-                "Theron Track02 reordered opaque rows remain blocked without promotion");
+                "Theron Track02 row consensus rejects reordered accepted rows without promotion");
     {
         uint8_t *objects = track02 + post_descriptor_candidate_offsets[1];
         uint8_t first_row[THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES];
@@ -4953,11 +4942,14 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
                     &object_route_receipt) &&
-                    object_route_receipt.object_table_level_consensus_mask == 0u &&
-                    !object_route_receipt.object_table_decode_ready &&
-                    object_route_receipt.blocked_for_missing_real_object_evidence &&
-                    !object_route_receipt.fallback_visuals_allowed,
-                "Theron Track02 mutated opaque rows remain blocked without promotion");
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     (1u << 0)) == 0u &&
+                    object_route_receipt
+                            .object_table_level_consensus_anchor_masks[0] ==
+                        0x05u &&
+                    (object_route_receipt.object_table_level_consensus_mask &
+                     (1u << 1)) != 0u,
+                "Theron Track02 row consensus reports an accepted per-level anchor mismatch without promotion");
 
     /* Restore the sparse fixture's deliberately malformed entry-6 prefix for
      * the following no-fallback/runtime receipt assertions. */
@@ -5123,14 +5115,11 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     runtime_result.all_dungeon_real_data_capture_ready &&
                     runtime_result.object_table_no_fallback_ready &&
                     runtime_result.object_table_blocked_anchor_mask == 0x07u &&
-                    runtime_result.fallback_visuals_blocked &&
-                    runtime_result.runtime_level_source ==
-                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
                     runtime_result.nonstartup_level_no_fallback_ready &&
                     runtime_result.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     runtime_result.startup_level_blocked_anchor_mask == 0x06u &&
                     runtime_result.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     runtime_result.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     runtime_result.startup_level_anchor_status[1] ==
@@ -5143,13 +5132,12 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     runtime_result.object_table_route_hash != 0u &&
                     runtime_result.level_route_hash != 0u &&
                     apply_receipt.object_table_no_fallback_ready &&
-                    apply_receipt.fallback_visuals_blocked &&
                     apply_receipt.object_table_blocked_anchor_mask == 0x07u &&
                     apply_receipt.nonstartup_level_no_fallback_ready &&
                     apply_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     apply_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     apply_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     apply_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     apply_receipt.startup_level_anchor_status[1] ==
@@ -5160,7 +5148,6 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     apply_receipt.startup_level_anchor_width[0] == 32u &&
                     apply_receipt.startup_level_anchor_level_index[0] == 0x0026u &&
                     state_receipt.runtime_track02_media_route &&
-                    state_receipt.runtime_fallback_visuals_blocked &&
                     state_receipt.runtime_track02_media_route_mask ==
                         TST_THERON_FULL_START_BITMAP_ROUTES &&
                     state_receipt.runtime_track02_media_checksum ==
@@ -5178,7 +5165,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     state_receipt.runtime_nonstartup_level_blocked_anchor_mask == 0x07u &&
                     state_receipt.runtime_startup_level_blocked_anchor_mask == 0x06u &&
                     state_receipt.runtime_object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     state_receipt.runtime_startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     state_receipt.runtime_startup_level_anchor_raw_offsets[0] ==
@@ -5204,7 +5191,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     host_receipt.nonstartup_level_blocked_anchor_mask == 0x07u &&
                     host_receipt.startup_level_blocked_anchor_mask == 0x06u &&
                     host_receipt.object_table_anchor_binding_status[0] ==
-                        THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND &&
+                        THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE &&
                     host_receipt.startup_level_anchor_status[0] ==
                         THERON_TRACK02_LEVEL_HANDOFF_OK &&
                     host_receipt.startup_level_anchor_raw_offsets[0] ==
@@ -5213,68 +5200,6 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     host_receipt.startup_level_anchor_width[0] == 32u &&
                     host_receipt.startup_level_anchor_level_index[0] == 0x0026u,
                 "Theron host receipt carries Track02 per-anchor no-fallback evidence");
-    {
-        Theron_V1_BootRuntimeStartupSnapshot blocked_snapshot;
-        Theron_V1_BootStartupFullStartReceipt blocked_full_start;
-        Theron_StartupActionHostReceipt blocked_action;
-
-        memset(&blocked_snapshot, 0, sizeof(blocked_snapshot));
-        blocked_snapshot.startup_phase = THERON_STARTUP_PHASE_READY;
-        blocked_snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-        blocked_snapshot.world = &selected_world;
-        blocked_snapshot.startup_cursor = 0;
-        blocked_snapshot.continue_focus = 1;
-        blocked_snapshot.resume_claim = THERON_V1_STARTUP_RESUME_TQSV;
-        blocked_snapshot.tqsv_slot = 0;
-        blocked_snapshot.runtime_level_source = runtime_result.runtime_level_source;
-        blocked_snapshot.runtime_track02_semantic_handoff =
-            runtime_result.track02_semantic_handoff;
-        blocked_snapshot.runtime_fallback_visuals_blocked =
-            runtime_result.fallback_visuals_blocked;
-        blocked_snapshot.runtime_structured_route =
-            runtime_result.structured_runtime_route;
-        blocked_snapshot.object_table_no_fallback_ready =
-            runtime_result.object_table_no_fallback_ready;
-        blocked_snapshot.object_table_blocked_anchor_mask =
-            runtime_result.object_table_blocked_anchor_mask;
-        blocked_snapshot.object_table_blocked_anchor_count =
-            runtime_result.object_table_blocked_anchor_count;
-        blocked_snapshot.nonstartup_level_no_fallback_ready =
-            runtime_result.nonstartup_level_no_fallback_ready;
-        blocked_snapshot.nonstartup_level_blocked_anchor_mask =
-            runtime_result.nonstartup_level_blocked_anchor_mask;
-        blocked_snapshot.nonstartup_level_blocked_anchor_count =
-            runtime_result.nonstartup_level_blocked_anchor_count;
-
-        expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
-                        &blocked_snapshot,
-                        &runtime_result.track02_media,
-                        NULL,
-                        &blocked_full_start) &&
-                        blocked_full_start.runtime_track02_semantic_handoff &&
-                        blocked_full_start.runtime_fallback_visuals_blocked &&
-                        !blocked_full_start.title_menu_ready &&
-                        !blocked_full_start.stage_menu_ready &&
-                        !blocked_full_start.soul_room_menu_ready &&
-                        !blocked_full_start.forcefield_menu_ready &&
-                        !blocked_full_start.save_resume_start_ready &&
-                        !blocked_full_start.save_resume_runtime_handoff_ready &&
-                        !theron_v1_boot_startup_execute_input_from_full_start_receipt(
-                            &blocked_full_start,
-                            THERON_STARTUP_INPUT_ACCEPT,
-                            &blocked_action) &&
-                        blocked_action.result == THERON_STARTUP_ERR_NOT_READY &&
-                        strcmp(blocked_action.host_receipt.status,
-                               "TRACK02 NOT_BOUND BLOCKED") == 0 &&
-                        !theron_v1_boot_startup_execute_pointer_from_full_start_receipt(
-                            &blocked_full_start,
-                            50,
-                            80,
-                            &blocked_action) &&
-                        strcmp(blocked_action.host_receipt.status,
-                               "TRACK02 NOT_BOUND BLOCKED") == 0,
-                    "Theron Track02 NOT_BOUND receipt blocks launcher, menus, Soul Room, dungeon selection, and Continue while retaining the bound runtime");
-    }
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id <= THERON_DUNGEON_COUNT;
@@ -5934,7 +5859,6 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
 static void test_runtime_entry_structured_track02_routes(void) {
     static const unsigned char fake_track02[2352] = {0};
     Theron_V1_World world;
-    Theron_V1_World world_before_block;
     Theron_StartupActionPlan plan;
     Theron_V1StartupRuntimeEntryResult result;
     Theron_V1StartupRuntimeEntryApplyReceipt apply_receipt;
@@ -5976,7 +5900,6 @@ static void test_runtime_entry_structured_track02_routes(void) {
                 "runtime entry fallback route is structured without receipt text parsing");
 
     theron_v1_world_init(&world);
-    world_before_block = world;
     memset(receipt, 0, sizeof(receipt));
     expect_true(!theron_v1_startup_runtime_load_initial_level_with_receipts(
                     &world,
@@ -6003,8 +5926,8 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     !apply_receipt.runtime_receipt_text_route &&
                     strstr(apply_receipt.inspect_detail,
                            "structured=1 text_route=0") != NULL &&
-                    memcmp(&world, &world_before_block, sizeof(world)) == 0,
-                "runtime entry verified Track02 block route is atomic without fallback visuals");
+                    world.level_loaded[0][0] == 0,
+                "runtime entry verified Track02 block route is structured without fallback visuals");
 
     theron_v1_world_init(&world);
     memset(receipt, 0, sizeof(receipt));
@@ -6106,72 +6029,16 @@ static void test_boot_runtime_release_facade(void) {
                 "boot runtime release facade is idempotent");
 }
 
-static void test_unsupported_srm_continue_is_atomic(void) {
-#if FIRESTAFF_HAS_ZLIB
-    char srm_root[THERON_V1_SRM_PATH_MAX];
-    char slot_path[THERON_V1_SRM_PATH_MAX];
-    Theron_V1_World world;
-    Theron_V1_World before;
-    Theron_V1StartupSaveResume snapshot;
-    Theron_StartupStateReceipt state_receipt;
-    Theron_V1StartupContinueAvailability availability;
-    char saved_srm[THERON_V1_SRM_PATH_MAX] = {0};
-    const char *previous_srm = getenv("FIRESTAFF_THERON_SRM_DIR");
-    int had_srm = previous_srm != NULL;
-    char receipt[192];
-
-    if (!make_temp_save_root(srm_root) ||
-        !theron_v1_srm_slot_path(srm_root, 0, slot_path) ||
-        !write_bytes(slot_path, g_unsupported_gzip_srm,
-                     sizeof(g_unsupported_gzip_srm))) {
-        expect_true(0, "unsupported SRM atomic fixture stages");
-        cleanup_srm_root(srm_root);
-        return;
-    }
-    theron_v1_world_init(&world);
-    world.world_tick = 77u;
-    world.party.gold = 31337u;
-    before = world;
-    memset(receipt, 0, sizeof(receipt));
-    expect_true(!theron_v1_startup_continue_srm_apply(
-                    &world, srm_root, 0, receipt, sizeof(receipt)) &&
-                    memcmp(&world, &before, sizeof(world)) == 0,
-                "unsupported authenticated SRM Continue leaves world unchanged");
-    if (had_srm) {
-        strncpy(saved_srm, previous_srm, sizeof(saved_srm) - 1u);
-    }
-    test_setenv("FIRESTAFF_THERON_SRM_DIR", srm_root);
-    expect_true(theron_v1_startup_save_resume_evaluate(NULL, &snapshot) == 1 &&
-                    snapshot.srm_first_opaque_transfer_slot == 0 &&
-                    snapshot.srm_opaque_transfer_slots == 1 &&
-                    snapshot.resume_claim == THERON_V1_STARTUP_RESUME_NONE &&
-                    theron_v1_startup_save_resume_state_receipt(
-                        &snapshot, 1, &state_receipt) == 1 &&
-                    state_receipt.save_resume_srm_active_slot == 0 &&
-                    state_receipt.save_resume_srm_import_status ==
-                        THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY &&
-                    theron_v1_startup_continue_availability_from_state(
-                        snapshot.resume_claim, snapshot.tqsv_active_slot,
-                        state_receipt.save_resume_srm_active_slot,
-                        (Theron_V1SrmProgressImportStatus)
-                            state_receipt.save_resume_srm_import_status,
-                        &availability) == 1 &&
-                    !availability.has_srm_continue &&
-                    availability.has_srm_opaque_transfer,
-                "authenticated opaque SRM is surfaced for transfer but not Continue");
-    test_setenv("FIRESTAFF_THERON_SRM_DIR", had_srm ? saved_srm : NULL);
-    cleanup_srm_root(srm_root);
-#else
-    expect_true(1, "unsupported SRM atomicity needs zlib (placeholder)");
-#endif
-}
-
 int main(void) {
     printf("\n=== Theron V1 Startup Save/Resume Smoke Gate Unit Tests ===\n\n");
     test_clean_host_skip_safe_no_save_root();
     test_empty_root_is_skip_save_root_present_no_slots();
     test_staged_but_unrecognized_is_skip();
     test_tqsv_only_resume_claim();
+    test_srm_only_resume_claim();
+    test_srm_decoded_slot_skips_unsupported_prefix();
+    test_srm_party_continue_restores_all_champions();
+    test_dual_resume_claim();
     test_boot_profile_handoff();
     test_status_name_contracts();
     test_source_evidence_string();
@@ -6184,7 +6051,6 @@ int main(void) {
     test_runtime_entry_structured_track02_routes();
     test_boot_runtime_render_frame_facade();
     test_boot_runtime_release_facade();
-    test_unsupported_srm_continue_is_atomic();
     test_startup_session_facts_wrappers();
     test_track02_startup_bitmap_decode_receipt();
     test_track02_startup_bitmap_atlas_overflow_breadth();

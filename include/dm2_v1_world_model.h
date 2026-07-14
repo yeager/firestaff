@@ -55,8 +55,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "dm2_v1_dungeon_loader.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -206,16 +204,6 @@ typedef struct {
     uint32_t dungeon_seed;
     /* Platform/version */
     int platform;
-    /*
-     * Loader-owned source bytes retained only after the skproject-shaped
-     * loader has validated the PC G1 map/pool boundary.  Consumers must use
-     * dm2_world_get_verified_g1_map_source() rather than reaching into this
-     * field: it is intentionally not a license to traverse GenericRecord::w0.
-     */
-    DM2_V1_DungeonData source_dungeon;
-    int source_dungeon_valid;
-    int g1_record_pool_addresses_valid;
-    int g1_record_graph_complete;
 } dm2_dungeon_world_t;
 
 /* Build world model from an in-memory DUNGEON.DAT image.
@@ -249,19 +237,6 @@ int dm2_world_is_walkable(const dm2_dungeon_world_t *world,
  * Returns 1 for OUTDOOR levels, 0 for INDOOR/BUILDING.
  * Source: SKULL.ASM T600 outdoor tick */
 int dm2_world_is_outdoor(const dm2_dungeon_world_t *world, int level);
-
-/* Return the retained PC G1 map/c_record source only when its source-order
- * pool transform and incomplete-map boot receipt have both been verified.
- * This is an address/provenance handoff, not a record-link traversal grant.
- * Source: skproject SKULLWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE and
- * c_record.cpp DM2_GET_ADDRESS_OF_RECORD. */
-const DM2_V1_DungeonData *dm2_world_get_verified_g1_map_source(
-    const dm2_dungeon_world_t *world);
-
-/* Returns 1 only for the fail-closed PC G1 source-order c_record pool gate.
- * A complete GenericRecord::w0 graph remains separately represented by
- * world->g1_record_graph_complete. */
-int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world);
 
 /* Free world model and all owned resources.
  * Safe to call with NULL. */

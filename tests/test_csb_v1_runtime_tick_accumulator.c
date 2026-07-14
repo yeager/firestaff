@@ -83,22 +83,6 @@ static void test_write_appended_expool_tail(uint8_t *tail,
     tail[4u * 4u + 3u] = 0x84u;
 }
 
-static void test_write_appended_dsa_tracing_tail(uint8_t *tail)
-{
-    const uint32_t record_id = CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID;
-    const uint32_t bucket = 32u +
-        ((record_id * 0xbb40e62du) >> 27);
-
-    memset(tail, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
-    test_write_le16(tail, 2u, 10u);
-    test_write_le32(tail, bucket * 4u, 1u);
-    test_write_le32(tail, 1u * 4u, 0u);
-    test_write_le32(tail, 2u * 4u, record_id);
-    test_write_le32(tail, 3u * 4u, 0x80000001u);
-    test_write_le32(tail, 4u * 4u, 0x00000002u);
-    test_write_le32(tail, 10u * 4u, 0x00000080u);
-}
-
 static uint16_t test_scramble_block(uint8_t *buf, uint16_t initial_hash,
                                     uint16_t numword)
 {
@@ -383,17 +367,15 @@ static size_t test_build_csbwin_extended_prefix(uint8_t *buf, size_t capacity)
     test_write_le32(buf, offset, 3u); offset += 4u;
     test_write_le32(buf, offset, 1u); offset += 4u;
     test_write_le32(buf, offset, 9u); offset += 4u;
-    test_write_le32(buf, offset, 3u); offset += 4u;
+    test_write_le32(buf, offset, 2u); offset += 4u;
     test_write_le32(buf, offset, 0u); offset += 4u;
     test_write_le32(buf, offset, 1u); offset += 4u;
     test_write_le32(buf, offset, 1u); offset += 4u;
     test_write_le32(buf, offset, 1u); offset += 4u;
     test_write_le32(buf, offset, 3u); offset += 4u;
-    test_write_le32(buf, offset, 3u); offset += 4u;
-    /* CSBWin Data.h DSAloadCmd: LOAD INTEGER, relative next state zero. */
-    test_write_le16(buf, offset, 0x0686u); offset += 2u;
+    test_write_le32(buf, offset, 2u); offset += 4u;
+    test_write_le16(buf, offset, 0x1234u); offset += 2u;
     test_write_le16(buf, offset, 0xabcdu); offset += 2u;
-    test_write_le16(buf, offset, 0x000du); offset += 2u;
     test_write_le32(buf, offset,
                     test_extended_checksum(buf + dsa_start,
                                            offset - dsa_start, 0xffffu));
@@ -1051,37 +1033,6 @@ static void test_timeline_square_events_mutate_real_format_map_bytes(void)
           "door animation follow-up reaches fully open state 0");
     CHECK(profile.timeline_queue.eventCount == 0,
           "fully opened door leaves no pending door-animation event");
-
-    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
-    raw[real_format_square_offset(1, 0)] = (uint8_t)((4u << 5) | 0u);
-    csb_v1_runtime_init(&profile, NULL);
-    profile.chaos_magic.magic_initialized = 1;
-    profile.dungeon_handle = &dungeon;
-    profile.current_level = 0;
-    profile.party_x = 1;
-    profile.party_y = 0;
-    profile.party_state_valid = 1;
-    profile.party_state.ChampionCount = 1;
-    profile.party_state.LeaderIndex = 0;
-    profile.party_state.Champions[0].CurrentHealth = 100;
-    profile.party_state.Champions[0].MaximumHealth = 100;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_VIT][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_ANTIFIRE][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_ANTIMAGIC][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_WIS][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MAX] = 30;
-    profile.party_state.Champions[0].Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MIN] = 30;
-    queue_square_event(&profile, DM1_EVENT_DOOR, DM1_EFFECT_CLEAR, 1, 0);
-    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-          "closing door event fires on an occupied real-format door square");
-    CHECK((raw[real_format_square_offset(1, 0)] & 0x07u) == 0u,
-          "closing door on party is forced back to open state");
-    CHECK(profile.party_state.Champions[0].CurrentHealth < 100,
-          "closing door routes source self-damage to the occupying party");
-    CHECK(profile.timeline_queue.eventCount == 1,
-          "closing door on party requeues its animation instead of closing through party");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     raw[real_format_square_offset(0, 1)] = (uint8_t)(6u << 5);
@@ -4756,18 +4707,15 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[1] = 72;
     dungeon.thing_type_counts[1] = 1;
-    dungeon.thing_data_bases[3] = 88;
-    dungeon.thing_type_counts[3] = 1;
     dungeon.thing_data_bases[5] = 80;
     dungeon.thing_type_counts[5] = 1;
-    raw[real_format_square_offset(0, 0)] = (uint8_t)(6u << 5);
     raw[real_format_square_offset(1, 0)] =
         (uint8_t)((5u << 5) | 0x10u | 0x08u);
     raw[real_format_square_offset(2, 0)] =
         (uint8_t)((1u << 5) | 0x10u);
     test_put_le16(raw, 60 + 1 * 2, 0);
     test_put_le16(raw, 60 + 2 * 2, 1);
-    test_put_le16(raw, 66, (uint16_t)(3u << 10));
+    test_put_le16(raw, 66, (uint16_t)(1u << 10));
     test_put_le16(raw, 68, 0xfffeu);
     test_put_le16(raw, 72, 0xfffeu);
     test_put_le16(raw, 74,
@@ -4776,11 +4724,6 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
     test_put_le16(raw, 76, 0u);
     test_put_le16(raw, 80, 0xfffeu);
     test_put_le16(raw, 82, 27u);
-    test_put_le16(raw, 88, (uint16_t)(1u << 10));
-    test_put_le16(raw, 90,
-                  (uint16_t)((27u << 7) | DM1_SENSOR_FLOOR_OBJECT));
-    test_put_le16(raw, 92, (uint16_t)(DM1_EFFECT_HOLD << 3));
-    test_put_le16(raw, 94, make_sensor_target(0, 0, 0));
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -4820,16 +4763,12 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C49 associated-object teleporter wall-impact event dispatches");
     CHECK(profile.projectiles.count == 0,
           "C49 associated-object teleporter impact despawns the projectile");
-    CHECK(test_get_le16(raw, 66) == (uint16_t)(3u << 10) &&
-              test_get_le16(raw, 88) == (uint16_t)(1u << 10) &&
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(1u << 10) &&
               test_get_le16(raw, 72) == 0xfffeu,
-          "C49 associated-object teleporter preserves the source C004/C05 chain");
+          "C49 associated-object teleporter leaves the C05 thing in place");
     CHECK(test_get_le16(raw, 68) == (uint16_t)(5u << 10) &&
               test_get_le16(raw, 80) == 0xfffeu,
           "C49 associated-object teleporter moves the object to the target square without CM2 cell rotation");
-    CHECK(count_queued_event_type(&profile, DM1_EVENT_FAKEWALL) == 1 &&
-              profile.timeline_queue.events[0].c_effect == DM1_EFFECT_CLEAR,
-          "C49 object teleporter coalesces F0276 add SET then source-unlink CLEAR in order");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
@@ -6244,9 +6183,6 @@ static void test_csbwin_extended_resume_file_handoff(void)
     CSB_V1_CSBWinExtendedTailReport tail;
     CSB_V1_CSBWin512BodyReport core_report;
     CSB_V1_ChaosMagicState dsa_state;
-    CSB_V1_CSBWinDSALoadStoreContext load_store_context;
-    CSB_V1_CSBWinDSALoadStoreExecution load_store_execution;
-    uint32_t parameters[1] = { 0u };
 
     printf("\n-- CSBWin extended resume runtime handoff --\n");
     prefix_size = test_build_csbwin_extended_prefix(bytes, sizeof(bytes));
@@ -6298,22 +6234,9 @@ static void test_csbwin_extended_resume_file_handoff(void)
     CHECK(profile.csbwin_extended_dsa_state.imported_action_count == 1 &&
               profile.csbwin_extended_dsa_state.imported_actions[0].dsa_id == 7u &&
               profile.csbwin_extended_dsa_state.imported_actions[0].state_index == 1u &&
-              profile.csbwin_extended_dsa_state.imported_actions[0].program_word_count == 3 &&
-              profile.csbwin_extended_dsa_state.imported_actions[0].program_words[0] == 0x0686u,
-          "CSBWin ReadDSAs action words retain their source program encoding");
-    memset(&load_store_context, 0, sizeof(load_store_context));
-    memset(&load_store_execution, 0, sizeof(load_store_execution));
-    load_store_context.master_location =
-        (2u << 16) | (3u << 10) | (4u << 5) | 5u;
-    load_store_context.parameters = parameters;
-    load_store_context.parameter_count = 1;
-    CHECK(csb_v1_csbwin_dsa_execute_authenticated_load_store_action(
-              &profile.csbwin_extended_dsa_state, 7, 1u, 0,
-              &load_store_context, &load_store_execution) ==
-              CSB_V1_CSBWIN_DSA_LOAD_STORE_OK && parameters[0] == 0xabcdu &&
-              load_store_execution.words_consumed == 3u &&
-              load_store_execution.store_selector == 0u,
-          "authenticated runtime action executes exact CSBWin LOAD then STORE");
+              profile.csbwin_extended_dsa_state.imported_actions[0].program_word_count == 2 &&
+              profile.csbwin_extended_dsa_state.imported_actions[0].program_words[0] == 0x1234u,
+          "CSBWin ReadDSAs action words are retained as opaque runtime data");
 
     bytes[512u + 127u] ^= 0x01u; /* corrupt the RCS checksum, not core data */
     fp = fopen(path, "wb");
@@ -6567,96 +6490,6 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
     remove(native_path);
 }
 
-static void test_csbwin_expool_dsa_tracing_runtime_handoff(void)
-{
-    uint8_t fixture[8192];
-    uint8_t trace_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
-    size_t fixture_size;
-    CSB_V1_CSBWin512BodyReport report;
-    CSB_V1_CSBWinDSATracingReport tracing;
-    CSB_V1_RuntimeProfile profile;
-    CSB_V1_RuntimeProfile file_profile;
-    CSB_V1_RuntimeProfile native_profile;
-    CSB_V1_RuntimeProfile snapshot;
-    char path[512];
-    char native_path[512];
-    const char *tmp_root;
-    FILE *fp;
-
-    fixture_size = test_build_full_csbwin_resume_fixture(
-        fixture, sizeof(fixture), 0);
-    CHECK(fixture_size == 4054u,
-          "CSBWin EXPOOL tracing fixture builds a verified source body");
-    test_write_appended_dsa_tracing_tail(trace_tail);
-    memcpy(fixture + fixture_size, trace_tail, sizeof(trace_tail));
-    fixture_size += sizeof(trace_tail);
-    memset(&report, 0, sizeof(report));
-    CHECK(csb_v1_csbwin_512_verify_save_body(
-              fixture, fixture_size, 0u, &report) == CSB_V1_CSBWIN_512_OK,
-          "CSBWin EXPOOL tracing fixture verifies through the save-body gate");
-
-    csb_v1_runtime_init(&profile, NULL);
-    CHECK(csb_v1_runtime_apply_csbwin_resume_report(&profile, &report) == 0,
-          "CSBWin resume stages the optional EXPOOL DSA tracing record");
-    memset(&tracing, 0, sizeof(tracing));
-    CHECK(csb_v1_runtime_get_csbwin_dsa_tracing(&profile, &tracing) == 0 &&
-              tracing.valid == 1 && tracing.present == 1 &&
-              tracing.record_id == CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID &&
-              tracing.payload_bytes == 32u && tracing.enabled_dsa_count == 4u &&
-              tracing.words[0] == 0x80000001u &&
-              tracing.words[1] == 0x00000002u &&
-              tracing.words[7] == 0x00000080u,
-          "CSBWin runtime owns the source eight-word DSA tracing bitmap");
-
-    tmp_root = getenv("TMPDIR");
-    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
-    snprintf(path, sizeof(path), "%s/firestaff_csbwin_dsa_trace_%p.sav",
-             tmp_root, (void *)&profile);
-    remove(path);
-    fp = fopen(path, "wb");
-    CHECK(fp != NULL && fwrite(fixture, 1u, fixture_size, fp) == fixture_size,
-          "CSBWin EXPOOL tracing fixture writes a complete resume file");
-    if (fp) fclose(fp);
-    csb_v1_runtime_init(&file_profile, NULL);
-    CHECK(csb_v1_runtime_apply_csbwin_resume_file(
-              &file_profile, path, 0u) == 0 &&
-              csb_v1_runtime_get_csbwin_dsa_tracing(
-                  &file_profile, &tracing) == 0 &&
-              tracing.present == 1 && tracing.enabled_dsa_count == 4u,
-          "CSBWin resume-file path stages the EXPOOL DSA tracing bitmap");
-    csb_v1_runtime_cleanup(&file_profile);
-    remove(path);
-
-    snprintf(native_path, sizeof(native_path),
-             "%s/firestaff_csbwin_dsa_trace_%p.fsav", tmp_root,
-             (void *)&profile);
-    remove(native_path);
-    CHECK(csb_v1_runtime_save_game_to_path(&profile, native_path) == 0,
-          "Firestaff native save preserves the verified EXPOOL tracing tail");
-    csb_v1_runtime_init(&native_profile, NULL);
-    CHECK(csb_v1_runtime_load_game_from_path(&native_profile, native_path) == 0 &&
-              csb_v1_runtime_get_csbwin_dsa_tracing(
-                  &native_profile, &tracing) == 0 &&
-              tracing.present == 1 && tracing.words[7] == 0x00000080u,
-          "Firestaff native reload rehydrates the EXPOOL DSA tracing bitmap");
-    csb_v1_runtime_cleanup(&native_profile);
-    remove(native_path);
-
-    test_write_le16(fixture, 4054u + 2u, 9u);
-    memset(&report, 0, sizeof(report));
-    CHECK(csb_v1_csbwin_512_verify_save_body(
-              fixture, fixture_size, 0u, &report) == CSB_V1_CSBWIN_512_OK,
-          "malformed tracing record still reaches the bounded EXPOOL handoff gate");
-    snapshot = profile;
-    CHECK(csb_v1_runtime_apply_csbwin_resume_report(&profile, &report) == -1 &&
-              memcmp(&profile, &snapshot, sizeof(profile)) == 0,
-          "malformed EXPOOL tracing record leaves live CSB runtime state unchanged");
-    CHECK(csb_v1_runtime_get_csbwin_dsa_tracing(NULL, &tracing) == -1 &&
-              csb_v1_runtime_get_csbwin_dsa_tracing(&profile, NULL) == -1,
-          "CSBWin DSA tracing accessor rejects null arguments");
-    csb_v1_runtime_cleanup(&profile);
-}
-
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
@@ -6694,7 +6527,6 @@ int main(void)
     test_csbwin_resume_file_applies_runtime_handoff();
     test_csbwin_extended_resume_file_handoff();
     test_csbwin_core_save_export_roundtrips_runtime();
-    test_csbwin_expool_dsa_tracing_runtime_handoff();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");

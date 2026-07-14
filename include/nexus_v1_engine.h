@@ -30,7 +30,6 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 
 /* ── Constants ─────────────────────────────────────────────────────── */
 #define NEXUS_MAX_MODELS 64
-#define NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX 512
 
 /* ── Enumerations ──────────────────────────────────────────────────── */
 typedef enum {
@@ -75,50 +74,6 @@ typedef struct {
 typedef struct {
     Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     Nexus_V1_DgnRenderPlanReceipt receipt;
-    /* Runtime-owned, no-draw Structure1G -> Structure2 source bindings for
-     * animated floor commands. These preserve package provenance while the
-     * original payload codec remains unavailable. */
-    Nexus_V1_DgnStructure2FloorCommandSource
-        structure2_floor_command_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_DgnStructure2FloorCommandSourceReceipt
-        structure2_floor_command_source_receipt;
-    /* Exact authenticated LEVxx.DGN facts that admitted the Structure2
-     * command-source receipt. They remain source ownership only. */
-    int structure2_source_level_index;
-    int structure2_source_canonical_hash_verified;
-    int structure2_source_envelope_valid;
-    int structure2_floor_command_sources_consumed;
-    Nexus_V1_DgnStructure1FItemMaterialBinding
-        structure1f_item_command_bindings[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_DgnStructure1FItemMaterialReceipt
-        structure1f_item_command_binding_receipt;
-    int structure1f_item_command_sources_consumed;
-    /* Descriptor-0008 retains an authenticated packed 4bpp span and local
-     * palette at its floor command. It stays no-draw until original VDP1
-     * command provenance proves the texel order and placement. */
-    Nexus_V1_DgnCommandPacked4BppMaterial
-        structure1f_item_floor_materials[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_DgnCommandPacked4BppMaterialReceipt
-        structure1f_item_floor_material_receipt;
-    int structure1f_item_floor_materials_consumed;
-    Nexus_V1_DgnStructure1FDirectFloorCommandSource
-        structure1f_direct_floor_sources[NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX];
-    Nexus_V1_DgnStructure1FDirectFloorCommandSourceReceipt
-        structure1f_direct_floor_source_receipt;
-    int structure1f_direct_floor_sources_consumed;
-    /* Structure1A-owned alcove/wall rows retain their exact owner-cell anchor
-     * in the runtime plan. They remain no-draw pending Saturn semantics. */
-    Nexus_V1_DgnStructure1FStructure1ACommandSource
-        structure1a_owned_cell_sources[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_DgnStructure1FStructure1ACommandSourceReceipt
-        structure1a_owned_cell_source_receipt;
-    int structure1a_owned_cell_sources_consumed;
-    Nexus_V1_DgnStructure1AStructure3TopologyCandidate
-        structure1a_structure3_topology_candidates[
-            NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_DgnStructure1AStructure3TopologyCandidateReceipt
-        structure1a_structure3_topology_candidate_receipt;
-    int structure1a_structure3_topology_candidates_consumed;
     int level;
     int party_x;
     int party_y;
@@ -149,73 +104,6 @@ typedef struct {
     Nexus_V1_BpkArchiveInfo archive;
 } Nexus_V1_DgnMaterialContainerReceipt;
 
-/* Structure2's descriptor envelope and opaque payload live in the canonical
- * LEV00.DGN..LEV15.DGN Track 1 entries, not in MENU.BPK or an inferred
- * FLOORS/WALLS container. This receipt authenticates that source boundary
- * only. `materialization_bound` means the loaded level's bounded payload is
- * tied to its canonical source; it never means that payload bytes are
- * decoded or renderable. */
-typedef struct {
-    int level_index;
-    char canonical_name[16];
-    char canonical_md5[33];
-    int exact_source_entry_observed;
-    int hash_discovery_attempted;
-    int canonical_hash_verified;
-    int structure2_payload_envelope_valid;
-    int materialization_bound;
-    int payload_decoder_permitted;
-    int fallback_visuals_permitted;
-} Nexus_V1_DgnStructure2SourceReceipt;
-
-/* Hash-bound ownership for level-local script and audio inputs. The receipt
- * establishes only the canonical Track 1 source; it never assigns opcode,
- * trigger, sample, or playback semantics to the bytes. */
-typedef struct {
-    char canonical_name[16];
-    char canonical_md5[33];
-    int exact_source_entry_observed;
-    int hash_discovery_attempted;
-    int canonical_hash_verified;
-} Nexus_V1_LevelAuxSourceReceipt;
-
-/* ITEM.IBS is a package-level source for direct Structure1Fa item records.
- * A verified bank can provide command provenance, never a drawable icon or
- * floor texture without separate original VDP1 evidence. */
-typedef struct {
-    Nexus_V1_LevelAuxSourceReceipt source;
-    int parsed_bank_valid;
-    int source_bound;
-    int fallback_visuals_permitted;
-} Nexus_V1_ItemIbsRuntimeSourceReceipt;
-
-typedef struct {
-    int level_index;
-    Nexus_V1_LevelAuxSourceReceipt slev;
-    Nexus_V1_LevelAuxSourceReceipt sal;
-    Nexus_V1_LevelAuxSourceReceipt map;
-    /* SDDRVS.TSK is the global Saturn sound-task image consumed with every
-     * level bank.  Its identity is separate from per-level SAL/MAP bytes. */
-    Nexus_V1_LevelAuxSourceReceipt sound_driver;
-    int canonical_pair_bound;
-    int fallback_visuals_permitted;
-} Nexus_V1_LevelAuxRuntimeReceipt;
-
-/* Canonical ownership for the two retail MNS banks consumed by Structure1B
- * material selectors.  A parseable file is not enough: each bank must be
- * tied to its known Track 1 identity before its pixels reach the viewport. */
-typedef struct {
-    Nexus_V1_LevelAuxSourceReceipt floor_mns;
-    Nexus_V1_LevelAuxSourceReceipt wall_mns;
-    int canonical_pair_bound;
-    /* The two MNS files establish source identity only. Structure1B bytes
-     * 3/4 are not a proved wall-selector grammar: real LEV00..15 values
-     * exceed the 0..14 SN_WALL descriptor range. This stays false until a
-     * Saturn executable/capture route proves the selector transform. */
-    int structure1b_selector_binding_proven;
-    int fallback_visuals_permitted;
-} Nexus_V1_DgnStaticMaterialSourceReceipt;
-
 /* Read-only real-media evidence for the fixed LEV00..LEV15 corpus.  It
  * counts only the already typed Structure1B material selectors and checks
  * them against the same banks used by the DGN viewport; it does not infer
@@ -226,161 +114,12 @@ typedef struct {
     int readable_level_count;
     int parsed_level_count;
     int geometry_ready_level_count;
-    int structure1f_valid_level_count;
-    int structure1f_typed_entry_count;
-    int structure1g_present_level_count;
-    int structure1g_valid_level_count;
-    int structure1g_animated_texture_count;
-    int structure1g_sequence_count;
-    int structure1g_image_instruction_count;
-    int structure1g_goto_instruction_count;
-    int structure1g_structure2_image_instruction_bound_count;
-    int structure1g_structure2_image_instruction_unbound_count;
-    int structure1g_floor_animation_cell_count;
-    int structure1g_floor_animation_bound_count;
-    int structure2_valid_level_count;
-    int structure2_texture_count;
-    int structure1g_structure2_first_image_bound_count;
-    int structure2_payload_envelope_valid_level_count;
-    int structure2_opaque_payload_byte_count;
-    int structure2_nonzero_descriptor_offset_count;
-    int structure2_descriptor_offsets_in_opaque_payload_count;
-    int structure2_descriptor_offsets_outside_opaque_payload_count;
-    int structure2_descriptor_offsets_word_bounded_count;
-    /* Corpus-only layout measurements.  These deliberately describe numeric
-     * descriptor targets, not any payload record or graphics meaning. */
-    int structure2_descriptor_offsets_unaligned_count;
-    int structure2_descriptor_offset_unique_count;
-    int structure2_descriptor_offset_reused_count;
-    int structure2_local_payload_offset_pattern_level_count;
-    int structure2_local_payload_word_aligned_offset_pattern_level_count;
-    int structure2_local_payload_word_bounded_offset_pattern_level_count;
-    int structure2_material_or_image_data_proven_level_count;
-    int structure2_canonical_source_verified_level_count;
-    int structure2_materialization_bound_level_count;
-    /* Per-level raw Structure3 payload observations. These only correlate the
-     * documented bounded container span with Structure1A model references;
-     * they do not assign any byte a face, vertex, mesh, texture, or pixel
-     * meaning. */
-    int structure3_payload_declared_level_count;
-    int structure3_payload_valid_level_count;
-    int structure3_payload_byte_count;
-    int structure3_payload_nonzero_byte_count;
-    int structure3_payload_transition_count;
-    int structure3_nonzero_byte_run_count;
-    int structure3_longest_nonzero_byte_run;
-    int structure3_zero_block_count;
-    int structure3_nonzero_block_count;
-    int structure3_nonzero_block_run_count;
-    int structure3_longest_nonzero_block_run;
-    int structure3_directory_valid_level_count;
-    int structure3_directory_entry_count;
-    int structure3_entry_header_valid_level_count;
-    int structure3_entry_header_entry_count;
-    int structure3_entry_header_first_region_element_count;
-    int structure3_entry_header_second_region_element_count;
-    int structure3_model_reference_complete_level_count;
-    int structure1a_transform_selector_complete_level_count;
-    int structure1f_face_selector_complete_level_count;
-    int structure1f_rotation_selector_complete_level_count;
-    int structure1f_face_rotation_pair_complete_level_count;
-    int structure1f_offset_pair_complete_level_count;
-    int structure1f_wall_payload_selector_complete_level_count;
-    int structure1f_wall_sensor_destination_complete_level_count;
-    int structure1f_wall_sensor_control_selector_complete_level_count;
-    int structure1f_wall_sensor_control_destination_tuple_complete_level_count;
-    int structure1f_wall_sensor_model_rotation_pair_complete_level_count;
-    int structure1f_wall_decoration_model_rotation_pair_complete_level_count;
-    int structure1f_alcove_payload_selector_complete_level_count;
-    int structure1f_alcove_payload_rotation_pair_complete_level_count;
-    int structure1f_floor_sensor_control_selector_complete_level_count;
-    int structure1f_floor_sensor_destination_complete_level_count;
-    int structure1f_floor_sensor_model_rotation_pair_complete_level_count;
-    int structure1f_floor_sensor_extent_pair_complete_level_count;
-    int structure1f_floor_decoration_payload_selector_complete_level_count;
-    int structure1f_floor_decoration_rotation_selector_complete_level_count;
-    int structure1f_floor_decoration_model_rotation_pair_complete_level_count;
-    int structure1f_floor_decoration_offset_pair_complete_level_count;
-    int structure1f_floor_decoration_control_extent_complete_level_count;
-    int structure1f_item_attribute_pair_complete_level_count;
-    int structure1f_item_location_pair_complete_level_count;
-    int structure1f_item_coordinate_pair_complete_level_count;
-    int structure3_zero_based_block_ordinal_mapping_disproven_level_count;
-    int structure3_one_based_block_ordinal_mapping_disproven_level_count;
-    int structure3_zero_based_byte_run_ordinal_mapping_disproven_level_count;
-    int structure3_one_based_byte_run_ordinal_mapping_disproven_level_count;
-    int structure3_zero_based_run_ordinal_mapping_disproven_level_count;
-    int structure3_one_based_run_ordinal_mapping_disproven_level_count;
-    int structure3_direct_block_ordinal_mapping_disproven_level_count;
-    int structure3_direct_byte_run_ordinal_mapping_disproven_level_count;
-    int structure3_direct_run_ordinal_mapping_disproven_level_count;
-    int structure3_zero_based_directory_ordinal_mapping_disproven_level_count;
-    int structure3_one_based_directory_ordinal_mapping_disproven_level_count;
-    int structure3_direct_directory_ordinal_mapping_disproven_level_count;
-    Nexus_V1_DgnStructure3PayloadReceipt structure3_payloads[16];
-    Nexus_V1_DgnStructure3DirectoryReceipt structure3_directories[16];
-    Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers[16];
-    Nexus_V1_DgnStructure3ModelReferenceReceipt
-        structure3_model_references[16];
-    Nexus_V1_DgnStructure1ATransformSelectorReceipt
-        structure1a_transform_selectors[16];
-    Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors[16];
-    Nexus_V1_DgnStructure1FRotationSelectorReceipt
-        structure1f_rotation_selectors[16];
-    Nexus_V1_DgnStructure1FFaceRotationPairReceipt
-        structure1f_face_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs[16];
-    Nexus_V1_DgnStructure1FWallPayloadSelectorReceipt
-        structure1f_wall_payload_selectors[16];
-    Nexus_V1_DgnStructure1FWallSensorDestinationReceipt
-        structure1f_wall_sensor_destinations[16];
-    Nexus_V1_DgnStructure1FWallSensorControlSelectorReceipt
-        structure1f_wall_sensor_control_selectors[16];
-    Nexus_V1_DgnStructure1FWallSensorControlDestinationTupleReceipt
-        structure1f_wall_sensor_control_destination_tuples[16];
-    Nexus_V1_DgnStructure1FWallSensorModelRotationPairReceipt
-        structure1f_wall_sensor_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FWallDecorationModelRotationPairReceipt
-        structure1f_wall_decoration_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FAlcovePayloadSelectorReceipt
-        structure1f_alcove_payload_selectors[16];
-    Nexus_V1_DgnStructure1FAlcovePayloadRotationPairReceipt
-        structure1f_alcove_payload_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorSensorControlSelectorReceipt
-        structure1f_floor_sensor_control_selectors[16];
-    Nexus_V1_DgnStructure1FFloorSensorDestinationReceipt
-        structure1f_floor_sensor_destinations[16];
-    Nexus_V1_DgnStructure1FFloorSensorModelRotationPairReceipt
-        structure1f_floor_sensor_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorSensorExtentPairReceipt
-        structure1f_floor_sensor_extent_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationPayloadSelectorReceipt
-        structure1f_floor_decoration_payload_selectors[16];
-    Nexus_V1_DgnStructure1FFloorDecorationRotationSelectorReceipt
-        structure1f_floor_decoration_rotation_selectors[16];
-    Nexus_V1_DgnStructure1FFloorDecorationModelRotationPairReceipt
-        structure1f_floor_decoration_model_rotation_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt
-        structure1f_floor_decoration_offset_pairs[16];
-    Nexus_V1_DgnStructure1FFloorDecorationControlExtentReceipt
-        structure1f_floor_decoration_control_extents[16];
-    Nexus_V1_DgnStructure1FItemAttributePairReceipt
-        structure1f_item_attribute_pairs[16];
-    Nexus_V1_DgnStructure1FItemLocationPairReceipt
-        structure1f_item_location_pairs[16];
-    Nexus_V1_DgnStructure1FItemCoordinatePairReceipt
-        structure1f_item_coordinate_pairs[16];
-    Nexus_V1_DgnStructure3OrdinalCorrelationReceipt
-        structure3_ordinal_correlations[16];
     Nexus_V1_DgnMaterialCategoryCoverageReceipt floor_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt ceiling_coverage;
     Nexus_V1_DgnMaterialCategoryCoverageReceipt wall_coverage;
     Nexus_V1_DgnMaterialContainerReceipt floor_container;
     Nexus_V1_DgnMaterialContainerReceipt wall_container;
-    Nexus_V1_DgnStaticMaterialSourceReceipt static_mns_sources;
-    Nexus_V1_DgnStructure2SourceReceipt structure2_sources[16];
     int bpk_host_routes_complete;
-    int static_mns_host_route_complete;
     int material_coverage_complete;
     int host_route_evidence_complete;
     int fallback_visuals_permitted;
@@ -403,10 +142,6 @@ struct Nexus_V1_Engine {
     /* DGN material references resolve through these decoded DMDF banks. */
     Nexus_DMDFMaterialBank floor_materials;
     Nexus_DMDFMaterialBank wall_materials;
-    /* Per-level Structure2 animation surfaces. These are decoded only from
-     * bounded DGN descriptor spans; they never replace static MNS banks. */
-    Nexus_DMDFMaterialBank animated_floor_materials;
-    int animated_floor_material_route_valid;
     Nexus_V1_DgnMaterialContainerReceipt floor_bpk_container;
     Nexus_V1_DgnMaterialContainerReceipt wall_bpk_container;
     /* FLOORS/WALLS.BPK must cross the validated BPK host route before a
@@ -417,17 +152,8 @@ struct Nexus_V1_Engine {
     int wall_bpk_host_route_attempted;
     int wall_bpk_host_route_valid;
     Nexus_V1_BpkMaterialHostRouteReceipt wall_bpk_host_route;
-    /* Retail SN_FLOOR.MNS / SN_WALL.MNS TEXT sections are a separate,
-     * direct-colour DMDF material route.  They are never inferred from
-     * MENU.BPK or an unnamed archive. */
-    int floor_mns_material_route_valid;
-    int wall_mns_material_route_valid;
-    Nexus_V1_DgnStaticMaterialSourceReceipt dgn_static_material_sources;
     Nexus_V1_DgnMaterialPlan dgn_material_plan;
     Nexus_V1_DgnMaterialCorpusReceipt dgn_material_corpus;
-    Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;
-    Nexus_V1_ItemIbsBank item_ibs_bank;
-    Nexus_V1_ItemIbsRuntimeSourceReceipt item_ibs_runtime_source;
 
     /* 3D models (loaded on demand) */
     Nexus_V1_Model models[NEXUS_MAX_MODELS];
@@ -461,8 +187,6 @@ struct Nexus_V1_Engine {
      * dispatch remains blocked until a source-locked parser exists. */
     Nexus_ScriptVM script_vm;
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
-    Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
-    Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
@@ -492,29 +216,11 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir);
  * Returns 0 on success, -1 on failure. */
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level);
 
-/* Compares the exact DGN byte buffer selected by the launcher with the
- * canonical MD5 from the Saturn asset catalog. Callers must not substitute a
- * path-level lookup for this check before Structure3 binding. */
-int nexus_v1_dgn_bytes_match_canonical_md5(
-    const uint8_t *data, int size, const char *canonical_md5);
-
 /* Inspects every canonical level without changing the currently loaded
  * level or promoting corpus coverage into a runtime launch gate. */
 int nexus_v1_inspect_dgn_material_corpus(
     Nexus_V1_Engine *engine,
     Nexus_V1_DgnMaterialCorpusReceipt *out_receipt);
-
-/* Read-only source identity receipt for a loaded LEVxx.DGN Structure2
- * payload. This is intentionally not a decoder or a material import route. */
-int nexus_v1_current_level_structure2_source_receipt(
-    const Nexus_V1_Engine *engine,
-    Nexus_V1_DgnStructure2SourceReceipt *out_receipt);
-int nexus_v1_current_level_aux_runtime_receipt(
-    const Nexus_V1_Engine *engine,
-    Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
-int nexus_v1_dgn_static_material_source_receipt(
-    const Nexus_V1_Engine *engine,
-    Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
 
 /* Return the DGN plan whose commands and material surfaces have been checked
  * together for this level and party pose. The returned pointer is owned by

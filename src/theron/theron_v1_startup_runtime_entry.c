@@ -1,7 +1,6 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
-#include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -41,59 +40,6 @@ static int theron_v1_startup_runtime_publish_track02_route(
     Theron_V1_World *world,
     Theron_DungeonID dungeon_id,
     const Theron_Track02DungeonRoute *route);
-
-/* The only original dynamic stage-two CD_READ proved so far is the JP/US
- * one-sector stage-three load. Direct runtime entry must verify its physical
- * `$3800` BRK $ff bytes too, rather than trusting a previously built startup
- * receipt. No descriptor semantics are admitted at this boundary. */
-static int theron_v1_startup_runtime_stage3_loader_ready(
-    const uint8_t *track02_data,
-    size_t track02_size,
-    const char *md5_hex) {
-    Theron_Track02Variant variant;
-    Theron_V1Stage2RuntimeHandoff stage2_handoff;
-
-    if (!track02_data || track02_size == 0u || !md5_hex || !md5_hex[0]) {
-        return 0;
-    }
-    variant = theron_v1_track02_variant_for_md5(md5_hex);
-    if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
-        variant != THERON_TRACK02_VARIANT_US_BIN) {
-        return 1;
-    }
-    memset(&stage2_handoff, 0, sizeof(stage2_handoff));
-    return theron_v1_stage2_runtime_handoff_from_original_media(
-               track02_data, track02_size, md5_hex, &stage2_handoff) &&
-           stage2_handoff.ipl_preload_local_read_verified &&
-           stage2_handoff.ipl_preload_cpu_address == 0x40cdu &&
-           stage2_handoff.ipl_preload_destination == 0x3000u &&
-           stage2_handoff.ipl_preload_record_proven &&
-           stage2_handoff.ipl_preload_record == 0x0003e3u &&
-           stage2_handoff.ipl_preload_sector_count == 2u &&
-           stage2_handoff.ipl_preload_returns_to_ipl_proven &&
-           stage2_handoff.ipl_preload_user_data_bytes == 4096u &&
-           stage2_handoff.ipl_preload_first_nonzero_offset == 243u &&
-           stage2_handoff.ipl_preload_nonzero_byte_count == 2911u &&
-           stage2_handoff.ipl_preload_user_data_hash != 0u &&
-           stage2_handoff.stage2_cd_exec_table_verified &&
-           stage2_handoff.stage2_cd_read_setup_verified &&
-           stage2_handoff.stage2_post_read_transfer_verified &&
-           stage2_handoff.work_ram_cleared_before_entry &&
-           stage2_handoff.cleared_work_ram_start == 0x2700u &&
-           stage2_handoff.cleared_work_ram_bytes == 0x1100u &&
-           stage2_handoff.cleared_work_ram_end == 0x3800u &&
-           stage2_handoff.physical_stage3_entry_verified &&
-           stage2_handoff.stage3_entry_opcode == 0x00u &&
-           stage2_handoff.stage3_irq2_selector == 0xffu &&
-           stage2_handoff.stage3_continuation_address == 0x3802u &&
-           stage2_handoff.stage3_mode1_header_verified &&
-           stage2_handoff.stage3_selector_catalog_complete &&
-           stage2_handoff.stage3_resolved_descriptor_selector_count != 0u &&
-           stage2_handoff.stage3_out_of_bounds_descriptor_selector_count == 0u &&
-           stage2_handoff.stage3_resolved_descriptor_selector_count ==
-               stage2_handoff.stage3_nonzero_descriptor_selector_count &&
-           stage2_handoff.stage3_resolved_descriptor_selector_hash != 0u;
-}
 
 static int theron_v1_startup_runtime_level_load_callback(
     Theron_V1_World *world,
@@ -153,14 +99,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         !md5_hex || md5_hex[0] == '\0') {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "no raw Track 02 bytes");
-        }
-        return 0;
-    }
-    if (!theron_v1_startup_runtime_stage3_loader_ready(
-            hucard_rom, hucard_rom_size, md5_hex)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "Track 02 stage-three loader bytes rejected");
         }
         return 0;
     }
@@ -392,74 +330,17 @@ static int theron_v1_startup_runtime_publish_track02_route(
     return 1;
 }
 
-/* A known Track 02 identity is authoritative even when its bytes have gone
- * missing by runtime entry. The later loader records that absence; it must
- * not downgrade the request into a fallback-room route. */
 static int theron_v1_startup_runtime_has_verified_track02_request(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
     const char *md5_hex) {
 
-    if (!md5_hex || md5_hex[0] == '\0') {
+    if (!hucard_rom || hucard_rom_size == 0u ||
+        !md5_hex || md5_hex[0] == '\0') {
         return 0;
     }
     return theron_v1_track02_variant_for_md5(md5_hex) !=
         THERON_TRACK02_VARIANT_UNKNOWN;
-}
-
-int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
-    Theron_V1_World *world,
-    const uint8_t *hucard_rom,
-    size_t hucard_rom_size,
-    const char *md5_hex,
-    Theron_DungeonID dungeon_id,
-    Theron_StartupMediaStateReceipt *out_media_receipt,
-    Theron_RuntimeLevelBankSelection *out_level_bank) {
-
-    Theron_StartupMediaStateReceipt media_receipt;
-    Theron_V1_World candidate_world;
-
-    if (out_media_receipt) {
-        memset(out_media_receipt, 0, sizeof(*out_media_receipt));
-    }
-    if (out_level_bank) {
-        memset(out_level_bank, 0, sizeof(*out_level_bank));
-    }
-    if (!world || !hucard_rom || hucard_rom_size == 0u || !md5_hex ||
-        md5_hex[0] == '\0' ||
-        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
-        dungeon_id > THERON_DUNGEON_COUNT ||
-        !theron_v1_startup_runtime_has_verified_track02_request(md5_hex) ||
-        !theron_v1_startup_runtime_stage3_loader_ready(
-            hucard_rom, hucard_rom_size, md5_hex)) {
-        return 0;
-    }
-
-    memset(&media_receipt, 0, sizeof(media_receipt));
-    theron_v1_startup_media_capture_track02_state_receipt(
-        hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
-    if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            &media_receipt)) {
-        return 0;
-    }
-
-    /* Keep this receipt-only handoff atomic. It authenticates source media
-     * for the forcefield transition but never creates a dungeon interpretation.
-     * Stage-two evidence: theron-us-stage2-huc6280.asm:163-181. */
-    candidate_world = *world;
-    if (!theron_v1_startup_media_bind_runtime_receipt(&candidate_world,
-                                                      &media_receipt) ||
-        !theron_v1_world_runtime_media_select_level_bank(
-            &candidate_world, THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
-            dungeon_id, 0)) {
-        return 0;
-    }
-    *world = candidate_world;
-    if (out_media_receipt) {
-        *out_media_receipt = media_receipt;
-    }
-    if (out_level_bank) {
-        *out_level_bank = world->runtime_media.level_bank;
-    }
-    return 1;
 }
 
 int theron_v1_startup_runtime_load_initial_level(
@@ -478,7 +359,6 @@ int theron_v1_startup_runtime_load_initial_level(
     uint32_t seed;
     Theron_MapLoadResult r;
     int verified_track02_request;
-    Theron_V1_World staged_world;
 
     if (!world) {
         return 0;
@@ -489,20 +369,15 @@ int theron_v1_startup_runtime_load_initial_level(
     }
     dungeon_index = (int)dungeon_id - 1;
     verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(md5_hex);
-    /* A real Track 02 route may validate its level and object records in
-     * several steps.  Keep every tentative write in a candidate world so a
-     * rejected later object/media check cannot leak a partial dungeon into
-     * the live runtime. */
-    staged_world = *world;
-    if (theron_v1_startup_runtime_try_track02_initial_level(&staged_world,
+        theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex);
+    if (theron_v1_startup_runtime_try_track02_initial_level(world,
                                                             hucard_rom,
                                                             hucard_rom_size,
                                                             md5_hex,
                                                             dungeon_id,
                                                             receipt,
                                                             receipt_cap)) {
-        *world = staged_world;
         return 1;
     }
     if (verified_track02_request) {
@@ -837,30 +712,6 @@ static void theron_v1_startup_runtime_entry_capture_failure_route(
     }
 }
 
-/* A verified Track 02 may legitimately bind the initial level while later
- * object-table evidence remains unbound.  Preserve that bound level route,
- * but make the receipt fail closed for every synthetic continuation surface.
- * ReDMCSB has no Theron's Quest implementation; this is constrained by the
- * hash/anchor-gated Track 02 receipts in theron_v1_track02.c. */
-static int theron_v1_startup_runtime_entry_has_not_bound_object_route(
-    const Theron_V1StartupRuntimeEntryResult *result) {
-
-    unsigned int i;
-
-    if (!result || !result->object_table_no_fallback_ready ||
-        result->object_table_blocked_anchor_mask == 0u) {
-        return 0;
-    }
-    for (i = 0; i < THERON_TRACK02_MAX_BANK_ANCHORS; ++i) {
-        if ((result->object_table_blocked_anchor_mask & (1u << i)) != 0u &&
-            result->object_table_anchor_binding_status[i] ==
-                THERON_TRACK02_SEMANTIC_BINDING_NOT_BOUND) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static const char *theron_v1_startup_runtime_level_source_name(
     int runtime_level_source) {
 
@@ -1100,7 +951,8 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         return 0;
     }
     theron_v1_startup_all_dungeon_route_receipt_init(out_receipt);
-    if (!theron_v1_startup_runtime_has_verified_track02_request(md5_hex) ||
+    if (!theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex) ||
         !media_receipt ||
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             media_receipt)) {
@@ -1256,8 +1108,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     size_t receipt_cap) {
 
     Theron_V1StartupRuntimeLevelLoadContext level_load_context;
-    Theron_StartupFlow candidate_flow;
-    Theron_V1_World candidate_world;
     Theron_StartupResult result;
     int verified_track02_request = 0;
     Theron_StartupMediaStateReceipt media_receipt;
@@ -1275,51 +1125,16 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         return 0;
     }
 
-    verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(
-            request->md5_hex);
-    theron_v1_startup_media_capture_track02_state_receipt(
-        request->hucard_rom, request->hucard_rom_size, request->md5_hex,
-        &media_receipt);
-
-    /* The Soul Room forcefield is the public handoff into the original-media
-     * route. The selected Track 02 profile must prove its complete startup
-     * atlas and the stage-two $4090 -> $3800 loader chain before a candidate
-     * world may mutate the selected party, startup flow, or world. See
-     * theron-us-stage2-huc6280.asm:163-181. */
-    if (verified_track02_request &&
-        (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-             &media_receipt) ||
-         !theron_v1_startup_runtime_stage3_loader_ready(
-             request->hucard_rom,
-             request->hucard_rom_size,
-             request->md5_hex))) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track 02 verified profile missing authenticated Soul Room handoff; "
-                     "fallback visuals blocked; no raw Track 02 bytes");
-        }
-        if (out_result) {
-            out_result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
-        }
-        theron_v1_startup_runtime_entry_capture_failure_route(
-            receipt, verified_track02_request, &media_receipt, out_result);
-        return 0;
-    }
-
-    candidate_flow = *flow;
-    candidate_world = *world;
     result = theron_v1_startup_enter_forcefield_with_roster(
-        &candidate_flow,
-        &candidate_world.party,
+        flow,
+        &world->party,
         request->roster_names,
         request->roster_name_count);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
-                     "startup-flow forcefield preflight failed: %s",
+                     "startup-flow forcefield failed: %s",
                      theron_v1_startup_result_name(result));
         }
         if (out_result) {
@@ -1328,28 +1143,20 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         return 0;
     }
 
-    if (verified_track02_request &&
-        !theron_v1_startup_runtime_bind_track02_soul_room_handoff(
-            &candidate_world, request->hucard_rom, request->hucard_rom_size,
-            request->md5_hex, candidate_flow.selected_dungeon, NULL, NULL)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "Track 02 verified profile rejected Soul Room media handoff");
-        }
-        if (out_result) {
-            out_result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
-        }
-        theron_v1_startup_runtime_entry_capture_failure_route(
-            receipt, verified_track02_request, &media_receipt, out_result);
-        return 0;
-    }
-
     level_load_context.hucard_rom = request->hucard_rom;
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            request->hucard_rom,
+            request->hucard_rom_size,
+            request->md5_hex);
+    theron_v1_startup_media_capture_track02_state_receipt(
+        request->hucard_rom, request->hucard_rom_size, request->md5_hex,
+        &media_receipt);
     result = theron_v1_startup_enter_runtime_from_forcefield(
-        &candidate_flow,
-        &candidate_world,
+        flow,
+        world,
         theron_v1_startup_runtime_level_load_callback,
         &level_load_context,
         receipt,
@@ -1370,9 +1177,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                                                               out_result);
         return 0;
     }
-
-    *flow = candidate_flow;
-    *world = candidate_world;
 
     theron_v1_startup_runtime_entry_capture_result(world,
                                                    receipt,
@@ -1439,10 +1243,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                 all_routes.startup_level_anchor_height,
                 all_routes.startup_level_anchor_seed,
                 all_routes.startup_level_anchor_level_index);
-            if (theron_v1_startup_runtime_entry_has_not_bound_object_route(
-                    out_result)) {
-                out_result->fallback_visuals_blocked = 1;
-            }
         }
     }
     return 1;
@@ -1820,7 +1620,10 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
     }
 
     verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(md5_hex);
+        theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom,
+            hucard_rom_size,
+            md5_hex);
     theron_v1_startup_media_capture_track02_state_receipt(
         hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
     if (!theron_v1_startup_runtime_load_initial_level(world,
@@ -1911,10 +1714,6 @@ int theron_v1_startup_runtime_load_initial_level_with_receipts(
                 all_routes.startup_level_anchor_height,
                 all_routes.startup_level_anchor_seed,
                 all_routes.startup_level_anchor_level_index);
-            if (theron_v1_startup_runtime_entry_has_not_bound_object_route(
-                    result)) {
-                result->fallback_visuals_blocked = 1;
-            }
         }
     }
     theron_v1_startup_flow_init(&flow);
@@ -2162,39 +1961,6 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         (const Theron_V1_BootProfile *)boot_profile;
     const char *md5_hex =
         (profile && profile->graphics_md5[0]) ? profile->graphics_md5 : NULL;
-
-    /* The forcefield is the first startup-to-dungeon mutation. Keep the
-     * player in Soul Room unless the boot-owned receipt came from the live,
-     * authenticated Mednafen/Track 02 intake. */
-    if (!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
-            profile)) {
-        if (out_result) {
-            theron_v1_startup_runtime_entry_result_init(out_result);
-            out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
-        }
-        if (out_host_receipt) {
-            theron_v1_startup_host_receipt_init(out_host_receipt);
-            out_host_receipt->input_result =
-                THERON_STARTUP_INPUT_RESULT_REDRAW;
-            out_host_receipt->status_scope = "TRACK02 TRACE";
-            out_host_receipt->status = "AUTHENTIC LIVE TRACE REQUIRED";
-            out_host_receipt->inspect_scope = "TRACK02 TRACE";
-            snprintf(out_host_receipt->inspect_detail,
-                     sizeof(out_host_receipt->inspect_detail),
-                     "%s",
-                     out_host_receipt->status);
-        }
-        if (out_state_receipt) {
-            theron_v1_startup_state_receipt_init(out_state_receipt);
-        }
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt,
-                     receipt_cap,
-                     "Track02 live trace receipt required "
-                     "before forcefield entry");
-        }
-        return 0;
-    }
 
     return theron_v1_startup_runtime_enter_from_forcefield_facts_with_host_receipts(
         flow,
