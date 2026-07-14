@@ -313,10 +313,11 @@ int main(void)
         M11_GameView_Init(&state);
         CHECK(M11_GameView_StartDm1(&state, data_dir),
               "M11 starts against original PC34 data");
-        CHECK(dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-                  snapshot.bytes, snapshot.size, &expected_world, NULL, NULL) ==
+        CHECK(dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+                  snapshot.bytes, snapshot.size, &state.world, &expected_world,
+                  NULL, NULL) ==
                   DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
-              "F0435 materializes the certified expected world");
+              "F0435 materializes the certified expected world with its start dungeon");
         CHECK(F0891_ORCH_WorldHash_Compat(&expected_world,
                                            &expected_world_hash),
               "F0435 materializes a serializable expected runtime world");

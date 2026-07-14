@@ -5457,8 +5457,8 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
     if (!dm1_v1_original_save_classify_bytes(bytes, size, &originalSave) ||
         originalSave.shape != DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 ||
         !originalSave.pc34_importer_candidate ||
-        dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
-            bytes, size, &loadedWorld, NULL, NULL) !=
+        dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+            bytes, size, &state->world, &loadedWorld, NULL, NULL) !=
             DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
