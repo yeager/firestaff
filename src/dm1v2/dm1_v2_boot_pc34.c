@@ -5,6 +5,7 @@
 #include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "dm1_v22_finished_art_material_gate_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v22_real_art_runtime_gate_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
 #include "m11_v22_inplace_draw_pc34.h"
 
@@ -25,6 +26,7 @@ int dm1_v2_boot_startup_prepare_pc34(
 {
     DM1_V2_PhaseGateConfig gate;
     const DM1_V2_PresentationModeState *mode_state;
+    DM1_V22_RealArtRuntimeGate_PC34 v22_gate;
 
     if (out_receipt) {
         dm1_v2_boot_startup_receipt_clear_pc34(out_receipt);
@@ -38,9 +40,17 @@ int dm1_v2_boot_startup_prepare_pc34(
         dm1_v22_famg_set_manifest_path(data_dir);
         dm1_v22_fpr_set_receipt_path(data_dir);
     }
+    (void)dm1_v22_real_art_runtime_gate_refresh_pc34(data_dir, &v22_gate);
 
     dm1_v2_presentation_mode_set_m12(m12_presentation_mode);
     mode_state = dm1_v2_presentation_mode_state();
+    if (mode_state && mode_state->kind == DM1_V2_PM_V22_MODERN &&
+        !v22_gate.admitted) {
+        /* A complete-looking manifest is insufficient at runtime. Keep V22
+         * off until the reviewed receipt binds to this renderer root. */
+        dm1_v2_presentation_mode_set(DM1_V2_PM_V21_UPSCALED);
+        mode_state = dm1_v2_presentation_mode_state();
+    }
 
     dm1_v2_phase_gate_defaults(&gate);
     gate.v2PresentationEnabled =
@@ -56,13 +66,12 @@ int dm1_v2_boot_startup_prepare_pc34(
         out_receipt->v2_presentation_enabled = gate.v2PresentationEnabled;
         out_receipt->v2_config_persistence_enabled =
             gate.v2ConfigPersistenceEnabled;
-        out_receipt->modern_pack_available = mode_state
-            ? mode_state->modernPackAvailable
-            : 0;
+        out_receipt->modern_pack_available = v22_gate.admitted;
         out_receipt->v22_finished_pack_receipt_state =
             dm1_v22_fpr_state();
         out_receipt->v22_finished_pack_receipt_promoted =
             dm1_v22_fpr_is_promoted();
+        out_receipt->v22_real_art_runtime_gate = v22_gate;
         out_receipt->render_decision = dm1_v2_phase_gate_decide(
             &gate,
             DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION);
@@ -91,8 +100,9 @@ const char *dm1_v2_boot_source_evidence_pc34(void)
 {
     return
         "DM1 V2 boot startup prepare: sets DM1 V2/V22 asset roots before "
-        "presentation-mode resolve, records the hash-bound finished-pack "
-        "review receipt, then gates V2 render/input/config through "
+        "presentation-mode resolve, admits V2.2 only through the reviewed "
+        "real-art asset-root receipt and records its finished-pack review, "
+        "then gates V2 render/input/config through "
         "dm1_v2_phase_gate_pc34. Source-lock anchors: ReDMCSB COMMAND.C "
         "F0359 LoadGameSettings and DUNVIEW.C F0128 viewport presentation.";
 }
