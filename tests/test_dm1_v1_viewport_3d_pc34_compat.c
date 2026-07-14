@@ -4244,6 +4244,37 @@ static void test_primary_side_wall_max_forward_contract(void)
               dm1_viewport_3d_primary_side_wall_max_forward_pc34(0), 3);
 }
 
+static void test_d2_side_wall_backing_crop_contract(void)
+{
+    const int visible[3] = {1, 1, 1};
+    DM1_ViewportLaneVisibilityReceiptPc34 visibility =
+        dm1_viewport_3d_lane_visibility_from_cells_pc34(
+            visible, visible, visible, visible, visible);
+    DM1_ViewportSideWallHostReceiptPc34 receipt;
+    const DM1_ViewSquareIndex squares[2] = {
+        DM1_VIEW_SQUARE_D2L, DM1_VIEW_SQUARE_D2R
+    };
+    size_t i;
+
+    /* ReDMCSB DUNVIEW.C G0163 rows 585-586, F0119/F0120: C710/C711
+     * keep a 75x71 destination zone but read the full 78x74 wall bitmap.
+     * Zone geometry must therefore not reject an authentic PC34 backing. */
+    for (i = 0; i < sizeof(squares) / sizeof(squares[0]); ++i) {
+        memset(&receipt, 0, sizeof(receipt));
+        check_int("F0119.F0120.d2_side_receipt",
+                  dm1_viewport_3d_build_side_wall_host_receipt_pc34(
+                      squares[i], 0, false, true, false, 3,
+                      &visibility, &receipt), 1);
+        check_int("F0119.F0120.d2_side_draw", receipt.draw_wall ? 1 : 0, 1);
+        check_int("F0119.F0120.d2_side_zone_width", receipt.width, 75);
+        check_int("F0119.F0120.d2_side_zone_height", receipt.height, 71);
+        check_int("F0119.F0120.d2_side_backing_width",
+                  receipt.material.expected_width, 78);
+        check_int("F0119.F0120.d2_side_backing_height",
+                  receipt.material.expected_height, 74);
+    }
+}
+
 static void test_f0128_parity_predicate_contract(void)
 {
     check_int("F0128.parity_predicate.origin_north",
@@ -4457,6 +4488,7 @@ int main(void)
     test_projectile_wall_zone_movement_visibility_gate();
     test_f0115_object_zone_contract();
     test_primary_side_wall_max_forward_contract();
+    test_d2_side_wall_backing_crop_contract();
     test_f0128_parity_predicate_contract();
     test_center_lane_blocking_contract();
     test_side_lane_clear_contract();

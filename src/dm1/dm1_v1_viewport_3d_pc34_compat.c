@@ -2454,6 +2454,15 @@ int dm1_viewport_3d_build_side_wall_host_receipt_pc34(
         *out_receipt = receipt;
         return 1;
     }
+    /* ReDMCSB DUNVIEW.C G0163 rows 585-586 describe C710/C711 as
+     * 75x71 destination zones, while F0119/F0120 consume the complete
+     * 78x74 Graphic558 backing bitmap. The host validates that real backing
+     * surface, then crops its copy to receipt.width/height. */
+    if (receipt.pc34_zone == DM1_PC34_ZONE_WALL_D2L ||
+        receipt.pc34_zone == DM1_PC34_ZONE_WALL_D2R) {
+        receipt.material.expected_width = 78;
+        receipt.material.expected_height = 74;
+    }
     receipt.draw_wall = true;
     *out_receipt = receipt;
     return 1;
