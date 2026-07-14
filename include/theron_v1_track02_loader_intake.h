@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     int observed;
     int payload_intake_admitted;
+    int initial_envelope_source_bound;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t observed_destination;
@@ -50,6 +51,14 @@ int theron_v1_track02_loader_intake_observe(
  * trace path. It does not promote the receipt to payload intake. */
 int theron_v1_track02_loader_intake_observe_authenticated_trace(
     const Theron_V1AuthenticatedTrack02LoaderReadFacts *facts,
+    Theron_V1Track02LoaderIntakeReceipt *out_receipt);
+
+/* Joins an authenticated later-read observation to the independently
+ * source-verified initial-envelope receipt. The observed read must cover the
+ * real envelope, but this remains a boundary binding rather than a decode. */
+int theron_v1_track02_loader_intake_bind_initial_envelope(
+    const Theron_V1Track02LoaderIntakeReceipt *observation,
+    const Theron_V1DungeonHandoffReceipt *initial_envelope,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt);
 
 #endif

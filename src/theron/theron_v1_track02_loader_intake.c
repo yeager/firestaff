@@ -48,3 +48,35 @@ int theron_v1_track02_loader_intake_observe_authenticated_trace(
     observation.byte_count = facts->byte_count;
     return theron_v1_track02_loader_intake_observe(&observation, out_receipt);
 }
+
+int theron_v1_track02_loader_intake_bind_initial_envelope(
+    const Theron_V1Track02LoaderIntakeReceipt *observation,
+    const Theron_V1DungeonHandoffReceipt *initial_envelope,
+    Theron_V1Track02LoaderIntakeReceipt *out_receipt) {
+    Theron_V1Track02LoaderIntakeReceipt receipt;
+
+    if (!observation || !initial_envelope || !out_receipt) return 0;
+    receipt = *observation;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!receipt.observed || receipt.payload_intake_admitted ||
+        receipt.record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
+        receipt.record_user_data_offset !=
+            THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
+        !initial_envelope->selected ||
+        !initial_envelope->runtime_route_consumed ||
+        initial_envelope->record != receipt.record ||
+        initial_envelope->record_user_data_offset !=
+            receipt.record_user_data_offset ||
+        initial_envelope->envelope_bytes != THERON_V1_INITIAL_ENVELOPE_BYTES ||
+        initial_envelope->header_identifier !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER ||
+        !initial_envelope->adjacent_boundary_opaque ||
+        receipt.observed_byte_count < initial_envelope->envelope_bytes) {
+        return 0;
+    }
+
+    receipt.initial_envelope_source_bound = 1;
+    receipt.status = "initial_envelope_loader_read_source_bound_payload_blocked";
+    *out_receipt = receipt;
+    return 1;
+}
