@@ -595,6 +595,11 @@
     viewport offsets, and inclusive X2/Y2 endpoints follow COMMAND.C. The
     bounded adapter adds no input layout, zone geometry, menu event, HUD,
     DSA, or runtime fallback; real CSB table/video binding remains required.
+  - 2026-07-14 update: F0674 now preserves the PC viewport floor/ceiling
+    copy path over a caller-owned bitmap cache: F0631 lookup, F0653 byte
+    count, then an exact copy into caller-owned destination storage. The
+    bounded adapter rejects undersized storage rather than partially copying;
+    it supplies no graphic, cache, palette, viewport, HUD, or runtime fallback.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
