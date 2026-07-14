@@ -16,6 +16,10 @@
   signed pixel-count forms with focused strict-C11 coverage. No pixel,
   palette, or fallback image data was introduced.
 
+- 2026-07-15 CSB ReDMCSB F0692/F0693 presentation: added the PC 3.4 packed
+  fill-box primitive and a VBlank-gated real startup-raster presenter. Focused
+  strict-C11 regression passes.
+
 - 2026-07-15 CSB startup IMG3 runtime coupling: real LZW-decoded PC34 records
   now reach title, entrance, and HUD surfaces through the F0691 row path.
   Focused strict-C11 regression passes.

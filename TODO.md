@@ -717,6 +717,11 @@
     LZW-decompressed PC34 IMG3 record through F0691 and bind only a complete,
     header-matching indexed result to title/entrance/HUD consumers. Unknown,
     truncated, and non-IMG3 records fail closed without a generated surface.
+  - 2026-07-15 update: authenticated 320x200 title/entrance/HUD rasters can
+    now reach a caller-owned PC34 packed page through F0692's original black
+    fill and F0693 vertical-blank gate. Non-PC34 dimensions, palette indices
+    outside 0..15, and missing VBlank delivery fail before presentation; no
+    fallback raster is created.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
