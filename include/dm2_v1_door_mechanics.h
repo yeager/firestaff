@@ -88,6 +88,9 @@ typedef enum {
 /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR obtains this dtWordValue before
  * it enters QUERY_TEMP_PICST for the selected DOORS dtImage. */
 #define DM2_V1_DOOR_GDAT_COLORKEY_FIELD 0x04u
+/* skproject DRAW_DOOR_FRAMES reads this DOORS word before resolving either
+ * side frame. A nonzero value means that this source door type has no frame. */
+#define DM2_V1_DOOR_GDAT_NO_FRAMES_FIELD 0x40u
 
 /* A no-draw ownership receipt for one already-selected door image field.
  * The runtime supplies its source-selected image field; this module never

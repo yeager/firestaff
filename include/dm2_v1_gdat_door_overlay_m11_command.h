@@ -31,6 +31,7 @@ typedef struct {
     uint8_t door_state;
     uint8_t door_open_pct;
     uint16_t color_key;
+    uint16_t no_frames;
     uint8_t palette16[16];
     uint32_t raw_hash;
     uint32_t decoded_hash;

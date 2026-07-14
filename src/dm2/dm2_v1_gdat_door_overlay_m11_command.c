@@ -141,8 +141,17 @@ static int add_material(const DM2_V1_AssetLoader *loader,
             return 0;
         }
         if (command->color_key > 0xffu) return 0;
+        /* DM2_QUERY_GDAT_ENTRY_DATA_INDEX returns zero for a missing
+         * dtWordValue entry (skgdtqdb.cpp:105-116), exactly the value that
+         * makes DRAW_DOOR_FRAMES retain frames. This is query semantics, not
+         * a visual fallback. */
+        (void)dm2_v1_asset_load_word_value(
+            loader, DM2_GDAT_CATEGORY_DOORS, index,
+            DM2_V1_DOOR_GDAT_NO_FRAMES_FIELD, &command->no_frames);
         command->selection_hash = hash_u32(command->selection_hash,
                                            command->color_key);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->no_frames);
     }
     return command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
@@ -159,10 +168,14 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     memset(&candidate, 0, sizeof(candidate));
     if (!loader || !door_plan || !dm2_v1_asset_loader_verify(loader)) return 0;
     for (int i = 0; i < door_plan->door_count; ++i) {
-        if (!add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_PANEL) ||
+        int no_frames;
+        if (!add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_PANEL)) goto fail;
+        no_frames = candidate.commands[candidate.command_count - 1].no_frames != 0u;
+        if (
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK)) goto fail;
+        if ((!no_frames &&
+             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME)) ||
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON)) goto fail;
     }
     if (!candidate.command_count) goto fail;

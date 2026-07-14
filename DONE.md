@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject DRAW_DOOR_FRAMES: M11 consumes the real
+  `DOORS/*/GDAT_DOOR_NO_FRAMES` word and suppresses frame blits only when the
+  source door type requires it; a missing word retains skproject's zero value.
+
 - 2026-07-15 CSB M11 startup surface: M11 now presents only the complete,
   verified session-owned C001-C005/C017/C040 host surface. Missing evidence
   leaves the prior page untouched; the black replacement frame is removed.

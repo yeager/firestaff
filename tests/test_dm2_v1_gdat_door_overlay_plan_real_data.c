@@ -55,6 +55,7 @@ int main(void)
     DM2_V1_GdatDoorOverlayM11CommandPlan changed_plan;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     uint16_t source_color_key = 0u;
+    uint16_t source_no_frames = 0u;
     int ornate = -1;
     int fallback_fetches = 0;
 
@@ -97,6 +98,11 @@ int main(void)
         dm2_v1_viewport_door_button_graphic_index_for_state(0);
     door_plan.doors[0].button_source_kind = 1;
     door_plan.doors[0].button_rect = (DM2_V1_ViewportRect){ 150, 80, 16, 16 };
+    /* Missing dtWordValue/0x40 is source-defined zero, not a failed material
+     * route: skproject's query returns zero for missing word entries. */
+    (void)dm2_v1_asset_load_word_value(
+        &loader, DM2_GDAT_CATEGORY_DOORS, 0,
+        DM2_V1_DOOR_GDAT_NO_FRAMES_FIELD, &source_no_frames);
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan, &material_plan) ||
         !material_plan.valid || material_plan.command_count != 4 || !material_plan.command_hash ||
         material_plan.commands[0].kind != DM2_V1_GDAT_DOOR_PANEL ||
@@ -113,6 +119,7 @@ int main(void)
             &loader, DM2_GDAT_CATEGORY_DOORS, 0,
             DM2_V1_DOOR_GDAT_COLORKEY_FIELD, &source_color_key) ||
         material_plan.commands[0].color_key != source_color_key ||
+        material_plan.commands[0].no_frames != source_no_frames ||
         !material_plan.commands[0].palette_hash || !material_plan.commands[2].palette_hash ||
         !material_plan.commands[3].palette_hash) goto fail;
     door_plan.doors[0].door_open_pct = 75;
