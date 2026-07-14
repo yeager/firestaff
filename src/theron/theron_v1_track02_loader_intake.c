@@ -35,7 +35,8 @@ int theron_v1_track02_loader_intake_observe_authenticated_trace(
     Theron_V1Track02LoaderReadFacts observation;
 
     if (!facts || !facts->trace_provenance ||
-        !facts->trace_provenance->valid) {
+        !facts->trace_provenance->valid ||
+        !facts->trace_provenance->runtime_admitted) {
         if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
