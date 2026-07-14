@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB save export provenance: FSSB envelopes now require a
+  non-empty original artifact path and reject the retired synthetic marker at
+  build, validation, and round-trip boundaries. Verification:
+  `test_csb_v1_save_export_import_pc34_compat` (101 passed).
+
 - 2026-07-14 CSB ReDMCSB `SOUND.C F0060`: packed Atari ST sound streams now
   decode high-nibble-first commands and repeat runs while retaining the prior
   PSG amplitude. The focused CTest validates normal, leading-repeat, and
