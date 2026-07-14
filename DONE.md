@@ -19,6 +19,17 @@
   before any replacement save bytes are written. Regression coverage mutates
   that exact case while retaining the live receipt.
 
+- ✅ 2026-07-14 DM2 custom `WALL_GFX` button decoded-geometry gate: the
+  source-required DB2/DB3 custom-door-button path now accepts a fetched
+  `WALL_GFX` field-1 image only when its decoded width and height match the
+  direct owner receipt, in addition to tile, ObjectID, graphic index, and
+  local palette. A same-palette image with altered dimensions blocks the
+  entire door material transaction before any button pixels are blitted;
+  no generic or resized substitute is used. Source: SKProject
+   `SkWinCore.cpp::DRAW_DEFAULT_DOOR_BUTTON` and `c_gui_vp.cpp`
+   `QUERY_GDAT_IMAGE_LOCALPAL`. Verification:
+   `test_dm2_v1_g1_wall_button_material_gate`.
+
 - 2026-07-14 DM1 save-and-quit guard: the M11 keyboard and pointer quit
   routes now persist the source SAVE-AND-QUIT header value and retain the
   guard when saving or path construction fails, reporting the actual failure
