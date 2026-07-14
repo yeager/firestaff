@@ -1,8 +1,9 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-14 DM1 ReDMCSB F8143/F8144: `NEC816.C:1549-1557` has empty bodies
-  and only commented parameter names; no copy, stride, byte order, or flip
-  contract exists to port without speculation.
+- 2026-07-14 DM1 ReDMCSB F8144: `NEC816.C:1554-1557` and C25
+  `VIDEODRV.C:1529-1532` have empty bodies and only commented parameter
+  names; no horizontal readback-flip contract exists to port without
+  speculation. F8143's distinct C25 readback body is implemented below.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
@@ -779,14 +780,17 @@ ReDMCSB WIP 2021-02-06 source tree.
   - 2026-07-14 VIDEODRV.C/NEC816.C F8151 now preserves the PC 3.4 C25
     source-bitmap-to-aperture rectangle path, including source/destination
     even strides, transparency and vertical flip. C25 F0681/F0683 are empty,
-    so horizontal flip deliberately remains a source-defined no-op. F8143
-    aperture-to-bitmap readback and live framebuffer presentation remain
-    separate, unproven mappings.
+    so horizontal flip deliberately remains a source-defined no-op. The F8143
+    C25 aperture-to-bitmap primitive is now separately ported; live framebuffer
+    presentation remains unproven.
   - 2026-07-14 VIDEODRV.C F8152 now preserves the PC 3.4 C25 inclusive
     rectangle fill through F8137, including fixed 320-byte rows and the
     viewport color-index offset. The live SDL/Mac aperture binding remains
-    separate. F8143 is still missing: unlike the NEC16 stub, the C25 source
-    has a real aperture-to-packed-bitmap readback body.
+    separate.
+  - 2026-07-14 VIDEODRV.C F8143 now preserves the PC 3.4 C25 aperture-to-
+    packed-bitmap readback with low-nibble extraction and retained opposite
+    boundary nibbles. It is a standalone aperture primitive until the live
+    host framebuffer supplies the C25 surface.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
