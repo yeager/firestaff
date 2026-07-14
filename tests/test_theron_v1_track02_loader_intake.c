@@ -37,6 +37,7 @@ int main(void) {
         .cue_track02_index01_raw_sector = 225u,
         .track02_raw_sector = 3123u,
         .raw_sector_offset = 0x124u,
+        .raw_track02_md5_verified = 1,
         .adjacent_boundary_opaque = 1,
         .route = "raw_track02_initial_envelope"
     };
@@ -79,6 +80,10 @@ int main(void) {
     CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
         &receipt, &initial_envelope, &receipt));
     initial_envelope.raw_sector_offset = 0x124u;
+    initial_envelope.raw_track02_md5_verified = 0;
+    CHECK(!theron_v1_track02_loader_intake_bind_initial_envelope(
+        &receipt, &initial_envelope, &receipt));
+    initial_envelope.raw_track02_md5_verified = 1;
 
     CHECK(theron_v1_track02_loader_intake_observe_authenticated_trace(
         &authenticated_facts, &receipt));

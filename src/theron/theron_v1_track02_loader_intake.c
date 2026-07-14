@@ -64,6 +64,7 @@ int theron_v1_track02_loader_intake_bind_initial_envelope(
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
         !initial_envelope->selected ||
         !initial_envelope->runtime_route_consumed ||
+        !initial_envelope->raw_track02_md5_verified ||
         initial_envelope->record != receipt.record ||
         initial_envelope->record_user_data_offset !=
             receipt.record_user_data_offset ||
