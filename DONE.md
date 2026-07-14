@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 original SKSave timer post-load ownership: after an atomic
+  original raw-SKSave/G1 import, runtime now consumes each authenticated
+  ten-byte timer as SKProject's `Timer { dw00, ttype, actor, value, w8 }` and
+  applies the exact bounded `SkWinCore.cpp::_3a15_020f` ownership rule.
+  `tty0C` rebinds only its saved champion actor to the table index; malformed
+  actors reject before publish. `tty1D`/`tty1E` are explicitly retained as
+  unresolved RecordE owners rather than dereferenced through an invented DB
+  graph. No timer is scheduled, fired, transformed, or given DB semantics.
+  Focused `dm2_v1_save_load` coverage proves `tty0C` and both RecordE cases.
+
 - 2026-07-14 DM2 original raw-SKSave G1 runtime handoff: before applying an
   admitted raw save, runtime now parses its complete dungeon prefix through
   the established SKProject-shaped loader and verifies the saved party pose

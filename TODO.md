@@ -6,9 +6,12 @@
   descriptor. The live dungeon metadata and bytes publish as one atomic swap;
   malformed raw G1 prefixes or out-of-range poses retain the old model. This
   still does not decode or rebuild the original DB record graph, tile-object
-  chains, timer payloads, checkcodes, minion associations, actuator state, or
-  post-load effects beyond the previously bounded importer fields. Remaining:
-  corpus-verified original read/write across those full DB/timer sections and
+  chains, checkcodes, minion associations, actuator state, or post-load
+  effects beyond the bounded importer fields. SKProject's `_3a15_020f`
+  post-load timer sweep now rebinds authenticated `tty0C` champion owners,
+  but retains `tty1D`/`tty1E` RecordE timer owners as unavailable until the
+  saved DB graph has an exact address owner. Remaining: corpus-verified
+  original read/write across those full DB/timer sections and the rest of
   SKProject's post-load rebuild order.
 
 - 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict

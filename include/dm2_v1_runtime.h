@@ -179,6 +179,20 @@ typedef struct {
     uint32_t interface_palette_hash;
     uint8_t interface_palette16[16];
 } DM2_V1_RuntimeGraphicsSetSceneReceipt;
+
+/* Exact post-load ownership facts reconstructed from the original ten-byte
+ * timer table.  skproject/SKWIN/SkWinCore.cpp::_3a15_020f only reconnects
+ * tty0C to Champion::timerIndex directly; tty1D/tty1E instead require a
+ * RecordE DB address.  Keep that latter dependency explicit until the saved
+ * DB graph has a source-owned runtime representation. */
+typedef struct {
+    int valid;
+    uint8_t timer_count;
+    uint8_t champion_timer_bound_mask;
+    uint8_t champion_timer_index[4];
+    uint8_t unresolved_record_timer_count;
+    uint8_t other_timer_count;
+} DM2_V1_RuntimeTimerPostLoadReceipt;
 #include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
@@ -496,6 +510,8 @@ int dm2_v1_runtime_get_party_y(void);
 int dm2_v1_runtime_get_party_dir(void);
 int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
+int dm2_v1_runtime_last_timer_post_load_receipt(
+    DM2_V1_RuntimeTimerPostLoadReceipt *out_receipt);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
