@@ -399,6 +399,14 @@
     runtime load against the already verified dungeon. It cannot fall through
     to CSBWin or roster import. The missing evidence remains external
     per-media original-save corpus, not a synthetic substitute.
+  - 2026-07-14 update: the HINTLOAD CPSX path now has a source-defined PC34
+    transport boundary for `F1910`, `F1913`, `F1914`, and F1918's initial
+    `GLOBAL_DATA`, `ACTIVE_GROUP`, and `PARTY` reads. It consumes the exact
+    512-byte `CSB_SAVE_HEADER`, extracts its original `Keys[0..2]` and
+    `Checksums[0..2]` at `DEFS.H` offsets `0x138/0x158`, and rejects a bad
+    header or part at HINTLOAD's original stage code. The caller must still
+    supply each media's exact record span; EVENTS, TIMELINE, dungeon-tail
+    allocation, platform identity, and all positive corpus proof remain open.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;

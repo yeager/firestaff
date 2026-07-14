@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB HINTLOAD F1910/F1913/F1914/F1918: added the
+  source-defined initial CPSX save sequence for exact sequential transport,
+  header deobfuscation, and the first three source-owned parts
+  (`GLOBAL_DATA`, `ACTIVE_GROUP`, `PARTY`). It derives only the original
+  `Keys[0..2]`/`Checksums[0..2]` from the decrypted 512-byte CSB header and
+  fails at the matching source stage without inventing record layouts, DSA,
+  timer, dungeon-tail, or replacement bytes. Focused strict-C11 regression
+  passes.
+
 - 2026-07-14 CSB ReDMCSB F7089/F7090 imported-party normalization: added the
   PC34 new-adventure transition after portrait transfer, including header-tail
   carry, party rotation, champion status reset, modifier removal callback and
