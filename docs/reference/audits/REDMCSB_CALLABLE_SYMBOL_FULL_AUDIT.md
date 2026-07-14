@@ -27,7 +27,7 @@ The inventory includes four-digit named callable symbols, documented unnamed F r
 | Status | Count |
 | --- | ---: |
 | UNCERTAIN_NUMBERED_EVIDENCE | 1156 |
-| MISSING | 967 |
+| MISSING | 959 |
 | **Total** | **2137** |
 
 Machine-check the ledger shape with:

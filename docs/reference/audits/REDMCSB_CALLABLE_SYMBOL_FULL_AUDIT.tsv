@@ -60,7 +60,7 @@ F033_aaaz_	F	Atari ST / PRIM ABI alias	ATARIST.H:27	src/csb/csb_v1_viewport_pc34
 F0034_OBJECT_DrawLeaderHandObjectName	F	OBJECT	ATARIST.H:28	src/csb/csb_v1_runtime_pc34_compat.c:10956	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F034_aaau_	F	Atari ST / PRIM ABI alias	ATARIST.H:28	src/csb/csb_v1_runtime_pc34_compat.c:10956	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0035_OBJECT_ClearLeaderHandObjectName	F	OBJECT	ATARIST.H:29	include/firestaff/dm1/v1/f0035_object_clear_leader_hand_object_name_isolated_c91f_pc34_compat.h	IMPLEMENTED_NARROW	Source C017 black-zone fill adapter; focused CTest.
-F035_aaaw_	F	Atari ST / PRIM ABI alias	ATARIST.H:29	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F035_aaaw_	F	Atari ST / PRIM ABI alias	ATARIST.H:29	F0035_OBJECT_ClearLeaderHandObjectName	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0035.
 F0036_OBJECT_ExtractIconFromBitmap	F	OBJECT	ACTIDRAW.C:263	src/nexus/nexus_v1_engine.c:27	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F036_aA19_	F	Atari ST / PRIM ABI alias	ATARIST.H:30	src/nexus/nexus_v1_engine.c:27	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0037_OBJECT_DrawIconToScreen	F	OBJECT	ATARIST.H:31	src/nexus/nexus_v1_engine.c:89	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -156,7 +156,7 @@ F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally	F	DUNGEONVIEW	DEFS.H:69
 F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap	F	DUNGEONVIEW	DEFS.H:6971	src/csb/csb_v1_viewport_d2l2_d2r2_wall_pc34_compat.c:32	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally	F	DUNGEONVIEW	DEFS.H:6972	src/dm2/dm2_v1_boot.c:242	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0106_DUNGEONVIEW_TestResetToStep1_CPSF	F	DUNGEONVIEW	ATARIST.H:62	include/firestaff/dm1/v1/dungeonview_test_reset_to_step1_cpsf_pc34_compat.h	IMPLEMENTED_NARROW	Source CPSF reset transition; focused CTest.
-F106_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:62	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F106_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:62	F0106_DUNGEONVIEW_TestResetToStep1_CPSF	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0106.
 F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF	F	DUNGEONVIEW	DEFS.H:6978	src/nexus/nexus_v1_rasterizer.c:533	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0108_DUNGEONVIEW_DrawFloorOrnament	F	DUNGEONVIEW	DEFS.H:6979	src/dm2/dm2_v2_asset_pipeline.c:25	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0109_DUNGEONVIEW_DrawDoorOrnament	F	DUNGEONVIEW	DEFS.H:6980	src/dm2/dm2_v2_asset_pipeline.c:26	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -208,11 +208,11 @@ F143_mzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:74	src/dm1/dm1_v1_combat_pc34_c
 F0144_DUNGEON_GetCreatureAttributes	F	DUNGEON	ATARIST.H:75	src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c:2124	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F144_amzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:75	src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c:2124	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0145_DUNGEON_GetGroupCells	F	DUNGEON	ATARIST.H:76	include/csb_v1_dungeon_world_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 group-cells accessor; focused CTest.
-F145_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:76	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F145_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:76	F0145_DUNGEON_GetGroupCells	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0145.
 F0146_DUNGEON_SetGroupCells	F	DUNGEON	ATARIST.H:77	include/csb_v1_f0146_dungeon_set_group_cells_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 group-cells mutation; focused CTest.
 F146_aczz_	F	Atari ST / PRIM ABI alias	ATARIST.H:77	src/nexus/nexus_v1_game.c:9	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0147_DUNGEON_GetGroupDirections	F	DUNGEON	ATARIST.H:78	include/csb_v1_dungeon_world_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 directions accessor; focused CTest.
-F147_aawz_	F	Atari ST / PRIM ABI alias	ATARIST.H:78	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F147_aawz_	F	Atari ST / PRIM ABI alias	ATARIST.H:78	F0147_DUNGEON_GetGroupDirections	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0147.
 F0148_DUNGEON_SetGroupDirections	F	DUNGEON	ATARIST.H:79	include/csb_v1_f0148_dungeon_set_group_directions_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked C04 and active-group direction update; focused CTest.
 F148_aayz_	F	Atari ST / PRIM ABI alias	ATARIST.H:79	src/csb/csb_v1_dungeon_loader_pc34_compat.c:9	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0149_DUNGEON_IsWallOrnamentAnAlcove	F	DUNGEON	ATARIST.H:80	src/csb/csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat.c:50	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -275,7 +275,7 @@ F180_hzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:104	src/csb/csb_v1_runtime_pc34
 F0181_GROUP_DeleteEvents	F	GROUP	ATARIST.H:105	src/csb/csb_v1_runtime_pc34_compat.c:6412	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F181_czzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:105	src/csb/csb_v1_runtime_pc34_compat.c:6412	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0182_GROUP_StopAttacking	F	GROUP	ATARIST.H:106	include/csb_v1_f0182_group_stop_attacking_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked group attack stop adapter; focused CTest.
-F182_aqzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:106	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F182_aqzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:106	F0182_GROUP_StopAttacking	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0182.
 F0183_GROUP_AddActiveGroup	F	GROUP	ATARIST.H:107	src/nexus/nexus_v1_creatures.c:43	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F183_kzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:107	src/nexus/nexus_v1_creatures.c:43	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0184_GROUP_RemoveActiveGroup	F	GROUP	ATARIST.H:108	src/csb/csb_v1_runtime_pc34_compat.c:6550	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -299,9 +299,9 @@ F0193_GROUP_StealFromChampion	F	GROUP	DATA.C:31	src/csb/csb_v1_monster_pc34_comp
 F0194_GROUP_RemoveAllActiveGroups	F	GROUP	ATARIST.H:116	src/dm1/dm1_v1_mirror_candidate_teleporter_survival_pc34_compat.c:16	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F194_hzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:116	src/dm1/dm1_v1_mirror_candidate_teleporter_survival_pc34_compat.c:16	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0195_GROUP_AddAllActiveGroups	F	GROUP	ATARIST.H:117	src/csb/csb_v1_runtime_pc34_compat.c	IMPLEMENTED_NARROW	Source-locked current-map active-group scan; focused M10-linked CTest.
-F195_akzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:117	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F195_akzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:117	F0195_GROUP_AddAllActiveGroups	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0195.
 F0196_GROUP_InitializeActiveGroups	F	GROUP	ATARIST.H:118	include/csb_v1_f0196_group_initialize_active_groups_adapter_pc34_compat.h	IMPLEMENTED_NARROW	Source active-group initialization adapter; focused CTest.
-F196_aozz_	F	Atari ST / PRIM ABI alias	ATARIST.H:118	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F196_aozz_	F	Atari ST / PRIM ABI alias	ATARIST.H:118	F0196_GROUP_InitializeActiveGroups	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0196.
 F0197_GROUP_IsViewPartyBlocked	F	GROUP	GROUP.C:40	src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c:842	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0198_GROUP_IsSmellPartyBlocked	F	GROUP	GROUP.C:41	src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c:842	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0199_GROUP_GetDistanceBetweenUnblockedSquares	F	GROUP	DEFS.H:7516	src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c:842	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
@@ -331,7 +331,7 @@ F215_lzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:125	src/csb/csb_v1_runtime_pc34
 F0216_PROJECTILE_GetImpactAttack	F	PROJECTILE	DEFS.H:7579	src/dm1/dm1_v1_throw_shoot_pc34_compat.c:1555	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0217_PROJECTILE_HasImpactOccured	F	PROJECTILE	DEFS.H:7580	src/dm2/dm2_v1_projectile_step_pc34_compat.c:44	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0218_PROJECTILE_GetImpactCount	F	PROJECTILE	ATARIST.H:126	include/dm1_v1_projectile_impact_count_pc34_compat.h	IMPLEMENTED_NARROW	Bounded PC34 impact-count callable; focused CTest.
-F218_ezzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:126	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F218_ezzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:126	F0218_PROJECTILE_GetImpactCount	IMPLEMENTED_NARROW	ABI alias resolved through source-mapped F0218.
 F0219_PROJECTILE_ProcessEvents48To49_Projectile	F	PROJECTILE	DEFS.H:7597	src/dm2/dm2_v1_projectile_pc34_compat.c:15	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0220_EXPLOSION_ProcessEvent25_Explosion	F	EXPLOSION	DEFS.H:7602	src/csb/csb_v1_runtime_pc34_compat.c:5103	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0221_GROUP_IsFluxcageOnSquare	F	GROUP	DEFS.H:7607	include/memory_projectile_pc34_compat.h:31	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
