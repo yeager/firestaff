@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0745`: `FILENAME.C:84-105` is source-locked
+  for English/French/German mutation of the dungeon, expansion, bonus, save
+  and backup filename templates. Focused strict C11 coverage passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0744`: `FILENAME.C:60-81` is source-locked
   for the PC 3.4 filename language mutation. It replaces every `~` with the
   language character, or removes it in place when that character is zero.
