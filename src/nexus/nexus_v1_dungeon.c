@@ -51,6 +51,7 @@ static int nexus_v1_level_copy_structure3_payload(
     int nonzero_byte_run_start = -1;
     int nonzero_byte_run_length = 0;
     int byte_index;
+    Nexus_V1_DgnStructure3DirectoryReceipt directory;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -78,6 +79,8 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.first_nonzero_block_run_start_block_index = -1;
     level->structure3_payload.last_nonzero_block_run_start_block_index = -1;
     level->structure3_payload.complete_block_count = (int)block_count;
+    memset(&directory, 0, sizeof(directory));
+    directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
         int block_nonzero = 0;
@@ -197,6 +200,37 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.raw_payload_hash = hash ? hash : 1U;
     level->structure3_payload.valid = 1;
     level->structure3_payload.face_semantics_proven = 0;
+    if (byte_size >= 4) {
+        uint32_t count = rb32(data + byte_offset);
+        uint64_t directory_bytes = 4U + (uint64_t)count * 4U;
+        int entry;
+        uint32_t previous = 0;
+
+        directory.directory_declared = 1;
+        if (count > 0U && count <= (uint32_t)INT_MAX &&
+            directory_bytes <= (uint64_t)byte_size) {
+            directory.entry_count = (int)count;
+            directory.directory_byte_count = (int)directory_bytes;
+            directory.offsets_strictly_increasing = 1;
+            for (entry = 0; entry < directory.entry_count; ++entry) {
+                uint32_t offset = rb32(data + byte_offset + 4 + entry * 4);
+                if (entry == 0) directory.first_entry_offset = (int)offset;
+                directory.last_entry_offset = (int)offset;
+                if (offset < (uint32_t)directory.directory_byte_count ||
+                    offset >= (uint32_t)byte_size ||
+                    (entry > 0 && offset <= previous)) {
+                    directory.offsets_strictly_increasing = 0;
+                    break;
+                }
+                previous = offset;
+            }
+            directory.valid = directory.offsets_strictly_increasing;
+        }
+    }
+    /* The directory bounds entry spans, but no entry grammar has yet been
+     * recovered from original Saturn execution or capture evidence. */
+    directory.entry_semantics_proven = 0;
+    level->structure3_directory = directory;
     return 0;
 }
 
@@ -2753,6 +2787,16 @@ int nexus_v1_level_structure3_payload_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_directory_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3DirectoryReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_directory;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -2777,6 +2821,9 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
         level->structure3_payload.nonzero_byte_run_count;
     receipt.structure3_nonzero_block_run_count =
         level->structure3_payload.nonzero_block_run_count;
+    receipt.structure3_directory_valid = level->structure3_directory.valid;
+    receipt.structure3_directory_entry_count =
+        level->structure3_directory.entry_count;
     for (entry = 0; entry < level->structure1f_entry_count; ++entry) {
         const Nexus_V1_DgnStructure1FEntry *record =
             &level->structure1f_entries[entry];
@@ -2817,6 +2864,13 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
             model_index > receipt.structure3_nonzero_block_run_count) {
             receipt.one_based_run_ordinal_mapping_disproven = 1;
         }
+        if (model_index >= receipt.structure3_directory_entry_count) {
+            receipt.zero_based_directory_ordinal_mapping_disproven = 1;
+        }
+        if (model_index == 0 ||
+            model_index > receipt.structure3_directory_entry_count) {
+            receipt.one_based_directory_ordinal_mapping_disproven = 1;
+        }
     }
     receipt.direct_block_ordinal_mapping_disproven =
         receipt.resolved_model_reference_count > 0 &&
@@ -2830,6 +2884,10 @@ int nexus_v1_level_structure3_ordinal_correlation_receipt(
         receipt.resolved_model_reference_count > 0 &&
         receipt.zero_based_run_ordinal_mapping_disproven &&
         receipt.one_based_run_ordinal_mapping_disproven;
+    receipt.direct_directory_ordinal_mapping_disproven =
+        receipt.resolved_model_reference_count > 0 &&
+        receipt.zero_based_directory_ordinal_mapping_disproven &&
+        receipt.one_based_directory_ordinal_mapping_disproven;
     receipt.valid = receipt.structure1a_relation_complete &&
         receipt.structure3_payload_valid;
     *out_receipt = receipt;
@@ -2999,6 +3057,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure1a_kinds);
     (void)nexus_v1_level_structure3_model_reference_receipt(
         level, &out_receipt->structure3_model_references);
+    (void)nexus_v1_level_structure3_directory_receipt(
+        level, &out_receipt->structure3_directory);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(

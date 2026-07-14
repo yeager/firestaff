@@ -475,6 +475,7 @@ int nexus_v1_inspect_dgn_material_corpus(
         free(data);
         ++receipt.parsed_level_count;
         receipt.structure3_payloads[level_index] = level.structure3_payload;
+        receipt.structure3_directories[level_index] = level.structure3_directory;
         (void)nexus_v1_level_structure3_model_reference_receipt(
             &level, &receipt.structure3_model_references[level_index]);
         (void)nexus_v1_level_structure1a_transform_selector_receipt(
@@ -558,6 +559,11 @@ int nexus_v1_inspect_dgn_material_corpus(
                 receipt.structure3_longest_nonzero_block_run =
                     level.structure3_payload.longest_nonzero_block_run;
             }
+        }
+        if (level.structure3_directory.valid) {
+            ++receipt.structure3_directory_valid_level_count;
+            receipt.structure3_directory_entry_count +=
+                level.structure3_directory.entry_count;
         }
         if (receipt.structure3_model_references[level_index].complete) {
             ++receipt.structure3_model_reference_complete_level_count;
@@ -672,6 +678,18 @@ int nexus_v1_inspect_dgn_material_corpus(
         if (receipt.structure3_ordinal_correlations[level_index]
                 .direct_run_ordinal_mapping_disproven) {
             ++receipt.structure3_direct_run_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .zero_based_directory_ordinal_mapping_disproven) {
+            ++receipt.structure3_zero_based_directory_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .one_based_directory_ordinal_mapping_disproven) {
+            ++receipt.structure3_one_based_directory_ordinal_mapping_disproven_level_count;
+        }
+        if (receipt.structure3_ordinal_correlations[level_index]
+                .direct_directory_ordinal_mapping_disproven) {
+            ++receipt.structure3_direct_directory_ordinal_mapping_disproven_level_count;
         }
         if (level.geometry_info.mesh_ready) ++receipt.geometry_ready_level_count;
         if (level.geometry_info.structure1f_valid) {

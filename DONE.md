@@ -39,6 +39,18 @@
   pixel instruction. Verification: focused build and CTest
   `nexus_v1_dgn_geometry_readiness` passed 1/1; `git diff --check` passed.
 
+- ✅ 2026-07-14 Nexus Structure3 directory envelope: the original
+  `LEV00.DGN`--`LEV15.DGN` corpus now proves a bounded big-endian count plus
+  strictly increasing in-payload offset directory at the start of every
+  Structure3 span. The parser retains only the count and first/last offsets;
+  it does not assign model, face, vertex, mesh, texture, palette, or pixel
+  semantics to an entry. Structure1A model-index bytes are separately tested
+  against this directory's zero- and one-based ordinal domains, while any
+  apparent in-range value remains non-semantic. The renderer stays blocked at
+  `blocked-structure3-face-semantics`; no synthetic geometry or graphics were
+  introduced. Verification: `test_nexus_v1_dgn_geometry_readiness` passed
+  against `/Users/bosse/.firestaff/data/nexus/LEV00.DGN`--`LEV15.DGN`.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API

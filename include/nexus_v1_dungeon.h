@@ -666,6 +666,22 @@ typedef struct {
     int face_semantics_proven;
 } Nexus_V1_DgnStructure3PayloadReceipt;
 
+/* The first Structure3 word is observed on the retail LEV00--LEV15 corpus
+ * as a big-endian count followed by that many increasing big-endian offsets.
+ * This proves a bounded directory envelope only. Its entries are not yet
+ * called models, faces, vertices, textures, or mesh records. */
+typedef struct {
+    int payload_valid;
+    int directory_declared;
+    int entry_count;
+    int directory_byte_count;
+    int first_entry_offset;
+    int last_entry_offset;
+    int offsets_strictly_increasing;
+    int valid;
+    int entry_semantics_proven;
+} Nexus_V1_DgnStructure3DirectoryReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -690,6 +706,11 @@ typedef struct {
     int direct_block_ordinal_mapping_disproven;
     int direct_byte_run_ordinal_mapping_disproven;
     int direct_run_ordinal_mapping_disproven;
+    int structure3_directory_valid;
+    int structure3_directory_entry_count;
+    int zero_based_directory_ordinal_mapping_disproven;
+    int one_based_directory_ordinal_mapping_disproven;
+    int direct_directory_ordinal_mapping_disproven;
     int face_semantics_proven;
     int valid;
 } Nexus_V1_DgnStructure3OrdinalCorrelationReceipt;
@@ -963,6 +984,7 @@ typedef struct {
     int structure2_texture_table_valid;
     Nexus_V1_DgnStructure2Payload structure2_payload;
     Nexus_V1_DgnStructure3PayloadReceipt structure3_payload;
+    Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
 } Nexus_V1_Level;
 
 /* Source-provenance predicate for host routes. A bounded Structure2 payload
@@ -1044,6 +1066,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure1AKindReceipt structure1a_kinds;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1502,6 +1525,7 @@ typedef struct {
     Nexus_V1_DgnStructure1ARelationReceipt structure1a_relation;
     Nexus_V1_DgnStructure1AKindReceipt structure1a_kinds;
     Nexus_V1_DgnStructure3ModelReferenceReceipt structure3_model_references;
+    Nexus_V1_DgnStructure3DirectoryReceipt structure3_directory;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1702,6 +1726,9 @@ int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_
 int nexus_v1_level_structure3_payload_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3PayloadReceipt *out_receipt);
+int nexus_v1_level_structure3_directory_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3DirectoryReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);
