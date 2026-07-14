@@ -1087,10 +1087,10 @@ F1077_OpenConsoleDevice	F	OpenConsoleDevice	AMIGINIT.C:4,132-180,333-361	include
 F1078_CloseConsoleDevice	F	CloseConsoleDevice	AMIGINIT.C:4,182-198,363-379	include/redmcsb_f1078_close_console_device_pc34_compat.h	SOURCE_NONAPPLICABLE	Available console-device teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1079_OpenInputDevice	F	OpenInputDevice	AMIGINIT.C:4,31-35,200-215,333-361,363-389	include/redmcsb_f1079_open_input_device_pc34_compat.h	SOURCE_NONAPPLICABLE	Available input-device open route is Amiga-only; focused PC boundary is intentionally a no-op.
 F1080_CloseInputDevice	F	CloseInputDevice	AMIGINIT.C:4,200-233,217-232,363-373	include/redmcsb_f1080_close_input_device_pc34_compat.h	SOURCE_NONAPPLICABLE	Available input-device teardown route is Amiga-only; focused PC boundary is intentionally a no-op.
-F1081_OpenNIL	F	OpenNIL	AMIGINIT.C:236	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1082_CloseNIL	F	CloseNIL	AMIGINIT.C:248	src/nexus/nexus_v1_rasterizer.c:7	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F1083_Allocate724Bytes	F	Allocate724Bytes	AMIGINIT.C:260	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1084_Free724Bytes	F	Free724Bytes	AMIGINIT.C:268	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1081_OpenNIL	F	OpenNIL	AMIGINIT.C:4,235-257,333-361	include/redmcsb_f1081_open_nil_pc34_compat.h	SOURCE_NONAPPLICABLE	Available NIL: handle open route is Amiga DOS-only; focused PC boundary is intentionally unavailable.
+F1082_CloseNIL	F	CloseNIL	AMIGINIT.C:4,248-257,363-373	include/redmcsb_f1082_close_nil_pc34_compat.h	SOURCE_NONAPPLICABLE	Available NIL: handle close route is Amiga DOS-only; focused PC boundary is intentionally unavailable.
+F1083_Allocate724Bytes	F	Allocate724Bytes	AMIGINIT.C:4,260-266,333-361	include/redmcsb_f1083_allocate_724_bytes_pc34_compat.h	SOURCE_NONAPPLICABLE	Available 724-byte AMISTRUCT allocation is Amiga chip-memory-only; focused PC boundary is intentionally unavailable.
+F1084_Free724Bytes	F	Free724Bytes	AMIGINIT.C:4,268-275,363-373	include/redmcsb_f1084_free_724_bytes_pc34_compat.h	SOURCE_NONAPPLICABLE	Available AMISTRUCT release is Amiga chip-memory-only; focused PC boundary is intentionally unavailable.
 F1085_IntuitionVectorReplacement	F	IntuitionVectorReplacement	AMIGINIT.C:277	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1086_ReplaceIntuitionVectors	F	ReplaceIntuitionVectors	AMIGINIT.C:283	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1087_RestoreIntuitionVectors	F	RestoreIntuitionVectors	AMIGINIT.C:293	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
