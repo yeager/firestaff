@@ -14617,6 +14617,19 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm1_v22_finished_pack_receipt_pc34
         PRIVATE firestaff_v2 firestaff_m10 m)
+    add_executable(test_dm1_v22_real_art_runtime_gate_pc34
+        tests/test_dm1_v22_real_art_runtime_gate_pc34.c
+        src/dm1v2/dm1_v22_real_art_runtime_gate_pc34.c
+        src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
+        src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
+        src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_dm1_v22_real_art_runtime_gate_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v22_real_art_runtime_gate_pc34
+        PRIVATE firestaff_v2 firestaff_m10 m)
     add_executable(firestaff_dm1_v22_finished_pack_receipt_probe
         probes/firestaff_dm1_v22_finished_pack_receipt_probe.c
         src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
@@ -15190,6 +15203,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v22_finished_pack_receipt_pc34
         COMMAND test_dm1_v22_finished_pack_receipt_pc34
+    )
+    add_test(
+        NAME dm1_v22_real_art_runtime_gate_pc34
+        COMMAND test_dm1_v22_real_art_runtime_gate_pc34
     )
     add_test(
         NAME firestaff_dm1_v22_finished_pack_receipt_probe

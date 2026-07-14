@@ -935,6 +935,16 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   Verification: the focused real-PC34 HoC material regression compares a
    C346-only framebuffer pixel to the installed source bitmap's scaled mapping
    outside the C026 portrait overlay.
+- ✅ 2026-07-14 DM1 V2.2 real-art receipt/asset-root runtime gate: boot now
+  binds the renderer, material classifier, and finished-pack receipt to one
+  data-derived modern-asset root. It admits V2.2 only when that root matches
+  the receipt manifest path, all required PNG-backed materials are
+  `FINISHED_REAL`, and `finish_receipt.json` is promoted for every reviewed
+  slot; otherwise boot resolves the requested V2.2 launch to V2.1. The
+  boot-startup receipt preserves every predicate for the M11 consumer. New
+  `dm1_v22_real_art_runtime_gate_pc34` covers missing, unreviewed real,
+  reviewed real, and post-review placeholder-regression cases through the
+  production boot path.
 
 - ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
   map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
