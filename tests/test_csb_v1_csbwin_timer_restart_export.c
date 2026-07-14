@@ -81,6 +81,18 @@ int main(void)
               report.first_avail_timer == 3u && report.timer_sequence == 0x90u,
           "export retains source GAMEBLOCK2 timer counters");
 
+    /* Keep the live event receipt exact while corrupting only the retained
+     * CSBWin heap order. Field-by-field event matching must not make this
+     * exportable as a replacement TimerQueue. */
+    event_index = profile.timeline_queue.timeline[0];
+    profile.csbwin_timers[2].time = 103u;
+    profile.timeline_queue.events[event_index].map_time = 103u;
+    check(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &profile, bytes, sizeof(bytes), &size) != 0,
+          "live-matched timer with an invalid CSBWin heap rejects export");
+
+    profile.csbwin_timers[2].time = 100u;
+    profile.timeline_queue.events[event_index].map_time = 100u;
     event_index = profile.timeline_queue.timeline[0];
     profile.timeline_queue.events[event_index].c_effect ^= 1u;
     check(csb_v1_runtime_export_csbwin_core_save_to_memory(

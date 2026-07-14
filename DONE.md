@@ -12,6 +12,13 @@
   `FIRESTAFF_DM1_PC34_SAVE_CORPUS` and `FIRESTAFF_DM1_PC_DATA` name operator
   supplied original PC34 material.
 
+- 2026-07-14 CSBWin resumed TimerQueue export guard: CSB core-save export now
+  rechecks CSBWin `Timer.cpp::CheckTimers` heap order after validating each
+  live event's serialized slot and TIMER fields. A timer/event pair that is
+  individually consistent but leaves a child ahead of its parent rejects
+  before any replacement save bytes are written. Regression coverage mutates
+  that exact case while retaining the live receipt.
+
 - 2026-07-14 DM1 save-and-quit guard: the M11 keyboard and pointer quit
   routes now persist the source SAVE-AND-QUIT header value and retain the
   guard when saving or path construction fails, reporting the actual failure
