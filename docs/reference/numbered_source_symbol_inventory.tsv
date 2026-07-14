@@ -1947,9 +1947,9 @@ F	1071	F1071_OpenGraphicsLibrary	AMIGINIT.C	source_nonapplicable
 F	1072	F1072_CloseGraphicsLibrary	AMIGINIT.C	source_nonapplicable
 F	1073	F1073_OpenIntuitionLibrary	AMIGINIT.C	source_nonapplicable
 F	1074	F1074_CloseIntuitionLibrary	AMIGINIT.C	source_nonapplicable
-F	1075	F1075_OpenLayersLibrary	AMIGINIT.C	unmapped_or_unverified
-F	1076	F1076_CloseLayersLibrary	AMIGINIT.C	unmapped_or_unverified
-F	1077	F1077_OpenConsoleDevice	AMIGINIT.C	unmapped_or_unverified
+F	1075	F1075_OpenLayersLibrary	AMIGINIT.C	source_nonapplicable
+F	1076	F1076_CloseLayersLibrary	AMIGINIT.C	source_nonapplicable
+F	1077	F1077_OpenConsoleDevice	AMIGINIT.C	source_nonapplicable
 F	1078	F1078_CloseConsoleDevice	AMIGINIT.C	unmapped_or_unverified
 F	1079	F1079_OpenInputDevice	AMIGINIT.C	unmapped_or_unverified
 F	1080	F1080_CloseInputDevice	AMIGINIT.C	unmapped_or_unverified
