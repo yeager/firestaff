@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0672/F0673 mouse-input initialization: added the
+  PC ordered nine-table initialization and command-none bounded zone-box
+  conversion over caller-owned MOUSE_INPUT records. The source `-2`/`-3`
+  offsets and inclusive endpoints are covered; no input layout, zone, menu,
+  HUD, DSA, or runtime fallback was introduced. Focused strict-C11 regression
+  passes.
+
 - 2026-07-14 CSB ReDMCSB F0670/F0671 text helpers: added the PC first-match
   replacement and signed decimal long formatting used by save-path and
   out-of-memory UI routes. Buffers remain caller-owned and no localization,

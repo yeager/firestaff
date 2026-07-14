@@ -585,6 +585,12 @@
     PC-long values as decimal text. Destination ownership/capacity remains
     with the caller; this adds no localization, allocation, dialog, or menu
     fallback. Real CSB UI binding remains required for end-to-end evidence.
+  - 2026-07-14 update: F0672/F0673 now resolve the nine source-ordered,
+    caller-owned mouse-input tables through the caller-owned F0638 zone
+    callback. The command-none sentinel, `-2` viewport and `-3` centered
+    viewport offsets, and inclusive X2/Y2 endpoints follow COMMAND.C. The
+    bounded adapter adds no input layout, zone geometry, menu event, HUD,
+    DSA, or runtime fallback; real CSB table/video binding remains required.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
