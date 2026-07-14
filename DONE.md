@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1073-F1074: available Intuition-library
+  open/close routes are Amiga-only. Focused PC 3.4 boundaries are intentionally
+  no-ops.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1072: available graphics-library teardown route
   is Amiga-only. The focused PC 3.4 boundary is intentionally a no-op.
 
