@@ -59,7 +59,8 @@ cd "$build_root/source"
 CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp --disable-pce-fast \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
-    --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan
+    --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \
+    --without-libflac
 make -j"$(sysctl -n hw.ncpu)"
 make install
 "$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh" "$prefix/bin/mednafen"

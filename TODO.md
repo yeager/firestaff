@@ -131,6 +131,15 @@
   blocker to macOS event delivery into SDL rather than Mednafen mapping. A
   PID-bound screen-center click was also recorded with zero SDL events; a
   future capture must use a delivery path that the emulator itself observes.
+  A 2026-07-15 run against a locally built, verified SDL 2.30.11 runtime did
+  observe the macOS Return pair in Mednafen's SDL dispatcher (`KEYDOWN` and
+  `KEYUP`, event types 768/769, scancode 40), plus 25 CD IRQ callbacks and 31
+  physical CUE-sector receipts. It still has zero dynamic CD_READ rows, zero
+  non-System-Card PCECD callers, and no later `$e009` receipt, so it remains
+  non-admissible as a dungeon handoff. The early physical LBAs are evidence
+  only: do not assign record, level, object, bitmap, or palette meaning. Next:
+  source-lock an actual post-start loader/CD request with caller and destination
+  receipts.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
