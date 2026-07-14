@@ -373,10 +373,11 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
         !csb_v1_startup_real_surface_matches_pc34(presents, 1, 320, 16, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(chaos, 1, 320, 80, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(strikes, 1, 320, 57, 0) ||
-        !left_door->valid || !left_door->pixels || left_door->source_asset_id != 2 ||
-        left_door->width <= 0 || left_door->height <= 0 ||
-        !right_door->valid || !right_door->pixels || right_door->source_asset_id != 3 ||
-        right_door->width <= 0 || right_door->height <= 0 ||
+        /* ReDMCSB ENTRANCE.C F0806 composes C002/C003 into fixed C430/C431
+         * door zones. C003 is a 128x161 source bitmap clipped at its 105 px
+         * destination zone, so a non-empty replacement strip is not enough. */
+        !csb_v1_startup_real_surface_matches_pc34(left_door, 2, 105, 161, -1) ||
+        !csb_v1_startup_real_surface_matches_pc34(right_door, 3, 128, 161, -1) ||
         !entrance->valid || !entrance->pixels || entrance->source_asset_id != 4 ||
         entrance->width != 320 || entrance->height != 200 ||
         !credits->valid || !credits->pixels || credits->source_asset_id != 5 ||
