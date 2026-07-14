@@ -417,6 +417,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0243_timeline_door_des
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_provenance.c")
+    add_executable(test_nexus_v1_dgn_face_material_provenance
+        tests/test_nexus_v1_dgn_face_material_provenance.c
+        src/nexus/nexus_v1_dgn_face_material_provenance.c
+    )
+    target_include_directories(test_nexus_v1_dgn_face_material_provenance PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_face_material_provenance PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_face_material_provenance
+        COMMAND test_nexus_v1_dgn_face_material_provenance
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c")
     add_executable(test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat
         tests/test_dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c

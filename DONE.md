@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus: DGN face/material raster admission now requires complete
+  canonical retail-DGN provenance and rejects any fallback source.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `FILLBOX.C F0135`: source four-plane
   inclusive fill-box logic now has a bounded compatibility implementation.
   Verification: focused strict CTest.
