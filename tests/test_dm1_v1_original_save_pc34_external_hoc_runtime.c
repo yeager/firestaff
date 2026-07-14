@@ -104,6 +104,7 @@ int main(void)
         M11_GameViewState state;
         unsigned char framebuffer[320 * 200];
         unsigned char repeated_framebuffer[320 * 200];
+        uint32_t expected_world_hash;
         unsigned int viewport_hash;
 
         CHECK(receipt_is_runtime_admitted(receipt),
@@ -116,6 +117,9 @@ int main(void)
                   receipt->path, &state.world, &expected_world, NULL, NULL) ==
                   DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
               "F0435 materializes an owned expected world");
+        CHECK(F0891_ORCH_WorldHash_Compat(&expected_world,
+                                           &expected_world_hash),
+              "F0435 materializes a serializable expected runtime world");
         CHECK(M11_GameView_LoadDm1SavePath(&state, receipt->path, NULL),
               "M11 adopts the same external F0435 runtime");
         CHECK(state.dm1ViewportRuntimeOrigin ==
@@ -128,6 +132,8 @@ int main(void)
                   state.world.party.championCount == expected_world.party.championCount &&
                   state.world.gameTick == expected_world.gameTick,
               "M11 runtime preserves source party pose and tick");
+        CHECK(state.lastWorldHash == expected_world_hash,
+              "M11 adopts the complete F0435 runtime world without mutation");
         CHECK(state.world.dungeon != NULL && state.world.things != NULL &&
                   state.world.ownsDungeon == 1,
               "M11 retains the source-owned dungeon");
