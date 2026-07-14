@@ -24,7 +24,7 @@ static Theron_V1Track02LoaderReadFacts valid_facts(void) {
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1TraceProvenanceReceipt trace = {
-        1, 0, "trace_accepted_runtime_unavailable"
+        1, 1, "trace_accepted_runtime_admitted"
     };
     Theron_V1DungeonHandoffReceipt initial_envelope = {
         .selected = 1,
@@ -109,6 +109,17 @@ int main(void) {
           authenticated_facts.record_user_data_offset);
     CHECK(receipt.observed_destination == authenticated_facts.destination);
     CHECK(receipt.observed_byte_count == authenticated_facts.byte_count);
+    trace.runtime_admitted = 0;
+    CHECK(!theron_v1_track02_loader_intake_observe_authenticated_trace(
+        &authenticated_facts, &receipt));
+    CHECK(!receipt.observed);
+    CHECK(!receipt.payload_intake_admitted);
+    CHECK(receipt.record == 0u);
+    CHECK(receipt.record_user_data_offset == 0u);
+    CHECK(receipt.observed_destination == 0u);
+    CHECK(receipt.observed_byte_count == 0u);
+    CHECK(receipt.status == NULL);
+    trace.runtime_admitted = 1;
     trace.valid = 0;
     CHECK(!theron_v1_track02_loader_intake_observe_authenticated_trace(
         &authenticated_facts, &receipt));
