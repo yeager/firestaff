@@ -1,6 +1,24 @@
 
 # Unreleased
 
+# Firestaff v3.0.76
+
+Firestaff v3.0.76 packages the latest source-faithful DM1/CSB text, cache,
+VBlank and Nexus DGN provenance work from `main`.
+
+## Highlights since v3.0.75
+
+- **DM1/CSB**: ReDMCSB text and cache call boundaries gained focused,
+  source-locked C11 coverage.
+- **Nexus**: DGN face/material raster admission now requires the exact
+  launcher-reopened LEV bytes to match authenticated canonical data.
+- **Runtime safety**: unavailable original data remains fail-closed.
+
+## Verification
+
+- Focused ReDMCSB and Nexus DGN CTests passed locally.
+- GitHub Actions packages platform artifacts from the `v3.0.76` tag.
+
 # Firestaff v3.0.75
 
 Firestaff v3.0.75 packages current source-locked runtime work from `main`.
