@@ -8,6 +8,8 @@
  * than depending on an unimplemented dungeon-handoff API. */
 #define THERON_V1_INITIAL_ENVELOPE_RECORD 0x0b52u
 #define THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET 0x114u
+#define THERON_V1_INITIAL_ENVELOPE_DESTINATION 0x3800u
+#define THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES 2048u
 
 /* This is an observation boundary, not a payload decoder. The destination and
  * byte count are retained only when an original later loader read reports
@@ -19,6 +21,8 @@ typedef struct {
     uint32_t record_user_data_offset;
     uint32_t destination;
     uint32_t byte_count;
+    int complete_payload_witness_verified;
+    uint32_t complete_payload_checksum;
 } Theron_V1Track02LoaderReadFacts;
 
 typedef struct {
@@ -33,7 +37,9 @@ typedef struct {
 
 /* Accepts only a provenance-authenticated later read of the source-locked
  * initial envelope. It deliberately leaves payload intake blocked until
- * independent evidence establishes what the observed transfer means. */
+ * authenticated trace must also retain the observed $3800 one-sector payload
+ * witness. Intake stays blocked until independent evidence establishes what
+ * the observed transfer means. */
 int theron_v1_track02_loader_intake_observe(
     const Theron_V1Track02LoaderReadFacts *facts,
     Theron_V1Track02LoaderIntakeReceipt *out_receipt);
