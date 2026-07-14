@@ -194,6 +194,14 @@
   C/G rows by rendering, save/load, champion, dungeon, and timeline impact;
   then give each an owner, width/lifetime contract, and focused evidence.
 
+- REDMCSB-SYMBOL-GAP-006 — **Runtime parameter ABI surfaces need contract
+  review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_AUDIT.tsv` covers
+  all 8,013 `A/L/M/P` symbols: 5,017 are local/module/auxiliary labels with no
+  standalone port target, while 2,996 `Pxxx` entries remain runtime ABI
+  surfaces. Required work: audit parameters by their enclosing high-impact
+  DM1/CSB routine, verifying width, signedness, ownership, mutation, and
+  cross-module call contracts before treating a Firestaff equivalent as exact.
+
 - REDMCSB-SYMBOL-GAP-001 — **The complete numbered-symbol inventory is not a
   completion claim.** ReDMCSB has 13,090 unique numbered source symbols:
   `A` 4, `C` 866, `E` 6, `F` 2,104, `G` 2,074, `L` 4,616, `M` 397, `P` 2,996,
