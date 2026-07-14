@@ -1763,6 +1763,105 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
         engine->item_ibs_runtime_source.source.canonical_hash_verified;
 }
 
+static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
+{
+    if (!engine) return;
+    free(engine->structure3_runtime_source.texture_span);
+    memset(&engine->structure3_runtime_source, 0,
+           sizeof(engine->structure3_runtime_source));
+    engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 1;
+}
+
+int nexus_v1_engine_consume_structure3_capture(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
+    const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
+    const uint8_t *texture_span, int texture_span_size)
+{
+    Nexus_V1_DgnStructure3MeshEntryReceipt entry;
+    Nexus_V1_DgnStructure3Vector *vertices = NULL;
+    Nexus_V1_DgnStructure3Face *faces = NULL;
+    Nexus_V1_DgnStructure3Vector *normals = NULL;
+    Nexus_V1_DgnStructure3RuntimeSource source;
+    int slot;
+    int slot_count;
+
+    if (!engine || !candidate || !binding || !texture_span ||
+        texture_span_size <= 0 || !engine->level_loaded ||
+        !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
+        !engine->current_level_structure2_source.canonical_hash_verified ||
+        !engine->current_level_structure2_source.materialization_bound ||
+        engine->current_level_structure2_source.level_index !=
+            engine->game.current_level ||
+        !binding->complete_source_binding ||
+        binding->renderer_handoff_ready || !binding->blocks_real_dgn_mesh_render)
+        return 0;
+
+    memset(&entry, 0, sizeof(entry));
+    if (nexus_v1_level_extract_structure3_mesh_entry(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, (int)candidate->entry_index,
+            NULL, 0, NULL, 0, NULL, 0, &entry) != -1 ||
+        !entry.source_identity_valid || candidate->face_ordinal >=
+            (uint32_t)entry.face_count) return 0;
+    vertices = (Nexus_V1_DgnStructure3Vector *)calloc(
+        (size_t)entry.vertex_count, sizeof(*vertices));
+    faces = (Nexus_V1_DgnStructure3Face *)calloc(
+        (size_t)entry.face_count, sizeof(*faces));
+    normals = (Nexus_V1_DgnStructure3Vector *)calloc(
+        (size_t)entry.normal_count, sizeof(*normals));
+    if ((entry.vertex_count && !vertices) || (entry.face_count && !faces) ||
+        (entry.normal_count && !normals) ||
+        nexus_v1_level_extract_structure3_mesh_entry(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, (int)candidate->entry_index,
+            vertices, entry.vertex_count, faces, entry.face_count, normals,
+            entry.normal_count, &entry) != 0 || !entry.valid) {
+        free(vertices);
+        free(faces);
+        free(normals);
+        return 0;
+    }
+
+    memset(&source, 0, sizeof(source));
+    source.level_index = engine->game.current_level;
+    source.entry_index = candidate->entry_index;
+    source.face_ordinal = candidate->face_ordinal;
+    source.face = faces[candidate->face_ordinal];
+    slot_count = source.face.triangle ? 3 : 4;
+    for (slot = 0; slot < slot_count; ++slot) {
+        uint16_t index = source.face.vertex_indexes[slot];
+        if (index >= (uint16_t)entry.vertex_count) {
+            free(vertices);
+            free(faces);
+            free(normals);
+            return 0;
+        }
+        source.vertices[slot] = vertices[index];
+    }
+    source.vertex_slot_count = slot_count;
+    source.normal = normals[candidate->face_ordinal];
+    source.texture_span = (uint8_t *)malloc((size_t)texture_span_size);
+    if (!source.texture_span) {
+        free(vertices);
+        free(faces);
+        free(normals);
+        return 0;
+    }
+    memcpy(source.texture_span, texture_span, (size_t)texture_span_size);
+    source.texture_span_size = texture_span_size;
+    source.binding = *binding;
+    source.valid = 1;
+    source.blocks_real_dgn_mesh_render = 1;
+    free(vertices);
+    free(faces);
+    free(normals);
+
+    nexus_v1_clear_structure3_runtime_source(engine);
+    engine->structure3_runtime_source = source;
+    return 1;
+}
+
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];
@@ -1788,6 +1887,10 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
 
     nexus_v1_invalidate_dgn_material_plan(engine);
+    free(engine->current_level_dgn_data);
+    engine->current_level_dgn_data = NULL;
+    engine->current_level_dgn_size = 0;
+    nexus_v1_clear_structure3_runtime_source(engine);
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
     if (r < 0) {
         free(data);
@@ -1795,7 +1898,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
     nexus_v1_load_item_ibs_runtime_source(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
-    free(data);
+    engine->current_level_dgn_data = data;
+    engine->current_level_dgn_size = size;
     (void)nexus_v1_structure2_source_receipt(
         engine, level, &engine->current_level,
         &engine->current_level_structure2_source);
@@ -2018,6 +2122,9 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
 void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     int i;
     if (!engine) return;
+    nexus_v1_clear_structure3_runtime_source(engine);
+    free(engine->current_level_dgn_data);
+    engine->current_level_dgn_data = NULL;
     /* Free mechanics state */
     free(engine->mechanics);
     engine->mechanics = NULL;

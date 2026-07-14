@@ -1,4 +1,5 @@
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_engine.h"
 #include "asset_find_by_hash.h"
 
 #include <stdint.h>
@@ -2136,6 +2137,42 @@ static void test_structure3_entry_header_boundaries(void) {
           !capture.original_saturn_capture_verified &&
           !capture.renderer_handoff_ready && capture.blocks_real_dgn_mesh_render,
           "a fully bound Structure3 packet remains no-draw without Saturn provenance");
+
+    {
+        Nexus_V1_Engine engine;
+        Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
+
+        memset(&engine, 0, sizeof(engine));
+        memset(&bound, 0, sizeof(bound));
+        engine.level_loaded = 1;
+        engine.game.current_level = 0;
+        engine.current_level = level;
+        engine.current_level_dgn_data = dgn;
+        engine.current_level_dgn_size = (int)sizeof(dgn);
+        engine.current_level_structure2_source.level_index = 0;
+        engine.current_level_structure2_source.canonical_hash_verified = 1;
+        engine.current_level_structure2_source.materialization_bound = 1;
+        bound.complete_source_binding = 1;
+        bound.blocks_real_dgn_mesh_render = 1;
+        CHECK(nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, texture_span,
+                  (int)sizeof(texture_span)) &&
+              engine.structure3_runtime_source.valid &&
+              engine.structure3_runtime_source.level_index == 0 &&
+              engine.structure3_runtime_source.entry_index ==
+                  candidate.entry_index &&
+              engine.structure3_runtime_source.face_ordinal ==
+                  candidate.face_ordinal &&
+              engine.structure3_runtime_source.vertex_slot_count == 3 &&
+              engine.structure3_runtime_source.texture_span_size ==
+                  (int)sizeof(texture_span) &&
+              engine.structure3_runtime_source.texture_span != texture_span &&
+              memcmp(engine.structure3_runtime_source.texture_span,
+                     texture_span, sizeof(texture_span)) == 0 &&
+              engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
+              "a bound Structure3 capture copies exact face/normal rows and opaque texture bytes without enabling drawing");
+        free(engine.structure3_runtime_source.texture_span);
+    }
 
     wb32(payload + 128, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&

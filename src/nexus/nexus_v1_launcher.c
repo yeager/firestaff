@@ -101,10 +101,7 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
     Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt)
 {
     Nexus_V1_DgnStructure2SourceReceipt source;
-    uint8_t *dgn_data;
-    int dgn_size = 0;
     int source_verified;
-    char name[32];
     int result;
 
     if (!out_receipt) return -1;
@@ -116,13 +113,18 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
         source.materialization_bound &&
         source.level_index == s_engine.game.current_level;
     if (!source_verified) return 0;
-    snprintf(name, sizeof(name), "LEV%02d.DGN", source.level_index);
-    dgn_data = nexus_v1_read_file(&s_engine, name, &dgn_size);
-    if (!dgn_data) return 0;
+    if (!s_engine.current_level_dgn_data ||
+        s_engine.current_level_dgn_size <= 0) return 0;
     result = nexus_v1_dgn_structure3_capture_host_intake(
-        &s_engine.current_level, dgn_data, dgn_size, source_verified,
+        &s_engine.current_level, s_engine.current_level_dgn_data,
+        s_engine.current_level_dgn_size, source_verified,
         manifest_text, manifest_size, capture, out_receipt);
-    free(dgn_data);
+    if (result > 0) {
+        result = nexus_v1_engine_consume_structure3_capture(
+            &s_engine, &out_receipt->manifest.candidate,
+            &out_receipt->import_receipt.binding, capture->texture_span,
+            (int)capture->texture_span_size);
+    }
     return result;
 }
 
