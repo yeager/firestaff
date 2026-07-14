@@ -33,8 +33,11 @@
   trace evidence. M11's normal C017 inventory panel now consumes the active
   champion's exact F0435 32x29 packed portrait payload rather than replacing
   it with a GRAPHICS.DAT atlas portrait; the fixture-free gate compares every
-  rendered pixel to the admitted save snapshot. Broader original PC34
-  executable route/capture comparison remains an external-corpus task.
+  rendered pixel to the admitted save snapshot. F0435 now also linearizes
+  authenticated same-tick C4 heap siblings by ReDMCSB's Type/Priority/index
+  comparator before M10 consumes them, rather than treating heap storage order
+  as runtime order. Broader original PC34 executable route/capture comparison
+  remains an external-corpus task.
 
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light and movement
   offsets still need source-owned destination/clipping plans. The static
