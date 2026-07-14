@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 SKSave corpus snapshot receipt: corpus classification now
+  rehashes the complete original file after reading and source-parsing its
+  payload, then rejects any changed file rather than retaining a mixed
+  file/payload receipt. The focused save test covers mutation after a scan.
+  This remains census-only for original timer and rebuilt dungeon DB regions.
+
 - DONE 2026-07-14 Nexus Structure3 face-normal geometry receipt: the bounded
   LEV00-LEV15 parser now cross-checks each documented face/normal pair against
   the signed-16.16 source vertices under an overflow-safe envelope. The retail

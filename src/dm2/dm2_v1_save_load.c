@@ -411,6 +411,7 @@ static void dm2_sksave_corpus_classify_payload(
     DM2_V1_SaveCandidate candidate;
     int status = 0;
     int importable_kind_ok = 0;
+    uint32_t initial_file_hash;
     uint32_t source_file_hash;
 
     if (!receipt || !path || payload_size == 0u ||
@@ -419,6 +420,11 @@ static void dm2_sksave_corpus_classify_payload(
         return;
     }
 
+    initial_file_hash = dm2_sksave_corpus_file_hash(path);
+    if (initial_file_hash == 0u) {
+        receipt->import_rejected_candidate_count++;
+        return;
+    }
     f = dm2_sl_open_valid_payload(path, &status);
     if (!f) {
         receipt->import_rejected_candidate_count++;
@@ -439,7 +445,10 @@ static void dm2_sksave_corpus_classify_payload(
         return;
     }
     source_file_hash = dm2_sksave_corpus_file_hash(path);
-    if (source_file_hash == 0u) {
+    /* The census receipt binds one complete original file to the payload
+     * parser. A file changed while being read must not publish a hybrid
+     * header/file hash and payload observation. */
+    if (source_file_hash == 0u || source_file_hash != initial_file_hash) {
         free(payload);
         fclose(f);
         receipt->import_rejected_candidate_count++;
