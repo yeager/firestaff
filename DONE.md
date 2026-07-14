@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0469_MEMORY_FreeAtHeapTop`: source odd-byte
+  rounding and bounded heap-top/accounting release now have a compatibility
+  callable. Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `SWSH.C F0904`: the 27-record palette animation
   now preserves source palette writes and black-palette VBlank waits.
   Verification: focused strict CTest.
