@@ -83,12 +83,13 @@ int main(void) {
     const int originalModeCenterX = 132 + 408;
     const int customModeCenterX = 132 + 817 + 22 + 408;
     const int modeChoiceCenterY = 190 + 34 + 78;
-    const int settingsDataDirCenterX = 960;
-    const int settingsCycleCenterX = 1240;
-    const int settingsSmoothTurnPanCenterY = 260 + 36 + 3 * 70 + 25;
-    const int settingsDataDirCenterY = 260 + 36 + 4 * 70 + 25;
-    const int settingsExportCenterY = 260 + 36 + 5 * 70 + 25;
-    const int settingsImportCenterY = 260 + 36 + 6 * 70 + 25;
+    const int settingsColumnW = (1920 - 2 * 96 - 2 * 36 - 24) / 2;
+    const int settingsLeftColumnCycleX = 132 + settingsColumnW * 4 / 5;
+    const int settingsRightColumnCycleX = 132 + settingsColumnW + 24 + settingsColumnW * 4 / 5;
+    const int settingsSmoothTurnPanCenterY = 260 + 36 + 4 * 70 + 25;
+    const int settingsDataDirCenterY = 260 + 36 + 1 * 70 + 25;
+    const int settingsExportCenterY = 260 + 36 + 3 * 70 + 25;
+    const int settingsImportCenterY = 260 + 36 + 4 * 70 + 25;
 
     if (!homeDir || !test_setenv("HOME", homeDir) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
@@ -147,10 +148,13 @@ int main(void) {
 
     state.settings.dm1V2SmoothTurnPanEnabled = 0;
     state.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
-    hit = M12_ModernMenu_HitTest(&state, settingsCycleCenterX, settingsSmoothTurnPanCenterY);
+    state.settingsTabIndex = M12_SETTINGS_TAB_GRAPHICS;
+    hit = M12_ModernMenu_HitTest(&state, settingsRightColumnCycleX,
+                                 settingsSmoothTurnPanCenterY);
     if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 14,
                 "visible Smooth Turn Pan settings row should hit the V2 turn-pan toggle")) return 1;
-    changed = M12_ModernMenu_HandlePointer(&state, settingsCycleCenterX, settingsSmoothTurnPanCenterY, 1, NULL);
+    changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX,
+                                           settingsSmoothTurnPanCenterY, 1, NULL);
     if (!expect(changed == 1 && state.settings.dm1V2SmoothTurnPanEnabled == 1,
                 "Smooth Turn Pan click should toggle the V2 turn-pan setting on")) return 1;
     M12_StartupMenu_SaveConfig(&state);
@@ -160,27 +164,28 @@ int main(void) {
     if (!expect(config.graphicsIndex == M12_PRESENTATION_V1_ORIGINAL,
                 "Smooth Turn Pan persistence should preserve original graphics mode")) return 1;
 
-    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsDataDirCenterY);
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
+    hit = M12_ModernMenu_HitTest(&state, settingsLeftColumnCycleX, settingsDataDirCenterY);
     if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 15,
                 "visible Data Directory settings row should hit the browse action")) return 1;
-    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsExportCenterY);
-    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 41,
+    hit = M12_ModernMenu_HitTest(&state, settingsRightColumnCycleX, settingsExportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 48,
                 "visible Export Settings row should hit the save action")) return 1;
-    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsExportCenterY, 1, NULL);
+    changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX, settingsExportCenterY, 1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Export Settings click should show a public result message")) return 1;
-    if (!expect(test_file_exists(M12_Config_GetExportPath()) == 1,
-                "Export Settings click should create the default settings JSON file")) return 1;
+    if (!expect(test_file_exists(M12_Config_GetSaveExportPath()) == 1,
+                "Export Settings click should create the default save manifest")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
-    hit = M12_ModernMenu_HitTest(&state, settingsDataDirCenterX, settingsImportCenterY);
-    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 42,
+    hit = M12_ModernMenu_HitTest(&state, settingsRightColumnCycleX, settingsImportCenterY);
+    if (!expect(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.index == 49,
                 "visible Import Settings row should hit the load action")) return 1;
-    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX, settingsImportCenterY, 1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Import Settings click should show a public result message")) return 1;
-    if (!expect(strcmp(state.messageLine1, "SETTINGS IMPORTED") == 0,
-                "Import Settings click should load the default settings JSON file")) return 1;
+    if (!expect(strcmp(state.messageLine1, "SAVE MANIFEST IMPORTED") == 0,
+                "Import Settings click should load the default save manifest")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
     if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
@@ -192,8 +197,8 @@ int main(void) {
                 "manual data directory setter should persist the chosen folder")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
-    remove(M12_Config_GetExportPath());
-    changed = M12_ModernMenu_HandlePointer(&state, settingsDataDirCenterX, settingsImportCenterY, 1, NULL);
+    remove(M12_Config_GetSaveExportPath());
+    changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX, settingsImportCenterY, 1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Import Settings missing-file click should show a public result message")) return 1;
     if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,

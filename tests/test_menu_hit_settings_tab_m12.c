@@ -31,6 +31,8 @@ int main(void) {
     M12_MouseHit hit;
     int tabW = (1920 - 2 * (1920 / 30)) / M12_SETTINGS_TAB_COUNT;
     const int settingsRowXRight = 96 + 36 + (1920 - 2 * 96 - 2 * 36) - 20;
+    const int settingsGameLeftColumnXRight = 96 + 36 +
+        ((1920 - 2 * 96 - 2 * 36 - 24) / 2) - 20;
     const int settingsRowY0 = 260 + 36;
     const int settingsRowYOffset[] = { 0, 70, 140, 210, 280 };
 
@@ -78,9 +80,17 @@ int main(void) {
         CHECK(rows != NULL && rowCount > 0 && rowCount <= 11,
               "settings tab publishes a bounded clickable row catalogue");
         for (int row = 0; rows && row < rowCount; ++row) {
+            const int useTwoColumns = rowCount > 8;
+            const int contentW = 1920 - 2 * 96 - 2 * 36;
+            const int columnW = useTwoColumns ? (contentW - 24) / 2 : contentW;
+            const int rowsPerColumn = useTwoColumns ? (rowCount + 1) / 2 : rowCount;
+            const int column = useTwoColumns ? row / rowsPerColumn : 0;
+            const int rowInColumn = useTwoColumns ? row % rowsPerColumn : row;
+            const int settingsRowXRight = 96 + 36 + column * (columnW + 24) +
+                columnW - 20;
             hit = M12_ModernMenu_HitTest(
                 &state, settingsRowXRight,
-                settingsRowY0 + row * 70 + 25);
+                settingsRowY0 + rowInColumn * 70 + 25);
             CHECK((hit.kind == M12_HIT_SETTINGS_ROW ||
                    hit.kind == M12_HIT_SETTINGS_CYCLE) &&
                       hit.index == rows[row],
@@ -257,7 +267,7 @@ int main(void) {
 
     state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
     hit = M12_ModernMenu_HitTest(&state,
-                                 settingsRowXRight,
+                                 settingsGameLeftColumnXRight,
                                  settingsRowY0 + settingsRowYOffset[3] + 25);
     CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE,
           "Session Timer visible row -> cycle hit");

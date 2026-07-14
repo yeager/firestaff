@@ -1546,6 +1546,31 @@ static const int* modern_settings_rows_for_tab(int tab, int* outCount) {
     return M12_StartupMenu_GetSettingsRowsForTab(tab, outCount);
 }
 
+/* Keep dense settings tabs inside the fixed 1080p panel.  Nine rows are the
+ * first layout that would leave the intended breathing room at the bottom,
+ * so longer catalogues flow top-to-bottom into a second column. */
+static void modern_settings_row_rect(int visibleRow,
+                                     int rowCount,
+                                     int panelX,
+                                     int panelY,
+                                     int panelW,
+                                     int* outX,
+                                     int* outY,
+                                     int* outW) {
+    const int inset = 36;
+    const int columnGap = 24;
+    const int useTwoColumns = rowCount > 8;
+    const int contentW = panelW - 2 * inset;
+    const int columnW = useTwoColumns ? (contentW - columnGap) / 2 : contentW;
+    const int rowsPerColumn = useTwoColumns ? (rowCount + 1) / 2 : rowCount;
+    const int column = useTwoColumns ? visibleRow / rowsPerColumn : 0;
+    const int rowInColumn = useTwoColumns ? visibleRow % rowsPerColumn : visibleRow;
+
+    *outX = panelX + inset + column * (columnW + columnGap);
+    *outY = panelY + inset + rowInColumn * 70;
+    *outW = columnW;
+}
+
 static void draw_modern_settings_tabs(M12_ModernCanvas* c,
                                       const M12_StartupMenuState* state) {
     int margin = c->w / 30;
@@ -1584,27 +1609,29 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     draw_panel(c, panelX, panelY, panelW, panelH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 18);
 
-    int rowX = panelX + 36;
-    int rowW = panelW - 72;
-    int rowY = panelY + 36;
     int rowCount = 0;
     const int* rows = modern_settings_rows_for_tab(
         state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME, &rowCount);
     for (int i = 0; i < rowCount; ++i) {
         int row = rows[i];
-        int y = rowY + i * 70;
+        int rowX;
+        int rowY;
+        int rowW;
+        modern_settings_row_rect(i, rowCount, panelX, panelY, panelW,
+                                 &rowX, &rowY, &rowW);
         if (row == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
-            draw_language_button(c, rowX, y, rowW, state,
+            draw_language_button(c, rowX, rowY, rowW, state,
                                  state->settingsSelectedIndex == row);
         } else {
             const char* label = M12_StartupMenu_GetSettingsLabel(state, row);
             const char* shown = M12_StartupMenu_GetSettingsValue(state, row);
-            draw_setting_row(c, rowX, y, rowW, label, shown,
+            draw_setting_row(c, rowX, rowY, rowW, label, shown,
                              state->settingsSelectedIndex == row);
         }
     }
     if (state->languagePopupOpen) {
-        draw_language_popup(c, state, rowX + rowW - 632, rowY + 56);
+        draw_language_popup(c, state, panelX + panelW - 36 - 632,
+                            panelY + 36 + 56);
     }
 }
 

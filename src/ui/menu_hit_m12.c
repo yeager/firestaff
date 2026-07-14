@@ -48,6 +48,8 @@
 /* Settings rows visible in the modern settings panel. */
 #define M12_HIT_SETTINGS_ROW_Y0     (M12_HIT_PANEL_Y + 36)
 #define M12_HIT_SETTINGS_ROW_STEP   70
+#define M12_HIT_SETTINGS_TWO_COLUMN_THRESHOLD 8
+#define M12_HIT_SETTINGS_COLUMN_GAP 24
 
 /* Game options rows (8 rows: version, patch, language, cheats, speed,
  * aspect, resolution, launch). Renderer draws rows 0..6 at step 52,
@@ -133,12 +135,28 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
     return 1;
 }
 
-static int m12_hit_settings_row_rect(int visibleRow, int* rx, int* ry, int* rw, int* rh) {
-    enum { M12_HIT_SETTINGS_MAX_ROWS = 11 };
-    if (visibleRow < 0 || visibleRow >= M12_HIT_SETTINGS_MAX_ROWS) return 0;
-    *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_SETTINGS_ROW_Y0 + visibleRow * M12_HIT_SETTINGS_ROW_STEP;
-    *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
+static int m12_hit_settings_row_rect(int visibleRow,
+                                     int visibleRowCount,
+                                     int* rx,
+                                     int* ry,
+                                     int* rw,
+                                     int* rh) {
+    const int useTwoColumns = visibleRowCount > M12_HIT_SETTINGS_TWO_COLUMN_THRESHOLD;
+    const int contentW = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
+    const int columnW = useTwoColumns
+        ? (contentW - M12_HIT_SETTINGS_COLUMN_GAP) / 2
+        : contentW;
+    const int rowsPerColumn = useTwoColumns
+        ? (visibleRowCount + 1) / 2
+        : visibleRowCount;
+    const int column = useTwoColumns ? visibleRow / rowsPerColumn : 0;
+    const int rowInColumn = useTwoColumns ? visibleRow % rowsPerColumn : visibleRow;
+
+    if (visibleRow < 0 || visibleRow >= visibleRowCount || visibleRowCount <= 0) return 0;
+    *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT +
+        column * (columnW + M12_HIT_SETTINGS_COLUMN_GAP);
+    *ry = M12_HIT_SETTINGS_ROW_Y0 + rowInColumn * M12_HIT_SETTINGS_ROW_STEP;
+    *rw = columnW;
     *rh = M12_HIT_ROW_HEIGHT;
     return 1;
 }
@@ -279,7 +297,8 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                     state ? state->settingsTabIndex : M12_SETTINGS_TAB_GAME,
                     &visibleRowCount);
                 for (i = 0; i < visibleRowCount; ++i) {
-                if (m12_hit_settings_row_rect(i, &rx, &ry, &rw, &rh) &&
+                if (m12_hit_settings_row_rect(i, visibleRowCount,
+                                              &rx, &ry, &rw, &rh) &&
                     rect_contains(rx, ry, rw, rh, x, y)) {
                     int rowIndex = visibleRows[i];
                     if (rowIndex == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
