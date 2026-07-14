@@ -156,6 +156,27 @@ static int tqr_trace_parse_later_e009_destination_span(
            *out_checksum != 0u;
 }
 
+static int tqr_trace_parse_later_e009_destination_payload(
+    const char *line, size_t length, unsigned int *out_caller_pc,
+    unsigned int *out_return_pc, unsigned int *out_record,
+    unsigned int *out_destination, unsigned int *out_bytes,
+    unsigned int *out_checksum)
+{
+    int consumed = 0;
+
+    if (!line || !out_caller_pc || !out_return_pc || !out_record ||
+        !out_destination || !out_bytes || !out_checksum) return 0;
+    return sscanf(line,
+                  "later_system_card_e009_destination_payload caller_pc=%x return_pc=%x record=%x destination=%x bytes=%u fnv1a=%x%n",
+                  out_caller_pc, out_return_pc, out_record, out_destination,
+                  out_bytes, out_checksum, &consumed) == 6 &&
+           consumed == (int)length && *out_caller_pc <= 0xffffu &&
+           *out_return_pc <= 0xffffu && *out_record <= 0xffffffu &&
+           *out_destination <= 0xffffu &&
+           *out_bytes == THERON_TRACK02_RAW_USER_DATA_BYTES &&
+           *out_checksum != 0u;
+}
+
 static int tqr_trace_parse_later_e009_post_return_step(
     const char *line, size_t length, unsigned int *out_caller_pc,
     unsigned int *out_return_pc, unsigned int *out_record,
@@ -708,12 +729,14 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t dispatch_count = 0u;
     size_t sector_count = 0u;
     size_t destination_count = 0u;
+    size_t destination_payload_count = 0u;
     size_t return_count = 0u;
     size_t post_return_count = 0u;
     size_t dynamic_line = 0u;
     size_t dispatch_line = 0u;
     size_t sector_line = 0u;
     size_t destination_line = 0u;
+    size_t destination_payload_line = 0u;
     size_t return_line = 0u;
     size_t post_return_line = 0u;
     size_t line_number = 0u;
@@ -742,6 +765,12 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     unsigned int destination = 0u;
     unsigned int destination_bytes = 0u;
     unsigned int destination_checksum = 0u;
+    unsigned int destination_payload_caller_pc = 0u;
+    unsigned int destination_payload_return_pc = 0u;
+    unsigned int destination_payload_record = 0u;
+    unsigned int destination_payload_destination = 0u;
+    unsigned int destination_payload_bytes = 0u;
+    unsigned int destination_payload_checksum = 0u;
     unsigned int post_return_caller_pc = 0u;
     unsigned int post_return_return_pc = 0u;
     unsigned int post_return_record = 0u;
@@ -818,6 +847,17 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
                     &destination, &destination_bytes,
                     &destination_checksum)) return 0;
             destination_line = line_number;
+        } else if (length >= strlen("later_system_card_e009_destination_payload ") &&
+                   memcmp(line, "later_system_card_e009_destination_payload ",
+                          strlen("later_system_card_e009_destination_payload ")) == 0) {
+            if (++destination_payload_count != 1u ||
+                !tqr_trace_parse_later_e009_destination_payload(
+                    line, length, &destination_payload_caller_pc,
+                    &destination_payload_return_pc, &destination_payload_record,
+                    &destination_payload_destination,
+                    &destination_payload_bytes,
+                    &destination_payload_checksum)) return 0;
+            destination_payload_line = line_number;
         } else if (length >= strlen("later_system_card_e009_return ") &&
                    memcmp(line, "later_system_card_e009_return ",
                           strlen("later_system_card_e009_return ")) == 0) {
@@ -838,16 +878,23 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         }
     }
     if (source_count != 1u || dynamic_count != 1u || dispatch_count != 1u ||
-        sector_count != 1u || destination_count != 1u || return_count != 1u ||
+        sector_count != 1u || destination_count != 1u ||
+        destination_payload_count != 1u || return_count != 1u ||
         post_return_count != 1u ||
         !(dynamic_line < dispatch_line && dispatch_line < sector_line &&
-          sector_line < destination_line && destination_line < return_line &&
+          sector_line < destination_line &&
+          destination_line < destination_payload_line &&
+          destination_payload_line < return_line &&
           return_line < post_return_line) ||
         return_pc != caller_pc + 3u || caller_opcode != 0x20u ||
         caller_target != 0xe009u ||
         return_caller_pc != caller_pc || return_return_pc != return_pc ||
         return_record != record || destination_caller_pc != caller_pc ||
         destination_return_pc != return_pc || destination_record != record ||
+        destination_payload_caller_pc != caller_pc ||
+        destination_payload_return_pc != return_pc ||
+        destination_payload_record != record ||
+        destination_payload_destination != destination ||
         post_return_caller_pc != caller_pc ||
         post_return_return_pc != return_pc || post_return_record != record ||
         post_return_resume_pc != return_pc ||
@@ -877,7 +924,11 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         destination_checksum != tqr_trace_fnv1a_bytes(
             track02_data + (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES +
                 THERON_TRACK02_RAW_USER_DATA_OFFSET,
-            destination_bytes)) return 0;
+            destination_bytes) ||
+        destination_payload_checksum != tqr_trace_fnv1a_bytes(
+            track02_data + (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET,
+            destination_payload_bytes)) return 0;
 
     out->valid = 1;
     out->variant = manifest.variant;
@@ -900,6 +951,9 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     out->later_destination_span_checksum = destination_checksum;
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
+    out->later_destination_payload_bytes = destination_payload_bytes;
+    out->later_destination_payload_checksum = destination_payload_checksum;
+    out->later_destination_payload_verified = 1;
     out->later_post_return_resume_pc = (uint16_t)post_return_resume_pc;
     out->later_post_return_next_pc = (uint16_t)post_return_next_pc;
     out->later_post_return_step_verified = 1;
@@ -926,11 +980,15 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !coalesced_receipt->selector_sector_bytes_verified ||
         !coalesced_receipt->later_destination_local_ram_verified ||
         !coalesced_receipt->later_destination_media_span_verified ||
+        !coalesced_receipt->later_destination_payload_verified ||
         !coalesced_receipt->later_caller_control_verified ||
         coalesced_receipt->later_caller_opcode != 0x20u ||
         coalesced_receipt->later_caller_target != 0xe009u ||
         coalesced_receipt->later_destination_span_bytes != 32u ||
+        coalesced_receipt->later_destination_payload_bytes !=
+            THERON_TRACK02_RAW_USER_DATA_BYTES ||
         !coalesced_receipt->later_destination_span_checksum ||
+        !coalesced_receipt->later_destination_payload_checksum ||
         !coalesced_receipt->later_post_return_step_verified ||
         coalesced_receipt->later_post_return_resume_pc !=
             coalesced_receipt->return_pc ||
@@ -977,7 +1035,13 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
                 THERON_TRACK02_RAW_SECTOR_BYTES +
             THERON_TRACK02_RAW_USER_DATA_OFFSET,
             coalesced_receipt->later_destination_span_bytes) !=
-            coalesced_receipt->later_destination_span_checksum) {
+            coalesced_receipt->later_destination_span_checksum ||
+        tqr_trace_fnv1a_bytes(track02_data +
+            (size_t)coalesced_receipt->later_track02_record *
+                THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET,
+            coalesced_receipt->later_destination_payload_bytes) !=
+            coalesced_receipt->later_destination_payload_checksum) {
         return 0;
     }
 

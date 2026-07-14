@@ -2,10 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -36,5 +36,1238 @@ static std::unique_ptr<FileStream> TraceLog;
- static std::string TraceLogSpec;
- static int64 TraceLogEnd;
- static unsigned TraceLogRTO;
+@@ -40,2 +40,1268 @@
 +static std::unique_ptr<FileStream> TheronIrq2Trace;
 +static bool TheronIrq2TraceSeen[768];
 +static unsigned TheronIrq2TraceCallbackCount;
@@ -1168,6 +1165,22 @@ index 347482c4..61d4758e 100644
 +    destination_hash *= 16777619U;
 +   }
 +   TheronIrq2Trace->print_format("later_system_card_e009_destination_span caller_pc=%04x return_pc=%04x record=%06x destination=%04x bytes=32 fnv1a=%08x\\n",
++                                 TheronIrq2TraceLaterE009CallerPC, logical_pc,
++                                 TheronIrq2TraceLaterE009Record,
++                                 TheronIrq2TraceLaterE009Destination,
++                                 destination_hash);
++   /* Retain the complete post-return MODE1 payload as a raw transfer
++    * witness. This binds original RAM bytes to original media only; it does
++    * not decode or classify the record. */
++   destination_hash = 2166136261U;
++   for(destination_offset = 0; destination_offset < 2048; destination_offset++)
++   {
++    destination_hash ^= CurGame->Debugger->MemPeek(
++     (TheronIrq2TraceLaterE009Destination + destination_offset) & 0xffff,
++     1, true, true) & 0xff;
++    destination_hash *= 16777619U;
++   }
++   TheronIrq2Trace->print_format("later_system_card_e009_destination_payload caller_pc=%04x return_pc=%04x record=%06x destination=%04x bytes=2048 fnv1a=%08x\\n",
 +                                 TheronIrq2TraceLaterE009CallerPC, logical_pc,
 +                                 TheronIrq2TraceLaterE009Record,
 +                                 TheronIrq2TraceLaterE009Destination,

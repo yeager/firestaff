@@ -165,6 +165,12 @@ typedef struct {
     uint32_t later_destination_span_checksum;
     int later_destination_local_ram_verified;
     int later_destination_media_span_verified;
+    /* A complete one-sector local-RAM witness emitted only by the
+     * instrumented original Mednafen run after the same $e009 return. It
+     * binds bytes, not any dungeon/object/bitmap interpretation. */
+    size_t later_destination_payload_bytes;
+    uint32_t later_destination_payload_checksum;
+    int later_destination_payload_verified;
     /* One observed caller control edge after the System Card return. The
      * resume PC must equal return_pc; neither PC assigns gameplay meaning. */
     uint16_t later_post_return_resume_pc;

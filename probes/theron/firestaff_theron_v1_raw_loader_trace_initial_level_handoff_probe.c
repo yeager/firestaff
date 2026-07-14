@@ -67,6 +67,12 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
         THERON_TRACK02_RAW_USER_DATA_OFFSET, 32u);
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
+    out->later_destination_payload_bytes = THERON_TRACK02_RAW_USER_DATA_BYTES;
+    out->later_destination_payload_checksum = fnv1a_bytes(
+        raw + 0x0b52u * THERON_TRACK02_RAW_SECTOR_BYTES +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET,
+        THERON_TRACK02_RAW_USER_DATA_BYTES);
+    out->later_destination_payload_verified = 1;
     out->later_post_return_resume_pc = 0xea03u;
     out->later_post_return_next_pc = 0xea04u;
     out->later_post_return_step_verified = 1;
@@ -147,6 +153,14 @@ int main(void)
         return 1;
     }
     --coalesced.later_destination_span_checksum;
+    coalesced.later_destination_payload_verified = 0;
+    if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
+            &coalesced, raw, raw_size, md5, &handoff)) {
+        free(raw);
+        printf("FAIL: receipt without the complete local payload admitted the level route\n");
+        return 1;
+    }
+    coalesced.later_destination_payload_verified = 1;
     coalesced.later_track02_record = 0x0b53u;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {
