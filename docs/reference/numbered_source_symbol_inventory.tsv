@@ -1871,8 +1871,8 @@ F	0922	F0922_Custom_strcpy	PRIM1.C	unmapped_or_unverified
 F	0924	F0924_SetCriticalErrorHandler	HINT002.C;PRIM1.C;CEDTINCI.C;SWITCH.C;UTIO.C;HINTSCR.C	source_nonapplicable
 F	0925	F0925_CheckUtilityDiskInDrive	PRIM1.C	implemented_narrow
 F	0926	F0926_FLOPPY_ForceMediaChangeDetection	PRIM1.C	source_nonapplicable
-F	0927	F0927_PrintLoaderError	PRIM1.C;PRIM.H	unmapped_or_unverified
-F	0928	F0928_PrintOSError	PRIM1.C;PRIM.H	unmapped_or_unverified
+F	0927	F0927_PrintLoaderError	PRIM1.C;PRIM.H	implemented_narrow
+F	0928	F0928_PrintOSError	PRIM1.C;PRIM.H	implemented_narrow
 F	0929	F0929_PRIM_05_FTL_Load	PRIM1.C;PRIM.H;PRIM2B.C	unmapped_or_unverified
 F	0930	F0930_GetHeaderChecksum	PRIM1.C;PRIM.H;SWITCH.C;PRIM2B.C	implemented_narrow
 F	0931	F0931_ChecksumWords	PRIM1.C;PRIM.H;PRIM2B.C	unmapped_or_unverified
