@@ -19,7 +19,10 @@
   texture span, palette state, VDP1 state, transform state, normal/culling
   state, command bytes, sizes, FNV witnesses, and capture ordering. It
   rejects missing or zero-sized correlations before the DGN binder sees a
-  candidate. Parsing never admits a capture source, assigns PRS3 or VDP1
+  candidate. The strict raw-capture importer also rechecks all six opaque
+  spans against the manifest, capture-session identity, and a length-prefixed
+  capture-bundle identity verified by the capture reader. Parsing/importing
+  never admits a capture source, assigns PRS3 or VDP1
   fields, decodes texture pixels or palette entries, or enables mesh drawing.
   Next required evidence is an authenticated original-Saturn capture manifest
   plus separately scanner-verified retail DGN media and observed command/read

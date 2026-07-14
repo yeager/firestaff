@@ -20682,6 +20682,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_structure3_capture_manifest
         tests/test_nexus_v1_structure3_capture_manifest.c
         src/nexus/nexus_v1_structure3_capture_manifest.c
+        src/nexus/nexus_v1_dungeon.c
     )
     target_include_directories(test_nexus_v1_structure3_capture_manifest PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
