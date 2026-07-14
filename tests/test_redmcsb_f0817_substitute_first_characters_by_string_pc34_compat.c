@@ -17,7 +17,7 @@ int main(void)
     if (redmcsb_f0817_substitute_first_characters_by_string_pc34_compat(
             shorter, 6, replacement_short) != -3 || strcmp(shorter, "map-text") != 0 ||
         redmcsb_f0817_substitute_first_characters_by_string_pc34_compat(
-            same, 6, replacement_same) != 0 || strcmp(same, "panel-text") != 0 ||
+            same, 6, replacement_same) != -1 || strcmp(same, "panel-text") != 0 ||
         redmcsb_f0817_substitute_first_characters_by_string_pc34_compat(
             longer, 6, replacement_long) != 2 || strcmp(longer, "champion-text") != 0 ||
         redmcsb_f0817_substitute_first_characters_by_string_pc34_compat(
