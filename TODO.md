@@ -1006,6 +1006,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     the original packed 4bpp source indices and destination aperture indices
     flow unchanged into F0680. Binding that aperture to the live SDL/Mac
     framebuffer remains separately unproven.
+   - 2026-07-14 VIDEODRV.C F8213 now preserves C25's direct one-byte aperture
+    write: `G8177 | color` goes to the requested `G8134` pixel index. Binding
+    this logical aperture to live SDL/Mac presentation remains separately
+    unproven.
   - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
     from one 320-byte row above, including its source-visible propagation for
     spans larger than a row. Binding this logical aperture effect to live
