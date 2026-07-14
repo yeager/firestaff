@@ -1651,6 +1651,56 @@ static int materialize_original_pc34_fakewall_event(const struct DM1_Event_V1 *s
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+/* ReDMCSB TIMELINE.C F0242/F0244/F0245/F0250/F0251 consume C05/C06 and
+ * C08-C10 through EVENT.B.Location plus EVENT.C.Cell/Effect.  M10 already
+ * owns their live execution as TIMELINE_EVENT_SQUARE_STATE; F0435 must retain
+ * that union instead of publishing a generic host event. */
+static int materialize_original_pc34_square_state_event(
+    const struct DM1_Event_V1 *src,
+    struct TimelineEvent_Compat *out_event)
+{
+    int map_index;
+
+    if (!src || !out_event || src->c_effect > DM1_EFFECT_TOGGLE) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    switch (src->type) {
+    case DM1_EVENT_CORRIDOR:
+        break;
+    case DM1_EVENT_WALL:
+        if (src->c_cell > 3u) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        break;
+    case DM1_EVENT_TELEPORTER:
+        break;
+    case DM1_EVENT_PIT:
+        break;
+    case DM1_EVENT_DOOR:
+        break;
+    default:
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    map_index = (int)((src->map_time >> 24) & 0xffu);
+    /* F0435 restores C05/C06/C08-C10 before TIMELINE.C dispatches them.
+     * The established M10 consumer is the source-square validation owner;
+     * importing here must not pre-run it or substitute a host transition. */
+
+    memset(out_event, 0, sizeof(*out_event));
+    out_event->kind = TIMELINE_EVENT_SQUARE_STATE;
+    out_event->fireAtTick = src->map_time & 0x00ffffffu;
+    out_event->mapIndex = map_index;
+    out_event->mapX = src->b_mapX;
+    out_event->mapY = src->b_mapY;
+    out_event->cell = src->c_cell;
+    out_event->aux0 = src->type;
+    out_event->aux1 = src->c_effect;
+    out_event->aux2 = src->type;
+    out_event->aux4 = src->priority;
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 static int materialize_original_pc34_door_destruction_event(
     const struct DM1_Event_V1 *src, const struct GameWorld_Compat *world,
     struct TimelineEvent_Compat *out_event)
@@ -1947,6 +1997,16 @@ static int materialize_original_pc34_timeline(
         }
         if (src->type == DM1_EVENT_FAKEWALL) {
             if (materialize_original_pc34_fakewall_event(src, world, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK || !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            continue;
+        }
+        if (src->type == DM1_EVENT_CORRIDOR || src->type == DM1_EVENT_WALL ||
+            src->type == DM1_EVENT_TELEPORTER || src->type == DM1_EVENT_PIT ||
+            src->type == DM1_EVENT_DOOR) {
+            if (materialize_original_pc34_square_state_event(
+                    src, &ev) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+                !F0721_TIMELINE_Schedule_Compat(timeline, &ev)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
             continue;
         }
         if (src->type == DM1_EVENT_DOOR_DESTRUCTION) {

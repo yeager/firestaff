@@ -5718,6 +5718,121 @@ static void test_world_export_roundtrips_c13_vi_altar_union(void)
           "world export rejects an unproven C13 rebirth step");
 }
 
+static void test_original_square_state_events_materialize_and_roundtrip(void)
+{
+    static const struct {
+        int event_type;
+        int dungeon_element;
+    } cases[] = {
+        { DM1_EVENT_CORRIDOR, DUNGEON_ELEMENT_CORRIDOR },
+        { DM1_EVENT_WALL, DUNGEON_ELEMENT_WALL },
+        { DM1_EVENT_TELEPORTER, DUNGEON_ELEMENT_TELEPORTER },
+        { DM1_EVENT_PIT, DUNGEON_ELEMENT_PIT },
+        { DM1_EVENT_DOOR, DUNGEON_ELEMENT_DOOR }
+    };
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char square_data[3][32 * 32];
+    char path[512];
+    int case_index;
+
+    for (case_index = 0;
+         case_index < (int)(sizeof(cases) / sizeof(cases[0]));
+         ++case_index) {
+        struct GameWorld_Compat start_world;
+        struct GameWorld_Compat loaded_world;
+        struct DungeonDatState_Compat dungeon;
+        struct DungeonMapDesc_Compat maps[3];
+        struct DungeonMapTiles_Compat tiles[3];
+        struct DungeonThings_Compat things;
+        struct SaveGame_Compat imported;
+        struct PartyState_Compat imported_party;
+        DM1OriginalSavePC34HandoffReport report;
+        int written = 0;
+        int exported_size = 0;
+        int rc;
+        int i;
+        int found = 0;
+
+        rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                         3, 2, 9, 10, 2, 1,
+                                         ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+        CHECK(rc == SAVEGAME_PC34_OK &&
+                  rewrite_fixture_event_type(bytes, (size_t)written, 1,
+                                             cases[case_index].event_type),
+              "C05/C06/C08/C09/C10 fixture remains checksum-authenticated");
+
+        memset(&start_world, 0, sizeof(start_world));
+        memset(&loaded_world, 0, sizeof(loaded_world));
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(maps, 0, sizeof(maps));
+        memset(tiles, 0, sizeof(tiles));
+        memset(square_data, 0, sizeof(square_data));
+        memset(&things, 0, sizeof(things));
+        for (i = 0; i < 3; ++i) {
+            maps[i].width = 32;
+            maps[i].height = 32;
+            tiles[i].squareData = square_data[i];
+        }
+        dungeon.header.mapCount = 3;
+        dungeon.maps = maps;
+        dungeon.tiles = tiles;
+        dungeon.tilesLoaded = 1;
+        square_data[2][21 * 32 + 22] =
+            (unsigned char)(cases[case_index].dungeon_element << 5);
+        start_world.dungeon = &dungeon;
+        start_world.things = &things;
+
+        make_temp_save_path(path, sizeof(path));
+        remove(path);
+        CHECK(write_fixture_file(path, bytes, written),
+              "square-state fixture writes");
+        rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+            path, &start_world, &loaded_world, NULL, &report);
+        remove(path);
+        CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+              "F0435 materializes the saved source square state");
+        for (i = 0; i < loaded_world.timeline.count; ++i) {
+            const struct TimelineEvent_Compat *event =
+                &loaded_world.timeline.events[i];
+            if (event->kind == TIMELINE_EVENT_SQUARE_STATE &&
+                event->aux0 == cases[case_index].event_type) {
+                found = event->mapIndex == 2 && event->mapX == 21 &&
+                        event->mapY == 22 && event->cell == 1 &&
+                        event->aux1 == DM1_EFFECT_TOGGLE &&
+                        event->aux2 == cases[case_index].event_type &&
+                        event->aux4 == 4;
+                break;
+            }
+        }
+        CHECK(found, "F0435 retains saved Location and Cell/Effect union");
+
+        rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+            &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+            &exported_size);
+        CHECK(rc == SAVEGAME_PC34_OK && exported_size > 0,
+              "F0433 exports the materialized source square state");
+        memset(&imported, 0, sizeof(imported));
+        memset(&imported_party, 0, sizeof(imported_party));
+        imported.party = &imported_party;
+        rc = dm1_v1_original_save_pc34_handoff_bytes(
+            exported, (size_t)exported_size, &imported, &report);
+        found = 0;
+        for (i = 0; i < report.original_event_count; ++i) {
+            if (report.events[i].type == cases[case_index].event_type) {
+                found = report.events[i].priority == 4 &&
+                        report.events[i].b_mapX == 21 &&
+                        report.events[i].b_mapY == 22 &&
+                        report.events[i].c_cell == 1 &&
+                        report.events[i].c_effect == DM1_EFFECT_TOGGLE;
+                break;
+            }
+        }
+        CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && found,
+              "F0435 to F0433 to F0435 preserves saved square-state bytes");
+    }
+}
+
 int main(void)
 {
     test_pc34_handoff_imports_party_state();
@@ -5768,6 +5883,7 @@ int main(void)
     test_world_export_rebuilds_c25_explosion_union();
     test_world_export_rebuilds_c29_group_reaction_union();
     test_world_export_roundtrips_c13_vi_altar_union();
+    test_original_square_state_events_materialize_and_roundtrip();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
     return 0;
