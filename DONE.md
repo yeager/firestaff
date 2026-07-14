@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F0918: source-locked PC release callback and
+  null gate with a focused strict-C11 test. F1038 is source-nonapplicable:
+  available mouse-pointer update paths are X68000/Amiga-only.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0917: source-locked X30J allocation/error
   path with a focused strict-C11 test. F1037 is source-nonapplicable because
   its mouse-sprite code has no PC 3.4 route.
