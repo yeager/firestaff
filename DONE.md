@@ -15854,6 +15854,15 @@ mutation withdraws it. This is no-draw camera-input provenance only: no
 Saturn camera matrix, transform order/unit, culling, or rendering semantics
 are inferred. Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-14 Nexus PRS3 V3 provenance-bundle validator route
+
+The read-only V3 capture validator now accepts an authentic capture bundle's
+trace, three raw sidecars, provenance ledger, and producer binary in one
+invocation. It can verify their FNV links, but reports producer authentication
+and runtime import as false by design. No PRS3 opcode grammar, pixel/palette
+decode, synthetic surface, or draw route is enabled. Verification:
+`test_nexus_v1_prs3_capture_trace_schema` and the validator target build.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the
