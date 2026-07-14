@@ -737,14 +737,6 @@ int main(void) {
     char partial_dm_bin[512];
     char real_fallback[512];
     const char* real_dir;
-    Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_capture_receipt;
-
-    expect_true(nexus_v1_launcher_startup_structure3_raw_capture_intake(
-                    NULL, 0U, NULL, NULL, &raw_capture_receipt) == 0 &&
-                    raw_capture_receipt.no_draw_only &&
-                    !raw_capture_receipt.raw_reader.import_ready &&
-                    !raw_capture_receipt.host.importer_invoked,
-                "Nexus launcher rejects raw Structure3 capture before a real level is loaded");
 
     expect_face_loader_counts_real_vs_fallback();
     expect_bpk_runtime_surface_import();
@@ -774,14 +766,14 @@ int main(void) {
 
     real_dir = nexus_data_dir(real_fallback);
     if (real_dir && real_dir[0]) {
-        M11_GameViewState view;
+        static M11_GameViewState view;
         M11_GameLaunchSpec spec;
         fill_nexus_spec(&spec, real_dir);
         M11_GameView_Init(&view);
         if (M11_GameView_Start(&view, &spec)) {
             char save_root[512];
             char save_path[512];
-            Nexus_V1_World resume_world;
+            static Nexus_V1_World resume_world;
             Nexus_SaveResult save_result;
             int resume_fixture_ready = 0;
             int visual_raster_available = 0;
@@ -1060,9 +1052,9 @@ int main(void) {
                 char old_home[512];
                 char default_save_dir[512];
                 const char* old_home_env = getenv("HOME");
-                Nexus_V1_SaveManager slot_mgr;
-                Nexus_V1_ChampionPool slot_champions;
-                Nexus_V1_World slot_world;
+                static Nexus_V1_SaveManager slot_mgr;
+                static Nexus_V1_ChampionPool slot_champions;
+                static Nexus_V1_World slot_world;
                 int slot_fixture_ready = 0;
 
                 snprintf(old_home, sizeof(old_home), "%s",

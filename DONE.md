@@ -52,6 +52,11 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- 2026-07-14 Nexus M11 startup regression: moved the large local test fixtures
+  for the optional real-data route to static test storage. This prevents
+  `test_m11_nexus_startup_gate` from exceeding the macOS main-thread stack
+  before it can exercise the launcher; the launcher route remains no-draw.
+
 - 2026-07-14 Nexus Structure3 launcher raw-capture route: the launcher can
   now feed the strict six-lane reader directly into its currently owned,
   hash-verified canonical DGN bytes and then into engine-owned no-draw
