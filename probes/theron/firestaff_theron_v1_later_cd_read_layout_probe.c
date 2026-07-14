@@ -291,7 +291,7 @@ static int inspect_coalesced(const char *track_path, const char *trace_path,
         m12_file_md5_hex(trace_path, trace_md5) &&
         theron_v1_capture_manifest_parse((const char *)manifest_bytes,
                                          &manifest) &&
-        theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+        theron_v1_raw_loader_trace_capture_manifest_matches(
             &manifest, track_path, actual_md5, system_card_path,
             system_card_md5, trace_path, trace_md5) &&
         theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(

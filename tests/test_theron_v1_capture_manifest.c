@@ -100,24 +100,30 @@ int main(void) {
               "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
               "loader_trace_path=/captures/live.trace", &manifest),
           "rejects legacy trace-unbound manifest format");
-    check(theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+    check(theron_v1_raw_loader_trace_capture_manifest_matches(
               &copy, "/media/track02.bin",
               "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
               "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace",
               "35d3b8fae88a3864d12d0e4d62e4bcfa"),
-          "binds a coalesced trace to its raw Track 02 and System Card manifest");
-    check(!theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+          "binds an ordered raw loader trace to its Track 02 and System Card manifest");
+    check(!theron_v1_raw_loader_trace_capture_manifest_matches(
               &copy, "/media/track02.bin",
               "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
               "098f6bcd4621d373cade4e832627b4f6", "/captures/live.trace",
               "35d3b8fae88a3864d12d0e4d62e4bcfa"),
-          "rejects a coalesced trace with a non-System Card 3.0 identity");
-    check(!theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+          "rejects an ordered raw loader trace with a non-System Card 3.0 identity");
+    check(!theron_v1_raw_loader_trace_capture_manifest_matches(
               &copy, "/media/track02.bin",
               "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
               "ff1a674273fe3540ccef576376407d1d", "/captures/other.trace",
               "35d3b8fae88a3864d12d0e4d62e4bcfa"),
-          "rejects a coalesced trace path outside its capture manifest");
+          "rejects an ordered raw loader trace path outside its capture manifest");
+    check(!theron_v1_raw_loader_trace_capture_manifest_matches(
+              &copy, "/media/track02.bin",
+              "f23601102138f87c33025877767ebf76", "/bios/syscard3.pce",
+              "ff1a674273fe3540ccef576376407d1d", "/captures/live.trace",
+              "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+          "rejects an ordered raw loader trace whose hash changed");
 
     track02_fd = mkstemp(track02_path);
     system_card_fd = mkstemp(system_card_path);

@@ -802,7 +802,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     return 1;
 }
 
-int theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+int theron_v1_raw_loader_trace_capture_manifest_matches(
     const Theron_V1CaptureManifest *manifest,
     const char *track02_path,
     const char *track02_md5,

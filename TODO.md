@@ -2353,6 +2353,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     and only then HuC6260 rows. This strengthens one bounded transport chain;
     it still does not identify a later dungeon record, map, object, palette
     source byte, or bitmap decoder.
+  - 2026-07-14 update: positive loader preflight now requires a V2 manifest
+    binding the rehashed raw Track 02, exact System Card 3.0, and ordered
+    Mednafen trace before the existing `$3800` media-span/Stage 3 receipt can
+    be accepted. This provenance gate does not identify a payload format,
+    dungeon, object, bitmap, palette source byte, or decoder.
   - 2026-07-13 update: the old generated stone palette and unverified-media
     V1 render allowance are removed. Remaining palette work is an original
     HuC6260 table binding from authenticated Track 02 execution/media; a
