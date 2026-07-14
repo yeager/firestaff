@@ -2087,6 +2087,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-13 Nexus PRS3 capture follow-up: external SH-2 traces now bind
   their complete observation to the exact original `MENU.BPK` PRS3 stream
   window and whole `DM.BIN` bytes before they count as asset-bound evidence.
+  The SH-2-to-VDP1 schema additionally requires a fingerprint of the exact
+  claimed `MENU.BPK` stream span and rejects a whole-file-valid trace when
+  that captured payload window differs. This proves source-byte identity for
+  one observed input range only; it does not establish PRS3 commands, output
+  pixels, palette semantics, or a render route.
   They still do not prove opcode grammar, palette semantics, or a renderer;
   the next admissible step is an original Saturn capture that supplies those
   facts, never a synthetic decode.

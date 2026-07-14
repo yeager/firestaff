@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus PRS3 captured-input span binding: a claimed SH-2-to-VDP1
+  capture now carries a nonzero fingerprint for its exact `MENU.BPK` stream
+  range. Asset binding recomputes that range from the bounded PRS3 entry plan
+  and rejects a trace even when its whole-file hashes and claimed offsets
+  agree but the captured input bytes do not. This is a capture-integrity gate
+  only: it proves no PRS3 opcode, output pixel, palette, VDP1 command
+  contents, or draw route. Verification: focused strict-C99
+  `test_nexus_v1_prs3_capture_trace_schema` includes a whole-file-valid,
+  payload-mismatched negative case; decoding and fallback visuals remain
+  disabled.
+
 - 2026-07-14 Theron Track 02 returned-PC control-edge receipt: the coalesced
   later `$e009` trace now retains the exact System Card return target alongside
   the next observed caller PC, and admission rejects a receipt whose raw edge
