@@ -340,6 +340,11 @@
     sequence and restores the caller's plaintext tail afterward. It supplies
     no RNG, file transport, format identification, CSBWin extension, DSA,
     timer, or runtime interpretation.
+  - 2026-07-14 update: `CEDTINCA.C` F7063 now validates the source-owned
+    22-part PC34 dungeon stream sequence against its trailing checksum word:
+    header, maps, three table blocks, 16 ThingData pools, and RawMapData.
+    The parts remain opaque; this neither allocates nor decodes DUNGEON_HEADER,
+    MAP, ThingData, CSBWin, DSA, timer, or runtime layouts.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and

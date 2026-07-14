@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F7063 LoadDungeon stream boundary: added the exact
+  22-part PC34 byte-checksum verdict over header, maps, tables, 16 ThingData
+  pools, and RawMapData. Empty pools retain their source zero-byte behavior;
+  a missing nonempty part or mismatching trailer fails closed. No dungeon
+  structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
+  Focused strict-C11 regression passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB F8134: source-locked IBMIO.C DOS EXEC command
   tail and normal-termination result. The focused strict-C11 test leaves
   program execution and DOS exit-status provenance as caller-owned boundaries.
