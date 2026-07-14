@@ -6917,6 +6917,9 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_hud_material_plan_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.hud_material_plan_hash : 0u;
+        out_receipt->runtime_m11_frame_hud_material_plan_command_count =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.hud_material_plan_command_count : 0;
         out_receipt->runtime_m11_frame_hud_material_plan_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.hud_material_plan_consumed : 0;

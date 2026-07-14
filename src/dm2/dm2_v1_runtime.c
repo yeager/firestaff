@@ -2886,6 +2886,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
     uint32_t hud_material_plan_hash = 0u;
+    int hud_material_plan_command_count = 0;
     int hud_material_plan_required = 0;
     int hud_material_plan_consumed = 0;
     uint32_t creature_material_plan_hash = 0u;
@@ -3120,6 +3121,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             hud_material_plan.command_count;
     hud_material_plan_hash = hud_material_plan_consumed
         ? hud_material_plan.command_hash : 0u;
+    hud_material_plan_command_count = hud_material_plan_consumed
+        ? hud_material_plan.command_count : 0;
     dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
@@ -3616,6 +3619,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.hud_material_plan_required =
         hud_material_plan_required;
     g_dm2_last_m11_frame.hud_material_plan_hash = hud_material_plan_hash;
+    g_dm2_last_m11_frame.hud_material_plan_command_count =
+        hud_material_plan_command_count;
     g_dm2_last_m11_frame.hud_material_plan_consumed =
         hud_material_plan_consumed;
     g_dm2_last_m11_frame.creature_material_plan_required =
