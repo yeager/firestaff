@@ -5427,6 +5427,86 @@ theron_v1_track02_capture_initial_level_object_boundary(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_envelope(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelEnvelopeReceipt *out_receipt) {
+
+    enum {
+        initial_level_envelope_bytes = 12u +
+            TQR_RAW_INITIAL_LEVEL_WIDTH * TQR_RAW_INITIAL_LEVEL_HEIGHT
+    };
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02LevelHandoffStatus copy_status;
+    uint8_t envelope[initial_level_envelope_bytes];
+    size_t copied_byte_count = 0u;
+    size_t copied_user_data_offset = 0u;
+    uint32_t hash;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    /* The boundary capture owns the raw-media hash, IPL coordinate, and
+     * descriptor-relative candidate gates.  Re-copy through MODE1 user data
+     * so this decoder never treats sector framing as level bytes. */
+    if (theron_v1_track02_capture_initial_level_object_boundary(
+            track02_data, track02_size, md5_hex, &boundary) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !boundary.valid ||
+        boundary.level_byte_count != initial_level_envelope_bytes) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    copy_status = theron_v1_track02_copy_initial_level_user_data_window(
+        track02_data, track02_size, md5_hex,
+        boundary.variant == THERON_TRACK02_VARIANT_JP_BIN
+            ? g_jp_bin_descriptor_offsets[0]
+            : g_us_bin_descriptor_offsets[0],
+        envelope, sizeof(envelope), &copied_byte_count,
+        &copied_user_data_offset);
+    if (copy_status != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        copied_byte_count != sizeof(envelope) ||
+        copied_user_data_offset != boundary.level_user_data_offset ||
+        rd16be(envelope + 0u) != boundary.level_width ||
+        rd16be(envelope + 2u) != boundary.level_height ||
+        rd32be(envelope + 4u) != boundary.level_seed ||
+        rd16be(envelope + 8u) != boundary.level_index ||
+        rd16be(envelope + 10u) != boundary.level_header_extension_be) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->variant = boundary.variant;
+    out_receipt->track02_record = boundary.track02_record;
+    out_receipt->level_raw_offset = boundary.level_raw_offset;
+    out_receipt->level_user_data_offset = boundary.level_user_data_offset;
+    out_receipt->level_byte_count = boundary.level_byte_count;
+    out_receipt->width = boundary.level_width;
+    out_receipt->height = boundary.level_height;
+    out_receipt->seed = boundary.level_seed;
+    out_receipt->level_index = boundary.level_index;
+    out_receipt->header_extension_be = boundary.level_header_extension_be;
+    out_receipt->grid_offset_in_envelope = 12u;
+    out_receipt->grid_byte_count = sizeof(envelope) - 12u;
+    out_receipt->grid_hash = tqr_hash_bytes(envelope + 12u,
+                                            out_receipt->grid_byte_count);
+    out_receipt->header_semantics_proven = 1;
+    out_receipt->grid_semantics_proven = 0;
+    out_receipt->header_extension_semantics_proven = 0;
+    out_receipt->object_tail_semantics_proven = 0;
+    out_receipt->fallback_visuals_allowed = 0;
+
+    hash = boundary.receipt_hash;
+    hash ^= out_receipt->grid_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->grid_byte_count;
+    hash *= 16777619u;
+    out_receipt->receipt_hash = hash;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_window(
     const uint8_t *track02_data,
     size_t track02_size,
