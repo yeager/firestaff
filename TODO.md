@@ -134,6 +134,12 @@
     consumer. D3C remains unavailable because the active GRAPHICSSET exposes
     no source wall field for it; no fallback surface is drawn. Dynamic light
     and non-wall/floor terrain remain open.
+  - 2026-07-14 update: a G1 class-4 tile now reaches the DB0 door material
+    route only when that exact visible square owns a direct DB0 record.
+    Generic low state bits cannot nominate a door or its GDAT panel. The
+    source-material transaction remains complete-or-blocked (panel, frame,
+    and button), with no substitute art. Dynamic light, non-DB0 objects, and
+    the unavailable D3C terrain field remain open.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
   `test_dm2_v1_save_load` external-corpus census accepts only
