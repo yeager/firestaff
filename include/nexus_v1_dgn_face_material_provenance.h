@@ -32,9 +32,17 @@ typedef struct {
 
 typedef struct {
     Nexus_V1_DgnFaceMaterialSource source;
+    /* Exact buffer reopened by the launcher for the active LEV entry. */
     const uint8_t *dgn_bytes;
     int dgn_size;
-    /* Set only by the caller that compared dgn_bytes to the retail catalog. */
+    /*
+     * Canonical bytes retained by the hash-verified retail catalog.  The
+     * face-binding route requires byte identity with the reopened buffer;
+     * naming a source retail is not sufficient.
+     */
+    const uint8_t *canonical_dgn_bytes;
+    int canonical_dgn_size;
+    /* Set only by the caller that authenticated canonical_dgn_bytes. */
     int canonical_source_verified;
     const Nexus_V1_DgnFaceMaterialBinding *bindings;
     int face_count;
@@ -51,6 +59,8 @@ typedef enum {
 typedef struct {
     Nexus_V1_DgnFaceMaterialStatus status;
     int canonical_source_verified;
+    int reopened_bytes_match_canonical;
+    int canonical_dgn_size;
     int face_count;
     int static_selector_count;
     int animated_selector_count;

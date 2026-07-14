@@ -19,6 +19,7 @@ int nexus_v1_dgn_face_material_validate(
     if (!out_receipt) return 0;
     set_status(out_receipt, NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_INPUT);
     if (!input || !input->dgn_bytes || input->dgn_size <= 0 ||
+        !input->canonical_dgn_bytes || input->canonical_dgn_size <= 0 ||
         !input->bindings || input->face_count <= 0 ||
         input->face_count > NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES ||
         input->material_selector_count <= 0) {
@@ -29,9 +30,17 @@ int nexus_v1_dgn_face_material_validate(
         set_status(out_receipt, NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE);
         return 0;
     }
+    if (input->dgn_size != input->canonical_dgn_size ||
+        memcmp(input->dgn_bytes, input->canonical_dgn_bytes,
+               (size_t)input->dgn_size) != 0) {
+        set_status(out_receipt, NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE);
+        return 0;
+    }
 
     memset(seen, 0, sizeof(seen));
     out_receipt->canonical_source_verified = 1;
+    out_receipt->reopened_bytes_match_canonical = 1;
+    out_receipt->canonical_dgn_size = input->canonical_dgn_size;
     for (i = 0; i < input->face_count; ++i) {
         const Nexus_V1_DgnFaceMaterialBinding *binding = &input->bindings[i];
         if (binding->face_ordinal >= (uint16_t)input->face_count ||
