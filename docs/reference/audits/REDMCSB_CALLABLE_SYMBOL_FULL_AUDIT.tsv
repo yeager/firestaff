@@ -1951,7 +1951,7 @@ F8130_GetReadFirstSectorResult	F	GetReadFirstSectorResult	IBMIO.C:2209	include/r
 F8131_GetVolumeName	F	GetVolumeName	IBMIO.C:2259	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 filters a host-supplied 11-byte FAT volume label by omitting spaces and periods; focused strict C11 test.
 F8132_GetRandomSeed	F	GetRandomSeed	IBMIO.C:2303	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 returns DOS time DX exactly as seconds in high byte and hundredths in low byte; focused strict C11 test.
 F8133_ReadFloppySector	F	ReadFloppySector	IBMIO.C:2313	include/redmcsb_f8131_system_query_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 body is an explicit no-op; focused strict C11 test.
-F8134_ExecuteProgramWithParameters	F	ExecuteProgramWithParameters	IBMIO.C:2318	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F8134_ExecuteProgramWithParameters	F	ExecuteProgramWithParameters	IBMIO.C:2318	include/redmcsb_f8134_execute_pc34_compat.h	IMPLEMENTED_NARROW	PC 3.4 builds the defined Pascal command-tail prefix and accepts only normal DOS termination; execution and AX status remain a host callback boundary; focused strict C11 test.
 F8137_SetMultiplePixels	F	SetMultiplePixels	NEC816.C:1804	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8139_Unreferenced	F	Unreferenced	VIDEODRV.C:1224	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F8140_ScrollMessageAreaUp	F	ScrollMessageAreaUp	NEC816.C:463	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
