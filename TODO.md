@@ -4687,3 +4687,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   2 and 3. Remaining dungeon/HUD material work must bind only further
   source-proven GDAT category/field queries to runtime consumers; unknown
   IMG3 selector bytes remain no-draw.
+
+- [ ] Nexus Structure3 face rendering capture: bind an original Saturn trace
+  from face rows to transform, winding/culling, normal use, fill-selector
+  texture and palette data, and a concrete draw command. The retained
+  entry-local pair multiplicity is row incidence only until this exists.

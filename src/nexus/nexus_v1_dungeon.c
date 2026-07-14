@@ -535,6 +535,8 @@ static int nexus_v1_level_copy_structure3_payload(
             if (vertex_adjacency_pairs) {
                 int pair;
                 int unique_pair_count = 0;
+                int single_pair_count = 0;
+                int shared_pair_count = 0;
 
                 qsort(vertex_adjacency_pairs,
                       (size_t)vertex_adjacency_pair_count,
@@ -542,12 +544,27 @@ static int nexus_v1_level_copy_structure3_payload(
                 for (pair = 0; pair < vertex_adjacency_pair_count; ++pair) {
                     if (pair == 0 || vertex_adjacency_pairs[pair] !=
                         vertex_adjacency_pairs[pair - 1]) {
+                        int incidence = 1;
+
                         ++unique_pair_count;
+                        while (pair + incidence < vertex_adjacency_pair_count &&
+                               vertex_adjacency_pairs[pair + incidence] ==
+                                   vertex_adjacency_pairs[pair]) {
+                            ++incidence;
+                        }
+                        if (incidence == 1) ++single_pair_count;
+                        else ++shared_pair_count;
+                        if (incidence > faces.maximum_face_vertex_adjacency_pair_incidence) {
+                            faces.maximum_face_vertex_adjacency_pair_incidence =
+                                incidence;
+                        }
                     }
                 }
                 faces.face_vertex_adjacency_pair_count += unique_pair_count;
                 faces.repeated_face_vertex_adjacency_pair_count +=
                     vertex_adjacency_pair_count - unique_pair_count;
+                faces.single_face_vertex_adjacency_pair_count += single_pair_count;
+                faces.shared_face_vertex_adjacency_pair_count += shared_pair_count;
             }
             for (face_index = 0; face_index < (int)vertex_count; ++face_index) {
                 int references = vertex_reference_counts
@@ -637,6 +654,19 @@ static int nexus_v1_level_copy_structure3_payload(
             faces.face_vertex_adjacency_pair_count +
                     faces.repeated_face_vertex_adjacency_pair_count ==
                 faces.face_vertex_cooccurrence_pair_count;
+        faces.face_vertex_adjacency_multiplicity_accounting_valid =
+            faces.face_vertex_adjacency_accounting_valid &&
+            faces.single_face_vertex_adjacency_pair_count +
+                    faces.shared_face_vertex_adjacency_pair_count ==
+                faces.face_vertex_adjacency_pair_count &&
+            faces.repeated_face_vertex_adjacency_pair_count >=
+                faces.shared_face_vertex_adjacency_pair_count &&
+            ((faces.face_vertex_adjacency_pair_count == 0 &&
+              faces.maximum_face_vertex_adjacency_pair_incidence == 0) ||
+             (faces.face_vertex_adjacency_pair_count > 0 &&
+              faces.maximum_face_vertex_adjacency_pair_incidence >= 1 &&
+              faces.maximum_face_vertex_adjacency_pair_incidence <=
+                  faces.face_vertex_cooccurrence_pair_count));
         faces.valid = faces.face_vertex_indexes_valid &&
             faces.face_vertex_linkage_valid &&
             faces.face_topology_accounting_valid &&
@@ -644,6 +674,7 @@ static int nexus_v1_level_copy_structure3_payload(
             faces.face_vertex_component_accounting_valid &&
             faces.face_vertex_component_entry_accounting_valid &&
             faces.face_vertex_adjacency_accounting_valid &&
+            faces.face_vertex_adjacency_multiplicity_accounting_valid &&
             faces.normal_count_matches_face_count &&
             faces.unclassified_fill_count == 0 &&
             faces.face_vertex_reference_count ==

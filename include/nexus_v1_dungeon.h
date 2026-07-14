@@ -753,6 +753,12 @@ typedef struct {
     int face_vertex_cooccurrence_pair_count;
     int face_vertex_adjacency_pair_count;
     int repeated_face_vertex_adjacency_pair_count;
+    /* Pair multiplicity is counted only across bounded face-row occurrences
+     * in the same entry. It does not establish an edge, winding, surface, or
+     * any mesh/draw relation. */
+    int single_face_vertex_adjacency_pair_count;
+    int shared_face_vertex_adjacency_pair_count;
+    int maximum_face_vertex_adjacency_pair_incidence;
     int maximum_vertex_reference_count;
     int textured_face_count;
     int mesh_transparent_face_count;
@@ -767,6 +773,7 @@ typedef struct {
     int face_vertex_component_accounting_valid;
     int face_vertex_component_entry_accounting_valid;
     int face_vertex_adjacency_accounting_valid;
+    int face_vertex_adjacency_multiplicity_accounting_valid;
     int normal_count_matches_face_count;
     int valid;
     int draw_semantics_proven;

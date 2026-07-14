@@ -659,6 +659,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       handoff.structure3_faces
                           .repeated_face_vertex_adjacency_pair_count ==
                   handoff.structure3_faces.face_vertex_cooccurrence_pair_count &&
+              handoff.structure3_faces
+                  .face_vertex_adjacency_multiplicity_accounting_valid &&
+              handoff.structure3_faces.single_face_vertex_adjacency_pair_count +
+                      handoff.structure3_faces.shared_face_vertex_adjacency_pair_count ==
+                  handoff.structure3_faces.face_vertex_adjacency_pair_count &&
+              handoff.structure3_faces.repeated_face_vertex_adjacency_pair_count >=
+                  handoff.structure3_faces.shared_face_vertex_adjacency_pair_count &&
               handoff.structure3_faces.face_vertex_entry_coverage_accounting_valid &&
               handoff.structure3_faces.fully_referenced_vertex_entry_count +
                       handoff.structure3_faces.partially_referenced_vertex_entry_count +
@@ -1885,6 +1892,9 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_vertex_cooccurrence_pair_count == 2 &&
           faces.face_vertex_adjacency_pair_count == 2 &&
           faces.repeated_face_vertex_adjacency_pair_count == 0 &&
+          faces.single_face_vertex_adjacency_pair_count == 2 &&
+          faces.shared_face_vertex_adjacency_pair_count == 0 &&
+          faces.maximum_face_vertex_adjacency_pair_incidence == 1 &&
           faces.maximum_vertex_reference_count == 6 &&
           faces.textured_face_count == 1 && faces.static_texture_fill_count == 4 &&
           faces.face_vertex_indexes_valid && faces.face_vertex_linkage_valid &&
@@ -1893,6 +1903,7 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_vertex_component_accounting_valid &&
           faces.face_vertex_component_entry_accounting_valid &&
           faces.face_vertex_adjacency_accounting_valid &&
+          faces.face_vertex_adjacency_multiplicity_accounting_valid &&
           faces.normal_count_matches_face_count &&
           !faces.draw_semantics_proven,
           "Structure3 face rows retain raw distinct-index topology without authorizing a draw");
@@ -1952,6 +1963,7 @@ static void test_structure3_entry_header_boundaries(void) {
           !faces.face_vertex_component_accounting_valid &&
           !faces.face_vertex_component_entry_accounting_valid &&
           !faces.face_vertex_adjacency_accounting_valid &&
+          !faces.face_vertex_adjacency_multiplicity_accounting_valid &&
           !faces.draw_semantics_proven,
           "out-of-range Structure3 face indexes remain fail-closed");
 
@@ -1966,6 +1978,10 @@ static void test_structure3_entry_header_boundaries(void) {
           faces.face_vertex_adjacency_pair_count == 1 &&
           faces.repeated_face_vertex_adjacency_pair_count == 1 &&
           faces.face_vertex_adjacency_accounting_valid &&
+          faces.face_vertex_adjacency_multiplicity_accounting_valid &&
+          faces.single_face_vertex_adjacency_pair_count == 0 &&
+          faces.shared_face_vertex_adjacency_pair_count == 1 &&
+          faces.maximum_face_vertex_adjacency_pair_incidence == 2 &&
           !faces.draw_semantics_proven,
           "repeated Structure3 index pairs remain bounded no-draw incidence");
 }
