@@ -3848,6 +3848,8 @@ const char *nexus_v1_dgn_renderer_handoff_status_name(
         return "blocked-structure3-face-semantics";
     case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR:
         return "blocked-structure1b-selector";
+    case NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE:
+        return "blocked-canonical-source";
     default: return "unknown";
     }
 }
