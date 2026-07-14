@@ -687,6 +687,12 @@
     a caller-owned CSB asset-presentation callback. Truncated or unsupported
     records are not presented, and the adapter supplies no display layout,
     pixels, palette, or fallback.
+  - 2026-07-14 update: F0690/F0691 now provide the PC 3.4 IMG3 screen path:
+    source-backed compressed records are validated before each decoded row is
+    delivered through the caller-owned F0690-style video sink. Command-6
+    retained pixels, local palette entries, and the original 320-pixel line
+    boundary are preserved; no clipping, generated graphics, or fallback is
+    supplied.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
