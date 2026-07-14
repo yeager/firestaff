@@ -9,13 +9,31 @@
 #define CSB_V1_CONTRACT_C040_HEIGHT_PC34 73
 #define CSB_V1_CONTRACT_C040_TRANSPARENT_PC34 6
 
-int csb_v1_startup_session_terminal_receipt_pc34(
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
-    CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt)
+int csb_v1_startup_session_hud_surface_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {
     const CSB_V1_StartupRuntimeSurface_PC34 *c017;
     const CSB_V1_StartupRuntimeSurface_PC34 *c040;
 
+    if (!session || !session->hud_assets_bound) return 0;
+    c017 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    c040 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    return c017->valid && c017->pixels && c017->source_asset_id == 17 &&
+        c017->width == CSB_V1_CONTRACT_C017_WIDTH_PC34 &&
+        c017->height == CSB_V1_CONTRACT_C017_HEIGHT_PC34 &&
+        c017->transparent_color == -1 && c040->valid && c040->pixels &&
+        c040->source_asset_id == 40 &&
+        c040->width == CSB_V1_CONTRACT_C040_WIDTH_PC34 &&
+        c040->height == CSB_V1_CONTRACT_C040_HEIGHT_PC34 &&
+        c040->transparent_color == CSB_V1_CONTRACT_C040_TRANSPARENT_PC34;
+}
+
+int csb_v1_startup_session_terminal_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt)
+{
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!session || !out_receipt || !session->valid ||
         !session->real_asset_matched || !session->title_presents_ready ||
@@ -26,20 +44,8 @@ int csb_v1_startup_session_terminal_receipt_pc34(
         session->playback.title_phase_mask != 0x0f ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
-        !session->hud_assets_bound || session->generation == 0u) return 0;
-    c017 = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
-    c040 = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
-        c017->width != CSB_V1_CONTRACT_C017_WIDTH_PC34 ||
-        c017->height != CSB_V1_CONTRACT_C017_HEIGHT_PC34 ||
-        c017->transparent_color != -1 || !c040->valid || !c040->pixels ||
-        c040->source_asset_id != 40 ||
-        c040->width != CSB_V1_CONTRACT_C040_WIDTH_PC34 ||
-        c040->height != CSB_V1_CONTRACT_C040_HEIGHT_PC34 ||
-        c040->transparent_color !=
-            CSB_V1_CONTRACT_C040_TRANSPARENT_PC34) return 0;
+        !session->hud_assets_bound || session->generation == 0u ||
+        !csb_v1_startup_session_hud_surface_contract_pc34(session)) return 0;
     out_receipt->valid = 1;
     out_receipt->c001_complete = 1;
     out_receipt->terminal_f0807_complete = 1;
