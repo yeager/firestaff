@@ -605,6 +605,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure3OrdinalCorrelationReceipt correlation;
         Nexus_V1_DgnStructure3ModelFaceSelectorReceipt model_face_selectors;
         Nexus_V1_DgnStructure3AttachmentReceipt attachments;
+        Nexus_V1_Engine active_engine;
+        Nexus_V1_DgnActiveStructure1FFaceMeshReceipt active_face_mesh;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -874,6 +876,32 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               attachments.out_of_range_face_selector_count == 0 &&
               !attachments.normal_plane_transform_or_draw_semantics_proven,
               "hash-verified Structure1A/Structure1F selectors fail closed to bounded face-normal ordinals");
+        memset(&active_engine, 0, sizeof(active_engine));
+        active_engine.level_loaded = 1;
+        active_engine.game.current_level = level;
+        active_engine.current_level = loaded_level;
+        active_engine.current_level_dgn_data = data;
+        active_engine.current_level_dgn_size = (int)size;
+        active_engine.current_level_structure2_source.level_index = level;
+        active_engine.current_level_structure2_source.canonical_hash_verified = 1;
+        active_engine.current_level_structure2_source.materialization_bound = 1;
+        active_engine.current_level_structure2_source.loaded_bytes_bound = 1;
+        active_engine.current_level_structure2_source.loaded_dgn_size = (int)size;
+        active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+            fnv1a64(data, (size_t)size);
+        CHECK(nexus_v1_current_level_structure1f_face_mesh_receipt(
+                  &active_engine, &active_face_mesh) == 1 &&
+              active_face_mesh.valid && active_face_mesh.level_index == level &&
+              active_face_mesh.canonical_lev_source_bound &&
+              active_face_mesh.source_byte_count == (int)size &&
+              active_face_mesh.attachment.complete &&
+              active_face_mesh.attachment.record_to_face_normal_semantics_proven &&
+              !active_face_mesh.attachment
+                   .normal_plane_transform_or_draw_semantics_proven &&
+              active_face_mesh.face_mesh_ordinal_relation_proven &&
+              active_face_mesh.no_draw_only &&
+              !active_face_mesh.fallback_visuals_permitted,
+              "active retail LEV consumes only authenticated Structure1F face/normal ordinals");
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==

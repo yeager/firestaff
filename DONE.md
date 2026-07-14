@@ -16587,3 +16587,13 @@ scripts/capture_theron_mednafen_live_trace.sh`, and
 `tests/test_theron_v1_mednafen_live_capture_script.sh` PASS. The installed
 Mednafen binary has no Firestaff trace instrumentation, so this does not claim
 a positive live capture.
+
+# ✅ 2026-07-15 Nexus active Structure1F face/mesh receipt
+
+`nexus_v1_current_level_structure1f_face_mesh_receipt()` now consumes the
+documented Structure1F -> Structure1A -> Structure3 model/face/normal ordinal
+attachment only from the active, hash-bound retail LEV bytes. The focused
+retail corpus verifies the receipt for every admitted level. It contains no
+transform, material, texture, palette, VDP1, or draw semantics and therefore
+remains no-draw with fallback visuals disabled. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.

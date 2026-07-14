@@ -6235,3 +6235,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   indexed frame passed to the renderer after a successful presentation,
   including the CSB V2 presentation filter when selected. Remaining work is
   a real packaged-app/Mac capture, not another host-side frame substitute.
+
+- 🔧 2026-07-15 Nexus DGN Structure1F active face/mesh route: active,
+  hash-verified retail LEV sources now expose the documented
+  Structure1F -> Structure1A -> Structure3 face/normal ordinal attachment at
+  the engine boundary. The remaining blocker is original Saturn evidence for
+  transforms, materials, texture/palette decoding, VDP1 commands, and draw;
+  this receipt remains strictly no-draw with no fallback visuals.

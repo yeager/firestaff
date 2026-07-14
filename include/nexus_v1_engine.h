@@ -421,6 +421,21 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_ItemIbsRuntimeSourceReceipt;
 
+/* Active canonical LEV consumption of the documented Structure1F →
+ * Structure1A → Structure3 face/normal ordinal relation. This establishes
+ * only bounded source ownership; transform, material, palette, and draw
+ * semantics remain explicitly unavailable. */
+typedef struct {
+    int valid;
+    int level_index;
+    int canonical_lev_source_bound;
+    int source_byte_count;
+    Nexus_V1_DgnStructure3AttachmentReceipt attachment;
+    int face_mesh_ordinal_relation_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveStructure1FFaceMeshReceipt;
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;
@@ -996,6 +1011,9 @@ int nexus_v1_current_level_structure3_face_framing_receipt(
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);
+int nexus_v1_current_level_structure1f_face_mesh_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure1FFaceMeshReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
