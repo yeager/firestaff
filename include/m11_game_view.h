@@ -19,6 +19,7 @@
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
@@ -48,6 +49,7 @@ extern "C" {
 #define M11_DM1_MOUSE_LIST_MOVEMENT DM1_V1_MOUSE_LIST_MOVEMENT_PC34
 #define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
 #define M11_DM1_MOUSE_SPACE_SCREEN DM1_V1_MOUSE_SPACE_SCREEN_PC34
+#define M11_DM1_MOUSE_SPACE_NONE DM1_V1_MOUSE_SPACE_NONE_PC34
 #define M11_GameView_SetV1LeaderHandObject \
     DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat
 #define M11_GameView_ClearV1LeaderHandObject \
@@ -80,6 +82,17 @@ static inline int M11_GameView_GetV1ObjectIconSourceZone(
     *outGraphic = zone.graphic_index;
     *outX = zone.x; *outY = zone.y; *outW = zone.w; *outH = zone.h;
     return 1;
+}
+
+static inline int M11_GameView_GetF0115C2500C2900Row(
+    int relForward, int relSide) {
+    return dm1_viewport_3d_f0115_c2500_c2900_row(relForward, relSide);
+}
+
+static inline int M11_GameView_GetC2500ObjectRawZonePoint(
+    int rowIndex, int relativeCell, int* outX, int* outY) {
+    return dm1_viewport_3d_c2500_object_raw_zone_point(
+        rowIndex, relativeCell, outX, outY);
 }
 
 int M11_GameView_GetV1StatusHandSlotBoxZone(
@@ -1573,6 +1586,18 @@ int M11_GameView_GetWallSetGraphicIndex(int wallSet, int wallSet0GraphicIndex);
 int M11_GameView_GetViewportRect(int* outX, int* outY, int* outW, int* outH);
 int M11_GameView_GetObjectIconIndexForThing(const M11_GameViewState* state,
                                             unsigned short thingId);
+int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+    const M11_GameViewState* state,
+    int* outObjectSpriteCount,
+    int* outObjectIconCount,
+    int* outObjectMarkerCount,
+    int* outGroupSpriteCount,
+    int* outGroupMarkerCount,
+    int* outProjectileSpriteCount,
+    int* outProjectileMaterialCount,
+    int* outProjectileMarkerCount,
+    int* outExplosionSpriteCount,
+    int* outExplosionMarkerCount);
 int M11_GameView_GetC3200CreatureZonePoint(int coordSet,
                                            int depthIndex,
                                            int visibleCount,
@@ -1861,6 +1886,17 @@ int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
 int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state);
 void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state);
 unsigned short DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(const M11_GameViewState* state);
+
+static inline int M11_GameView_GetV1LeaderHandObjectIconIndex(
+    const M11_GameViewState* state) {
+    return DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(state);
+}
+
+static inline int M11_GameView_GetV1LeaderHandObjectName(
+    const M11_GameViewState* state, char* out, int outSize) {
+    return DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
+        state, out, outSize);
+}
 
 static inline int M11_GameView_DecodeV1InventoryActionHandScrollText(
     const M11_GameViewState* state, char* out, int outSize) {
