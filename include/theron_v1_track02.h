@@ -2583,11 +2583,14 @@ theron_v1_track02_compare_nonstartup_level_layout_variants(
  *
  * This is the narrowest promoted Track 02 startup path: it first composes the
  * semantic startup handoff above, then loads only that handoff's
- * hash/anchor-gated initial 32x27 candidate through theron_v1_level_load().
+ * hash/anchor-gated Hall of Records level-0 32x27 candidate through
+ * theron_v1_level_load().
  * The caller gets both the semantic handoff (seed table + user-data offsets)
  * and the level-load handoff (header + map loader status).  It does not scan
  * descriptor DATA windows as levels and it does not claim broader dungeon,
- * object, menu-art, font, palette, or audio semantics.
+ * object, menu-art, font, palette, or audio semantics.  Other dungeon ids
+ * and nonzero level indexes are rejected: the same envelope cannot stand in
+ * for an uncorrelated later Track 02 record.
  */
 Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     const uint8_t *track02_data,

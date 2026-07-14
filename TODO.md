@@ -5,6 +5,15 @@
   names; no horizontal readback-flip contract exists to port without
   speculation. F8143's distinct C25 readback body is implemented below.
 
+- 2026-07-14 Theron Track 02 dungeon/object follow-up: the authenticated US
+  Track 02 loader handoff now preserves the INDEX 01-relative record identity
+  and consumes the corresponding verified raw-media payload transactionally.
+  The only source-locked semantic route is Hall of Records level 0. Later
+  dungeon records and the bytes after its level envelope remain opaque:
+  object-table layout, object semantics, and a positive live transition still
+  require independently authenticated loader captures. No fallback world,
+  object, visual, or inferred layout is permitted.
+
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
   V2.1 session, using the configured screenshot directory (or the default).

@@ -47,9 +47,20 @@ static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t byte_count)
 }
 
 static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
-                            const char *md5, const uint8_t *raw)
+                            const char *md5, const uint8_t *raw,
+                            size_t raw_size)
 {
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    size_t raw_offset;
+
     memset(out, 0, sizeof(*out));
+    if (theron_v1_track02_capture_initial_level_object_boundary(
+            raw, raw_size, md5, &boundary) != THERON_TRACK02_SIGNAL_OK ||
+        !boundary.valid || boundary.track02_record != 0x0b52u) {
+        return;
+    }
+    raw_offset = boundary.level_first_raw_sector *
+        THERON_TRACK02_RAW_SECTOR_BYTES + THERON_TRACK02_RAW_USER_DATA_OFFSET;
     out->valid = 1;
     out->variant = THERON_TRACK02_VARIANT_US_BIN;
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", md5);
@@ -65,14 +76,12 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     out->later_local_destination = 0x3800u;
     out->later_destination_span_bytes = 32u;
     out->later_destination_span_checksum = fnv1a_bytes(
-        raw + 0x0b52u * THERON_TRACK02_RAW_SECTOR_BYTES +
-        THERON_TRACK02_RAW_USER_DATA_OFFSET, 32u);
+        raw + raw_offset, 32u);
     out->later_destination_local_ram_verified = 1;
     out->later_destination_media_span_verified = 1;
     out->later_destination_payload_bytes = THERON_TRACK02_RAW_USER_DATA_BYTES;
     out->later_destination_payload_checksum = fnv1a_bytes(
-        raw + 0x0b52u * THERON_TRACK02_RAW_SECTOR_BYTES +
-        THERON_TRACK02_RAW_USER_DATA_OFFSET,
+        raw + raw_offset,
         THERON_TRACK02_RAW_USER_DATA_BYTES);
     out->later_destination_payload_verified = 1;
     out->later_post_return_resume_pc = 0xea03u;
@@ -111,7 +120,7 @@ int main(void)
         return 1;
     }
 
-    fixture_receipt(&coalesced, md5, raw);
+    fixture_receipt(&coalesced, md5, raw, raw_size);
     if (!theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff) || !handoff.valid ||
         handoff.observed_track02_record != 0x0b52u ||
@@ -180,7 +189,7 @@ int main(void)
         payload_receipt.record != handoff.observed_track02_record ||
         payload_receipt.payload_checksum != handoff.complete_payload_checksum ||
         payload_receipt.raw_track02_offset !=
-            (uint64_t)handoff.observed_track02_record *
+            (uint64_t)handoff.initial_level_boundary.level_first_raw_sector *
                 THERON_TRACK02_RAW_SECTOR_BYTES +
                 THERON_TRACK02_RAW_USER_DATA_OFFSET) {
         free(raw);

@@ -169,6 +169,13 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
         return 0;
     }
+    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 initial loader route only proves Hall of Records level 0; selected stage has no source-locked record");
+        }
+        return 0;
+    }
     /* This helper owns the source-checked semantic record route, and is also
      * used by all-dungeon receipt collection. The live Soul Room forcefield
      * admission separately requires the complete Stage 2/3 loader handoff
@@ -448,7 +455,9 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             handoff->loader_intake.observed_payload_checksum) {
         return 0;
     }
-    raw_offset = (size_t)handoff->loader_payload.record *
+    /* The loader record is INDEX 01-relative; the bound boundary retains
+     * the physical raw-BIN sector selected by the authenticated IPL. */
+    raw_offset = handoff->initial_level_boundary.level_first_raw_sector *
             THERON_TRACK02_RAW_SECTOR_BYTES +
         THERON_TRACK02_RAW_USER_DATA_OFFSET;
     if (raw_offset > hucard_rom_size ||
@@ -1263,6 +1272,9 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         return 0;
     }
 
+    theron_v1_track02_object_table_route_receipt_init(&object_table_route);
+    theron_v1_track02_level_route_receipt_init(&level_route);
+
     if (theron_v1_track02_capture_object_table_route_receipt(
             hucard_rom,
             hucard_rom_size,
@@ -1327,7 +1339,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
     }
 
     for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
-         dungeon_id <= THERON_DUNGEON_COUNT;
+         dungeon_id <= THERON_DUNGEON_1_HALL_OF_RECORDS;
          dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
         Theron_V1_World world;
         char receipt[320];
@@ -1356,18 +1368,24 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         level_ok =
             theron_v1_startup_runtime_level_semantics_exact(&world,
                                                             dungeon_id);
-        object_ok =
+        /* The initial loader record proves a level envelope only.  A zero
+         * projected object count is not proof that the opaque tail contains
+         * no objects, so never promote it to an object route. */
+        object_ok = object_table_route.object_table_decode_ready &&
             theron_v1_startup_runtime_object_semantics_exact(&world,
                                                              dungeon_id);
-        if (!level_ok || !object_ok) {
+        if (!level_ok) {
             return 0;
         }
         out_receipt->level_banks[(int)dungeon_id - 1] =
             world.runtime_media.level_bank;
         out_receipt->object_counts[(int)dungeon_id - 1] = world.object_count;
-        ++out_receipt->object_capture_count;
-        out_receipt->object_capture_mask |= 1u << ((unsigned)dungeon_id - 1u);
-        out_receipt->object_count_total += world.object_count;
+        if (object_ok) {
+            ++out_receipt->object_capture_count;
+            out_receipt->object_capture_mask |=
+                1u << ((unsigned)dungeon_id - 1u);
+            out_receipt->object_count_total += world.object_count;
+        }
         out_receipt->dungeon_mask |= 1u << ((unsigned)dungeon_id - 1u);
         ++out_receipt->capture_count;
         ++out_receipt->semantic_level_count;
@@ -1399,7 +1417,10 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         out_receipt->exact_object_semantics_ready;
     out_receipt->route_hash = hash;
     out_receipt->object_route_hash = object_hash;
-    out_receipt->valid = out_receipt->real_data_capture_ready;
+    /* A source receipt remains useful when only its one proven level is
+     * present: callers consume its no-fallback evidence while the remaining
+     * dungeon/object records stay unavailable. */
+    out_receipt->valid = out_receipt->capture_count != 0;
     return out_receipt->valid;
 }
 

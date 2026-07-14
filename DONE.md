@@ -37,6 +37,12 @@
   source-order free-cell repair. The boundary fails closed without its random
   and modifier dependencies; full original-media save interop remains open.
 
+- 2026-07-14 Theron Track 02 authenticated Hall of Records handoff: repaired
+  INDEX 01 record-to-raw-media consumption, alias-safe transactional manifest
+  binding, and the runtime payload receipt. The source-locked US Track 02 raw
+  probe and startup save/resume suite pass. The route deliberately admits only
+  Hall of Records level 0 and does not promote any object-tail semantics.
+
 - 2026-07-14 CSB ReDMCSB F7088 portrait transfer: added the source-proven
   PC34 `PORTRAITS_INCLUDED` to `PORTRAITS_EXCLUDED` path for exactly four
   464-byte portrait spans, followed by F7066 slot rebinding. Format/count

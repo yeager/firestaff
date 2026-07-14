@@ -4758,16 +4758,14 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     &media_receipt,
                     &receipt) &&
                     receipt.valid &&
-                    receipt.real_data_capture_ready &&
-                    receipt.capture_count == THERON_DUNGEON_COUNT &&
-                    receipt.semantic_level_count == THERON_DUNGEON_COUNT &&
-                    receipt.dungeon_mask ==
-                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
-                    receipt.exact_level_semantics_ready &&
-                    receipt.exact_object_semantics_ready &&
-                    receipt.object_capture_count == THERON_DUNGEON_COUNT &&
-                    receipt.object_capture_mask ==
-                        ((1u << THERON_DUNGEON_COUNT) - 1u) &&
+                    !receipt.real_data_capture_ready &&
+                    receipt.capture_count == 1 &&
+                    receipt.semantic_level_count == 1 &&
+                    receipt.dungeon_mask == 0x01u &&
+                    !receipt.exact_level_semantics_ready &&
+                    !receipt.exact_object_semantics_ready &&
+                    receipt.object_capture_count == 0 &&
+                    receipt.object_capture_mask == 0u &&
                     receipt.object_count_total == 0 &&
                     (receipt.no_fallback_semantic_role_mask &
                      (1u << THERON_TRACK02_SEMANTIC_DUNGEON_SEED_TABLE)) &&
@@ -4801,7 +4799,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     receipt.level_route_hash != 0u &&
                     receipt.object_route_hash != 0u &&
                     receipt.route_hash != 0u,
-                "Theron Track02 all seven dungeon selections have inspectable real-data level/object capture");
+                "Theron Track02 receipt retains only the source-locked Hall of Records level and blocks unproved dungeon/object routes");
     expect_true(theron_v1_track02_capture_object_table_route_receipt(
                     track02,
                     track02_size,
@@ -5120,7 +5118,11 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     &state_receipt,
                     runtime_receipt,
                     sizeof(runtime_receipt)) &&
-                    runtime_result.all_dungeon_real_data_capture_ready &&
+                    !runtime_result.all_dungeon_real_data_capture_ready &&
+                    runtime_result.all_dungeon_capture_count == 1 &&
+                    runtime_result.all_dungeon_capture_mask == 0x01u &&
+                    !runtime_result.exact_level_semantics_ready &&
+                    !runtime_result.exact_object_semantics_ready &&
                     runtime_result.object_table_no_fallback_ready &&
                     runtime_result.object_table_blocked_anchor_mask == 0x07u &&
                     runtime_result.fallback_visuals_blocked &&
@@ -5284,22 +5286,37 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     "Theron all-dungeon receipt records empty startup object route exactly");
         theron_v1_world_init(&selected_world);
         memset(runtime_receipt, 0, sizeof(runtime_receipt));
-        expect_true(theron_v1_startup_runtime_load_initial_level(
-                        &selected_world,
-                        track02,
-                        track02_size,
-                        THERON_TRACK02_MD5_US_BIN,
-                        dungeon_id,
-                        runtime_receipt,
-                        sizeof(runtime_receipt)) &&
-                        selected_world.current_dungeon == (int)dungeon_id &&
-                        selected_world.level_loaded[(int)dungeon_id - 1][0] &&
-                        selected_world.object_count ==
-                            selected_world.levels[(int)dungeon_id - 1][0]
-                                .thing_count &&
-                        strstr(runtime_receipt,
-                               "Track 02 semantic initial level") != NULL,
-                    "Theron selected dungeon loads through selected Track02 semantic route");
+        if (dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS) {
+            expect_true(theron_v1_startup_runtime_load_initial_level(
+                            &selected_world,
+                            track02,
+                            track02_size,
+                            THERON_TRACK02_MD5_US_BIN,
+                            dungeon_id,
+                            runtime_receipt,
+                            sizeof(runtime_receipt)) &&
+                            selected_world.current_dungeon == (int)dungeon_id &&
+                            selected_world.level_loaded[(int)dungeon_id - 1][0] &&
+                            selected_world.object_count ==
+                                selected_world.levels[(int)dungeon_id - 1][0]
+                                    .thing_count &&
+                            strstr(runtime_receipt,
+                                   "Track 02 semantic initial level") != NULL,
+                        "Theron Hall of Records loads through the source-locked Track02 semantic route");
+        } else {
+            expect_true(!theron_v1_startup_runtime_load_initial_level(
+                            &selected_world,
+                            track02,
+                            track02_size,
+                            THERON_TRACK02_MD5_US_BIN,
+                            dungeon_id,
+                            runtime_receipt,
+                            sizeof(runtime_receipt)) &&
+                            !selected_world.level_loaded[(int)dungeon_id - 1][0] &&
+                            strstr(runtime_receipt,
+                                   "only proves Hall of Records") != NULL,
+                        "Theron never relabels the Hall of Records record as an unproved later dungeon");
+        }
     }
 
     free(track02);
