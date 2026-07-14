@@ -169,6 +169,10 @@
     consumer. D3C remains unavailable because the active GRAPHICSSET exposes
     no source wall field for it; no fallback surface is drawn. Dynamic light
     and non-wall/floor terrain remain open.
+  - 2026-07-14 update: M11 now also consumes the live
+    `INTERFACE_GENERAL/0/dt07/0x02` action-palette identity alongside the
+    interface palette. Remaining work is the source-owned dynamic light
+    input, not a substitute HUD palette.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
   `test_dm2_v1_save_load` external-corpus census accepts only

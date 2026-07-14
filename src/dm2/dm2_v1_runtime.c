@@ -3184,6 +3184,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.gdat_scene_control_hash;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
+    g_dm2_last_m11_frame.interface_action_palette_hash =
+        g_dm2_frame_ownership.gdat_interface_action_palette_hash;
+    g_dm2_last_m11_frame.interface_action_palette_consumed =
+        g_dm2_frame_ownership.gdat_interface_action_palette_consumed > 0;
     g_dm2_last_m11_frame.floor_ceiling_material_required_mask =
         g_dm2_frame_ownership.floor_ceiling_material_required_mask;
     g_dm2_last_m11_frame.floor_ceiling_material_consumed_mask =
@@ -3198,7 +3202,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.floor_ceiling_materials_complete &&
         g_dm2_last_m11_frame.map_load_token != 0u &&
         g_dm2_last_m11_frame.scene_control_hash != 0u &&
-        g_dm2_last_m11_frame.palette_hash != 0u;
+        g_dm2_last_m11_frame.palette_hash != 0u &&
+        (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
+         (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
+          g_dm2_last_m11_frame.interface_action_palette_consumed));
     g_dm2_last_m11_frame.m11_consume_frame =
         g_dm2_last_m11_frame.valid;
     rt->weather.weather_seed = viewport.random_seed;

@@ -1609,6 +1609,70 @@ static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
     return hash ? hash : 1u;
 }
 
+/* SkWinCore::EXTENDED_LOAD_SPELLS_DEFINITION scans the 254 custom SPELL_DEF
+ * slots, admits a slot only when rune 1 is nonzero, and then reads words
+ * 2..7 plus dtText/0x18. Keep the raw GDAT result inside boot receipt flow;
+ * no Firestaff-local spell table is allowed to stand in for these records. */
+static int dm2_v1_boot_extended_spells_definition_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_ExtendedSpellsDefinitionReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    uint32_t hash = 0x4553504cu;
+    uint32_t count = 0u;
+    uint32_t index;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!profile || !profile->graphics_dat || !out_receipt) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    for (index = 0u; index < 254u; ++index) {
+        uint16_t words[7];
+        const uint8_t *name;
+        size_t name_size = 0u;
+        uint32_t field;
+
+        if (!dm2_v1_asset_load_word_value(
+                &gfx->loader, DM2_GDAT_CATEGORY_SPELL_DEF,
+                (int)index, 1, &words[0]) || words[0] == 0u) {
+            continue;
+        }
+        for (field = 2u; field <= 7u; ++field) {
+            if (!dm2_v1_asset_load_word_value(
+                    &gfx->loader, DM2_GDAT_CATEGORY_SPELL_DEF,
+                    (int)index, (int)field, &words[field - 1u])) {
+                return 0;
+            }
+        }
+        name = dm2_v1_asset_load_text_sized(
+            &gfx->loader, DM2_GDAT_CATEGORY_SPELL_DEF, (int)index,
+            0x18, &name_size);
+        if (!name || name_size == 0u) {
+            return 0;
+        }
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, index);
+        for (field = 0u; field < 7u; ++field) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, words[field]);
+        }
+        for (field = 0u; field < name_size; ++field) {
+            hash = dm2_v1_boot_packaged_capture_hash_step(hash, name[field]);
+        }
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+                                                       (uint32_t)name_size);
+        ++count;
+    }
+    if (count == 0u) {
+        return 1;
+    }
+    out_receipt->loaded = 1;
+    out_receipt->spell_count = count;
+    out_receipt->gdat_hash = hash;
+    return 1;
+}
+
 void dm2_v1_boot_startup_packaged_capture_proof_init(
     DM2_V1_BootStartupPackagedCaptureProof *proof)
 {
@@ -1676,6 +1740,12 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
         receipt->startup_menu_assets_ready &&
         receipt->hud_overlay_suppressed &&
         receipt->hud_runtime_ready;
+    if (snapshot->profile &&
+        !dm2_v1_boot_extended_spells_definition_receipt(
+            (DM2_V1_BootProfile *)snapshot->profile,
+            &receipt->extended_spells)) {
+        return 0;
+    }
     if (snapshot && snapshot->profile &&
         dm2_v1_boot_gdat_raw_asset_proof(
             (DM2_V1_BootProfile *)snapshot->profile,
@@ -1848,6 +1918,7 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
         full_start->hud_raw_gdat_core_hash;
     out_proof->hud_raw_gdat_core_byte_count =
         full_start->hud_raw_gdat_core_byte_count;
+    out_proof->extended_spells = host_view->extended_spells;
     out_proof->first_hud_frame_ready = host_view->first_hud_frame_ready;
     out_proof->status_scope = host_view->status_scope;
     out_proof->status = host_view->status;
@@ -1947,6 +2018,12 @@ int dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
         out_proof->hud_raw_gdat_portrait_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(hash,
         out_proof->hud_raw_gdat_core_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        (uint32_t)out_proof->extended_spells.loaded);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        out_proof->extended_spells.spell_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(hash,
+        out_proof->extended_spells.gdat_hash);
     out_proof->packaged_capture_hash = hash;
     out_proof->valid =
         out_proof->host_view_valid &&
@@ -2083,6 +2160,7 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
         capture_proof.hud_raw_gdat_core_hash;
     out_receipt->hud_raw_gdat_core_byte_count =
         capture_proof.hud_raw_gdat_core_byte_count;
+    out_receipt->extended_spells = capture_proof.extended_spells;
     out_receipt->status_scope = capture_proof.status_scope;
     out_receipt->status = capture_proof.status;
 
@@ -2128,6 +2206,12 @@ int dm2_v1_boot_startup_packaged_full_start_receipt_from_host_view(
         hash, out_receipt->hud_raw_gdat_portrait_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->hud_raw_gdat_core_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->extended_spells.loaded);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->extended_spells.spell_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->extended_spells.gdat_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->first_hud_frame_ready);
     hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -2228,6 +2312,7 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
     receipt->runtime_menu_ready = full_start->runtime_menu_ready;
     receipt->runtime_action_ready = full_start->runtime_action_ready;
     receipt->first_hud_frame_ready = full_start->first_hud_frame_ready;
+    receipt->extended_spells = full_start->extended_spells;
     receipt->startup_hud_handoff_ready =
         receipt->draw_startup_menu &&
         receipt->hud_overlay_suppressed &&
@@ -2589,6 +2674,7 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
         package->menu_decoded_gdat_hash;
     out_receipt->startup_menu_decoded_gdat_pixel_count =
         package->menu_decoded_gdat_pixel_count;
+    out_receipt->extended_spells = package->extended_spells;
     out_receipt->startup_draw_ready = draw_ready;
     out_receipt->startup_draw_command_count = package->command_count;
     out_receipt->startup_draw_menu_capture_ready =
@@ -2812,6 +2898,7 @@ int dm2_v1_boot_startup_host_frame_receipt_from_consumer(
         consumer->startup_menu_decoded_gdat_hash;
     out_receipt->startup_menu_decoded_gdat_pixel_count =
         consumer->startup_menu_decoded_gdat_pixel_count;
+    out_receipt->extended_spells = consumer->extended_spells;
     out_receipt->runtime_menu_ready = consumer->runtime_menu_ready;
     out_receipt->runtime_action_ready = consumer->runtime_action_ready;
     out_receipt->first_hud_frame_ready = consumer->first_hud_frame_ready;
@@ -2948,6 +3035,11 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         host_frame.startup_menu_decoded_gdat_hash;
     out_receipt->startup_menu_decoded_gdat_pixel_count =
         host_frame.startup_menu_decoded_gdat_pixel_count;
+    out_receipt->extended_spells = host_frame.extended_spells;
+    out_receipt->extended_spells_definition_consumed =
+        !out_receipt->extended_spells.loaded ||
+        (out_receipt->extended_spells.spell_count > 0u &&
+         out_receipt->extended_spells.gdat_hash != 0u);
     out_receipt->present_first_hud_frame =
         host_frame.present_first_hud_frame;
     out_receipt->schedule_next_title_tick =
@@ -3071,6 +3163,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->title_timing_receipt_consumed &&
         out_receipt->real_gdat_title_asset_receipt_breadth &&
         out_receipt->menu_hud_startup_receipt_breadth &&
+        out_receipt->extended_spells_definition_consumed &&
         !out_receipt->fallback_title_blit_used;
     out_receipt->final_m11_draw_caller_consumes_ownership =
         out_receipt->final_m11_draw_caller_ready;
@@ -3084,6 +3177,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->packaged_draw_commands_consumed &&
         out_receipt->title_gdat_command_count == 1 &&
         out_receipt->suppress_game_hud &&
+        out_receipt->extended_spells_definition_consumed &&
         (!package.full_start_real_asset_ready ||
          (out_receipt->startup_hud_raw_gdat_receipt_consumed &&
           out_receipt->startup_title_menu_raw_gdat_receipt_consumed &&
@@ -6780,6 +6874,12 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;
+        out_receipt->runtime_m11_frame_interface_action_palette_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_action_palette_hash : 0u;
+        out_receipt->runtime_m11_frame_interface_action_palette_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_action_palette_consumed : 0;
     }
     return rendered == 0;
 }

@@ -289,6 +289,8 @@ typedef struct {
     uint32_t runtime_m11_frame_map_load_token;
     uint32_t runtime_m11_frame_scene_control_hash;
     uint32_t runtime_m11_frame_palette_hash;
+    uint32_t runtime_m11_frame_interface_action_palette_hash;
+    int runtime_m11_frame_interface_action_palette_consumed;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -463,6 +465,16 @@ typedef struct {
     uint32_t atlas_material_hash;
 } DM2_V1_BootCreatureAtlasCaptureReceipt;
 
+/* skproject SkWinCore::EXTENDED_LOAD_SPELLS_DEFINITION reads the custom
+ * spell family from SPELL_DEF/index/dtWordValue fields 1..7. This is a
+ * boot-owned receipt, not a parallel spell table: its hash proves the exact
+ * original records carried through host and M11 boundaries. */
+typedef struct {
+    int loaded;
+    uint32_t spell_count;
+    uint32_t gdat_hash;
+} DM2_V1_ExtendedSpellsDefinitionReceipt;
+
 typedef struct {
     int valid;
     int startup_menu_active;
@@ -519,6 +531,7 @@ typedef struct {
     int first_hud_frame_ready;
     int full_start_graphics_ready;
     int full_start_real_asset_ready;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
 } DM2_V1_BootStartupFullStartReceipt;
 
 typedef struct {
@@ -582,6 +595,7 @@ typedef struct {
     uint32_t hud_raw_gdat_core_hash;
     uint32_t hud_raw_gdat_core_byte_count;
     int first_hud_frame_ready;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
     const char *status_scope;
     const char *status;
 } DM2_V1_BootStartupPackagedCaptureProof;
@@ -652,6 +666,7 @@ typedef struct {
     uint32_t hud_raw_gdat_portrait_byte_count;
     uint32_t hud_raw_gdat_core_hash;
     uint32_t hud_raw_gdat_core_byte_count;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
     const char *status_scope;
     const char *status;
     DM2_V1_BootStartupFullStartReceipt full_start;
@@ -710,6 +725,7 @@ typedef struct {
     int title_next_frame_tick;
     int title_frame_elapsed_ticks;
     int title_frame_remaining_ticks;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
     const char *phase;
     const char *animation;
     const char *status_scope;
@@ -752,6 +768,7 @@ typedef struct {
     uint32_t startup_title_decoded_gdat_pixel_count;
     uint32_t startup_menu_decoded_gdat_hash;
     uint32_t startup_menu_decoded_gdat_pixel_count;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
     int runtime_menu_ready;
     int runtime_action_ready;
     int first_hud_frame_ready;
@@ -798,6 +815,8 @@ typedef struct {
     uint32_t startup_title_decoded_gdat_pixel_count;
     uint32_t startup_menu_decoded_gdat_hash;
     uint32_t startup_menu_decoded_gdat_pixel_count;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
+    int extended_spells_definition_consumed;
     int suppress_game_hud;
     int present_first_hud_frame;
     int schedule_next_title_tick;
@@ -1059,6 +1078,7 @@ typedef struct {
     uint32_t extended_spell_gdat_defined_count;
     uint32_t extended_spell_gdat_word_hash;
     int m11_host_view_ready;
+    DM2_V1_ExtendedSpellsDefinitionReceipt extended_spells;
     const char *status_scope;
     const char *status;
     const char *log_line;

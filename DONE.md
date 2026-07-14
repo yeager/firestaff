@@ -15496,6 +15496,28 @@ without its own source receipt; no G1/DB meaning was inferred. Verification:
 external Ninja target `test_dm2_v1_gdat_hud_m11_command_real_data` and CTest
 `dm2_v1_gdat_hud_m11_command_real_data` pass against local canonical media.
 
+# ✅ 2026-07-14 DM2 GDAT HUD action-palette M11 identity
+
+The M11 dungeon presentation gate now carries and compares the live
+`INTERFACE_GENERAL/0/dt07/0x02` action-palette transform in addition to the
+base interface palette. A stale transform hash or an unconsumed transform
+blocks the frame, so skproject `DISPLAY_VIEWPORT` HUD text cannot be presented
+against a different action-table result. Verification: the focused M11 frame
+receipt tests cover acceptance plus stale-hash and unconsumed-transform
+rejection. No palette or action table is synthesized.
+
+# ✅ 2026-07-14 DM2 extended spell-definition receipt
+
+DM2 boot now scans only source-owned `SPELL_DEF/index/dtWordValue` fields
+1 through 7 and the matching `dtText/0x18` name used by skproject
+`SkWinCore::EXTENDED_LOAD_SPELLS_DEFINITION`. The count and hash travel
+unchanged through host view, packaged startup, consumer, host frame, render
+ownership, and the M11 startup boundary; partial definitions fail closed.
+The real-data test independently scans the same original GDAT fields and
+compares the receipt at every boundary. The local canonical PC corpus has no
+extended spell definitions, so the test reports an honest non-promoting skip
+instead of generating substitute spells.
+
 # ✅ 2026-07-14 DM2 GDAT HUD portrait destination receipt
 
 The four `CHAMPIONS` M11 commands now retain their exact source-owned
