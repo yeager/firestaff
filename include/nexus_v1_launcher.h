@@ -60,6 +60,16 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
     const Nexus_V1_DgnStructure3CaptureImport *capture,
     Nexus_V1_DgnStructure3CaptureHostReceipt *out_receipt);
 
+/* Reads a six-lane external capture through the strict raw importer, then
+ * consumes it only against the launcher's currently owned canonical DGN
+ * bytes. The resulting engine source remains no-draw. Call release on the
+ * receipt when its reader-owned spans are no longer needed. */
+int nexus_v1_launcher_startup_structure3_raw_capture_intake(
+    const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt *out_receipt);
+
 typedef struct {
     int title_surface_loaded;
     int warning_surface_loaded;

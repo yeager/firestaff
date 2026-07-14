@@ -52,6 +52,13 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- 2026-07-14 Nexus Structure3 launcher raw-capture route: the launcher can
+  now feed the strict six-lane reader directly into its currently owned,
+  hash-verified canonical DGN bytes and then into engine-owned no-draw
+  storage. It rejects absent launcher/level/source state before reading a
+  capture. This is evidence transport only and assigns no VDP1, palette,
+  pixel, transform, or drawing semantics.
+
 - 2026-07-14 DM1/CSB ReDMCSB F8134: source-locked IBMIO.C DOS EXEC command
   tail and normal-termination result. The focused strict-C11 test leaves
   program execution and DOS exit-status provenance as caller-owned boundaries.

@@ -146,6 +146,45 @@ int nexus_v1_launcher_startup_structure3_capture_intake(
     return result;
 }
 
+int nexus_v1_launcher_startup_structure3_raw_capture_intake(
+    const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure2SourceReceipt source;
+    int source_verified;
+    int result;
+
+    if (!out_receipt) return -1;
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(out_receipt);
+    if (!s_initialized || !s_engine.level_loaded || !paths || !attestation)
+        return 0;
+    memset(&source, 0, sizeof(source));
+    (void)nexus_v1_current_level_structure2_source_receipt(&s_engine, &source);
+    source_verified = source.canonical_hash_verified &&
+        source.materialization_bound &&
+        source.level_index == s_engine.game.current_level &&
+        source.loaded_bytes_bound &&
+        source.loaded_dgn_size == s_engine.current_level_dgn_size &&
+        source.loaded_dgn_fnv1a64 != 0U &&
+        source.loaded_dgn_fnv1a64 == nexus_v1_launcher_dgn_bytes_fnv1a64(
+            s_engine.current_level_dgn_data, s_engine.current_level_dgn_size);
+    if (!source_verified || !s_engine.current_level_dgn_data ||
+        s_engine.current_level_dgn_size <= 0) return 0;
+    result = nexus_v1_dgn_structure3_raw_capture_host_intake(
+        &s_engine.current_level, s_engine.current_level_dgn_data,
+        s_engine.current_level_dgn_size, source_verified, manifest_text,
+        manifest_size, paths, attestation, out_receipt);
+    if (result > 0) {
+        result = nexus_v1_engine_consume_structure3_capture(
+            &s_engine, &out_receipt->host.manifest.candidate,
+            &out_receipt->host.import_receipt.binding,
+            &out_receipt->raw_reader.import_packet);
+    }
+    return result;
+}
+
 void nexus_v1_launcher_boot_receipt_clear(
     Nexus_V1_LauncherBootReceipt *receipt)
 {
