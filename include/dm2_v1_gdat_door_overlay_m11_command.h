@@ -30,6 +30,11 @@ typedef struct {
     uint8_t door_opening_dir;
     uint8_t door_state;
     uint8_t door_open_pct;
+    /* skproject DRAW_DOOR's selected image and initial stretch/light
+     * controls. These are source routing data, not synthesized shading. */
+    uint8_t draw_distance;
+    uint8_t stretch_dual;
+    uint8_t light_palette;
     uint16_t color_key;
     uint16_t no_frames;
     uint8_t palette16[16];

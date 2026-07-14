@@ -53,9 +53,11 @@ int main(void)
     DM2_V1_DoorRenderPlan door_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan changed_plan;
+    DM2_V1_GdatDoorOverlayM11CommandPlan d2_plan;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     uint16_t source_color_key = 0u;
     uint16_t source_no_frames = 0u;
+    const DM2_V1_GdatDoorOverlayM11Command *d2_panel = NULL;
     int ornate = -1;
     int fallback_fetches = 0;
 
@@ -71,6 +73,7 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     memset(&material_plan, 0, sizeof(material_plan));
     memset(&changed_plan, 0, sizeof(changed_plan));
+    memset(&d2_plan, 0, sizeof(d2_plan));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) goto fail;
     for (int i = 1; i < dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_DOOR_GFX); ++i) {
         uint8_t palette[16]; uint32_t hash = 0; int w = 0, h = 0;
@@ -113,6 +116,9 @@ int main(void)
         material_plan.commands[0].door_opening_dir != 1 ||
         material_plan.commands[0].door_state != 2 ||
         material_plan.commands[0].door_open_pct != 50 ||
+        material_plan.commands[0].draw_distance != 0u ||
+        material_plan.commands[0].stretch_dual != 0x40u ||
+        material_plan.commands[0].light_palette != 0u ||
         !material_plan.commands[0].decoded_hash ||
         !material_plan.commands[0].selection_hash ||
         !dm2_v1_asset_load_word_value(
@@ -130,6 +136,38 @@ int main(void)
             material_plan.commands[0].selection_hash) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
     door_plan.doors[0].door_open_pct = 50;
+    /* DRAW_DOOR's D2 center cell is 6 with Y distance 2, which selects
+     * the second DOORS image (field 1) without synthetic scale or palette. */
+    door_plan.doors[0].view_square = DM2_SQ_D2C;
+    door_plan.doors[0].panel_gdat_index =
+        dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D2C);
+    door_plan.doors[0].ornate_gdat_index = 0;
+    door_plan.doors[0].frame_gdat_index =
+        dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D2C);
+    door_plan.doors[0].button_source_kind = 0;
+    door_plan.doors[0].button_gdat_index = 0;
+    if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan,
+                                                          &d2_plan) ||
+        !d2_plan.valid || !d2_plan.command_count) goto fail;
+    for (int i = 0; i < d2_plan.command_count; ++i) {
+        if (d2_plan.commands[i].kind == DM2_V1_GDAT_DOOR_PANEL) {
+            d2_panel = &d2_plan.commands[i];
+            break;
+        }
+    }
+    if (!d2_panel || d2_panel->field != 1u ||
+        d2_panel->draw_distance != 2u || d2_panel->stretch_dual != 0x40u ||
+        d2_panel->light_palette != 0u || !d2_panel->raw_hash ||
+        !d2_panel->decoded_hash || !d2_panel->palette_hash) goto fail;
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&d2_plan);
+    door_plan.doors[0].view_square = DM2_SQ_D0C;
+    door_plan.doors[0].ornate_gdat_index =
+        dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
+    door_plan.doors[0].frame_gdat_index =
+        dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
+    door_plan.doors[0].button_source_kind = 1;
+    door_plan.doors[0].button_gdat_index =
+        dm2_v1_viewport_door_button_graphic_index_for_state(0);
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
@@ -152,10 +190,12 @@ int main(void)
            material_plan.command_hash, (unsigned)material_plan.command_count);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
 done:
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&d2_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
     dm2_v1_asset_loader_free(&loader); free(graphics); return 0;
 fail:
     fputs("FAIL: canonical GDAT door overlay plan was not source-owned\n", stderr);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&d2_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&changed_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
     dm2_v1_asset_loader_free(&loader); free(graphics); return 1;
