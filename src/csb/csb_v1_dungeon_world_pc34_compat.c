@@ -23,6 +23,22 @@ const CSB_DoorInfo CSB_doorInfo[4] = {
         | CSB_MASK_DOOR_CREATURES_CAN_SEE_THROUGH, 255 }
 };
 
+int csb_v1_dungeon_get_group_cells_pc34(
+    const uint8_t *group_record,
+    int record_size,
+    uint8_t *out_cells)
+{
+    /* ReDMCSB DEFS.H GROUP is a 16-byte C04 record: Type at byte 4 and
+     * Cells at byte 5. DUNGEON.C F0145 returns that packed byte; it does
+     * not normalize the 0xff centered-group sentinel. */
+    if (!group_record || !out_cells || record_size < 16 ||
+        group_record[4] != CSB_THING_TYPE_GROUP) {
+        return 0;
+    }
+    *out_cells = group_record[5];
+    return 1;
+}
+
 /* ================================================================
  *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)
  * ================================================================ */
