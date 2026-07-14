@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 ReDMCSB `ACTIDRAW.C F0134`: bounded planar bitmap fill now
+  follows original four-plane 16-pixel unit layout. Verification: focused
+  strict CTest.
+
+- 2026-07-14 ReDMCSB `START F0458`: the original TOS command-tail copy is
+  now a bounded compatibility adapter. Verification: focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `GROUP2.C F0227`: destination-visibility wedge
   logic now has a bounded source-owned callable. Verification: focused strict
   CTest.
