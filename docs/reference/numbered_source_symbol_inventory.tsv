@@ -1778,11 +1778,11 @@ F	0711	F0711_ConvertScanCodeToASCII	MEMORY.C;DEFS.H;SELECTOR.C;IO2.C	implemented
 F	0712	F0712_AnyKeyboardOrMouseInput	INPUT.C;FMTOWNS.H;IIGS.H;IO.C;DEFS.H;CEDT026.C;ENDGAME.C;ENTRANCE.C;IO2.C	implemented_source_locked
 F	0713	F0713_InitIOInterrupt	ANIM.C;IO.C;CEDT028.C;DEFS.H;SWITCH.C;CEDT026.C;SELECTOR.C;STARTUP1.C	implemented_source_locked
 F	0714	F0714_GetReadFirstSectorResult	IO.C;DEFS.H;CEDT026.C;FLOPPY.C	implemented_source_locked
-F	0715	F0715_GetConvertedDeviceType	IO.C;DEFS.H;CEDT026.C;FLOPPY.C;CEDT029.C	referenced_not_verified
-F	0716	F0716_CallRazAXInIBMIO	IO.C;DEFS.H;CEDT026.C;FLOPPY.C	referenced_not_verified
-F	0717	F0717_GetVolumeName	IO.C;DEFS.H;CEDT026.C;FLOPPY.C	referenced_not_verified
-F	0718	F0718_GetTime	IO.C;DEFS.H;CEDT026.C;STARTUP1.C	referenced_not_verified
-F	0719	F0719_PlayMusicTrack	ANIM.C;FMTOWNS.H;IO.C;MUSIC.C	referenced_not_verified
+F	0715	F0715_GetConvertedDeviceType	IO.C;DEFS.H;CEDT026.C;FLOPPY.C;CEDT029.C	implemented_source_locked
+F	0716	F0716_CallRazAXInIBMIO	IO.C;DEFS.H;CEDT026.C;FLOPPY.C	implemented_source_locked
+F	0717	F0717_GetVolumeName	IO.C;DEFS.H;CEDT026.C;FLOPPY.C	implemented_source_locked
+F	0718	F0718_GetTime	IO.C;DEFS.H;CEDT026.C;STARTUP1.C	implemented_source_locked
+F	0719	F0719_PlayMusicTrack	ANIM.C;FMTOWNS.H;IO.C;MUSIC.C	implemented_source_locked
 F	0720	F0720_ShrinkBLT_Sub1	BLTSHRNK.C	referenced_not_verified
 F	0721	F0721_ShrinkBLT_Sub2	BLTSHRNK.C	referenced_not_verified
 F	0731	F0731_InvertZone	FMTOWNS.H;SPELDRAW.C;DEFS.H;INVRTZON.C	referenced_not_verified

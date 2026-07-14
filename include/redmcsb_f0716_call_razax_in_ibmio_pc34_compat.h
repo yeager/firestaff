@@ -18,8 +18,9 @@ typedef struct {
 } redmcsb_f0716_io_driver_pc34_compat;
 
 /*
- * Executes IO.C F0716's sole action: IODRV_17(value).  The source has a
- * void return type; a missing host vector is therefore also a no-op.
+ * Executes IO.C F0716's sole action: IODRV_17(value).  ReDMCSB declares
+ * F0716 as int16_t but its PC 3.4 body returns no value after calling the
+ * void IODRV_17 vector; this host boundary exposes that actual void behavior.
  */
 void redmcsb_f0716_call_razax_in_ibmio_pc34_compat(
     const redmcsb_f0716_io_driver_pc34_compat *io_driver,
