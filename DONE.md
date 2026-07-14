@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 raw `c_tim` queue boundary: replaced the fabricated
+  NPC/creature/door/message timeline catalog with the exact source-shaped
+  twelve-byte timer record and `c_timer.cpp::DM2_cmp_timers` order: tick
+  ascending, then type and actor descending, then source-pool index ascending.
+  Due work now reaches only an explicit caller-supplied dispatcher, matching
+  `c_tim_proc.cpp::DM2_PROCEED_TIMERS` dequeue-before-dispatch structure; no
+  timer is invented when the original save timer payload is unavailable.
+  Verification: strict C11 `-Wall -Wextra -Werror -pedantic` unit test and
+  probe pass, plus `git diff --check`.
 - ✅ 2026-07-11 CSB-006 CSBWin extended-save runtime handoff: validated plain
   `Extended Features` prefixes now stage `ReadDSAs`, `ReadGameInfo`,
   `ReadDSALevelIndex`, and the encrypted core body in one candidate runtime
