@@ -557,6 +557,7 @@ int main(void) {
                    &sidecar_receipt, &provenance_receipt) &&
                    !provenance_receipt.ledger_parsed &&
                    !provenance_receipt.provenance_complete &&
+                   !provenance_receipt.producer_binary_bound &&
                    !provenance_receipt.capture_producer_authenticated &&
                    !provenance_receipt.runtime_import_permitted,
                "provenance gate rejects an absent raw capture ledger without authenticating a producer");

@@ -113,6 +113,11 @@
   The active party pose now has a canonical-LEV receipt with bounded cell facts
   and raw Structure1A transform-selector provenance. It deliberately does not
   infer camera matrices, transform units/order, culling, or draw semantics.
+  The PRS3 V3 validator now accepts a full externally captured bundle,
+  including the raw output/VDP1/palette sidecars, provenance ledger, and exact
+  capture-producer binary. It checks file identity only: the producer remains
+  unauthenticated and no trace can promote a decoder, pixels, palette route,
+  or runtime import.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette
