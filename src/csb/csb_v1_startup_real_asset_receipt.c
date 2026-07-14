@@ -328,6 +328,10 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     const CSB_V1_StartupRuntimeSurface_PC34 *presents;
     const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
     const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left_door;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right_door;
+    const CSB_V1_StartupRuntimeSurface_PC34 *entrance;
+    const CSB_V1_StartupRuntimeSurface_PC34 *credits;
     const CSB_V1_StartupRuntimeSurface_PC34 *c017;
     const CSB_V1_StartupRuntimeSurface_PC34 *c040;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
@@ -356,14 +360,27 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
     chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
     strikes = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    left_door = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right_door = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    credits = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34];
     c017 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     c040 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
     if (!session->surfaces.valid || !session->surfaces.real_asset_matched ||
-        !session->surfaces.title_regions_ready || !session->surfaces.hud_surfaces_ready ||
+        !session->surfaces.title_regions_ready || !session->surfaces.opening_frame_ready ||
+        !session->surfaces.entrance_screen_ready || !session->surfaces.hud_surfaces_ready ||
         !csb_v1_startup_real_surface_matches_pc34(title, 1, 320, 153, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(presents, 1, 320, 16, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(chaos, 1, 320, 80, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(strikes, 1, 320, 57, 0) ||
+        !left_door->valid || !left_door->pixels || left_door->source_asset_id != 2 ||
+        left_door->width <= 0 || left_door->height <= 0 ||
+        !right_door->valid || !right_door->pixels || right_door->source_asset_id != 3 ||
+        right_door->width <= 0 || right_door->height <= 0 ||
+        !entrance->valid || !entrance->pixels || entrance->source_asset_id != 4 ||
+        entrance->width != 320 || entrance->height != 200 ||
+        !credits->valid || !credits->pixels || credits->source_asset_id != 5 ||
+        credits->width != 320 || credits->height != 200 ||
         !csb_v1_startup_real_surface_matches_pc34(c017, 17, 224, 136, -1) ||
         !csb_v1_startup_real_surface_matches_pc34(c040, 40, 144, 73, 6)) {
         return 0;
@@ -375,6 +392,10 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     csb_v1_startup_real_hash_surface_pc34(&hash, presents);
     csb_v1_startup_real_hash_surface_pc34(&hash, chaos);
     csb_v1_startup_real_hash_surface_pc34(&hash, strikes);
+    csb_v1_startup_real_hash_surface_pc34(&hash, left_door);
+    csb_v1_startup_real_hash_surface_pc34(&hash, right_door);
+    csb_v1_startup_real_hash_surface_pc34(&hash, entrance);
+    csb_v1_startup_real_hash_surface_pc34(&hash, credits);
     csb_v1_startup_real_hash_surface_pc34(&hash, c017);
     csb_v1_startup_real_hash_surface_pc34(&hash, c040);
     csb_v1_startup_real_hash_u64(&hash, session->source_tick);
@@ -384,8 +405,13 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     out_receipt->c001_presents_consumed = 1;
     out_receipt->c001_chaos_consumed = 1;
     out_receipt->c001_strikes_back_consumed = 1;
+    out_receipt->c002_left_door_consumed = 1;
+    out_receipt->c003_right_door_consumed = 1;
+    out_receipt->c004_entrance_consumed = 1;
+    out_receipt->c005_credits_consumed = 1;
     out_receipt->c017_hud_consumed = 1;
     out_receipt->c040_hud_consumed = 1;
+    out_receipt->title_to_entrance_same_session = 1;
     out_receipt->title_to_hud_same_session = 1;
     out_receipt->no_legacy_wrappers = 1;
     out_receipt->no_fallback_routes = 1;

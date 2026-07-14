@@ -215,8 +215,13 @@ int main(int argc, char **argv)
               &real_package, &session, &consumption) == 1 && consumption.valid &&
               consumption.no_fallback_routes && consumption.c001_presents_consumed &&
               consumption.c001_chaos_consumed && consumption.c001_strikes_back_consumed &&
+              consumption.c002_left_door_consumed &&
+              consumption.c003_right_door_consumed &&
+              consumption.c004_entrance_consumed &&
+              consumption.c005_credits_consumed &&
+              consumption.title_to_entrance_same_session &&
               consumption.c017_hud_consumed && consumption.c040_hud_consumed,
-          "terminal receipt binds all presented phases to the package");
+          "terminal receipt binds C001-C005 and C017/C040 to one package");
 
     csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
     printf("\n%d checks, %d failures\n", checks, failures);

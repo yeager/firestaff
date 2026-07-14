@@ -149,8 +149,13 @@ typedef struct CSB_V1_StartupRealPackageConsumptionReceipt_PC34 {
     int c001_presents_consumed;
     int c001_chaos_consumed;
     int c001_strikes_back_consumed;
+    int c002_left_door_consumed;
+    int c003_right_door_consumed;
+    int c004_entrance_consumed;
+    int c005_credits_consumed;
     int c017_hud_consumed;
     int c040_hud_consumed;
+    int title_to_entrance_same_session;
     int title_to_hud_same_session;
     int no_legacy_wrappers;
     int no_fallback_routes;
