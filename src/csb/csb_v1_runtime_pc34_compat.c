@@ -5094,6 +5094,11 @@ static void csb_v1_runtime_mark_champion_dead(
         champion_index >= CSB_V1_MAX_CHAMPIONS) {
         return;
     }
+    /* CSBWin Character.cpp::KillCharacter:2532-2585 invokes the optional
+     * CharDeathFilter before it changes the hero.  Only the existing
+     * checksum/FNV-authenticated pure-stack DSA runner is admitted here. */
+    (void)csb_v1_runtime_execute_csbwin_character_death_filter(
+        profile, champion_index);
     (void)csb_v1_champion_kill(
         &profile->party_state.Champions[champion_index]);
     if (profile->party_state.LeaderIndex == champion_index ||
@@ -18927,6 +18932,46 @@ int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     *out_action_ordinal = resolution.action_ordinal;
     *out_master_location = resolution.master_location;
     return 1;
+}
+
+int csb_v1_runtime_execute_csbwin_character_death_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index)
+{
+    CSB_V1_DSAFilterLocation location;
+    CSB_V1_RuntimeCSBWinDSATimer6Resolution resolution;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *action;
+    int parameters[2];
+    int flags[2] = { 0, 0 };
+
+    if (!profile || !profile->dungeon_handle || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        !profile->csbwin_extended_features_valid) {
+        return 0;
+    }
+    memset(&location, 0, sizeof(location));
+    memset(&resolution, 0, sizeof(resolution));
+    memset(&runner, 0, sizeof(runner));
+    if (!csb_v1_dungeon_resolve_dsa_special_location(
+            profile->dungeon_handle, CSB_V1_EXPOOL_ESL_CHAR_DEATH_FILTER,
+            &location) ||
+        !csb_v1_runtime_resolve_csbwin_dsa_timer6_action(
+            profile, profile->dungeon_handle, &location, 0, 0,
+            &resolution) ||
+        !csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+            profile, &resolution.master, resolution.state_index,
+            resolution.action_ordinal, resolution.master_location, &runner)) {
+        return 0;
+    }
+    action = csb_v1_chaos_find_imported_action(
+        &profile->csbwin_extended_dsa_state, resolution.master.dsa_id,
+        resolution.state_index, resolution.action_ordinal);
+    if (!action) return 0;
+    parameters[0] = 1;
+    parameters[1] = champion_index;
+    return csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+        profile, &runner, action, parameters, 2, flags);
 }
 
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(

@@ -933,6 +933,14 @@ int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
     int *out_action_ordinal,
     uint32_t *out_master_location);
 
+/* CSBWin Character.cpp::KillCharacter checks EDT_SpecialLocations /
+ * ESL_CHARDEATHFILTER before changing the CHARDESC.  Execute only that exact
+ * authenticated type-47 / ProcessDSATimer6 action with source parameters
+ * `{ 1, championIndex }`.  Missing, altered, unsupported, or non-FNV-owned
+ * DSA data remains a no-op; this never invents a location or callback. */
+int csb_v1_runtime_execute_csbwin_character_death_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */

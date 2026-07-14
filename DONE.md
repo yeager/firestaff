@@ -15,6 +15,16 @@
   candidate-to-live ownership transfer. This is exercised only for
   user-supplied external PC34 corpus saves carrying C13; no C13 fixture,
   generated tail, or parity claim is added.
+- 2026-07-14 CSBWin CharDeathFilter handoff: live champion death now checks
+  the exact original `EDT_SpecialLocations|ESL_CHARDEATHFILTER` key before
+  `KillCharacter`, selects only CSBWin's first type-47 actuator, resolves its
+  saved DSA selector/state/column, and invokes the existing FNV-authenticated
+  pure-stack runner with source parameters `{ 1, championIndex }`. Missing,
+  altered, unsupported, or non-owned save data is a no-op; no fallback DSA,
+  location, or world opcode is created. Source: CSBWin `Character.cpp`
+  lines 2532-2585, `DSA.cpp` lines 5363-5416, and `data.cpp`
+  `EXPOOL::Locate`. Verification:
+   `csb_v1_csbwin_character_death_filter_runtime`.
 
 - 2026-07-14 DM2 original SKSave timer-queue rebuild: after authentic raw
   timer decode, runtime reconstructs the exact `DM2_SORT_TIMERS` min-heap

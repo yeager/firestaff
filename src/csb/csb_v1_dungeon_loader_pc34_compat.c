@@ -527,6 +527,26 @@ int csb_v1_dungeon_resolve_dsa_filter_location(
     return csb_v1_dungeon_find_dsa_filter_actuator(d, out);
 }
 
+int csb_v1_dungeon_resolve_dsa_special_location(
+    const CSB_V1_DungeonData *d, uint8_t special_location,
+    CSB_V1_DSAFilterLocation *out)
+{
+    const uint8_t *bytes;
+    size_t size;
+    uint32_t key;
+
+    if (!d || !out) return 0;
+    key = (CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS << 24) |
+        (uint32_t)special_location;
+    if (!csb_v1_dungeon_expool_locate_record(d, key, &bytes, &size) ||
+        !bytes || size < sizeof(uint32_t) ||
+        !csb_v1_dungeon_decode_dsa_filter_location(
+            d, rd32(bytes), 0, out)) {
+        return 0;
+    }
+    return csb_v1_dungeon_find_dsa_filter_actuator(d, out);
+}
+
 static uint32_t csb_v1_dungeon_read_le32_at_word(
     const CSB_V1_DungeonData *d,
     int word_index)

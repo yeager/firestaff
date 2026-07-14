@@ -2458,6 +2458,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-13 runtime callback binding: the prepared profile-owned stack runner can now occupy the real CSBWin `Monster.cpp` `ProcessDSAFilter` callback slot. The adapter preserves the 20-word attack ABI and loaded-level restoration while routing only an exact authenticated action through the save-owned global bank; it adds no opcode, filter flag, master-state, or world mutation support.
     - 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
     - 2026-07-13 movement-filter save handoff: a resolved type-47 movement binding can now atomically install the same authenticated adapter in its exact `Monster.cpp` level slot. The source seven-word callback restores loaded level and may publish only the existing admitted `GLOBALSTORE` bank transaction. All other levels are explicitly unbound rather than defaulting to DSA zero; no distance/party gate inference, movement flag semantics, master-state persistence, generic dispatcher, or new opcode is added.
+    - 2026-07-14 CharDeathFilter handoff: `Character.cpp::KillCharacter`
+      now resolves only original `EDT_SpecialLocations|ESL_CHARDEATHFILTER`
+      through the CSBWin DB11 hash chain, selects the first type-47 actuator,
+      maps its saved DSA selector, and runs the existing FNV-authenticated
+      pure-stack receipt with exactly `{ 1, championIndex }` before the
+      champion changes state. Missing, altered, unsupported, or non-owned
+      data remains a no-op; DamageChar/EQUIP/PUT/GET filters, world opcodes,
+      and arbitrary `ProcessDSAFilter` behavior remain open.
     - 2026-07-13 multi-level movement callback: independently resolved movement filters can now share one runtime callback across distinct source levels. Every selected action retains exact imported-action identity; duplicate levels or duplicate action ownership reject before replacing the live runtime. It remains the same admitted stack/transfer subset only, with no inferred movement gates/flags, master state, world opcodes, or fallback dispatch.
     - 2026-07-13 saved timer receipt: CSBWin `Timer.cpp::ProcessTT_STONEROOM`
       function-6 save timers now prove their original target level/x/y,
