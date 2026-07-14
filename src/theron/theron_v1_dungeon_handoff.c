@@ -27,6 +27,11 @@ static uint16_t read_be16(const uint8_t *bytes) {
     return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
 }
 
+static uint32_t read_be32(const uint8_t *bytes) {
+    return ((uint32_t)bytes[0] << 24u) | ((uint32_t)bytes[1] << 16u) |
+        ((uint32_t)bytes[2] << 8u) | bytes[3];
+}
+
 typedef struct {
     uint32_t state[4];
     uint8_t block[64];
@@ -131,6 +136,9 @@ int theron_v1_dungeon_handoff_select_initial_level(
     uint32_t cue_index01_sector;
     uint32_t raw_sector;
     uint32_t raw_sector_offset;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
     uint16_t header_identifier;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -169,6 +177,9 @@ int theron_v1_dungeon_handoff_select_initial_level(
         return 0;
     }
 
+    header_width = read_be16(facts->raw_track02 + candidate_offset);
+    header_height = read_be16(facts->raw_track02 + candidate_offset + 2u);
+    header_seed = read_be32(facts->raw_track02 + candidate_offset + 4u);
     header_identifier = read_be16(facts->raw_track02 + candidate_offset + 8u);
     if (raw_sector_offset != TQR_INITIAL_ENVELOPE_RAW_SECTOR_OFFSET ||
         raw_sector_offset != THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET +
@@ -178,14 +189,9 @@ int theron_v1_dungeon_handoff_select_initial_level(
             TQR_INITIAL_BOUNDARY_RAW_SECTOR_OFFSET ||
         memcmp(facts->raw_track02 + descriptor_offset, g_descriptor,
                sizeof(g_descriptor)) != 0 ||
-        facts->raw_track02[candidate_offset] != 0x00u ||
-        facts->raw_track02[candidate_offset + 1u] != 0x20u ||
-        facts->raw_track02[candidate_offset + 2u] != 0x00u ||
-        facts->raw_track02[candidate_offset + 3u] != 0x1bu ||
-        facts->raw_track02[candidate_offset + 4u] != 0x01u ||
-        facts->raw_track02[candidate_offset + 5u] != 0x08u ||
-        facts->raw_track02[candidate_offset + 6u] != 0xe9u ||
-        facts->raw_track02[candidate_offset + 7u] != 0x38u ||
+        header_width != THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        header_height != THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        header_seed != THERON_V1_INITIAL_ENVELOPE_HEADER_SEED ||
         header_identifier != THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER) {
         return 0;
     }
@@ -196,6 +202,9 @@ int theron_v1_dungeon_handoff_select_initial_level(
     receipt.record_user_data_offset =
         THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET;
     receipt.envelope_bytes = THERON_V1_INITIAL_ENVELOPE_BYTES;
+    receipt.header_width = header_width;
+    receipt.header_height = header_height;
+    receipt.header_seed = header_seed;
     receipt.header_identifier = header_identifier;
     receipt.cue_track02_index01_raw_sector = cue_index01_sector;
     receipt.track02_raw_sector = raw_sector;

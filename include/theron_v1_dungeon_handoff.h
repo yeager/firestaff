@@ -9,6 +9,9 @@
 #define THERON_V1_INITIAL_ENVELOPE_RECORD 0x0b52u
 #define THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET 0x114u
 #define THERON_V1_INITIAL_ENVELOPE_BYTES 0x36cu
+#define THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH 0x0020u
+#define THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT 0x001bu
+#define THERON_V1_INITIAL_ENVELOPE_HEADER_SEED 0x0108e938u
 #define THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER 0x0026u
 
 #define THERON_V1_TRACK02_RAW_SECTOR_BYTES 2352u
@@ -31,6 +34,9 @@ typedef struct {
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t envelope_bytes;
+    uint16_t header_width;
+    uint16_t header_height;
+    uint32_t header_seed;
     uint16_t header_identifier;
     uint32_t cue_track02_index01_raw_sector;
     uint32_t track02_raw_sector;
@@ -48,9 +54,9 @@ int theron_v1_track02_raw_bytes_match_md5(const uint8_t *bytes,
 
 /* Selects only the source-locked startup envelope after independently hashing
  * the complete raw MODE1/2352 BIN against the declared JP or US identity, then
- * checking its exact placement and CUE Index 01 sector. This exports no
- * envelope bytes and assigns no dungeon, object, bitmap, palette, or grammar
- * role to the following boundary. */
+ * checking its exact placement, literal header, and CUE Index 01 sector. This
+ * exports no envelope bytes and assigns no dungeon, object, bitmap, palette,
+ * or grammar role to the following boundary. */
 int theron_v1_dungeon_handoff_select_initial_level(
     const Theron_V1DungeonHandoffFacts *facts,
     Theron_V1DungeonHandoffReceipt *out_receipt);
