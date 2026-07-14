@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1052: available code polls Amiga scan-line
+  hardware. The focused PC 3.4 boundary is deliberately a no-op rather than
+  a fabricated hardware emulation.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1048/F1050: source review found a commented-out
   setjmp alias and an Amiga-only terminal-alert route. Focused boundaries keep
   C semantics where applicable without asserting PC 3.4 behavior.
