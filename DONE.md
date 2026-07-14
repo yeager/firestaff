@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Theron SDL delivery trace: the authentic run records every SDL
+  event class and proves Quartz never reaches a key/window/focus event. The
+  empty PCE input and CD route remains fail-closed.
+
 - 2026-07-15 DM2 skproject DRAW_DOOR_FRAMES: M11 consumes the real
   `DOORS/*/GDAT_DOOR_NO_FRAMES` word and suppresses frame blits only when the
   source door type requires it; a missing word retains skproject's zero value.

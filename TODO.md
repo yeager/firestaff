@@ -77,11 +77,15 @@
   Mednafen 1.32.1 and its debugger patch is applied with `git apply`, rather
   than macOS BSD `patch`, so that the same bounded CPU callback route is
   enabled in the built binary. A fresh authentic US CUE/System Card capture
-  with that binary still recorded 128 raw PCE input polls at `0000`, zero SDL
+  with that binary recorded 128 raw PCE input polls at `0000`, zero SDL
   host-key events, three System-Card IRQ callbacks, zero non-System-Card
-  PCECD reads, and zero raw-sector spans. It remains non-admissible. Investigate
-  the SDL-window delivery boundary or obtain a later original CD_READ trace;
-  do not inject an emulated controller state.
+  PCECD reads, and zero raw-sector spans. The next PID-targeted capture
+  additionally reached only SDL event types `519,518`, with zero window or
+  focus callback and zero key event. This identifies the remaining blocker as
+  macOS Quartz-to-SDL keyboard-queue delivery, not a PCE mapping or CD loader
+  interpretation. It remains non-admissible. Obtain an SDL-observed keyboard
+  event or a later original CD_READ trace; do not inject an emulated controller
+  state.
   Receipt-only inspection now uses an isolated staging world; direct runtime
   mutation continues to require the original Stage 2/3 physical-media gate.
 - 2026-07-14 Nexus Structure3 external capture follow-up: the capture-target

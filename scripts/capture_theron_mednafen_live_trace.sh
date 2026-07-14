@@ -153,6 +153,32 @@ trace_count() {
     printf '%s' "${count:-0}"
 }
 
+trace_event_types() {
+    local file=$1
+
+    awk '
+        /^host_sdl_event type=/ {
+            split($0, fields, "=")
+            if (!(fields[2] in seen)) {
+                seen[fields[2]] = 1
+                values[++count] = fields[2]
+            }
+        }
+        END {
+            if (count == 0) {
+                print "none"
+                exit
+            }
+            for (i = 1; i <= count; ++i) {
+                if (i > 1)
+                    printf ","
+                printf "%s", values[i]
+            }
+            print ""
+        }
+    ' "$file"
+}
+
 trace_input_order_receipt() {
     local file=$1
 
@@ -295,6 +321,10 @@ if ! "$script_dir/verify_theron_stage2_system_card_call_trace.sh" "$trace" >"$st
 fi
 transition_input_count=$(trace_count '^pce_input_(read|write) ' "$input_trace")
 transition_host_key_count=$(trace_count '^host_key_event ' "$input_trace")
+transition_host_sdl_event_count=$(trace_count '^host_sdl_event ' "$input_trace")
+transition_host_window_event_count=$(trace_count '^host_window_event ' "$input_trace")
+transition_host_focus_state_count=$(trace_count '^host_focus_state ' "$input_trace")
+transition_host_sdl_event_types=$(trace_event_types "$input_trace")
 transition_irq_count=$(trace_count '^pce_cd_irq cpu_pc=' "$cd_trace")
 transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace")
 transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
@@ -304,6 +334,10 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
+    printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
+    printf 'host_sdl_event_types=%s\n' "$transition_host_sdl_event_types"
+    printf 'host_window_events=%s\n' "$transition_host_window_event_count"
+    printf 'host_focus_state_events=%s\n' "$transition_host_focus_state_count"
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
@@ -326,7 +360,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     fi
 } >"$transition_receipt"
 if [[ -n "$host_key" && "$transition_host_key_count" -eq 0 ]]; then
-    printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch (exit=%s)\n' "$status"
+    printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
     exit 1
 fi
 if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||

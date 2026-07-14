@@ -71,6 +71,10 @@ if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCE
     exit 1
 fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
+   ! grep -Fq 'host_sdl_events=%s' "$script" ||
+   ! grep -Fq 'host_sdl_event_types=%s' "$script" ||
+   ! grep -Fq 'host_window_events=%s' "$script" ||
+   ! grep -Fq 'host_focus_state_events=%s' "$script" ||
    ! grep -Fq 'host_input_target_pid=%s' "$script" ||
    ! grep -Fq 'host_input_focus=screen_click:%s,%s' "$script" ||
    ! grep -Fq 'host_input_delivery=quartz_pid_key_down_up' "$script" ||
@@ -85,6 +89,7 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'trace_count()' "$script" ||
+   ! grep -Fq 'trace_event_types()' "$script" ||
    ! grep -Fq 'local count' "$script" ||
    ! grep -Fq '"${count:-0}"' "$script"; then
     printf 'FAIL: capture script must emit numeric zero counts when a trace file is absent\n' >&2
