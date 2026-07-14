@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `DUNGEON.C F0165`: discard search now skips
+  the party's visible 11x11 area, honours enabled sensors and protected
+  records, dispatches source-specific discard ownership, and returns a
+  type-and-index Thing. Verification: focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `GROUP.C F0195`: the current-map native C04 chain
   scan now materializes active groups idempotently from source record state.
   Verification: focused M10-linked CTest.

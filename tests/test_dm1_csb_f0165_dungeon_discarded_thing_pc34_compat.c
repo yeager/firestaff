@@ -169,7 +169,7 @@ int main(void)
                 "party visible 11x11 square is skipped before party-map fallback");
 
     init_fixture(&fixture);
-    fixture.records[0] = (Record){ 0x1007u, 0x1008u,
+    fixture.records[0] = (Record){ 0x1007u, 0x3808u,
         DM1_CSB_F0165_THING_TYPE_GROUP, 0, 1, 1 };
     fixture.records[1] = (Record){ 0x3808u, DM1_CSB_F0165_THING_ENDOFLIST,
         DM1_CSB_F0165_THING_TYPE_PROJECTILE, 0, 0, 1 };
