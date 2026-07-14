@@ -13726,6 +13726,17 @@ matches skproject `SkWinCore.cpp::GAME_LOAD` order before timer sorting and
 `READ_SKSAVE_DUNGEON`, while keeping timer semantics and dungeon DB rebuild
 unpromoted. Verification: Ninja and `test_dm2_v1_save_load`.
 
+# ✅ 2026-07-14 DM2 fixture-free original SKSave corpus census
+
+`test_dm2_v1_save_load` now optionally consumes an explicitly staged
+`FIRESTAFF_DM2_SKSAVE_CORPUS`. It creates no files and performs neither export
+nor runtime restoration: each discovered original envelope/raw candidate must
+remain hash-identical through its receipt reload, then reproduce only the
+already source-bound pre-rebuild state census from `GAME_LOAD` before
+`READ_SKSAVE_DUNGEON`. An unset corpus root is a non-promoting skip; a supplied
+corpus with absent, incomplete, or changed original candidates fails. Source:
+SKProject `SKWIN/SkWinCore.cpp::GAME_LOAD` and `SKULLWIN/c_savegame.cpp::DM2_GAME_LOAD`.
+
 # ✅ 2026-07-14 DM2 template-bound raw SKSave export roundtrip
 
 `dm2_v1_session_export_raw_sksave_payload()` exports only from a

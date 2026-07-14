@@ -16,6 +16,7 @@
  *  12. Stale session metadata mismatch (fixture guard)
  *  13. Resume smoke gate: position/facing/map/leader/inventory continuity
  *  14. Champion death/permanence source-lock gate
+ *  24. Fixture-free external original SKSave corpus census
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
@@ -2485,6 +2486,88 @@ done:
     return 1;
 }
 
+static int test_external_original_sksave_corpus_census(void)
+{
+    const char *corpus_root = getenv("FIRESTAFF_DM2_SKSAVE_CORPUS");
+    DM2_SKSaveCorpusReceipt corpus;
+    DM2_OriginalSaveStateCorpusReceipt state;
+    uint16_t original_count;
+    uint8_t i;
+
+    printf("  External original SKSave corpus census...\n");
+    if (!corpus_root || corpus_root[0] == '\0') {
+        printf("    SKIP: FIRESTAFF_DM2_SKSAVE_CORPUS is unset\n");
+        return 1;
+    }
+    if (!dm2_v1_sksave_corpus_scan(corpus_root, &corpus) ||
+        !dm2_v1_original_save_state_corpus_probe(corpus_root, &state)) {
+        printf("    FAIL: could not scan external SKSave corpus\n");
+        return 0;
+    }
+
+    original_count = (uint16_t)(corpus.original_envelope_candidate_count +
+                                corpus.original_raw_candidate_count);
+    if (original_count == 0u ||
+        state.original_candidate_count != original_count ||
+        !state.original_candidate_list_complete ||
+        state.parsed_candidate_count != original_count ||
+        state.rejected_candidate_count != 0u ||
+        state.entry_count != original_count ||
+        state.corpus_hash == 0u) {
+        printf("    FAIL: corpus contains no complete original-save census "
+               "(original=%u entries=%u parsed=%u rejected=%u)\n",
+               (unsigned)original_count, (unsigned)state.entry_count,
+               (unsigned)state.parsed_candidate_count,
+               (unsigned)state.rejected_candidate_count);
+        return 0;
+    }
+
+    for (i = 0u; i < state.entry_count; ++i) {
+        const DM2_OriginalSaveStateCorpusEntry *entry = &state.entries[i];
+        DM2_V1_SaveCandidate candidate;
+        uint8_t payload[DM2_SESSION_MAX_SIZE];
+        size_t payload_size = 0u;
+
+        if ((entry->candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+             entry->candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) ||
+            entry->candidate.source_file_hash == 0u ||
+            entry->candidate.payload_hash == 0u ||
+            !dm2_v1_sksave_corpus_load_receipted_candidate(
+                &entry->candidate, payload, sizeof(payload), &payload_size) ||
+            dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                                 payload_size) != 0 ||
+            candidate.kind != (DM2_V1_SaveCandidateKind)entry->candidate.kind ||
+            candidate.session.game_tick != entry->game_tick ||
+            candidate.session.rng_seed != entry->rng_seed ||
+            candidate.session.party_x != entry->party_x ||
+            candidate.session.party_y != entry->party_y ||
+            candidate.session.party_dir != entry->party_dir ||
+            candidate.session.party_level != entry->party_map ||
+            candidate.session.champion_count != entry->champion_count ||
+            candidate.session.original_timer_count != entry->timer_count ||
+            candidate.session.rain_intensity != entry->rain_intensity ||
+            corpus_hash_bytes(candidate.session.original_global_flags,
+                              sizeof(candidate.session.original_global_flags)) !=
+                entry->global_flags_hash ||
+            corpus_hash_bytes(candidate.session.original_global_bytes,
+                              sizeof(candidate.session.original_global_bytes)) !=
+                entry->global_bytes_hash ||
+            corpus_hash_words_le(candidate.session.original_global_words,
+                                 DM2_GLOBAL_WORDS_SIZE) != entry->global_words_hash ||
+            corpus_hash_bytes(candidate.session.original_spell_effects,
+                              sizeof(candidate.session.original_spell_effects)) !=
+                entry->spell_effects_hash) {
+            printf("    FAIL: external candidate %u did not revalidate\n",
+                   (unsigned)i);
+            return 0;
+        }
+    }
+
+    printf("    PASS: %u original files revalidated without fixture or export\n",
+           (unsigned)original_count);
+    return 1;
+}
+
 /* ════════════════════════════════════════════════════════════════ */
 
 int main(void)
@@ -2521,6 +2604,7 @@ int main(void)
     RUN(21, test_sksave_corpus_runtime_import);
     RUN(22, test_sksave_receipted_candidate_hash_gate);
     RUN(23, test_original_sksave_corpus_runtime_import);
+    RUN(24, test_external_original_sksave_corpus_census);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);
