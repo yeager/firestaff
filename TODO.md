@@ -800,6 +800,9 @@ ReDMCSB WIP 2021-02-06 source tree.
     packed-bitmap readback with low-nibble extraction and retained opposite
     boundary nibbles. It is a standalone aperture primitive until the live
     host framebuffer supplies the C25 surface.
+  - 2026-07-14 VIDEODRV.C F8154 now preserves the PC 3.4 C25 inclusive
+    aperture inversion rectangle, XORing exactly `0x04` at `(y * 320) + x`.
+    Its live Mac/SDL aperture consumer remains separately unproven.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette

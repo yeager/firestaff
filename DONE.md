@@ -76,6 +76,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8154: source-locked PC 3.4 C25
+  aperture inversion rectangle. The portable route preserves inclusive edges,
+  fixed 320-byte rows and exactly the source's XOR `0x04` operation; focused
+  strict-C11 tests cover edge inclusion, restoration after a second call and
+  source-defined reversed-loop no-op behavior.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8143: source-locked PC 3.4 C25
   aperture-to-packed-4bpp bitmap readback. The adapter takes only source low
   nibbles and retains opposite packed boundary nibbles exactly as the leading,
