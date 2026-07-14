@@ -22,6 +22,15 @@
    smoke has four pre-existing weather no-draw failures on both this branch
    and untouched `origin/main`.
 
+- ✅ 2026-07-14 Theron Track 02 Soul Room media handoff: a candidate-world
+  forcefield transition now binds all four hash-verified original bitmap routes
+  only after the authenticated stage-two `$4090 -> $3800` loader chain passes,
+  then selects the original forcefield media bank before the level loader runs.
+  The new real-corpus regression proves this positive handoff leaves level and
+  object state untouched; no map/object semantics or synthetic visual route is
+   introduced. Verification: `firestaff_theron_v1_startup_real_asset_receipt_probe`
+   exercises the assertion when raw JP/US Track 02 media is staged.
+
 - ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
   census revalidates each scanner-issued original envelope/raw candidate
   against its complete-file FNV receipt before parsing it, then retains only

@@ -368,6 +368,8 @@ static void check_real_soul_room_dungeon_handoff(const char *path,
     Theron_V1_World world;
     Theron_V1StartupRuntimeEntryRequest request;
     Theron_V1StartupRuntimeEntryResult result;
+    Theron_StartupMediaStateReceipt media_receipt;
+    Theron_RuntimeLevelBankSelection level_bank;
     uint8_t *track02_bytes;
     size_t track02_size;
     char receipt[512];
@@ -389,15 +391,29 @@ static void check_real_soul_room_dungeon_handoff(const char *path,
     request.md5_hex = md5_hex;
     memset(receipt, 0, sizeof(receipt));
 
-    check(theron_v1_startup_runtime_enter_from_forcefield(
-              &flow, &world, &request, &result, receipt, sizeof(receipt)) &&
-              flow.phase == THERON_STARTUP_PHASE_IN_DUNGEON &&
-              world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] &&
-              result.track02_semantic_handoff &&
+    check(theron_v1_startup_runtime_bind_track02_soul_room_handoff(
+              &world, track02_bytes, track02_size, md5_hex,
+              THERON_DUNGEON_1_HALL_OF_RECORDS, &media_receipt,
+              &level_bank) &&
+              media_receipt.startup_media_ready &&
+              world.runtime_media.restored &&
+              level_bank.ready && level_bank.real_media_gate &&
+              level_bank.kind == THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD &&
+              level_bank.dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS &&
+              level_bank.level_index == 0,
+          "real Soul Room handoff binds loader-authenticated forcefield media");
+    check(!world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] &&
+              world.object_count == 0 && world.current_level == 0,
+          "real Soul Room media handoff does not invent level or object semantics");
+
+    check(!theron_v1_startup_runtime_enter_from_forcefield(
+               &flow, &world, &request, &result, receipt, sizeof(receipt)) &&
+              flow.phase == THERON_STARTUP_PHASE_SOUL_ROOM &&
+              !world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] &&
+              world.object_count == 0 && result.fallback_visuals_blocked &&
               result.runtime_level_source ==
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
-              !result.fallback_visuals_blocked,
-          "real Soul Room handoff publishes only a semantic Track 02 dungeon");
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED,
+          "real Soul Room dungeon entry stays blocked without level semantics");
     free(track02_bytes);
 }
 
