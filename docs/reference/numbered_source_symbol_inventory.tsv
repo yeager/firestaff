@@ -1894,7 +1894,7 @@ F	0949	F0949_JAPANESE_	JAPANESE.C	implemented_narrow
 F	0950	F0950_JAPANESE_	JAPANESE.C	implemented_narrow
 F	0951	F0951_JAPANESE_GetCharacterPattern	JAPANESE.C	implemented_narrow
 F	0952	F0952_JAPANESE_Print	FMTOWNS.H;TEXT2.C;DEFS.H;CEDT027.C;TEXT.C;JAPANESE.C;CEDT030.C	implemented_narrow
-F	1001	F1001_JAPANESE_LoadANKCharacterPatterns	TEXT.C;JAPANESE.C	referenced_not_verified
+F	1001	F1001_JAPANESE_LoadANKCharacterPatterns	TEXT.C;JAPANESE.C	implemented_narrow
 F	1002	F1002_Call_F0132_VIDEO_Blit	BASE.C	implemented_narrow
 F	1004	F1004_VIDEO_BlitShrinkWithPaletteChanges	IO.C;BLTSHRNK.C	referenced_not_verified
 F	1007	F1007_AddMemoryChunk	MEMORY.C	referenced_not_verified
