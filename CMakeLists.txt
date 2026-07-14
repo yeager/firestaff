@@ -11748,6 +11748,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_wall_inscription_pc34_material_gate
     )
 
+    # DUNVIEW.C F0107: reject malformed M648/C10 receipts before host blits.
+    add_executable(test_dm1_v1_inscription_source_raster_gate
+        tests/test_dm1_v1_inscription_source_raster_gate.c
+    )
+    target_link_libraries(test_dm1_v1_inscription_source_raster_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inscription_source_raster_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inscription_source_raster_gate
+        COMMAND test_dm1_v1_inscription_source_raster_gate
+    )
+
     # DM1 V1 slot-boxes: Graphics.dat item 562 init var
     # G0030_as_Graphic562_SlotBoxes[46] (8 status-box hands, 30 inventory
     # slots, 8 chest slots) — the pixel-coordinate table for slot-box
