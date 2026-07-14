@@ -17,6 +17,8 @@ static uint32_t dm2_weather_hash_bytes(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static uint32_t dm2_weather_hash_step(uint32_t hash, uint32_t value);
+
 static int dm2_weather_command_is_source_owned(uint8_t command)
 {
     return command >= DM2_V1_WEATHER_CLOUD_LIGHT_CMD &&
@@ -51,6 +53,116 @@ static int dm2_weather_has_environment_image(const DM2_V1_AssetLoader *loader,
         }
     }
     return 0;
+}
+
+static const DM2_V1_GdatEntry *dm2_weather_find_environment_entry(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t field,
+    int want_image)
+{
+    size_t i;
+
+    if (!loader || !loader->loaded || !loader->entries) return NULL;
+    for (i = 0u; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 == DM2_GDAT_CATEGORY_ENVIRONMENT &&
+            entry->cls2 == graphicsset && entry->cls4 == field &&
+            (!!(entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE) == !!want_image)) {
+            return entry;
+        }
+    }
+    return NULL;
+}
+
+static int dm2_weather_environment_material_receipt(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t field,
+    DM2_V1_EnvironmentWeatherMaterialReceipt *out)
+{
+    const DM2_V1_GdatEntry *text_entry;
+    const DM2_V1_GdatEntry *image_entry;
+    const uint8_t *text;
+    const uint8_t *image;
+    size_t text_size;
+    size_t image_size;
+    int found_cd;
+    int found_fw;
+    int32_t cd;
+    int32_t fw;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    text_entry = dm2_weather_find_environment_entry(loader, graphicsset,
+                                                     field, 0);
+    image_entry = dm2_weather_find_environment_entry(loader, graphicsset,
+                                                      field, 1);
+    if (!text_entry || !image_entry || !loader->data || !loader->raw_offsets ||
+        !loader->raw_sizes || text_entry->data_index >= loader->raw_data_count ||
+        image_entry->data_index >= loader->raw_data_count) {
+        return 0;
+    }
+    text_size = loader->raw_sizes[text_entry->data_index];
+    image_size = loader->raw_sizes[image_entry->data_index];
+    text = loader->data + loader->raw_offsets[text_entry->data_index];
+    image = loader->data + loader->raw_offsets[image_entry->data_index];
+    if (!text || !image || text_size == 0u || image_size == 0u ||
+        loader->raw_offsets[text_entry->data_index] > loader->data_size ||
+        text_size > loader->data_size - loader->raw_offsets[text_entry->data_index] ||
+        loader->raw_offsets[image_entry->data_index] > loader->data_size ||
+        image_size > loader->data_size - loader->raw_offsets[image_entry->data_index] ||
+        !dm2_v1_weather_cmdstr_query(text, text_size, "CD", &found_cd, &cd) ||
+        !dm2_v1_weather_cmdstr_query(text, text_size, "FW", &found_fw, &fw) ||
+        !found_cd || !found_fw || fw < 0 || fw > UINT8_MAX) {
+        return 0;
+    }
+    out->environment_field = field;
+    out->command_cd = cd;
+    out->command_fw = (uint8_t)fw;
+    out->text_hash = dm2_weather_hash_bytes(text, text_size);
+    out->image_hash = dm2_weather_hash_bytes(image, image_size);
+    out->image_byte_count = (uint32_t)image_size;
+    return out->text_hash != 0u && out->image_hash != 0u;
+}
+
+int dm2_v1_weather_gdat_environment_receipt(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
+    uint32_t map_load_token, int outdoor_scene, int weather_enabled,
+    uint8_t cloud_field, uint8_t wet_ground_field, int draw_clouds,
+    int draw_wet_ground, DM2_V1_EnvironmentWeatherReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!loader || !loader->loaded || map_load_token == 0u) return 0;
+    out->valid = 1;
+    out->graphicsset = graphicsset;
+    out->map_load_token = map_load_token;
+    if (!outdoor_scene || !weather_enabled) {
+        out->receipt_hash = hash;
+        return 1;
+    }
+    if (draw_clouds && !dm2_weather_environment_material_receipt(
+            loader, graphicsset, cloud_field, &out->materials[out->material_count])) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (draw_clouds) ++out->material_count;
+    if (draw_wet_ground && !dm2_weather_environment_material_receipt(
+            loader, graphicsset, wet_ground_field,
+            &out->materials[out->material_count])) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (draw_wet_ground) ++out->material_count;
+    hash = dm2_weather_hash_step(hash, map_load_token);
+    hash = dm2_weather_hash_step(hash, graphicsset);
+    hash = dm2_weather_hash_step(hash, out->material_count);
+    for (unsigned int i = 0u; i < out->material_count; ++i) {
+        hash = dm2_weather_hash_step(hash, out->materials[i].environment_field);
+        hash = dm2_weather_hash_step(hash, out->materials[i].text_hash);
+        hash = dm2_weather_hash_step(hash, out->materials[i].image_hash);
+    }
+    out->receipt_hash = hash;
+    return 1;
 }
 
 int dm2_v1_weather_cmdstr_query(const uint8_t *text, size_t text_size,
