@@ -976,6 +976,14 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_scene_movement_active(
+    DM2_V1_ViewportState *s, int active)
+{
+    if (!s) return;
+    s->gdat_scene_movement_active = active ? 1 : 0;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s, const DM2_V1_GdatWallM11CommandPlan *plan)
 {
@@ -3236,6 +3244,11 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     DM2_V1_ScenePlaneMaterial floor_material = { 0 };
     int ceiling_asset;
     int floor_asset;
+    /* SKProject SkWinCore.cpp DRAW_DUNGEON_GRAPHIC applies these initialized
+     * _4976_00fa/_4976_00fc displacements only when glbIsPlayerMoving is
+     * nonzero, and only for rect 700/701. Do not admit arbitrary offsets. */
+    const int movement_ceiling_y = s->gdat_scene_movement_active ? -2 : 0;
+    const int movement_floor_y = s->gdat_scene_movement_active ? 3 : 0;
 
     s->last_floor_ceiling_material_required_mask = 0u;
     s->last_floor_ceiling_material_consumed_mask = 0u;
@@ -3391,14 +3404,14 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
      * DM1. Source: ReDMCSB DUNVIEW.C:126-127. */
 
     int ceiling_x = 0;
-    int ceiling_y = 0;
+    int ceiling_y = movement_ceiling_y;
     int ceiling_h = DM2_CEILING_H;
     int ceiling_w_dst = DM2_VP_WIDTH;
     if (s->source_materials_required && s->gdat_scene_material_plan) {
         const DM2_V1_GdatSceneBlitRect *rect =
             &s->gdat_scene_material_plan->rects[1];
         ceiling_x = rect->x;
-        ceiling_y = rect->y;
+        ceiling_y = rect->y + movement_ceiling_y;
         ceiling_w_dst = rect->width;
         ceiling_h = rect->height;
     }
@@ -3439,14 +3452,14 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     }
 
     int floor_x = 0;
-    int floor_y = DM2_FLOOR_Y;
+    int floor_y = DM2_FLOOR_Y + movement_floor_y;
     int floor_h = DM2_FLOOR_H;
     int floor_w_dst = DM2_VP_WIDTH;
     if (s->source_materials_required && s->gdat_scene_material_plan) {
         const DM2_V1_GdatSceneBlitRect *rect =
             &s->gdat_scene_material_plan->rects[0];
         floor_x = rect->x;
-        floor_y = rect->y;
+        floor_y = rect->y + movement_floor_y;
         floor_w_dst = rect->width;
         floor_h = rect->height;
     }

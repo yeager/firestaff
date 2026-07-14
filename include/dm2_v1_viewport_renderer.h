@@ -808,6 +808,10 @@ typedef struct {
     uint16_t gdat_misty_map;
     uint16_t gdat_thunder_position;
     uint16_t gdat_ambient_darkness;
+    /* SKProject DRAW_DUNGEON_GRAPHIC offsets only the 700/701 planes while
+     * glbIsPlayerMoving is live. This is a boolean rather than a host-provided
+     * displacement: the two source offsets are fixed. */
+    int gdat_scene_movement_active;
     int gdat_scene_material_index;
     /* The active MAP's decoded GRAPHICSSET planes are retained by the runtime
      * plan. These are never synthesized and are preferred over a second GDAT
@@ -978,6 +982,11 @@ void dm2_v1_viewport_set_gdat_scene_control(
 void dm2_v1_viewport_set_gdat_scene_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatSceneM11CommandPlan *plan);
+/* Source-locked 700/701 movement presentation. When active, the ceiling is
+ * drawn at -2 and the floor at +3 pixels, matching SKProject's initialized
+ * _4976_00fa/_4976_00fc values. */
+void dm2_v1_viewport_set_gdat_scene_movement_active(
+    DM2_V1_ViewportState *s, int active);
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatWallM11CommandPlan *plan);
