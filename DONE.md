@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0662/F0663 palette bitmap bridge: added the exact
+  in-place F0662 and dimensions-prefix-copy F0663 F0129 dispatches. Palette
+  bytes, bitmap pixels, and final renderer remain caller-owned real data;
+  this adds no palette validation, graphic decode, derived-cache policy,
+  event, DSA, or runtime. Focused strict-C11 regression passes.
+
 - 2026-07-14 Theron authentic-capture provenance: the Mednafen host-input
   helper now resolves the launched SDL process by PID and records that PID in
   its transition receipt. A real US CUE/System Card run confirmed the PID
