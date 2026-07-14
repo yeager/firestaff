@@ -1975,7 +1975,7 @@ F	8165	F8165_VIDRV_14_GetPrefixedBitmapByteCountOrBlitFromScreenNoTransparency	N
 F	8166	F8166_VIDRV_15_BlitToScreenNoTransparency	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8166_blit_prefixed_bitmap_c25_pc34_compat	PC 3.4 C25 six-byte prefixed aperture playback ported and focused-tested
 F	8167	F8167_VIDRV_03_BlitMousePointerPrefixedBitmapFromScreen	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8167_f8168_mouse_pointer_c25_pc34_compat	PC 3.4 C25 18x18 edge-clamped mouse aperture capture ported and focused-tested
 F	8168	F8168_VIDRV_04_BlitMousePointerPrefixedBitmapToScreen	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8167_f8168_mouse_pointer_c25_pc34_compat	PC 3.4 C25 captured mouse aperture restore through F8166 ported and focused-tested
-F	8169	F8169_VIDRV_19_BlackenAllPixelsOneByOne	VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	8169	F8169_VIDRV_19_BlackenAllPixelsOneByOne	VIDEODRV.C	implemented-narrow	redmcsb_f8169_blacken_pixels_c25_pc34_compat	PC 3.4 C25 LFSR-ordered aperture blackening ported and focused-tested
 F	8170	F8170_Return0	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	8171	F8171_ExecuteProgram	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	8213	F8213_SetSinglePixel_Unreferenced	VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
