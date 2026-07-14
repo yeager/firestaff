@@ -1654,6 +1654,12 @@ and real community-save corpus round-trip evidence.
     family without an M10 materializer. It never resumes by silently dropping
     an original event; remaining work is source-complete event-family breadth
     plus real community-save corpus round-trip evidence.
+  - 2026-07-14 update: F0435 candidate materialization now rejects a restored
+    PartyMapIndex/X/Y outside its checksum-qualified, materialized dungeon
+    tail before world/report commit. The focused local-original-data regression
+    rechecks F0417/F0430 checksums for each invalid map, X, and Y mutation and
+    proves no destination state is published. Remaining work is authentic
+    community-save corpus coverage.
   - 2026-07-13 update: saved C040 HoC panel state now reopens only for the
     last appended party slot, the same candidate position consumed by
     `REVIVE.C` F0282. A stale sidecar cannot bind a mirror panel to an older

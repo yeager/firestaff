@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 F0435 dungeon-tail party-pose validation: after
+  F0434 materializes a checksum-qualified saved dungeon into the candidate
+  world, the original handoff now rejects PartyMapIndex/X/Y outside the saved
+  map descriptors before active groups, timeline, report, or destination world
+  can commit. Source-lock: ReDMCSB `LOADSAVE.C` F0435 lines 2729-2745 and
+  2826. The focused test mutates each GLOBAL_DATA pose field in a native F0802
+  export from local original `DUNGEON.DAT`, recomputes its F0417/F0430
+  checksums, and proves the failed candidate publishes no state.
+
 - ✅ 2026-07-14 DM2 original SKSave state-corpus receipt: the new read-only
   census revalidates each scanner-issued original envelope/raw candidate
   against its complete-file FNV receipt before parsing it, then retains only
