@@ -11,7 +11,10 @@ typedef struct DM2_V1_DoorRenderPlan DM2_V1_DoorRenderPlan;
 
 typedef enum {
     DM2_V1_GDAT_DOOR_OVERLAY_ORNATE = 1,
-    DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK = 2
+    DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK = 2,
+    DM2_V1_GDAT_DOOR_PANEL = 3,
+    DM2_V1_GDAT_DOOR_FRAME = 4,
+    DM2_V1_GDAT_DOOR_BUTTON = 5
 } DM2_V1_GdatDoorOverlayKind;
 
 typedef struct {

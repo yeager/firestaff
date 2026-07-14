@@ -3900,14 +3900,18 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 material->required = 1;
                 s->last_door_material_required_mask |=
                     (uint8_t)(1u << (unsigned)kind);
-                if ((kind == DM2_DOOR_MATERIAL_ORNATE ||
-                     kind == DM2_DOOR_MATERIAL_DESTROYED_MASK) &&
-                    s->gdat_door_overlay_material_plan) {
+                if (s->gdat_door_overlay_material_plan) {
                     const DM2_V1_GdatDoorOverlayM11CommandPlan *overlay_plan =
                         s->gdat_door_overlay_material_plan;
-                    const int wanted_kind = kind == DM2_DOOR_MATERIAL_ORNATE
-                        ? DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
-                        : DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK;
+                    const int wanted_kind = kind == DM2_DOOR_MATERIAL_PANEL
+                        ? DM2_V1_GDAT_DOOR_PANEL
+                        : kind == DM2_DOOR_MATERIAL_ORNATE
+                            ? DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
+                            : kind == DM2_DOOR_MATERIAL_DESTROYED_MASK
+                                ? DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK
+                                : kind == DM2_DOOR_MATERIAL_FRAME
+                                    ? DM2_V1_GDAT_DOOR_FRAME
+                                    : DM2_V1_GDAT_DOOR_BUTTON;
                     const DM2_V1_GdatDoorOverlayM11Command *command = NULL;
                     for (int j = 0; overlay_plan->valid &&
                          j < overlay_plan->command_count; ++j) {

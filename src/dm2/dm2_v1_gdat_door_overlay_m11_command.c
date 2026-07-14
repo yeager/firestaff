@@ -19,23 +19,77 @@ void dm2_v1_gdat_door_overlay_m11_command_plan_free(
     memset(plan, 0, sizeof(*plan));
 }
 
-static int add_overlay(const DM2_V1_AssetLoader *loader,
-                       DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
-                       const DM2_V1_DoorRender *door, int kind)
+/* SKProject SkWinCore.cpp DM2_DRAW_DOOR/DRAW_DOOR_FRAMES resolves these
+ * category/index/field triples before the first door blit. */
+static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
+                                    int *out_gdat_index, int *out_category,
+                                    int *out_index, int *out_field)
+{
+    int gdat_index;
+    int packed;
+    if (!door || !out_gdat_index || !out_category || !out_index || !out_field) return 0;
+    switch (kind) {
+    case DM2_V1_GDAT_DOOR_PANEL:
+        gdat_index = door->panel_gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOORS;
+        if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
+            gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {
+            packed = DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index;
+            *out_index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) & 0xff;
+            *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
+        } else {
+            *out_index = 0;
+            *out_field = DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - gdat_index;
+        }
+        break;
+    case DM2_V1_GDAT_DOOR_OVERLAY_ORNATE:
+        gdat_index = door->ornate_gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOOR_GFX;
+        *out_index = door->ornament_index;
+        *out_field = dm2_v1_viewport_door_panel_field_for_square(door->view_square);
+        break;
+    case DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK:
+        gdat_index = door->destroyed_mask_gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOORS;
+        *out_index = door->door_gfx_index;
+        *out_field = dm2_v1_viewport_door_panel_field_for_square(door->view_square);
+        break;
+    case DM2_V1_GDAT_DOOR_FRAME:
+        gdat_index = door->frame_gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+        *out_index = DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
+        *out_field = dm2_v1_viewport_door_frame_field_for_square(door->view_square);
+        break;
+    case DM2_V1_GDAT_DOOR_BUTTON:
+        if (door->button_source_kind != 1) return 1;
+        gdat_index = door->button_gdat_index;
+        *out_category = DM2_GDAT_CATEGORY_DOOR_BUTTONS;
+        *out_index = 0;
+        *out_field = DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - gdat_index;
+        break;
+    default: return 0;
+    }
+    if (gdat_index == 0 || *out_index < 0 || *out_index > 0xff ||
+        *out_field < 0 || *out_field > 0xff) return 0;
+    *out_gdat_index = gdat_index;
+    return 1;
+}
+
+static int add_material(const DM2_V1_AssetLoader *loader,
+                        DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
+                        const DM2_V1_DoorRender *door, int kind)
 {
     DM2_V1_GdatDoorOverlayM11Command *command;
-    int gdat_index = kind == DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
-        ? door->ornate_gdat_index : door->destroyed_mask_gdat_index;
-    int category = kind == DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
-        ? DM2_GDAT_CATEGORY_DOOR_GFX : DM2_GDAT_CATEGORY_DOORS;
-    int index = kind == DM2_V1_GDAT_DOOR_OVERLAY_ORNATE
-        ? door->ornament_index : door->door_gfx_index;
-    int field = dm2_v1_viewport_door_panel_field_for_square(door->view_square);
+    int gdat_index, category, index, field;
     const uint8_t *raw;
     size_t raw_size = 0u;
     int width = 0, height = 0;
 
-    if (!gdat_index) return 1;
+    if (kind == DM2_V1_GDAT_DOOR_BUTTON && door->button_source_kind != 1) return 1;
+    if ((kind == DM2_V1_GDAT_DOOR_OVERLAY_ORNATE && !door->ornate_gdat_index) ||
+        (kind == DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK &&
+         !door->destroyed_mask_gdat_index)) return 1;
+    if (!resolve_material_address(door, kind, &gdat_index, &category, &index, &field)) return 0;
     if (plan->command_count >= DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX ||
         index < 0 || index > 0xff || field < 0) return 0;
     command = &plan->commands[plan->command_count];
@@ -70,10 +124,11 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     memset(&candidate, 0, sizeof(candidate));
     if (!loader || !door_plan || !dm2_v1_asset_loader_verify(loader)) return 0;
     for (int i = 0; i < door_plan->door_count; ++i) {
-        if (!add_overlay(loader, &candidate, &door_plan->doors[i],
-                         DM2_V1_GDAT_DOOR_OVERLAY_ORNATE) ||
-            !add_overlay(loader, &candidate, &door_plan->doors[i],
-                         DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK)) goto fail;
+        if (!add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_PANEL) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON)) goto fail;
     }
     if (!candidate.command_count) goto fail;
     for (int i = 0; i < candidate.command_count; ++i) {

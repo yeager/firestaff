@@ -25,6 +25,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -92,6 +93,7 @@ typedef struct {
     int map_graphics_style;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
+    DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
@@ -512,6 +514,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     if (!rt) return;
     dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
     dm2_v1_gdat_wall_m11_command_plan_free(&rt->gdat_wall_material_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&rt->gdat_door_material_plan);
     rt->map_graphics_style = -1;
     rt->gdat_scene_control_ready = 0;
     rt->gdat_scene_control_hash = 0u;
@@ -1290,6 +1293,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         &g_dm2_runtime.gdat_scene_material_plan);
     dm2_v1_gdat_wall_m11_command_plan_free(
         &g_dm2_runtime.gdat_wall_material_plan);
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(
+        &g_dm2_runtime.gdat_door_material_plan);
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     g_dm2_runtime.boot = boot_profile;
@@ -2406,6 +2411,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t font_hash = 0u;
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_GdatHudM11CommandPlan hud_material_plan;
+    DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
     DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
@@ -2498,6 +2504,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport, &rt->gdat_scene_material_plan);
     dm2_v1_viewport_set_gdat_wall_material_plan(
         &viewport, &rt->gdat_wall_material_plan);
+    memset(&door_render_plan, 0, sizeof(door_render_plan));
+    dm2_v1_gdat_door_overlay_m11_command_plan_free(&rt->gdat_door_material_plan);
+    if (dm2_v1_viewport_build_door_render_plan(&viewport, &door_render_plan) &&
+        door_render_plan.door_count > 0 &&
+        dm2_v1_boot_gdat_door_overlay_m11_command_plan(
+            rt->boot, &door_render_plan, &rt->gdat_door_material_plan)) {
+        dm2_v1_viewport_set_gdat_door_overlay_material_plan(
+            &viewport, &rt->gdat_door_material_plan);
+    }
     dm2_runtime_refresh_g1_scene_handoff(
         rt, rt->dungeon_level,
         party_x + forward_dx[party_dir & 3],
