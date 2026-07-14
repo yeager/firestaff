@@ -92,6 +92,15 @@
   Ninja-built M10 archive. The opt-in real-corpus leg skipped because
   `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
 
+- ✅ 2026-07-14 DM1 PC34 external-corpus runtime admission: the fixture-free
+  corpus target now promotes a save only after its own F0435 dungeon tail
+  stages and its EVENTS/TIMELINE queue is adopted intact. A tail-less
+  F0435/F0433 byte roundtrip stays diagnostic-only and cannot pass by using a
+  host dungeon. Source-lock: ReDMCSB `LOADSAVE.C F0435` staged load and
+  return-to-game order. Verification: focused
+  `test_dm1_v1_original_save_pc34_external_corpus` (non-promoting skip with
+  no staged original corpus) and Ninja `firestaff_m10`.
+
 - ✅ 2026-07-14 CSBWin package live-timer ownership receipt: the opt-in
   original-package handoff probe now verifies every accepted `csbgame*.dat`
   timer queue entry is the live runtime event from the same saved timer index,

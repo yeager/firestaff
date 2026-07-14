@@ -305,6 +305,11 @@ ReDMCSB WIP 2021-02-06 source tree.
     trailing-tail size, and no-fallback runtime-stage/adoption results; an
     unset corpus root is a non-promoting skip. Remaining evidence is still
     provenance-recorded original PC34 saves and original executable results.
+  - 2026-07-14 update: fixture-free external-corpus promotion now requires
+    every qualified PC34 candidate to stage an owned F0435 dungeon and adopt
+    its EVENTS/TIMELINE queue before it is called runtime-admitted. A
+    tail-less byte roundtrip remains diagnostic-only; it cannot borrow a host
+    dungeon or satisfy the corpus runtime gate.
   - 2026-07-13 update: F0435 tail validation now verifies the persisted
     per-column cumulative SquareFirstThings table against raw-map thing-list
     flags before M10 can reconstruct its lookup. The remaining requirement is
