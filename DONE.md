@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0799`: source-locked PC 3.4 unavailable
+  sound masking by original memory flags. Focused strict C11 test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0792` and `F0798`: source-locked dungeon
   bitmap draw and inclusive point-in-zone predicate. Focused strict C11 tests
   pass without synthetic graphics.
