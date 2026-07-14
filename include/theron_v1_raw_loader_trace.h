@@ -87,6 +87,28 @@ typedef struct {
     int stage3_handoff_record_proven;
 } Theron_V1RawLoaderTraceStage3SectorReceipt;
 
+/* A later System Card $e009 call/return observed in the same authenticated
+ * Mednafen lineage. This binds the executed CD record range to raw Track 02
+ * user data, but deliberately assigns no dungeon, object, bitmap, palette,
+ * or payload-format meaning to those bytes. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t stage3_track02_record;
+    uint32_t later_track02_record;
+    uint16_t caller_pc;
+    uint16_t return_pc;
+    uint8_t sector_count;
+    size_t first_raw_sector;
+    size_t first_raw_offset;
+    size_t first_user_data_offset;
+    size_t user_data_bytes;
+    uint32_t user_data_hash;
+    int later_e009_return_verified;
+    int later_cd_read_to_media_verified;
+} Theron_V1RawLoaderTraceLaterSectorReceipt;
+
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
  * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores and
  * completed HuC6260 colour-table words that appear after that read in the
@@ -121,6 +143,19 @@ int theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_Track02Stage2DynamicPayloadReceipt *payload,
     Theron_V1RawLoaderTraceStage3SectorReceipt *out);
+
+/* Consumes one complete later `JSR $e009` dispatch/return envelope from the
+ * original Mednafen capture and binds its captured record range to the same
+ * hash-verified raw Track 02 identity as `trace`. The prior $4090->$3800
+ * receipt must already be media-bound. This is a loader-coordinate handoff
+ * only; it cannot authorize a dungeon load or rendering. */
+int theron_v1_raw_loader_trace_bind_later_e009_sector(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const char *capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceLaterSectorReceipt *out);
 
 /* Binds only compatible real-media startup bitmap receipts. In addition to
  * preserving the existing bitmap-route contract, this binds the inspected

@@ -822,6 +822,14 @@ Duplicate, mismatched, or standalone later rows reject. It assigns no CD
 payload, object, graphics, palette, level, or gameplay-transition semantics. A
 fresh matched JP/US capture remains required before any positive record
 correlation is claimed.
+2026-07-14 later-loader media join: the production raw-loader receipt now
+requires that later `$e009` dispatch/return envelope after the same capture's
+`$4090 -> $3800` Stage 3 span has already bound to hash-verified raw Track 02.
+It retains only later record range, caller/return PCs, raw/user-data
+coordinates, and a user-data hash. This is a positive executed
+loader-to-media fact, not a dungeon/map/object/palette/bitmap meaning; a
+positive dungeon route still needs an authentic executed range whose format
+and route relationship are independently observed.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 

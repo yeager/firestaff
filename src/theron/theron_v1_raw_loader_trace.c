@@ -97,6 +97,61 @@ static int tqr_trace_parse_cd_read_destination_span(
            *out_bytes == 32u && *out_checksum != 0u;
 }
 
+static int tqr_trace_parse_later_e009_dispatch(
+    const char *line, size_t length, unsigned int *out_caller_pc,
+    unsigned int *out_return_pc, unsigned int *out_sector_count,
+    unsigned int *out_cl, unsigned int *out_dl, unsigned int *out_ch,
+    unsigned int *out_record)
+{
+    int consumed = 0;
+
+    if (!line || !out_caller_pc || !out_return_pc || !out_sector_count ||
+        !out_cl || !out_dl || !out_ch || !out_record) return 0;
+    return sscanf(line,
+                  "later_system_card_e009_dispatch caller_pc=%x return_pc=%x sector_count=%x record_cl=%x record_dl=%x record_ch=%x record=%x%n",
+                  out_caller_pc, out_return_pc, out_sector_count, out_cl,
+                  out_dl, out_ch, out_record, &consumed) == 7 &&
+           consumed == (int)length && *out_caller_pc <= 0xffffu &&
+           *out_return_pc <= 0xffffu && *out_sector_count > 0u &&
+           *out_sector_count <= 0xffu && *out_cl <= 0xffu &&
+           *out_dl <= 0xffu && *out_ch <= 0xffu && *out_record <= 0xffffffu;
+}
+
+static int tqr_trace_parse_later_e009_return(const char *line, size_t length,
+                                              unsigned int *out_caller_pc,
+                                              unsigned int *out_return_pc,
+                                              unsigned int *out_record)
+{
+    int consumed = 0;
+
+    if (!line || !out_caller_pc || !out_return_pc || !out_record) return 0;
+    return sscanf(line,
+                  "later_system_card_e009_return caller_pc=%x return_pc=%x record=%x%n",
+                  out_caller_pc, out_return_pc, out_record, &consumed) == 3 &&
+           consumed == (int)length && *out_caller_pc <= 0xffffu &&
+           *out_return_pc <= 0xffffu && *out_record <= 0xffffffu;
+}
+
+static uint32_t tqr_trace_fnv1a_user_data_range(const uint8_t *track02_data,
+                                                 size_t first_raw_sector,
+                                                 size_t sector_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t sector;
+    size_t byte;
+
+    for (sector = 0u; sector < sector_count; ++sector) {
+        const uint8_t *user_data = track02_data +
+            (first_raw_sector + sector) * THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET;
+        for (byte = 0u; byte < THERON_TRACK02_RAW_USER_DATA_BYTES; ++byte) {
+            hash ^= user_data[byte];
+            hash *= 16777619u;
+        }
+    }
+    return hash;
+}
+
 int theron_v1_raw_loader_trace_ingest_mednafen_capture(
     const char *capture,
     const char *track02_md5,
@@ -340,6 +395,103 @@ int theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(
         trace->dynamic_cd_read_destination_span_checksum;
     out->observed_cd_read_to_media_span_verified = 1;
     out->stage3_handoff_record_proven = 1;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_later_e009_sector(
+    const Theron_V1RawLoaderTraceReceipt *trace,
+    const char *capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceLaterSectorReceipt *out)
+{
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int caller_pc = 0u;
+    unsigned int return_pc = 0u;
+    unsigned int sector_count = 0u;
+    unsigned int cl = 0u;
+    unsigned int dl = 0u;
+    unsigned int ch = 0u;
+    unsigned int record = 0u;
+    unsigned int returned_caller_pc = 0u;
+    unsigned int returned_pc = 0u;
+    unsigned int returned_record = 0u;
+    size_t source_count = 0u;
+    size_t dispatch_count = 0u;
+    size_t returned_count = 0u;
+    size_t raw_sector_count;
+    size_t first_raw_offset;
+    const char *expected_md5;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!trace || !capture || !track02_data || !track02_md5 || !out ||
+        !trace->valid || !trace->dynamic_cd_read_verified ||
+        !trace->dynamic_cd_read_registers_verified ||
+        !trace->dynamic_cd_read_destination_span_verified ||
+        !trace->dynamic_cd_read_media_span_verified ||
+        !trace->stage2_dynamic_payload_verified ||
+        trace->dynamic_cd_read_destination != 0x3800u ||
+        trace->dynamic_cd_read_destination_span_bytes != 32u ||
+        strcmp(trace->track02_md5, track02_md5) != 0 ||
+        (trace->variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         trace->variant != THERON_TRACK02_VARIANT_US_BIN) ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+
+    expected_md5 = trace->variant == THERON_TRACK02_VARIANT_JP_BIN
+        ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    if (strcmp(track02_md5, expected_md5) != 0) return 0;
+
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented") &&
+            memcmp(line, "source=mednafen-pce-instrumented", length) == 0) {
+            ++source_count;
+        } else if (length >= strlen("later_system_card_e009_dispatch ") &&
+                   memcmp(line, "later_system_card_e009_dispatch ",
+                          strlen("later_system_card_e009_dispatch ")) == 0) {
+            if (++dispatch_count != 1u || !tqr_trace_parse_later_e009_dispatch(
+                    line, length, &caller_pc, &return_pc, &sector_count,
+                    &cl, &dl, &ch, &record)) return 0;
+        } else if (length >= strlen("later_system_card_e009_return ") &&
+                   memcmp(line, "later_system_card_e009_return ",
+                          strlen("later_system_card_e009_return ")) == 0) {
+            if (++returned_count != 1u || !tqr_trace_parse_later_e009_return(
+                    line, length, &returned_caller_pc, &returned_pc,
+                    &returned_record)) return 0;
+        }
+    }
+    if (source_count != 1u || dispatch_count != 1u || returned_count != 1u ||
+        return_pc != caller_pc + 3u || returned_caller_pc != caller_pc ||
+        returned_pc != return_pc || returned_record != record ||
+        record != (cl | (dl << 8) | (ch << 16)) ||
+        record <= trace->dynamic_cd_read_record) return 0;
+
+    raw_sector_count = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
+    if (record >= raw_sector_count || sector_count > raw_sector_count - record)
+        return 0;
+    first_raw_offset = (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES;
+
+    out->valid = 1;
+    out->variant = trace->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->stage3_track02_record = trace->dynamic_cd_read_record;
+    out->later_track02_record = record;
+    out->caller_pc = (uint16_t)caller_pc;
+    out->return_pc = (uint16_t)return_pc;
+    out->sector_count = (uint8_t)sector_count;
+    out->first_raw_sector = record;
+    out->first_raw_offset = first_raw_offset;
+    out->first_user_data_offset = first_raw_offset +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    out->user_data_bytes = (size_t)sector_count *
+        THERON_TRACK02_RAW_USER_DATA_BYTES;
+    out->user_data_hash = tqr_trace_fnv1a_user_data_range(
+        track02_data, record, sector_count);
+    out->later_e009_return_verified = 1;
+    out->later_cd_read_to_media_verified = 1;
     return 1;
 }
 
