@@ -8,6 +8,40 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static uint16_t read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static const uint8_t *find_compressed_rect_row(const uint8_t *table,
+                                                size_t table_size,
+                                                uint16_t rect_number)
+{
+    uint16_t group_count;
+    size_t rows_offset;
+
+    if (!table || table_size < 4u || read_le16(table) != 0xfc0du) return NULL;
+    group_count = read_le16(table + 2u);
+    if (group_count == 0u || (size_t)group_count > (table_size - 4u) / 4u) {
+        return NULL;
+    }
+    rows_offset = 4u + (size_t)group_count * 4u;
+    for (uint16_t group = 0u; group < group_count; ++group) {
+        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
+        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
+
+        if (count == 0u || count > (table_size - rows_offset) / 8u) {
+            return NULL;
+        }
+        if (rect_number >= first && rect_number <= last) {
+            return table + rows_offset + (size_t)(rect_number - first) * 8u;
+        }
+        rows_offset += count * 8u;
+    }
+    return NULL;
+}
+
 void dm2_v1_gdat_scene_m11_command_plan_free(DM2_V1_GdatSceneM11CommandPlan *plan)
 {
     if (!plan) return;
@@ -66,5 +100,40 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     hash ^= candidate.ambient_darkness; hash *= 16777619u;
     if (!hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }
     candidate.command_hash = hash; candidate.valid = 1; *out_plan = candidate;
+    return 1;
+}
+
+int dm2_v1_gdat_scene_query_blit_rect_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatSceneQueryBlitRectReceipt *out_receipt)
+{
+    const uint8_t *table;
+    const uint8_t *floor_row;
+    const uint8_t *ceiling_row;
+    size_t table_size = 0u;
+    DM2_V1_GdatSceneQueryBlitRectReceipt candidate;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    floor_row = find_compressed_rect_row(
+        table, table_size, DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER);
+    ceiling_row = find_compressed_rect_row(
+        table, table_size, DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER);
+    if (!floor_row || !ceiling_row) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.floor_rect_number = DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER;
+    candidate.ceiling_rect_number = DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
+    candidate.table_hash = hash_bytes(2166136261u, table, table_size);
+    candidate.floor_row_hash = hash_bytes(2166136261u, floor_row, 8u);
+    candidate.ceiling_row_hash = hash_bytes(2166136261u, ceiling_row, 8u);
+    if (!candidate.table_hash || !candidate.floor_row_hash ||
+        !candidate.ceiling_row_hash) return 0;
+    candidate.valid = 1;
+    *out_receipt = candidate;
     return 1;
 }

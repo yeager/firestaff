@@ -2469,6 +2469,14 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   `test_dm2_v1_weather_no_synthetic_overlay`; matching CTest passed 2/2;
   `git diff --check` passed.
 
+- ✅ 2026-07-14 DM2 floor/ceiling compressed-rect ownership receipt: the
+  GDAT scene path now validates that the original
+  `INTERFACE_GENERAL/0/dt04/0` table owns raw `QUERY_BLIT_RECT` rows 700 and
+  701, retaining table and row hashes without assigning geometry or drawing
+  from them. The canonical-data scene-plan test exercises that receipt before
+  its existing real GRAPHICSSET plane handoff. The compressed grammar and
+  runtime call order remain intentionally unavailable. No save corpus files.
+
 - 2026-07-13 CSBWin restored TT_11 action-enable timer bridge: verified an
   exact queue-slot/timer/event/champion receipt now clears the source busy
   timer, disable-action bit, action-defense word, and action index for the
