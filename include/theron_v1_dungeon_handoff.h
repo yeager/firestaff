@@ -19,6 +19,12 @@
 #define THERON_V1_TRACK02_MD5_JP_BIN "b7afb338ad31be1025b53f9aff12d73a"
 #define THERON_V1_TRACK02_MD5_US_BIN "f23601102138f87c33025877767ebf76"
 
+typedef enum {
+    THERON_V1_TRACK02_VARIANT_NONE = 0,
+    THERON_V1_TRACK02_VARIANT_JP_BIN = 1,
+    THERON_V1_TRACK02_VARIANT_US_BIN = 2
+} Theron_V1Track02Variant;
+
 typedef struct {
     const Theron_V1RuntimeAdmissionReceipt *runtime_admission;
     int track02_hash_verified;
@@ -42,9 +48,16 @@ typedef struct {
     uint32_t track02_raw_sector;
     uint32_t raw_sector_offset;
     int raw_track02_md5_verified;
+    Theron_V1Track02Variant raw_track02_variant;
     int adjacent_boundary_opaque;
     const char *route;
 } Theron_V1DungeonHandoffReceipt;
+
+/* Returns a canonical raw MODE1/2352 variant only for the two source-locked
+ * Track 02 identities. Unknown, ISO, and caller-invented identities are not
+ * a media route. */
+Theron_V1Track02Variant theron_v1_track02_variant_from_md5(
+    const char *track02_md5);
 
 /* Compares an exact raw byte span with a supplied MD5 identity. This is an
  * integrity primitive only; it assigns no Track 02 record or payload role. */

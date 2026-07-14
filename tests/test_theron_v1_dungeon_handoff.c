@@ -42,12 +42,39 @@ static Theron_V1DungeonHandoffFacts valid_facts(unsigned char *raw) {
     return facts;
 }
 
+static unsigned char *read_raw_track02(const char *path, size_t *out_bytes) {
+    FILE *file;
+    long file_bytes;
+    unsigned char *bytes;
+
+    if (!path || !out_bytes || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_bytes = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = malloc((size_t)file_bytes);
+    if (!bytes || fread(bytes, 1u, (size_t)file_bytes, file) !=
+        (size_t)file_bytes) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_bytes = (size_t)file_bytes;
+    return bytes;
+}
+
 int main(void) {
     static const unsigned char md5_vector[] = "abc";
     unsigned char *raw = calloc(1u, RAW_BYTES);
     Theron_V1DungeonHandoffFacts facts;
     Theron_V1RuntimeAdmissionReceipt admission = {1, 1};
     Theron_V1DungeonHandoffReceipt receipt;
+    const char *real_track02_path;
+    unsigned char *real_track02;
+    size_t real_track02_bytes;
 
     CHECK(raw != NULL);
     if (!raw) return 1;
@@ -57,6 +84,12 @@ int main(void) {
     CHECK(!theron_v1_track02_raw_bytes_match_md5(
         md5_vector, sizeof(md5_vector) - 1u,
         THERON_V1_TRACK02_MD5_US_BIN));
+    CHECK(theron_v1_track02_variant_from_md5(THERON_V1_TRACK02_MD5_JP_BIN) ==
+          THERON_V1_TRACK02_VARIANT_JP_BIN);
+    CHECK(theron_v1_track02_variant_from_md5(THERON_V1_TRACK02_MD5_US_BIN) ==
+          THERON_V1_TRACK02_VARIANT_US_BIN);
+    CHECK(theron_v1_track02_variant_from_md5("not-a-track02-digest") ==
+          THERON_V1_TRACK02_VARIANT_NONE);
     write_us_receipt_bytes(raw);
     facts = valid_facts(raw);
     facts.runtime_admission = &admission;
@@ -90,6 +123,40 @@ int main(void) {
     raw[US_CANDIDATE_OFFSET + 7u] = 0x38u;
     facts.track02_md5 = "00000000000000000000000000000000";
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+
+    /* Positive selection is available only for an operator-supplied raw BIN. */
+    real_track02_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    real_track02 = read_raw_track02(real_track02_path, &real_track02_bytes);
+    if (real_track02) {
+        Theron_V1Track02Variant variant = THERON_V1_TRACK02_VARIANT_NONE;
+        uint32_t cue_index01_sector = 0u;
+
+        if (theron_v1_track02_raw_bytes_match_md5(
+                real_track02, real_track02_bytes, THERON_V1_TRACK02_MD5_US_BIN)) {
+            variant = THERON_V1_TRACK02_VARIANT_US_BIN;
+            cue_index01_sector = 225u;
+        } else if (theron_v1_track02_raw_bytes_match_md5(
+                       real_track02, real_track02_bytes,
+                       THERON_V1_TRACK02_MD5_JP_BIN)) {
+            variant = theron_v1_track02_variant_from_md5(
+                THERON_V1_TRACK02_MD5_JP_BIN);
+            cue_index01_sector = 224u;
+        }
+        CHECK(variant != THERON_V1_TRACK02_VARIANT_NONE);
+        if (variant != THERON_V1_TRACK02_VARIANT_NONE) {
+            facts = valid_facts(real_track02);
+            facts.raw_track02_bytes = real_track02_bytes;
+            facts.track02_md5 = variant == THERON_V1_TRACK02_VARIANT_US_BIN ?
+                THERON_V1_TRACK02_MD5_US_BIN : THERON_V1_TRACK02_MD5_JP_BIN;
+            facts.cue_track02_index01_raw_sector = cue_index01_sector;
+            CHECK(theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+            CHECK(receipt.raw_track02_variant == variant);
+            CHECK(receipt.adjacent_boundary_opaque);
+            CHECK(receipt.route != NULL &&
+                  strcmp(receipt.route, "raw_track02_initial_envelope") == 0);
+        }
+        free(real_track02);
+    }
 
     free(raw);
     return failures != 0;
