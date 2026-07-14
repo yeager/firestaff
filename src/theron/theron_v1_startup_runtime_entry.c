@@ -176,11 +176,19 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
         return 0;
     }
-    /* This helper owns the source-checked semantic record route, and is also
-     * used by all-dungeon receipt collection. The live Soul Room forcefield
-     * admission separately requires the complete Stage 2/3 loader handoff
-     * before it can mutate a world. Keeping that physical preflight there
-     * avoids making receipt inspection depend on unrelated loader bytes. */
+    /* A known MD5 string alone cannot admit synthetic bytes. Every direct
+     * runtime consumer must repeat the original Stage 2/3 physical-media
+     * preflight before the level handoff can mutate a world. */
+    if (!theron_v1_startup_runtime_stage3_loader_ready(
+            hucard_rom, hucard_rom_size, md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "stage-three loader bytes rejected; Track 02 runtime route blocked");
+        }
+        return 0;
+    }
+    /* This helper owns the source-checked semantic record route and is also
+     * used by all-dungeon receipt collection. */
     signal_status = theron_v1_track02_find_bank_signal(hucard_rom,
                                                        hucard_rom_size,
                                                        md5_hex,
