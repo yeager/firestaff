@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 DM1 ReDMCSB F8143/F8144: `NEC816.C:1549-1557` has empty bodies
+  and only commented parameter names; no copy, stride, byte order, or flip
+  contract exists to port without speculation.
+
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
   V2.1 session, using the configured screenshot directory (or the default).
