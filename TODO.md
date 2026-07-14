@@ -4469,6 +4469,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original `CD`/`FW` values. This closes no image or placement gap: actual
     `ENVIRONMENT_DRAW_DISTANT_ELEMENT` interpolation and `QUERY_TEMP_PICST`
     realization remain blocked on the original rect/image route.
+  - 2026-07-14 update: M11 now consumes the already source-owned
+    `DistantEnvironment` transform at the final GDAT weather draw: `FW`
+    mirror, movement offset, and the verified 0x40/0x34 fixed-point scale are
+    passed to the indexed `DRAW_TEMP_PICST` equivalent. Invalid scale values
+    block the complete source weather pass; no procedural overlay or 1:1
+    substitute is retained. The original timer/reseed/light/cloud dispatcher
+    and real-corpus runtime capture remain open.
   - 2026-07-13 update: the selected `QUERY_TEMP_PICST` material now carries
     its exact GDAT IMG3 width, height, bpp, category-wide `dtImageOffset`
     (`0xfe`), and image-specific `dtImageOffset`, in source order. Absent

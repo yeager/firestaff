@@ -215,6 +215,18 @@
   `dm2_v1_weather_gdat_receipt`, and `dm2_v1_weather_no_synthetic_overlay`
   passed 3/3.
 
+- ✅ 2026-07-14 DM2 GDAT weather transform handoff: the final outdoor GDAT
+  renderer now consumes the verified `DistantEnvironment` transform rather
+  than flattening it to an unmirrored 1:1 blit. The source-owned `FW` mirror,
+  movement offsets, and 0x40/0x34 fixed-point scale reach the indexed blitter
+  with the same fail-closed receipt and original `CD` destination clip. An
+  invalid transform blocks the complete weather layer; no procedural or
+  substitute weather pixels are introduced. Source: skproject
+  `c_bkgrnd.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT` and
+  `c_querydb.cpp::DM2_QUERY_TEMP_PICST`. Verification: focused build and
+  CTest `dm2_v1_weather_renderer_material_gate`,
+  `dm2_v1_weather_gdat_receipt`, and `dm2_v1_weather_no_synthetic_overlay`.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API

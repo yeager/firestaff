@@ -4825,7 +4825,11 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
             draw->image_field > DM2_V1_WEATHER_RAIN_STORM_CMD ||
             draw->source_right <= draw->source_left ||
             draw->source_bottom <= draw->source_top ||
-            clip->w <= 0 || clip->h <= 0) {
+            draw->scale_x == 0u || draw->scale_x > 0x40u ||
+            draw->scale_y == 0u || draw->scale_y > 0x40u ||
+            clip->w <= 0 || clip->h <= 0 ||
+            dm2_v1_viewport_calc_stretched_size(clip->w, draw->scale_x) <= 0 ||
+            dm2_v1_viewport_calc_stretched_size(clip->h, draw->scale_y) <= 0) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
             return;
@@ -4844,11 +4848,25 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
         }
     }
     for (i = 0u; i < receipt->command_count; ++i) {
+        const DM2_V1_WeatherDrawPlan *draw = &receipt->draws[i];
         const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
-        dm2_v1_blit_scaled_material_bitmap(
-            s, s->framebuffer, s->fb_stride, clip->x, clip->y,
-            clip->w, clip->h, pixels[i], widths[i], heights[i], strides[i],
-            DM2_COLOR_TRANSPARENT, &s->gdat_scene_weather_consumed_count);
+        int dst_w = dm2_v1_viewport_calc_stretched_size(
+            clip->w, draw->scale_x);
+        int dst_h = dm2_v1_viewport_calc_stretched_size(
+            clip->h, draw->scale_y);
+
+        /* skproject c_bkgrnd.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT passes
+         * the source slot's offset, stretch and FW-selected mirror through
+         * DRAW_TEMP_PICST.  The receipt has already bound its original CD
+         * clip and IMG3 bounds; consume those exact transform values here
+         * instead of silently treating every layer as an unmirrored 1:1 blit.
+         */
+        dm2_v1_blit_scaled_material_bitmap_region_ex(
+            s, s->framebuffer, s->fb_stride,
+            clip->x + draw->draw_offset_x, clip->y + draw->draw_offset_y,
+            dst_w, dst_h, pixels[i], 0, 0, widths[i], heights[i], strides[i],
+            DM2_COLOR_TRANSPARENT, draw->mirror_flip ? 1 : 0,
+            &s->gdat_scene_weather_consumed_count);
         ++s->asset_weather_drawn_count;
     }
 }

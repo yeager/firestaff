@@ -56,6 +56,8 @@ static void setup_receipt(DM2_V1_WeatherRendererReceipt *receipt)
     receipt->draws[0].image_field = DM2_V1_WEATHER_CLOUD_HEAVY_CMD;
     receipt->draws[0].source_right = 2;
     receipt->draws[0].source_bottom = 1;
+    receipt->draws[0].scale_x = 0x40u;
+    receipt->draws[0].scale_y = 0x40u;
     receipt->draws[0].material_hash = 0x6801u;
     receipt->clips[0].valid = 1;
     receipt->clips[0].x = 10;
@@ -66,6 +68,8 @@ static void setup_receipt(DM2_V1_WeatherRendererReceipt *receipt)
     receipt->draws[1].image_field = DM2_V1_WEATHER_RAIN_HEAVY_CMD;
     receipt->draws[1].source_right = 2;
     receipt->draws[1].source_bottom = 1;
+    receipt->draws[1].scale_x = 0x40u;
+    receipt->draws[1].scale_y = 0x40u;
     receipt->draws[1].material_hash = 0x6b01u;
     receipt->clips[1].valid = 1;
     receipt->clips[1].x = 10;
@@ -99,6 +103,31 @@ int main(void)
         fputs("FAIL: complete source weather receipt did not consume GDAT pixels\n", stderr);
         return 1;
     }
+
+    /* ENVIRONMENT_DRAW_DISTANT_ELEMENT forwards movement offsets, 0x40/0x34
+     * scale and FW-selected mirroring into DRAW_TEMP_PICST.  Ensure the
+     * source receipt is consumed rather than flattened to the old 1:1 path. */
+    receipt.draws[0].mirror_flip = 1u;
+    receipt.draws[0].draw_offset_x = 3;
+    receipt.draws[0].draw_offset_y = 2;
+    receipt.draws[0].scale_x = 0x20u;
+    receipt.clips[0].w = 4;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_asset, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_palette, NULL);
+    dm2_v1_viewport_set_gdat_weather_renderer_receipt(&viewport, 3u, &receipt);
+    dm2_v1_render_weather_overlay(&viewport);
+    if (viewport.asset_weather_drawn_count != 2 ||
+        framebuffer[32 * DM2_VP_WIDTH + 13] != 0x42u ||
+        framebuffer[32 * DM2_VP_WIDTH + 14] != 0x41u) {
+        fputs("FAIL: weather receipt did not consume source transform fields\n", stderr);
+        return 1;
+    }
+
+    setup_receipt(&receipt);
 
     memset(framebuffer, 0x5a, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
