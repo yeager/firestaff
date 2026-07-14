@@ -13230,6 +13230,18 @@ file probes; an incomplete scan is marked truncated. Arbitrary filenames and
 bytes never become importable. Verification: Ninja `test_dm2_v1_save_load`
 23/23 and CTest `dm2_v1_save_load` 1/1.
 
+# ✅ 2026-07-14 CSB PC34 first-opening-door package capture
+
+The staged-data M12-to-M11 launcher boundary now captures the first visible
+CSB entrance-opening frame and verifies its real C002 and C003 bytes directly
+in the presented 320x200 raster: C002 `[0..100]` lands at `(0,30)` and C003
+`[4..126]` lands at `(109,30)`, each for 161 rows. This locks the PC34
+F0438/F0807 first-step crop and destination geometry without introducing a
+synthetic surface. Source: ReDMCSB `ENTRANCE.C` F0438/F0807 lines 142-304;
+CSBWin `Graphics.cpp::ReadGraphic` is the corresponding package-read boundary.
+Verification: `test_csb_v1_m11_launcher_handoff_boundary` passes 327/327
+against local hash-verified CSB data.
+
 # ✅ 2026-07-14 CSB real title/HUD/door launcher visual capture
 
 The real-data M12-to-M11 CSB launcher handoff regression now captures all
