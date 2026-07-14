@@ -1094,6 +1094,9 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
         out->startupInitializeTouchRuntime =
             view_model->initialize_touch_runtime;
         out->startupHudRuntimeReady = proof->hud_runtime_ready;
+        out->dm2ExtendedSpellGdatReady = view_model->host_view_receipt.extended_spell_gdat_ready;
+        out->dm2ExtendedSpellGdatDefinedCount = view_model->host_view_receipt.extended_spell_gdat_defined_count;
+        out->dm2ExtendedSpellGdatWordHash = view_model->host_view_receipt.extended_spell_gdat_word_hash;
         return;
     }
     if (view_model->host_view_receipt.valid) {
@@ -1123,6 +1126,9 @@ static void m11_dm2_boot_probe_receipt_from_startup_view_model(
             view_model->initialize_touch_runtime;
         out->startupHudRuntimeReady =
             view_model->host_view_receipt.hud_runtime_ready;
+        out->dm2ExtendedSpellGdatReady = view_model->host_view_receipt.extended_spell_gdat_ready;
+        out->dm2ExtendedSpellGdatDefinedCount = view_model->host_view_receipt.extended_spell_gdat_defined_count;
+        out->dm2ExtendedSpellGdatWordHash = view_model->host_view_receipt.extended_spell_gdat_word_hash;
         return;
     }
     if (view_model->view_receipt.valid &&

@@ -2462,6 +2462,15 @@ int dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
         dm2_v1_boot_interface_rect14_host_receipt(
             (DM2_V1_BootProfile *)profile,
             &out_receipt->interface_rect14);
+    {
+        DM2_V1_ExtendedSpellGdatReceipt spells;
+        if (dm2_v1_boot_extended_spell_gdat_receipt(
+                (DM2_V1_BootProfile *)profile, &spells)) {
+            out_receipt->extended_spell_gdat_ready = spells.valid;
+            out_receipt->extended_spell_gdat_defined_count = spells.defined_count;
+            out_receipt->extended_spell_gdat_word_hash = spells.word_hash;
+        }
+    }
     return 1;
 }
 
@@ -4938,6 +4947,30 @@ int dm2_v1_boot_interface_action_table(
      * two group spans and command tail directly from this original dt07/2
      * payload. Firestaff retains those offsets without inventing actions. */
     return dm2_v1_boot_parse_interface_action_table(raw, raw_size, out_table);
+}
+
+int dm2_v1_boot_extended_spell_gdat_receipt(DM2_V1_BootProfile *profile, DM2_V1_ExtendedSpellGdatReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    int i;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    out->word_hash = 0x53504c57u;
+    for (i = 0; i < 254; ++i) {
+        uint16_t w;
+        int f;
+        if (!dm2_v1_asset_load_word_value(&gfx->loader, DM2_GDAT_CATEGORY_SPELL_DEF, i, 1, &w) || w == 0u) continue;
+        ++out->defined_count;
+        for (f = 1; f <= 7; ++f) {
+            if (!dm2_v1_asset_load_word_value(&gfx->loader, DM2_GDAT_CATEGORY_SPELL_DEF, i, f, &w)) return 0;
+            out->word_hash = dm2_v1_boot_packaged_capture_hash_step(out->word_hash, (uint8_t)w);
+            out->word_hash = dm2_v1_boot_packaged_capture_hash_step(out->word_hash, (uint8_t)(w >> 8));
+        }
+    }
+    out->valid = 1;
+    return 1;
 }
 
 int dm2_v1_interface_action_table_remap_palette(
