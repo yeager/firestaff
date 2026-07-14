@@ -1960,7 +1960,7 @@ F	8144	F8144_CopyPixelLineFromScreenWithoutTransparencyFlippedHorizontally	NEC81
 F	8151	F8151_VIDRV_02_Blit	NEC816.C;VIDEODRV.C;IMAGE3.C	implemented-narrow	redmcsb_f8151_vidrv_blit_pc34_compat	PC 3.4 C25 source-to-screen blit branch ported and focused-tested; F8143 readback is separately ported
 F	8152	F8152_VIDRV_01_FillBox	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8152_vidrv_fill_box_pc34_compat	PC 3.4 C25 row fill ported and focused-tested
 F	8153	F8153_VIDRV_07_WaitVerticalBlank	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	8154	F8154_VIDRV_05_InvertBox	NEC816.C;VIDEODRV.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	8154	F8154_VIDRV_05_InvertBox	NEC816.C;VIDEODRV.C	implemented-narrow	redmcsb_f8154_vidrv_invert_box_pc34_compat	PC 3.4 C25 aperture invert ported and focused-tested
 F	8155	F8155_VIDRV_06_HatchScreenBox	NEC816.C;VIDEODRV.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	8156	F8156_SetPalette	DRAWVIEW.C;SWITCH.C;ANIMTOWN.C;VIDEODRV.C;CEDT027.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	8157	F8157_VIDRV_08_SetMultipleColorsInPalette	DRAWVIEW.C;SWITCH.C;NEC816.C;ANIMTOWN.C;VIDEODRV.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
