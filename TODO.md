@@ -70,6 +70,10 @@
   and its receipt hash is revalidated by the Soul Room runtime gate. Remaining
   evidence is still an authenticated positive capture and a separately
   source-owned dungeon transition; this change does not infer either.
+  M11 now forwards an explicitly supplied capture-manifest path to that
+  prepared-launch intake before runtime publication. A missing or
+  unauthenticated manifest rejects the launch; this does not provide a
+  positive capture or establish any dungeon transition semantics.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one

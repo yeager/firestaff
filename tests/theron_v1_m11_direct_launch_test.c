@@ -1048,6 +1048,26 @@ theron_fake_track02_runtime_done:
     }
 #endif
 
+    /* Run this only after the established direct-launch scenarios. It reuses
+     * their Track 02 path and proves an explicit capture manifest reaches the
+     * authenticated intake before M11 can publish another runtime. */
+    memset(&spec, 0, sizeof(spec));
+    spec.title = "THERON'S QUEST";
+    spec.gameId = "theron";
+    spec.sourceId = "theron";
+    spec.dataDir = temp_dir;
+    spec.verifiedAssetPath = track_path;
+    spec.verifiedAssetMd5 = "f23601102138f87c33025877767ebf76";
+    spec.theronTrack02CaptureManifestPath = "/nonexistent/theron-capture.manifest";
+    spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+    spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+    M11_GameView_Init(&view);
+    expect_true(!M11_GameView_Start(&view, &spec) &&
+                    strcmp(view.inspectDetail,
+                           "TRACK02 CAPTURE MANIFEST REJECTED") == 0,
+                "M11 rejects an explicit unauthenticated Track 02 capture before runtime publication");
+
     if (g_failures) {
         fprintf(stderr, "Theron V1 M11 direct-launch checks FAILED (%d failures)\n",
                 g_failures);

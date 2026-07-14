@@ -9,6 +9,15 @@
   `nexus_v1_dgn_geometry_readiness` and
   `nexus_v1_structure3_capture_manifest`.
 
+- 2026-07-14 Theron Track 02 M11 authenticated capture intake: the existing
+  prepared-launch manifest reader is now called from M11 before its detached
+  runtime receipt is published. An explicit manifest must therefore bind the
+  selected Track 02 and revalidated System Card/trace evidence, or the M11
+  launch rejects. The established direct-launch regression remains intact and
+  now contains an explicit unauthenticated-manifest rejection assertion. This
+  is an intake connection only: no positive capture, dungeon transition,
+  bitmap, palette, or object claim is added.
+
 - 2026-07-14 DM2 G1 side-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now populates D0/D1/D2 left and right wall rays, using the
   party-relative SKProject viewport coordinates, before the existing GDAT
