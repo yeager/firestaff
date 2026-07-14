@@ -14331,6 +14331,19 @@ texture-before-command sequence all have to match. The codec remains no-draw
 and retail ITEM.IBS remains blocked because no original Saturn packet is
 present. Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# 2026-07-14 Nexus ITEM.IBS VDP1 command-packet shape gate
+
+The descriptor-`0008` capture binder now parses a complete 32-byte
+little-endian VDP1 command record before it can authorize high-nibble-first
+expansion. It requires the captured texture-source word, 4bpp colour-bank
+mode, and declared width/height to agree with the selected ITEM.IBS descriptor,
+in addition to the pre-existing hash and sequence checks. The focused
+`nexus_v1_dgn_geometry_readiness` fixture proves a self-consistent but
+different source word remains blocked. This is only a documented hardware
+packet-shape check: no original Saturn command packet was added, so retail
+ITEM.IBS stays no-draw and no texture, palette, placement, or VDP1 ordering
+claim is promoted.
+
 # ✅ 2026-07-14 Theron Track 02 route-receipt probe repair
 
 The focused Track 02 handoff probe now constructs a complete hash-profiled

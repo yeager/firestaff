@@ -9,6 +9,7 @@ static uint32_t rb32(const uint8_t *p) {
     return ((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
+static uint16_t rl16(const uint8_t *p) { return (uint16_t)p[0]|((uint16_t)p[1]<<8); }
 
 static uint32_t nexus_v1_fnv1a32(const uint8_t *data, int size)
 {
@@ -6230,6 +6231,35 @@ int nexus_v1_dgn_structure1f_item_ibs_coverage(
     return 0;
 }
 
+int nexus_v1_vdp1_texture_command_parse(
+    const uint8_t *command, int command_size,
+    Nexus_V1_Vdp1TextureCommand *out_command)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+
+    if (!out_command) return -1;
+    memset(&parsed, 0, sizeof(parsed));
+    if (!command || command_size != NEXUS_V1_VDP1_COMMAND_BYTES) {
+        *out_command = parsed;
+        return -1;
+    }
+    /* Sega Saturn VDP1 User Manual: CMDCTRL/CMDPMOD/CMDSRCA/CMDSIZE are the
+     * first four words of each 32-byte command. SH-2 command-table memory is
+     * little-endian; CMDSIZE stores width in eight-pixel units. */
+    parsed.control = rl16(command);
+    parsed.draw_mode = rl16(command + 2);
+    parsed.texture_source_word = rl16(command + 4);
+    parsed.command_type = (uint8_t)(parsed.control & 0x000fU);
+    parsed.colour_mode = (uint8_t)((parsed.draw_mode >> 3) & 0x0007U);
+    parsed.texture_width = (uint16_t)((rl16(command + 6) & 0x003fU) * 8U);
+    parsed.texture_height = (uint16_t)(rl16(command + 6) >> 8);
+    parsed.texture_command = parsed.command_type <= 2U;
+    parsed.four_bpp_colour_bank = parsed.texture_command &&
+        parsed.colour_mode == 0U;
+    *out_command = parsed;
+    return 0;
+}
+
 int nexus_v1_item_ibs_bind_0008_vdp1_capture(
     const Nexus_V1_ItemIbsFloorImage *floor,
     const uint8_t *item_ibs, int item_ibs_size, int item_ibs_hash_verified,
@@ -6241,6 +6271,7 @@ int nexus_v1_item_ibs_bind_0008_vdp1_capture(
     Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt *out_receipt)
 {
     Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt receipt;
+    Nexus_V1_Vdp1TextureCommand command;
     uint32_t expected_bytes;
 
     if (!out_receipt) return -1;
@@ -6288,6 +6319,12 @@ int nexus_v1_item_ibs_bind_0008_vdp1_capture(
         (size_t)captured_vdp1_state_size) == candidate->vdp1_state_fnv1a64;
     receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
         (size_t)captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
+    receipt.vdp1_command_format_matches =
+        nexus_v1_vdp1_texture_command_parse(captured_vdp1_command,
+            captured_vdp1_command_size, &command) == 0 &&
+        command.four_bpp_colour_bank &&
+        command.texture_source_word == candidate->vdp1_command_source_word &&
+        command.texture_width == floor->width && command.texture_height == floor->height;
     receipt.sequence_order_valid = candidate->texture_first_sequence <=
         candidate->texture_last_sequence && candidate->texture_last_sequence <
         candidate->vdp1_command_sequence;
@@ -6295,6 +6332,7 @@ int nexus_v1_item_ibs_bind_0008_vdp1_capture(
         receipt.item_ibs_source_matches && receipt.floor_descriptor_matches &&
         receipt.packed_span_matches && receipt.palette_matches &&
         receipt.vdp1_state_matches && receipt.vdp1_command_matches &&
+        receipt.vdp1_command_format_matches &&
         receipt.sequence_order_valid;
     receipt.decode_authorized = receipt.original_vdp1_capture_verified;
     *out_receipt = receipt;

@@ -1766,6 +1766,7 @@ typedef struct {
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT 109
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES 2048
 #define NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS 4096
+#define NEXUS_V1_VDP1_COMMAND_BYTES 32
 
 typedef struct {
     uint16_t image_id;
@@ -1781,6 +1782,21 @@ typedef struct {
     int palette_bound;
     int packed_4bpp_valid;
 } Nexus_V1_ItemIbsFloorImage;
+
+/* A captured VDP1 command is stored as sixteen little-endian words.  Only the
+ * documented texture fields are retained here; command placement, vertices,
+ * and draw ordering remain capture facts outside this parser. */
+typedef struct {
+    uint16_t control;
+    uint16_t draw_mode;
+    uint16_t texture_source_word;
+    uint16_t texture_width;
+    uint16_t texture_height;
+    uint8_t command_type;
+    uint8_t colour_mode;
+    int texture_command;
+    int four_bpp_colour_bank;
+} Nexus_V1_Vdp1TextureCommand;
 
 /* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
  * has not yet been tied to an original VDP1 command stream. These records
@@ -1800,6 +1816,7 @@ typedef struct {
     uint64_t vdp1_command_sequence;
     uint32_t vdp1_texture_source_address;
     uint32_t vdp1_texture_source_bytes;
+    uint16_t vdp1_command_source_word;
 } Nexus_V1_ItemIbs0008Vdp1CaptureCandidate;
 
 typedef struct {
@@ -1810,6 +1827,7 @@ typedef struct {
     int palette_matches;
     int vdp1_state_matches;
     int vdp1_command_matches;
+    int vdp1_command_format_matches;
     int sequence_order_valid;
     int original_vdp1_capture_verified;
     int decode_authorized;
@@ -2318,6 +2336,11 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
 int nexus_v1_dgn_structure1f_item_ibs_coverage(
     const Nexus_V1_Level *level, const Nexus_V1_ItemIbsBank *bank,
     Nexus_V1_DgnStructure1FItemIbsCoverageReceipt *out_receipt);
+/* Parses one complete captured VDP1 command record.  This describes only the
+ * hardware packet fields and does not prove that any asset reached VDP1. */
+int nexus_v1_vdp1_texture_command_parse(
+    const uint8_t *command, int command_size,
+    Nexus_V1_Vdp1TextureCommand *out_command);
 /* Atomically binds one descriptor-0008 image to original Saturn capture
  * bytes. The source ITEM.IBS, packed span, palette, VDP1 state/command, and
  * texture-before-command ordering all have to match. It never authorizes a

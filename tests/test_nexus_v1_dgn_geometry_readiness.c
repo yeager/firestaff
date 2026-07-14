@@ -47,6 +47,11 @@ static void wb16(uint8_t *p, uint16_t v) {
     p[1] = (uint8_t)(v & 0xffU);
 }
 
+static void wl16(uint8_t *p, uint16_t v) {
+    p[0] = (uint8_t)(v & 0xffU);
+    p[1] = (uint8_t)(v >> 8);
+}
+
 static void wb32(uint8_t *p, uint32_t v) {
     p[0] = (uint8_t)(v >> 24);
     p[1] = (uint8_t)((v >> 16) & 0xffU);
@@ -3027,6 +3032,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
     Nexus_V1_ItemIbs0008Vdp1CaptureBindingReceipt capture;
     Nexus_V1_ItemIbs0008CodecReceipt codec_receipt;
     uint8_t decoded[NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_TEXELS];
+    uint8_t vdp1_command[NEXUS_V1_VDP1_COMMAND_BYTES];
     int i;
 
     CHECK(ibs != NULL, "ITEM.IBS material fixture allocates");
@@ -3127,26 +3133,49 @@ static void test_structure1f_item_ibs_material_binding(void) {
     candidate.palette_fnv1a64 = fnv1a64(
         (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32U);
     candidate.vdp1_state_fnv1a64 = fnv1a64((const uint8_t *)"state", 5U);
-    candidate.vdp1_command_fnv1a64 = fnv1a64((const uint8_t *)"command", 7U);
+    memset(vdp1_command, 0, sizeof(vdp1_command));
+    wl16(vdp1_command, 0U);       /* normal sprite */
+    wl16(vdp1_command + 2, 0U);   /* 4bpp colour-bank mode */
+    wl16(vdp1_command + 4, 0x1234U);
+    wl16(vdp1_command + 6, 2U | (16U << 8));
+    candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
+                                              sizeof(vdp1_command));
     candidate.texture_first_sequence = 10U;
     candidate.texture_last_sequence = 11U;
     candidate.vdp1_command_sequence = 12U;
     candidate.vdp1_texture_source_address = 0x25c00000U;
     candidate.vdp1_texture_source_bytes = 128U;
+    candidate.vdp1_command_source_word = 0x1234U;
     CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
               bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
               &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
               (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
-              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              (const uint8_t *)"state", 5, vdp1_command, sizeof(vdp1_command),
               &capture) == 0 && capture.original_vdp1_capture_verified &&
-          capture.decode_authorized && !capture.fallback_visuals_permitted,
-          "descriptor-0008 requires one atomically bound VDP1 capture receipt");
+          capture.vdp1_command_format_matches && capture.decode_authorized &&
+          !capture.fallback_visuals_permitted,
+          "descriptor-0008 requires a complete matching VDP1 texture command");
+    wl16(vdp1_command + 4, 0x1235U);
+    candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
+                                              sizeof(vdp1_command));
+    CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
+              bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
+              &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
+              (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
+              (const uint8_t *)"state", 5, vdp1_command, sizeof(vdp1_command),
+              &capture) == 0 && capture.vdp1_command_matches &&
+          !capture.vdp1_command_format_matches &&
+          !capture.original_vdp1_capture_verified && !capture.decode_authorized,
+          "a hash-matched VDP1 command with another texture source stays blocked");
+    wl16(vdp1_command + 4, 0x1234U);
+    candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
+                                              sizeof(vdp1_command));
     candidate.vdp1_command_fnv1a64 ^= UINT64_C(1);
     CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
               bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
               &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
               (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
-              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              (const uint8_t *)"state", 5, vdp1_command, sizeof(vdp1_command),
               &capture) == 0 && !capture.vdp1_command_matches &&
           !capture.original_vdp1_capture_verified && !capture.decode_authorized,
           "a changed VDP1 command fingerprint rejects descriptor-0008 decoding");
@@ -3156,7 +3185,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
               bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
               &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
               (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
-              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              (const uint8_t *)"state", 5, vdp1_command, sizeof(vdp1_command),
               &capture) == 0 && !capture.item_ibs_source_matches &&
           !capture.original_vdp1_capture_verified && !capture.decode_authorized,
           "a changed ITEM.IBS source byte rejects descriptor-0008 decoding");
@@ -3165,7 +3194,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
               bindings[1].special_floor_image, ibs, NEXUS_V1_ITEM_IBS_BYTES, 1,
               &candidate, bindings[1].special_floor_image->packed_4bpp_texels, 128,
               (const uint8_t *)bindings[1].special_floor_image->palette_bgr555, 32,
-              (const uint8_t *)"state", 5, (const uint8_t *)"command", 7,
+              (const uint8_t *)"state", 5, vdp1_command, sizeof(vdp1_command),
               &capture) == 0 && capture.decode_authorized,
           "only the unmodified capture binding may authorize descriptor-0008 decoding");
     CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
