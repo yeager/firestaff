@@ -544,9 +544,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   header with three count-bounded 12-byte regions. The tracked DMWeb Saturn
   reference and verified `LEV00.DGN`--`LEV15.DGN` corpus now establish
   entry-local vertex-index bounds, triangle/quad topology, paired normal
-  counts, and static/animated/one-off face-fill lanes. Next: prove the
-  original selector-to-Structure2/Structure1G material binding and Saturn VDP1
-  draw ordering before any draw route; do not infer texture pixels, palettes,
+  counts, and static/animated/one-off face-fill lanes. The real corpus now
+  also proves every texture-flagged `00xx` face-fill selector resolves to a
+  bounded Structure2 descriptor and every `08xx` selector resolves to a
+  Structure1G animated declaration. Next: prove Saturn payload/palette decode
+  and VDP1 draw ordering before any draw route; do not infer texture pixels,
   transforms, clipping, triggers, or fallback art.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
     render-plan receipts only through complete Structure1F owner relations.

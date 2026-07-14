@@ -10,6 +10,17 @@
   inferred, and the receipt cannot mutate runtime. Verification: rebuilt and
   ran `test_dm2_v1_save_load` (23/23), plus CTest `dm2_v1_save_load` (1/1).
 
+- ✅ 2026-07-14 Nexus Structure3 face-material selector receipt: the tracked
+  DMWeb Saturn DGN reference states that a texture-flagged Structure3b
+  `00xx` fill names a local Structure2 texture and `08xx` names a Structure1G
+  animated-texture declaration. Firestaff now validates those source-table
+  joins for every face in the retail `LEV00.DGN`--`LEV15.DGN` corpus, retaining
+  unbound or unsupported selectors as blocked. It does not decode image
+  payloads or palettes, issue VDP1 commands, consume geometry in a draw path,
+   or relax the existing no-draw gate. Verification: strict direct C99 build
+   plus focused real-corpus CTest `nexus_v1_dgn_geometry_readiness` passed with
+   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-07-14 Nexus Structure3 face-record receipt: DMWeb's Saturn DGN
   format describes each bounded Structure3b row as four vertex indexes, flags,
   and a fill selector, with one Structure3c normal per face. Firestaff now

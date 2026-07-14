@@ -1267,6 +1267,82 @@ static void nexus_v1_level_finalize_structure1g_structure2_bindings(
     }
 }
 
+static void nexus_v1_level_bind_structure3_face_materials(
+    Nexus_V1_Level *level, const uint8_t *data, int size)
+{
+    Nexus_V1_DgnStructure3FaceMaterialReceipt receipt;
+    int entry;
+
+    if (!level || !data || size <= 0) return;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.face_receipt_valid = level->structure3_faces.valid;
+    receipt.face_count = level->structure3_faces.face_count;
+    receipt.valid = receipt.face_receipt_valid &&
+        level->structure3_directory.valid &&
+        level->structure3_entry_headers.valid &&
+        level->structure3_payload.valid;
+    if (!receipt.valid) {
+        level->structure3_face_materials = receipt;
+        return;
+    }
+
+    /* DMWeb DGN Structure3b: flags bit 6 selects texture filling; 00xx
+     * selects a local Structure2 descriptor and 08xx selects a Structure1G
+     * animated-texture declaration. This is a bounded identifier join only. */
+    for (entry = 0; entry < level->structure3_directory.entry_count; ++entry) {
+        uint32_t entry_offset = rb32(data + level->structure3_payload.byte_offset +
+                                     4 + entry * 4);
+        const uint8_t *header = data + level->structure3_payload.byte_offset +
+            entry_offset;
+        uint16_t face_count = rb16(header + 6);
+        uint32_t face_offset = rb32(header + 16);
+        int face_index;
+
+        for (face_index = 0; face_index < (int)face_count; ++face_index) {
+            const uint8_t *face = data + level->structure3_payload.byte_offset +
+                face_offset + face_index * 12;
+            uint16_t fill = rb16(face + 10);
+
+            if ((face[8] & 0x40U) == 0U) {
+                ++receipt.non_textured_face_count;
+            } else if ((fill & 0xff00U) == 0U) {
+                ++receipt.textured_face_count;
+                ++receipt.static_texture_selector_count;
+                if (nexus_v1_level_find_structure2_texture(level, fill & 0xffU))
+                    ++receipt.static_texture_bound_count;
+                else
+                    ++receipt.static_texture_unbound_count;
+            } else if ((fill & 0xff00U) == 0x0800U) {
+                int animation;
+                int bound = 0;
+
+                ++receipt.textured_face_count;
+                ++receipt.animated_texture_selector_count;
+                for (animation = 0; animation < level->structure1g_entry_count;
+                     ++animation) {
+                    if (level->structure1g_entries[animation].animation_id ==
+                        (uint8_t)(fill & 0xffU)) {
+                        bound = 1;
+                        break;
+                    }
+                }
+                if (bound) ++receipt.animated_texture_bound_count;
+                else ++receipt.animated_texture_unbound_count;
+            } else {
+                ++receipt.textured_face_count;
+                ++receipt.unsupported_textured_fill_count;
+            }
+        }
+    }
+    receipt.selector_bindings_complete =
+        receipt.textured_face_count == level->structure3_faces.textured_face_count &&
+        receipt.static_texture_unbound_count == 0 &&
+        receipt.animated_texture_unbound_count == 0 &&
+        receipt.unsupported_textured_fill_count == 0;
+    receipt.material_or_draw_semantics_proven = 0;
+    level->structure3_face_materials = receipt;
+}
+
 static void nexus_v1_level_copy_structure1f_entries(
     Nexus_V1_Level *level,
     const uint8_t *data,
@@ -1477,6 +1553,7 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                 nexus_v1_level_resolve_structure1a_relations(level);
                 nexus_v1_level_copy_structure1g_entries(level, data, &layout);
                 nexus_v1_level_finalize_structure1g_structure2_bindings(level);
+                nexus_v1_level_bind_structure3_face_materials(level, data, size);
                 level->structure1g_floor_animation_bound_count = 0;
                 for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
                     for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
@@ -2953,6 +3030,16 @@ int nexus_v1_level_structure3_face_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_face_material_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_face_materials;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3219,6 +3306,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_entry_headers);
     (void)nexus_v1_level_structure3_face_receipt(
         level, &out_receipt->structure3_faces);
+    (void)nexus_v1_level_structure3_face_material_receipt(
+        level, &out_receipt->structure3_face_materials);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
