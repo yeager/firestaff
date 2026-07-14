@@ -15818,6 +15818,15 @@ it proves neither Saturn transforms nor surfaces, materials, textures,
 palettes, VDP1 commands, or rendering. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-14 Nexus active LEV transform/camera framing receipt
+
+The engine now binds the active party cell and direction to the exact
+canonical LEV byte receipt, alongside the existing bounded Structure1A raw
+transform-selector receipt. A stale level, invalid pose coordinate, or byte
+mutation withdraws it. This is no-draw camera-input provenance only: no
+Saturn camera matrix, transform order/unit, culling, or rendering semantics
+are inferred. Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-14 Nexus active LEV renderer-source receipt
 
 The DGN viewport now consumes an active-LEV renderer receipt that carries the

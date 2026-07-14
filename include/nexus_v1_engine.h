@@ -309,6 +309,29 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure3FaceFramingReceipt;
 
+/* Active party pose bound to the canonical LEV source and the bounded raw
+ * Structure1A transform-selector evidence. This is camera input provenance,
+ * not a decoded Saturn camera, transform, culling, or drawing rule. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int party_cell_geometry_valid;
+    int party_square_type;
+    uint16_t party_collision_ref;
+    uint16_t party_post_grid_0x30_ref;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
+    int transform_selector_source_bound;
+    int saturn_camera_semantics_proven;
+    int saturn_transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveTransformCameraFramingReceipt;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -690,6 +713,9 @@ int nexus_v1_current_level_structure3_mesh_semantic_receipt(
 int nexus_v1_current_level_structure3_face_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure3FaceFramingReceipt *out_receipt);
+int nexus_v1_current_level_transform_camera_framing_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

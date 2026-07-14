@@ -108,6 +108,9 @@
   Active entry-header and face-row framing is also source-bound now, including
   bounded entry regions and local vertex-index checks. These are not Saturn
   transform or surface semantics and remain no-draw pending authentic capture.
+  The active party pose now has a canonical-LEV receipt with bounded cell facts
+  and raw Structure1A transform-selector provenance. It deliberately does not
+  infer camera matrices, transform units/order, culling, or draw semantics.
 
 - 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
   original-capture schema now requires exact VDP1 command-read and palette
