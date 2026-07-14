@@ -734,6 +734,7 @@ static M12_MenuInput m11_next_script_input(const char** cursor);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
+static int m11_game_view_is_dm1(const M11_GameViewState* gameView);
 static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
                                             const char* token,
                                             size_t len,
@@ -2443,6 +2444,37 @@ static void m11_write_autotest_presented_screenshot(const char* outputDir) {
     fprintf(stderr, "AUTOTEST PRESENTED SCREENSHOT: %s\n", outPath);
 }
 
+/* V2.1's EPX surface is the user-visible image. Capturing the indexed
+ * source here would produce a valid-looking but unscaled BMP. */
+static void m11_capture_user_screenshot(const M11_GameViewState* gameView,
+                                        const M12_StartupMenuState* menuState) {
+    const char* outputDir = NULL;
+    char outPath[1024];
+    int captured;
+
+    if (!gameView || !gameView->active) {
+        return;
+    }
+    if (menuState && menuState->settings.screenshotPath[0] != '\0') {
+        outputDir = menuState->settings.screenshotPath;
+    }
+    if (m11_game_view_is_dm1(gameView) &&
+        gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        captured = M11_Screenshot_CapturePresentedRGBA(outputDir,
+                                                        outPath,
+                                                        (int)sizeof(outPath));
+    } else {
+        captured = M11_Screenshot_CaptureCurrent(outputDir,
+                                                  outPath,
+                                                  (int)sizeof(outPath));
+    }
+    if (captured) {
+        fprintf(stderr, "SCREENSHOT: %s\n", outPath);
+    } else {
+        fprintf(stderr, "SCREENSHOT FAILED\n");
+    }
+}
+
 static M12_MenuInput m11_map_script_token(const char* token, size_t len) {
     if (!token || len == 0U) {
         return M12_MENU_INPUT_NONE;
@@ -3683,6 +3715,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 case SDLK_F11:
                     M11_Render_ToggleFullscreen();
                     return M12_MENU_INPUT_NONE;
+                case SDLK_F12:
+                    m11_capture_user_screenshot(gameView, menuState);
+                    return M12_MENU_INPUT_NONE;
                 default:
                     break;
             }
@@ -4051,6 +4086,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F11:
                     M11_Render_ToggleFullscreen();
+                    return M12_MENU_INPUT_NONE;
+                case SDLK_F12:
+                    m11_capture_user_screenshot(gameView, menuState);
                     return M12_MENU_INPUT_NONE;
                 default:
                     break;

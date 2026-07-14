@@ -415,6 +415,7 @@ typedef struct ModeCapture {
     int expected_w;
     int expected_h;
     int present_via_rgba; /* 1 -> use M11_Render_PresentRGBA, 0 -> PresentIndexed */
+    int capture_via_presented_api;
     int v22_overlay_active; /* 1 -> paint V22 overlay into fb before present */
     char bmp_path[512];
     uint32_t bmp_hash;
@@ -440,6 +441,8 @@ static int run_mode_capture(ModeCapture* cap,
                             unsigned char* v1_framebuffer,
                             unsigned char* v1_shadow) {
     const unsigned char* rgba;
+    char capture_dir[sizeof(cap->bmp_path)];
+    char* slash;
     int outW = 0;
     int outH = 0;
     int rc;
@@ -506,7 +509,21 @@ static int run_mode_capture(ModeCapture* cap,
         return 0;
     }
 
-    if (!write_bmp_24bit_rgba(cap->bmp_path, rgba, outW, outH)) {
+    if (cap->capture_via_presented_api) {
+        snprintf(capture_dir, sizeof(capture_dir), "%s", cap->bmp_path);
+        slash = strrchr(capture_dir, '/');
+        if (!slash) {
+            fprintf(stderr, "FAIL %s: presented capture path has no directory\n", cap->id);
+            return 0;
+        }
+        *slash = '\0';
+        if (!M11_Screenshot_CapturePresentedRGBA(capture_dir,
+                                                 cap->bmp_path,
+                                                 (int)sizeof(cap->bmp_path))) {
+            fprintf(stderr, "FAIL %s: M11_Screenshot_CapturePresentedRGBA failed\n", cap->id);
+            return 0;
+        }
+    } else if (!write_bmp_24bit_rgba(cap->bmp_path, rgba, outW, outH)) {
         fprintf(stderr, "FAIL %s: write_bmp_24bit_rgba failed for %s\n", cap->id, cap->bmp_path);
         return 0;
     }
@@ -735,6 +752,7 @@ int main(void) {
     v21_cap.expected_w = 640;
     v21_cap.expected_h = 400;
     v21_cap.present_via_rgba = 1;
+    v21_cap.capture_via_presented_api = 1;
     snprintf(v21_cap.bmp_path, sizeof(v21_cap.bmp_path), "%s/v21_upscaled.bmp", out_dir);
 
     dm1_v2_presentation_mode_set(DM1_V2_PM_V21_UPSCALED);

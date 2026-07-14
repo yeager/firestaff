@@ -8,7 +8,8 @@
  * RGB palette.  Output filename is firestaff-YYYYMMDD-HHMMSS.bmp.
  *
  * Hotkeys (wired by main_loop_m11):
- *   F12        — capture immediately with HUD visible
+ *   F12        — capture immediately with HUD visible. DM1 V2.1 records
+ *                the post-EPX presentation buffer, not its 320x200 source.
  *   Ctrl+F12   — enter "screenshot mode" (pause + hide HUD) until F12
  *                or Esc is pressed.
  *
