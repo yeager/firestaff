@@ -1831,9 +1831,9 @@ F	0785	F0785_SetMousePointerCoordinates	FMTOWNS.H;IO.C;DEFS.H;CEDT026.C;SELECTOR
 F	0787	F0787_GetZoneInitializedFromCoordinates	PANEL.C;FMTOWNS.H;COORD.C;REVIVE.C;DEFS.H	implemented_source_locked
 F	0789	F0789_AllocateLayoutRange	COORD.C	implemented_source_locked
 F	0791	F0791_DUNGEONVIEW_DrawBitmapXX	DUNVIEW.C	implemented_source_locked
-F	0792	F0792_DUNGEONVIEW_DrawBitmapYYY	DUNVIEW.C	referenced_not_verified
+F	0792	F0792_DUNGEONVIEW_DrawBitmapYYY	DUNVIEW.C	implemented_source_locked
 F	0797	F0797_STARTEND_DrawEntranceMicroDungeon	IIGS.H;DEFS.H;ENTRANCE.C	referenced_not_verified
-F	0798	F0798_COMMAND_IsPointInZone	CLIKVIEW.C;COORD.C;COMMAND.C;DEFS.H;SWITCH.C	referenced_not_verified
+F	0798	F0798_COMMAND_IsPointInZone	CLIKVIEW.C;COORD.C;COMMAND.C;DEFS.H;SWITCH.C	implemented_source_locked
 F	0799	F0799_SOUND_DisableUnavailableSounds	DEFS.H;STARTUP2.C;SOUND.C	referenced_not_verified
 F	0802	F0802_IsMagicMap	PANEL.C;MENU.C;DEFS.H	referenced_not_verified
 F	0803	F0803_DrawMagicMapIcon	PANEL.C	referenced_not_verified
