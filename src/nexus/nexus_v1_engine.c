@@ -2043,6 +2043,71 @@ int nexus_v1_engine_consume_structure3_capture(
     return 1;
 }
 
+int nexus_v1_engine_consume_structure3_raw_capture_manifest(
+    Nexus_V1_Engine *engine, const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt receipt;
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_host;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    int accepted;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!engine || !manifest_text || !paths || !attestation ||
+        !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    receipt.active_canonical_lev_bound =
+        source->level_index == engine->game.current_level &&
+        source->canonical_hash_verified && source->materialization_bound &&
+        source->loaded_bytes_bound &&
+        nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                        engine->current_level_dgn_size);
+    if (!receipt.active_canonical_lev_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(&raw_host);
+    receipt.raw_capture_host_intake_invoked = 1;
+    accepted = nexus_v1_dgn_structure3_raw_capture_host_intake(
+        &engine->current_level, engine->current_level_dgn_data,
+        engine->current_level_dgn_size, 1, manifest_text, manifest_size,
+        paths, attestation, &raw_host);
+    receipt.manifest_parsed = raw_host.manifest_parsed;
+    receipt.all_trace_lanes_authenticated = raw_host.raw_reader.manifest_accepted &&
+        raw_host.raw_reader.all_spans_read &&
+        raw_host.raw_reader.raw_span_hashes_match &&
+        raw_host.raw_reader.attestation_session_matches &&
+        raw_host.raw_reader.attestation_bundle_matches &&
+        raw_host.raw_reader.attestation_trace_order_matches &&
+        raw_host.raw_reader.original_saturn_source_attested &&
+        raw_host.raw_reader.import_ready;
+    receipt.complete_source_binding = accepted &&
+        raw_host.host.host_dgn_source_verified &&
+        raw_host.host.capture_source_verified &&
+        raw_host.host.manifest_parsed && raw_host.host.importer_invoked &&
+        raw_host.host.import_receipt.complete_source_binding &&
+        raw_host.host.import_receipt.blocks_real_dgn_mesh_render;
+    if (receipt.all_trace_lanes_authenticated &&
+        receipt.complete_source_binding) {
+        receipt.engine_consume_invoked = 1;
+        receipt.runtime_source_consumed = nexus_v1_engine_consume_structure3_capture(
+            engine, &raw_host.host.manifest.candidate,
+            &raw_host.host.import_receipt.binding,
+            &raw_host.raw_reader.import_packet);
+    }
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_release(&raw_host);
+    *out_receipt = receipt;
+    return receipt.runtime_source_consumed;
+}
+
 int nexus_v1_current_level_structure3_render_packet(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3RenderPacket *out_packet)

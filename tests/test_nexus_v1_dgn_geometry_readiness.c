@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int g_fail;
 
@@ -99,6 +100,35 @@ static uint64_t structure3_capture_bundle_fnv1a64(
         hash = fnv1a64_update(hash, spans[span], sizes[span]);
     }
     return hash;
+}
+
+static uint64_t structure3_capture_trace_order_fnv1a64(
+    const uint64_t sequence[6])
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t lane;
+
+    for (lane = 0U; lane < 6U; ++lane) {
+        uint8_t lane_id = (uint8_t)lane;
+        uint8_t value[8];
+        size_t byte;
+        hash = fnv1a64_update(hash, &lane_id, sizeof(lane_id));
+        for (byte = 0U; byte < sizeof(value); ++byte)
+            value[byte] = (uint8_t)(sequence[lane] >> (byte * 8U));
+        hash = fnv1a64_update(hash, value, sizeof(value));
+    }
+    return hash;
+}
+
+static int write_capture_span(const char *path, const uint8_t *data, size_t size)
+{
+    FILE *file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fwrite(data, 1U, size, file) != size) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
 }
 
 static uint32_t fnv1a32(const uint8_t *data, size_t size) {
@@ -2229,7 +2259,14 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveStructure3FaceFramingReceipt active_face_framing;
         Nexus_V1_DgnActiveTransformCameraFramingReceipt active_camera_framing;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
+        Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt raw_runtime_intake;
+        Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
+        Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
         Nexus_Viewport viewport;
+        char raw_manifest[2048];
+        char raw_paths_storage[6][128];
+        uint64_t raw_sequence[6] = { 11U, 12U, 13U, 14U, 15U, 16U };
+        int raw_path_index;
 
         memset(&engine, 0, sizeof(engine));
         memset(&bound, 0, sizeof(bound));
@@ -2538,6 +2575,108 @@ static void test_structure3_entry_header_boundaries(void) {
               host_route.active_level_source.no_draw_only &&
               host_route.blocks_runtime_dgn,
               "host route carries the exact active LEV source receipt while Saturn decoding remains blocked");
+        candidate.first_sequence = 10U;
+        candidate.last_sequence = 20U;
+        snprintf(raw_manifest, sizeof(raw_manifest),
+                 "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1\n"
+                 "capture_session_fnv1a64=1234\n"
+                 "dgn_fnv1a64=%llx\n"
+                 "structure3_payload_fnv1a32=%x\n"
+                 "typed_mesh_corpus_fnv1a32=%x\n"
+                 "entry_index=%x\nface_ordinal=%x\n"
+                 "face_row_fnv1a32=%x\n"
+                 "referenced_vertex_rows_fnv1a32=%x\n"
+                 "normal_row_fnv1a32=%x\nfill_selector=%x\n"
+                 "texture_span_bytes=%zx\ntexture_span_fnv1a64=%llx\n"
+                 "palette_state_bytes=%zx\npalette_state_fnv1a64=%llx\n"
+                 "vdp1_state_bytes=%zx\nvdp1_state_fnv1a64=%llx\n"
+                 "transform_state_bytes=%zx\ntransform_state_fnv1a64=%llx\n"
+                 "normal_culling_state_bytes=%zx\nnormal_culling_state_fnv1a64=%llx\n"
+                 "vdp1_command_bytes=%zx\nvdp1_command_fnv1a64=%llx\n"
+                 "texture_span_sequence=b\npalette_state_sequence=c\n"
+                 "vdp1_state_sequence=d\ntransform_state_sequence=e\n"
+                 "normal_culling_state_sequence=f\nvdp1_command_sequence=10\n"
+                 "first_sequence=a\nlast_sequence=14\n",
+                 (unsigned long long)candidate.dgn_fnv1a64,
+                 candidate.structure3_payload_fnv1a32,
+                 candidate.typed_mesh_corpus_fnv1a32, candidate.entry_index,
+                 candidate.face_ordinal, candidate.face_row_fnv1a32,
+                 candidate.referenced_vertex_rows_fnv1a32,
+                 candidate.normal_row_fnv1a32, candidate.fill_selector,
+                 sizeof(texture_span),
+                 (unsigned long long)candidate.texture_span_fnv1a64,
+                 sizeof(palette_state),
+                 (unsigned long long)candidate.palette_state_fnv1a64,
+                 sizeof(vdp1_state),
+                 (unsigned long long)candidate.vdp1_state_fnv1a64,
+                 sizeof(transform_state),
+                 (unsigned long long)candidate.transform_state_fnv1a64,
+                 sizeof(culling_state),
+                 (unsigned long long)candidate.normal_culling_state_fnv1a64,
+                 sizeof(vdp1_command),
+                 (unsigned long long)candidate.vdp1_command_fnv1a64);
+        for (raw_path_index = 0; raw_path_index < 6; ++raw_path_index) {
+            snprintf(raw_paths_storage[raw_path_index],
+                     sizeof(raw_paths_storage[raw_path_index]),
+                     "/tmp/firestaff-nexus-raw-runtime-%ld-%d.bin",
+                     (long)getpid(), raw_path_index);
+            remove(raw_paths_storage[raw_path_index]);
+        }
+        CHECK(write_capture_span(raw_paths_storage[0], texture_span,
+                                 sizeof(texture_span)) &&
+              write_capture_span(raw_paths_storage[1], palette_state,
+                                 sizeof(palette_state)) &&
+              write_capture_span(raw_paths_storage[2], vdp1_state,
+                                 sizeof(vdp1_state)) &&
+              write_capture_span(raw_paths_storage[3], transform_state,
+                                 sizeof(transform_state)) &&
+              write_capture_span(raw_paths_storage[4], culling_state,
+                                 sizeof(culling_state)) &&
+              write_capture_span(raw_paths_storage[5], vdp1_command,
+                                 sizeof(vdp1_command)),
+              "raw Structure3 capture lanes are available for runtime intake");
+        memset(&raw_paths, 0, sizeof(raw_paths));
+        raw_paths.texture_span_path = raw_paths_storage[0];
+        raw_paths.palette_state_path = raw_paths_storage[1];
+        raw_paths.vdp1_state_path = raw_paths_storage[2];
+        raw_paths.transform_state_path = raw_paths_storage[3];
+        raw_paths.normal_culling_state_path = raw_paths_storage[4];
+        raw_paths.vdp1_command_path = raw_paths_storage[5];
+        memset(&raw_attestation, 0, sizeof(raw_attestation));
+        raw_attestation.capture_session_fnv1a64 = UINT64_C(0x1234);
+        raw_attestation.capture_bundle_fnv1a64 =
+            structure3_capture_bundle_fnv1a64(&import);
+        raw_attestation.capture_trace_order_fnv1a64 =
+            structure3_capture_trace_order_fnv1a64(raw_sequence);
+        raw_attestation.original_saturn_source_attested = 1;
+        CHECK(nexus_v1_engine_consume_structure3_raw_capture_manifest(
+                  &engine, raw_manifest, strlen(raw_manifest), &raw_paths,
+                  &raw_attestation, &raw_runtime_intake) &&
+              raw_runtime_intake.active_canonical_lev_bound &&
+              raw_runtime_intake.raw_capture_host_intake_invoked &&
+              raw_runtime_intake.manifest_parsed &&
+              raw_runtime_intake.all_trace_lanes_authenticated &&
+              raw_runtime_intake.complete_source_binding &&
+              raw_runtime_intake.engine_consume_invoked &&
+              raw_runtime_intake.runtime_source_consumed &&
+              raw_runtime_intake.no_draw_only &&
+              !raw_runtime_intake.fallback_visuals_permitted &&
+              engine.structure3_runtime_source.valid &&
+              engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
+              "all six authenticated raw trace lanes reach the engine-owned no-draw runtime source");
+        raw_attestation.capture_trace_order_fnv1a64 ^= UINT64_C(1);
+        CHECK(!nexus_v1_engine_consume_structure3_raw_capture_manifest(
+                  &engine, raw_manifest, strlen(raw_manifest), &raw_paths,
+                  &raw_attestation, &raw_runtime_intake) &&
+              raw_runtime_intake.active_canonical_lev_bound &&
+              raw_runtime_intake.raw_capture_host_intake_invoked &&
+              !raw_runtime_intake.all_trace_lanes_authenticated &&
+              !raw_runtime_intake.runtime_source_consumed &&
+              raw_runtime_intake.no_draw_only &&
+              engine.structure3_runtime_source.valid,
+              "a failed trace-order attestation cannot replace the admitted runtime source");
+        for (raw_path_index = 0; raw_path_index < 6; ++raw_path_index)
+            remove(raw_paths_storage[raw_path_index]);
         engine.structure3_runtime_source.binding.normal_row_matches = 0;
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 0 &&
               !packet.valid && packet.no_draw_only &&

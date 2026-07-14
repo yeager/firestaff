@@ -332,6 +332,20 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveTransformCameraFramingReceipt;
 
+/* Runtime admission receipt for an externally captured Structure3 packet.
+ * Every raw lane remains opaque and the successful route remains no-draw. */
+typedef struct {
+    int active_canonical_lev_bound;
+    int raw_capture_host_intake_invoked;
+    int manifest_parsed;
+    int all_trace_lanes_authenticated;
+    int complete_source_binding;
+    int engine_consume_invoked;
+    int runtime_source_consumed;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt;
+
 /* Hash-bound ownership for level-local script and audio inputs. The receipt
  * establishes only the canonical Track 1 source; it never assigns opcode,
  * trigger, sample, or playback semantics to the bytes. */
@@ -691,6 +705,14 @@ int nexus_v1_engine_consume_structure3_capture(
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
     const Nexus_V1_DgnStructure3CaptureImport *capture);
+/* Consume a verified external manifest and its six raw trace lanes through
+ * the active canonical LEV route. Success stores only opaque, engine-owned
+ * bytes and continues to block drawing until separate Saturn semantics exist. */
+int nexus_v1_engine_consume_structure3_raw_capture_manifest(
+    Nexus_V1_Engine *engine, const char *manifest_text, size_t manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt *out_receipt);
 /* Stages the engine-owned, already-bound Structure3 face for the viewport.
  * This is a source/geometry handoff only: a successful packet always remains
  * no-draw until independent Saturn render semantics are established. */

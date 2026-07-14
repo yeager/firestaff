@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 Nexus Structure3 runtime-capture follow-up: a complete external
+  capture now reaches engine-owned runtime storage only through the active
+  canonical `LEVxx.DGN` identity, parsed manifest, byte-matched six raw lanes,
+  matching session/bundle/trace-order attestation, and the existing complete
+  face binding. The route remains strictly no-draw: texture/palette codecs,
+  VDP1 field meanings, transforms, culling, and actual rasterization still
+  require separate original-Saturn proof. A missing or altered lane cannot
+  replace a previously admitted runtime source.
+
 - 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
   receipt inspection is deliberately separate from the live Soul Room
   Stage 2/3 admission. The latter still requires original physical-media
