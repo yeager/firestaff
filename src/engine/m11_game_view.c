@@ -14526,6 +14526,17 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
 
     m11_apply_champion_time_effects(state);
     m11_process_creature_ticks(state);
+    /* ReDMCSB GAMELOOP.C processes TIMELINE.C's due queue before the next
+     * command surface is exposed.  Original F0435 C13 rows already enter
+     * world.timeline through the source-owned materializer; dispatch them
+     * here so an admitted Vi Altar sequence reaches F0283's live champion
+     * mutation instead of becoming an M11 notification-only event. */
+    {
+        struct TickResult_Compat timelineResult;
+        memset(&timelineResult, 0, sizeof(timelineResult));
+        (void)F0887_ORCH_DispatchTimelineEvents_Compat(
+            &state->world, &timelineResult);
+    }
     M11_GameView_TickAnimation(state);
     m11_check_party_death(state);
     m11_mark_explored(state);
@@ -14582,31 +14593,6 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
             state->camera_interpolated_facing = dm1_v2_camera_interpolated_facing(
                     &state->p5_camera);
             (void)br; /* sourceEvidence for documentation only */
-        }
-    }
-
-    /* Vi Altar rebirth: check timeline for event kind 13.
-     * ReDMCSB: C13_EVENT_VI_ALTAR_REBIRTH fires after bones are
-     * placed at the Vi Altar.  The event resurrects the champion
-     * whose bones were dropped.  We scan the timeline queue and
-     * consume any expired rebirth events. */
-    if (state->world.timeline.count > 0) {
-        int ti;
-        for (ti = 0; ti < state->world.timeline.count; ++ti) {
-            if (state->world.timeline.events[ti].kind == 13 &&
-                state->world.timeline.events[ti].fireAtTick <= state->world.gameTick) {
-                m11_set_status(state, "ALTAR", "CHAMPION REBORN!");
-                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                              "T%u: VI ALTAR — A CHAMPION IS REBORN!",
-                              (unsigned int)state->world.gameTick);
-                M11_GameView_ShowDialogOverlay(state, "A CHAMPION IS REBORN!");
-                /* Remove consumed event by swapping with last */
-                state->world.timeline.events[ti] =
-                    state->world.timeline.events[state->world.timeline.count - 1];
-                state->world.timeline.count--;
-                ti--; /* re-check this index */
-                break;
-            }
         }
     }
 
