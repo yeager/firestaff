@@ -2340,6 +2340,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `CD_READ`; it does not taint a word back to Track 02 RAM/media or identify
     a palette table, bitmap, menu, object, or level. A future handoff must
     capture that source-byte transfer before RGB presentation can open.
+  - 2026-07-14 update: loader-trace import now rejects reordered or coalesced
+    evidence. The accepted original capture must preserve the observed
+    `CD_READ` transaction, `$3800` destination span, IRQ2 controller state,
+    and only then HuC6260 rows. This strengthens one bounded transport chain;
+    it still does not identify a later dungeon record, map, object, palette
+    source byte, or bitmap decoder.
   - 2026-07-13 update: the old generated stone palette and unverified-media
     V1 render allowance are removed. Remaining palette work is an original
     HuC6260 table binding from authenticated Track 02 execution/media; a
