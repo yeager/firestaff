@@ -1068,6 +1068,90 @@ bool dm2_v1_original_timer_format_corpus_probe(
     return true;
 }
 
+bool dm2_v1_original_save_state_corpus_probe(
+    const char *save_base,
+    DM2_OriginalSaveStateCorpusReceipt *out_receipt)
+{
+    DM2_SKSaveCorpusReceipt corpus;
+    uint32_t hash = 2166136261u;
+    uint8_t i;
+
+    if (!out_receipt) return false;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
+
+    /* skproject/SKWIN/SkWinCore.cpp GAME_LOAD ^2066:2F8C-319F opens the
+     * chosen SKSave, then reads skload_table_60, champions and 10-byte timer
+     * entries before READ_SKSAVE_DUNGEON.  Retain only those importer-owned
+     * values after the complete file-hash receipt has been revalidated. */
+    out_receipt->scan_complete = 1;
+    out_receipt->original_candidate_list_complete =
+        corpus.candidate_receipt_count == corpus.importable_candidate_count;
+    out_receipt->original_candidate_count =
+        (uint16_t)(corpus.original_envelope_candidate_count +
+                   corpus.original_raw_candidate_count);
+
+    for (i = 0u; i < corpus.candidate_receipt_count; ++i) {
+        const DM2_SKSaveCandidateReceipt *source =
+            &corpus.candidate_receipts[i];
+        DM2_OriginalSaveStateCorpusEntry *target;
+        DM2_V1_SaveCandidate candidate;
+        uint8_t payload[DM2_SESSION_MAX_SIZE];
+        size_t payload_size = 0u;
+
+        if (source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+            source->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+            continue;
+        }
+        if (out_receipt->entry_count >= DM2_SK_CORPUS_RECEIPT_MAX) {
+            out_receipt->original_candidate_list_complete = 0;
+            out_receipt->rejected_candidate_count++;
+            continue;
+        }
+        if (!dm2_v1_sksave_corpus_load_receipted_candidate(
+                source, payload, sizeof(payload), &payload_size) ||
+            dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                                 payload_size) != 0 ||
+            candidate.kind != (DM2_V1_SaveCandidateKind)source->kind) {
+            out_receipt->original_candidate_list_complete = 0;
+            out_receipt->rejected_candidate_count++;
+            continue;
+        }
+
+        target = &out_receipt->entries[out_receipt->entry_count++];
+        target->candidate = *source;
+        target->game_tick = candidate.session.game_tick;
+        target->rng_seed = candidate.session.rng_seed;
+        target->party_x = candidate.session.party_x;
+        target->party_y = candidate.session.party_y;
+        target->party_dir = candidate.session.party_dir;
+        target->party_map = candidate.session.party_level;
+        target->champion_count = candidate.session.champion_count;
+        target->timer_count = candidate.session.original_timer_count;
+        target->rain_intensity = candidate.session.rain_intensity;
+        hash = dm2_sksave_corpus_hash_step(hash, target->candidate.source_file_hash);
+        hash = dm2_sksave_corpus_hash_step(hash, target->game_tick);
+        hash = dm2_sksave_corpus_hash_step(hash, target->rng_seed);
+        hash = dm2_sksave_corpus_hash_step(
+            hash, ((uint32_t)target->party_x << 16) | target->party_y);
+        hash = dm2_sksave_corpus_hash_step(
+            hash, ((uint32_t)target->party_dir << 24) |
+                  ((uint32_t)target->party_map << 16) |
+                  ((uint32_t)target->champion_count << 8) |
+                  target->timer_count);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            hash, target->rain_intensity);
+        hash = target->state_hash;
+        out_receipt->parsed_candidate_count++;
+    }
+    hash = dm2_sksave_corpus_hash_step(
+        hash, (uint32_t)out_receipt->original_candidate_list_complete);
+    hash = dm2_sksave_corpus_hash_step(hash, out_receipt->original_candidate_count);
+    hash = dm2_sksave_corpus_hash_step(hash, out_receipt->rejected_candidate_count);
+    out_receipt->corpus_hash = hash;
+    return true;
+}
+
 bool dm2_v1_sksave_corpus_load_first_importable(
     const char *save_base,
     uint8_t *out_payload,

@@ -1403,6 +1403,7 @@ static int test_sksave_corpus_scan_receipt(void)
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
     DM2_OriginalTimerFormatCorpusReceipt timer_receipt;
+    DM2_OriginalSaveStateCorpusReceipt state_receipt;
     int r;
 
     memset(&gs_store, 0, sizeof(gs_store));
@@ -1552,6 +1553,32 @@ static int test_sksave_corpus_scan_receipt(void)
         timer_receipt.corpus_hash == 0u) {
         printf("    FAIL: original timer-format probe promoted or lost "
                "unowned corpus evidence\n");
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    if (!dm2_v1_original_save_state_corpus_probe(tmpdir, &state_receipt) ||
+        state_receipt.scan_complete != 1 ||
+        state_receipt.original_candidate_list_complete != 1 ||
+        state_receipt.original_candidate_count != 1 ||
+        state_receipt.parsed_candidate_count != 1 ||
+        state_receipt.rejected_candidate_count != 0 ||
+        state_receipt.entry_count != 1 ||
+        state_receipt.entries[0].candidate.kind !=
+            DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE ||
+        state_receipt.entries[0].candidate.source_file_hash == 0u ||
+        state_receipt.entries[0].game_tick != gs->dwGameTick ||
+        state_receipt.entries[0].rng_seed != gs->dwRandomSeed ||
+        state_receipt.entries[0].party_x != gs->wPlayerPosX ||
+        state_receipt.entries[0].party_y != gs->wPlayerPosY ||
+        state_receipt.entries[0].party_dir != gs->wPlayerDir ||
+        state_receipt.entries[0].party_map != gs->wPlayerMap ||
+        state_receipt.entries[0].champion_count != gs->wChampionsCount ||
+        state_receipt.entries[0].timer_count != 0u ||
+        state_receipt.entries[0].rain_intensity != gs->rain_state[0] ||
+        state_receipt.entries[0].state_hash == 0u ||
+        state_receipt.corpus_hash == 0u) {
+        printf("    FAIL: original save state census lost source-decoded fields\n");
         cleanup_slot_dir(tmpdir);
         return 0;
     }
