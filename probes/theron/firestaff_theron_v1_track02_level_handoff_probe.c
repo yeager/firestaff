@@ -1041,6 +1041,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02LevelCandidateCatalog catalog;
     Theron_Track02InitialCandidateBinding binding;
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02InitialLevelEnvelopeReceipt envelope;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1186,6 +1187,36 @@ static void probe_real_data_initial_candidate(const char *label,
            boundary.object_boundary_user_data_offset_in_record,
            boundary.following_user_data_bytes_in_record,
            (unsigned)boundary.receipt_hash);
+
+    signal_status = theron_v1_track02_decode_initial_level_envelope(
+        data, size, local_md5, &envelope);
+    check_int("real initial envelope decode status", signal_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("real initial envelope valid", envelope.valid, 1);
+    check_u32("real initial envelope record", envelope.track02_record, 0x0b52u);
+    check_size("real initial envelope bytes", envelope.level_byte_count, 0x36cu);
+    check_u16("real initial envelope width", envelope.width, 32u);
+    check_u16("real initial envelope height", envelope.height, 27u);
+    check_u32("real initial envelope seed", envelope.seed, 0x0108e938u);
+    check_u16("real initial envelope level index", envelope.level_index, 0x0026u);
+    check_u16("real initial envelope opaque extension",
+              envelope.header_extension_be, 0x0103u);
+    check_size("real initial envelope grid offset",
+               envelope.grid_offset_in_envelope, 12u);
+    check_size("real initial envelope grid bytes", envelope.grid_byte_count, 0x360u);
+    check_int("real initial envelope grid fingerprinted", envelope.grid_hash != 0u, 1);
+    check_int("real initial envelope header semantics proven",
+              envelope.header_semantics_proven, 1);
+    check_int("real initial envelope grid semantics remain unproven",
+              envelope.grid_semantics_proven, 0);
+    check_int("real initial envelope extension remains opaque",
+              envelope.header_extension_semantics_proven, 0);
+    check_int("real initial envelope object tail remains opaque",
+              envelope.object_tail_semantics_proven, 0);
+    check_int("real initial envelope blocks fallback visuals",
+              envelope.fallback_visuals_allowed, 0);
+    check_int("real initial envelope receipt fingerprinted",
+              envelope.receipt_hash != 0u, 1);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,

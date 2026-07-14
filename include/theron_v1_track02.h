@@ -1535,6 +1535,38 @@ typedef struct {
     uint32_t receipt_hash;
 } Theron_Track02InitialLevelObjectBoundaryReceipt;
 
+/* Real-media decode of the source-locked initial level envelope.
+ *
+ * This receipt promotes only the level envelope facts established by the
+ * hash-gated JP/US corpus and the descriptor-relative loader candidate:
+ * the four decoded header fields and the exact following grid byte span.
+ * Grid bytes remain byte-faithful data; no square, object, pose, trigger,
+ * palette, or visual semantics are inferred here.  In particular, the
+ * 0x0103 extension is retained as an opaque fingerprint, and the bytes after
+ * the grid remain an unparsed tail. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t track02_record;
+    size_t level_raw_offset;
+    size_t level_user_data_offset;
+    size_t level_byte_count;
+    uint16_t width;
+    uint16_t height;
+    uint32_t seed;
+    uint16_t level_index;
+    uint16_t header_extension_be;
+    size_t grid_offset_in_envelope;
+    size_t grid_byte_count;
+    uint32_t grid_hash;
+    int header_semantics_proven;
+    int grid_semantics_proven;
+    int header_extension_semantics_proven;
+    int object_tail_semantics_proven;
+    int fallback_visuals_allowed;
+    uint32_t receipt_hash;
+} Theron_Track02InitialLevelEnvelopeReceipt;
+
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
  * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
@@ -1654,6 +1686,16 @@ theron_v1_track02_capture_initial_level_object_boundary(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02InitialLevelObjectBoundaryReceipt *out_receipt);
+
+/* Decode the corroborated initial-level envelope from authenticated raw JP/US
+ * Track 02 media.  This is deliberately a no-visual, no-object receipt: it
+ * has no synthetic-media path and never exposes or interprets the tail after
+ * the grid. */
+Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_envelope(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelEnvelopeReceipt *out_receipt);
 
 /* Copy the hash/anchor-gated initial startup candidate through the logical
  * MODE1/2048 user-data address space.

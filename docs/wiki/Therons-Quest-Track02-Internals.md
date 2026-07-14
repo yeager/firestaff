@@ -46,6 +46,14 @@ extension with the CD-record boundary receipt, but assigns it no gameplay
 meaning. In particular, it is not treated as a start pose, object count, flag,
 or command; the following `0x380` user-data tail remains unparsed.
 
+`theron_v1_track02_decode_initial_level_envelope()` is the real-media decode
+surface for that one payload. It requires the known raw JP/US hash, IPL INDEX
+01 coordinate, descriptor-relative candidate, and MODE1 user-data copy before
+it promotes the header fields and the exact `0x360`-byte grid span. The grid is
+still byte-faithful and unclassified: no tile meanings, objects, or visuals
+are inferred. Its receipt explicitly blocks fallback visuals and keeps both
+the extension and tail unpromoted.
+
 ## SRM Boundary
 
 Save Disk candidates require one valid gzip member with bounded header parsing,
