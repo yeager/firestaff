@@ -20,6 +20,8 @@ typedef struct {
     int fallback_visuals_permitted;
     int no_draw_structure2_source;
     int no_draw_structure1f_semantics;
+    int active_level_source_consumed;
+    Nexus_V1_DgnActiveLevelRendererSourceReceipt active_level_source;
     int structure3_source_packet_consumed;
     int structure3_source_geometry_bound;
     int structure3_source_no_draw;
@@ -69,6 +71,8 @@ typedef struct {
     int fallback_visuals_permitted;
     int no_draw_structure2_source;
     int no_draw_structure1f_semantics;
+    int active_level_source_consumed;
+    Nexus_V1_DgnActiveLevelRendererSourceReceipt active_level_source;
     int level;
     int party_x;
     int party_y;

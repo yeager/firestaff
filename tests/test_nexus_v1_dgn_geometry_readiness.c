@@ -2223,6 +2223,8 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnStructure3Face live_faces[2];
         Nexus_V1_DgnStructure3Vector live_normals[2];
         Nexus_V1_DgnStructure3MeshEntryReceipt live_mesh;
+        Nexus_V1_DgnActiveLevelRendererSourceReceipt active_source;
+        Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_Viewport viewport;
 
         memset(&engine, 0, sizeof(engine));
@@ -2240,6 +2242,27 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(dgn, sizeof(dgn));
+        memset(&active_source, 0, sizeof(active_source));
+        CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
+                  &engine, &active_source) == 1 &&
+              active_source.valid && active_source.package_source_bound &&
+              active_source.structure3_payload_bound &&
+              active_source.level_index == 0 &&
+              active_source.source_byte_count == (int)sizeof(dgn) &&
+              active_source.source_bytes_fnv1a64 == fnv1a64(dgn, sizeof(dgn)) &&
+              active_source.structure3_payload_byte_count ==
+                  level.structure3_payload.byte_size &&
+              active_source.structure3_payload_fnv1a32 ==
+                  level.structure3_payload.raw_payload_hash &&
+              !active_source.original_saturn_capture_bound &&
+              active_source.no_draw_only &&
+              active_source.blocks_real_dgn_mesh_render &&
+              !active_source.fallback_visuals_permitted &&
+              active_source.texture_decode_unproven &&
+              active_source.palette_decode_unproven &&
+              active_source.vdp1_draw_unproven &&
+              active_source.transform_culling_unproven,
+              "active LEV source receipt binds canonical package bytes at the renderer boundary without authorizing Saturn drawing");
         memset(&live_mesh, 0, sizeof(live_mesh));
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
                   &engine, 0, live_vertices, 4, live_faces, 2,
@@ -2251,6 +2274,11 @@ static void test_structure3_entry_header_boundaries(void) {
               live_normals[0].x == 65536,
               "active engine exposes only checksum-bound Structure3 mesh rows no-draw");
         dgn[0] ^= 1U;
+        CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
+                  &engine, &active_source) == 0 &&
+              !active_source.valid && active_source.no_draw_only &&
+              active_source.blocks_real_dgn_mesh_render,
+              "active LEV source receipt withdraws renderer provenance after retained bytes change");
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
                   &engine, 0, live_vertices, 4, live_faces, 2,
                   live_normals, 2, &live_mesh) == -1 &&
@@ -2377,9 +2405,27 @@ static void test_structure3_entry_header_boundaries(void) {
                   engine.structure3_runtime_source.normal_culling_state &&
               packet.vdp1_command == engine.structure3_runtime_source.vdp1_command,
               "the DGN renderer receives only the engine-owned, fully related Structure3 packet and keeps it no-draw");
+        CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
+                  &engine, &active_source) == 1 &&
+              active_source.original_saturn_capture_bound &&
+              active_source.texture_span_bound && active_source.palette_state_bound &&
+              active_source.vdp1_state_bound && active_source.transform_state_bound &&
+              active_source.normal_culling_state_bound &&
+              active_source.vdp1_command_bound &&
+              active_source.texture_decode_unproven &&
+              active_source.palette_decode_unproven &&
+              active_source.vdp1_draw_unproven &&
+              active_source.transform_culling_unproven &&
+              active_source.no_draw_only &&
+              active_source.blocks_real_dgn_mesh_render,
+              "bound original capture exposes exact opaque-state blockers without enabling a Saturn pixel or VDP1 route");
         nexus_viewport_init(&viewport);
         nexus_viewport_render(&viewport, &engine);
-        CHECK(viewport.last_dgn_render_receipt.structure3_source_packet_consumed &&
+        CHECK(viewport.last_dgn_render_receipt.active_level_source_consumed &&
+              viewport.last_dgn_render_receipt.active_level_source.valid &&
+              viewport.last_dgn_render_receipt.active_level_source.package_source_bound &&
+              viewport.last_dgn_render_receipt.active_level_source.no_draw_only &&
+              viewport.last_dgn_render_receipt.structure3_source_packet_consumed &&
               viewport.last_dgn_render_receipt.structure3_source_geometry_bound &&
               viewport.last_dgn_render_receipt.structure3_source_no_draw &&
               viewport.structure3_source_packet.vertices ==
@@ -2387,6 +2433,21 @@ static void test_structure3_entry_header_boundaries(void) {
               viewport.structure3_source_packet.normal ==
                   &engine.structure3_runtime_source.normal,
               "the DGN viewport stages the bound Structure3 geometry without drawing it");
+        memset(&host_route, 0, sizeof(host_route));
+        CHECK(nexus_viewport_dgn_host_route_receipt(
+                  &viewport, &engine, &host_route) == 0 &&
+              host_route.package_consumed &&
+              host_route.active_level_source_consumed &&
+              host_route.active_level_source.valid &&
+              host_route.active_level_source.package_source_bound &&
+              host_route.active_level_source.source_bytes_fnv1a64 ==
+                  fnv1a64(dgn, sizeof(dgn)) &&
+              host_route.active_level_source.texture_decode_unproven &&
+              host_route.active_level_source.palette_decode_unproven &&
+              host_route.active_level_source.vdp1_draw_unproven &&
+              host_route.active_level_source.no_draw_only &&
+              host_route.blocks_runtime_dgn,
+              "host route carries the exact active LEV source receipt while Saturn decoding remains blocked");
         engine.structure3_runtime_source.binding.normal_row_matches = 0;
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 0 &&
               !packet.valid && packet.no_draw_only &&

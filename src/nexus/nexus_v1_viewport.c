@@ -156,6 +156,10 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         vp->last_dgn_render_receipt.party_x = px;
         vp->last_dgn_render_receipt.party_y = py;
         vp->last_dgn_render_receipt.party_dir = pdir;
+        if (nexus_v1_current_level_dgn_renderer_source_receipt(
+                engine, &vp->last_dgn_render_receipt.active_level_source) > 0) {
+            vp->last_dgn_render_receipt.active_level_source_consumed = 1;
+        }
         memset(&vp->structure3_source_packet, 0,
                sizeof(vp->structure3_source_packet));
         if (nexus_v1_current_level_structure3_render_packet(
@@ -380,6 +384,9 @@ int nexus_viewport_dgn_host_route_receipt(
         render->no_draw_structure2_source ? 1 : 0;
     out_receipt->no_draw_structure1f_semantics =
         render->no_draw_structure1f_semantics ? 1 : 0;
+    out_receipt->active_level_source_consumed =
+        render->active_level_source_consumed ? 1 : 0;
+    out_receipt->active_level_source = render->active_level_source;
     out_receipt->level = engine->game.current_level;
     out_receipt->party_x = render->party_x;
     out_receipt->party_y = render->party_y;
