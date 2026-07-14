@@ -2990,6 +2990,29 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Opt-in canonical PC package presentation proof. This does not use generated
+# art, palette fixtures, or the CSBWin custom-graphics override path: it drives
+# the production C001-C005/C017/C040 session from a hash-verified PC package.
+add_executable(firestaff_csb_v1_pc_package_presentation_probe
+    probes/csb/firestaff_csb_v1_pc_package_presentation_probe.c
+    src/csb/csb_v1_boot.c
+    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_startup_real_asset_receipt.c
+    src/csb/csb_v1_runtime_pc34_compat.c
+    src/csb/csb_v1_dungeon_loader_pc34_compat.c
+    src/csb/csb_v1_character_pc34_compat.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c
+)
+target_include_directories(firestaff_csb_v1_pc_package_presentation_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_pc_package_presentation_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_pc_package_presentation_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 save real-artifact boundary probe.
 # Drives a real binary DUNGEON.DAT + a deterministic CSB_V1_PartyState
 # through the live F0435 STARTEND_LoadGame-shaped save/load round-trip
@@ -22227,6 +22250,17 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_pc_real_asset_launch PROPERTIES
             LABELS "tier1;csb;real_data;skip_safe;launch;boot_handoff"
+            TIMEOUT 120
+        )
+    endif()
+
+    if(TARGET firestaff_csb_v1_pc_package_presentation_probe)
+        add_test(
+            NAME csb_v1_pc_package_presentation
+            COMMAND firestaff_csb_v1_pc_package_presentation_probe
+        )
+        set_tests_properties(csb_v1_pc_package_presentation PROPERTIES
+            LABELS "tier1;csb;real_data;skip_safe;presentation;package"
             TIMEOUT 120
         )
     endif()
