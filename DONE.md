@@ -1,5 +1,22 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 HoC F0121/F0124 C2548 alcove-object runtime binding: the
+  live M11 F0115 alcove lane now resolves ReDMCSB's
+  `C2548 + CoordinateSet * 7 + G2029[ViewSquare]` Graphic 558 anchors,
+  preserving the source C10/F0791 material route and viewport clip instead
+  of substituting a C2500 floor-object position. The real chest alcove
+  bitmap variant remains selected by its object aspect. Invalid coordinate
+  sets or rows are rejected before drawing. Verification:
+  `dm1_v1_f0115_alcove_item_material_pc34_compat` and
+  `m11_dm1_floor_item_host_presentation_receipt`.
+
+- 2026-07-14 DM1 V2.2 finished-pack receipt integration: V2.2 selection
+  and the M11 in-place cache now require both `FINISHED_REAL` manifest
+  material and a hash-matched, complete `finish_receipt.json` review. Boot
+  records the receipt state and promotion result, while absent, stale, or
+  partial receipts retain the V2.1 source route. Verification:
+  `dm1_v22_finished_pack_receipt_pc34`.
+
 - 2026-07-14 DM1 V2.2 original-art cache admission: the M11 in-place cache
   now admits pixels only when the finished-art material gate resolves the
   boot-selected asset root as `FINISHED_REAL`. The boot adapter sets that

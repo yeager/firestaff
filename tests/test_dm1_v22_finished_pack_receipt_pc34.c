@@ -43,6 +43,9 @@
 
 #include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v2_asset_pipeline_pc34.h"
+#include "dm1_v2_boot_pc34.h"
+#include "dm1_v2_presentation_mode_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -491,6 +494,12 @@ static void test_partial_review_with_full_real_manifest(void) {
     CHECK(dm1_v22_fpr_is_promoted() == 0,
           "3-of-7 reviewed -> is_promoted=0");
 
+    dm1_v2_presentation_mode_reset();
+    m11_v22_set_manifest_path(k_data);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    CHECK(dm1_v2_presentation_mode_get() == DM1_V2_PM_V21_UPSCALED,
+          "partial review keeps V2.2 on the V2.1 source route");
+
     int required = 0;
     int reviewed = dm1_v22_fpr_receipt_slot_count(&required);
     CHECK(required == (int)DM1_V22_FAMG_MATERIAL_COUNT,
@@ -532,6 +541,25 @@ static void test_full_review_with_full_real_manifest(void) {
           "required = 7");
     CHECK(dm1_v22_fpr_receipt_stale_review_count() == 0,
           "no slot regressed -> stale=0");
+
+    dm1_v2_presentation_mode_reset();
+    m11_v22_set_manifest_path(k_data);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    CHECK(dm1_v2_presentation_mode_get() == DM1_V2_PM_V22_MODERN,
+          "matching finished receipt admits the V2.2 source route");
+
+    {
+        DM1_V2_BootStartupReceipt_PC34 boot;
+        CHECK(dm1_v2_boot_startup_prepare_pc34("dm1", k_data, 3, &boot) == 1,
+              "boot accepts DM1 V2.2 request");
+        CHECK(boot.resolved_mode == DM1_V2_PM_V22_MODERN,
+              "boot receipt retains the admitted V2.2 route");
+        CHECK(boot.v22_finished_pack_receipt_state ==
+                  DM1_V22_FPR_MATCH_FINISHED_REAL,
+              "boot receipt records the matching finished-pack state");
+        CHECK(boot.v22_finished_pack_receipt_promoted == 1,
+              "boot receipt records receipt promotion");
+    }
 }
 
 /* ── Scenario 10: receipt with reviewed slot that regressed ───── */

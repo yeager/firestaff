@@ -41,6 +41,7 @@
 #include "m11_v22_render_overlay_pc34.h"   /* M11_V22_CellRect shared coord */
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -356,9 +357,11 @@ static int v22_load_cache_file(const char* path) {
 int m11_v22_inplace_draw_init(void) {
     if (g_v22_inplace_active) return 1;
 
-    /* A cache transports pixels; only the reviewed original-art manifest
-     * may admit it to a V2.2 session. */
-    if (!dm1_v22_famg_is_finished_real()) return 0;
+    /* A cache transports pixels. It needs both the finished-art manifest
+     * classification and the hash-bound review receipt for that manifest. */
+    if (!dm1_v22_famg_is_finished_real() || !dm1_v22_fpr_is_promoted()) {
+        return 0;
+    }
 
     char cache_path[FSP_PATH_MAX];
     const char* modern_root = m11_v22_get_modern_asset_root();

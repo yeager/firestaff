@@ -574,6 +574,13 @@ int dm1_viewport_3d_c2500_object_raw_zone_point(int row_index,
                                                 int relative_cell,
                                                 int *out_x,
                                                 int *out_y);
+/* ReDMCSB DUNVIEW.C F0115's PC34 alcove-object route selects
+ * C2548 + coordinateSet * 7 + G2029[viewSquare].  These anchors are the
+ * Graphic 558 layout-696 records, not C2500 floor-object rows. */
+int dm1_viewport_3d_c2548_alcove_object_zone_point(int coordinate_set,
+                                                    int alcove_row,
+                                                    int *out_x,
+                                                    int *out_y);
 int dm1_viewport_3d_c2900_projectile_zone_point(int scale_index,
                                                 int relative_cell,
                                                 int *out_x,

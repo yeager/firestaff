@@ -240,9 +240,14 @@ int dm1_v1_f0115_alcove_item_material_plan_pc34(
     plan.alcove_view_row = k_g2029_view_square_to_alcove_row[view_square];
     plan.source_zone = 2548 + plan.coordinate_set * 7 + plan.alcove_view_row;
     plan.transparent_color = 10;
-    /* The source has a real C2548 coordinate/clip record.  Do not map it
-     * onto the unrelated C2500 rows or invent pane geometry. */
-    plan.coordinate_binding_ready = 0;
+    plan.clip_x = 0;
+    plan.clip_y = 0;
+    plan.clip_w = 224;
+    plan.clip_h = 136;
+    plan.coordinate_binding_ready =
+        dm1_viewport_3d_c2548_alcove_object_zone_point(
+            plan.coordinate_set, plan.alcove_view_row,
+            &plan.anchor_x, &plan.anchor_y);
     *out_plan = plan;
     return 1;
 }
@@ -310,7 +315,12 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                                               &plan.shift_x_index,
                                               &plan.shift_y_index);
     if (paneX >= viewportX && paneY >= viewportY &&
-        ((sourceZoneRow >= 0 &&
+        (((sourceZoneRow >= 2548 && sourceZoneRow < 2569) &&
+          dm1_viewport_3d_c2548_alcove_object_zone_point(
+              (sourceZoneRow - 2548) / 7,
+              (sourceZoneRow - 2548) % 7,
+              &zoneX, &zoneY)) ||
+         (sourceZoneRow >= 0 && sourceZoneRow < 17 &&
           dm1_viewport_3d_c2500_object_raw_zone_point(sourceZoneRow,
                                                       relativeCell,
                                                       &zoneX,

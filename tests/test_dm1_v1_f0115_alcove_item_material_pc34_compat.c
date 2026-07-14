@@ -25,8 +25,12 @@ int main(void)
     expect_int("chest.alcove_variant", chest.use_alcove_object_image, 1);
     expect_int("chest.g2029_d1c", chest.alcove_view_row, 6);
     expect_int("chest.c2548", chest.source_zone, 2554);
+    expect_int("chest.anchor_x", chest.anchor_x, 115);
+    expect_int("chest.anchor_y", chest.anchor_y, 92);
+    expect_int("chest.clip_w", chest.clip_w, 224);
+    expect_int("chest.clip_h", chest.clip_h, 136);
     expect_int("chest.c10", chest.transparent_color, 10);
-    expect_int("chest.no_c2500_substitute", chest.coordinate_binding_ready, 0);
+    expect_int("chest.c2548_bound", chest.coordinate_binding_ready, 1);
 
     expect_int("scroll.plan",
                dm1_v1_f0115_alcove_item_material_plan_pc34(
@@ -35,6 +39,8 @@ int main(void)
     expect_int("scroll.no_alcove_variant", scroll.use_alcove_object_image, 0);
     expect_int("scroll.g2029_d3c", scroll.alcove_view_row, 0);
     expect_int("scroll.c2548", scroll.source_zone, 2555);
+    expect_int("scroll.anchor_x", scroll.anchor_x, 112);
+    expect_int("scroll.anchor_y", scroll.anchor_y, 60);
 
     expect_int("reject_wrong_cell",
                dm1_v1_f0115_alcove_item_material_plan_pc34(

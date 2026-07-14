@@ -8,6 +8,7 @@
 #include "dm1_v2_settings_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 #include <string.h>
 
 static DM1_V2_PresentationModeState g_pm_state;
@@ -18,9 +19,11 @@ static int pm_modern_pack_detected(void) {
     if (g_pm_pack_override_valid) return g_pm_pack_override_value;
     /* A manifest and cache alone are not enough to replace source pixels.
      * V2.2 becomes live only after every required material is verified as
-     * non-placeholder; otherwise the original-data V2.1 route is used. */
+     * non-placeholder and its matching reviewer receipt covers the finished
+     * pack; otherwise the original-data V2.1 route is used. */
     return m11_v22_modern_assets_available() &&
-           dm1_v22_famg_is_finished_real();
+           dm1_v22_famg_is_finished_real() &&
+           dm1_v22_fpr_is_promoted();
 }
 
 static void pm_recompute(DM1_V2_PresentationModeKind resolved) {
@@ -117,6 +120,7 @@ const char* dm1_v2_presentation_mode_source_evidence(void) {
         "  M12_PRESENTATION_V20_FILTERED=1 -> V20_FILTERED\n"
         "  M12_PRESENTATION_V21_UPSCALED=2 -> V21_UPSCALED\n"
         "  M12_PRESENTATION_V22_MODERN=3   -> V22_MODERN\n"
-        "  V2.2 requires a finished, non-placeholder material pack\n"
+        "  V2.2 requires a finished, non-placeholder material pack and "
+        "matching reviewer receipt\n"
         "  Fallback chain: V22->V21->V20->V1\n";
 }

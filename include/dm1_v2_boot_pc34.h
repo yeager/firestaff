@@ -3,6 +3,7 @@
 
 #include "dm1_v2_phase_gate_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,6 +16,8 @@ typedef struct {
     int v2_presentation_enabled;
     int v2_config_persistence_enabled;
     int modern_pack_available;
+    DM1_V22_FprState v22_finished_pack_receipt_state;
+    int v22_finished_pack_receipt_promoted;
     int v22_shape_runtime_active;
     int v22_inplace_cache_attempted;
     int v22_inplace_cache_active;

@@ -158,6 +158,12 @@ typedef struct DM1_F0115AlcoveItemMaterialPlanPc34 {
     int view_square_index;
     int alcove_view_row;
     int source_zone;
+    int anchor_x;
+    int anchor_y;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
     int transparent_color;
     int use_alcove_object_image;
     int coordinate_binding_ready;
