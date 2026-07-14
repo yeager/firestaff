@@ -484,6 +484,25 @@
 - SKPROJECT-GAP-006 — `SKWIN/SkWinCore.h::_44c8_0f29` is unresolved blitting.
   Risk: local-palette clipping/mirroring differs despite decoded GDAT pixels.
   Required: original framebuffer captures and DOS blitter trace.
+- SKPROJECT-GAP-007 — **The named-symbol inventory has no verified behavior
+  mappings yet.** `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
+  records 1,751 skproject callable definitions: 142 exact-name candidates,
+  1,540 missing names, 69 desktop-variant exclusions, and zero implementation
+  claims. Risk: promoting a literal identifier collision as a DM2 port.
+  Required: per-family call-path evidence, owned input/GDAT/save data, and a
+  focused Firestaff regression before any `UNCERTAIN` row becomes
+  `IMPLEMENTED`.
+- SKPROJECT-GAP-008 — **Title/menu GAME_LOAD remains a source boundary, not a
+  session constructor.** Candidate names found by the inventory do not prove
+  `SHOW_MENU_SCREEN` input routing or `GAME_LOAD` data admission. Risk:
+  reintroducing a synthetic party or dungeon after NEW GAME. Required:
+  skproject input event trace plus a hash-verified original DUNGEON.DAT load
+  receipt consumed by M11 before runtime activation.
+- SKPROJECT-GAP-009 — **Two skproject source files are presently unreadable
+  locally.** `SKULLWIN/c_music_wav.cpp` and `SKULLWIN/c_rect.cpp` are retained
+  as explicit audit sentinels rather than guessed symbols. Risk: treating a
+  partial source tree as exhaustive coverage. Required: readable local source
+  copies followed by a regenerated inventory and reviewed mappings.
 
 - 2026-07-13 CSBWin restored `TT_60`/`TT_61` follow-up: only the exact
   party-square, non-Lord-Chaos `+5` successor is live before M10 can mutate
