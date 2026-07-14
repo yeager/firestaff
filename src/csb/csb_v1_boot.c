@@ -1651,6 +1651,42 @@ void csb_v1_boot_startup_door_runtime_receipt_init_pc34(
     csb_v1_runtime_m11_mirror_receipt_init_pc34(&receipt->runtime_mirror);
 }
 
+static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
+    const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
+
+    if (!profile || !session || !profile->assets_verified ||
+        !profile->graphics_verified || !profile->dungeon_verified ||
+        !profile->graphics_path[0] || !session->valid ||
+        !session->real_asset_matched || !session->full_startup_ready ||
+        !session->rejects_legacy_wrappers ||
+        !session->playback.no_fallback_routes ||
+        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
+        !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
+        !session->hud_resurrect_binding.verified ||
+        session->hud_inventory_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
+        session->hud_resurrect_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
+        session->hud_inventory_binding.graphic_index != 17u ||
+        session->hud_resurrect_binding.graphic_index != 40u ||
+        strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0 ||
+        strcmp(session->hud_resurrect_binding.path, profile->graphics_path) != 0) {
+        return 0;
+    }
+
+    inventory = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    resurrect = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    return inventory->valid && inventory->pixels &&
+        inventory->source_asset_id == 17 && resurrect->valid &&
+        resurrect->pixels && resurrect->source_asset_id == 40;
+}
+
 int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     const CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
@@ -1681,9 +1717,13 @@ int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
     out_receipt->door_opening_finished = 1;
     /* ReDMCSB ENTRANCE.C F0806 lines 857-889 and CSBWin CSBCode.cpp
      * lines 9515-9535 only return from the entrance after the door action.
-     * Build the live dungeon/HUD mirror before changing the media owner so a
-     * failed runtime mirror cannot expose a HUD with stale entrance state. */
-    if (!csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
+     * C017/C040 must remain bound to the verified GRAPHICS.DAT that supplied
+     * this boot profile. Build the live dungeon/HUD mirror before changing
+     * the media owner so a swapped session or failed mirror cannot expose a
+     * HUD with stale entrance state. */
+    if (!csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
+            profile, session) ||
+        !csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
             &profile->runtime, &out_receipt->runtime_mirror) ||
         !out_receipt->runtime_mirror.valid ||
         !out_receipt->runtime_mirror.view.level_loaded) {
