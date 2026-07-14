@@ -14140,6 +14140,19 @@ hash-verified JP/US Track 02 images. The older seed-table semantic handoff is
 still independently blocked on authentic media and is not composed here. This
 does not infer an IPL spawn override, object table, transition, bitmap,
 palette, or fallback.
+
+# ✅ 2026-07-14 Theron Track 02 coalesced later-loader sector receipt
+
+The later-loader handoff now has one media-bound receipt for a single original
+Mednafen transcript. It requires the authenticated Stage 2 `$4090 -> $4093`
+loader row, one later `$e009` dispatch, one complete 2352-byte raw-sector
+fingerprint, and the matching return in that observation order. Both the
+complete-sector and leading-span FNV-1a values must match the raw sector
+selected through the existing Stage 3 descriptor coordinate in a hash-verified
+JP or US Track 02 image. The opt-in corpus probe runs this check only when both
+variants' coalesced traces are supplied. This records a loader-coordinate and
+physical-media fact only: it assigns no payload format, dungeon, map, object,
+graphics, palette, bitmap, or transition meaning.
 # Nexus Structure3 Selector Reuse Receipt (2026-07-14)
 
 `nexus_v1_level_structure3_face_material_receipt()` now retains per-level

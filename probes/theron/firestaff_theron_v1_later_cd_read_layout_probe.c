@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "theron_v1_raw_loader_trace.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_track02.h"
 
@@ -255,13 +256,48 @@ static int inspect(const char *track_path, const char *trace_path,
     return 1;
 }
 
+static int inspect_coalesced(const char *track_path, const char *trace_path,
+                             const char *expected_md5,
+                             Theron_V1RawLoaderTraceCoalescedLaterReceipt *out)
+{
+    uint8_t *track_bytes;
+    uint8_t *trace_bytes;
+    size_t track_size;
+    size_t trace_size;
+    char actual_md5[33];
+    int ok;
+
+    track_bytes = read_file_bytes(track_path, &track_size);
+    trace_bytes = read_file_bytes(trace_path, &trace_size);
+    if (!track_bytes || !trace_bytes) {
+        free(track_bytes);
+        free(trace_bytes);
+        return 0;
+    }
+    (void)trace_size;
+    ok = m12_file_md5_hex(track_path, actual_md5) &&
+        strcmp(actual_md5, expected_md5) == 0 &&
+        theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
+            (const char *)trace_bytes, track_bytes, track_size, expected_md5,
+            out);
+    free(track_bytes);
+    free(trace_bytes);
+    return ok;
+}
+
 int main(void) {
     const char *jp_track = getenv("FIRESTAFF_THERON_TRACK02_JP_BIN");
     const char *us_track = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
     const char *jp_trace = getenv("FIRESTAFF_THERON_LATER_CD_READ_TRACE_JP");
     const char *us_trace = getenv("FIRESTAFF_THERON_LATER_CD_READ_TRACE_US");
+    const char *jp_coalesced =
+        getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_TRACE_JP");
+    const char *us_coalesced =
+        getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_TRACE_US");
     LaterCdReadLayoutReceipt jp;
     LaterCdReadLayoutReceipt us;
+    Theron_V1RawLoaderTraceCoalescedLaterReceipt jp_coalesced_receipt;
+    Theron_V1RawLoaderTraceCoalescedLaterReceipt us_coalesced_receipt;
 
     test_later_trace_envelope_parser();
     if (!jp_track || !us_track || !jp_trace || !us_trace) {
@@ -278,6 +314,29 @@ int main(void) {
               jp.caller_pc == us.caller_pc && jp.return_pc == us.return_pc &&
               us.record - jp.record == 1u,
           "JP/US later dispatches retain one bounded selector and transition anchor");
+    if (jp_coalesced || us_coalesced) {
+        check(jp_coalesced && us_coalesced,
+              "coalesced Mednafen evidence is supplied for both raw variants");
+        if (jp_coalesced && us_coalesced) {
+            check(inspect_coalesced(jp_track, jp_coalesced,
+                                    THERON_TRACK02_MD5_JP_BIN,
+                                    &jp_coalesced_receipt) &&
+                      inspect_coalesced(us_track, us_coalesced,
+                                        THERON_TRACK02_MD5_US_BIN,
+                                        &us_coalesced_receipt),
+                  "coalesced Mednafen transcripts bind each later selector to original sector bytes");
+            check(jp_coalesced_receipt.valid && us_coalesced_receipt.valid &&
+                      jp_coalesced_receipt.descriptor_selector ==
+                          us_coalesced_receipt.descriptor_selector &&
+                      jp_coalesced_receipt.descriptor_selector_ordinal ==
+                          us_coalesced_receipt.descriptor_selector_ordinal &&
+                      jp_coalesced_receipt.observation_order_verified &&
+                      us_coalesced_receipt.observation_order_verified &&
+                      jp_coalesced_receipt.selector_sector_bytes_verified &&
+                      us_coalesced_receipt.selector_sector_bytes_verified,
+                  "coalesced JP/US receipts retain one selector and verified observation order");
+        }
+    }
     printf("--- %d failed, %d skipped ---\n", g_fail, g_skip);
     return g_fail ? 1 : 0;
 }

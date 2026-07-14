@@ -628,6 +628,162 @@ int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
+    const char *capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceCoalescedLaterReceipt *out)
+{
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3ManifestEvidence manifest;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t source_count = 0u;
+    size_t dynamic_count = 0u;
+    size_t dispatch_count = 0u;
+    size_t sector_count = 0u;
+    size_t return_count = 0u;
+    size_t dynamic_line = 0u;
+    size_t dispatch_line = 0u;
+    size_t sector_line = 0u;
+    size_t return_line = 0u;
+    size_t line_number = 0u;
+    size_t ordinal;
+    unsigned int caller_pc = 0u;
+    unsigned int return_pc = 0u;
+    unsigned int read_count = 0u;
+    unsigned int cl = 0u;
+    unsigned int dl = 0u;
+    unsigned int ch = 0u;
+    unsigned int record = 0u;
+    unsigned int return_caller_pc = 0u;
+    unsigned int return_return_pc = 0u;
+    unsigned int return_record = 0u;
+    unsigned int lba = 0u;
+    unsigned int bytes = 0u;
+    unsigned int span_offset = 0u;
+    unsigned int span_bytes = 0u;
+    unsigned int span_checksum = 0u;
+    unsigned int sector_checksum = 0u;
+    uint32_t expected_span_checksum;
+    uint32_t expected_sector_checksum;
+    uint32_t derived_base;
+    uint32_t selector;
+    const char *variant_name;
+    char expected_dynamic[256];
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!capture || !track02_data || !track02_md5 || !out ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            track02_data, track02_size, track02_md5, &payload) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_stage3_manifest_evidence_from_payload(
+            track02_data, track02_size, &payload, &manifest)) return 0;
+
+    if (manifest.variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        variant_name = "jp_bin";
+    } else if (manifest.variant == THERON_TRACK02_VARIANT_US_BIN) {
+        variant_name = "us_bin";
+    } else {
+        return 0;
+    }
+    snprintf(expected_dynamic, sizeof(expected_dynamic),
+             "dynamic_cd_read_transaction pc=4090 return_pc=4093 "
+             "sector_count=01 destination=3800 record_register_mask=07 "
+             "record_cl=%02x record_dl=%02x record_ch=%02x variant=%s "
+             "record=%x",
+             payload.track02_record & 0xffu,
+             (payload.track02_record >> 8) & 0xffu,
+             (payload.track02_record >> 16) & 0xffu, variant_name,
+             payload.track02_record);
+
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        ++line_number;
+        if (length == strlen("source=mednafen-pce-instrumented-coalesced") &&
+            memcmp(line, "source=mednafen-pce-instrumented-coalesced",
+                   length) == 0) {
+            ++source_count;
+        } else if (length >= strlen("dynamic_cd_read_transaction ") &&
+                   memcmp(line, "dynamic_cd_read_transaction ",
+                          strlen("dynamic_cd_read_transaction ")) == 0) {
+            if (++dynamic_count != 1u || length != strlen(expected_dynamic) ||
+                memcmp(line, expected_dynamic, length) != 0) return 0;
+            dynamic_line = line_number;
+        } else if (length >= strlen("later_system_card_e009_dispatch ") &&
+                   memcmp(line, "later_system_card_e009_dispatch ",
+                          strlen("later_system_card_e009_dispatch ")) == 0) {
+            if (++dispatch_count != 1u ||
+                !tqr_trace_parse_later_e009_dispatch(
+                    line, length, &caller_pc, &return_pc, &read_count, &cl,
+                    &dl, &ch, &record)) return 0;
+            dispatch_line = line_number;
+        } else if (length >= strlen("cd_interface_raw_sector_read ") &&
+                   memcmp(line, "cd_interface_raw_sector_read ",
+                          strlen("cd_interface_raw_sector_read ")) == 0) {
+            if (++sector_count != 1u || !tqr_trace_parse_raw_sector_span(
+                    line, length, &lba, &bytes, &span_offset, &span_bytes,
+                    &span_checksum, &sector_checksum)) return 0;
+            sector_line = line_number;
+        } else if (length >= strlen("later_system_card_e009_return ") &&
+                   memcmp(line, "later_system_card_e009_return ",
+                          strlen("later_system_card_e009_return ")) == 0) {
+            if (++return_count != 1u || !tqr_trace_parse_later_e009_return(
+                    line, length, &return_caller_pc, &return_return_pc,
+                    &return_record)) return 0;
+            return_line = line_number;
+        }
+    }
+    if (source_count != 1u || dynamic_count != 1u || dispatch_count != 1u ||
+        sector_count != 1u || return_count != 1u ||
+        !(dynamic_line < dispatch_line && dispatch_line < sector_line &&
+          sector_line < return_line) || return_pc != caller_pc + 3u ||
+        return_caller_pc != caller_pc || return_return_pc != return_pc ||
+        return_record != record || record != (cl | (dl << 8) | (ch << 16)) ||
+        read_count == 0u || record <= manifest.track02_record ||
+        record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        read_count > track02_size / THERON_TRACK02_RAW_SECTOR_BYTES - record ||
+        manifest.first_descriptor.word2 == 0u ||
+        record < manifest.track02_record - manifest.first_descriptor.word2) {
+        return 0;
+    }
+    derived_base = manifest.track02_record - manifest.first_descriptor.word2;
+    selector = record - derived_base;
+    if (selector > UINT16_MAX) return 0;
+    for (ordinal = 0u; ordinal < manifest.descriptor_count; ++ordinal) {
+        if (manifest.descriptors[ordinal].word2 == (uint16_t)selector) break;
+    }
+    if (ordinal == manifest.descriptor_count) return 0;
+
+    expected_span_checksum = tqr_trace_fnv1a_bytes(
+        track02_data + (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES, 32u);
+    expected_sector_checksum = tqr_trace_fnv1a_bytes(
+        track02_data + (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES,
+        THERON_TRACK02_RAW_SECTOR_BYTES);
+    if (span_checksum != expected_span_checksum ||
+        sector_checksum != expected_sector_checksum) return 0;
+
+    out->valid = 1;
+    out->variant = manifest.variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->stage3_track02_record = manifest.track02_record;
+    out->later_track02_record = record;
+    out->descriptor_selector = (uint16_t)selector;
+    out->descriptor_selector_ordinal = ordinal;
+    out->caller_pc = (uint16_t)caller_pc;
+    out->return_pc = (uint16_t)return_pc;
+    out->sector_count = (uint8_t)read_count;
+    out->observed_raw_sector_lba = (int)lba;
+    out->observed_raw_sector_checksum = expected_sector_checksum;
+    out->observed_raw_sector_span_checksum = expected_span_checksum;
+    out->observation_order_verified = 1;
+    out->selector_sector_bytes_verified = 1;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_final_bind(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_StartupMediaStateReceipt *media,
