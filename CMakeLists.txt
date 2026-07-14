@@ -455,6 +455,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0461_start_allocate_fl
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0931_f0932_prim_checksums_pc34_compat.c")
+    add_executable(test_f0931_f0932_prim_checksums_pc34_compat
+        tests/test_f0931_f0932_prim_checksums_pc34_compat.c
+        src/shared/f0931_f0932_prim_checksums_pc34_compat.c
+    )
+    target_include_directories(test_f0931_f0932_prim_checksums_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_f0931_f0932_prim_checksums_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME f0931_f0932_prim_checksums_pc34_compat
+        COMMAND test_f0931_f0932_prim_checksums_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c

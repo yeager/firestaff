@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `PRIM1.C F0931/F0932`: source 16-bit wrapping
+  word and byte checksums now have bounded compatibility callables.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0461_START_AllocateFlippedWallBitmaps`:
   source-ordered plans now reserve the five derived, horizontally flipped
   wall buffers without admitting substitute graphic bytes. Verification:
