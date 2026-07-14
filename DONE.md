@@ -13771,6 +13771,16 @@ dispatch. Source: CSBWin `data.cpp` `DB3::MakeBig`/`ParameterB` and `DSA.cpp`
 `GetState`/`ProcessDSATimer6`. Verified by CTest
 `csb_v1_phase7_verification` and `csb_v1_dsa_queued_localstate2_timer`.
 
+# ✅ 2026-07-14 CSBWin zero-word DSA action rejection
+
+The authenticated CSBWin DSA runner now rejects an imported action with no
+program words before it inspects an opcode. This preserves parameter words,
+save-owned globals, execution counters, and both prior stack and transfer
+receipts when a malformed save action reaches the pointer-identity boundary.
+It adds no opcode support, synthetic behavior, or world/filter route. Source:
+CSBWin `SaveGame.cpp::ReadDSAs` / `DSA.cpp::ProcessDSAFilter` and `Execute`.
+Verification: focused `csb_v1_dsa_trigger_single_step_pc34_compat` CTest.
+
 # ✅ 2026-07-14 Theron Track 02 startup-grid positive route
 
 The existing CD/MODE1 envelope and loader-semantic receipt now materialize one
