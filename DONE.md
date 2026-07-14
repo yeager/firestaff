@@ -198,6 +198,11 @@
   14-by-6 creature set into the selected entry of palette tables 0..5, while
   retaining each `COLOR_DEF.Index`. Focused strict-C11 test passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8167/F8168: source-locked PC 3.4 C25 mouse
+  pointer background save/restore. F8167 clamps to the exact screen-edge
+  18-by-18 rectangle before F8165 capture; F8168 delegates the same saved
+  prefix-and-payload form to F8166. Focused strict-C11 roundtrip test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8166: source-locked PC 3.4 C25 aperture
   playback. The adapter reads F8165's little-endian width/height/offset
   prefix and restores the raw payload in 320-byte aperture rows. Focused
