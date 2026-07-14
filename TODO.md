@@ -2018,6 +2018,14 @@ and real community-save corpus round-trip evidence.
     rechecks F0417/F0430 checksums for each invalid map, X, and Y mutation and
     proves no destination state is published. Remaining work is authentic
     community-save corpus coverage.
+  - DONE 2026-07-14: F0435 now materializes saved C05/C06/C08/C09/C10
+    square-state records through M10's existing ReDMCSB `TIMELINE.C`
+    F0242/F0244/F0245/F0250/F0251 consumer. It retains the source
+    `B.Location` and `C.Cell/Effect` union and leaves source-square validation
+    to that existing dispatch owner, rather than substituting a host event.
+    The focused authenticated-PC34 regression
+    covers all five records and their F0433/F0435 round trips. Remaining work
+    is authentic community-save corpus coverage and other source event unions.
   - 2026-07-13 update: saved C040 HoC panel state now reopens only for the
     last appended party slot, the same candidate position consumed by
     `REVIVE.C` F0282. A stale sidecar cannot bind a mirror panel to an older
