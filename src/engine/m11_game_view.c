@@ -37796,6 +37796,42 @@ static int m11_draw_dm1_hoc_rename_pc34_text(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0435:2803-2816 restores each saved 32x29 4bpp
+ * M516_CHAMPIONS.Portrait before the resumed dungeon is presented.  A
+ * resumed PC34 champion must therefore retain its save-owned pixels in the
+ * inventory panel; the GRAPHICS.DAT atlas is only a new-recruit fallback. */
+static int m11_draw_saved_champion_portrait_pc34(
+    const struct ChampionState_Compat* champion,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int dstX,
+    int dstY)
+{
+    int y;
+
+    if (!champion || !champion->portraitBitmapValid || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        dstX < 0 || dstY < 0 ||
+        dstX + CHAMPION_PORTRAIT_BITMAP_WIDTH > framebufferWidth ||
+        dstY + CHAMPION_PORTRAIT_BITMAP_HEIGHT > framebufferHeight) {
+        return 0;
+    }
+    for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+        const unsigned char* src = champion->portraitBitmap +
+            y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+        unsigned char* dst = framebuffer + (dstY + y) * framebufferWidth + dstX;
+        int x;
+
+        for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+            const unsigned char packed = src[x / 2];
+            dst[x] = (unsigned char)(packed >> 4);
+            dst[x + 1] = (unsigned char)(packed & 0x0fU);
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -38121,8 +38157,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                   portX, portY, PORT_W, PORT_H,
                   isDead ? M11_COLOR_RED : M11_COLOR_LIGHT_CYAN);
     {
-        int drewPortrait = 0;
-        if (state->assetsAvailable) {
+        int drewPortrait = m11_draw_saved_champion_portrait_pc34(
+            champ, framebuffer, framebufferWidth, framebufferHeight, portX, portY);
+        if (!drewPortrait && state->assetsAvailable) {
             /* Try full 32×29 portrait from graphic 26 first */
             const M11_AssetSlot* portraits = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,

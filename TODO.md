@@ -28,8 +28,11 @@
   The gate now freezes each corpus-certified file into one in-memory snapshot
   before both independent F0435 staging and M11 adoption, then rehashes its
   path after replay; a replacement save cannot inherit prior admission or
-  trace evidence. Broader original PC34 executable route/capture comparison
-  remains an external-corpus task.
+  trace evidence. M11's normal C017 inventory panel now consumes the active
+  champion's exact F0435 32x29 packed portrait payload rather than replacing
+  it with a GRAPHICS.DAT atlas portrait; the fixture-free gate compares every
+  rendered pixel to the admitted save snapshot. Broader original PC34
+  executable route/capture comparison remains an external-corpus task.
 
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light and movement
   offsets still need source-owned destination/clipping plans. The static
