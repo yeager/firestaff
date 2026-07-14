@@ -119,6 +119,18 @@ TODO: task-body opcodes, entry-point ownership, host callbacks, and trigger
 semantics remain unproven. The receipt must not be promoted into a dispatcher
 without hash-bound Saturn execution or capture evidence.
 
+## SAL Opaque Prefix Receipt
+
+DONE: the retail `SNDLEV00.SAL` through `SNDLEV15.SAL` corpus shares an exact
+33-byte opaque prefix: ASCII `dsp01.EXB`, 23 zero bytes, then byte `0x02`.
+`nexus_v1_audio_sal_opaque_prefix_receipt()` records only this common byte
+fact, and the corpus test rejects a truncated or altered prefix.
+
+TODO: this is not a SAL container grammar, payload boundary, codec, sample
+directory, MAP selector meaning, Saturn driver ABI, or playback binding. The
+receipt explicitly blocks decode until original execution or capture evidence
+establishes those semantics.
+
 ## Host Route
 
 Launcher, runtime, and host receipts preserve whether a static MNS route was

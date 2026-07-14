@@ -57,6 +57,21 @@ typedef struct {
     int last_audio_track;
 } Nexus_V1_CddaLayoutReceipt;
 
+/* Receipt for the only common on-disk SAL prefix observed in all sixteen
+ * retail banks. It deliberately does not identify a file format, payload
+ * boundary, codec, sample table, or playback ABI. */
+typedef struct {
+    int valid;
+    uint32_t opaque_prefix_bytes;
+    int signature_matches;
+    int reserved_zero_bytes_match;
+    int marker_matches;
+    int codec_semantics_proven;
+    int sample_semantics_proven;
+    int playback_semantics_proven;
+    int blocks_decode;
+} Nexus_V1_SalOpaquePrefixReceipt;
+
 int nexus_v1_audio_expected_asset(Nexus_V1_AudioKind kind,
                                   int level_index,
                                   Nexus_V1_AudioReceipt *out);
@@ -71,6 +86,11 @@ int nexus_v1_audio_classify_cdda_layout(int data_track_count,
                                         int first_audio_track,
                                         int last_audio_track,
                                         Nexus_V1_CddaLayoutReceipt *out);
+
+int nexus_v1_audio_sal_opaque_prefix_receipt(
+    const uint8_t *data,
+    uint32_t size,
+    Nexus_V1_SalOpaquePrefixReceipt *out);
 
 int nexus_v1_audio_cd_track_for_level_receipt(int level_index);
 
