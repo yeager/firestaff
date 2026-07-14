@@ -87,7 +87,12 @@ CSBWin `Dungeon.dat` and an original extended `csbgame*.dat` save. It verifies
 the production resume path publishes authenticated DSA actions and the saved
 level-index table into the same runtime owner, then scans decoded source Thing
 chains for a type-47 actuator whose selector resolves through that restored
-table to an authenticated action. It also confirms the owner stays stable
-through one tick. It does not generate a save, DSA record, selector, actuator,
-or fallback action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON`
-and `FIRESTAFF_CSBWIN_SAVE`), it skips.
+table to an authenticated action. It also requires a non-empty source TIMER
+heap and proves each serialized queue slot retains one exact live timeline
+receipt (time, function, priority, coordinates, cell, and effect) before the
+DSA owner is checked through one tick. This is queue correlation, not a claim
+that any saved timer dispatched or executed a DSA action; unsupported timer
+functions and DSA bytecode still fail closed at their existing boundaries. It
+does not generate a save, DSA record, selector, actuator, timer, or fallback
+action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON` and
+`FIRESTAFF_CSBWIN_SAVE`), it skips.
