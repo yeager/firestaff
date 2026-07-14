@@ -92,6 +92,14 @@ int main(void) {
     int edge_opposite_total = 0;
     int edge_same_direction_total = 0;
     int edge_maximum_incidence = 0;
+    int normal_geometry_face_total = 0;
+    int normal_geometry_orthogonal_face_total = 0;
+    int normal_geometry_nonorthogonal_face_total = 0;
+    int normal_geometry_edge_test_total = 0;
+    int normal_geometry_orthogonal_edge_test_total = 0;
+    int normal_geometry_positive_total = 0;
+    int normal_geometry_negative_total = 0;
+    int normal_geometry_zero_total = 0;
     uint32_t mesh_source_hash = 2166136261u;
 
     if (!data_dir || !data_dir[0]) {
@@ -108,6 +116,7 @@ int main(void) {
         Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
         Nexus_V1_DgnStructure3VectorReceipt vectors;
         Nexus_V1_DgnStructure3FaceGeometryReceipt geometry;
+        Nexus_V1_DgnStructure3FaceNormalGeometryReceipt normal_geometry;
         Nexus_V1_DgnStructure3FaceEdgeReceipt edges;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
         Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
@@ -125,6 +134,8 @@ int main(void) {
             nexus_v1_level_structure3_face_material_receipt(&level, &materials) != 0 ||
             nexus_v1_level_structure3_vector_receipt(&level, &vectors) != 0 ||
             nexus_v1_level_structure3_face_geometry_receipt(&level, &geometry) != 0 ||
+            nexus_v1_level_structure3_face_normal_geometry_receipt(
+                &level, &normal_geometry) != 0 ||
             nexus_v1_level_structure3_face_edge_receipt(&level, &edges) != 0 ||
             nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0 ||
             nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
@@ -155,6 +166,23 @@ int main(void) {
                   geometry.measurement_face_count &&
               !geometry.surface_or_draw_semantics_proven,
               "retail face coordinates retain an accounting-complete no-draw degeneracy receipt");
+        CHECK(normal_geometry.face_receipt_valid &&
+              normal_geometry.vector_receipt_valid &&
+              normal_geometry.face_normal_pairing_valid &&
+              normal_geometry.arithmetic_envelope_safe &&
+              normal_geometry.accounting_valid && normal_geometry.valid &&
+              normal_geometry.measured_face_count == faces.face_count &&
+              normal_geometry.orthogonal_face_count +
+                      normal_geometry.nonorthogonal_face_count ==
+                  normal_geometry.measured_face_count &&
+              normal_geometry.orthogonal_edge_test_count <=
+                  normal_geometry.edge_test_count &&
+              normal_geometry.positive_cross_normal_dot_count +
+                      normal_geometry.negative_cross_normal_dot_count +
+                      normal_geometry.zero_cross_normal_dot_count ==
+                  normal_geometry.measured_face_count &&
+              !normal_geometry.normal_plane_or_draw_semantics_proven,
+              "retail face-normal arithmetic remains bounded and no-draw");
         CHECK(edges.face_receipt_valid && edges.valid && edges.accounting_valid &&
               edges.face_count == faces.face_count &&
               edges.nondegenerate_face_edge_reference_count +
@@ -185,6 +213,9 @@ int main(void) {
               plan.structure3_face_edges.valid &&
               plan.structure3_face_edges.face_edge_slot_count ==
                   edges.face_edge_slot_count &&
+              plan.structure3_face_normal_geometry.valid &&
+              plan.structure3_face_normal_geometry.measured_face_count ==
+                  faces.face_count &&
               !plan.structure3_face_edges.winding_or_draw_semantics_proven &&
               !plan.structure3_face_geometry.surface_or_draw_semantics_proven &&
               !plan.structure3_face_materials.material_or_draw_semantics_proven &&
@@ -196,6 +227,7 @@ int main(void) {
               "face-normal rows do not authorize plane or draw semantics");
         CHECK(mesh_semantics.source_facts_complete &&
               mesh_semantics.source_face_geometry_valid &&
+              mesh_semantics.source_face_normal_geometry_valid &&
               mesh_semantics.entry_count == pairs.entry_count &&
               mesh_semantics.face_count == pairs.face_normal_pair_count &&
               mesh_semantics.normal_count == pairs.face_normal_pair_count &&
@@ -362,6 +394,15 @@ int main(void) {
         edge_multi_incident_total += edges.multi_incident_face_edge_count;
         edge_opposite_total += edges.opposite_direction_paired_face_edge_count;
         edge_same_direction_total += edges.same_direction_paired_face_edge_count;
+        normal_geometry_face_total += normal_geometry.measured_face_count;
+        normal_geometry_orthogonal_face_total += normal_geometry.orthogonal_face_count;
+        normal_geometry_nonorthogonal_face_total += normal_geometry.nonorthogonal_face_count;
+        normal_geometry_edge_test_total += normal_geometry.edge_test_count;
+        normal_geometry_orthogonal_edge_test_total +=
+            normal_geometry.orthogonal_edge_test_count;
+        normal_geometry_positive_total += normal_geometry.positive_cross_normal_dot_count;
+        normal_geometry_negative_total += normal_geometry.negative_cross_normal_dot_count;
+        normal_geometry_zero_total += normal_geometry.zero_cross_normal_dot_count;
         if (edges.maximum_face_edge_incidence > edge_maximum_incidence)
             edge_maximum_incidence = edges.maximum_face_edge_incidence;
         if (geometry.maximum_component_absolute_value >
@@ -388,6 +429,11 @@ int main(void) {
            edge_unique_total, edge_boundary_total, edge_paired_total,
            edge_multi_incident_total, edge_opposite_total, edge_same_direction_total,
            edge_maximum_incidence);
+    printf("Structure3 face-normal geometry corpus: faces=%d orthogonal=%d nonorthogonal=%d edges=%d orthogonal-edges=%d positive=%d negative=%d zero=%d\n",
+           normal_geometry_face_total, normal_geometry_orthogonal_face_total,
+           normal_geometry_nonorthogonal_face_total, normal_geometry_edge_test_total,
+           normal_geometry_orthogonal_edge_test_total, normal_geometry_positive_total,
+           normal_geometry_negative_total, normal_geometry_zero_total);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -421,5 +467,14 @@ int main(void) {
               edge_multi_incident_total == 342 && edge_opposite_total == 20962 &&
               edge_same_direction_total == 3777 && edge_maximum_incidence == 4,
           "retail face-edge incidence remains corpus-locked without winding semantics");
+    CHECK(normal_geometry_face_total == 18478 &&
+              normal_geometry_orthogonal_face_total == 11876 &&
+              normal_geometry_nonorthogonal_face_total == 6602 &&
+              normal_geometry_edge_test_total == 54748 &&
+              normal_geometry_orthogonal_edge_test_total == 39003 &&
+              normal_geometry_positive_total == 15877 &&
+              normal_geometry_negative_total == 2601 &&
+              normal_geometry_zero_total == 0,
+          "retail face-normal arithmetic remains corpus-locked without normal-use semantics");
     return g_fail == 0 ? 0 : 1;
 }
