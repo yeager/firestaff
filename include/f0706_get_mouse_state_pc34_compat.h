@@ -10,7 +10,9 @@
  *
  * Keep the driver-owned coordinates and button word opaque.  In
  * particular, F0706 neither scales nor normalizes them before returning
- * them to CLICKVIEW.C, DRAWVIEW.C, PANEL.C, or selector code.
+ * them to CLICKVIEW.C, DRAWVIEW.C, PANEL.C, or selector code.  A missing
+ * host driver is a no-op in this compatibility boundary; an installed driver
+ * still receives the original pointers without alteration.
  */
 
 #include <stdint.h>
