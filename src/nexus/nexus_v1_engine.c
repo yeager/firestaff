@@ -1778,6 +1778,48 @@ static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
     engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 1;
 }
 
+/* Keep the engine boundary independent of the launcher/importer receipt.
+ * This repeats the capture reader's six length-prefixed FNV lanes before the
+ * raw bytes enter engine-owned storage. It verifies transport identity only;
+ * it assigns no VDP1, palette, transform, or draw semantics. */
+static uint64_t nexus_v1_structure3_capture_bundle_fnv1a64(
+    const Nexus_V1_DgnStructure3CaptureImport *capture)
+{
+    const uint8_t *spans[6];
+    size_t sizes[6];
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t span;
+
+    if (!capture) return 0U;
+    spans[0] = capture->texture_span;
+    spans[1] = capture->palette_state;
+    spans[2] = capture->vdp1_state;
+    spans[3] = capture->transform_state;
+    spans[4] = capture->normal_culling_state;
+    spans[5] = capture->vdp1_command;
+    sizes[0] = capture->texture_span_size;
+    sizes[1] = capture->palette_state_size;
+    sizes[2] = capture->vdp1_state_size;
+    sizes[3] = capture->transform_state_size;
+    sizes[4] = capture->normal_culling_state_size;
+    sizes[5] = capture->vdp1_command_size;
+    for (span = 0U; span < 6U; ++span) {
+        uint8_t length[8];
+        size_t byte;
+        if (!spans[span] || sizes[span] == 0U) return 0U;
+        for (byte = 0U; byte < sizeof(length); ++byte) {
+            length[byte] = (uint8_t)(sizes[span] >> (byte * 8U));
+            hash ^= length[byte];
+            hash *= UINT64_C(1099511628211);
+        }
+        for (byte = 0U; byte < sizes[span]; ++byte) {
+            hash ^= spans[span][byte];
+            hash *= UINT64_C(1099511628211);
+        }
+    }
+    return hash;
+}
+
 static int nexus_v1_copy_structure3_capture_span(
     uint8_t **out_data, int *out_size, const uint8_t *data, size_t size)
 {
@@ -1804,6 +1846,7 @@ int nexus_v1_engine_consume_structure3_capture(
     Nexus_V1_DgnStructure3Face *faces = NULL;
     Nexus_V1_DgnStructure3Vector *normals = NULL;
     Nexus_V1_DgnStructure3RuntimeSource source;
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt rebound;
     int slot;
     int slot_count;
 
@@ -1815,6 +1858,12 @@ int nexus_v1_engine_consume_structure3_capture(
         capture->vdp1_state_size == 0U || capture->transform_state_size == 0U ||
         capture->normal_culling_state_size == 0U ||
         capture->vdp1_command_size == 0U ||
+        capture->texture_span_size > (size_t)INT_MAX ||
+        capture->palette_state_size > (size_t)INT_MAX ||
+        capture->vdp1_state_size > (size_t)INT_MAX ||
+        capture->transform_state_size > (size_t)INT_MAX ||
+        capture->normal_culling_state_size > (size_t)INT_MAX ||
+        capture->vdp1_command_size > (size_t)INT_MAX ||
         !capture->capture_session_fnv1a64 || !capture->capture_bundle_fnv1a64 ||
         !capture->capture_bundle_hash_verified ||
         !capture->original_saturn_capture_verified || !engine->level_loaded ||
@@ -1827,6 +1876,27 @@ int nexus_v1_engine_consume_structure3_capture(
         !binding->complete_source_binding ||
         binding->renderer_handoff_ready || !binding->blocks_real_dgn_mesh_render)
         return 0;
+
+    /* The launcher may already have authenticated this receipt, but never
+     * accept its booleans as a substitute for the bytes now entering M11.
+     * Recompute both the transport bundle and the DGN face binding against
+     * the currently loaded canonical level. */
+    if (nexus_v1_structure3_capture_bundle_fnv1a64(capture) !=
+        capture->capture_bundle_fnv1a64) return 0;
+    memset(&rebound, 0, sizeof(rebound));
+    if (nexus_v1_dgn_bind_structure3_face_capture_candidate(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, 1, 1, candidate,
+            capture->texture_span, (int)capture->texture_span_size,
+            capture->palette_state, (int)capture->palette_state_size,
+            capture->vdp1_state, (int)capture->vdp1_state_size,
+            capture->transform_state, (int)capture->transform_state_size,
+            capture->normal_culling_state,
+            (int)capture->normal_culling_state_size,
+            capture->vdp1_command, (int)capture->vdp1_command_size,
+            &rebound) != 0 || !rebound.complete_source_binding ||
+        rebound.renderer_handoff_ready ||
+        !rebound.blocks_real_dgn_mesh_render) return 0;
 
     memset(&entry, 0, sizeof(entry));
     if (nexus_v1_level_extract_structure3_mesh_entry(
@@ -1907,7 +1977,7 @@ int nexus_v1_engine_consume_structure3_capture(
         capture->capture_bundle_hash_verified != 0;
     source.original_saturn_capture_verified =
         capture->original_saturn_capture_verified != 0;
-    source.binding = *binding;
+    source.binding = rebound;
     source.valid = 1;
     source.blocks_real_dgn_mesh_render = 1;
     free(vertices);

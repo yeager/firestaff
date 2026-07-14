@@ -61,12 +61,42 @@ static void wb32(uint8_t *p, uint32_t v) {
     p[3] = (uint8_t)(v & 0xffU);
 }
 
-static uint64_t fnv1a64(const uint8_t *data, size_t size) {
-    uint64_t hash = UINT64_C(1469598103934665603);
+static uint64_t fnv1a64_update(uint64_t hash, const uint8_t *data, size_t size) {
     size_t i;
     for (i = 0; i < size; ++i) {
         hash ^= data[i];
         hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    return fnv1a64_update(UINT64_C(1469598103934665603), data, size);
+}
+
+static uint64_t structure3_capture_bundle_fnv1a64(
+    const Nexus_V1_DgnStructure3CaptureImport *capture)
+{
+    const uint8_t *spans[6] = {
+        capture->texture_span, capture->palette_state, capture->vdp1_state,
+        capture->transform_state, capture->normal_culling_state,
+        capture->vdp1_command
+    };
+    const size_t sizes[6] = {
+        capture->texture_span_size, capture->palette_state_size,
+        capture->vdp1_state_size, capture->transform_state_size,
+        capture->normal_culling_state_size, capture->vdp1_command_size
+    };
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t span;
+
+    for (span = 0U; span < 6U; ++span) {
+        uint8_t length[8];
+        size_t byte;
+        for (byte = 0U; byte < sizeof(length); ++byte)
+            length[byte] = (uint8_t)(sizes[span] >> (byte * 8U));
+        hash = fnv1a64_update(hash, length, sizeof(length));
+        hash = fnv1a64_update(hash, spans[span], sizes[span]);
     }
     return hash;
 }
@@ -2149,6 +2179,41 @@ static void test_structure3_entry_header_boundaries(void) {
           !capture.complete_source_binding && capture.blocks_real_dgn_mesh_render,
           "a degenerate Structure3 face cannot enter the host packet");
 
+    /* The engine boundary needs a nondegenerate row so it can prove that it
+     * recomputes a real binding instead of trusting a receipt's booleans.
+     * This happens after the deliberately-degenerate parser coverage above. */
+    wb32(payload + 56, 65536U);
+    wb32(payload + 60, 65536U);
+    wb32(payload + 64, 65536U);
+    wb32(payload + 68, 131072U);
+    wb32(payload + 72, 65536U);
+    wb32(payload + 76, 65536U);
+    wb32(payload + 80, 65536U);
+    wb32(payload + 84, 131072U);
+    wb32(payload + 88, 65536U);
+    wb16(payload + 104, 0U);
+    wb16(payload + 106, 1U);
+    wb16(payload + 108, 2U);
+    wb16(payload + 110, 2U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0,
+          "the engine capture fixture reloads one bounded nondegenerate face");
+    candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
+    candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
+    candidate.entry_index = 0U;
+    candidate.face_ordinal = 0U;
+    candidate.face_row_fnv1a32 = fnv1a32(payload + 104U, 12U);
+    candidate.referenced_vertex_rows_fnv1a32 = fnv1a32(payload + 56U, 36U);
+    candidate.normal_row_fnv1a32 = fnv1a32(payload + 128U, 12U);
+    CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+              &level, dgn, (int)sizeof(dgn), 1, 1, &candidate,
+              texture_span, (int)sizeof(texture_span),
+              palette_state, (int)sizeof(palette_state),
+              vdp1_state, (int)sizeof(vdp1_state),
+              transform_state, (int)sizeof(transform_state),
+              culling_state, (int)sizeof(culling_state),
+              vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
+          capture.complete_source_binding,
+          "the engine fixture produces one complete but no-draw Structure3 binding");
     {
         Nexus_V1_Engine engine;
         Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
@@ -2180,7 +2245,8 @@ static void test_structure3_entry_header_boundaries(void) {
         import.vdp1_command = vdp1_command;
         import.vdp1_command_size = sizeof(vdp1_command);
         import.capture_session_fnv1a64 = UINT64_C(0x1234);
-        import.capture_bundle_fnv1a64 = UINT64_C(0x5678);
+        import.capture_bundle_fnv1a64 =
+            structure3_capture_bundle_fnv1a64(&import);
         import.capture_bundle_hash_verified = 1;
         import.original_saturn_capture_verified = 1;
         bound.complete_source_binding = 1;
@@ -2245,6 +2311,14 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
+        import.capture_bundle_fnv1a64 ^= UINT64_C(1);
+        CHECK(!nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, &import) &&
+              engine.structure3_runtime_source.valid &&
+              engine.structure3_runtime_source.capture_bundle_fnv1a64 !=
+                  import.capture_bundle_fnv1a64,
+              "the engine rejects a stale bundle receipt before a raw capture packet can replace its owned source");
+        import.capture_bundle_fnv1a64 ^= UINT64_C(1);
         memset(&packet, 0, sizeof(packet));
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 1 &&
               packet.valid && packet.source_geometry_bound &&
@@ -2282,6 +2356,20 @@ static void test_structure3_entry_header_boundaries(void) {
         free(engine.structure3_runtime_source.normal_culling_state);
         free(engine.structure3_runtime_source.vdp1_command);
     }
+
+    wb32(payload + 56, 65536U);
+    wb32(payload + 60, 0U);
+    wb32(payload + 64, 0U);
+    wb32(payload + 68, 65536U);
+    wb32(payload + 72, 0U);
+    wb32(payload + 76, 0U);
+    wb32(payload + 80, 65536U);
+    wb32(payload + 84, 0U);
+    wb32(payload + 88, 0U);
+    wb16(payload + 104, 0U);
+    wb16(payload + 106, 1U);
+    wb16(payload + 108, 0U);
+    wb16(payload + 110, 0U);
 
     wb32(payload + 128, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
