@@ -29,6 +29,13 @@
   unresolved RecordE owners rather than dereferenced through an invented DB
   graph. No timer is scheduled, fired, transformed, or given DB semantics.
   Focused `dm2_v1_save_load` coverage proves `tty0C` and both RecordE cases.
+- 2026-07-14 Theron complete `$e009` runtime-admission binding: the final
+  initial-level receipt now retains the authenticated 2048-byte local-RAM
+  payload witness and binds its byte count/checksum into the receipt hash.
+  Soul Room entry revalidates that complete witness before it can consume the
+  loader/CD handoff. Coverage rejects a malformed direct receipt and a
+  mismatched full-payload checksum. This remains opaque byte provenance only;
+  no dungeon, object, bitmap, palette, or transition semantics were added.
 
 - 2026-07-14 DM2 original raw-SKSave G1 runtime handoff: before applying an
   admitted raw save, runtime now parses its complete dungeon prefix through

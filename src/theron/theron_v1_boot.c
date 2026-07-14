@@ -209,13 +209,11 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
            initial_level->valid &&
            initial_level->variant == expected_variant &&
            strcmp(initial_level->track02_md5, profile->graphics_md5) == 0 &&
-           initial_level->coalesced_loader_cd_receipt_proven &&
-           initial_level->initial_level_record_proven &&
-           initial_level->complete_initial_level_envelope_proven &&
            initial_level->observed_track02_record == 0x0b52u &&
            !initial_level->object_tail_semantics_proven &&
            !initial_level->fallback_visuals_allowed &&
-           initial_level->receipt_hash != 0u;
+           theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+               initial_level);
 }
 
 /* ── PC Engine file candidates ───────────────────────────────────── */
