@@ -13205,6 +13205,19 @@ file probes; an incomplete scan is marked truncated. Arbitrary filenames and
 bytes never become importable. Verification: Ninja `test_dm2_v1_save_load`
 23/23 and CTest `dm2_v1_save_load` 1/1.
 
+# ✅ 2026-07-14 CSB real title/HUD/door launcher visual capture
+
+The real-data M12-to-M11 CSB launcher handoff regression now captures all
+three source title phases alongside the existing entrance-door and terminal
+HUD checks. It advances the live title through ReDMCSB `TITLE.C F0437`'s
+CHAOS zoom/hold into STRIKES BACK, verifies the decoded `C001` C426 crop is
+drawn byte-for-byte at `(0,118)` with C00 transparency, confirms the C426
+palette, and requires the capture to differ from CHAOS. Existing checks retain
+the real opening-door frame and exact C017/C040 HUD composition. Verification:
+`test_csb_v1_m11_launcher_handoff_boundary` passed 289/289 against staged CSB
+data. Source: ReDMCSB `TITLE.C F0437` lines 424-463 and `ENTRANCE.C F0806`
+lines 775-826.
+
 # ✅ 2026-07-14 DM2 template-bound raw SKSave export roundtrip
 
 `dm2_v1_session_export_raw_sksave_payload()` exports only from a
