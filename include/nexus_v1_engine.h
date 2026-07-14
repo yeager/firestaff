@@ -208,6 +208,23 @@ typedef struct {
     int capture_trace_order_verified;
     int original_saturn_capture_verified;
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt binding;
+    /* A separately selected Structure1F/Structure1A owner row may be
+     * revalidated against this admitted face capture.  This preserves both
+     * original source sides for a later Saturn trace comparison; it does not
+     * prove model-index-to-entry mapping or any draw semantics. */
+    int structure1a_owner_correlation_bound;
+    int structure1a_owner_x;
+    int structure1a_owner_y;
+    int structure1f_entry_index;
+    Nexus_V1_DgnStructure1FFamily structure1f_family;
+    uint8_t structure1f_tag;
+    uint8_t structure1f_face_selector;
+    uint16_t structure1a_index;
+    uint8_t structure1a_kind;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    uint32_t structure3_owner_payload_fnv1a32;
+    int structure3_entry_mapping_proven;
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3RuntimeSource;
 
@@ -238,8 +255,34 @@ typedef struct {
     int normal_culling_state_size;
     const uint8_t *vdp1_command;
     int vdp1_command_size;
+    int structure1a_owner_correlation_bound;
+    int structure1a_owner_x;
+    int structure1a_owner_y;
+    int structure1f_entry_index;
+    Nexus_V1_DgnStructure1FFamily structure1f_family;
+    uint8_t structure1f_tag;
+    uint8_t structure1f_face_selector;
+    uint16_t structure1a_index;
+    uint8_t structure1a_kind;
+    uint8_t structure3_model_index;
+    uint8_t z_rotation;
+    uint32_t structure3_owner_payload_fnv1a32;
+    int structure3_entry_mapping_proven;
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3RenderPacket;
+
+/* Result of binding a dual-source Structure1F/Structure1A target to an
+ * already admitted original-Saturn Structure3 capture.  This is deliberately
+ * a source correlation only, never a mesh/material/pixel interpretation. */
+typedef struct {
+    int active_canonical_lev_bound;
+    int runtime_capture_attested;
+    int target_source_revalidated;
+    int owner_context_bound;
+    int structure3_entry_mapping_proven;
+    int no_draw_only;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt;
 
 /* Renderer-bound provenance for the active canonical LEV entry.  This makes
  * the package-to-viewport boundary inspectable without assigning a Saturn
@@ -713,6 +756,13 @@ int nexus_v1_engine_consume_structure3_raw_capture_manifest(
     const Nexus_V1_DgnStructure3RawCapturePaths *paths,
     const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
     Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt *out_receipt);
+/* Revalidate a dual-source owner target against the active canonical LEV and
+ * one already-attested runtime capture. Success stores source context only;
+ * it explicitly leaves model-entry mapping and draw blocked. */
+int nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
+    Nexus_V1_Engine *engine,
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *target,
+    Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt *out_receipt);
 /* Stages the engine-owned, already-bound Structure3 face for the viewport.
  * This is a source/geometry handoff only: a successful packet always remains
  * no-draw until independent Saturn render semantics are established. */
