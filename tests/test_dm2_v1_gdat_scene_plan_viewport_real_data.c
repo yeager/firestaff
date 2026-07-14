@@ -86,6 +86,47 @@ static int unexpected_palette_fetch(void *user, int index, uint8_t palette[16],
     return -1;
 }
 
+static int verify_direct_handoff(int style,
+                                 const DM2_V1_GdatSceneM11CommandPlan *plan)
+{
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    int needs_local_palette_remap =
+        plan->commands[0].format == DM2_IMG_FMT_IMG3 ||
+        plan->commands[0].format == DM2_IMG_FMT_U4 ||
+        plan->commands[1].format == DM2_IMG_FMT_IMG3 ||
+        plan->commands[1].format == DM2_IMG_FMT_U4;
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    unexpected_fetches = 0;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, unexpected_palette_fetch, NULL);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, style, plan->command_hash, plan->scene_colorkey,
+        plan->scene_flags, 0u, plan->highest_light_level, 0u, 0u, 0u, 0u,
+        0u, plan->ambient_darkness);
+    dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, plan);
+    dm2_v1_render_floor_ceiling(&viewport);
+    if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 2 ||
+        viewport.last_floor_ceiling_material_consumed_mask != 3u ||
+        (needs_local_palette_remap &&
+         viewport.gdat_material_palette_floor_ceiling_consumed_count == 0) ||
+        viewport.fallback_floor_ceiling_drawn_count != 0 ||
+        viewport.blocked_material_draw_count != 0) {
+        fprintf(stderr, "FAIL: GRAPHICSSET %d plane plan did not directly reach M11 "
+                "(fetch=%d planes=%d mask=%u palette=%d blocked=%d)\n",
+                style, unexpected_fetches, viewport.asset_floor_ceiling_drawn_count,
+                viewport.last_floor_ceiling_material_consumed_mask,
+                viewport.gdat_material_palette_floor_ceiling_consumed_count,
+                viewport.blocked_material_draw_count);
+        return 0;
+    }
+    return 1;
+}
+
 int main(void)
 {
     uint8_t *graphics = NULL;
@@ -98,7 +139,9 @@ int main(void)
     DM2_V1_GdatSceneM11CommandPlan mismatched;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
-    int style = -1;
+    uint8_t seen_styles[256];
+    int first_style = -1;
+    int style_count = 0;
     int failures = 0;
 
     if (!load_canonical_files(&graphics, &graphics_size,
@@ -109,6 +152,8 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&plan, 0, sizeof(plan));
+    memset(&mismatched, 0, sizeof(mismatched));
+    memset(seen_styles, 0, sizeof(seen_styles));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0) {
         fputs("FAIL: canonical DM2 GDAT/G1 input was not accepted\n", stderr);
@@ -117,47 +162,36 @@ int main(void)
     }
     for (int level = 0; level < dungeon.level_count; ++level) {
         int candidate = dm2_v1_dungeon_get_map_graphics_style(&dungeon, level);
-        if (candidate >= 0 && candidate <= 0xff &&
-            dm2_v1_gdat_scene_m11_command_plan_build(
-                &loader, (uint8_t)candidate, &plan)) {
-            style = candidate;
-            break;
+        if (candidate < 0 || candidate > 0xff || seen_styles[candidate]) continue;
+        seen_styles[candidate] = 1;
+        if (!dm2_v1_gdat_scene_m11_command_plan_build(
+                &loader, (uint8_t)candidate, &plan) ||
+            !plan.valid || plan.graphicsset != (uint8_t)candidate ||
+            plan.command_hash == 0u || plan.commands[0].raw_hash == 0u ||
+            plan.commands[1].raw_hash == 0u || plan.commands[0].palette_hash == 0u ||
+            plan.commands[1].palette_hash == 0u) {
+            fprintf(stderr, "FAIL: G1 MapGraphicsStyle %d yielded no complete "
+                    "GRAPHICSSET plane plan\n", candidate);
+            failures = 1;
+            dm2_v1_gdat_scene_m11_command_plan_free(&plan);
+            continue;
         }
+        if (!verify_direct_handoff(candidate, &plan)) failures = 1;
+        if (first_style < 0) {
+            first_style = candidate;
+            mismatched = plan;
+            memset(&plan, 0, sizeof(plan));
+        }
+        ++style_count;
+        dm2_v1_gdat_scene_m11_command_plan_free(&plan);
     }
-    if (style < 0 || !plan.valid || plan.command_hash == 0u) {
-        fputs("FAIL: no G1 MapGraphicsStyle yielded a decoded plane plan\n", stderr);
+    if (first_style < 0 || style_count == 0) {
+        fputs("FAIL: no G1 MapGraphicsStyle yielded a complete plane plan\n", stderr);
         failures = 1;
         goto done;
     }
 
-    memset(framebuffer, 0, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
-    dm2_v1_viewport_set_asset_palette_provider(
-        &viewport, unexpected_palette_fetch, NULL);
-    dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, style, plan.command_hash, plan.scene_colorkey,
-        plan.scene_flags, 0u, plan.highest_light_level, 0u, 0u, 0u, 0u,
-        0u, plan.ambient_darkness);
-    dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &plan);
-    dm2_v1_render_floor_ceiling(&viewport);
-    if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 2 ||
-        viewport.last_floor_ceiling_material_consumed_mask != 3u ||
-        viewport.gdat_material_palette_floor_ceiling_consumed_count == 0 ||
-        viewport.fallback_floor_ceiling_drawn_count != 0 ||
-        viewport.blocked_material_draw_count != 0) {
-        fprintf(stderr, "FAIL: canonical plane plan did not directly reach M11 "
-                "(fetch=%d planes=%d mask=%u palette=%d blocked=%d)\n",
-                unexpected_fetches, viewport.asset_floor_ceiling_drawn_count,
-                viewport.last_floor_ceiling_material_consumed_mask,
-                viewport.gdat_material_palette_floor_ceiling_consumed_count,
-                viewport.blocked_material_draw_count);
-        failures = 1;
-    }
-
-    mismatched = plan;
-    mismatched.graphicsset = (uint8_t)(style ^ 1);
+    mismatched.graphicsset = (uint8_t)(first_style ^ 1);
     memset(framebuffer, 0, sizeof(framebuffer));
     unexpected_fetches = 0;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
@@ -166,9 +200,9 @@ int main(void)
     dm2_v1_viewport_set_asset_palette_provider(
         &viewport, unexpected_palette_fetch, NULL);
     dm2_v1_viewport_set_gdat_scene_control(
-        &viewport, 1, style, plan.command_hash, plan.scene_colorkey,
-        plan.scene_flags, 0u, plan.highest_light_level, 0u, 0u, 0u, 0u,
-        0u, plan.ambient_darkness);
+        &viewport, 1, first_style, mismatched.command_hash, mismatched.scene_colorkey,
+        mismatched.scene_flags, 0u, mismatched.highest_light_level, 0u, 0u, 0u,
+        0u, 0u, mismatched.ambient_darkness);
     dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
     dm2_v1_render_floor_ceiling(&viewport);
     if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
@@ -181,12 +215,14 @@ int main(void)
     }
 
 done:
+    dm2_v1_gdat_scene_m11_command_plan_free(&mismatched);
     dm2_v1_gdat_scene_m11_command_plan_free(&plan);
     dm2_v1_asset_loader_free(&loader);
     dm2_v1_dungeon_free(&dungeon);
     free(graphics);
     free(dungeon_bytes);
     if (failures) return 1;
-    puts("PASS: canonical GRAPHICSSET floor/ceiling plan reaches M11 directly");
+    printf("PASS: %d canonical G1 GRAPHICSSET plane plans reach M11 directly\n",
+           style_count);
     return 0;
 }

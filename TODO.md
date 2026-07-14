@@ -4793,6 +4793,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `GDAT_GFXSET_SCENE_COLORKEY` and `GDAT_GFXSET_SCENE_FLAGS` before it queries
   that same set's floor and ceiling. Keep unproven light/weather semantics
   separate and fail closed; do not borrow another graphics set.
+  - 2026-07-14 done: the real-data M11 handoff gate now audits every distinct
+    G1-referenced `MapGraphicsStyle`, requiring each matching `GRAPHICSSET`
+    floor/ceiling transaction to decode and render callback-free. The negative
+    cross-set plan remains an explicit blocked no-draw check.
 - 🔧 2026-07-13 Nexus Structure1Fa special floor images: ITEM.IBS descriptors, inherited local BGR555 palettes and canonical-corpus-proven `0008` packed-4bpp spans now reach their matching DGN floor-command consumer. The LEV00–LEV15 corpus now proves 446 direct item records, including 174 separate `0008` floor-image references, all resolving to verified ITEM.IBS sources with no missing or unsupported descriptor. The codec gate now distinguishes the documented VDP1 high-nibble rule from game-specific proof and blocks retail ITEM.IBS until an original Nexus VDP1 command stream binds the mode and byte route. Exact Saturn command provenance and 3D item placement remain unproven, so the material consumer stays no-draw with no inventory-icon or synthetic fallback.
 - 🔧 2026-07-14 DM2 GDAT follow-up: canonical G1 GRAPHICSSET 1..5 floor and
   ceiling IMG3 material records now decode through their source-selected

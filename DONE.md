@@ -13761,6 +13761,20 @@ without its own source receipt; no G1/DB meaning was inferred. Verification:
 external Ninja target `test_dm2_v1_gdat_hud_m11_command_real_data` and CTest
 `dm2_v1_gdat_hud_m11_command_real_data` pass against local canonical media.
 
+# ✅ 2026-07-14 DM2 corpus-wide G1 GRAPHICSSET scene-plan handoff
+
+`test_dm2_v1_gdat_scene_plan_viewport_real_data` now traverses every distinct
+original G1 `MapGraphicsStyle` referenced by the supplied `DUNGEON.DAT`. Each
+matching `GRAPHICSSET` must provide decoded floor and ceiling pixels, local
+palettes, source scene controls, and a direct callback-free M11 material
+handoff; a copied plan with a different graphics-set remains blocked with no
+fallback draw. This follows skproject `c_gui_vp.cpp` `UPDATE_GFXSET` into
+`DRAW_DUNGEON`, where all four controls and both plane queries stay within the
+active map's graphics set. The test is skip-safe when canonical user media is
+absent and does not construct substitute GDAT assets. Verification: external
+Ninja target `test_dm2_v1_gdat_scene_plan_viewport_real_data` built clean and
+the canonical PC corpus run passed all five referenced GRAPHICSSET styles.
+
 # ✅ 2026-07-14 CSB compact ParameterB timer integration coverage
 
 The Phase 7 CSB runtime regression now materially exercises the existing
