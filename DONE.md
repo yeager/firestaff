@@ -13540,3 +13540,20 @@ payload bytes and makes no object, grid, palette, bitmap, or dungeon-format
 claim. Source: `tqr_v1_track02_bank_signal_2026-06-03.md` and the authenticated
 stage-two `$e009` route in `theron-us-stage2-huc6280.asm`. Verification:
 focused `test_theron_v1_dungeon_handoff`.
+
+# ✅ 2026-07-14 Theron Track02 raw envelope handoff receipt
+
+`theron_v1_dungeon_handoff_select_initial_level()` now derives its receipt
+from the selected hash-verified raw JP/US MODE1/2352 Track 02 bytes, rather
+than trusting caller-supplied record/envelope coordinates. It requires the
+known raw-BIN identity, the documented CUE `TRACK 02 INDEX 01` raw sector
+(JP 224, US 225), the variant-specific descriptor fingerprint, the raw
+candidate placement, MODE1 framing, and the literal bounded envelope header.
+The receipt computes record `0x0b52`, reports logical user-data offset
+`0x114` (raw-sector byte `0x124`), and retains the logical `0x480` following
+boundary as opaque. It exports no envelope bytes and makes no object, grid,
+palette, bitmap, dungeon-format, or Soul Room-selection claim. Source:
+`tqr_v1_track02_bank_signal_2026-06-03.md` and
+`tqr_v1_track02_ipl_loader_2026-07-11.md`. Verification: focused
+`test_theron_v1_dungeon_handoff` with descriptor/header, CUE-sector, and
+identity rejection coverage.
