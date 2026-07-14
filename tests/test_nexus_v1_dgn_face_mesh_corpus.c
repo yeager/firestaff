@@ -115,6 +115,7 @@ int main(void) {
     int normal_geometry_positive_total = 0;
     int normal_geometry_negative_total = 0;
     int normal_geometry_zero_total = 0;
+    int capture_blocked_level_total = 0;
     uint32_t mesh_source_hash = 2166136261u;
 
     if (!data_dir || !data_dir[0]) {
@@ -300,7 +301,7 @@ int main(void) {
                       "an out-of-range Structure1A model selector rejects the whole attachment receipt");
             }
         }
-        if (level_index == 0) {
+        {
             Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
             Nexus_V1_DgnStructure3FaceCaptureBindingReceipt capture;
 
@@ -308,9 +309,16 @@ int main(void) {
             CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
                       &level, data, size, &candidate, NULL, 0, NULL, 0,
                       NULL, 0, NULL, 0, NULL, 0, NULL, 0, &capture) != 0 &&
+                  !capture.candidate_framing_valid &&
                   !capture.complete_source_binding && !capture.renderer_handoff_ready &&
                   capture.blocks_real_dgn_mesh_render,
-                  "a real DGN face stays blocked until an original capture supplies every span");
+                  "a retail DGN level stays blocked until an original capture supplies every span");
+            if (!capture.candidate_framing_valid &&
+                !capture.complete_source_binding &&
+                !capture.renderer_handoff_ready &&
+                capture.blocks_real_dgn_mesh_render) {
+                ++capture_blocked_level_total;
+            }
         }
         {
             int entry_index;
@@ -494,6 +502,8 @@ int main(void) {
            normal_geometry_nonorthogonal_face_total, normal_geometry_edge_test_total,
            normal_geometry_orthogonal_edge_test_total, normal_geometry_positive_total,
            normal_geometry_negative_total, normal_geometry_zero_total);
+    printf("Structure3 source-only capture gate: blocked-levels=%d\n",
+           capture_blocked_level_total);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -536,5 +546,7 @@ int main(void) {
               normal_geometry_negative_total == 2601 &&
               normal_geometry_zero_total == 0,
           "retail face-normal arithmetic remains corpus-locked without normal-use semantics");
+    CHECK(capture_blocked_level_total == 16,
+          "every retail DGN level rejects source-only capture binding and remains no-draw");
     return g_fail == 0 ? 0 : 1;
 }
