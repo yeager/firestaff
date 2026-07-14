@@ -78,6 +78,10 @@ int main(void) {
     int animated_bound_total = 0;
     int animated_unique_selector_total = 0;
     int animated_reused_selector_total = 0;
+    int geometry_face_total = 0;
+    int geometry_nondegenerate_total = 0;
+    int geometry_degenerate_total = 0;
+    int geometry_maximum_component_absolute_value = 0;
     uint32_t mesh_source_hash = 2166136261u;
 
     if (!data_dir || !data_dir[0]) {
@@ -93,6 +97,7 @@ int main(void) {
         Nexus_V1_DgnStructure3FaceReceipt faces;
         Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
         Nexus_V1_DgnStructure3VectorReceipt vectors;
+        Nexus_V1_DgnStructure3FaceGeometryReceipt geometry;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
         Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
         Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -108,6 +113,7 @@ int main(void) {
         if (nexus_v1_level_structure3_face_receipt(&level, &faces) != 0 ||
             nexus_v1_level_structure3_face_material_receipt(&level, &materials) != 0 ||
             nexus_v1_level_structure3_vector_receipt(&level, &vectors) != 0 ||
+            nexus_v1_level_structure3_face_geometry_receipt(&level, &geometry) != 0 ||
             nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0 ||
             nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
                 &level, &mesh_semantics) != 0) {
@@ -130,6 +136,13 @@ int main(void) {
               materials.selector_reuse_accounting_valid &&
               !materials.material_or_draw_semantics_proven,
               "retail Structure3 texture selectors are bounded but remain no-draw");
+        CHECK(geometry.face_receipt_valid && geometry.vector_receipt_valid &&
+              geometry.valid && geometry.cross_product_measurement_safe &&
+              geometry.measurement_face_count == faces.face_count &&
+              geometry.nondegenerate_face_count + geometry.degenerate_face_count ==
+                  geometry.measurement_face_count &&
+              !geometry.surface_or_draw_semantics_proven,
+              "retail face coordinates retain an accounting-complete no-draw degeneracy receipt");
         memset(commands, 0, sizeof(commands));
         CHECK(nexus_v1_level_build_dgn_view_render_plan(
                   &level, 0, 0, 0, commands,
@@ -139,6 +152,12 @@ int main(void) {
               plan.structure3_face_normal_pairs.valid &&
               plan.structure3_face_normal_pairs.face_normal_pair_count ==
                   faces.face_count &&
+              plan.structure3_face_geometry.valid &&
+              plan.structure3_face_geometry.measurement_face_count ==
+                  faces.face_count &&
+              plan.structure3_face_geometry.nondegenerate_face_count ==
+                  faces.face_count &&
+              !plan.structure3_face_geometry.surface_or_draw_semantics_proven &&
               !plan.structure3_face_materials.material_or_draw_semantics_proven &&
               !plan.structure3_face_normal_pairs.normal_plane_or_draw_semantics_proven,
               "renderer-facing plan preserves retail Structure3 no-draw receipts");
@@ -147,6 +166,7 @@ int main(void) {
               !faces.draw_semantics_proven,
               "face-normal rows do not authorize plane or draw semantics");
         CHECK(mesh_semantics.source_facts_complete &&
+              mesh_semantics.source_face_geometry_valid &&
               mesh_semantics.entry_count == pairs.entry_count &&
               mesh_semantics.face_count == pairs.face_normal_pair_count &&
               mesh_semantics.normal_count == pairs.face_normal_pair_count &&
@@ -289,6 +309,14 @@ int main(void) {
         animated_bound_total += materials.animated_texture_bound_count;
         animated_unique_selector_total += materials.animated_texture_unique_selector_count;
         animated_reused_selector_total += materials.animated_texture_reused_selector_count;
+        geometry_face_total += geometry.measurement_face_count;
+        geometry_nondegenerate_total += geometry.nondegenerate_face_count;
+        geometry_degenerate_total += geometry.degenerate_face_count;
+        if (geometry.maximum_component_absolute_value >
+            geometry_maximum_component_absolute_value) {
+            geometry_maximum_component_absolute_value =
+                geometry.maximum_component_absolute_value;
+        }
         if (materials.selector_bindings_complete) ++selector_complete_levels;
     }
 
@@ -300,6 +328,9 @@ int main(void) {
            animated_bound_total, animated_selector_total,
            animated_unique_selector_total, animated_reused_selector_total);
     printf("Structure3 typed mesh source hash: %08x\n", mesh_source_hash);
+    printf("Structure3 geometric-degeneracy corpus: faces=%d nondegenerate=%d degenerate=%d max-component=%d\n",
+           geometry_face_total, geometry_nondegenerate_total,
+           geometry_degenerate_total, geometry_maximum_component_absolute_value);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -322,5 +353,10 @@ int main(void) {
           "retail selector identity reuse remains corpus-locked without decoding textures");
     CHECK(mesh_source_hash == 0xd3f42b1fu,
           "typed mesh source rows retain the verified retail corpus identity");
+    CHECK(geometry_face_total == 18478 &&
+              geometry_nondegenerate_total == 18478 &&
+              geometry_degenerate_total == 0 &&
+              geometry_maximum_component_absolute_value == 450560,
+          "retail face geometry remains nondegenerate within the measured coordinate envelope");
     return g_fail == 0 ? 0 : 1;
 }

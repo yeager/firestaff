@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- DONE 2026-07-14 Nexus Structure3 real-face geometry receipt: the bounded
+  LEV00-LEV15 DGN parser now measures every documented entry-local face row
+  against its signed-16.16 vertex coordinates and preserves the result across
+  the renderer handoff and no-draw render plan. The supplied retail corpus
+  contains 1,144 entries and 18,478 nondegenerate faces (zero degenerate),
+  with maximum absolute coordinate component 450560. The receipt is fail
+  closed outside its overflow-safe measurement envelope and asserts no plane,
+  winding, transform, texture, palette, VDP1, or draw semantics. Verification:
+  `test_nexus_v1_dgn_face_mesh_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - 2026-07-14 DM1 PC34 external-save first-runtime-tick gate: the fixture-free
   HoC runtime probe now advances each authenticated external F0435 world once
   through M11's `CMD_NONE` path and requires exactly one tick, a published M10

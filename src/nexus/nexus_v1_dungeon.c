@@ -34,6 +34,39 @@ static uint64_t nexus_v1_fixed_vector_length_squared(int32_t x, int32_t y,
     return sum;
 }
 
+static uint64_t nexus_v1_abs_i32(int32_t value)
+{
+    return value < 0 ? (uint64_t)-(int64_t)value : (uint64_t)value;
+}
+
+static int nexus_v1_structure3_face_has_noncollinear_vertices(
+    const uint8_t *vertices, const uint16_t indexes[4], int slot_count)
+{
+    int first;
+
+    for (first = 0; first < slot_count - 2; ++first) {
+        int second;
+        for (second = first + 1; second < slot_count - 1; ++second) {
+            int third;
+            for (third = second + 1; third < slot_count; ++third) {
+                const uint8_t *a = vertices + indexes[first] * 12;
+                const uint8_t *b = vertices + indexes[second] * 12;
+                const uint8_t *c = vertices + indexes[third] * 12;
+                int64_t ux = (int64_t)rbs32(b) - rbs32(a);
+                int64_t uy = (int64_t)rbs32(b + 4) - rbs32(a + 4);
+                int64_t uz = (int64_t)rbs32(b + 8) - rbs32(a + 8);
+                int64_t vx = (int64_t)rbs32(c) - rbs32(a);
+                int64_t vy = (int64_t)rbs32(c + 4) - rbs32(a + 4);
+                int64_t vz = (int64_t)rbs32(c + 8) - rbs32(a + 8);
+
+                if (uy * vz != uz * vy || uz * vx != ux * vz ||
+                    ux * vy != uy * vx) return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static int nexus_v1_compare_u32(const void *left, const void *right)
 {
     uint32_t a = *(const uint32_t *)left;
@@ -88,6 +121,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
+    Nexus_V1_DgnStructure3FaceGeometryReceipt face_geometry;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt face_normal_pairs;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -120,6 +154,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&entry_headers, 0, sizeof(entry_headers));
     memset(&faces, 0, sizeof(faces));
     memset(&vectors, 0, sizeof(vectors));
+    memset(&face_geometry, 0, sizeof(face_geometry));
     memset(&face_normal_pairs, 0, sizeof(face_normal_pairs));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
@@ -711,6 +746,23 @@ static int nexus_v1_level_copy_structure3_payload(
                  ++vector_index) {
                 const uint8_t *vertex = data + byte_offset + vertex_offset +
                     vector_index * 12;
+                uint64_t component_abs;
+
+                component_abs = nexus_v1_abs_i32(rbs32(vertex));
+                if (component_abs > (uint64_t)face_geometry
+                        .maximum_component_absolute_value)
+                    face_geometry.maximum_component_absolute_value =
+                        component_abs > INT_MAX ? INT_MAX : (int)component_abs;
+                component_abs = nexus_v1_abs_i32(rbs32(vertex + 4));
+                if (component_abs > (uint64_t)face_geometry
+                        .maximum_component_absolute_value)
+                    face_geometry.maximum_component_absolute_value =
+                        component_abs > INT_MAX ? INT_MAX : (int)component_abs;
+                component_abs = nexus_v1_abs_i32(rbs32(vertex + 8));
+                if (component_abs > (uint64_t)face_geometry
+                        .maximum_component_absolute_value)
+                    face_geometry.maximum_component_absolute_value =
+                        component_abs > INT_MAX ? INT_MAX : (int)component_abs;
                 if (rbs32(vertex) != 0 || rbs32(vertex + 4) != 0 ||
                     rbs32(vertex + 8) != 0) {
                     ++vectors.nonzero_vertex_vector_count;
@@ -753,6 +805,53 @@ static int nexus_v1_level_copy_structure3_payload(
         vectors.normal_unit_length_count == vectors.normal_count;
     vectors.transform_or_draw_semantics_proven = 0;
     level->structure3_vectors = vectors;
+    face_geometry.face_receipt_valid = faces.valid;
+    face_geometry.vector_receipt_valid = vectors.valid;
+    face_geometry.face_count = faces.face_count;
+    face_geometry.cross_product_measurement_safe =
+        face_geometry.maximum_component_absolute_value <=
+        NEXUS_DGN_STRUCTURE3_GEOMETRY_MEASUREMENT_MAX_COMPONENT_ABS;
+    if (faces.valid && vectors.valid &&
+        face_geometry.cross_product_measurement_safe) {
+        int entry;
+
+        for (entry = 0; entry < directory.entry_count; ++entry) {
+            uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+            const uint8_t *header = data + byte_offset + entry_offset;
+            const uint8_t *entry_vertices = data + byte_offset + rb32(header + 8);
+            uint16_t face_count = rb16(header + 6);
+            uint32_t face_offset = rb32(header + 16);
+            int face_index;
+
+            for (face_index = 0; face_index < (int)face_count; ++face_index) {
+                const uint8_t *face = data + byte_offset + face_offset +
+                    face_index * 12;
+                uint16_t indexes[4] = {
+                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                };
+                int slot_count = indexes[2] == indexes[3] ? 3 : 4;
+
+                ++face_geometry.measurement_face_count;
+                if (nexus_v1_structure3_face_has_noncollinear_vertices(
+                        entry_vertices, indexes, slot_count)) {
+                    ++face_geometry.nondegenerate_face_count;
+                } else {
+                    ++face_geometry.degenerate_face_count;
+                }
+            }
+        }
+    }
+    face_geometry.accounting_valid =
+        face_geometry.measurement_face_count == face_geometry.face_count &&
+        face_geometry.nondegenerate_face_count +
+                face_geometry.degenerate_face_count ==
+            face_geometry.measurement_face_count;
+    face_geometry.valid = face_geometry.face_receipt_valid &&
+        face_geometry.vector_receipt_valid &&
+        face_geometry.cross_product_measurement_safe &&
+        face_geometry.accounting_valid;
+    face_geometry.surface_or_draw_semantics_proven = 0;
+    level->structure3_face_geometry = face_geometry;
     face_normal_pairs.face_receipt_valid = faces.valid;
     face_normal_pairs.vector_receipt_valid = vectors.valid;
     face_normal_pairs.entry_count = faces.entry_count;
@@ -3476,6 +3575,16 @@ int nexus_v1_level_structure3_vector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_face_geometry_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceGeometryReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_face_geometry;
+    return 0;
+}
+
 int nexus_v1_level_structure3_face_normal_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt)
@@ -3500,6 +3609,7 @@ int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
     }
     receipt.source_topology_valid = level->structure3_faces.valid;
     receipt.source_vectors_valid = level->structure3_vectors.valid;
+    receipt.source_face_geometry_valid = level->structure3_face_geometry.valid;
     receipt.source_face_normal_pairing_valid =
         level->structure3_face_normal_pairs.valid;
     receipt.entry_count = level->structure3_faces.entry_count;
@@ -3509,7 +3619,8 @@ int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
     receipt.face_normal_pair_count =
         level->structure3_face_normal_pairs.face_normal_pair_count;
     receipt.source_facts_complete = receipt.source_topology_valid &&
-        receipt.source_vectors_valid && receipt.source_face_normal_pairing_valid &&
+        receipt.source_vectors_valid && receipt.source_face_geometry_valid &&
+        receipt.source_face_normal_pairing_valid &&
         receipt.face_count == receipt.normal_count &&
         receipt.face_count == receipt.face_normal_pair_count;
     receipt.original_capture_required = receipt.source_facts_complete;
@@ -3900,6 +4011,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_face_materials);
     (void)nexus_v1_level_structure3_vector_receipt(
         level, &out_receipt->structure3_vectors);
+    (void)nexus_v1_level_structure3_face_geometry_receipt(
+        level, &out_receipt->structure3_face_geometry);
     (void)nexus_v1_level_structure3_face_normal_pair_receipt(
         level, &out_receipt->structure3_face_normal_pairs);
     (void)nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
@@ -4470,6 +4583,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_faces = handoff.structure3_faces;
     receipt.structure3_face_materials = handoff.structure3_face_materials;
     receipt.structure3_vectors = handoff.structure3_vectors;
+    receipt.structure3_face_geometry = handoff.structure3_face_geometry;
     receipt.structure3_face_normal_pairs = handoff.structure3_face_normal_pairs;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;

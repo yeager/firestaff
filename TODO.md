@@ -1023,6 +1023,16 @@ Nexus M11 now presents only the verified WARNING.BIN/TITLE.CG transition at
 Saturn frames 47, 48, and 102. MENU.BPK remains blocked until its PRS3 pixel
 and palette decoder is proven; the next Nexus work is real DGN rendering.
 
+- 🔧 2026-07-14 Nexus Structure3 face-geometry follow-up: the retail
+  LEV00-LEV15 corpus now proves every bounded Structure3 face row contains at
+  least one non-collinear vertex triplet within the measured signed-16.16
+  coordinate envelope. This is mesh-shape evidence only: it does not make the
+  paired normal a plane normal, select winding/transforms, decode texture or
+  palette bytes, or authorize a VDP1/host draw. Next DGN work needs an
+  original Saturn executable trace or frame capture that binds a selected
+  Structure3 entry and face order to a real render transform and material
+  route; do not infer either from the all-nondegenerate corpus measurement.
+
 Nexus Track 1 capture now requires hash-bound SN_FLOOR.MNS and SN_WALL.MNS
 and forbids BPK material surfaces. Remaining work is full DGN semantics and
 texture decoding, not a substitute material path.
