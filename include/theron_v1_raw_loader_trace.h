@@ -7,6 +7,7 @@
 #include "theron_v1_capture_manifest.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_loader_intake.h"
 
 /*
  * A loader receipt is accepted only from the instrumented original Mednafen
@@ -203,6 +204,11 @@ typedef struct {
     size_t complete_payload_bytes;
     uint32_t complete_payload_checksum;
     int complete_payload_witness_proven;
+    /* The source-locked `$e009` sector witness must also pass the narrow
+     * loader-intake boundary before a consumer may treat it as an initial
+     * level handoff. This remains an opaque transfer fact: intake explicitly
+     * does not decode the payload or admit its semantics. */
+    Theron_V1Track02LoaderIntakeReceipt loader_intake;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;

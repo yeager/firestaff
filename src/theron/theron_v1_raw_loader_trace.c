@@ -983,6 +983,20 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->complete_payload_witness_proven ? 1u : 0u;
     hash *= 16777619u;
+    hash ^= receipt->loader_intake.observed ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.payload_intake_admitted ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.record;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.record_user_data_offset;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.observed_destination;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.observed_byte_count;
+    hash *= 16777619u;
+    hash ^= receipt->loader_intake.observed_payload_checksum;
+    hash *= 16777619u;
     return hash;
 }
 
@@ -996,6 +1010,17 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            receipt->complete_payload_witness_proven &&
            receipt->complete_payload_bytes == THERON_TRACK02_RAW_USER_DATA_BYTES &&
            receipt->complete_payload_checksum != 0u &&
+           receipt->loader_intake.observed &&
+           !receipt->loader_intake.payload_intake_admitted &&
+           receipt->loader_intake.record == receipt->observed_track02_record &&
+           receipt->loader_intake.record_user_data_offset ==
+               THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET &&
+           receipt->loader_intake.observed_destination ==
+               THERON_V1_INITIAL_ENVELOPE_DESTINATION &&
+           receipt->loader_intake.observed_byte_count ==
+               THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES &&
+           receipt->loader_intake.observed_payload_checksum ==
+               receipt->complete_payload_checksum &&
            receipt->receipt_hash != 0u &&
            receipt->receipt_hash == tqr_trace_initial_level_handoff_hash(receipt);
 }
@@ -1009,6 +1034,8 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
 {
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02InitialLevelLoaderRoute route;
+    Theron_V1Track02LoaderReadFacts loader_facts;
+    Theron_V1Track02LoaderIntakeReceipt loader_intake;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
@@ -1050,6 +1077,31 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             boundary.track02_record ||
         route.semantics.object_tail_semantics_proven ||
         route.fallback_visuals_allowed) {
+        return 0;
+    }
+
+    memset(&loader_facts, 0, sizeof(loader_facts));
+    memset(&loader_intake, 0, sizeof(loader_intake));
+    loader_facts.authenticated_original_trace = 1;
+    loader_facts.later_than_stage2_transfer = 1;
+    loader_facts.track02_record = coalesced_receipt->later_track02_record;
+    /* `0x114` is the source-locked byte coordinate within record 0x0b52,
+     * retained by the raw-media boundary. Do not turn it into a global file
+     * offset: the intake contract describes the loader's selected sector. */
+    if (boundary.level_user_data_offset_in_record > UINT32_MAX) {
+        return 0;
+    }
+    loader_facts.record_user_data_offset =
+        (uint32_t)boundary.level_user_data_offset_in_record;
+    loader_facts.destination = coalesced_receipt->later_local_destination;
+    loader_facts.byte_count =
+        (uint32_t)coalesced_receipt->later_destination_payload_bytes;
+    loader_facts.complete_payload_witness_verified =
+        coalesced_receipt->later_destination_payload_verified;
+    loader_facts.complete_payload_checksum =
+        coalesced_receipt->later_destination_payload_checksum;
+    if (!theron_v1_track02_loader_intake_observe(&loader_facts,
+                                                 &loader_intake)) {
         return 0;
     }
 
@@ -1097,6 +1149,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->complete_payload_checksum =
         coalesced_receipt->later_destination_payload_checksum;
     out->complete_payload_witness_proven = 1;
+    out->loader_intake = loader_intake;
     out->initial_level_boundary = boundary;
     out->initial_level_route = route;
     out->object_tail_semantics_proven = 0;
