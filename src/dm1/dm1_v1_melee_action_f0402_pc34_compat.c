@@ -1,5 +1,6 @@
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 
+#include <limits.h>
 #include <string.h>
 
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
@@ -1087,6 +1088,7 @@ int dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
         in->sourceMapX < 0 || in->sourceMapY < 0 ||
         in->destinationMapIndex < 0 || in->destinationMapX < 0 ||
         in->destinationMapY < 0 ||
+        in->currentTick > (unsigned int)INT_MAX ||
         (in->sourceCell != EXPLOSION_CELL_CENTERED &&
          (in->sourceCell < 0 || in->sourceCell > 3))) {
         return 1;
