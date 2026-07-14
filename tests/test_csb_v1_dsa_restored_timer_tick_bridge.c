@@ -47,6 +47,7 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
 
 int main(void)
 {
+    int i;
     uint8_t raw[128] = { 0 };
     uint8_t tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
     uint8_t exported_save[8192] = { 0 };
@@ -869,10 +870,18 @@ int main(void)
     profile.csbwin_timers[0].time = profile.game_time;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
               csb_v1_runtime_tick_v1(&profile) == 1 &&
-              profile.party_state.Champions[0].CurrentHealth == 9 &&
-              profile.party_state.Champions[0].PoisonDose == 3u &&
+              profile.party_state.Champions[0].CurrentHealth == 5 &&
+              profile.party_state.Champions[0].PoisonDose == 259u &&
               profile.party_state.Champions[0].PoisonEventCount == 1u,
-          "wide saved poison attack remains fail-closed without truncation");
+          "wide saved poison attack keeps CSBWin timerWord6 through requeue");
+
+    for (i = 0; i < 36; ++i) {
+        (void)csb_v1_runtime_tick_v1(&profile);
+    }
+    check(profile.party_state.Champions[0].CurrentHealth == 2 &&
+              profile.party_state.Champions[0].PoisonDose == 514u &&
+              profile.party_state.Champions[0].PoisonEventCount == 1u,
+          "wide poison continuation consumes its slot receipt at the next +36 tick");
 
     /* Rebuild the source square after prior timer cases and give TT_65 its
      * actual timerObj8 actuator handle (type 3, index 0). */

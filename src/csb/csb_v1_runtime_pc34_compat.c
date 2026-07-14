@@ -2080,7 +2080,9 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 }
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
-    CSB_V1_RuntimeProfile *profile);
+    CSB_V1_RuntimeProfile *profile,
+    const uint16_t *event_indices,
+    int event_count);
 static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
     CSB_V1_RuntimeProfile *profile,
     uint16_t event_index,
@@ -2155,7 +2157,8 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
                     DM1_EVENT_NONE;
             }
         }
-        csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
+        csb_v1_runtime_apply_timeline_dispatch_side_effects(
+            profile, source_event_indices, dispatched);
 
         /* A supported CSBWin timer successor retains its original TIMER
          * record but must pass through Timer.cpp's heap adjustment before a
@@ -5122,6 +5125,7 @@ static void csb_v1_runtime_schedule_poison_champion_event(
     int poison_attack)
 {
     struct DM1_Event_V1 event;
+    int event_index;
 
     if (!profile || champion_index < 0 ||
         champion_index >= profile->party_state.ChampionCount ||
@@ -5137,7 +5141,13 @@ static void csb_v1_runtime_schedule_poison_champion_event(
     event.b_mapX = (uint8_t)profile->party_x;
     event.b_mapY = (uint8_t)profile->party_y;
     event.c_effect = (uint8_t)(poison_attack & 0xff);
-    if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0 &&
+    event_index = csb_v1_runtime_add_timeline_event(profile, &event);
+    if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
+        profile->csbwin_poison_event_attack[event_index] =
+            (uint16_t)poison_attack;
+        profile->csbwin_poison_event_attack_valid[event_index] = 1u;
+    }
+    if (event_index >= 0 &&
         profile->party_state.Champions[champion_index].PoisonEventCount <
             255u) {
         profile->party_state.Champions[champion_index].PoisonEventCount++;
@@ -5169,8 +5179,9 @@ static void csb_v1_runtime_apply_poison_attack_to_champion(
 
     /* ReDMCSB CHAMPION.C F0322 lines 1949-1960 applies immediate
      * max(1, Attack >> 6) damage, increments PoisonEventCount when
-     * rescheduling C75, and stores Attack-1 in EVENT.B.Attack.  The
-     * bounded CSB event bridge stores that 8-bit attack in c_effect. */
+     * rescheduling C75, and stores Attack-1 in EVENT.B.Attack. The shared
+     * event retains the low byte for ordinary V1 dispatch while the runtime
+     * slot receipt preserves the full CSBWin timerWord6 continuation. */
     poison_damage = poison_attack >> 6;
     if (poison_damage < 1) poison_damage = 1;
     if (poison_damage >= champion->CurrentHealth) {
@@ -5197,9 +5208,11 @@ static void csb_v1_runtime_apply_poison_attack_to_champion(
 
 static void csb_v1_runtime_apply_poison_event_record(
     CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record)
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t event_index)
 {
     int champion_index;
+    int poison_attack;
 
     if (!profile || !record) return;
     champion_index = record->aux0;
@@ -5214,10 +5227,15 @@ static void csb_v1_runtime_apply_poison_event_record(
         0u) {
         profile->party_state.Champions[champion_index].PoisonEventCount--;
     }
+    poison_attack = record->effect;
+    if (event_index < DM1_EVENT_MAX_COUNT &&
+        profile->csbwin_poison_event_attack_valid[event_index]) {
+        poison_attack = profile->csbwin_poison_event_attack[event_index];
+        profile->csbwin_poison_event_attack_valid[event_index] = 0u;
+        profile->csbwin_poison_event_attack[event_index] = 0u;
+    }
     csb_v1_runtime_apply_poison_attack_to_champion(
-        profile,
-        champion_index,
-        record->effect);
+        profile, champion_index, poison_attack);
 }
 
 static int csb_v1_runtime_apply_explosion_party_action(
@@ -13363,11 +13381,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
 }
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
-    CSB_V1_RuntimeProfile *profile)
+    CSB_V1_RuntimeProfile *profile,
+    const uint16_t *event_indices,
+    int event_count)
 {
     int i;
 
-    if (!profile) return;
+    if (!profile || !event_indices || event_count < 0) return;
     /* ReDMCSB: TIMELINE.C F0261 lines 1875-1901 dispatches C05/C06/C07/C08/C09/C10
      * to F0242/F0250/F0251/F0244; F0244 immediately routes doors through
      * C01 door-animation, and F0241 lines 754-809 steps the door state one
@@ -13375,7 +13395,8 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
      * square flags and bounded wall/generator sensor state for the startup
      * playability path; projectile launchers, group movement, damage, sounds,
      * and DSA effects remain separate work. */
-    for (i = 0; i < profile->last_timeline_dispatch.count; ++i) {
+    for (i = 0; i < profile->last_timeline_dispatch.count && i < event_count;
+         ++i) {
         const struct DM1_DispatchRecord_V1 *record =
             &profile->last_timeline_dispatch.records[i];
         switch (record->eventType) {
@@ -13465,7 +13486,8 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                 record);
             break;
         case DM1_EVENT_POISON_CHAMPION:
-            csb_v1_runtime_apply_poison_event_record(profile, record);
+            csb_v1_runtime_apply_poison_event_record(
+                profile, record, event_indices[i]);
             break;
         default:
             break;
@@ -18051,7 +18073,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             profile->champion_count <= CSB_V1_MAX_CHAMPIONS &&
             profile->party_state.ChampionCount == profile->champion_count &&
             champion_index < profile->party_state.ChampionCount &&
-            poison_attack > 0u && poison_attack <= 0xffu &&
+            poison_attack > 0u &&
             profile->party_state.Champions[champion_index].PoisonEventCount >
                 0u) {
             --profile->party_state.Champions[champion_index].PoisonEventCount;
