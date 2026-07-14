@@ -5203,6 +5203,18 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   receipt->source_runtime_stage_event_count >=
                       receipt->source_runtime_stage_c13_event_count,
                   "tail-backed real PC34 C13 reaches an owned staged runtime");
+            if (receipt->source_c13_event_count > 0) {
+                CHECK(receipt->source_runtime_stage_c13_admission_ok &&
+                          receipt->source_runtime_stage_c13_admitted_count ==
+                              receipt->source_c13_event_count &&
+                          receipt->source_runtime_stage_c13_fingerprint != 0u &&
+                          receipt->source_runtime_adopt_c13_admission_ok &&
+                          receipt->source_runtime_adopt_c13_admitted_count ==
+                              receipt->source_c13_event_count &&
+                          receipt->source_runtime_adopt_c13_fingerprint ==
+                              receipt->source_runtime_stage_c13_fingerprint,
+                      "genuine tail-backed C13 retains F0255 state through adoption");
+            }
             CHECK(receipt->source_dungeon_tail_byte_count ==
                       receipt->exported_dungeon_tail_byte_count &&
                   receipt->source_dungeon_tail_fingerprint ==
