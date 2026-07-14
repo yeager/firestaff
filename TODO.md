@@ -4605,6 +4605,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: DM1 throw/shoot compat now owns the full F0215 square attach receipt for empty square vs append-after-tail from an M10-provided chain snapshot. Remaining runtime coding work is reducing non-projectile thing-link adapters and end-to-end full-graphics proof.
 
 - 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
+  - 2026-07-15 investigation: the pre-existing real-PC3.4
+    `test_m11_dm1_hoc_wall_material_receipt_pc34` still fails before its
+    C346/C026 pixel assertion. `F0882_WORLD_InitFromDungeonDat_Compat` loads
+    24 C127 sensors, but the M11-started world's F0511 compact
+    square-first-thing traversal exposes none of them to the test's HoC wall
+    scan. The standalone PC3.4 C127 material gate still finds ordinal 5 and
+    proves C346 then C026, so this is a live world/SFT binding gap, not a
+    missing bitmap or a reason to synthesize a portrait. Reconcile the M11
+    load-time tile flags/cumulative SFT lookup with ReDMCSB DUNGEON.C
+    F0160/F0161/F0172, then restore this corpus regression to green.
   - 2026-07-14 update: M11's live generic F0115 object/projectile and deferred C15 effect boundaries now consume the DM1 C127 mirror decision. The real C346/C026 draw now also executes in the F0107 wall-ornament phase, before nearer wall/door occlusion replay; independently admitted F0115 objects/projectiles remain drawable. Remaining work is packaged Mac/release capture proof.
   - 2026-07-10 update: DM1 startup now owns a ReDMCSB-shaped save/resume capture receipt for M566 RESUME, loaded runtime handoff, five save parts, four PC34 portraits, dungeon payload, and required asset hashes. Remaining DM1 work is real Mac/app HoC capture plus broader original-save corpus verification.
 
