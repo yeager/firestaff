@@ -78,6 +78,15 @@
   authenticated opaque capture keeps all four blockers set and remains
   no-draw; no synthetic pixels may replace those missing Saturn facts.
 
+- 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
+  original-capture schema now requires exact VDP1 command-read and palette
+  read spans, byte counts, ordering, and FNV witnesses alongside the existing
+  hash-bound MENU.BPK input and decoded-texture output route. This is a
+  capture/corpus gate only. Remaining proof is the original PRS3 opcode
+  grammar, the VDP1 command field meanings, the palette source/format and
+  application rules, plus a positive authentic V3 capture. Until all exist,
+  MENU.BPK surfaces remain blocked and no synthetic menu pixels are allowed.
+
 - 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
   initial-level admission receipt can join a coalesced, identity-locked
   later `$e009` observation to the already source-locked record `0x0b52`

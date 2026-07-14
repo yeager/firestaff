@@ -338,17 +338,24 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!text) return 0;
-    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC) - 1U;
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC) - 1U;
     if (text_size > magic_size &&
-        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC, magic_size) == 0 &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC, magic_size) == 0 &&
         text[magic_size] == '\n') {
-        receipt.schema_version = 2U;
+        receipt.schema_version = 3U;
     } else {
+        magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC) - 1U;
+        if (text_size > magic_size &&
+            memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC, magic_size) == 0 &&
+            text[magic_size] == '\n') {
+        receipt.schema_version = 2U;
+        } else {
         magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC) - 1U;
         if (text_size <= magic_size ||
             memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC, magic_size) != 0 ||
             text[magic_size] != '\n') return 0;
         receipt.schema_version = 1U;
+        }
     }
     cursor = text + magic_size + 1U;
     if (!read_u64(&cursor, "menu_bpk_fnv1a64=", &receipt.menu_bpk_fnv1a64) ||
@@ -384,6 +391,19 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           !read_u32(&cursor, "vdp1_texture_last_read_address=", &receipt.vdp1_texture_last_read_address) ||
           !read_u32(&cursor, "vdp1_texture_read_bytes=", &receipt.vdp1_texture_read_bytes) ||
           !read_u64(&cursor, "vdp1_texture_fnv1a64=", &receipt.vdp1_texture_fnv1a64))) ||
+        (receipt.schema_version >= 3U &&
+         (!read_u64(&cursor, "vdp1_command_first_read_sequence=", &receipt.vdp1_command_first_read_sequence) ||
+          !read_u64(&cursor, "vdp1_command_last_read_sequence=", &receipt.vdp1_command_last_read_sequence) ||
+          !read_u32(&cursor, "vdp1_command_first_read_address=", &receipt.vdp1_command_first_read_address) ||
+          !read_u32(&cursor, "vdp1_command_last_read_address=", &receipt.vdp1_command_last_read_address) ||
+          !read_u32(&cursor, "vdp1_command_read_bytes=", &receipt.vdp1_command_read_bytes) ||
+          !read_u64(&cursor, "vdp1_command_fnv1a64=", &receipt.vdp1_command_fnv1a64) ||
+          !read_u64(&cursor, "palette_first_read_sequence=", &receipt.palette_first_read_sequence) ||
+          !read_u64(&cursor, "palette_last_read_sequence=", &receipt.palette_last_read_sequence) ||
+          !read_u32(&cursor, "palette_first_read_address=", &receipt.palette_first_read_address) ||
+          !read_u32(&cursor, "palette_last_read_address=", &receipt.palette_last_read_address) ||
+          !read_u32(&cursor, "palette_read_bytes=", &receipt.palette_read_bytes) ||
+          !read_u64(&cursor, "palette_fnv1a64=", &receipt.palette_fnv1a64))) ||
         !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
         !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
     if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
@@ -421,11 +441,29 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           receipt.vdp1_texture_last_read_address != receipt.output_ram_address +
               receipt.vdp1_texture_read_bytes - 1U ||
           receipt.vdp1_texture_fnv1a64 != receipt.output_fnv1a64)) ||
+        (receipt.schema_version >= 3U &&
+         (!receipt.vdp1_command_first_read_sequence ||
+          receipt.vdp1_command_first_read_sequence <= receipt.vdp1_command_sequence ||
+          receipt.vdp1_command_first_read_sequence > receipt.vdp1_command_last_read_sequence ||
+          !receipt.vdp1_command_first_read_address ||
+          !receipt.vdp1_command_read_bytes || !receipt.vdp1_command_fnv1a64 ||
+          receipt.vdp1_command_last_read_address !=
+              receipt.vdp1_command_first_read_address +
+              receipt.vdp1_command_read_bytes - 1U ||
+          !receipt.palette_first_read_sequence ||
+          receipt.palette_first_read_sequence <= receipt.vdp1_command_sequence ||
+          receipt.palette_first_read_sequence > receipt.palette_last_read_sequence ||
+          !receipt.palette_first_read_address || !receipt.palette_read_bytes ||
+          !receipt.palette_fnv1a64 ||
+          receipt.palette_last_read_address != receipt.palette_first_read_address +
+              receipt.palette_read_bytes - 1U)) ||
         decoder_returned_success != 1U || capture_complete != 1U) return 0;
     receipt.valid = 1;
     receipt.complete_capture = 1;
     receipt.exact_vdp1_handoff_observed = 1;
     receipt.vdp1_texture_consumption_observed = receipt.schema_version >= 2U;
+    receipt.vdp1_command_consumption_observed = receipt.schema_version >= 3U;
+    receipt.palette_consumption_observed = receipt.schema_version >= 3U;
     receipt.opcode_grammar_proven = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
@@ -471,6 +509,12 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     receipt.vdp1_texture_consumption_observed =
         receipt.exact_vdp1_handoff_observed &&
         trace->vdp1_texture_consumption_observed;
+    receipt.vdp1_command_consumption_observed =
+        receipt.exact_vdp1_handoff_observed &&
+        trace->vdp1_command_consumption_observed;
+    receipt.palette_consumption_observed =
+        receipt.exact_vdp1_handoff_observed &&
+        trace->palette_consumption_observed;
     receipt.valid = receipt.exact_vdp1_handoff_observed;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;

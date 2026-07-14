@@ -15252,6 +15252,18 @@ whose texture source is that exact output range. Partial or inconsistent
 traces reject atomically. The gate records an observed handoff only; it never
 claims an opcode grammar, enables generic PRS3 decoding, or permits fallback
 visuals. Verified by `nexus_v1_prs3_capture_trace_schema`.
+
+# ✅ 2026-07-14 Nexus PRS3 VDP1 command/palette capture contract
+
+The original-capture schema now accepts V3 evidence for one hash-bound
+`MENU.BPK` PRS3 frame. In addition to the existing SH-2 input/output and VDP1
+texture-read witnesses, V3 requires contiguous raw VDP1-command and palette
+read spans with ordered sequence numbers, byte counts, addresses, and FNV
+witnesses. Binding remains tied to the exact MENU.BPK/DM.BIN input, and a
+changed palette span rejects the capture. This establishes no PRS3 opcode,
+texture-pixel, palette-format, or VDP1 field semantics, and it never permits
+rendering or fallback visuals. Verification:
+`test_nexus_v1_prs3_capture_trace_schema`.
 # ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
 
 `dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`

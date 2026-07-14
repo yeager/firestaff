@@ -56,6 +56,32 @@ static const char valid_vdp1_trace[] =
     "vdp1_texture_read_bytes=4\nvdp1_texture_fnv1a64=3\n"
     "decoder_returned_success=1\ncapture_complete=1\n";
 
+static const char valid_vdp1_v3_trace[] =
+    "NEXUS_PRS3_SH2_VDP1_TRACE_V3\n"
+    "menu_bpk_fnv1a64=%llx\n"
+    "dm_bin_fnv1a64=%llx\n"
+    "entry_index=0\nstream_offset=40\nstream_size=4\nexpected_output_bytes=4\n"
+    "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
+    "last_input_read_address=6010003\ninput_read_bytes=4\n"
+    "payload_fnv1a64=%llx\n"
+    "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
+    "last_output_write_address=6020003\noutput_write_bytes=4\noutput_fnv1a64=3\n"
+    "first_opcode_sequence=10\nfirst_input_read_sequence=11\n"
+    "last_input_read_sequence=12\nfirst_output_write_sequence=13\n"
+    "last_output_write_sequence=14\ndecoder_return_sequence=15\n"
+    "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
+    "vdp1_texture_source_address=6020000\nvdp1_texture_source_bytes=4\n"
+    "vdp1_texture_first_read_sequence=17\nvdp1_texture_last_read_sequence=18\n"
+    "vdp1_texture_first_read_address=6020000\nvdp1_texture_last_read_address=6020003\n"
+    "vdp1_texture_read_bytes=4\nvdp1_texture_fnv1a64=3\n"
+    "vdp1_command_first_read_sequence=17\nvdp1_command_last_read_sequence=17\n"
+    "vdp1_command_first_read_address=5c00000\nvdp1_command_last_read_address=5c0001f\n"
+    "vdp1_command_read_bytes=20\nvdp1_command_fnv1a64=4\n"
+    "palette_first_read_sequence=17\npalette_last_read_sequence=18\n"
+    "palette_first_read_address=5f00000\npalette_last_read_address=5f0001f\n"
+    "palette_read_bytes=20\npalette_fnv1a64=5\n"
+    "decoder_returned_success=1\ncapture_complete=1\n";
+
 static void put_be32(unsigned char *p, unsigned int value) {
     p[0] = (unsigned char)(value >> 24);
     p[1] = (unsigned char)(value >> 16);
@@ -280,8 +306,8 @@ int main(void) {
     Nexus_V1_Prs3Vdp1CaptureReceipt vdp1_receipt;
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt vdp1_binding;
     char malformed[sizeof(valid_trace)];
-    char vdp1_malformed[sizeof(valid_vdp1_trace) + 64U];
-    char bound_trace[1024];
+    char vdp1_malformed[sizeof(valid_vdp1_v3_trace) + 64U];
+    char bound_trace[2048];
     unsigned char bpk[68];
     static const unsigned char dm_bin[] = {0x53, 0x48, 0x32, 0x21};
 
@@ -396,6 +422,29 @@ int main(void) {
                !vdp1_binding.decoder_promoted &&
                !vdp1_binding.fallback_visuals_permitted,
            "complete SH-2 to VDP1 capture binds one exact frame without a decoder");
+    snprintf(bound_trace, sizeof(bound_trace), valid_vdp1_v3_trace,
+             fnv1a64(bpk, sizeof(bpk)), fnv1a64(dm_bin, sizeof(dm_bin)),
+             fnv1a64(bpk + 64U, 4U));
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               bound_trace, strlen(bound_trace), &vdp1_receipt) &&
+               nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+                   &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+                   &vdp1_binding) && vdp1_receipt.schema_version == 3U &&
+               vdp1_receipt.vdp1_command_consumption_observed &&
+               vdp1_receipt.palette_consumption_observed &&
+               vdp1_binding.vdp1_command_consumption_observed &&
+               vdp1_binding.palette_consumption_observed &&
+               !vdp1_receipt.decoder_promoted &&
+               !vdp1_binding.fallback_visuals_permitted,
+           "V3 capture binds original command and palette read witnesses without decoding them");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "palette_last_read_address=5f0001f"),
+           "palette_last_read_address=5f00020",
+           sizeof("palette_last_read_address=5f00020") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "V3 rejects a palette read span that is not contiguous");
     snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
     memcpy(vdp1_malformed, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC,
            sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC) - 1U);
