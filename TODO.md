@@ -623,6 +623,10 @@
     count, then an exact copy into caller-owned destination storage. The
     bounded adapter rejects undersized storage rather than partially copying;
     it supplies no graphic, cache, palette, viewport, HUD, or runtime fallback.
+   - 2026-07-14 update: F0676/F0677 now execute the source D3L2/D3R2 branch
+    ordering through caller-owned draw callbacks, including wall return, door
+    passes, pit, teleporter field, and PC cell orders. No geometry, bitmap,
+    dungeon, or render fallback is supplied.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
