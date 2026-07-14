@@ -343,6 +343,10 @@ int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
 
     if (fclose(file) != 0) {
         free(blob);
+        remove(path);
+        if (rc > 0 && rc < (int)sizeof(backupPath)) {
+            rename(backupPath, path);
+        }
         return DM1_SAVE_ERROR_FILE_WRITE;
     }
 
@@ -406,6 +410,10 @@ int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
     }
     if (fclose(file) != 0) {
         free(pc34);
+        remove(path);
+        if (backupRc > 0 && backupRc < (int)sizeof(backupPath)) {
+            rename(backupPath, path);
+        }
         return DM1_SAVE_ERROR_FILE_WRITE;
     }
 
