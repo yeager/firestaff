@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `DUNVIEW.C F0106`: source CPSF reset-to-step-one
+  transition is now a bounded compatibility callable. Verification: focused
+  strict CTest.
+
+- 2026-07-14 DM1 ReDMCSB `OBJECT.C F0035`: leader-hand object-name clearing
+  now invokes the source C017 black-zone fill through an owned backend.
+  Verification: focused strict CTest.
+
+- 2026-07-14 CSB ReDMCSB `GROUP.C F0196`: active-group initialization now
+  enforces the source 110-slot floor and sentinel state. Verification:
+  focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `DUNGEON.C F0146`: the native C04 `GROUP.Cells`
   setter now has a source-owned callable and bounded record mutation.
   Verification: focused strict CTest.
