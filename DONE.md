@@ -13630,6 +13630,16 @@ fixture: unavailable or non-PC34 media skips, and any non-package route fails.
 It records the existing ReDMCSB TITLE.C/ENTRANCE.C and CSBWin indexed-graphics
 contract boundary without promoting a custom CSBgraphics.dat override.
 
+# ✅ 2026-07-14 CSBWin DSA door timer handoff
+
+CSBWin restored `TT_DOOR` now retains its source queue slot through one
+authenticated type-47 pure-stack DSA action and the subsequent same-time
+`TT_1` door handoff. This follows `Timer.cpp::ActivateDSA` and
+`ProcessTT_DOOR`: DSA runs first, then the original timer is converted without
+changing its time. Multiple type-47 entries, failed/unsupported DSA actions,
+and all world-mutating DSA behavior remain fail-closed. Verification:
+`csb_v1_csbwin_dsa_door_timer_handoff`.
+
 # DM2 GDAT MapGraphicsStyle Corpus (2026-07-14)
 
 - DM2's boot-owned scene-material cache now spans the original unsigned-byte

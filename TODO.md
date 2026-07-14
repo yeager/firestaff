@@ -536,8 +536,9 @@ ReDMCSB WIP 2021-02-06 source tree.
   actuator arms, and endgame remain mutation-blocked. TT_DOOR now retains
   the exact same-time TT_1 handoff only when its saved square has no type-47
   owner;
-  type-47 squares still reach only their pre-requeue ActivateDSA receipt and
-  door cell changes remain blocked. TT_DESSAGE reaches only its
+  a single type-47 owner now retains its same-TIMER TT_1 handoff only after an
+  authenticated pure-stack receipt succeeds. Multiple/failed actions and all
+  world-mutating DSA paths remain blocked. TT_DESSAGE reaches only its
   zero-parameter type-47 OPENROOM receipt; text/cell/other-actuator effects
   remain blocked.
   TT_ParameterMessage now reaches its authenticated EXPOOL payload route;
