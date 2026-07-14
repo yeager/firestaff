@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject DRAW_DOOR D3 receipt: M11 now admits the real
+  cell-11/third-distance DOORS panel transaction without inventing a D3 frame
+  or destination rectangle. It preserves the original field-2 choice or its
+  documented field-0 GDAT retry, including stretch/light controls.
+
 - 2026-07-15 DM2 skproject DRAW_DOOR D0-D2: M11 door commands now retain the
   selected GDAT image field, real decoded pixels/local palette, and source
   stretch/light controls for D0, D1, and D2.

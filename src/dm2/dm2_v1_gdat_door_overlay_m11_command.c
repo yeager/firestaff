@@ -236,7 +236,7 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
         if (
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE) ||
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK)) goto fail;
-        if ((!no_frames &&
+        if ((!no_frames && door_plan->doors[i].frame_gdat_index != 0 &&
              !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME)) ||
             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON)) goto fail;
     }
