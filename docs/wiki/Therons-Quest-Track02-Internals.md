@@ -37,6 +37,15 @@ committed only after every required data receipt validates. An incomplete route
 leaves the old runtime state unchanged and cannot fall through to a synthetic
 surface.
 
+## Startup Level Envelope
+
+The authenticated raw JP and US startup payloads agree on the complete
+12-byte envelope prefix: dimensions, seed, level index, and an opaque
+two-byte extension `0x0103` at offsets 10-11. Firestaff fingerprints that
+extension with the CD-record boundary receipt, but assigns it no gameplay
+meaning. In particular, it is not treated as a start pose, object count, flag,
+or command; the following `0x380` user-data tail remains unparsed.
+
 ## SRM Boundary
 
 Save Disk candidates require one valid gzip member with bounded header parsing,

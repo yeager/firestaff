@@ -1506,8 +1506,9 @@ typedef struct {
  * opaque until an original loader read establishes that semantic role.
  *
  * The known JP and US raw corpora agree on record 0x0b52, user-data offset
- * 0x114, and a 0x36c-byte level envelope.  No tiles, objects, or runtime
- * world state are returned by this receipt. */
+ * 0x114, a 0x36c-byte level envelope, and the opaque 0x0103 two-byte header
+ * extension at offsets 10..11. No meaning is assigned to that extension, and
+ * no tiles, objects, or runtime world state are returned by this receipt. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -1526,6 +1527,7 @@ typedef struct {
     uint16_t level_height;
     uint32_t level_seed;
     uint16_t level_index;
+    uint16_t level_header_extension_be;
     uint32_t level_payload_hash;
     int object_table_parsed;
     int object_table_semantics_proven;

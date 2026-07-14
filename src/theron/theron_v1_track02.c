@@ -5399,6 +5399,11 @@ theron_v1_track02_capture_initial_level_object_boundary(
     out_receipt->level_height = binding.candidate.header_height;
     out_receipt->level_seed = binding.candidate.header_seed;
     out_receipt->level_index = binding.candidate.header_level_index;
+    /* Both authenticated raw variants retain 0x0103 at offsets 10..11.
+     * This is an opaque level-envelope field, not a decoded start pose,
+     * object count, flag, or loader command. */
+    out_receipt->level_header_extension_be = rd16be(
+        track02_data + binding.candidate.absolute_offset + 10u);
     out_receipt->level_payload_hash = tqr_hash_bytes(
         track02_data + binding.candidate.absolute_offset,
         binding.candidate.byte_count);
@@ -5411,6 +5416,8 @@ theron_v1_track02_capture_initial_level_object_boundary(
     hash ^= (uint32_t)out_receipt->level_user_data_offset_in_record;
     hash *= 16777619u;
     hash ^= (uint32_t)out_receipt->level_byte_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->level_header_extension_be;
     hash *= 16777619u;
     hash ^= out_receipt->level_payload_hash;
     hash *= 16777619u;
