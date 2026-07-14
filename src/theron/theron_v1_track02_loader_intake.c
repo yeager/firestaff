@@ -184,9 +184,13 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_coordinate(
             THERON_V1_INITIAL_ENVELOPE_HEADER_SEED ||
         decoded_receipt->decoded_header_identifier !=
             THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER ||
+        decoded_receipt->decoded_grid_row_count !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        decoded_receipt->decoded_grid_row_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
         decoded_receipt->decoded_grid_bytes !=
-            (uint32_t)decoded_receipt->decoded_grid_row_count *
-                decoded_receipt->decoded_grid_row_bytes ||
+            (uint32_t)THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT *
+                THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
         decoded_receipt->decoded_grid_raw_sector_offset !=
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET +
                 THERON_V1_TRACK02_MODE1_HEADER_BYTES +
@@ -278,11 +282,13 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_row(
             THERON_V1_INITIAL_ENVELOPE_HEADER_SEED ||
         decoded_receipt->decoded_header_identifier !=
             THERON_V1_INITIAL_ENVELOPE_HEADER_IDENTIFIER ||
-        decoded_receipt->decoded_grid_row_bytes >
+        decoded_receipt->decoded_grid_row_count !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        decoded_receipt->decoded_grid_row_bytes !=
             THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
         decoded_receipt->decoded_grid_bytes !=
-            (uint32_t)decoded_receipt->decoded_grid_row_count *
-                decoded_receipt->decoded_grid_row_bytes ||
+            (uint32_t)THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT *
+                THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
         decoded_receipt->decoded_grid_raw_sector_offset !=
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET +
                 THERON_V1_TRACK02_MODE1_HEADER_BYTES +
@@ -341,6 +347,61 @@ int theron_v1_track02_loader_intake_handoff_raw_grid_row(
     receipt.raw_grid_row_hash = hash_bytes(receipt.raw_grid_row,
                                            receipt.raw_grid_bytes);
     receipt.status = "initial_envelope_raw_grid_row_handoff_no_semantics";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int theron_v1_track02_loader_intake_handoff_raw_grid(
+    const Theron_V1Track02LoaderIntakeReceipt *decoded_receipt,
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    const char *raw_track02_md5,
+    Theron_V1Track02RawGridReceipt *out_receipt) {
+    Theron_V1Track02RawGridRowReceipt row;
+    Theron_V1Track02RawGridReceipt receipt = {0};
+    uint16_t y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!decoded_receipt || !out_receipt ||
+        decoded_receipt->decoded_grid_row_count !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT ||
+        decoded_receipt->decoded_grid_row_bytes !=
+            THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        decoded_receipt->decoded_grid_bytes !=
+            (uint32_t)THERON_V1_INITIAL_ENVELOPE_HEADER_HEIGHT *
+                THERON_V1_INITIAL_ENVELOPE_HEADER_WIDTH ||
+        !theron_v1_track02_loader_intake_handoff_raw_grid_row(
+            decoded_receipt, raw_track02, raw_track02_bytes, raw_track02_md5,
+            0u, &row)) {
+        return 0;
+    }
+
+    receipt.handed_off = 1;
+    receipt.raw_grid_width = decoded_receipt->decoded_grid_row_bytes;
+    receipt.raw_grid_height = decoded_receipt->decoded_grid_row_count;
+    receipt.raw_grid_bytes = decoded_receipt->decoded_grid_bytes;
+    receipt.raw_track02_sector = row.raw_track02_sector;
+    receipt.raw_sector_offset = row.raw_sector_offset;
+    receipt.raw_track02_offset = row.raw_track02_offset;
+    memcpy(receipt.raw_grid, row.raw_grid_row, row.raw_grid_bytes);
+    for (y = 1u; y < receipt.raw_grid_height; ++y) {
+        if (!theron_v1_track02_loader_intake_handoff_raw_grid_row(
+                decoded_receipt, raw_track02, raw_track02_bytes,
+                raw_track02_md5, y, &row) ||
+            row.raw_grid_bytes != receipt.raw_grid_width ||
+            row.raw_track02_offset != receipt.raw_track02_offset +
+                (uint32_t)y * receipt.raw_grid_width) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
+        memcpy(receipt.raw_grid + (size_t)y * receipt.raw_grid_width,
+               row.raw_grid_row, row.raw_grid_bytes);
+    }
+    receipt.raw_grid_hash = hash_bytes(receipt.raw_grid, receipt.raw_grid_bytes);
+    if (receipt.raw_grid_hash != decoded_receipt->decoded_grid_hash) {
+        return 0;
+    }
+    receipt.status = "initial_envelope_raw_grid_handoff_no_semantics";
     *out_receipt = receipt;
     return 1;
 }
