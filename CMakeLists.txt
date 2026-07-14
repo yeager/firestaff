@@ -3430,6 +3430,21 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# Opt-in CSBWin extended-save DSA handoff. This consumes an original package
+# only: it requires a supplied Dungeon.dat plus a CSBWin save with Extended
+# Features/DSAs and does not synthesize an alternate save or DSA record.
+add_executable(firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+    probes/csb/firestaff_csb_v1_csbwin_extended_dsa_handoff_probe.c
+)
+target_include_directories(firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+    PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 CSBWin 512-byte XOR-pad save-header classifier probe
 # Real-asset CSBWin / DM1 save -> csb_v1_csbwin_512_xor_pad_classify
 # verdict gate. The probe runs the data-free synthetic-fixture
@@ -22008,6 +22023,20 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_csbwin_save_loader_boundary PROPERTIES
             LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+            TIMEOUT 120
+        )
+    endif()
+    # ── CSBWin extended-save DSA -> runtime handoff probe ──────────
+    # This probe has no synthetic fallback: it skips unless a caller provides
+    # an original package's Dungeon.dat and an extended CSBWin csbgame save.
+    # A supplied core-only save is a failed input for this focused DSA gate.
+    if(TARGET firestaff_csb_v1_csbwin_extended_dsa_handoff_probe)
+        add_test(
+            NAME csb_v1_csbwin_extended_dsa_handoff
+            COMMAND firestaff_csb_v1_csbwin_extended_dsa_handoff_probe
+        )
+        set_tests_properties(csb_v1_csbwin_extended_dsa_handoff PROPERTIES
+            LABELS "tier2;csb;csbwin;dsa;save_runtime;real_data;skip_safe"
             TIMEOUT 120
         )
     endif()
