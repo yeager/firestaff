@@ -521,6 +521,37 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelScriptCaptureTargetReceipt;
 
+/* Admission state for a trace produced by the supported debugger workflow.
+ * A successful receipt only proves that the external trace names the active
+ * SLEV target coherently. It is intentionally insufficient to execute any
+ * task byte or host callback. */
+#define NEXUS_V1_SLEV_TRACE_MAGIC "FIRESTAFF_NEXUS_SLEV_SH2_TRACE_V1"
+typedef enum {
+    NEXUS_V1_SLEV_TRACE_MISSING = 0,
+    NEXUS_V1_SLEV_TRACE_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE = 3
+} Nexus_V1_LevelScriptTraceStatus;
+
+typedef struct {
+    Nexus_V1_LevelScriptTraceStatus status;
+    int level_index;
+    int capture_target_bound;
+    int mednafen_debugger_provenance;
+    int original_saturn_execution_claimed;
+    int trace_sha256_present;
+    uint32_t entry_pc;
+    uint32_t task_body_pc;
+    uint32_t task_body_opcode;
+    uint32_t callback_or_write_pc;
+    int callback_or_write_is_write;
+    int trace_chain_complete;
+    int task_body_dispatch_proven;
+    int dispatch_permitted;
+    int blocks_real_script_dispatch;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelScriptTraceAdmissionReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -786,6 +817,7 @@ struct Nexus_V1_Engine {
      * dispatch remains blocked until a source-locked parser exists. */
     Nexus_ScriptVM script_vm;
     Nexus_ScriptRuntimeReceipt script_runtime_receipt;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt script_trace_admission;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
@@ -917,6 +949,12 @@ int nexus_v1_engine_build_slev_capture_target(
 int nexus_v1_engine_write_slev_capture_target(
     const Nexus_V1_Engine *engine, const char *path,
     Nexus_V1_LevelScriptCaptureTargetReceipt *out_target);
+int nexus_v1_engine_admit_slev_execution_trace(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt);
+int nexus_v1_current_level_slev_trace_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
