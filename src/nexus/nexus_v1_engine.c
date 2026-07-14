@@ -1311,6 +1311,31 @@ int nexus_v1_engine_build_structure1a_structure3_capture_target(
     return receipt.target_built;
 }
 
+int nexus_v1_engine_write_structure1a_structure3_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *path,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt target;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!path || !path[0] ||
+        !nexus_v1_engine_build_structure1a_structure3_capture_target(
+            engine, topology_candidate_index, structure3_entry_index,
+            structure3_face_ordinal, &target, &receipt)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.target_written =
+        nexus_v1_dgn_structure1a_structure3_capture_target_write(path, &target);
+    *out_receipt = receipt;
+    return receipt.target_written;
+}
+
 static uint8_t *nexus_read_host_file(const char *path, int *out_size) {
     uint8_t *buf = NULL;
     FILE *fp;

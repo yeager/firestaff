@@ -290,6 +290,7 @@ typedef struct {
     int material_plan_prepared;
     int topology_candidate_bound;
     int target_built;
+    int target_written;
     int no_draw_only;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt;
@@ -780,6 +781,13 @@ int nexus_v1_engine_build_structure1a_structure3_capture_target(
     Nexus_V1_Engine *engine, int topology_candidate_index,
     uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
     Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
+/* Build and atomically write a producer request only through the active
+ * canonical LEV route. The output names source facts, never decoded pixels. */
+int nexus_v1_engine_write_structure1a_structure3_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *path,
     Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
 /* Stages the engine-owned, already-bound Structure3 face for the viewport.
  * This is a source/geometry handoff only: a successful packet always remains
