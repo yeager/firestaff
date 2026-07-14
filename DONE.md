@@ -95,6 +95,11 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8155: source-locked PC 3.4 C25 hatch
+  screen box. The portable route preserves inclusive rectangle bounds and the
+  exact `(x ^ y)` parity choice: matching parity clears the aperture byte,
+  differing parity leaves it untouched. Focused strict-C11 test passed.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8154: source-locked PC 3.4 C25
   aperture inversion rectangle. The portable route preserves inclusive edges,
   fixed 320-byte rows and exactly the source's XOR `0x04` operation; focused

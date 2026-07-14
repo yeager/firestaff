@@ -825,6 +825,9 @@ ReDMCSB WIP 2021-02-06 source tree.
   - 2026-07-14 VIDEODRV.C F8154 now preserves the PC 3.4 C25 inclusive
     aperture inversion rectangle, XORing exactly `0x04` at `(y * 320) + x`.
     Its live Mac/SDL aperture consumer remains separately unproven.
+  - 2026-07-14 VIDEODRV.C F8155 now preserves the PC 3.4 C25 hatch box:
+    `((x ^ y) & 1) == 0` aperture pixels clear to zero and the others are
+    retained. Live Mac/SDL aperture consumption remains separately unproven.
 
   - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
     C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
