@@ -14501,6 +14501,10 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_settings_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
+    add_executable(test_dm1_v2_startup_title_filter_handoff_pc34
+        tests/test_dm1_v2_startup_title_filter_handoff_pc34.c
+        src/dm1v2/dm1_v2_startup_title_filter_handoff_pc34.c
+    )
     add_executable(test_dm1_v2_phase5_runtime_bridge_pc34
         tests/test_dm1_v2_phase5_runtime_bridge_pc34.c
         src/dm1v2/dm1_v2_phase5_runtime_bridge_pc34.c
@@ -15111,6 +15115,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v2_phase_gate_pc34
         COMMAND test_dm1_v2_phase_gate_pc34
+    )
+    add_test(
+        NAME dm1_v2_startup_title_filter_handoff_pc34
+        COMMAND test_dm1_v2_startup_title_filter_handoff_pc34
     )
     add_test(
         NAME dm1_v2_phase5_runtime_bridge_pc34

@@ -18,6 +18,7 @@
 #include "firestaff_retroachievements.h"
 #include "audio_sdl_m11.h"
 #include "render_sdl_m11.h"
+#include "dm1_v2_startup_title_filter_handoff_pc34.h"
 #include "csb_v2_filter_config_pc34.h"
 #include "m11_qol_runtime.h"
 #include "dm1_v1_minimap_pc34_compat.h"
@@ -1525,6 +1526,18 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (!dm1_v1_startup_title_presentation_command_pc34(
                 &dm1Media, &titleAssetReceipt, sourceStep, &command)) {
             break;
+        }
+        {
+            DM1_V2_StartupTitleFilterHandoffReceiptPc34 filterReceipt;
+            const int paletteValid = command.special_palette >= 0;
+
+            (void)dm1_v2_startup_title_filter_handoff_pc34(
+                sourceId,
+                gameView->presentationMode,
+                command.source_timing_receipt_consumed,
+                paletteValid,
+                &filterReceipt);
+            M11_Render_SetV2PresentationActive(filterReceipt.filters_active);
         }
         if (command.clear_before_present) {
             memset(framebuffer, 0, (size_t)M11_FB_BYTES);
