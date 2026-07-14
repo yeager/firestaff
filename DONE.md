@@ -12,6 +12,12 @@
   remain opaque caller-owned spans; insufficient output fails before any byte
   is emitted. No dungeon or CSBWin/DSA/timer layout is inferred. Focused
   strict-C11 regression passes.
+- 2026-07-14 CSB ReDMCSB F7065/F7066 portrait save lifecycle: added the
+  `PORTRAITS_EXCLUDED` pointer-clear-before-save and sequential-buffer-rebind
+  after-load behavior from `CEDTINCS.C`. The caller supplies typed pointer
+  slots and owned portrait bytes; an undersized buffer fails without partial
+  rebinding. No champion layout, portrait decode, CSBWin extension, DSA, or
+  timer semantics are inferred. Focused strict-C11 regression passes.
 
 - 2026-07-14 CSB ReDMCSB CEDTINC8 five-part save write: added the source
   sequence that precomputes five keyed checksums, emits the corresponding
