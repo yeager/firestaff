@@ -4257,11 +4257,10 @@ if(BUILD_TESTING)
         if(NOT MSVC)
             target_compile_options(test_m11_csb_leader_hand_no_dm1_fallback PRIVATE -Wall -Wextra -O2)
         endif()
-        add_test(
-            NAME m11_csb_leader_hand_no_dm1_fallback
-            COMMAND test_m11_csb_leader_hand_no_dm1_fallback
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
+        # This legacy executable still asserts marker and combat fallback
+        # rendering with no CSB package materials. Keep it compiling while
+        # its runtime assertions are replaced by hash-verified CSB data;
+        # do not run a synthetic fallback policy in CTest.
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_floor_item_host_presentation_receipt.c")

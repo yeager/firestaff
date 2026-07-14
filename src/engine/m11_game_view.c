@@ -1425,6 +1425,39 @@ static void m11_csb_runtime_overlay_stats_reset(
     m11_csb_runtime_overlay_stats_apply(state, &counts);
 }
 
+int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+    const M11_GameViewState *state,
+    int *outObjectSpriteCount,
+    int *outObjectIconCount,
+    int *outObjectMarkerCount,
+    int *outGroupSpriteCount,
+    int *outGroupMarkerCount,
+    int *outProjectileSpriteCount,
+    int *outProjectileMaterialCount,
+    int *outProjectileMarkerCount,
+    int *outExplosionSpriteCount,
+    int *outExplosionMarkerCount)
+{
+    if (!state || !outObjectSpriteCount || !outObjectIconCount ||
+        !outObjectMarkerCount || !outGroupSpriteCount ||
+        !outGroupMarkerCount || !outProjectileSpriteCount ||
+        !outProjectileMaterialCount || !outProjectileMarkerCount ||
+        !outExplosionSpriteCount || !outExplosionMarkerCount) {
+        return 0;
+    }
+    *outObjectSpriteCount = state->csbState.runtime_object_sprite_drawn_count;
+    *outObjectIconCount = state->csbState.runtime_object_icon_drawn_count;
+    *outObjectMarkerCount = state->csbState.runtime_object_marker_drawn_count;
+    *outGroupSpriteCount = state->csbState.runtime_group_sprite_drawn_count;
+    *outGroupMarkerCount = state->csbState.runtime_group_marker_drawn_count;
+    *outProjectileSpriteCount = state->csbState.runtime_projectile_sprite_drawn_count;
+    *outProjectileMaterialCount = state->csbState.runtime_projectile_material_resolved_count;
+    *outProjectileMarkerCount = state->csbState.runtime_projectile_marker_drawn_count;
+    *outExplosionSpriteCount = state->csbState.runtime_explosion_sprite_drawn_count;
+    *outExplosionMarkerCount = state->csbState.runtime_explosion_marker_drawn_count;
+    return 1;
+}
+
 static int m11_csb_viewport_object_sprite_drawer(
     void *user,
     const CSB_V1_ViewportRuntimeObjectSpriteBlit *blit,
