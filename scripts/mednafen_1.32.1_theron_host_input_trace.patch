@@ -39,12 +39,21 @@ diff --git a/src/drivers/input.cpp b/src/drivers/input.cpp
 +}
 +
  int NoWaiting = 0;
-@@ -1455,3 +1483,8 @@ void Input_Event(const SDL_Event *event)
+@@ -1455,3 +1483,11 @@ void Input_Event(const SDL_Event *event)
  void Input_Event(const SDL_Event *event)
  {
++ TheronTraceHostInput("host_sdl_event type=%u\n", (unsigned)event->type);
++ if(event->type == SDL_WINDOWEVENT)
++  TheronTraceHostInput("host_window_event event=%u\n", (unsigned)event->window.event);
 + if(event->type == SDL_KEYDOWN || event->type == SDL_KEYUP)
 +  TheronTraceHostInput("host_key_event type=%s scancode=%u repeat=%u\n",
 +                       event->type == SDL_KEYDOWN ? "down" : "up",
 +                       event->key.keysym.scancode, event->key.repeat ? 1 : 0);
 +
-  switch(event->type)
+ switch(event->type)
+@@ -1473,4 +1506,5 @@ void Input_SetFocus(bool have)
+ void Input_SetFocus(bool have)
+ {
++ TheronTraceHostInput("host_focus_state have=%u\n", have ? 1 : 0);
+  HaveFocus = have;
+ }

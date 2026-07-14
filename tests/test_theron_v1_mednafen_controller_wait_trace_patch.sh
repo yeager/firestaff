@@ -50,6 +50,9 @@ if ! grep -Fq 'pce_input_read register=%04x raw=%04x sel=%u clr=%u index=%u' "$i
     exit 1
 fi
 if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
+   ! grep -Fq 'host_sdl_event type=%u' "$host_input_patch_file" ||
+   ! grep -Fq 'host_window_event event=%u' "$host_input_patch_file" ||
+   ! grep -Fq 'host_focus_state have=%u' "$host_input_patch_file" ||
    ! grep -Fq 'host_key_event type=%s scancode=%u repeat=%u' "$host_input_patch_file"; then
     printf 'FAIL: Mednafen host-input patch no longer retains raw SDL key-event evidence\n' >&2
     exit 1
