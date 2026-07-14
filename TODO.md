@@ -4,8 +4,10 @@
   initial-level admission receipt can join a coalesced, identity-locked
   later `$e009` observation to the already source-locked record `0x0b52`
   startup envelope. It remains unavailable until an operator supplies that
-  authenticated coalesced capture. Remaining semantic boundary: no observed
-  destination RAM address or game-transition causality, and no object-tail,
+  authenticated coalesced capture. Its contract now additionally requires the
+  later call's observed local-RAM destination and a post-return 32-byte
+  user-data fingerprint checked against the selected record. Remaining semantic
+  boundary: no game-transition causality, and no object-tail,
   bitmap, palette, or broader dungeon-record semantics.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;

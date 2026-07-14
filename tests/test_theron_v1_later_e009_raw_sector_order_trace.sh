@@ -11,6 +11,7 @@ source=mednafen-pce-instrumented-coalesced
 dynamic_cd_read_transaction pc=4090 return_pc=4093 sector_count=01 destination=3800 record_register_mask=07 record_cl=e0 record_dl=04 record_ch=00 variant=us_bin record=4e0
 later_system_card_e009_dispatch caller_pc=ea00 return_pc=ea03 sector_count=1 record_cl=10 record_dl=5 record_ch=0 record=510
 cd_interface_raw_sector_read lba=1296 bytes=2352 sector_fnv1a=1234abcd span_offset=0 span_bytes=32 span_fnv1a=5678ef90
+later_system_card_e009_destination_span caller_pc=ea00 return_pc=ea03 record=510 destination=3800 bytes=32 fnv1a=90abcdef
 later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510
 EOF
 
@@ -20,6 +21,20 @@ awk 'NR == 4 { saved = $0; next } NR == 5 { print; print saved; next } { print }
     "$work/valid.trace" >"$work/sector-after-return.trace"
 if "$script" "$work/sector-after-return.trace" us_bin >/dev/null 2>&1; then
     printf 'FAIL: verifier accepted a raw-sector row after the e009 return\n' >&2
+    exit 1
+fi
+
+awk 'NR == 5 { saved = $0; next } NR == 6 { print; print saved; next } { print }' \
+    "$work/valid.trace" >"$work/destination-after-return.trace"
+if "$script" "$work/destination-after-return.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a destination span after the e009 return\n' >&2
+    exit 1
+fi
+
+grep -v '^later_system_card_e009_destination_span ' "$work/valid.trace" \
+    >"$work/missing-destination.trace"
+if "$script" "$work/missing-destination.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a missing e009 destination span\n' >&2
     exit 1
 fi
 
