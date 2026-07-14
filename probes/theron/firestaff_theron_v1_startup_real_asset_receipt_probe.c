@@ -89,6 +89,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_asset_loader.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
@@ -359,6 +360,45 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
     fclose(file);
     *out_size = (size_t)file_size;
     return bytes;
+}
+
+static void check_real_soul_room_dungeon_handoff(const char *path,
+                                                  const char *md5_hex) {
+    Theron_StartupFlow flow;
+    Theron_V1_World world;
+    Theron_V1StartupRuntimeEntryRequest request;
+    Theron_V1StartupRuntimeEntryResult result;
+    uint8_t *track02_bytes;
+    size_t track02_size;
+    char receipt[512];
+
+    track02_bytes = read_file_bytes(path, &track02_size);
+    check(track02_bytes != NULL,
+          "real Soul Room handoff reads the hash-verified Track 02");
+    if (!track02_bytes) {
+        return;
+    }
+    theron_v1_startup_flow_init(&flow);
+    flow.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
+    flow.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    flow.theron_present = 1u;
+    theron_v1_world_init(&world);
+    theron_v1_startup_runtime_entry_request_init(&request);
+    request.hucard_rom = track02_bytes;
+    request.hucard_rom_size = track02_size;
+    request.md5_hex = md5_hex;
+    memset(receipt, 0, sizeof(receipt));
+
+    check(theron_v1_startup_runtime_enter_from_forcefield(
+              &flow, &world, &request, &result, receipt, sizeof(receipt)) &&
+              flow.phase == THERON_STARTUP_PHASE_IN_DUNGEON &&
+              world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] &&
+              result.track02_semantic_handoff &&
+              result.runtime_level_source ==
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+              !result.fallback_visuals_blocked,
+          "real Soul Room handoff publishes only a semantic Track 02 dungeon");
+    free(track02_bytes);
 }
 
 static int report_real_stage3_manifest(
@@ -1032,6 +1072,7 @@ static void check_real_asset_path(void) {
         }
         check(r.boot_profile_assets_verified == 1,
               "boot profile marks assets_verified");
+        check_real_soul_room_dungeon_handoff(path, c->expected_md5);
         check_verified_media_render_boundary(path);
         check(r.boot_profile_tick_rate_hz == 18u,
               "boot profile carries the documented 18 Hz tick rate");
