@@ -113,10 +113,11 @@ typedef struct {
     int real_task_aux_literal_offset;
     int real_task_aux_literal_address;
     Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;
-    /* The terminal R0 PC-relative load follows the fixed RTS in the observed
-     * entry spine. This is SH-2 delay-slot placement only, not target
-     * ownership or a dispatch permission. */
-    int real_task_aux_literal_is_rts_delay_slot;
+    /* Raw adjacency only: the fixed word immediately after RTS. It has no
+     * assigned instruction, target, ownership, or dispatch semantics. */
+    int real_task_rts_instruction_offset;
+    int real_task_post_rts_instruction_offset;
+    int real_task_post_rts_instruction_word;
     Nexus_ScriptActionHandler handler;
     void *handler_data;
 } Nexus_ScriptVM;
@@ -165,7 +166,9 @@ typedef struct {
     int real_task_aux_literal_offset;
     int real_task_aux_literal_address;
     Nexus_SlevLiteralProvenance real_task_aux_literal_provenance;
-    int real_task_aux_literal_is_rts_delay_slot;
+    int real_task_rts_instruction_offset;
+    int real_task_post_rts_instruction_offset;
+    int real_task_post_rts_instruction_word;
     int rules_loaded;
     int blocks_real_script_dispatch;
     int fallback_visuals_permitted;

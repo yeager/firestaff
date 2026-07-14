@@ -29,11 +29,14 @@
   `DRAW_CHIP_OF_MAGIC_MAP`. Verification: Ninja
    `test_dm2_v1_g1_creature_scene_corpus_real_data`.
 
-- DONE 2026-07-14 Nexus SLEV RTS delay-slot receipt: the canonical 36-byte
-  SH-2 entry parser now records that its terminal `MOV.L @(disp,PC),R0`
-  occupies the delay slot after the fixed `RTS`. The focused real-data corpus
-  test verifies this across `SLEV00.BIN` through `SLEV15.BIN`; targets,
-   task-body semantics, callbacks, and all dispatch remain blocked.
+- DONE 2026-07-14 Nexus SLEV post-RTS raw-word receipt: the canonical
+  36-byte entry parser retains the fixed `RTS` at byte 28 and the raw
+  immediately following `0x6ef6` word at byte 30 across the sixteen
+  hash-verified SLEV files. The terminal `MOV.L @(disp,PC),R0` remains the
+  distinct word at byte 32. This is byte-position evidence only: no task,
+  target, callback, instruction, or dispatch semantics are assigned.
+  Verification: `nexus_v1_script_vm` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
 
 - ✅ 2026-07-14 DM1 M11 PC34 runtime load-save interop: the focused M11
   resume path now proves a checksum-qualified original PC34 F0435 load can
