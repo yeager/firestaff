@@ -1598,6 +1598,19 @@ typedef struct {
     uint32_t receipt_hash;
 } Theron_Track02InitialLevelLoaderSemanticReceipt;
 
+/* The first positive Track 02 dungeon route. It owns only the authenticated
+ * Hall of Records level-0 grid accepted by the existing level loader. */
+typedef struct {
+    int valid;
+    int dungeon_id;
+    int sub_level_index;
+    Theron_V1_Level level;
+    Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
+    int object_tail_semantics_proven;
+    int fallback_visuals_allowed;
+    uint32_t route_hash;
+} Theron_Track02InitialLevelLoaderRoute;
+
 /* Bounded Track 02 -> V1 level-loader handoff.
  *
  * Decodes the 9-word descriptor table at `descriptor_offset`, binds the
@@ -1738,6 +1751,16 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02InitialLevelLoaderSemanticReceipt *out_receipt);
+
+/* Materialize the one loader-proven startup grid as a positive dungeon route.
+ * Only Hall of Records level 0 is admitted; the opaque tail stays unclaimed. */
+Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_Track02InitialLevelLoaderRoute *out_route);
 
 /* Copy the hash/anchor-gated initial startup candidate through the logical
  * MODE1/2048 user-data address space.

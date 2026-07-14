@@ -1100,6 +1100,7 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02InitialLevelEnvelopeReceipt envelope;
     Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
+    Theron_Track02InitialLevelLoaderRoute loader_route;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1297,6 +1298,28 @@ static void probe_real_data_initial_candidate(const char *label,
               semantics.fallback_visuals_allowed, 0);
     check_int("real initial loader semantics receipt fingerprinted",
               semantics.receipt_hash != 0u, 1);
+
+    signal_status = theron_v1_track02_load_initial_level_loader_route(
+        data, size, local_md5, THERON_DUNGEON_1_HALL_OF_RECORDS, 0,
+        &loader_route);
+    check_int("real initial loader route status", signal_status,
+              THERON_TRACK02_SIGNAL_OK);
+    check_int("real initial loader route valid", loader_route.valid, 1);
+    check_int("real initial loader route has no object claim",
+              loader_route.object_tail_semantics_proven, 0);
+    check_int("real initial loader route blocks fallback visuals",
+              loader_route.fallback_visuals_allowed, 0);
+    check_int("real initial loader route grid matches receipt",
+              loader_route.level.start_x == semantics.start_x &&
+              loader_route.level.start_y == semantics.start_y &&
+              loader_route.level.start_dir == semantics.start_dir, 1);
+    check_int("real initial loader route fingerprinted",
+              loader_route.route_hash != 0u, 1);
+    signal_status = theron_v1_track02_load_initial_level_loader_route(
+        data, size, local_md5, THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 0,
+        &loader_route);
+    check_int("real initial loader route rejects unproven dungeon",
+              signal_status, THERON_TRACK02_SIGNAL_NOT_FOUND);
 
     status = theron_v1_track02_load_initial_level_candidate(
         data,
@@ -1596,9 +1619,22 @@ static void probe_media_gated_level_bank_selection(void) {
               world.runtime_media.level_bank.real_media_gate, 1);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     printf("=== Theron V1 Track 02 Level Handoff Probe ===\n");
     printf("%s\n", theron_v1_track02_source_evidence());
+
+    if (argc == 2 && strcmp(argv[1], "--loader-route-only") == 0) {
+        probe_real_data_initial_candidate("US raw BIN",
+                                          THERON_TRACK02_MD5_US_BIN,
+                                          "FIRESTAFF_THERON_US_TRACK02",
+                                          "theron/TQUS02.bin");
+        probe_real_data_initial_candidate("JP raw BIN",
+                                          THERON_TRACK02_MD5_JP_BIN,
+                                          "FIRESTAFF_THERON_JP_TRACK02",
+                                          "theron/TQJP02.bin");
+        printf("summary: fail=%d skip=%d\n", g_fail, g_skip);
+        return g_fail ? 1 : 0;
+    }
 
     probe_synthetic_positive_handoff();
     probe_synthetic_initial_candidate_handoff();

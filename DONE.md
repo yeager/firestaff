@@ -13530,3 +13530,14 @@ the authenticated action through the saved `TT_STONEROOM`, `TT_OPENROOM`, and
 dispatch. Source: CSBWin `data.cpp` `DB3::MakeBig`/`ParameterB` and `DSA.cpp`
 `GetState`/`ProcessDSATimer6`. Verified by CTest
 `csb_v1_phase7_verification` and `csb_v1_dsa_queued_localstate2_timer`.
+
+# ✅ 2026-07-14 Theron Track 02 startup-grid positive route
+
+The existing CD/MODE1 envelope and loader-semantic receipt now materialize one
+positive route: Hall of Records level 0 only. It verifies the loader-selected
+pose against the receipt and remains an explicit route boundary pending
+startup-pose reconciliation with the older semantic handoff. The route
+contains no object table, header-extension interpretation, transition, bitmap,
+or fallback-visual claim; later dungeon requests reject. The focused Track 02
+handoff probe checks the real-media route and its refusal of an unproven
+dungeon ID.

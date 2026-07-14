@@ -5606,6 +5606,61 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    int dungeon_id,
+    int sub_level_index,
+    Theron_Track02InitialLevelLoaderRoute *out_route) {
+    uint8_t envelope[12u + TQR_RAW_INITIAL_LEVEL_WIDTH *
+                     TQR_RAW_INITIAL_LEVEL_HEIGHT];
+    Theron_Track02LevelHandoffStatus copy_status;
+    size_t copied_byte_count = 0u;
+    size_t copied_user_data_offset = 0u;
+    uint32_t hash;
+
+    if (out_route) memset(out_route, 0, sizeof(*out_route));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_route)
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS || sub_level_index != 0)
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    if (theron_v1_track02_decode_initial_level_loader_semantics(
+            track02_data, track02_size, md5_hex, &out_route->semantics) !=
+            THERON_TRACK02_SIGNAL_OK || !out_route->semantics.valid ||
+        !out_route->semantics.loader_grid_semantics_proven) {
+        memset(out_route, 0, sizeof(*out_route));
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    copy_status = theron_v1_track02_copy_initial_level_user_data_window(
+        track02_data, track02_size, md5_hex,
+        out_route->semantics.envelope.variant == THERON_TRACK02_VARIANT_JP_BIN
+            ? g_jp_bin_descriptor_offsets[0] : g_us_bin_descriptor_offsets[0],
+        envelope, sizeof(envelope), &copied_byte_count, &copied_user_data_offset);
+    if (copy_status != THERON_TRACK02_LEVEL_HANDOFF_OK ||
+        copied_byte_count != sizeof(envelope) ||
+        copied_user_data_offset != out_route->semantics.envelope.level_user_data_offset ||
+        theron_v1_level_load(&out_route->level, envelope, (int)sizeof(envelope),
+                             dungeon_id, sub_level_index) != THERON_MAP_OK ||
+        out_route->level.start_x != out_route->semantics.start_x ||
+        out_route->level.start_y != out_route->semantics.start_y ||
+        out_route->level.start_dir != out_route->semantics.start_dir) {
+        memset(out_route, 0, sizeof(*out_route));
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_route->dungeon_id = dungeon_id;
+    out_route->sub_level_index = sub_level_index;
+    out_route->fallback_visuals_allowed = 0;
+    hash = out_route->semantics.receipt_hash;
+    hash ^= (uint32_t)dungeon_id;
+    hash *= 16777619u;
+    hash ^= (uint32_t)sub_level_index;
+    hash *= 16777619u;
+    out_route->route_hash = hash;
+    out_route->valid = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_window(
     const uint8_t *track02_data,
     size_t track02_size,
