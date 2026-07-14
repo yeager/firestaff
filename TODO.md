@@ -25,6 +25,11 @@
   only IDLE/FORWARD/BACKWARD/TURN/STRAFE inputs because those are the direct
   GAMELOOP-to-M10 command boundary; it is not original-executable pixel
   parity and does not synthesize saves, dungeons, command streams, or art.
+  The gate now freezes each corpus-certified file into one in-memory snapshot
+  before both independent F0435 staging and M11 adoption, then rehashes its
+  path after replay; a replacement save cannot inherit prior admission or
+  trace evidence. Broader original PC34 executable route/capture comparison
+  remains an external-corpus task.
 
 - 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
   source-owned destination/clipping plan. Complete standard door panels,
