@@ -671,6 +671,10 @@
     through their header, six-entry local palette, command stream, F0685, and
     F0686. The bounded adapter accepts the source even-stride branch only;
     padded-row variants remain explicitly unclaimed rather than synthesized.
+  - 2026-07-14 update: successful F0689 PC IMG3 expansion can now flow through
+    a caller-owned CSB asset-presentation callback. Truncated or unsupported
+    records are not presented, and the adapter supplies no display layout,
+    pixels, palette, or fallback.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
