@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
+  retain broad original PC34 interactive runtime/capture comparison as an
+  external-corpus task.
+
 - 2026-07-14 DM2 GDAT door-overlay follow-up: ornate and destroyed-door
   overlays now reach M11 through exact `DOOR_GFX`/`DOORS` material plans.
   Remaining dungeon work is source-owned plans for panels, frames, buttons,
