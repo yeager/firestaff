@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 ReDMCSB `BMPSIZE.C F0459`: PC34 scaled packed-bitmap byte
+  count now follows the original scale and even-width allocation formula.
+  Verification: focused CTest; allocation and pixel decoding remain separate.
+
 - 2026-07-14 CSB ReDMCSB `DUNGEON.C F0145`: C04 group-cell access now
   preserves the original packed byte and `0xff` centered-group sentinel,
   rejecting incomplete or non-group records. Verification: focused CTest.
