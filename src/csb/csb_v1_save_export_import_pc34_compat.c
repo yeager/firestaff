@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* ── Internal: little-endian byte writers/parsers ──────────────────── */
 
@@ -380,19 +381,57 @@ int csb_v1_save_export_write_envelope(const char *path,
                                         size_t envelope_len)
 {
     FILE *f;
+    char *temporary_path;
+    size_t path_len;
+    size_t temporary_path_len;
     size_t got;
+    int fd;
+    int rc;
 
     if (!path || !envelope) return CSB_V1_SAVE_EXPORT_ERR_NULL;
-    if (envelope_len < CSB_V1_SAVE_EXPORT_HEADER_LEN)
-        return CSB_V1_SAVE_EXPORT_ERR_BUF_TOO_SMALL;
-    if (envelope_len > CSB_V1_SAVE_EXPORT_MAX_ENVELOPE)
-        return CSB_V1_SAVE_EXPORT_ERR_BUF_TOO_SMALL;
+    rc = csb_v1_save_export_validate_importable_envelope(envelope,
+                                                           envelope_len);
+    if (rc != CSB_V1_SAVE_EXPORT_OK) return rc;
 
-    f = fopen(path, "wb");
-    if (!f) return CSB_V1_SAVE_EXPORT_ERR_IO;
+    /* ReDMCSB LOADSAVE.C F0433/F0435 stages a complete save before it
+     * publishes runtime state. Keep the exported CSBGAME artifact equally
+     * transactional: CSBWin SaveGame.cpp's active save must never become a
+     * partial or non-resumable envelope after a failed host write. */
+    path_len = strlen(path);
+    if (path_len > (size_t)-1 - sizeof(".tmp.XXXXXX")) {
+        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    }
+    temporary_path_len = path_len + sizeof(".tmp.XXXXXX");
+    temporary_path = (char *)malloc(temporary_path_len);
+    if (!temporary_path) return CSB_V1_SAVE_EXPORT_ERR_IO;
+    memcpy(temporary_path, path, path_len);
+    memcpy(temporary_path + path_len, ".tmp.XXXXXX", sizeof(".tmp.XXXXXX"));
+
+    fd = mkstemp(temporary_path);
+    if (fd < 0) {
+        free(temporary_path);
+        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    }
+    f = fdopen(fd, "wb");
+    if (!f) {
+        close(fd);
+        unlink(temporary_path);
+        free(temporary_path);
+        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    }
     got = fwrite(envelope, 1u, envelope_len, f);
-    fclose(f);
-    if (got != envelope_len) return CSB_V1_SAVE_EXPORT_ERR_IO;
+    if (got != envelope_len || fflush(f) != 0 || fsync(fd) != 0 ||
+        fclose(f) != 0) {
+        unlink(temporary_path);
+        free(temporary_path);
+        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    }
+    if (rename(temporary_path, path) != 0) {
+        unlink(temporary_path);
+        free(temporary_path);
+        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    }
+    free(temporary_path);
     return CSB_V1_SAVE_EXPORT_OK;
 }
 

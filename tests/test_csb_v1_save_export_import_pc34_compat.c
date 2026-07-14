@@ -687,6 +687,35 @@ int main(void)
                   read_buf, sizeof(read_buf))
                   == CSB_V1_SAVE_EXPORT_ERR_IO,
               "read_envelope(bad path) -> ERR_IO");
+
+        /* A valid archive container is not automatically a resumable
+         * runtime save. The disk writer must reject that cross-label before
+         * it can replace the known-good artifact. */
+        {
+            uint8_t bad_envelope[CSB_V1_SAVE_EXPORT_MAX_ENVELOPE];
+            long bad_len;
+
+            bad_len = csb_v1_save_export_roundtrip(
+                &export_party, CSB_SAVE_VERSION_V20, tmp_path,
+                bad_envelope, sizeof(bad_envelope));
+            CHECK(bad_len > 0, "atomic-write: build valid v2.0 envelope");
+            bad_envelope[12] = 1u;
+            bad_envelope[13] = 0u;
+            CHECK(csb_v1_save_export_validate_envelope(
+                      bad_envelope, (size_t)bad_len)
+                      == CSB_V1_SAVE_EXPORT_OK,
+                  "atomic-write: cross-label remains archive-valid");
+            CHECK(csb_v1_save_export_write_envelope(
+                      tmp_path, bad_envelope, (size_t)bad_len)
+                      == CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH,
+                  "atomic-write: reject cross-label before replacement");
+            rc = csb_v1_save_export_read_envelope(
+                tmp_path, read_buf, sizeof(read_buf));
+            CHECK(rc == (int)envelope_len,
+                  "atomic-write: rejected replacement preserves saved bytes");
+            CHECK(memcmp(read_buf, scratch, (size_t)envelope_len) == 0,
+                  "atomic-write: rejected replacement preserves payload identity");
+        }
     }
 
     /* ── Source-evidence citation chain ── */
