@@ -1863,7 +1863,7 @@ F	0910	F0910_ReleaseSwooshSound	SWSHSND.C;SWSH.C	implemented_narrow
 F	0913	F0913_DecompressPAK	STARTGD.C;APPA.C;DECOMPCO.C	implemented_narrow
 F	0914	F0914_Graphic21	GRAPH21.C;MKBIN.C	implemented_narrow
 F	0915	F0915_Graphic538	GRAPH538.C	source_nonapplicable
-F	0917	F0917_PRIM_15_Memory_Allocate	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	unmapped_or_unverified
+F	0917	F0917_PRIM_15_Memory_Allocate	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	implemented_narrow
 F	0918	F0918_PRIM_16_Memory_Free	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	unmapped_or_unverified
 F	0919	F0919_PRIM_19_File_Seek	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	unmapped_or_unverified
 F	0920	F0920_PRIM_20_File_Read	PRIM1.C;PRIM.H;PRIM2C.C;PRIM2B.C	implemented_narrow
@@ -1922,7 +1922,7 @@ F	1033	F1033_HatchBox_Unreferenced	BLITFILL.C	implemented_narrow
 F	1034	F1034_Unreferenced	IO2.C;AMIGINIT.C	source_nonapplicable
 F	1035	F1035_Unreferenced	IO2.C	source_nonapplicable
 F	1036	F1036_Mouse1	AMIGA.H;IO.C	source_nonapplicable
-F	1037	F1037_Mouse2	IO.C	referenced_not_verified
+F	1037	F1037_Mouse2	IO.C	source_nonapplicable
 F	1038	F1038_UpdateMousePointer	IO.C;STARTUP2.C;COPERINT.C	referenced_not_verified
 F	1040	F1040_SetMouseBoundEvent	FMTOWNS.H;IO.C;IBMIO.C;NECIO.C	referenced_not_verified
 F	1041	F1041_GetMousePointerType	IO.C;DEFS.H	referenced_not_verified

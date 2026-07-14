@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F0917: source-locked X30J allocation/error
+  path with a focused strict-C11 test. F1037 is source-nonapplicable because
+  its mouse-sprite code has no PC 3.4 route.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1034-F1036: source review identified Amiga
   output and X68000/Amiga mouse-sprite layouts as PC 3.4-nonapplicable.
   Focused compatibility tests preserve their source transforms without claiming
