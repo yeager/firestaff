@@ -105,3 +105,8 @@ and GAMEBLOCK2 timer counters only when every live timeline entry still has one
 exact saved queue-slot receipt. A fired, replaced, duplicated, or unmapped event
 breaks that receipt and causes CSBWin core export to reject rather than emitting
 a reconstructed queue that could look valid while changing restart behavior.
+
+At dispatch, a materialized CSBWin queue slot remains CSBWin-owned even if its
+live timer receipt no longer validates. Firestaff consumes that event instead of
+letting a numeric timer-function alias fall through to a generic M10 handler.
+Only a complete source receipt can authorize a CSBWin timer mutation.
