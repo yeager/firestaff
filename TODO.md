@@ -296,6 +296,11 @@
   to another. Independent evidence: hash-identified original asset captures
   per claimed CSB media, with CSBWin `Swoosh.cpp`, `Graphics.cpp`, and
   `Viewport.cpp` used only for CSBWin behavior.
+  - 2026-07-14 update: the bounded PC 3.4 path now decodes canonical
+    `GRAPHICS.DAT` C001-C005 with ReDMCSB LZW.C chunk-width semantics before
+    IMAGE3 expansion. Real-data regressions lock TITLE.C PRESENTS/CHAOS/
+    STRIKES palette/raster output and ENTRANCE.C C004/C002/C003 y=30 output.
+    This evidence does not extend to other media branches.
 
 - REDMCSB-CSB-GAP-007 — **Platform service shims are opaque dispatches, not
   portable behavioral specifications.** `USIOSTUB.C` forwards mouse, input,

@@ -59,8 +59,8 @@ static int checks;
 static int failures;
 
 enum {
-    CSB_ENTRANCE_CLOSED_RASTER_HASH_PC34 = 0xc9db1e1du,
-    CSB_ENTRANCE_OPEN_STEP2_RASTER_HASH_PC34 = 0x74e48371u
+    CSB_ENTRANCE_CLOSED_RASTER_HASH_PC34 = 0x2cbcebc8u,
+    CSB_ENTRANCE_OPEN_STEP2_RASTER_HASH_PC34 = 0xde9c254eu
 };
 
 #define CHECK(cond, msg) do { \
@@ -99,7 +99,7 @@ static int pc_data_present(const char *dir)
 }
 
 /* ReDMCSB ENTRANCE.C F0438/F0441: C004 is the entrance base, C002/C003
- * are composed at the F20J y=28 origin, with a 20-vblank hold followed by
+ * are composed at the PC DATA.C y=30 origin, with a 20-vblank hold followed by
  * 31 four-pixel door steps.  Keep this at the hash-verified asset boundary:
  * a synthetic raster cannot prove the archive decoder or the actual art. */
 static void check_real_entrance_composition(const CSB_V1_BootProfile *profile)
@@ -134,11 +134,11 @@ static void check_real_entrance_composition(const CSB_V1_BootProfile *profile)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               receipt.render_plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
-              receipt.render_plan.closed_left_dest_y == 28 &&
-              receipt.render_plan.closed_right_dest_y == 28 &&
+              receipt.render_plan.closed_left_dest_y == 30 &&
+              receipt.render_plan.closed_right_dest_y == 30 &&
               receipt.redmcsb_pre_open_delay_ticks == 20 &&
               receipt.redmcsb_door_step_count == 31,
-          "C004 closed entrance keeps the F0438 palette, y=28, and timing");
+          "C004 closed entrance keeps the F0438 palette, y=30, and timing");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &receipt.render_plan, 100u, &frame) == 1 &&
               frame.valid && frame.real_asset_matched && frame.entrance_ready &&
@@ -161,8 +161,8 @@ static void check_real_entrance_composition(const CSB_V1_BootProfile *profile)
               receipt.render_plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               receipt.render_plan.opening_composite_valid &&
-              receipt.render_plan.opening_left_dest_y == 28 &&
-              receipt.render_plan.opening_right_dest_y == 28 &&
+              receipt.render_plan.opening_left_dest_y == 30 &&
+              receipt.render_plan.opening_right_dest_y == 30 &&
               receipt.render_plan.opening_left_w == 97 &&
               receipt.render_plan.opening_right_dest_x == 113 &&
               receipt.render_plan.opening_right_w == 119,

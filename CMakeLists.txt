@@ -2990,6 +2990,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
