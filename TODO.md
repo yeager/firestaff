@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 DM2 original SKSave corpus follow-up: raw original candidates now
+  stage through the existing source-owned G1 dungeon loader before runtime
+  mutation, and their saved party map/coordinates must fit that exact parsed
+  descriptor. The live dungeon metadata and bytes publish as one atomic swap;
+  malformed raw G1 prefixes or out-of-range poses retain the old model. This
+  still does not decode or rebuild the original DB record graph, tile-object
+  chains, timer payloads, checkcodes, minion associations, actuator state, or
+  post-load effects beyond the previously bounded importer fields. Remaining:
+  corpus-verified original read/write across those full DB/timer sections and
+  SKProject's post-load rebuild order.
+
 - 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict
   single-face manifest intake now preserves one DGN/Structure3 face's opaque
   texture span, palette state, VDP1 state, transform state, normal/culling

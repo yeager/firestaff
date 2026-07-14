@@ -3778,7 +3778,9 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     DM2_V1_SaveCandidate candidate;
     DM2_V1_DungeonData *dungeon;
     DM2_V1_CreatureLiveState cleared_creatures;
-    uint8_t *saved_dungeon = NULL;
+    DM2_V1_DungeonData parsed_dungeon;
+    DM2_V1_DungeonData saved_dungeon;
+    int parsed_original_dungeon = 0;
 
     if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
         !g_dm2_runtime.boot->dungeon_data ||
@@ -3792,15 +3794,30 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
         return -1;
     }
 
-    /* All fallible parsing and compatibility checks happen above. Keep a
-     * rollback copy anyway: a rejected candidate must not leave a half-loaded
-     * dungeon behind if a later runtime binding check is tightened. */
-    saved_dungeon = (uint8_t *)malloc((size_t)dungeon->raw_size);
-    if (!saved_dungeon) return -1;
-    memcpy(saved_dungeon, dungeon->raw_data, (size_t)dungeon->raw_size);
+    memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
     if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
-        memcpy(dungeon->raw_data, candidate.dungeon_bytes,
-               (size_t)dungeon->raw_size);
+        /* skproject/SKWINSPX/src/v4/skcore.cpp::GAME_LOAD calls
+         * READ_DUNGEON_STRUCTURE before it consumes skload_table_60.  The
+         * raw prefix therefore owns both the bytes and the live G1 layout;
+         * copying it under old DUNGEON.DAT metadata can select the wrong map
+         * dimensions, GRAPHICSSET, or record-pool spans.  Parse the complete
+         * saved prefix first, then publish it in one swap below. */
+        if (dm2_v1_dungeon_load(&parsed_dungeon, candidate.dungeon_bytes,
+                                (int)candidate.dungeon_size) != 0 ||
+            candidate.session.party_level >= parsed_dungeon.level_count ||
+            candidate.session.party_x >=
+                (uint16_t)parsed_dungeon.level_widths[
+                    candidate.session.party_level] ||
+            candidate.session.party_y >=
+                (uint16_t)parsed_dungeon.level_heights[
+                    candidate.session.party_level]) {
+            dm2_v1_dungeon_free(&parsed_dungeon);
+            return -1;
+        }
+        saved_dungeon = *dungeon;
+        *dungeon = parsed_dungeon;
+        memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
+        parsed_original_dungeon = 1;
     }
 
     /* Original SKSave has dungeon DB records but no Firestaff-only CCM cache.
@@ -3809,11 +3826,15 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     memset(&cleared_creatures, 0, sizeof(cleared_creatures));
     if (dm2_v1_creature_restore_live_state(&cleared_creatures) != 0 ||
         dm2_v1_runtime_apply_session(&candidate.session) != 0) {
-        memcpy(dungeon->raw_data, saved_dungeon, (size_t)dungeon->raw_size);
-        free(saved_dungeon);
+        if (parsed_original_dungeon) {
+            dm2_v1_dungeon_free(dungeon);
+            *dungeon = saved_dungeon;
+        }
         return -1;
     }
-    free(saved_dungeon);
+    if (parsed_original_dungeon) {
+        dm2_v1_dungeon_free(&saved_dungeon);
+    }
     return 0;
 }
 
