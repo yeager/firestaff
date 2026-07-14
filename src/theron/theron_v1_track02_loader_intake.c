@@ -66,6 +66,7 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     uint16_t grid_width;
     uint16_t grid_height;
     uint32_t grid_bytes;
+    uint32_t grid_raw_sector_offset;
 
     if (!source_bound_receipt || !initial_envelope || !out_receipt) return 0;
     receipt = *source_bound_receipt;
@@ -108,12 +109,21 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
     grid_width = read_be16(envelope);
     grid_height = read_be16(envelope + 2u);
     grid_bytes = (uint32_t)grid_width * grid_height;
+    if (initial_envelope->raw_sector_offset >
+            THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+                TQR_INITIAL_ENVELOPE_HEADER_BYTES) {
+        return 0;
+    }
+    grid_raw_sector_offset = initial_envelope->raw_sector_offset +
+        TQR_INITIAL_ENVELOPE_HEADER_BYTES;
     if (grid_width != initial_envelope->header_width ||
         grid_height != initial_envelope->header_height ||
         read_be32(envelope + 4u) != initial_envelope->header_seed ||
         read_be16(envelope + 8u) != initial_envelope->header_identifier ||
         grid_bytes != initial_envelope->envelope_bytes -
-            TQR_INITIAL_ENVELOPE_HEADER_BYTES) {
+            TQR_INITIAL_ENVELOPE_HEADER_BYTES ||
+        grid_bytes > THERON_V1_TRACK02_RAW_SECTOR_BYTES -
+            grid_raw_sector_offset) {
         return 0;
     }
 
@@ -129,6 +139,8 @@ int theron_v1_track02_loader_intake_decode_initial_envelope(
                                            grid_bytes);
     receipt.decoded_grid_row_count = grid_height;
     receipt.decoded_grid_row_bytes = grid_width;
+    receipt.decoded_grid_raw_sector = initial_envelope->track02_raw_sector;
+    receipt.decoded_grid_raw_sector_offset = grid_raw_sector_offset;
     receipt.decoded_grid_first_row_hash = hash_bytes(
         envelope + TQR_INITIAL_ENVELOPE_HEADER_BYTES, grid_width);
     receipt.decoded_grid_last_row_hash = hash_bytes(
