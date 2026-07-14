@@ -101,6 +101,14 @@ static int nexus_v1_compare_u32(const void *left, const void *right)
     return a < b ? -1 : a > b;
 }
 
+static int nexus_v1_compare_u64(const void *left, const void *right)
+{
+    uint64_t a = *(const uint64_t *)left;
+    uint64_t b = *(const uint64_t *)right;
+
+    return a < b ? -1 : a > b;
+}
+
 static const Nexus_V1_DgnStructure2Texture *
 nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
                                       uint16_t image_id)
@@ -148,6 +156,7 @@ static int nexus_v1_level_copy_structure3_payload(
     Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
     Nexus_V1_DgnStructure3FaceGeometryReceipt face_geometry;
+    Nexus_V1_DgnStructure3FaceEdgeReceipt face_edges;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt face_normal_pairs;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
@@ -181,6 +190,7 @@ static int nexus_v1_level_copy_structure3_payload(
     memset(&faces, 0, sizeof(faces));
     memset(&vectors, 0, sizeof(vectors));
     memset(&face_geometry, 0, sizeof(face_geometry));
+    memset(&face_edges, 0, sizeof(face_edges));
     memset(&face_normal_pairs, 0, sizeof(face_normal_pairs));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
@@ -878,6 +888,110 @@ static int nexus_v1_level_copy_structure3_payload(
         face_geometry.accounting_valid;
     face_geometry.surface_or_draw_semantics_proven = 0;
     level->structure3_face_geometry = face_geometry;
+    face_edges.face_receipt_valid = faces.valid;
+    face_edges.entry_count = faces.entry_count;
+    face_edges.face_count = faces.face_count;
+    if (faces.valid) {
+        int entry;
+        int measurement_complete = 1;
+
+        for (entry = 0; entry < directory.entry_count; ++entry) {
+            uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+            const uint8_t *header = data + byte_offset + entry_offset;
+            uint16_t face_count = rb16(header + 6);
+            uint32_t face_offset = rb32(header + 16);
+            uint64_t *edges = NULL;
+            int edge_capacity = (int)face_count * 4;
+            int edge_count = 0;
+            int face_index;
+
+            if (edge_capacity > 0) {
+                edges = (uint64_t *)malloc((size_t)edge_capacity *
+                                           sizeof(*edges));
+                if (!edges) measurement_complete = 0;
+            }
+            for (face_index = 0; face_index < (int)face_count; ++face_index) {
+                const uint8_t *face = data + byte_offset + face_offset +
+                    face_index * 12;
+                uint16_t indexes[4] = {
+                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                };
+                int slot_count = indexes[2] == indexes[3] ? 3 : 4;
+                int slot;
+
+                face_edges.face_edge_slot_count += slot_count;
+                for (slot = 0; slot < slot_count; ++slot) {
+                    uint16_t from = indexes[slot];
+                    uint16_t to = indexes[(slot + 1) % slot_count];
+                    uint16_t low;
+                    uint16_t high;
+                    uint64_t key;
+                    int direction;
+
+                    if (from == to) {
+                        ++face_edges.degenerate_face_edge_reference_count;
+                        continue;
+                    }
+                    ++face_edges.nondegenerate_face_edge_reference_count;
+                    low = from < to ? from : to;
+                    high = from < to ? to : from;
+                    direction = from == low ? 0 : 1;
+                    key = ((uint64_t)low << 16) | high;
+                    if (!edges || edge_count >= edge_capacity) {
+                        measurement_complete = 0;
+                    } else {
+                        edges[edge_count++] = (key << 1) | (uint64_t)direction;
+                    }
+                }
+            }
+            if (edges) {
+                int edge;
+
+                qsort(edges, (size_t)edge_count, sizeof(*edges),
+                      nexus_v1_compare_u64);
+                for (edge = 0; edge < edge_count;) {
+                    uint64_t key = edges[edge] >> 1;
+                    int incidence = 0;
+                    int direction_count[2] = { 0, 0 };
+
+                    do {
+                        ++direction_count[edges[edge] & 1U];
+                        ++incidence;
+                        ++edge;
+                    } while (edge < edge_count && (edges[edge] >> 1) == key);
+                    ++face_edges.unique_face_edge_count;
+                    if (incidence == 1) ++face_edges.boundary_face_edge_count;
+                    else if (incidence == 2) {
+                        ++face_edges.paired_face_edge_count;
+                        if (direction_count[0] == 1 && direction_count[1] == 1)
+                            ++face_edges.opposite_direction_paired_face_edge_count;
+                        else
+                            ++face_edges.same_direction_paired_face_edge_count;
+                    } else {
+                        ++face_edges.multi_incident_face_edge_count;
+                    }
+                    if (incidence > face_edges.maximum_face_edge_incidence)
+                        face_edges.maximum_face_edge_incidence = incidence;
+                }
+            }
+            free(edges);
+        }
+        face_edges.accounting_valid = measurement_complete &&
+            face_edges.nondegenerate_face_edge_reference_count +
+                    face_edges.degenerate_face_edge_reference_count ==
+                face_edges.face_edge_slot_count &&
+            face_edges.boundary_face_edge_count +
+                    face_edges.paired_face_edge_count +
+                    face_edges.multi_incident_face_edge_count ==
+                face_edges.unique_face_edge_count &&
+            face_edges.opposite_direction_paired_face_edge_count +
+                    face_edges.same_direction_paired_face_edge_count ==
+                face_edges.paired_face_edge_count;
+    }
+    face_edges.valid = face_edges.face_receipt_valid &&
+        face_edges.accounting_valid;
+    face_edges.winding_or_draw_semantics_proven = 0;
+    level->structure3_face_edges = face_edges;
     face_normal_pairs.face_receipt_valid = faces.valid;
     face_normal_pairs.vector_receipt_valid = vectors.valid;
     face_normal_pairs.entry_count = faces.entry_count;
@@ -3611,6 +3725,16 @@ int nexus_v1_level_structure3_face_geometry_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_face_edge_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceEdgeReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_face_edges;
+    return 0;
+}
+
 int nexus_v1_level_structure3_face_normal_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt)
@@ -4186,6 +4310,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_vectors);
     (void)nexus_v1_level_structure3_face_geometry_receipt(
         level, &out_receipt->structure3_face_geometry);
+    (void)nexus_v1_level_structure3_face_edge_receipt(
+        level, &out_receipt->structure3_face_edges);
     (void)nexus_v1_level_structure3_face_normal_pair_receipt(
         level, &out_receipt->structure3_face_normal_pairs);
     (void)nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
@@ -4757,6 +4883,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_face_materials = handoff.structure3_face_materials;
     receipt.structure3_vectors = handoff.structure3_vectors;
     receipt.structure3_face_geometry = handoff.structure3_face_geometry;
+    receipt.structure3_face_edges = handoff.structure3_face_edges;
     receipt.structure3_face_normal_pairs = handoff.structure3_face_normal_pairs;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;

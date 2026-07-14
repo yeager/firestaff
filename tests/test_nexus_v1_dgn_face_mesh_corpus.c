@@ -82,6 +82,16 @@ int main(void) {
     int geometry_nondegenerate_total = 0;
     int geometry_degenerate_total = 0;
     int geometry_maximum_component_absolute_value = 0;
+    int edge_slot_total = 0;
+    int edge_nondegenerate_total = 0;
+    int edge_degenerate_total = 0;
+    int edge_unique_total = 0;
+    int edge_boundary_total = 0;
+    int edge_paired_total = 0;
+    int edge_multi_incident_total = 0;
+    int edge_opposite_total = 0;
+    int edge_same_direction_total = 0;
+    int edge_maximum_incidence = 0;
     uint32_t mesh_source_hash = 2166136261u;
 
     if (!data_dir || !data_dir[0]) {
@@ -98,6 +108,7 @@ int main(void) {
         Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
         Nexus_V1_DgnStructure3VectorReceipt vectors;
         Nexus_V1_DgnStructure3FaceGeometryReceipt geometry;
+        Nexus_V1_DgnStructure3FaceEdgeReceipt edges;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
         Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
         Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
@@ -114,6 +125,7 @@ int main(void) {
             nexus_v1_level_structure3_face_material_receipt(&level, &materials) != 0 ||
             nexus_v1_level_structure3_vector_receipt(&level, &vectors) != 0 ||
             nexus_v1_level_structure3_face_geometry_receipt(&level, &geometry) != 0 ||
+            nexus_v1_level_structure3_face_edge_receipt(&level, &edges) != 0 ||
             nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0 ||
             nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
                 &level, &mesh_semantics) != 0) {
@@ -143,6 +155,19 @@ int main(void) {
                   geometry.measurement_face_count &&
               !geometry.surface_or_draw_semantics_proven,
               "retail face coordinates retain an accounting-complete no-draw degeneracy receipt");
+        CHECK(edges.face_receipt_valid && edges.valid && edges.accounting_valid &&
+              edges.face_count == faces.face_count &&
+              edges.nondegenerate_face_edge_reference_count +
+                      edges.degenerate_face_edge_reference_count ==
+                  edges.face_edge_slot_count &&
+              edges.boundary_face_edge_count + edges.paired_face_edge_count +
+                      edges.multi_incident_face_edge_count ==
+                  edges.unique_face_edge_count &&
+              edges.opposite_direction_paired_face_edge_count +
+                      edges.same_direction_paired_face_edge_count ==
+                  edges.paired_face_edge_count &&
+              !edges.winding_or_draw_semantics_proven,
+              "retail face-row edge incidence remains bounded and no-draw");
         memset(commands, 0, sizeof(commands));
         CHECK(nexus_v1_level_build_dgn_view_render_plan(
                   &level, 0, 0, 0, commands,
@@ -157,6 +182,10 @@ int main(void) {
                   faces.face_count &&
               plan.structure3_face_geometry.nondegenerate_face_count ==
                   faces.face_count &&
+              plan.structure3_face_edges.valid &&
+              plan.structure3_face_edges.face_edge_slot_count ==
+                  edges.face_edge_slot_count &&
+              !plan.structure3_face_edges.winding_or_draw_semantics_proven &&
               !plan.structure3_face_geometry.surface_or_draw_semantics_proven &&
               !plan.structure3_face_materials.material_or_draw_semantics_proven &&
               !plan.structure3_face_normal_pairs.normal_plane_or_draw_semantics_proven,
@@ -324,6 +353,17 @@ int main(void) {
         geometry_face_total += geometry.measurement_face_count;
         geometry_nondegenerate_total += geometry.nondegenerate_face_count;
         geometry_degenerate_total += geometry.degenerate_face_count;
+        edge_slot_total += edges.face_edge_slot_count;
+        edge_nondegenerate_total += edges.nondegenerate_face_edge_reference_count;
+        edge_degenerate_total += edges.degenerate_face_edge_reference_count;
+        edge_unique_total += edges.unique_face_edge_count;
+        edge_boundary_total += edges.boundary_face_edge_count;
+        edge_paired_total += edges.paired_face_edge_count;
+        edge_multi_incident_total += edges.multi_incident_face_edge_count;
+        edge_opposite_total += edges.opposite_direction_paired_face_edge_count;
+        edge_same_direction_total += edges.same_direction_paired_face_edge_count;
+        if (edges.maximum_face_edge_incidence > edge_maximum_incidence)
+            edge_maximum_incidence = edges.maximum_face_edge_incidence;
         if (geometry.maximum_component_absolute_value >
             geometry_maximum_component_absolute_value) {
             geometry_maximum_component_absolute_value =
@@ -343,6 +383,11 @@ int main(void) {
     printf("Structure3 geometric-degeneracy corpus: faces=%d nondegenerate=%d degenerate=%d max-component=%d\n",
            geometry_face_total, geometry_nondegenerate_total,
            geometry_degenerate_total, geometry_maximum_component_absolute_value);
+    printf("Structure3 face-edge corpus: slots=%d nondegenerate=%d degenerate=%d unique=%d boundary=%d paired=%d multi-incident=%d opposite=%d same=%d max-incidence=%d\n",
+           edge_slot_total, edge_nondegenerate_total, edge_degenerate_total,
+           edge_unique_total, edge_boundary_total, edge_paired_total,
+           edge_multi_incident_total, edge_opposite_total, edge_same_direction_total,
+           edge_maximum_incidence);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
@@ -370,5 +415,11 @@ int main(void) {
               geometry_degenerate_total == 0 &&
               geometry_maximum_component_absolute_value == 450560,
           "retail face geometry remains nondegenerate within the measured coordinate envelope");
+    CHECK(edge_slot_total == 73226 && edge_nondegenerate_total == 73041 &&
+              edge_degenerate_total == 185 && edge_unique_total == 47321 &&
+              edge_boundary_total == 22240 && edge_paired_total == 24739 &&
+              edge_multi_incident_total == 342 && edge_opposite_total == 20962 &&
+              edge_same_direction_total == 3777 && edge_maximum_incidence == 4,
+          "retail face-edge incidence remains corpus-locked without winding semantics");
     return g_fail == 0 ? 0 : 1;
 }
