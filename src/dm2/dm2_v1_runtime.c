@@ -78,6 +78,9 @@ typedef struct {
     uint32_t last_generated_object;
     int last_projectile_slot;
     int projectile_actuator_count;
+    /* Consumed by the next V1 frame only. It represents an accepted party
+     * move, never a cooldown, blocked move, or host-supplied animation. */
+    int scene_movement_pending;
     /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
@@ -2502,6 +2505,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_ambient_darkness);
     dm2_v1_viewport_set_gdat_scene_material_plan(
         &viewport, &rt->gdat_scene_material_plan);
+    dm2_v1_viewport_set_gdat_scene_movement_active(
+        &viewport, rt->scene_movement_pending);
     dm2_v1_viewport_set_gdat_wall_material_plan(
         &viewport, &rt->gdat_wall_material_plan);
     memset(&door_render_plan, 0, sizeof(door_render_plan));
@@ -2596,6 +2601,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    /* TODO(source-bound): retain SKProject's full glbIsPlayerMoving cadence
+     * only after its original timing state is decoded. This V1 runtime has
+     * one accepted-move presentation frame, so consume the proven 700/701
+     * offsets once instead of inventing additional animation samples. */
+    rt->scene_movement_pending = 0;
     dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
@@ -3322,6 +3332,10 @@ int dm2_v1_runtime_move(int dir) {
         if (rt->move_callback) {
             rt->move_callback(old_x, old_y, nx, ny);
         }
+        /* SKProject DRAW_DUNGEON_GRAPHIC moves only the floor/ceiling planes
+         * while glbIsPlayerMoving is active. Arm the next renderer-owned V1
+         * frame after an accepted step; blocked moves do not enter it. */
+        rt->scene_movement_pending = 1;
         gs->party_x = nx;
         gs->party_y = ny;
         for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {

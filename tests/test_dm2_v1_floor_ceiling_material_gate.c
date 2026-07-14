@@ -77,6 +77,7 @@ static void prepare(DM2_V1_ViewportState *viewport,
 
 int main(void)
 {
+    enum { FLOOR_TOP = 66 };
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     FetchTrace trace;
@@ -103,6 +104,21 @@ int main(void)
               viewport.last_floor_ceiling_material_consumed_mask == 3u &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u);
+
+    /* SKProject DRAW_DUNGEON_GRAPHIC only offsets rect 700 (ceiling) and
+     * rect 701 (floor) during glbIsPlayerMoving: _4976_00fa=-2,
+     * _4976_00fc=+3. The renderer accepts no alternate displacement. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    prepare(&viewport, framebuffer, &trace);
+    dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK("source-locked movement offsets clip ceiling by -2 and shift floor by +3",
+          framebuffer[0] == 1 && framebuffer[1] == 2 &&
+              framebuffer[FLOOR_TOP * DM2_VP_WIDTH] == 0 &&
+              framebuffer[(FLOOR_TOP + 3) * DM2_VP_WIDTH] == 5 &&
+              viewport.asset_floor_ceiling_drawn_count == 2 &&
+              viewport.blocked_material_draw_count == 0);
 
     printf("DM2 complete GDAT floor/ceiling gate: %d/%d passed\n",
            passed, checks);
