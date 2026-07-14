@@ -425,6 +425,87 @@ static void test_engine_slev_capture_target_stays_source_bound(void) {
     remove(path);
 }
 
+static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt receipt;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt stored;
+    uint8_t slev[96];
+    static const uint8_t task_header[] = {
+        0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0xd0, 0x08, 0x4e, 0x08
+    };
+    static const char trace[] =
+        "magic=FIRESTAFF_NEXUS_SLEV_SH2_TRACE_V1\n"
+        "producer=mednafen-debugger\n"
+        "trace_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+        "level_index=0\n"
+        "canonical_slev_md5=59c01cbdd224152a6176687cdebeea9e\n"
+        "source_byte_count=60\n"
+        "entry_opcode=2fe6\n"
+        "entry_pc=06001200\n"
+        "task_body_pc=06001224\n"
+        "task_body_opcode=430b\n"
+        "callback_or_write_pc=06001280\n"
+        "callback_or_write_kind=write\n"
+        "original_saturn_execution=1\n";
+
+    memset(&engine, 0, sizeof(engine));
+    memset(slev, 0, sizeof(slev));
+    memcpy(slev, task_header, sizeof(task_header));
+    slev[36] = 0x43; slev[37] = 0x0b;
+    slev[52] = 0xa0; slev[53] = 0x10;
+    slev[64] = 0x00; slev[65] = 0x20; slev[66] = 0x27; slev[67] = 0x34;
+    slev[68] = 0x00; slev[69] = 0x20; slev[70] = 0x28; slev[71] = 0x40;
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 1;
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_name,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_name),
+             "SLEV00.BIN");
+    snprintf(engine.level_aux_runtime_receipt.slev.canonical_md5,
+             sizeof(engine.level_aux_runtime_receipt.slev.canonical_md5),
+             "59c01cbdd224152a6176687cdebeea9e");
+    nexus_script_vm_init(&engine.script_vm);
+    CHECK(nexus_script_vm_load_canonical_level(&engine.script_vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0,
+          "trace admission loads canonical SLEV profile");
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_v1_engine_admit_slev_execution_trace(
+              &engine, trace, sizeof(trace) - 1, &receipt) == 1 &&
+          receipt.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE &&
+          receipt.level_index == 0 && receipt.capture_target_bound &&
+          receipt.mednafen_debugger_provenance &&
+          receipt.original_saturn_execution_claimed && receipt.trace_sha256_present &&
+          receipt.entry_pc == 0x06001200u && receipt.task_body_pc == 0x06001224u &&
+          receipt.task_body_opcode == 0x430bu &&
+          receipt.callback_or_write_pc == 0x06001280u &&
+          receipt.callback_or_write_is_write && receipt.trace_chain_complete &&
+          !receipt.task_body_dispatch_proven && !receipt.dispatch_permitted &&
+          receipt.blocks_real_script_dispatch && !receipt.fallback_visuals_permitted,
+          "matched Mednafen trace is retained only as opaque dispatch evidence");
+    CHECK(nexus_v1_current_level_slev_trace_admission_receipt(&engine, &stored) == 0 &&
+          stored.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE &&
+          stored.entry_pc == receipt.entry_pc &&
+          !stored.dispatch_permitted,
+          "engine owns the admitted trace receipt without enabling dispatch");
+    {
+        char mismatched_trace[sizeof(trace)];
+        memcpy(mismatched_trace, trace, sizeof(trace));
+        memcpy(strstr(mismatched_trace, "59c01"), "00000", 5);
+        CHECK(nexus_v1_engine_admit_slev_execution_trace(
+                  &engine, mismatched_trace, sizeof(mismatched_trace) - 1,
+                  &receipt) == 0 &&
+              receipt.status == NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH &&
+              nexus_v1_current_level_slev_trace_admission_receipt(
+                  &engine, &stored) == 0 &&
+              stored.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE,
+              "wrong SLEV identity rejects without replacing admitted evidence");
+    }
+}
+
 static void test_real_slev_corpus_profile(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int seen = 0;
@@ -535,6 +616,7 @@ int main(void) {
     test_real_slev_task_profile_blocks_dispatch();
     test_engine_owned_slev_profile_route_stays_blocked();
     test_engine_slev_capture_target_stays_source_bound();
+    test_engine_slev_trace_admission_stays_no_dispatch();
     test_real_slev_corpus_profile();
 
     if (g_failures) {

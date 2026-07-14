@@ -2597,6 +2597,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         engine->level_aux_runtime_receipt.slev.canonical_hash_verified);
     (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
                                           &engine->script_runtime_receipt);
+    memset(&engine->script_trace_admission, 0,
+           sizeof(engine->script_trace_admission));
+    engine->script_trace_admission.status = NEXUS_V1_SLEV_TRACE_MISSING;
+    engine->script_trace_admission.level_index = level;
+    engine->script_trace_admission.blocks_real_script_dispatch = 1;
+    engine->script_trace_admission.fallback_visuals_permitted = 0;
     free(script_data);
 
     snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
@@ -3020,6 +3026,174 @@ int nexus_v1_engine_write_slev_capture_target(
     }
     *out_target = target;
     return 1;
+}
+
+static int nexus_v1_slev_trace_value(const char *text, size_t size,
+                                     const char *key, char *out,
+                                     size_t out_size) {
+    const char *line = text;
+    const char *end = text + size;
+    size_t key_size;
+
+    if (!text || !key || !out || out_size == 0) return 0;
+    key_size = strlen(key);
+    while (line < end) {
+        const char *line_end = line;
+        size_t value_size;
+        while (line_end < end && *line_end != '\n' && *line_end != '\r')
+            ++line_end;
+        if ((size_t)(line_end - line) > key_size &&
+            memcmp(line, key, key_size) == 0 && line[key_size] == '=') {
+            value_size = (size_t)(line_end - line) - key_size - 1;
+            if (value_size == 0 || value_size >= out_size) return 0;
+            memcpy(out, line + key_size + 1, value_size);
+            out[value_size] = '\0';
+            return 1;
+        }
+        line = line_end;
+        while (line < end && (*line == '\n' || *line == '\r')) ++line;
+    }
+    return 0;
+}
+
+static int nexus_v1_slev_trace_hex_u32(const char *text, uint32_t *out_value) {
+    uint32_t value = 0;
+    const char *cursor;
+
+    if (!text || !text[0] || !out_value) return 0;
+    for (cursor = text; *cursor; ++cursor) {
+        uint32_t digit;
+        if (*cursor >= '0' && *cursor <= '9') digit = (uint32_t)(*cursor - '0');
+        else if (*cursor >= 'a' && *cursor <= 'f') digit = (uint32_t)(*cursor - 'a' + 10);
+        else if (*cursor >= 'A' && *cursor <= 'F') digit = (uint32_t)(*cursor - 'A' + 10);
+        else return 0;
+        if (value > 0x0fffffffu) return 0;
+        value = (value << 4) | digit;
+    }
+    *out_value = value;
+    return 1;
+}
+
+static int nexus_v1_slev_trace_is_sha256(const char *text) {
+    int index;
+    if (!text || strlen(text) != 64) return 0;
+    for (index = 0; index < 64; ++index) {
+        char value = text[index];
+        if (!((value >= '0' && value <= '9') ||
+              (value >= 'a' && value <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+int nexus_v1_engine_admit_slev_execution_trace(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
+    Nexus_V1_LevelScriptCaptureTargetReceipt target;
+    Nexus_V1_LevelScriptTraceAdmissionReceipt receipt;
+    char value[96];
+    char magic[96];
+    char callback_kind[16];
+    uint32_t source_byte_count;
+    uint32_t entry_opcode;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_script_dispatch = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !trace_text || trace_size == 0 ||
+        nexus_v1_engine_build_slev_capture_target(engine, &target) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = target.level_index;
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size, "magic", magic,
+                                    sizeof(magic)) ||
+        strcmp(magic, NEXUS_V1_SLEV_TRACE_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "producer", value,
+                                   sizeof(value)) ||
+        strcmp(value, "mednafen-debugger") != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "trace_sha256",
+                                   value, sizeof(value)) ||
+        !nexus_v1_slev_trace_is_sha256(value)) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.mednafen_debugger_provenance = 1;
+    receipt.trace_sha256_present = 1;
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size, "level_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
+        (int)source_byte_count != target.level_index ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "canonical_slev_md5",
+                                    value, sizeof(value)) ||
+        strcmp(value, target.canonical_slev_md5) != 0 ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "source_byte_count",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &source_byte_count) ||
+        (int)source_byte_count != target.source_byte_count ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "entry_opcode", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &entry_opcode) ||
+        (int)entry_opcode != target.first_opcode) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_slev_trace_value(trace_text, trace_size, "entry_pc", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.entry_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "task_body_pc", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.task_body_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size, "task_body_opcode",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.task_body_opcode) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "callback_or_write_pc", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &receipt.callback_or_write_pc) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "callback_or_write_kind", callback_kind,
+                                    sizeof(callback_kind)) ||
+        (strcmp(callback_kind, "callback") != 0 &&
+         strcmp(callback_kind, "write") != 0) ||
+        !nexus_v1_slev_trace_value(trace_text, trace_size,
+                                    "original_saturn_execution", value,
+                                    sizeof(value)) || strcmp(value, "1") != 0 ||
+        receipt.entry_pc == 0 || receipt.task_body_pc == 0 ||
+        receipt.task_body_pc == receipt.entry_pc || receipt.task_body_opcode == 0 ||
+        receipt.callback_or_write_pc == 0) {
+        receipt.status = NEXUS_V1_SLEV_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.callback_or_write_is_write = strcmp(callback_kind, "write") == 0;
+    receipt.original_saturn_execution_claimed = 1;
+    receipt.capture_target_bound = 1;
+    receipt.trace_chain_complete = 1;
+    receipt.task_body_dispatch_proven = 0;
+    receipt.dispatch_permitted = 0;
+    receipt.status = NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE;
+    engine->script_trace_admission = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_current_level_slev_trace_admission_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_SLEV_TRACE_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->blocks_real_script_dispatch = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->script_trace_admission;
+    return 0;
 }
 
 int nexus_v1_dgn_static_material_source_receipt(
