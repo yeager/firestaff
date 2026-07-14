@@ -1744,9 +1744,9 @@ F	7083	F7083_DrawInitialFilePickerFileList	CEDT014.C;CEDT008.C;UTILITY.H	missing
 F	7084	F7084_ProcessFilePickerInput	CEDT014.C;CEDT008.C;UTILITY.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	7086	F7086_IsReadyToMakeNewAdventure	CEDTINCH.C;CEDT006.C;UTILITY.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	7087	F7087_CopyChampionProperty	CEDTINCR.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	7088	F7088_CopyChampionPortraits	CEDTINCI.C;CEDTINCR.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	7089	F7089_GetFirstCellWithNoChampion	CEDTINCI.C;CEDT008.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	7090	F7090_MakeNewAdventure	CEDTINCI.C;CEDT006.C;UTILITY.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	7088	F7088_CopyChampionPortraits	CEDTINCI.C;CEDTINCR.C	implemented-narrow	redmcsb_f7088_copy_included_portraits_to_excluded_pc34	PC34 four-portrait included-to-excluded transfer is source-linked and tested
+F	7089	F7089_GetFirstCellWithNoChampion	CEDTINCI.C;CEDT008.C	implemented-narrow	redmcsb_f7089_get_first_cell_with_no_champion_pc34	PC34 four-cell source scan order is ported and tested
+F	7090	F7090_MakeNewAdventure	CEDTINCI.C;CEDT006.C;UTILITY.H	implemented-narrow	redmcsb_f7090_make_new_adventure_pc34	PC34 imported-party normalization is source-linked and tested; full media interop remains open
 F	7091	F7091_RunChampionEditor	CEDT019.C;CEDTINCI.C;UTILITY.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	7092	F7092_Unreferenced	CEDTINCI.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	7093	F7093_GetPointerToLastCharacter	STRING.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan

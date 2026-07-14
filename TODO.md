@@ -380,6 +380,11 @@
     spans of 464 bytes are copied and then rebound through F7066. Other
     champion properties, allocation, champion records, CSBWin, DSA, timer,
     and save layouts remain unimplemented rather than inferred.
+  - 2026-07-14 update: `CEDT008.C` F7089 and `CEDTINCI.C` F7090 now own the
+    PC34 imported-party reset after that portrait transfer: source header
+    tails, rotation, field reset, modifier callback and four-cell collision
+    repair are explicit. Original per-media save bytes and runtime handoff
+    still require the corpus proof tracked below.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and

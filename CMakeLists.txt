@@ -6,6 +6,22 @@ if(POLICY CMP0156)
     cmake_policy(SET CMP0156 OLD)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7090_make_new_adventure_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f7090_make_new_adventure_pc34_compat.c")
+    add_executable(test_redmcsb_f7090_make_new_adventure_pc34_compat
+        tests/test_redmcsb_f7090_make_new_adventure_pc34_compat.c
+        src/csb/redmcsb_f7090_make_new_adventure_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f7090_make_new_adventure_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f7090_make_new_adventure_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f7090_make_new_adventure_pc34_compat
+             COMMAND test_redmcsb_f7090_make_new_adventure_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0190_moving_killed_all_tick_boundary_pc34_compat.c")
     add_executable(test_dm1_v1_f0190_moving_killed_all_tick_boundary_pc34_compat
         tests/test_dm1_v1_f0190_moving_killed_all_tick_boundary_pc34_compat.c

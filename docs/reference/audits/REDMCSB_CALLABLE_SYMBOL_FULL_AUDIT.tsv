@@ -1750,9 +1750,9 @@ F7083_DrawInitialFilePickerFileList	F	DrawInitialFilePickerFileList	CEDT008.C:12
 F7084_ProcessFilePickerInput	F	ProcessFilePickerInput	CEDT008.C:143	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F7086_IsReadyToMakeNewAdventure	F	IsReadyToMakeNewAdventure	CEDT006.C:1478	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F7087_CopyChampionProperty	F	CopyChampionProperty	CEDTINCR.C:5	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F7088_CopyChampionPortraits	F	CopyChampionPortraits	CEDTINCI.C:157	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F7089_GetFirstCellWithNoChampion	F	GetFirstCellWithNoChampion	CEDT008.C:273	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F7090_MakeNewAdventure	F	MakeNewAdventure	CEDT006.C:1489	src/csb/csb_v1_character_pc34_compat.c:569	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
+F7088_CopyChampionPortraits	F	CopyChampionPortraits	CEDTINCI.C:157	redmcsb_f7088_copy_included_portraits_to_excluded_pc34	IMPLEMENTED_NARROW	PC34 included-to-excluded four-portrait transfer is source-linked and fails closed; broader champion/save layouts remain outside this adapter.
+F7089_GetFirstCellWithNoChampion	F	GetFirstCellWithNoChampion	CEDT008.C:273	redmcsb_f7089_get_first_cell_with_no_champion_pc34	IMPLEMENTED_NARROW	Four-cell source scan order is ported for the PC34 imported-party boundary and tested with collision normalization.
+F7090_MakeNewAdventure	F	MakeNewAdventure	CEDT006.C:1489	redmcsb_f7090_make_new_adventure_pc34	IMPLEMENTED_NARROW	PC34 imported-party normalization covers header tails, rotation, reset fields, modifier callback and F7089 collision repair; original media/save corpus remains required for full interop.
 F7091_RunChampionEditor	F	RunChampionEditor	CEDT019.C:129	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F7092_Unreferenced	F	Unreferenced	CEDTINCI.C:479	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F7093_GetPointerToLastCharacter	F	GetPointerToLastCharacter	STRING.C:200	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
