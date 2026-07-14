@@ -354,6 +354,10 @@
     opaque dungeon byte stream and its final little-endian checksum word. A
     short output buffer emits nothing. This does not allocate or decode any
     dungeon, CSBWin, DSA, timer, or runtime layout.
+  - 2026-07-14 update: `CEDTINCQ.C` F7064 now applies the PC34 fixed-field
+    NUL padding for the 8-byte champion name and 20-byte title after load.
+    Media-specific character conversion and all champion/CSBWin/DSA layouts
+    remain outside this byte-field normalizer.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
