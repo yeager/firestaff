@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0744`: `FILENAME.C:60-81` is source-locked
+  for the PC 3.4 filename language mutation. It replaces every `~` with the
+  language character, or removes it in place when that character is zero.
+  Focused strict C11 coverage includes adjacent markers and unmarked names.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0738`: `MUSIC.C:513-524` proves that the PC
   3.4/I34E route is intentionally a no-op. Focused strict C11 test and CTest
   registration pass; no synthetic music continuation was introduced.
