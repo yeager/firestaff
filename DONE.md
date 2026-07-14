@@ -8,6 +8,18 @@
   relation evidence withdraws the packet. Verification:
   `nexus_v1_dgn_geometry_readiness`.
 
+- 2026-07-14 CSBWin CursorFilter ResumeSavedGame handoff: the existing live
+  GAMEBLOCK2 leader-hand resume bridge now follows `ReadGame` with
+  `CSBCode.cpp::TAG0138ec`'s `CURSORFILTER_ResumeSavedGame` packet before it
+  publishes a non-empty hand. The six-word packet is admitted only through
+  the current FNV-authenticated `ESL_CURSORFILTER` type-47 DSA action; its
+  output cannot cancel or replace the source-owned restored object. A missing,
+  altered, or unsupported action remains a no-op and cannot prevent the
+  normal hand restoration. Source: CSBWin `CSBCode.cpp:6287-6314`,
+  `SaveGame.cpp:1802-1808`, `MoveObject.cpp:790-852`, and `CSB.h` cursor
+   packet definitions. Verification:
+   `csb_v1_csbwin_cursor_resume_saved_game_filter_runtime`.
+
 - 2026-07-14 Nexus Structure3 complete opaque capture retention: after strict
   capture admission, the engine copies the exact typed face/vertex/normal rows
   together with all six opaque capture spans and their session/bundle identity
