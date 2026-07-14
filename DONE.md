@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1053: available body injects 68k code explicitly
+  marked never executed. The focused PC 3.4 boundary is a source-faithful no-op.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1052: available code polls Amiga scan-line
   hardware. The focused PC 3.4 boundary is deliberately a no-op rather than
   a fabricated hardware emulation.
