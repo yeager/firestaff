@@ -1811,6 +1811,7 @@ static int materialize_original_pc34_timeline(
     struct TimelineQueue_Compat *timeline)
 {
     int i;
+    uint16_t source_indices[DM1_EVENT_MAX_COUNT];
 
     if (!report || !world || !timeline) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
@@ -1833,6 +1834,24 @@ static int materialize_original_pc34_timeline(
             (uint16_t)report->decoded_event_count) {
             return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
         }
+        source_indices[i] = report->timeline_indices[i];
+    }
+    /* C4 is a heap, not F0240's eventual pop order.  M10's compact queue
+     * only sorts by tick, so materialize a source-comparator order here to
+     * retain TIMELINE.C F0234/F0240's same-tick Type/Priority/index order. */
+    for (i = 1; i < report->original_event_count; ++i) {
+        uint16_t source_index = source_indices[i];
+        int insert_index = i;
+
+        while (insert_index > 0 &&
+               original_pc34_timeline_event_is_before(
+                   &report->events[source_index], (int)source_index,
+                   &report->events[source_indices[insert_index - 1]],
+                   (int)source_indices[insert_index - 1])) {
+            source_indices[insert_index] = source_indices[insert_index - 1];
+            --insert_index;
+        }
+        source_indices[insert_index] = source_index;
     }
     for (i = 0; i < report->original_event_count; ++i) {
         uint16_t source_index = report->timeline_indices[i];
@@ -1848,7 +1867,7 @@ static int materialize_original_pc34_timeline(
     }
     (void)F0720_TIMELINE_Init_Compat(timeline, report->original_game_time);
     for (i = 0; i < report->original_event_count; ++i) {
-        uint16_t source_index = report->timeline_indices[i];
+        uint16_t source_index = source_indices[i];
         const struct DM1_Event_V1 *src;
         struct TimelineEvent_Compat ev;
         int kind;

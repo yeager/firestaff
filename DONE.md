@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 F0435 same-tick timeline materialization: original PC34 C4
+  is a ReDMCSB `TIMELINE.C F0234` heap, rather than a linear execution list.
+  F0435 now linearizes its admitted C3/C4 event pairs by the source comparator
+  (low-24-bit time, then Type/Priority descending, then EVENT index) before
+  handing them to M10's tick-ordered queue. This prevents valid sibling heap
+  entries from firing in their storage order when they share a tick. The
+  focused C20 regression uses an authenticated PC34-shaped C4 heap whose
+  priority-1 and priority-2 siblings are deliberately reversed in storage,
+  then proves the runtime emits priority 3, 2, 1. Verification:
+  `test_dm1_v1_original_save_pc34_handoff` (the external-corpus portion
+  remains skip-safe without operator-supplied media).
+
 - 2026-07-14 CSBWin real extended-DSA package stability gate: the opt-in
   `Dungeon.dat` plus `csbgame*.dat` runtime handoff now snapshots both
   complete input files before production resume and requires matching

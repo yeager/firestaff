@@ -2441,6 +2441,85 @@ static void test_runtime_materializer_binds_original_sound_union(void)
           "C20 export rejects a host sound event without the receipt");
 }
 
+static void test_runtime_materializer_linearizes_original_c4_heap_order(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    int written = 0;
+    int rc;
+    int i;
+    const uint32_t fire_at_tick = 123500u;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct TickResult_Compat result;
+    DM1OriginalSavePC34HandoffReport report;
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "same-tick C4 materializer fixture build succeeds");
+    for (i = 0; i < ORIGINAL_PC34_EVENT_COUNT; ++i) {
+        const int priority = i == 0 ? 3 : (i == 1 ? 1 : 2);
+        const int sound_index = i == 0 ? 30 : (i == 1 ? 10 : 20);
+        CHECK(rewrite_fixture_event_type(bytes, (size_t)written, i,
+                                         DM1_EVENT_PLAY_SOUND) &&
+                  rewrite_fixture_event_priority(bytes, (size_t)written, i,
+                                                 priority) &&
+                  rewrite_fixture_event_c_union(bytes, (size_t)written, i,
+                                                (uint16_t)sound_index) &&
+                  rewrite_fixture_event_byte(bytes, (size_t)written, i, 0,
+                                             (int)(fire_at_tick & 0xffu)) &&
+                  rewrite_fixture_event_byte(bytes, (size_t)written, i, 1,
+                                             (int)((fire_at_tick >> 8) & 0xffu)) &&
+                  rewrite_fixture_event_byte(bytes, (size_t)written, i, 2,
+                                             (int)((fire_at_tick >> 16) & 0xffu)) &&
+                  rewrite_fixture_event_byte(bytes, (size_t)written, i, 3, 2),
+              "same-tick C20 fixture retains source map-time and unions");
+    }
+    /* This is a valid C4 heap: priority 3 is its root; its priority-1 and
+     * priority-2 children are deliberately reversed in heap-array order. */
+    CHECK(rewrite_fixture_timeline_index(bytes, (size_t)written, 0, 0u) &&
+              rewrite_fixture_timeline_index(bytes, (size_t)written, 1, 1u) &&
+              rewrite_fixture_timeline_index(bytes, (size_t)written, 2, 2u),
+          "same-tick C4 fixture retains a valid non-linear heap");
+
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(&report, 0, sizeof(report));
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "same-tick C4 fixture write succeeds");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, &report);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0435 materializes the source-valid same-tick C4 heap");
+    CHECK(loaded_world.timeline.count == ORIGINAL_PC34_EVENT_COUNT &&
+              loaded_world.timeline.events[0].aux0 == 30 &&
+              loaded_world.timeline.events[1].aux0 == 20 &&
+              loaded_world.timeline.events[2].aux0 == 10,
+          "F0435 linearizes C4 siblings by source Type/Priority/index order");
+    loaded_world.gameTick = fire_at_tick;
+    memset(&result, 0, sizeof(result));
+    F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world, &result);
+    CHECK(result.emissionCount == ORIGINAL_PC34_EVENT_COUNT &&
+              result.emissions[0].kind == EMIT_SOUND_REQUEST &&
+              result.emissions[0].payload[0] == 30 &&
+              result.emissions[1].kind == EMIT_SOUND_REQUEST &&
+              result.emissions[1].payload[0] == 20 &&
+              result.emissions[2].kind == EMIT_SOUND_REQUEST &&
+              result.emissions[2].payload[0] == 10,
+          "M10 consumes restored same-tick C20 events in source order");
+}
+
 static void test_original_c60_deferred_group_move_roundtrip(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE], exported[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -5655,6 +5734,7 @@ int main(void)
     test_runtime_handoff_rejects_unknown_source_event();
     test_runtime_handoff_materializes_original_c11_actions();
     test_runtime_materializer_binds_original_sound_union();
+    test_runtime_materializer_linearizes_original_c4_heap_order();
     test_original_c60_deferred_group_move_roundtrip();
     test_original_c61_audible_group_move_roundtrip();
     test_runtime_materializer_binds_original_c12_damage_hide();
