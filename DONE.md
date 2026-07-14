@@ -15003,6 +15003,13 @@ gated at runtime. This follows SKProject's `SHOW_MENU_SCREEN` before the later
 `GAME_LOAD` world-graph path. The focused smoke test covers a bounded G1 map
 whose record graph is intentionally unavailable.
 
+# 2026-07-14 DM1 save close-failure recovery
+
+Both native and PC34 save writers now remove a failed primary file and restore
+the previous `.bak` after a close failure. The ordinary original-save handoff
+and C13 runtime gates pass; the optional external PC34 corpus remains skipped
+until supplied.
+
 # ✅ 2026-07-14 DM1 F0435 original-save runtime provenance gate
 
 M11 now publishes `ORIGINAL_SAVE_PC34` only when the input was classified and
