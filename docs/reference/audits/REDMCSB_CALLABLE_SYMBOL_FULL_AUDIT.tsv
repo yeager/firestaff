@@ -1003,12 +1003,12 @@ F0919_PRIM_19_File_Seek	F	PRIM	PRIM.H:281	-	MISSING	No exact numbered token foun
 F0920_PRIM_20_File_Read	F	PRIM	PRIM2C.C:123-142;PRIM.H:324	include/redmcsb_f0920_prim_file_read_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked exact-count file-read host boundary with a focused strict-C11 test.
 F0922_Custom_strcpy	F	Custom	PRIM1.C:105	include/f0922_custom_strcpy_compat.h	IMPLEMENTED_NARROW	PRIM1.C NUL-terminated copy semantics with bounded destination gate; focused CTest.
 F0924_SetCriticalErrorHandler	F	SetCriticalErrorHandler	CEDTINCI.C:306;PRIM1.C:253-269	include/redmcsb_f0924_set_critical_error_handler_pc34_compat.h	SOURCE_NONAPPLICABLE	Available source route installs an Atari ST critical-error vector; no PC 3.4 branch or portable host adapter is supplied. Focused strict-C11 boundary test documents the decision.
-F0925_CheckUtilityDiskInDrive	F	CheckUtilityDiskInDrive	PRIM1.C:143	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0926_FLOPPY_ForceMediaChangeDetection	F	FLOPPY	PRIM1.C:282	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0925_CheckUtilityDiskInDrive	F	CheckUtilityDiskInDrive	PRIM1.C:272-295	include/redmcsb_f0925_check_utility_disk_in_drive_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked utility-disk sector-signature gate with a focused strict-C11 test.
+F0926_FLOPPY_ForceMediaChangeDetection	F	FLOPPY	PRIM1.C:297-395	include/redmcsb_f0926_floppy_force_media_change_detection_pc34_compat.h	SOURCE_NONAPPLICABLE	Available source route directly installs Atari ST supervisor/vector media-change handlers; no PC 3.4 branch or portable adapter is supplied. Focused strict-C11 boundary test documents the decision.
 F0927_PrintLoaderError	F	PrintLoaderError	PRIM.H:285	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0928_PrintOSError	F	PrintOSError	PRIM.H:286	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0929_PRIM_05_FTL_Load	F	PRIM	PRIM.H:273	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0930_GetHeaderChecksum	F	GetHeaderChecksum	PRIM.H:288	src/dm1/dm1_v1_game_state_pc34_compat.c:321	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
+F0930_GetHeaderChecksum	F	GetHeaderChecksum	PRIM1.C:649-670;PRIM2B.C:757-778	include/redmcsb_f0930_get_header_checksum.h	IMPLEMENTED_NARROW	Source-locked header checksum loops with a focused strict-C11 test.
 F0931_ChecksumWords	F	ChecksumWords	PRIM.H:289	include/f0931_f0932_prim_checksums_pc34_compat.h	IMPLEMENTED_NARROW	PRIM1.C source 16-bit word checksum; focused CTest.
 F0932_ChecksumBytes	F	ChecksumBytes	PRIM.H:290	include/f0931_f0932_prim_checksums_pc34_compat.h	IMPLEMENTED_NARROW	PRIM1.C source 16-bit byte checksum; focused CTest.
 F0933_GetHexStringFromValue	F	GetHexStringFromValue	PRIM.H:291	include/redmcsb_f0933_get_hex_string_from_value.h	IMPLEMENTED_NARROW	PRIM1.C uppercase unprefixed hexadecimal formatter; focused CTest.
