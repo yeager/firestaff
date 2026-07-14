@@ -9,6 +9,29 @@
 
 #include <string.h>
 
+static uint16_t csb_v1_audio_read_be16(const uint8_t* bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static int csb_v1_audio_read_nibble(const uint8_t* encoded,
+                                    size_t encodedSize,
+                                    size_t* nibbleIndex,
+                                    uint8_t* outNibble)
+{
+    size_t byteIndex;
+
+    byteIndex = *nibbleIndex / 2u;
+    if (byteIndex >= encodedSize) {
+        return 0;
+    }
+    *outNibble = (uint8_t)((*nibbleIndex & 1u) ?
+                               (encoded[byteIndex] & 0x0fu) :
+                               (encoded[byteIndex] >> 4));
+    ++*nibbleIndex;
+    return 1;
+}
+
 static int csb_v1_audio_valid_index(int16_t soundIndex)
 {
     return soundIndex >= 0 && soundIndex < CSB_V1_SOUND_COUNT;
@@ -117,8 +140,75 @@ void csb_v1_audio_runtime_load_snapshot(CsbV1AudioRuntime* runtime,
     csb_v1_audio_clear_pending(runtime);
 }
 
+int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
+                                         size_t encodedSize,
+                                         uint8_t initialLevel,
+                                         uint8_t* outLevels,
+                                         size_t outLevelCapacity,
+                                         CsbV1StSoundDecodeResult* outResult)
+{
+    size_t declaredSamples;
+    size_t emitted = 0;
+    size_t nibbleIndex = 0;
+    size_t repeatsRemaining = 0;
+    uint8_t currentLevel;
+
+    if (!encoded || !outLevels || !outResult || encodedSize < 2u ||
+        initialLevel > 15u) {
+        return -1;
+    }
+
+    declaredSamples = csb_v1_audio_read_be16(encoded);
+    if (outLevelCapacity < declaredSamples) {
+        return -3;
+    }
+
+    currentLevel = initialLevel;
+    while (emitted < declaredSamples) {
+        uint8_t nibble;
+
+        if (repeatsRemaining != 0u) {
+            --repeatsRemaining;
+        } else {
+            size_t repeatValue = 0;
+
+            if (!csb_v1_audio_read_nibble(encoded + 2u, encodedSize - 2u,
+                                          &nibbleIndex, &nibble)) {
+                return -2;
+            }
+            if (nibble != 0u) {
+                currentLevel = nibble;
+            } else {
+                do {
+                    if (!csb_v1_audio_read_nibble(encoded + 2u,
+                                                  encodedSize - 2u,
+                                                  &nibbleIndex, &nibble)) {
+                        return -2;
+                    }
+                    if (repeatValue > (SIZE_MAX >> 3u)) {
+                        return -2;
+                    }
+                    repeatValue = (repeatValue << 3u) | (nibble & 0x07u);
+                } while ((nibble & 0x08u) != 0u);
+
+                if (repeatValue > SIZE_MAX - 2u) {
+                    return -2;
+                }
+                repeatsRemaining = repeatValue + 2u;
+            }
+        }
+
+        outLevels[emitted++] = currentLevel;
+    }
+
+    outResult->sampleCount = emitted;
+    outResult->encodedBytesConsumed = 2u + ((nibbleIndex + 1u) / 2u);
+    return 0;
+}
+
 const char* csb_v1_audio_runtime_source_evidence(void)
 {
-    return "DEFS.H:135-138; SOUND.C:1632-1638; SOUND.C:1804-1865; "
+    return "DEFS.H:135-138; SOUND.C F0060:887-931,1164-1246; "
+           "SOUND.C:1632-1638; SOUND.C:1804-1865; "
            "GAMELOOP.C:114-115; LOADSAVE.C:1530/2739; PROJEXPL.C:5";
 }
