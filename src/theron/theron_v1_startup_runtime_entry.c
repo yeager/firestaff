@@ -489,6 +489,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff;
     Theron_V1StartupRuntimeInitialPayloadReceipt payload_receipt;
     Theron_Track02InitialLevelLoaderRoute route;
+    Theron_V1_Level payload_level;
     Theron_V1_World candidate;
     Theron_V1StartupRuntimeInitialRouteReceipt receipt = {0};
 
@@ -505,6 +506,19 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
             handoff) ||
         handoff->object_tail_semantics_proven ||
         handoff->fallback_visuals_allowed ||
+        !handoff->loader_level_envelope.handed_off ||
+        !handoff->loader_level_envelope.no_fallback ||
+        handoff->loader_level_envelope.record != handoff->observed_track02_record ||
+        handoff->loader_level_envelope.record_user_data_offset !=
+            handoff->initial_level_boundary.level_user_data_offset_in_record ||
+        handoff->loader_level_envelope.envelope_bytes !=
+            handoff->initial_level_boundary.level_byte_count ||
+        handoff->loader_level_envelope.envelope_checksum !=
+            handoff->initial_level_boundary.level_payload_hash ||
+        theron_v1_level_load(&payload_level,
+            handoff->loader_level_envelope.envelope,
+            (int)handoff->loader_level_envelope.envelope_bytes,
+            dungeon_id, 0) != THERON_MAP_OK ||
         theron_v1_track02_load_initial_level_loader_route(
             hucard_rom, hucard_rom_size, profile->graphics_md5, dungeon_id, 0,
             &route) != THERON_TRACK02_SIGNAL_OK ||
@@ -517,7 +531,14 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
             handoff->initial_level_route.semantics.receipt_hash ||
         route.semantics.envelope.track02_record != handoff->observed_track02_record ||
         route.semantics.envelope.track02_record !=
-            handoff->initial_level_boundary.track02_record) {
+            handoff->initial_level_boundary.track02_record ||
+        payload_level.width != route.level.width ||
+        payload_level.height != route.level.height ||
+        payload_level.start_x != route.level.start_x ||
+        payload_level.start_y != route.level.start_y ||
+        payload_level.start_dir != route.level.start_dir ||
+        memcmp(payload_level.squares, route.level.squares,
+               sizeof(payload_level.squares)) != 0) {
         return 0;
     }
 
@@ -536,6 +557,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
     receipt.sub_level_index = 0;
     receipt.route_hash = route.route_hash;
     receipt.payload_checksum = payload_receipt.payload_checksum;
+    receipt.envelope_checksum = handoff->loader_level_envelope.envelope_checksum;
     receipt.status = "initial_level_route_runtime_received_no_object_or_visual_semantics";
     *world = candidate;
     *out_receipt = receipt;

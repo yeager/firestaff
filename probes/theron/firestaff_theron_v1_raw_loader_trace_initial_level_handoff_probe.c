@@ -127,6 +127,13 @@ int main(void)
         !handoff.loader_payload.no_fallback ||
         handoff.loader_payload.payload_checksum !=
             handoff.complete_payload_checksum ||
+        !handoff.loader_level_envelope.handed_off ||
+        !handoff.loader_level_envelope.no_fallback ||
+        handoff.loader_level_envelope.record_user_data_offset != 0x114u ||
+        handoff.loader_level_envelope.envelope_bytes !=
+            THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
+        handoff.loader_level_envelope.envelope_checksum !=
+            handoff.initial_level_boundary.level_payload_hash ||
         handoff.object_tail_semantics_proven || handoff.fallback_visuals_allowed) {
         free(raw);
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
@@ -187,6 +194,8 @@ int main(void)
         !route_receipt.received || !route_receipt.no_fallback ||
         route_receipt.route_hash != handoff.initial_level_route.route_hash ||
         route_receipt.payload_checksum != handoff.complete_payload_checksum ||
+        route_receipt.envelope_checksum !=
+            handoff.loader_level_envelope.envelope_checksum ||
         world.current_dungeon != THERON_DUNGEON_1_HALL_OF_RECORDS ||
         !world.level_loaded[0][0] || world.levels[0][0].thing_count != 0) {
         free(raw);
@@ -202,6 +211,15 @@ int main(void)
         return 1;
     }
     --profile.track02_initial_level_handoff.initial_level_route.route_hash;
+    ++profile.track02_initial_level_handoff.loader_level_envelope.envelope[0];
+    if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
+            &profile, &world, raw, raw_size,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+        free(raw);
+        printf("FAIL: altered record envelope reached runtime\n");
+        return 1;
+    }
+    --profile.track02_initial_level_handoff.loader_level_envelope.envelope[0];
     ++raw[payload_receipt.raw_track02_offset];
     if (theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             &profile, raw, raw_size, &payload_receipt)) {
