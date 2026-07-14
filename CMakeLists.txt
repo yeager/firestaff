@@ -261,6 +261,103 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_damage_render_pl
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dungeon_get_group_directions_pc34.c")
+    add_executable(test_csb_v1_dungeon_get_group_directions_pc34
+        tests/test_csb_v1_dungeon_get_group_directions_pc34.c
+    )
+    target_include_directories(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dungeon_get_group_directions_pc34 PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_dungeon_get_group_directions_pc34
+        COMMAND test_csb_v1_dungeon_get_group_directions_pc34
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_projectile_impact_count_pc34_compat.c")
+    add_executable(test_dm1_v1_projectile_impact_count_pc34_compat
+        tests/test_dm1_v1_projectile_impact_count_pc34_compat.c
+        src/dm1/dm1_v1_projectile_impact_count_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_impact_count_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_impact_count_pc34_compat
+        COMMAND test_dm1_v1_projectile_impact_count_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_unpoison_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_unpoison_pc34_compat
+        tests/test_dm1_v1_champion_unpoison_pc34_compat.c
+        src/dm1/dm1_v1_champion_unpoison_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_champion_unpoison_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_unpoison_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_champion_unpoison_pc34_compat
+        COMMAND test_dm1_v1_champion_unpoison_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c")
+    add_executable(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
+        tests/test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c
+        src/dm1/dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
+        COMMAND test_dm1_v1_sensor_get_object_of_type_in_cell_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0182_group_stop_attacking_pc34_compat.c")
+    add_executable(test_csb_v1_f0182_group_stop_attacking_pc34_compat
+        tests/test_csb_v1_f0182_group_stop_attacking_pc34_compat.c
+        src/csb/csb_v1_f0182_group_stop_attacking_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0182_group_stop_attacking_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0182_group_stop_attacking_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_f0182_group_stop_attacking_pc34_compat
+        COMMAND test_csb_v1_f0182_group_stop_attacking_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c")
     add_executable(test_dm1_v1_object_draw_icon_to_screen_pc34_compat
         tests/test_dm1_v1_object_draw_icon_to_screen_pc34_compat.c
