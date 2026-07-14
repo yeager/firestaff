@@ -2041,6 +2041,49 @@ static int dm2_runtime_floor_gfx_map_chip_material_plan_identity(
     return 1;
 }
 
+/* skproject LOAD_LOCALLEVEL_DYN makes every Map_definitions::WallGraphics()
+ * entry loadable before DRAW_MAP_CHIP reaches a wall ornament.  Bind the
+ * exact local list to WALL_GFX/index/F9; no generic wall image can stand in. */
+static int dm2_runtime_wall_gfx_map_chip_material_plan_identity(
+    DM2_V1_BootProfile *boot,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    uint32_t *out_hash)
+{
+    uint32_t hash = 2166136261u;
+
+    if (out_hash) *out_hash = 0u;
+    if (!boot || !wall_gfx_list || !out_hash || wall_gfx_count <= 0 ||
+        wall_gfx_count > 16) {
+        return 0;
+    }
+    for (int i = 0; i < wall_gfx_count; ++i) {
+        DM2_V1_BootViewportAssetEvidence evidence;
+        uint8_t palette16[16];
+        uint32_t palette_hash = 0u;
+        int gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
+            wall_gfx_list[i]);
+
+        if (gdat_index == 0 ||
+            !dm2_v1_boot_viewport_asset_evidence(boot, gdat_index, &evidence) ||
+            evidence.category != DM2_GDAT_CATEGORY_WALL_GFX ||
+            evidence.entry_index != wall_gfx_list[i] ||
+            evidence.field != DM2_GDAT_IMG_MAP_CHIP ||
+            dm2_v1_boot_viewport_asset_palette_fetch(
+                boot, gdat_index, palette16, &palette_hash) != 0 ||
+            palette_hash == 0u) {
+            return 0;
+        }
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)wall_gfx_list[i]);
+        hash = dm2_runtime_creature_material_plan_step(hash, evidence.raw_hash);
+        hash = dm2_runtime_creature_material_plan_step(hash, evidence.decoded_hash);
+        hash = dm2_runtime_creature_material_plan_step(hash, palette_hash);
+    }
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_G1CreatureMapChipMaterial *material,
@@ -2799,6 +2842,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t floor_gfx_map_chip_material_plan_hash = 0u;
     int floor_gfx_map_chip_material_plan_required = 0;
     int floor_gfx_map_chip_material_plan_consumed = 0;
+    uint32_t wall_gfx_map_chip_material_plan_hash = 0u;
+    int wall_gfx_map_chip_material_plan_required = 0;
+    int wall_gfx_map_chip_material_plan_consumed = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
@@ -3049,6 +3095,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &floor_gfx_map_chip_material_plan_hash);
     if (!floor_gfx_map_chip_material_plan_consumed) {
         floor_gfx_map_chip_material_plan_hash = 0u;
+    }
+    wall_gfx_map_chip_material_plan_required =
+        !rt->outdoor && rt->map_wall_gfx_count > 0;
+    wall_gfx_map_chip_material_plan_consumed =
+        !wall_gfx_map_chip_material_plan_required ||
+        dm2_runtime_wall_gfx_map_chip_material_plan_identity(
+            rt->boot, rt->map_wall_gfx_list, rt->map_wall_gfx_count,
+            &wall_gfx_map_chip_material_plan_hash);
+    if (!wall_gfx_map_chip_material_plan_consumed) {
+        wall_gfx_map_chip_material_plan_hash = 0u;
     }
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
@@ -3504,6 +3560,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         floor_gfx_map_chip_material_plan_hash;
     g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_consumed =
         floor_gfx_map_chip_material_plan_consumed;
+    g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_required =
+        wall_gfx_map_chip_material_plan_required;
+    g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_hash =
+        wall_gfx_map_chip_material_plan_hash;
+    g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_consumed =
+        wall_gfx_map_chip_material_plan_consumed;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3543,6 +3605,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_required ||
          (g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.floor_gfx_map_chip_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_required ||
+         (g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.wall_gfx_map_chip_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

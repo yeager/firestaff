@@ -36,6 +36,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         (boot_receipt->runtime_m11_frame_floor_gfx_map_chip_material_plan_required &&
          (boot_receipt->runtime_m11_frame_floor_gfx_map_chip_material_plan_hash == 0u ||
           !boot_receipt->runtime_m11_frame_floor_gfx_map_chip_material_plan_consumed)) ||
+        (boot_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_required &&
+         (boot_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_hash == 0u ||
+          !boot_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_consumed)) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
         boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
         !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
@@ -99,6 +102,13 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
           runtime_receipt->floor_gfx_map_chip_material_plan_consumed &&
           runtime_receipt->floor_gfx_map_chip_material_plan_hash ==
               boot_receipt->runtime_m11_frame_floor_gfx_map_chip_material_plan_hash)) &&
+        runtime_receipt->wall_gfx_map_chip_material_plan_required ==
+            boot_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_required &&
+        (!runtime_receipt->wall_gfx_map_chip_material_plan_required ||
+         (runtime_receipt->wall_gfx_map_chip_material_plan_hash != 0u &&
+          runtime_receipt->wall_gfx_map_chip_material_plan_consumed &&
+          runtime_receipt->wall_gfx_map_chip_material_plan_hash ==
+              boot_receipt->runtime_m11_frame_wall_gfx_map_chip_material_plan_hash)) &&
         runtime_receipt->palette_hash ==
             boot_receipt->runtime_m11_frame_palette_hash &&
         runtime_receipt->interface_action_palette_hash ==

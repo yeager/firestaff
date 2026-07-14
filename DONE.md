@@ -7,6 +7,12 @@
 - 2026-07-14 CSB ReDMCSB F0687/F0688 IMG3 stream: added PC packed-nibble and
   source run-count decoding for real IMG3 expansion. Focused strict-C11
   regression passes.
+- 2026-07-14 DM2 SKProject map-local WALL_GFX M11 bridge: added a distinct
+  `Map_definitions::WallGraphics()` material plan for each source
+  `WALL_GFX/index/F9` map chip. Raw data, decoded pixels, and the exact local
+  palette are required before the matching hash reaches M11; missing material
+  fails closed with no generic-wall substitute. Focused G1 map-list and M11
+  receipt-gate regressions pass.
 
 - 2026-07-14 CSB ReDMCSB F0686 IMG previous-line copy: added the PC packed
   pixel copy primitive for real IMG expansion. Focused strict-C11 regression

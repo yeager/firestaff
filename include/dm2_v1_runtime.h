@@ -173,6 +173,9 @@ typedef struct {
     int floor_gfx_map_chip_material_plan_required;
     uint32_t floor_gfx_map_chip_material_plan_hash;
     int floor_gfx_map_chip_material_plan_consumed;
+    int wall_gfx_map_chip_material_plan_required;
+    uint32_t wall_gfx_map_chip_material_plan_hash;
+    int wall_gfx_map_chip_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;
