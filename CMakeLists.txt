@@ -550,6 +550,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0922_custom_strcpy_compat.c")
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0933_get_hex_string_from_value.c")
+    add_executable(test_redmcsb_f0933_get_hex_string_from_value
+        tests/test_redmcsb_f0933_get_hex_string_from_value.c
+        src/frontend/redmcsb_f0933_get_hex_string_from_value.c
+    )
+    target_include_directories(test_redmcsb_f0933_get_hex_string_from_value PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0933_get_hex_string_from_value PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0933_get_hex_string_from_value
+        COMMAND test_redmcsb_f0933_get_hex_string_from_value
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c

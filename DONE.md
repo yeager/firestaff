@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `PRIM1.C F0933_GetHexStringFromValue`: uppercase
+  unprefixed hexadecimal formatting now has a source-locked callable.
+  Verification: focused strict CTest.
+
 - 2026-07-14 DM1/CSB ReDMCSB `PRIM1.C F0922_Custom_strcpy`: NUL-terminated
   source copy semantics now have a destination-bounded compatibility callable.
   Verification: focused strict CTest.
