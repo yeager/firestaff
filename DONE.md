@@ -10,6 +10,17 @@
   `LOADSAVE.C F0435` and `DUNVIEW.C F0128`. Verification: CTest
   `dm1_v1_original_save_pc34_external_hoc_runtime`.
 
+- DONE 2026-07-14 Theron Track02 later-loader media receipt: the raw-loader
+  boundary now requires one source-marked original Mednafen `$e009`
+  dispatch/return envelope after a media-bound `$4090 -> $3800` Stage 3
+  receipt, then binds its exact record range to the same hash-verified raw
+  Track 02 bytes. The receipt retains caller/return PCs, sector count,
+  raw/user-data coordinates, and a user-data hash. Duplicate returns,
+  malformed packed records, out-of-range sectors, changed Track 02 identity,
+  and unbound Stage 3 traces fail closed. It asserts no dungeon, map, object,
+  palette, bitmap, or payload semantics. Verification:
+  `firestaff_theron_v1_raw_loader_trace_stage3_sector_probe`.
+
 - ✅ 2026-07-14 DM1 PC34 external-save HoC runtime gate: every
   operator-staged, checksum-qualified PC34 corpus candidate now has a
   fixture-free M11 F0435 runtime check against original DM1 media. The gate
