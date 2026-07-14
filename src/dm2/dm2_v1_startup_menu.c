@@ -1337,8 +1337,9 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
              sizeof(out_receipt->animation),
              "%s",
              active ? "dm2-startup-menu" : "dm2-runtime");
-    /* fe7299.cpp has no startup frame loop: cue 0 is started before the
-     * static TITLE/0 dt07/4 menu surface is shown. */
+    /* skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235) has no
+     * title-frame loop here: it owns the static TITLE/0/dt07/4 menu surface
+     * and its MessageLoop(true) input before GAME_LOAD may proceed. */
     out_receipt->title_animation_tick = 0;
     out_receipt->title_frame = 0;
     out_receipt->title_frame_max = 0;

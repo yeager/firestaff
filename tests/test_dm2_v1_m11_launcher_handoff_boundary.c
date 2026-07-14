@@ -39,7 +39,13 @@
  *      the saved DM2 party pose/tick into the live runtime boundary.
  *
  * Source-lock boundary:
- *   - m11_game_view.c lines 6706-6810 (DM2 hand-off branch).
+ *   - skproject/SKWIN/SkWinCore.cpp::INIT (55639-55645):
+ *     SHOW_MENU_SCREEN() repeats until GAME_LOAD() returns 1.
+ *   - skproject/SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55235):
+ *     TITLE/0/dt07/4 selection and MessageLoop(true) menu input own the
+ *     frame before runtime.
+ *   - m11_game_view.c (DM2 render branch): startup GDAT must render or the
+ *     frame remains black; a dungeon frame is never substituted.
  *   - firestaff_game_loop.c lines 449-487 (FS_GAME_DM2 boot).
  *   - menu_startup_m12.c lines 2420-2428 (m12_game_supported),
  *     2404-2416 (game_index_for_id), 7759-7833 (launch intent).
@@ -464,6 +470,11 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 200,
                 "real DM2 startup menu first frame is non-blank");
+    expect_true(strcmp(view.lastOutcome, "DM2 STARTUP GDAT") == 0,
+                "real DM2 startup frame uses TITLE GDAT before runtime");
+    expect_true(view.dm2State.startup_menu_active == 1 &&
+                view.dm2State.tick_count == initialTick,
+                "startup draw cannot enter or age the dungeon runtime");
 
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
