@@ -63,6 +63,18 @@ uint8_t dm2_v1_viewport_object_light_level(uint8_t base_light_level,
                      (int)source->light_radius);
 }
 
+int dm2_v1_viewport_g1_tile_class_to_square_type(uint8_t tile_class)
+{
+    /* skproject/SKWIN/DME.h::tileTypeIndex: these are G1 byte-square
+     * classes, not DM2_SquareType enum values. */
+    switch (tile_class) {
+    case 0u: return DM2_SQUARE_WALL;
+    case 1u: return DM2_SQUARE_FLOOR;
+    case 4u: return DM2_SQUARE_DOOR;
+    default: return -1;
+    }
+}
+
 int dm2_v1_viewport_project_map_to_sprite(
     int map_x,
     int map_y,

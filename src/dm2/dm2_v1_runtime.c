@@ -854,6 +854,24 @@ static void dm2_runtime_populate_front_square(DM2_V1_RuntimeState *rt,
         int type;
         if (raw < 0) continue;
         type = raw & DM2_SQUARE_TYPE_MASK;
+        if (dd->square_bytes == 1) {
+            /* G1's tileTypeIndex values are not the renderer enum.  Convert
+             * only the three source-defined classes; every other byte class
+             * remains unavailable instead of becoming a fallback surface. */
+            square_type = dm2_v1_viewport_g1_tile_class_to_square_type(
+                (uint8_t)((unsigned int)raw >> 5));
+            if (square_type < 0) continue;
+        }
+        {
+            DM2_ViewSquare *surface = &viewport->squares[center_doors[i].square];
+            if (square_type == DM2_SQUARE_WALL) {
+                surface->square_type = DM2_SQUARE_WALL;
+                surface->flags |= DM2_SQF_HAS_WALL;
+            } else if (square_type == DM2_SQUARE_FLOOR) {
+                surface->square_type = DM2_SQUARE_FLOOR;
+                surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
+            }
+        }
         if (dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
             DM2_ViewSquare *door = &viewport->squares[center_doors[i].square];
             door->square_type =

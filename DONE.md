@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 G1 center-ray surface binding: the active G1 byte-square
+  `tileTypeIndex` now reaches D0/D1/D2 as its actual SKProject terrain class
+  before M11 consumes the already source-bound wall/floor material plan.
+  This corrects G1's `0=wall, 1=floor, 4=door` numbering at the renderer
+  boundary, rather than treating it as the unrelated host enum. Doors retain
+  their existing direct DB0 route; unsupported terrain remains unavailable.
+  Verification: `dm2_v1_g1_center_ray_surface_gate` proves a G1 wall consumes
+  only source-backed wall material with no fallback draw.
+
 - 2026-07-14 Nexus Structure3 startup capture intake: Nexus startup now
   reopens the loaded canonical `LEVxx.DGN` only after its engine-owned source
   receipt is hash-bound, then forwards a manifest and opaque capture packet to

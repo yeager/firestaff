@@ -85,6 +85,12 @@ typedef enum {
     DM2_SQF_TRANSPARENT_WALL  = 1 << 7,  /* wall with window/open */
 } DM2_SquareFlags;
 
+/* SKProject DME.h::tileTypeIndex encodes PC G1 squares as 0=wall, 1=floor,
+ * and 4=door, whereas the renderer's DM2_SquareType uses different numeric
+ * values.  This conversion is the only admitted G1 terrain bridge. Doors
+ * still require their direct DB0 route before they are rendered. */
+int dm2_v1_viewport_g1_tile_class_to_square_type(uint8_t tile_class);
+
 /* ── Wall frame ─────────────────────────────────────────────────── */
 /* Wall frame descriptor — source rectangle within wall bitmap.
  * Derived from ReDMCSB DUNVIEW.C wall frame tables.
