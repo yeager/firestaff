@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 V2.1 Scale2x capture delivery: the selected-resolution
+  presentation and BMP prove a non-uniform source edge survives EPX.
+  Verification: `dm1_v21_special_palette_capture_probe`.
+
 - ✅ 2026-07-14 DM1 V1 wall-inscription source raster gate: M11 now accepts
   M648 only with graphic 258, C10 transparency, valid source dimensions, and
   an exact F0107 line plan. Verification: `dm1_v1_inscription_source_raster_gate`.
