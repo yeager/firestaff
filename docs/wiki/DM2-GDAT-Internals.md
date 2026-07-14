@@ -43,7 +43,8 @@ decoded pair through the M11 frame. The viewport consumes those exact plan
 pixels and their per-image local palettes directly; it does not issue a second
 asset callback that could accidentally select a different graphics set. A plan
 whose graphics-set index or command hash no longer matches the active map is a
-blocked no-draw frame.
+blocked no-draw frame: it does not consult the callback route or paint a
+fallback plane.
 
 If a required material class cannot be resolved, the frame records a blocked
 no-draw receipt. It must not paint a conventional-color approximation.
@@ -87,4 +88,6 @@ unit test for one material class is not a full-playability claim.
 ./build/test_dm2_v1_runtime_handoff_smoke
 ./build/test_dm2_v1_lighting_falloff_boundary
 ./build/test_dm2_v1_weather_no_synthetic_overlay
+FIRESTAFF_DM2_DATA_DIR="$HOME/.firestaff/data/dm2/data" \\
+  ./build/test_dm2_v1_gdat_scene_plan_viewport_real_data
 ```
