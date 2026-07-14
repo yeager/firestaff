@@ -405,6 +405,63 @@ static int theron_v1_startup_runtime_has_verified_track02_request(
         THERON_TRACK02_VARIANT_UNKNOWN;
 }
 
+int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    Theron_StartupMediaStateReceipt *out_media_receipt,
+    Theron_RuntimeLevelBankSelection *out_level_bank) {
+
+    Theron_StartupMediaStateReceipt media_receipt;
+    Theron_V1_World candidate_world;
+
+    if (out_media_receipt) {
+        memset(out_media_receipt, 0, sizeof(*out_media_receipt));
+    }
+    if (out_level_bank) {
+        memset(out_level_bank, 0, sizeof(*out_level_bank));
+    }
+    if (!world || !hucard_rom || hucard_rom_size == 0u || !md5_hex ||
+        md5_hex[0] == '\0' ||
+        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT ||
+        !theron_v1_startup_runtime_has_verified_track02_request(md5_hex) ||
+        !theron_v1_startup_runtime_stage3_loader_ready(
+            hucard_rom, hucard_rom_size, md5_hex)) {
+        return 0;
+    }
+
+    memset(&media_receipt, 0, sizeof(media_receipt));
+    theron_v1_startup_media_capture_track02_state_receipt(
+        hucard_rom, hucard_rom_size, md5_hex, &media_receipt);
+    if (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &media_receipt)) {
+        return 0;
+    }
+
+    /* Keep this receipt-only handoff atomic. It authenticates source media
+     * for the forcefield transition but never creates a dungeon interpretation.
+     * Stage-two evidence: theron-us-stage2-huc6280.asm:163-181. */
+    candidate_world = *world;
+    if (!theron_v1_startup_media_bind_runtime_receipt(&candidate_world,
+                                                      &media_receipt) ||
+        !theron_v1_world_runtime_media_select_level_bank(
+            &candidate_world, THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
+            dungeon_id, 0)) {
+        return 0;
+    }
+    *world = candidate_world;
+    if (out_media_receipt) {
+        *out_media_receipt = media_receipt;
+    }
+    if (out_level_bank) {
+        *out_level_bank = world->runtime_media.level_bank;
+    }
+    return 1;
+}
+
 int theron_v1_startup_runtime_load_initial_level(
     Theron_V1_World *world,
     const uint8_t *hucard_rom,
@@ -1268,6 +1325,22 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         if (out_result) {
             out_result->result = result;
         }
+        return 0;
+    }
+
+    if (verified_track02_request &&
+        !theron_v1_startup_runtime_bind_track02_soul_room_handoff(
+            &candidate_world, request->hucard_rom, request->hucard_rom_size,
+            request->md5_hex, candidate_flow.selected_dungeon, NULL, NULL)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 verified profile rejected Soul Room media handoff");
+        }
+        if (out_result) {
+            out_result->result = THERON_STARTUP_ERR_LEVEL_LOAD;
+        }
+        theron_v1_startup_runtime_entry_capture_failure_route(
+            receipt, verified_track02_request, &media_receipt, out_result);
         return 0;
     }
 

@@ -713,6 +713,13 @@ that same complete startup-media and stage-two `$4090 -> $3800` preflight
 before it creates the party or changes flow/world state. The tracked startup
 probe verifies the rejected known-profile path remains in the Soul Room;
 positive progress still requires an authentic combined capture.
+2026-07-14 Soul Room handoff update: a hash-verified raw Track 02 can now
+positively bind its complete original bitmap receipt and the authenticated
+stage-two `$4090 -> $3800` loader receipt to the candidate runtime world,
+selecting only the original forcefield media bank before any level load.
+This does not create tiles, objects, a party pose, or a dungeon-record claim;
+the handoff remains atomic and exact level/object semantics stay separately
+blocked on original loader/layout evidence.
 The generic startup-flow probe no longer treats its own rectangles or
 fabricated Track 02 bytes as title/runtime evidence. The title plan remains
 empty until an authenticated Track 02 bitmap route exists, while a known
