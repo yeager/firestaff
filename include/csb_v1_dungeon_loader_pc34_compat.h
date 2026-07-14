@@ -37,6 +37,8 @@
 #define CSB_V1_EXPOOL_EDT_SPECIAL_LOCATIONS 3u
 #define CSB_V1_EXPOOL_ESL_MONSTER_ATTACK_FILTER 0u
 #define CSB_V1_EXPOOL_ESL_MONSTER_MOVE_FILTER 2u
+#define CSB_V1_EXPOOL_ESL_CHAR_DEATH_FILTER 11u
+#define CSB_V1_EXPOOL_ESL_DAMAGE_CHAR_FILTER 15u
 #define CSB_V1_DSA_FILTER_ACTUATOR_TYPE 47u
 
 typedef struct {
@@ -158,6 +160,13 @@ int csb_v1_dungeon_decode_dsa_filter_location(
  * It decodes locations only; it deliberately does not execute DSA actions. */
 int csb_v1_dungeon_resolve_dsa_filter_location(
     const CSB_V1_DungeonData *d, int level, int movement_filter,
+    CSB_V1_DSAFilterLocation *out);
+
+/* Resolve a non-monster CSBWin EDT_SpecialLocations DSA filter.  The caller
+ * supplies the source ESL ordinal; this accepts no inferred fallback key and
+ * retains CSBWin's first type-47 actuator selection on the decoded square. */
+int csb_v1_dungeon_resolve_dsa_special_location(
+    const CSB_V1_DungeonData *d, uint8_t special_location,
     CSB_V1_DSAFilterLocation *out);
 
 /* Adapter matching CSB_V1_SkinCacheRecordLookup. Pass CSB_V1_DungeonData*
