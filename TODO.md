@@ -98,6 +98,14 @@
     and game time while owning no Extended Features/DSA state. A nonexportable
     post-tick heap remains an explicit unavailable result; no generic timer
     or synthetic core save is substituted.
+  - 2026-07-14 follow-up: after a source-owned timer successor survives a
+    live tick, Firestaff now rebuilds only the retained CSBWin `TimerQueue`
+    ordering using `Timer.cpp::AdjustTimerQueue` ordering, and republishes
+    event-to-slot receipts only when every live event still maps one-to-one to
+    a complete original `TIMER` array. Consumed timers, generated events,
+    duplicate slots, and malformed receipts remain unexportable. The opt-in
+    real-package probe remains the required positive evidence for a requeued
+    original save; no package, timer, dungeon, or DSA fixture was added.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

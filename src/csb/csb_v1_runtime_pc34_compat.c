@@ -75,6 +75,8 @@ static int csb_v1_runtime_write_csbwin_global_variables(
 static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate);
 static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
+static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
+    CSB_V1_RuntimeProfile *profile);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -2150,6 +2152,12 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
             }
         }
         csb_v1_runtime_apply_timeline_dispatch_side_effects(profile);
+
+        /* A supported CSBWin timer successor retains its original TIMER
+         * record but must pass through Timer.cpp's heap adjustment before a
+         * core save can be emitted. This is intentionally a no-op when a
+         * timer was consumed or any live event lost its source receipt. */
+        (void)csb_v1_runtime_reheapify_live_csbwin_timer_queue(profile);
     }
 
     profile->game_time++;
@@ -14911,6 +14919,132 @@ static int csb_v1_runtime_validate_csbwin_timer_heap(
             }
         }
     }
+    return 1;
+}
+
+/* CSBWin Timer.cpp::DeleteTimer/SetTimer preserves the TIMER slot when a
+ * supported runtime path consumes and requeues it, then AdjustTimerQueue
+ * restores heap order. Firestaff retains that slot as a source receipt. Once
+ * the due M10 event is gone, rebuild only the serialized heap topology and
+ * its event-to-slot receipts. Any consumed timer, generated event, duplicate
+ * receipt, or malformed queue leaves the profile untouched and unexportable. */
+static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
+    CSB_V1_RuntimeProfile *profile)
+{
+    uint16_t staged_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
+    uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
+    uint8_t seen_timers[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES] = { 0 };
+    int event_ordinal;
+    uint16_t i;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue_summary_total !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_timer_summary_count !=
+            profile->csbwin_timer_queue_summary_count ||
+        profile->csbwin_timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        profile->timeline_queue.eventCount < 0 ||
+        profile->timeline_queue.eventCount !=
+            (int)profile->csbwin_timer_summary_count) {
+        return 0;
+    }
+
+    memcpy(staged_queue, profile->csbwin_timer_queue,
+           (size_t)profile->csbwin_timer_queue_summary_count *
+               sizeof(staged_queue[0]));
+    for (i = 0u; i < DM1_EVENT_MAX_COUNT; ++i) {
+        staged_slots[i] = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    }
+
+    if (profile->csbwin_timer_queue_summary_count != 0u) {
+        const uint16_t timer_index = staged_queue[0];
+        if (timer_index >= profile->csbwin_timer_summary_count ||
+            !profile->csbwin_timers[timer_index].valid ||
+            profile->csbwin_timers[timer_index].truncated ||
+            profile->csbwin_timers[timer_index].function == DM1_EVENT_NONE ||
+            profile->csbwin_timers[timer_index].source_index != timer_index) {
+            return 0;
+        }
+        seen_timers[timer_index] = 1u;
+    }
+
+    /* The restored queue contains each active timer exactly once. Rebuild it
+     * from the retained entries using CSBWin TIMER::operator< ordering. */
+    for (i = 1u; i < profile->csbwin_timer_queue_summary_count; ++i) {
+        const uint16_t timer_index = staged_queue[i];
+        uint16_t position = i;
+
+        if (timer_index >= profile->csbwin_timer_summary_count ||
+            !profile->csbwin_timers[timer_index].valid ||
+            profile->csbwin_timers[timer_index].truncated ||
+            profile->csbwin_timers[timer_index].function == DM1_EVENT_NONE ||
+            profile->csbwin_timers[timer_index].source_index != timer_index ||
+            seen_timers[timer_index]) {
+            return 0;
+        }
+        seen_timers[timer_index] = 1u;
+        while (position > 0u) {
+            const uint16_t parent = (uint16_t)((position - 1u) / 2u);
+            const uint16_t parent_index = staged_queue[parent];
+            if (parent_index >= profile->csbwin_timer_summary_count ||
+                !csb_v1_runtime_csbwin_timer_is_before(
+                    &profile->csbwin_timers[timer_index], timer_index,
+                    &profile->csbwin_timers[parent_index], parent_index)) {
+                break;
+            }
+            staged_queue[position] = parent_index;
+            position = parent;
+        }
+        staged_queue[position] = timer_index;
+    }
+    for (i = 0u; i < profile->csbwin_timer_summary_count; ++i) {
+        if (!seen_timers[i]) return 0;
+    }
+
+    for (event_ordinal = 0;
+         event_ordinal < profile->timeline_queue.eventCount;
+         ++event_ordinal) {
+        const int event_index = profile->timeline_queue.timeline[event_ordinal];
+        const struct DM1_Event_V1 *event;
+        uint16_t previous_slot;
+        uint16_t timer_index;
+        uint16_t queue_slot;
+
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+        previous_slot = profile->csbwin_timeline_event_queue_slot[event_index];
+        if (previous_slot >= profile->csbwin_timer_queue_summary_count) return 0;
+        timer_index = profile->csbwin_timer_queue[previous_slot];
+        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+        for (queue_slot = 0u;
+             queue_slot < profile->csbwin_timer_queue_summary_count;
+             ++queue_slot) {
+            if (staged_queue[queue_slot] == timer_index) break;
+        }
+        if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
+            staged_slots[event_index] != CSB_V1_CSBWIN_TIMER_QUEUE_NONE) {
+            return 0;
+        }
+        event = &profile->timeline_queue.events[event_index];
+        if (event->map_time != profile->csbwin_timers[timer_index].time ||
+            event->type != profile->csbwin_timers[timer_index].function ||
+            event->priority != profile->csbwin_timers[timer_index].ubyte5 ||
+            event->b_mapX != profile->csbwin_timers[timer_index].ubyte6 ||
+            event->b_mapY != profile->csbwin_timers[timer_index].ubyte7 ||
+            event->c_cell != profile->csbwin_timers[timer_index].ubyte8 ||
+            event->c_effect != profile->csbwin_timers[timer_index].ubyte9) {
+            return 0;
+        }
+        staged_slots[event_index] = queue_slot;
+    }
+
+    memcpy(profile->csbwin_timer_queue, staged_queue,
+           (size_t)profile->csbwin_timer_queue_summary_count *
+               sizeof(staged_queue[0]));
+    memcpy(profile->csbwin_timeline_event_queue_slot, staged_slots,
+           sizeof(staged_slots));
     return 1;
 }
 
