@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0738`: `MUSIC.C:513-524` proves that the PC
+  3.4/I34E route is intentionally a no-op. Focused strict C11 test and CTest
+  registration pass; no synthetic music continuation was introduced.
+
+- 2026-07-14 DM1/CSB ReDMCSB `F0735`: PC 3.4 viewport fill forwards the
+  original XYZ and color to the 224-pixel-wide viewport route with no height
+  argument. Focused strict C11 dispatch test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0721`: PC 3.4 palette-changing packed shrink
   blit is source-locked to `BLTSHRNK.C:113-169`, preserving 6-bit sampling,
   nibble extraction and palette remap order. Focused strict C11 byte test
