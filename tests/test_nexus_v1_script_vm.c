@@ -431,12 +431,16 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
     Nexus_V1_LevelScriptTraceAdmissionReceipt stored;
     Nexus_V1_LevelScriptTraceHostReceipt host_receipt;
     Nexus_V1_LevelScriptTraceHostReceipt stored_host;
+    Nexus_V1_SlevDispatchEvidenceReceipt evidence;
     uint8_t slev[96];
     char trace[2048];
     uint64_t raw_trace_hash = 1469598103934665603ULL;
     size_t raw_index;
     static const uint8_t raw_trace[] =
-        "mednafen debugger raw SH-2 trace\n06001200 2fe6\n06001224 430b\n";
+        "mednafen debugger raw SH-2 trace\n"
+        "pc=06001200 opcode=2fe6\n"
+        "pc=06001224 opcode=430b\n"
+        "pc=06001280 kind=write\n";
     static const uint8_t task_header[] = {
         0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
         0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
@@ -501,6 +505,16 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           stored.entry_pc == receipt.entry_pc &&
           !stored.dispatch_permitted,
           "engine owns the admitted trace receipt without enabling dispatch");
+    CHECK(nexus_v1_build_slev_dispatch_evidence(
+              &engine, raw_trace, sizeof(raw_trace) - 1, &evidence) == 1 &&
+          evidence.status == NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED &&
+          evidence.raw_trace_bound && evidence.entry_observed &&
+          evidence.task_body_observed && evidence.callback_or_write_observed &&
+          evidence.callback_or_write_is_write &&
+          !evidence.task_body_dispatch_proven && !evidence.dispatch_permitted &&
+          evidence.blocks_real_script_dispatch &&
+          !evidence.fallback_visuals_permitted,
+          "raw trace proves observation order without promoting task semantics");
     CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine,
                                                        &host_receipt) == 1 &&
           host_receipt.status == NEXUS_V1_SLEV_TRACE_HOST_CONSUMED_OPAQUE &&

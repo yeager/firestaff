@@ -583,6 +583,27 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelScriptTraceHostReceipt;
 
+typedef enum {
+    NEXUS_V1_SLEV_DISPATCH_EVIDENCE_MISSING = 0,
+    NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_RAW = 1,
+    NEXUS_V1_SLEV_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION = 2,
+    NEXUS_V1_SLEV_DISPATCH_EVIDENCE_OBSERVED = 3
+} Nexus_V1_SlevDispatchEvidenceStatus;
+
+typedef struct {
+    Nexus_V1_SlevDispatchEvidenceStatus status;
+    int level_index;
+    int raw_trace_bound;
+    int entry_observed;
+    int task_body_observed;
+    int callback_or_write_observed;
+    int callback_or_write_is_write;
+    int task_body_dispatch_proven;
+    int dispatch_permitted;
+    int blocks_real_script_dispatch;
+    int fallback_visuals_permitted;
+} Nexus_V1_SlevDispatchEvidenceReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -997,6 +1018,9 @@ int nexus_v1_engine_consume_slev_execution_trace(
 int nexus_v1_current_level_slev_trace_host_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptTraceHostReceipt *out_receipt);
+int nexus_v1_build_slev_dispatch_evidence(
+    const Nexus_V1_Engine *engine, const uint8_t *raw_trace,
+    size_t raw_trace_size, Nexus_V1_SlevDispatchEvidenceReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
