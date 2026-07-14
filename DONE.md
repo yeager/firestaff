@@ -14174,6 +14174,17 @@ JP or US Track 02 image. The opt-in corpus probe runs this check only when both
 variants' coalesced traces are supplied. This records a loader-coordinate and
 physical-media fact only: it assigns no payload format, dungeon, map, object,
 graphics, palette, bitmap, or transition meaning.
+
+# ✅ 2026-07-14 Theron Track 02 manifest-bound coalesced loader receipt
+
+The opt-in JP/US coalesced-loader corpus probe now accepts each ordered
+Mednafen transcript only through its own V2 capture manifest. It rehashes and
+matches the exact raw Track 02, System Card 3.0, and trace paths before binding
+the existing selector-resolved complete-sector receipt. A missing half-pair,
+manifest, or System Card path fails the supplied-evidence gate. This records
+only original-artifact provenance and loader/media coordinates; no payload
+format, dungeon, map, object, graphics, palette, bitmap, or transition meaning
+is assigned.
 # Nexus Structure3 Selector Reuse Receipt (2026-07-14)
 
 `nexus_v1_level_structure3_face_material_receipt()` now retains per-level

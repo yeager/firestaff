@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_capture_manifest.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_track02.h"
 
@@ -229,6 +230,21 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceCoalescedLaterReceipt *out);
+
+/* Validates the explicit V2 capture-manifest identity for a coalesced
+ * Mednafen transcript before the transcript is parsed. The caller must
+ * rehash these files before passing their measured MD5 values. This binds
+ * only the original raw Track 02, System Card 3.0, and trace artifacts; it
+ * assigns no payload, dungeon, object, graphics, palette, or transition
+ * meaning to the receipt. */
+int theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+    const Theron_V1CaptureManifest *manifest,
+    const char *track02_path,
+    const char *track02_md5,
+    const char *system_card_path,
+    const char *system_card_md5,
+    const char *trace_path,
+    const char *trace_md5);
 
 /* Binds only compatible real-media startup bitmap receipts. In addition to
  * preserving the existing bitmap-route contract, this binds the inspected

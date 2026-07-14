@@ -784,6 +784,26 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+    const Theron_V1CaptureManifest *manifest,
+    const char *track02_path,
+    const char *track02_md5,
+    const char *system_card_path,
+    const char *system_card_md5,
+    const char *trace_path,
+    const char *trace_md5)
+{
+    return track02_md5 &&
+           (strcmp(track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
+            strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) == 0) &&
+           system_card_md5 &&
+           strcmp(system_card_md5,
+                  "ff1a674273fe3540ccef576376407d1d") == 0 &&
+           theron_v1_capture_manifest_matches_preflight_inputs(
+               manifest, track02_path, track02_md5, system_card_path,
+               system_card_md5, trace_path, trace_md5);
+}
+
 int theron_v1_raw_loader_trace_final_bind(
     const Theron_V1RawLoaderTraceReceipt *trace,
     const Theron_StartupMediaStateReceipt *media,

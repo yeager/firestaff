@@ -257,31 +257,49 @@ static int inspect(const char *track_path, const char *trace_path,
 }
 
 static int inspect_coalesced(const char *track_path, const char *trace_path,
+                             const char *system_card_path,
+                             const char *manifest_path,
                              const char *expected_md5,
                              Theron_V1RawLoaderTraceCoalescedLaterReceipt *out)
 {
     uint8_t *track_bytes;
     uint8_t *trace_bytes;
+    uint8_t *manifest_bytes;
     size_t track_size;
     size_t trace_size;
+    size_t manifest_size;
     char actual_md5[33];
+    char system_card_md5[33];
+    char trace_md5[33];
+    Theron_V1CaptureManifest manifest;
     int ok;
 
     track_bytes = read_file_bytes(track_path, &track_size);
     trace_bytes = read_file_bytes(trace_path, &trace_size);
-    if (!track_bytes || !trace_bytes) {
+    manifest_bytes = read_file_bytes(manifest_path, &manifest_size);
+    if (!track_bytes || !trace_bytes || !manifest_bytes) {
         free(track_bytes);
         free(trace_bytes);
+        free(manifest_bytes);
         return 0;
     }
     (void)trace_size;
+    (void)manifest_size;
     ok = m12_file_md5_hex(track_path, actual_md5) &&
         strcmp(actual_md5, expected_md5) == 0 &&
+        m12_file_md5_hex(system_card_path, system_card_md5) &&
+        m12_file_md5_hex(trace_path, trace_md5) &&
+        theron_v1_capture_manifest_parse((const char *)manifest_bytes,
+                                         &manifest) &&
+        theron_v1_raw_loader_trace_coalesced_capture_manifest_matches(
+            &manifest, track_path, actual_md5, system_card_path,
+            system_card_md5, trace_path, trace_md5) &&
         theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
             (const char *)trace_bytes, track_bytes, track_size, expected_md5,
             out);
     free(track_bytes);
     free(trace_bytes);
+    free(manifest_bytes);
     return ok;
 }
 
@@ -294,6 +312,11 @@ int main(void) {
         getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_TRACE_JP");
     const char *us_coalesced =
         getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_TRACE_US");
+    const char *jp_coalesced_manifest =
+        getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_MANIFEST_JP");
+    const char *us_coalesced_manifest =
+        getenv("FIRESTAFF_THERON_LATER_CD_READ_COALESCED_MANIFEST_US");
+    const char *system_card = getenv("FIRESTAFF_THERON_SYSTEM_CARD3_ROM");
     LaterCdReadLayoutReceipt jp;
     LaterCdReadLayoutReceipt us;
     Theron_V1RawLoaderTraceCoalescedLaterReceipt jp_coalesced_receipt;
@@ -314,17 +337,22 @@ int main(void) {
               jp.caller_pc == us.caller_pc && jp.return_pc == us.return_pc &&
               us.record - jp.record == 1u,
           "JP/US later dispatches retain one bounded selector and transition anchor");
-    if (jp_coalesced || us_coalesced) {
-        check(jp_coalesced && us_coalesced,
-              "coalesced Mednafen evidence is supplied for both raw variants");
-        if (jp_coalesced && us_coalesced) {
-            check(inspect_coalesced(jp_track, jp_coalesced,
+    if (jp_coalesced || us_coalesced || jp_coalesced_manifest ||
+        us_coalesced_manifest || system_card) {
+        check(jp_coalesced && us_coalesced && jp_coalesced_manifest &&
+                  us_coalesced_manifest && system_card,
+              "coalesced Mednafen evidence supplies both manifests and System Card 3.0");
+        if (jp_coalesced && us_coalesced && jp_coalesced_manifest &&
+            us_coalesced_manifest && system_card) {
+            check(inspect_coalesced(jp_track, jp_coalesced, system_card,
+                                    jp_coalesced_manifest,
                                     THERON_TRACK02_MD5_JP_BIN,
                                     &jp_coalesced_receipt) &&
-                      inspect_coalesced(us_track, us_coalesced,
+                      inspect_coalesced(us_track, us_coalesced, system_card,
+                                        us_coalesced_manifest,
                                         THERON_TRACK02_MD5_US_BIN,
                                         &us_coalesced_receipt),
-                  "coalesced Mednafen transcripts bind each later selector to original sector bytes");
+                  "manifest-bound coalesced transcripts bind each later selector to original sector bytes");
             check(jp_coalesced_receipt.valid && us_coalesced_receipt.valid &&
                       jp_coalesced_receipt.descriptor_selector ==
                           us_coalesced_receipt.descriptor_selector &&
