@@ -30,4 +30,11 @@ if "$script" "$work/unmarked.trace" us_bin >/dev/null 2>&1; then
     exit 1
 fi
 
+sed 's/sector_fnv1a=1234abcd/sector_fnv1a=1234abcg/' \
+    "$work/valid.trace" >"$work/malformed-sector.trace"
+if "$script" "$work/malformed-sector.trace" us_bin >/dev/null 2>&1; then
+    printf 'FAIL: verifier accepted a malformed raw-sector fingerprint\n' >&2
+    exit 1
+fi
+
 printf 'PASS: later e009 raw-sector ordering verifier is fail-closed\n'
