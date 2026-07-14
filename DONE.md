@@ -16491,6 +16491,15 @@ fabricating a creature visual.
   negative receipt.
 # ✅ 2026-07-14 Theron PID-targeted Quartz host-input receipt
 
+# ✅ 2026-07-15 Nexus Structure1F/Structure3 runtime correlation
+
+The Nexus engine now revalidates a dual-source Structure1F/Structure1A
+capture target against the active canonical LEV before binding it to an
+already externally attested, engine-owned Structure3 capture. The renderer
+packet exposes that owner context only as no-draw provenance; the
+model-index-to-mesh-entry mapping remains explicitly unproven and the real
+Saturn texture, palette, VDP1, transform, and draw blockers remain active.
+
 The live-capture helper now requires a focused Mednafen process PID and posts
 the requested key-down/up pair directly to that PID with Quartz. It checks
 macOS event-access preflight, emits the granted/post-to-PID receipt, and the
