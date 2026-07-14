@@ -1024,9 +1024,9 @@ F0945_InitAudioData	F	InitAudioData	SOUND.C:425-494;EXEC.C:433-501	include/redmc
 F0946_ReleaseAudioData	F	ReleaseAudioData	SOUND.C:496-557	include/redmcsb_f0946_release_audio_data_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route closes Amiga audio.device and frees native resources; no PC 3.4 branch is supplied.
 F0947_InitDiskData	F	InitDiskData	EXEC.C:547-566	include/redmcsb_f0947_init_disk_data_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route initializes Amiga disk data; no PC 3.4 branch is supplied.
 F0948_ReleaseDiskData	F	ReleaseDiskData	EXEC.C:568-579	include/redmcsb_f0948_release_disk_data_pc34_compat.h	SOURCE_NONAPPLICABLE	Available route releases Amiga disk data; no PC 3.4 branch is supplied.
-F0949_JAPANESE_	F	JAPANESE	JAPANESE.C:16	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0950_JAPANESE_	F	JAPANESE	JAPANESE.C:36	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F0951_JAPANESE_GetCharacterPattern	F	JAPANESE	JAPANESE.C:76	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0949_JAPANESE_	F	JAPANESE	JAPANESE.C:15-34	include/redmcsb_f0949_japanese_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked Japanese character conversion with exhaustive 16-bit strict-C11 test coverage.
+F0950_JAPANESE_	F	JAPANESE	JAPANESE.C:36-74	include/redmcsb_f0950_japanese_character_pattern_pc34_compat.h	IMPLEMENTED_NARROW	Source-locked PC-98 port character-pattern transaction sequence with a focused strict-C11 trace test.
+F0951_JAPANESE_GetCharacterPattern	F	JAPANESE	JAPANESE.C:76-93	include/redmcsb_f0951_japanese_get_character_pattern.h	IMPLEMENTED_NARROW	Source-locked A100 16-byte character-pattern copy with a focused strict-C11 test.
 F0952_JAPANESE_Print	F	JAPANESE	CEDT027.C:1568	src/dm1/dm1_v1_text_message_pc34_compat.c:597	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1001_JAPANESE_LoadANKCharacterPatterns	F	JAPANESE	JAPANESE.C:97	src/dm1/dm1_v1_text_message_pc34_compat.c:598	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1002_Call_F0132_VIDEO_Blit	F	Call	BASE.C:1202	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
