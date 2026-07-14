@@ -13,6 +13,18 @@
 #define NEXUS_V1_STRUCTURE3_CAPTURE_MANIFEST_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES (16U * 1024U * 1024U)
+#define NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT 6U
+
+/* These identify opaque evidence lanes only. Their numeric values and order
+ * are a Firestaff transport record, not a statement about Saturn hardware. */
+typedef enum {
+    NEXUS_V1_STRUCTURE3_TRACE_TEXTURE_SPAN = 0,
+    NEXUS_V1_STRUCTURE3_TRACE_PALETTE_STATE = 1,
+    NEXUS_V1_STRUCTURE3_TRACE_VDP1_STATE = 2,
+    NEXUS_V1_STRUCTURE3_TRACE_TRANSFORM_STATE = 3,
+    NEXUS_V1_STRUCTURE3_TRACE_NORMAL_CULLING_STATE = 4,
+    NEXUS_V1_STRUCTURE3_TRACE_VDP1_COMMAND = 5
+} Nexus_V1_DgnStructure3CaptureTraceLane;
 
 typedef struct {
     int valid;
@@ -24,6 +36,9 @@ typedef struct {
     uint32_t transform_state_bytes;
     uint32_t normal_culling_state_bytes;
     uint32_t vdp1_command_bytes;
+    /* Exact externally captured ordinals for the six opaque observations.
+     * Their relative order is recorded, never inferred from lane names. */
+    uint64_t trace_sequence[NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT];
     Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
     /* Parsing a manifest never makes it an original-Saturn capture. */
     int original_saturn_capture_verified;
@@ -72,6 +87,7 @@ typedef struct {
 typedef struct {
     uint64_t capture_session_fnv1a64;
     uint64_t capture_bundle_fnv1a64;
+    uint64_t capture_trace_order_fnv1a64;
     int original_saturn_source_attested;
 } Nexus_V1_DgnStructure3RawCaptureAttestation;
 
@@ -81,7 +97,9 @@ typedef struct {
     int raw_span_hashes_match;
     int attestation_session_matches;
     int attestation_bundle_matches;
+    int attestation_trace_order_matches;
     int original_saturn_source_attested;
+    uint64_t capture_trace_order_fnv1a64;
     int import_ready;
     int no_draw_only;
     Nexus_V1_DgnStructure3CaptureImport import_packet;

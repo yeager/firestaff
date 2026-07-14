@@ -75,6 +75,48 @@ static uint64_t capture_bundle_fnv1a64(
                          capture->vdp1_command_size);
 }
 
+static uint64_t capture_trace_order_fnv1a64(
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t lane;
+
+    if (!manifest) return 0U;
+    for (lane = 0U; lane < NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT;
+         ++lane) {
+        uint8_t lane_id = (uint8_t)lane;
+        uint8_t sequence[8];
+        size_t byte;
+        if (!manifest->trace_sequence[lane]) return 0U;
+        hash = fnv1a64_update(hash, &lane_id, sizeof(lane_id));
+        for (byte = 0U; byte < sizeof(sequence); ++byte)
+            sequence[byte] = (uint8_t)(manifest->trace_sequence[lane] >>
+                                       (byte * 8U));
+        hash = fnv1a64_update(hash, sequence, sizeof(sequence));
+    }
+    return hash;
+}
+
+static int trace_sequence_is_valid(
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest)
+{
+    size_t lane;
+    size_t other;
+
+    if (!manifest || !manifest->candidate.first_sequence ||
+        manifest->candidate.first_sequence >= manifest->candidate.last_sequence)
+        return 0;
+    for (lane = 0U; lane < NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT;
+         ++lane) {
+        uint64_t sequence = manifest->trace_sequence[lane];
+        if (sequence <= manifest->candidate.first_sequence ||
+            sequence >= manifest->candidate.last_sequence) return 0;
+        for (other = 0U; other < lane; ++other)
+            if (sequence == manifest->trace_sequence[other]) return 0;
+    }
+    return 1;
+}
+
 static uint8_t *read_raw_capture_span(const char *path, size_t expected_size)
 {
     FILE *file;
@@ -192,15 +234,21 @@ int nexus_v1_dgn_structure3_raw_capture_read(
             manifest->candidate.vdp1_command_fnv1a64;
     packet->capture_session_fnv1a64 = attestation->capture_session_fnv1a64;
     packet->capture_bundle_fnv1a64 = capture_bundle_fnv1a64(packet);
+    receipt.capture_trace_order_fnv1a64 = capture_trace_order_fnv1a64(manifest);
     receipt.attestation_session_matches =
         attestation->capture_session_fnv1a64 != 0U &&
         attestation->capture_session_fnv1a64 == manifest->capture_session_fnv1a64;
     receipt.attestation_bundle_matches = packet->capture_bundle_fnv1a64 != 0U &&
         packet->capture_bundle_fnv1a64 == attestation->capture_bundle_fnv1a64;
+    receipt.attestation_trace_order_matches =
+        receipt.capture_trace_order_fnv1a64 != 0U &&
+        receipt.capture_trace_order_fnv1a64 ==
+            attestation->capture_trace_order_fnv1a64;
     receipt.original_saturn_source_attested =
         attestation->original_saturn_source_attested != 0;
     packet->capture_bundle_hash_verified = receipt.raw_span_hashes_match &&
-        receipt.attestation_session_matches && receipt.attestation_bundle_matches;
+        receipt.attestation_session_matches && receipt.attestation_bundle_matches &&
+        receipt.attestation_trace_order_matches;
     packet->original_saturn_capture_verified =
         packet->capture_bundle_hash_verified &&
         receipt.original_saturn_source_attested;
@@ -292,6 +340,18 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
         !read_u32(&cursor, "vdp1_command_bytes=", &receipt.vdp1_command_bytes) ||
         !read_u64(&cursor, "vdp1_command_fnv1a64=",
                   &receipt.candidate.vdp1_command_fnv1a64) ||
+        !read_u64(&cursor, "texture_span_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_TEXTURE_SPAN]) ||
+        !read_u64(&cursor, "palette_state_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_PALETTE_STATE]) ||
+        !read_u64(&cursor, "vdp1_state_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_VDP1_STATE]) ||
+        !read_u64(&cursor, "transform_state_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_TRANSFORM_STATE]) ||
+        !read_u64(&cursor, "normal_culling_state_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_NORMAL_CULLING_STATE]) ||
+        !read_u64(&cursor, "vdp1_command_sequence=",
+                  &receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_VDP1_COMMAND]) ||
         !read_u64(&cursor, "first_sequence=", &receipt.candidate.first_sequence) ||
         !read_u64(&cursor, "last_sequence=", &receipt.candidate.last_sequence) ||
         *cursor != '\0') return 0;
@@ -311,8 +371,7 @@ int nexus_v1_dgn_structure3_capture_manifest_parse(
         !receipt.candidate.transform_state_fnv1a64 ||
         !receipt.candidate.normal_culling_state_fnv1a64 ||
         !receipt.candidate.vdp1_command_fnv1a64 ||
-        !receipt.candidate.first_sequence ||
-        receipt.candidate.first_sequence >= receipt.candidate.last_sequence) return 0;
+        !trace_sequence_is_valid(&receipt)) return 0;
 
     receipt.candidate.fill_selector = (uint16_t)fill_selector;
     receipt.valid = 1;
