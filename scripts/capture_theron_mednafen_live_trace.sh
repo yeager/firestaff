@@ -16,6 +16,8 @@ host_key=${THERON_CAPTURE_HOST_KEY:-}
 host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-8}
 host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
+host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
+host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
@@ -112,6 +114,12 @@ if [[ -n "$host_key" ]]; then
     fi
     if [[ ! "$host_key_repeats" =~ ^[1-9][0-9]*$ ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' >&2
+        exit 1
+    fi
+    if [[ ! "$host_focus_x" =~ ^[1-9][0-9]*$ ||
+          ! "$host_focus_y" =~ ^[1-9][0-9]*$ ]] ||
+       ! command -v cliclick >/dev/null 2>&1; then
+        printf '%s\n' 'FAIL: host input requires cliclick and positive THERON_CAPTURE_FOCUS_X/Y coordinates' >&2
         exit 1
     fi
 fi
@@ -220,6 +228,12 @@ if [[ -n "$host_key" ]]; then
         printf '%s\n' 'FAIL: could not resolve the launched Mednafen UI process' >&2
         exit 1
     fi
+    if ! cliclick "c:${host_focus_x},${host_focus_y}"; then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: macOS could not focus the Mednafen SDL surface' >&2
+        exit 1
+    fi
     if ! osascript <<APPLESCRIPT
 tell application "System Events"
     set targetProcess to first application process whose unix id is $mednafen_ui_pid
@@ -275,6 +289,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
+        printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
     fi

@@ -26,6 +26,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' "$script" ||
    ! grep -Fq 'set targetProcess to first application process whose unix id is $mednafen_ui_pid' "$script" ||
+   ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
    ! grep -Fq 'mednafen_ui_pid=$(pgrep -f "$mednafen_bin" | tail -n 1 || true)' "$script" ||
    ! grep -Fq 'key code 36' "$script" ||
    ! grep -Fq 'key code 48' "$script" ||
@@ -54,6 +55,7 @@ if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCE
 fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'host_input_target_pid=%s' "$script" ||
+   ! grep -Fq 'host_input_focus=screen_click:%s,%s' "$script" ||
    ! grep -Fq 'trace_input_order_receipt()' "$script" ||
    ! grep -Fq 'pce_input_transactions_after_first_host' "$script" ||
    ! grep -Fq 'host_input_order=after_last_observed_pce_input_poll' "$script" ||

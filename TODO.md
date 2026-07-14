@@ -24,7 +24,9 @@
   still had zero emulator-observed host events, so process focus alone is not
   evidence of controller delivery. A third run used the explicit local
   Return-to-PCE-run mapping and still produced zero host events, narrowing the
-  blocker to macOS event delivery into SDL rather than Mednafen mapping.
+  blocker to macOS event delivery into SDL rather than Mednafen mapping. A
+  PID-bound screen-center click was also recorded with zero SDL events; a
+  future capture must use a delivery path that the emulator itself observes.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
