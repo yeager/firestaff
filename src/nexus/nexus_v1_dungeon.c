@@ -4130,6 +4130,7 @@ int nexus_v1_level_structure3_attachment_receipt(
 
 int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int dgn_source_hash_verified,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const uint8_t *captured_texture_span, int captured_texture_span_size,
     const uint8_t *captured_palette_state, int captured_palette_state_size,
@@ -4190,7 +4191,14 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
         candidate->vdp1_command_fnv1a64 == 0U ||
         candidate->first_sequence == 0U ||
         candidate->first_sequence >= candidate->last_sequence) return -1;
-    receipt.candidate_framing_valid = 1;
+    /* The caller owns canonical-source admission. Do not let arbitrary data
+     * self-admit by echoing its fingerprint inside a capture packet. */
+    receipt.dgn_source_hash_verified = dgn_source_hash_verified != 0;
+    receipt.candidate_framing_valid = receipt.dgn_source_hash_verified;
+    if (!receipt.candidate_framing_valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
     receipt.dgn_source_matches = nexus_v1_fnv1a64(dgn_data, dgn_size) ==
         candidate->dgn_fnv1a64;
     receipt.structure3_payload_matches =
@@ -4263,7 +4271,8 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
         candidate->normal_culling_state_fnv1a64;
     receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
         captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
-    receipt.complete_source_binding = receipt.dgn_source_matches &&
+    receipt.complete_source_binding = receipt.dgn_source_hash_verified &&
+        receipt.dgn_source_matches &&
         receipt.structure3_payload_matches && receipt.typed_mesh_corpus_matches &&
         receipt.entry_face_matches && receipt.face_row_matches &&
         receipt.referenced_vertex_rows_match && receipt.normal_row_matches &&

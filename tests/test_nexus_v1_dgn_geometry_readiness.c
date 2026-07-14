@@ -69,6 +69,29 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static uint32_t fnv1a32(const uint8_t *data, size_t size) {
+    uint32_t hash = 2166136261U;
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619U;
+    }
+    return hash;
+}
+
+static uint32_t fnv1a32_repeated(const uint8_t *data, size_t size, int count) {
+    uint32_t hash = 2166136261U;
+    int repeat;
+    for (repeat = 0; repeat < count; ++repeat) {
+        size_t i;
+        for (i = 0U; i < size; ++i) {
+            hash ^= data[i];
+            hash *= 16777619U;
+        }
+    }
+    return hash;
+}
+
 static uint8_t *cell_at(uint8_t *structure1, int structure1b_rel, int x, int y) {
     return structure1 + structure1b_rel +
            ((y * NEXUS_MAX_MAP_SIZE + x) *
@@ -1905,6 +1928,14 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
+    Nexus_V1_DgnStructure3FaceCaptureCandidate candidate;
+    Nexus_V1_DgnStructure3FaceCaptureBindingReceipt capture;
+    uint8_t vdp1_command[NEXUS_V1_VDP1_COMMAND_BYTES];
+    const uint8_t texture_span[] = { 0x12U, 0x34U };
+    const uint8_t palette_state[] = { 0x56U };
+    const uint8_t vdp1_state[] = { 0x78U };
+    const uint8_t transform_state[] = { 0x9aU };
+    const uint8_t culling_state[] = { 0xbcU };
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
           "Structure3 entry-header fixture builds");
@@ -2059,6 +2090,51 @@ static void test_structure3_entry_header_boundaries(void) {
           !handoff.structure3_entry_headers.semantics_proven &&
           !handoff.fallback_visuals_permitted,
           "Structure3 entry-header receipt cannot authorize a draw route");
+
+    /* These hashes cover every future packet lane, but a fixture must not
+     * certify itself by merely repeating its own DGN fingerprint. */
+    memset(&candidate, 0, sizeof(candidate));
+    memset(vdp1_command, 0, sizeof(vdp1_command));
+    candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
+    candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
+    candidate.typed_mesh_corpus_fnv1a32 = NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
+    candidate.entry_index = 1U;
+    candidate.face_ordinal = 0U;
+    candidate.face_row_fnv1a32 = fnv1a32(payload + 204U, 12U);
+    candidate.referenced_vertex_rows_fnv1a32 =
+        fnv1a32_repeated(payload + 192U, 12U, 3);
+    candidate.normal_row_fnv1a32 = fnv1a32(payload + 228U, 12U);
+    candidate.texture_span_fnv1a64 = fnv1a64(texture_span, sizeof(texture_span));
+    candidate.palette_state_fnv1a64 = fnv1a64(palette_state, sizeof(palette_state));
+    candidate.vdp1_state_fnv1a64 = fnv1a64(vdp1_state, sizeof(vdp1_state));
+    candidate.transform_state_fnv1a64 = fnv1a64(transform_state, sizeof(transform_state));
+    candidate.normal_culling_state_fnv1a64 = fnv1a64(culling_state, sizeof(culling_state));
+    candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command, sizeof(vdp1_command));
+    candidate.first_sequence = 1U;
+    candidate.last_sequence = 2U;
+    CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+              &level, dgn, (int)sizeof(dgn), 0, &candidate,
+              texture_span, (int)sizeof(texture_span),
+              palette_state, (int)sizeof(palette_state),
+              vdp1_state, (int)sizeof(vdp1_state),
+              transform_state, (int)sizeof(transform_state),
+              culling_state, (int)sizeof(culling_state),
+              vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
+          !capture.dgn_source_hash_verified && !capture.candidate_framing_valid &&
+          !capture.complete_source_binding && capture.blocks_real_dgn_mesh_render,
+          "Structure3 capture fingerprints cannot self-admit unverified DGN bytes");
+    CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+              &level, dgn, (int)sizeof(dgn), 1, &candidate,
+              texture_span, (int)sizeof(texture_span),
+              palette_state, (int)sizeof(palette_state),
+              vdp1_state, (int)sizeof(vdp1_state),
+              transform_state, (int)sizeof(transform_state),
+              culling_state, (int)sizeof(culling_state),
+              vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
+          capture.dgn_source_hash_verified && capture.complete_source_binding &&
+          !capture.original_saturn_capture_verified &&
+          !capture.renderer_handoff_ready && capture.blocks_real_dgn_mesh_render,
+          "a fully bound Structure3 packet remains no-draw without Saturn provenance");
 
     wb32(payload + 128, 0U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
