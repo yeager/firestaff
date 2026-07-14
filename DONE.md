@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0784`: source-locked direct IODRV_06
+  unlock-mouse dispatch. Focused strict C11 test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0773`, `F0781` and `F0783`: source-locked
   DOS chunked write, mouse pointer-event routing and lock-mouse driver
   dispatch. Focused strict C11 tests pass.
