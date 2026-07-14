@@ -1796,7 +1796,7 @@ F	0740	F0740_MUSIC_Pause	ANIM.C;COMMAND.C;DEFS.H;MUSIC.C;STARTUP2.C	referenced_n
 F	0741	F0741_MUSIC_PlayGameMusic	FMTOWNS.H;DEFS.H;MUSIC.C;ENDGAME.C;ENTRANCE.C	referenced_not_verified
 F	0742	F0742_MUSIC_SetTrack	FMTOWNS.H;NEWMAP.C;MUSIC.C	referenced_not_verified
 F	0743	F0743_MUSIC_Update	FMTOWNS.H;GAMELOOP.C;MUSIC.C	referenced_not_verified
-F	0744	F0744_ReplaceTildeInFileName	FILENAME.C	referenced_not_verified
+F	0744	F0744_ReplaceTildeInFileName	FILENAME.C	implemented_source_locked
 F	0745	F0745_SetFileNamesAccordingToLanguage	DEFS.H;FILENAME.C;STARTUP2.C	referenced_not_verified
 F	0746	F0746_IsEMSPresent	STARTUP2.C	referenced_not_verified
 F	0747	F0747_EMM_GetVersion	STARTUP2.C	referenced_not_verified
