@@ -7389,11 +7389,29 @@ int dm2_v1_boot_creature_atlas_capture_receipt(
             out_receipt->animation_table_hash = before_hash;
             out_receipt->animation_table_byte_count = before_count;
         }
+        if (table_count == 3) {
+            ++out_receipt->animation_complete_creature_index_count;
+            if (creature < 32) {
+                out_receipt->animation_complete_creature_mask_low |=
+                    (uint32_t)1u << creature;
+            } else {
+                out_receipt->animation_complete_creature_mask_high |=
+                    (uint32_t)1u << (creature - 32);
+            }
+            out_receipt->animation_complete_creature_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_receipt->animation_complete_creature_hash
+                        ? out_receipt->animation_complete_creature_hash
+                        : 0x32434149u,
+                    (uint32_t)creature);
+        }
     }
     out_receipt->animation_table_ready =
         out_receipt->animation_attribution_count > 0 &&
         out_receipt->animation_info_sequence_count > 0 &&
         out_receipt->animation_frame_sequence_count > 0 &&
+        out_receipt->animation_complete_creature_index_count > 0 &&
+        out_receipt->animation_complete_creature_hash != 0u &&
         out_receipt->animation_table_hash != 0u &&
         out_receipt->animation_table_byte_count > 0u;
     if (out_receipt->min_frame_count == 9999) {

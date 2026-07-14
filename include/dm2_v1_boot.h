@@ -448,6 +448,12 @@ typedef struct {
     int animation_attribution_count;
     int animation_info_sequence_count;
     int animation_frame_sequence_count;
+    /* A creature animation route is source-owned only when all three
+     * SKProject table payloads resolve for one CREATURES index. */
+    int animation_complete_creature_index_count;
+    uint32_t animation_complete_creature_mask_low;
+    uint32_t animation_complete_creature_mask_high;
+    uint32_t animation_complete_creature_hash;
     uint32_t animation_table_hash;
     uint32_t animation_table_byte_count;
     int animation_table_ready;
