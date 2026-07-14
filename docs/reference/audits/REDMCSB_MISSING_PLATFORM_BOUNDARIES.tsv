@@ -1,0 +1,299 @@
+symbol	kind	family	reference_source	audit_status	platform_partition	disposition	portable_equivalent	rationale
+E0013_MAIN_Exception69Handler_TimerC_DoNothing	E	MAIN	BASE.C:726	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+E0014_MAIN_Exception70Handler_KeyboardMIDI	E	MAIN	BASE.C:728	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F0018_MAIN_SetExceptionVectors	F	MAIN	ATARIST.H:12	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F018_aaat_	F	Atari ST / PRIM ABI alias	ATARIST.H:12	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F019_aarz_	F	Atari ST / PRIM ABI alias	ATARIST.H:13	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F035_aaaw_	F	Atari ST / PRIM ABI alias	ATARIST.H:29	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F106_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:62	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F134_zzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:66	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F135_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:67	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F145_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:76	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F147_aawz_	F	Atari ST / PRIM ABI alias	ATARIST.H:78	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F182_aqzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:106	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F195_akzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:117	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F196_aozz_	F	Atari ST / PRIM ABI alias	ATARIST.H:118	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F218_ezzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:126	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F227_qzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:130	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F461_AA08_	F	Atari ST / PRIM ABI alias	ATARIST.H:223	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F468_ozzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:227	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F469_rzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:228	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F470_xzzz_	F	Atari ST / PRIM ABI alias	ATARIST.H:229	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F480_AA07_	F	Atari ST / PRIM ABI alias	ATARIST.H:235	MISSING	Atari-ST-PRIM-ABI-alias	NON_APPLICABLE	-	Atari ST/PRIM linker alias, not an independently callable portable behavior.
+F0513_DIALOG_DrawGameReadyToPlay_Unreferenced	F	DIALOG	AMIGA.H:304	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0518_FLOPPY_Deinitialize_CPSX	F	FLOPPY	AMIGA.H:309	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0519_FLOPPY_GetFormatResult	F	FLOPPY	AMIGA.H:310	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0520_FLOPPY_GetSectorChecksum	F	FLOPPY	AMIGA.H:311	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0521_FLOPPY_GetIOError	F	FLOPPY	AMIGA.H:312	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0522_FLOPPY_SendDosPacket	F	FLOPPY	AMIGA.H:313	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0523_FLOPPY_InhibitFileSystem	F	FLOPPY	AMIGA.H:314	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0524_FLOPPY_OpenTrackdiskDevice	F	FLOPPY	AMIGA.H:315	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0525_FLOPPY_GetWriteProtectionState	F	FLOPPY	AMIGA.H:316	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0526_FLOPPY_DoTrackdiskDeviceIO	F	FLOPPY	AMIGA.H:318	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0529_FLOPPY_IsFloppyInDrive	F	FLOPPY	AMIGA.H:325	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0530_FLOPPY_DirectoryExists	F	FLOPPY	AMIGA.H:326	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0531_FLOPPY_CompareVolumeName	F	FLOPPY	AMIGA.H:327	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0532_FLOPPY_GetVolumeInfoData	F	FLOPPY	AMIGA.H:329	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0534_FLOPPY_GetFileSize	F	FLOPPY	AMIGA.H:335	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0535_MEMORY_GetGraphicsDatFileSize	F	MEMORY	AMIGA.H:336	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0537_INPUT_ReleaseResources	F	INPUT	AMIGA.H:338	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0544_INPUT_ResetPressingEyeOrMouth	F	INPUT	AMIGA.H:345	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0550_VIDEO_FillScreenBox	F	VIDEO	AMIGA.H:351	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0551_VIDEO_HatchBox_Unreferenced	F	VIDEO	AMIGA.H:352	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0552_BASE_DisplayError	F	BASE	AMIGA.H:353	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0557_SCROLLER_Initialize	F	SCROLLER	AMIGA.H:358	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0558_SCROLLER_CancelInitialize	F	SCROLLER	AMIGA.H:359	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0559_SCROLLER_Deinitialize	F	SCROLLER	AMIGA.H:360	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0562_SCROLLER_Task	F	SCROLLER	AMIGA.H:363	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0563_SCROLLER_UpdateMessageArea	F	SCROLLER	AMIGA.H:364	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F0567_COPYPROA_InitFloppyInterruptHandler_CPSX	F	COPYPROA	AMIGA.H:368	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F0568_COPYPROA_CleanupFloppyInterruptHandler_CPSX	F	COPYPROA	AMIGA.H:369	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F0569_COPYPROA_FloppyInterruptHandler_CPSX	F	COPYPROA	AMIGA.H:371	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F0571_COPYPROB_InitializeDiskChangeHandler_CPSX	F	COPYPROB	AMIGA.H:377	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0572_COPYPROB_ReleaseDiskChangeHandler_CPSX	F	COPYPROB	AMIGA.H:378	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0573_COPYPROB_DiskChangeHandler_CPSX	F	COPYPROB	AMIGA.H:379	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F0917_PRIM_15_Memory_Allocate	F	PRIM	PRIM.H:279	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0918_PRIM_16_Memory_Free	F	PRIM	PRIM.H:280	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0919_PRIM_19_File_Seek	F	PRIM	PRIM.H:281	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0922_Custom_strcpy	F	Custom	PRIM1.C:105	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0925_CheckUtilityDiskInDrive	F	CheckUtilityDiskInDrive	PRIM1.C:143	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0926_FLOPPY_ForceMediaChangeDetection	F	FLOPPY	PRIM1.C:282	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0927_PrintLoaderError	F	PrintLoaderError	PRIM.H:285	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0928_PrintOSError	F	PrintOSError	PRIM.H:286	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0929_PRIM_05_FTL_Load	F	PRIM	PRIM.H:273	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0931_ChecksumWords	F	ChecksumWords	PRIM.H:289	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0932_ChecksumBytes	F	ChecksumBytes	PRIM.H:290	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0933_GetHexStringFromValue	F	GetHexStringFromValue	PRIM.H:291	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F0934_ConvertValueToHexDigits	F	ConvertValueToHexDigits	PRIM.H:274	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC	F	Pre	AMIGA.H:400	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F1055_Post_F0380_COMMAND_ProcessQueue_CPSC	F	Post	AMIGA.H:401	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F1065_SetExecBase	F	SetExecBase	AMIGALIB.C:838	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F1067_InitAmigaStuff	F	InitAmigaStuff	AMIGA.H:406	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F1101_DetectDiskChange	F	DetectDiskChange	AMIGA.H:398	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F1106_IsTrackdiskDeviceOpened	F	IsTrackdiskDeviceOpened	FIO1.C:737	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1107_GetDiskChangeCounter	F	GetDiskChangeCounter	FIO1.C:22	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1108_GetDiskChangeCounter	F	GetDiskChangeCounter	AMIGA.H:405	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F1109_GetDiskState	F	GetDiskState	FIO1.C:970	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1110_DrawFormatProgressBar	F	DrawFormatProgressBar	AMIGA.H:399	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F1140_InitializeColorPaletteFullBlack	F	InitializeColorPaletteFullBlack	AMIGAVID.C:32	MISSING	Amiga-host	MISSING	-	Amiga host-facing behavior lacks a source-backed portable contract; no runtime equivalent is claimed.
+F1141_EnablePlayfieldDisplayAndCopper	F	EnablePlayfieldDisplayAndCopper	AMIGAVID.C:50	MISSING	Amiga-host	NON_APPLICABLE	-	Original Amiga device, interrupt, or display-host boundary; no portable runtime substitute is evidenced.
+F1159_Empty	F	Empty	USIOMAIN.C:12	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1160_USIO_04_Empty	F	USIO	USIO1.C:29	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1161_USIO_05_Empty	F	USIO	USIO1.C:36	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1162_USIO_06_HidePointer	F	USIO	USIO1.C:43	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1163_USIO_07_ShowPointer	F	USIO	USIO1.C:61	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1164_USIO_15_GetFirstQueuedUsioDataType	F	USIO	USIO2.C:41	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1165_USIO_17_WaitUntilKeyboardOrMouseInput	F	USIO	USIO2.C:60	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1166_USIO_16_ExtractFirstUsioDataFromQueue	F	USIO	USIO2.C:75	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1167_USIO_14_GetMouseStatus	F	USIO	USIO2.C:89	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1168_USIO_18_Empty	F	USIO	USIO2.C:116	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1170_USIO_03_Expunge	F	USIO	USIO2.C:176	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1171_USIO_19_LockDF0	F	USIO	USIO2.C:205	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1172_QueueMouseAndKeyboardInput	F	QueueMouseAndKeyboardInput	USIO2.C:13	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1173_AddUsioDataToInputQueue	F	AddUsioDataToInputQueue	USIO1.C:177	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1174_AddPendingUsioDataToInputQueue	F	AddPendingUsioDataToInputQueue	USIO2.C:264	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1175_GetFirstQueuedUsioDataIndex	F	GetFirstQueuedUsioDataIndex	USIO2.C:51	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1176_ExtractFirstUsioDataFromQueue	F	ExtractFirstUsioDataFromQueue	USIO2.C:69	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1305_OpenFTLLibrary	F	OpenFTLLibrary	FIO1MAIN.C:34	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1306_Unreferenced	F	Unreferenced	FIO1MAIN.C:75	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1307_FIO1_03_Expunge	F	FIO1	FIO1MAIN.C:31	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1316_InitializeLibrary	F	InitializeLibrary	FIO1.C:54	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1317_UninitializeLibrary	F	UninitializeLibrary	FIO1.C:61	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1318_FIO1_29_	F	FIO1	FIO1.C:69	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1319_FIO1_28_	F	FIO1	FIO1.C:95	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1320_FIO1_27_	F	FIO1	FIO1.C:113	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1321_FIO1_07_SubstituteStringInFileName	F	FIO1	FIO1.C:125	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1322_FIO1_26_	F	FIO1	FIO1.C:145	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1324_FIO1_24_	F	FIO1	FIO1.C:247	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1325_FIO1_04_IsDiskWriteable	F	FIO1	FIO1.C:267	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1326_FIO1_05_FormatSaveDisk	F	FIO1	FIO1.C:285	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1327_FIO1_23_	F	FIO1	FIO1.C:50	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1328_FIO1_22_	F	FIO1	FIO1.C:362	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1329_FIO1_21_Open	F	FIO1	FIO1.C:384	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1331_FIO1_19_Close	F	FIO1	FIO1.C:453	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1332_FIO1_18_GetSize	F	FIO1	FIO1.C:479	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1333_FIO1_17_Tell	F	FIO1	FIO1.C:506	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1334_FIO1_16_Seek	F	FIO1	FIO1.C:531	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1335_FIO1_15_Read	F	FIO1	FIO1.C:560	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1336_FIO1_14_Write	F	FIO1	FIO1.C:592	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1337_FIO1_13_Lock	F	FIO1	FIO1.C:634	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1338_FIO1_12_Delete	F	FIO1	FIO1.C:668	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1339_FIO1_11_Rename	F	FIO1	FIO1.C:697	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1340_FIO1_09_	F	FIO1	FIO1.C:728	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1341_FIO1_10_	F	FIO1	FIO1.C:745	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1342_FIO1_08_	F	FIO1	FIO1.C:762	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1343_FIO1_06_	F	FIO1	FIO1.C:791	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1344_UninitializeData	F	UninitializeData	FIO1.C:26	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1345_InitializeData	F	InitializeData	FIO1.C:27	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1348_IsFloppyDiskInDrive	F	IsFloppyDiskInDrive	FIO1.C:329	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1349_IsDiskWriteProtected	F	IsDiskWriteProtected	FIO1.C:278	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1362_IsFloppyDriveEmpty	F	IsFloppyDriveEmpty	FIO1.C:21	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1363_IsFloppyDiskWriteProtected	F	IsFloppyDiskWriteProtected	FIO1.C:24	MISSING	FIO	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F1534_CallAES	F	CallAES	ATARIST.H:376	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1535_AES_appl_init	F	AES	UTSTAES.C:169	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1536_AES_appl_exit	F	AES	UTSTAES.C:187	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1537_AES_appl_write	F	AES	UTSTAES.C:194	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1538_AES_appl_read	F	AES	UTSTAES.C:201	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1539_AES_appl_find	F	AES	UTSTAES.C:208	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1540_AES_appl_tplay	F	AES	UTSTAES.C:213	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1541_AES_appl_trecord	F	AES	UTSTAES.C:220	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1542_AES_evnt_keybd	F	AES	UTSTAES.C:226	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1543_AES_evnt_button	F	AES	UTSTAES.C:232	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1544_AES_evnt_mouse	F	AES	UTSTAES.C:244	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1545_AES_evnt_mesag	F	AES	UTSTAES.C:258	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1546_AES_evnt_timer	F	AES	UTSTAES.C:263	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1547_AES_evnt_multi	F	AES	UTSTAES.C:269	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1548_AES_evnt_dclick	F	AES	UTSTAES.C:297	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1549_AES_menu_bar	F	AES	UTSTAES.C:303	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1550_AES_menu_icheck	F	AES	UTSTAES.C:309	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1551_AES_menu_ienable	F	AES	UTSTAES.C:316	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1552_AES_menu_tnormal	F	AES	UTSTAES.C:323	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1553_AES_menu_text	F	AES	UTSTAES.C:330	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1554_AES_menu_register	F	AES	UTSTAES.C:337	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1555_AES_objc_add	F	AES	UTSTAES.C:343	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1556_AES_objc_delete	F	AES	UTSTAES.C:350	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1557_AES_objc_draw	F	AES	UTSTAES.C:356	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1558_AES_objc_find	F	AES	UTSTAES.C:367	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1559_AES_objc_order	F	AES	UTSTAES.C:376	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1560_AES_objc_offset	F	AES	UTSTAES.C:383	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1561_AES_objc_edit	F	AES	UTSTAES.C:392	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1562_AES_objc_change	F	AES	UTSTAES.C:403	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1563_AES_form_do	F	AES	UTSTAES.C:416	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1564_AES_form_button	F	AES	UTSTAES.C:422	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1565_AES_form_keybd	F	AES	UTSTAES.C:431	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1566_AES_form_dial	F	AES	UTSTAES.C:442	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1567_AES_form_alert	F	AES	UTSTAES.C:455	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1568_AES_form_error	F	AES	UTSTAES.C:461	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1569_AES_form_center	F	AES	UTSTAES.C:466	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1570_AES_graf_rubberbox	F	AES	UTSTAES.C:476	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1571_AES_graf_dragbox	F	AES	UTSTAES.C:487	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1572_AES_graf_movebox	F	AES	UTSTAES.C:502	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1573_AES_graf_growbox	F	AES	UTSTAES.C:512	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1574_AES_graf_shrinkbox	F	AES	UTSTAES.C:524	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1575_AES_graf_watchbox	F	AES	UTSTAES.C:536	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1576_AES_graf_slidebox	F	AES	UTSTAES.C:544	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1577_AES_graf_handle	F	AES	UTSTAES.C:552	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1579_AES_graf_mkstate	F	AES	UTSTAES.C:567	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1580_AES_scrp_read	F	AES	UTSTAES.C:575	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1581_AES_scrp_write	F	AES	UTSTAES.C:580	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1582_AES_fsel_input	F	AES	UTSTAES.C:585	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1583_AES_wind_create	F	AES	UTSTAES.C:593	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1584_AES_wind_open	F	AES	UTSTAES.C:602	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1585_AES_wind_close	F	AES	UTSTAES.C:611	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1586_AES_wind_delete	F	AES	UTSTAES.C:616	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1587_AES_wind_get	F	AES	UTSTAES.C:621	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1588_AES_wind_set	F	AES	UTSTAES.C:632	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1589_AES_wind_find	F	AES	UTSTAES.C:642	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1590_AES_wind_update	F	AES	UTSTAES.C:648	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1591_AES_wind_calc	F	AES	UTSTAES.C:653	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1592_AES_rsrc_load	F	AES	UTSTAES.C:668	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1593_AES_rsrc_free	F	AES	UTSTAES.C:673	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1594_AES_rsrc_gaddr	F	AES	UTSTAES.C:679	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1595_AES_rsrc_saddr	F	AES	UTSTAES.C:689	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1596_AES_rsrc_obfix	F	AES	UTSTAES.C:696	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1597_AES_shel_read	F	AES	UTSTAES.C:702	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1598_AES_shel_write	F	AES	UTSTAES.C:708	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1599_AES_shel_get	F	AES	UTSTAES.C:717	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1600_AES_shel_put	F	AES	UTSTAES.C:723	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1601_AES_shel_find	F	AES	UTSTAES.C:729	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1602_AES_shel_envrn	F	AES	UTSTAES.C:734	MISSING	AES	NON_APPLICABLE	-	GEM AES trap ABI; Firestaff must use its host UI route rather than emulate the Atari application environment.
+F1608_VDI_v_opnwk	F	VDI	UTSTVDI2.C:5	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1609_VDI_v_clswk	F	VDI	UTSTVDI2.C:20	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1610_VDI_v_opnvwk	F	VDI	UTSTVDI2.C:28	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1611_VDI_v_clsvwk	F	VDI	UTSTVDI2.C:44	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1612_VDI_v_clrwk	F	VDI	UTSTVDI2.C:52	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1613_VDI_v_updwk	F	VDI	UTSTVDI2.C:60	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1614_VDI_vst_load_fonts	F	VDI	UTSTVDI2.C:68	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1615_VDI_vst_unload_fonts	F	VDI	UTSTVDI2.C:77	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1616_VDI_vs_clip	F	VDI	UTSTVDI2.C:85	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1617_VDI_vsin_mode	F	VDI	HINTTEXT.C:8	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1618_VDI_vrq_locator	F	VDI	UTSTVDI3.C:15	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1619_VDI_vrq_locator	F	VDI	UTSTVDI3.C:28	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1620_VDI_vrq_valuator	F	VDI	UTSTVDI3.C:42	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1621_VDI_vrq_valuator	F	VDI	UTSTVDI3.C:53	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1622_VDI_vrq_choice	F	VDI	UTSTVDI3.C:65	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1623_VDI_vrq_choice	F	VDI	UTSTVDI3.C:75	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1624_VDI_vrq_string	F	VDI	UTSTVDI3.C:85	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1625_VDI_vrq_string	F	VDI	UTSTVDI3.C:104	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1626_VDI_vsc_form	F	VDI	UTSTVDI3.C:124	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1627_VDI_vex_timv	F	VDI	UTSTVDI3.C:135	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1633_VDI_vex_curv	F	VDI	UTSTVDI3.C:194	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1634_VDI_vq_key_s	F	VDI	UTSTVDI3.C:204	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1635_VDI_v_curhome	F	VDI	UTSTVDI3.C:213	MISSING	VDI	NON_APPLICABLE	-	GEM VDI workstation ABI; no source-backed portable graphics-call contract is present.
+F1684_GetMouseStatus	F	GetMouseStatus	USIO1.C:80	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1685_InstallMouseInterruptHandler	F	InstallMouseInterruptHandler	USIO1.C:180	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F1687_UninstallMouseInterruptHandler	F	UninstallMouseInterruptHandler	USIO1.C:388	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+F1690_GetASCIICode	F	GetASCIICode	USIO2.C:287	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1691_Cconis	F	Cconis	USIO2.C:282	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1692_Crawcin	F	Crawcin	USIO2.C:15	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F1694_AddMouseInputToQueue	F	AddMouseInputToQueue	USIO1.C:164	MISSING	USIO	MISSING	-	Input queue and pointer behavior need exact source ordering and host-input evidence before a portable shim is admissible.
+F6000_PRIM_17_File_Open	F	PRIM	PRIM.H:366	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6001_PRIM_18_File_Close	F	PRIM	PRIM.H:367	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6002_PRIM_22_Console_PrintMessage	F	PRIM	PRIM.H:370	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6003_PRIM_23_Input_WaitForChar	F	PRIM	PRIM.H:371	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6004_PRIM_24_Input_Read	F	PRIM	PRIM.H:372	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6005_PRIM_21_FTL_FatalLoaderError	F	PRIM	PRIM.H:373	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6006_PRIM_07_FTL_Execute	F	PRIM	PRIM.H:374	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6007_CallFTLProgram	F	CallFTLProgram	PRIM.H:378	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6008_PRIM_29_Empty	F	PRIM	PRIM.H:375	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6009_GetInitialA5World	F	GetInitialA5World	PRIM.H:376	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6010_ExecuteLibraryFunction	F	ExecuteLibraryFunction	PRIM.H:377	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6011_BeginLibraryFunction	F	BeginLibraryFunction	PRIM2B.C:60	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6012_EndLibraryFunction	F	EndLibraryFunction	PRIM2B.C:77	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6013_F0917_PRIM_15_Memory_Allocate	F	F0917	PRIM.H:319	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6014_F0918_PRIM_16_Memory_Free	F	F0918	PRIM.H:320	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6015_F6000_PRIM_17_File_Open	F	F6000	PRIM.H:321	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6016_F6001_PRIM_18_File_Close	F	F6001	PRIM.H:322	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6017_F0919_PRIM_19_File_Seek	F	F0919	PRIM.H:323	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6018_F0920_PRIM_20_File_Read	F	F0920	PRIM.H:324	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6019_F6002_PRIM_22_Console_PrintMessage	F	F6002	PRIM.H:326	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6020_F6003_PRIM_23_Input_WaitForChar	F	F6003	PRIM.H:327	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6021_F6004_PRIM_24_Input_Read	F	F6004	PRIM.H:328	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6022_F6005_PRIM_21_FTL_FatalLoaderError	F	F6005	PRIM.H:325	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6023_F6037_PRIM_04_Library_HookFunction	F	F6037	PRIM.H:308	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6024_F6044_PRIM_06_FTL_FreeMemory	F	F6044	PRIM.H:310	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6025_F6006_PRIM_07_FTL_Execute	F	F6006	PRIM.H:311	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6026_F0929_PRIM_05_FTL_Load	F	F0929	PRIM.H:309	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6027_F6047_PRIM_11_Library_AddToList	F	F6047	PRIM.H:315	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6028_F6048_PRIM_12_Library_RemoveFromList	F	F6048	PRIM.H:316	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6028_F6048_RemoveLibraryFromLi	F	F6048	PRIM.H:440	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6029_F6045_PRIM_13_Library_InitializeList	F	F6045	PRIM.H:317	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6030_F6046_PRIM_14_Library_FindInList	F	F6046	PRIM.H:318	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6031_F6040_PRIM_08_Library_Open	F	F6040	PRIM.H:312	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6032_F6041_PRIM_09_Library_Close	F	F6041	PRIM.H:313	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6033_F6042_PRIM_10_Library_FlagAsCanBeExpunged	F	F6042	PRIM.H:314	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6034_F6049_PRIM_25_FTL_DecompressCODESegment	F	F6049	PRIM.H:329	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6035_F6043_PRIM_26_FTL_LoadAndExecute	F	F6043	PRIM.H:330	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6036_F6039_PRIM_27_File_IsOpenable	F	F6039	PRIM.H:331	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6037_PRIM_04_Library_HookFunction	F	PRIM	PRIM.H:339	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6038_PRIM_28_Library_UnhookFunction	F	PRIM	PRIM.H:340	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6039_PRIM_27_File_IsOpenable	F	PRIM	PRIM.H:341	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6040_PRIM_08_Library_Open	F	PRIM	PRIM.H:342	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6041_PRIM_09_Library_Close	F	PRIM	PRIM.H:343	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6042_PRIM_10_Library_FlagAsCanBeExpunged	F	PRIM	PRIM.H:344	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6043_PRIM_26_FTL_LoadAndExecute	F	PRIM	PRIM.H:345	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6044_PRIM_06_FTL_FreeMemory	F	PRIM	PRIM.H:347	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6045_PRIM_13_Library_InitializeList	F	PRIM	PRIM.H:348	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6046_PRIM_14_Library_FindInList	F	PRIM	PRIM.H:349	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6047_PRIM_11_Library_AddToList	F	PRIM	PRIM.H:350	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6048_PRIM_12_Library_RemoveFromList	F	PRIM	PRIM.H:351	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6049_PRIM_25_FTL_DecompressCODESegment	F	PRIM	APPA.C:40	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6050_InitializeFTLLibraryManagement	F	InitializeFTLLibraryManagement	PRIM.H:353	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6051_UnLoadFTLLibrary	F	UnLoadFTLLibrary	PRIM.H:354	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6052_FTL_UnloadAll	F	FTL	PRIM.H:355	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F6053_IsFunctionHooked	F	IsFunctionHooked	PRIM.H:356	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F7094_ConvertLongToString	F	ConvertLongToString	PRIM.H:362	MISSING	PRIM	MISSING	-	PRIM library behavior has no source-backed portable contract in the callable audit; do not equate it with libc or a loader shim.
+F8052_DOS_KeyboardInput	F	DOS	DM.C:603	MISSING	DOS	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F8054_DOS_PrintString	F	DOS	DM.C:516	MISSING	DOS	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F8083_DOS_OpenFile	F	DOS	DM.C:564	MISSING	DOS	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+F8084_DOS_CloseFile	F	DOS	DM.C:581	MISSING	DOS	MISSING	-	File or console behavior is source-named but has no verified Firestaff contract for handle, error, media, or path semantics.
+R0138_CPSEF_HiddenCodeLauncher	R	CPSEF	ATARIST.H:248	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+R138_lzzz_	R	Atari ST / PRIM ABI alias	ATARIST.H:248	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0016_MAIN_DrawMousePointerHiddenScreenAreaIfNecessary_CPSDF	S	MAIN	BASE.C:772	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0059_TOS_SetException257Vector_CriticalError	S	TOS	ATARIST.H:249	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S059_aaac_	S	Atari ST / PRIM ABI alias	ATARIST.H:249	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0072_MOUSE_DrawPointerHiddenScreenArea	S	MOUSE	BASE.C:828	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0542_INPUT_DeviceInterruptStub	S	INPUT	AMIGA.H:343	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0570_COPYPROA_IntHandlerStub_CPSX	S	COPYPROA	AMIGA.H:376	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0574_COPYPROB_DiskChangeStub_CPSX	S	COPYPROB	AMIGA.H:380	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
+S0578_VerticalBlank_HandlerStub	S	VerticalBlank	AMIGA.H:389	MISSING	exception-R/E/S	NON_APPLICABLE	-	Original exception/vector or assembly-stub entry; host scheduling and signal behavior cannot be substituted without an exact trace-backed contract.
