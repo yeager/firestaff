@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 source-backed GRAPHICSSET admission: dungeon scene material
+  is admitted once the selected set supplies SKProject's `SCENE_COLORKEY` and
+  `SCENE_FLAGS`; light and weather fields remain separately recorded instead
+  of blocking the source-owned floor/ceiling path. Verification:
+  `test_dm2_v1_gdat_graphicsset_real_data` with real G1 materials.
+
 - 2026-07-14 DM1 spell-area same-caster redraw: repeated
   `CM1_CHAMPION_NONE` requests now retain the visible spell area instead of
   clearing it redundantly, matching ReDMCSB `CASTER.C F0394`'s early-return
