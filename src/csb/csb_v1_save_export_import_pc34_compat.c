@@ -266,6 +266,32 @@ int csb_v1_save_export_validate_envelope(const uint8_t *raw,
     return CSB_V1_SAVE_EXPORT_OK;
 }
 
+int csb_v1_save_export_validate_importable_envelope(const uint8_t *raw,
+                                                     size_t raw_size)
+{
+    CSB_V1_SaveExportHeader hdr;
+    CSB_V1_SaveExportKind payload_kind;
+    int rc;
+
+    rc = csb_v1_save_export_validate_envelope(raw, raw_size);
+    if (rc != CSB_V1_SAVE_EXPORT_OK) return rc;
+    rc = csb_v1_save_export_parse_header(raw, raw_size, &hdr);
+    if (rc != CSB_V1_SAVE_EXPORT_OK) return rc;
+
+    /* ReDMCSB's CEDT dispatch selects the CSBGAME version before entering
+     * the loader. Keep the Firestaff envelope label coupled to that exact
+     * production payload shape instead of allowing a CRC-valid relabel. */
+    payload_kind = csb_v1_save_export_classify(
+        raw + CSB_V1_SAVE_EXPORT_HEADER_LEN, hdr.payload_len);
+    if ((hdr.payload_kind == 0u &&
+         payload_kind != CSB_V1_SAVE_EXPORT_KIND_RAW_CSBGAME_V20) ||
+        (hdr.payload_kind == 1u &&
+         payload_kind != CSB_V1_SAVE_EXPORT_KIND_RAW_CSBGAME_V21)) {
+        return CSB_V1_SAVE_EXPORT_ERR_PAYLOAD_MISMATCH;
+    }
+    return CSB_V1_SAVE_EXPORT_OK;
+}
+
 /* ── Round-trip a CSB_V1_PartyState ────────────────────────────────── */
 
 long csb_v1_save_export_roundtrip(const CSB_V1_PartyState *party,
@@ -331,7 +357,7 @@ int csb_v1_save_export_import_envelope(CSB_V1_PartyState *party,
 
     if (!party || !raw) return CSB_V1_SAVE_EXPORT_ERR_NULL;
 
-    rc = csb_v1_save_export_validate_envelope(raw, raw_size);
+    rc = csb_v1_save_export_validate_importable_envelope(raw, raw_size);
     if (rc != CSB_V1_SAVE_EXPORT_OK) return rc;
 
     rc = csb_v1_save_export_parse_header(raw, raw_size, &hdr);
