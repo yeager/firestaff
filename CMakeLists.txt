@@ -31255,3 +31255,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dialogue_gdat_receipt.c
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 endif()
+
+# ReDMCSB MUSIC.C F0738_MUSIC_Continue is an intentional PC 3.4/I34E no-op.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0738_music_continue_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f0738_music_continue_pc34_compat.c")
+    add_executable(test_redmcsb_f0738_music_continue_pc34_compat
+        tests/test_redmcsb_f0738_music_continue_pc34_compat.c
+        src/shared/redmcsb_f0738_music_continue_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0738_music_continue_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(
+        NAME redmcsb_f0738_music_continue_pc34_compat
+        COMMAND test_redmcsb_f0738_music_continue_pc34_compat
+    )
+endif()
