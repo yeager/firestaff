@@ -87,12 +87,78 @@ static void test_f0061_loud_table_and_index_mask(void)
     CHECK(amplitudes.channelC == 14);
 }
 
+static CsbV1AudioRequest make_request(int16_t soundIndex,
+                                      int16_t mode,
+                                      int16_t volume,
+                                      uint8_t priority)
+{
+    CsbV1AudioRequest request = {0};
+
+    request.soundIndex = soundIndex;
+    request.mode = mode;
+    request.volume = volume;
+    request.priority = priority;
+    return request;
+}
+
+static void test_f0064_f0065_pending_sound_runtime(void)
+{
+    CsbV1AudioRuntime runtime;
+    CsbV1AudioSaveSnapshot snapshot;
+    CsbV1AudioRequest quiet = make_request(
+        CSB_V1_SOUND_SWITCH, CSB_V1_MODE_PLAY_IF_PRIORITIZED, 32, 3);
+    CsbV1AudioRequest louder = make_request(
+        CSB_V1_SOUND_COMBAT, CSB_V1_MODE_PLAY_ONE_TICK_LATER, 48, 1);
+    CsbV1AudioRequest equalHigherPriority = make_request(
+        CSB_V1_SOUND_SPELL, CSB_V1_MODE_PLAY_IF_PRIORITIZED, 48, 6);
+    CsbV1AudioRequest immediate = make_request(
+        CSB_V1_SOUND_PARTY_DAMAGED, CSB_V1_MODE_PLAY_IMMEDIATELY, 64, 0);
+    CsbV1AudioRequest invalidMode = make_request(
+        CSB_V1_SOUND_BUZZ, 3, 64, 7);
+
+    csb_v1_audio_runtime_init(&runtime);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
+    CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_NONE);
+    CHECK(runtime.lastCreatureAttackTime == -200);
+
+    CHECK(csb_v1_audio_runtime_request(&runtime, &quiet) == 1);
+    CHECK(csb_v1_audio_runtime_request(&runtime, &louder) == 1);
+    CHECK(csb_v1_audio_runtime_request(&runtime, &equalHigherPriority) == 1);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_SPELL);
+    CHECK(runtime.pendingVolume == 48);
+    CHECK(runtime.pendingPriority == 6);
+
+    CHECK(csb_v1_audio_runtime_request(&runtime, &immediate) == 1);
+    CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_PARTY_DAMAGED);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
+    CHECK(runtime.totalImmediatePlays == 1);
+    CHECK(csb_v1_audio_runtime_flush_pending(&runtime) == 0);
+
+    CHECK(csb_v1_audio_runtime_request(&runtime, &equalHigherPriority) == 1);
+    CHECK(csb_v1_audio_runtime_flush_pending(&runtime) == 1);
+    CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_SPELL);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
+    CHECK(runtime.totalPendingFlushes == 1);
+
+    CHECK(csb_v1_audio_runtime_request(&runtime, &invalidMode) == 0);
+    CHECK(runtime.totalRejectedRequests == 1);
+
+    csb_v1_audio_runtime_record_creature_attack(&runtime, 733);
+    csb_v1_audio_runtime_save_snapshot(&runtime, &snapshot);
+    CHECK(snapshot.lastCreatureAttackTime == 733);
+    CHECK(csb_v1_audio_runtime_request(&runtime, &quiet) == 1);
+    csb_v1_audio_runtime_load_snapshot(&runtime, &snapshot);
+    CHECK(runtime.lastCreatureAttackTime == 733);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
+}
+
 int main(void)
 {
     test_high_nibble_first_and_repeat_runs();
     test_leading_repeat_uses_existing_psg_level();
     test_malformed_and_short_output_are_rejected();
     test_f0061_loud_table_and_index_mask();
+    test_f0064_f0065_pending_sound_runtime();
     printf("test_csb_v1_f0060_sound_play_pc34_compat: %d failures\n", failures);
     return failures != 0;
 }
