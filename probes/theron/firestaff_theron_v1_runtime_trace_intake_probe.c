@@ -75,9 +75,9 @@ int main(void) {
     profile.track02_initial_level_handoff.initial_level_record_proven = 1;
     profile.track02_initial_level_handoff.complete_initial_level_envelope_proven = 1;
     profile.track02_initial_level_handoff.receipt_hash = 1u;
-    check(theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
+    check(!theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
               &profile),
-          "Soul Room route requires a coalesced initial-level receipt");
+          "Soul Room route rejects a receipt without the bound full payload witness");
     theron_v1_boot_profile_init(&profile);
     memset(&flow, 0, sizeof(flow));
     memset(&world, 0, sizeof(world));

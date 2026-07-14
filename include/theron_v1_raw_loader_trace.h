@@ -197,6 +197,12 @@ typedef struct {
     int coalesced_loader_cd_receipt_proven;
     int initial_level_record_proven;
     int complete_initial_level_envelope_proven;
+    /* The exact post-$e009 one-sector local-RAM witness that authorizes this
+     * admission. It remains opaque loader/media provenance, not a payload
+     * grammar or a dungeon/object/visual claim. */
+    size_t complete_payload_bytes;
+    uint32_t complete_payload_checksum;
+    int complete_payload_witness_proven;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;
@@ -292,6 +298,13 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out);
+
+/* Revalidates the immutable fields carried by an initial-level admission
+ * receipt before a runtime consumer uses it. In particular, it requires the
+ * full 2048-byte local-RAM witness and checks that the receipt hash covers
+ * that witness. It does not inspect or interpret the payload bytes. */
+int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *receipt);
 
 /* Validates the explicit V2 capture-manifest identity for an ordered
  * Mednafen loader transcript before it is parsed. The caller must rehash

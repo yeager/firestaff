@@ -45,11 +45,15 @@
   missing, or replaced manifest cannot erase a prior accepted receipt. This is
   transactional intake only; it does not make an absent positive capture
   available.
-  The next coalesced-capture format additionally requires a post-`$e009`
+  The coalesced-capture contract additionally requires a post-`$e009`
   2048-byte local-RAM FNV witness matching the selected original MODE1
   user-data payload. This strengthens an authentic transfer receipt but
   remains byte provenance only: no dungeon transition, record format, object,
   bitmap, or palette semantics are inferred until a real capture proves them.
+  The full 2048-byte witness is now retained in the final admission receipt
+  and its receipt hash is revalidated by the Soul Room runtime gate. Remaining
+  evidence is still an authenticated positive capture and a separately
+  source-owned dungeon transition; this change does not infer either.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
