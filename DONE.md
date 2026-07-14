@@ -15348,6 +15348,15 @@ accepts all six inputs and reports each binding separately. It does not claim
 that a file was produced by an original Saturn/emulator, decode any sidecar,
 or permit runtime import, rendering, or fallback. Verification:
 `nexus_v1_prs3_capture_trace_schema`.
+
+# ✅ 2026-07-14 Nexus PRS3 V3 provenance-ledger gate
+
+The raw-sidecar admission can now be accompanied by a strict text ledger that
+hash-binds the V3 trace, output, VDP1-command, palette sidecars, and capture
+producer binary. Missing or changed files reject the ledger. This records
+reproducible provenance only: no local authentic Nexus trace/log was found,
+producer authentication remains false, and runtime import stays disabled.
+Verification: `nexus_v1_prs3_capture_trace_schema`.
 # ✅ 2026-07-13 DM2 atomic GDAT door-material transaction
 
 `dm2_v1_render_doors()` now preloads each required skproject `DM2_DRAW_DOOR`
