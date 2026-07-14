@@ -10,6 +10,15 @@
   Source-lock: ReDMCSB `LOADSAVE.C F0435`. Verification: CTest
   `dm1_v1_original_save_pc34_external_hoc_runtime`.
 
+- 2026-07-14 CSBWin real-package DSA tick ownership: the opt-in
+  `firestaff_csb_v1_csbwin_extended_dsa_handoff_probe` now verifies the
+  post-tick live timeline as well as the admitted queue. A source TIMER may
+  be consumed or requeued, but every surviving event must retain one unique
+  saved TimerQueue slot and every serialized TIMER field, while the loaded
+  package dungeon remains the runtime owner. The probe accepts only supplied
+  `Dungeon.dat` plus a checksum-valid Extended Features/DSA save and skips
+  without both paths; it creates no substitute dungeon, save, DSA, or event.
+
 - ✅ 2026-07-14 DM1 PC34 external-save viewport-consumption gate: the
   fixture-free HoC runtime probe now requires M11 to retain the
   `ORIGINAL_SAVE_PC34` runtime origin and to produce a nonblank, byte-stable
