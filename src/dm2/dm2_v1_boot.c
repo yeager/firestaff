@@ -7415,6 +7415,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     uint32_t hash = 0x32414353u;
     const char *save_corpus_root = NULL;
     DM2_SKSaveCorpusReceipt save_corpus;
+    DM2_OriginalSaveStateCorpusReceipt original_save_state_corpus;
 
     dm2_v1_boot_complete_support_receipt_init(out_receipt);
     if (!profile || !out_receipt ||
@@ -7436,6 +7437,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         return 0;
     }
     memset(&save_corpus, 0, sizeof(save_corpus));
+    memset(&original_save_state_corpus, 0, sizeof(original_save_state_corpus));
     save_corpus_root = (startup_save_root && startup_save_root[0])
         ? startup_save_root
         : profile->save_root;
@@ -7474,6 +7476,17 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     out_receipt->save_corpus_hash = dm2_v1_boot_packaged_capture_hash_step(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);
+    out_receipt->save_corpus_original_state_scan_complete =
+        dm2_v1_original_save_state_corpus_probe(
+            save_corpus_root, &original_save_state_corpus) ? 1 : 0;
+    out_receipt->save_corpus_original_state_list_complete =
+        original_save_state_corpus.original_candidate_list_complete;
+    out_receipt->save_corpus_original_state_parsed_candidate_count =
+        original_save_state_corpus.parsed_candidate_count;
+    out_receipt->save_corpus_original_state_rejected_candidate_count =
+        original_save_state_corpus.rejected_candidate_count;
+    out_receipt->save_corpus_original_state_hash =
+        original_save_state_corpus.corpus_hash;
 
     out_receipt->skproject_gdat_queries_ready =
         out_receipt->startup_visual.skproject_title_query_ready &&
@@ -7653,6 +7666,16 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, out_receipt->creature_atlas.frame_parity_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_state_scan_complete);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_state_list_complete);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_state_parsed_candidate_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_state_rejected_candidate_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, out_receipt->save_corpus_original_state_hash);
     out_receipt->complete_support_hash = hash;
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
@@ -7673,6 +7696,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->raw_gdat_capture_complete &&
         out_receipt->decoded_gdat_capture_complete &&
         out_receipt->save_corpus_scan_complete &&
+        out_receipt->save_corpus_original_state_scan_complete &&
         out_receipt->complete_support_hash != 0u;
     out_receipt->valid = out_receipt->complete_support_ready;
     out_receipt->status_scope = "DM2";
