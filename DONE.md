@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1081-F1084: available NIL-device and
+  AMISTRUCT allocation routes are Amiga-only. Focused PC 3.4 boundaries are
+  intentionally unavailable.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1078-F1080: available console/input device
   teardown/open routes are Amiga-only. Focused PC 3.4 boundaries are
   intentionally no-ops.
