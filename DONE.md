@@ -13372,6 +13372,18 @@ bytes. Source: ReDMCSB `LOADSAVE.C F0435` one-save read transaction and
 `test_dm1_v1_original_save_pc34_handoff` passes; real-corpus coverage remains
 explicitly opt-in through `FIRESTAFF_DM1_PC34_SAVE_CORPUS`.
 
+# ✅ 2026-07-14 DM1 PC34 fixture-free external corpus admission target
+
+Added `test_dm1_v1_original_save_pc34_external_corpus`, a focused admission
+target that creates no save bytes or substitute corpus. With
+`FIRESTAFF_DM1_PC34_SAVE_CORPUS` set, it requires every classifier-qualified
+external candidate to complete the ReDMCSB `LOADSAVE.C` F0435 -> F0433 ->
+F0435 transaction, then emits its source/export byte hashes, F7057 envelope
+endpoint, trailing-tail size, and no-fallback runtime stage/adoption result.
+Without an explicitly staged corpus it reports `SKIP` and makes no parity or
+interop claim. The outstanding requirement remains provenance-recorded PC34
+saves and original executable load results.
+
 # ✅ 2026-07-13 Nexus Structure1Fa ITEM.IBS special-floor palette consumer
 
 `nexus_v1_item_ibs_parse_verified()` now validates the documented special

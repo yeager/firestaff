@@ -17595,6 +17595,23 @@ if(BUILD_TESTING)
         LABELS "tier2;dm1;save;interop;handoff"
     )
 
+    # This is intentionally fixture-free: it only admits an explicitly staged
+    # external PC34 corpus and prints its F0435 -> F0433 -> F0435 receipts.
+    add_executable(test_dm1_v1_original_save_pc34_external_corpus
+        tests/test_dm1_v1_original_save_pc34_external_corpus.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_pc34_external_corpus PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_pc34_external_corpus PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_external_corpus
+        COMMAND test_dm1_v1_original_save_pc34_external_corpus
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_external_corpus PROPERTIES
+        LABELS "tier2;dm1;save;interop;external-corpus"
+    )
+
     add_executable(test_dm1_v1_original_save_pc34_portrait_receipt
         tests/test_dm1_v1_original_save_pc34_portrait_receipt.c
     )
