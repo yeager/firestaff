@@ -34,6 +34,14 @@ LEV00-LEV15 remains in that span. This is a safety and provenance result, not
 a pixel decoder. Image payload grammar, palette coupling, animation flags, and
 timing remain blocked until proven.
 
+## Structure3 Face Geometry
+
+Structure3 face rows now retain bounded vertex linkage, paired normal counts,
+and signed-16.16 face-plane/normal coherence. The parser records triangle
+winding signs as corpus measurements only; it does not infer a front face,
+back-face culling rule, transform, projection, UV grammar, or drawing order.
+Texture and palette semantics remain outside this receipt.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
