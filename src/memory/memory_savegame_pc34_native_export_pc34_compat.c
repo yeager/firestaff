@@ -919,6 +919,10 @@ static int pack_party(unsigned char* dst, int dstCap,
                 dst + (size_t)SAVEGAME_PC34_CHAMPION_BYTE_COUNT * 4u;
             if (state->magic->magicalLightAmount < -32768 ||
                 state->magic->magicalLightAmount > 32767 ||
+                state->magic->event73CountThievesEye < 0 ||
+                state->magic->event73CountThievesEye > 255 ||
+                state->magic->event79CountFootprints < 0 ||
+                state->magic->event79CountFootprints > 255 ||
                 state->magic->partyShieldDefense < -32768 ||
                 state->magic->partyShieldDefense > 32767 ||
                 state->magic->fireShieldDefense < -32768 ||
@@ -928,9 +932,11 @@ static int pack_party(unsigned char* dst, int dstCap,
                 return -1;
             }
             /* ReDMCSB DEFS.H PARTY_INFO: signed MagicalLightAmount at 0,
-             * then the source-owned party/fire/spell shield words at 4/6/8. */
+             * C73/C79 counters at 2/3, then party/fire/spell shields. */
             write_u16_le(party_info + 0u,
                          (uint16_t)(int16_t)state->magic->magicalLightAmount);
+            party_info[2u] = (unsigned char)state->magic->event73CountThievesEye;
+            party_info[3u] = (unsigned char)state->magic->event79CountFootprints;
             write_u16_le(party_info + 4u,
                          (uint16_t)(int16_t)state->magic->partyShieldDefense);
             write_u16_le(party_info + 6u,

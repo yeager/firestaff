@@ -1,5 +1,22 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron complete `$e009` payload witness: the coalesced Mednafen
+  contract now records the full 2048-byte local-RAM payload after the observed
+  System Card return and requires its FNV fingerprint to match the selected
+  hash-verified Track 02 MODE1 user-data sector. Missing, short, reordered,
+  or mismatched payload rows fail closed. This proves only an original
+  loader-to-RAM byte transfer, not a dungeon transition, payload format,
+  object table, bitmap, or palette relation. Coverage: focused trace-order
+  regression test and raw-media initial-level handoff probe.
+
+- ✅ 2026-07-14 DM1 PC34 `PARTY_INFO` C73/C79 runtime handoff: F0435 now
+  restores ReDMCSB `DEFS.H` offsets 2 and 3, `Event73Count_ThievesEye` and
+  `Event79Count_Footprints`, into their existing M10 magic owners. C79 also
+  reactivates its footprint state. F0433 writes only bounded source-owned
+  byte values, preserving the remaining opaque `PARTY_INFO` bytes. Source:
+  ReDMCSB `DEFS.H:837-870`, `LOADSAVE.C F0433/F0435` and `TIMELINE.C`
+  C73/C79 dispatch. Verification: `test_dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-14 Nexus Structure3 capture-source admission: a complete face
   binding now also requires caller-owned verification of the capture source,
   separately from the canonical DGN hash admission. Hash-verified DGN bytes

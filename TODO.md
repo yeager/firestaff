@@ -16,6 +16,11 @@
   missing, or replaced manifest cannot erase a prior accepted receipt. This is
   transactional intake only; it does not make an absent positive capture
   available.
+  The next coalesced-capture format additionally requires a post-`$e009`
+  2048-byte local-RAM FNV witness matching the selected original MODE1
+  user-data payload. This strengthens an authentic transfer receipt but
+  remains byte provenance only: no dungeon transition, record format, object,
+  bitmap, or palette semantics are inferred until a real capture proves them.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
@@ -1717,6 +1722,12 @@ staged queue, so a malformed report cannot alter a live queue. The DM1 world
 handoff restores ACTIVE_GROUP records through the same candidate-world path.
 Remaining original-save interop work is original dungeon-tail import breadth
 and real community-save corpus round-trip evidence.
+  - 2026-07-14 update: F0435 now materializes the source-owned one-byte C73
+    Thieves Eye and C79 Footprints counters from `PARTY_INFO` offsets 2 and
+    3 into the existing M10 magic state; C79 also restores its active
+    footprint flag. F0433 writes only those bounded counters back to the
+    retained source bytes. Scent, freeze-life, and the remaining opaque
+    `PARTY_INFO` fields are still untouched pending their own source owners.
   - 2026-07-14 update: the fixture-free external-corpus M11 runtime gate now
     drives every F0435-admitted original PC34 save through the live game view,
     checks the source party pose/tick and owned dungeon against an independent
