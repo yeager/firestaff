@@ -14463,6 +14463,11 @@ the real opening-door frame and exact C017/C040 HUD composition. Verification:
 data. Source: ReDMCSB `TITLE.C F0437` lines 424-463 and `ENTRANCE.C F0806`
 lines 775-826.
 
+- ✅ 2026-07-14 DM1 HoC champion time-effects cadence fix: M11 now applies
+  F0331 only every 64 active ticks or 16 resting ticks after game time advances.
+  This prevents accelerated food/water loss and starvation death. Verification:
+  `dm1_v1_champion_needs_pc34_compat_integration`.
+
 # ✅ 2026-07-14 DM2 original SKSave pre-rebuild corpus receipt
 
 The original-save corpus census now retains separate byte-identity hashes for

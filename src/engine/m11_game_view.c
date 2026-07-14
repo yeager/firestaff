@@ -9066,9 +9066,15 @@ static void m11_apply_champion_time_effects(M11_GameViewState* state) {
     if (!state || !state->active) {
         return;
     }
-    /* ReDMCSB CHAMPION.C F0331:2305-2509 runs once for every source tick.
-     * Its effect order is scent, mana/stamina, temporary XP, needs/stamina,
-     * health, statistic recovery, then panel refresh. */
+    /* GAMELOOP.C:124-138 increments G0313 first, then invokes F0331 only
+     * when the PC 3.4 active/rest cadence mask is due. */
+    if (!DM1_V1_Needs_TimeEffectsDuePc34Compat(
+            state->world.gameTick, state->resting)) {
+        return;
+    }
+    /* ReDMCSB CHAMPION.C F0331:2305-2509 owns scent, mana/stamina,
+     * temporary XP, needs/stamina, health, statistic recovery, and panel
+     * refresh in this order. */
     if (state->world.party.championCount <= 0) return;
     DM1_V1_Needs_DecayScentsPc34Compat(&state->championScents);
     for (i = 0; i < state->world.party.championCount; ++i) {

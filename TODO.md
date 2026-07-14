@@ -4957,6 +4957,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### DM1 V1
 
+- 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
+  PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
+  ticks. This removes the prior every-tick food/water, starvation, F0325, and
+  F0319 death acceleration. Focused cadence coverage is data-free; remaining
+  work is real-session duration evidence, not a changed poison/death rule.
+
 - 🔧 Original DOS capture parity: five specific paired evidence sets are blocked. Details and honest status labels at `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`. Minimum runbook at `docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md`.
   - Live-capture harness: 2026-06-21 recovered the macOS DOSBox Staging app-binary path for `docs/parity/tools/dosbox_capture_session.py --live`; a local run reached `dungeon_gameplay` and produced operator-local `01_ingame_start.png` / `02_ingame_step_forward.png` plus a movement receipt. Remaining work: promote those local original frames through the existing pass608/pass1052/pass1056-style evidence path and pair them against Firestaff; do not count them as parity until the tracked artifacts and diffs exist.
   - Live-capture receipt: pass1073 now CTest-locks a redacted receipt for that local run: two `dungeon_gameplay` frame hashes, a C070 no-change diagnostic, a `Keypad-5` viewport-hash change, DOSBox Staging conf pins, and explicit non-claims. Remaining work is unchanged: the original frame bytes stay operator-local until a deliberate promotion path exists, and no B1 row moves to fixed without tracked same-state pairing.

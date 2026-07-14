@@ -5,7 +5,8 @@
  * F0325_CHAMPION_DecrementStamina, F0306_CHAMPION_GetStaminaAdjustedValue),
  * GAMELOOP.C (F0002_MAIN_GameLoop_CPSDF), DEFS.H.
  *
- * Implements: food depletion per tick, water depletion per tick, stamina
+ * Implements: food depletion per F0331 time-effects pass, water depletion,
+ * stamina
  * regeneration (rest vs active), HP healing, starvation/dehydration damage.
  *
  * DM1 V1 uses signed int16_t for Food/Water with range [-1024, +2048].
@@ -72,6 +73,11 @@ typedef struct {
     int16_t water_after;
     int     starvation_damage;
 } DM1_NeedsTickResult;
+
+/* GAMELOOP.C increments G0313 before testing this cadence.  PC 3.4 invokes
+ * F0331 every 64 active ticks and every 16 resting ticks. */
+int DM1_V1_Needs_TimeEffectsDuePc34Compat(uint32_t game_time,
+                                          int party_is_resting);
 
 /* ReDMCSB CHAMPION.C F0331:2308-2330.  This is the runtime scent list
  * consumed by Thieves Eye; it is game state, never presentation data. */
