@@ -1012,7 +1012,7 @@ F0930_GetHeaderChecksum	F	GetHeaderChecksum	PRIM.H:288	src/dm1/dm1_v1_game_state
 F0931_ChecksumWords	F	ChecksumWords	PRIM.H:289	include/f0931_f0932_prim_checksums_pc34_compat.h	IMPLEMENTED_NARROW	PRIM1.C source 16-bit word checksum; focused CTest.
 F0932_ChecksumBytes	F	ChecksumBytes	PRIM.H:290	include/f0931_f0932_prim_checksums_pc34_compat.h	IMPLEMENTED_NARROW	PRIM1.C source 16-bit byte checksum; focused CTest.
 F0933_GetHexStringFromValue	F	GetHexStringFromValue	PRIM.H:291	include/redmcsb_f0933_get_hex_string_from_value.h	IMPLEMENTED_NARROW	PRIM1.C uppercase unprefixed hexadecimal formatter; focused CTest.
-F0934_ConvertValueToHexDigits	F	ConvertValueToHexDigits	PRIM.H:274	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0934_ConvertValueToHexDigits	F	ConvertValueToHexDigits	PRIM.H:274	include/redmcsb_f0934_convert_value_to_hex_digits.h	IMPLEMENTED_NARROW	PRIM1.C uppercase hexadecimal digits without terminator; focused CTest.
 F0936_LaunchProcess	F	LaunchProcess	EXEC.C:5	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0937_InitAmigaData	F	InitAmigaData	EXEC.C:6	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0938_CallCloseWorkbench	F	CallCloseWorkbench	EXEC.C:7	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
