@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1034-F1036: source review identified Amiga
+  output and X68000/Amiga mouse-sprite layouts as PC 3.4-nonapplicable.
+  Focused compatibility tests preserve their source transforms without claiming
+  a PC route.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
   I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
   adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
