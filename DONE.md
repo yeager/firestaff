@@ -34,6 +34,16 @@
    provide both original package paths. Verification: Ninja and
    `csb_v1_csbwin_package_runtime_handoff`.
 
+- ✅ 2026-07-14 DM1 HoC C346/C026 exact host linkage: M11 now consumes the
+  C127 mirror receipt's C346 source origin, destination zone, palette mapping,
+  and flip before it overlays C026. It retains ReDMCSB F0791 native-bitmap
+  scaling into G0205 and leaves the HoC mirror undrawn when the original source
+  region is absent or out of bounds; it supplies no substitute backing.
+  Source-lock: ReDMCSB `DUNGEON.C` F0172 and `DUNVIEW.C` 3913-3928.
+  Verification: the focused real-PC34 HoC material regression compares a
+   C346-only framebuffer pixel to the installed source bitmap's scaled mapping
+   outside the C026 portrait overlay.
+
 - ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
   map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
   retained by the runtime and consumed directly by M11 with its original

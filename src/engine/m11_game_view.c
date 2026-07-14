@@ -21861,6 +21861,62 @@ static void m11_blit_scaled_palette_map_maybe_flip(const M11_AssetSlot* slot,
     }
 }
 
+/* ReDMCSB DUNVIEW.C F0791 scales C346's native material into G0205's
+ * destination zone.  The mirror receipt owns the source origin, while the
+ * decoded bitmap determines the native source extent. */
+static int m11_blit_scaled_region_palette_map_maybe_flip(
+    const M11_AssetSlot* slot,
+    int srcX,
+    int srcY,
+    int srcW,
+    int srcH,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int dstX,
+    int dstY,
+    int dstW,
+    int dstH,
+    int transparentColor,
+    const unsigned char paletteMap[16],
+    int flipHorizontal)
+{
+    int dy;
+
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        srcX < 0 || srcY < 0 || srcW <= 0 || srcH <= 0 ||
+        dstW <= 0 || dstH <= 0 || srcX + srcW > (int)slot->width ||
+        srcY + srcH > (int)slot->height) {
+        return 0;
+    }
+    for (dy = 0; dy < dstH; ++dy) {
+        int dx;
+        int sourceY = srcY + (dy * srcH) / dstH;
+        int fbY = dstY + dy;
+        if (fbY < 0 || fbY >= fbH) {
+            continue;
+        }
+        for (dx = 0; dx < dstW; ++dx) {
+            int sourceX = srcX +
+                ((flipHorizontal ? dstW - 1 - dx : dx) * srcW) / dstW;
+            int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) {
+                continue;
+            }
+            pixel = slot->pixels[sourceY * (int)slot->width + sourceX];
+            if (transparentColor >= 0 && pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            if (paletteMap) {
+                pixel = paletteMap[pixel & 0x0f];
+            }
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
                                       const M11_ViewportCell* cell,
                                       int depthIndex) {
@@ -22762,17 +22818,25 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     }
 
     if (drawReceipt.drawMirrorBackingAsset) {
-        m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,
-                                               M11_VIEWPORT_X +
-                                                   drawReceipt.backingDstX,
-                                               M11_VIEWPORT_Y +
-                                                   drawReceipt.backingDstY,
-                                               drawReceipt.backingWidth,
-                                               drawReceipt.backingHeight,
-                                               drawReceipt.backingTransparentColor,
-                                               drawReceipt.backingPaletteMapValid ?
-                                                   drawReceipt.backingPaletteMap : NULL,
-                                               drawReceipt.backingFlipHorizontal);
+        if (!m11_blit_scaled_region_palette_map_maybe_flip(
+                slot,
+                drawReceipt.backingSourceX,
+                drawReceipt.backingSourceY,
+                (int)slot->width - drawReceipt.backingSourceX,
+                (int)slot->height - drawReceipt.backingSourceY,
+                framebuffer,
+                fbW,
+                fbH,
+                M11_VIEWPORT_X + drawReceipt.backingDstX,
+                M11_VIEWPORT_Y + drawReceipt.backingDstY,
+                drawReceipt.backingWidth,
+                drawReceipt.backingHeight,
+                drawReceipt.backingTransparentColor,
+                drawReceipt.backingPaletteMapValid
+                    ? drawReceipt.backingPaletteMap : NULL,
+                drawReceipt.backingFlipHorizontal)) {
+            return;
+        }
     }
     m11_draw_dm1_front_champion_portrait_host_receipt(
         state, &drawReceipt, framebuffer, fbW, fbH);
