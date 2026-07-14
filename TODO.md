@@ -186,6 +186,14 @@
   source-backed non-applicability decision with focused evidence. A comment
   or identifier match alone cannot close this gap.
 
+- REDMCSB-SYMBOL-GAP-005 — **C/G semantic ownership is not verified.**
+  `docs/reference/audits/REDMCSB_CONSTANT_GLOBAL_AUDIT.tsv` covers all 866
+  `Cxxx` constants and 2,074 named `Gxxxx` globals. Of those, 1,830 have only
+  a semantic Firestaff candidate, 587 have no direct counterpart, and 523 are
+  platform/toolchain-specific. Required work: prioritize the DM1/CSB runtime
+  C/G rows by rendering, save/load, champion, dungeon, and timeline impact;
+  then give each an owner, width/lifetime contract, and focused evidence.
+
 - REDMCSB-SYMBOL-GAP-001 — **The complete numbered-symbol inventory is not a
   completion claim.** ReDMCSB has 13,090 unique numbered source symbols:
   `A` 4, `C` 866, `E` 6, `F` 2,104, `G` 2,074, `L` 4,616, `M` 397, `P` 2,996,
