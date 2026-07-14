@@ -646,6 +646,10 @@
   - 2026-07-14 update: F0685 now provides the PC IMG3 packed-nibble line fill
     over caller-owned destination storage for real image expansion paths. It
     allocates no bitmap and supplies no palette, image, or renderer fallback.
+  - 2026-07-14 update: F0684 now preserves PC I34 viewport blit dispatch:
+    zone dimensions, even source/destination strides, vertical/horizontal flip,
+    and caller-owned opaque/transparent line primitives. No bitmap or display
+    buffer is created by the adapter.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
