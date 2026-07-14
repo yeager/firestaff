@@ -282,6 +282,24 @@ typedef struct {
     int face_semantics_proven;
 } Nexus_V1_DgnStructure1FFaceSelectorReceipt;
 
+/* A Structure1F face-selector byte can be retained beside the resolved
+ * Structure1A Structure3-model selector only after the complete owner
+ * relation succeeds. This is a raw source-pair receipt: it establishes no
+ * Structure3 record boundary, face ordinal, normal, vertex, transform,
+ * texture, palette, pixel, or draw instruction. */
+typedef struct {
+    int structure1a_relation_complete;
+    int structure1f_bound_entry_count;
+    int resolved_pair_count;
+    int unique_pair_count;
+    int duplicate_pair_count;
+    int zero_pair_count;
+    int nonzero_pair_count;
+    uint16_t highest_pair;
+    int complete;
+    int attachment_semantics_proven;
+} Nexus_V1_DgnStructure3ModelFaceSelectorReceipt;
+
 /* Structure1F's Structure1A-bound families also carry a separate raw
  * rotation-selector byte. It is retained only after the owner relation is
  * complete. Its unit and relation to any face or Structure3 transform remain
@@ -1436,6 +1454,7 @@ typedef struct {
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt structure3_mesh_semantics;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
+    Nexus_V1_DgnStructure3ModelFaceSelectorReceipt structure3_model_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
@@ -1907,6 +1926,7 @@ typedef struct {
         structure3_face_normal_geometry;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
+    Nexus_V1_DgnStructure3ModelFaceSelectorReceipt structure3_model_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
     Nexus_V1_DgnStructure1FFaceRotationPairReceipt structure1f_face_rotation_pairs;
     Nexus_V1_DgnStructure1FOffsetPairReceipt structure1f_offset_pairs;
@@ -2039,6 +2059,9 @@ int nexus_v1_level_structure1a_transform_selector_receipt(
 int nexus_v1_level_structure1f_face_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFaceSelectorReceipt *out_receipt);
+int nexus_v1_level_structure3_model_face_selector_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3ModelFaceSelectorReceipt *out_receipt);
 int nexus_v1_level_structure1f_rotation_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FRotationSelectorReceipt *out_receipt);
