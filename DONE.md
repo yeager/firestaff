@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0657/F0658 bitmap-index viewport bridge: added
+  the PC34 F0630 `STRUCT2` bitmap-origin path and the F0658 F0635-relative
+  zone-offset path before F0132 dispatch. Bitmap lookup, layout resolution,
+  and renderer state remain caller-owned real data; no graphics decode,
+  fallback index, event, DSA, or runtime was introduced. Focused strict-C11
+  regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0655/F0656 viewport bitmap bridge: added the
   IBM-PC bitmap-prefix `F0615` dimension copy plus F0132 flip dispatch, and
   the F0635-resolved transparent viewport dispatch. The adapter owns no

@@ -496,6 +496,13 @@
     a layout, or creates a fallback event/DSA/runtime. Real CSB graphics and
     save corpus evidence is still required before this boundary is bound to a
     restored live viewport.
+  - 2026-07-14 update: F0657/F0658 now route caller-owned bitmap indices
+    through the original F0630 `STRUCT2` offsets and, for F0658, the F0635
+    layout-relative offset before the PC34 F0132 viewport dispatch. Bitmap
+    lookup, layout data, and renderer state remain external real-data owners;
+    this adds no graphic decode, index fallback, synthetic event, DSA, or
+    runtime selection. A real CSB graphics corpus still must bind the route
+    to live HUD/viewport data.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
