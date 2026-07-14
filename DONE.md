@@ -14221,6 +14221,18 @@ retail corpus validates the partition. This is no-draw row incidence only; it
 does not establish an edge, winding, surface, normal-plane, transform,
 texture, palette, or drawing behavior.
 
+# 2026-07-14 Nexus Structure3 retail source-only capture gate
+
+`test_nexus_v1_dgn_face_mesh_corpus` now submits source-only capture input for
+each hash-verified LEV00.DGN through LEV15.DGN level and requires all 16 to
+remain blocked before candidate framing, complete source binding, or renderer
+handoff. This proves only that the installed DGN corpus lacks the separate
+captured texture span, palette state, VDP1 state/command, transform, culling,
+and ordered original-Saturn provenance required by the binder. It does not
+decode a texture or palette, assign a transform, or authorize DGN drawing.
+Verification: `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus
+./build-nexus/test_nexus_v1_dgn_face_mesh_corpus`.
+
 # ✅ 2026-07-14 Theron Track 02 route-receipt probe repair
 
 The focused Track 02 handoff probe now constructs a complete hash-profiled

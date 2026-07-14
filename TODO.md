@@ -708,6 +708,13 @@ ReDMCSB WIP 2021-02-06 source tree.
     joins. This records raw source selector reuse only; it does not assign
     payload contents, texture dimensions, UVs, palette semantics, animation,
     transforms, or a draw route.
+  - 2026-07-14 update: the hash-verified LEV00--LEV15 corpus now exercises
+    the Structure3 capture binder for every retail level with source-only
+    input. All 16 remain explicitly blocked before candidate framing, source
+    binding, or renderer handoff. This is a no-draw regression guard, not
+    Saturn capture evidence; texture/palette decoding, transforms, and VDP1
+    draw ordering still require an authenticated original executable trace or
+    capture containing every bound span.
   - 2026-07-14 update: the bounded Structure3 grammar now has a caller-owned,
     source-hash-checked typed entry extractor for documented signed-16.16
     vertex/normal rows and entry-local face rows. It rejects partial buffers
