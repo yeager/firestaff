@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0792` and `F0798`: source-locked dungeon
+  bitmap draw and inclusive point-in-zone predicate. Focused strict C11 tests
+  pass without synthetic graphics.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0791`: source-locked PC 3.4 dungeon-view
   zone bitmap blit. Focused strict C11 test passes without synthetic pixels.
 
