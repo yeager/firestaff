@@ -579,7 +579,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   face-row/normal-row ordinal pairing is now retained and corpus-checked for
   1,144 entries / 18,478 pairs. Next remains original Saturn evidence for
   normal-plane use, transforms, palette/texture decoding, and VDP1 draw
-  ordering; do not infer any of those from the pair receipt.
+  ordering; do not infer any of those from the pair receipt. 2026-07-14
+  update: the renderer now receives an aggregate mesh-semantic receipt when
+  bounded topology, vectors, and ordinal pairs agree, but it explicitly
+  requires an unavailable original Saturn capture and continues to block
+  normal-plane, transform, texture/palette, and draw behavior.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
     render-plan receipts only through complete Structure1F owner relations.
     Its raw reuse is counted, but its grammar remains unassigned; it cannot

@@ -114,6 +114,15 @@
   `ctest -R nexus_v1_dgn_face_mesh_corpus` with
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
 
+- ✅ 2026-07-14 Nexus Structure3 mesh-semantic renderer handoff: bounded
+  topology, fixed-point vectors, and entry-local face-normal ordinal pairs now
+  reach one renderer-facing receipt. The retail `LEV00.DGN`--`LEV15.DGN`
+  corpus verifies the source facts, while the receipt explicitly requires an
+  unavailable original Saturn capture and blocks normal planes, transforms,
+  texture/palette decoding, and drawing. Verification: external Ninja build
+  and `ctest -R 'nexus_v1_dgn_(geometry_readiness|face_mesh_corpus)'` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-07-14 CSBWin package dungeon/save boundary handoff: added an
   opt-in real-package probe that attaches only a caller-supplied original
   `Dungeon.dat` to the runtime-owned CSB world, ticks that live world, then

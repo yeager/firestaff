@@ -3460,6 +3460,45 @@ int nexus_v1_level_structure3_face_normal_pair_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt receipt;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!level) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_topology_valid = level->structure3_faces.valid;
+    receipt.source_vectors_valid = level->structure3_vectors.valid;
+    receipt.source_face_normal_pairing_valid =
+        level->structure3_face_normal_pairs.valid;
+    receipt.entry_count = level->structure3_faces.entry_count;
+    receipt.vertex_count = level->structure3_faces.vertex_count;
+    receipt.face_count = level->structure3_faces.face_count;
+    receipt.normal_count = level->structure3_faces.normal_count;
+    receipt.face_normal_pair_count =
+        level->structure3_face_normal_pairs.face_normal_pair_count;
+    receipt.source_facts_complete = receipt.source_topology_valid &&
+        receipt.source_vectors_valid && receipt.source_face_normal_pairing_valid &&
+        receipt.face_count == receipt.normal_count &&
+        receipt.face_count == receipt.face_normal_pair_count;
+    receipt.original_capture_required = receipt.source_facts_complete;
+    /* No original Saturn trace is represented by the DGN corpus alone. */
+    receipt.original_capture_available = 0;
+    receipt.normal_plane_semantics_proven = 0;
+    receipt.transform_semantics_proven = 0;
+    receipt.texture_palette_semantics_proven = 0;
+    receipt.draw_semantics_proven = 0;
+    receipt.renderer_handoff_ready = 0;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    *out_receipt = receipt;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3732,6 +3771,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_vectors);
     (void)nexus_v1_level_structure3_face_normal_pair_receipt(
         level, &out_receipt->structure3_face_normal_pairs);
+    (void)nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+        level, &out_receipt->structure3_mesh_semantics);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(

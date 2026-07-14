@@ -1801,6 +1801,7 @@ static void test_structure3_entry_header_boundaries(void) {
     Nexus_V1_DgnStructure3FaceMaterialReceipt materials;
     Nexus_V1_DgnStructure3VectorReceipt vectors;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
+    Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
@@ -1933,6 +1934,24 @@ static void test_structure3_entry_header_boundaries(void) {
           pairs.non_unit_length_face_normal_pair_count == 0 &&
           !pairs.normal_plane_or_draw_semantics_proven,
           "Structure3 face/normal ordinals remain bounded no-draw correspondence");
+    CHECK(nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+              &level, &mesh_semantics) == 0 &&
+          mesh_semantics.source_topology_valid &&
+          mesh_semantics.source_vectors_valid &&
+          mesh_semantics.source_face_normal_pairing_valid &&
+          mesh_semantics.source_facts_complete &&
+          mesh_semantics.entry_count == 2 && mesh_semantics.vertex_count == 5 &&
+          mesh_semantics.face_count == 4 && mesh_semantics.normal_count == 4 &&
+          mesh_semantics.face_normal_pair_count == 4 &&
+          mesh_semantics.original_capture_required &&
+          !mesh_semantics.original_capture_available &&
+          !mesh_semantics.normal_plane_semantics_proven &&
+          !mesh_semantics.transform_semantics_proven &&
+          !mesh_semantics.texture_palette_semantics_proven &&
+          !mesh_semantics.draw_semantics_proven &&
+          !mesh_semantics.renderer_handoff_ready &&
+          mesh_semantics.blocks_real_dgn_mesh_render,
+          "Structure3 mesh handoff requires an original capture before drawing");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
@@ -1943,9 +1962,14 @@ static void test_structure3_entry_header_boundaries(void) {
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_vector_receipt(&level, &vectors) == 0 &&
           nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) == 0 &&
+          nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+              &level, &mesh_semantics) == 0 &&
           !vectors.valid && vectors.normal_non_unit_length_count == 1 &&
           !pairs.vector_receipt_valid && !pairs.valid &&
           pairs.non_unit_length_face_normal_pair_count == 1 &&
+          !mesh_semantics.source_facts_complete &&
+          !mesh_semantics.original_capture_required &&
+          mesh_semantics.blocks_real_dgn_mesh_render &&
           !vectors.transform_or_draw_semantics_proven,
           "a non-unit Structure3 normal invalidates its no-draw pair receipt");
     wb32(payload + 128, 65536U);

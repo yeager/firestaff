@@ -74,6 +74,16 @@ existing fixed-point unit tolerance. This remains correspondence provenance;
 it does not identify a normal plane, orientation, surface, palette, texture,
 or draw operation.
 
+## Mesh Semantic Handoff
+
+The renderer receives a single Structure3 mesh-semantic receipt only after
+bounded topology, signed fixed-point vectors, and entry-local face/normal
+ordinal pairs agree. On the retail `LEV00.DGN` through `LEV15.DGN` corpus this
+is evidence completeness, not rendering readiness: the receipt explicitly
+requires an original Saturn capture and marks it unavailable. It therefore
+blocks normal-plane use, transforms, texture/palette decoding, and draw
+commands until a capture ties those operations to the original runtime.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,

@@ -65,6 +65,7 @@ int main(void) {
         Nexus_V1_DgnStructure3FaceReceipt faces;
         Nexus_V1_DgnStructure3VectorReceipt vectors;
         Nexus_V1_DgnStructure3FaceNormalPairReceipt pairs;
+        Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt mesh_semantics;
 
         snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
         data = read_file(path, &size);
@@ -76,7 +77,9 @@ int main(void) {
         free(data);
         if (nexus_v1_level_structure3_face_receipt(&level, &faces) != 0 ||
             nexus_v1_level_structure3_vector_receipt(&level, &vectors) != 0 ||
-            nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0) {
+            nexus_v1_level_structure3_face_normal_pair_receipt(&level, &pairs) != 0 ||
+            nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+                &level, &mesh_semantics) != 0) {
             CHECK(0, "Structure3 face/normal receipts are available");
             continue;
         }
@@ -93,6 +96,19 @@ int main(void) {
               !vectors.transform_or_draw_semantics_proven &&
               !faces.draw_semantics_proven,
               "face-normal rows do not authorize plane or draw semantics");
+        CHECK(mesh_semantics.source_facts_complete &&
+              mesh_semantics.entry_count == pairs.entry_count &&
+              mesh_semantics.face_count == pairs.face_normal_pair_count &&
+              mesh_semantics.normal_count == pairs.face_normal_pair_count &&
+              mesh_semantics.original_capture_required &&
+              !mesh_semantics.original_capture_available &&
+              !mesh_semantics.normal_plane_semantics_proven &&
+              !mesh_semantics.transform_semantics_proven &&
+              !mesh_semantics.texture_palette_semantics_proven &&
+              !mesh_semantics.draw_semantics_proven &&
+              !mesh_semantics.renderer_handoff_ready &&
+              mesh_semantics.blocks_real_dgn_mesh_render,
+              "retail mesh evidence reaches a capture-blocked renderer handoff");
         ++checked;
         entry_total += pairs.entry_count;
         face_total += pairs.face_normal_pair_count;
