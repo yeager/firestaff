@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 PC34 external-save viewport-consumption gate: the
+  fixture-free HoC runtime probe now requires M11 to retain the
+  `ORIGINAL_SAVE_PC34` runtime origin and to produce a nonblank, byte-stable
+  224x136 PC34 viewport crop from each admitted external save. The former
+  whole-frame nonblank check could be satisfied by HUD chrome alone. No save,
+  dungeon, or graphics fixture is created; the target still skips without
+  explicitly staged original PC34 media and corpus. Source-lock: ReDMCSB
+  `LOADSAVE.C F0435` and `DUNVIEW.C F0128`. Verification: CTest
+  `dm1_v1_original_save_pc34_external_hoc_runtime`.
+
 - ✅ 2026-07-14 DM1 PC34 external-save HoC runtime gate: every
   operator-staged, checksum-qualified PC34 corpus candidate now has a
   fixture-free M11 F0435 runtime check against original DM1 media. The gate
