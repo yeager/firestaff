@@ -2,7 +2,8 @@
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
-  ReDMCSB-shaped idle runtime tick. M11 now assigns ORIGINAL_SAVE_PC34 only
+  ReDMCSB-shaped idle runtime tick, matched against an independently staged
+  F0435 world's M10 tick receipt. M11 now assigns ORIGINAL_SAVE_PC34 only
   after its F0435 classifier/materializer route succeeds; native F0433-style
   saves retain QUICKSAVE_RESUME_PC34 provenance. Retain broader original PC34
   interactive route/capture comparison as an external-corpus task.
