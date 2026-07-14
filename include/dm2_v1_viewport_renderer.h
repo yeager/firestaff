@@ -480,6 +480,8 @@ typedef struct {
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
+    int16_t  map_x;            /* source map coordinate for G1 material ownership */
+    int16_t  map_y;
 } DM2_CreatureSprite;
 
 typedef struct {
@@ -489,6 +491,8 @@ typedef struct {
     int frame_index;
     int direction;
     int depth;
+    int map_x;
+    int map_y;
     int center_x;
     int center_y;
     int gdat_index;
@@ -856,6 +860,16 @@ typedef struct {
     int asset_creature_possession_item_drawn_count;
     int fallback_creature_possession_item_drawn_count;
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
+    int g1_scene_creature_material_ready;
+    int g1_scene_creature_material_map_x;
+    int g1_scene_creature_material_map_y;
+    int g1_scene_creature_material_type;
+    int g1_scene_creature_material_gdat_index;
+    int g1_scene_creature_material_width;
+    int g1_scene_creature_material_height;
+    int g1_scene_creature_material_stride;
+    uint32_t g1_scene_creature_material_palette_hash;
+    int g1_scene_creature_material_consumed_count;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
     int asset_carried_item_drawn_count;
@@ -943,6 +957,10 @@ void dm2_v1_viewport_set_gdat_interface_font(
 void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_scene_creature_material(
+    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
+    int creature_type, int gdat_index, int width, int height, int stride,
+    uint32_t palette_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,

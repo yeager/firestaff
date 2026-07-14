@@ -965,6 +965,28 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_g1_scene_creature_material(
+    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
+    int creature_type, int gdat_index, int width, int height, int stride,
+    uint32_t palette_hash)
+{
+    if (!s) return;
+    s->g1_scene_creature_material_ready =
+        ready && creature_type >= 0 && creature_type <= 0xff &&
+        gdat_index != 0 && width > 0 && height > 0 && stride >= width &&
+        palette_hash != 0u;
+    s->g1_scene_creature_material_map_x = map_x;
+    s->g1_scene_creature_material_map_y = map_y;
+    s->g1_scene_creature_material_type = creature_type;
+    s->g1_scene_creature_material_gdat_index = gdat_index;
+    s->g1_scene_creature_material_width = width;
+    s->g1_scene_creature_material_height = height;
+    s->g1_scene_creature_material_stride = stride;
+    s->g1_scene_creature_material_palette_hash = palette_hash;
+    s->g1_scene_creature_material_consumed_count = 0;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
@@ -2362,6 +2384,8 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;
+        row->map_x = src->map_x;
+        row->map_y = src->map_y;
         row->center_x = src->screen_x;
         row->center_y = src->screen_y;
         row->gdat_index = dm2_v1_viewport_creature_graphic_index(
@@ -4190,6 +4214,21 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
                     continue;
                 }
+                if (c->source_kind == 2 &&
+                    s->g1_scene_creature_material_ready &&
+                    c->map_x == s->g1_scene_creature_material_map_x &&
+                    c->map_y == s->g1_scene_creature_material_map_y &&
+                    (c->creature_type != s->g1_scene_creature_material_type ||
+                     c->gdat_index != s->g1_scene_creature_material_gdat_index ||
+                     src_w != s->g1_scene_creature_material_width ||
+                     src_h != s->g1_scene_creature_material_height ||
+                     src_stride != s->g1_scene_creature_material_stride ||
+                     s->active_asset_palette_hash !=
+                         s->g1_scene_creature_material_palette_hash)) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
+                    continue;
+                }
                 if (dm2_v1_viewport_creature_asset_blit(c,
                                                         src_w,
                                                         src_h,
@@ -4214,6 +4253,12 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_drawn_count;
+                    if (c->source_kind == 2 &&
+                        s->g1_scene_creature_material_ready &&
+                        c->map_x == s->g1_scene_creature_material_map_x &&
+                        c->map_y == s->g1_scene_creature_material_map_y) {
+                        ++s->g1_scene_creature_material_consumed_count;
+                    }
                     s->last_creature_asset_blit_valid = 1;
                     s->last_creature_asset_render = *c;
                     s->last_creature_asset_blit = blit;
