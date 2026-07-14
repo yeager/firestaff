@@ -151,6 +151,11 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8160: source-locked PC 3.4 C25 creature
+  replacement palette. The adapter copies RGB6 only, from one original
+  14-by-6 creature set into the selected entry of palette tables 0..5, while
+  retaining each `COLOR_DEF.Index`. Focused strict-C11 test passes.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8161: source-locked PC 3.4 C25 viewport
   blit. The adapter preserves the temporary `0x10` viewport palette bank and
   exact opaque, unflipped F8151 parameters: source origin `(0,0)`, width 224,
