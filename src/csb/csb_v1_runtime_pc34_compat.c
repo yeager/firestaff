@@ -16100,7 +16100,6 @@ static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
             candidate->csbwin_appended_tail,
             candidate->csbwin_appended_tail_preserved_size) ||
         before->dsa_id < 0 || before->dsa_id >= CSB_V1_MAX_DSA_SCRIPTS ||
-        before->state_index != after->state_index ||
         before->action_ordinal != after->action_ordinal) {
         return 0;
     }
