@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1072: available graphics-library teardown route
+  is Amiga-only. The focused PC 3.4 boundary is intentionally a no-op.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1071: available graphics-library open route is
   Amiga-only. The focused PC 3.4 boundary is intentionally a no-op.
 
