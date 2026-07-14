@@ -618,6 +618,18 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_entry_headers.boundaries_valid &&
               handoff.structure3_entry_headers.third_region_boundaries_valid &&
               !handoff.structure3_entry_headers.semantics_proven &&
+              handoff.structure3_faces.entry_headers_valid &&
+              handoff.structure3_faces.valid &&
+              handoff.structure3_faces.entry_count ==
+                  handoff.structure3_entry_headers.entry_count &&
+              handoff.structure3_faces.vertex_count > 0 &&
+              handoff.structure3_faces.face_count > 0 &&
+              handoff.structure3_faces.normal_count ==
+                  handoff.structure3_faces.face_count &&
+              handoff.structure3_faces.face_vertex_indexes_valid &&
+              handoff.structure3_faces.normal_count_matches_face_count &&
+              handoff.structure3_faces.unclassified_fill_count == 0 &&
+              !handoff.structure3_faces.draw_semantics_proven &&
               handoff.structure1f_face_selectors.structure1a_relation_complete ==
                   handoff.structure3_model_references.complete &&
               handoff.structure1f_face_selectors.resolved_face_selector_count ==
@@ -626,7 +638,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               handoff.structure3_model_references.structure1f_bound_entry_count ==
                   loaded_level.structure1f_entry_count -
                       handoff.structure1f_spatial.direct_coordinate_entry_count,
-              "real Structure3 payload, owner-model, and raw face-selector provenance reach the host unchanged");
+              "real Structure3 face topology and fill lanes remain bounded no-draw provenance");
         CHECK(nexus_v1_level_structure3_ordinal_correlation_receipt(
                   &loaded_level, &correlation) == 0 &&
               correlation.structure1a_relation_complete ==
@@ -1702,6 +1714,7 @@ static void test_structure3_entry_header_boundaries(void) {
     uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
     Nexus_V1_Level level;
     Nexus_V1_DgnStructure3EntryHeaderReceipt headers;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
     Nexus_V1_DgnRendererHandoffReceipt handoff;
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
@@ -1723,6 +1736,18 @@ static void test_structure3_entry_header_boundaries(void) {
     wb32(payload + 120, 156U);
     wb32(payload + 124, 180U);
 
+    /* Structure3b face rows: all three rows are triangles; entry 1 carries
+     * one textured triangle. All indexes stay inside their own vertex table. */
+    wb16(payload + 80, 0U);
+    wb16(payload + 82, 1U);
+    wb16(payload + 84, 0U);
+    wb16(payload + 86, 0U);
+    wb16(payload + 156, 0U);
+    wb16(payload + 158, 0U);
+    wb16(payload + 160, 0U);
+    wb16(payload + 162, 0U);
+    payload[164] = 0x40U;
+
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
           nexus_v1_level_structure3_entry_header_receipt(&level, &headers) == 0 &&
           headers.payload_valid && headers.directory_valid && headers.valid &&
@@ -1738,6 +1763,14 @@ static void test_structure3_entry_header_boundaries(void) {
           headers.third_region_boundaries_valid &&
           !headers.semantics_proven,
           "Structure3 entry framing bounds the paired third 12-byte region");
+    CHECK(nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
+          faces.entry_headers_valid && faces.valid && faces.vertex_count == 3 &&
+          faces.face_count == 3 && faces.normal_count == 3 &&
+          faces.triangle_count == 3 && faces.quad_count == 0 &&
+          faces.textured_face_count == 1 && faces.static_texture_fill_count == 3 &&
+          faces.face_vertex_indexes_valid && faces.normal_count_matches_face_count &&
+          !faces.draw_semantics_proven,
+          "Structure3 face rows retain bounded topology without authorizing a draw");
     CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(&level, &handoff) == 0 &&
           handoff.structure3_entry_headers.valid &&
           !handoff.structure3_entry_headers.semantics_proven &&
@@ -1758,6 +1791,14 @@ static void test_structure3_entry_header_boundaries(void) {
           !headers.valid && !headers.third_region_boundaries_valid &&
           !headers.semantics_proven,
           "truncated third Structure3 region remains fail-closed");
+
+    wb32(payload + 124, 180U);
+    wb16(payload + 80, 2U);
+    CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0 &&
+          nexus_v1_level_structure3_face_receipt(&level, &faces) == 0 &&
+          !faces.valid && !faces.face_vertex_indexes_valid &&
+          !faces.draw_semantics_proven,
+          "out-of-range Structure3 face indexes remain fail-closed");
 }
 
 static void test_visible_structure1f_semantics_block_render_plan(void) {

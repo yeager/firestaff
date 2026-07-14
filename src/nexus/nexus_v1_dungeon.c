@@ -53,6 +53,7 @@ static int nexus_v1_level_copy_structure3_payload(
     int byte_index;
     Nexus_V1_DgnStructure3DirectoryReceipt directory;
     Nexus_V1_DgnStructure3EntryHeaderReceipt entry_headers;
+    Nexus_V1_DgnStructure3FaceReceipt faces;
 
     if (!level || !data || size < NEXUS_DGN_BLOCK_SIZE) return -1;
     /* DMWeb DGN container: Structure3's block offset/count follow the
@@ -82,6 +83,7 @@ static int nexus_v1_level_copy_structure3_payload(
     level->structure3_payload.complete_block_count = (int)block_count;
     memset(&directory, 0, sizeof(directory));
     memset(&entry_headers, 0, sizeof(entry_headers));
+    memset(&faces, 0, sizeof(faces));
     directory.payload_valid = 1;
     memset(seen, 0, sizeof(seen));
     for (block_index = 0; block_index < (int)block_count; ++block_index) {
@@ -311,6 +313,60 @@ static int nexus_v1_level_copy_structure3_payload(
      * texture grammar. Keep the renderer on its existing fail-closed gate. */
     entry_headers.semantics_proven = 0;
     level->structure3_entry_headers = entry_headers;
+    faces.entry_headers_valid = entry_headers.valid;
+    if (entry_headers.valid) {
+        int entry;
+
+        faces.entry_count = entry_headers.entry_count;
+        faces.face_vertex_indexes_valid = 1;
+        faces.normal_count_matches_face_count = 1;
+        for (entry = 0; entry < directory.entry_count; ++entry) {
+            uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
+            const uint8_t *header = data + byte_offset + entry_offset;
+            uint16_t vertex_count = rb16(header + 4);
+            uint16_t face_count = rb16(header + 6);
+            uint32_t face_offset = rb32(header + 16);
+            uint32_t normal_offset = rb32(header + 20);
+            int face_index;
+
+            faces.vertex_count += vertex_count;
+            faces.face_count += face_count;
+            faces.normal_count += face_count;
+            if ((uint64_t)normal_offset + (uint64_t)face_count * 12U >
+                (uint64_t)byte_size) {
+                faces.normal_count_matches_face_count = 0;
+                break;
+            }
+            for (face_index = 0; face_index < (int)face_count; ++face_index) {
+                const uint8_t *face = data + byte_offset + face_offset +
+                    face_index * 12;
+                uint16_t index2 = rb16(face + 4);
+                uint16_t index3 = rb16(face + 6);
+                uint16_t fill = rb16(face + 10);
+
+                if (rb16(face) >= vertex_count || rb16(face + 2) >= vertex_count ||
+                    index2 >= vertex_count || index3 >= vertex_count) {
+                    faces.face_vertex_indexes_valid = 0;
+                }
+                if (index2 == index3) ++faces.triangle_count;
+                else ++faces.quad_count;
+                if ((face[8] & 0x40U) != 0U) ++faces.textured_face_count;
+                if ((face[8] & 0x01U) != 0U) ++faces.mesh_transparent_face_count;
+                if ((fill & 0x8000U) != 0U) ++faces.one_off_color_fill_count;
+                else if ((fill & 0xff00U) == 0x0800U)
+                    ++faces.animated_texture_fill_count;
+                else if ((fill & 0xff00U) == 0U)
+                    ++faces.static_texture_fill_count;
+                else ++faces.unclassified_fill_count;
+            }
+        }
+        faces.valid = faces.face_vertex_indexes_valid &&
+            faces.normal_count_matches_face_count &&
+            faces.unclassified_fill_count == 0;
+    }
+    /* Record grammar alone cannot select material data or issue a draw. */
+    faces.draw_semantics_proven = 0;
+    level->structure3_faces = faces;
     return 0;
 }
 
@@ -2887,6 +2943,16 @@ int nexus_v1_level_structure3_entry_header_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure3_face_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (level) *out_receipt = level->structure3_faces;
+    return 0;
+}
+
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt)
@@ -3151,6 +3217,8 @@ int nexus_v1_level_dgn_renderer_handoff_receipt(
         level, &out_receipt->structure3_directory);
     (void)nexus_v1_level_structure3_entry_header_receipt(
         level, &out_receipt->structure3_entry_headers);
+    (void)nexus_v1_level_structure3_face_receipt(
+        level, &out_receipt->structure3_faces);
     (void)nexus_v1_level_structure1a_transform_selector_receipt(
         level, &out_receipt->structure1a_transform_selectors);
     (void)nexus_v1_level_structure1f_face_selector_receipt(
@@ -3714,6 +3782,7 @@ int nexus_v1_level_build_dgn_view_render_plan(
     receipt.structure3_model_references = handoff.structure3_model_references;
     receipt.structure3_directory = handoff.structure3_directory;
     receipt.structure3_entry_headers = handoff.structure3_entry_headers;
+    receipt.structure3_faces = handoff.structure3_faces;
     receipt.structure1a_transform_selectors = handoff.structure1a_transform_selectors;
     receipt.structure1f_face_selectors = handoff.structure1f_face_selectors;
     receipt.structure1f_rotation_selectors = handoff.structure1f_rotation_selectors;

@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 Nexus Structure3 face-record receipt: DMWeb's Saturn DGN
+  format describes each bounded Structure3b row as four vertex indexes, flags,
+  and a fill selector, with one Structure3c normal per face. Firestaff now
+  validates every face index against its entry-local Structure3a vertex count
+  and records triangle/quad, mesh-transparency, static-texture,
+  animated-texture, and one-off-color totals through the DGN handoff. The
+  verified retail `LEV00.DGN`--`LEV15.DGN` corpus passes those bounds and fill
+  lanes. No selector is bound to a material, palette, VDP1 command, or draw;
+  the existing no-draw gate remains unchanged. Verification: focused CTest
+  `nexus_v1_dgn_geometry_readiness` passed with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-07-14 Theron Stage 3 CD_READ sector receipt: added an immutable,
   fail-closed join between the observed Mednafen `$4090 -> $4093` `$3800`
   transfer and the matching hash-verified MODE1/2048 Stage 3 sector receipt.
