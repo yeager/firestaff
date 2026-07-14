@@ -257,6 +257,13 @@ static int startup_role_geometry(CSB_V1_CSBGraphicsStartupAssetRole role,
     *out_route = CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE;
     switch (role) {
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE:
+        /* ReDMCSB TITLE.C F0437 only addresses C001 rows 0..152:
+         * CHAOS (0..79), STRIKES BACK (80..136), PRESENTS (137..152).
+         * The PC34 C001 archive entry is therefore 320x153, not a padded
+         * 320x200 screen. */
+        *out_width = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W;
+        *out_height = 153u;
+        return 1;
     case CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN:
         *out_width = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W;
         *out_height = CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H;
