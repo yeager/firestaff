@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1048/F1050: source review found a commented-out
+  setjmp alias and an Amiga-only terminal-alert route. Focused boundaries keep
+  C semantics where applicable without asserting PC 3.4 behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1049: numbered alias is commented out and
   jump-buffer declarations are non-PC-only. The focused boundary does not
   synthesize longjmp behavior.
