@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 ReDMCSB `MENUS.C F0383`: action-list construction now keeps
+  the primary action, compacts eligible optional actions, clears unused slots,
+  and rejects incomplete runtime receipts without mutation. The focused CTest
+  covers charge, skill, and receipt gates.
+
 - 2026-07-14 CSB save export provenance: FSSB envelopes now require a
   non-empty original artifact path and reject the retired synthetic marker at
   build, validation, and round-trip boundaries. Verification:
