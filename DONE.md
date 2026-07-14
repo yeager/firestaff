@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 PC34 C11 save-runtime materialization: the focused F0435
+  regression now stages three source-valid `ENABLE_CHAMPION_ACTION` records,
+  including MENU.C F0407's ordinal-two throw form, and drives them through
+  the restored M10 queue. Each fires once on its saved tick as the exact
+  champion/ordinal `EMIT_ACTION_ENABLED` receipt; no dungeon, action, or
+  follow-up is synthesized. The former malformed-C11 rollback fixture now
+  proves an unknown active C80 remains transactional. Source-lock:
+  ReDMCSB `CHAMPION.C F0330`, `MENU.C F0407`, and `TIMELINE.C C11/F0253/F0259`.
+  Verification: `dm1_v1_original_save_pc34_handoff`.
+
 - 2026-07-14 DM1 PC34 external-save live-world runtime receipt: the
   fixture-free HoC runtime probe now recomputes the canonical M10 world hash
   from M11's adopted world after the first ReDMCSB-shaped idle tick and after
