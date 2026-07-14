@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB `GROUP2.C F0227`: destination-visibility wedge
+  logic now has a bounded source-owned callable. Verification: focused strict
+  CTest.
+
 - 2026-07-14 CSB ReDMCSB `DIALOG.C F0426`: the source 30-character dialog
   split rule is now a callable compatibility adapter. Verification: focused
   strict CTest.
