@@ -6252,3 +6252,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the engine boundary. The remaining blocker is original Saturn evidence for
   transforms, materials, texture/palette decoding, VDP1 commands, and draw;
   this receipt remains strictly no-draw with no fallback visuals.
+
+- 🔧 2026-07-15 Nexus active DGN face/material selector route: active retail
+  LEV sources now bind bounded Structure3 face topology to the documented
+  Structure2/Structure1G selector joins. This remains identifier provenance,
+  not material/pixel/palette/UV/VDP1/draw semantics. Original Saturn capture
+  evidence is still required before any renderer promotion.
