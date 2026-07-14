@@ -1830,7 +1830,7 @@ F	0784	F0784_UnlockMouse	FMTOWNS.H;IO.C;CEDT026.C	implemented_source_locked
 F	0785	F0785_SetMousePointerCoordinates	FMTOWNS.H;IO.C;DEFS.H;CEDT026.C;SELECTOR.C;ENTRANCE.C	implemented_source_locked
 F	0787	F0787_GetZoneInitializedFromCoordinates	PANEL.C;FMTOWNS.H;COORD.C;REVIVE.C;DEFS.H	implemented_source_locked
 F	0789	F0789_AllocateLayoutRange	COORD.C	implemented_source_locked
-F	0791	F0791_DUNGEONVIEW_DrawBitmapXX	DUNVIEW.C	referenced_not_verified
+F	0791	F0791_DUNGEONVIEW_DrawBitmapXX	DUNVIEW.C	implemented_source_locked
 F	0792	F0792_DUNGEONVIEW_DrawBitmapYYY	DUNVIEW.C	referenced_not_verified
 F	0797	F0797_STARTEND_DrawEntranceMicroDungeon	IIGS.H;DEFS.H;ENTRANCE.C	referenced_not_verified
 F	0798	F0798_COMMAND_IsPointInZone	CLIKVIEW.C;COORD.C;COMMAND.C;DEFS.H;SWITCH.C	referenced_not_verified

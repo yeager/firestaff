@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0791`: source-locked PC 3.4 dungeon-view
+  zone bitmap blit. Focused strict C11 test passes without synthetic pixels.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0766`, `F0785`, `F0787` and `F0789`:
   source-locked screen blit, mouse-coordinate, XYZ-zone and permanent
   layout-allocation routes. Four focused strict C11 tests pass.
