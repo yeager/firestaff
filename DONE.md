@@ -13233,3 +13233,16 @@ referenced floor/ceiling at its declared dimensions and mutates each observed
 C8 selector only to prove unknown selectors cannot publish pixels. Verification:
 Ninja and direct `test_dm2_v1_gdat_graphicsset_real_data`,
 `test_dm2_v1_gdat_word_values`, and `test_dm2_v1_weather_gdat_receipt` pass.
+
+# ✅ 2026-07-14 CSB terminal presented-frame runtime handoff
+
+M11 now records the successfully presented 320x200 indexed CSB framebuffer
+through a CSB-owned fact builder that requires the terminal real package
+session: C001 PRESENTS/CHAOS/STRIKES, F0807 door completion, and C017/C040.
+The boot receipt retains only the actual-frame hash, dimensions, and macOS
+app/window facts. It remains fail-closed outside a valid terminal session and
+does not promote an app capture without the existing release/app receipt.
+Source lock: ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0438/F0807`; CSBWin
+`Graphics.cpp ReadGraphic`. Verification: CMake build of `firestaff_m11` and
+`git diff --check` passed. The broad `test_csb_v1_boot_runtime_handoff` still
+has pre-existing failures in unrelated synthetic-fixture assertions.

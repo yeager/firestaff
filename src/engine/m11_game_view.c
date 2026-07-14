@@ -12555,6 +12555,15 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->csbState.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->csbState.tick_count;
+        out->csbPresentedFrameCaptureReady =
+            state->csbState.presented_frame_capture_ready;
+        out->csbPresentedFrameRunningFromMacOSApp =
+            state->csbState.presented_frame_running_from_macos_app;
+        out->csbPresentedFrameMacWindowReady =
+            state->csbState.presented_frame_mac_window_ready;
+        out->csbPresentedFrameWidth = state->csbState.presented_frame_width;
+        out->csbPresentedFrameHeight = state->csbState.presented_frame_height;
+        out->csbPresentedFrameHash = state->csbState.presented_frame_hash;
         if (m11_csb_boot_runtime_full_visual_sequence_receipt(
                 state,
                 &visual_sequence)) {
@@ -12885,6 +12894,46 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->startupTitleReady = out->levelLoaded ? 1 : 0;
     }
     return 1;
+}
+
+void M11_GameView_RecordCSBPresentedIndexedFrame(
+    M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height,
+    int runningFromMacOSAppBundle,
+    int macWindowCaptureReady)
+{
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 facts;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return;
+    }
+    state->csbState.presented_frame_capture_ready = 0;
+    state->csbState.presented_frame_running_from_macos_app = 0;
+    state->csbState.presented_frame_mac_window_ready = 0;
+    state->csbState.presented_frame_width = 0;
+    state->csbState.presented_frame_height = 0;
+    state->csbState.presented_frame_hash = 0u;
+    if (!csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession,
+            indexedPixels,
+            width,
+            height,
+            runningFromMacOSAppBundle,
+            macWindowCaptureReady,
+            &facts)) {
+        return;
+    }
+    state->csbState.presented_frame_capture_ready = 1;
+    state->csbState.presented_frame_running_from_macos_app =
+        facts.running_from_macos_app_bundle;
+    state->csbState.presented_frame_mac_window_ready =
+        facts.mac_window_capture_ready;
+    state->csbState.presented_frame_width = facts.presented_frame_width;
+    state->csbState.presented_frame_height = facts.presented_frame_height;
+    state->csbState.presented_frame_hash = facts.presented_frame_hash;
 }
 
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,

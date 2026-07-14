@@ -1399,6 +1399,17 @@ int csb_v1_boot_startup_presented_app_capture_receipt_from_release_pc34(
     const CSB_V1_StartupReleaseAppCaptureReceipt_PC34 *release_app_capture,
     const CSB_V1_StartupPresentedAppCaptureFacts_PC34 *presented_facts,
     CSB_V1_StartupPresentedAppCaptureReceipt_PC34 *out_receipt);
+/* Build presentation facts only from an actual M11 indexed frame and the
+ * terminal C001-C005/C017/C040 package session. This records evidence for a
+ * later macOS app capture; it never manufactures a frame or promotes one. */
+int csb_v1_boot_startup_presented_app_capture_facts_from_indexed_frame_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const unsigned char *indexed_pixels,
+    int width,
+    int height,
+    int running_from_macos_app_bundle,
+    int mac_window_capture_ready,
+    CSB_V1_StartupPresentedAppCaptureFacts_PC34 *out_facts);
 /* ReDMCSB SWSH.C F0909/F0910 owns the pre-title sound, TITLE.C F0437 owns
  * the title timing, and ENTRANCE.C F0806 starts C0_MUSIC_ENTRANCE. */
 int csb_v1_boot_startup_playback_begin_pc34(

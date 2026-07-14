@@ -429,6 +429,12 @@ typedef struct {
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;
     int startupHudRuntimeReady;
+    int csbPresentedFrameCaptureReady;
+    int csbPresentedFrameRunningFromMacOSApp;
+    int csbPresentedFrameMacWindowReady;
+    int csbPresentedFrameWidth;
+    int csbPresentedFrameHeight;
+    unsigned int csbPresentedFrameHash;
     int levelLoaded;
     int mapIndex;
     int partyX;
@@ -1003,6 +1009,12 @@ typedef struct {
         int startup_title_active;
         int startup_title_frame;
         int startup_title_source_step;
+        int presented_frame_capture_ready;
+        int presented_frame_running_from_macos_app;
+        int presented_frame_mac_window_ready;
+        int presented_frame_width;
+        int presented_frame_height;
+        uint32_t presented_frame_hash;
         int startup_entrance_active;
         int startup_entrance_frame;
         int startup_entrance_source_step;
@@ -1127,6 +1139,15 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out);
+/* Record the already-rendered CSB source framebuffer after M11 presents it.
+ * The CSB package layer verifies C001-C005/C017/C040 before retaining facts. */
+void M11_GameView_RecordCSBPresentedIndexedFrame(
+    M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height,
+    int runningFromMacOSAppBundle,
+    int macWindowCaptureReady);
 int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   char* out,
                                   size_t outSize);
