@@ -2178,6 +2178,20 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm1_v2_actual_render_screenshot_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM1 V2.1's TITLE/entrance frames have source-owned special VGA palettes.
+# This capture gate verifies EPX, selected-resolution presentation, and the
+# presented-RGBA BMP writer together without V2.0/V2.2 fallback assets.
+add_executable(firestaff_dm1_v21_special_palette_capture_probe
+    probes/firestaff_dm1_v21_special_palette_capture_probe.c)
+target_include_directories(firestaff_dm1_v21_special_palette_capture_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_dm1_v21_special_palette_capture_probe
+    PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm1_v21_special_palette_capture_probe PRIVATE -Wall -Wextra -O2)
+endif()
+
 # DM1 V2 source-owned deterministic screenshot script. Headless:
 # skip-safe when no DM1 PC 3.4 DUNGEON.DAT is present (exits 0 with
 # SKIP message). When DUNGEON.DAT is present it drives the real M11
@@ -6255,6 +6269,15 @@ if(BUILD_TESTING)
         set_tests_properties(dm1_v2_actual_render_screenshot_probe PROPERTIES
             LABELS "dm1;v2;screenshot;presentation;headless"
             ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
+        )
+    endif()
+    if(TARGET firestaff_dm1_v21_special_palette_capture_probe)
+        firestaff_add_test_if_missing(
+            dm1_v21_special_palette_capture_probe
+            firestaff_dm1_v21_special_palette_capture_probe
+        )
+        set_tests_properties(dm1_v21_special_palette_capture_probe PROPERTIES
+            LABELS "dm1;v2.1;palette;capture;headless"
         )
     endif()
     if(TARGET firestaff_dm1_v2_side_by_side_presentation_seed_probe)
