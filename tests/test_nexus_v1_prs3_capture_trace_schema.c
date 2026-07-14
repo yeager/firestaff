@@ -45,9 +45,10 @@ static const char valid_vdp1_trace[] =
     "last_input_read_address=6010003\ninput_read_bytes=4\n"
     "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
     "last_output_write_address=6020003\noutput_write_bytes=4\noutput_fnv1a64=3\n"
-    "first_opcode_sequence=10\nlast_input_read_sequence=11\n"
-    "last_output_write_sequence=12\ndecoder_return_sequence=13\n"
-    "vdp1_command_sequence=14\nvdp1_command_address=5c00000\n"
+    "first_opcode_sequence=10\nfirst_input_read_sequence=11\n"
+    "last_input_read_sequence=12\nfirst_output_write_sequence=13\n"
+    "last_output_write_sequence=14\ndecoder_return_sequence=15\n"
+    "vdp1_command_sequence=16\nvdp1_command_address=5c00000\n"
     "vdp1_texture_source_address=6020000\nvdp1_texture_source_bytes=4\n"
     "decoder_returned_success=1\ncapture_complete=1\n";
 
@@ -396,6 +397,24 @@ int main(void) {
                vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
                !vdp1_receipt.valid,
            "VDP1 source range mismatch rejects a supposedly complete capture");
+
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "first_input_read_sequence=11"),
+           "first_input_read_sequence=09",
+           sizeof("first_input_read_sequence=09") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "VDP1 input interval before the first opcode is rejected");
+
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "first_output_write_sequence=13"),
+           "first_output_write_sequence=09",
+           sizeof("first_output_write_sequence=09") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "VDP1 output interval before the first opcode is rejected");
 
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
