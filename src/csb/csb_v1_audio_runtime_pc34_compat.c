@@ -37,6 +37,12 @@ static int csb_v1_audio_valid_index(int16_t soundIndex)
     return soundIndex >= 0 && soundIndex < CSB_V1_SOUND_COUNT;
 }
 
+static int csb_v1_audio_valid_mode(int16_t mode)
+{
+    return mode >= CSB_V1_MODE_DO_NOT_PLAY &&
+           mode <= CSB_V1_MODE_PLAY_ONE_TICK_LATER;
+}
+
 CsbV1PsgChannelAmplitudes
 csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex)
 {
@@ -84,7 +90,7 @@ int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
                                  const CsbV1AudioRequest* request)
 {
     if (!runtime || !request || !csb_v1_audio_valid_index(request->soundIndex) ||
-        request->volume <= 0 || request->mode < CSB_V1_MODE_DO_NOT_PLAY) {
+        request->volume <= 0 || !csb_v1_audio_valid_mode(request->mode)) {
         if (runtime) {
             runtime->totalRejectedRequests++;
         }
