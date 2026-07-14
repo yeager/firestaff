@@ -131,6 +131,30 @@ them an object role. The receipt exposes no object records, creates no tiles or
 placements, and remains promotion-blocked. This preserves the completed Soul
 Room/forcefield media handoff's fail-closed contract.
 
+### Decoded Startup Envelope, Blocked Object Tail
+
+`theron_v1_track02_decode_initial_level_envelope()` is the only real-media
+decode surface for this startup payload. It accepts only the authenticated raw
+JP/US BIN variants and reuses the IPL record and descriptor-relative candidate
+gates before copying through the MODE1 user-data stream. The decoder establishes
+this byte layout within the `0x36c`-byte envelope:
+
+| Byte range | Corpus-backed result | Semantic status |
+|------------|----------------------|-----------------|
+| `0x000..0x001` | big-endian width `32` | decoded header field |
+| `0x002..0x003` | big-endian height `27` | decoded header field |
+| `0x004..0x007` | big-endian seed `0x0108e938` | decoded header field |
+| `0x008..0x009` | big-endian level index `0x0026` | decoded header field |
+| `0x00a..0x00b` | big-endian value `0x0103` | opaque fingerprint only |
+| `0x00c..0x36b` | exact `0x360`-byte (32 x 27) grid span | byte-faithful envelope only |
+
+The grid's extent and fingerprint are decoded, but byte values have no new tile,
+collision, trigger, object, palette, or visual meaning here. The immediate
+following boundary remains `0x480` in the CD record, and the remaining `0x380`
+user-data bytes remain an unparsed tail. No object record, count, placement, or
+table is returned. The receipt is invalidated for malformed, unknown, or
+non-corpus media and does not permit fallback visuals.
+
 ## Regression Gate
 
 `firestaff_theron_v1_track02_bank_probe` verifies:
@@ -161,6 +185,10 @@ The probe skips real-data assertions when the Track 02 images are absent.
 - a corrupted initial-level header rejection fixture
 - real US raw BIN candidate `0x7015b4` loading as 32x27
 - real JP raw BIN candidate `0x700c84` loading as 32x27
+- authenticated JP/US envelope header values, `0x360`-byte grid extent, and
+  fail-closed extension/object-tail receipt state
+- malformed input, unknown media, and a known-MD5-labelled non-corpus sector
+  cannot produce an envelope, grid, object claim, or fallback route
 - the older descriptor-window handoff remains no-claim on real JP/US raw BIN
   descriptor windows until the actual per-window semantics are decoded
 
