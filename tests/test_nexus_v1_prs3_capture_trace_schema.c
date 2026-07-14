@@ -43,6 +43,7 @@ static const char valid_vdp1_trace[] =
     "entry_index=0\nstream_offset=40\nstream_size=4\nexpected_output_bytes=4\n"
     "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
     "last_input_read_address=6010003\ninput_read_bytes=4\n"
+    "payload_fnv1a64=%llx\n"
     "output_ram_address=6020000\nfirst_output_write_address=6020000\n"
     "last_output_write_address=6020003\noutput_write_bytes=4\noutput_fnv1a64=3\n"
     "first_opcode_sequence=10\nfirst_input_read_sequence=11\n"
@@ -376,17 +377,37 @@ int main(void) {
 
     make_bpk(bpk);
     snprintf(bound_trace, sizeof(bound_trace), valid_vdp1_trace,
-             fnv1a64(bpk, sizeof(bpk)), fnv1a64(dm_bin, sizeof(dm_bin)));
+             fnv1a64(bpk, sizeof(bpk)), fnv1a64(dm_bin, sizeof(dm_bin)),
+             fnv1a64(bpk + 64U, 4U));
     expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                bound_trace, strlen(bound_trace), &vdp1_receipt) &&
                nexus_v1_prs3_vdp1_capture_schema_bind_assets(
                    &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
                    &vdp1_binding) && vdp1_binding.valid &&
                vdp1_binding.exact_vdp1_handoff_observed &&
+               vdp1_binding.payload_span_matches &&
                !vdp1_receipt.opcode_grammar_proven &&
                !vdp1_binding.decoder_promoted &&
                !vdp1_binding.fallback_visuals_permitted,
            "complete SH-2 to VDP1 capture binds one exact frame without a decoder");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "payload_fnv1a64="), "payload_missing=",
+           sizeof("payload_missing=") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !vdp1_receipt.valid,
+           "missing captured payload fingerprint rejects the VDP1 trace");
+    snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
+    memcpy(strstr(vdp1_malformed, "payload_fnv1a64="),
+           "payload_fnv1a64=4", sizeof("payload_fnv1a64=4") - 1U);
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               vdp1_malformed, strlen(vdp1_malformed), &vdp1_receipt) &&
+               !nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+                   &vdp1_receipt, bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+                   &vdp1_binding) && !vdp1_binding.valid &&
+               vdp1_binding.menu_bpk_matches &&
+               !vdp1_binding.payload_span_matches,
+           "a claimed SH-2 payload fingerprint must match the exact BPK span");
     snprintf(vdp1_malformed, sizeof(vdp1_malformed), "%s", bound_trace);
     {
         char *expected_bytes =

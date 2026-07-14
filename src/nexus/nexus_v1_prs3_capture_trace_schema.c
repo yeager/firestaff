@@ -352,6 +352,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
         !read_u32(&cursor, "first_input_read_address=", &receipt.first_input_read_address) ||
         !read_u32(&cursor, "last_input_read_address=", &receipt.last_input_read_address) ||
         !read_u32(&cursor, "input_read_bytes=", &receipt.input_read_bytes) ||
+        !read_u64(&cursor, "payload_fnv1a64=", &receipt.payload_fnv1a64) ||
         !read_u32(&cursor, "output_ram_address=", &receipt.output_ram_address) ||
         !read_u32(&cursor, "first_output_write_address=", &receipt.first_output_write_address) ||
         !read_u32(&cursor, "last_output_write_address=", &receipt.last_output_write_address) ||
@@ -376,6 +377,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
         !receipt.input_read_bytes || receipt.input_read_bytes > receipt.stream_size ||
         receipt.last_input_read_address != receipt.payload_ram_address +
             receipt.input_read_bytes - 1U ||
+        !receipt.payload_fnv1a64 ||
         !receipt.output_ram_address ||
         receipt.first_output_write_address != receipt.output_ram_address ||
         receipt.output_write_bytes != receipt.expected_output_bytes ||
@@ -430,9 +432,14 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
         receipt.entry_plan_matches = plan.stream_offset == trace->stream_offset &&
             plan.stream_size == trace->stream_size &&
             plan.expected_output_bytes == trace->expected_output_bytes;
+        if (receipt.entry_plan_matches)
+            receipt.payload_span_matches = fnv1a64(
+                menu_bpk + plan.stream_offset, plan.stream_size) ==
+                trace->payload_fnv1a64;
     }
     receipt.exact_vdp1_handoff_observed = receipt.menu_bpk_matches &&
         receipt.dm_bin_matches && receipt.entry_plan_matches &&
+        receipt.payload_span_matches &&
         trace->exact_vdp1_handoff_observed;
     receipt.valid = receipt.exact_vdp1_handoff_observed;
     receipt.decoder_promoted = 0;

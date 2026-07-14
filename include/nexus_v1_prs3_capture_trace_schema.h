@@ -102,6 +102,7 @@ typedef struct {
     uint32_t first_input_read_address;
     uint32_t last_input_read_address;
     uint32_t input_read_bytes;
+    uint64_t payload_fnv1a64;
     uint32_t output_ram_address;
     uint32_t first_output_write_address;
     uint32_t last_output_write_address;
@@ -129,6 +130,7 @@ typedef struct {
     int menu_bpk_matches;
     int dm_bin_matches;
     int entry_plan_matches;
+    int payload_span_matches;
     int exact_vdp1_handoff_observed;
     int decoder_promoted;
     int fallback_visuals_permitted;
