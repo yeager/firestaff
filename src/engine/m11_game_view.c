@@ -14536,6 +14536,12 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         memset(&timelineResult, 0, sizeof(timelineResult));
         (void)F0887_ORCH_DispatchTimelineEvents_Compat(
             &state->world, &timelineResult);
+        /* F0887 may mutate the world after the movement-path pre-dispatch
+         * hash above (for example C13's terminal F0283 rebirth). Publish the
+         * resulting live state, otherwise save/HoC callers retain a hash for
+         * a timeline that no longer exists. */
+        (void)F0891_ORCH_WorldHash_Compat(
+            &state->world, &state->lastWorldHash);
     }
     M11_GameView_TickAnimation(state);
     m11_check_party_death(state);

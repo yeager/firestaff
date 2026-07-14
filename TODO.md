@@ -5,7 +5,8 @@
   source-owned Vi Altar fields. Remaining work is authentic corpus coverage
   for additional C13 states and original-PC34 capture evidence; M11 now
   dispatches the admitted sequence through the source-backed timeline on
-  movement ticks, but this does not establish original executable parity.
+  movement ticks and republishes the post-dispatch live-world hash, but this
+  does not establish original executable parity.
 
 - 2026-07-14 DM2 original SKSave corpus follow-up: raw original candidates now
   stage through the existing source-owned G1 dungeon loader before runtime
