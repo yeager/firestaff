@@ -102,11 +102,105 @@ static uint32_t hash_indexed_frame(const unsigned char* framebuffer) {
     return hash;
 }
 
+static void verify_original_startup_palette_frame(
+    ProbeStats* stats,
+    const char* name,
+    const M11_AssetSlot* graphic,
+    unsigned char* framebuffer,
+    int specialPalette) {
+    const unsigned char* expected;
+    const unsigned char* presented;
+    uint32_t sourceHash;
+    int x;
+    int y;
+    int sampleX = -1;
+    int sampleY = -1;
+    unsigned char sampleIndex = 0;
+    int presentedW = 0;
+    int presentedH = 0;
+    char id[96];
+
+    snprintf(id, sizeof(id), "%s_SOURCE_ASSET_READY", name);
+    if (!graphic || graphic->width != M11_FB_WIDTH ||
+        graphic->height != M11_FB_HEIGHT || !framebuffer) {
+        record(stats, id, 0, "original 320x200 GRAPHICS.DAT frame unavailable");
+        return;
+    }
+    record(stats, id, 1, "original 320x200 GRAPHICS.DAT frame loaded");
+    M11_AssetLoader_Blit(graphic, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+                         0, 0, -1);
+    sourceHash = hash_indexed_frame(framebuffer);
+    for (y = 0; y < M11_FB_HEIGHT && sampleX < 0; ++y) {
+        for (x = 0; x < M11_FB_WIDTH; ++x) {
+            const unsigned char index = framebuffer[y * M11_FB_WIDTH + x] & 0x0fU;
+            if (index != 0U) {
+                sampleX = x;
+                sampleY = y;
+                sampleIndex = index;
+                break;
+            }
+        }
+    }
+    expected = F9011_VGA_GetSpecialColorRgb_Compat(
+        sampleIndex, (unsigned)specialPalette);
+    snprintf(id, sizeof(id), "%s_SOURCE_SAMPLE_FOUND", name);
+    record(stats, id, sampleX >= 0 && expected != NULL,
+           "found a non-black original indexed pixel");
+    if (sampleX < 0 || !expected) return;
+
+    (void)M11_Render_SetV2Filters(0, 0, 1, 100, -25, 0,
+                                  0, 0, 0, 0, 0);
+    snprintf(id, sizeof(id), "%s_V20_FILTERED_PRESENT", name);
+    record(stats, id,
+           M11_Render_PresentIndexedWithSpecialPalette(
+               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, specialPalette) ==
+               M11_RENDER_OK,
+           "V2.0 filters only the source palette-expanded presentation copy");
+    presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+    snprintf(id, sizeof(id), "%s_V20_FILTERED_PIXEL", name);
+    if (presented && sampleX < presentedW && sampleY < presentedH) {
+        const unsigned char* px = presented +
+            ((sampleY * presentedW + sampleX) * 4);
+        record(stats, id,
+               px[0] != expected[0] || px[1] != expected[1] ||
+                   px[2] != expected[2],
+               "V2.0 changes the expanded original RGB sample");
+    } else {
+        record(stats, id, 0, "filtered original sample unavailable");
+    }
+    snprintf(id, sizeof(id), "%s_SOURCE_INDEXED_UNCHANGED", name);
+    record(stats, id, hash_indexed_frame(framebuffer) == sourceHash,
+           "V2.0 never rewrites the original indexed frame");
+
+    (void)M11_Render_SetV2Filters(0, 0, 0, 100, 0, 0,
+                                  0, 0, 0, 0, 0);
+    snprintf(id, sizeof(id), "%s_V1_PALETTE_RESTORED", name);
+    record(stats, id,
+           M11_Render_PresentIndexedWithSpecialPalette(
+               framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, specialPalette) ==
+               M11_RENDER_OK,
+           "disabling V2.0 restores the source special-palette route");
+    presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
+    snprintf(id, sizeof(id), "%s_V1_PALETTE_EXACT", name);
+    if (presented && sampleX < presentedW && sampleY < presentedH) {
+        const unsigned char* px = presented +
+            ((sampleY * presentedW + sampleX) * 4);
+        record(stats, id,
+               px[0] == expected[0] && px[1] == expected[1] &&
+                   px[2] == expected[2],
+               "unfiltered original sample is byte-identical to its palette");
+    } else {
+        record(stats, id, 0, "restored original sample unavailable");
+    }
+}
+
 int main(int argc, char** argv) {
     const char* graphicsPath;
     FILE* graphicsFile;
     M11_AssetLoader loader;
     const M11_AssetSlot* titleGraphic;
+    const M11_AssetSlot* entranceGraphic;
+    const M11_AssetSlot* creditsGraphic;
     unsigned char* framebuffer;
     unsigned char* poisonRgba;
     V1_TitleFrontendSourceAnimationStep step;
@@ -164,6 +258,8 @@ int main(int argc, char** argv) {
         return 1;
     }
     titleGraphic = M11_AssetLoader_Load(&loader, 1U);
+    entranceGraphic = M11_AssetLoader_Load(&loader, 4U);
+    creditsGraphic = M11_AssetLoader_Load(&loader, 5U);
     framebuffer = M11_Render_GetFramebuffer();
     if (!titleGraphic || titleGraphic->width < 320U || titleGraphic->height < 175U || !framebuffer) {
         fprintf(stderr, "FAIL title C001 asset unavailable or wrong size\n");
@@ -333,6 +429,12 @@ int main(int argc, char** argv) {
         record(&stats, "TITLE_SWOOSH_HANDOFF_V1_PALETTE_EXACT", 0,
                "restored C001 sample unavailable");
     }
+    verify_original_startup_palette_frame(
+        &stats, "ENTRANCE", entranceGraphic, framebuffer,
+        VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+    verify_original_startup_palette_frame(
+        &stats, "CREDITS", creditsGraphic, framebuffer,
+        VGA_PALETTE_PC34_SPECIAL_CREDITS);
     M11_Render_SetV2PresentationActive(0);
 
     printf("summary=%d passed %d failed total=%d\n",

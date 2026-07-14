@@ -231,6 +231,14 @@ static void m11_map_presented_game_point_to_source(const M11_GameViewState* game
                                                            y);
 }
 
+static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
+    return gameView &&
+        gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
+        (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
+         gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
+         gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON);
+}
+
 static int m11_present_game_frame(const M11_GameViewState* gameView) {
     int scale = M11_GameView_PresentationIndexedScale(
         gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL);
@@ -244,11 +252,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         requestedFilter);
     int restoreFilter = 0;
     int result;
-    int dm1_v20_active = gameView &&
-        gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
-        (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
-         gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
-         gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON);
+    int dm1_v20_active = m11_dm1_v20_presentation_active(gameView);
     const unsigned char* presented_frame = M11_Render_GetFramebuffer();
     int csb_v20_active = gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
@@ -794,6 +798,10 @@ static int m11_play_redmcsb_entrance_transition(
         !dm1_v1_startup_entrance_timing_receipt_valid_pc34(mediaReceipt)) {
         return 0;
     }
+    /* Startup presentation runs before the ordinary frame loop selects the
+     * V2.0 lane. Keep its original special-palette frames in that same lane. */
+    M11_Render_SetV2PresentationActive(
+        m11_dm1_v20_presentation_active(gameView));
     entrancePalette = mediaReceipt->entrance_palette;
     if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
             entranceReceipt)) {
@@ -1441,6 +1449,9 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         !gameView || !gameView->assetsAvailable) {
         return 0;
     }
+    /* TITLE.C renders before m11_present_game_frame() can activate V2.0. */
+    M11_Render_SetV2PresentationActive(
+        m11_dm1_v20_presentation_active(gameView));
     titleGraphic = M11_AssetLoader_Load(&gameView->assetLoader, 1U);
     {
         DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 sourceReceipt;
