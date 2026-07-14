@@ -14,6 +14,8 @@ typedef struct {
     int creature_type;
     int expected_index;
     uint8_t *decoded_pixels;
+    int decoded_pixels_width;
+    int decoded_pixels_height;
     int fetch_calls;
     int palette_calls;
     int resolve_calls;
@@ -92,16 +94,22 @@ static int fetch_creature_map_chip(void *user, int gdat_index,
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
 
     ++trace->fetch_calls;
-    if (trace->reject_fetch || gdat_index != trace->expected_index ||
-        trace->decoded_pixels) return -1;
-    trace->decoded_pixels = dm2_v1_asset_load_image_field(
-        trace->loader, DM2_GDAT_CATEGORY_CREATURES, trace->creature_type,
-        DM2_GDAT_IMG_MAP_CHIP, &width, &height, &format);
-    if (!trace->decoded_pixels || width <= 0 || height <= 0 ||
-        format == DM2_IMG_FMT_UNKNOWN) {
-        dm2_v1_asset_free_pixels(trace->decoded_pixels);
-        trace->decoded_pixels = NULL;
-        return -1;
+    if (trace->reject_fetch || gdat_index != trace->expected_index) return -1;
+    if (!trace->decoded_pixels) {
+        trace->decoded_pixels = dm2_v1_asset_load_image_field(
+            trace->loader, DM2_GDAT_CATEGORY_CREATURES, trace->creature_type,
+            DM2_GDAT_IMG_MAP_CHIP, &width, &height, &format);
+        if (!trace->decoded_pixels || width <= 0 || height <= 0 ||
+            format == DM2_IMG_FMT_UNKNOWN) {
+            dm2_v1_asset_free_pixels(trace->decoded_pixels);
+            trace->decoded_pixels = NULL;
+            return -1;
+        }
+        trace->decoded_pixels_width = width;
+        trace->decoded_pixels_height = height;
+    } else {
+        width = trace->decoded_pixels_width;
+        height = trace->decoded_pixels_height;
     }
     *out_pixels = trace->decoded_pixels;
     *out_width = width;
@@ -134,6 +142,9 @@ int main(void)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1DungeonSceneClassificationReceipt scene;
     DM2_V1_G1SceneRuntimeHandoffReceipt handoff;
+    DM2_V1_G1CreatureMapChipRuntimeReceipt material_receipt;
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     GdatTrace trace;
     const DM2_V1_G1DirectChainNode *root;
     const uint8_t *raw_map_chip;
@@ -141,6 +152,7 @@ int main(void)
     int creature_level = -1;
     int creature_x = -1;
     int creature_y = -1;
+    int root_object_id = -1;
     int failures = 0;
 
     if (!load_canonical_files(&graphics, &graphics_size,
@@ -212,6 +224,13 @@ int main(void)
         failures = 1;
         goto done;
     }
+    root_object_id = dm2_v1_dungeon_get_first_thing(
+        &dungeon, creature_level, creature_x, creature_y);
+    if (root_object_id < 0) {
+        fputs("FAIL: canonical DB4 scene root lost its source ObjectID\n", stderr);
+        failures = 1;
+        goto done;
+    }
     trace.loader = &loader;
     trace.creature_type = dungeon.raw_data[root->record_offset + 4];
     trace.expected_index = dm2_v1_viewport_creature_graphic_index(
@@ -241,6 +260,57 @@ int main(void)
         failures = 1;
         goto done;
     }
+    /* The same decoded source surface must be accepted by the viewport draw,
+     * not merely by the bridge.  The owner receipt is built exclusively from
+     * this canonical G1 root and the handoff's real F9 metadata. */
+    memset(&material_receipt, 0, sizeof(material_receipt));
+    material_receipt.valid = 1;
+    material_receipt.map = creature_level;
+    material_receipt.source_creature_root_count = 1;
+    material_receipt.material_count = 1;
+    material_receipt.materials[0].x = creature_x;
+    material_receipt.materials[0].y = creature_y;
+    material_receipt.materials[0].object_id = (uint16_t)root_object_id;
+    material_receipt.materials[0].direction =
+        (uint8_t)((root_object_id >> 14) & 3);
+    material_receipt.materials[0].creature_type = (uint8_t)trace.creature_type;
+    material_receipt.materials[0].image_width = handoff.material_width;
+    material_receipt.materials[0].image_height = handoff.material_height;
+    material_receipt.materials[0].local_palette_hash =
+        handoff.material_palette_hash;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_creature_map_chip, &trace);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, fetch_creature_local_palette, &trace);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_g1_creature_map_chip_materials(
+        &viewport, &material_receipt);
+    dm2_v1_viewport_set_g1_scene_creature_material(
+        &viewport, 1, creature_x, creature_y, trace.creature_type,
+        handoff.gdat_index, handoff.material_width, handoff.material_height,
+        handoff.material_stride, handoff.material_palette_hash);
+    viewport.creature_count = 1;
+    viewport.creatures[0].creature_type = (uint8_t)trace.creature_type;
+    viewport.creatures[0].source_kind = 2;
+    viewport.creatures[0].object_id = (uint16_t)root_object_id;
+    viewport.creatures[0].map_x = (int16_t)creature_x;
+    viewport.creatures[0].map_y = (int16_t)creature_y;
+    viewport.creatures[0].screen_x = DM2_VP_WIDTH / 2;
+    viewport.creatures[0].screen_y = DM2_VP_HEIGHT / 2;
+    viewport.creatures[0].health_pct = 100;
+    dm2_v1_render_creatures(&viewport);
+    if (viewport.asset_creature_drawn_count != 1 ||
+        viewport.fallback_creature_drawn_count != 0 ||
+        viewport.blocked_material_draw_count != 0 ||
+        viewport.g1_scene_creature_material_consumed_count != 1 ||
+        !viewport.last_creature_asset_blit_valid || trace.fetch_calls != 2 ||
+        trace.palette_calls != 2) {
+        fputs("FAIL: canonical DB4 owner did not consume its F9 material draw\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
     dm2_v1_asset_free_pixels(trace.decoded_pixels);
     trace.decoded_pixels = NULL;
     trace.reject_fetch = 1;
@@ -262,6 +332,6 @@ done:
     free(graphics);
     free(dungeon_bytes);
     if (failures) return 1;
-    puts("PASS: canonical DB4 creature reaches its exact GDAT CREATURES/F9 material");
+    puts("PASS: canonical DB4 creature consumes its exact GDAT CREATURES/F9 material");
     return 0;
 }
