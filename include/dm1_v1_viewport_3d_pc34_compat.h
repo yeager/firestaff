@@ -134,6 +134,8 @@ extern "C" {
 /* Screen geometry — VIEWPORT.C line 27: viewport starts at line 33 */
 #define DM1_VIEWPORT_SCREEN_X       0
 #define DM1_VIEWPORT_SCREEN_Y       33
+#define DM1_VIEWPORT_SCREEN_WIDTH   320
+#define DM1_VIEWPORT_SCREEN_HEIGHT  200
 
 /* Viewport sub-regions — DUNVIEW.C F0098 */
 #define DM1_VIEWPORT_BLACK_AREA_H   37   /* Lines 0..36: cleared to black */
@@ -1101,11 +1103,60 @@ const uint8_t *dm1_v1_viewport_get_door_button_palette_remap_pc34(
 void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
                                 int direction, int map_x, int map_y);
 
+typedef enum DM1_ViewportPresentPaletteActionPc34 {
+    DM1_VIEWPORT_PRESENT_PALETTE_NONE_PC34 = 0,
+    DM1_VIEWPORT_PRESENT_PALETTE_DUNGEON_PC34,
+    DM1_VIEWPORT_PRESENT_PALETTE_INVENTORY_PC34,
+    DM1_VIEWPORT_PRESENT_PALETTE_LIGHT0_PC34
+} DM1_ViewportPresentPaletteActionPc34;
+
+/* Exact PC 3.4 F0097 observable boundary. The host owns actual palette bytes
+ * and mouse calls; this receipt reports the source-selected operation without
+ * inventing either resource. */
+typedef struct DM1_ViewportPresentReceiptPc34 {
+    bool valid;
+    bool mouse_hidden;
+    bool mouse_screen_update_enabled;
+    bool mouse_screen_update_disabled;
+    bool palette_changed;
+    int16_t palette_switch_request;
+    int16_t dungeon_palette_index;
+    int16_t cached_palette_index;
+    DM1_ViewportPresentPaletteActionPc34 palette_action;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t destination_x;
+    int16_t destination_y;
+    int16_t width;
+    int16_t height;
+} DM1_ViewportPresentReceiptPc34;
+
 /*
- * Transfer viewport framebuffer to screen with palette switching.
- * Handles vblank synchronization for PAL timing.
+ * Execute the I34E/PC3.4 body of DRAWVIEW.C F0097. It selects the source
+ * palette action, observes the original mouse bounds, then transfers the
+ * already-composed G0296 224x136 aperture to C007 at (0,33). Palette bytes,
+ * mouse operations and video pages remain caller/host-owned real resources.
  *
- * palette_switching: 0=inventory palette, 1=dungeon palette, 2=as-before
+ * palette_switching: 0=non-dungeon, 1=dungeon, 2=as-before/no PC action.
+ * cached_palette_index is G2123 and is updated only by source-defined cases.
+ */
+bool dm1_viewport_3d_present_pc34(const uint8_t *viewport_pixels,
+                                  int viewport_stride,
+                                  uint8_t *screen_pixels,
+                                  int screen_width,
+                                  int screen_height,
+                                  int screen_stride,
+                                  int palette_switching,
+                                  int dungeon_palette_index,
+                                  int party_map_index,
+                                  int entrance_map_index,
+                                  int mouse_x,
+                                  int mouse_y,
+                                  int *cached_palette_index,
+                                  DM1_ViewportPresentReceiptPc34 *out_receipt);
+
+/*
+ * Legacy wrapper for caller-owned DM1_Viewport3DState storage.
  *
  * Source: DRAWVIEW.C F0097_DUNGEONVIEW_DrawViewport (varies per platform)
  *         VIEWPORT.C F0565_VIEWPORT_SetPalette (line 33)

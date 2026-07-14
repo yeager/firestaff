@@ -1591,6 +1591,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materi
     )
 endif()
 
+if(BUILD_TESTING AND NOT TARGET test_dm1_v1_f0097_viewport_present_pc34_compat)
+    add_executable(test_dm1_v1_f0097_viewport_present_pc34_compat
+        tests/test_dm1_v1_f0097_viewport_present_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0097_viewport_present_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0097_viewport_present_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0097_viewport_present_pc34_compat
+        COMMAND test_dm1_v1_f0097_viewport_present_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0190_c040_m11_integration_audit.c")
     add_executable(test_dm1_v1_f0190_c040_m11_integration_audit
         tests/test_dm1_v1_f0190_c040_m11_integration_audit.c

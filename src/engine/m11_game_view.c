@@ -10859,6 +10859,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->leaderHandIconIndex = -1;
     state->dm1ViewportRuntimeOrigin =
         DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
+    state->dm1ViewportPresentedPaletteIndex = -1;
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     state->v1OpenChestThing = THING_NONE;
@@ -35814,6 +35815,34 @@ skip_debug_legacy_texture_tiling:
                                 M11_VIEWPORT_X, M11_VIEWPORT_Y,
                                 M11_VIEWPORT_W, M11_VIEWPORT_H,
                                 turnPanX);
+    {
+        uint8_t presented_viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+        DM1_ViewportPresentReceiptPc34 present_receipt;
+        M11_GameViewState *mutable_state = (M11_GameViewState *)state;
+        int y;
+
+        /* F0097 consumes the fully composed G0296 bitmap after F0128 and
+         * turn-pan. Stage the actual C007 pixels so source/destination never
+         * alias; unavailable host geometry remains a no-draw. */
+        if (framebufferWidth < DM1_VIEWPORT_SCREEN_WIDTH ||
+            framebufferHeight < DM1_VIEWPORT_SCREEN_HEIGHT) {
+            return;
+        }
+        for (y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+            memcpy(presented_viewport + y * DM1_VIEWPORT_WIDTH,
+                   framebuffer + (M11_VIEWPORT_Y + y) * framebufferWidth +
+                       M11_VIEWPORT_X,
+                   DM1_VIEWPORT_WIDTH);
+        }
+        (void)dm1_viewport_3d_present_pc34(
+            presented_viewport, DM1_VIEWPORT_WIDTH,
+            framebuffer, framebufferWidth, framebufferHeight, framebufferWidth,
+            1, m11_compute_dungeon_palette_index(state),
+            state->world.party.mapIndex, 255,
+            -1, -1,
+            &mutable_state->dm1ViewportPresentedPaletteIndex,
+            &present_receipt);
+    }
 }
 
 static void m11_format_champion_name(const unsigned char* raw,
