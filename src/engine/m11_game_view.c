@@ -21379,6 +21379,7 @@ _Static_assert(M11_GFX_DOOR_FRAME_TOP_D2 == 92,
 _Static_assert(M11_GFX_FLOOR_PANEL == 78 && M11_GFX_CEILING_PANEL == 79,
                "DM1 floor/ceiling graphics must remain 78/79");
 
+#define M11_GFX_UNAVAILABLE ((unsigned int)-1)
 #define M11_GFX_DIALOG_BOX 17 /* C000_GRAPHIC_DIALOG_BOX, viewport-sized 224×136 */
 
 /* ================================================================
@@ -21424,10 +21425,8 @@ static void m11_apply_dungeon_palette_level(unsigned char* framebuffer,
     }
 }
 
-/* Forward declarations for floor-set-aware graphic index helpers.
- * Definitions follow m11_current_map_floor_set below. */
-static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state);
-static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state);
+static int m11_current_map_floor_set(const M11_GameViewState* state,
+                                     int* out_floor_set);
 
 /* F0094 loads the current map's floor/ceiling pair into the two negative
  * F0098 cached-bitmap slots.  Keep the M11 loader at this narrow boundary:
@@ -21484,10 +21483,14 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
     uint8_t flipped[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_FLOOR_H];
     DM1_Viewport3DState f0098;
     M11_DM1F0098GraphicProvider provider;
+    int floor_set;
 
     if (!state || !state->assetsAvailable || !framebuffer ||
         vpW != DM1_VIEWPORT_WIDTH || vpH != DM1_VIEWPORT_HEIGHT ||
         vpX < 0 || vpY < 0 || vpX + vpW > fbW || vpY + vpH > fbH) {
+        return;
+    }
+    if (!m11_current_map_floor_set(state, &floor_set)) {
         return;
     }
 
@@ -21500,8 +21503,9 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                DM1_VIEWPORT_WIDTH);
     }
     provider.state = state;
-    provider.floor_graphic = m11_floor_set_floor_graphic(state);
-    provider.ceiling_graphic = m11_floor_set_ceiling_graphic(state);
+    provider.floor_graphic = (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
+        floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
+    provider.ceiling_graphic = provider.floor_graphic + 1;
     dm1_viewport_3d_init(&f0098, viewport, DM1_VIEWPORT_WIDTH);
     f0098.graphic_provider_callback = m11_dm1_f0098_graphic_provider;
     f0098.graphic_provider_user_data = &provider;
@@ -21560,6 +21564,8 @@ typedef struct M11_DM1ZoneBlit {
  * matches the original DM1 viewport appearance. */
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex);
+static int m11_current_map_wall_set(const M11_GameViewState* state,
+                                    int* out_wall_set);
 static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
     if (!state) return 0;
     return dm1_viewport_3d_use_flipped_walls_pc34(
@@ -21579,15 +21585,16 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
                                           int transparentColor) {
     const M11_AssetSlot* slot;
     DM1_ViewportWallHostMaterialReceiptPc34 material;
+    int map_wall_set;
     int y;
     if (!state || !state->assetsAvailable || !blit || !framebuffer) {
         return 0;
     }
+    if (!m11_current_map_wall_set(state, &map_wall_set)) {
+        return 0;
+    }
     if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
-            state->world.dungeon && state->world.party.mapIndex >= 0 &&
-                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
-                ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
-                : 0,
+            map_wall_set,
             blit->graphicIndex, transparentColor, true, blit->width,
             blit->height, &material)) {
         return 0;
@@ -21622,16 +21629,14 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
 
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex) {
-    int wallSet = 0;
-    if (state && state->world.dungeon && state->world.dungeon->maps &&
-        state->world.party.mapIndex >= 0 &&
-        state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
-        wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
-    }
+    int wallSet;
     if (wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST ||
         wallSet0GraphicIndex >=
             M11_GFX_DM1_WALLSET_FIRST + M11_GFX_DM1_WALLSET_COUNT) {
         return wallSet0GraphicIndex;
+    }
+    if (!m11_current_map_wall_set(state, &wallSet)) {
+        return M11_GFX_UNAVAILABLE;
     }
     /* ReDMCSB DUNVIEW.C F0096: wall-set-0 source ids are materialized from
      * M646_GRAPHIC_FIRST_WALL_SET + wallSet *
@@ -21650,14 +21655,15 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
                                                     int transparentColor) {
     const M11_AssetSlot* slot;
     DM1_ViewportWallHostMaterialReceiptPc34 material;
+    int map_wall_set;
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
+    if (!m11_current_map_wall_set(state, &map_wall_set)) {
+        return 0;
+    }
     if (!dm1_viewport_3d_wall_host_material_receipt_pc34(
-            state->world.dungeon && state->world.party.mapIndex >= 0 &&
-                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
-                ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
-                : 0,
+            map_wall_set,
             blit->graphicIndex, transparentColor, false, blit->width,
             blit->height, &material)) {
         return 0;
@@ -21757,9 +21763,13 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
     }
+    unsigned int graphic_index = m11_wallset_graphic_index_for_state(
+        state, (unsigned int)blit->graphicIndex);
+    if (graphic_index == M11_GFX_UNAVAILABLE) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                m11_wallset_graphic_index_for_state(state,
-                                    (unsigned int)blit->graphicIndex));
+                                graphic_index);
     if (!slot || slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
@@ -21793,9 +21803,13 @@ static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable || !blit || !framebuffer) {
         return 0;
     }
+    unsigned int graphic_index = m11_wallset_graphic_index_for_state(
+        state, (unsigned int)blit->graphicIndex);
+    if (graphic_index == M11_GFX_UNAVAILABLE) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                m11_wallset_graphic_index_for_state(state,
-                                    (unsigned int)blit->graphicIndex));
+                                graphic_index);
     if (!slot || !slot->loaded || !slot->pixels || slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
@@ -23323,11 +23337,10 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable || !visibility) {
         return;
     }
+    if (!m11_current_map_wall_set(state, &mapWallSet)) {
+        return;
+    }
     flipWalls = m11_dm1_use_flipped_walls(state);
-    mapWallSet = state->world.dungeon && state->world.party.mapIndex >= 0 &&
-            state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount
-        ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet
-        : 0;
     for (i = 0; i < dm1_viewport_3d_wall_draw_spec_count(); ++i) {
         M11_ViewportCell cell;
         DM1_ViewportSideWallHostReceiptPc34 receipt;
@@ -24511,40 +24524,35 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
     return 1;
 }
 
-/* Get the current map's wall set index for wall texture selection.
- * Returns 0 (default set) if dungeon data is unavailable. */
-static int m11_current_map_wall_set(const M11_GameViewState* state) {
+/* F0096 materializes its wall-set cache from the active map.  A missing map
+ * has no source-selected wall set, so M11 must leave the corresponding host
+ * material undrawn instead of silently substituting wall-set 0. */
+static int m11_current_map_wall_set(const M11_GameViewState* state,
+                                    int* out_wall_set) {
     if (!state || !state->world.dungeon ||
+        !state->world.dungeon->maps || !out_wall_set ||
         state->world.party.mapIndex < 0 ||
         state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount) {
         return 0;
     }
-    return (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+    *out_wall_set =
+        (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;
+    return 1;
 }
 
-/* Get the current map's floor set index for floor texture selection. */
-static int m11_current_map_floor_set(const M11_GameViewState* state) {
+/* F0094 selects the floor pair from the active map.  Do not manufacture
+ * floor-set 0 when that map identity is absent. */
+static int m11_current_map_floor_set(const M11_GameViewState* state,
+                                     int* out_floor_set) {
     if (!state || !state->world.dungeon ||
+        !state->world.dungeon->maps || !out_floor_set ||
         state->world.party.mapIndex < 0 ||
         state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount) {
         return 0;
     }
-    return (int)state->world.dungeon->maps[state->world.party.mapIndex].floorSet;
-}
-
-/* Compute floor-set-aware GRAPHICS.DAT index for the floor panel bitmap.
- * ReDMCSB DUNVIEW.C F0094_DUNGEONVIEW_LoadFloorSet:
- *   graphicIndex = floorSet * C002_FLOOR_SET_GRAPHIC_COUNT + M644_GRAPHIC_FIRST_FLOOR_SET
- * Floor panel = graphicIndex, ceiling panel = graphicIndex + 1.
- * DM1 PC 3.4 has floor sets 0..3 (maps vary by dungeon level). */
-static unsigned int m11_floor_set_floor_graphic(const M11_GameViewState* state) {
-    int floorSet = m11_current_map_floor_set(state);
-    return (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
-                          floorSet * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
-}
-
-static unsigned int m11_floor_set_ceiling_graphic(const M11_GameViewState* state) {
-    return m11_floor_set_floor_graphic(state) + 1;
+    *out_floor_set =
+        (int)state->world.dungeon->maps[state->world.party.mapIndex].floorSet;
+    return 1;
 }
 
 /* Draw stair graphics from GRAPHICS.DAT at the given depth. */
@@ -24564,6 +24572,7 @@ static int m11_draw_stairs_asset(const M11_GameViewState* state,
         stairIdx = stairUp ? M11_GFX_STAIRS_UP_D2 : M11_GFX_STAIRS_DOWN_D2;
     }
     stairIdx = m11_wallset_graphic_index_for_state(state, stairIdx);
+    if (stairIdx == M11_GFX_UNAVAILABLE) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, stairIdx);
     if (!slot || slot->width == 0 || slot->height == 0) return 0;
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
@@ -35876,8 +35885,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * instead of this placeholder tiling. */
     if (state->assetsAvailable && state->showDebugHUD) {
         int d;
-        int mapWallSet = m11_current_map_wall_set(state);
-        int mapFloorSet = m11_current_map_floor_set(state);
+        int mapWallSet;
+        int mapFloorSet;
+        if (!m11_current_map_wall_set(state, &mapWallSet) ||
+            !m11_current_map_floor_set(state, &mapFloorSet)) {
+            goto skip_debug_legacy_texture_tiling;
+        }
         for (d = 2; d >= 0; --d) {
             const M11_AssetSlot* wallSlot;
             unsigned int wallIdx = (unsigned int)
@@ -35929,6 +35942,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
+skip_debug_legacy_texture_tiling:
 
     /* ReDMCSB source lock: F0337 selects one G0304 dungeon-view
      * palette index, and DRAWVIEW applies that palette to the whole
