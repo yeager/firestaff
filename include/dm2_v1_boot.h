@@ -1055,6 +1055,9 @@ typedef struct {
     int runtime_handoff_ready;
     int interface_rect14_host_ready;
     DM2_V1_InterfaceRect14HostReceipt interface_rect14;
+    int extended_spell_gdat_ready;
+    uint32_t extended_spell_gdat_defined_count;
+    uint32_t extended_spell_gdat_word_hash;
     int m11_host_view_ready;
     const char *status_scope;
     const char *status;
@@ -1063,6 +1066,12 @@ typedef struct {
     int capture_proof_valid;
     DM2_V1_BootStartupPackagedCaptureProof capture_proof;
 } DM2_V1_BootStartupHostViewReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t defined_count;
+    uint32_t word_hash;
+} DM2_V1_ExtendedSpellGdatReceipt;
 
 enum {
     DM2_V1_BOOT_STARTUP_VIEW_MODEL_COMMAND_CAP = 32,
@@ -1480,6 +1489,9 @@ typedef struct {
 int dm2_v1_boot_interface_action_table(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceActionTable *out_table);
+int dm2_v1_boot_extended_spell_gdat_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_ExtendedSpellGdatReceipt *out_receipt);
 
 /* ReDMCSB/skproject SkWinCore.cpp _0b36_037e uses the dt07/2 tail as 256
  * (group, threshold) pairs, then selects the nearest source threshold in

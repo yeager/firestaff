@@ -500,6 +500,9 @@ typedef struct {
     int startupInitializeHudRuntime;
     int startupInitializeTouchRuntime;
     int startupHudRuntimeReady;
+    int dm2ExtendedSpellGdatReady;
+    unsigned int dm2ExtendedSpellGdatDefinedCount;
+    unsigned int dm2ExtendedSpellGdatWordHash;
     int csbPresentedFrameCaptureReady;
     int csbPresentedFrameRunningFromMacOSApp;
     int csbPresentedFrameMacWindowReady;
