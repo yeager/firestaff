@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1042-F1043: source-locked X68000 interrupt
+  cleanup boundary and empty Amiga caller boundary. Focused strict-C11 tests
+  preserve the non-PC decision without emulating unavailable hardware paths.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1041: source review identified an X68000/Amiga
   pointer resolver with no PC 3.4 route. A focused compatibility resolver
   preserves source semantics without claiming platform parity.
