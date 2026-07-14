@@ -244,9 +244,11 @@ int csb_v1_save_export_import_envelope(CSB_V1_PartyState *party,
 
 /* ── File I/O helpers ──────────────────────────────────────────────── */
 
-/* Write an FSSB envelope to `path`. The buffer is `envelope`
- * (length `envelope_len`, must be ≥ CSB_V1_SAVE_EXPORT_HEADER_LEN).
- * Returns 0 on success, negative CSB_V1_SaveExportResult. */
+/* Write a runtime-resumable FSSB envelope to `path`. The buffer is validated
+ * through validate_importable_envelope() before a same-directory temporary
+ * file is flushed and atomically renamed over `path`; a malformed or
+ * cross-labeled envelope therefore cannot replace an existing save. Returns
+ * 0 on success, negative CSB_V1_SaveExportResult. */
 int csb_v1_save_export_write_envelope(const char *path,
                                        const uint8_t *envelope,
                                        size_t envelope_len);
