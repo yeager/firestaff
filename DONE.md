@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0721`: PC 3.4 palette-changing packed shrink
+  blit is source-locked to `BLTSHRNK.C:113-169`, preserving 6-bit sampling,
+  nibble extraction and palette remap order. Focused strict C11 byte test
+  passes.
+
+- 2026-07-14 DM1/CSB ReDMCSB `F0720`, `F0732`, and `F0733`: PC 3.4 packed
+  shrink blit and screen/zone fill routes are source-locked. The modules keep
+  fixed-point nibble sampling, ZONE-to-inclusive-BOX conversion and F0638
+  lookup ownership. Focused strict C11 byte/dispatch tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0716`-`F0719`: PC 3.4 disk/vector and CD-audio
   adapter routes are source-locked: IODRV_17's void body, volume-name buffer,
   signed time return, and G2024-gated CD-track dispatch. Focused strict C11
