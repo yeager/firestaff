@@ -4692,3 +4692,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   it does not parse grids, objects, palettes, bitmaps, or dungeon grammar.
   Remaining work is an original later-read trace for this record before any
   payload consumer can be admitted.
+- 2026-07-14 raw receipt follow-up: the handoff now derives the same record
+  and envelope facts from the selected hash-verified JP/US MODE1/2352 bytes,
+  matching the variant's CUE `TRACK 02 INDEX 01` sector and descriptor/header
+  fingerprints. The `0x114` receipt is the logical MODE1 user-data offset
+  (raw-sector byte `0x124`), and the following logical `0x480` boundary
+  remains opaque. This is still not a later loader read, a payload decoder,
+  or a Soul Room-to-dungeon correlation; obtain that original trace before
+  admitting any payload consumer.
+diff --git a/DONE.md b/DONE.md

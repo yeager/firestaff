@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "theron_v1_dungeon_handoff.h"
@@ -12,44 +13,71 @@ static int failures;
     } \
 } while (0)
 
-static Theron_V1DungeonHandoffFacts valid_facts(void) {
+enum {
+    RAW_SECTOR_BYTES = THERON_V1_TRACK02_RAW_SECTOR_BYTES,
+    US_CANDIDATE_OFFSET = 0x7015b4u,
+    US_DESCRIPTOR_OFFSET = 0x710904u,
+    RAW_BYTES = ((US_DESCRIPTOR_OFFSET + 18u + RAW_SECTOR_BYTES - 1u) /
+                 RAW_SECTOR_BYTES) * RAW_SECTOR_BYTES
+};
+
+static void write_us_receipt_bytes(unsigned char *raw) {
+    static const unsigned char descriptor[] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20,
+        0x10, 0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const unsigned char header[] = {
+        0x00, 0x20, 0x00, 0x1b, 0x01, 0x08, 0xe9, 0x38, 0x00, 0x26
+    };
+
+    memcpy(raw + US_DESCRIPTOR_OFFSET, descriptor, sizeof(descriptor));
+    memcpy(raw + US_CANDIDATE_OFFSET, header, sizeof(header));
+}
+
+static Theron_V1DungeonHandoffFacts valid_facts(unsigned char *raw) {
     static Theron_V1RuntimeAdmissionReceipt admission = {1, 1};
     Theron_V1DungeonHandoffFacts facts = {
-        &admission, 1, 1, 1,
-        THERON_V1_INITIAL_LEVEL_RECORD,
-        THERON_V1_INITIAL_LEVEL_USER_DATA_OFFSET,
-        THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES,
-        THERON_V1_INITIAL_LEVEL_IDENTIFIER
+        &admission, 1, THERON_V1_TRACK02_MD5_US_BIN, raw, RAW_BYTES, 225u
     };
     return facts;
 }
 
 int main(void) {
-    Theron_V1DungeonHandoffFacts facts = valid_facts();
+    unsigned char *raw = calloc(1u, RAW_BYTES);
+    Theron_V1DungeonHandoffFacts facts;
     Theron_V1RuntimeAdmissionReceipt admission = {1, 1};
     Theron_V1DungeonHandoffReceipt receipt;
 
+    CHECK(raw != NULL);
+    if (!raw) return 1;
+    write_us_receipt_bytes(raw);
+    facts = valid_facts(raw);
     facts.runtime_admission = &admission;
 
     CHECK(theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     CHECK(receipt.selected && receipt.runtime_route_consumed);
     CHECK(receipt.record == 0x0b52u);
-    CHECK(receipt.user_data_offset == 0x114u);
+    CHECK(receipt.record_user_data_offset == 0x114u);
     CHECK(receipt.envelope_bytes == 0x36cu);
-    CHECK(receipt.level_identifier == 0x0026u);
-    CHECK(strcmp(receipt.route, "initial_level_source_locked") == 0);
+    CHECK(receipt.header_identifier == 0x0026u);
+    CHECK(receipt.adjacent_boundary_opaque);
+    CHECK(strcmp(receipt.route, "raw_track02_initial_envelope") == 0);
 
     admission.admitted = 0;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
     admission.admitted = 1;
-    facts.record = 0x04e0u;
+    facts.cue_track02_index01_raw_sector = 224u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
-    facts.record = THERON_V1_INITIAL_LEVEL_RECORD;
-    facts.adjacent_boundary_unparsed = 0;
+    facts.cue_track02_index01_raw_sector = 225u;
+    raw[US_DESCRIPTOR_OFFSET] = 0u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
-    facts.adjacent_boundary_unparsed = 1;
-    facts.level_identifier = 0x0027u;
+    write_us_receipt_bytes(raw);
+    raw[US_CANDIDATE_OFFSET + 9u] = 0x27u;
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+    raw[US_CANDIDATE_OFFSET + 9u] = 0x26u;
+    facts.track02_md5 = "00000000000000000000000000000000";
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
 
+    free(raw);
     return failures != 0;
 }
