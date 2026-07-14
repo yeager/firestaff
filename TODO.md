@@ -15,6 +15,11 @@
   object, visual, or inferred layout is permitted.
   The adjacent 0x380-byte post-envelope span is now hash-witnessed from raw
   JP/US media, but remains opaque until a loader capture assigns its role.
+  A 2026-07-14 original US CUE/System Card Mednafen attempt reached the System
+  Card wait loop but recorded no SDL host-key event, no non-System-Card PCECD
+  read, and no dynamic CD_READ row. It is not admissible as a dungeon/object
+  capture; obtain a capture with an observed input event and later `$e009`
+  dispatch/return pair before promoting any subsequent record.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1

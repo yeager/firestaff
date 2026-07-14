@@ -213,13 +213,9 @@ tell application "System Events"
     set frontmost of targetProcess to true
     delay 0.2
     if "$host_key" is "return" then
-        key down 36
-        delay $host_key_hold
-        key up 36
+        key code 36
     else if "$host_key" is "select" then
-        key down 48
-        delay $host_key_hold
-        key up 48
+        key code 48
     else
         repeat $host_key_repeats times
             key code 85
