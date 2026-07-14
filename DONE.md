@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1047: available code closes Amiga FTL libraries
+  only. The focused PC 3.4 boundary records unavailable rather than synthesizing
+  teardown behavior.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1046: available code opens Amiga FTL libraries
   only. The focused PC 3.4 boundary returns unavailable rather than synthesizing
   a library-loading route.
