@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <stdlib.h>
 
 static uint32_t rb32(const uint8_t *p) {
     return ((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];
@@ -342,9 +343,11 @@ static int nexus_v1_level_copy_structure3_payload(
     faces.entry_headers_valid = entry_headers.valid;
     if (entry_headers.valid) {
         int entry;
+        int face_vertex_linkage_measurement_complete = 1;
 
         faces.entry_count = entry_headers.entry_count;
         faces.face_vertex_indexes_valid = 1;
+        faces.face_vertex_linkage_valid = 0;
         faces.normal_count_matches_face_count = 1;
         for (entry = 0; entry < directory.entry_count; ++entry) {
             uint32_t entry_offset = rb32(data + byte_offset + 4 + entry * 4);
@@ -354,6 +357,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint32_t face_offset = rb32(header + 16);
             uint32_t normal_offset = rb32(header + 20);
             int face_index;
+            int *vertex_reference_counts = NULL;
 
             faces.vertex_count += vertex_count;
             faces.face_count += face_count;
@@ -362,6 +366,13 @@ static int nexus_v1_level_copy_structure3_payload(
                 (uint64_t)byte_size) {
                 faces.normal_count_matches_face_count = 0;
                 break;
+            }
+            if (vertex_count > 0) {
+                vertex_reference_counts = (int *)calloc(
+                    (size_t)vertex_count, sizeof(*vertex_reference_counts));
+                if (!vertex_reference_counts) {
+                    face_vertex_linkage_measurement_complete = 0;
+                }
             }
             for (face_index = 0; face_index < (int)face_count; ++face_index) {
                 const uint8_t *face = data + byte_offset + face_offset +
@@ -374,8 +385,20 @@ static int nexus_v1_level_copy_structure3_payload(
                     index2 >= vertex_count || index3 >= vertex_count) {
                     faces.face_vertex_indexes_valid = 0;
                 }
+                if (vertex_reference_counts) {
+                    if (rb16(face) < vertex_count)
+                        ++vertex_reference_counts[rb16(face)];
+                    if (rb16(face + 2) < vertex_count)
+                        ++vertex_reference_counts[rb16(face + 2)];
+                    if (index2 < vertex_count)
+                        ++vertex_reference_counts[index2];
+                    if (index3 != index2 && index3 < vertex_count)
+                        ++vertex_reference_counts[index3];
+                }
                 if (index2 == index3) ++faces.triangle_count;
                 else ++faces.quad_count;
+                faces.face_vertex_reference_count +=
+                    index2 == index3 ? 3 : 4;
                 if ((face[8] & 0x40U) != 0U) ++faces.textured_face_count;
                 if ((face[8] & 0x01U) != 0U) ++faces.mesh_transparent_face_count;
                 if ((fill & 0x8000U) != 0U) ++faces.one_off_color_fill_count;
@@ -385,10 +408,31 @@ static int nexus_v1_level_copy_structure3_payload(
                     ++faces.static_texture_fill_count;
                 else ++faces.unclassified_fill_count;
             }
+            for (face_index = 0; face_index < (int)vertex_count; ++face_index) {
+                int references = vertex_reference_counts
+                    ? vertex_reference_counts[face_index] : 0;
+
+                if (references > 0) ++faces.referenced_vertex_count;
+                else ++faces.unreferenced_vertex_count;
+                faces.linked_face_vertex_reference_count += references;
+                if (references > faces.maximum_vertex_reference_count) {
+                    faces.maximum_vertex_reference_count = references;
+                }
+            }
+            free(vertex_reference_counts);
         }
+        faces.face_vertex_linkage_valid =
+            face_vertex_linkage_measurement_complete &&
+            faces.referenced_vertex_count + faces.unreferenced_vertex_count ==
+                faces.vertex_count &&
+            faces.linked_face_vertex_reference_count ==
+                faces.face_vertex_reference_count;
         faces.valid = faces.face_vertex_indexes_valid &&
+            faces.face_vertex_linkage_valid &&
             faces.normal_count_matches_face_count &&
-            faces.unclassified_fill_count == 0;
+            faces.unclassified_fill_count == 0 &&
+            faces.face_vertex_reference_count ==
+                faces.triangle_count * 3 + faces.quad_count * 4;
     }
     /* Record grammar alone cannot select material data or issue a draw. */
     faces.draw_semantics_proven = 0;

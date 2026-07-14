@@ -676,6 +676,17 @@ Faces stored as **uint16_t index arrays** at `data_offset + 8 + vertex_count * 1
 
 The implementation assumes all triangles: `face_bytes = face_count * 6`.
 
+### 6.4.1 DGN Structure3 Face-to-Vertex Incidence
+
+The Saturn DGN Structure3 parser treats each documented Structure3b row as
+four big-endian local vertex indexes, followed by flags and a fill selector.
+Its evidence receipt counts triangle rows as three local vertex references
+(the fourth index repeats the third) and quad rows as four. It also reports
+the number of referenced and unreferenced Structure3a vertices and the
+largest local reference count. This is a bounded topology check only: it does
+not infer winding, UVs, palette format, VDP1 commands, transforms, clipping,
+or any draw behaviour. The no-draw handoff gate remains required.
+
 ### 6.5 DMDF Texture Data
 
 Embedded texture follows vertex and face data. Format: **VDP1 BITMAP** (Saturn hardware texture format). Compression: unknown.
