@@ -58,6 +58,7 @@ uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
 {
     uint16_t map_index;
     uint16_t discard_start_map;
+    uint16_t map_scans;
 
     if (!state || !ops || !ops->get_map_bounds || !ops->get_first_thing ||
         !ops->get_next_thing || !ops->get_thing_type ||
@@ -73,7 +74,10 @@ uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
     if (map_index == party_map_index && ++map_index >= map_count) map_index = 0;
     discard_start_map = map_index;
 
-    for (;;) {
+    /* A source dungeon has one finite pass over its maps.  Keep that bound
+     * explicit so a malformed callback cannot turn discard reclamation into
+     * an unbounded host loop. */
+    for (map_scans = 0; map_scans < map_count; ++map_scans) {
         uint16_t max_x;
         uint16_t max_y;
         uint16_t map_x;
@@ -83,24 +87,26 @@ uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
                 uint16_t map_y;
                 for (map_y = 0;; ++map_y) {
                     uint16_t thing;
-                    if (dm1_csb_f0165_is_party_visible_square(
-                            map_index, party_map_index, map_x, map_y,
-                            party_map_x, party_map_y)) {
-                        continue;
-                    }
-                    thing = ops->get_first_thing(context, map_index, map_x, map_y);
-                    while (thing != DM1_CSB_F0165_THING_ENDOFLIST) {
-                        uint8_t current_type = ops->get_thing_type(context, thing);
-                        if (current_type == DM1_CSB_F0165_THING_TYPE_SENSOR) {
-                            if (ops->sensor_is_enabled(context, thing)) break;
-                        } else if (current_type == thing_type &&
-                                   dm1_csb_f0165_discard_selected(
-                                       ops, context, thing, thing_type,
-                                       map_index, map_x, map_y)) {
-                            state->last_discarded_map[thing_type] = (uint8_t)map_index;
-                            return (uint16_t)(thing & 0x3fffu);
+                    unsigned int thing_guard = 0;
+                    if (!dm1_csb_f0165_is_party_visible_square(
+                             map_index, party_map_index, map_x, map_y,
+                             party_map_x, party_map_y)) {
+                        thing = ops->get_first_thing(context, map_index, map_x, map_y);
+                        while (thing != DM1_CSB_F0165_THING_ENDOFLIST &&
+                               thing != DM1_CSB_F0165_THING_NONE &&
+                               thing_guard++ < 1024u) {
+                            uint8_t current_type = ops->get_thing_type(context, thing);
+                            if (current_type == DM1_CSB_F0165_THING_TYPE_SENSOR) {
+                                if (ops->sensor_is_enabled(context, thing)) break;
+                            } else if (current_type == thing_type &&
+                                       dm1_csb_f0165_discard_selected(
+                                           ops, context, thing, thing_type,
+                                           map_index, map_x, map_y)) {
+                                state->last_discarded_map[thing_type] = (uint8_t)map_index;
+                                return (uint16_t)(thing & 0x3fffu);
+                            }
+                            thing = ops->get_next_thing(context, thing);
                         }
-                        thing = ops->get_next_thing(context, thing);
                     }
                     if (map_y == max_y) break;
                 }
@@ -117,4 +123,7 @@ uint16_t F0165_DUNGEON_GetDiscardedThing_Compat(
         } while (map_index == party_map_index);
         if (map_index == discard_start_map) map_index = party_map_index;
     }
+
+    state->last_discarded_map[thing_type] = (uint8_t)party_map_index;
+    return DM1_CSB_F0165_THING_NONE;
 }
