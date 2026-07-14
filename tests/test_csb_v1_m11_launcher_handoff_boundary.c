@@ -24,6 +24,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
@@ -266,6 +267,7 @@ static void run_real_launcher_handoff_if_available(void) {
     M12_LaunchIntent intent;
     M11_GameViewState view;
     M11_BootProbeReceipt probe;
+    CSB_V1_StartupRealReceipt real_package;
     const M12_MenuEntry* entry;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
@@ -280,6 +282,21 @@ static void run_real_launcher_handoff_if_available(void) {
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Firestaff data root");
+        return;
+    }
+
+    /* This is an M12 -> M11 integration route, so admit only the same
+     * hash-verified PC34 pair consumed by ReDMCSB/CSBWin.  In particular,
+     * an otherwise launchable directory must not promote a fallback surface
+     * into the title, door, or terminal HUD assertions below. */
+    csb_v1_startup_real_receipt_init(&real_package);
+    if (csb_v1_startup_real_scan_and_receipt(data_dir, 4, &real_package) !=
+            CSB_V1_STARTUP_REAL_OK ||
+        !real_package.matched ||
+        real_package.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        real_package.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
+        real_package.receipt_hash == 0u) {
+        expect_skip("no hash-verified PC34 CSB package under default data root");
         return;
     }
 
@@ -323,6 +340,12 @@ static void run_real_launcher_handoff_if_available(void) {
                          view.csbStartupRuntimeAssetSession)
                         ->rejects_legacy_wrappers,
                 "M11 CSB launcher handoff owns source-session startup surfaces");
+    expect_true(((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                     view.csbStartupRuntimeAssetSession)->real_asset_matched &&
+                    real_package.assets_verified &&
+                    real_package.graphics_verified &&
+                    real_package.dungeon_verified,
+                "M11 CSB launcher session is bound to the hash-verified PC34 package");
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB launcher handoff stops at startup title/entrance");

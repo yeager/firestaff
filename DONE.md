@@ -13999,6 +13999,18 @@ absent and does not construct substitute GDAT assets. Verification: external
 Ninja target `test_dm2_v1_gdat_scene_plan_viewport_real_data` built clean and
 the canonical PC corpus run passed all five referenced GRAPHICSSET styles.
 
+# ✅ 2026-07-14 CSB hash-receipted M12/M11 package startup gate
+
+The real M12-to-M11 CSB launcher route now begins with the same hash-verified
+PC34 `GRAPHICS.DAT` plus `DUNGEON.DAT` receipt used by the package scanner. It
+does not promote an otherwise launchable directory: title C001, the C002/C003
+door sequence, and terminal C017/C040 HUD assertions run only after the
+receipt confirms both source files and the production session remains bound to
+them. Missing or non-PC34 media is an explicit skip, with no generated art or
+fallback surface. Source boundaries: ReDMCSB `TITLE.C` F0437 and `ENTRANCE.C`
+F0806/F0807; CSBWin `Graphics.cpp::ReadGraphic`. Verification:
+`test_csb_v1_m11_launcher_handoff_boundary`.
+
 # ✅ 2026-07-14 CSB compact ParameterB timer integration coverage
 
 The Phase 7 CSB runtime regression now materially exercises the existing
