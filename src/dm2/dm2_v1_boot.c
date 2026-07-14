@@ -1370,16 +1370,16 @@ int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
     DM2_V1_StartupHostActionReceipt *out_receipt)
 {
     DM2_V1_StartupHostFacts facts;
-    DM2_V1_StartupMenuPointerLayout layout;
+    DM2_V1_StartupMenuPointerHitReceipt pointer_hit;
     DM2_V1_StartupAction action;
 
     if (!out_receipt || !startup_menu_active ||
         !dm2_v1_boot_startup_host_facts_from_runtime_state(
             profile, startup_menu_active, startup_save_root, resume_available,
             slot_mask, selected_row, &facts) ||
-        !dm2_v1_boot_startup_menu_pointer_layout(
-            (DM2_V1_BootProfile *)profile, &layout) ||
-        !dm2_v1_boot_startup_rect_contains(&layout.new_game, x, y)) {
+        !dm2_v1_boot_startup_menu_pointer_hit(
+            (DM2_V1_BootProfile *)profile, x, y, &pointer_hit) ||
+        pointer_hit.target != DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME) {
         return 0;
     }
 
@@ -5631,6 +5631,50 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     }
     out_layout->table_hash = hash;
     out_layout->valid = 1;
+    return 1;
+}
+
+int dm2_v1_boot_startup_menu_pointer_hit(
+    DM2_V1_BootProfile *profile,
+    int x,
+    int y,
+    DM2_V1_StartupMenuPointerHitReceipt *out_receipt)
+{
+    DM2_V1_StartupMenuPointerLayout layout;
+
+    if (!dm2_v1_boot_startup_menu_pointer_layout(profile, &layout)) {
+        return 0;
+    }
+    return dm2_v1_boot_startup_menu_pointer_hit_from_layout(
+        &layout, x, y, out_receipt);
+}
+
+int dm2_v1_boot_startup_menu_pointer_hit_from_layout(
+    const DM2_V1_StartupMenuPointerLayout *layout,
+    int x,
+    int y,
+    DM2_V1_StartupMenuPointerHitReceipt *out_receipt)
+{
+    DM2_V1_StartupMenuPointerHitReceipt candidate;
+
+    if (!out_receipt || !layout || !layout->valid ||
+        layout->table_hash == 0u) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.table_hash = layout->table_hash;
+    if (dm2_v1_boot_startup_rect_contains(&layout->new_game, x, y)) {
+        candidate.target = DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME;
+        candidate.rect = layout->new_game;
+    } else if (dm2_v1_boot_startup_rect_contains(&layout->resume_game, x, y)) {
+        candidate.target =
+            DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE;
+        candidate.rect = layout->resume_game;
+    } else {
+        return 0;
+    }
+    candidate.valid = 1;
+    *out_receipt = candidate;
     return 1;
 }
 
