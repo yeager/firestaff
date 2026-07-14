@@ -764,7 +764,8 @@ static int csb_v1_csbwin_dsa_pending_skin_lookup(
 
 static CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
-    int *depth, int *forced_state, int parameter_count,
+    int *depth, int *forced_state, uint32_t *variables,
+    uint8_t *variable_state, uint32_t *parameters, int parameter_count,
     const CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
     int *pending_skin_write_count)
@@ -776,7 +777,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int32_t sv;
     int32_t sw;
 
-    if (!stack || !depth || !forced_state || !context ||
+    if (!stack || !depth || !forced_state || !variables || !variable_state ||
+        !parameters || !context ||
         !pending_skin_writes || !pending_skin_write_count ||
         *pending_skin_write_count < 0 || parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
@@ -939,6 +941,50 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 40u: /* STKOP_ParamFetch */
+        /* CSBWin DSA.cpp:2956-2999 copies the first N source parameters to
+         * DSAVARS starting at I.  Missing logical parameters become zero and
+         * retain DVT_NonParameter so a later PARAM! does not manufacture a
+         * caller value.  Firestaff's callback owns only parameter_count
+         * words, therefore malformed DSAVARS coordinates fail closed. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (w > 100u) break;
+        if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            w > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        for (count = 0u; count < w; ++count) {
+            if (count < (uint32_t)parameter_count) {
+                variables[v + count] = parameters[count];
+                variable_state[v + count] = 1u;
+            } else {
+                variables[v + count] = 0u;
+                variable_state[v + count] = 2u; /* DVT_NonParameter */
+            }
+        }
+        break;
+    case 41u: /* STKOP_ParamStore */
+        /* DSA.cpp:3000-3044 copies DSAVARS back to the supplied parameter
+         * list except cells marked DVT_NonParameter by PARAM@.  The source
+         * caller owns the list's actual extent, so never widen it here. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if ((int32_t)w < 0 || w > 100u) break;
+        if (w > (uint32_t)parameter_count ||
+            v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            w > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        for (count = 0u; count < w; ++count) {
+            if (variable_state[v + count] != 2u) {
+                if (variable_state[v + count] != 1u) {
+                    variables[v + count] = 0u;
+                }
+                parameters[count] = variables[v + count];
+            }
+        }
+        break;
     case 139u: /* STKOP_NumParam, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:4949-4955 pushes pDSAparameters[0].  Firestaff's
          * authenticated filter context keeps that source count separately
@@ -960,6 +1006,40 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         v += v >> 16;
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v & 0x3fu)) {
             goto underflow;
+        }
+        break;
+    case 136u: /* STKOP_VSET, reached via AMPERSAND2 + 128 */
+        /* DSA.cpp:4850-4887 consumes N, destination, and source from the
+         * source stack.  It clamps the two DSAVARS spans to 100 cells, then
+         * either fills a constant or memmoves values and definition states. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) break;
+        if (count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v) {
+            count = CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v;
+        }
+        if ((int32_t)w < 0) {
+            if (w == 0x80000000u) {
+                return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+            }
+            for (sv = 0; sv < (int32_t)count; ++sv) {
+                variables[v + (uint32_t)sv] = 0u - w;
+                variable_state[v + (uint32_t)sv] = 1u;
+            }
+        } else if (w > 99u) {
+            for (sv = 0; sv < (int32_t)count; ++sv) {
+                variables[v + (uint32_t)sv] = w - 100u;
+                variable_state[v + (uint32_t)sv] = 1u;
+            }
+        } else {
+            if (count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - w) {
+                count = CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - w;
+            }
+            memmove(variables + v, variables + w,
+                    (size_t)count * sizeof(*variables));
+            memmove(variable_state + v, variable_state + w,
+                    (size_t)count * sizeof(*variable_state));
         }
         break;
     case 131u: /* STKOP_GetSkin, reached via AMPERSAND2 + 128 */
@@ -1010,7 +1090,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     uint32_t parameters[26] = { 0u };
     uint32_t variables[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY] = { 0u };
-    uint8_t variable_defined[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
+    uint8_t variable_state[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
     CSB_V1_CSBWinDSAPendingSkinWrite
         pending_skin_writes[CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES];
     CSB_V1_CSBWinDSAStackExecution candidate;
@@ -1166,7 +1246,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 /* CSBWin DSADBANK::NoValue writes zero before returning an
                  * undefined local. The definition flag intentionally stays
                  * unset, because a later store is the first definition. */
-                if (!variable_defined[index]) variables[index] = 0u;
+                if (variable_state[index] != 1u) variables[index] = 0u;
                 if (!csb_v1_csbwin_dsa_stack_push(stack, &depth,
                                                     variables[index])) {
                     return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
@@ -1176,7 +1256,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                                                    &variables[index])) {
                     return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
                 }
-                variable_defined[index] = 1u;
+                variable_state[index] = 1u;
             }
             next_state = relative_state;
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_GLOBALFETCH ||
@@ -1224,7 +1304,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 subcode = (uint16_t)(subcode + 128u);
             }
             rc = csb_v1_csbwin_dsa_execute_stack_subcode(
-                subcode, stack, &depth, &candidate.forced_state,
+                subcode, stack, &depth, &candidate.forced_state, variables,
+                variable_state, parameters,
                 context->parameter_count, context, pending_skin_writes,
                 &pending_skin_write_count);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;

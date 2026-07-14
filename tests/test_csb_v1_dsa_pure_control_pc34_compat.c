@@ -1,7 +1,8 @@
 /* CSBWin DSA pure-control and pure-stack opcode regression.
  * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
- * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268 and
- * STKOP_BitCount:4832-4848. These commands have no filter or world effect. */
+ * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
+ * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
+ * 2956-3044,4850-4887. These commands have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
@@ -58,6 +59,18 @@ int main(void)
         0x0786u, 0x0f0fu, 0xf0f0u, 0x1b0bu, 0x000du
     };
     uint16_t bitcount_underflow[] = { 0x1b0bu };
+    uint16_t parameter_round_trip[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0a0bu,
+        0x0686u, 1u, 0x0686u, 0u, 0x0686u, 3u, 0x0215u,
+        0x0686u, 3u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t parameter_constant[] = {
+        0x0686u, 107u, 0x0686u, 0u, 0x0686u, 4u, 0x0215u,
+        0x0686u, 4u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t parameter_bad_variable_span[] = {
+        0x0686u, 4u, 0x0686u, 98u, 0x0a0bu
+    };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
@@ -158,6 +171,43 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_MALFORMED &&
               parameters[0] == 77u,
           "BITCOUNT underflow rejects without parameter publication");
+
+    parameters[0] = 10u;
+    parameters[1] = 20u;
+    parameters[2] = 30u;
+    parameters[3] = 40u;
+    check(run(&state, &action, parameter_round_trip,
+              (int)(sizeof(parameter_round_trip) /
+                    sizeof(parameter_round_trip[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 20u && parameters[1] == 30u &&
+              parameters[2] == 40u && parameters[3] == 40u &&
+              execution.stack_depth == 0u,
+          "PARAM@ VSET PARAM! preserves source variable and parameter order");
+
+    parameters[0] = 10u;
+    parameters[1] = 20u;
+    parameters[2] = 30u;
+    parameters[3] = 40u;
+    check(run(&state, &action, parameter_constant,
+              (int)(sizeof(parameter_constant) /
+                    sizeof(parameter_constant[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 7u && parameters[1] == 7u &&
+              parameters[2] == 7u && parameters[3] == 7u,
+          "VSET positive constant writes a bounded source DSAVARS range");
+
+    parameters[0] = 10u;
+    parameters[1] = 20u;
+    parameters[2] = 30u;
+    parameters[3] = 40u;
+    check(run(&state, &action, parameter_bad_variable_span,
+              (int)(sizeof(parameter_bad_variable_span) /
+                    sizeof(parameter_bad_variable_span[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL &&
+              parameters[0] == 10u && parameters[1] == 20u &&
+              parameters[2] == 30u && parameters[3] == 40u,
+          "PARAM@ rejects an out-of-bank DSAVARS span without publication");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
