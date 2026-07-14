@@ -52,6 +52,20 @@ static DM1_NeedsTickContext make_ctx(uint32_t gt, int resting) {
     return ctx;
 }
 
+static void test_time_effects_cadence(void) {
+    /* ReDMCSB GAMELOOP.C increments G0313, then tests 63/15. */
+    ASSERT_EQ(DM1_V1_Needs_TimeEffectsDuePc34Compat(63u, 0), 0,
+              "active tick 63 is not an F0331 pass");
+    ASSERT_EQ(DM1_V1_Needs_TimeEffectsDuePc34Compat(64u, 0), 1,
+              "active tick 64 runs F0331 once");
+    ASSERT_EQ(DM1_V1_Needs_TimeEffectsDuePc34Compat(15u, 1), 0,
+              "resting tick 15 is not an F0331 pass");
+    ASSERT_EQ(DM1_V1_Needs_TimeEffectsDuePc34Compat(16u, 1), 1,
+              "resting tick 16 runs F0331 once");
+    ASSERT_EQ(DM1_V1_Needs_TimeEffectsDuePc34Compat(0x10040u, 0), 1,
+              "PC 3.4 cadence retains the low 16-bit game-time mask");
+}
+
 /* ── Test: stamina_amount computation ─────────────────────────────── */
 static void test_stamina_amount(void) {
     /* F0331: BoundedValue(1, (MaxStamina >> 8) - 1, 6) */
@@ -373,6 +387,7 @@ int main(void) {
     printf("=== DM1 V1 Champion Needs Source-Lock Tests ===\n\n");
 
     test_stamina_amount();
+    test_time_effects_cadence();
     test_health_gain();
     test_decrement_stamina();
     test_food_water_bar_render_command();

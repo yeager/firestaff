@@ -72,6 +72,14 @@ static int bounded_value(int lo, int val, int hi) {
 static int min_value(int a, int b) { return a < b ? a : b; }
 static int max_value(int a, int b) { return a > b ? a : b; }
 
+int DM1_V1_Needs_TimeEffectsDuePc34Compat(uint32_t game_time,
+                                          int party_is_resting)
+{
+    const uint16_t cadence_mask = party_is_resting ? 15u : 63u;
+
+    return (((uint16_t)game_time & cadence_mask) == 0u) ? 1 : 0;
+}
+
 void DM1_V1_Needs_DecayScentsPc34Compat(
     DM1_V1_NeedsScentListPc34Compat* scents) {
     int index;
