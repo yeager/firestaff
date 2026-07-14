@@ -1285,33 +1285,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   "runtime renders skproject creature possession chain");
             CHECK(fetch_count >= 14,
                   "runtime creature possession chain reaches item-map-chip fetch path");
-            CHECK(dm2_v1_runtime_last_asset_creature_count() == 1 &&
+            CHECK(dm2_v1_runtime_last_asset_creature_count() == 0 &&
                   dm2_v1_runtime_last_fallback_creature_count() == 0,
-                  "runtime DB4 creature draws through creature GDAT map-chip path");
-            CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
-                  receipt.source_kind == 2 &&
-                  receipt.instance_id == -1 &&
-                  receipt.thing_handle >= 0 &&
-                  receipt.creature_type > 0 &&
-                  receipt.gdat_index ==
-                      dm2_v1_viewport_creature_graphic_index(
-                          receipt.creature_type, receipt.frame_index) &&
-                  receipt.draw_order == 0 &&
-                  receipt.map_x == 1 &&
-                  receipt.map_y == 0 &&
-                  receipt.asset_blit_ready == 1 &&
-                  receipt.fallback_drawn == 0 &&
-                  receipt.asset_src_w == 16 &&
-                  receipt.asset_src_h == 8 &&
-                  receipt.asset_frame_count == 2 &&
-                  receipt.requested_frame_index == receipt.frame_index &&
-                  receipt.party_direction == 0 &&
-                  receipt.atlas_frame_index == receipt.render_frame &&
-                  receipt.atlas_frame_w == 8 &&
-                  receipt.atlas_frame_h == 8 &&
-                  receipt.asset_dst_rect.w > 0 &&
-                  receipt.asset_dst_rect.h > 0,
-                  "runtime DB4 creature receipt exposes GDAT sprite atlas blit");
+                  "runtime does not draw fixture DB4 through an unowned record chain");
+            CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 0,
+                  "runtime withholds DB4 atlas receipt without direct G1 material ownership");
             CHECK(dm2_v1_runtime_last_asset_creature_possession_item_count() == 2 &&
                   dm2_v1_runtime_last_fallback_creature_possession_item_count() == 0,
                   "runtime records asset-backed creature possession item draws");
