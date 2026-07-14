@@ -209,6 +209,9 @@ typedef struct {
      * level handoff. This remains an opaque transfer fact: intake explicitly
      * does not decode the payload or admit its semantics. */
     Theron_V1Track02LoaderIntakeReceipt loader_intake;
+    /* Atomically copied from the same full, rehashed user-data sector as the
+     * intake receipt. It is opaque runtime input, never a decoded level. */
+    Theron_V1Track02LoaderPayloadReceipt loader_payload;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;

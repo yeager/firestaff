@@ -210,6 +210,14 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
            initial_level->variant == expected_variant &&
            strcmp(initial_level->track02_md5, profile->graphics_md5) == 0 &&
            initial_level->observed_track02_record == 0x0b52u &&
+           initial_level->loader_payload.handed_off &&
+           initial_level->loader_payload.no_fallback &&
+           initial_level->loader_payload.record ==
+               initial_level->observed_track02_record &&
+           initial_level->loader_payload.payload_bytes ==
+               THERON_TRACK02_RAW_USER_DATA_BYTES &&
+           initial_level->loader_payload.payload_checksum ==
+               initial_level->complete_payload_checksum &&
            !initial_level->object_tail_semantics_proven &&
            !initial_level->fallback_visuals_allowed &&
            theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
