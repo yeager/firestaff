@@ -3253,6 +3253,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         if (plan) {
             const DM2_V1_GdatSceneM11Command *floor = &plan->commands[0];
             const DM2_V1_GdatSceneM11Command *ceiling = &plan->commands[1];
+            const DM2_V1_GdatSceneBlitRect *floor_rect = &plan->rects[0];
+            const DM2_V1_GdatSceneBlitRect *ceiling_rect = &plan->rects[1];
             if (!s->gdat_scene_control_ready ||
                 plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
                 plan->command_hash != s->gdat_scene_control_hash ||
@@ -3262,6 +3264,21 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 floor->width == 0u || floor->height == 0u ||
                 ceiling->width == 0u || ceiling->height == 0u ||
                 floor->palette_hash == 0u || ceiling->palette_hash == 0u) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            if (floor_rect->rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+                ceiling_rect->rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+                floor_rect->width != floor->width || floor_rect->height != floor->height ||
+                ceiling_rect->width != ceiling->width ||
+                ceiling_rect->height != ceiling->height ||
+                floor_rect->x < 0 || floor_rect->y < 0 ||
+                ceiling_rect->x < 0 || ceiling_rect->y < 0 ||
+                (unsigned)floor_rect->x + floor_rect->width > DM2_VP_WIDTH ||
+                (unsigned)floor_rect->y + floor_rect->height > DM2_VP_HEIGHT ||
+                (unsigned)ceiling_rect->x + ceiling_rect->width > DM2_VP_WIDTH ||
+                (unsigned)ceiling_rect->y + ceiling_rect->height > DM2_VP_HEIGHT) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
@@ -3353,14 +3370,25 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     /* DM2 uses the same floor (G2108=-1) and ceiling (G2109=-2) indices as
      * DM1. Source: ReDMCSB DUNVIEW.C:126-127. */
 
+    int ceiling_x = 0;
+    int ceiling_y = 0;
     int ceiling_h = DM2_CEILING_H;
+    int ceiling_w_dst = DM2_VP_WIDTH;
+    if (s->source_materials_required && s->gdat_scene_material_plan) {
+        const DM2_V1_GdatSceneBlitRect *rect =
+            &s->gdat_scene_material_plan->rects[1];
+        ceiling_x = rect->x;
+        ceiling_y = rect->y;
+        ceiling_w_dst = rect->width;
+        ceiling_h = rect->height;
+    }
     if (ceiling_asset) {
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
                                  stride,
-                                 0,
-                                 0,
-                                 DM2_VP_WIDTH,
+                                 ceiling_x,
+                                 ceiling_y,
+                                 ceiling_w_dst,
                                  ceiling_h,
                                  ceiling_pixels,
                                  ceiling_w,
@@ -3390,8 +3418,18 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         }
     }
 
+    int floor_x = 0;
     int floor_y = DM2_FLOOR_Y;
     int floor_h = DM2_FLOOR_H;
+    int floor_w_dst = DM2_VP_WIDTH;
+    if (s->source_materials_required && s->gdat_scene_material_plan) {
+        const DM2_V1_GdatSceneBlitRect *rect =
+            &s->gdat_scene_material_plan->rects[0];
+        floor_x = rect->x;
+        floor_y = rect->y;
+        floor_w_dst = rect->width;
+        floor_h = rect->height;
+    }
     /* QUERY_GDAT_IMAGE_LOCALPAL belongs to the decoded IMG3 being drawn.
      * Fetch the floor only after the ceiling blit: the viewport intentionally
      * keeps one active palette binding, so prefetching both would present the
@@ -3417,9 +3455,9 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
                                  stride,
-                                 0,
+                                 floor_x,
                                  floor_y,
-                                 DM2_VP_WIDTH,
+                                 floor_w_dst,
                                  floor_h,
                                  floor_pixels,
                                  floor_w,

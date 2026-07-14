@@ -2,6 +2,9 @@
 
 #include <string.h>
 
+#define DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH 224u
+#define DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT 136u
+
 static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
     for (size_t i = 0u; i < size; ++i) { hash ^= bytes[i]; hash *= 16777619u; }
@@ -11,6 +14,11 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 static uint16_t read_le16(const uint8_t *bytes)
 {
     return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static int16_t read_le16s(const uint8_t *bytes)
+{
+    return (int16_t)read_le16(bytes);
 }
 
 static const uint8_t *find_compressed_rect_row(const uint8_t *table,
@@ -42,6 +50,47 @@ static const uint8_t *find_compressed_rect_row(const uint8_t *table,
     return NULL;
 }
 
+static int decode_viewport_root_rect(const uint8_t *table, size_t table_size,
+                                     const uint8_t *row, uint16_t rect_number,
+                                     uint16_t width, uint16_t height,
+                                     DM2_V1_GdatSceneBlitRect *out_rect)
+{
+    const uint8_t *reference;
+    const uint8_t *clip;
+
+    /* skproject QUERY_BLIT_RECT (098D:0602-0BBD) handles 700/701 through
+     * x=11/14 -> record x=1 -> viewport clip x=9. 11 reduces to top-left
+     * anchor 1 and 14 to bottom-left anchor 4; their x=1 reference applies
+     * no adjustment, and record 3 clips only to (0,0,224,136). No alternate
+     * anchor, source crop, or nested clip is admitted here. */
+    if (!table || !row || !out_rect || width == 0u || height == 0u ||
+        (read_le16s(row) != 11 && read_le16s(row) != 14) ||
+        read_le16s(row + 4u) != 0 ||
+        read_le16s(row + 6u) != 0) {
+        return 0;
+    }
+    reference = find_compressed_rect_row(table, table_size, read_le16(row + 2u));
+    if (!reference || read_le16s(reference) != 1 ||
+        read_le16s(reference + 4u) != 0 || read_le16s(reference + 6u) != 0) {
+        return 0;
+    }
+    clip = find_compressed_rect_row(table, table_size, read_le16(reference + 2u));
+    if (!clip || read_le16s(clip) != 9 || read_le16s(clip + 2u) != 0 ||
+        read_le16s(clip + 4u) != DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
+        read_le16s(clip + 6u) != DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT ||
+        width > DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
+        height > DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT) {
+        return 0;
+    }
+    out_rect->rect_number = rect_number;
+    out_rect->x = 0;
+    out_rect->y = read_le16s(row) == 11 ? 0 :
+        (int16_t)(DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT - height);
+    out_rect->width = width;
+    out_rect->height = height;
+    return 1;
+}
+
 void dm2_v1_gdat_scene_m11_command_plan_free(DM2_V1_GdatSceneM11CommandPlan *plan)
 {
     if (!plan) return;
@@ -54,6 +103,10 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     DM2_V1_GdatSceneM11CommandPlan *out_plan)
 {
     static const uint8_t fields[2] = { DM2_GDAT_GFXSET_FLOOR, DM2_GDAT_GFXSET_CEIL };
+    static const uint16_t rect_numbers[2] = {
+        DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER,
+        DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER
+    };
     DM2_V1_GdatSceneM11CommandPlan candidate;
     uint32_t hash = 2166136261u;
 
@@ -93,6 +146,26 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
         if (!command->raw_hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }
         hash = hash_bytes(hash, (const uint8_t *)&command->raw_hash, sizeof(command->raw_hash));
         hash = hash_bytes(hash, (const uint8_t *)&command->palette_hash, sizeof(command->palette_hash));
+    }
+    {
+        const uint8_t *table;
+        size_t table_size = 0u;
+        table = dm2_v1_asset_load_typed_sized(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+            DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+        for (int i = 0; i < 2; ++i) {
+            const uint8_t *row = find_compressed_rect_row(
+                table, table_size, rect_numbers[i]);
+            if (!decode_viewport_root_rect(table, table_size, row, rect_numbers[i],
+                                         candidate.commands[i].width,
+                                         candidate.commands[i].height,
+                                         &candidate.rects[i])) {
+                dm2_v1_gdat_scene_m11_command_plan_free(&candidate);
+                return 0;
+            }
+            hash = hash_bytes(hash, (const uint8_t *)&candidate.rects[i],
+                              sizeof(candidate.rects[i]));
+        }
     }
     hash ^= candidate.scene_colorkey; hash *= 16777619u;
     hash ^= candidate.scene_flags; hash *= 16777619u;
