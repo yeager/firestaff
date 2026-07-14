@@ -14,6 +14,8 @@
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_TARGET_MAGIC \
     "NEXUS_STRUCTURE3_SATURN_CAPTURE_TARGET_V1"
+#define NEXUS_V1_STRUCTURE3_CAPTURE_PRODUCER_ATTESTATION_MAGIC \
+    "NEXUS_STRUCTURE3_SATURN_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_STRUCTURE3_CAPTURE_RAW_SPAN_MAX_BYTES (16U * 1024U * 1024U)
 #define NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT 6U
 
@@ -109,6 +111,20 @@ typedef struct {
     int original_saturn_source_attested;
 } Nexus_V1_DgnStructure3RawCaptureAttestation;
 
+/* This binds an instrumented producer binary to the identities it claims to
+ * have emitted. The claim needs independent original-Saturn review, so it
+ * cannot by itself import runtime bytes or enable drawing. */
+typedef struct {
+    int attestation_parsed;
+    int producer_binary_bound;
+    int capture_mode_declared;
+    int original_saturn_execution_claimed;
+    int workflow_bound;
+    int independent_authentication_required;
+    int runtime_import_permitted;
+    int no_draw_only;
+} Nexus_V1_DgnStructure3ProducerAttestationReceipt;
+
 typedef struct {
     int manifest_accepted;
     int all_spans_read;
@@ -199,6 +215,16 @@ int nexus_v1_dgn_structure3_capture_target_write(
 int nexus_v1_dgn_structure3_capture_target_matches_manifest(
     const Nexus_V1_DgnStructure3CaptureTargetReceipt *target,
     const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest);
+
+/* Parses a producer workflow attestation. Its output raw attestation always
+ * leaves original-Saturn admission false; only independent evidence may set
+ * that bit before the runtime intake is called. */
+int nexus_v1_dgn_structure3_capture_producer_attestation_parse(
+    const char *text, size_t text_size,
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest,
+    uint64_t producer_binary_fnv1a64,
+    Nexus_V1_DgnStructure3RawCaptureAttestation *out_raw_attestation,
+    Nexus_V1_DgnStructure3ProducerAttestationReceipt *out_receipt);
 
 void nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt *receipt);

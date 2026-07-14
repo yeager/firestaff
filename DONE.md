@@ -17,6 +17,12 @@
   palette are required before the matching hash reaches M11; missing material
   fails closed with no generic-wall substitute. Focused G1 map-list and M11
   receipt-gate regressions pass.
+- 2026-07-14 Nexus Structure3 producer workflow binding: the external
+  capture session now supplies an attestation destination and verifies a
+  producer-written Mednafen SH2/VDP1 workflow against the executable's hash,
+  source target, manifest, six raw lane hashes, bundle, and trace order. A
+  self-claimed original-Saturn run remains explicitly no-draw and cannot be
+  imported until independent authentication exists.
 
 - 2026-07-14 CSB ReDMCSB F0686 IMG previous-line copy: added the PC packed
   pixel copy primitive for real IMG expansion. Focused strict-C11 regression

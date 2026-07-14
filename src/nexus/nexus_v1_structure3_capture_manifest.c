@@ -264,6 +264,62 @@ int nexus_v1_dgn_structure3_capture_target_matches_manifest(
         expected->fill_selector == observed->fill_selector;
 }
 
+int nexus_v1_dgn_structure3_capture_producer_attestation_parse(
+    const char *text, size_t text_size,
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest,
+    uint64_t producer_binary_fnv1a64,
+    Nexus_V1_DgnStructure3RawCaptureAttestation *out_raw_attestation,
+    Nexus_V1_DgnStructure3ProducerAttestationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
+    Nexus_V1_DgnStructure3ProducerAttestationReceipt receipt;
+    const size_t magic_size =
+        sizeof(NEXUS_V1_STRUCTURE3_CAPTURE_PRODUCER_ATTESTATION_MAGIC) - 1U;
+    const char *cursor;
+    uint64_t producer_hash;
+
+    if (!out_raw_attestation || !out_receipt) return 0;
+    memset(&raw_attestation, 0, sizeof(raw_attestation));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.independent_authentication_required = 1;
+    receipt.no_draw_only = 1;
+    *out_raw_attestation = raw_attestation;
+    *out_receipt = receipt;
+    if (!text || !manifest || !manifest->valid || !manifest->complete ||
+        !manifest->blocks_real_dgn_mesh_render || !producer_binary_fnv1a64 ||
+        text_size <= magic_size ||
+        memcmp(text, NEXUS_V1_STRUCTURE3_CAPTURE_PRODUCER_ATTESTATION_MAGIC,
+               magic_size) != 0 || text[magic_size] != '\n') return 0;
+    cursor = text + magic_size + 1U;
+    if (strncmp(cursor, "producer_name=MEDNAFEN\n", 23U) != 0) return 0;
+    cursor += 23U;
+    if (strncmp(cursor, "capture_mode=SH2_VDP1_BUS_TRACE\n", 32U) != 0) return 0;
+    cursor += 32U;
+    if (strncmp(cursor, "original_saturn_execution=CLAIMED\n", 34U) != 0) return 0;
+    cursor += 34U;
+    if (!read_u64(&cursor, "producer_binary_fnv1a64=", &producer_hash) ||
+        !read_u64(&cursor, "capture_session_fnv1a64=",
+                  &raw_attestation.capture_session_fnv1a64) ||
+        !read_u64(&cursor, "capture_bundle_fnv1a64=",
+                  &raw_attestation.capture_bundle_fnv1a64) ||
+        !read_u64(&cursor, "capture_trace_order_fnv1a64=",
+                  &raw_attestation.capture_trace_order_fnv1a64) ||
+        *cursor != '\0') return 0;
+    receipt.attestation_parsed = 1;
+    receipt.capture_mode_declared = 1;
+    receipt.original_saturn_execution_claimed = 1;
+    receipt.producer_binary_bound = producer_hash == producer_binary_fnv1a64;
+    receipt.workflow_bound = receipt.producer_binary_bound &&
+        raw_attestation.capture_session_fnv1a64 == manifest->capture_session_fnv1a64 &&
+        raw_attestation.capture_bundle_fnv1a64 != 0U &&
+        raw_attestation.capture_trace_order_fnv1a64 != 0U;
+    /* A producer's text does not establish original-Saturn provenance. */
+    raw_attestation.original_saturn_source_attested = 0;
+    *out_raw_attestation = raw_attestation;
+    *out_receipt = receipt;
+    return receipt.workflow_bound;
+}
+
 static uint64_t capture_bundle_fnv1a64(
     const Nexus_V1_DgnStructure3CaptureImport *capture)
 {
