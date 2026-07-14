@@ -164,6 +164,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     struct GameWorld_Compat staged_world;
     struct GameWorld_Compat adopted_world;
     struct DM1_EventQueue_V1 staged_queue;
+    struct DM1_EventQueue_V1 adopted_queue;
     DM1OriginalSavePC34HandoffReport staged_report;
     int i;
 
@@ -173,6 +174,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     memset(&staged_world, 0, sizeof(staged_world));
     memset(&adopted_world, 0, sizeof(adopted_world));
     memset(&staged_queue, 0, sizeof(staged_queue));
+    memset(&adopted_queue, 0, sizeof(adopted_queue));
     memset(&staged_report, 0, sizeof(staged_report));
     receipt->source_runtime_stage_attempted = 1;
     receipt->source_runtime_stage_result =
@@ -195,8 +197,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         if (receipt->source_runtime_stage_committed) {
             receipt->source_runtime_adopt_attempted = 1;
             receipt->source_runtime_adopt_result =
-                dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
-                    &adopted_world, &staged_world);
+                dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+                    &adopted_world, &adopted_queue,
+                    &staged_world, &staged_queue);
             if (receipt->source_runtime_adopt_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 receipt->source_runtime_adopted = 1;
@@ -206,7 +209,12 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopt_event_count =
                     adopted_world.timeline.count;
                 receipt->source_runtime_adopt_timeline_count =
-                    staged_queue.eventCount;
+                    adopted_queue.eventCount;
+                receipt->source_runtime_adopt_queue_committed = 1;
+                receipt->source_runtime_adopt_queue_event_count =
+                    adopted_queue.eventCount;
+                receipt->source_runtime_adopt_queue_first_unused_index =
+                    adopted_queue.firstUnusedIndex;
             }
         }
     }
@@ -3580,6 +3588,29 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     F0883_WORLD_Free_Compat(runtime_world);
     *runtime_world = *loaded_world;
     memset(loaded_world, 0, sizeof(*loaded_world));
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    struct GameWorld_Compat *loaded_world,
+    struct DM1_EventQueue_V1 *loaded_queue)
+{
+    int result;
+
+    if (!runtime_world || !runtime_queue || !loaded_world || !loaded_queue ||
+        runtime_world == loaded_world || runtime_queue == loaded_queue) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+
+    result = dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
+        runtime_world, loaded_world);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+    *runtime_queue = *loaded_queue;
+    memset(loaded_queue, 0, sizeof(*loaded_queue));
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
