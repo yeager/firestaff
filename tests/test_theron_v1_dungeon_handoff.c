@@ -43,6 +43,7 @@ static Theron_V1DungeonHandoffFacts valid_facts(unsigned char *raw) {
 }
 
 int main(void) {
+    static const unsigned char md5_vector[] = "abc";
     unsigned char *raw = calloc(1u, RAW_BYTES);
     Theron_V1DungeonHandoffFacts facts;
     Theron_V1RuntimeAdmissionReceipt admission = {1, 1};
@@ -50,21 +51,19 @@ int main(void) {
 
     CHECK(raw != NULL);
     if (!raw) return 1;
+    CHECK(theron_v1_track02_raw_bytes_match_md5(
+        md5_vector, sizeof(md5_vector) - 1u,
+        "900150983cd24fb0d6963f7d28e17f72"));
+    CHECK(!theron_v1_track02_raw_bytes_match_md5(
+        md5_vector, sizeof(md5_vector) - 1u,
+        THERON_V1_TRACK02_MD5_US_BIN));
     write_us_receipt_bytes(raw);
     facts = valid_facts(raw);
     facts.runtime_admission = &admission;
 
-    CHECK(theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
-    CHECK(receipt.selected && receipt.runtime_route_consumed);
-    CHECK(receipt.record == 0x0b52u);
-    CHECK(receipt.record_user_data_offset == 0x114u);
-    CHECK(receipt.envelope_bytes == 0x36cu);
-    CHECK(receipt.header_identifier == 0x0026u);
-    CHECK(receipt.cue_track02_index01_raw_sector == 225u);
-    CHECK(receipt.track02_raw_sector == 3123u);
-    CHECK(receipt.raw_sector_offset == 0x124u);
-    CHECK(receipt.adjacent_boundary_opaque);
-    CHECK(strcmp(receipt.route, "raw_track02_initial_envelope") == 0);
+    /* Anchor-shaped test bytes are not original media and must never select. */
+    CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));
+    CHECK(!receipt.selected && !receipt.raw_track02_md5_verified);
 
     facts.raw_track02_bytes = 0u;
     CHECK(!theron_v1_dungeon_handoff_select_initial_level(&facts, &receipt));

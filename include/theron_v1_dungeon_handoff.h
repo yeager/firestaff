@@ -35,14 +35,22 @@ typedef struct {
     uint32_t cue_track02_index01_raw_sector;
     uint32_t track02_raw_sector;
     uint32_t raw_sector_offset;
+    int raw_track02_md5_verified;
     int adjacent_boundary_opaque;
     const char *route;
 } Theron_V1DungeonHandoffReceipt;
 
-/* Selects only the source-locked startup envelope after checking the exact
- * raw MODE1/2352 placement for a hash-verified JP or US Track 02 BIN and its
- * CUE Index 01 sector. This exports no envelope bytes and assigns no dungeon,
- * object, bitmap, palette, or grammar role to the following boundary. */
+/* Compares an exact raw byte span with a supplied MD5 identity. This is an
+ * integrity primitive only; it assigns no Track 02 record or payload role. */
+int theron_v1_track02_raw_bytes_match_md5(const uint8_t *bytes,
+                                          size_t byte_count,
+                                          const char *expected_md5);
+
+/* Selects only the source-locked startup envelope after independently hashing
+ * the complete raw MODE1/2352 BIN against the declared JP or US identity, then
+ * checking its exact placement and CUE Index 01 sector. This exports no
+ * envelope bytes and assigns no dungeon, object, bitmap, palette, or grammar
+ * role to the following boundary. */
 int theron_v1_dungeon_handoff_select_initial_level(
     const Theron_V1DungeonHandoffFacts *facts,
     Theron_V1DungeonHandoffReceipt *out_receipt);
