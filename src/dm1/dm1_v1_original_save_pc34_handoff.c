@@ -3685,6 +3685,57 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    const struct GameWorld_Compat *start_world,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *event_queue,
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    struct GameWorld_Compat candidate_world;
+    struct DM1_EventQueue_V1 candidate_queue;
+    DM1OriginalSavePC34HandoffReport candidate_report;
+    int result;
+
+    if (!bytes || size == 0u || !out_world || out_world == start_world) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    memset(&candidate_queue, 0, sizeof(candidate_queue));
+    memset(&candidate_report, 0, sizeof(candidate_report));
+    /* ReDMCSB LOADSAVE.C F0435 restores the optional dungeon only after the
+     * save parts. A tail-less immutable import therefore has to borrow the
+     * active DM1 backing before C3/C4 materialization, just like the file
+     * route; otherwise an M11 import would lose its source dungeon. */
+    if (start_world) {
+        candidate_world.dungeon = start_world->dungeon;
+        candidate_world.things = start_world->things;
+        candidate_world.ownsDungeon = 0;
+    }
+    result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        bytes, size, &candidate_world,
+        event_queue ? &candidate_queue : NULL, &candidate_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&candidate_world);
+        return result;
+    }
+    if (!candidate_world.dungeon || !candidate_world.things) {
+        F0883_WORLD_Free_Compat(&candidate_world);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    F0883_WORLD_Free_Compat(out_world);
+    *out_world = candidate_world;
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    if (event_queue) {
+        *event_queue = candidate_queue;
+    }
+    if (out_report) {
+        *out_report = candidate_report;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     struct GameWorld_Compat *runtime_world,
     struct GameWorld_Compat *loaded_world)

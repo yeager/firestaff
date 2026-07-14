@@ -1810,6 +1810,53 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     F0883_WORLD_Free_Compat(&start_world);
 }
 
+static void test_runtime_byte_materializer_reuses_start_dungeon(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    int written = 0;
+    int rc;
+    struct GameWorld_Compat start_world;
+    struct GameWorld_Compat loaded_world;
+    struct GameWorld_Compat unchanged_world;
+    struct DungeonDatState_Compat start_dungeon;
+    struct DungeonThings_Compat start_things;
+    struct DungeonGroup_Compat groups[4];
+
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     2, 3, 9, 10, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "byte runtime materializer fixture build succeeds");
+    memset(&start_world, 0, sizeof(start_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&unchanged_world, 0, sizeof(unchanged_world));
+    memset(&start_dungeon, 0, sizeof(start_dungeon));
+    memset(&start_things, 0, sizeof(start_things));
+    memset(groups, 0, sizeof(groups));
+    groups[1].creatureType = 15;
+    groups[2].creatureType = 16;
+    start_things.groups = groups;
+    start_things.groupCount = 4;
+    start_world.dungeon = &start_dungeon;
+    start_world.things = &start_things;
+    unchanged_world.gameTick = 77;
+
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+        bytes, (size_t)written, &start_world, &loaded_world, NULL, NULL);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "byte F0435 materializer imports through the start dungeon");
+    CHECK(loaded_world.dungeon == &start_dungeon &&
+              loaded_world.things == &start_things &&
+              loaded_world.ownsDungeon == 0,
+          "tail-less byte import retains original DM1 backing ownership");
+    CHECK(dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+              bytes, (size_t)written, NULL, &unchanged_world, NULL, NULL) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+              unchanged_world.gameTick == 77,
+          "tail-less byte import rejects atomically without a source dungeon");
+    F0883_WORLD_Free_Compat(&loaded_world);
+}
+
 static void test_runtime_state_adoption_moves_f0435_queue(void)
 {
     struct GameWorld_Compat runtime_world;
@@ -6104,6 +6151,7 @@ int main(void)
     test_rejects_non_pc34_and_truncated_parts();
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
+    test_runtime_byte_materializer_reuses_start_dungeon();
     test_runtime_state_adoption_moves_f0435_queue();
     test_runtime_state_adoption_rejects_incoherent_f0435_queue();
     test_runtime_materializer_binds_original_group_reaction();

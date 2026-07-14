@@ -2109,6 +2109,13 @@ and real community-save corpus round-trip evidence.
     C02 Location through F0433/F0435, rejects a corridor target, and proves
     the due event reaches C5_DOOR_STATE_DESTROYED. Remaining work is authentic
     community-save corpus coverage and other source event unions.
+  - DONE 2026-07-14: immutable original-save imports now use the same F0435
+    candidate-world materializer as file imports. Tail-less byte imports borrow
+    the live original DM1 dungeon/Thing backing before C3/C4 processing, so
+    M11 cannot adopt a save that lost its dungeon. The focused regression proves
+    backing retention and atomic rejection without that source backing.
+    Remaining work is authentic community-save corpus coverage and other
+    source event unions.
   - 2026-07-13 update: saved C040 HoC panel state now reopens only for the
     last appended party slot, the same candidate position consumed by
     `REVIVE.C` F0282. A stale sidecar cannot bind a mirror panel to an older

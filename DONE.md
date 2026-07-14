@@ -139,6 +139,12 @@
   Verification: strict-C99 `test_nexus_v1_prs3_capture_trace_schema` covers
   the positive V2 receipt plus mismatched texture digest/base and V1 regression
   cases.
+- 2026-07-14 DM1 F0435 immutable-byte runtime materialization: original PC34
+  byte imports now stage through the same candidate-world route as file imports
+  and borrow the active original dungeon/Thing backing for tail-less saves.
+  M11's original-byte import now uses this route, preventing a valid save from
+  replacing the live world with one that has no source dungeon. Focused handoff
+  coverage proves backing retention and atomic rejection without it.
 
 - 2026-07-14 DM2 direct-DB4 live candidate gate: M11 now receives static
   dungeon creature candidates only from the committed G1

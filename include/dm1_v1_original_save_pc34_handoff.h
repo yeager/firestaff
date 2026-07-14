@@ -649,6 +649,17 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
     struct DM1_EventQueue_V1 *event_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
 
+/* The immutable-byte counterpart is used by import/browser paths.  It keeps
+ * the same F0435 candidate-world transaction as the file route, including
+ * borrowing start_world's original DUNGEON.DAT backing for a tail-less save. */
+int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    const struct GameWorld_Compat *start_world,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *event_queue,
+    DM1OriginalSavePC34HandoffReport *out_report);
+
 int dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
     struct GameWorld_Compat *runtime_world,
     struct GameWorld_Compat *loaded_world);
