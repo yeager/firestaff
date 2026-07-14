@@ -242,7 +242,8 @@ static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
          gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON);
 }
 
-static int m11_present_game_frame(const M11_GameViewState* gameView) {
+static int m11_present_game_frame(const M11_GameViewState* gameView,
+                                  const unsigned char** outPresentedFrame) {
     int scale = M11_GameView_PresentationIndexedScale(
         gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL);
     int specialPalette =
@@ -260,6 +261,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
     int csb_v20_active = gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
         gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT;
+
+    if (outPresentedFrame) {
+        *outPresentedFrame = NULL;
+    }
     if (csb_v20_active && presented_frame) {
         static unsigned char csb_v20_scratch[M11_FB_BYTES];
         memcpy(csb_v20_scratch, presented_frame, sizeof(csb_v20_scratch));
@@ -298,6 +303,9 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
             if (restoreFilter) {
                 M11_Render_SetScaleFilter(requestedFilter);
             }
+            if (result && outPresentedFrame) {
+                *outPresentedFrame = presented_frame;
+            }
             return result;
         }
         if (M11_GameView_PresentationTarget(
@@ -323,6 +331,9 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
+        if (result && outPresentedFrame) {
+            *outPresentedFrame = presented_frame;
+        }
         return result;
     }
     if (gameView &&
@@ -340,6 +351,9 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
+        if (result && outPresentedFrame) {
+            *outPresentedFrame = presented_frame;
+        }
         return result;
     }
     if (scale > 1) {
@@ -349,6 +363,9 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
                                                  scale);
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
+        }
+        if (result && outPresentedFrame) {
+            *outPresentedFrame = presented_frame;
         }
         return result;
     }
@@ -365,11 +382,17 @@ static int m11_present_game_frame(const M11_GameViewState* gameView) {
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }
+        if (result && outPresentedFrame) {
+            *outPresentedFrame = presented_frame;
+        }
         return result;
     }
     result = M11_Render_Present();
     if (restoreFilter) {
         M11_Render_SetScaleFilter(requestedFilter);
+    }
+    if (result && outPresentedFrame) {
+        *outPresentedFrame = presented_frame;
     }
     return result;
 }
@@ -431,13 +454,16 @@ static int m11_running_from_macos_app_bundle(void)
 static int m11_present_game_frame_and_publish_dm1_hoc_capture(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
-    if (!m11_present_game_frame(gameView)) {
+    const unsigned char* presented_frame = NULL;
+
+    if (!m11_present_game_frame(gameView, &presented_frame)) {
         return 0;
     }
-    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        presented_frame) {
         M11_GameView_RecordCSBPresentedIndexedFrame(
             (M11_GameViewState *)gameView,
-            M11_Render_GetFramebuffer(),
+            presented_frame,
             M11_FB_WIDTH,
             M11_FB_HEIGHT,
             m11_running_from_macos_app_bundle(),
