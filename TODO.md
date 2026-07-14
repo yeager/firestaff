@@ -214,6 +214,12 @@
   source receipt's decoded dimensions. Direct DB4 creature sprites require
   their exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.
+  - 2026-07-14 update: the full skproject `LOAD_GDAT_INTERFACE_00_02` HUD
+    plan now carries its exact consumed command hash from viewport through
+    runtime and boot to M11. A source-required HUD frame is rejected if any
+    plan command is missing; no generic HUD lookup can promote a partial
+    plan. Remaining weather work still requires original timer destination
+    and clipping evidence before any overlay is admitted.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

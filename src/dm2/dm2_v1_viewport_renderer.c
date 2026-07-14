@@ -1019,6 +1019,7 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
 {
     if (!s) return;
     s->gdat_hud_material_plan = plan;
+    s->gdat_hud_material_plan_consumed_count = 0;
     s->dirty = 1;
 }
 
@@ -5284,6 +5285,7 @@ static int dm2_v1_render_hud_plan_command(DM2_V1_ViewportState *s,
         rect->x, rect->y, rect->w, rect->h, command->pixels,
         command->width, command->height, command->width,
         DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
+    ++s->gdat_hud_material_plan_consumed_count;
     return 1;
 }
 
@@ -5538,6 +5540,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                         portrait_command->height, portrait_command->width,
                         DM2_COLOR_TRANSPARENT,
                         &s->gdat_interface_palette_consumed_count);
+                    ++s->gdat_hud_material_plan_consumed_count;
                     ++s->asset_hud_portrait_drawn_count;
                 } else if (portrait_gdat != 0 &&
                     dm2_v1_fetch_viewport_local_material(

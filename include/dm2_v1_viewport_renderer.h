@@ -941,6 +941,9 @@ typedef struct {
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
     const DM2_V1_GdatHudM11CommandPlan *gdat_hud_material_plan;
+    /* One successful blit per exact command in the boot-owned HUD plan.
+     * A source-required frame must not let M11 promote a partial plan. */
+    int gdat_hud_material_plan_consumed_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
