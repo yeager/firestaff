@@ -16,6 +16,7 @@
 #define NEXUS_SLEV_TASK_HEADER_SIZE 36
 #define NEXUS_SLEV_PRIMARY_LITERAL_INSTRUCTION_OFFSET 4
 #define NEXUS_SLEV_RTS_INSTRUCTION_OFFSET 28
+#define NEXUS_SLEV_POST_RTS_INSTRUCTION_OFFSET 30
 #define NEXUS_SLEV_AUX_LITERAL_INSTRUCTION_OFFSET 32
 
 static int nexus_read_u16_be(const uint8_t *p) {
@@ -96,7 +97,11 @@ static int nexus_script_parse_slev_task_header(Nexus_ScriptVM *vm,
     vm->real_task_aux_literal_address = aux_literal;
     vm->real_task_aux_literal_provenance =
         NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0;
-    vm->real_task_aux_literal_is_rts_delay_slot = 1;
+    vm->real_task_rts_instruction_offset = NEXUS_SLEV_RTS_INSTRUCTION_OFFSET;
+    vm->real_task_post_rts_instruction_offset =
+        NEXUS_SLEV_POST_RTS_INSTRUCTION_OFFSET;
+    vm->real_task_post_rts_instruction_word =
+        nexus_read_u16_be(data + NEXUS_SLEV_POST_RTS_INSTRUCTION_OFFSET);
     return 1;
 }
 
@@ -237,7 +242,9 @@ int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
     vm->real_task_aux_literal_offset = -1;
     vm->real_task_aux_literal_address = 0;
     vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
-    vm->real_task_aux_literal_is_rts_delay_slot = 0;
+    vm->real_task_rts_instruction_offset = -1;
+    vm->real_task_post_rts_instruction_offset = -1;
+    vm->real_task_post_rts_instruction_word = 0;
 
     if (vm->candidate_source_loaded && vm->canonical_source_verified)
         nexus_script_profile_real_slev_task(vm, data, size);
@@ -291,7 +298,9 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->real_task_aux_literal_offset = -1;
     vm->real_task_aux_literal_address = 0;
     vm->real_task_aux_literal_provenance = NEXUS_SLEV_LITERAL_NONE;
-    vm->real_task_aux_literal_is_rts_delay_slot = 0;
+    vm->real_task_rts_instruction_offset = -1;
+    vm->real_task_post_rts_instruction_offset = -1;
+    vm->real_task_post_rts_instruction_word = 0;
 }
 
 int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
@@ -354,8 +363,12 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
         vm->real_task_aux_literal_address;
     out_receipt->real_task_aux_literal_provenance =
         vm->real_task_aux_literal_provenance;
-    out_receipt->real_task_aux_literal_is_rts_delay_slot =
-        vm->real_task_aux_literal_is_rts_delay_slot;
+    out_receipt->real_task_rts_instruction_offset =
+        vm->real_task_rts_instruction_offset;
+    out_receipt->real_task_post_rts_instruction_offset =
+        vm->real_task_post_rts_instruction_offset;
+    out_receipt->real_task_post_rts_instruction_word =
+        vm->real_task_post_rts_instruction_word;
     out_receipt->rules_loaded = vm->rule_count;
 
     if (!vm->candidate_source_loaded) {

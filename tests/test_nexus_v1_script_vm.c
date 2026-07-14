@@ -277,7 +277,9 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
           receipt.real_task_aux_literal_address == 0x00202840 &&
           receipt.real_task_aux_literal_provenance ==
               NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0 &&
-          receipt.real_task_aux_literal_is_rts_delay_slot == 1,
+          receipt.real_task_rts_instruction_offset == 28 &&
+          receipt.real_task_post_rts_instruction_offset == 30 &&
+          receipt.real_task_post_rts_instruction_word == 0x6ef6,
           "real-shaped SLEV task receipt classifies bounded entry operands");
 
     slev[0] = 0x00;
@@ -374,7 +376,9 @@ static void test_real_slev_corpus_profile(void) {
                       NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R3 &&
                   receipt.real_task_aux_literal_provenance ==
                       NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0 &&
-                  receipt.real_task_aux_literal_is_rts_delay_slot == 1,
+                  receipt.real_task_rts_instruction_offset == 28 &&
+                  receipt.real_task_post_rts_instruction_offset == 30 &&
+                  receipt.real_task_post_rts_instruction_word == 0x6ef6,
                   "real SLEV corpus matches bounded entry provenance");
             if (receipt.real_task_literal_pointer_count > 0) {
                 CHECK(receipt.real_task_first_literal_offset >= 0 &&
