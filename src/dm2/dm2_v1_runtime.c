@@ -1849,6 +1849,82 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
     }
 }
 
+static uint32_t dm2_runtime_creature_material_plan_step(uint32_t hash,
+                                                        uint32_t value)
+{
+    int shift;
+
+    for (shift = 0; shift < 32; shift += 8) {
+        hash ^= (value >> shift) & 0xffu;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+/* c_map.cpp's DB4 route selects CREATURES/type/F9 before DRAW_MAP_CHIP.
+ * Preserve every visible direct-root material in one ordered M11 receipt.
+ * Dynamic creature instances have no admitted G1 F9 owner yet, so the
+ * source-required frame stays fail-closed instead of borrowing this plan. */
+static int dm2_runtime_creature_material_plan_identity(
+    const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt,
+    const DM2_V1_ViewportState *viewport,
+    uint32_t *out_hash,
+    int *out_count)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_count) *out_count = 0;
+    if (!receipt || !receipt->valid || !viewport || !out_hash ||
+        !out_count || viewport->creature_count <= 0) {
+        return 0;
+    }
+    for (i = 0; i < viewport->creature_count; ++i) {
+        const DM2_CreatureSprite *sprite = &viewport->creatures[i];
+        const DM2_V1_G1CreatureMapChipMaterial *material = NULL;
+        uint32_t material_hash = 0u;
+        int material_index;
+
+        if (sprite->source_kind != 2) {
+            return 0;
+        }
+        for (material_index = 0;
+             material_index < receipt->material_count;
+             ++material_index) {
+            const DM2_V1_G1CreatureMapChipMaterial *candidate =
+                &receipt->materials[material_index];
+            if (candidate->object_id == sprite->object_id &&
+                candidate->x == sprite->map_x && candidate->y == sprite->map_y &&
+                candidate->direction == sprite->direction &&
+                candidate->creature_type == sprite->creature_type) {
+                material = candidate;
+                break;
+            }
+        }
+        if (!material ||
+            !dm2_v1_g1_creature_map_chip_material_identity(
+                material, &material_hash)) {
+            return 0;
+        }
+        hash = dm2_runtime_creature_material_plan_step(hash, material_hash);
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)dm2_v1_viewport_creature_graphic_index(
+                sprite->creature_type, sprite->frame_index));
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, sprite->frame_index);
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)sprite->screen_x);
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)sprite->screen_y);
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)sprite->depth);
+        ++*out_count;
+    }
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static void dm2_runtime_append_creature_sprite(
     DM2_V1_ViewportState *viewport,
     const DM2_V1_G1CreatureMapChipMaterial *material,
@@ -2590,6 +2666,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     uint32_t hud_material_plan_hash = 0u;
     int hud_material_plan_required = 0;
     int hud_material_plan_consumed = 0;
+    uint32_t creature_material_plan_hash = 0u;
+    int creature_material_plan_required = 0;
+    int creature_material_plan_consumed = 0;
+    int creature_material_plan_count = 0;
     DM2_V1_DoorRenderPlan door_render_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
@@ -2811,6 +2891,17 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_finish_creature_render_receipt(&viewport);
     dm2_runtime_finish_item_render_receipt(&viewport);
     dm2_runtime_finish_projectile_render_receipt(&viewport);
+    creature_material_plan_required = viewport.asset_creature_drawn_count > 0;
+    creature_material_plan_consumed =
+        creature_material_plan_required &&
+        viewport.fallback_creature_drawn_count == 0 &&
+        dm2_runtime_creature_material_plan_identity(
+            &rt->g1_creature_map_chip_runtime, &viewport,
+            &creature_material_plan_hash, &creature_material_plan_count) &&
+        creature_material_plan_count == viewport.asset_creature_drawn_count;
+    if (!creature_material_plan_consumed) {
+        creature_material_plan_hash = 0u;
+    }
     g_dm2_last_asset_floor_ceiling_count =
         viewport.asset_floor_ceiling_drawn_count;
     g_dm2_last_fallback_floor_ceiling_count =
@@ -3242,6 +3333,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.hud_material_plan_hash = hud_material_plan_hash;
     g_dm2_last_m11_frame.hud_material_plan_consumed =
         hud_material_plan_consumed;
+    g_dm2_last_m11_frame.creature_material_plan_required =
+        creature_material_plan_required;
+    g_dm2_last_m11_frame.creature_material_plan_hash =
+        creature_material_plan_hash;
+    g_dm2_last_m11_frame.creature_material_plan_consumed =
+        creature_material_plan_consumed;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3272,6 +3369,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.hud_material_plan_required ||
          (g_dm2_last_m11_frame.hud_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.hud_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.creature_material_plan_required ||
+         (g_dm2_last_m11_frame.creature_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.creature_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

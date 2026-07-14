@@ -3016,6 +3016,50 @@ static uint32_t dm2_v1_g1_raw_hash(const uint8_t *data, uint32_t byte_count)
     return hash;
 }
 
+static uint32_t dm2_v1_g1_material_identity_step(uint32_t hash,
+                                                   uint32_t value)
+{
+    int shift;
+
+    for (shift = 0; shift < 32; shift += 8) {
+        hash ^= (value >> shift) & 0xffu;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+int dm2_v1_g1_creature_map_chip_material_identity(
+    const DM2_V1_G1CreatureMapChipMaterial *material,
+    uint32_t *out_identity)
+{
+    uint32_t hash = 2166136261u;
+
+    if (out_identity) *out_identity = 0u;
+    if (!material || !out_identity || material->object_id == 0xfffeu ||
+        material->raw_hash == 0u || material->raw_byte_count == 0u ||
+        material->image_width <= 0 || material->image_height <= 0 ||
+        material->image_format <= 0 || material->local_palette_hash == 0u) {
+        return 0;
+    }
+    hash = dm2_v1_g1_material_identity_step(hash, material->raw_hash);
+    hash = dm2_v1_g1_material_identity_step(hash, material->raw_byte_count);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             material->local_palette_hash);
+    hash = dm2_v1_g1_material_identity_step(hash, material->object_id);
+    hash = dm2_v1_g1_material_identity_step(hash, material->direction);
+    hash = dm2_v1_g1_material_identity_step(hash, material->creature_type);
+    hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->x);
+    hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->y);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_width);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_height);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             (uint32_t)material->image_format);
+    *out_identity = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
     const DM2_V1_DungeonData *d,
     int map,

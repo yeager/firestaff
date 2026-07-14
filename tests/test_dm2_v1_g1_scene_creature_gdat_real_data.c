@@ -49,6 +49,18 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
     return 1;
 }
 
+static uint32_t hash_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
 {
@@ -153,6 +165,8 @@ int main(void)
     int creature_x = -1;
     int creature_y = -1;
     int root_object_id = -1;
+    uint32_t material_identity = 0u;
+    uint32_t altered_identity = 0u;
     int failures = 0;
 
     if (!load_canonical_files(&graphics, &graphics_size,
@@ -274,8 +288,41 @@ int main(void)
     material_receipt.materials[0].direction =
         (uint8_t)((root_object_id >> 14) & 3);
     material_receipt.materials[0].creature_type = (uint8_t)trace.creature_type;
+    material_receipt.materials[0].raw_hash =
+        hash_bytes(raw_map_chip, raw_map_chip_size);
+    material_receipt.materials[0].raw_byte_count =
+        (uint32_t)raw_map_chip_size;
     material_receipt.materials[0].image_width = handoff.material_width;
     material_receipt.materials[0].image_height = handoff.material_height;
+    material_receipt.materials[0].image_format = DM2_IMG_FMT_UNKNOWN;
+    {
+        int source_width = 0;
+        int source_height = 0;
+        DM2_ImageFormat source_format = DM2_IMG_FMT_UNKNOWN;
+        uint8_t *source_pixels = dm2_v1_asset_load_image_field(
+            &loader, DM2_GDAT_CATEGORY_CREATURES, trace.creature_type,
+            DM2_GDAT_IMG_MAP_CHIP, &source_width, &source_height,
+            &source_format);
+        dm2_v1_asset_free_pixels(source_pixels);
+        material_receipt.materials[0].image_format = source_format;
+    }
+    material_receipt.materials[0].local_palette_hash =
+        handoff.material_palette_hash;
+    if (!dm2_v1_g1_creature_map_chip_material_identity(
+            &material_receipt.materials[0], &material_identity) ||
+        material_identity == 0u) {
+        fputs("FAIL: canonical DB4 material has no source identity\n", stderr);
+        failures = 1;
+        goto done;
+    }
+    material_receipt.materials[0].local_palette_hash ^= 1u;
+    if (!dm2_v1_g1_creature_map_chip_material_identity(
+            &material_receipt.materials[0], &altered_identity) ||
+        altered_identity == material_identity) {
+        fputs("FAIL: creature identity accepted an altered local palette\n", stderr);
+        failures = 1;
+        goto done;
+    }
     material_receipt.materials[0].local_palette_hash =
         handoff.material_palette_hash;
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -332,6 +379,7 @@ done:
     free(graphics);
     free(dungeon_bytes);
     if (failures) return 1;
-    puts("PASS: canonical DB4 creature consumes its exact GDAT CREATURES/F9 material");
+    printf("PASS: canonical DB4 creature GDAT identity=%08x consumes its exact F9 material\n",
+           material_identity);
     return 0;
 }

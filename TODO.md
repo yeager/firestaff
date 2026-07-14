@@ -230,6 +230,11 @@
     plan command is missing; no generic HUD lookup can promote a partial
     plan. Remaining weather work still requires original timer destination
     and clipping evidence before any overlay is admitted.
+  - 2026-07-14 update: the visible direct-DB4 creature plan now carries the
+    exact `CREATURES/type/F9` raw bytes, local palette, object ID, tile,
+    direction, and atlas placement identity through runtime, boot, and M11.
+    Mixed dynamic-creature frames stay no-draw at M11 until their original
+    GDAT owner route is equally proven; no type-index substitute is accepted.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

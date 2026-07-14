@@ -363,6 +363,13 @@ typedef struct {
         materials[DM2_V1_G1_CREATURE_MAP_CHIP_MAX];
 } DM2_V1_G1CreatureMapChipRuntimeReceipt;
 
+/* Hashes one admitted DB4 -> CREATURES/type/F9 material together with the
+ * original G1 owner fields. This is a receipt identity, not a replacement
+ * image or a generic creature-type lookup. */
+int dm2_v1_g1_creature_map_chip_material_identity(
+    const DM2_V1_G1CreatureMapChipMaterial *material,
+    uint32_t *out_identity);
+
 /* The dungeon layer owns G1 record addressing. The boot layer supplies this
  * exact typed-GDAT reader so standalone dungeon validation has no loader or
  * renderer dependency. */
