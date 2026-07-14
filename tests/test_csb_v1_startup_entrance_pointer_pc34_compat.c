@@ -541,15 +541,15 @@ int main(void)
           "startup render plan owns title clear and draw command");
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
               csb_v1_startup_title_chaos_zoom_ticks_pc34() == 20 &&
-              csb_v1_startup_title_chaos_hold_ticks_pc34() == 20 &&
-              csb_v1_startup_title_strikes_back_ticks_pc34() == 2 &&
-              csb_v1_startup_title_total_ticks_pc34() == 102 &&
+              csb_v1_startup_title_chaos_hold_ticks_pc34() == 2 &&
+              csb_v1_startup_title_strikes_back_ticks_pc34() == 1 &&
+              csb_v1_startup_title_total_ticks_pc34() == 83 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
               csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
-              csb_v1_startup_title_source_step_for_frame_pc34(100) == 22 &&
-              csb_v1_startup_title_stage_for_frame_pc34(100) ==
+              csb_v1_startup_title_source_step_for_frame_pc34(80) == 21 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(82) == 22 &&
+              csb_v1_startup_title_stage_for_frame_pc34(82) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
           "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");
 
@@ -732,16 +732,9 @@ int main(void)
               strcmp(plan.fallback_text_rows[2].text, "CSB RUNTIME READY") == 0 &&
               strcmp(plan.fallback_text_rows[3].text, "START 5,7 DIR 2") == 0 &&
               strcmp(plan.fallback_text_rows[4].text, "PRESS ENTER") == 0 &&
-              plan.primitive_command_count == 2 &&
+              plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
-              plan.primitive_commands[1].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34 &&
-              plan.primitive_commands[1].x == 18 &&
-              plan.primitive_commands[1].y == 18 &&
-              plan.primitive_commands[1].w == 284 &&
-              plan.primitive_commands[1].h == 164 &&
-              plan.primitive_commands[1].color == 14 &&
               plan.asset_command_count == 3 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
@@ -772,17 +765,15 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
               plan.menu_options[3].enabled &&
               strcmp(plan.menu_options[3].label, "QUIT") == 0,
-          "startup render plan owns closed entrance prompt, fallback rows, menu options, door boxes, asset blits, and primitive frame");
-    check(plan.render_command_count == 5 &&
+          "startup render plan owns closed entrance source metadata, menu options, and real asset blits without a synthetic frame");
+    check(plan.render_command_count == 4 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
               plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34 &&
               plan.render_commands[2].kind ==
-                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34 &&
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 &&
               plan.render_commands[3].kind ==
-                  CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34 &&
-              plan.render_commands[4].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34,
           "startup render plan owns closed entrance command order");
     render_state.utility_overlay_active = 1;
@@ -851,7 +842,7 @@ int main(void)
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
               plan.render_commands[1].kind ==
-                  CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34,
+                  CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34,
           "startup render plan owns credits command order");
 
     memset(&render_state, 0, sizeof(render_state));
@@ -874,22 +865,9 @@ int main(void)
               plan.closed_right_fallback_fill_color == 12 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.opening_step == 2 &&
-              plan.primitive_command_count == 3 &&
+              plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
-              plan.primitive_commands[1].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
-              plan.primitive_commands[1].x == 0 &&
-              plan.primitive_commands[1].y == 30 &&
-              plan.primitive_commands[1].w == 105 &&
-              plan.primitive_commands[1].h == 161 &&
-              plan.primitive_commands[1].color == 12 &&
-              plan.primitive_commands[1].light_edge_color == 2 &&
-              plan.primitive_commands[1].dark_edge_color == 0 &&
-              plan.primitive_commands[2].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
-              plan.primitive_commands[2].x == 105 &&
-              plan.primitive_commands[2].w == 127 &&
               plan.asset_command_count == 3 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
@@ -897,14 +875,14 @@ int main(void)
                   CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
               plan.asset_commands[2].kind ==
                   CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
-          "startup render plan owns door pre-open surface, asset blits, and fallback primitive panels");
+          "startup render plan owns door pre-open surface and real door asset blits");
     check(plan.render_command_count == 3 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
               plan.render_commands[1].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34 &&
               plan.render_commands[2].kind ==
-                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34,
           "startup render plan owns door pre-open command order");
 
     render_state.opening_delay_ticks = 0;
@@ -952,9 +930,7 @@ int main(void)
               plan.opening_composite_left_source_x == 0 &&
               plan.opening_composite_right_source_x == 8 &&
               plan.opening_composite_right_source_y == 0 &&
-              plan.primitive_command_count == 3 &&
-              plan.primitive_commands[1].kind ==
-                  CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 &&
+              plan.primitive_command_count == 1 &&
               plan.asset_command_count == 3 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_FULL_SURFACE_PC34 &&
@@ -962,7 +938,7 @@ int main(void)
                   CSB_V1_STARTUP_ASSET_CLOSED_LEFT_DOOR_PC34 &&
               plan.asset_commands[2].kind ==
                   CSB_V1_STARTUP_ASSET_CLOSED_RIGHT_DOOR_PC34,
-          "startup render plan owns door-opening frame surface, boxes, composite plan, asset blits, and fallback primitive panels");
+          "startup render plan owns door-opening frame surface, boxes, composite plan, and real asset blits");
     check(plan.render_command_count == 4 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -971,7 +947,7 @@ int main(void)
               plan.render_commands[2].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34 &&
               plan.render_commands[3].kind ==
-                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34,
+                  CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34,
           "startup render plan owns door-opening command order");
     memset(&command_state, 0, sizeof(command_state));
     check(csb_v1_startup_init_command_state_pc34(&command_state, 0) &&
@@ -2137,7 +2113,7 @@ int main(void)
                       presentation_receipt.accepts_input &&
                       presentation_receipt.waiting_for_input &&
                       presentation_receipt.menu_option_count == 4 &&
-                      presentation_receipt.render_command_count == 5 &&
+                      presentation_receipt.render_command_count == 4 &&
                       presentation_receipt.render_plan.surface ==
                           CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
                       presentation_receipt.render_plan.menu_options[1]

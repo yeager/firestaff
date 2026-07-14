@@ -721,43 +721,30 @@ int csb_v1_startup_execute_render_plan_pc34(
                 }
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34:
-                if (executor->draw_full_surface &&
-                    executor->draw_full_surface(executor->user, plan)) {
-                    drew_asset = 1;
-                } else if (executor->draw_fallback_text) {
-                    executor->draw_fallback_text(executor->user, plan);
-                }
-                break;
             case CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34:
-                if (executor->draw_full_surface &&
-                    executor->draw_full_surface(executor->user, plan)) {
-                    drew_asset = 1;
+                if (!executor->draw_full_surface ||
+                    !executor->draw_full_surface(executor->user, plan)) {
+                    return 0;
                 }
+                drew_asset = 1;
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34:
-                if (drew_asset && executor->draw_opening_frame &&
-                    executor->draw_opening_frame(executor->user, plan)) {
-                    return 1;
+                if (!drew_asset || !executor->draw_opening_frame ||
+                    !executor->draw_opening_frame(executor->user, plan)) {
+                    return 0;
                 }
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
-                if (drew_asset) {
-                    if (executor->draw_closed_doors) {
-                        executor->draw_closed_doors(executor->user, plan);
-                    }
-                } else if (executor->draw_door_fallback) {
-                    executor->draw_door_fallback(executor->user, plan);
-                }
-                break;
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34:
-                if (drew_asset && executor->draw_closed_doors) {
-                    executor->draw_closed_doors(executor->user, plan);
+                if (!drew_asset || !executor->draw_closed_doors) {
+                    return 0;
                 }
+                executor->draw_closed_doors(executor->user, plan);
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
-                if (!drew_asset && executor->draw_fallback_text) {
-                    executor->draw_fallback_text(executor->user, plan);
-                }
+                /* Retained for old serialized plans. A CSB package failure
+                 * must stay visible as a failed draw, never synthesized UI. */
+                if (!drew_asset) return 0;
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
                 if (plan->waiting_for_input && executor->draw_utility_panel) {
@@ -793,45 +780,9 @@ static void csb_v1_startup_rebuild_primitive_commands_pc34(
         0,
         0,
         1);
-    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
-        plan->fallback_frame_valid) {
-        csb_v1_startup_add_primitive_command_pc34(
-            plan,
-            CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34,
-            plan->fallback_frame_x,
-            plan->fallback_frame_y,
-            plan->fallback_frame_w,
-            plan->fallback_frame_h,
-            plan->fallback_frame_color,
-            0,
-            0,
-            1);
-    }
-    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
-        plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
-        csb_v1_startup_add_primitive_command_pc34(
-            plan,
-            CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
-            plan->closed_left_dest_x,
-            plan->closed_left_dest_y,
-            plan->closed_left_w,
-            plan->closed_left_h,
-            plan->closed_left_fallback_fill_color,
-            plan->closed_left_fallback_light_edge_color,
-            plan->closed_left_fallback_dark_edge_color,
-            1);
-        csb_v1_startup_add_primitive_command_pc34(
-            plan,
-            CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34,
-            plan->closed_right_dest_x,
-            plan->closed_right_dest_y,
-            plan->closed_right_w,
-            plan->closed_right_h,
-            plan->closed_right_fallback_fill_color,
-            plan->closed_right_fallback_light_edge_color,
-            plan->closed_right_fallback_dark_edge_color,
-            1);
-    }
+    /* ReDMCSB ENTRANCE.C owns C004/C002/C003.  In particular, do not add
+     * synthetic door panels or a decorative text frame after those package
+     * assets were scheduled: a missing asset is a failed entrance draw. */
 }
 
 static void csb_v1_startup_clear_render_commands_pc34(
@@ -887,7 +838,7 @@ static void csb_v1_startup_rebuild_render_commands_pc34(
     }
     if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
         csb_v1_startup_add_render_command_pc34(
-            plan, CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34);
+            plan, CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34);
         return;
     }
     csb_v1_startup_add_render_command_pc34(
@@ -901,15 +852,12 @@ static void csb_v1_startup_rebuild_render_commands_pc34(
         plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
         csb_v1_startup_add_render_command_pc34(
             plan,
-            CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34);
+            CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34);
         return;
     }
     csb_v1_startup_add_render_command_pc34(
         plan,
-        CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34);
-    csb_v1_startup_add_render_command_pc34(
-        plan,
-        CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34);
+        CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34);
     csb_v1_startup_add_render_command_pc34(
         plan,
         CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34);
