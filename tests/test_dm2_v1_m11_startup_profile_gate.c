@@ -2515,6 +2515,7 @@ int main(void) {
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile) {
         DM2_V1_StartupMenuPointerLayout pointer_layout;
+        DM2_V1_StartupMenuPointerHitReceipt pointer_hit;
         dm2_v1_boot_set_save_root(profile, save_root);
         view.dm2State.startup_menu_active = 1;
         view.dm2State.startup_menu_selected_row = 0;
@@ -2533,6 +2534,29 @@ int main(void) {
                     pointer_layout.new_game.w > 0 &&
                     pointer_layout.new_game.h > 0,
                     "DM2 startup derives the original NEW hit rectangle from dt04/0");
+        expect_true(dm2_v1_boot_startup_menu_pointer_hit(
+                        profile,
+                        pointer_layout.new_game.x +
+                            pointer_layout.new_game.w / 2,
+                        pointer_layout.new_game.y +
+                            pointer_layout.new_game.h / 2,
+                        &pointer_hit) == 1 &&
+                    pointer_hit.valid == 1 &&
+                    pointer_hit.target == DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME &&
+                    pointer_hit.table_hash == pointer_layout.table_hash,
+                    "DM2 startup records the original NEW event surface");
+        expect_true(dm2_v1_boot_startup_menu_pointer_hit(
+                        profile,
+                        pointer_layout.resume_game.x +
+                            pointer_layout.resume_game.w / 2,
+                        pointer_layout.resume_game.y +
+                            pointer_layout.resume_game.h / 2,
+                        &pointer_hit) == 1 &&
+                    pointer_hit.valid == 1 &&
+                    pointer_hit.target ==
+                        DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE &&
+                    pointer_hit.table_hash == pointer_layout.table_hash,
+                    "DM2 startup retains 0xD9 geometry without inventing a resume selector");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,
                         pointer_layout.new_game.x + pointer_layout.new_game.w / 2,

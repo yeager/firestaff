@@ -1643,11 +1643,44 @@ typedef struct {
     DM2_V1_InterfaceRect resume_game;
 } DM2_V1_StartupMenuPointerLayout;
 
+/* skproject SHOW_MENU_SCREEN installs the title-menu rectangle table before
+ * HANDLE_UI_EVENT dispatches event 0xD7 (NEW) or 0xD9 (RESUME).  Firestaff
+ * can prove the latter hit surface, but cannot execute it until the original
+ * resume-selector state machine is source-bound. */
+typedef enum {
+    DM2_V1_STARTUP_POINTER_TARGET_NONE = 0,
+    DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME,
+    DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE
+} DM2_V1_StartupMenuPointerTarget;
+
+typedef struct {
+    int valid;
+    uint32_t table_hash;
+    DM2_V1_StartupMenuPointerTarget target;
+    DM2_V1_InterfaceRect rect;
+} DM2_V1_StartupMenuPointerHitReceipt;
+
 /* skproject SHOW_MENU_SCREEN installs the raw4 rect table before handling
  * event 0xD7 (NEW) and 0xD9 (RESUME). */
 int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout);
+
+/* Returns a source-owned 0xD7/0xD9 hit receipt only.  A 0xD9 hit never
+ * creates a resume action or mutates a session while its selector is absent. */
+int dm2_v1_boot_startup_menu_pointer_hit(
+    DM2_V1_BootProfile *profile,
+    int x,
+    int y,
+    DM2_V1_StartupMenuPointerHitReceipt *out_receipt);
+
+/* Pure consumer for an already decoded source layout. This lets callers
+ * preserve the 0xD7/0xD9 event boundary without re-reading GDAT. */
+int dm2_v1_boot_startup_menu_pointer_hit_from_layout(
+    const DM2_V1_StartupMenuPointerLayout *layout,
+    int x,
+    int y,
+    DM2_V1_StartupMenuPointerHitReceipt *out_receipt);
 
 /* skproject LOAD_GDAT_INTERFACE_00_0A table. Storage remains owned by the
  * boot graphics handle and is valid while profile->graphics_dat is alive. */
