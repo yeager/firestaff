@@ -19,7 +19,10 @@
   Card wait loop but recorded no SDL host-key event, no non-System-Card PCECD
   read, and no dynamic CD_READ row. It is not admissible as a dungeon/object
   capture; obtain a capture with an observed input event and later `$e009`
-  dispatch/return pair before promoting any subsequent record.
+  dispatch/return pair before promoting any subsequent record. The capture
+  script now resolves and records the real SDL PID; a second PID-bound attempt
+  still had zero emulator-observed host events, so process focus alone is not
+  evidence of controller delivery.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
