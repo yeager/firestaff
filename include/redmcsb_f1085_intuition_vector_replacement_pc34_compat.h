@@ -1,0 +1,9 @@
+#ifndef FIRESTAFF_REDMCSB_F1085_INTUITION_VECTOR_REPLACEMENT_PC34_COMPAT_H
+#define FIRESTAFF_REDMCSB_F1085_INTUITION_VECTOR_REPLACEMENT_PC34_COMPAT_H
+
+#include <stdint.h>
+
+int16_t redmcsb_f1085_intuition_vector_replacement_pc34_compat(void);
+const char *redmcsb_f1085_intuition_vector_replacement_source_evidence_pc34(void);
+
+#endif

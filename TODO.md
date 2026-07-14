@@ -1862,3 +1862,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ## CSB/ReDMCSB F1081-F1084 Boundary Audit (2026-07-14)
 
 `AMIGINIT.C` F1081-F1084 are recorded as four `PC34_HOST_BOUNDARY` rows: no PC34 branch, DOS `NIL:` behavior, Amiga alert, chip-memory allocation, or host substitute is claimed.
+
+## CSB/ReDMCSB F1085-F1091 Inventory (2026-07-14)
+
+F1085's zero callback and F1090/F1091's encoded mutable error templates are source-locked. F1086-F1089 remain four `PC34_HOST_BOUNDARY` rows: no Amiga vector, library/device, task, startup, teardown, alert, or restart behavior is claimed.
