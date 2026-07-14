@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0758`: source-locked PC 3.4 language-table
+  lookup. The focused strict C11 test passes without synthetic text.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0763`: source-locked PC 3.4 endgame bitmap
   allocation/load route. The focused strict C11 test passes without synthetic
   bitmap content.
