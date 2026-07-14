@@ -109,6 +109,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8156/F8157: source-locked PC 3.4 C25
+  palette route. The adapter carries the original RGB6 bytes unchanged,
+  applies only terminated `G8176` entries below index 32, and writes all 32
+  DAC rows only after an explicit VBlank gate while the curtain is active.
+  Focused strict-C11 tests cover raw bytes, terminator, index bounds and gate.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8155: source-locked PC 3.4 C25 hatch
   screen box. The portable route preserves inclusive rectangle bounds and the
   exact `(x ^ y)` parity choice: matching parity clears the aperture byte,
