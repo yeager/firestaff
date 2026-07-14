@@ -1,4 +1,5 @@
 #include "redmcsb_f0691_draw_compressed_img3_pc34_compat.h"
+#include "redmcsb_f0690_copy_pixel_line_to_screen_pc34_compat.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -11,6 +12,28 @@ struct capture {
     size_t widths[4];
     size_t count;
 };
+
+struct driver_capture {
+    size_t call_count;
+    uint16_t source_x;
+    uint16_t destination;
+    int16_t count;
+};
+
+static void capture_driver_line(void *context,
+                                const uint8_t *packed_pixel_line,
+                                uint16_t source_x,
+                                uint16_t destination,
+                                int16_t count)
+{
+    struct driver_capture *capture = context;
+
+    assert(packed_pixel_line != NULL);
+    capture->call_count++;
+    capture->source_x = source_x;
+    capture->destination = destination;
+    capture->count = count;
+}
 
 static void capture_line(void *context,
                          const uint8_t *packed_pixel_line,
@@ -84,10 +107,27 @@ static void test_rejects_malformed_stream_without_sink(void)
     assert(pixel_line[0] == 0xa5U);
 }
 
+static void test_f0690_forwards_pc34_video_driver_arguments(void)
+{
+    uint8_t pixel_line[1] = { 0x12 };
+    struct driver_capture capture = { 0 };
+    RedmcsbF0690VideoDriverPc34Compat driver = {
+        capture_driver_line, &capture
+    };
+
+    redmcsb_f0690_copy_pixel_line_to_screen_pc34_compat(
+        &driver, pixel_line, 964U, 2);
+    assert(capture.call_count == 1U);
+    assert(capture.source_x == 4U);
+    assert(capture.destination == 964U);
+    assert(capture.count == 2);
+}
+
 int main(void)
 {
     test_palette_direct_skip_and_row_wrap();
     test_extended_rle_count_spans_complete_rows();
     test_rejects_malformed_stream_without_sink();
+    test_f0690_forwards_pc34_video_driver_arguments();
     return 0;
 }
