@@ -9,6 +9,7 @@ int main(void)
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1RawLoaderTraceStage3SectorReceipt receipt;
     Theron_V1RawLoaderTraceLaterSectorReceipt later_receipt;
+    Theron_V1RawLoaderTraceLaterRawSectorWitness witness;
     uint8_t *track;
     size_t track_size = 0x0511u * THERON_TRACK02_RAW_SECTOR_BYTES;
     static const char later_capture[] =
@@ -73,6 +74,14 @@ int main(void)
             "later_system_card_e009_return caller_pc=ea00 return_pc=ea03 record=510\n",
             (const uint8_t *)"x", THERON_TRACK02_RAW_SECTOR_BYTES,
             THERON_TRACK02_MD5_US_BIN, &later_receipt)) return 1;
+
+    /* A noncanonical buffer and an absent CD sidecar cannot manufacture an
+     * authentic selector-sector witness. Positive coverage is external-media
+     * only and intentionally lives in the skip-safe corpus probes. */
+    if (theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
+            &later_receipt, "source=mednafen-pce-instrumented-cd\n",
+            (const uint8_t *)"x", THERON_TRACK02_RAW_SECTOR_BYTES,
+            THERON_TRACK02_MD5_US_BIN, &witness) || witness.valid) return 1;
 
     payload.raw_sector++;
     return !theron_v1_raw_loader_trace_stage3_sector_receipt_from_bound_span(

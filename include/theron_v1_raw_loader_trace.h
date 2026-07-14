@@ -112,6 +112,24 @@ typedef struct {
     int descriptor_selector_bound;
 } Theron_V1RawLoaderTraceLaterSectorReceipt;
 
+/* An independently observed SCSI raw-sector span from a provenance-marked
+ * Mednafen CD sidecar. It proves that one captured physical CD sector matches
+ * the selector-resolved Track 02 record byte-for-byte over the bounded span.
+ * It does not establish that $e009 initiated that read, or assign any payload
+ * format, dungeon, object, bitmap, palette, or transition meaning. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t later_track02_record;
+    uint16_t descriptor_selector;
+    size_t descriptor_selector_ordinal;
+    int observed_raw_sector_lba;
+    size_t observed_raw_sector_span_bytes;
+    uint32_t observed_raw_sector_span_checksum;
+    int same_capture_raw_sector_span_verified;
+} Theron_V1RawLoaderTraceLaterRawSectorWitness;
+
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
  * existing dynamic CD_READ/IRQ2 gate first, then records only VCE stores and
  * completed HuC6260 colour-table words that appear after that read in the
@@ -161,6 +179,19 @@ int theron_v1_raw_loader_trace_bind_later_e009_sector(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceLaterSectorReceipt *out);
+
+/* Binds a selector-coordinate receipt to one bounded, provenance-marked
+ * Mednafen SCSI sidecar span. The sidecar must contain exactly one raw-sector
+ * fingerprint that matches the selector-resolved raw Track 02 sector. This
+ * remains an independent CD/media observation, not an e009-to-sector
+ * causality or capture-session identity claim. */
+int theron_v1_raw_loader_trace_witness_later_e009_raw_sector(
+    const Theron_V1RawLoaderTraceLaterSectorReceipt *later_receipt,
+    const char *cd_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceLaterRawSectorWitness *out);
 
 /* Binds only compatible real-media startup bitmap receipts. In addition to
  * preserving the existing bitmap-route contract, this binds the inspected
