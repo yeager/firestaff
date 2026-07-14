@@ -152,6 +152,28 @@ static void test_f0064_f0065_pending_sound_runtime(void)
     CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
 }
 
+static void test_load_snapshot_restarts_transient_audio_state(void)
+{
+    CsbV1AudioRuntime runtime;
+    CsbV1AudioSaveSnapshot snapshot;
+    CsbV1AudioRequest request = make_request(
+        CSB_V1_SOUND_COMBAT, CSB_V1_MODE_PLAY_ONE_TICK_LATER, 64, 2);
+
+    csb_v1_audio_runtime_init(&runtime);
+    csb_v1_audio_runtime_record_creature_attack(&runtime, 1842);
+    csb_v1_audio_runtime_save_snapshot(&runtime, &snapshot);
+    CHECK(csb_v1_audio_runtime_request(&runtime, &request) == 1);
+    CHECK(csb_v1_audio_runtime_flush_pending(&runtime) == 1);
+    CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_COMBAT);
+
+    csb_v1_audio_runtime_init(&runtime);
+    CHECK(runtime.lastCreatureAttackTime == -200);
+    csb_v1_audio_runtime_load_snapshot(&runtime, &snapshot);
+    CHECK(runtime.lastCreatureAttackTime == 1842);
+    CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE);
+    CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_NONE);
+}
+
 int main(void)
 {
     test_high_nibble_first_and_repeat_runs();
@@ -159,6 +181,7 @@ int main(void)
     test_malformed_and_short_output_are_rejected();
     test_f0061_loud_table_and_index_mask();
     test_f0064_f0065_pending_sound_runtime();
+    test_load_snapshot_restarts_transient_audio_state();
     printf("test_csb_v1_f0060_sound_play_pc34_compat: %d failures\n", failures);
     return failures != 0;
 }
