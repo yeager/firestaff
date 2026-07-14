@@ -1066,6 +1066,45 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                                                 first == second ? 1u : 0u)) {
                 return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
             }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_QUESTION) {
+            int condition;
+            uint32_t condition_word;
+            uint8_t if_command = (uint8_t)((command >> 11) & 0x03u);
+            uint8_t else_command = (uint8_t)((command >> 14) & 0x03u);
+            uint8_t if_column = (uint8_t)((command >> 10) & 0x01u);
+            uint8_t else_column = (uint8_t)((command >> 13) & 0x01u);
+            uint8_t selected_command;
+            int extension_count;
+
+            /* CSBWin DSA.cpp:850-978 / Data.h DSAquestionCmd. QUESTION
+             * pops its condition, consumes every declared branch operand in
+             * source order, and then either performs no transfer or asks
+             * Execute for a JUMP/GOSUB. The latter needs a whole authenticated
+             * action-chain owner, so it remains closed here rather than
+             * dispatching an invented continuation. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 4);
+            if (next_state == -2) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (!csb_v1_csbwin_dsa_stack_pop(stack, &depth,
+                                               &condition_word)) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+            condition = condition_word != 0u;
+            extension_count = (if_command != 0u) + if_column +
+                (else_command != 0u) + else_column;
+            if (extension_count > action->program_word_count - cursor) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+            cursor += extension_count;
+            selected_command = condition ? if_command : else_command;
+            if (selected_command == 1u || selected_command == 2u) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             if (selector > 25u) return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
