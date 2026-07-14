@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0780`: source-locked signed file-handle
+  invalidity predicate. Focused strict C11 test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0777` and `F0778`: source-locked DOS delete
   and rename dispatch preserve the original ignored-result behavior. Focused
   strict C11 tests pass.
