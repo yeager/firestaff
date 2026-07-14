@@ -2485,6 +2485,7 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->creature_index = i;
         row->creature_type = src->creature_type;
         row->source_kind = src->source_kind;
+        row->object_id = src->object_id;
         row->frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;
@@ -4423,11 +4424,12 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
                 if (c->source_kind == 2 &&
-                    s->g1_creature_map_chip_materials &&
-                    !dm2_v1_g1_creature_map_chip_matches_decoded_material(
+                    (!s->g1_creature_map_chip_materials ||
+                     !dm2_v1_g1_creature_map_chip_matches_decoded_instance(
                         s->g1_creature_map_chip_materials,
+                        c->object_id, c->map_x, c->map_y,
                         c->creature_type, src_w, src_h,
-                        s->active_asset_palette_hash)) {
+                        s->active_asset_palette_hash))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
                     continue;

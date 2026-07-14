@@ -490,6 +490,7 @@ typedef struct {
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
+    uint16_t object_id;        /* G1 DB4 ObjectID; zero for non-dungeon sprites */
     int16_t  map_x;            /* source map coordinate for G1 material ownership */
     int16_t  map_y;
 } DM2_CreatureSprite;
@@ -498,6 +499,7 @@ typedef struct {
     int creature_index;
     int creature_type;
     int source_kind;
+    uint16_t object_id;
     int frame_index;
     int direction;
     int depth;

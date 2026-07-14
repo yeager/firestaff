@@ -33,10 +33,11 @@ static int fetch_palette(void *user, int index, uint8_t palette[16],
     return 0;
 }
 
-static int run_case(int mismatch)
+static int run_case(int mismatch, int wrong_owner)
 {
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     DM2_V1_ViewportState viewport;
+    DM2_V1_G1CreatureMapChipRuntimeReceipt receipt;
 
     palette_mismatch = mismatch;
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -47,17 +48,29 @@ static int run_case(int mismatch)
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = 7;
     viewport.creatures[0].source_kind = 2;
+    viewport.creatures[0].object_id = 0x1000u;
     viewport.creatures[0].map_x = 12;
     viewport.creatures[0].map_y = 9;
     viewport.creatures[0].screen_x = 160;
     viewport.creatures[0].screen_y = 90;
     viewport.creatures[0].health_pct = 100;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.material_count = 1;
+    receipt.materials[0].object_id = wrong_owner ? 0x1001u : 0x1000u;
+    receipt.materials[0].x = 12;
+    receipt.materials[0].y = 9;
+    receipt.materials[0].creature_type = 7;
+    receipt.materials[0].image_width = 2;
+    receipt.materials[0].image_height = 2;
+    receipt.materials[0].local_palette_hash = 0x11111111u;
+    dm2_v1_viewport_set_g1_creature_map_chip_materials(&viewport, &receipt);
     dm2_v1_viewport_set_g1_scene_creature_material(
         &viewport, 1, 12, 9, 7,
         dm2_v1_viewport_creature_graphic_index(7, 0),
         2, 2, 2, 0x11111111u);
     dm2_v1_render_creatures(&viewport);
-    return mismatch
+    return mismatch || wrong_owner
         ? viewport.asset_creature_drawn_count == 0 &&
               viewport.g1_scene_creature_material_consumed_count == 0 &&
               viewport.blocked_material_draw_count == 1
@@ -68,11 +81,11 @@ static int run_case(int mismatch)
 
 int main(void)
 {
-    if (!run_case(0) || !run_case(1)) {
-        fputs("FAIL: G1 scene owner did not gate matching viewport material\n",
+    if (!run_case(0, 0) || !run_case(1, 0) || !run_case(0, 1)) {
+        fputs("FAIL: G1 DB4 owner did not gate matching viewport material\n",
               stderr);
         return 1;
     }
-    puts("PASS: G1 DB4 scene receipt owns matching viewport F9 material");
+    puts("PASS: G1 DB4 receipt owns each matching viewport F9 material");
     return 0;
 }

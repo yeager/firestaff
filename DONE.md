@@ -21,6 +21,20 @@
   palette, bitmap, or payload semantics. Verification:
   `firestaff_theron_v1_raw_loader_trace_stage3_sector_probe`.
 
+# ✅ 2026-07-14 DM2 G1 direct DB4 live-instance GDAT ownership
+
+The V1 viewport now carries the original DB4 ObjectID from the dungeon record
+into each direct-creature sprite plan. A `CREATURES/type/F9` draw is admitted
+only when the active G1 receipt matches that exact ObjectID, source tile,
+creature type, decoded dimensions, and local-palette hash. A same-type
+creature elsewhere in the source corpus cannot authorize the draw. Missing or
+mismatched instance receipts block the source-required creature pass without a
+generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
+`SKWIN/c_map.cpp::QUERY_DUNGEON_MAP_CHIP_PICT`; and
+  `SKWIN/SkWinCore.cpp::DRAW_CHIP_OF_MAGIC_MAP`. Verification: external build
+  targets `test_dm2_v1_g1_scene_viewport_material_gate` and
+  `test_dm2_v1_g1_creature_material_graph_gate`; direct runs and CTest 2/2 pass.
+
 - ✅ 2026-07-14 DM1 PC34 external-save HoC runtime gate: every
   operator-staged, checksum-qualified PC34 corpus candidate now has a
   fixture-free M11 F0435 runtime check against original DM1 media. The gate
