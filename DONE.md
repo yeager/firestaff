@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 GDAT hand actions: the hand-action resolver follows
+  SKProject's `INTERFACE_GENERAL/4` image route and fails closed when source
+  images are unavailable. Verification: strict probe against original DM2
+  `GRAPHICS.DAT` resolves and decodes all four hand-action images.
+
 - 2026-07-14 DM1 F0099 D0/D1 alias safety: D0L2/D0R2 and D1L2/D1R2 now use
   row-local swaps when source and destination alias, preserving the distinct
   buffer path. Verification: strict standalone two-lane regression.
