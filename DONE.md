@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0665/F0362 highlight-box route: added the PC
+  caller-owned zone gate and ordered screen-update, zone copy, invert, enabled
+  state, disable, and vertical-blank sequence. Missing zones are no-ops;
+  no layout/framebuffer/menu-event/DSA/runtime fallback was introduced.
+  Focused strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F0664 front-wall click transaction: added the PC34
   no-party guard, imaginary fake-wall press/release gate, live mouse sample,
   pointer hide, ordinary wall-thud request, and input-wait stop flag over
