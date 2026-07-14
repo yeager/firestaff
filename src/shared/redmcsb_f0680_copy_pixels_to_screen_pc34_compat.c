@@ -1,0 +1,57 @@
+#include "redmcsb_f0680_copy_pixels_to_screen_pc34_compat.h"
+
+#include <stdint.h>
+
+static bool redmcsb_f0680_range_fits(size_t start, size_t count, size_t limit)
+{
+    return start <= limit && count <= limit - start;
+}
+
+bool redmcsb_f0680_copy_pixels_to_screen_pc34_compat(
+    const uint8_t *source,
+    size_t source_byte_count,
+    size_t source_pixel_index,
+    RedmcsbF0680C25VgaAperturePc34Compat *vga_aperture,
+    size_t destination_pixel_index,
+    size_t pixel_count,
+    uint8_t viewport_color_index_offset)
+{
+    size_t source_pixel_capacity;
+    size_t pixel_index;
+
+    if (source == NULL || vga_aperture == NULL || vga_aperture->bytes == NULL ||
+        (viewport_color_index_offset & 0x0FU) != 0U ||
+        source_byte_count > SIZE_MAX / 2U) {
+        return false;
+    }
+
+    source_pixel_capacity = source_byte_count * 2U;
+    if (!redmcsb_f0680_range_fits(source_pixel_index, pixel_count,
+                                   source_pixel_capacity) ||
+        !redmcsb_f0680_range_fits(destination_pixel_index, pixel_count,
+                                   vga_aperture->byte_count)) {
+        return false;
+    }
+
+    for (pixel_index = 0U; pixel_index < pixel_count; ++pixel_index) {
+        const size_t source_index = source_pixel_index + pixel_index;
+        const uint8_t packed_pixel = source[source_index >> 1U];
+        const uint8_t source_nibble =
+            (source_index & 1U) == 0U ? (uint8_t)(packed_pixel >> 4U)
+                                      : (uint8_t)(packed_pixel & 0x0FU);
+
+        vga_aperture->bytes[destination_pixel_index + pixel_index] =
+            (uint8_t)(viewport_color_index_offset | source_nibble);
+    }
+
+    return true;
+}
+
+const char *redmcsb_f0680_copy_pixels_to_screen_source_evidence_pc34(void)
+{
+    return "ReDMCSB IMAGE5.C:936-1010 F0680_CopyPixelsToScreenWithoutTransparency "
+           "C25_VGA: source index / 2 selects a packed byte, odd source indices "
+           "emit its low nibble first, and each pixel is written to A000h as "
+           "G8177_c_ViewportColorIndexOffset | source_nibble. VIDEODRV.C:938, "
+           "3578-3580 constrain that offset to 0x00 or 0x10.";
+}
