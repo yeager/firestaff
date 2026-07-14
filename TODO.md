@@ -175,6 +175,33 @@
 
 ## ReDMCSB CSB Reference-Boundary Audit
 
+### ReDMCSB Numbered-Symbol Audit (2026-07-14)
+
+- REDMCSB-SYMBOL-GAP-001 — **The complete numbered-symbol inventory is not a
+  completion claim.** ReDMCSB has 13,090 unique numbered source symbols:
+  `A` 4, `C` 866, `E` 6, `F` 2,104, `G` 2,074, `L` 4,616, `M` 397, `P` 2,996,
+  `R` 8, and `S` 19. `Cxxx` denotes constants, not functions; only `F`, `E`,
+  `R`, and `S` are callable families (2,137 total). Firestaff now tracks every
+  symbol in `docs/reference/numbered_source_symbol_inventory.tsv`, but an exact source
+  reference is deliberately only `referenced_not_verified`. Required work:
+  complete per-routine behavioural mapping and original-data/runtime evidence
+  before any family can be claimed fully implemented.
+
+- REDMCSB-SYMBOL-GAP-002 — **Data-label families need a semantic map, not a
+  name transplant.** `Gxxx`, `Lxxx`, and `Pxxx` are globals, locals, and
+  parameters; `Mxxx` and `Axxx` are module/macro and auxiliary labels. C11
+  Firestaff ownership may legitimately differ, but no complete audited map
+  links them to their enclosing ReDMCSB function/data contract. Required work:
+  record the owning Firestaff structure/function for each runtime-relevant
+  label and verify aliasing, width, lifetime, and original-data boundaries.
+
+- REDMCSB-SYMBOL-GAP-003 — **All platform/special boundaries require an
+  explicit disposition.** The six `Exxx` exception handlers, eight `Rxxx`
+  TOS/system routines, and nineteen `Sxxx` assembly/special routines cannot be
+  accepted through a source-name match. Required work: mark each as portable
+  equivalent, intentionally non-applicable, or source-backed implementation,
+  with a focused test or a documented host-platform boundary.
+
 - REDMCSB-CSB-GAP-001 — **CSBWin DSA is outside ReDMCSB's source domain.**
   ReDMCSB `Toolchains/Common/Source/` has no DSA, `EXPOOL`, `GAMEBLOCK2`, or
   `ITEM16` implementation; its original timer model is `TIMELINE.C`
