@@ -15,6 +15,15 @@
   their exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.
 
+- 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
+  `test_dm2_v1_save_load` external-corpus census accepts only
+  `FIRESTAFF_DM2_SKSAVE_CORPUS` files that survive a complete-file/payload
+  hash revalidation and the existing source-bound envelope/raw parser. It
+  reports an unset root as a non-promoting skip, performs no export or runtime
+  restore, and rejects any incomplete original-candidate census. Remaining
+  work is byte-level ownership for the timer and rebuilt dungeon DB regions;
+  do not infer either from a header-valid save.
+
 ## ReDMCSB CSB Reference-Boundary Audit
 
 - REDMCSB-CSB-GAP-001 — **CSBWin DSA is outside ReDMCSB's source domain.**
