@@ -27,7 +27,10 @@ static const char valid_manifest[] =
     "transform_state_bytes=10\ntransform_state_fnv1a64=11\n"
     "normal_culling_state_bytes=12\nnormal_culling_state_fnv1a64=13\n"
     "vdp1_command_bytes=14\nvdp1_command_fnv1a64=15\n"
-    "first_sequence=16\nlast_sequence=17\n";
+    "texture_span_sequence=17\npalette_state_sequence=18\n"
+    "vdp1_state_sequence=19\ntransform_state_sequence=1a\n"
+    "normal_culling_state_sequence=1b\nvdp1_command_sequence=1c\n"
+    "first_sequence=16\nlast_sequence=1d\n";
 
 static unsigned long long fnv1a64_update(unsigned long long hash,
                                           const unsigned char *data,
@@ -64,6 +67,25 @@ static unsigned long long bundle_hash(const Nexus_V1_DgnStructure3CaptureImport 
             length[byte] = (unsigned char)(sizes[i] >> (byte * 8U));
         hash = fnv1a64_update(hash, length, sizeof(length));
         hash = fnv1a64_update(hash, spans[i], sizes[i]);
+    }
+    return hash;
+}
+
+static unsigned long long trace_order_hash(
+    const Nexus_V1_DgnStructure3CaptureManifestReceipt *manifest) {
+    unsigned long long hash = 1469598103934665603ULL;
+    size_t lane;
+
+    for (lane = 0U; lane < NEXUS_V1_STRUCTURE3_CAPTURE_TRACE_LANE_COUNT;
+         ++lane) {
+        unsigned char lane_id = (unsigned char)lane;
+        unsigned char sequence[8];
+        size_t byte;
+        hash = fnv1a64_update(hash, &lane_id, sizeof(lane_id));
+        for (byte = 0U; byte < sizeof(sequence); ++byte)
+            sequence[byte] = (unsigned char)(manifest->trace_sequence[lane] >>
+                                             (byte * 8U));
+        hash = fnv1a64_update(hash, sequence, sizeof(sequence));
     }
     return hash;
 }
@@ -116,6 +138,8 @@ int main(void) {
                receipt.candidate.fill_selector == 9U &&
                receipt.texture_span_bytes == 10U &&
                receipt.palette_state_bytes == 12U &&
+               receipt.trace_sequence[NEXUS_V1_STRUCTURE3_TRACE_TEXTURE_SPAN] ==
+                   0x17U &&
                !receipt.original_saturn_capture_verified &&
                !receipt.renderer_handoff_ready &&
                receipt.blocks_real_dgn_mesh_render,
@@ -169,7 +193,10 @@ int main(void) {
         "transform_state_bytes=%zx\ntransform_state_fnv1a64=%llx\n"
         "normal_culling_state_bytes=%zx\nnormal_culling_state_fnv1a64=%llx\n"
         "vdp1_command_bytes=%zx\nvdp1_command_fnv1a64=%llx\n"
-        "first_sequence=16\nlast_sequence=17\n",
+        "texture_span_sequence=17\npalette_state_sequence=18\n"
+        "vdp1_state_sequence=19\ntransform_state_sequence=1a\n"
+        "normal_culling_state_sequence=1b\nvdp1_command_sequence=1c\n"
+        "first_sequence=16\nlast_sequence=1d\n",
         sizeof(texture), fnv1a64(texture, sizeof(texture)),
         sizeof(palette), fnv1a64(palette, sizeof(palette)),
         sizeof(vdp1), fnv1a64(vdp1, sizeof(vdp1)),
@@ -211,6 +238,7 @@ int main(void) {
     memset(&raw_attestation, 0, sizeof(raw_attestation));
     raw_attestation.capture_session_fnv1a64 = receipt.capture_session_fnv1a64;
     raw_attestation.capture_bundle_fnv1a64 = bundle_hash(&capture);
+    raw_attestation.capture_trace_order_fnv1a64 = trace_order_hash(&receipt);
     raw_attestation.original_saturn_source_attested = 1;
     nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(&raw_receipt);
     expect(nexus_v1_dgn_structure3_raw_capture_read(
@@ -219,11 +247,23 @@ int main(void) {
                raw_receipt.raw_span_hashes_match &&
                raw_receipt.attestation_session_matches &&
                raw_receipt.attestation_bundle_matches &&
+               raw_receipt.attestation_trace_order_matches &&
                raw_receipt.import_ready && raw_receipt.no_draw_only &&
                raw_receipt.import_packet.original_saturn_capture_verified &&
                raw_receipt.import_packet.texture_span != texture,
            "raw capture reader retains six file-backed spans only after atomically matching manifest and external attestation");
     nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    raw_attestation.capture_trace_order_fnv1a64 ^= 1ULL;
+    expect(!nexus_v1_dgn_structure3_raw_capture_read(
+               &receipt, &raw_paths, &raw_attestation, &raw_receipt) &&
+               raw_receipt.all_spans_read && raw_receipt.raw_span_hashes_match &&
+               raw_receipt.attestation_session_matches &&
+               raw_receipt.attestation_bundle_matches &&
+               !raw_receipt.attestation_trace_order_matches &&
+               !raw_receipt.import_ready && raw_receipt.no_draw_only,
+           "a mismatched trace-order attestation rejects otherwise matching raw bytes atomically");
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    raw_attestation.capture_trace_order_fnv1a64 = trace_order_hash(&receipt);
     expect(!nexus_v1_dgn_structure3_raw_capture_host_intake(
                &level, texture, (int)sizeof(texture), 1, imported_manifest,
                strlen(imported_manifest), &raw_paths, &raw_attestation,
@@ -302,10 +342,11 @@ int main(void) {
            "empty texture span rejects the manifest and retains no-draw gate");
 
     snprintf(malformed, sizeof(malformed), "%s", valid_manifest);
-    memcpy(strstr(malformed, "last_sequence=17"), "last_sequence=16", 16U);
+    memcpy(strstr(malformed, "palette_state_sequence=18"),
+           "palette_state_sequence=17", 25U);
     expect(!nexus_v1_dgn_structure3_capture_manifest_parse(
                malformed, strlen(malformed), &receipt) && !receipt.valid,
-           "non-increasing capture sequence is rejected");
+           "duplicate capture trace ordinal is rejected");
 
     snprintf(malformed, sizeof(malformed), "%s", valid_manifest);
     memcpy(strstr(malformed, "palette_state_fnv1a64=d"),

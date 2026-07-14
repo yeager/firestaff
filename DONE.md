@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 trace-order attestation: the strict capture
+  manifest now records six explicit opaque observation ordinals. The reader
+  rejects missing, duplicate, out-of-window, or externally mismatched order
+  attestations before DGN host intake. Lane names gain no Saturn hardware or
+  pixel meaning; the resulting packet remains no-draw.
+
 - 2026-07-14 DM2 New Game GAME_LOAD gate: `skproject/SKWIN/SkWinCore.cpp`
   `HANDLE_UI_EVENT`, `SHOW_MENU_SCREEN`, and `INIT` prove that NEW first
   leaves the title menu and then reaches `GAME_LOAD`/`LOAD_NEW_DUNGEON`.

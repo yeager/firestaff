@@ -5465,6 +5465,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     session, bundle, and external Saturn attestation match. A changed lane
     stops before host intake. This is opaque transport only, not a claim about
     an original Saturn capture-file format or any VDP1/palette/pixel semantics.
+  - 2026-07-14 trace-order follow-up: the manifest now records all six opaque
+    observation ordinals and the reader requires an external attestation of
+    their exact lane-to-ordinal relation. Missing, duplicate, out-of-window,
+    or mismatched order evidence blocks before host intake. This validates
+    transport chronology only; actual Saturn render semantics remain unknown.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named
