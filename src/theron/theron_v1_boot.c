@@ -5534,7 +5534,10 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return 0;
     }
-    if (!tr_asset_generated_v1_rendering_allowed(assets)) {
+    /* A caller can present a viewport-only indexed frame without asking for
+     * generated V1 artwork. If an asset bundle is supplied, it must still be
+     * original-data backed before its palette/tile path is consumed. */
+    if (assets && !tr_asset_generated_v1_rendering_allowed(assets)) {
         return 0;
     }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and

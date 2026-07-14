@@ -15840,3 +15840,15 @@ Verification: `firestaff_m11` Ninja build.
   runtime world. Changed route receipts, payloads, or source bytes fail
   closed. Object tables, bitmap/palette decoding, and fallback visuals remain
   unavailable. Focused Track 02 intake and initial-level-handoff probes pass.
+
+- 2026-07-14 Theron runtime-gate regression repair: Stage 2/3 physical loader
+  admission remains at the live Soul Room forcefield boundary, while the
+  shared Track 02 semantic record collector is again usable for bounded
+  all-dungeon receipt inspection. The indexed viewport-only render facade can
+  present without an asset bundle; supplied V1 bundles still require original
+  tile/palette data. No synthetic artwork or object route is admitted.
+- 2026-07-14 Theron Continue/runtime media repair: Continue now transports the
+  already captured indexed Track 02 atlas into runtime without attempting a
+  second raw-byte decode. Raw bitmap consumers still require MD5 and physical
+  offsets, and failed capture admission explicitly reports that fallback
+  visuals remain blocked.

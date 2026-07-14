@@ -104,6 +104,11 @@
   the immutable capture receipt before it mutates the startup flow or world.
   This is capture-to-route admission only; a positive original transition,
   object-tail meaning, bitmap, or palette evidence is still required.
+  The shared semantic record collector does not duplicate the Stage 2/3
+  physical-loader preflight: forcefield admission owns that live mutation
+  gate, while receipt collection remains a byte-checked inspection path.
+  Continue binds only the prior source-captured indexed receipt; it never
+  re-decodes absent Track 02 bytes or emits a replacement visual.
 
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one

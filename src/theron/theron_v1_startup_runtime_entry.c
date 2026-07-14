@@ -169,14 +169,11 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         }
         return 0;
     }
-    if (!theron_v1_startup_runtime_stage3_loader_ready(
-            hucard_rom, hucard_rom_size, md5_hex)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "Track 02 stage-three loader bytes rejected");
-        }
-        return 0;
-    }
+    /* This helper owns the source-checked semantic record route, and is also
+     * used by all-dungeon receipt collection. The live Soul Room forcefield
+     * admission separately requires the complete Stage 2/3 loader handoff
+     * before it can mutate a world. Keeping that physical preflight there
+     * avoids making receipt inspection depend on unrelated loader bytes. */
     signal_status = theron_v1_track02_find_bank_signal(hucard_rom,
                                                        hucard_rom_size,
                                                        md5_hex,
@@ -2340,7 +2337,8 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
             out_host_receipt->input_result =
                 THERON_STARTUP_INPUT_RESULT_REDRAW;
             out_host_receipt->status_scope = "TRACK02 ADMISSION";
-            out_host_receipt->status = "AUTHENTIC CAPTURE ADMISSION REQUIRED";
+            out_host_receipt->status =
+                "AUTHENTIC CAPTURE ADMISSION REQUIRED; fallback visuals blocked";
             out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
             snprintf(out_host_receipt->inspect_detail,
                      sizeof(out_host_receipt->inspect_detail),
@@ -2353,8 +2351,8 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
-                     "Track02 capture admission required "
-                     "before forcefield entry");
+                     "Track02 capture admission required before forcefield entry; "
+                     "fallback visuals blocked");
         }
         return 0;
     }
