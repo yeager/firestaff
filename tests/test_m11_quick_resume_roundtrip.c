@@ -1,5 +1,6 @@
 #include "m11_game_view.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 
 #include <stdio.h>
@@ -331,6 +332,9 @@ int main(void) {
     if (!expect(resumed.world.party.mapY == mapY, "resumed mapY should match saved state")) return 1;
     if (!expect(resumed.world.party.direction == direction, "resumed direction should match saved state")) return 1;
     if (!expect(resumed.world.gameTick == 4242, "resumed gameTick should match saved state")) return 1;
+    if (!expect(resumed.dm1ViewportRuntimeOrigin ==
+                    DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34,
+                "Firestaff-native resume must not claim original PC34 provenance")) return 1;
     if (!expect(explored_cell_is_set(&resumed, revealedCell),
                 "resumed explored tile should match saved reveal state")) return 1;
     if (!expect(explored_cell_is_set(&resumed, currentCell),
@@ -364,6 +368,9 @@ int main(void) {
                 "original PC34 resumed tick should match GLOBAL_DATA")) return 1;
     if (!expect(originalResumed.world.party.championCount == 1,
                 "original PC34 resumed champion count should match PARTY")) return 1;
+    if (!expect(originalResumed.dm1ViewportRuntimeOrigin ==
+                    DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
+                "F0435 original PC34 resume should retain source provenance")) return 1;
     if (!expect(memcmp(originalResumed.world.party.champions[0].name,
                        "TIGGY   ",
                        CHAMPION_NAME_LENGTH) == 0,
@@ -419,6 +426,9 @@ int main(void) {
                 roundtripLoaded.world.things != NULL &&
                 roundtripLoaded.world.ownsDungeon == 1,
                 "PC34 runtime reload should retain live dungeon ownership")) return 1;
+    if (!expect(roundtripLoaded.dm1ViewportRuntimeOrigin ==
+                    DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
+                "exported PC34 envelope reload should retain F0435 provenance")) return 1;
     M11_GameView_Shutdown(&roundtripLoaded);
 
     puts("ok: DM1 M11 quick-resume restores Firestaff-native and original PC34 saves");
