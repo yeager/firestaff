@@ -1011,7 +1011,32 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_payload.payload_checksum;
     hash *= 16777619u;
+    hash ^= receipt->capture_manifest_bound ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= tqr_trace_fnv1a_bytes(
+        (const uint8_t *)receipt->capture_manifest_system_card_md5,
+        strlen(receipt->capture_manifest_system_card_md5));
+    hash *= 16777619u;
+    hash ^= tqr_trace_fnv1a_bytes(
+        (const uint8_t *)receipt->capture_manifest_trace_md5,
+        strlen(receipt->capture_manifest_trace_md5));
+    hash *= 16777619u;
+    hash ^= receipt->capture_manifest_binding_hash;
+    hash *= 16777619u;
     return hash;
+}
+
+static int tqr_trace_is_lower_md5(const char *value) {
+    size_t i;
+
+    if (!value || strlen(value) != 32u) return 0;
+    for (i = 0u; i < 32u; ++i) {
+        if (!((value[i] >= '0' && value[i] <= '9') ||
+              (value[i] >= 'a' && value[i] <= 'f'))) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
@@ -1047,6 +1072,68 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                receipt->complete_payload_checksum &&
            receipt->receipt_hash != 0u &&
            receipt->receipt_hash == tqr_trace_initial_level_handoff_hash(receipt);
+}
+
+int theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *receipt) {
+    return theron_v1_raw_loader_trace_initial_level_handoff_is_complete(receipt) &&
+           receipt->capture_manifest_bound &&
+           strcmp(receipt->capture_manifest_system_card_md5,
+                  "ff1a674273fe3540ccef576376407d1d") == 0 &&
+           tqr_trace_is_lower_md5(receipt->capture_manifest_trace_md5) &&
+           receipt->capture_manifest_binding_hash != 0u;
+}
+
+int theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *source,
+    const Theron_V1CaptureManifest *manifest,
+    const char *track02_path,
+    const char *track02_md5,
+    const char *system_card_path,
+    const char *system_card_md5,
+    const char *trace_path,
+    const char *trace_md5,
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out) {
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt receipt;
+    uint32_t binding_hash = 2166136261u;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!source || !manifest || !out ||
+        !theron_v1_raw_loader_trace_initial_level_handoff_is_complete(source) ||
+        !theron_v1_raw_loader_trace_capture_manifest_matches(
+            manifest, track02_path, track02_md5, system_card_path,
+            system_card_md5, trace_path, trace_md5) ||
+        strcmp(source->track02_md5, track02_md5) != 0) {
+        return 0;
+    }
+
+    receipt = *source;
+    receipt.capture_manifest_bound = 1;
+    snprintf(receipt.capture_manifest_system_card_md5,
+             sizeof(receipt.capture_manifest_system_card_md5), "%s",
+             system_card_md5);
+    snprintf(receipt.capture_manifest_trace_md5,
+             sizeof(receipt.capture_manifest_trace_md5), "%s", trace_md5);
+    binding_hash ^= source->receipt_hash;
+    binding_hash *= 16777619u;
+    binding_hash ^= tqr_trace_fnv1a_bytes((const uint8_t *)track02_md5,
+                                          strlen(track02_md5));
+    binding_hash *= 16777619u;
+    binding_hash ^= tqr_trace_fnv1a_bytes((const uint8_t *)system_card_md5,
+                                          strlen(system_card_md5));
+    binding_hash *= 16777619u;
+    binding_hash ^= tqr_trace_fnv1a_bytes((const uint8_t *)trace_md5,
+                                          strlen(trace_md5));
+    binding_hash *= 16777619u;
+    if (binding_hash == 0u) return 0;
+    receipt.capture_manifest_binding_hash = binding_hash;
+    receipt.receipt_hash = tqr_trace_initial_level_handoff_hash(&receipt);
+    if (!theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
+            &receipt)) {
+        return 0;
+    }
+    *out = receipt;
+    return 1;
 }
 
 int theron_v1_raw_loader_trace_bind_initial_level_handoff(

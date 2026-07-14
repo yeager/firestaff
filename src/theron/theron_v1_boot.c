@@ -220,7 +220,7 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                initial_level->complete_payload_checksum &&
            !initial_level->object_tail_semantics_proven &&
            !initial_level->fallback_visuals_allowed &&
-           theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+           theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
                initial_level);
 }
 
@@ -5902,7 +5902,12 @@ int theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_f
             profile->graphics_md5, &coalesced) ||
         !theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, track02, track02_size,
-            profile->graphics_md5, &initial_level)) {
+            profile->graphics_md5, &initial_level) ||
+        !theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
+            &initial_level, &manifest, profile->graphics_path,
+            observed_track02_md5, manifest.system_card_path,
+            observed_system_card_md5, manifest.trace_path, observed_trace_md5,
+            &initial_level)) {
         goto done;
     }
     profile->track02_initial_level_handoff = initial_level;

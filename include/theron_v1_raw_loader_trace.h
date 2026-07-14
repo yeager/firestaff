@@ -216,6 +216,12 @@ typedef struct {
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;
     int fallback_visuals_allowed;
+    /* Populated only after the same manifest that admitted the Track 02 file
+     * has also revalidated its System Card and coalesced Mednafen trace. */
+    int capture_manifest_bound;
+    char capture_manifest_system_card_md5[33];
+    char capture_manifest_trace_md5[33];
+    uint32_t capture_manifest_binding_hash;
     uint32_t receipt_hash;
 } Theron_V1RawLoaderTraceInitialLevelHandoffReceipt;
 
@@ -313,6 +319,22 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
  * full 2048-byte local-RAM witness and checks that the receipt hash covers
  * that witness. It does not inspect or interpret the payload bytes. */
 int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *receipt);
+
+/* Adds the three hash-verified capture artifacts to an already source-bound
+ * `$e009` receipt. The handoff remains opaque loader/media provenance. */
+int theron_v1_raw_loader_trace_bind_capture_manifest_to_initial_level_handoff(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *source,
+    const Theron_V1CaptureManifest *manifest,
+    const char *track02_path,
+    const char *track02_md5,
+    const char *system_card_path,
+    const char *system_card_md5,
+    const char *trace_path,
+    const char *trace_md5,
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out);
+
+int theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *receipt);
 
 /* Validates the explicit V2 capture-manifest identity for an ordered

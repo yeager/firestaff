@@ -5457,3 +5457,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   or fallback visual may be inferred. Promote real DGN geometry only after
   the capture reproduces the observed command and rejects altered source rows,
   selectors, texture bytes, palette state, and trace coordinates atomically.
+
+- 🔧 2026-07-14 coalesced `$e009` manifest-to-runtime binding: the
+  initial-level handoff now carries a receipt hash bound to the selected
+  original Track 02, System Card 3.0, and exact coalesced trace MD5s. Runtime
+  consumes the opaque 2048-byte payload only when that binding and every
+  source receipt remain complete; altered, missing, or cross-capture evidence
+  fails closed without a generated bitmap or dungeon fallback. The remaining
+  gap is still a positive original capture that assigns actual dungeon-route
+  semantics to this authenticated byte transfer.
