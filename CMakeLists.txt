@@ -20586,6 +20586,29 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_dgn_geometry_readiness
     )
 
+    # Retail Structure3 face-row to normal-row correspondence. The parser
+    # checks only documented ordinal pairing and fixed-point unit framing;
+    # it deliberately does not infer planes, surfaces, palettes, or draws.
+    add_executable(test_nexus_v1_dgn_face_mesh_corpus
+        tests/test_nexus_v1_dgn_face_mesh_corpus.c
+        src/nexus/nexus_v1_dungeon.c
+    )
+    target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_face_mesh_corpus
+        COMMAND test_nexus_v1_dgn_face_mesh_corpus
+    )
+    set_tests_properties(nexus_v1_dgn_face_mesh_corpus PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        LABELS "nexus;dgn;face;mesh;real-media"
+    )
+
     add_executable(test_nexus_v1_structure1f_spatial_receipt
         tests/test_nexus_v1_structure1f_spatial_receipt.c
     )

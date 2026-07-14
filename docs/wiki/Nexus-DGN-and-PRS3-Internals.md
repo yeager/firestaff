@@ -66,6 +66,14 @@ occurrences, retaining the maximum observed occurrence count per entry. This
 still does not turn a shared pair into an edge or establish winding, surface,
 normal-plane, transform, material, palette, or drawing behavior.
 
+The documented face-to-normal ordinal relationship is retained separately:
+within each bounded entry, row `n` of the face region is paired only with row
+`n` of the count-matched normal region. Across the retail `LEV00.DGN` through
+`LEV15.DGN` corpus, this covers 1,144 entries and 18,478 pairs, all within the
+existing fixed-point unit tolerance. This remains correspondence provenance;
+it does not identify a normal plane, orientation, surface, palette, texture,
+or draw operation.
+
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,

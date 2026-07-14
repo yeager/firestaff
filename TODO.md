@@ -568,7 +568,11 @@ ReDMCSB WIP 2021-02-06 source tree.
   Structure3a/Structure3c signed 16.16 vector framing and the rounded
   unit-normal invariant now hold across the retail LEV00--LEV15 corpus, but
   this remains read-only geometry provenance and does not expose a mesh or
-  relax the no-draw barrier.
+  relax the no-draw barrier. 2026-07-14 update: the documented entry-local
+  face-row/normal-row ordinal pairing is now retained and corpus-checked for
+  1,144 entries / 18,478 pairs. Next remains original Saturn evidence for
+  normal-plane use, transforms, palette/texture decoding, and VDP1 draw
+  ordering; do not infer any of those from the pair receipt.
   - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
     render-plan receipts only through complete Structure1F owner relations.
     Its raw reuse is counted, but its grammar remains unassigned; it cannot
