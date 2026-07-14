@@ -67,6 +67,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8152: source-locked PC 3.4 C25
+  inclusive box fill through F8137, with the original 320-byte row stride and
+  viewport color-index offset. Focused strict-C11 test covers inclusive edges,
+  color offset and bounds rejection; live aperture presentation remains
+  separately tracked.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8151: source-locked PC 3.4 C25
   source-bitmap-to-aperture rectangle blit with original even-stride,
   opaque/transparent and vertical-flip behavior. Empty C25 F0681/F0683 paths
