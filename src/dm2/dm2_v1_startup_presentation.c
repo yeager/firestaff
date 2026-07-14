@@ -85,13 +85,22 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* skproject fe7299.cpp: DM2_PLAY_MUSIC(0, true) is followed directly by
-     * DM2_SHOW_MENU_SCREEN. TITLE/0 dt07/4 is the complete static menu. */
+    /* SKProject fe7299.cpp presents the title/credit image before the menu.
+     * These are two distinct TITLE/0 GDAT queries, not host-drawn chrome. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;
     rect.h = 200;
     if (!dm2_v1_startup_push_gdat_image(out_commands,
+                                        max_commands,
+                                        &count,
+                                        DM2_GDAT_CATEGORY_TITLE,
+                                        0,
+                                        1,
+                                        &rect,
+                                        -1,
+                                        DM2_V1_FRAME_OWNER_STARTUP_TITLE) ||
+        !dm2_v1_startup_push_gdat_image(out_commands,
                                         max_commands,
                                         &count,
                                         DM2_GDAT_CATEGORY_TITLE,
@@ -194,13 +203,17 @@ int dm2_v1_startup_presentation_render_receipt(
         const DM2_V1_StartupDrawCommand *command = &commands[i];
         if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
             command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
-            command->gdat_field == out_receipt->skproject_menu_screen_field &&
+            command->gdat_field == out_receipt->skproject_credit_screen_field &&
             !out_receipt->title_gdat_found) {
             out_receipt->title_gdat_found = 1;
             out_receipt->title_gdat_category = command->gdat_category;
             out_receipt->title_gdat_index = command->gdat_index;
             out_receipt->title_gdat_field = command->gdat_field;
             out_receipt->title_rect = command->rect;
+        } else if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                   command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
+                   command->gdat_field == out_receipt->skproject_menu_screen_field &&
+                   !out_receipt->menu_gdat_found) {
             out_receipt->menu_gdat_found = 1;
             out_receipt->menu_gdat_category = command->gdat_category;
             out_receipt->menu_gdat_index = command->gdat_index;
@@ -230,7 +243,7 @@ int dm2_v1_startup_presentation_render_receipt(
             out_receipt->skproject_title_category &&
         out_receipt->title_gdat_index == out_receipt->skproject_title_index &&
         out_receipt->title_gdat_field ==
-            out_receipt->skproject_menu_screen_field;
+            out_receipt->skproject_credit_screen_field;
     out_receipt->skproject_menu_query_ready =
         out_receipt->menu_gdat_found &&
         out_receipt->menu_gdat_category ==
