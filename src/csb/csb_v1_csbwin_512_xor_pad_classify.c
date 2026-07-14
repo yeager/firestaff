@@ -1173,9 +1173,15 @@ int csb_v1_csbwin_512_inspect_extended_dsa_section(
                 offset += 4u;
                 if (!checked_mul_size((size_t)program_words, 2u,
                                       &program_bytes) ||
-                    program_bytes > size - offset ||
-                    total_program_words > UINT32_MAX - program_words) {
+                    program_bytes > size - offset) {
                     return CSB_V1_CSBWIN_EXTENDED_ERR_TRUNCATED;
+                }
+                if (program_words >
+                        CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS ||
+                    total_program_words >
+                        CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS -
+                            program_words) {
+                    return CSB_V1_CSBWIN_EXTENDED_ERR_DSA;
                 }
                 total_program_words += program_words;
                 offset += program_bytes;

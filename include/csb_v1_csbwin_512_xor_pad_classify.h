@@ -126,6 +126,10 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DATA_MAP_BYTES 4096u
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_COUNT 256u
 #define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_STATES 65536u
+/* Keep authenticated DSA payloads within the CSB runtime importer's
+ * aggregate bytecode allocation ceiling. This is an admission bound, not an
+ * opcode-semantic claim. */
+#define CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS 32768u
 
 /* The two documented scramble keys. CSBWin/Chaos.cpp:2357 tries
  * CSB_KEY first, then DM_KEY on UnscrambleBlock1 returning 0.
@@ -659,8 +663,9 @@ int csb_v1_csbwin_512_inspect_extended_data_map(
  * exact boundary for the separately-gated game-info/level-index tail.
  *
  * Simple-encrypted preambles remain unsupported. All DSA records, including
- * duplicate IDs/states, invalid counts, truncated programs, and a bad final
- * checksum are rejected before the output report becomes valid. */
+ * duplicate IDs/states, invalid counts, aggregate bytecode exceeding
+ * CSB_V1_CSBWIN_MAX_EXTENDED_DSA_PROGRAM_WORDS, truncated programs, and a
+ * bad final checksum are rejected before the output report becomes valid. */
 int csb_v1_csbwin_512_inspect_extended_dsa_section(
     const uint8_t *bytes,
     size_t size,
