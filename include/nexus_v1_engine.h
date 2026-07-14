@@ -284,6 +284,16 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt;
 
+/* Source-owned request receipt for an external Saturn capture producer. */
+typedef struct {
+    int active_canonical_lev_bound;
+    int material_plan_prepared;
+    int topology_candidate_bound;
+    int target_built;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt;
+
 /* Renderer-bound provenance for the active canonical LEV entry.  This makes
  * the package-to-viewport boundary inspectable without assigning a Saturn
  * decoding or drawing meaning to any captured bytes. */
@@ -763,6 +773,14 @@ int nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
     Nexus_V1_Engine *engine,
     const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *target,
     Nexus_V1_DgnStructure1AStructure3RuntimeCorrelationReceipt *out_receipt);
+/* Build one external capture request through the active package/host route.
+ * The selected owner candidate and face are retained as original bytes only;
+ * this never supplies a renderer input or a draw permission. */
+int nexus_v1_engine_build_structure1a_structure3_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
 /* Stages the engine-owned, already-bound Structure3 face for the viewport.
  * This is a source/geometry handoff only: a successful packet always remains
  * no-draw until independent Saturn render semantics are established. */
