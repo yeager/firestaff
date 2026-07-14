@@ -433,6 +433,35 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelAuxRuntimeReceipt;
 
+/* Engine-owned handoff for one raw SNDLEV MAP selector. The selector remains
+ * an opaque on-disk value: this only proves a unique, bounded SAL byte window
+ * from the active hash-verified level pair. It is never a host SFX event and
+ * does not imply a Saturn decoder, driver ABI, or playback operation. */
+typedef enum {
+    NEXUS_V1_LEVEL_SOUND_ROUTE_MISSING = 0,
+    NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SOURCE = 1,
+    NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SELECTOR = 2,
+    NEXUS_V1_LEVEL_SOUND_ROUTE_BOUND_OPAQUE = 3
+} Nexus_V1_LevelSoundRouteStatus;
+
+typedef struct {
+    Nexus_V1_LevelSoundRouteStatus status;
+    int level_index;
+    int raw_map_selector;
+    int map_attribute;
+    int sal_offset;
+    int sal_size;
+    int canonical_sal_source_verified;
+    int canonical_map_source_verified;
+    int canonical_sound_driver_source_verified;
+    int map_window_unique_and_bounded;
+    int saturn_event_dispatch_proven;
+    int sal_decode_proven;
+    int playback_permitted;
+    int blocks_real_sfx_playback;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelSoundRouteReceipt;
+
 /* Canonical ownership for the two retail MNS banks consumed by Structure1B
  * material selectors.  A parseable file is not enough: each bank must be
  * tied to its known Track 1 identity before its pixels reach the viewport. */
@@ -817,6 +846,9 @@ int nexus_v1_current_level_transform_camera_framing_receipt(
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
+int nexus_v1_current_level_sound_route_receipt(
+    const Nexus_V1_Engine *engine, int raw_map_selector,
+    Nexus_V1_LevelSoundRouteReceipt *out_receipt);
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt);
