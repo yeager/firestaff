@@ -678,6 +678,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     prefix and normal-termination result. Program loading and DOS exit status
     remain callback boundaries requiring PC34 proof.
 
+  - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
+    C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
+    capture parity remains subject to the PC34 evidence requirement above.
+
 - REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
   mouse interrupt path.** The source records a platform/version race fix for
   eye/mouth press state between interrupt and command-queue processing.

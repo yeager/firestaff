@@ -39626,14 +39626,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
     m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth, framebufferHeight);
 
-    /* Spell panel overlay.
-     * ReDMCSB CASTER.C F0394/MENU.C F0392 draws the DM1 spell/action
-     * controls in the fixed right-column spell area {224,319,42,74}.
-     * The larger Firestaff workbench is only a debug/custom-mode helper;
-     * classic V1 must not cover the dungeon viewport with it. */
-    if (state->spellPanelOpen &&
-        (state->showDebugHUD || m11_v2_vertical_slice_enabled() ||
-         !m11_v1_chrome_mode_enabled())) {
+    /* The procedural workbench is not a DM1 spell renderer. Classic V1 uses
+     * the late CASTER.C/MENUDRAW.C C009/C011/C013 route below, gated by real
+     * GRAPHICS.DAT assets and the original font. */
+    if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled()) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;
