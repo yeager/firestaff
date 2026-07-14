@@ -1926,7 +1926,7 @@ F	1037	F1037_Mouse2	IO.C	source_nonapplicable
 F	1038	F1038_UpdateMousePointer	IO.C;STARTUP2.C;COPERINT.C	source_nonapplicable
 F	1040	F1040_SetMouseBoundEvent	FMTOWNS.H;IO.C;IBMIO.C;NECIO.C	referenced_not_verified
 F	1041	F1041_GetMousePointerType	IO.C;DEFS.H	source_nonapplicable
-F	1046	F1046_OpenLibraries	GAMELOOP.C;MAINLIB.C	referenced_not_verified
+F	1046	F1046_OpenLibraries	GAMELOOP.C;MAINLIB.C	source_nonapplicable
 F	1047	F1047_CloseLibraries	GAMELOOP.C;MAINLIB.C	referenced_not_verified
 F	1048	F1048_setjmp	DEFS.H	unmapped_or_unverified
 F	1049	F1049_longjmp	DEFS.H	unmapped_or_unverified
