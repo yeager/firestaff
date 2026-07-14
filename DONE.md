@@ -11,6 +11,12 @@
   attestations before DGN host intake. Lane names gain no Saturn hardware or
   pixel meaning; the resulting packet remains no-draw.
 
+- 2026-07-14 CSB ReDMCSB F7062/F0430 PC34 save-header preparation: added the
+  original mixed random-word/checksum sequence, tail obfuscation for the
+  emitted 512-byte header, and post-write tail restoration. The 127 RNG words
+  and output destination are required caller evidence; no host RNG or file
+  fallback is invented. Focused strict-C11 F7062-to-F7061 regression passes.
+
 - 2026-07-14 CSB ReDMCSB F7061/F0429 PC34 save-header verification: added the
   exact 512-byte first-half mixed checksum and in-place second-half
   deobfuscation order from `CEDTINC6.C`. A checksum failure deliberately still

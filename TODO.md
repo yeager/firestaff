@@ -335,6 +335,11 @@
     original checksum verdict, including on failure. It neither identifies a
     save format nor decodes CSBWin GAMEBLOCK2, CHARDESC, ITEM16, EXPOOL, DSA,
     timer, or runtime state.
+  - 2026-07-14 update: `CEDTINC6.C` F7062/F0430 now prepares the exact
+    obfuscated 512-byte PC34 header image from the source-owned 127-word RNG
+    sequence and restores the caller's plaintext tail afterward. It supplies
+    no RNG, file transport, format identification, CSBWin extension, DSA,
+    timer, or runtime interpretation.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
