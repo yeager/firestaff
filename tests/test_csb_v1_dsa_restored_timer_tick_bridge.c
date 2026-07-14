@@ -49,6 +49,8 @@ int main(void)
 {
     uint8_t raw[128] = { 0 };
     uint8_t tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
+    uint8_t exported_save[8192] = { 0 };
+    size_t exported_save_size = 0u;
     uint16_t store_global[] = { 0x0686u, 0x55aau, 0x0054u };
     const uint32_t message_record_id = (1u << 24);
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
@@ -129,6 +131,9 @@ int main(void)
     profile.csbwin_timer_summary_total = 1u;
     profile.csbwin_timer_queue_summary_count = 1u;
     profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_max_timers = 1u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 1u;
     profile.csbwin_timers[0] = timer;
     profile.csbwin_timer_queue[0] = 0u;
 
@@ -1038,6 +1043,15 @@ int main(void)
               profile.csbwin_timers[0].time == profile.game_time + 299u &&
               profile.timeline_queue.eventCount == 1,
           "requeued watchdog remains owned by its original saved timer slot");
+
+    /* Timer.cpp's DeleteTimer/SetTimer path adjusts TimerQueue before
+     * SaveGame.cpp serializes the retained TIMER entry and heap. The runtime
+     * tick must therefore leave a recurring saved receipt exportable rather
+     * than preserving a plausible-but-stale queue order. */
+    check(csb_v1_runtime_export_csbwin_core_save_to_memory(
+              &profile, exported_save, sizeof(exported_save),
+              &exported_save_size) == 0 && exported_save_size > 0u,
+          "requeued watchdog reaches the CSBWin core-save package handoff");
 
     profile.csbwin_timers[0].source_index = 1u;
     profile.csbwin_timers[0].time = profile.game_time;

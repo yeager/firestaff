@@ -407,6 +407,15 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   1660-1669. Verification: focused
   `test_csb_v1_csbwin_champion_bones_expool_runtime`.
 
+- ✅ 2026-07-14 CSBWin saved-timer post-dispatch package handoff: a retained
+  recurring `TT_53` watchdog now has a focused end-to-end regression from
+  live dispatch through TimerQueue reheapification into the writable CSBWin
+  core-save package. This covers only the source-owned recurring timer path;
+  consumed timers and incomplete free-list state remain non-exportable rather
+  than being rebuilt. Source-lock: CSBWin `Timer.cpp` `DeleteTimer`/
+  `SetTimer`/`AdjustTimerQueue` and `SaveGame.cpp` TIMER plus TimerQueue
+  serialization. Verification: `test_csb_v1_dsa_restored_timer_tick_bridge`.
+
 - ✅ 2026-07-14 DM1 PC34 corpus runtime-adoption receipt handoff: the
   no-fallback F0435 candidate-to-live adoption counts now flow through the
   DM1 startup, complete-support, boot-summary, host-field, expectation, and

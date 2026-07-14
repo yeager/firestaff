@@ -511,9 +511,10 @@ ReDMCSB WIP 2021-02-06 source tree.
 
 - 2026-07-13 CSBWin restored `TT_13` follow-up: the exact final Vi Altar life
   stage and the old-save no-EXPOOL DB10-bones state-1 handoff are live. The
-  `packedState` 2 cloud plus EXPOOL and Wings state-1 branches remain
-  fail-closed until those original owners are retained by the imported runtime
-  record.
+  `packedState` 2 cloud and Wings state-1 branches remain fail-closed until
+  those original owners are retained by the imported runtime record. The
+  current-save `EDT_ChampionBones` EXPOOL state-1 branch is complete and
+  tracked in DONE.
 
 - 2026-07-13 CSBWin restored `TT_53` follow-up: live runtime now retains the
   exact saved watchdog TIMER/queue owner while requeueing its source `+300`
