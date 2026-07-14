@@ -88,6 +88,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_d3l2_d3r2_f010
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0060_sound_play_pc34_compat.c")
+    add_executable(test_csb_v1_f0060_sound_play_pc34_compat
+        tests/test_csb_v1_f0060_sound_play_pc34_compat.c
+        src/csb/csb_v1_audio_runtime_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_f0060_sound_play_pc34_compat
+        COMMAND test_csb_v1_f0060_sound_play_pc34_compat
+    )
+endif()
+
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
