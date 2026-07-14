@@ -39,6 +39,21 @@ int csb_v1_dungeon_get_group_cells_pc34(
     return 1;
 }
 
+int csb_v1_dungeon_get_group_directions_pc34(
+    const uint8_t *group_record,
+    int record_size,
+    uint8_t *out_directions)
+{
+    /* ReDMCSB DEFS.H GROUP is a 16-byte C04 record. Direction is the
+     * two-bit field at bits 8..9 of its final little-endian word, so F0147
+     * reads bits 0..1 of byte 15. Byte 4 is CreatureType, not a C04 tag. */
+    if (!group_record || !out_directions || record_size < 16) {
+        return 0;
+    }
+    *out_directions = (uint8_t)(group_record[15] & 0x03u);
+    return 1;
+}
+
 /* ================================================================
  *  Door helpers -- DUNGEON.C:561-565 (pass563 compat)
  * ================================================================ */
