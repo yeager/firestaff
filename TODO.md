@@ -32,6 +32,12 @@
     real-package probe. The probe has no package fixture and skips without
     explicit original paths. Positive DSA proof still requires an authentic
     checksum-valid DSA-bearing save/dungeon pair.
+  - 2026-07-14 follow-up: the opt-in Extended Features/DSA package probe now
+    carries that ownership receipt through one live tick. Consumed source
+    timers may leave the queue, but every surviving timeline event must still
+    match one unique serialized TimerQueue slot and all TIMER fields. A host
+    event without that source receipt fails the probe; no generated save,
+    dungeon, DSA, or replacement event is used.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

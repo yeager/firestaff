@@ -223,6 +223,58 @@ static int saved_timer_queue_matches_runtime(
     return 1;
 }
 
+/* A source timer may be consumed or requeued by the runtime tick, so the
+ * complete serialized heap need not still be live afterwards. Every event
+ * that does remain live must nevertheless retain an exact saved TimerQueue
+ * slot and TIMER field receipt. This rejects a generic M10 replacement event
+ * being introduced beside the real package queue. */
+static int remaining_saved_timer_queue_matches_runtime(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    uint8_t seen[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES] = { 0 };
+    int event_ordinal;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_queue_summary_count !=
+            profile->csbwin_timer_summary_count ||
+        profile->timeline_queue.eventCount < 0 ||
+        profile->timeline_queue.eventCount >
+            (int)profile->csbwin_timer_queue_summary_count) {
+        return 0;
+    }
+    for (event_ordinal = 0;
+         event_ordinal < profile->timeline_queue.eventCount;
+         ++event_ordinal) {
+        const int event_index = profile->timeline_queue.timeline[event_ordinal];
+        const struct DM1_Event_V1 *event;
+        const CSB_V1_CSBWin512TimerSummary *timer;
+        uint16_t queue_slot;
+        uint16_t timer_index;
+
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+        queue_slot = profile->csbwin_timeline_event_queue_slot[event_index];
+        if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
+            seen[queue_slot]) {
+            return 0;
+        }
+        timer_index = profile->csbwin_timer_queue[queue_slot];
+        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+        timer = &profile->csbwin_timers[timer_index];
+        event = &profile->timeline_queue.events[event_index];
+        if (!timer->valid || timer->truncated ||
+            timer->source_index != timer_index ||
+            event->map_time != timer->time || event->type != timer->function ||
+            event->priority != timer->ubyte5 ||
+            event->b_mapX != timer->ubyte6 ||
+            event->b_mapY != timer->ubyte7 ||
+            event->c_cell != timer->ubyte8 || event->c_effect != timer->ubyte9) {
+            return 0;
+        }
+        seen[queue_slot] = 1u;
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     const char *dungeon_path = path_arg_or_env(
@@ -356,6 +408,10 @@ int main(int argc, char **argv)
                       action_hashes_before_tick,
                       state->imported_action_count),
                   "runtime tick preserves every admitted source DSA action and selector");
+            CHECK(profile.dungeon_handle == dungeon &&
+                      csb_v1_dungeon_get_current() == dungeon &&
+                      remaining_saved_timer_queue_matches_runtime(&profile),
+                  "post-tick live queue retains only exact package TIMER slots");
         }
     }
 
