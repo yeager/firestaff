@@ -1748,6 +1748,18 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready &&
           !render_plan.fallback_visuals_permitted,
           "DGN render planning retains bounded Structure3 source commands without a mesh draw");
+    level.structure3_face_materials.static_texture_unbound_count = 1;
+    level.structure3_face_materials.selector_bindings_complete = 0;
+    memset(commands, 0x5a, sizeof(commands));
+    CHECK(nexus_v1_level_build_dgn_view_render_plan(
+              &level, 10, 10, 0, commands,
+              NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &render_plan) == 0 &&
+          render_plan.status ==
+              NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
+          render_plan.command_count == 0 && !render_plan.plan_ready &&
+          render_plan.blocks_real_dgn_mesh_render &&
+          !render_plan.fallback_visuals_permitted,
+          "an unresolved Structure3 face material cannot retain a no-draw command plan");
     wb16(dgn + 0x1c, 24U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 1) != 0,
           "out-of-file Structure3 payload envelopes fail closed during DGN load");

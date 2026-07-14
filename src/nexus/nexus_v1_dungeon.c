@@ -4078,6 +4078,29 @@ static void nexus_v1_dgn_plan_project_quad(Nexus_V1_DgnRenderCommand *command) {
     }
 }
 
+static int nexus_v1_dgn_structure3_face_materials_plan_bound(
+    const Nexus_V1_DgnRendererHandoffReceipt *handoff)
+{
+    const Nexus_V1_DgnStructure3FaceReceipt *faces;
+    const Nexus_V1_DgnStructure3FaceMaterialReceipt *materials;
+
+    if (!handoff) return 0;
+    faces = &handoff->structure3_faces;
+    materials = &handoff->structure3_face_materials;
+    return materials->face_receipt_valid && materials->valid &&
+        faces->valid && materials->face_count == faces->face_count &&
+        materials->textured_face_count == faces->textured_face_count &&
+        materials->static_texture_selector_count ==
+            materials->static_texture_bound_count &&
+        materials->animated_texture_selector_count ==
+            materials->animated_texture_bound_count &&
+        materials->static_texture_unbound_count == 0 &&
+        materials->animated_texture_unbound_count == 0 &&
+        materials->unsupported_textured_fill_count == 0 &&
+        materials->selector_bindings_complete &&
+        !materials->material_or_draw_semantics_proven;
+}
+
 int nexus_v1_level_build_dgn_view_render_plan(
     const Nexus_V1_Level *level,
     int party_x,
@@ -4206,9 +4229,14 @@ int nexus_v1_level_build_dgn_view_render_plan(
         handoff.structure1g_structure2_image_instruction_unbound_count;
     receipt.structure1g_structure2_bindings_complete =
         handoff.structure1g_structure2_bindings_complete;
+    /* Preserve bounded source commands for Structure3 only after every
+     * parser-validated face fill remains joined to its declared source. This
+     * is a no-draw consumer: it retains neither mesh geometry nor pixel,
+     * palette, transform, or raster semantics. */
     structure3_topology_no_draw =
         handoff.status ==
-        NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS;
+            NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
+        nexus_v1_dgn_structure3_face_materials_plan_bound(&handoff);
     if ((handoff.status != NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
          !structure3_topology_no_draw) ||
         (!handoff.can_render_dgn_mesh && !structure3_topology_no_draw)) {
