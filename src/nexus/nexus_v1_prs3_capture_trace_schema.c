@@ -608,3 +608,50 @@ done:
     *out_receipt = receipt;
     return receipt.source_bound_capture;
 }
+
+int nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+    const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1RawSidecarReceipt receipt;
+    uint8_t *output = NULL;
+    uint8_t *command = NULL;
+    uint8_t *palette = NULL;
+    size_t output_size = 0U;
+    size_t command_size = 0U;
+    size_t palette_size = 0U;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.trace_source_bound = nexus_v1_prs3_vdp1_capture_validate_files(
+        trace_path, menu_bpk_path, dm_bin_path, &receipt.trace_file);
+    if (!receipt.trace_source_bound || !output_path || !vdp1_command_path ||
+        !palette_path) goto done;
+    output = read_capture_file(output_path, 16U * 1024U * 1024U, &output_size);
+    command = read_capture_file(vdp1_command_path, 64U * 1024U, &command_size);
+    palette = read_capture_file(palette_path, 1024U * 1024U, &palette_size);
+    if (!output || !command || !palette) goto done;
+    receipt.output_sidecar_bound =
+        output_size == receipt.trace_file.trace.expected_output_bytes &&
+        fnv1a64(output, output_size) == receipt.trace_file.trace.output_fnv1a64;
+    receipt.vdp1_command_sidecar_bound =
+        command_size == receipt.trace_file.trace.vdp1_command_read_bytes &&
+        fnv1a64(command, command_size) ==
+            receipt.trace_file.trace.vdp1_command_fnv1a64;
+    receipt.palette_sidecar_bound =
+        palette_size == receipt.trace_file.trace.palette_read_bytes &&
+        fnv1a64(palette, palette_size) == receipt.trace_file.trace.palette_fnv1a64;
+    receipt.raw_sidecars_bound = receipt.output_sidecar_bound &&
+        receipt.vdp1_command_sidecar_bound && receipt.palette_sidecar_bound;
+done:
+    free(output);
+    free(command);
+    free(palette);
+    receipt.capture_producer_authenticated = 0;
+    receipt.runtime_import_permitted = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.raw_sidecars_bound;
+}

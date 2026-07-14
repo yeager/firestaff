@@ -523,6 +523,7 @@ int main(void) {
 
     {
         Nexus_V1_Prs3Vdp1CaptureFileReceipt file_receipt;
+        Nexus_V1_Prs3Vdp1RawSidecarReceipt sidecar_receipt;
         expect(!nexus_v1_prs3_vdp1_capture_validate_files(
                    "/missing/nexus-v3.trace", "/missing/MENU.BPK",
                    "/missing/DM.BIN", &file_receipt) &&
@@ -534,6 +535,21 @@ int main(void) {
                    !file_receipt.decoder_promoted &&
                    !file_receipt.fallback_visuals_permitted,
                "file validator rejects absent or non-canonical capture inputs without a runtime route");
+        expect(!nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+                   "/missing/nexus-v3.trace", "/missing/MENU.BPK",
+                   "/missing/DM.BIN", "/missing/output.bin",
+                   "/missing/command.bin", "/missing/palette.bin",
+                   &sidecar_receipt) &&
+                   !sidecar_receipt.trace_source_bound &&
+                   !sidecar_receipt.output_sidecar_bound &&
+                   !sidecar_receipt.vdp1_command_sidecar_bound &&
+                   !sidecar_receipt.palette_sidecar_bound &&
+                   !sidecar_receipt.raw_sidecars_bound &&
+                   !sidecar_receipt.capture_producer_authenticated &&
+                   !sidecar_receipt.runtime_import_permitted &&
+                   !sidecar_receipt.decoder_promoted &&
+                   !sidecar_receipt.fallback_visuals_permitted,
+               "raw sidecar admission rejects absent capture artifacts without a substitute route");
     }
 
     test_dm_bin_prs3_catalog();

@@ -180,6 +180,21 @@ typedef struct {
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
 } Nexus_V1_Prs3Vdp1CaptureFileReceipt;
 
+/* Additional raw-byte admission for a V3 trace. The three sidecars are
+ * capture artifacts, never decoded texture or palette input for Firestaff. */
+typedef struct {
+    int trace_source_bound;
+    int output_sidecar_bound;
+    int vdp1_command_sidecar_bound;
+    int palette_sidecar_bound;
+    int raw_sidecars_bound;
+    int capture_producer_authenticated;
+    int runtime_import_permitted;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+    Nexus_V1_Prs3Vdp1CaptureFileReceipt trace_file;
+} Nexus_V1_Prs3Vdp1RawSidecarReceipt;
+
 typedef struct {
     int valid;
     int complete_evidence;
@@ -286,5 +301,14 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
 int nexus_v1_prs3_vdp1_capture_validate_files(
     const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
     Nexus_V1_Prs3Vdp1CaptureFileReceipt *out_receipt);
+
+/* Admit a V3 candidate only when its three raw capture sidecars exactly
+ * match the trace's lengths and FNV witnesses. The caller must separately
+ * establish the emulator/original-Saturn provenance of the artifacts; this
+ * routine does not infer it and never exposes sidecar bytes to runtime. */
+int nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
+    const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
+    const char *output_path, const char *vdp1_command_path,
+    const char *palette_path, Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt);
 
 #endif
