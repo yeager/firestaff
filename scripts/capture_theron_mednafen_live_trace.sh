@@ -86,6 +86,10 @@ if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
     exit 1
 fi
 if [[ -n "$host_key" ]]; then
+    if [[ -z "$configured_home" ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' >&2
+        exit 1
+    fi
     if [[ "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
         exit 1

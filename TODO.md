@@ -22,7 +22,9 @@
   dispatch/return pair before promoting any subsequent record. The capture
   script now resolves and records the real SDL PID; a second PID-bound attempt
   still had zero emulator-observed host events, so process focus alone is not
-  evidence of controller delivery.
+  evidence of controller delivery. A third run used the explicit local
+  Return-to-PCE-run mapping and still produced zero host events, narrowing the
+  blocker to macOS event delivery into SDL rather than Mednafen mapping.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
