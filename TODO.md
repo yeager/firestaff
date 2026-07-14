@@ -111,6 +111,13 @@
     duplicate slots, and malformed receipts remain unexportable. The opt-in
     real-package probe remains the required positive evidence for a requeued
     original save; no package, timer, dungeon, or DSA fixture was added.
+  - 2026-07-14 follow-up: the opt-in Extended Features/DSA handoff now
+    snapshots the supplied original `Dungeon.dat` and `csbgame*.dat` before
+    production resume, then revalidates both complete-file size/FNV receipts
+    after the live tick. A replaced package cannot inherit DSA-action,
+    timer-slot, or core-resume evidence. The probe remains unavailable without an explicit
+    checksum-valid DSA-bearing save/dungeon pair; it creates no substitute
+    save, dungeon, timer, or DSA record.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while
