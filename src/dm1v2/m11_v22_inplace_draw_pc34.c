@@ -28,6 +28,8 @@
  *   - Floor MOSSY pattern  -> floor_plain_01 (no mossy variant in v1.4.0)
  *   - Teleporter fields    -> field_teleporter_01
  *   - Creatures (any)      -> creature_demon_01
+ *   - Items                -> no V2.2 substitution until a reviewed item
+ *                             material is available; preserve V1 pixels
  *
  * Source-lock: m11_v22_shape_cache_pc34.h (the cache),
  * m11_v2_modern_assets_pc34.c (manifest path resolution),
@@ -129,8 +131,10 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
         case M11_V22_SHAPE_ITEM:
         case M11_V22_SHAPE_ITEM_FLOOR:
         case M11_V22_SHAPE_ITEM_PROJECTILE:
-            /* Items use creature sprite as placeholder (no items asset yet) */
-            return v22_creature_asset_id;
+            /* No reviewed item material is installed.  Do not substitute a
+             * creature image: returning NULL leaves the source-owned V1
+             * item pixels intact in the in-place pass. */
+            return NULL;
         default:
             /* Walls and doors use the first-cut carved-stone asset. */
             return v22_wall_asset_id;

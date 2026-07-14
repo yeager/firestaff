@@ -61,6 +61,20 @@ static void test_get_cell_asset_id_no_cache(void) {
     CHECK(aid == NULL, "no cache -> asset_id NULL");
 }
 
+static void test_item_shapes_preserve_v1_when_no_item_material_exists(void) {
+    unsigned char raw_cells[3][3] = {
+        { 0x60, 0x60, 0x60 },
+        { 0x60, 0x60, 0x60 },
+        { 0x60, 0x60, 0x60 }
+    };
+
+    /* The cache state is irrelevant here: item shapes must never borrow a
+     * creature material. The source-owned V1 item pass remains visible. */
+    m11_v22_shape_cache_update(0, raw_cells);
+    CHECK(m11_v22_inplace_get_cell_asset_id(1, -1) == NULL,
+          "item shape has no V2.2 asset substitution");
+}
+
 static void test_source_evidence(void) {
     const char* ev = m11_v22_inplace_draw_source_evidence();
     CHECK(ev != NULL, "evidence non-null");
@@ -133,6 +147,7 @@ int main(void) {
     test_init_shutdown();
     test_get_cell_bitmap_no_cache();
     test_get_cell_asset_id_no_cache();
+    test_item_shapes_preserve_v1_when_no_item_material_exists();
     test_source_evidence();
     test_cache_load_path();
     test_double_shutdown_safe();

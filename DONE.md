@@ -14933,3 +14933,4 @@ blocked draws. D3C remains intentionally unavailable because its GRAPHICSSET
 wall field is absent; this change does not fabricate a backdrop, dynamic
 light, doors, or non-wall/floor terrain. Verification:
 `dm2_v1_g1_center_ray_surface_gate`.
+- ✅ 2026-07-14 DM1 V2.2 original-art item fallback guard: the V2.2 in-place material resolver no longer maps item, floor-item, or projectile-item shapes to `creature_demon_01` when no reviewed item material exists. Those shapes now have no V2.2 substitution, preserving the source-owned V1 pixels while reviewed modern materials remain limited to their matching shape categories. `m11_v22_inplace_draw_pc34` now asserts the item route returns `NULL`. This is an integration-safety correction only; it adds no art, does not promote the modern pack, and does not claim pixel parity.
