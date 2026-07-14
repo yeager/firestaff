@@ -156,6 +156,49 @@ static int remaining_saved_timer_queue_is_live(
     return 1;
 }
 
+/* A package tick may consume or requeue a source timer, in which case the
+ * runtime deliberately refuses to invent a writable CSBWin heap. When the
+ * heap is still exportable, require the production writer and reader to
+ * carry the surviving source-owned core state into a separate runtime. */
+static int exported_core_reloads_after_tick(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    uint8_t core_bytes[65536];
+    size_t core_size = 0u;
+    CSB_V1_CSBWin512BodyReport core_report;
+    CSB_V1_RuntimeProfile core_runtime;
+    int result = 0;
+
+    if (!profile) return 0;
+    if (csb_v1_runtime_export_csbwin_core_save_to_memory(
+            profile, core_bytes, sizeof(core_bytes), &core_size) != 0) {
+        return -1;
+    }
+    memset(&core_report, 0, sizeof(core_report));
+    if (csb_v1_csbwin_512_verify_save_body(
+            core_bytes, core_size, 0u, &core_report) != CSB_V1_CSBWIN_512_OK) {
+        return 0;
+    }
+    csb_v1_runtime_init(&core_runtime, NULL);
+    if (csb_v1_runtime_apply_csbwin_resume_report(
+            &core_runtime, &core_report) == 0 &&
+        !core_runtime.csbwin_extended_features_valid &&
+        !core_runtime.csbwin_extended_level_index_present &&
+        core_runtime.csbwin_extended_dsa_state.imported_action_count == 0 &&
+        saved_timer_queue_is_live(&core_runtime) &&
+        core_runtime.game_time == profile->game_time &&
+        core_runtime.current_level == profile->current_level &&
+        core_runtime.party_x == profile->party_x &&
+        core_runtime.party_y == profile->party_y &&
+        core_runtime.party_dir == profile->party_dir &&
+        core_runtime.party_state.PartyDirection ==
+            profile->party_state.PartyDirection) {
+        result = 1;
+    }
+    csb_v1_runtime_cleanup(&core_runtime);
+    return result;
+}
+
 int main(int argc, char **argv)
 {
     const char *dungeon_path = path_arg_or_env(
@@ -165,6 +208,7 @@ int main(int argc, char **argv)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData *dungeon;
     int resume_rc;
+    int core_resume_result;
     uint32_t game_time_before_tick;
     uint32_t game_time_before_resume_tick;
     uint32_t dungeon_bytes_before_resume;
@@ -226,6 +270,14 @@ int main(int argc, char **argv)
         CHECK(profile.game_time == game_time_before_resume_tick + 1u &&
                   remaining_saved_timer_queue_is_live(&profile),
               "first resumed tick retains only exact package TIMER slots");
+        core_resume_result = exported_core_reloads_after_tick(&profile);
+        CHECK(core_resume_result != 0,
+              "post-tick package core either reloads exactly or remains unavailable");
+        if (core_resume_result > 0) {
+            puts("CSBWIN_PACKAGE_CORE_RESUME_AFTER_TICK=verified");
+        } else {
+            puts("CSBWIN_PACKAGE_CORE_RESUME_AFTER_TICK=unavailable");
+        }
     } else {
         CHECK(profile.dungeon_handle == dungeon &&
                   csb_v1_dungeon_get_current() == dungeon &&
