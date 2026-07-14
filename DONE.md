@@ -23,6 +23,9 @@
   Amiga copper, disk.resource and Exec-vector routes. They are recorded as
   source-nonapplicable to PC 3.4; focused host-boundary tests pass.
 
+- 2026-07-14 DM1/CSB ReDMCSB F0947-F0948: Amiga disk-data initialization and
+  release are source-nonapplicable to PC 3.4. Focused boundary tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0812`-`F0816`: source-locked PC-98
   copy-protection BIOS callback, MIDI IODRV commands and substring routine.
   Focused strict C11 tests pass without synthetic disk or audio behavior.
