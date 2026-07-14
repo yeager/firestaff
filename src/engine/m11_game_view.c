@@ -15874,13 +15874,20 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                       "firestaff-%s-dm1save.sav", sid);
                     if (rc > 0 && rc < (int)sizeof(savePath)) {
                         int saveResult = DM1_SaveGame(&state->world, savePath,
-                                                      state->dm1GameID, 1,
+                                                      state->dm1GameID, 0,
                                                       state->dm1MusicOn);
                         if (saveResult == DM1_SAVE_OK) {
                             state->lastSaveTick =
                                 (uint32_t)state->world.gameTick;
                             M12_Config_SetLastSavePath(savePath);
+                        } else {
+                            m11_set_status(state, "SAVE",
+                                           DM1_SaveLoadErrorString(saveResult));
+                            return M11_GAME_INPUT_REDRAW;
                         }
+                    } else {
+                        m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+                        return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
                 }
@@ -17021,13 +17028,20 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                       "firestaff-%s-dm1save.sav", sid);
                     if (rc > 0 && rc < (int)sizeof(savePath)) {
                         int saveResult = DM1_SaveGame(&state->world, savePath,
-                                                      state->dm1GameID, 1,
+                                                      state->dm1GameID, 0,
                                                       state->dm1MusicOn);
                         if (saveResult == DM1_SAVE_OK) {
                             state->lastSaveTick =
                                 (uint32_t)state->world.gameTick;
                             M12_Config_SetLastSavePath(savePath);
+                        } else {
+                            m11_set_status(state, "SAVE",
+                                           DM1_SaveLoadErrorString(saveResult));
+                            return M11_GAME_INPUT_REDRAW;
                         }
+                    } else {
+                        m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+                        return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
                 }

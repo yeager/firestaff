@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 save-and-quit guard: the M11 keyboard and pointer quit
+  routes now persist the source SAVE-AND-QUIT header value and retain the
+  guard when saving or path construction fails, reporting the actual failure
+  instead of silently quitting. Source-lock: ReDMCSB `LOADSAVE.C` save-and-quit
+  header path. Verification: `test_dm1_v1_save_load`.
+
 - ✅ 2026-07-14 DM1 PC34 external-save full-runtime handoff gate: the
   fixture-free HoC runtime probe now hashes an independently materialized
   F0435 world from each admitted external save and requires M11's
