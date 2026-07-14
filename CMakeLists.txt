@@ -645,6 +645,63 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0050_text_messagearea
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat.c")
+    add_executable(test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat
+        tests/test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat.c
+        src/csb/redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat
+        COMMAND test_redmcsb_f0051_text_messagearea_print_linefeed_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0480_cache_release_state_transition_pc34_compat.c")
+    add_executable(test_redmcsb_f0480_cache_release_state_transition_pc34_compat
+        tests/test_redmcsb_f0480_cache_release_state_transition_pc34_compat.c
+        src/memory/redmcsb_f0480_cache_release_state_transition_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0480_cache_release_state_transition_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0480_cache_release_state_transition_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0480_cache_release_state_transition_pc34_compat
+        COMMAND test_redmcsb_f0480_cache_release_state_transition_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0693_wait_vertical_blank_pc34_compat.c")
+    add_executable(test_redmcsb_f0693_wait_vertical_blank_pc34_compat
+        tests/test_redmcsb_f0693_wait_vertical_blank_pc34_compat.c
+        src/dm1/redmcsb_f0693_wait_vertical_blank_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0693_wait_vertical_blank_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0693_wait_vertical_blank_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0693_wait_vertical_blank_pc34_compat
+        COMMAND test_redmcsb_f0693_wait_vertical_blank_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0480`, `TEXT.C F0051` and `VBLANK.C F0693`:
+  source-bounded cache release, line-feed and VBlank gate callables added.
+  Verification: focused strict CTests.
+
 - 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0050`: source white-space output now
   delegates the exact white color/message pair through a bounded callable.
   Verification: focused strict CTest.
