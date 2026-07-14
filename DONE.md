@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1067: available initialization is Amiga-
+  specific. The focused PC 3.4 boundary is intentionally a source-evidenced
+  no-op.
+
+- 2026-07-14 DM1/CSB ReDMCSB F1068: available teardown is Amiga-specific.
+  The focused PC 3.4 boundary is a verified no-op.
+
+- 2026-07-14 DM1/CSB ReDMCSB F1066: source-locked largest-block reserve
+  calculation with host-supplied memory metrics. Focused strict-C11 test passes.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1065: available body reads Amiga Exec from
   address 4. The focused PC 3.4 boundary does not emulate ExecBase.
 

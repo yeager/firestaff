@@ -1073,9 +1073,9 @@ F1059_Post_F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	F	Post	LOADSAVE.C:17
 F1061_Pre_Unreferenced	F	Pre	READWRIT.C:73-88;FAKE2.C:1-17;FAKE3.C:1-19;FAKE4.C:1-17	include/redmcsb_f1061_pre_unreferenced_pc34_compat.h	SOURCE_NONAPPLICABLE	Available pre-hook selects Amiga fake-code only; focused PC boundary is a source-faithful no-op.
 F1063_ChecksumEor_CPSX	F	ChecksumEor	READWRIT.C:73-110;COMMAND.C:1537-1542	include/redmcsb_f1063_checksum_eor_cpsx_pc34_compat.h	SOURCE_NONAPPLICABLE	Available checksum is Amiga copy-protection code with no PC 3.4 route; focused boundary avoids synthesizing protection behavior.
 F1065_SetExecBase	F	SetExecBase	AMIGALIB.C:837-844	include/redmcsb_f1065_set_exec_base_pc34_compat.h	SOURCE_NONAPPLICABLE	Available body reads Amiga Exec from address 4; focused PC boundary does not emulate ExecBase.
-F1066_GetUsableChipMemoryByteCount	F	GetUsableChipMemoryByteCount	AMIGINIT.C:498	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1067_InitAmigaStuff	F	InitAmigaStuff	AMIGA.H:406	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1068_FreeAmigaStuff	F	FreeAmigaStuff	AMIGINIT.C:630	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1066_GetUsableChipMemoryByteCount	F	GetUsableChipMemoryByteCount	AMIGINIT.C:498-560	include/redmcsb_f1066_get_usable_chip_memory_byte_count.h	IMPLEMENTED_NARROW	Source-locked largest-block reserve calculation with a focused strict-C11 test; host supplies memory metrics rather than Amiga Exec calls.
+F1067_InitAmigaStuff	F	InitAmigaStuff	AMIGINIT.C:539-628;HINT001.C:4,56-63	include/redmcsb_f1067_init_amiga_stuff_pc34_compat.h	SOURCE_NONAPPLICABLE	Available initialization is Amiga-specific; focused PC boundary is intentionally a source-evidenced no-op.
+F1068_FreeAmigaStuff	F	FreeAmigaStuff	AMIGINIT.C:630-671;HINT001.C:4,65-72;HINTMAIN.C:235-239	include/redmcsb_f1068_free_amiga_stuff_pc34_compat.h	SOURCE_NONAPPLICABLE	Available teardown is Amiga-specific; focused PC boundary is a verified no-op.
 F1069_OpenDosLibrary	F	OpenDosLibrary	AMIGINIT.C:67	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1070_CloseDosLibrary	F	CloseDosLibrary	AMIGINIT.C:79	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1071_OpenGraphicsLibrary	F	OpenGraphicsLibrary	AMIGINIT.C:89	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
