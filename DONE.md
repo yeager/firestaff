@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1 original PC34 save/HoC external runtime trace gate: the
+  fixture-free F0435 corpus target optionally consumes an operator-recorded,
+  source-CRC-bound IDLE/FORWARD/BACKWARD/TURN/STRAFE trace. Each row advances
+  an independently materialized F0435 world and the live M11 adoption, then
+  requires matching M10 tick receipts, canonical world hashes, timeline and
+  emission state, plus a nonblank byte-stable 224x136 host viewport capture.
+  No save, dungeon, graphics, or trace fixture is generated. ReDMCSB anchors:
+  `LOADSAVE.C F0435` and the normal `GAMELOOP.C` command-to-tick route. This
+  is Firestaff runtime evidence only; provenance-recorded original PC34 saves
+  and original executable route/capture comparisons remain required.
+
 - 2026-07-14 CSBWin general-package post-tick core-resume gate: the opt-in
   package handoff now applies the production core writer and reader to every
   accepted original `csbgame*.dat`, not only Extended Features saves. When
