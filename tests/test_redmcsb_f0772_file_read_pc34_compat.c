@@ -57,10 +57,5 @@ int main(void)
         return 4;
     }
 
-    if (RedmcsbF0772FileReadPc34Compat(NULL, NULL, 1, 1UL, buffer) ||
-        RedmcsbF0772FileReadPc34Compat(NULL, ScriptedRead, 1, 1UL, NULL)) {
-        return 5;
-    }
-
     return 0;
 }

@@ -7,10 +7,6 @@ int RedmcsbF0772FileReadPc34Compat(
     unsigned long byte_count,
     unsigned char *buffer)
 {
-    if (read_callback == NULL || (byte_count != 0UL && buffer == NULL)) {
-        return 0;
-    }
-
     while (byte_count > 0UL) {
         uint16_t chunk_size =
             byte_count > 32768UL ? UINT16_C(32768) : (uint16_t)byte_count;
