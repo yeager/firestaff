@@ -185,6 +185,12 @@ typedef struct {
     uint32_t master_location;
     uint32_t *parameters;
     int parameter_count;
+    /* CSBWin DSA.cpp STKOP_PartyDistance reads only d.partyLevel/X/Y.
+     * This is supplied by the runtime profile that owns the live party. */
+    int party_location_valid;
+    int party_level;
+    int party_x;
+    int party_y;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -399,6 +405,10 @@ typedef struct {
     uint32_t state_index;
     int action_ordinal;
     uint32_t master_location;
+    int party_location_valid;
+    int party_level;
+    int party_x;
+    int party_y;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

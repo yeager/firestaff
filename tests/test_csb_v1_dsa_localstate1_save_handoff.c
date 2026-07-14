@@ -156,6 +156,10 @@ int main(void)
     memset(&profile, 0, sizeof(profile));
     check(initialize_profile(&profile, bytes, sizeof(bytes)) == 1,
           "real-shaped Extended Features DSA receipt imports");
+    profile.party_state_valid = 1;
+    profile.current_level = 5;
+    profile.party_x = 10;
+    profile.party_y = 12;
     memset(&runner, 0, sizeof(runner));
     {
         CSB_V1_RuntimeDSAFilterBinding binding;
@@ -164,6 +168,9 @@ int main(void)
         check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
                   &profile, &binding, 1u, 0, 0u, &runner) == 1,
               "LocalState=1 master resolves its authenticated action");
+        check(runner.party_location_valid && runner.party_level == 5 &&
+                  runner.party_x == 10 && runner.party_y == 12,
+              "runtime runner preserves the source-owned party location");
     }
     action = csb_v1_chaos_find_imported_action(
         &profile.csbwin_extended_dsa_state, 7, 1u, 0);
