@@ -531,6 +531,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0469_memory_free_at_he
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0922_custom_strcpy_compat.c")
+    add_executable(test_f0922_custom_strcpy_compat
+        tests/test_f0922_custom_strcpy_compat.c
+        src/f0922_custom_strcpy_compat.c
+    )
+    target_include_directories(test_f0922_custom_strcpy_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_f0922_custom_strcpy_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME f0922_custom_strcpy_compat
+        COMMAND test_f0922_custom_strcpy_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c")
     add_executable(test_csb_v1_f0496_lzw_output_character_pc34_compat
         tests/test_csb_v1_f0496_lzw_output_character_pc34_compat.c

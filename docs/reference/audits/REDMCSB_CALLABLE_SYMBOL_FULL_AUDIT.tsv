@@ -1001,7 +1001,7 @@ F0917_PRIM_15_Memory_Allocate	F	PRIM	PRIM.H:279	-	MISSING	No exact numbered toke
 F0918_PRIM_16_Memory_Free	F	PRIM	PRIM.H:280	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0919_PRIM_19_File_Seek	F	PRIM	PRIM.H:281	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0920_PRIM_20_File_Read	F	PRIM	PRIM.H:282	src/engine/m11_game_view.c:9875	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
-F0922_Custom_strcpy	F	Custom	PRIM1.C:105	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F0922_Custom_strcpy	F	Custom	PRIM1.C:105	include/f0922_custom_strcpy_compat.h	IMPLEMENTED_NARROW	PRIM1.C NUL-terminated copy semantics with bounded destination gate; focused CTest.
 F0924_SetCriticalErrorHandler	F	SetCriticalErrorHandler	CEDTINCI.C:306	src/dm1/dm1_v1_game_state_pc34_compat.c:320	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F0925_CheckUtilityDiskInDrive	F	CheckUtilityDiskInDrive	PRIM1.C:143	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F0926_FLOPPY_ForceMediaChangeDetection	F	FLOPPY	PRIM1.C:282	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
