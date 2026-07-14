@@ -23,7 +23,6 @@
   out-of-memory UI routes. Buffers remain caller-owned and no localization,
   allocation, dialog, or menu fallback was introduced. Focused strict-C11
   regression passes.
-=======
 - 2026-07-14 Theron Track 02 staging receipt split: direct
   `try_track02_initial_level` again requires the complete original Stage 2/3
   preflight before it can publish any world state. A distinct public
@@ -259,6 +258,11 @@
   component update. The adapter converts real RGB4 values with exact
   `(component << 2) + 3` expansion and republishes via F8156 only when the
   curtain is active. Focused strict-C11 logical/DAC/VBlank test passes.
+
+ - ✅ 2026-07-14 DM1/CSB ReDMCSB F8213: source-locked PC 3.4 C25 aperture
+  single-pixel write. The adapter stores exactly `G8177 | color` at the
+  requested aperture index. Focused strict-C11 bank, bounds and retained-byte
+  test passes.
 
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8163: source-locked PC 3.4 C25 bitmap
   transfer. The adapter binds the caller's real packed source and delegates
