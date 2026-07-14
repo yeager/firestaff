@@ -3809,6 +3809,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: startup media receipts now expose per-route Track02 bitmap decode proof for title, stage, Soul Room, and forcefield samples. Remaining work is replacing final M11 call sites and broadening real bitmap decode beyond sampled startup tiles.
 
 - 🔧 2026-07-10 DM2 runtime/render follow-up: complete-support and full GDAT HUD/dungeon runtime gates are verified in DONE.md. The interface palette is now strictly decoded and carried into runtime scene/frame receipts; remaining work is applying that palette at the M11 display target, broader Mac packaged capture, broader typed GDAT data/image parser coverage beyond the verified interface `dt09`, `dtPalette16`, `dt07/0x00`, `dt07/0x02`, `dt06` no-alias gate, remaining advanced interface placement/semantics, remaining advanced CCM opcodes, and broader real save corpus import.
+  - 2026-07-14 update: map-header `UseDoor0/1` plus `DoorType0/1` now
+    admits only the active source `DOORS/type/F9` chips and their exact local
+    palettes into a separate M11 plan, matching skproject
+    `LOAD_LOCALLEVEL_DYN`. A disabled type nibble is not preloaded; an active
+    type without an actual F9 image remains absent, while a present F9 chip
+    requires its real palette and cannot use a generic door. Exact
+    per-distance door image selection remains owned by `DRAW_DOOR`.
   - 2026-07-13 update: a selected original SKSave corpus candidate is now
     loaded only through its full-file and payload hash receipt, then handed to
     the existing atomic runtime save restore. Original raw/envelope candidates

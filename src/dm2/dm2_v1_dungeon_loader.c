@@ -276,6 +276,8 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
         out->map_offset_y[i] = (int)map_desc[7];
         out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
+        out->map_use_door0[i] = (int)((RD16(map_desc + 2) >> 7) & 1u);
+        out->map_use_door1[i] = (int)((RD16(map_desc + 2) >> 8) & 1u);
         out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
         total_columns += w;
     }
@@ -380,6 +382,8 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         out->map_offset_y[i] = (int)map_desc[7];
         out->map_door_set0[i] = (int)((RD16(map_desc + 14) >> 8) & 0x0fu);
         out->map_door_set1[i] = (int)((RD16(map_desc + 14) >> 12) & 0x0fu);
+        out->map_use_door0[i] = (int)((RD16(map_desc + 2) >> 7) & 1u);
+        out->map_use_door1[i] = (int)((RD16(map_desc + 2) >> 8) & 1u);
         out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
         total_columns += w;
     }

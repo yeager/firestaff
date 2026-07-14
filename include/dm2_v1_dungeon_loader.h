@@ -747,6 +747,8 @@ typedef struct {
     int map_offset_y[DM2_V1_MAX_LEVELS];
     int map_door_set0[DM2_V1_MAX_LEVELS];
     int map_door_set1[DM2_V1_MAX_LEVELS];
+    int map_use_door0[DM2_V1_MAX_LEVELS];
+    int map_use_door1[DM2_V1_MAX_LEVELS];
     int square_bytes;
     int raw_map_data_base;
     int column_index_base;

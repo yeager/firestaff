@@ -590,6 +590,25 @@ static void test_skproject_map_floor_gfx_list(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
+static void test_skproject_map_door_type_flags(void)
+{
+    uint8_t dat[192];
+    DM2_V1_DungeonData dungeon;
+    size_t size = build_skproject_map_floor_gfx_list_fixture(dat, sizeof(dat));
+    uint8_t *desc = dat + 44;
+
+    /* DME.h Map_definitions::UseDoor0/1 reads w2 bits 7/8, while DoorType0/1
+     * are w14 nibbles 8/12.  Slot one remains deliberately disabled. */
+    put16le(desc + 2, (uint16_t)(1u << 7));
+    put16le(desc + 14, (uint16_t)((3u << 8) | (11u << 12)));
+    CHECK(size > 0 && dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
+          "loader accepts skproject map door header flags");
+    CHECK(dungeon.map_use_door0[0] == 1 && dungeon.map_door_set0[0] == 3 &&
+              dungeon.map_use_door1[0] == 0 && dungeon.map_door_set1[0] == 11,
+          "loader retains UseDoor-gated DoorType0/1 independently");
+    dm2_v1_dungeon_free(&dungeon);
+}
+
 static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
 {
     uint8_t dat[384];
@@ -784,6 +803,7 @@ int main(void)
     test_skproject_actuator_wall_gfx_ordinal();
     test_skproject_map_wall_gfx_list();
     test_skproject_map_floor_gfx_list();
+    test_skproject_map_door_type_flags();
     test_pc_g1_record_pool_ownership_and_bounded_traversal();
     test_pc_g1_ground_stack_map_corpus_receipt();
     test_pc_g1_extension_record_transform();
