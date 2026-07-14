@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 original raw-SKSave G1 runtime handoff: before applying an
+  admitted raw save, runtime now parses its complete dungeon prefix through
+  the established SKProject-shaped loader and verifies the saved party pose
+  against its exact map descriptor. The parsed model replaces the live model
+  only after all checks succeed, then the existing session/GDAT refresh uses
+  that model; rejection keeps the prior dungeon bytes and metadata. Focused
+  save/load coverage proves the reparsed 4x5 map reaches runtime and an
+  out-of-range original pose cannot mutate it. This does not claim DB-chain,
+  timer-payload, checkcode, minion, or full post-load reconstruction parity.
+
 - 2026-07-14 Nexus Structure3 capture-manifest intake: introduced a strict,
   ordered single-face correlation envelope for future original-Saturn DGN
   captures. It records opaque, size-bounded texture/palette/VDP1/transform/

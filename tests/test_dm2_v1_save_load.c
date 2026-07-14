@@ -943,13 +943,14 @@ static int build_raw_sksave_payload(
     memset(payload, 0, payload_cap);
     if (payload_cap < 63u) return 0;
 
-    /* Minimal skproject-shaped dungeon prefix:
-     * 44-byte header, one 16-byte map descriptor, one column index, one tile.
-     * The runtime state SUPPRESS stream starts immediately after byte 62. */
+    /* Minimal skproject-shaped dungeon prefix: 44-byte header, one 16-byte
+     * descriptor, four column indexes, and a 4x5 byte map.  The live raw-save
+     * restore must reparse this exact G1 structure before accepting pose 3,4. */
     payload[4] = 1u;
     write_u16_le_at(payload, 44u, 0u);
-    write_u16_le_at(payload, 44u + 8u, 0u);
-    pos = 63u;
+    write_u16_le_at(payload, 44u + 8u,
+                    (uint16_t)((3u << 6) | (4u << 11)));
+    pos = 88u;
 
     n = dm2_suppress_encode_gamestate(gs, enc, sizeof(enc));
     if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
@@ -2289,7 +2290,8 @@ static int test_original_save_candidate_live_restore(void)
         dm2_v1_runtime_get_tick_count() != (int)gs->dwGameTick ||
         dm2_v1_runtime_get_champion_inventory_object(0, 8) != inventory[8] ||
         dm2_v1_runtime_get_leader_hand_object() != dm2_db_make_handle(7, 0x2a) ||
-        dm2_v1_creature_count() != 0 ||
+        dm2_v1_creature_count() != 0 || dungeon.level_count != 1 ||
+        dungeon.level_widths[0] != 4 || dungeon.level_heights[0] != 5 ||
         memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
         goto done;
     }
@@ -2298,6 +2300,19 @@ static int test_original_save_candidate_live_restore(void)
      * or the GDAT-bound runtime view. */
     if (dm2_v1_runtime_restore_save_candidate(payload, payload_size - 1u) == 0 ||
         game.party_x != 3 || game.party_y != 4 ||
+        memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
+        goto done;
+    }
+    /* A source-valid stream cannot place the party outside the exact saved
+     * G1 map descriptor.  Rejection must retain the already-published model. */
+    gs->wPlayerPosX = 4;
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, NULL, 0,
+                                  inventory, dm2_db_make_handle(7, 0x2a),
+                                  payload, sizeof(payload), &payload_size) ||
+        dm2_v1_runtime_restore_save_candidate(payload, payload_size) == 0 ||
+        game.party_x != 3 || game.party_y != 4 ||
+        dungeon.level_widths[0] != 4 || dungeon.level_heights[0] != 5 ||
         memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
         goto done;
     }
