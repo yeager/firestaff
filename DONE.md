@@ -13566,6 +13566,20 @@ has pre-existing failures in unrelated synthetic-fixture assertions.
   style values and checks each style actually referenced by the supplied
   dungeon against its exact GDAT floor, ceiling, and scene controls.
 
+# ✅ 2026-07-14 DM2 GDAT HUD material-plan handoff
+
+The validated 13-command PC DM2 HUD family is now consumed directly by the
+viewport: nine `INTERFACE_GENERAL` chrome commands and four source-bound
+`CHAMPIONS` portraits retain their decoded IMG3 pixels, local palettes, and
+exact M11 rectangles from the boot-owned GDAT plan. This mirrors the existing
+`UPDATE_GFXSET` scene-plan ownership path and blocks missing HUD commands
+instead of requesting or painting substitute graphics. Source: SKProject
+`SKWINSPX` `LOAD_GDAT_INTERFACE_00_02` / `QUERY_GDAT_IMAGE_ENTRY_BUFF` and
+`DRAW_CHAMPION_PICTURE`. The separate dt07 name-font route remains no-draw
+without its own source receipt; no G1/DB meaning was inferred. Verification:
+external Ninja target `test_dm2_v1_gdat_hud_m11_command_real_data` and CTest
+`dm2_v1_gdat_hud_m11_command_real_data` pass against local canonical media.
+
 # ✅ 2026-07-14 CSB compact ParameterB timer integration coverage
 
 The Phase 7 CSB runtime regression now materially exercises the existing

@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
@@ -4281,6 +4282,20 @@ int dm2_v1_boot_gdat_scene_m11_command_plan(
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     return dm2_v1_gdat_scene_m11_command_plan_build(
         &gfx->loader, (uint8_t)graphicsset_index, out_plan);
+}
+
+int dm2_v1_boot_gdat_hud_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_HudPartyState *party,
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!profile || !profile->graphics_dat || !party || !out_plan) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_gdat_hud_m11_command_plan_build_for_party(
+        &gfx->loader, party, out_plan);
 }
 
 int dm2_v1_boot_weather_gdat_receipt(

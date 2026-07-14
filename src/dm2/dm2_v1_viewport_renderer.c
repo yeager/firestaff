@@ -36,6 +36,7 @@
  */
 
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_world_model.h"
 #include <string.h>
 #include <stdlib.h>
@@ -961,6 +962,15 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
 {
     if (!s) return;
     s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
+    s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_gdat_hud_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    if (!s) return;
+    s->gdat_hud_material_plan = plan;
     s->dirty = 1;
 }
 
@@ -4999,6 +5009,45 @@ static int dm2_v1_render_hud_source_font(
     return glyph_count > 0;
 }
 
+static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
+    DM2_V1_ViewportState *s, int gdat_index,
+    const DM2_V1_ViewportRect *rect, int kind)
+{
+    const DM2_V1_GdatHudM11CommandPlan *plan;
+
+    if (!s || !rect || !(plan = s->gdat_hud_material_plan) ||
+        !plan->valid || plan->command_count != DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        plan->command_hash == 0u) return NULL;
+    for (int i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        if (command->kind == kind && command->viewport_gdat_index == gdat_index &&
+            command->destination.x == rect->x && command->destination.y == rect->y &&
+            command->destination.w == rect->w && command->destination.h == rect->h &&
+            command->pixels && command->width > 0 && command->height > 0 &&
+            command->palette_hash != 0u) return command;
+    }
+    return NULL;
+}
+
+static int dm2_v1_render_hud_plan_command(DM2_V1_ViewportState *s,
+                                           int gdat_index,
+                                           const DM2_V1_ViewportRect *rect,
+                                           int kind)
+{
+    const DM2_V1_GdatHudM11Command *command =
+        dm2_v1_hud_plan_command(s, gdat_index, rect, kind);
+    if (!command) return 0;
+    memcpy(s->active_asset_palette16, command->palette16,
+           sizeof(s->active_asset_palette16));
+    s->active_asset_palette_hash = command->palette_hash;
+    s->active_asset_palette_ready = 1;
+    dm2_v1_blit_scaled_material_bitmap(s, s->framebuffer, s->fb_stride,
+        rect->x, rect->y, rect->w, rect->h, command->pixels,
+        command->width, command->height, command->width,
+        DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
+    return 1;
+}
+
 static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                                         const DM2_V1_ViewportRect *rect,
                                         int gdat_index)
@@ -5008,7 +5057,14 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     int h = 0;
     int stride = 0;
     if (!s || !s->framebuffer || !rect || rect->w <= 0 || rect->h <= 0 ||
-        gdat_index == 0 ||
+        gdat_index == 0) return 0;
+    if (s->source_materials_required && s->gdat_hud_material_plan) {
+        if (!dm2_v1_render_hud_plan_command(s, gdat_index, rect,
+                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) ? DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR :
+                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP) ? DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP :
+                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX) ? DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX :
+                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL) ? DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL : DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON)) return 0;
+    } else if (
         dm2_v1_fetch_viewport_asset(s,
                                     gdat_index,
                                     &pixels,
@@ -5018,7 +5074,7 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         !pixels || w <= 0 || h <= 0) {
         return 0;
     }
-    dm2_v1_blit_scaled_material_bitmap(s,
+    if (!s->source_materials_required || !s->gdat_hud_material_plan) dm2_v1_blit_scaled_material_bitmap(s,
                               s->framebuffer,
                               s->fb_stride,
                               rect->x,
@@ -5215,6 +5271,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 int portrait_gdat =
                     dm2_v1_viewport_hud_portrait_graphic_index(
                         plan.champion_slots[slot].portrait_index);
+                const DM2_V1_GdatHudM11Command *portrait_command = NULL;
                 /* DRAW_CHAMPION_PICTURE uses glbChampionSquad.HeroType(),
                  * not Firestaff's session-tail portrait ordinal. Until the
                  * original save/session parser binds that field, a real-data
@@ -5223,6 +5280,26 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     !plan.champion_slots[slot].portrait_type_source_bound) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
+                } else if (s->source_materials_required &&
+                    s->gdat_hud_material_plan &&
+                    (portrait_command = dm2_v1_hud_plan_command(
+                        s, portrait_gdat,
+                        &plan.champion_slots[slot].portrait_rect,
+                        DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT)) != NULL) {
+                    memcpy(s->active_asset_palette16, portrait_command->palette16,
+                           sizeof(s->active_asset_palette16));
+                    s->active_asset_palette_hash = portrait_command->palette_hash;
+                    s->active_asset_palette_ready = 1;
+                    dm2_v1_blit_scaled_material_bitmap(s, vp, stride,
+                        plan.champion_slots[slot].portrait_rect.x,
+                        plan.champion_slots[slot].portrait_rect.y,
+                        plan.champion_slots[slot].portrait_rect.w,
+                        plan.champion_slots[slot].portrait_rect.h,
+                        portrait_command->pixels, portrait_command->width,
+                        portrait_command->height, portrait_command->width,
+                        DM2_COLOR_TRANSPARENT,
+                        &s->gdat_interface_palette_consumed_count);
+                    ++s->asset_hud_portrait_drawn_count;
                 } else if (portrait_gdat != 0 &&
                     dm2_v1_fetch_viewport_local_material(
                         s, portrait_gdat, &portrait_pixels, &portrait_w,

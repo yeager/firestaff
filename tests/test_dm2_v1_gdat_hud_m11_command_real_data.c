@@ -36,6 +36,26 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
     return 1;
 }
 
+static int unexpected_fetches;
+
+static int unexpected_asset_fetch(void *user, int index,
+                                  const uint8_t **pixels, int *width,
+                                  int *height, int *stride)
+{
+    (void)user; (void)index; (void)pixels; (void)width; (void)height;
+    (void)stride;
+    ++unexpected_fetches;
+    return -1;
+}
+
+static int unexpected_palette_fetch(void *user, int index, uint8_t palette[16],
+                                    uint32_t *hash)
+{
+    (void)user; (void)index; (void)palette; (void)hash;
+    ++unexpected_fetches;
+    return -1;
+}
+
 int main(void)
 {
     const char *home = getenv("HOME");
@@ -48,6 +68,8 @@ int main(void)
     DM2_V1_BootProfile boot;
     DM2_V1_GdatHudM11CommandPlan plan;
     DM2_V1_HudPartyState party;
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     int failures = 0;
     uint8_t champion_mask[261];
     uint8_t encoded_champion[261];
@@ -156,6 +178,31 @@ int main(void)
                command->gdat_field, command->width, command->height,
                command->destination.x, command->destination.y,
                command->destination.w, command->destination.h);
+    }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    unexpected_fetches = 0;
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_hud_party(&viewport, &party);
+    dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, unexpected_palette_fetch, NULL);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_hud_material_plan(&viewport, &plan);
+    dm2_v1_render_ui_chrome(&viewport);
+    /* HUD names still use the separately source-gated dt07 font route. The
+     * image-family proof below excludes that known no-draw lookup. */
+    if (viewport.asset_hud_core_drawn_count != 9 ||
+        viewport.asset_hud_portrait_drawn_count != 4 ||
+        viewport.fallback_hud_core_drawn_count != 0 ||
+        viewport.fallback_hud_portrait_drawn_count != 0) {
+        fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
+              stderr);
+        fprintf(stderr, "core=%d portrait=%d fallback-core=%d fallback-portrait=%d callbacks=%d\n",
+                viewport.asset_hud_core_drawn_count,
+                viewport.asset_hud_portrait_drawn_count,
+                viewport.fallback_hud_core_drawn_count,
+                viewport.fallback_hud_portrait_drawn_count, unexpected_fetches);
+        ++failures;
     }
     dm2_v1_gdat_hud_m11_command_plan_free(&plan);
     dm2_v1_boot_cleanup(&boot);

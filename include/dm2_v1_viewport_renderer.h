@@ -4,6 +4,8 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 
+typedef struct DM2_V1_GdatHudM11CommandPlan DM2_V1_GdatHudM11CommandPlan;
+
 /* ══════════════════════════════════════════════════════════════════════
  * DM2 V1 Viewport Renderer — Skullkeep rendering pipeline
  *
@@ -351,7 +353,7 @@ typedef struct {
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
 } DM2_V1_HudChampionState;
 
-typedef struct {
+typedef struct DM2_V1_HudPartyState {
     int champion_count;
     int leader_index;
     DM2_V1_HudChampionState champions[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
@@ -916,6 +918,7 @@ typedef struct {
     uint32_t last_hud_core_pixel_count;
     int asset_hud_portrait_drawn_count;
     int fallback_hud_portrait_drawn_count;
+    const DM2_V1_GdatHudM11CommandPlan *gdat_hud_material_plan;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -963,6 +966,9 @@ void dm2_v1_viewport_set_gdat_scene_control(
 void dm2_v1_viewport_set_gdat_scene_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatSceneM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_hud_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatHudM11CommandPlan *plan);
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,

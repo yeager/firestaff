@@ -485,6 +485,13 @@ ReDMCSB WIP 2021-02-06 source tree.
     active `GRAPHICSSET` sky and ground IMG3s with their own local palettes
     before either outdoor scene plane is drawn. Weather stays no-draw because
     its real `DRAW_TEMP_PICST` image/destination route remains unproven.
+  - 2026-07-14 update: the complete static HUD family now follows the same
+    boot-owned command-plan route as the validated `UPDATE_GFXSET` scene
+    planes. `INTERFACE_GENERAL` chrome and source-bound `CHAMPIONS` portraits
+    carry their own decoded IMG3 pixels, local palettes, and exact M11
+    destinations into `c_gui_vp` consumption; a missing command remains
+    blocked rather than asking the provider for substitute art. This does not
+    infer any G1 DB semantics, HUD font placement, or dynamic-stat clipping.
 
 - 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
   `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads

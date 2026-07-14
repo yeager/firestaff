@@ -19,7 +19,7 @@ enum {
 
 #define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 13
 
-typedef struct {
+typedef struct DM2_V1_GdatHudM11Command {
     int kind;
     int gdat_category;
     int gdat_index;
@@ -36,7 +36,7 @@ typedef struct {
     uint32_t palette_hash;
 } DM2_V1_GdatHudM11Command;
 
-typedef struct {
+typedef struct DM2_V1_GdatHudM11CommandPlan {
     int valid;
     int command_count;
     uint32_t command_hash;

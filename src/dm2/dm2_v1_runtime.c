@@ -24,6 +24,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -2392,6 +2393,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     const uint8_t *font_rows = NULL;
     uint32_t font_hash = 0u;
     DM2_V1_InterfaceHudLayout hud_layout;
+    DM2_V1_GdatHudM11CommandPlan hud_material_plan;
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
     DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
@@ -2529,6 +2531,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &viewport, font_rows, font_hash);
     }
     memset(&hud_layout, 0, sizeof(hud_layout));
+    memset(&hud_material_plan, 0, sizeof(hud_material_plan));
+    if (viewport.hud_party_valid) {
+        (void)dm2_v1_boot_gdat_hud_m11_command_plan(
+            rt->boot, &viewport.hud_party, &hud_material_plan);
+        dm2_v1_viewport_set_gdat_hud_material_plan(
+            &viewport, &hud_material_plan);
+    }
     if (dm2_v1_boot_interface_hud_layout(rt->boot, &hud_layout)) {
         dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &hud_layout);
     }
@@ -2558,6 +2567,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
     dm2_runtime_finish_item_render_receipt(&viewport);
