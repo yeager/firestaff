@@ -1,5 +1,7 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM2 HUD follow-up: HUD now binds to its G1 scene receipt. Save corpus remains.
+
 - 2026-07-15 DM2 HUD follow-up: exact real HUD command counts now cross M11.
   Remaining work is original save-corpus admission, not partial HUD fallback.
 

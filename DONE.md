@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 M11 HUD/scene composition: real HUD delivery now requires
+  the same G1 scene-control receipt as its GDAT planes.
+
 - 2026-07-15 DM2 skproject HUD M11 delivery: the exact real GDAT HUD command
   count now accompanies its hash and consumed flag; a partial plan is no-draw.
 

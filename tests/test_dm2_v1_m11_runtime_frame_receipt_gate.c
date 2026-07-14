@@ -35,6 +35,7 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_door_material_plan_consumed = 1;
     receipt.runtime_m11_frame_hud_material_plan_required = 1;
     receipt.runtime_m11_frame_hud_material_plan_hash = 0x48554431u;
+    receipt.runtime_m11_frame_hud_scene_control_hash = 0x53434e45u;
     receipt.runtime_m11_frame_hud_material_plan_command_count = 13;
     receipt.runtime_m11_frame_hud_material_plan_consumed = 1;
     receipt.runtime_m11_frame_creature_material_plan_required = 1;
@@ -81,6 +82,7 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.door_material_plan_consumed = 1;
     receipt.hud_material_plan_required = 1;
     receipt.hud_material_plan_hash = 0x48554431u;
+    receipt.hud_scene_control_hash = 0x53434e45u;
     receipt.hud_material_plan_command_count = 13;
     receipt.hud_material_plan_consumed = 1;
     receipt.creature_material_plan_required = 1;
@@ -178,6 +180,11 @@ int main(void)
     runtime.hud_material_plan_hash++;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a stale GDAT HUD material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.hud_scene_control_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects HUD from another G1 scene");
     runtime = make_runtime_receipt();
 
     runtime.hud_material_plan_command_count--;
