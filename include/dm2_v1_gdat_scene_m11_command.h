@@ -24,6 +24,15 @@ typedef struct {
 
 typedef struct {
     int valid;
+    uint16_t floor_rect_number;
+    uint16_t ceiling_rect_number;
+    uint32_t table_hash;
+    uint32_t floor_row_hash;
+    uint32_t ceiling_row_hash;
+} DM2_V1_GdatSceneQueryBlitRectReceipt;
+
+typedef struct {
+    int valid;
     uint8_t graphicsset;
     uint16_t scene_colorkey;
     uint16_t scene_flags;
@@ -34,21 +43,16 @@ typedef struct {
     /* QUERY_BLIT_RECT's source-backed destinations, indexed like commands:
      * floor first, ceiling second. The viewport consumes ceiling then floor. */
     DM2_V1_GdatSceneBlitRect rects[2];
+    /* Exact INTERFACE_GENERAL/0/dt04 program that resolved rects. M11 must
+     * reject a plan that cannot retain this source receipt. */
+    DM2_V1_GdatSceneQueryBlitRectReceipt query_blit_rect;
+    uint32_t query_blit_rect_hash;
 } DM2_V1_GdatSceneM11CommandPlan;
 
 /* SKProject QUERY_BLIT_RECT obtains the ceiling and floor destinations from
  * INTERFACE_GENERAL/0/dt04/0 in that order. */
 #define DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER   701u
 #define DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER 700u
-
-typedef struct {
-    int valid;
-    uint16_t floor_rect_number;
-    uint16_t ceiling_rect_number;
-    uint32_t table_hash;
-    uint32_t floor_row_hash;
-    uint32_t ceiling_row_hash;
-} DM2_V1_GdatSceneQueryBlitRectReceipt;
 
 /* skproject c_gui_vp: the active MapGraphicsStyle's control words and floor/
  * ceiling IMG3s form one transaction. Missing any source record emits no M11
@@ -57,11 +61,13 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
 
-/* The receipt hashes records 700/701 only. Plan construction separately
- * admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */
+/* The receipt hashes records 700/701 only. Plan construction retains this
+ * receipt and admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */
 int dm2_v1_gdat_scene_query_blit_rect_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatSceneQueryBlitRectReceipt *out_receipt);
+uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
+    const DM2_V1_GdatSceneQueryBlitRectReceipt *receipt);
 void dm2_v1_gdat_scene_m11_command_plan_free(
     DM2_V1_GdatSceneM11CommandPlan *plan);
 

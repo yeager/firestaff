@@ -3268,6 +3268,26 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
             }
+            /* SKProject c_gui_vp.cpp DRAW_DUNGEON_GRAPHIC submits rect 700
+             * for ceiling then 701 for floor through QUERY_BLIT_RECT. The
+             * decoded planes are usable only while the source table and both
+             * program rows remain bound to this plan. */
+            if (!plan->query_blit_rect.valid ||
+                plan->query_blit_rect.floor_rect_number !=
+                    DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+                plan->query_blit_rect.ceiling_rect_number !=
+                    DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+                plan->query_blit_rect.table_hash == 0u ||
+                plan->query_blit_rect.floor_row_hash == 0u ||
+                plan->query_blit_rect.ceiling_row_hash == 0u ||
+                plan->query_blit_rect_hash == 0u ||
+                plan->query_blit_rect_hash !=
+                    dm2_v1_gdat_scene_query_blit_rect_hash(
+                        &plan->query_blit_rect)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
             if (floor_rect->rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
                 ceiling_rect->rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
                 floor_rect->width != floor->width || floor_rect->height != floor->height ||

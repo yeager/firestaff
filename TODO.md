@@ -31,8 +31,10 @@
   trace evidence. Broader original PC34 executable route/capture comparison
   remains an external-corpus task.
 
-- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
-  source-owned destination/clipping plan. Complete standard door panels,
+- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light and movement
+  offsets still need source-owned destination/clipping plans. The static
+  floor/ceiling route now accepts only the source-bound `QUERY_BLIT_RECT`
+  700/701 program receipt. Complete standard door panels,
   frames, default buttons, and overlays now reach M11 through exact material
   plans. HUD champion portraits now bind their M11 destination to the original
   `INTERFACE_GENERAL/0/dt04` RECT_173..RECT_176 table receipt; custom `WALL_GFX` buttons remain receipt-gated, including the

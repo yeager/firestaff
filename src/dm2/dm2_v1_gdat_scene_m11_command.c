@@ -21,6 +21,30 @@ static int16_t read_le16s(const uint8_t *bytes)
     return (int16_t)read_le16(bytes);
 }
 
+uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
+    const DM2_V1_GdatSceneQueryBlitRectReceipt *receipt)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!receipt || !receipt->valid ||
+        receipt->floor_rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+        receipt->ceiling_rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+        receipt->table_hash == 0u || receipt->floor_row_hash == 0u ||
+        receipt->ceiling_row_hash == 0u) {
+        return 0u;
+    }
+    hash = hash_bytes(hash, (const uint8_t *)&receipt->floor_rect_number,
+                      sizeof(receipt->floor_rect_number));
+    hash = hash_bytes(hash, (const uint8_t *)&receipt->ceiling_rect_number,
+                      sizeof(receipt->ceiling_rect_number));
+    hash = hash_bytes(hash, (const uint8_t *)&receipt->table_hash,
+                      sizeof(receipt->table_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&receipt->floor_row_hash,
+                      sizeof(receipt->floor_row_hash));
+    return hash_bytes(hash, (const uint8_t *)&receipt->ceiling_row_hash,
+                      sizeof(receipt->ceiling_row_hash));
+}
+
 static const uint8_t *find_compressed_rect_row(const uint8_t *table,
                                                 size_t table_size,
                                                 uint16_t rect_number)
@@ -123,6 +147,18 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
      * eight. Every live G1 set carries it; AMBIANT_LIGHT does not, so it is
      * intentionally outside this fail-closed scene/light command family. */
     candidate.graphicsset = graphicsset;
+    if (!dm2_v1_gdat_scene_query_blit_rect_receipt(
+            loader, &candidate.query_blit_rect) ||
+        !candidate.query_blit_rect.valid ||
+        candidate.query_blit_rect.floor_rect_number !=
+            DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+        candidate.query_blit_rect.ceiling_rect_number !=
+            DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER) {
+        return 0;
+    }
+    candidate.query_blit_rect_hash =
+        dm2_v1_gdat_scene_query_blit_rect_hash(&candidate.query_blit_rect);
+    if (!candidate.query_blit_rect_hash) return 0;
     for (int i = 0; i < 2; ++i) {
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
         const uint8_t *raw;
@@ -167,6 +203,17 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
                               sizeof(candidate.rects[i]));
         }
     }
+    hash = hash_bytes(hash,
+                      (const uint8_t *)&candidate.query_blit_rect.table_hash,
+                      sizeof(candidate.query_blit_rect.table_hash));
+    hash = hash_bytes(hash,
+                      (const uint8_t *)&candidate.query_blit_rect.floor_row_hash,
+                      sizeof(candidate.query_blit_rect.floor_row_hash));
+    hash = hash_bytes(hash,
+                      (const uint8_t *)&candidate.query_blit_rect.ceiling_row_hash,
+                      sizeof(candidate.query_blit_rect.ceiling_row_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.query_blit_rect_hash,
+                      sizeof(candidate.query_blit_rect_hash));
     hash ^= candidate.scene_colorkey; hash *= 16777619u;
     hash ^= candidate.scene_flags; hash *= 16777619u;
     hash ^= candidate.highest_light_level; hash *= 16777619u;
