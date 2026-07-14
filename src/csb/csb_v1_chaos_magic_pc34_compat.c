@@ -925,6 +925,30 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, w * v)) goto underflow;
         break;
+    case 38u: /* STKOP_Fetch */
+        /* CSBWin DSA.cpp:2473-2480 routes this through DSADBANK::Var.
+         * An undefined local therefore yields source zero without changing
+         * its definition state; no external variable bank is involved. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        if (variable_state[v] != 1u) variables[v] = 0u;
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, variables[v])) {
+            goto underflow;
+        }
+        break;
+    case 39u: /* STKOP_Store */
+        /* DSA.cpp:2481-2488 pops index before the value and defines the
+         * selected DSAVARS cell.  The local bank remains transaction-local. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if (v >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        variables[v] = w;
+        variable_state[v] = 1u;
+        break;
     case 48u: /* STKOP_Loc2AbsCoord */
         /* CSBWin DSA.cpp:3253-3268 constructs LOCATIONREL from the source
          * packed integer, assigns it to LOCATIONABS, then pushes level, X,
