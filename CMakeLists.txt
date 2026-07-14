@@ -417,6 +417,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0243_timeline_door_des
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat.c")
+    add_executable(test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat
+        tests/test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat.c
+        src/csb/csb_v1_f0148_dungeon_set_group_directions_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME csb_v1_f0148_dungeon_set_group_directions_pc34_compat
+        COMMAND test_csb_v1_f0148_dungeon_set_group_directions_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_csb_f0165_dungeon_discarded_thing_pc34_compat.c")
     add_executable(test_dm1_csb_f0165_dungeon_discarded_thing_pc34_compat
         tests/test_dm1_csb_f0165_dungeon_discarded_thing_pc34_compat.c
