@@ -4,6 +4,11 @@
   tail and normal-termination result. The focused strict-C11 test leaves
   program execution and DOS exit-status provenance as caller-owned boundaries.
 
+- 2026-07-14 DM1 HUD spell rendering: removed the procedural spell workbench
+  from V1-chrome eligibility. CASTER.C/MENUDRAW.C's native C009 background,
+  C011 rows and C013 layout are now the sole V1 route, with GRAPHICS.DAT and
+  original-font availability still required; no text or placeholder fallback.
+
 - 2026-07-14 DM1/CSB ReDMCSB F8131/F8132/F8133: source-locked IBMIO.C FAT
   volume-label filter, DOS-time `DX` seed and explicit empty floppy route.
   The focused strict-C11 test keeps FCB/DTA lookup and clock provenance as
