@@ -27,6 +27,7 @@ int theron_v1_track02_loader_intake_observe(
     receipt.record_user_data_offset = facts->record_user_data_offset;
     receipt.observed_destination = facts->destination;
     receipt.observed_byte_count = facts->byte_count;
+    receipt.observed_payload_checksum = facts->complete_payload_checksum;
     receipt.status =
         "initial_envelope_loader_read_observed_media_bound_payload_blocked";
     *out_receipt = receipt;

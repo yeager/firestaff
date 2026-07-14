@@ -35,6 +35,7 @@ int main(void) {
           THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET);
     CHECK(receipt.observed_destination == facts.destination);
     CHECK(receipt.observed_byte_count == facts.byte_count);
+    CHECK(receipt.observed_payload_checksum == facts.complete_payload_checksum);
     CHECK(strcmp(receipt.status,
                  "initial_envelope_loader_read_observed_media_bound_payload_blocked") == 0);
 
