@@ -3,12 +3,20 @@ set -euo pipefail
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 script=$repo/scripts/capture_theron_mednafen_live_trace.sh
+quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
     exit 1
 fi
 bash -n "$script"
+if [[ ! -f "$quartz_helper" ]] ||
+   ! grep -Fq 'CGEvent(keyboardEventSource: source' "$quartz_helper" ||
+   ! grep -Fq 'down.post(tap: .cghidEventTap)' "$quartz_helper" ||
+   ! grep -Fq 'up.post(tap: .cghidEventTap)' "$quartz_helper"; then
+    printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
+    exit 1
+fi
 if ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
     printf 'FAIL: capture script must disable unrelated Arcade Card emulation\n' >&2
     exit 1
@@ -28,9 +36,11 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'set targetProcess to first application process whose unix id is $mednafen_ui_pid' "$script" ||
    ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
    ! grep -Fq 'mednafen_ui_pid=$(pgrep -f "$mednafen_bin" | tail -n 1 || true)' "$script" ||
-   ! grep -Fq 'key code 36' "$script" ||
-   ! grep -Fq 'key code 48' "$script" ||
-   ! grep -Fq 'key code 85' "$script" ||
+   ! grep -Fq 'return) host_key_code=36' "$script" ||
+   ! grep -Fq 'select) host_key_code=48' "$script" ||
+   ! grep -Fq 'i) host_key_code=34' "$script" ||
+   ! grep -Fq 'swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold"' "$script" ||
+   ! grep -Fq 'host input requires Swift and the checked-in Quartz keypair helper' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
@@ -56,6 +66,8 @@ fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'host_input_target_pid=%s' "$script" ||
    ! grep -Fq 'host_input_focus=screen_click:%s,%s' "$script" ||
+   ! grep -Fq 'host_input_delivery=quartz_hid_key_down_up' "$script" ||
+   ! grep -Fq 'host_input_delivery_attempts=%s' "$script" ||
    ! grep -Fq 'trace_input_order_receipt()' "$script" ||
    ! grep -Fq 'pce_input_transactions_after_first_host' "$script" ||
    ! grep -Fq 'host_input_order=after_last_observed_pce_input_poll' "$script" ||

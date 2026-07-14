@@ -18,6 +18,8 @@ host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
+host_key_code=
+quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
@@ -96,12 +98,21 @@ if [[ -n "$host_key" ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
         exit 1
     fi
+    case "$host_key" in
+        return) host_key_code=36 ;;
+        select) host_key_code=48 ;;
+        i) host_key_code=34 ;;
+    esac
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' >&2
         exit 1
     fi
     if [[ "$(uname -s)" != Darwin ]] || ! command -v osascript >/dev/null 2>&1; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY=return requires macOS osascript accessibility input' >&2
+        exit 1
+    fi
+    if [[ ! -f "$quartz_keypair_script" ]] || ! command -v swift >/dev/null 2>&1; then
+        printf '%s\n' 'FAIL: host input requires Swift and the checked-in Quartz keypair helper' >&2
         exit 1
     fi
     if [[ ! "$host_key_delay" =~ ^[0-9]+$ ]]; then
@@ -238,17 +249,6 @@ if [[ -n "$host_key" ]]; then
 tell application "System Events"
     set targetProcess to first application process whose unix id is $mednafen_ui_pid
     set frontmost of targetProcess to true
-    delay 0.2
-    if "$host_key" is "return" then
-        key code 36
-    else if "$host_key" is "select" then
-        key code 48
-    else
-        repeat $host_key_repeats times
-            key code 85
-            delay 0.2
-        end repeat
-    end if
 end tell
 APPLESCRIPT
     then
@@ -257,6 +257,20 @@ APPLESCRIPT
         printf '%s\n' 'FAIL: macOS could not focus Mednafen and send Return; grant accessibility permission to the invoking terminal' >&2
         exit 1
     fi
+    # Send real Quartz key-down/up pairs after PID-bound focus.
+    # The old AppleScript tap never consumed THERON_CAPTURE_HOST_KEY_HOLD, so
+    # its receipt overstated what reached SDL.  These explicit pairs make the
+    # requested duration and repeat count observable at the host boundary;
+    # only Mednafen's own input trace can establish emulated delivery.
+    for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
+        if ! swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold"; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: macOS could not deliver the requested Quartz key pair' >&2
+            exit 1
+        fi
+        sleep 0.2
+    done
 fi
 wait "$mednafen_pid"
 status=$?
@@ -290,6 +304,9 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
         printf 'requested_host_key=%s\n' "$host_key"
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
+        printf 'host_input_delivery=quartz_hid_key_down_up\n'
+        printf 'host_input_delivery_key_code=%s\n' "$host_key_code"
+        printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
     fi

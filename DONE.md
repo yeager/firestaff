@@ -16232,3 +16232,13 @@ Verification: `firestaff_m11` Ninja build.
   second raw-byte decode. Raw bitmap consumers still require MD5 and physical
   offsets, and failed capture admission explicitly reports that fallback
   visuals remain blocked.
+
+- 2026-07-14 Theron authenticated Quartz host-input receipt: the live
+  Mednafen harness now uses PID-bound focus followed by explicit Quartz HID
+  key-down/up pairs, rather than reporting an unused key-hold setting around
+  an AppleScript tap. The transition receipt records delivery method, key
+  code, attempt count, and requested hold. A fresh genuine US CUE + System
+  Card 3.0 run still observed no SDL key event, so it remains fail-closed
+  before emulated input, CD-read, dungeon, object, palette, bitmap, or
+  fallback claims. Focused script test passes; the authentic capture is a
+  negative receipt.

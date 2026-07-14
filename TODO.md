@@ -3300,6 +3300,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or level semantics. The next admissible capture must first observe a host
     event and a nonzero emulated port transition, then retain the existing
     CDIRQ/non-System-Card/raw-sector gates.
+    2026-07-14 Quartz-delivery update: the macOS harness now sends explicit
+    HID key-down/up pairs through a checked-in Quartz helper after PID-bound
+    SDL-surface focus; its stated hold duration and attempt count are retained
+    in the transition receipt. A fresh authentic US CUE + System Card 3.0 run
+    still reports `host_key_events=0`, `input_transactions=128`, three CDIRQ
+    callbacks, and no non-System-Card read or raw sector. The result proves
+    only that this host delivery path did not reach Mednafen's SDL dispatcher.
+    It does not authorize an emulated input, CD read, Track 02 record, dungeon,
+    object, palette, bitmap, or fallback route.
     direct `STA abs` stores to HuC6260 `$0402..$0405` only after a future
     controller receipt. Capture a complete authentic run, then bind only a
     complete recognised index/low/high receipt to a raw bitmap route. Indirect
