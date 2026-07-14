@@ -1,6 +1,7 @@
-/* CSBWin DSA pure-control opcode regression.
- * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591 and
- * EX_EQUAL:1491-1515. These commands have no filter or world side effect. */
+/* CSBWin DSA pure-control and pure-stack opcode regression.
+ * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
+ * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268 and
+ * STKOP_BitCount:4832-4848. These commands have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
 
@@ -29,7 +30,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     action->program_words = words;
     action->program_word_count = word_count;
     context.parameters = parameters;
-    context.parameter_count = 1;
+    context.parameter_count = 4;
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
 }
@@ -49,7 +50,15 @@ int main(void)
     uint16_t question_false[] = { 0x0686u, 0u, 0x03c9u };
     uint16_t question_extended[] = { 0x0686u, 1u, 0x0389u, 0xfffeu };
     uint16_t question_jump[] = { 0x0686u, 1u, 0x0849u, 2u };
-    uint32_t parameters[1] = { 77u };
+    uint16_t loc2abscoord[] = {
+        0x0786u, 0x9629u, 0x0002u, 0x0c0bu,
+        0x00cdu, 0x008du, 0x004du, 0x000du
+    };
+    uint16_t bitcount[] = {
+        0x0786u, 0x0f0fu, 0xf0f0u, 0x1b0bu, 0x000du
+    };
+    uint16_t bitcount_underflow[] = { 0x1b0bu };
+    uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackExecution execution;
@@ -125,6 +134,30 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "QUESTION jump branch remains closed without an action-chain owner");
+
+    parameters[0] = parameters[1] = parameters[2] = parameters[3] = 77u;
+    check(run(&state, &action, loc2abscoord,
+              (int)(sizeof(loc2abscoord) / sizeof(loc2abscoord[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 37u && parameters[1] == 17u &&
+              parameters[2] == 9u && parameters[3] == 2u &&
+              execution.stack_depth == 0u,
+          "LOC2ABSCOORD decodes an original packed location in source order");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, bitcount,
+              (int)(sizeof(bitcount) / sizeof(bitcount[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 16u && execution.stack_depth == 0u,
+          "BITCOUNT consumes and counts all 32 original source bits");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, bitcount_underflow,
+              (int)(sizeof(bitcount_underflow) /
+                    sizeof(bitcount_underflow[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_MALFORMED &&
+              parameters[0] == 77u,
+          "BITCOUNT underflow rejects without parameter publication");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
