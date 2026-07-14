@@ -123,6 +123,14 @@ does not alter the indexed source frame or substitute graphics, and an
 unfiltered present restores the exact source palette RGB. Verification:
 `dm_title_swoosh_handoff_palette` against the local original `GRAPHICS.DAT`.
 
+# 2026-07-14 — DM1 V2.0 startup special-palette runtime route
+
+The V2.0 filter lane is now selected before the original TITLE and ENTRANCE
+timing loops render, so C001 title, C004 entrance, and C005 credits frames
+receive the presentation-only post-pass during live startup. Their original
+indexed pixels and source special VGA palettes remain unchanged. Verification:
+`dm_title_swoosh_handoff_palette` against local original `GRAPHICS.DAT`.
+
 - 2026-07-14 DM2 G1 side-ray surface binding: the active G1 byte-square
   `tileTypeIndex` now populates D0/D1/D2 left and right wall rays, using the
   party-relative SKProject viewport coordinates, before the existing GDAT
