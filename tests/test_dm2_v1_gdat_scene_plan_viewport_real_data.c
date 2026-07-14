@@ -145,6 +145,7 @@ int main(void)
     if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 2 ||
         viewport.last_floor_ceiling_material_consumed_mask != 3u ||
         viewport.gdat_material_palette_floor_ceiling_consumed_count == 0 ||
+        viewport.fallback_floor_ceiling_drawn_count != 0 ||
         viewport.blocked_material_draw_count != 0) {
         fprintf(stderr, "FAIL: canonical plane plan did not directly reach M11 "
                 "(fetch=%d planes=%d mask=%u palette=%d blocked=%d)\n",
@@ -158,18 +159,24 @@ int main(void)
     mismatched = plan;
     mismatched.graphicsset = (uint8_t)(style ^ 1);
     memset(framebuffer, 0, sizeof(framebuffer));
+    unexpected_fetches = 0;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, unexpected_palette_fetch, NULL);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, style, plan.command_hash, plan.scene_colorkey,
         plan.scene_flags, 0u, plan.highest_light_level, 0u, 0u, 0u, 0u,
         0u, plan.ambient_darkness);
     dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
     dm2_v1_render_floor_ceiling(&viewport);
-    if (viewport.asset_floor_ceiling_drawn_count != 0 ||
+    if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
+        viewport.fallback_floor_ceiling_drawn_count != 0 ||
         (viewport.blocked_material_mask &
          DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u) {
-        fputs("FAIL: mismatched MapGraphicsStyle plan was not blocked\n", stderr);
+        fputs("FAIL: mismatched MapGraphicsStyle plan was not a callback-free no-draw\n",
+              stderr);
         failures = 1;
     }
 
