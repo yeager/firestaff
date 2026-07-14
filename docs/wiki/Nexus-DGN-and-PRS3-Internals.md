@@ -96,6 +96,17 @@ bit order, opcode grammar, literal/back-reference layout, output size handling,
 or palette semantics. No synthetic or retail PRS3 surface is materialized from
 them.
 
+## SLEV Task Receipt
+
+DONE: `tests/test_nexus_v1_script_vm.c` consumes every `SLEV00.BIN` through
+`SLEV15.BIN` file from `FIRESTAFF_NEXUS_DATA_DIR`. It locks the observed
+36-byte SH-2 entry receipt, bounded profile accounting, and the runtime block
+against condition/action dispatch.
+
+TODO: task-body opcodes, entry-point ownership, host callbacks, and trigger
+semantics remain unproven. The receipt must not be promoted into a dispatcher
+without hash-bound Saturn execution or capture evidence.
+
 ## Host Route
 
 Launcher, runtime, and host receipts preserve whether a static MNS route was
@@ -111,4 +122,5 @@ before they reach host drawing.
 ./build/test_nexus_v1_bpk_surface_class
 ./build/firestaff_nexus_v1_prs3_loader_media_probe
 ./build/firestaff_nexus_v1_dgn_material_corpus_probe
+FIRESTAFF_NEXUS_DATA_DIR=/path/to/nexus ./build/test_nexus_v1_script_vm
 ```
