@@ -25,12 +25,17 @@ static void make_terminal_real_data_session(
     session->real_asset_matched = 1;
     session->full_startup_ready = 1;
     session->rejects_legacy_wrappers = 1;
+    session->title_assets_ready = 1;
+    session->entrance_assets_ready = 1;
     session->hud_assets_bound = 1;
     session->surfaces.valid = 1;
+    session->surfaces.title_regions_ready = 1;
+    session->surfaces.opening_frame_ready = 1;
     session->surfaces.hud_surfaces_ready = 1;
     session->playback.no_fallback_routes = 1;
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
     session->playback.entrance_music_active = 1;
+    session->playback.entrance_complete = 1;
     session->hud_inventory_binding.verified = 1;
     session->hud_inventory_binding.source =
         CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34;
@@ -68,6 +73,7 @@ int main(void)
     CSB_V1_DungeonData dungeon;
     unsigned char inventory_pixels = 17u;
     unsigned char resurrect_pixels = 40u;
+    int handoff_ok;
 
     csb_v1_boot_profile_init(&profile);
     memset(&snapshot, 0, sizeof(snapshot));
@@ -87,8 +93,9 @@ int main(void)
 
     make_terminal_real_data_session(&session, profile.graphics_path,
                                     &inventory_pixels, &resurrect_pixels);
-    check(csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
-              &snapshot, &session, &receipt) && receipt.hud_session_ready &&
+    handoff_ok = csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+        &snapshot, &session, &receipt);
+    check(handoff_ok && receipt.hud_session_ready &&
               receipt.route == CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34,
           "ReDMCSB entrance completion hands the verified C017/C040 pair to runtime");
 
