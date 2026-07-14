@@ -1413,8 +1413,10 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
         }
         return 0;
     }
-    dm2_v1_session_new(&out_receipt->session);
-    out_receipt->session_valid = 1;
+    /* skproject/SKWIN/SkWinCore.cpp::INIT (55639-55645) keeps the menu in
+     * SHOW_MENU_SCREEN until GAME_LOAD succeeds. This boot receipt proves
+     * only the source-owned title/menu boundary; it cannot manufacture a
+     * party session before the verified DUNGEON.DAT load route completes. */
     if (dm2_v1_startup_menu_state_receipt_scan_saves_from_host_facts(
             &out_receipt->menu_state_receipt,
             facts)) {
