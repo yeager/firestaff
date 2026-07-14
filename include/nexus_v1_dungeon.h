@@ -35,6 +35,7 @@
 #define NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES 20
 #define NEXUS_DGN_MAX_STRUCTURE2_TEXTURES 256
 #define NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES 40
+#define NEXUS_DGN_STRUCTURE3_GEOMETRY_MEASUREMENT_MAX_COMPONENT_ABS 0x100000
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
@@ -828,6 +829,25 @@ typedef struct {
     int transform_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3VectorReceipt;
 
+/* This is a raw coordinate measurement over the documented, entry-local
+ * Structure3a/3b rows. A face is counted nondegenerate only when at least
+ * one three-vertex combination has a nonzero cross product. This establishes
+ * neither a surface plane nor a winding, normal, transform, visibility,
+ * texture, palette, VDP1, or draw rule. */
+typedef struct {
+    int face_receipt_valid;
+    int vector_receipt_valid;
+    int face_count;
+    int measurement_face_count;
+    int nondegenerate_face_count;
+    int degenerate_face_count;
+    int maximum_component_absolute_value;
+    int cross_product_measurement_safe;
+    int accounting_valid;
+    int valid;
+    int surface_or_draw_semantics_proven;
+} Nexus_V1_DgnStructure3FaceGeometryReceipt;
+
 /* Structure3c is documented as one normal row for each Structure3b face
  * row. This retains only that entry-local ordinal correspondence and the
  * already bounded fixed-point unit check. It does not infer a normal plane,
@@ -852,6 +872,7 @@ typedef struct {
 typedef struct {
     int source_topology_valid;
     int source_vectors_valid;
+    int source_face_geometry_valid;
     int source_face_normal_pairing_valid;
     int source_facts_complete;
     int entry_count;
@@ -1211,6 +1232,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
 } Nexus_V1_Level;
 
@@ -1298,6 +1320,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt structure3_mesh_semantics;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
@@ -1766,6 +1789,7 @@ typedef struct {
      * or a draw until original Saturn evidence establishes that route. */
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
+    Nexus_V1_DgnStructure3FaceGeometryReceipt structure3_face_geometry;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1982,6 +2006,9 @@ int nexus_v1_level_structure3_face_material_receipt(
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt);
+int nexus_v1_level_structure3_face_geometry_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3FaceGeometryReceipt *out_receipt);
 int nexus_v1_level_structure3_face_normal_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt);
