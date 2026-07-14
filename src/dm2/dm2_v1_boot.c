@@ -49,7 +49,12 @@
 #define DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT 8
 #define DM2_GDAT_OBJECT_ICON_FIELD_LIMIT 0x10
 #define DM2_GDAT_TITLE_MENU_SCREEN_FIELD 4
-#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 16
+/* skproject/SKWIN/SkWinCore.cpp LOAD_LOCALLEVEL_DYN (2676:07E9-084E)
+ * preserves MapGraphicsStyle as U8, then uses that exact byte in the
+ * GRAPHICSSET and ENVIRONMENT MARK_DYN_LOAD selectors.  The cache must cover
+ * that source address domain; a local 16-style limit would reject a valid
+ * custom or later-corpus map before its GDAT image can be verified. */
+#define DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT 0x100
 
 /* ── Embedded MD5 (same implementation as asset_find_by_hash.c) ──────── */
 

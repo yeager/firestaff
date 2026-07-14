@@ -13346,3 +13346,14 @@ Source lock: ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0438/F0807`; CSBWin
 `Graphics.cpp ReadGraphic`. Verification: CMake build of `firestaff_m11` and
 `git diff --check` passed. The broad `test_csb_v1_boot_runtime_handoff` still
 has pre-existing failures in unrelated synthetic-fixture assertions.
+
+# DM2 GDAT MapGraphicsStyle Corpus (2026-07-14)
+
+- DM2's boot-owned scene-material cache now spans the original unsigned-byte
+  `MapGraphicsStyle` domain. `skproject/SKWIN/SkWinCore.cpp`
+  `LOAD_LOCALLEVEL_DYN` passes that byte unchanged into the active
+  `GRAPHICSSET` and `ENVIRONMENT` load selectors, so Firestaff no longer
+  rejects source-addressable styles above the former local 16-style cache.
+- `test_dm2_v1_gdat_graphicsset_real_data` now audits all 256 possible source
+  style values and checks each style actually referenced by the supplied
+  dungeon against its exact GDAT floor, ceiling, and scene controls.
