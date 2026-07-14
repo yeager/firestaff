@@ -40,21 +40,17 @@ int main(void)
     }
     count = dm2_v1_startup_presentation_build(
         &menu, commands, (int)(sizeof(commands) / sizeof(commands[0])));
-    if (count != 2 || commands[0].kind != DM2_V1_STARTUP_DRAW_GDAT_IMAGE ||
+    if (count != 1 || commands[0].kind != DM2_V1_STARTUP_DRAW_GDAT_IMAGE ||
         commands[0].gdat_category != DM2_GDAT_CATEGORY_TITLE ||
         commands[0].gdat_index != 0 ||
-        commands[0].gdat_field != 1 ||
+        commands[0].gdat_field != 4 ||
         commands[0].rect.x != 0 || commands[0].rect.y != 0 ||
         commands[0].rect.w != 320 || commands[0].rect.h != 200 ||
-        commands[0].frame_owner != DM2_V1_FRAME_OWNER_STARTUP_TITLE ||
-        commands[1].kind != DM2_V1_STARTUP_DRAW_GDAT_IMAGE ||
-        commands[1].gdat_category != DM2_GDAT_CATEGORY_TITLE ||
-        commands[1].gdat_index != 0 || commands[1].gdat_field != 4 ||
-        commands[1].frame_owner != DM2_V1_FRAME_OWNER_STARTUP_MENU) {
-        fprintf(stderr, "DM2 startup title/menu is not TITLE/0 dt07/1 then dt07/4\n");
+        commands[0].frame_owner != DM2_V1_FRAME_OWNER_STARTUP_MENU) {
+        fprintf(stderr, "DM2 startup menu is not TITLE/0 dt07/4 only\n");
         return 1;
     }
 
-    puts("PASS DM2 startup cue 0 precedes TITLE/0 dt07/1 then dt07/4");
+    puts("PASS DM2 startup cue 0 precedes one static TITLE/0 dt07/4 menu");
     return 0;
 }
