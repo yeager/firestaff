@@ -3619,6 +3619,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.hud_material_plan_required =
         hud_material_plan_required;
     g_dm2_last_m11_frame.hud_material_plan_hash = hud_material_plan_hash;
+    g_dm2_last_m11_frame.hud_scene_control_hash = hud_material_plan_consumed
+        ? g_dm2_last_m11_frame.scene_control_hash : 0u;
     g_dm2_last_m11_frame.hud_material_plan_command_count =
         hud_material_plan_command_count;
     g_dm2_last_m11_frame.hud_material_plan_consumed =
