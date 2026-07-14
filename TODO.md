@@ -2115,10 +2115,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   claimed `MENU.BPK` stream span and rejects a whole-file-valid trace when
   that captured payload window differs. This proves source-byte identity for
   one observed input range only; it does not establish PRS3 commands, output
-  pixels, palette semantics, or a render route.
-  They still do not prove opcode grammar, palette semantics, or a renderer;
-  the next admissible step is an original Saturn capture that supplies those
-  facts, never a synthetic decode.
+  pixels, palette semantics, or a render route. Its V2 receipt can additionally
+  retain an observed VDP1 texture-read interval only when that interval exactly
+  covers and fingerprints the captured decoder-output range after the VDP1
+  command; no authentic V2 capture is staged yet. This is source/output-byte
+  consumption evidence only, not VDP1 command-field semantics, opcode grammar,
+  palette semantics, output pixels, or a renderer. The next admissible step is
+  an original Saturn capture with the raw VDP1 command bytes and ordering needed
+  to prove one command-field interpretation, never a synthetic decode.
 - 🔧 2026-07-13 Nexus SFX follow-up: level-0/CD-track provenance alone does
   not promote audio. The verified `dsp01.EXB` preamble establishes only an
   opaque byte-8 SAL payload boundary. All 16 local banks share bytes
