@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `F0777` and `F0778`: source-locked DOS delete
+  and rename dispatch preserve the original ignored-result behavior. Focused
+  strict C11 tests pass.
+
 - 2026-07-14 DM1/CSB ReDMCSB `F0775` and `F0776`: source-locked DOS file
   EOF-size and create routes preserve mark restoration and carry-to-handle
   behavior. Focused strict C11 tests pass.
