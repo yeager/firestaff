@@ -1063,7 +1063,25 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         return NULL;
     }
     plan->structure1a_structure3_topology_candidates_consumed =
+        /* The owner-cell candidate cannot make an unverified Structure3
+         * material join look like source evidence. Consume the parser's
+         * bounded face-material receipt alongside the topology envelope, but
+         * retain the existing no-draw status: neither receipt identifies a
+         * model ordinal, face transform, texel layout, nor raster operation. */
         plan->structure1a_structure3_topology_candidate_receipt.complete &&
+        plan->receipt.structure3_face_materials.face_receipt_valid &&
+        plan->receipt.structure3_face_materials.valid &&
+        plan->receipt.structure3_face_materials.face_count ==
+            plan->receipt.structure3_faces.face_count &&
+        plan->receipt.structure3_face_materials.textured_face_count ==
+            plan->receipt.structure3_faces.textured_face_count &&
+        plan->receipt.structure3_face_materials.static_texture_selector_count ==
+            plan->receipt.structure3_face_materials.static_texture_bound_count &&
+        plan->receipt.structure3_face_materials.animated_texture_selector_count ==
+            plan->receipt.structure3_face_materials.animated_texture_bound_count &&
+        plan->receipt.structure3_face_materials.unsupported_textured_fill_count ==
+            0 &&
+        plan->receipt.structure3_face_materials.selector_bindings_complete &&
         !plan->structure1a_structure3_topology_candidate_receipt
              .fallback_visuals_permitted;
     if (plan->structure1a_structure3_topology_candidates_consumed) {
