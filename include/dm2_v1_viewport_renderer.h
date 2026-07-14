@@ -803,6 +803,10 @@ typedef struct {
     uint16_t gdat_thunder_position;
     uint16_t gdat_ambient_darkness;
     int gdat_scene_material_index;
+    /* The active MAP's decoded GRAPHICSSET planes are retained by the runtime
+     * plan. These are never synthesized and are preferred over a second GDAT
+     * lookup during the same M11 frame. */
+    const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
     int gdat_scene_material_consumed_count;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed_count;
@@ -953,6 +957,12 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t misty_map,
     uint16_t thunder_position,
     uint16_t ambient_darkness);
+/* c_gui_vp consumes UPDATE_GFXSET's already decoded floor/ceiling pair.
+ * The caller retains the plan through this viewport render; an incomplete or
+ * differently addressed plan is rejected by the source-required plane gate. */
+void dm2_v1_viewport_set_gdat_scene_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatSceneM11CommandPlan *plan);
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,

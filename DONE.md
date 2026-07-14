@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
+  map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
+  retained by the runtime and consumed directly by M11 with its original
+  per-image local palettes. A plan whose graphics-set or command hash no
+  longer matches the active map blocks the dungeon planes before any draw;
+  the live route does not re-query through a callback or borrow another set.
+  Source-lock: skproject `SKWIN/c_gui_vp.cpp` `UPDATE_GFXSET` ->
+  `DRAW_DUNGEON`; ReDMCSB `DUNVIEW.C` F0098. Verification: canonical-media
+  `test_dm2_v1_gdat_scene_plan_viewport_real_data` passed, focused CTest
+  material gates passed 3/3, and `test_dm2_v1_runtime_handoff_smoke` passed
+  161/161.
+
 - ✅ 2026-07-14 DM1 original PC34 corpus runtime-stage receipt: every
   classifier-qualified external snapshot now takes an additional immutable
   `LOADSAVE.C` F0435 candidate-world pass before Firestaff's transient export.

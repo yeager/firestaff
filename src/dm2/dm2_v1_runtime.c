@@ -89,6 +89,7 @@ typedef struct {
     int map_wall_gfx_count;
     uint8_t map_door_gfx_list[2];
     int map_graphics_style;
+    DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
     int gdat_scene_control_ready;
     uint32_t gdat_scene_control_hash;
     uint32_t gdat_scene_control_present_mask;
@@ -501,13 +502,13 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
 static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_DungeonData *dd;
-    DM2_V1_GdatSceneM11CommandPlan scene_plan;
     DM2_V1_InterfacePalette palette;
     DM2_V1_WeatherGdatReceipt weather_receipt;
     DM2_V1_BootWeatherDestinationReceipt weather_destination;
     DM2_V1_DialogueGdatReceipt dialogue_shell;
 
     if (!rt) return;
+    dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
     rt->map_graphics_style = -1;
     rt->gdat_scene_control_ready = 0;
     rt->gdat_scene_control_hash = 0u;
@@ -550,11 +551,11 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     /* skproject UPDATE_GFXSET loads the selected GRAPHICSSET image pair and
      * CHECK_RECOMPUTE_LIGHT consumes its darkness word before dungeon draw.
      * Admit only this exact map's complete source family, never a nearby set. */
-    memset(&scene_plan, 0, sizeof(scene_plan));
     if (!dm2_v1_boot_gdat_scene_m11_command_plan(
-            rt->boot, rt->map_graphics_style, &scene_plan) ||
-        !scene_plan.valid ||
-        scene_plan.graphicsset != (uint8_t)rt->map_graphics_style) {
+            rt->boot, rt->map_graphics_style, &rt->gdat_scene_material_plan) ||
+        !rt->gdat_scene_material_plan.valid ||
+        rt->gdat_scene_material_plan.graphicsset !=
+            (uint8_t)rt->map_graphics_style) {
         return;
     }
 
@@ -562,14 +563,14 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
      * These four source fields are the complete G1 family and must remain
      * paired with the decoded floor/ceiling pixels from the selected map. */
     rt->gdat_scene_control_ready = 1;
-    rt->gdat_scene_control_hash = scene_plan.command_hash;
+    rt->gdat_scene_control_hash = rt->gdat_scene_material_plan.command_hash;
     rt->gdat_scene_control_present_mask = 0x0fu;
     rt->gdat_scene_control_query_count = 4u;
-    rt->gdat_scene_flags = scene_plan.scene_flags;
-    rt->gdat_scene_colorkey = scene_plan.scene_colorkey;
-    rt->gdat_scene_highest_light_level = scene_plan.highest_light_level;
-    rt->gdat_ambient_darkness = scene_plan.ambient_darkness;
-    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+    rt->gdat_scene_flags = rt->gdat_scene_material_plan.scene_flags;
+    rt->gdat_scene_colorkey = rt->gdat_scene_material_plan.scene_colorkey;
+    rt->gdat_scene_highest_light_level =
+        rt->gdat_scene_material_plan.highest_light_level;
+    rt->gdat_ambient_darkness = rt->gdat_scene_material_plan.ambient_darkness;
     /* c_weather.cpp consumes the active MapGraphicsStyle after GRAPHICSSET
      * control resolution. Preserve the verified environment image/palette
      * receipt in the live frame boundary, but do not turn it into pixels: the
@@ -1275,6 +1276,8 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     if (!boot_profile) return;
+    dm2_v1_gdat_scene_m11_command_plan_free(
+        &g_dm2_runtime.gdat_scene_material_plan);
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     g_dm2_runtime.boot = boot_profile;
@@ -2477,6 +2480,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_misty_map,
         rt->gdat_thunder_position,
         rt->gdat_ambient_darkness);
+    dm2_v1_viewport_set_gdat_scene_material_plan(
+        &viewport, &rt->gdat_scene_material_plan);
     dm2_runtime_refresh_g1_scene_handoff(
         rt, rt->dungeon_level,
         party_x + forward_dx[party_dir & 3],
