@@ -1,304 +1,153 @@
-/*
- * dm2_v1_timeline.c - DM2 V1 Timeline Wiring Implementation
- *
- * Phase 4 (mechanics parity) source-lock.
- *
- * The DM2 timeline is a time-ordered event queue with these properties:
- *   - Events are scheduled at absolute times (fire_at_ms).
- *   - A tick walker fires events whose fire_at_ms <= now_ms.
- *   - Past events are fired immediately; future events are held.
- *   - Event firing is idempotent (each event fires once unless rescheduled).
- *
- * This module provides:
- *   1. Built-in timeline catalog (6 events: NPC_MOVE + CREATURE_SPAWN +
- *      DOOR_LOCK + DOOR_UNLOCK + MESSAGE_DISPLAY).
- *   2. Schedule API (dm2_v1_timeline_schedule).
- *   3. Tick walker (dm2_v1_timeline_tick) that fires due events.
- *   4. Explicit fire / cancel for tests.
- *
- * Source-lock anchors:
- *   skproject/SKULLWIN/c_timeline.cpp        - timeline core
- *   skproject/SKWIN/DME.h:1780-1850          - timeline_event_t
- *   skproject/SKWIN/SkGlobal.cpp:1280-1350   - dTimelineTable
- *   ReDMCSB TIMELINE.C:43-220                - F0256/F0261 timeline events
- *   ReDMCSB GAMELOOP.C:69                    - F0261_TIMELINE_Process_CPSEF
- *   ReDMCSB MOVESENS.C:1000-1100             - F0268_SENSOR_AddEvent
- *   ReDMCSB TIMELINE.C:882-908               - door destruction event (C02)
- *
- * DM2 difference vs DM1:
- *   - DM1 timeline (TIMELINE.C) has 60+ event types (C01..C70).
- *   - DM2 uses the same machinery but with a smaller built-in set
- *     (NPC move + creature spawn + door lock/unlock + message).
- *
- * V1 invariant: timeline events mutate world state but NEVER party
- * state (HP/mana/food/water/direction/position).
- */
-
 #include "dm2_v1_timeline.h"
 
 #include <string.h>
 
-/* ── Built-in timeline catalog (6 events) ─────────────────────────── */
-static const DM2_V1_TimelineEvent g_builtin_events[DM2_TIMELINE_NUM_BUILTIN] = {
-    /* 1: NPC_MOVE at t=0 (immediate, NPC walks to throne) */
-    {
-        1, DM2_TIMELINE_EVENT_NPC_MOVE, 0,
-        8, 8, 0, 0, 0, NULL
-    },
-    /* 2: CREATURE_SPAWN at t=5000 (5s after start) */
-    {
-        2, DM2_TIMELINE_EVENT_CREATURE_SPAWN, 5000,
-        10, 10, 0, 1, 0, NULL
-    },
-    /* 3: DOOR_LOCK at t=10000 (10s, lock the throne room door) */
-    {
-        3, DM2_TIMELINE_EVENT_DOOR_LOCK, 10000,
-        8, 9, 0, 0, 1, NULL
-    },
-    /* 4: DOOR_UNLOCK at t=30000 (30s, unlock after combat) */
-    {
-        4, DM2_TIMELINE_EVENT_DOOR_UNLOCK, 30000,
-        8, 9, 0, 0, 1, NULL
-    },
-    /* 5: MESSAGE_DISPLAY at t=2000 (2s after start) */
-    {
-        5, DM2_TIMELINE_EVENT_MESSAGE_DISPLAY, 2000,
-        0, 0, 0, 0, 0, "The dungeon awakens..."
-    },
-    /* 6: MESSAGE_DISPLAY at t=15000 (periodic reminder) */
-    {
-        6, DM2_TIMELINE_EVENT_MESSAGE_DISPLAY, 15000,
-        0, 0, 0, 0, 0, "You feel a chill down your spine."
-    },
-};
+static uint32_t timer_ticks(const DM2_V1_SourceTimer *timer)
+{
+    return timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK;
+}
 
-/* ── Module state ─────────────────────────────────────────────────── */
-typedef struct {
-    int now_ms;
-    int queue_count;
-    int event_id_at_slot[DM2_TIMELINE_MAX_EVENTS];  /* event_id or DM2_TIMELINE_NONE */
-    DM2_V1_TimelineEventState states[DM2_TIMELINE_MAX_EVENTS];
-    DM2_V1_TimelineEvent queue[DM2_TIMELINE_MAX_EVENTS];  /* scheduled event copies */
-    int total_fires;
-    int total_ticks;
-    int initialized;
-} DM2_V1_TimelineRuntime;
-
-static DM2_V1_TimelineRuntime s_runtime;
-
-static void ensure_init(void) {
-    if (s_runtime.initialized) return;
-    memset(&s_runtime, 0, sizeof(s_runtime));
-    s_runtime.now_ms = 0;
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        s_runtime.event_id_at_slot[i] = DM2_TIMELINE_NONE;
+void dm2_v1_source_timer_queue_init(DM2_V1_SourceTimerQueue *queue)
+{
+    if (queue != NULL) {
+        memset(queue, 0, sizeof(*queue));
     }
-    s_runtime.initialized = 1;
 }
 
-/* ── Internal: find slot for event_id, or first free slot ───────── */
-static int find_slot_for(int event_id) {
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        if (s_runtime.event_id_at_slot[i] == event_id) return i;
+int dm2_v1_source_timer_compare(const DM2_V1_SourceTimer *left,
+                                uint16_t left_source_index,
+                                const DM2_V1_SourceTimer *right,
+                                uint16_t right_source_index)
+{
+    uint32_t left_ticks;
+    uint32_t right_ticks;
+
+    if (left == NULL || right == NULL) {
+        return 0;
     }
-    return -1;
-}
-
-static int find_free_slot(void) {
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        if (s_runtime.event_id_at_slot[i] == DM2_TIMELINE_NONE) return i;
+    left_ticks = timer_ticks(left);
+    right_ticks = timer_ticks(right);
+    if (left_ticks != right_ticks) {
+        return left_ticks < right_ticks ? -1 : 1;
     }
-    return -1;
-}
-
-/* ── Lifecycle / state ──────────────────────────────────────────── */
-void dm2_v1_timeline_reset_state(void) {
-    memset(&s_runtime, 0, sizeof(s_runtime));
-    s_runtime.now_ms = 0;
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        s_runtime.event_id_at_slot[i] = DM2_TIMELINE_NONE;
+    if (left->type != right->type) {
+        return left->type > right->type ? -1 : 1;
     }
-    s_runtime.initialized = 1;
+    if (left->actor != right->actor) {
+        return left->actor > right->actor ? -1 : 1;
+    }
+    if (left_source_index != right_source_index) {
+        return left_source_index < right_source_index ? -1 : 1;
+    }
+    return 0;
 }
 
-void dm2_v1_timeline_set_now_ms(int now_ms) {
-    ensure_init();
-    s_runtime.now_ms = now_ms;
+DM2_V1_SourceTimerResult dm2_v1_source_timer_enqueue(
+    DM2_V1_SourceTimerQueue *queue,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index)
+{
+    size_t position;
+
+    if (queue == NULL || timer == NULL || timer->type == 0U) {
+        return DM2_V1_SOURCE_TIMER_DISPATCH_REJECTED;
+    }
+    if (queue->count == DM2_V1_SOURCE_TIMER_MAX) {
+        return DM2_V1_SOURCE_TIMER_FULL;
+    }
+    position = queue->count;
+    while (position > 0U &&
+           dm2_v1_source_timer_compare(timer, source_index,
+                                       &queue->timers[position - 1U],
+                                       queue->source_indices[position - 1U]) < 0) {
+        queue->timers[position] = queue->timers[position - 1U];
+        queue->source_indices[position] = queue->source_indices[position - 1U];
+        --position;
+    }
+    queue->timers[position] = *timer;
+    queue->source_indices[position] = source_index;
+    ++queue->count;
+    return DM2_V1_SOURCE_TIMER_OK;
 }
 
-int dm2_v1_timeline_get_now_ms(void) {
-    ensure_init();
-    return s_runtime.now_ms;
+bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
+                                uint32_t game_tick)
+{
+    return queue != NULL && queue->count != 0U &&
+           timer_ticks(&queue->timers[0]) <=
+               (game_tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
 }
 
-/* ── Catalog ────────────────────────────────────────────────────── */
-int dm2_v1_timeline_get_builtin_count(void) {
-    return DM2_TIMELINE_NUM_BUILTIN;
+DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t game_tick,
+    DM2_V1_SourceTimer *out_timer,
+    uint16_t *out_source_index)
+{
+    if (queue == NULL || queue->count == 0U) {
+        return DM2_V1_SOURCE_TIMER_EMPTY;
+    }
+    if (!dm2_v1_source_timer_is_due(queue, game_tick)) {
+        return DM2_V1_SOURCE_TIMER_NOT_DUE;
+    }
+    if (out_timer != NULL) {
+        *out_timer = queue->timers[0];
+    }
+    if (out_source_index != NULL) {
+        *out_source_index = queue->source_indices[0];
+    }
+    if (queue->count > 1U) {
+        memmove(&queue->timers[0], &queue->timers[1],
+                (queue->count - 1U) * sizeof(queue->timers[0]));
+        memmove(&queue->source_indices[0], &queue->source_indices[1],
+                (queue->count - 1U) * sizeof(queue->source_indices[0]));
+    }
+    --queue->count;
+    return DM2_V1_SOURCE_TIMER_OK;
 }
 
-const DM2_V1_TimelineEvent *dm2_v1_timeline_get_builtin(int event_id) {
-    for (int i = 0; i < DM2_TIMELINE_NUM_BUILTIN; i++) {
-        if (g_builtin_events[i].event_id == event_id) {
-            return &g_builtin_events[i];
+DM2_V1_SourceTimerResult dm2_v1_source_timer_dispatch_due(
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t game_tick,
+    DM2_V1_SourceTimerDispatch dispatch,
+    void *context,
+    size_t *out_dispatched_count)
+{
+    size_t dispatched = 0U;
+
+    if (out_dispatched_count != NULL) {
+        *out_dispatched_count = 0U;
+    }
+    if (dispatch == NULL) {
+        return DM2_V1_SOURCE_TIMER_DISPATCH_UNAVAILABLE;
+    }
+    while (dm2_v1_source_timer_is_due(queue, game_tick)) {
+        DM2_V1_SourceTimer timer;
+        uint16_t source_index;
+
+        (void)dm2_v1_source_timer_pop_due(queue, game_tick, &timer,
+                                           &source_index);
+        if (!dispatch(context, &timer, source_index)) {
+            if (out_dispatched_count != NULL) {
+                *out_dispatched_count = dispatched;
+            }
+            return DM2_V1_SOURCE_TIMER_DISPATCH_REJECTED;
         }
+        ++dispatched;
     }
-    return NULL;
-}
-
-int dm2_v1_timeline_lookup_index(int event_id) {
-    for (int i = 0; i < DM2_TIMELINE_NUM_BUILTIN; i++) {
-        if (g_builtin_events[i].event_id == event_id) return i;
+    if (out_dispatched_count != NULL) {
+        *out_dispatched_count = dispatched;
     }
-    return -1;
+    return DM2_V1_SOURCE_TIMER_OK;
 }
 
-/* ── Init: copy built-in events into queue ──────────────────────── */
-int dm2_v1_timeline_init(void) {
-    ensure_init();
-    s_runtime.queue_count = 0;
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        s_runtime.event_id_at_slot[i] = DM2_TIMELINE_NONE;
-        s_runtime.states[i].event_id = 0;
-        s_runtime.states[i].active = 0;
-        s_runtime.states[i].fired_count = 0;
-        s_runtime.states[i].fire_at_ms = 0;
-    }
-    for (int i = 0; i < DM2_TIMELINE_NUM_BUILTIN; i++) {
-        int slot = find_free_slot();
-        if (slot < 0) return (int)DM2_TIMELINE_RESULT_QUEUE_FULL;
-        s_runtime.queue[slot] = g_builtin_events[i];
-        s_runtime.event_id_at_slot[slot] = g_builtin_events[i].event_id;
-        s_runtime.states[slot].event_id = g_builtin_events[i].event_id;
-        s_runtime.states[slot].fire_at_ms = g_builtin_events[i].fire_at_ms;
-        s_runtime.queue_count++;
-    }
-    return (int)DM2_TIMELINE_RESULT_OK;
-}
-
-/* ── Schedule ───────────────────────────────────────────────────── */
-int dm2_v1_timeline_schedule(int event_id, int fire_at_ms) {
-    ensure_init();
-    if (fire_at_ms < 0) return (int)DM2_TIMELINE_RESULT_INVALID_TIME;
-    /* If event is already in queue, update its fire_at_ms. */
-    int slot = find_slot_for(event_id);
-    if (slot >= 0) {
-        s_runtime.queue[slot].fire_at_ms = fire_at_ms;
-        s_runtime.states[slot].fire_at_ms = fire_at_ms;
-        s_runtime.states[slot].fired_count = 0;  /* re-arm */
-        s_runtime.states[slot].active = 0;
-        return (int)DM2_TIMELINE_RESULT_OK;
-    }
-    /* Otherwise add a new event from the catalog. */
-    const DM2_V1_TimelineEvent *builtin = dm2_v1_timeline_get_builtin(event_id);
-    if (!builtin) return (int)DM2_TIMELINE_RESULT_NOT_FOUND;
-    slot = find_free_slot();
-    if (slot < 0) return (int)DM2_TIMELINE_RESULT_QUEUE_FULL;
-    s_runtime.queue[slot] = *builtin;
-    s_runtime.queue[slot].fire_at_ms = fire_at_ms;
-    s_runtime.event_id_at_slot[slot] = event_id;
-    s_runtime.states[slot].event_id = event_id;
-    s_runtime.states[slot].fire_at_ms = fire_at_ms;
-    s_runtime.states[slot].fired_count = 0;
-    s_runtime.states[slot].active = 0;
-    s_runtime.queue_count++;
-    return (int)DM2_TIMELINE_RESULT_OK;
-}
-
-/* ── Tick ───────────────────────────────────────────────────────── */
-int dm2_v1_timeline_tick(int now_ms) {
-    ensure_init();
-    s_runtime.now_ms = now_ms;
-    s_runtime.total_ticks++;
-    int fired = 0;
-    /* Sort events by fire_at_ms so earliest fires first. */
-    for (int i = 0; i < DM2_TIMELINE_MAX_EVENTS; i++) {
-        if (s_runtime.event_id_at_slot[i] == DM2_TIMELINE_NONE) continue;
-        if (s_runtime.states[i].fired_count > 0) continue;
-        if (s_runtime.queue[i].fire_at_ms <= now_ms) {
-            s_runtime.states[i].active = 1;
-            s_runtime.states[i].fired_count++;
-            s_runtime.total_fires++;
-            fired++;
-        }
-    }
-    return fired;
-}
-
-/* ── Explicit fire ──────────────────────────────────────────────── */
-int dm2_v1_timeline_fire(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return (int)DM2_TIMELINE_RESULT_NOT_FOUND;
-    s_runtime.states[slot].active = 1;
-    s_runtime.states[slot].fired_count++;
-    s_runtime.total_fires++;
-    return (int)DM2_TIMELINE_RESULT_OK;
-}
-
-/* ── Cancel ─────────────────────────────────────────────────────── */
-int dm2_v1_timeline_cancel(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return (int)DM2_TIMELINE_RESULT_NOT_FOUND;
-    s_runtime.event_id_at_slot[slot] = DM2_TIMELINE_NONE;
-    s_runtime.queue_count--;
-    return (int)DM2_TIMELINE_RESULT_OK;
-}
-
-/* ── State ──────────────────────────────────────────────────────── */
-int dm2_v1_timeline_get_fire_count(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return -1;
-    return s_runtime.states[slot].fired_count;
-}
-
-int dm2_v1_timeline_is_active(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return 0;
-    return s_runtime.states[slot].active;
-}
-
-int dm2_v1_timeline_get_event_fire_at(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return -1;
-    return s_runtime.queue[slot].fire_at_ms;
-}
-
-const DM2_V1_TimelineEventState *dm2_v1_timeline_get_state(int event_id) {
-    ensure_init();
-    int slot = find_slot_for(event_id);
-    if (slot < 0) return NULL;
-    return &s_runtime.states[slot];
-}
-
-int dm2_v1_timeline_queue_size(void) {
-    ensure_init();
-    return s_runtime.queue_count;
-}
-
-/* ── Observability ──────────────────────────────────────────────── */
-int dm2_v1_timeline_total_fires(void) {
-    ensure_init();
-    return s_runtime.total_fires;
-}
-
-int dm2_v1_timeline_total_ticks(void) {
-    ensure_init();
-    return s_runtime.total_ticks;
-}
-
-const char *dm2_v1_timeline_source_evidence(void) {
-    return
-        "DM2 V1 Timeline Wiring parity - Phase 4 source-lock\n"
-        "Source: skproject/SKULLWIN/c_timeline.cpp        (timeline core)\n"
-        "Source: skproject/SKWIN/DME.h:1780-1850          (timeline_event_t)\n"
-        "Source: skproject/SKWIN/SkGlobal.cpp:1280-1350   (dTimelineTable)\n"
-        "Source: ReDMCSB TIMELINE.C:43-220                (F0256/F0261 timeline events)\n"
-        "Source: ReDMCSB GAMELOOP.C:69                    (F0261_TIMELINE_Process_CPSEF)\n"
-        "Source: ReDMCSB TIMELINE.C:882-908               (door destruction event C02)\n"
-        "Event kinds: NPC_MOVE / CREATURE_SPAWN / DOOR_LOCK / DOOR_UNLOCK / MESSAGE_DISPLAY\n"
-        "V1 invariant: timeline events mutate world state, NEVER party state.\n";
+const char *dm2_v1_source_timer_source_evidence(void)
+{
+    return "skproject/SKULLWIN/c_timer.h defines c_tim as 12 bytes: "
+           "low 24 bits tick, high byte map, then type, actor, A, B, and "
+           "reserved; c_timer.cpp:31-47 DM2_cmp_timers orders tick ascending, "
+           "type descending, actor descending, then timer-array address; "
+           "c_timer.cpp:261-278 pops the heap head only when due; "
+           "c_tim_proc.cpp:3980-4007 dequeues before changing map and "
+           "type-specific dispatch.";
 }

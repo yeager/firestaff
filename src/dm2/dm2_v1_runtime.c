@@ -27,7 +27,6 @@
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
-#include "dm2_v1_timeline.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
 #include "fs_portable_compat.h"
@@ -951,34 +950,6 @@ static void dm2_runtime_apply_plate_event(DM2_V1_RuntimeState *rt,
     }
 }
 
-static void dm2_runtime_apply_timeline_event(DM2_V1_RuntimeState *rt,
-                                             const DM2_V1_TimelineEvent *event) {
-    if (!rt || !event) return;
-    switch (event->kind) {
-        case DM2_TIMELINE_EVENT_CREATURE_SPAWN:
-            dm2_runtime_record_spawn(rt, event->arg_creature_id,
-                                     event->arg_level,
-                                     event->arg_x,
-                                     event->arg_y);
-            break;
-        case DM2_TIMELINE_EVENT_DOOR_LOCK:
-            dm2_runtime_set_target_door_state(rt, event->arg_level,
-                                              event->arg_x,
-                                              event->arg_y, 4);
-            break;
-        case DM2_TIMELINE_EVENT_DOOR_UNLOCK:
-            dm2_runtime_set_target_door_state(rt, event->arg_level,
-                                              event->arg_x,
-                                              event->arg_y, 0);
-            break;
-        case DM2_TIMELINE_EVENT_MESSAGE_DISPLAY:
-            dm2_runtime_record_message(rt, event->message);
-            break;
-        default:
-            break;
-    }
-}
-
 static void dm2_runtime_process_time_triggers(DM2_V1_RuntimeState *rt,
                                               int now_ms) {
     if (!rt) return;
@@ -1001,25 +972,6 @@ static void dm2_runtime_process_time_triggers(DM2_V1_RuntimeState *rt,
                 (int)DM2_TRIGGER_RESULT_OK &&
             dm2_v1_trigger_copy_last_event(&event)) {
             dm2_runtime_apply_trigger_event(rt, &event);
-        }
-    }
-}
-
-static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
-    int before[DM2_TIMELINE_NUM_BUILTIN];
-    int fired;
-
-    if (!rt) return;
-    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
-        before[i - 1] = dm2_v1_timeline_get_fire_count(i);
-    }
-    fired = dm2_v1_timeline_tick(now_ms);
-    if (fired <= 0) return;
-    for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
-        int after = dm2_v1_timeline_get_fire_count(i);
-        if (after > before[i - 1]) {
-            dm2_runtime_apply_timeline_event(rt,
-                                             dm2_v1_timeline_get_builtin(i));
         }
     }
 }
@@ -1066,8 +1018,6 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.projectile_actuator_count = 0;
     dm2_v1_trigger_reset_state();
     dm2_v1_plate_reset_state();
-    dm2_v1_timeline_reset_state();
-    dm2_v1_timeline_init();
     g_dm2_runtime.move_callback  = NULL;
     g_dm2_runtime.turn_callback  = NULL;
     g_dm2_runtime.stairs_callback = NULL;
@@ -1814,7 +1764,6 @@ void dm2_v1_runtime_tick(void) {
     }
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
-    dm2_runtime_process_timeline(rt, rt->tick_count * 55);
 
     memset(&creature_field, 0, sizeof(creature_field));
     creature_field.read_door = dm2_runtime_creature_read_door;
