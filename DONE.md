@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 outdoor renderer: synthetic sky-color generation is removed.
+  Outdoor output now remains unavailable until source-owned ENVIRONMENT GDAT
+  image, palette, and destination receipts are consumed. Verification:
+  focused CTest.
+
 - 2026-07-14 DM1 ReDMCSB `DUNVIEW.C F0111`: source-owned closed-door
   ornament eligibility and temporary panel replay are now explicit renderer
   dispatch receipts, with bounded invalid-route rejection. Verification:
