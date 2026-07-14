@@ -98,6 +98,9 @@ struct DungeonMapTiles_Compat {
 struct DungeonDatState_Compat {
     struct DungeonHeader_Compat   header;
     struct DungeonMapDesc_Compat* maps;   /* [header.mapCount] */
+    /* ReDMCSB G0280: one F0160 base index per dungeon map column. */
+    unsigned short* columnsCumulativeSquareFirstThingCount;
+    int             dungeonColumnCount;
     struct DungeonMapTiles_Compat* tiles;  /* [header.mapCount], NULL until tiles loaded */
     long                          fileSize;
     int                           loaded;

@@ -22680,6 +22680,60 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 }
 #endif
 
+static void m11_draw_dm1_front_mirror_backing_host_receipt(
+    const M11_GameViewState* state,
+    const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH) {
+    const M11_AssetSlot* backing;
+    const unsigned char* paletteMap;
+    int y;
+
+    if (!state || !receipt || !framebuffer || !receipt->drawMirrorBackingAsset ||
+        receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
+        return;
+    }
+    backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                   (unsigned int)receipt->backingGraphicIndex);
+    if (!backing || !backing->loaded || !backing->pixels ||
+        receipt->backingSourceX < 0 || receipt->backingSourceY < 0 ||
+        receipt->backingSourceX >= (int)backing->width ||
+        receipt->backingSourceY >= (int)backing->height) {
+        return;
+    }
+    paletteMap = receipt->backingPaletteMapValid
+        ? receipt->backingPaletteMap : NULL;
+    for (y = 0; y < receipt->backingHeight; ++y) {
+        const int sourceHeight = (int)backing->height - receipt->backingSourceY;
+        const int sourceY = receipt->backingSourceY +
+            (y * sourceHeight) / receipt->backingHeight;
+        const int framebufferY = M11_VIEWPORT_Y + receipt->backingDstY + y;
+        int x;
+        if (framebufferY < 0 || framebufferY >= fbH) {
+            continue;
+        }
+        for (x = 0; x < receipt->backingWidth; ++x) {
+            const int sourceWidth = (int)backing->width - receipt->backingSourceX;
+            const int sourceOffsetX = receipt->backingFlipHorizontal
+                ? receipt->backingWidth - 1 - x : x;
+            const int sourceX = receipt->backingSourceX +
+                (sourceOffsetX * sourceWidth) / receipt->backingWidth;
+            const int framebufferX = M11_VIEWPORT_X + receipt->backingDstX + x;
+            unsigned char pixel;
+            if (framebufferX < 0 || framebufferX >= fbW) {
+                continue;
+            }
+            pixel = backing->pixels[sourceY * (int)backing->width + sourceX];
+            if (pixel == (unsigned char)receipt->backingTransparentColor) {
+                continue;
+            }
+            framebuffer[framebufferY * fbW + framebufferX] = paletteMap
+                ? paletteMap[pixel & 0x0f] : pixel;
+        }
+    }
+}
+
 static void m11_draw_dm1_front_champion_portrait_host_receipt(
     const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt,
@@ -22740,17 +22794,17 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
 
-    /* ReDMCSB DUNGEON.C:2608-2612 stores the C127 champion portrait in
-     * G0289 and DUNVIEW.C:3913-3928 first completes the ordinary F0107 wall
-     * ornament blit, then copies C026 into the fixed D1C portrait-on-wall
-     * rectangle.  The generic wall pass above owns the backing selected by
-     * the map-local sensor ordinal; do not replace it with hard-coded C346.
-     */
+    /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 backing from this exact
+     * F0172-derived receipt, then overlays C026. The ordinary F0107 pass
+     * cannot stand in for C346 because its map-local ornament lookup is a
+     * different source input. */
     if (drawReceipt.candidatePanelOwnsCell) {
         m11_draw_dm1_front_champion_portrait_host_receipt(
             state, &drawReceipt, framebuffer, fbW, fbH);
         return;
     }
+    m11_draw_dm1_front_mirror_backing_host_receipt(
+        state, &drawReceipt, framebuffer, fbW, fbH);
     m11_draw_dm1_front_champion_portrait_host_receipt(
         state, &drawReceipt, framebuffer, fbW, fbH);
 }

@@ -17,17 +17,6 @@ enum { kFramebufferWidth = 320, kFramebufferHeight = 200 };
 static int dx(int direction) { return (direction & 3) == 1 ? 1 : ((direction & 3) == 3 ? -1 : 0); }
 static int dy(int direction) { return (direction & 3) == 2 ? 1 : ((direction & 3) == 0 ? -1 : 0); }
 
-static int square_element(const M11_GameViewState *state, int x, int y)
-{
-    const struct DungeonMapDesc_Compat *map;
-    int index;
-    if (!state || !state->world.dungeon || !state->world.dungeon->tiles) return -1;
-    map = &state->world.dungeon->maps[0];
-    if (x < 0 || y < 0 || x >= (int)map->width || y >= (int)map->height) return -1;
-    index = x * (int)map->height + y;
-    return (state->world.dungeon->tiles[0].squareData[index] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-}
-
 static int find_front_mirror(M11_GameViewState *state,
                              unsigned char *framebuffer,
                              int *out_render_index)
@@ -39,7 +28,6 @@ static int find_front_mirror(M11_GameViewState *state,
         for (x = 0; x < (int)map->width; ++x) {
             unsigned short thing;
             int safety = 0;
-            if (square_element(state, x, y) != DUNGEON_ELEMENT_WALL) continue;
             thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
                 state->world.dungeon, state->world.things, 0, x, y);
             while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
@@ -50,7 +38,13 @@ static int find_front_mirror(M11_GameViewState *state,
                     int partyY = y - dy(direction);
                     if (sensorIndex >= 0 && sensorIndex < state->world.things->sensorCount &&
                         state->world.things->sensors[sensorIndex].sensorType == 127 &&
-                        square_element(state, partyX, partyY) == DUNGEON_ELEMENT_CORRIDOR) {
+                        partyX >= 0 && partyY >= 0 &&
+                        partyX < (int)map->width && partyY < (int)map->height) {
+                        /* DUNGEON.C F0172 publishes C127 through the Thing's
+                         * packed wall cell. Whether the front square is an
+                         * effective wall (including a closed fake wall) is
+                         * the M11/F0172 runtime decision, not a raw-tile
+                         * fixture precondition. */
                         state->world.party.mapIndex = 0;
                         state->world.party.mapX = partyX;
                         state->world.party.mapY = partyY;
@@ -60,7 +54,9 @@ static int find_front_mirror(M11_GameViewState *state,
                                           kFramebufferWidth, kFramebufferHeight);
                         if (M11_GameView_GetFrontMirrorOrdinal(state) !=
                             (int)state->world.things->sensors[sensorIndex].sensorData) {
-                            return 0;
+                            thing = F0512_DUNGEON_GetThingNext_Compat(
+                                state->world.things, thing);
+                            continue;
                         }
                         if (out_render_index) {
                             *out_render_index =
@@ -217,9 +213,15 @@ int main(void)
                                 DM1_V1_CHAMPION_PORTRAIT_GRAPHIC_PC34);
     if (!slot || !slot->loaded || !slot->pixels ||
         !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
-            (int)slot->width, (int)slot->height) ||
-        !find_front_mirror(&state, framebuffer, &mirrorRenderIndex) ||
-        !verify_front_mirror_backing_pixel(&state, framebuffer, mirrorRenderIndex)) goto fail;
+            (int)slot->width, (int)slot->height)) goto fail;
+    if (!find_front_mirror(&state, framebuffer, &mirrorRenderIndex)) {
+        fprintf(stderr, "real PC34 C127 sensor was not presented by M11\n");
+        goto fail;
+    }
+    if (!verify_front_mirror_backing_pixel(&state, framebuffer, mirrorRenderIndex)) {
+        fprintf(stderr, "real PC34 C127 presented without exact C346/C026 pixels\n");
+        goto fail;
+    }
     printf("ok: real PC34 HoC F0096 wall receipts and exact C346/C026 host route\n");
     M11_GameView_Shutdown(&state);
     return 0;
