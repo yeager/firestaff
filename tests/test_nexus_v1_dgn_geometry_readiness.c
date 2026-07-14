@@ -2219,6 +2219,10 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
         Nexus_V1_DgnStructure3CaptureImport import;
         Nexus_V1_DgnStructure3RenderPacket packet;
+        Nexus_V1_DgnStructure3Vector live_vertices[4];
+        Nexus_V1_DgnStructure3Face live_faces[2];
+        Nexus_V1_DgnStructure3Vector live_normals[2];
+        Nexus_V1_DgnStructure3MeshEntryReceipt live_mesh;
         Nexus_Viewport viewport;
 
         memset(&engine, 0, sizeof(engine));
@@ -2236,6 +2240,23 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(dgn, sizeof(dgn));
+        memset(&live_mesh, 0, sizeof(live_mesh));
+        CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
+                  &engine, 0, live_vertices, 4, live_faces, 2,
+                  live_normals, 2, &live_mesh) == 0 &&
+              live_mesh.valid && live_mesh.source_identity_valid &&
+              !live_mesh.transform_or_draw_semantics_proven &&
+              live_vertices[0].x == 65536 && live_vertices[2].y == 131072 &&
+              live_faces[0].triangle && live_faces[0].fill_selector == 0 &&
+              live_normals[0].x == 65536,
+              "active engine exposes only checksum-bound Structure3 mesh rows no-draw");
+        dgn[0] ^= 1U;
+        CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
+                  &engine, 0, live_vertices, 4, live_faces, 2,
+                  live_normals, 2, &live_mesh) == -1 &&
+              !live_mesh.valid && !live_mesh.source_identity_valid,
+              "active engine refuses Structure3 mesh rows after retained LEV bytes change");
+        dgn[0] ^= 1U;
         import.texture_span = texture_span;
         import.texture_span_size = sizeof(texture_span);
         import.palette_state = palette_state;

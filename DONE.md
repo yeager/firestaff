@@ -15542,6 +15542,18 @@ Verification: focused `csb_v1_dsa_trigger_single_step_pc34_compat` CTest.
 
 # ✅ 2026-07-14 Theron Track 02 later loader-to-local-RAM capture contract
 
+# ✅ 2026-07-14 Nexus active DGN Structure3 mesh source route
+
+The Nexus engine now exposes a caller-buffered Structure3 mesh-entry route
+only from the exact canonical `LEVxx.DGN` bytes it currently owns. It requires
+the active level identity, canonical hash, byte-binding receipt, and current
+source bytes to agree before returning typed signed 16.16 vertices, face rows,
+and paired normals. Mutated or stale level bytes return no partial mesh. This
+is a source-routing boundary only: no transform, texture, palette, VDP1, or
+draw semantics are granted, and the no-draw barrier remains active.
+Verification: `test_nexus_v1_dgn_geometry_readiness` covers the active route
+and mutation rejection.
+
 - ✅ 2026-07-14 CSB PC V1 startup decode: literal assets bypass LZW and
   compressed assets use ReDMCSB-compatible chunk-width LZW before IMAGE3
   expansion. This restores original C001 title and entrance assets. Verification:

@@ -2244,6 +2244,39 @@ int nexus_v1_current_level_structure2_source_receipt(
     return 0;
 }
 
+int nexus_v1_current_level_extract_structure3_mesh_entry(
+    const Nexus_V1_Engine *engine, int entry_index,
+    Nexus_V1_DgnStructure3Vector *out_vertices, int max_vertices,
+    Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
+    Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
+    Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3MeshEntryReceipt empty;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+
+    if (!out_receipt) return -1;
+    memset(&empty, 0, sizeof(empty));
+    empty.entry_index = entry_index;
+    *out_receipt = empty;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return -1;
+
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->loaded_bytes_bound ||
+        !source->materialization_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                          engine->current_level_dgn_size)) {
+        return -1;
+    }
+    return nexus_v1_level_extract_structure3_mesh_entry(
+        &engine->current_level, engine->current_level_dgn_data,
+        engine->current_level_dgn_size, entry_index, out_vertices,
+        max_vertices, out_faces, max_faces, out_normals, max_normals,
+        out_receipt);
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
