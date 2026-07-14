@@ -52,6 +52,11 @@ int main(void) {
     int unit_pair_total = 0;
     int non_unit_pair_total = 0;
     int selector_complete_levels = 0;
+    int textured_face_total = 0;
+    int static_selector_total = 0;
+    int static_bound_total = 0;
+    int animated_selector_total = 0;
+    int animated_bound_total = 0;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -136,16 +141,28 @@ int main(void) {
         face_total += pairs.face_normal_pair_count;
         unit_pair_total += pairs.unit_length_face_normal_pair_count;
         non_unit_pair_total += pairs.non_unit_length_face_normal_pair_count;
+        textured_face_total += materials.textured_face_count;
+        static_selector_total += materials.static_texture_selector_count;
+        static_bound_total += materials.static_texture_bound_count;
+        animated_selector_total += materials.animated_texture_selector_count;
+        animated_bound_total += materials.animated_texture_bound_count;
         if (materials.selector_bindings_complete) ++selector_complete_levels;
     }
 
     printf("Structure3 face-normal corpus: levels=%d entries=%d pairs=%d unit=%d nonunit=%d\n",
            checked, entry_total, face_total, unit_pair_total, non_unit_pair_total);
+    printf("Structure3 texture-selector corpus: textured=%d static=%d/%d animated=%d/%d\n",
+           textured_face_total, static_bound_total, static_selector_total,
+           animated_bound_total, animated_selector_total);
     CHECK(checked == 16, "all retail LEV00 through LEV15 files were checked");
     CHECK(entry_total == 1144 && face_total == 18478 &&
           unit_pair_total == 18478 && non_unit_pair_total == 0,
           "retail face-normal pair totals remain corpus-verified and no-draw");
     CHECK(selector_complete_levels == 16,
           "all retail levels preserve selector joins through the renderer-facing receipt");
+    CHECK(textured_face_total == 17821 &&
+              static_selector_total == 17401 && static_bound_total == 17401 &&
+              animated_selector_total == 420 && animated_bound_total == 420,
+          "retail texture selector joins remain corpus-verified without decoding pixels");
     return g_fail == 0 ? 0 : 1;
 }
