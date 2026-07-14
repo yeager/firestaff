@@ -398,6 +398,23 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnActiveStructure1AOwnerChainReceipt;
 
+/* Active canonical LEV Structure2 descriptor envelope and optional
+ * Structure1G global-to-local descriptor binding. The post-FFFF payload is
+ * still opaque: no encoding, palette, pixels, animation, or draw follows. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int descriptor_count;
+    int structure1g_entry_count;
+    int structure1g_structure2_bindings_complete;
+    Nexus_V1_DgnStructure2Payload payload;
+    int descriptor_layout_complete;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnActiveStructure2DescriptorReceipt;
+
 /* Active party pose bound to the canonical LEV source and the bounded raw
  * Structure1A transform-selector evidence. This is camera input provenance,
  * not a decoded Saturn camera, transform, culling, or drawing rule. */
@@ -1049,6 +1066,9 @@ int nexus_v1_current_level_structure3_face_material_receipt(
 int nexus_v1_current_level_structure1a_owner_chain_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveStructure1AOwnerChainReceipt *out_receipt);
+int nexus_v1_current_level_structure2_descriptor_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt *out_receipt);
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);

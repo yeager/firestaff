@@ -6269,3 +6269,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Structure1A -> model/face selector chain. Owner coordinates, selectors, and
   model indexes remain source evidence only; original Saturn capture is still
   required for placement, transforms, materials, pixels, and drawing.
+
+- 🔧 2026-07-15 Nexus active Structure2 descriptor envelope: canonical LEV
+  runtime now consumes the bounded descriptor table, opaque post-FFFF span,
+  and verified Structure1G global-to-local descriptor joins. The payload has
+  no proven encoding, pixel ordering, palette layout, animation timing, or
+  VDP1 route; original Saturn evidence remains required before drawing.
