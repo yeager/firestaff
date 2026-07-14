@@ -2232,6 +2232,10 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.level_index = 0;
         engine.current_level_structure2_source.canonical_hash_verified = 1;
         engine.current_level_structure2_source.materialization_bound = 1;
+        engine.current_level_structure2_source.loaded_bytes_bound = 1;
+        engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
+        engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+            fnv1a64(dgn, sizeof(dgn));
         import.texture_span = texture_span;
         import.texture_span_size = sizeof(texture_span);
         import.palette_state = palette_state;
@@ -2311,6 +2315,12 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
+        dgn[0] ^= 1U;
+        CHECK(!nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, &import) &&
+              engine.structure3_runtime_source.valid,
+              "the engine rejects a capture when retained LEV bytes no longer match their package receipt");
+        dgn[0] ^= 1U;
         import.capture_bundle_fnv1a64 ^= UINT64_C(1);
         CHECK(!nexus_v1_engine_consume_structure3_capture(
                   &engine, &candidate, &bound, &import) &&

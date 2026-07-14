@@ -163,6 +163,12 @@ typedef struct {
     int exact_source_entry_observed;
     int hash_discovery_attempted;
     int canonical_hash_verified;
+    /* Identity of the exact LEV bytes retained by the engine after the
+     * canonical package lookup.  A later host/capture handoff must not use
+     * a receipt for one package entry with a different in-memory DGN. */
+    int loaded_bytes_bound;
+    int loaded_dgn_size;
+    uint64_t loaded_dgn_fnv1a64;
     int structure2_payload_envelope_valid;
     int materialization_bound;
     int payload_decoder_permitted;
