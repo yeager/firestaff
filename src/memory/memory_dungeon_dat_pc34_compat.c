@@ -101,6 +101,7 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
         unsigned short sig;
         unsigned short rawBitA;
         int i;
+        int dungeonColumnCount = 0;
 
         memset(state, 0, sizeof(*state));
 
@@ -246,7 +247,7 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
         }
 
         for (i = 0; i < (int)state->header.mapCount; i++) {
-                struct DungeonMapDesc_Compat* m = &state->maps[i];
+            struct DungeonMapDesc_Compat* m = &state->maps[i];
 
                 if (!read_u16_le(file, &m->rawMapDataByteOffset)) goto fail_maps;
                 if (!read_u16_le(file, &m->aUnreferenced))        goto fail_maps;
@@ -265,13 +266,38 @@ int F0500_DUNGEON_LoadDatHeader_Compat(
                 decode_map_bitfield_b(m->rawBitfieldB, m);
                 decode_map_bitfield_c(m->rawBitfieldC, m);
                 decode_map_bitfield_d(m->rawBitfieldD, m);
+                dungeonColumnCount += (int)m->width;
         }
+
+        /* ReDMCSB LOADSAVE.C builds G0280 from this on-disk table and
+         * F0173 selects a map-local first-column pointer into it. F0160
+         * must consume these source bases, not recreate them from mutable
+         * tile flags after runtime map mutation. */
+        if (dungeonColumnCount <= 0) {
+                goto fail_maps;
+        }
+        state->columnsCumulativeSquareFirstThingCount =
+                (unsigned short*)calloc((size_t)dungeonColumnCount,
+                                        sizeof(unsigned short));
+        if (!state->columnsCumulativeSquareFirstThingCount) {
+                goto fail_maps;
+        }
+        for (i = 0; i < dungeonColumnCount; ++i) {
+                if (!read_u16_le(file,
+                                 &state->columnsCumulativeSquareFirstThingCount[i])) {
+                        goto fail_maps;
+                }
+        }
+        state->dungeonColumnCount = dungeonColumnCount;
 
         state->loaded = 1;
         fclose(file);
         return 1;
 
 fail_maps:
+        free(state->columnsCumulativeSquareFirstThingCount);
+        state->columnsCumulativeSquareFirstThingCount = NULL;
+        state->dungeonColumnCount = 0;
         free(state->maps);
         state->maps = NULL;
 fail:
@@ -287,6 +313,11 @@ void F0500_DUNGEON_FreeDatHeader_Compat(
                 free(state->maps);
                 state->maps = NULL;
         }
+        if (state->columnsCumulativeSquareFirstThingCount) {
+                free(state->columnsCumulativeSquareFirstThingCount);
+                state->columnsCumulativeSquareFirstThingCount = NULL;
+        }
+        state->dungeonColumnCount = 0;
         state->loaded = 0;
 }
 
@@ -504,10 +535,11 @@ int F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
         int mapY)
 {
         const struct DungeonMapDesc_Compat* map;
-        int sftIndex = 0;
+        int sftIndex;
         int m;
-        int squareIndex;
-        int i;
+        int columnIndex;
+        int mapFirstColumnIndex = 0;
+        int row;
 
         if (!dungeon || !dungeon->tilesLoaded || !dungeon->maps || !dungeon->tiles) {
                 return -1;
@@ -522,35 +554,30 @@ int F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
                 return -1;
         }
 
-        squareIndex = mapX * (int)map->height + mapY;
-        if (squareIndex < 0 || squareIndex >= dungeon->tiles[mapIndex].squareCount) {
-                return -1;
-        }
-
-        /* ReDMCSB DUNGEON.C:F0160 lines 1715-1727:
-         * G0270_pui_CurrentMapColumnsCumulativeSquareFirstThingCount[x]
-         * plus the count of earlier thing-list rows in the same column.
-         * We reconstruct that cumulative count from the loaded tile flags
-         * instead of using the on-disk column table directly. */
-        if (!(dungeon->tiles[mapIndex].squareData[squareIndex] &
+        if (!(dungeon->tiles[mapIndex].squareData[
+                mapX * (int)map->height + mapY] &
               DUNGEON_SQUARE_MASK_THING_LIST)) {
                 return -1;
         }
 
-        for (m = 0; m < mapIndex; ++m) {
-                int count;
-                if (!dungeon->tiles[m].squareData) return -1;
-                count = dungeon->tiles[m].squareCount;
-                for (i = 0; i < count; ++i) {
-                        if (dungeon->tiles[m].squareData[i] &
-                            DUNGEON_SQUARE_MASK_THING_LIST) {
-                                ++sftIndex;
-                        }
-                }
+        /* ReDMCSB DUNGEON.C F0160: G0270 is an alias into G0280 at
+         * the first column of the current map. It provides the source
+         * SquareFirstThings base for this x column. */
+        if (!dungeon->columnsCumulativeSquareFirstThingCount ||
+            dungeon->dungeonColumnCount <= 0) {
+                return -1;
         }
-
-        for (i = 0; i < squareIndex; ++i) {
-                if (dungeon->tiles[mapIndex].squareData[i] &
+        for (m = 0; m < mapIndex; ++m) {
+                mapFirstColumnIndex += (int)dungeon->maps[m].width;
+        }
+        columnIndex = mapFirstColumnIndex + mapX;
+        if (columnIndex < 0 || columnIndex >= dungeon->dungeonColumnCount) {
+                return -1;
+        }
+        sftIndex = (int)dungeon->columnsCumulativeSquareFirstThingCount[columnIndex];
+        for (row = 0; row < mapY; ++row) {
+                if (dungeon->tiles[mapIndex].squareData[
+                        mapX * (int)map->height + row] &
                     DUNGEON_SQUARE_MASK_THING_LIST) {
                         ++sftIndex;
                 }
