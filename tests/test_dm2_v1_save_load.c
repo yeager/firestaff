@@ -2519,6 +2519,105 @@ done:
     return 1;
 }
 
+static int test_original_sksave_timer_post_load_rebuild(void)
+{
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_TimerEntry timers[3];
+    DM2_V1_SaveCandidate candidate;
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_RuntimeTimerPostLoadReceipt timer_receipt;
+    DM2_V1_SessionState rejected_session;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    int result = 0;
+
+    printf("  Original SKSave timer post-load ownership rebuild...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    memset(timers, 0, sizeof(timers));
+    gs->dwGameTick = 0x00045678u;
+    gs->wChampionsCount = 1;
+    gs->wPlayerPosX = 2;
+    gs->wPlayerPosY = 3;
+    gs->wPlayerDir = 3;
+    gs->wTimersCount = 3;
+    memcpy(champion.first_name, "ZED", 3u);
+    champion.cur_hp = 41;
+    champion.max_hp = 50;
+
+    /* Raw Timer is dw00, type, actor, value, w8.  Write the retained
+     * ten-byte LE wire image directly, not the compatibility field names. */
+    ((uint8_t *)&timers[0])[4] = 0x0cu; /* tty0C, champion actor 0 */
+    ((uint8_t *)&timers[1])[4] = 0x1du; /* tty1D, RecordE value follows */
+    ((uint8_t *)&timers[1])[6] = 0x34u;
+    ((uint8_t *)&timers[1])[7] = 0x12u;
+    ((uint8_t *)&timers[2])[4] = 0x1eu; /* tty1E, RecordE value follows */
+    ((uint8_t *)&timers[2])[6] = 0x78u;
+    ((uint8_t *)&timers[2])[7] = 0x56u;
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, timers, 3,
+                                  inventory, dm2_db_make_handle(7, 0x44),
+                                  payload, sizeof(payload),
+                                  &payload_size) ||
+        dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                             payload_size) != 0 ||
+        candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        goto done;
+    }
+
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = (uint8_t *)calloc(candidate.dungeon_size, 1u);
+    if (!dungeon.raw_data) goto done;
+    dungeon.raw_size = (int)candidate.dungeon_size;
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 4;
+    dungeon.level_heights[0] = 5;
+    dungeon.square_bytes = 1;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    dm2_v1_runtime_init(&boot);
+
+    if (dm2_v1_runtime_restore_save_candidate(payload, payload_size) != 0 ||
+        !dm2_v1_runtime_last_timer_post_load_receipt(&timer_receipt) ||
+        !timer_receipt.valid || timer_receipt.timer_count != 3u ||
+        timer_receipt.champion_timer_bound_mask != 0x01u ||
+        timer_receipt.champion_timer_index[0] != 0u ||
+        timer_receipt.unresolved_record_timer_count != 2u ||
+        timer_receipt.other_timer_count != 0u) {
+        goto done;
+    }
+    /* A corrupt source actor must fail before session/game/receipt publish. */
+    rejected_session = candidate.session;
+    rejected_session.party_x = 1u;
+    ((uint8_t *)&rejected_session.original_timers[0])[5] = 1u;
+    if (dm2_v1_runtime_apply_session(&rejected_session) == 0 ||
+        game.party_x != 2 ||
+        !dm2_v1_runtime_last_timer_post_load_receipt(&timer_receipt) ||
+        timer_receipt.champion_timer_bound_mask != 0x01u) {
+        goto done;
+    }
+    result = 1;
+done:
+    free(dungeon.raw_data);
+    if (!result) {
+        printf("    FAIL: SKProject timer ownership was not rebuilt exactly\n");
+        return 0;
+    }
+    printf("    PASS: tty0C binds champion and RecordE timers stay unbound\n");
+    return 1;
+}
+
 static int test_external_original_sksave_corpus_census(void)
 {
     const char *corpus_root = getenv("FIRESTAFF_DM2_SKSAVE_CORPUS");
@@ -2637,7 +2736,8 @@ int main(void)
     RUN(21, test_sksave_corpus_runtime_import);
     RUN(22, test_sksave_receipted_candidate_hash_gate);
     RUN(23, test_original_sksave_corpus_runtime_import);
-    RUN(24, test_external_original_sksave_corpus_census);
+    RUN(24, test_original_sksave_timer_post_load_rebuild);
+    RUN(25, test_external_original_sksave_corpus_census);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

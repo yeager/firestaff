@@ -137,6 +137,7 @@ typedef struct {
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
+    DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -168,6 +169,73 @@ static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
 static int g_dm2_runtime_restore_in_progress = 0;
+
+enum {
+    DM2_SKPROJECT_TTY_CHAMPION = 0x0c,
+    DM2_SKPROJECT_TTY_MISSILE_0 = 0x1d,
+    DM2_SKPROJECT_TTY_MISSILE_1 = 0x1e
+};
+
+/* skproject/SKWIN/SkWinCore.cpp::_3a15_020f.  DM2_TimerEntry is retained as
+ * the original ten-byte wire image by the SUPPRESS decoder, so inspect its
+ * bytes rather than its older compatibility field names. */
+static int dm2_runtime_rebuild_original_timer_owners(
+    const DM2_V1_SessionState *session,
+    DM2_V1_RuntimeTimerPostLoadReceipt *out)
+{
+    uint8_t count;
+
+    if (!session || !out || session->champion_count > 4u ||
+        session->original_timer_count > DM2_MAX_TIMERS) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    memset(out->champion_timer_index, 0xff,
+           sizeof(out->champion_timer_index));
+    count = session->original_timer_count;
+    out->timer_count = count;
+
+    /* The source returns immediately for an empty queue.  There are no
+     * source timer-owner facts to manufacture in that case. */
+    if (count == 0u) {
+        out->valid = 1;
+        return 1;
+    }
+
+    for (uint8_t i = 0u; i < count; ++i) {
+        uint8_t raw[DM2_TIMER_ENTRY_SIZE];
+        uint8_t timer_type;
+        uint8_t actor;
+
+        memcpy(raw, &session->original_timers[i], sizeof(raw));
+        timer_type = raw[4];
+        actor = raw[5];
+        switch (timer_type) {
+            case DM2_SKPROJECT_TTY_CHAMPION:
+                /* _3a15_020f writes the current table index.  Reject a bad
+                 * actor before publish instead of writing beyond four saved
+                 * champion records. */
+                if (actor >= session->champion_count || actor >= 4u) {
+                    return 0;
+                }
+                out->champion_timer_index[actor] = i;
+                out->champion_timer_bound_mask |= (uint8_t)(1u << actor);
+                break;
+            case DM2_SKPROJECT_TTY_MISSILE_0:
+            case DM2_SKPROJECT_TTY_MISSILE_1:
+                /* Source calls GET_ADDRESS_OF_RECORDE(timer->value).  The
+                 * exact ObjectID is intentionally not dereferenced until
+                 * raw saved DB pools have a verified address owner. */
+                out->unresolved_record_timer_count++;
+                break;
+            default:
+                out->other_timer_count++;
+                break;
+        }
+    }
+    out->valid = 1;
+    return 1;
+}
 
 static int dm2_runtime_resolve_g1_scene_gdat(
     void *user,
@@ -1512,6 +1580,7 @@ int dm2_v1_runtime_bind_boot_profile_with_receipt(
 int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
+    DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
 
     if (!session || !rt->boot || !rt->boot->dm2_state) {
         return -1;
@@ -1519,9 +1588,14 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     if (!dm2_v1_session_validate(session)) {
         return -1;
     }
+    if (!dm2_runtime_rebuild_original_timer_owners(session,
+                                                   &timer_post_load)) {
+        return -1;
+    }
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     rt->session_snapshot = *session;
     rt->session_snapshot_valid = 1;
+    rt->timer_post_load = timer_post_load;
 
     /* skproject SKWINSPX/src/v4/skgame.cpp SELECT_LOAD_GAME and
      * skfileop.cpp READ_SAVEGAMES_FILENAMES route startup resume through a
@@ -2221,6 +2295,14 @@ void dm2_v1_runtime_tick(void) {
  */
 int dm2_v1_runtime_get_tick_count(void) {
     return g_dm2_runtime.tick_count;
+}
+
+int dm2_v1_runtime_last_timer_post_load_receipt(
+    DM2_V1_RuntimeTimerPostLoadReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.timer_post_load;
+    return out_receipt->valid;
 }
 
 /*
