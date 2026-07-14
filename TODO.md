@@ -350,6 +350,10 @@
     before any part is emitted, each emitted part is obfuscated, and caller
     plaintext is restored. Missing, empty, or odd parts have no partial output.
     This does not identify the five part layouts or decode CSBWin DSA/timers.
+  - 2026-07-14 update: `CEDTINC8.C` plus F7060 now emits the fixed 22-part
+    opaque dungeon byte stream and its final little-endian checksum word. A
+    short output buffer emits nothing. This does not allocate or decode any
+    dungeon, CSBWin, DSA, timer, or runtime layout.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and

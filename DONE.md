@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB CEDTINC8/F7060 dungeon write stream: added the exact
+  ordered 22-part PC34 dungeon byte emission and trailing little-endian
+  checksum word. The header, maps, tables, ThingData pools, and RawMapData
+  remain opaque caller-owned spans; insufficient output fails before any byte
+  is emitted. No dungeon or CSBWin/DSA/timer layout is inferred. Focused
+  strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB CEDTINC8 five-part save write: added the source
   sequence that precomputes five keyed checksums, emits the corresponding
   obfuscated bytes, checks the emitted checksum, and restores plaintext. Keys
