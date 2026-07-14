@@ -1,5 +1,6 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <string.h>
@@ -8,6 +9,11 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
 {
     for (size_t i = 0; i < size; ++i) { hash ^= bytes[i]; hash *= 16777619u; }
     return hash;
+}
+
+static uint32_t hash_u32(uint32_t hash, uint32_t value)
+{
+    return hash_bytes(hash, (const uint8_t *)&value, sizeof(value));
 }
 
 void dm2_v1_gdat_door_overlay_m11_command_plan_free(
@@ -109,8 +115,37 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->field = (uint8_t)field;
     command->width = (uint16_t)width;
     command->height = (uint16_t)height;
+    command->door_opening_dir = door->door_opening_dir;
+    command->door_state = door->door_state;
+    command->door_open_pct = door->door_open_pct;
     command->raw_hash = hash_bytes(2166136261u, raw, raw_size);
-    return command->raw_hash != 0u && ++plan->command_count;
+    command->decoded_hash = hash_bytes(2166136261u, command->pixels,
+                                       (size_t)width * (size_t)height);
+    command->selection_hash = 2166136261u;
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->view_square);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->door_gfx_index);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->door_opening_dir);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->door_state);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->door_open_pct);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)field);
+    if (kind == DM2_V1_GDAT_DOOR_PANEL) {
+        if (!dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_DOORS, index,
+                DM2_V1_DOOR_GDAT_COLORKEY_FIELD, &command->color_key)) {
+            return 0;
+        }
+        if (command->color_key > 0xffu) return 0;
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           command->color_key);
+    }
+    return command->raw_hash != 0u && command->decoded_hash != 0u &&
+           command->selection_hash != 0u && ++plan->command_count;
 }
 
 int dm2_v1_gdat_door_overlay_m11_command_plan_build(
@@ -134,8 +169,12 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     for (int i = 0; i < candidate.command_count; ++i) {
         hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].raw_hash,
                           sizeof(candidate.commands[i].raw_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].decoded_hash,
+                          sizeof(candidate.commands[i].decoded_hash));
         hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].palette_hash,
                           sizeof(candidate.commands[i].palette_hash));
+        hash = hash_bytes(hash, (const uint8_t *)&candidate.commands[i].selection_hash,
+                          sizeof(candidate.commands[i].selection_hash));
     }
     candidate.command_hash = hash ? hash : 1u;
     candidate.valid = 1;

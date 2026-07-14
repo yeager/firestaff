@@ -27,9 +27,15 @@ typedef struct {
     uint8_t *pixels;
     uint16_t width;
     uint16_t height;
+    uint8_t door_opening_dir;
+    uint8_t door_state;
+    uint8_t door_open_pct;
+    uint16_t color_key;
     uint8_t palette16[16];
     uint32_t raw_hash;
+    uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint32_t selection_hash;
 } DM2_V1_GdatDoorOverlayM11Command;
 
 typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan {
