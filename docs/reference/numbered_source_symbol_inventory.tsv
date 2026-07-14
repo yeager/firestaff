@@ -1633,8 +1633,8 @@ F	0535	F0535_MEMORY_GetGraphicsDatFileSize	AMIGA.H;MEMORY.C;STARTUP1.C	reference
 F	0536	F0536_INPUT_Initialize	AMIGA.H;INPUT.C;STARTUP2.C;STARTUP1.C	referenced_not_verified
 F	0537	F0537_INPUT_ReleaseResources	AMIGA.H;INPUT.C	unmapped_or_unverified
 F	0538	F0538_INPUT_Deinitialize	AMIGA.H;INPUT.C;AMIGINIT.C;STARTUP1.C	referenced_not_verified
-F	0539	F0539_INPUT_Cconis	AMIGA.H;INPUT.C;CEDT025.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;IO.C;DEFS.H;CEDT026.C;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	referenced_not_verified
-F	0540	F0540_INPUT_Crawcin	AMIGA.H;INPUT.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;BASE.C;DEFS.H;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	referenced_not_verified
+F	0539	F0539_INPUT_Cconis	AMIGA.H;INPUT.C;CEDT025.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;IO.C;DEFS.H;CEDT026.C;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	implemented_source_locked
+F	0540	F0540_INPUT_Crawcin	AMIGA.H;INPUT.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;BASE.C;DEFS.H;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	implemented_source_locked
 F	0541	F0541_INPUT_WaitForMouseOrKeyboardActivity	AMIGA.H;INPUT.C;ENDGAME.C	referenced_not_verified
 F	0543	F0543_INPUT_DeviceInterruptHandler	AMIGA.H;INPUT.C	referenced_not_verified
 F	0544	F0544_INPUT_ResetPressingEyeOrMouth	AMIGA.H;INPUT.C	unmapped_or_unverified
@@ -1745,7 +1745,7 @@ F	0676	F0676_DrawD3L2	DUNVIEW.C	referenced_not_verified
 F	0677	F0677_DrawD3R2	DUNVIEW.C	referenced_not_verified
 F	0678	F0678_DrawD2L2	DUNVIEW.C	referenced_not_verified
 F	0679	F0679_DrawD2R2	DUNVIEW.C	referenced_not_verified
-F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;NEC816.C;VIDEODRV.C;IMAGE3.C	unmapped_or_unverified
+F	0680	F0680_CopyPixelsToScreenWithoutTransparency	ANIMIMG.C;IMAGE5.C;IMAGE2.C;NEC816.C;VIDEODRV.C;IMAGE3.C	implemented_source_locked
 F	0681	F0681_CopyPixelLineToScreenWithoutTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced_not_verified
 F	0682	F0682_CopyPixelLineToScreenWithTransparency	NEC816.C;VIDEODRV.C;IMAGE3.C	referenced_not_verified
 F	0683	F0683_CopyPixelLineToScreenWithTransparencyFlippedHorizontally	NEC816.C;VIDEODRV.C;IMAGE3.C	unmapped_or_unverified
@@ -1756,7 +1756,7 @@ F	0687	F0687_IMG3_GetNibble	IMAGE2.C;IMAGE3.C	referenced_not_verified
 F	0688	F0688_IMG3_GetPixelCount	IMAGE2.C;IMAGE3.C	referenced_not_verified
 F	0689	F0689_IMG_ExpandGraphicToBitmap	FMTOWNS.H;DEFS.H;SWITCH.C;IMAGE2.C;EXPAND.C;CEDT018.C;SELECTOR.C;SWSH.C;NECIO.C	referenced_not_verified
 F	0690	F0690_CopyPixelLineToScreenWithoutTransparency	ANIMIMG.C;SWITCH.C;IMAGE3.C	referenced_not_verified
-F	0691	F0691_IMG_ExpandGraphicToScreen	DEFS.H;SWITCH.C;EXPAND.C;IMAGE3.C;SELECTOR.C	unmapped_or_unverified
+F	0691	F0691_IMG_ExpandGraphicToScreen	DEFS.H;SWITCH.C;EXPAND.C;IMAGE3.C;SELECTOR.C	implemented_source_locked
 F	0692	F0692_FillBox	FILLBOX.C;DEFS.H;CEDT027.C;IMAGE3.C;SELECTOR.C	unmapped_or_unverified
 F	0693	F0693_WaitVerticalBlank	PALETTE.C;CEDT025.C;VBLANK.C;FMTOWNS.H;DRAWVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;SWITCH.C;IMAGE.C;ANIMTOWN.C;CEDT027.C;JAPANESE.C;SWSH.C	referenced_not_verified
 F	0694	F0694_SetMultipleColorsInPalette	LOADSAVE.C;FMTOWNS.H;DRAWVIEW.C;DEFS.H;SWITCH.C;TIMELINE.C;IMAGE.C;ANIMTOWN.C;STARTUP2.C;CEDT027.C;CEDT018.C;ENDGAME.C;ENTRANCE.C;TITLE.C;SWSH.C;DIALOG.C	referenced_not_verified

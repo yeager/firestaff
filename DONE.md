@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `IMAGE5.C F0680`: PC 3.4 C25 VGA aperture copy
+  now preserves packed-nibble order, high-nibble viewport colour offset and
+  odd source/count boundaries. Verification: focused strict C11 test.
+
+- 2026-07-14 DM1/CSB ReDMCSB `IMAGE3.C F0691`: PC 3.4 IMG3 expansion now
+  preserves the six-entry local palette, RLE row wrapping, retained command-6
+  pixels and F0690-style line sink. Verification: focused strict C11 test.
+
+- 2026-07-14 DM1/CSB ReDMCSB `IO2.C F0539/F0540`: PC 3.4 keyboard-status and
+  raw-key routes now preserve one driver read, exit shortcuts, and shifted-arrow
+  normalization. Verification: focused strict C11 tests.
+
 - 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0053`: logical-screen text now forwards
   C160 byte stride, C200 height and caller colours through a bounded callback.
   Verification: focused strict CTest.
