@@ -5777,6 +5777,19 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0094_f0096_m11_source_gate.c")
+        add_executable(test_dm1_v1_f0094_f0096_m11_source_gate
+            tests/test_dm1_v1_f0094_f0096_m11_source_gate.c)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_f0094_f0096_m11_source_gate PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_f0094_f0096_m11_source_gate
+            COMMAND test_dm1_v1_f0094_f0096_m11_source_gate
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c")
         add_executable(test_m11_dm1_hoc_inscription_palette_transition_pc34
             tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c)
