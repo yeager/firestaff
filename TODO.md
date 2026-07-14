@@ -856,6 +856,10 @@ ReDMCSB WIP 2021-02-06 source tree.
     below 32, and F8156 publishes all 32 rows only after a host VBlank gate
     when the curtain is active. This does not fabricate a VBlank or a palette:
     M11/SDL consumption of the verified DAC rows remains separate work.
+  - 2026-07-14 VIDEODRV.C F8159 now preserves the PC 3.4 C25 RGB6 curtain:
+    black waits at the caller-owned VBlank boundary and writes 32 zero rows;
+    normal restores verified source RGB6 bytes through F8156. SDL/Mac DAC
+    consumption remains separately unproven.
   - 2026-07-14 VIDEODRV.C F8158 is not a PC 3.4 C25 task: its source body is
     guarded to EGA/Tandy builds only, so no C25 behavior is invented.
 

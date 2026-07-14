@@ -122,6 +122,11 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8159: source-locked PC 3.4 C25 RGB6
+  palette curtain. The adapter preserves black's VBlank-gated 32-entry zero
+  write, normal F8156 restore, and final curtain-state assignment; focused
+  strict-C11 test covers black, restore, failed VBlank, and arbitrary state.
+
 - ✅ 2026-07-14 DM1/CSB ReDMCSB F8156/F8157: source-locked PC 3.4 C25
   palette route. The adapter carries the original RGB6 bytes unchanged,
   applies only terminated `G8176` entries below index 32, and writes all 32
