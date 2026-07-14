@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 New Game GAME_LOAD gate: `skproject/SKWIN/SkWinCore.cpp`
+  `HANDLE_UI_EVENT`, `SHOW_MENU_SCREEN`, and `INIT` prove that NEW first
+  leaves the title menu and then reaches `GAME_LOAD`/`LOAD_NEW_DUNGEON`.
+  The startup route now records that request but keeps the original title
+  surface active until an original dungeon-load receipt is available; it no
+  longer synthesizes a new party/session. DM2 startup contract test passes.
+
 - 2026-07-14 CSB ReDMCSB F7059/F7060 dungeon-part checksum: added the exact
   PC34 16-bit modular byte accumulator used after a dungeon part is read or
   before it is written. The C11 port receives only those real bytes and does

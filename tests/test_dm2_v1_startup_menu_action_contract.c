@@ -1173,44 +1173,36 @@ int main(void)
               plan.slot == -1 &&
               plan.rescan_saves_on_failure == 0 &&
               strcmp(plan.success_status, "DM2 NEW GAME") == 0,
-          "New Game action resolves to DM2-owned startup session plan");
+          "New Game action preserves the source-owned startup selection");
     check(dm2_v1_startup_execute_plan(
               &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
-              execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY &&
+              execution.kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED &&
               execution.rescan_saves == 0 &&
-              execution.session.champion_count == 4 &&
-              execution.session.party_x == 15 &&
-              execution.session.party_y == 15 &&
-              strcmp(execution.status, "DM2 NEW GAME") == 0,
-          "New Game plan execution creates a DM2 startup session");
+              strcmp(execution.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "New Game plan requires the original GAME_LOAD data path");
     check(dm2_v1_startup_execute_action(
               &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
-              execution.kind == DM2_V1_STARTUP_EXEC_SESSION_READY &&
+              execution.kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED &&
               execution.rescan_saves == 0 &&
-              execution.session.champion_count == 4 &&
-              execution.session.party_x == 15 &&
-              execution.session.party_y == 15 &&
-              strcmp(execution.status, "DM2 NEW GAME") == 0,
-          "New Game action executes through DM2-owned startup wrapper");
+              strcmp(execution.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "New Game action keeps the original GAME_LOAD boundary explicit");
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
-              mode_update.set_startup_menu_active &&
-              mode_update.startup_menu_active == 0,
-          "session-ready execution owns startup-menu close update");
+              !mode_update.set_startup_menu_active,
+          "GAME_LOAD requirement leaves the startup menu active");
     check(dm2_v1_startup_execution_input_outcome(&execution, 1, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               outcome.rescan_saves == 0 &&
-              strcmp(outcome.status_scope, "STARTUP") == 0 &&
-              strcmp(outcome.status, "DM2 NEW GAME") == 0,
-          "session-ready execution owns successful redraw input outcome");
+              strcmp(outcome.status_scope, "GAME_LOAD") == 0 &&
+              strcmp(outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "New Game outcome reports the source-owned GAME_LOAD boundary");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 1, &receipt) &&
-              receipt.session_should_apply &&
+              !receipt.session_should_apply &&
               receipt.session_applied &&
-              receipt.mode_update.set_startup_menu_active &&
-              receipt.mode_update.startup_menu_active == 0 &&
+              !receipt.mode_update.set_startup_menu_active &&
               receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
-              strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
-          "session-ready receipt closes startup after applied session");
+              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "New Game receipt blocks synthetic session handoff");
     g_apply_calls = 0;
     g_apply_result = 1;
     memset(&g_applied_session, 0, sizeof(g_applied_session));
@@ -1221,14 +1213,12 @@ int main(void)
               NULL,
               &execution,
               &receipt) &&
-              g_apply_calls == 1 &&
-              g_applied_session.champion_count == 4 &&
-              receipt.session_should_apply &&
-              receipt.session_applied &&
-              receipt.mode_update.set_startup_menu_active &&
-              receipt.mode_update.startup_menu_active == 0 &&
-              strcmp(receipt.outcome.status, "DM2 NEW GAME") == 0,
-          "combined action execution applies session and returns close receipt");
+              g_apply_calls == 0 &&
+              !receipt.session_should_apply &&
+              !receipt.session_applied &&
+              !receipt.mode_update.set_startup_menu_active &&
+              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "combined action execution blocks synthetic Game Load handoff");
     g_apply_calls = 0;
     g_apply_result = 1;
     memset(&g_applied_session, 0, sizeof(g_applied_session));
@@ -1239,14 +1229,12 @@ int main(void)
               NULL,
               &execution,
               &host_receipt) &&
-              g_apply_calls == 1 &&
-              g_applied_session.champion_count == 4 &&
+              g_apply_calls == 0 &&
               host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              host_receipt.mode_update.set_startup_menu_active &&
-              host_receipt.mode_update.startup_menu_active == 0 &&
-              strcmp(host_receipt.status, "DM2 NEW GAME") == 0,
-          "combined action execution can return M11-ready host receipt directly");
+              !host_receipt.mode_update.set_startup_menu_active &&
+              strcmp(host_receipt.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "combined action execution preserves M11 title/menu gate");
     host_facts.resume_available = 1;
     host_facts.slot_mask = (1u << 2);
     host_facts.selected_row = 2;
@@ -1260,12 +1248,10 @@ int main(void)
               NULL,
               &execution,
               &host_action_receipt) &&
-              g_apply_calls == 1 &&
-              g_applied_session.champion_count == 4 &&
+              g_apply_calls == 0 &&
               host_action_receipt.host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
-              host_action_receipt.host_receipt.mode_update.startup_menu_active == 0 &&
+              !host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
               host_action_receipt.menu_state_receipt_valid &&
               host_action_receipt.menu_state_receipt.selected_row == 2 &&
               host_action_receipt.input_route.valid &&
@@ -1285,32 +1271,32 @@ int main(void)
               host_action_receipt.save_menu_handoff.plan_kind ==
                   DM2_V1_STARTUP_PLAN_NEW_GAME &&
               host_action_receipt.save_menu_handoff.execution_kind ==
-                  DM2_V1_STARTUP_EXEC_SESSION_READY &&
+                  DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED &&
               host_action_receipt.save_menu_handoff.source_row == 2 &&
-              host_action_receipt.save_menu_handoff.session_ready == 1 &&
+              host_action_receipt.save_menu_handoff.session_ready == 0 &&
               host_action_receipt.save_menu_handoff.return_to_launcher == 0 &&
               host_action_receipt.save_menu_handoff.selected_row_after == 2 &&
               host_action_receipt.host_menu_route.valid &&
               host_action_receipt.host_menu_route.redraw_startup_menu == 1 &&
-              host_action_receipt.host_menu_route.close_startup_menu == 1 &&
-              host_action_receipt.host_menu_route.apply_session == 1 &&
+              host_action_receipt.host_menu_route.close_startup_menu == 0 &&
+              host_action_receipt.host_menu_route.apply_session == 0 &&
               host_action_receipt.host_menu_route.selected_row_after == 2 &&
-              host_action_receipt.host_menu_route.runtime_menu_ready == 0 &&
-              host_action_receipt.host_menu_route.runtime_action_ready == 1 &&
-              host_action_receipt.host_menu_route.first_hud_frame_ready == 1,
-          "host facts keyboard wrapper returns M11/M12-ready startup route");
+              host_action_receipt.host_menu_route.runtime_menu_ready == 1 &&
+              host_action_receipt.host_menu_route.runtime_action_ready == 0 &&
+              host_action_receipt.host_menu_route.first_hud_frame_ready == 0,
+          "host facts keyboard wrapper preserves the GAME_LOAD title gate");
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
-              strcmp(outcome.status_scope, "STARTUP") == 0 &&
-              strcmp(outcome.status, "DM2 LOAD FAILED") == 0,
-          "session-ready execution owns failed apply input outcome");
+              strcmp(outcome.status_scope, "GAME_LOAD") == 0 &&
+              strcmp(outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "GAME_LOAD requirement ignores synthetic session apply state");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 0, &receipt) &&
-              receipt.session_should_apply &&
+              !receipt.session_should_apply &&
               !receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
-              strcmp(receipt.outcome.status, "DM2 LOAD FAILED") == 0,
-          "session-ready receipt keeps startup open after failed apply");
+              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "GAME_LOAD receipt keeps startup open without a session");
     g_apply_calls = 0;
     g_apply_result = 0;
     memset(&g_applied_session, 0, sizeof(g_applied_session));
@@ -1321,12 +1307,12 @@ int main(void)
               NULL,
               NULL,
               &receipt) &&
-              g_apply_calls == 1 &&
-              receipt.session_should_apply &&
+              g_apply_calls == 0 &&
+              !receipt.session_should_apply &&
               !receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
-              strcmp(receipt.outcome.status, "DM2 LOAD FAILED") == 0,
-          "combined action execution keeps startup open when session apply fails");
+              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+          "combined action execution keeps GAME_LOAD behind the title menu");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER &&
@@ -1447,10 +1433,10 @@ int main(void)
                   NULL,
                   &execution,
                   &host_action_receipt) &&
-              g_apply_calls == 1 &&
+              g_apply_calls == 0 &&
               host_action_receipt.host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
+              !host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
               host_action_receipt.menu_state_receipt_valid &&
               host_action_receipt.menu_state_receipt.selected_row == 2 &&
               host_action_receipt.input_route.valid &&
@@ -1464,13 +1450,13 @@ int main(void)
               host_action_receipt.input_route.action_row == 2 &&
               host_action_receipt.input_route.action_slot == -1 &&
               host_action_receipt.host_menu_route.valid &&
-              host_action_receipt.host_menu_route.close_startup_menu == 1 &&
-              host_action_receipt.host_menu_route.apply_session == 1 &&
+              host_action_receipt.host_menu_route.close_startup_menu == 0 &&
+              host_action_receipt.host_menu_route.apply_session == 0 &&
               host_action_receipt.host_menu_route.selected_row_after == 2 &&
-              host_action_receipt.host_menu_route.runtime_menu_ready == 0 &&
-              host_action_receipt.host_menu_route.runtime_action_ready == 1 &&
-              host_action_receipt.host_menu_route.first_hud_frame_ready == 1,
-          "host facts pointer wrapper returns M11/M12-ready input route");
+              host_action_receipt.host_menu_route.runtime_menu_ready == 1 &&
+              host_action_receipt.host_menu_route.runtime_action_ready == 0 &&
+              host_action_receipt.host_menu_route.first_hud_frame_ready == 0,
+          "host facts pointer wrapper preserves the GAME_LOAD title gate");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");

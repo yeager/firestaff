@@ -59,7 +59,11 @@ typedef enum {
     DM2_V1_STARTUP_EXEC_IGNORE = 0,
     DM2_V1_STARTUP_EXEC_SESSION_READY = 1,
     DM2_V1_STARTUP_EXEC_STATUS_REDRAW = 2,
-    DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER = 3
+    DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER = 3,
+    /* skproject/SKWIN/SkWinCore.cpp::INIT (55639-55645) calls GAME_LOAD()
+     * only after SHOW_MENU_SCREEN returns. This request has no Firestaff
+     * runtime session until that original load path has a verified receipt. */
+    DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED = 4
 } DM2_V1_StartupExecutionKind;
 
 typedef struct DM2_V1_StartupExecution {
