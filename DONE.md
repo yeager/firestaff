@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1059/F1061: available post-save and pre-read
+  hooks select Amiga fake-code only. Focused PC 3.4 boundaries are source-
+  faithful no-ops.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1057: available pre-save-game body injects
   Amiga fake-code only. The focused PC 3.4 boundary is a source-faithful no-op.
 
