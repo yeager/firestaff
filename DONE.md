@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F8134: source-locked IBMIO.C DOS EXEC command
+  tail and normal-termination result. The focused strict-C11 test leaves
+  program execution and DOS exit-status provenance as caller-owned boundaries.
+
 - 2026-07-14 DM1/CSB ReDMCSB F8131/F8132/F8133: source-locked IBMIO.C FAT
   volume-label filter, DOS-time `DX` seed and explicit empty floppy route.
   The focused strict-C11 test keeps FCB/DTA lookup and clock provenance as
