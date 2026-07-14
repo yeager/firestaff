@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM1 V1 wall-inscription source raster gate: M11 now accepts
+  M648 only with graphic 258, C10 transparency, valid source dimensions, and
+  an exact F0107 line plan. Verification: `dm1_v1_inscription_source_raster_gate`.
+
 - 2026-07-14 DM1 V2.0 source-owned title/entrance cadence: V2.0 presentation
   consumes the existing ReDMCSB VBlank interval instead of adding a full host
   delay. Verification: `dm1_v20_startup_presentation_timing_probe`.

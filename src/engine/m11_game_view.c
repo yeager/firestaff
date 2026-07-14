@@ -22555,22 +22555,31 @@ static void m11_draw_dm1_front_wall_inscription_material(
     int fbW,
     int fbH) {
     DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    const M11_AssetSlot* fontSlot;
     int line = 0;
-    if (!inputMaterial || !inputMaterial->valid) {
+    if (!state || !inputMaterial || !inputMaterial->valid) {
         return;
     }
     material = *inputMaterial;
+    /* DUNVIEW.C F0107 is an all-or-nothing M648/C10 raster pass.  Do not
+     * emit a valid leading line if a later receipt line is malformed. */
+    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
+        fontSlot->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        return;
+    }
+    if (!DM1_V1_InscriptionHostMaterialRasterGatePc34(
+            &material, (int)fontSlot->width, (int)fontSlot->height)) {
+        return;
+    }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
         const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
             &material.lines[line];
         if (drawPlan->glyphCount > 0) {
             int textX = M11_VIEWPORT_X + drawPlan->textX;
             int textY = M11_VIEWPORT_Y + drawPlan->textY;
-            if (!m11_dm1_inscription_font_slot_for_glyphs(state,
-                    material.glyphBytes + drawPlan->glyphStart,
-                    drawPlan->glyphCount)) {
-                return;
-            }
             /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
              * negative D1C bitmap before M648.  This M11 path already
              * skipped the unreadable-inscription ornament, leaving the
