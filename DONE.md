@@ -151,6 +151,11 @@
   The focused strict-C11 test preserves the visible and hidden-pointer paths
   without claiming DOS interrupt or host-video behavior.
 
+- 2026-07-14 DM1/CSB ReDMCSB F8123/F8124: source-locked IBMIO.C empty CD
+  route and device-specific raw sound-progress query with a focused strict-C11
+  test. F8128 is source-nonapplicable because its unbounded ISR/timer polling
+  has no portable PC34-equivalent host progress contract.
+
 - 2026-07-14 DM1/CSB ReDMCSB F0909-F0910/F0913-F0914: source-locked swoosh
   I/O/release boundaries, PAK decompression and A20E/A31E Graphic21 sector-word
   adapter plus exact-count file read. Focused strict C11 tests pass. F0915 and
