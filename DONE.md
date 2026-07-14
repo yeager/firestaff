@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Theron Mednafen trace build: the official 1.32.1 trace patch now
+  applies reproducibly with `git apply`; the real Track 02 run remains
+  fail-closed because no SDL input or non-System-Card CD reads were observed.
+
 - 2026-07-15 DM2 skproject DRAW_DOOR M11 receipt: source-selected door panels
   now carry real DOORS pixels, opening state, decoded hash, and IMG_COLORKEY_1
   through M11; no generic panel or transparency is supplied.
