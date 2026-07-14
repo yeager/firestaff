@@ -32128,3 +32128,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8137_pixels_c25_pc34_
     add_test(NAME redmcsb_f8137_pixels_c25_pc34_compat
              COMMAND test_redmcsb_f8137_pixels_c25_pc34_compat)
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0684_blit_c25_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f0684_blit_c25_pc34_compat.c")
+    add_executable(test_redmcsb_f0684_blit_c25_pc34_compat
+        tests/test_redmcsb_f0684_blit_c25_pc34_compat.c
+        src/shared/redmcsb_f0680_copy_pixels_to_screen_pc34_compat.c
+        src/shared/redmcsb_f0681_copy_pixel_line_flipped_pc34_compat.c
+        src/shared/redmcsb_f0682_copy_pixel_line_transparent_pc34_compat.c
+        src/frontend/redmcsb_f0683_c25_vga_flipped_transparent_copy_pc34_compat.c
+        src/shared/redmcsb_f0684_blit_c25_pc34_compat.c)
+    target_include_directories(test_redmcsb_f0684_blit_c25_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0684_blit_c25_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f0684_blit_c25_pc34_compat COMMAND test_redmcsb_f0684_blit_c25_pc34_compat)
+endif()
