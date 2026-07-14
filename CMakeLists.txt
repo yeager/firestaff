@@ -3429,6 +3429,14 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
         PRIVATE -Wall -Wextra -O2)
 endif()
+add_test(
+    NAME csb_v1_csbwin_package_runtime_handoff
+    COMMAND firestaff_csb_v1_csbwin_package_runtime_handoff_probe
+)
+set_tests_properties(csb_v1_csbwin_package_runtime_handoff PROPERTIES
+    LABELS "tier2;csb;csbwin_custom_resource;real_data;skip_safe"
+    TIMEOUT 120
+)
 
 # Opt-in CSBWin extended-save DSA handoff. This consumes an original package
 # only: it requires a supplied Dungeon.dat plus a CSBWin save with Extended

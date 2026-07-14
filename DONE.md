@@ -25,6 +25,15 @@
   Ninja-built M10 archive. The opt-in real-corpus leg skipped because
   `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is unset.
 
+- ✅ 2026-07-14 CSBWin package live-timer ownership receipt: the opt-in
+  original-package handoff probe now verifies every accepted `csbgame*.dat`
+  timer queue entry is the live runtime event from the same saved timer index,
+  including its full time word, function, payload bytes, and source queue
+  slot. A generic replacement event cannot satisfy the package handoff. The
+  CTest target has no generated dungeon/save fixture and skips unless callers
+   provide both original package paths. Verification: Ninja and
+   `csb_v1_csbwin_package_runtime_handoff`.
+
 - ✅ 2026-07-14 DM2 GDAT `UPDATE_GFXSET` scene-plane handoff: the active
   map's validated, decoded `GRAPHICSSET` floor/ceiling command plan is now
   retained by the runtime and consumed directly by M11 with its original

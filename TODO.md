@@ -18,6 +18,13 @@
     publishing party, timer, or DSA state. This is an observed unavailable
     route, not a substitute format; a checksum-valid DSA-bearing save remains
     required for positive DSA handoff proof.
+  - 2026-07-14 follow-up: an accepted original package resume is now checked
+    against the live runtime queue slot-by-slot. Every published event must
+    retain its source timer index, full timer word, function, bytes, and
+    queue-slot ownership; a missing or generic replacement event fails the
+    real-package probe. The probe has no package fixture and skips without
+    explicit original paths. Positive DSA proof still requires an authentic
+    checksum-valid DSA-bearing save/dungeon pair.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while
