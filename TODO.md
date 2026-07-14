@@ -1412,6 +1412,12 @@ and real community-save corpus round-trip evidence.
     the staged timeline; a tail-less source remains explicitly not runtime
     ready and never borrows a host start dungeon. Remaining work is broader
     authentic tail coverage and independently collected community saves.
+  - 2026-07-14 update: the focused C13 runtime regression now follows
+    `TIMELINE.C F0255` from step 2 through the matching-bones step 1 unlink
+    and the one-tick-later step 0 rebirth. A bones-missing live step 1 ends
+    without a fallback rebirth, while a saved step 1 still requires its owner
+    at F0435 handoff. Remaining work is authentic external tail/save coverage,
+    not a synthetic C13 completion path.
   - 2026-07-13 update: every classifier-qualified external PC34 corpus file
     now emits a separate source path/hash/size, game-id, transient export
     hash/size, and result receipt for the F0435 -> F0433 -> F0435 handoff.
