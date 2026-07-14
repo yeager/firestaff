@@ -1829,6 +1829,7 @@ static void test_runtime_state_adoption_moves_f0435_queue(void)
           "loaded queue initializes before adoption");
     runtime_world.gameTick = 77u;
     loaded_world.gameTick = 123456u;
+    loaded_world.timeline.nowTick = 123456u;
     loaded_world.dungeon = &dungeon;
     loaded_world.things = &things;
     loaded_world.timeline.count = 1;
@@ -1857,6 +1858,67 @@ static void test_runtime_state_adoption_moves_f0435_queue(void)
               &runtime_world, &runtime_queue, &runtime_world, &loaded_queue) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "runtime state adoption rejects aliased world owners");
+}
+
+static void test_runtime_state_adoption_rejects_incoherent_f0435_queue(void)
+{
+    struct GameWorld_Compat runtime_world;
+    struct GameWorld_Compat loaded_world;
+    struct DungeonDatState_Compat runtime_dungeon;
+    struct DungeonThings_Compat runtime_things;
+    struct DungeonDatState_Compat loaded_dungeon;
+    struct DungeonThings_Compat loaded_things;
+    struct DM1_EventQueue_V1 runtime_queue;
+    struct DM1_EventQueue_V1 loaded_queue;
+
+    memset(&runtime_world, 0, sizeof(runtime_world));
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&runtime_dungeon, 0, sizeof(runtime_dungeon));
+    memset(&runtime_things, 0, sizeof(runtime_things));
+    memset(&loaded_dungeon, 0, sizeof(loaded_dungeon));
+    memset(&loaded_things, 0, sizeof(loaded_things));
+    CHECK(dm1v1_event_queue_init(&runtime_queue, 77u),
+          "live queue initializes before rejected adoption");
+    CHECK(dm1v1_event_queue_init(&loaded_queue, 123456u),
+          "candidate queue initializes before rejected adoption");
+
+    runtime_world.gameTick = 77u;
+    runtime_world.dungeon = &runtime_dungeon;
+    runtime_world.things = &runtime_things;
+    runtime_world.ownsDungeon = 0;
+    loaded_world.gameTick = 123456u;
+    loaded_world.timeline.nowTick = 123456u;
+    loaded_world.timeline.count = 1;
+    loaded_world.dungeon = &loaded_dungeon;
+    loaded_world.things = &loaded_things;
+    loaded_world.ownsDungeon = 0;
+    loaded_queue.eventCount = 1;
+    loaded_queue.firstUnusedIndex = 2;
+    loaded_queue.events[1].type = DM1_EVENT_DOOR;
+    loaded_queue.timeline[0] = 1u;
+
+    /* A candidate C4 heap that does not belong to its F0435 GameTime must
+     * fail before either live owner moves. */
+    loaded_queue.gameTick = 123457u;
+    CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+              &runtime_world, &runtime_queue, &loaded_world, &loaded_queue) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "incoherent F0435 queue rejects before runtime adoption");
+    CHECK(runtime_world.gameTick == 77u &&
+              runtime_world.dungeon == &runtime_dungeon &&
+              runtime_world.things == &runtime_things &&
+              runtime_world.ownsDungeon == 0 &&
+              runtime_queue.gameTick == 77u && runtime_queue.eventCount == 0,
+          "rejected queue leaves both live runtime owners unchanged");
+    CHECK(loaded_world.gameTick == 123456u &&
+              loaded_world.dungeon == &loaded_dungeon &&
+              loaded_world.things == &loaded_things &&
+              loaded_world.ownsDungeon == 0 &&
+              loaded_queue.gameTick == 123457u && loaded_queue.eventCount == 1,
+          "rejected queue remains owned by the F0435 candidate");
+
+    F0883_WORLD_Free_Compat(&runtime_world);
+    F0883_WORLD_Free_Compat(&loaded_world);
 }
 
 static void test_runtime_materializer_binds_original_group_reaction(void)
@@ -5511,6 +5573,7 @@ int main(void)
     test_file_runtime_world_loader();
     test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc();
     test_runtime_state_adoption_moves_f0435_queue();
+    test_runtime_state_adoption_rejects_incoherent_f0435_queue();
     test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();
