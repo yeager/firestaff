@@ -326,6 +326,10 @@
     This does not specify CSBWin GAMEBLOCK2, CHARDESC, ITEM16, EXPOOL, or DSA
     layouts, and does not establish a complete CSBWin resume.
 
+  - 2026-07-14 update: `CEDTINC6.C` F7059/F7060 now has the PC34 modular
+    16-bit accumulation of exact already-read or already-written dungeon-part
+    bytes. The port owns no file transport and does not infer a dungeon part,
+    CSBWin extension, timer, or DSA layout from that checksum.
 - REDMCSB-CSB-GAP-004 — **Original CSB save bytes still require per-media
   corpus proof.** ReDMCSB `LOADSAVE.C` is selected through many `MEDIA*`
   branches and serializes platform-dependent portraits, music state, and
