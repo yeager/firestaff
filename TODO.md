@@ -898,6 +898,12 @@ verifier records only observation order and rejects separate, reordered,
 duplicated, unmarked, malformed, or cross-variant rows. It does not infer a
 destination, payload format, dungeon, map, object, graphics, or palette
 meaning. Existing split CPU/CD sidecars remain insufficient for this boundary.
+2026-07-14 manifest-bound coalesced follow-up: a future positive JP/US pair
+must also supply one V2 capture manifest per transcript. Each manifest is
+rehash-checked against its exact raw Track 02, System Card 3.0, and coalesced
+Mednafen trace paths before the ordered sector receipt is accepted. This is
+artifact provenance only: it still does not identify a payload format,
+dungeon, map, object, graphics, palette, bitmap, or transition.
 
 ## DM1/CSB Render Follow-up (2026-07-12)
 
