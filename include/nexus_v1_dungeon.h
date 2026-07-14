@@ -837,6 +837,30 @@ typedef struct {
     int normal_plane_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceNormalPairReceipt;
 
+/* This is the renderer-facing boundary for the bounded Structure3 mesh
+ * evidence. It aggregates only topology, vector, and face/normal-row facts.
+ * An original Saturn capture remains mandatory before a normal plane,
+ * transform, texture/palette route, or draw command can be authorized. */
+typedef struct {
+    int source_topology_valid;
+    int source_vectors_valid;
+    int source_face_normal_pairing_valid;
+    int source_facts_complete;
+    int entry_count;
+    int vertex_count;
+    int face_count;
+    int normal_count;
+    int face_normal_pair_count;
+    int original_capture_required;
+    int original_capture_available;
+    int normal_plane_semantics_proven;
+    int transform_semantics_proven;
+    int texture_palette_semantics_proven;
+    int draw_semantics_proven;
+    int renderer_handoff_ready;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt;
+
 /* Correlates only documented Structure1A model-index bytes with documented
  * Structure3 byte/block-run counts. Each zero- and one-based domain is tested
  * separately; neither result establishes any other mapping or decodes a
@@ -1232,6 +1256,7 @@ typedef struct {
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure3FaceNormalPairReceipt structure3_face_normal_pairs;
+    Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt structure3_mesh_semantics;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
     Nexus_V1_DgnStructure1FRotationSelectorReceipt structure1f_rotation_selectors;
@@ -1912,6 +1937,9 @@ int nexus_v1_level_structure3_vector_receipt(
 int nexus_v1_level_structure3_face_normal_pair_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceNormalPairReceipt *out_receipt);
+int nexus_v1_level_structure3_mesh_semantic_handoff_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3MeshSemanticHandoffReceipt *out_receipt);
 int nexus_v1_level_structure3_ordinal_correlation_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3OrdinalCorrelationReceipt *out_receipt);
