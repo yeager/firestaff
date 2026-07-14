@@ -13450,6 +13450,14 @@ the real opening-door frame and exact C017/C040 HUD composition. Verification:
 data. Source: ReDMCSB `TITLE.C F0437` lines 424-463 and `ENTRANCE.C F0806`
 lines 775-826.
 
+# ✅ 2026-07-14 DM2 original SKSave pre-rebuild corpus receipt
+
+The original-save corpus census now retains separate byte-identity hashes for
+the source-decoded global flags, bytes, words, and global spell effects. This
+matches skproject `SkWinCore.cpp::GAME_LOAD` order before timer sorting and
+`READ_SKSAVE_DUNGEON`, while keeping timer semantics and dungeon DB rebuild
+unpromoted. Verification: Ninja and `test_dm2_v1_save_load`.
+
 # ✅ 2026-07-14 DM2 template-bound raw SKSave export roundtrip
 
 `dm2_v1_session_export_raw_sksave_payload()` exports only from a

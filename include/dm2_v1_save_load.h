@@ -182,6 +182,13 @@ typedef struct {
     uint8_t champion_count;
     uint8_t timer_count;
     uint8_t rain_intensity;
+    /* GAME_LOAD restores these SUPPRESS sections before it sorts timers and
+     * rebuilds the saved dungeon. Hashes preserve their original byte
+     * identities without assigning unproven timer or DB semantics. */
+    uint32_t global_flags_hash;
+    uint32_t global_bytes_hash;
+    uint32_t global_words_hash;
+    uint32_t spell_effects_hash;
     uint32_t state_hash;
 } DM2_OriginalSaveStateCorpusEntry;
 
