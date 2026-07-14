@@ -2824,6 +2824,57 @@ int nexus_v1_current_level_aux_runtime_receipt(
     return 0;
 }
 
+int nexus_v1_current_level_sound_route_receipt(
+    const Nexus_V1_Engine *engine, int raw_map_selector,
+    Nexus_V1_LevelSoundRouteReceipt *out_receipt) {
+    Nexus_SoundMapWindow window;
+
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_LEVEL_SOUND_ROUTE_MISSING;
+    out_receipt->level_index = -1;
+    out_receipt->raw_map_selector = raw_map_selector;
+    out_receipt->sal_offset = -1;
+    out_receipt->blocks_real_sfx_playback = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded || raw_map_selector < 0 ||
+        raw_map_selector > 0xff) {
+        return 0;
+    }
+
+    out_receipt->level_index = engine->level_aux_runtime_receipt.level_index;
+    out_receipt->canonical_sal_source_verified =
+        engine->level_aux_runtime_receipt.sal.canonical_hash_verified;
+    out_receipt->canonical_map_source_verified =
+        engine->level_aux_runtime_receipt.map.canonical_hash_verified;
+    out_receipt->canonical_sound_driver_source_verified =
+        engine->level_aux_runtime_receipt.sound_driver.canonical_hash_verified;
+    if (!out_receipt->canonical_sal_source_verified ||
+        !out_receipt->canonical_map_source_verified ||
+        engine->audio.current_level != out_receipt->level_index) {
+        out_receipt->status = NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SOURCE;
+        return 0;
+    }
+
+    memset(&window, 0, sizeof(window));
+    if (nexus_sound_map_lookup_raw_selector(&engine->audio, raw_map_selector,
+                                            &window) != 0) {
+        out_receipt->status = NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SELECTOR;
+        return 0;
+    }
+
+    out_receipt->status = NEXUS_V1_LEVEL_SOUND_ROUTE_BOUND_OPAQUE;
+    out_receipt->map_attribute = window.attribute;
+    out_receipt->sal_offset = window.sal_offset;
+    out_receipt->sal_size = window.sal_size;
+    out_receipt->map_window_unique_and_bounded = 1;
+    /* The raw selector is not a host event and SAL stays opaque. */
+    out_receipt->saturn_event_dispatch_proven = 0;
+    out_receipt->sal_decode_proven = 0;
+    out_receipt->playback_permitted = 0;
+    return 1;
+}
+
 int nexus_v1_dgn_static_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {

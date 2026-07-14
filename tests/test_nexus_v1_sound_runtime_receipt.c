@@ -1,4 +1,4 @@
-#include "nexus_v1_sound.h"
+#include "nexus_v1_engine.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -414,6 +414,62 @@ static void test_sfx_map_duplicate_event_receipt(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_engine_raw_map_window_handoff_stays_opaque(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelSoundRouteReceipt route;
+    static unsigned char sal_data[297082];
+    static unsigned char map_data[66];
+
+    memset(&engine, 0, sizeof(engine));
+    memset(sal_data, 0, sizeof(sal_data));
+    memset(map_data, 0, sizeof(map_data));
+    sal_data[0x1000] = 0x12;
+    sal_data[0x101f] = 0x80;
+    map_data[24] = 0x42;
+    map_data[25] = 0x7e;
+    map_data[26] = 0x00;
+    map_data[27] = 0x20;
+    map_data[30] = 0x10;
+    map_data[31] = 0x00;
+    map_data[32] = 0xff;
+    map_data[33] = 0xff;
+
+    engine.level_loaded = 1;
+    engine.level_aux_runtime_receipt.level_index = 0;
+    engine.level_aux_runtime_receipt.sal.canonical_hash_verified = 1;
+    engine.level_aux_runtime_receipt.map.canonical_hash_verified = 1;
+    engine.level_aux_runtime_receipt.sound_driver.canonical_hash_verified = 1;
+    CHECK(nexus_sound_init(&engine.audio) == 0,
+          "engine-owned sound route initializes");
+    CHECK(nexus_sound_load_canonical_level(&engine.audio, 0, sal_data,
+                                           (int)sizeof(sal_data), map_data,
+                                           (int)sizeof(map_data), 1, 1) == 0,
+          "engine-owned raw MAP route loads canonical pair");
+    memset(&route, 0, sizeof(route));
+    CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 0x42, &route) == 1 &&
+          route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BOUND_OPAQUE &&
+          route.level_index == 0 && route.raw_map_selector == 0x42 &&
+          route.map_attribute == 0x7e && route.sal_offset == 0x1000 &&
+          route.sal_size == 0x20 && route.canonical_sal_source_verified &&
+          route.canonical_map_source_verified &&
+          route.canonical_sound_driver_source_verified &&
+          route.map_window_unique_and_bounded &&
+          !route.saturn_event_dispatch_proven && !route.sal_decode_proven &&
+          !route.playback_permitted && route.blocks_real_sfx_playback &&
+          !route.fallback_visuals_permitted,
+          "engine exposes only a verified opaque SNDLEV selector-to-SAL window");
+    CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 0x43, &route) == 0 &&
+          route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SELECTOR &&
+          route.sal_offset == -1 && route.blocks_real_sfx_playback,
+          "missing raw selector cannot produce a fallback route");
+    engine.level_aux_runtime_receipt.map.canonical_hash_verified = 0;
+    CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 0x42, &route) == 0 &&
+          route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SOURCE &&
+          route.sal_offset == -1 && route.blocks_real_sfx_playback,
+          "unverified MAP source cannot reach the engine route");
+    nexus_sound_shutdown(&engine.audio);
+}
+
 static void test_optional_real_sal_corpus_profile(void) {
     const char *home = getenv("HOME");
     int seen = 0;
@@ -687,6 +743,7 @@ int main(void) {
     test_sal_container_preamble_stays_opaque();
     test_sfx_map_record_table_receipt();
     test_sfx_map_duplicate_event_receipt();
+    test_engine_raw_map_window_handoff_stays_opaque();
     test_mismatched_assets_block_playback();
     test_canonical_source_handoff_stays_decode_blocked();
     test_optional_real_sal_corpus_profile();
