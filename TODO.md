@@ -5558,6 +5558,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the viewport packet gate. An otherwise byte-complete packet lacking that
     verification is rejected. This preserves evidence transport only; it does
     not establish any Saturn graphics semantics or relax no-draw.
+  - 2026-07-14 launcher-route follow-up: the launcher now supplies only its
+    currently owned, hash-verified canonical DGN bytes to the strict raw
+    capture reader/host path. It fails before reading any capture if no real
+    loaded level exists, and the admitted source remains no-draw. A genuine
+    original-Saturn capture is still required for render semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named
