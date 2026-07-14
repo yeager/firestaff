@@ -85,6 +85,7 @@ int main(void) {
     Nexus_V1_DgnStructure3CaptureImportReceipt import_receipt;
     Nexus_V1_DgnStructure3CaptureHostReceipt host_receipt;
     Nexus_V1_DgnStructure3RawCaptureReaderReceipt raw_receipt;
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_host_receipt;
     Nexus_V1_DgnStructure3RawCapturePaths raw_paths;
     Nexus_V1_DgnStructure3RawCaptureAttestation raw_attestation;
     Nexus_V1_Level level;
@@ -223,6 +224,19 @@ int main(void) {
                raw_receipt.import_packet.texture_span != texture,
            "raw capture reader retains six file-backed spans only after atomically matching manifest and external attestation");
     nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    expect(!nexus_v1_dgn_structure3_raw_capture_host_intake(
+               &level, texture, (int)sizeof(texture), 1, imported_manifest,
+               strlen(imported_manifest), &raw_paths, &raw_attestation,
+               &raw_host_receipt) && raw_host_receipt.manifest_parsed &&
+               raw_host_receipt.raw_reader_invoked &&
+               raw_host_receipt.raw_reader.import_ready &&
+               raw_host_receipt.host_intake_invoked &&
+               raw_host_receipt.host.capture_source_verified &&
+               raw_host_receipt.host.importer_invoked &&
+               raw_host_receipt.no_draw_only &&
+               raw_host_receipt.host.no_draw_only,
+           "the package-to-host route forwards only the atomically attested opaque packet and remains no-draw");
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_release(&raw_host_receipt);
     memcpy(altered_palette, palette, sizeof(altered_palette));
     altered_palette[0] ^= 1U;
     expect(write_capture_file(raw_paths_storage[1], altered_palette,
@@ -235,6 +249,16 @@ int main(void) {
                !raw_receipt.import_packet.original_saturn_capture_verified,
            "one altered raw span rejects the complete capture atomically before any host import");
     nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(&raw_receipt);
+    expect(!nexus_v1_dgn_structure3_raw_capture_host_intake(
+               &level, texture, (int)sizeof(texture), 1, imported_manifest,
+               strlen(imported_manifest), &raw_paths, &raw_attestation,
+               &raw_host_receipt) && raw_host_receipt.manifest_parsed &&
+               raw_host_receipt.raw_reader_invoked &&
+               !raw_host_receipt.raw_reader.import_ready &&
+               !raw_host_receipt.host_intake_invoked &&
+               raw_host_receipt.no_draw_only,
+           "one altered raw lane prevents the host intake atomically");
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_release(&raw_host_receipt);
     for (int path_index = 0; path_index < 6; ++path_index)
         remove(raw_paths_storage[path_index]);
     capture.original_saturn_capture_verified = 0;
