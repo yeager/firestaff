@@ -15,6 +15,15 @@
   candidate-to-live ownership transfer. This is exercised only for
   user-supplied external PC34 corpus saves carrying C13; no C13 fixture,
   generated tail, or parity claim is added.
+- 2026-07-14 CSBWin EquipFilter handoff: the runtime inventory-slot write now
+  follows `CHARDESC::SetPossession` exactly for authenticated DSA data: it
+  executes the removed RN first through timer column 1, then the added RN
+  through column 0, with the source five-word parameter shape, before writing
+  the slot. Both dispatches require original `EDT_SpecialLocations` DB11
+  ownership plus the current FNV receipt; unsupported routes receive no
+  fabricated callback. Source: CSBWin `Character.cpp` lines 2923-2994 and
+  `DSA.cpp` lines 5363-5416. Verification:
+   `csb_v1_csbwin_character_death_filter_runtime`.
 - 2026-07-14 CSBWin CharDeathFilter handoff: live champion death now checks
   the exact original `EDT_SpecialLocations|ESL_CHARDEATHFILTER` key before
   `KillCharacter`, selects only CSBWin's first type-47 actuator, resolves its

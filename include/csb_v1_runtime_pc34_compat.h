@@ -941,6 +941,14 @@ int csb_v1_runtime_resolve_csbwin_attack_filter_stack_action(
 int csb_v1_runtime_execute_csbwin_character_death_filter(
     CSB_V1_RuntimeProfile *profile, int champion_index);
 
+/* CSBWin CHARDESC::SetPossession invokes the optional EquipFilter before it
+ * writes a slot: timer function 1 for the removed RN, then 0 for the added
+ * RN, each with `{ 4, championIndex, slot, thing, 0 }`. This dispatch admits
+ * only authenticated pure-stack actions and never fabricates an EquipFilter. */
+int csb_v1_runtime_execute_csbwin_equip_filter(
+    CSB_V1_RuntimeProfile *profile, int champion_index, int slot_index,
+    uint16_t old_thing, uint16_t new_thing);
+
 /* Prepare the source-authenticated pure-stack runner only after a concrete
  * imported action was selected. World opcodes, DSA master-state persistence,
  * and movement post-filter flags remain outside this bounded bridge. */

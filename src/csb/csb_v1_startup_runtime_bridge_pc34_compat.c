@@ -631,6 +631,14 @@ int csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
         csb_slot >= CSB_V1_SLOT_COUNT) {
         return 0;
     }
+    /* CSBWin Character.cpp::SetPossession runs EquipFilter once for the
+     * removed RN (timer function 1) and once for the added RN (0), before it
+     * writes the possession. Unsupported or non-authenticated DSA data is
+     * deliberately not substituted; the established slot write still owns
+     * its non-DSA runtime path. */
+    (void)csb_v1_runtime_execute_csbwin_equip_filter(
+        runtime, champion_index, csb_slot,
+        runtime->party_state.Champions[champion_index].Slots[csb_slot], thing);
     runtime->party_state.Champions[champion_index].Slots[csb_slot] = thing;
     return 1;
 }
