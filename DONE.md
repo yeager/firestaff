@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `FILLBOX.C F0135`: source four-plane
+  inclusive fill-box logic now has a bounded compatibility implementation.
+  Verification: focused strict CTest.
+
 - 2026-07-14 CSB ReDMCSB `DIALOG.C F0425`: centered-choice text placement
   now has a source-derived render plan. Verification: focused strict CTest.
 
