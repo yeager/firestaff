@@ -82,6 +82,6 @@ int main(void)
                                                     &callbacks) == 26u);
     assert(strstr(redmcsb_f0929_prim_ftl_load_source_evidence_pc34(),
                   "PRIM2B.C:267-544") != NULL);
-    puts("ok: ReDMCSB F0929 PC 3.4 FTL loader validation gates");
+    puts("ok: ReDMCSB F0929 source FTL loader validation gates");
     return 0;
 }
