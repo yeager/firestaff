@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Nexus Structure3 raw package-to-host route: connected the strict
+  six-span reader to the DGN host intake. Only an exact manifest-ordered,
+  hash-matching, externally Saturn-attested packet can invoke the existing
+  host binder; a changed lane stops before host intake. The route retains no
+  VDP1, palette, pixel, transform, or draw interpretation and remains no-draw.
+
 - 2026-07-14 CSB ReDMCSB F7055/F7056/F7057/F7058 save-part checksum: added a
   CSB-owned C11 port of `CEDTINC6.C`'s PC34 little-endian word XOR/checksum
   utilities. F7058 returns the original checksum and restores caller

@@ -5448,6 +5448,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the existing no-draw import packet. There is still no local genuine
     Saturn trace, and the reader deliberately assigns no VDP1, palette,
     transform, culling, texture, or draw semantics.
+  - 2026-07-14 package-to-host follow-up: the same reader-owned packet now
+    crosses into DGN host intake only in manifest order after all six spans,
+    session, bundle, and external Saturn attestation match. A changed lane
+    stops before host intake. This is opaque transport only, not a claim about
+    an original Saturn capture-file format or any VDP1/palette/pixel semantics.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   establish one original Saturn execution-to-VDP1 receipt for a named

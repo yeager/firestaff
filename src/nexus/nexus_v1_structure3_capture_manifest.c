@@ -219,6 +219,26 @@ void nexus_v1_dgn_structure3_capture_host_receipt_clear(
     receipt->import_receipt.blocks_real_dgn_mesh_render = 1;
 }
 
+void nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt *receipt)
+{
+    if (!receipt) return;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->no_draw_only = 1;
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_clear(
+        &receipt->raw_reader);
+    nexus_v1_dgn_structure3_capture_host_receipt_clear(&receipt->host);
+}
+
+void nexus_v1_dgn_structure3_raw_capture_host_receipt_release(
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt *receipt)
+{
+    if (!receipt) return;
+    nexus_v1_dgn_structure3_raw_capture_reader_receipt_release(
+        &receipt->raw_reader);
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(receipt);
+}
+
 int nexus_v1_dgn_structure3_capture_manifest_parse(
     const char *text, size_t text_size,
     Nexus_V1_DgnStructure3CaptureManifestReceipt *out_receipt)
@@ -445,4 +465,38 @@ int nexus_v1_dgn_structure3_capture_host_intake(
         &receipt.manifest, capture, &receipt.import_receipt);
     *out_receipt = receipt;
     return receipt.import_receipt.complete_source_binding ? 1 : 0;
+}
+
+int nexus_v1_dgn_structure3_raw_capture_host_intake(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    int dgn_source_hash_verified, const char *manifest_text,
+    size_t manifest_size, const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt receipt;
+    Nexus_V1_DgnStructure3CaptureManifestReceipt manifest;
+
+    if (!out_receipt) return -1;
+    nexus_v1_dgn_structure3_raw_capture_host_receipt_clear(&receipt);
+    *out_receipt = receipt;
+    if (!manifest_text || !paths || !attestation) return 0;
+    receipt.manifest_parsed = nexus_v1_dgn_structure3_capture_manifest_parse(
+        manifest_text, manifest_size, &manifest);
+    if (!receipt.manifest_parsed) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_reader_invoked = 1;
+    if (!nexus_v1_dgn_structure3_raw_capture_read(
+            &manifest, paths, attestation, &receipt.raw_reader)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.host_intake_invoked = 1;
+    (void)nexus_v1_dgn_structure3_capture_host_intake(
+        level, dgn_data, dgn_size, dgn_source_hash_verified, manifest_text,
+        manifest_size, &receipt.raw_reader.import_packet, &receipt.host);
+    *out_receipt = receipt;
+    return receipt.host.import_receipt.complete_source_binding ? 1 : 0;
 }
