@@ -1798,10 +1798,10 @@ F	0742	F0742_MUSIC_SetTrack	FMTOWNS.H;NEWMAP.C;MUSIC.C	referenced_not_verified
 F	0743	F0743_MUSIC_Update	FMTOWNS.H;GAMELOOP.C;MUSIC.C	referenced_not_verified
 F	0744	F0744_ReplaceTildeInFileName	FILENAME.C	implemented_source_locked
 F	0745	F0745_SetFileNamesAccordingToLanguage	DEFS.H;FILENAME.C;STARTUP2.C	implemented_source_locked
-F	0746	F0746_IsEMSPresent	STARTUP2.C	referenced_not_verified
-F	0747	F0747_EMM_GetVersion	STARTUP2.C	referenced_not_verified
+F	0746	F0746_IsEMSPresent	STARTUP2.C	implemented_source_locked
+F	0747	F0747_EMM_GetVersion	STARTUP2.C	implemented_source_locked
 F	0748	F0748_Get_EMS_Memory	DEFS.H;STARTUP2.C;STARTUP1.C	unmapped_or_unverified
-F	0749	F0749_EMM_ReleaseHandle	STARTUP2.C	unmapped_or_unverified
+F	0749	F0749_EMM_ReleaseHandle	STARTUP2.C	implemented_source_locked
 F	0750	F0750_CPSX	AMIGINIT.C;DEFS.H;STARTUP2.C;ENDGAME.C	referenced_not_verified
 F	0751	F0751_GetBitmapByteCount	STARTUP2.C	referenced_not_verified
 F	0752	F0752_AllocateAndSetNegativeBitmapPointer	STARTUP2.C	referenced_not_verified
