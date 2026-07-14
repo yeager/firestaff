@@ -120,6 +120,35 @@ int main(void)
               viewport.asset_floor_ceiling_drawn_count == 2 &&
               viewport.blocked_material_draw_count == 0);
 
+    /* SKProject DISPLAY_VIEWPORT calls SET_GRAPHICS_FLIP_FROM_POSITION with
+     * kind 0x20 for rect 700 (ceiling) and kind 1 for rect 701 (floor). */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    prepare(&viewport, framebuffer, &trace);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    dm2_v1_viewport_set_level(&viewport, 0);
+    dm2_v1_viewport_set_gdat_scene_map_origin(&viewport, 0, 0);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 3, 0x6d324741u,
+        10, 2, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK("source scene flag 0x02 mirrors ceiling rect 700 from map parity",
+          framebuffer[0] == 2 && framebuffer[1] == 1);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    prepare(&viewport, framebuffer, &trace);
+    dm2_v1_viewport_set_party(&viewport, 0, 0, 0);
+    dm2_v1_viewport_set_level(&viewport, 0);
+    dm2_v1_viewport_set_gdat_scene_map_origin(&viewport, 1, 0);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 3, 0x6d324741u,
+        10, 8, 0, 0, 0, 0, 0, 0, 0, 0);
+    dm2_v1_render_floor_ceiling(&viewport);
+    CHECK("source scene flag 0x08 mirrors floor rect 701 from G1 map offset parity",
+          framebuffer[FLOOR_TOP * DM2_VP_WIDTH] == 6 &&
+              framebuffer[FLOOR_TOP * DM2_VP_WIDTH + 1] == 5);
+
     printf("DM2 complete GDAT floor/ceiling gate: %d/%d passed\n",
            passed, checks);
     return passed == checks ? 0 : 1;

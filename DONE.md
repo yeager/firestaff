@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM2 GDAT plane flip: bound G1 map offsets and active party state
+  to SKProject `SET_GRAPHICS_FLIP_FROM_POSITION` for decoded ceiling rect 700
+  and floor rect 701 material plans. Focused coverage proves their distinct
+  source flag/parity branches; this does not claim dynamic light, full GDAT
+  scene parity, or inferred material routes.
+
 - 2026-07-14 DM2 real GDAT dynamic-creature animation-table boundary: added a
   bounded V5 decoder for SKProject's `GET_CREATURE_ANIMATION_FRAME` data path.
   For a GDAT-backed non-static AI type, it resolves only the complete
