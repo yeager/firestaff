@@ -418,6 +418,13 @@
     header or part at HINTLOAD's original stage code. The caller must still
     supply each media's exact record span; EVENTS, TIMELINE, dungeon-tail
     allocation, platform identity, and all positive corpus proof remain open.
+  - 2026-07-14 update: F0435's subsequent EVENTS and TIMELINE transport now
+    consumes only caller-admitted original byte spans with header
+    `Keys[3..4]`/`Checksums[3..4]`, and calls the required F0434 dungeon-tail
+    loader only after both checks succeed. It does not infer EVENT records,
+    heap semantics, tail allocation, DSA, or a runtime from fixtures. A real
+    CSB corpus was not available locally; per-media positive evidence remains
+    required before this boundary can admit a live save.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;

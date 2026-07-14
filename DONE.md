@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSB ReDMCSB F0435 EVENTS/TIMELINE/dungeon-tail admission:
+  added the source-ordered continuation after an accepted HINTLOAD F1918
+  receipt. It derives only C3/C4 key and checksum words from the decrypted
+  header, restores caller-owned EVENTS and uint16 TIMELINE spans, and invokes
+  the required F0434 tail loader only after both validations pass. Invalid
+  spans, checksum failures, and a tail failure stop the sequence without a
+  replacement layout, event runtime, DSA, allocation, or fallback. Focused
+  strict-C11 regression passes.
+
 - 2026-07-14 CSB ReDMCSB HINTLOAD F1910/F1913/F1914/F1918: added the
   source-defined initial CPSX save sequence for exact sequential transport,
   header deobfuscation, and the first three source-owned parts
