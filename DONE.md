@@ -18,6 +18,17 @@
   route is constructed. Verification: focused CTest
    `theron_v1_startup_flow_probe` passed 1/1.
 
+- ✅ 2026-07-14 DM2 G1 DB4 scene-owner viewport material handoff: the
+  source-classified `c_map`/`c_record` creature scene receipt now carries its
+  coordinate, `CREATURES/type/F9` address, decoded geometry, stride, and
+  local palette hash into the viewport creature pass. Only the matching DB4
+  source sprite may consume that material; a mismatch blocks the draw without
+  a substitute. Source: skproject `SKWIN/c_map.cpp`, `DME.h::CreatureType`,
+  and `SkWinCore.cpp QUERY_DUNGEON_MAP_CHIP_PICT`/`DRAW_CHIP_OF_MAGIC_MAP`.
+   Verification: new data-free `test_dm2_v1_g1_scene_viewport_material_gate`
+   passed accepted and mismatch cases; `test_dm2_v1_runtime_handoff_smoke`
+   passed 161/161.
+
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
   including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API

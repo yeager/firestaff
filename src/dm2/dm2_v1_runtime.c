@@ -1608,6 +1608,8 @@ static void dm2_runtime_append_creature_sprite(
      * before DRAW_CHIP_OF_MAGIC_MAP. */
     dst->creature_type = record[4];
     dst->source_kind = 2;
+    dst->map_x = (int16_t)map_x;
+    dst->map_y = (int16_t)map_y;
     dst->frame_index = 0;
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
@@ -2362,6 +2364,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
     DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
+    static const int forward_dx[4] = { 0, 1, 0, -1 };
+    static const int forward_dy[4] = { -1, 0, 1, 0 };
 
     if (!framebuffer || fb_stride <= 0 ||
         view_w < DM2_VP_WIDTH || view_h < DM2_VP_HEIGHT) {
@@ -2446,11 +2450,30 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_thunder_position,
         rt->gdat_ambient_darkness);
     dm2_runtime_refresh_g1_scene_handoff(
-        rt, rt->dungeon_level, party_x, party_y);
+        rt, rt->dungeon_level,
+        party_x + forward_dx[party_dir & 3],
+        party_y + forward_dy[party_dir & 3]);
     if (rt->g1_scene_runtime_handoff.blocked) {
         /* A classified source tile has no verified GDAT material. Never let
          * the renderer turn this into a fallback dungeon frame. */
         return -1;
+    }
+    if (rt->g1_scene_runtime_handoff.valid &&
+        rt->g1_scene_runtime_handoff.scene.root_class ==
+            DM2_V1_G1_SCENE_ROOT_CREATURE) {
+        const DM2_V1_G1DungeonSceneClassificationReceipt *scene =
+            &rt->g1_scene_runtime_handoff.scene;
+        dm2_v1_viewport_set_g1_scene_creature_material(
+            &viewport, 1, scene->x, scene->y,
+            rt->g1_scene_runtime_handoff.creature_type,
+            rt->g1_scene_runtime_handoff.gdat_index,
+            rt->g1_scene_runtime_handoff.material_width,
+            rt->g1_scene_runtime_handoff.material_height,
+            rt->g1_scene_runtime_handoff.material_stride,
+            rt->g1_scene_runtime_handoff.material_palette_hash);
+    } else {
+        dm2_v1_viewport_set_g1_scene_creature_material(
+            &viewport, 0, 0, 0, 0, 0, 0, 0, 0, 0u);
     }
     dm2_v1_viewport_set_gdat_interface_palette(
         &viewport,
