@@ -221,6 +221,16 @@ int csb_v1_dungeon_get_group_cells_pc34(
     int record_size,
     uint8_t *out_cells);
 
+/* ReDMCSB DUNGEON.C F0147_DUNGEON_GetGroupDirections reads the C04
+ * GROUP.Direction bitfield. DEFS.H packs it into bits 8..9 of the final
+ * little-endian word (byte 15, bits 0..1). As with F0145, the caller owns
+ * C04 admission; this accessor neither infers a direction nor rewrites any
+ * packed source byte. */
+int csb_v1_dungeon_get_group_directions_pc34(
+    const uint8_t *group_record,
+    int record_size,
+    uint8_t *out_directions);
+
 /* ================================================================
  *  Dungeon-layer accessor stubs (M10 integration points)
  *
