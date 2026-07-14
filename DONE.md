@@ -13993,6 +13993,18 @@ matching spans, and changed bytes reject.
 Verification: `theron_v1_raw_loader_trace_stage3_sector` focused negative
 probe; a positive result requires original JP/US media and captures.
 
+# ✅ 2026-07-14 Theron later `$e009` complete-sector witness hardening
+
+The raw-sector witness now accepts only a provenance-marked Mednafen SCSI row
+that retains both FNV-1a fingerprints: all 2352 observed raw-sector bytes and
+the existing leading 32-byte span. Firestaff compares both against the same
+selector-resolved record in the hash-verified original Track 02 BIN; span-only
+or malformed sidecars reject. This remains physical CD/media provenance only:
+it does not establish `$e009` causality, shared capture-session identity,
+payload format, dungeon, object, graphics, palette, bitmap, or transition
+semantics. Verification: focused raw-loader CTest and Mednafen patch/capture
+script contracts.
+
 Added a skip-safe, corpus-bound probe and Mednafen instrumentation for the
 first post-stage-two HuC6280 `JSR $e009` envelope. A positive result requires
 hash-verified JP and US raw Track 02 images plus matching instrumented traces;

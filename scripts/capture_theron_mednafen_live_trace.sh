@@ -298,8 +298,8 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
     printf 'BLOCKED: dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
     exit 1
 fi
-if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 span_offset=0 span_bytes=32 span_fnv1a=[0-9a-f]{8}$' "$cd_trace"; then
-    printf 'BLOCKED: dynamic CPU receipts lack a bounded authentic raw-sector span (exit=%s)\n' "$status"
+if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 sector_fnv1a=[0-9a-f]{8} span_offset=0 span_bytes=32 span_fnv1a=[0-9a-f]{8}$' "$cd_trace"; then
+    printf 'BLOCKED: dynamic CPU receipts lack a complete authentic raw-sector receipt (exit=%s)\n' "$status"
     exit 1
 fi
 if ! awk '
