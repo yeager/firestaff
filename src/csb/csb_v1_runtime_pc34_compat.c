@@ -15410,6 +15410,87 @@ static int csb_v1_runtime_build_csbwin_core_summary(
         }
     }
 
+    if (profile->csbwin_body_runtime_summary_valid) {
+        uint8_t seen[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES] = { 0 };
+
+        /* A resumed CSBWin save owns both TIMER and TimerQueue. Preserve
+         * those bytes only while every live timeline event still has its
+         * exact original queue-slot receipt. Once a timer has fired or a new
+         * event has been introduced, this runtime cannot reconstruct the
+         * source heap's free-list/requeue state, so do not emit a plausible
+         * but invented replacement save. */
+        if (profile->csbwin_timer_summary_total !=
+                profile->csbwin_timer_summary_count ||
+            profile->csbwin_timer_queue_summary_total !=
+                profile->csbwin_timer_queue_summary_count ||
+            profile->csbwin_timer_summary_count !=
+                profile->csbwin_timer_queue_summary_count ||
+            profile->csbwin_timer_summary_count >
+                CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+            profile->csbwin_timer_queue_summary_count >
+                CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+            profile->timeline_queue.eventCount < 0 ||
+            profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT ||
+            profile->timeline_queue.eventCount !=
+                (int)profile->csbwin_timer_queue_summary_count) {
+            return -1;
+        }
+        for (i = 0u; i < (uint16_t)profile->timeline_queue.eventCount; ++i) {
+            const int event_index = profile->timeline_queue.timeline[i];
+            const struct DM1_Event_V1 *event;
+            uint16_t queue_slot;
+            uint16_t timer_index;
+            const CSB_V1_CSBWin512TimerSummary *timer;
+
+            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+                return -1;
+            }
+            queue_slot = profile->csbwin_timeline_event_queue_slot[event_index];
+            if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
+                seen[queue_slot]) {
+                return -1;
+            }
+            timer_index = profile->csbwin_timer_queue[queue_slot];
+            if (timer_index >= profile->csbwin_timer_summary_count) {
+                return -1;
+            }
+            event = &profile->timeline_queue.events[event_index];
+            timer = &profile->csbwin_timers[timer_index];
+            if (!timer->valid || timer->truncated ||
+                timer->source_index != timer_index ||
+                event->map_time != timer->time ||
+                event->type != timer->function ||
+                event->priority != timer->ubyte5 ||
+                event->b_mapX != timer->ubyte6 ||
+                event->b_mapY != timer->ubyte7 ||
+                event->c_cell != timer->ubyte8 ||
+                event->c_effect != timer->ubyte9) {
+                return -1;
+            }
+            seen[queue_slot] = 1u;
+        }
+        for (i = 0u; i < profile->csbwin_timer_queue_summary_count; ++i) {
+            if (!seen[i]) return -1;
+        }
+
+        summary->max_timers = profile->csbwin_max_timers;
+        summary->num_timer = profile->csbwin_num_timer;
+        summary->first_avail_timer = profile->csbwin_first_avail_timer;
+        summary->timer_sequence = profile->csbwin_timer_sequence;
+        summary->timer_summary_total = profile->csbwin_timer_summary_total;
+        summary->timer_summary_count = profile->csbwin_timer_summary_count;
+        summary->timer_queue_summary_total =
+            profile->csbwin_timer_queue_summary_total;
+        summary->timer_queue_summary_count =
+            profile->csbwin_timer_queue_summary_count;
+        memcpy(summary->timers, profile->csbwin_timers,
+               sizeof(summary->timers));
+        memcpy(summary->timer_queue, profile->csbwin_timer_queue,
+               sizeof(summary->timer_queue));
+        summary->sections_verified = CSB_V1_CSBWIN_512_SECTION_COUNT;
+        return 0;
+    }
+
     if (profile->timeline_queue.eventCount < 0 ||
         profile->timeline_queue.eventCount >
             (int)CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
