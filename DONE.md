@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB `TEXT.C F0054`: PC 3.4 message cursor, permanent
+  allocation, font-load and expiry initialization now use bounded callbacks.
+  Verification: focused strict CTest.
+
 - 2026-07-14 Nexus DGN face/material provenance: launcher-reopened LEV bytes
   now must equal authenticated canonical bytes before raster admission.
   Verification: focused strict CTest; no fallback visual is admitted.
