@@ -654,6 +654,13 @@ int csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
     runtime = &profile->runtime;
     if (!runtime->party_state_valid) return 0;
     if (thing == 0xfffeu) thing = 0xffffu;
+    if (runtime->csbwin_gameblock2_summary_valid) {
+        /* CSBWin SaveGame.cpp::LoadGame sends CURSORFILTER_ReadGame after
+         * GAMEBLOCK2.objectInHand is restored.  The filter is a notification
+         * here as in the source; no DSA result can alter this saved hand. */
+        (void)csb_v1_runtime_execute_csbwin_cursor_read_game_filter(
+            runtime, thing);
+    }
     runtime->party_state.LeaderHandThing = thing;
     if (runtime->csbwin_gameblock2_summary_valid) {
         runtime->csbwin_object_in_hand = thing;
