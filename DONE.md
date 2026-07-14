@@ -13780,6 +13780,20 @@ fallback action is constructed. Source boundary: CSBWin `SaveGame.cpp`
 `ReadExtendedFeatures`/`ReadDSAs`, `DSA.cpp` `DSA::Read`, and ReDMCSB
 `LOADSAVE.C F0435_STARTEND_LoadGame`.
 
+# ✅ 2026-07-14 DM2 GDAT complete door material-plan handoff
+
+The boot-owned M11 door plan now carries every source-addressed component of
+each visible standard door: `DOORS` base panels, `DOOR_GFX` ornate overlays,
+destroyed-door masks, `GRAPHICSSET` frames, and `DOOR_BUTTONS` defaults. The
+viewport consumes the plan's decoded IMG3 pixels and exact local palettes
+before it can consult its generic asset provider. Custom `WALL_GFX` buttons
+remain separately fail-closed behind their direct DB2/DB3 owner receipt; no
+same-index substitute is accepted. Source: SKProject `SkWinCore.cpp`
+`DM2_DRAW_DOOR`, `DRAW_DOOR_FRAMES`, and `DRAW_DEFAULT_DOOR_BUTTON`.
+Verification: `test_dm2_v1_gdat_door_overlay_plan_real_data` passes against
+canonical PC DM2 data with no provider fetches; CTest
+`dm2_v1_g1_wall_button_material_gate` passes 7/7.
+
 # DM2 GDAT MapGraphicsStyle Corpus (2026-07-14)
 
 - DM2's boot-owned scene-material cache now spans the original unsigned-byte

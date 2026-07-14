@@ -22,14 +22,14 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
 static int static_fetch(void *user, int index, const uint8_t **pixels,
                         int *width, int *height, int *stride)
 {
-    static const uint8_t bitmap[4] = { 1, 2, 3, 4 };
-    int *overlay_fetches = user;
-    if (index <= DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE &&
-        index > DM2_V1_VIEWPORT_GFX_DOOR_DESTROYED_MASK_FIELD_BASE) {
-        ++*overlay_fetches;
-        return -1;
-    }
-    *pixels = bitmap; *width = 2; *height = 2; *stride = 2; return 0;
+    int *fallback_fetches = user;
+    (void)index;
+    (void)pixels;
+    (void)width;
+    (void)height;
+    (void)stride;
+    ++*fallback_fetches;
+    return -1;
 }
 
 static int static_palette(void *user, int index, uint8_t palette[16],
@@ -53,7 +53,7 @@ int main(void)
     DM2_V1_GdatDoorOverlayM11CommandPlan material_plan;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     int ornate = -1;
-    int overlay_fetches = 0;
+    int fallback_fetches = 0;
 
     if (!root || !root[0]) {
         if (!home || !home[0]) { puts("SKIP: no local canonical DM2 data"); return 0; }
@@ -85,24 +85,36 @@ int main(void)
     door_plan.doors[0].panel_rect = (DM2_V1_ViewportRect){ 0, 28, 320, 144 };
     door_plan.doors[0].panel_visible_rect = door_plan.doors[0].panel_rect;
     door_plan.doors[0].frame_rect = door_plan.doors[0].panel_rect;
+    door_plan.doors[0].button_gdat_index =
+        dm2_v1_viewport_door_button_graphic_index_for_state(0);
+    door_plan.doors[0].button_source_kind = 1;
+    door_plan.doors[0].button_rect = (DM2_V1_ViewportRect){ 150, 80, 16, 16 };
     if (!dm2_v1_gdat_door_overlay_m11_command_plan_build(&loader, &door_plan, &material_plan) ||
-        !material_plan.valid || material_plan.command_count != 1 || !material_plan.command_hash ||
-        material_plan.commands[0].entry_index != ornate ||
-        material_plan.commands[0].category != DM2_GDAT_CATEGORY_DOOR_GFX ||
-        !material_plan.commands[0].palette_hash) goto fail;
+        !material_plan.valid || material_plan.command_count != 4 || !material_plan.command_hash ||
+        material_plan.commands[0].kind != DM2_V1_GDAT_DOOR_PANEL ||
+        material_plan.commands[1].entry_index != ornate ||
+        material_plan.commands[1].kind != DM2_V1_GDAT_DOOR_OVERLAY_ORNATE ||
+        material_plan.commands[2].kind != DM2_V1_GDAT_DOOR_FRAME ||
+        material_plan.commands[3].kind != DM2_V1_GDAT_DOOR_BUTTON ||
+        !material_plan.commands[0].palette_hash || !material_plan.commands[2].palette_hash ||
+        !material_plan.commands[3].palette_hash) goto fail;
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &overlay_fetches);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);
     dm2_v1_render_doors(&viewport);
-    if (overlay_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 1 ||
+    if (fallback_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 4 ||
+        viewport.asset_door_panel_drawn_count != 1 ||
         viewport.asset_door_overlay_drawn_count != 1 ||
+        viewport.asset_door_frame_drawn_count != 1 ||
+        viewport.asset_door_button_drawn_count != 1 ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
-    puts("PASS: canonical GDAT door overlay plan reaches M11 directly");
+    puts("PASS: canonical GDAT door panel/frame/button/overlay plan reaches M11 directly");
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
 done:
     dm2_v1_asset_loader_free(&loader); free(graphics); return 0;

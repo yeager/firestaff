@@ -4,10 +4,11 @@
   retain broad original PC34 interactive runtime/capture comparison as an
   external-corpus task.
 
-- 2026-07-14 DM2 GDAT door-overlay follow-up: ornate and destroyed-door
-  overlays now reach M11 through exact `DOOR_GFX`/`DOORS` material plans.
-  Remaining dungeon work is source-owned plans for panels, frames, buttons,
-  and light. Direct DB4 creature sprites now require their
+- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: light still needs a
+  source-owned destination/clipping plan. Complete standard door panels,
+  frames, default buttons, and overlays now reach M11 through exact material
+  plans; custom `WALL_GFX` buttons remain receipt-gated. Direct DB4 creature
+  sprites require their
   exact original ObjectID/tile/material receipt before M11 can draw them.
   Do not replace missing GDAT entries with generic art.
 
