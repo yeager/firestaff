@@ -42,6 +42,9 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_teleporter_material_plan_required = 1;
     receipt.runtime_m11_frame_teleporter_material_plan_hash = 0x54454c45u;
     receipt.runtime_m11_frame_teleporter_material_plan_consumed = 1;
+    receipt.runtime_m11_frame_floor_gfx_map_chip_material_plan_required = 1;
+    receipt.runtime_m11_frame_floor_gfx_map_chip_material_plan_hash = 0x46474d43u;
+    receipt.runtime_m11_frame_floor_gfx_map_chip_material_plan_consumed = 1;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -78,6 +81,9 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.teleporter_material_plan_required = 1;
     receipt.teleporter_material_plan_hash = 0x54454c45u;
     receipt.teleporter_material_plan_consumed = 1;
+    receipt.floor_gfx_map_chip_material_plan_required = 1;
+    receipt.floor_gfx_map_chip_material_plan_hash = 0x46474d43u;
+    receipt.floor_gfx_map_chip_material_plan_consumed = 1;
     receipt.palette_hash = 0x50414c31u;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
@@ -103,6 +109,16 @@ int main(void)
     runtime.map_load_token++;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a stale DM2 map token");
+    runtime = make_runtime_receipt();
+
+    runtime.floor_gfx_map_chip_material_plan_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale local FLOOR_GFX map-chip material receipt");
+    runtime = make_runtime_receipt();
+
+    runtime.floor_gfx_map_chip_material_plan_consumed = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects an unconsumed local FLOOR_GFX map-chip material plan");
     runtime = make_runtime_receipt();
 
     runtime.floor_material_hash++;

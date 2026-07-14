@@ -834,6 +834,14 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
     int level,
     uint8_t *out_wall_gfx_list,
     int out_capacity);
+/* SKProject DME.h::Map_definitions::FloorGraphics() is w10 bits 8..11.
+ * LOAD_LOCALLEVEL_DYN reads the corresponding map-local byte list directly
+ * after CreaturesTypes and WallGraphics. */
+int dm2_v1_dungeon_get_map_floor_gfx_list(
+    const DM2_V1_DungeonData *d,
+    int level,
+    uint8_t *out_floor_gfx_list,
+    int out_capacity);
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
     int level);

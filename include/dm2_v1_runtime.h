@@ -170,6 +170,9 @@ typedef struct {
     int teleporter_material_plan_required;
     uint32_t teleporter_material_plan_hash;
     int teleporter_material_plan_consumed;
+    int floor_gfx_map_chip_material_plan_required;
+    uint32_t floor_gfx_map_chip_material_plan_hash;
+    int floor_gfx_map_chip_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;

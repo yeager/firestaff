@@ -15,6 +15,13 @@
 - 2026-07-14 CSB ReDMCSB F0678/F0679 D2 side dispatcher: added PC D2L2/D2R2
   wall-panel/teleporter-field routing with source wall swaps and zones over
   caller-owned callbacks. Focused strict-C11 regression passes.
+- 2026-07-14 DM2 SKProject map-local FLOOR_GFX M11 bridge: added the exact
+  `Map_definitions::FloorGraphics()` list decode after creature and wall lists,
+  reversible `FLOOR_GFX/index/F9` material addresses, and a runtime/M11 plan
+  that requires raw bytes, decoded pixels, and each source image's local
+  palette. Missing material fails closed and no ornament placement or
+  substitute graphics is introduced. Focused dungeon-loader and M11-gate
+  regressions pass.
 
 - 2026-07-14 CSB ReDMCSB F0676/F0677 D3 side dispatcher: added PC D3L2/D3R2
   ordering for walls, stairs, doors, pits, corridors, and teleporters over

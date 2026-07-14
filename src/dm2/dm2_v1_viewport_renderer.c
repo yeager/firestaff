@@ -596,6 +596,25 @@ int dm2_v1_viewport_teleporter_map_chip_graphic_index(void)
     return DM2_V1_VIEWPORT_GFX_TELEPORTER_MAP_CHIP;
 }
 
+int dm2_v1_viewport_floor_gfx_map_chip_graphic_index(int floor_gfx_index)
+{
+    if (floor_gfx_index < 0 || floor_gfx_index > 0xff) return 0;
+    return DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE - floor_gfx_index;
+}
+
+int dm2_v1_viewport_floor_gfx_map_chip_graphic_address(
+    int gdat_index, int *out_floor_gfx_index)
+{
+    int index = DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE - gdat_index;
+
+    if (!out_floor_gfx_index || index < 0 || index > 0xff ||
+        gdat_index > DM2_V1_VIEWPORT_GFX_FLOOR_GFX_MAP_CHIP_BASE) {
+        return 0;
+    }
+    *out_floor_gfx_index = index;
+    return 1;
+}
+
 /* DM2 draw order — back-to-front, same 12 view squares as DM1.
  * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
  * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542

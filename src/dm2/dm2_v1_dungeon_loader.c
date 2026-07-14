@@ -2983,6 +2983,53 @@ int dm2_v1_dungeon_get_map_wall_gfx_list(
     return wall_gfx_count;
 }
 
+int dm2_v1_dungeon_get_map_floor_gfx_list(
+    const DM2_V1_DungeonData *d,
+    int level,
+    uint8_t *out_floor_gfx_list,
+    int out_capacity)
+{
+    const uint8_t *map_desc;
+    int wall_gfx_count;
+    int floor_gfx_count;
+    int creature_count;
+    int map_base;
+    int list_base;
+
+    if (out_floor_gfx_list && out_capacity > 0) {
+        memset(out_floor_gfx_list, 0, (size_t)out_capacity);
+    }
+    if (!d || level < 0 || level >= d->level_count || !d->raw_data ||
+        d->raw_size <= 0 || out_capacity < 0 || level >= DM2_V1_MAX_LEVELS ||
+        d->raw_size < DM2_DUNGEON_HEADER_SIZE +
+                          (level + 1) * DM2_MAP_DESC_SIZE) {
+        return -1;
+    }
+    map_desc = d->raw_data + DM2_DUNGEON_HEADER_SIZE +
+               level * DM2_MAP_DESC_SIZE;
+    wall_gfx_count = (int)(RD16(map_desc + 10) & 0x0fu);
+    floor_gfx_count = (int)((RD16(map_desc + 10) >> 8) & 0x0fu);
+    creature_count = (int)((RD16(map_desc + 12) >> 4) & 0x0fu);
+    if (floor_gfx_count <= 0) return 0;
+    if (!out_floor_gfx_list || out_capacity < floor_gfx_count ||
+        d->raw_map_data_base < 0 || d->level_widths[level] <= 0 ||
+        d->level_heights[level] <= 0) {
+        return -1;
+    }
+    /* DME.h Map_definitions::FloorGraphics and SkWinCore.cpp
+     * LOAD_LOCALLEVEL_DYN: creature list, wall list, then floor list. */
+    map_base = d->raw_map_data_base + d->level_offsets[level];
+    list_base = map_base + d->level_widths[level] * d->level_heights[level] +
+                creature_count + wall_gfx_count;
+    if (map_base < 0 || list_base < map_base ||
+        list_base + floor_gfx_count > d->raw_size) {
+        return -1;
+    }
+    memcpy(out_floor_gfx_list, d->raw_data + list_base,
+           (size_t)floor_gfx_count);
+    return floor_gfx_count;
+}
+
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
     int level) {
