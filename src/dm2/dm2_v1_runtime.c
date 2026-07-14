@@ -3388,37 +3388,27 @@ int dm2_v1_runtime_get_weather_intensity(void) {
     return g_dm2_runtime.weather.weather_intensity;
 }
 
-int dm2_v1_runtime_import_sksave_corpus(
-    const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out)
+int dm2_v1_runtime_import_sksave_receipted_candidate(
+    const DM2_SKSaveCandidateReceipt *selected,
+    DM2_V1_RuntimeCorpusImportReceipt *out)
 {
     uint8_t payload[DM2_SESSION_MAX_SIZE];
     size_t size = 0u;
-    DM2_SKSaveCorpusReceipt corpus;
     DM2_V1_SaveCandidate candidate;
     DM2_V1_SessionState session;
-    const DM2_SKSaveCandidateReceipt *selected = NULL;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!dm2_v1_sksave_corpus_scan(save_root, &corpus) ||
-        corpus.importable_candidate_count == 0u ||
-        corpus.first_importable_path[0] == '\0') {
+    if (!selected || !selected->path[0] || !selected->source_file_hash) {
         out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
         return 0;
     }
-    for (uint8_t i = 0u; i < corpus.candidate_receipt_count; ++i) {
-        if (strcmp(corpus.candidate_receipts[i].path,
-                   corpus.first_importable_path) == 0) {
-            selected = &corpus.candidate_receipts[i];
-            break;
-        }
-    }
-    if (!selected) {
-        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
-        return 0;
-    }
+    /* ReDMCSB's load UI chooses a row before DM2_GAME_LOAD opens its stream.
+     * skproject c_savegame.cpp::DM2_SELECT_LOAD_GAME and DM2_GAME_LOAD
+     * follow that order. Do not scan for or replace this selected receipt. */
     out->candidate_kind = selected->kind;
     out->selected_payload_size = selected->payload_size;
     out->selected_payload_hash = selected->payload_hash;
+    out->selected_source_file_hash = selected->source_file_hash;
     snprintf(out->selected_path, sizeof(out->selected_path), "%s", selected->path);
     if (!dm2_v1_sksave_corpus_load_receipted_candidate(selected, payload,
             sizeof(payload), &size) ||
@@ -3455,6 +3445,35 @@ int dm2_v1_runtime_import_sksave_corpus(
      * Runtime weather owns the live copy; do not invent a weather transition. */
     g_dm2_runtime.weather.weather_seed = session.rng_seed;
     return 1;
+}
+
+int dm2_v1_runtime_import_sksave_corpus(
+    const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out)
+{
+    DM2_SKSaveCorpusReceipt corpus;
+    const DM2_SKSaveCandidateReceipt *selected = NULL;
+    uint8_t i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!dm2_v1_sksave_corpus_scan(save_root, &corpus) ||
+        corpus.importable_candidate_count == 0u ||
+        corpus.first_importable_path[0] == '\0') {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
+        return 0;
+    }
+    for (i = 0u; i < corpus.candidate_receipt_count; ++i) {
+        if (strcmp(corpus.candidate_receipts[i].path,
+                   corpus.first_importable_path) == 0) {
+            selected = &corpus.candidate_receipts[i];
+            break;
+        }
+    }
+    if (!selected) {
+        out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+    return dm2_v1_runtime_import_sksave_receipted_candidate(selected, out);
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {

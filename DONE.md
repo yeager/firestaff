@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-14 DM2 selected-SKSave runtime handoff: runtime restore now
+  accepts an explicit scanner-issued candidate receipt, mirroring skproject
+  `DM2_SELECT_LOAD_GAME` selection before `DM2_GAME_LOAD` opens the save.
+  The complete-file FNV receipt is reported through the runtime handoff and
+  rechecked before payload parsing or mutation; changed selected bytes reject
+  without substituting a different corpus entry or changing live state.
+  Verification: `test_dm2_v1_save_load` 23/23 passed.
+
 - ✅ 2026-07-14 DM1 PC34 C13 Vi Altar terminal-save handoff: aligned the
   original-save materializer with ReDMCSB `TIMELINE.C F0255:1677-1699`.
   Firestaff now validates the JUNK bones/`ChargeCount` owner only at C13 step
