@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 DM1/CSB ReDMCSB F1069-F1070: available DOS-library open/close
+  routes are Amiga-only. Focused PC 3.4 boundaries are intentionally no-ops.
+
 - 2026-07-14 DM1/CSB ReDMCSB F1067: available initialization is Amiga-
   specific. The focused PC 3.4 boundary is intentionally a source-evidenced
   no-op.

@@ -1941,8 +1941,8 @@ F	1065	F1065_SetExecBase	AMIGINIT.C;MEM1.C;AMIGALIB.C;COMPILE.H;MEM1MAIN.C	sourc
 F	1066	F1066_GetUsableChipMemoryByteCount	AMIGINIT.C	implemented_narrow
 F	1067	F1067_InitAmigaStuff	AMIGA.H;AMIGINIT.C;HINTMAIN.C;HINT001.C;STARTUP2.C	source_nonapplicable
 F	1068	F1068_FreeAmigaStuff	AMIGINIT.C;HINTMAIN.C;HINT001.C	source_nonapplicable
-F	1069	F1069_OpenDosLibrary	AMIGINIT.C	unmapped_or_unverified
-F	1070	F1070_CloseDosLibrary	AMIGINIT.C	unmapped_or_unverified
+F	1069	F1069_OpenDosLibrary	AMIGINIT.C	source_nonapplicable
+F	1070	F1070_CloseDosLibrary	AMIGINIT.C	source_nonapplicable
 F	1071	F1071_OpenGraphicsLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1072	F1072_CloseGraphicsLibrary	AMIGINIT.C	unmapped_or_unverified
 F	1073	F1073_OpenIntuitionLibrary	AMIGINIT.C	unmapped_or_unverified
