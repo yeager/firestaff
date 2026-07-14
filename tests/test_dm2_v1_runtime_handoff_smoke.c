@@ -1026,6 +1026,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.floor_ceiling_gdat_blits == 2 &&
               ownership.floor_ceiling_materials_complete == 1 &&
               ownership.wall_gdat_blits == 10 &&
+              ownership.gdat_wall_material_plan_consumed == 0 &&
               ownership.hud_core_gdat_blits == 9 &&
               ownership.hud_gdat_blits == 13 &&
               ownership.door_gdat_blits == 0 &&
@@ -1038,7 +1039,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.real_gdat_evidence_valid == 0 &&
               ownership.gdat_scene_control_ready == 0 &&
               ownership.gdat_scene_control_consumed == 0,
-              "indoor runtime frame clears the outdoor weather command while consuming full GDAT HUD and dungeon layers without fallback");
+              "indoor runtime frame keeps provider-backed wall fetches distinct from boot-owned GDAT plan consumption");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);

@@ -3630,14 +3630,16 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
      * behind a full-viewport placeholder blanket.
      */
     if (!s->asset_fetch) {
-        if (s->source_materials_required) {
+        if (s->source_materials_required && !s->gdat_wall_material_plan) {
             ++s->blocked_material_draw_count;
             s->blocked_material_mask |= DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL;
             return;
         }
-        dm2_v1_draw_legacy_wall_fallback(vp, stride);
-        ++s->fallback_wall_drawn_count;
-        return;
+        if (!s->source_materials_required) {
+            dm2_v1_draw_legacy_wall_fallback(vp, stride);
+            ++s->fallback_wall_drawn_count;
+            return;
+        }
     }
 
     /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
@@ -3781,6 +3783,9 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         if (s->source_materials_required) {
             s->last_dungeon_wall_material_consumed_mask |=
                 (uint16_t)(1u << (unsigned)panel->view_square);
+            if (s->gdat_wall_material_plan) {
+                ++s->gdat_wall_material_plan_consumed_count;
+            }
         }
         ++wall_asset_count;
     }

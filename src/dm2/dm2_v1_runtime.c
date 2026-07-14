@@ -2653,6 +2653,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_outdoor_ground_drawn_count;
     g_dm2_frame_ownership.wall_gdat_blits =
         viewport.asset_wall_drawn_count;
+    g_dm2_frame_ownership.gdat_wall_material_plan_consumed =
+        viewport.gdat_wall_material_plan_consumed_count;
     g_dm2_frame_ownership.hud_core_gdat_blits =
         viewport.asset_hud_core_drawn_count;
     g_dm2_frame_ownership.hud_gdat_blits =
@@ -2988,6 +2990,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.floor_ceiling_material_consumed_mask;
     g_dm2_last_m11_frame.floor_ceiling_materials_complete =
         g_dm2_frame_ownership.floor_ceiling_materials_complete;
+    g_dm2_last_m11_frame.gdat_wall_material_plan_consumed =
+        g_dm2_frame_ownership.gdat_wall_material_plan_consumed;
     g_dm2_last_m11_frame.valid =
         g_dm2_frame_ownership.valid &&
         g_dm2_last_m11_frame.source_materials_required &&

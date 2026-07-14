@@ -812,6 +812,8 @@ typedef struct {
     const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
     const DM2_V1_GdatWallM11CommandPlan *gdat_wall_material_plan;
     int gdat_scene_material_consumed_count;
+    /* Counts only wall blits supplied by the boot-owned GRAPHICSSET plan. */
+    int gdat_wall_material_plan_consumed_count;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed_count;
     int gdat_material_palette_floor_ceiling_consumed_count;
