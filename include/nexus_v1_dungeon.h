@@ -760,6 +760,25 @@ typedef struct {
     int material_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;
 
+/* Structure3b's documented, entry-local vertex indexes also permit a raw
+ * edge-incidence measurement. Endpoints are canonicalized only to count
+ * repeated index pairs within one entry; this does not establish adjacency,
+ * manifoldness requirements, winding, collision, clipping, or draw order. */
+typedef struct {
+    int face_receipt_valid;
+    int entry_count;
+    int edge_count;
+    int unique_edge_count;
+    int single_use_edge_count;
+    int shared_edge_count;
+    int nonmanifold_edge_count;
+    int degenerate_edge_count;
+    int maximum_edge_use_count;
+    int topology_measurement_complete;
+    int valid;
+    int topology_semantics_proven;
+} Nexus_V1_DgnStructure3EdgeReceipt;
+
 /* DMWeb documents Structure3a and Structure3c as signed 16.16 X/Y/Z
  * vectors. This validates their fixed-point framing, the documented
  * unit-normal invariant, and face-plane/normal coherence with an analytic
@@ -1095,6 +1114,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3EdgeReceipt structure3_edges;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
 } Nexus_V1_Level;
 
@@ -1181,6 +1201,7 @@ typedef struct {
     Nexus_V1_DgnStructure3EntryHeaderReceipt structure3_entry_headers;
     Nexus_V1_DgnStructure3FaceReceipt structure3_faces;
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3EdgeReceipt structure3_edges;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1647,6 +1668,7 @@ typedef struct {
      * later mesh work consumes the original DGN data rather than recreating
      * it. This is still not a material decoder or draw permission. */
     Nexus_V1_DgnStructure3FaceMaterialReceipt structure3_face_materials;
+    Nexus_V1_DgnStructure3EdgeReceipt structure3_edges;
     Nexus_V1_DgnStructure3VectorReceipt structure3_vectors;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt structure1a_transform_selectors;
     Nexus_V1_DgnStructure1FFaceSelectorReceipt structure1f_face_selectors;
@@ -1860,6 +1882,9 @@ int nexus_v1_level_structure3_face_receipt(
 int nexus_v1_level_structure3_face_material_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3FaceMaterialReceipt *out_receipt);
+int nexus_v1_level_structure3_edge_receipt(
+    const Nexus_V1_Level *level,
+    Nexus_V1_DgnStructure3EdgeReceipt *out_receipt);
 int nexus_v1_level_structure3_vector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3VectorReceipt *out_receipt);
