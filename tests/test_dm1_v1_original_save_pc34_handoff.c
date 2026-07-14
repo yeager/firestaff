@@ -4738,6 +4738,7 @@ static void test_original_pc34_party_info_runtime_materialization(void)
     wr16le(party_info + 8u, 23u);
     party_info[10u] = 29u;
     party_info[11u] = 37u;
+    party_info[84u] = 18u;
     CHECK(rewrite_fixture_party_info_bytes(
               bytes, (size_t)written, party_info),
           "PARTY_INFO runtime fixture retains authenticated C2 bytes");
@@ -4754,6 +4755,7 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           world.magic.scentCount == 29 &&
           world.freezeLifeTicks == 37 &&
           world.magic.freezeLifeTicks == 37 &&
+          world.magic.firstScentIndex == 18 &&
           world.lifecycle.status.partyShieldDefense == 17 &&
           world.lifecycle.status.partyFireShieldDefense == 19 &&
           world.lifecycle.status.partySpellShieldDefense == 23,
@@ -4767,8 +4769,9 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           world.magic.lastScentIndex == 0,
           "resumed ScentCount drives the source Footprints window");
     F0890_ORCH_ApplyPeriodicEffects_Compat(&world, NULL);
-    CHECK(world.freezeLifeTicks == 36 && world.magic.freezeLifeTicks == 36,
-          "the resumed source FreezeLifeTicks value reaches the live tick owner");
+    CHECK(world.freezeLifeTicks == 36 && world.magic.freezeLifeTicks == 36 &&
+              world.magic.firstScentIndex == 29,
+          "the resumed PARTY_INFO owners reach the live periodic tick");
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
               &world, 0x43313445u, exported, (int)sizeof(exported),
               &exported_size) == SAVEGAME_PC34_OK,
@@ -4786,7 +4789,8 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 6u) == 19 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23 &&
           reimported_party.pc34PartyInfoBytes[10u] == 29u &&
-          reimported_party.pc34PartyInfoBytes[11u] == 36u,
+          reimported_party.pc34PartyInfoBytes[11u] == 36u &&
+          reimported_party.pc34PartyInfoBytes[84u] == 29u,
           "F0433 preserves source PARTY_INFO field ownership on export");
     F0883_WORLD_Free_Compat(&world);
 }
