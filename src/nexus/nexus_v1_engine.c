@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <io.h>
@@ -1767,16 +1768,36 @@ static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
 {
     if (!engine) return;
     free(engine->structure3_runtime_source.texture_span);
+    free(engine->structure3_runtime_source.palette_state);
+    free(engine->structure3_runtime_source.vdp1_state);
+    free(engine->structure3_runtime_source.transform_state);
+    free(engine->structure3_runtime_source.normal_culling_state);
+    free(engine->structure3_runtime_source.vdp1_command);
     memset(&engine->structure3_runtime_source, 0,
            sizeof(engine->structure3_runtime_source));
     engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 1;
+}
+
+static int nexus_v1_copy_structure3_capture_span(
+    uint8_t **out_data, int *out_size, const uint8_t *data, size_t size)
+{
+    uint8_t *copy;
+
+    if (!out_data || !out_size || !data || size == 0U || size > (size_t)INT_MAX)
+        return 0;
+    copy = (uint8_t *)malloc(size);
+    if (!copy) return 0;
+    memcpy(copy, data, size);
+    *out_data = copy;
+    *out_size = (int)size;
+    return 1;
 }
 
 int nexus_v1_engine_consume_structure3_capture(
     Nexus_V1_Engine *engine,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
-    const uint8_t *texture_span, int texture_span_size)
+    const Nexus_V1_DgnStructure3CaptureImport *capture)
 {
     Nexus_V1_DgnStructure3MeshEntryReceipt entry;
     Nexus_V1_DgnStructure3Vector *vertices = NULL;
@@ -1786,13 +1807,23 @@ int nexus_v1_engine_consume_structure3_capture(
     int slot;
     int slot_count;
 
-    if (!engine || !candidate || !binding || !texture_span ||
-        texture_span_size <= 0 || !engine->level_loaded ||
+    if (!engine || !candidate || !binding || !capture ||
+        !capture->texture_span || !capture->palette_state ||
+        !capture->vdp1_state || !capture->transform_state ||
+        !capture->normal_culling_state || !capture->vdp1_command ||
+        capture->texture_span_size == 0U || capture->palette_state_size == 0U ||
+        capture->vdp1_state_size == 0U || capture->transform_state_size == 0U ||
+        capture->normal_culling_state_size == 0U ||
+        capture->vdp1_command_size == 0U ||
+        !capture->capture_session_fnv1a64 || !capture->capture_bundle_fnv1a64 ||
+        !capture->capture_bundle_hash_verified ||
+        !capture->original_saturn_capture_verified || !engine->level_loaded ||
         !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
         !engine->current_level_structure2_source.canonical_hash_verified ||
         !engine->current_level_structure2_source.materialization_bound ||
         engine->current_level_structure2_source.level_index !=
             engine->game.current_level ||
+        !binding->dgn_source_hash_verified || !binding->capture_source_verified ||
         !binding->complete_source_binding ||
         binding->renderer_handoff_ready || !binding->blocks_real_dgn_mesh_render)
         return 0;
@@ -1841,15 +1872,41 @@ int nexus_v1_engine_consume_structure3_capture(
     }
     source.vertex_slot_count = slot_count;
     source.normal = normals[candidate->face_ordinal];
-    source.texture_span = (uint8_t *)malloc((size_t)texture_span_size);
-    if (!source.texture_span) {
+    if (!nexus_v1_copy_structure3_capture_span(
+            &source.texture_span, &source.texture_span_size,
+            capture->texture_span, capture->texture_span_size) ||
+        !nexus_v1_copy_structure3_capture_span(
+            &source.palette_state, &source.palette_state_size,
+            capture->palette_state, capture->palette_state_size) ||
+        !nexus_v1_copy_structure3_capture_span(
+            &source.vdp1_state, &source.vdp1_state_size,
+            capture->vdp1_state, capture->vdp1_state_size) ||
+        !nexus_v1_copy_structure3_capture_span(
+            &source.transform_state, &source.transform_state_size,
+            capture->transform_state, capture->transform_state_size) ||
+        !nexus_v1_copy_structure3_capture_span(
+            &source.normal_culling_state, &source.normal_culling_state_size,
+            capture->normal_culling_state, capture->normal_culling_state_size) ||
+        !nexus_v1_copy_structure3_capture_span(
+            &source.vdp1_command, &source.vdp1_command_size,
+            capture->vdp1_command, capture->vdp1_command_size)) {
+        free(source.texture_span);
+        free(source.palette_state);
+        free(source.vdp1_state);
+        free(source.transform_state);
+        free(source.normal_culling_state);
+        free(source.vdp1_command);
         free(vertices);
         free(faces);
         free(normals);
         return 0;
     }
-    memcpy(source.texture_span, texture_span, (size_t)texture_span_size);
-    source.texture_span_size = texture_span_size;
+    source.capture_session_fnv1a64 = capture->capture_session_fnv1a64;
+    source.capture_bundle_fnv1a64 = capture->capture_bundle_fnv1a64;
+    source.capture_bundle_hash_verified =
+        capture->capture_bundle_hash_verified != 0;
+    source.original_saturn_capture_verified =
+        capture->original_saturn_capture_verified != 0;
     source.binding = *binding;
     source.valid = 1;
     source.blocks_real_dgn_mesh_render = 1;

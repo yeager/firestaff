@@ -2141,9 +2141,11 @@ static void test_structure3_entry_header_boundaries(void) {
     {
         Nexus_V1_Engine engine;
         Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
+        Nexus_V1_DgnStructure3CaptureImport import;
 
         memset(&engine, 0, sizeof(engine));
         memset(&bound, 0, sizeof(bound));
+        memset(&import, 0, sizeof(import));
         engine.level_loaded = 1;
         engine.game.current_level = 0;
         engine.current_level = level;
@@ -2152,11 +2154,34 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.level_index = 0;
         engine.current_level_structure2_source.canonical_hash_verified = 1;
         engine.current_level_structure2_source.materialization_bound = 1;
+        import.texture_span = texture_span;
+        import.texture_span_size = sizeof(texture_span);
+        import.palette_state = palette_state;
+        import.palette_state_size = sizeof(palette_state);
+        import.vdp1_state = vdp1_state;
+        import.vdp1_state_size = sizeof(vdp1_state);
+        import.transform_state = transform_state;
+        import.transform_state_size = sizeof(transform_state);
+        import.normal_culling_state = culling_state;
+        import.normal_culling_state_size = sizeof(culling_state);
+        import.vdp1_command = vdp1_command;
+        import.vdp1_command_size = sizeof(vdp1_command);
+        import.capture_session_fnv1a64 = UINT64_C(0x1234);
+        import.capture_bundle_fnv1a64 = UINT64_C(0x5678);
+        import.capture_bundle_hash_verified = 1;
+        import.original_saturn_capture_verified = 1;
         bound.complete_source_binding = 1;
+        bound.dgn_source_hash_verified = 1;
+        bound.capture_source_verified = 1;
         bound.blocks_real_dgn_mesh_render = 1;
+        import.original_saturn_capture_verified = 0;
+        CHECK(!nexus_v1_engine_consume_structure3_capture(
+                  &engine, &candidate, &bound, &import) &&
+              !engine.structure3_runtime_source.valid,
+              "engine rejects a complete-looking packet without the external Saturn verdict");
+        import.original_saturn_capture_verified = 1;
         CHECK(nexus_v1_engine_consume_structure3_capture(
-                  &engine, &candidate, &bound, texture_span,
-                  (int)sizeof(texture_span)) &&
+                  &engine, &candidate, &bound, &import) &&
               engine.structure3_runtime_source.valid &&
               engine.structure3_runtime_source.level_index == 0 &&
               engine.structure3_runtime_source.entry_index ==
@@ -2169,9 +2194,35 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.texture_span != texture_span &&
               memcmp(engine.structure3_runtime_source.texture_span,
                      texture_span, sizeof(texture_span)) == 0 &&
+              engine.structure3_runtime_source.palette_state != palette_state &&
+              memcmp(engine.structure3_runtime_source.palette_state,
+                     palette_state, sizeof(palette_state)) == 0 &&
+              engine.structure3_runtime_source.vdp1_state != vdp1_state &&
+              memcmp(engine.structure3_runtime_source.vdp1_state,
+                     vdp1_state, sizeof(vdp1_state)) == 0 &&
+              engine.structure3_runtime_source.transform_state != transform_state &&
+              memcmp(engine.structure3_runtime_source.transform_state,
+                     transform_state, sizeof(transform_state)) == 0 &&
+              engine.structure3_runtime_source.normal_culling_state != culling_state &&
+              memcmp(engine.structure3_runtime_source.normal_culling_state,
+                     culling_state, sizeof(culling_state)) == 0 &&
+              engine.structure3_runtime_source.vdp1_command != vdp1_command &&
+              memcmp(engine.structure3_runtime_source.vdp1_command,
+                     vdp1_command, sizeof(vdp1_command)) == 0 &&
+              engine.structure3_runtime_source.capture_session_fnv1a64 ==
+                  import.capture_session_fnv1a64 &&
+              engine.structure3_runtime_source.capture_bundle_fnv1a64 ==
+                  import.capture_bundle_fnv1a64 &&
+              engine.structure3_runtime_source.capture_bundle_hash_verified &&
+              engine.structure3_runtime_source.original_saturn_capture_verified &&
               engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
-              "a bound Structure3 capture copies exact face/normal rows and opaque texture bytes without enabling drawing");
+              "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
         free(engine.structure3_runtime_source.texture_span);
+        free(engine.structure3_runtime_source.palette_state);
+        free(engine.structure3_runtime_source.vdp1_state);
+        free(engine.structure3_runtime_source.transform_state);
+        free(engine.structure3_runtime_source.normal_culling_state);
+        free(engine.structure3_runtime_source.vdp1_command);
     }
 
     wb32(payload + 128, 0U);

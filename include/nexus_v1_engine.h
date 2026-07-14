@@ -26,6 +26,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
+#include "nexus_v1_structure3_capture_manifest.h"
 #include <stdint.h>
 
 /* ── Constants ─────────────────────────────────────────────────────── */
@@ -169,9 +170,10 @@ typedef struct {
 } Nexus_V1_DgnStructure2SourceReceipt;
 
 /* One original-capture-bound Structure3 face source retained by the live
- * engine.  The texture bytes are intentionally opaque: this cache exists so
- * a later verified Saturn decoder has the exact face, normal, and source span
- * that its capture admitted, not to infer a host texture format. */
+ * engine. The capture spans are intentionally opaque: this cache provides a
+ * later verified Saturn renderer the same face, normal, and complete capture
+ * packet that admission checked, not a host interpretation of texture,
+ * palette, VDP1, transform, or culling bytes. */
 typedef struct {
     int valid;
     int level_index;
@@ -183,6 +185,20 @@ typedef struct {
     Nexus_V1_DgnStructure3Vector normal;
     uint8_t *texture_span;
     int texture_span_size;
+    uint8_t *palette_state;
+    int palette_state_size;
+    uint8_t *vdp1_state;
+    int vdp1_state_size;
+    uint8_t *transform_state;
+    int transform_state_size;
+    uint8_t *normal_culling_state;
+    int normal_culling_state_size;
+    uint8_t *vdp1_command;
+    int vdp1_command_size;
+    uint64_t capture_session_fnv1a64;
+    uint64_t capture_bundle_fnv1a64;
+    int capture_bundle_hash_verified;
+    int original_saturn_capture_verified;
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt binding;
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3RuntimeSource;
@@ -527,14 +543,14 @@ int nexus_v1_inspect_dgn_material_corpus(
 int nexus_v1_current_level_structure2_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2SourceReceipt *out_receipt);
-/* Commit one already-bound original-capture face into engine-owned source
- * storage. This copies only typed DGN rows and opaque texture bytes; it never
- * enables mesh drawing or Saturn texture decoding. */
+/* Commit one already-bound original-capture face and its complete opaque
+ * capture packet into engine-owned source storage. This is the renderer's
+ * source-data route, not a decode or draw route. */
 int nexus_v1_engine_consume_structure3_capture(
     Nexus_V1_Engine *engine,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
     const Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *binding,
-    const uint8_t *texture_span, int texture_span_size);
+    const Nexus_V1_DgnStructure3CaptureImport *capture);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
