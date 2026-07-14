@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
+  initial-level admission receipt can join a coalesced, identity-locked
+  later `$e009` observation to the already source-locked record `0x0b52`
+  startup envelope. It remains unavailable until an operator supplies that
+  authenticated coalesced capture. Remaining semantic boundary: no observed
+  destination RAM address or game-transition causality, and no object-tail,
+  bitmap, palette, or broader dungeon-record semantics.
+
 - 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
   the fixture-free external PC34 HoC gate now proves F0435 adoption plus one
   ReDMCSB-shaped idle runtime tick, and, when an admitted save's C4 queue has

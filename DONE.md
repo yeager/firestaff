@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 Theron Track 02 initial-level loader/CD admission receipt: a
+  coalesced, ordered original `$e009` complete-sector receipt now composes
+  with the hash/anchor-gated initial-level envelope only when it observes
+  exact Track 02 record `0x0b52`. The receipt retains the existing Hall of
+  Records level-0 loader route and explicitly blocks object-tail and visual
+  semantics. Fixture coverage proves the exact-record gate and adjacent-record
+  rejection; an authenticated positive result remains opt-in via
+  `FIRESTAFF_THERON_COALESCED_LOADER_TRACE`. Verification:
+  `theron_v1_raw_loader_trace_initial_level_handoff`.
+
 - 2026-07-14 DM1 original PC34 save/HoC external runtime trace gate: the
   fixture-free F0435 corpus target optionally consumes an operator-recorded,
   source-CRC-bound IDLE/FORWARD/BACKWARD/TURN/STRAFE trace. Each row advances

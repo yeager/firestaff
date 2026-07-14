@@ -157,6 +157,30 @@ typedef struct {
     int selector_sector_bytes_verified;
 } Theron_V1RawLoaderTraceCoalescedLaterReceipt;
 
+/* Narrow composition of two independently source-locked facts: an ordered,
+ * complete-sector later $e009 receipt and the one authenticated initial-level
+ * envelope. It accepts only an observed one-sector read of record 0x0b52,
+ * the record containing that envelope in both known raw Track 02 variants.
+ * This proves a loader/CD admission for the existing Hall of Records level-0
+ * route; it does not prove a destination RAM address, a game transition,
+ * object-tail ownership, bitmap, or palette behavior. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t observed_track02_record;
+    uint16_t descriptor_selector;
+    size_t descriptor_selector_ordinal;
+    int coalesced_loader_cd_receipt_proven;
+    int initial_level_record_proven;
+    int complete_initial_level_envelope_proven;
+    Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
+    Theron_Track02InitialLevelLoaderRoute initial_level_route;
+    int object_tail_semantics_proven;
+    int fallback_visuals_allowed;
+    uint32_t receipt_hash;
+} Theron_V1RawLoaderTraceInitialLevelHandoffReceipt;
+
 /* Parses a provenance-marked instrumented Mednafen trace.  It validates the
  * existing dynamic CD_READ/IRQ2 gate first, then requires the captured
  * CD_READ, $3800 destination span, and IRQ2 controller state in their
@@ -231,6 +255,18 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceCoalescedLaterReceipt *out);
+
+/* Promotes the existing source-locked initial-level loader route only after
+ * a coalesced original loader/CD receipt selects its exact one-sector record.
+ * The trace receipt is not a substitute for a runtime destination or a
+ * transition capture, and the returned route retains the existing opaque
+ * object-tail and no-fallback restrictions. */
+int theron_v1_raw_loader_trace_bind_initial_level_handoff(
+    const Theron_V1RawLoaderTraceCoalescedLaterReceipt *coalesced_receipt,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out);
 
 /* Validates the explicit V2 capture-manifest identity for an ordered
  * Mednafen loader transcript before it is parsed. The caller must rehash
