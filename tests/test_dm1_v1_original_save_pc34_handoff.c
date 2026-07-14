@@ -5117,6 +5117,93 @@ static void test_world_export_rebuilds_c25_explosion_union(void)
           "world export rejects an unbound C25 instead of inventing Cell/Effect");
 }
 
+static void test_world_export_rebuilds_c29_group_reaction_union(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    struct SaveGame_Compat imported;
+    struct PartyState_Compat imported_party;
+    DM1OriginalSavePC34HandoffReport report;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned char square_data[32 * 32];
+    unsigned short first_things[1];
+    unsigned char raw_group[16];
+    int written = 0;
+    int rc;
+
+    memset(&world, 0, sizeof(world));
+    memset(&imported, 0, sizeof(imported));
+    memset(&imported_party, 0, sizeof(imported_party));
+    memset(&report, 0, sizeof(report));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(groups, 0, sizeof(groups));
+    memset(square_data, 0, sizeof(square_data));
+    memset(raw_group, 0, sizeof(raw_group));
+
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 32;
+    maps[0].height = 32;
+    tiles[0].squareData = square_data;
+    tiles[0].squareCount = 32 * 32;
+    square_data[14 * 32 + 7] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    first_things[0] = (unsigned short)(THING_TYPE_GROUP << 10);
+    wr16le(raw_group, THING_ENDOFLIST);
+    groups[0].next = THING_ENDOFLIST;
+    groups[0].creatureType = 15;
+    things.squareFirstThings = first_things;
+    things.squareFirstThingCount = 1;
+    things.groups = groups;
+    things.groupCount = 1;
+    things.rawThingData[THING_TYPE_GROUP] = raw_group;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.loaded = 1;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.party.championCount = 1;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_CREATURE_REACTION;
+    world.timeline.events[0].fireAtTick = 102u;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 14;
+    world.timeline.events[0].mapY = 7;
+    world.timeline.events[0].aux0 = 0;
+    world.timeline.events[0].aux1 = 15;
+    world.timeline.events[0].aux2 = DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE;
+    world.timeline.events[0].aux3 = 9;
+    world.timeline.events[0].aux4 = 0x104;
+
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x43313445u, bytes, (int)sizeof(bytes), &written);
+    CHECK(rc == SAVEGAME_PC34_OK && written > 0,
+          "world export writes C29 only with its original C04 square owner");
+    imported.party = &imported_party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        bytes, (size_t)written, &imported, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              report.original_event_count == 1 &&
+              report.events[0].type == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
+              report.events[0].priority == 4 &&
+              report.events[0].b_mapX == 14 && report.events[0].b_mapY == 7 &&
+              rd16le(&report.events[0].c_cell) == 9u,
+          "C29 export preserves original Priority Location and C.Ticks union");
+
+    first_things[0] = THING_ENDOFLIST;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &world, 0x43313445u, bytes, (int)sizeof(bytes), &written) ==
+              SAVEGAME_PC34_ERROR_INTERNAL,
+          "world export rejects a C29 runtime event without its C04 source owner");
+}
+
 static void test_world_export_roundtrips_c13_vi_altar_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -5376,6 +5463,7 @@ int main(void)
     test_original_projectile_event_plan_preserves_c48_bits();
     test_world_export_rebuilds_c48_c49_projectile_union();
     test_world_export_rebuilds_c25_explosion_union();
+    test_world_export_rebuilds_c29_group_reaction_union();
     test_world_export_roundtrips_c13_vi_altar_union();
     test_strings();
     puts("PASS dm1_v1_original_save_pc34_handoff");
