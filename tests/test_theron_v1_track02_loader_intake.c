@@ -47,9 +47,21 @@ int main(void) {
         &authenticated_facts, &receipt));
     CHECK(receipt.observed);
     CHECK(!receipt.payload_intake_admitted);
+    CHECK(receipt.record == authenticated_facts.track02_record);
+    CHECK(receipt.record_user_data_offset ==
+          authenticated_facts.record_user_data_offset);
+    CHECK(receipt.observed_destination == authenticated_facts.destination);
+    CHECK(receipt.observed_byte_count == authenticated_facts.byte_count);
     trace.valid = 0;
     CHECK(!theron_v1_track02_loader_intake_observe_authenticated_trace(
         &authenticated_facts, &receipt));
+    CHECK(!receipt.observed);
+    CHECK(!receipt.payload_intake_admitted);
+    CHECK(receipt.record == 0u);
+    CHECK(receipt.record_user_data_offset == 0u);
+    CHECK(receipt.observed_destination == 0u);
+    CHECK(receipt.observed_byte_count == 0u);
+    CHECK(receipt.status == NULL);
     trace.valid = 1;
     authenticated_facts.byte_count = 0u;
     CHECK(!theron_v1_track02_loader_intake_observe_authenticated_trace(
