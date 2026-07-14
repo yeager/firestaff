@@ -639,6 +639,10 @@
     ordering through caller-owned draw callbacks, including wall return, door
     passes, pit, teleporter field, and PC cell orders. No geometry, bitmap,
     dungeon, or render fallback is supplied.
+  - 2026-07-14 update: F0678/F0679 now execute the PC D2L2/D2R2 wall or
+    teleporter-only branch over caller-owned callbacks, preserving C05/C06
+    swap, C707/C708 zones, field aspects, and wall early return. No geometry,
+    bitmap, F0111/F0115, or runtime fallback is supplied.
 
 - REDMCSB-CSB-GAP-005 — **DSA timer action remapping cannot be inferred from
   ReDMCSB.** ReDMCSB has canonical original SET/CLEAR/TOGGLE EVENT behavior;
