@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int checks;
 static int failures;
@@ -300,6 +301,47 @@ static int remaining_saved_timer_queue_matches_runtime(
     return 1;
 }
 
+/* A live Extended Features package may no longer have an exportable core
+ * after a timer fires: Firestaff deliberately refuses to invent CSBWin's
+ * free-list/requeue state. When the unchanged source-owned heap remains
+ * exportable, prove the core bytes through the production verifier and a
+ * separate core-only resume. That resume must not inherit DSA metadata from
+ * the extended package. */
+static int exported_core_reloads_after_tick(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    uint8_t core_bytes[65536];
+    size_t core_size = 0u;
+    CSB_V1_CSBWin512BodyReport core_report;
+    CSB_V1_RuntimeProfile core_runtime;
+
+    if (!profile) return 0;
+    if (csb_v1_runtime_export_csbwin_core_save_to_memory(
+            profile, core_bytes, sizeof(core_bytes), &core_size) != 0) {
+        return -1;
+    }
+    memset(&core_report, 0, sizeof(core_report));
+    if (csb_v1_csbwin_512_verify_save_body(
+            core_bytes, core_size, 0u, &core_report) != CSB_V1_CSBWIN_512_OK) {
+        return 0;
+    }
+    csb_v1_runtime_init(&core_runtime, NULL);
+    if (csb_v1_runtime_apply_csbwin_resume_report(
+            &core_runtime, &core_report) != 0 ||
+        core_runtime.csbwin_extended_features_valid ||
+        core_runtime.csbwin_extended_level_index_present ||
+        core_runtime.csbwin_extended_dsa_state.imported_action_count != 0 ||
+        !saved_timer_queue_matches_runtime(&core_runtime) ||
+        core_runtime.game_time != profile->game_time ||
+        core_runtime.party_x != profile->party_x ||
+        core_runtime.party_y != profile->party_y ||
+        core_runtime.party_state.PartyDirection !=
+            profile->party_state.PartyDirection) {
+        return 0;
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     const char *dungeon_path = path_arg_or_env(
@@ -423,6 +465,8 @@ int main(int argc, char **argv)
         CHECK(actions_before_tick != NULL && action_hashes_before_tick != NULL,
               "allocate a complete save-owned DSA catalog receipt");
         if (actions_before_tick && action_hashes_before_tick) {
+            int core_resume_result;
+
             for (i = 0; i < state->imported_action_count; ++i) {
                 actions_before_tick[i] = &state->imported_actions[i];
                 action_hashes_before_tick[i] = action_fingerprint(
@@ -439,6 +483,14 @@ int main(int argc, char **argv)
                       csb_v1_dungeon_get_current() == dungeon &&
                       remaining_saved_timer_queue_matches_runtime(&profile),
                   "post-tick live queue retains only exact package TIMER slots");
+            core_resume_result = exported_core_reloads_after_tick(&profile);
+            CHECK(core_resume_result != 0,
+                  "post-tick core export either reloads exactly or remains unavailable");
+            if (core_resume_result > 0) {
+                puts("CSBWIN_DSA_CORE_RESUME_AFTER_TICK=verified");
+            } else {
+                puts("CSBWIN_DSA_CORE_RESUME_AFTER_TICK=unavailable");
+            }
         }
     }
 

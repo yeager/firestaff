@@ -64,6 +64,13 @@
     TIMER/TimerQueue heap after matching every live source receipt. A live
     event that still matches its timer cannot make a stale or reordered
     serialized heap exportable; the route rejects before emitting bytes.
+  - 2026-07-14 follow-up: the real-package Extended Features/DSA probe now
+    tests post-tick core persistence only when the retained TIMER heap remains
+    exportable. Production verification and a fresh core-only runtime resume
+    must preserve the timer receipts, party pose, and game time while clearing
+    extended DSA metadata. A fired or requeued timer that lacks a serializable
+    CSBWin heap is explicitly unavailable; the probe never fabricates a
+    replacement save or DSA tail.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while

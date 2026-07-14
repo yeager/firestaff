@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-14 CSBWin real-package DSA post-tick core-resume gate: the opt-in
+  Extended Features/DSA probe now exports a post-tick core save only when the
+  retained source TIMER/TimerQueue heap is still serializable. It verifies the
+  bytes with the production body reader and restores them into an isolated
+  core-only runtime, which must retain timer receipts, party pose, and game
+  time while clearing Extended Features/DSA ownership. A consumed or requeued
+  timer stays explicitly unavailable rather than being replaced. Verification:
+  `csb_v1_csbwin_extended_dsa_handoff` with supplied original package paths.
+
 - 2026-07-14 DM2 SKSave corpus snapshot receipt: corpus classification now
   rehashes the complete original file after reading and source-parsing its
   payload, then rejects any changed file rather than retaining a mixed
