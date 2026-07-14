@@ -1,0 +1,70 @@
+#ifndef NEXUS_V1_DGN_FACE_MATERIAL_PROVENANCE_H
+#define NEXUS_V1_DGN_FACE_MATERIAL_PROVENANCE_H
+
+#include <stdint.h>
+
+/*
+ * Renderer-facing admission gate for already-decoded Structure3 face
+ * selectors.  It deliberately does not parse DGN geometry or interpret a
+ * selector as a texture, palette, or draw command.  Its job is to retain the
+ * real-media identity through the point where a raster input is assembled.
+ */
+
+#define NEXUS_V1_DGN_FACE_MATERIAL_MAX_FACES 4096
+
+typedef enum {
+    NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_NONE = 0,
+    NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_RETAIL_DGN = 1,
+    NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_SYNTHETIC = 2,
+    NEXUS_V1_DGN_FACE_MATERIAL_SOURCE_DERIVED = 3
+} Nexus_V1_DgnFaceMaterialSource;
+
+typedef enum {
+    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_STATIC = 0,
+    NEXUS_V1_DGN_FACE_MATERIAL_SELECTOR_ANIMATED = 1
+} Nexus_V1_DgnFaceMaterialSelectorKind;
+
+typedef struct {
+    uint16_t face_ordinal;
+    uint16_t material_selector;
+    Nexus_V1_DgnFaceMaterialSelectorKind selector_kind;
+} Nexus_V1_DgnFaceMaterialBinding;
+
+typedef struct {
+    Nexus_V1_DgnFaceMaterialSource source;
+    const uint8_t *dgn_bytes;
+    int dgn_size;
+    /* Set only by the caller that compared dgn_bytes to the retail catalog. */
+    int canonical_source_verified;
+    const Nexus_V1_DgnFaceMaterialBinding *bindings;
+    int face_count;
+    int material_selector_count;
+} Nexus_V1_DgnFaceMaterialInput;
+
+typedef enum {
+    NEXUS_V1_DGN_FACE_MATERIAL_READY = 0,
+    NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_SOURCE,
+    NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_INPUT,
+    NEXUS_V1_DGN_FACE_MATERIAL_BLOCKED_BINDING
+} Nexus_V1_DgnFaceMaterialStatus;
+
+typedef struct {
+    Nexus_V1_DgnFaceMaterialStatus status;
+    int canonical_source_verified;
+    int face_count;
+    int static_selector_count;
+    int animated_selector_count;
+    int selector_bindings_complete;
+    int permits_fallback_visuals;
+    int can_submit_raster_input;
+} Nexus_V1_DgnFaceMaterialReceipt;
+
+/* Returns 1 only when a complete retail-DGN binding table is admissible. */
+int nexus_v1_dgn_face_material_validate(
+    const Nexus_V1_DgnFaceMaterialInput *input,
+    Nexus_V1_DgnFaceMaterialReceipt *out_receipt);
+
+const char *nexus_v1_dgn_face_material_status_name(
+    Nexus_V1_DgnFaceMaterialStatus status);
+
+#endif
