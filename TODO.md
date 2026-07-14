@@ -159,6 +159,14 @@
   only: do not assign record, level, object, bitmap, or palette meaning. Next:
   source-lock an actual post-start loader/CD request with caller and destination
   receipts.
+  The next 2026-07-15 authentic run now has bounded lower-level receipts: 38
+  PC Engine SCSI READ commands, 32 command-to-physical-sector bindings, and
+  17 byte-exact CD data-FIFO to System Card RAM destination candidates. This
+  proves the observed early media path reaches the System Card, but not a
+  game-owned loader call, later `$e009` dispatch, Track 02 record coordinate,
+  or dungeon layout. Keep every candidate non-admissible; next capture must
+  cross the later game loader boundary with an independently observed caller,
+  destination, and raw-sector ordering.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1

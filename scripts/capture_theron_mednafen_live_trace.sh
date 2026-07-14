@@ -350,6 +350,9 @@ transition_host_sdl_event_types=$(trace_event_types "$input_trace")
 transition_irq_count=$(trace_count '^pce_cd_irq cpu_pc=' "$cd_trace")
 transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace")
 transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
+transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
+transition_scsi_sector_binding_count=$(trace_count '^scsi_read_sector_binding ' "$cd_trace")
+transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candidate ' "$cd_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'track02_md5=%s\n' "$track02_md5"
@@ -363,6 +366,9 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
+    printf 'scsi_read_commands=%s\n' "$transition_scsi_read_command_count"
+    printf 'scsi_read_sector_bindings=%s\n' "$transition_scsi_sector_binding_count"
+    printf 'byte_exact_fifo_ram_destinations=%s\n' "$transition_data_destination_count"
     trace_input_order_receipt "$input_trace"
     if [[ -n "$host_key" ]]; then
         printf 'requested_host_key=%s\n' "$host_key"
