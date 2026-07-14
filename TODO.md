@@ -4684,3 +4684,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the two. This establishes no Track02 dungeon, object, or payload semantics.
   Next evidence must be a later original loader read that reaches the level
   record and exposes its destination/byte count before any handoff can widen.
+- 🔧 2026-07-14 Theron source-locked initial-level route: after full-payload
+  runtime admission, the only positive dungeon-facing selection is the
+  hash-verified initial-level envelope at record `0x0b52`, user-data offset
+  `0x114`, envelope `0x36c`, and stable level identifier `0x0026`. The route
+  consumes no payload bytes and requires the adjacent boundary to stay opaque;
+  it does not parse grids, objects, palettes, bitmaps, or dungeon grammar.
+  Remaining work is an original later-read trace for this record before any
+  payload consumer can be admitted.

@@ -13527,3 +13527,16 @@ meaning for `0x0b52`. Source: authenticated Mednafen facts in
 `tqr_v1_track02_ipl_loader_2026-07-11.md` and the hash-verified initial-level
 receipt in `tqr_v1_track02_bank_signal_2026-06-03.md`. Verification:
 `firestaff_theron_v1_track02_loader_dungeon_separation_probe.sh` passes.
+
+# ✅ 2026-07-14 Theron Track02 source-locked initial-level route
+
+`theron_v1_dungeon_handoff_select_initial_level()` consumes an admitted full
+loader payload only to select the separately hash-verified initial-level
+envelope: Track02 record `0x0b52`, MODE1 user-data offset `0x114`, envelope
+length `0x36c`, and stable level identifier `0x0026`. It rejects the loader
+record, changed envelope coordinates, a non-admitted payload, and any route
+whose adjacent boundary is not explicitly still opaque. The receipt exposes no
+payload bytes and makes no object, grid, palette, bitmap, or dungeon-format
+claim. Source: `tqr_v1_track02_bank_signal_2026-06-03.md` and the authenticated
+stage-two `$e009` route in `theron-us-stage2-huc6280.asm`. Verification:
+focused `test_theron_v1_dungeon_handoff`.
