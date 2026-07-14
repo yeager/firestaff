@@ -52,6 +52,12 @@
   structure, CSBWin extension, DSA, timer, or runtime semantics are inferred.
   Focused strict-C11 regression passes.
 
+- ✅ 2026-07-14 DM1/CSB ReDMCSB F8140/F8162: source-locked `NEC816.C`
+  overlap-safe byte transfer and PC 3.4 multi-plane message-area scroll. The
+  portable adapter preserves the exact source direction choice, 160-byte
+  scanline stride, width calculation and non-clearing of exposed rows; focused
+  strict-C11 tests cover both F8140 directions plus all four F8162 planes.
+
 - 2026-07-14 Nexus M11 startup regression: moved the large local test fixtures
   and the raw-capture NULL-rejection receipt to static test storage. This prevents
   `test_m11_nexus_startup_gate` from exceeding the macOS main-thread stack
