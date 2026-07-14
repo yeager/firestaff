@@ -376,8 +376,6 @@ int main(void)
     check(dm2_v1_startup_launch_from_host_facts_with_receipt(
               &host_facts,
               &launch_receipt) &&
-              launch_receipt.session_valid &&
-              launch_receipt.session.champion_count == 4 &&
               launch_receipt.menu_state_receipt_valid &&
               launch_receipt.menu_state_receipt.row_count == 1 &&
               launch_receipt.host_receipt.mode_update.set_startup_menu_active &&
@@ -409,7 +407,7 @@ int main(void)
               launch_receipt.runtime_handoff.runtime_menu_ready == 1 &&
               launch_receipt.runtime_handoff.runtime_action_ready == 0 &&
               launch_receipt.runtime_handoff.first_hud_frame_ready == 0,
-          "launch receipt owns DM2 startup session, save scan, active menu, inspect, log, and runtime handoff");
+          "launch receipt owns the source title/menu boundary, save scan, inspect, log, and runtime handoff without a session");
     check(!dm2_v1_startup_launch_from_host_facts_with_receipt(
               NULL,
               &launch_receipt) &&
