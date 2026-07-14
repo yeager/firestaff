@@ -2,7 +2,8 @@
  * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
  * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
- * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072. These commands
+ * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
+ * STKOP_TimeFetch:2512-2518 and STKOP_ThisDSAId:4822-4828. These commands
  * have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -37,6 +38,10 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_level = 5;
     context.party_x = 10;
     context.party_y = 12;
+    context.game_time_valid = 1;
+    context.game_time = 12345u;
+    context.dsa_slave_thing_valid = 1;
+    context.dsa_slave_thing = 0x8123u;
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
 }
@@ -82,6 +87,8 @@ int main(void)
     uint16_t party_distance_other_level[] = {
         0x0786u, 0x08f4u, 0u, 0x0055u, 0x000du
     };
+    uint16_t time_fetch[] = { 0x184bu, 0x000du };
+    uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
@@ -235,6 +242,20 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0xfffffffdu && execution.stack_depth == 0u,
           "PARTYDISTANCE returns negative source level distance off-level");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, time_fetch,
+              (int)(sizeof(time_fetch) / sizeof(time_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 12345u && execution.stack_depth == 0u,
+          "TIME@ reads the runtime-owned CSBWin game clock");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, this_dsa_id,
+              (int)(sizeof(this_dsa_id) / sizeof(this_dsa_id[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x8123u && execution.stack_depth == 0u,
+          "THIS_DSA_ID returns the verified source actuator Thing identity");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;

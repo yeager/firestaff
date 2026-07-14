@@ -701,6 +701,7 @@ typedef struct {
     CSB_V1_DSAFilterLocation location;
     uint8_t dsa_selector;
     uint8_t dsa_id;
+    int actuator_identity_valid;
 } CSB_V1_RuntimeDSAFilterBinding;
 
 /* Exact, bounded receipt for CSBWin DSA.cpp ProcessDSATimer6.  The current

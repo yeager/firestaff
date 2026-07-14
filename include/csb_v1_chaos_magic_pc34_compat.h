@@ -191,6 +191,10 @@ typedef struct {
     int party_level;
     int party_x;
     int party_y;
+    int game_time_valid;
+    uint32_t game_time;
+    int dsa_slave_thing_valid;
+    uint16_t dsa_slave_thing;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -409,6 +413,10 @@ typedef struct {
     int party_level;
     int party_x;
     int party_y;
+    int game_time_valid;
+    uint32_t game_time;
+    int dsa_slave_thing_valid;
+    uint16_t dsa_slave_thing;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

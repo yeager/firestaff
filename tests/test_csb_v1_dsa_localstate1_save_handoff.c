@@ -160,6 +160,7 @@ int main(void)
     profile.current_level = 5;
     profile.party_x = 10;
     profile.party_y = 12;
+    profile.game_time = 991u;
     memset(&runner, 0, sizeof(runner));
     {
         CSB_V1_RuntimeDSAFilterBinding binding;
@@ -171,6 +172,9 @@ int main(void)
         check(runner.party_location_valid && runner.party_level == 5 &&
                   runner.party_x == 10 && runner.party_y == 12,
               "runtime runner preserves the source-owned party location");
+        check(runner.game_time_valid && runner.game_time == 991u &&
+                  !runner.dsa_slave_thing_valid,
+              "runtime runner carries time but rejects an unverified DSA Thing");
     }
     action = csb_v1_chaos_find_imported_action(
         &profile.csbwin_extended_dsa_state, 7, 1u, 0);
