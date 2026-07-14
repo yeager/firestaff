@@ -128,9 +128,13 @@ Source: dm1_v1_graphics_loader_pc34_compat.c -- m11_gfx_open_dat()
 | Clear/End codes 256/257| LZW.C:143,157   | implemented     |
 | Code width growth      | LZW.C:36-42      | implemented     |
 | KwKwK case             | LZW.C:162        | implemented     |
-| IMG3 RLE bytecode      | IMAGE3.C:1100-1200 | partial       |
+| IMG3 RLE bytecode      | IMAGE2.C:339-459 | implemented for PC 3.4 C03/C11 |
 | 4-bitplane output      | GRF1.C:44-52     | implemented     |
 | GRAPHICS.DAT format    | MEMORY.C:707     | implemented     |
 
-Gap: IMG3 expand (F0689_IMG_ExpandGraphicToBitmap) -- image_expand_pc34_compat.c
-calls IMG3_Compat_ExpandFromSource() but implementation needs verification.
+The PC 3.4 `F0689_IMG_ExpandGraphicToBitmap` path is source-locked through
+`IMAGE2.C:339-459`: `F0687` reads high then low nibbles, `F0688` retains the
+original signed 16-bit count form, and F0685/F0686 materialize literal and
+previous-line commands into the caller-owned packed bitmap. The adapter is
+intentionally IMG3-only; C01 Swoosh and other IMG2 assets use their distinct
+source-specific decoder and must not be sent through this path.

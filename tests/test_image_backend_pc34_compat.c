@@ -60,6 +60,14 @@ static int test_F0688_get_pixel_count_long_form(void) {
     return F0688_IMG3_GetPixelCount() == 0x1234 && G2157_ == 7;
 }
 
+/* IMAGE2.C:107-116 returns int16_t, including the original signed wrap. */
+static int test_F0688_get_pixel_count_long_form_signed_result(void) {
+    unsigned char src[4] = {0xFF, 0xFF, 0xFF, 0xF0};
+    G2159_puc_Bitmap_Source = src;
+    G2157_ = 0;
+    return F0688_IMG3_GetPixelCount() == -1 && G2157_ == 7;
+}
+
 static int test_F0686_copy_from_previous_line_even_to_even(void) {
     unsigned char buf[4] = {0x12, 0x34, 0x56, 0x78};
     G2160_puc_Bitmap_Destination = buf;
@@ -218,6 +226,10 @@ int main(void) {
     }
     if (!test_F0688_get_pixel_count_long_form()) {
         fprintf(stderr, "test_F0688_get_pixel_count_long_form failed\n");
+        return 1;
+    }
+    if (!test_F0688_get_pixel_count_long_form_signed_result()) {
+        fprintf(stderr, "test_F0688_get_pixel_count_long_form_signed_result failed\n");
         return 1;
     }
     if (!test_F0686_copy_from_previous_line_even_to_even()) {

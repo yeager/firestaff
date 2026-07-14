@@ -21505,6 +21505,26 @@ endif()
 
 # -- DM1 V1 SWSH source animation/capture schedule gate
 if(BUILD_TESTING)
+    add_executable(test_redmcsb_f0685_f0688_img3_primitives_pc34_compat
+        tests/test_image_backend_pc34_compat.c
+        src/shared/image_backend_pc34_compat.c
+    )
+    target_compile_definitions(test_redmcsb_f0685_f0688_img3_primitives_pc34_compat PRIVATE
+        COMPILE_H
+        STATICFUNCTION=static
+        "SEPARATOR=,"
+        "FINAL_SEPARATOR=)"
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0685_f0688_img3_primitives_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0685_f0688_img3_primitives_pc34_compat
+        COMMAND test_redmcsb_f0685_f0688_img3_primitives_pc34_compat
+    )
+
     add_executable(test_swsh_frontend_pc34_compat_integration
         tests/test_swsh_frontend_pc34_compat_integration.c
         src/frontend/swsh_frontend_pc34_compat.c
