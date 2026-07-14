@@ -1821,8 +1821,14 @@ and real community-save corpus round-trip evidence.
     Thieves Eye and C79 Footprints counters from `PARTY_INFO` offsets 2 and
     3 into the existing M10 magic state; C79 also restores its active
     footprint flag. F0433 writes only those bounded counters back to the
-    retained source bytes. Scent, freeze-life, and the remaining opaque
-    `PARTY_INFO` fields are still untouched pending their own source owners.
+    retained source bytes.
+  - 2026-07-14 update: F0435 now restores ReDMCSB `PARTY.FreezeLifeTicks`
+    from `PARTY_INFO` byte 11 into the M10 world and magic-state owners. The
+    live periodic runtime decrements both owners together, and F0433 writes
+    the bounded byte back to the retained source record. The targeted
+    authenticated-PC34 regression covers import, a live periodic tick, and
+    export/reimport. `ScentCount`, scent indices and arrays, Event71, and
+    unreferenced `PARTY_INFO` bytes remain opaque pending their own owners.
   - 2026-07-14 update: the fixture-free external-corpus M11 runtime gate now
     drives every F0435-admitted original PC34 save through the live game view,
     checks the source party pose/tick and owned dungeon against an independent

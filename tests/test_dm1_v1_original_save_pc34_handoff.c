@@ -4734,6 +4734,7 @@ static void test_original_pc34_party_info_runtime_materialization(void)
     wr16le(party_info + 4u, 17u);
     wr16le(party_info + 6u, 19u);
     wr16le(party_info + 8u, 23u);
+    party_info[11u] = 37u;
     CHECK(rewrite_fixture_party_info_bytes(
               bytes, (size_t)written, party_info),
           "PARTY_INFO runtime fixture retains authenticated C2 bytes");
@@ -4747,10 +4748,15 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           world.magic.partyShieldDefense == 17 &&
           world.magic.fireShieldDefense == 19 &&
           world.magic.spellShieldDefense == 23 &&
+          world.freezeLifeTicks == 37 &&
+          world.magic.freezeLifeTicks == 37 &&
           world.lifecycle.status.partyShieldDefense == 17 &&
           world.lifecycle.status.partyFireShieldDefense == 19 &&
           world.lifecycle.status.partySpellShieldDefense == 23,
-          "F0435 materializes source PARTY_INFO light and shield owners");
+          "F0435 materializes source PARTY_INFO magic and freeze-life owners");
+    F0890_ORCH_ApplyPeriodicEffects_Compat(&world, NULL);
+    CHECK(world.freezeLifeTicks == 36 && world.magic.freezeLifeTicks == 36,
+          "the resumed source FreezeLifeTicks value reaches the live tick owner");
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
               &world, 0x43313445u, exported, (int)sizeof(exported),
               &exported_size) == SAVEGAME_PC34_OK,
@@ -4766,7 +4772,8 @@ static void test_original_pc34_party_info_runtime_materialization(void)
           reimported_party.pc34PartyInfoBytes[3u] == 5u &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 4u) == 17 &&
           (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 6u) == 19 &&
-          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23,
+          (int16_t)rd16le(reimported_party.pc34PartyInfoBytes + 8u) == 23 &&
+          reimported_party.pc34PartyInfoBytes[11u] == 36u,
           "F0433 preserves source PARTY_INFO field ownership on export");
     F0883_WORLD_Free_Compat(&world);
 }
