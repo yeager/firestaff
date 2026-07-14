@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DM2_GDAT_SOURCE_VIEWPORT_HEIGHT 136
+
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
     FILE *file;
@@ -186,6 +188,22 @@ int main(void)
             plan.commands[1].palette_hash == 0u) {
             fprintf(stderr, "FAIL: G1 MapGraphicsStyle %d yielded no complete "
                     "GRAPHICSSET plane plan\n", candidate);
+            failures = 1;
+            dm2_v1_gdat_scene_m11_command_plan_free(&plan);
+            continue;
+        }
+        if (plan.rects[0].rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+            plan.rects[1].rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+            plan.rects[0].x != 0 ||
+            plan.rects[0].y + plan.commands[0].height !=
+                DM2_GDAT_SOURCE_VIEWPORT_HEIGHT ||
+            plan.rects[1].x != 0 || plan.rects[1].y != 0 ||
+            plan.rects[0].width != plan.commands[0].width ||
+            plan.rects[0].height != plan.commands[0].height ||
+            plan.rects[1].width != plan.commands[1].width ||
+            plan.rects[1].height != plan.commands[1].height) {
+            fprintf(stderr, "FAIL: G1 MapGraphicsStyle %d did not decode "
+                    "QUERY_BLIT_RECT 700/701 geometry\n", candidate);
             failures = 1;
             dm2_v1_gdat_scene_m11_command_plan_free(&plan);
             continue;

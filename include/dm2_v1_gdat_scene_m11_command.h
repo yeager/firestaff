@@ -15,6 +15,14 @@ typedef struct {
 } DM2_V1_GdatSceneM11Command;
 
 typedef struct {
+    uint16_t rect_number;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+} DM2_V1_GdatSceneBlitRect;
+
+typedef struct {
     int valid;
     uint8_t graphicsset;
     uint16_t scene_colorkey;
@@ -23,14 +31,15 @@ typedef struct {
     uint16_t ambient_darkness;
     uint32_t command_hash;
     DM2_V1_GdatSceneM11Command commands[2];
+    /* QUERY_BLIT_RECT's source-backed destinations, indexed like commands:
+     * floor first, ceiling second. The viewport consumes ceiling then floor. */
+    DM2_V1_GdatSceneBlitRect rects[2];
 } DM2_V1_GdatSceneM11CommandPlan;
 
-/* SKProject QUERY_BLIT_RECT obtains the floor and ceiling destinations from
- * INTERFACE_GENERAL/0/dt04/0.  This receipt proves that the original table
- * owns the two named compressed records, but deliberately does not assign
- * coordinates: their compressed program grammar has not been established. */
-#define DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER   700u
-#define DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER 701u
+/* SKProject QUERY_BLIT_RECT obtains the ceiling and floor destinations from
+ * INTERFACE_GENERAL/0/dt04/0 in that order. */
+#define DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER   701u
+#define DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER 700u
 
 typedef struct {
     int valid;
@@ -48,8 +57,8 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan);
 
-/* Source-only admission for QUERY_BLIT_RECT records 700/701. This is not a
- * rectangle expander and cannot authorize a floor/ceiling draw by itself. */
+/* The receipt hashes records 700/701 only. Plan construction separately
+ * admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */
 int dm2_v1_gdat_scene_query_blit_rect_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatSceneQueryBlitRectReceipt *out_receipt);

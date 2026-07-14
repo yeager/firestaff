@@ -46,6 +46,15 @@ whose graphics-set index or command hash no longer matches the active map is a
 blocked no-draw frame: it does not consult the callback route or paint a
 fallback plane.
 
+The M11 plan also materializes the only established `QUERY_BLIT_RECT` grammar
+slice for viewport planes. `INTERFACE_GENERAL/0/dt04/0` ceiling record 700
+and floor record 701 must resolve through source root anchors 11 and 14,
+respectively, via the `x=1` reference to the `(0,0,224,136)` clip record. This
+yields the ceiling at `(0,0)` and the floor bottom-aligned to that viewport;
+the renderer draws the ceiling before the floor. Chained variants, alternate
+anchors, source crops, and additional clips remain rejected and produce no
+source-material draw.
+
 If a required material class cannot be resolved, the frame records a blocked
 no-draw receipt. It must not paint a conventional-color approximation.
 
