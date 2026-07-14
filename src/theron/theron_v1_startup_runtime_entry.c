@@ -1230,13 +1230,13 @@ int theron_v1_startup_runtime_enter_from_forcefield(
      * atlas and the stage-two $4090 -> $3800 loader chain before a candidate
      * world may mutate the selected party, startup flow, or world. See
      * theron-us-stage2-huc6280.asm:163-181. */
-    if (!verified_track02_request ||
-        !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-            &media_receipt) ||
-        !theron_v1_startup_runtime_stage3_loader_ready(
-            request->hucard_rom,
-            request->hucard_rom_size,
-            request->md5_hex)) {
+    if (verified_track02_request &&
+        (!theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+             &media_receipt) ||
+         !theron_v1_startup_runtime_stage3_loader_ready(
+             request->hucard_rom,
+             request->hucard_rom_size,
+             request->md5_hex))) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
                      receipt_cap,
