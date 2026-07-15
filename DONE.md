@@ -16036,6 +16036,19 @@ DB5 roots use item 126, but `GRAPHICS.DAT` contains no exact
 before metadata or palette access. This is deliberately no-draw, not a
 substitute item surface. Verification: local canonical real-data gate.
 
+# ✅ 2026-07-15 DM2 direct G1 item decoded-pixel binding
+
+The direct DB5 and DB9 `DRAW_MAP_CHIP` routes now retain a row-wise hash of
+the exact decoded `WEAPONS/itemType/F9` or `CONTAINERS/containerType/F9`
+bitmap only after boot proves the matching virtual GDAT address, raw-byte
+receipt, dimensions, and decoded pixels. M10 recomputes that hash immediately
+before the item blit, so a stale or replaced decoded provider buffer is
+blocked even when its ObjectID, tile, dimensions, and local IMG3 palette
+match. Missing canonical DB5/DB9 map-chip media remains no-draw. Verification:
+`test_dm2_v1_g1_weapon_viewport_material_gate` and
+`test_dm2_v1_g1_container_viewport_material_gate` exercise both a valid draw
+and a changed-pixel rejection.
+
 # ✅ 2026-07-15 DM2 raw SKSave DB-pool offset receipt
 
 Raw SKSave receipts now retain exact source-order offsets for each DB pool and

@@ -381,6 +381,10 @@ typedef struct {
     int image_format;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
+    /* Boot binds this to the exact decoded WEAPONS/itemType/F9 pixels.
+     * The raw metadata receipt alone is not permission to replay another
+     * decoded image with matching dimensions and palette. */
+    uint32_t decoded_pixel_hash;
 } DM2_V1_G1WeaponMapChipMaterial;
 
 typedef struct {
@@ -410,6 +414,8 @@ typedef struct {
     int image_format;
     uint8_t local_palette16[16];
     uint32_t local_palette_hash;
+    /* Exact decoded CONTAINERS/containerType/F9 pixel witness. */
+    uint32_t decoded_pixel_hash;
 } DM2_V1_G1ContainerMapChipMaterial;
 
 typedef struct {
@@ -1211,7 +1217,8 @@ int dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
     int item_type,
     int image_width,
     int image_height,
-    uint32_t local_palette_hash);
+    uint32_t local_palette_hash,
+    uint32_t decoded_pixel_hash);
 int dm2_v1_g1_container_map_chip_matches_decoded_instance(
     const DM2_V1_G1ContainerMapChipRuntimeReceipt *receipt,
     uint16_t object_id,
@@ -1220,7 +1227,8 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
     int container_type,
     int image_width,
     int image_height,
-    uint32_t local_palette_hash);
+    uint32_t local_palette_hash,
+    uint32_t decoded_pixel_hash);
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 #endif

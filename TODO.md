@@ -6907,15 +6907,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-15 update: direct G1 DB5 weapon roots now traverse the complete
     `DRAW_MAP_CHIP` viewport path as `WEAPONS/itemType/F9`. The runtime admits
     only a visible receipt row, and the final blit rechecks ObjectID, map
-    coordinate, item type, decoded dimensions, and IMG3 local-palette hash.
-    A mismatched or absent receipt is no-draw. The current canonical corpus
+    coordinate, item type, decoded dimensions, decoded pixel hash, and IMG3
+    local-palette hash. Boot admits that pixel hash only after the same exact
+    virtual GDAT entry has raw-byte and decoded-pixel evidence. A mismatched
+    or absent receipt is no-draw. The current canonical corpus
     correctly remains blocked because it lacks `WEAPONS/126/F9`; broader DB6--
     DB10 object ownership and mutable floor-chain semantics remain open.
   - 2026-07-15 update: direct G1 DB9 containers now use the same authenticated
     `DRAW_MAP_CHIP` admission with `CONTAINERS/ContainerType/F9`. The viewport
-    rechecks ObjectID, tile, container type, decoded dimensions, and local
-    palette before a blit, while container contents remain unread. Canonical
-    G1 has the source container root `0xe408` but no exact
+    rechecks ObjectID, tile, container type, decoded dimensions, decoded pixel
+    hash, and local palette before a blit, while container contents remain
+    unread. Canonical G1 has the source container root `0xe408` but no exact
     `CONTAINERS/0/F9`; it is therefore blocked rather than borrowing another
     item's art. DB6--DB8/DB10 have no direct G1 roots and remain unavailable
     without a separately proven source route.

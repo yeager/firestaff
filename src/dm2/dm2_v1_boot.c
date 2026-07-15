@@ -5508,6 +5508,92 @@ int dm2_v1_boot_g1_creature_map_chip_materials(
         dm2_v1_boot_g1_image_local_palette_read, gfx, out);
 }
 
+static uint32_t dm2_v1_boot_g1_indexed_pixel_hash(const uint8_t *pixels,
+                                                   int width,
+                                                   int height,
+                                                   int stride)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!pixels || width <= 0 || height <= 0 || stride < width) return 0u;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
+}
+
+static int dm2_v1_boot_bind_g1_weapon_map_chip_pixels(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt)
+{
+    for (int i = 0; i < receipt->material_count; ++i) {
+        DM2_V1_G1WeaponMapChipMaterial *material = &receipt->materials[i];
+        DM2_V1_BootViewportAssetEvidence evidence;
+        const uint8_t *pixels = NULL;
+        int width = 0, height = 0, stride = 0;
+        int gdat_index = dm2_v1_viewport_item_graphic_index(
+            0x10, material->item_type, 0xf9);
+
+        /* skproject DRAW_MAP_CHIP reaches exactly WEAPONS/itemType/F9. The
+         * decoded image must still be the raw-GDAT-proven virtual resource
+         * selected by the DB5 receipt, not merely a matching-size bitmap. */
+        if (gdat_index == 0 ||
+            !dm2_v1_boot_viewport_asset_evidence(profile, gdat_index,
+                                                  &evidence) ||
+            evidence.category != 0x10 ||
+            evidence.entry_index != material->item_type ||
+            evidence.field != 0xf9 ||
+            evidence.raw_byte_count != material->raw_byte_count ||
+            evidence.decoded_w != material->image_width ||
+            evidence.decoded_h != material->image_height ||
+            dm2_v1_boot_viewport_asset_fetch(profile, gdat_index, &pixels,
+                                             &width, &height, &stride) != 0 ||
+            width != material->image_width || height != material->image_height) {
+            return 0;
+        }
+        material->decoded_pixel_hash = dm2_v1_boot_g1_indexed_pixel_hash(
+            pixels, width, height, stride);
+        if (material->decoded_pixel_hash == 0u) return 0;
+    }
+    return 1;
+}
+
+static int dm2_v1_boot_bind_g1_container_map_chip_pixels(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_G1ContainerMapChipRuntimeReceipt *receipt)
+{
+    for (int i = 0; i < receipt->material_count; ++i) {
+        DM2_V1_G1ContainerMapChipMaterial *material = &receipt->materials[i];
+        DM2_V1_BootViewportAssetEvidence evidence;
+        const uint8_t *pixels = NULL;
+        int width = 0, height = 0, stride = 0;
+        int gdat_index = dm2_v1_viewport_item_graphic_index(
+            0x14, material->container_type, 0xf9);
+
+        if (gdat_index == 0 ||
+            !dm2_v1_boot_viewport_asset_evidence(profile, gdat_index,
+                                                  &evidence) ||
+            evidence.category != 0x14 ||
+            evidence.entry_index != material->container_type ||
+            evidence.field != 0xf9 ||
+            evidence.raw_byte_count != material->raw_byte_count ||
+            evidence.decoded_w != material->image_width ||
+            evidence.decoded_h != material->image_height ||
+            dm2_v1_boot_viewport_asset_fetch(profile, gdat_index, &pixels,
+                                             &width, &height, &stride) != 0 ||
+            width != material->image_width || height != material->image_height) {
+            return 0;
+        }
+        material->decoded_pixel_hash = dm2_v1_boot_g1_indexed_pixel_hash(
+            pixels, width, height, stride);
+        if (material->decoded_pixel_hash == 0u) return 0;
+    }
+    return 1;
+}
+
 int dm2_v1_boot_g1_weapon_map_chip_materials(
     DM2_V1_BootProfile *profile,
     int map,
@@ -5519,10 +5605,15 @@ int dm2_v1_boot_g1_weapon_map_chip_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_weapon_map_chip_runtime(
+    if (!dm2_v1_dungeon_materialize_g1_weapon_map_chip_runtime(
         (const DM2_V1_DungeonData *)profile->dungeon_data, map,
         dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out) ||
+        !dm2_v1_boot_bind_g1_weapon_map_chip_pixels(profile, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_g1_container_map_chip_materials(
@@ -5536,10 +5627,15 @@ int dm2_v1_boot_g1_container_map_chip_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_container_map_chip_runtime(
+    if (!dm2_v1_dungeon_materialize_g1_container_map_chip_runtime(
         (const DM2_V1_DungeonData *)profile->dungeon_data, map,
         dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out) ||
+        !dm2_v1_boot_bind_g1_container_map_chip_pixels(profile, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    return 1;
 }
 
 static uint16_t dm2_v1_boot_le16(const uint8_t *p)
