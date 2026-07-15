@@ -18903,6 +18903,21 @@ targets, `test_theron_rendering` 18/18,
 (skip-safe without the authentic corpus), and the capture-script contract test
 passes.
 
+# ✅ 2026-07-15 Theron Track 02 caller-successor TII byte receipt
+
+When the authenticated caller-entry successor executes HuC6280 `TII`,
+Firestaff now accepts it only when its entire source interval lies inside the
+already source-bound Track 02 continuation copy. The receipt retains exact
+RAM source/destination coordinates, byte count, corresponding original source
+coordinate, and FNV-1a checksum. This proves the observed caller path
+re-copied known original bytes, without assigning them a loader, descriptor,
+CD-read, table, record, level, object, tile, palette, bitmap, command, or
+visual meaning. Verification: genuine Mednafen 1.32.1 patch dry-run, Ninja
+focused targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), and the capture-script contract test
+passes.
+
 # ✅ 2026-07-15 Theron Track 02 caller-next-call entry receipt
 
 The instrumented original Mednafen trace now writes a call-entry row only
