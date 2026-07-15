@@ -62,6 +62,19 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static int sh2_bra_target(uint16_t instruction, uint32_t instruction_offset,
+                          uint32_t *out_target) {
+    int32_t displacement;
+
+    if (!out_target || (instruction & 0xf000U) != 0xa000U) return 0;
+    displacement = (int32_t)(instruction & 0x0fffU);
+    if ((displacement & 0x0800) != 0) displacement -= 0x1000;
+    if (displacement < -((int32_t)instruction_offset + 2) / 2) return 0;
+    *out_target = (uint32_t)((int32_t)instruction_offset + 4 +
+                             displacement * 2);
+    return 1;
+}
+
 static uint32_t read_be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
         ((uint32_t)p[2] << 8) | (uint32_t)p[3];
@@ -305,7 +318,10 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_CONTROL_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 74U,
         SH2_STREAM_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 84U,
         SH2_OUTPUT_BYTE_STORE_OFFSET = SH2_V1_CALLEE_OFFSET + 88U,
-        SH2_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 96U
+        SH2_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 96U,
+        SH2_LOOP_BODY_START_OFFSET = SH2_V1_CALLEE_OFFSET + 52U,
+        SH2_LOOP_BODY_BYTE_COUNT =
+            SH2_LOOP_BRANCH_OFFSET + 2U - SH2_LOOP_BODY_START_OFFSET
     };
     Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
 
@@ -329,6 +345,8 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.stream_byte_read_offset = SH2_STREAM_BYTE_READ_OFFSET;
     receipt.output_byte_store_offset = SH2_OUTPUT_BYTE_STORE_OFFSET;
     receipt.loop_branch_offset = SH2_LOOP_BRANCH_OFFSET;
+    receipt.loop_body_start_offset = SH2_LOOP_BODY_START_OFFSET;
+    receipt.loop_body_byte_count = SH2_LOOP_BODY_BYTE_COUNT;
     receipt.control_test_instruction =
         read_be16(dm_bin + receipt.control_test_offset);
     receipt.stream_byte_read_instruction =
@@ -337,6 +355,18 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + receipt.output_byte_store_offset);
     receipt.loop_branch_instruction =
         read_be16(dm_bin + receipt.loop_branch_offset);
+    receipt.sh2_loop_back_target_verified = sh2_bra_target(
+        receipt.loop_branch_instruction, receipt.loop_branch_offset,
+        &receipt.loop_back_target_offset) &&
+        receipt.loop_back_target_offset == receipt.loop_body_start_offset;
+    if (receipt.loop_body_start_offset <= dm_bin_size &&
+        receipt.loop_body_byte_count <=
+            dm_bin_size - receipt.loop_body_start_offset) {
+        receipt.loop_body_fnv1a64 = fnv1a64(
+            dm_bin + receipt.loop_body_start_offset,
+            receipt.loop_body_byte_count);
+        receipt.sh2_loop_body_bound = receipt.loop_body_fnv1a64 != 0U;
+    }
     receipt.sh2_control_path_verified =
         receipt.control_test_instruction == 0x23b8U &&
         read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 72U) == 0xe301U &&
@@ -355,7 +385,8 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.decoder_promoted = 0;
     *out_receipt = receipt;
     return receipt.sh2_control_path_verified && receipt.sh2_stream_read_verified &&
-        receipt.sh2_output_store_verified;
+        receipt.sh2_output_store_verified && receipt.sh2_loop_back_target_verified &&
+        receipt.sh2_loop_body_bound;
 }
 
 int nexus_v1_prs3_vdp1_capture_schema_parse(
