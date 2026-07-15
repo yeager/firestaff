@@ -33643,6 +33643,16 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
         }
     }
     if (!drewBox) {
+        /* CHAMDRAW.C F0291 composes the hand box from C033/C034/C035 before
+         * it draws its C020 object cell.  CSB owns those bytes in the
+         * selected GRAPHICS.DAT; a host rectangle would be a new visual,
+         * not an original empty-hand surface. */
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          dstX, dstY, 18, 18,
+                          (unsigned char)dm1_v1_champion_status_box_fill_color_pc34());
+            return 0;
+        }
         int boxX = dstX;
         int boxY = dstY;
         int boxW = 18;
