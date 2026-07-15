@@ -17,6 +17,14 @@
   cells now resolve their exact no-draw Structure1C source packet through the
   canonical DGN receipt. Invalid or unreferenced cells remain unavailable.
 
+- 2026-07-15 CSB source-party HUD gate: C113..C116 and C150..C218 now use
+  a newly generated CSBWin GAMEBLOCK/CHARDESC mirror receipt on every M11
+  runtime frame, rather than trusting M11's cached party mirror. A missing
+  or invalid source party clears those rectangles, so stale names, bars,
+  hand slots, and C028 markers cannot survive or be synthesized. The launcher
+  regression seeds a fake M11 champion, invalidates the source receipt, and
+  proves both icon and status zones remain black.
+
 - 2026-07-15 CSB C033-C035 status-hand source gate: CSB F0291 hand slots
   now require the exact 18x18 GRAPHICS.DAT C033/C034/C035 source surface.
   A missing or malformed hand box leaves the C12 F0292 status clear intact
