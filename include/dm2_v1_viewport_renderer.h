@@ -126,6 +126,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE      0x100u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT  0x200u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_SCENE_CONTROL 0x400u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER       0x800u
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
@@ -165,6 +166,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE (-0xD00000)
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING 0x01
 #define DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR   0x00
+#define DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE (-0xD10000)
 #define DM2_V1_VIEWPORT_GFX_WALL_GRAPHICSSET_BASE (-0xE00000)
 #define DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE (-0xF00000)
 #define DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET 0x01
@@ -255,6 +257,93 @@ typedef struct {
     int w;
     int h;
 } DM2_V1_ViewportRect;
+
+typedef struct {
+    const uint8_t *pixels;
+    int width;
+    int height;
+    int stride;
+    DM2_ImageFormat format;
+} DM2_V1_BootViewportSurfaceView;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int object_count;
+    int blocked_record_reads;
+} DM2_V1_G1FirstMapRuntimeReceipt;
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int source_map;
+    int generic_record_reads;
+    int blocked_record_reads;
+} DM2_V1_G1TeleporterTransitionReceipt;
+
+typedef struct {
+    int valid;
+    int viewport_owned;
+    uint32_t map_load_token;
+    uint8_t gdat_category;
+    uint8_t floor_ornate_source_index;
+    int animated_frame_route;
+} DM2_V1_FloorGfxViewportOwnershipReceipt;
+
+typedef struct {
+    int x;
+    int y;
+    uint32_t object_id;
+    uint8_t wall_gfx_index;
+    int front_image_ready;
+    uint32_t front_image_width;
+    uint32_t front_image_height;
+    uint32_t local_palette_hash;
+} DM2_V1_G1WallGfxMaterial;
+
+typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1TextWallGfxMaterial;
+typedef DM2_V1_G1WallGfxMaterial DM2_V1_G1ActuatorWallGfxMaterial;
+
+#define DM2_V1_G1_WALL_GFX_MATERIAL_MAX 16
+
+typedef struct {
+    int valid;
+    int map;
+    int material_count;
+    DM2_V1_G1TextWallGfxMaterial
+        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
+} DM2_V1_G1TextWallGfxRuntimeReceipt;
+
+typedef struct {
+    int valid;
+    int map;
+    int material_count;
+    DM2_V1_G1ActuatorWallGfxMaterial
+        materials[DM2_V1_G1_WALL_GFX_MATERIAL_MAX];
+} DM2_V1_G1ActuatorWallGfxRuntimeReceipt;
+
+typedef struct {
+    uint8_t creature_type;
+    int decoded_width;
+    int decoded_height;
+    uint32_t local_palette_hash;
+} DM2_V1_G1CreatureMapChipMaterial;
+
+#define DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX 32
+
+typedef struct {
+    int valid;
+    int material_count;
+    DM2_V1_G1CreatureMapChipMaterial
+        materials[DM2_V1_G1_CREATURE_MAP_CHIP_MATERIAL_MAX];
+} DM2_V1_G1CreatureMapChipRuntimeReceipt;
+
+typedef struct {
+    int valid;
+    DM2_V1_ViewportRect portrait[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+    DM2_V1_ViewportRect name[DM2_V1_HUD_CHAMPION_SLOT_COUNT];
+    DM2_V1_ViewportRect status[DM2_V1_HUD_CHAMPION_SLOT_COUNT][3];
+} DM2_V1_InterfaceHudLayout;
 
 #define DM2_V1_WALL_PANEL_RENDER_MAX DM2_SQ_COUNT
 
@@ -768,6 +857,22 @@ typedef struct {
 } DM2_V1_ViewportSpritePlacement;
 
 typedef struct {
+    uint8_t field;
+    const uint8_t *pixels;
+    const uint8_t *palette16;
+    uint32_t palette_hash;
+    uint32_t width;
+    uint32_t height;
+} DM2_V1_GdatSceneM11Command;
+
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint32_t command_hash;
+    DM2_V1_GdatSceneM11Command commands[2];
+} DM2_V1_GdatSceneM11CommandPlan;
+
+typedef struct {
     int valid;
     uint8_t base_5x5;
     int8_t lateral_offset;
@@ -854,6 +959,8 @@ typedef struct {
     int16_t  depth;            /* depth sort key */
     int16_t  screen_x;         /* viewport X position */
     int16_t  screen_y;         /* viewport Y position */
+    int16_t  map_x;            /* source map tile X */
+    int16_t  map_y;            /* source map tile Y */
     uint8_t  health_pct;       /* 0–100 for health bar */
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
@@ -866,6 +973,8 @@ typedef struct {
     int source_kind;
     int frame_index;
     int direction;
+    int map_x;
+    int map_y;
     int depth;
     int center_x;
     int center_y;
@@ -1068,6 +1177,11 @@ typedef int (*DM2_V1_ViewportDoorSurfaceViewFetch)(
     void *user,
     int gdat_index,
     DM2_V1_BootViewportSurfaceView *out_view);
+typedef int (*DM2_V1_ViewportAssetPaletteFetch)(
+    void *user,
+    int gdat_index,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash);
 
 /* ── Viewport state ────────────────────────────────────────────── */
 typedef struct {
@@ -1116,6 +1230,11 @@ typedef struct {
 
     DM2_V1_ViewportAssetFetch asset_fetch;
     void *asset_user;
+    DM2_V1_ViewportAssetPaletteFetch asset_palette_fetch;
+    void *asset_palette_user;
+    int active_asset_palette_ready;
+    uint32_t active_asset_palette_hash;
+    uint8_t active_asset_palette16[16];
     DM2_V1_ViewportDoorSurfaceViewFetch door_surface_view_fetch;
     void *door_surface_view_user;
     /* A boot-owned, hash-verified GDAT provider must never be replaced by
@@ -1199,6 +1318,16 @@ typedef struct {
     int gdat_scene_light_recompute_enabled;
     int gdat_scene_material_index;
     int gdat_scene_material_consumed_count;
+    const DM2_V1_GdatSceneM11CommandPlan *gdat_scene_material_plan;
+    uint8_t last_floor_ceiling_material_required_mask;
+    uint8_t last_floor_ceiling_material_consumed_mask;
+    uint8_t last_door_material_required_mask;
+    uint8_t last_door_material_consumed_mask;
+    uint8_t last_outdoor_scene_material_required_mask;
+    uint8_t last_outdoor_scene_material_consumed_mask;
+    const DM2_V1_WeatherRendererReceipt *gdat_weather_renderer_receipt;
+    uint8_t gdat_weather_renderer_graphicsset;
+    int asset_weather_drawn_count;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed_count;
     int gdat_material_palette_floor_ceiling_consumed_count;
@@ -1206,14 +1335,19 @@ typedef struct {
     int gdat_material_palette_door_frame_consumed_count;
     uint32_t gdat_interface_palette_hash;
     uint8_t gdat_interface_palette16[16];
+    int gdat_interface_text_palette_ready;
+    uint32_t gdat_interface_text_palette_hash;
+    uint8_t gdat_interface_text_palette16[16];
     const uint8_t *gdat_interface_font_rows;
     uint32_t gdat_interface_font_hash;
+    int gdat_interface_action_palette_consumed_count;
     int gdat_interface_font_consumed_count;
     const DM2_V1_InterfaceHudLayout *gdat_interface_hud_layout;
     const uint8_t *gdat_interface_rect14_rows;
     uint32_t gdat_interface_rect14_row_count;
     uint32_t gdat_interface_rect14_hash;
     int gdat_interface_rect14_consumed_count;
+    int gdat_local_palette_consumed_count;
     int asset_door_panel_drawn_count;
     int asset_door_overlay_drawn_count;
     int asset_door_frame_drawn_count;
@@ -1293,6 +1427,16 @@ typedef struct {
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
+    int g1_scene_creature_material_ready;
+    int g1_scene_creature_material_map_x;
+    int g1_scene_creature_material_map_y;
+    int g1_scene_creature_material_type;
+    int g1_scene_creature_material_gdat_index;
+    int g1_scene_creature_material_width;
+    int g1_scene_creature_material_height;
+    int g1_scene_creature_material_stride;
+    uint32_t g1_scene_creature_material_palette_hash;
+    int g1_scene_creature_material_consumed_count;
     int asset_carried_item_drawn_count;
     int fallback_carried_item_drawn_count;
     int last_item_render_valid;
@@ -1343,6 +1487,10 @@ void dm2_v1_viewport_set_hud_hand_action_source(
 void dm2_v1_viewport_set_asset_provider(DM2_V1_ViewportState *s,
                                          DM2_V1_ViewportAssetFetch fetch,
                                          void *user);
+void dm2_v1_viewport_set_asset_palette_provider(
+    DM2_V1_ViewportState *s,
+    DM2_V1_ViewportAssetPaletteFetch fetch,
+    void *user);
 void dm2_v1_viewport_set_door_surface_view_provider(
     DM2_V1_ViewportState *s,
     DM2_V1_ViewportDoorSurfaceViewFetch fetch,
@@ -1473,6 +1621,18 @@ void dm2_v1_viewport_set_gdat_interface_palette(
     int ready,
     uint32_t hash,
     const uint8_t palette16[16]);
+void dm2_v1_viewport_set_gdat_scene_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_GdatSceneM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+    DM2_V1_ViewportState *s,
+    uint8_t graphicsset_index,
+    const DM2_V1_WeatherRendererReceipt *receipt);
+void dm2_v1_viewport_set_gdat_interface_text_palette(
+    DM2_V1_ViewportState *s,
+    int ready,
+    uint32_t hash,
+    const uint8_t palette16[16]);
 /* skproject QUERY_FONT consumes the six 128-byte dt07/0 rows as 3x6 HUD
  * glyph pixels.  The caller retains ownership through the boot profile. */
 void dm2_v1_viewport_set_gdat_interface_font(
@@ -1482,6 +1642,17 @@ void dm2_v1_viewport_set_gdat_interface_font(
 void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_scene_creature_material(
+    DM2_V1_ViewportState *s,
+    int ready,
+    int map_x,
+    int map_y,
+    int creature_type,
+    int gdat_index,
+    int width,
+    int height,
+    int stride,
+    uint32_t palette_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
