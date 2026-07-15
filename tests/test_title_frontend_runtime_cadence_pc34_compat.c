@@ -50,6 +50,8 @@ int main(void) {
     V1_TitleFrontendSourceTiming zero;
     unsigned char packed[4];
     unsigned char indexed[12];
+    unsigned int paced_vblanks;
+    unsigned int visual_duration_ms;
 
     memset(&zero, 0, sizeof(zero));
     memset(packed, 0, sizeof(packed));
@@ -76,6 +78,25 @@ int main(void) {
     expect_u("runtime PRESENTS hold prevents one-tick flash",
              V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing),
              dm1_v1_startup_title_presents_hold_ms_pc34());
+    /* Host visual timing: TITLE.C F0437 has 18 zoom waits, two post-zoom
+     * waits and a final guard. PRESENTS owns the remaining ticks in the
+     * 53-frame observed bank. This detects the old `53 - 23` event-count
+     * calculation, which made macOS C001 presentation two ticks too fast. */
+    paced_vblanks = timing.zoomStepCount * timing.vblankBeforeEachZoomStep +
+                     timing.postZoomVblankCount +
+                     timing.finalFadeGuardVblankCount;
+    expect_u("PRESENTS hold excludes non-wait source blits",
+             timing.presentsHoldVblankCount,
+             timing.frameBankEquivalentStepCount - paced_vblanks);
+    expect_u("host visual cadence covers complete TITLE bank",
+             timing.presentsHoldVblankCount + paced_vblanks,
+             timing.frameBankEquivalentStepCount);
+    visual_duration_ms = V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing) +
+                         paced_vblanks * V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing);
+    expect_u("host visual TITLE duration is refresh-independent",
+             visual_duration_ms,
+             timing.frameBankEquivalentStepCount *
+                 dm1_v1_startup_title_vblank_tick_ms_pc34());
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
              (dm1_v1_startup_title_post_zoom_vblanks_pc34() +

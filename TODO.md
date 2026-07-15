@@ -5831,9 +5831,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     36x8-pixel glyph sheet and C10 transparent blit. Non-D1C distances remain
     the original unreadable-plaque route from `DUNVIEW.C` F0107, rather than a
     scaled host font. Title timing audit: the existing event-pumped 55 ms V1
-    tick waits once per TITLE.C VBlank and has no macOS display-refresh path;
-    retain it pending real-package capture rather than introducing a guessed
-    refresh-rate multiplier.
+    tick waits once per TITLE.C VBlank and has no macOS display-refresh path.
+    A host timing audit found and corrected the C001 hold budget: source event
+    count included two non-wait blits, shortening the visual run by 110 ms;
+    PRESENTS now owns the two missing VBlank ticks. No refresh-rate multiplier
+    is used.
   - 2026-07-07 update: `box_action_area_pc34_compat` now owns the F0387 action-area render contract consumed by M11: full 224..319 screen clear rect, 1/2/3-row menu graphic rects, header/action text origins, row colors, and F0386 action icon cell/inner icon rectangles. Remaining action/spell work is the actual spell/action presentation polish beyond this geometry ownership, plus live HoC route proof.
   - 2026-07-07 update: `box_spell_area_pc34_compat` now also owns the visible C009 spell-area rect, C013 click rect, C011/C009 graphic ids, caster-panel/tab zones, and available/champion symbol zone ids consumed by M11. Remaining action/spell work is the actual spell/action presentation polish beyond geometry/id ownership, plus live HoC route proof.
   - 2026-07-07 update: DM1 viewport modules now own item sprite/aspect metadata and F0115 visible-square to G2028 C2500/C2900 row mapping used by M11 object/projectile rendering. Remaining render work is broader real-asset source-zone proof and packaged HoC visual checks.
