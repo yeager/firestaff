@@ -1,20 +1,23 @@
 diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -7,5 +7,8 @@
+@@ -7,5 +7,9 @@
  
  namespace MDFN_IEN_PCE
  {
 +void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value);
++void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination);
 +void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
 +
  class alignas(128) HuC6280
  {
-@@ -415,6 +418,12 @@
+@@ -415,6 +419,14 @@
  	 uint8 wmpr = MPR[address >> 13];
  
  	 LastLogicalWriteAddr = address;
 +	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 if(physical_address < 0x1f0000 || physical_address >= 0x1f8000)
++	  TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(physical_address);
 +	 const uint16 writer_pc = GetRegister(GSREG_PC);
 +	 const uint8 writer_mpr = MPR[writer_pc >> 13];
 +	 TheronPCECDTracePostGeneration7RAMWrite(address, physical_address, V, writer_pc,
@@ -26,7 +29,7 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -103,6 +103,86 @@
+@@ -103,6 +103,94 @@
  static bool TheronPCECDDataReadPending;
  static uint16 TheronPCECDDataReadPC;
  static uint8 TheronPCECDDataReadValue;
@@ -86,7 +89,15 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +  return;
 + TheronPCECDFifoReceipt *receipt = &TheronPCECDFifoReceipts[TheronPCECDFifoReceiptHead];
 + if(receipt->value != stored_value)
++ {
++  TheronPCECDTraceFifoReceipt("pce_cd_fifo_store_mismatch generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x read_value=%02x stored_value=%02x\n",
++                             receipt->generation, (unsigned long long)receipt->sequence,
++                             receipt->reader_pc, logical_destination, physical_destination,
++                             receipt->value, stored_value);
++  TheronPCECDFifoReceiptHead = (TheronPCECDFifoReceiptHead + 1) % TheronPCECDFifoReceiptCapacity;
++  TheronPCECDFifoReceiptCount--;
 +  return;
++ }
 + TheronPCECDTraceFifoReceipt("pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x\n",
 +                             receipt->generation, (unsigned long long)receipt->sequence,
 +                             receipt->reader_pc, logical_destination, physical_destination, stored_value);
@@ -113,7 +124,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
  
  static void TheronTracePCECDState(const char *format, ...)
  {
-@@ -603,6 +683,10 @@
+@@ -603,6 +691,10 @@
       TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u\\n",
                             TheronPCECDDataReadPC, ret,
                             Mednafen::TheronSCSITraceCurrentReadGeneration());

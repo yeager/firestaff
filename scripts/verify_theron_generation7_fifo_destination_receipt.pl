@@ -21,7 +21,7 @@ length($raw) % 2352 == 0 or die "FAIL: raw Track 02 is not MODE1/2352\n";
 
 open my $trace, '<', $trace_path or die "FAIL: cannot read CD trace: $trace_path\n";
 my ($command_seen, $marker_seen) = (0, 0);
-my (@fifo, @destinations);
+my (@fifo, @destinations, @mismatches);
 while (my $line = <$trace>) {
     chomp $line;
     $marker_seen = 1 if $line eq 'source=mednafen-pce-generation7-fifo-destination-receipt';
@@ -33,19 +33,31 @@ while (my $line = <$trace>) {
     if ($line =~ /^pce_cd_fifo_destination_receipt generation=7 fifo_sequence=(\d+) reader_pc=([0-9a-f]{4}) logical_destination=([0-9a-f]{4}) physical_destination=([0-9a-f]{6}) value=([0-9a-f]{2})$/) {
         push @destinations, [$1, $2, $3, $4, hex($5)];
     }
+    if ($line =~ /^pce_cd_fifo_store_mismatch generation=7 fifo_sequence=(\d+) reader_pc=([0-9a-f]{4}) logical_destination=([0-9a-f]{4}) physical_destination=([0-9a-f]{6}) read_value=([0-9a-f]{2}) stored_value=([0-9a-f]{2})$/) {
+        push @mismatches, [$1, $2, $3, $4, hex($5), hex($6)];
+    }
 }
 close $trace;
 
 $marker_seen or die "FAIL: generation-7 FIFO receipt provenance marker is missing\n";
 $command_seen or die "FAIL: generation 7 is not the authenticated LBA 4847 eight-sector READ(6)\n";
 @fifo == 8 * 2048 or die "FAIL: generation-7 FIFO receipt is truncated\n";
-@destinations == @fifo or die "FAIL: every generation-7 FIFO byte must have one destination receipt\n";
+@destinations + @mismatches == @fifo
+    or die "FAIL: every generation-7 FIFO byte must have one immediate store classification\n";
 
 my $expected = '';
 for my $record (0x72e .. 0x735) {
     $expected .= substr($raw, $record * 2352 + 16, 2048);
 }
 length($expected) == @fifo or die "FAIL: authenticated user-data span has the wrong length\n";
+
+my (%destinations_by_sequence, %mismatches_by_sequence);
+for my $destination (@destinations) {
+    $destinations_by_sequence{$destination->[0]} = $destination;
+}
+for my $mismatch (@mismatches) {
+    $mismatches_by_sequence{$mismatch->[0]} = $mismatch;
+}
 
 for my $index (0 .. $#fifo) {
     my ($sequence, $reader_pc, $value) = @{ $fifo[$index] };
@@ -54,13 +66,23 @@ for my $index (0 .. $#fifo) {
     $value == ord(substr($expected, $index, 1))
         or die "FAIL: generation-7 FIFO bytes differ from authenticated Track 02 records 0x72e..0x735\n";
 
-    my ($destination_sequence, $destination_pc, $logical, $physical, $stored) = @{ $destinations[$index] };
-    $destination_sequence == $sequence && $destination_pc eq $reader_pc && $stored == $value
-        or die "FAIL: FIFO and destination receipts lose byte identity\n";
-    my $expected_logical = $index & 1 ? '0003' : '0002';
-    my $expected_physical = $index & 1 ? '1fe003' : '1fe002';
-    $logical eq $expected_logical && $physical eq $expected_physical
-        or die "FAIL: generation-7 destination is not the observed System Card CD-register pair\n";
+    if (my $destination = $destinations_by_sequence{$sequence}) {
+        my ($destination_sequence, $destination_pc, $logical, $physical, $stored) = @$destination;
+        $destination_sequence == $sequence && $destination_pc eq $reader_pc && $stored == $value
+            or die "FAIL: FIFO and destination receipts lose byte identity\n";
+        my $expected_logical = $index & 1 ? '0003' : '0002';
+        my $expected_physical = $index & 1 ? '1fe003' : '1fe002';
+        $logical eq $expected_logical && $physical eq $expected_physical
+            or die "FAIL: generation-7 destination is not the observed System Card CD-register pair\n";
+    } elsif (my $mismatch = $mismatches_by_sequence{$sequence}) {
+        my ($mismatch_sequence, $mismatch_pc, undef, $physical, $read_value, $stored_value) = @$mismatch;
+        $mismatch_sequence == $sequence && $mismatch_pc eq $reader_pc && $read_value == $value
+            or die "FAIL: FIFO mismatch receipt loses raw-byte identity\n";
+        $physical =~ /^1f[0-7][0-9a-f]{3}$/ && $stored_value != $read_value
+            or die "FAIL: FIFO mismatch is not an explicit rejected main-RAM write\n";
+    } else {
+        die "FAIL: generation-7 FIFO byte has no immediate store classification\n";
+    }
 }
 
-print "PASS: generation 7 reads 16384 byte-exact MODE1 user-data bytes from Track 02 records 0x72e..0x735 through System Card PC eb33; every byte reaches the alternating PCE CD-register destinations 0x1802/0x1803, not game RAM, so dungeon/object semantics remain unbound\n";
+print "PASS: generation 7 reads 16384 byte-exact MODE1 user-data bytes from Track 02 records 0x72e..0x735 through System Card PC eb33; " . scalar(@destinations) . " immediate bytes reach alternating PCE CD-register destinations 0x1802/0x1803 and " . scalar(@mismatches) . " mismatched main-RAM writes are explicitly rejected, so no raw payload-copy or dungeon/object semantics are admitted\n";
