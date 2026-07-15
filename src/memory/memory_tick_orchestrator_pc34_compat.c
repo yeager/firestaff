@@ -8935,22 +8935,33 @@ static int orch_schedule_deferred_group_move_compat(
     int audible)
 {
     struct TimelineEvent_Compat deferred;
+    struct DM1_Event_V1 sourceEvent;
+    unsigned short groupThing;
 
-    if (!world || !ev) return 0;
+    if (!world || !ev || groupIndex < 0) return 0;
 
     /* ReDMCSB MOVESENS.C:F0265:169-192 creates C60/C61 at
      * G0313_ul_GameTime + 5 with destination map/x/y and the group thing
      * slot; MOVESENS.C:F0267:830-844 calls it when insertion is blocked
      * by the party or another group. */
+    groupThing = orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
+    if (!dm1v1_f0265_build_move_group_event(
+            world->gameTick, (uint8_t)ev->mapIndex, (uint8_t)ev->mapX,
+            (uint8_t)ev->mapY, groupThing, audible, &sourceEvent)) {
+        return 0;
+    }
     memset(&deferred, 0, sizeof(deferred));
-    deferred.kind = audible
+    deferred.kind = sourceEvent.type == DM1_EVENT_MOVE_GROUP_AUDIBLE
         ? TIMELINE_EVENT_MOVE_GROUP_AUDIBLE
         : TIMELINE_EVENT_MOVE_GROUP_SILENT;
-    deferred.fireAtTick = world->gameTick + 5u;
-    deferred.mapIndex = ev->mapIndex;
-    deferred.mapX = ev->mapX;
-    deferred.mapY = ev->mapY;
+    deferred.fireAtTick = DM1_MAP_TIME_TIME(sourceEvent.map_time);
+    deferred.mapIndex = DM1_MAP_TIME_MAP(sourceEvent.map_time);
+    deferred.mapX = sourceEvent.b_mapX;
+    deferred.mapY = sourceEvent.b_mapY;
     deferred.aux0 = groupIndex;
+    deferred.aux1 = (int)(uint16_t)(sourceEvent.c_cell |
+                                    ((uint16_t)sourceEvent.c_effect << 8));
+    deferred.aux2 = sourceEvent.type;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &deferred);
 }
 

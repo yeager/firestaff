@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 MOVE F0265: added exact `MOVESENS.C:11938-11955` C60/C61
+  event construction. The deferred group-move route now preserves native
+  map/time wrapping, zero priority, destination location, and the C04 Thing
+  word in `C.Slot` for runtime and original-save consumption.
+
 - 2026-07-15 DM1 MOVE F0264: added the exact `MOVESENS.C:11919-11936`
   levitation classifier. C04 uses only raw G0243 `MASK0x0020`; C14
   projectiles and C15 explosions always levitate. The active F0267

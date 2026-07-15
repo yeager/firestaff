@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 MOVE F0265 follow-up: blocked C04 movement now builds the
+  original C60/C61 `Map_Time`, `B.Location`, and exact little-endian `C.Slot`
+  record before M10 schedules its retry. Remaining F0265 work is real
+  original-save corpus capture; do not replace C.Slot with a host-only index.
+
 - 2026-07-15 DM1 MOVE F0264 follow-up: the source-defined C04 raw-attribute,
   C14 projectile, and C15 explosion levitation classifier now drives the live
   F0267 ordinary-Thing sensor gate. Remaining F0267 work requires real
