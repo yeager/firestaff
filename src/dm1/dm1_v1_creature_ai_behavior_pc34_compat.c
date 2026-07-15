@@ -243,6 +243,19 @@ int F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
     return 1;
 }
 
+int F0264_DM1_MOVE_IsLevitating_Compat(
+    int thingType,
+    int creatureAttributes)
+{
+    /* MOVESENS.C F0264: only C04 reads G0243 Attributes. C14/C15 are the
+     * unconditional non-group cases; no decoded-object substitute exists. */
+    if (thingType == THING_TYPE_GROUP) {
+        return (creatureAttributes & DM1_ATTR_LEVITATION) != 0;
+    }
+    return thingType == THING_TYPE_PROJECTILE ||
+           thingType == THING_TYPE_EXPLOSION;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 MOVE F0264 follow-up: the source-defined C04 raw-attribute,
+  C14 projectile, and C15 explosion levitation classifier now drives the live
+  F0267 ordinary-Thing sensor gate. Remaining F0267 work requires real
+  original route capture; do not classify a decoded object or substitute a
+  default levitation state.
+
 - 2026-07-15 CSBWin DSA `STKOP_Copy` is source-backed for loaded DB3
   actuators: `DSA.cpp:4696-4721` copies only bytes 2..7 after both Thing
   integers validate as actuators. The authenticated runtime stages chained

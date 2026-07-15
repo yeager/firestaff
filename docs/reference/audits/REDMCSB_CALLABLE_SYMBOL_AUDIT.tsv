@@ -386,7 +386,7 @@ F	0261	F0261_TIMELINE_Process_CPSEF	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;GAMELOOP.C
 F	261	F261_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0262	F0262_MOVE_GetTeleporterRotatedGroupResult	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0263	F0263_MOVE_GetTeleporterRotatedProjectileThing	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0264	F0264_MOVE_IsLevitating	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0264	F0264_MOVE_IsLevitating	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	MOVESENS.C:11919-11936 exact C04 G0243 MASK0x0020 classifier plus unconditional C14 projectile/C15 explosion cases; active M10 F0267 loaded-chain sensor gate consumes it
 F	264	F264_avzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0265	F0265_MOVE_CreateEvent60To61_MoveGroup	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0266	F0266_MOVE_IsKilledByProjectileImpact	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

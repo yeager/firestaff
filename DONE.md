@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 MOVE F0264: added the exact `MOVESENS.C:11919-11936`
+  levitation classifier. C04 uses only raw G0243 `MASK0x0020`; C14
+  projectiles and C15 explosions always levitate. The active F0267
+  loaded-chain route now consumes it before source/destination F0276 sensor
+  passes, so explosions no longer take ordinary-object sensor paths.
+
 - 2026-07-15 DM2 skproject raw-SKSave prefix receipt: raw original saves now
   validate `c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE`'s saved
   `warr_00[1]` map-data span rather than inferring its size from descriptors.
