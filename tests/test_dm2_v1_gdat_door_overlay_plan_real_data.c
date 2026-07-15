@@ -89,6 +89,7 @@ int main(void)
     door_plan.door_count = 1;
     door_plan.doors[0].view_square = DM2_SQ_D0C;
     door_plan.doors[0].door_gfx_index = 0;
+    door_plan.doors[0].door_gfx_admitted = 1;
     door_plan.doors[0].door_opening_dir = 1;
     /* The only currently admitted source geometry is SKProject DRAW_DOOR's
      * closed-panel QUERY_BLIT_RECT route. Partial split panels fail closed. */
@@ -177,6 +178,7 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
     viewport.squares[DM2_SQ_D0C].door_state = 1;
     viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
     viewport.squares[DM2_SQ_D0C].door_open_pct = 50;
@@ -232,6 +234,7 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D3C].door_gfx_admitted = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
@@ -257,6 +260,7 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D3C].door_gfx_admitted = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
@@ -276,6 +280,7 @@ int main(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
     viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_button = 1;

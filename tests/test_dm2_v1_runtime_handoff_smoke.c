@@ -495,6 +495,7 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     put16le(buf + 12, 1);
     put16le(buf + 16, 1);
     desc = buf + header_size;
+    put16le(desc + 2, (uint16_t)(1u << 8));
     put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
     put16le(desc + 12, 2u);
     put16le(desc + 14, (uint16_t)((3u << 8) | (7u << 12)));
@@ -1492,6 +1493,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.skproject_cell == 0 &&
                       door_receipt.door_record_type == 1 &&
                       door_receipt.door_gfx_index == 7 &&
+                      door_receipt.door_gfx_admitted == 1 &&
                       door_receipt.door_opening_dir == 1 &&
                       door_receipt.ornament_index == 2 &&
                       door_receipt.door_ornate_gfx_index == 0x0d &&

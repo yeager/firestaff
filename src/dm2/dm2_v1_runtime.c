@@ -95,6 +95,7 @@ typedef struct {
     uint8_t map_floor_gfx_list[16];
     int map_floor_gfx_count;
     uint8_t map_door_gfx_list[2];
+    uint8_t map_door_gfx_active[2];
     uint8_t map_door_ornate_list[16];
     int map_door_ornate_count;
     int map_graphics_style;
@@ -590,6 +591,7 @@ static void dm2_runtime_apply_door_record_metadata(
     const uint8_t *wall_gfx_list,
     int wall_gfx_count,
     const uint8_t *door_gfx_list,
+    const uint8_t *door_gfx_active,
     const uint8_t *door_ornate_list,
     int door_ornate_count,
     DM2_ViewSquare *door) {
@@ -623,8 +625,10 @@ static void dm2_runtime_apply_door_record_metadata(
     door->door_record_type = (uint8_t)(w2 & 1u);
     door->door_opening_dir = (uint8_t)((w2 >> 5) & 1u);
     door->ornament_index = (uint8_t)((w2 >> 1) & 0x0fu);
-    if (door_gfx_list) {
+    if (door_gfx_list && door_gfx_active &&
+        door_gfx_active[door->door_record_type & 1u]) {
         door->door_gfx_index = door_gfx_list[door->door_record_type & 1u];
+        door->door_gfx_admitted = 1u;
     }
     /* skproject DRAW_DOOR uses Door::OrnateIndex()-1 as an index into the
      * current map's glbMapDoorOrnatesList before its DOOR_GFX GDAT query. */
@@ -683,15 +687,22 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     memset(rt->map_floor_gfx_list, 0, sizeof(rt->map_floor_gfx_list));
     rt->map_floor_gfx_count = 0;
     memset(rt->map_door_gfx_list, 0, sizeof(rt->map_door_gfx_list));
+    memset(rt->map_door_gfx_active, 0, sizeof(rt->map_door_gfx_active));
     memset(rt->map_door_ornate_list, 0, sizeof(rt->map_door_ornate_list));
     rt->map_door_ornate_count = 0;
     if (!rt->boot || !rt->boot->dungeon_data) return;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
     if (rt->dungeon_level >= 0 && rt->dungeon_level < dd->level_count) {
-        rt->map_door_gfx_list[0] =
-            (uint8_t)(dd->map_door_set0[rt->dungeon_level] & 0xff);
-        rt->map_door_gfx_list[1] =
-            (uint8_t)(dd->map_door_set1[rt->dungeon_level] & 0xff);
+        if (dd->map_use_door0[rt->dungeon_level]) {
+            rt->map_door_gfx_list[0] =
+                (uint8_t)(dd->map_door_set0[rt->dungeon_level] & 0xff);
+            rt->map_door_gfx_active[0] = 1u;
+        }
+        if (dd->map_use_door1[rt->dungeon_level]) {
+            rt->map_door_gfx_list[1] =
+                (uint8_t)(dd->map_door_set1[rt->dungeon_level] & 0xff);
+            rt->map_door_gfx_active[1] = 1u;
+        }
     }
     count = dm2_v1_dungeon_get_map_wall_gfx_list(
         dd,
@@ -949,7 +960,8 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
             dm2_runtime_apply_door_record_metadata(
                 dd, rt->dungeon_level, map_x, map_y, dir,
                 rt->map_wall_gfx_list, rt->map_wall_gfx_count,
-                rt->map_door_gfx_list, rt->map_door_ornate_list,
+                rt->map_door_gfx_list, rt->map_door_gfx_active,
+                rt->map_door_ornate_list,
                 rt->map_door_ornate_count, door);
         }
     }
@@ -979,6 +991,7 @@ static void dm2_runtime_capture_door_render_receipt(
     g_dm2_last_door_render.skproject_cell = door->skproject_cell;
     g_dm2_last_door_render.door_record_type = door->door_record_type;
     g_dm2_last_door_render.door_gfx_index = door->door_gfx_index;
+    g_dm2_last_door_render.door_gfx_admitted = door->door_gfx_admitted;
     g_dm2_last_door_render.door_opening_dir = door->door_opening_dir;
     g_dm2_last_door_render.ornament_index = door->ornament_index;
     g_dm2_last_door_render.door_ornate_gfx_index =
