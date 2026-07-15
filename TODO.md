@@ -287,6 +287,13 @@
     A stale HUD-stage C004/C002/C003 host frame can no longer be recorded as
     a valid opening capture. Remaining work is unchanged: external
     original-window capture and broader app-route parity.
+  - 2026-07-16 update: opening-door and title/opening consumption receipts
+    now also require the package receipt and opening host frame to match the
+    active startup session source tick. A stale package tick or reused
+    C004/C002/C003 host frame from another startup tick cannot be promoted
+    into the entrance receipt. Remaining work is unchanged: external
+    original-window capture and broader app-route parity, not a tick-stale
+    host capture or synthetic startup replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
