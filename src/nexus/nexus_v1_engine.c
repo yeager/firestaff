@@ -5461,6 +5461,81 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1f_direct_mesh_binding(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt receipt;
+    Nexus_V1_DgnStructure3AttachmentReceipt attachment;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    const Nexus_V1_DgnStructure1FEntry *entry;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0 ||
+        structure1f_entry_index < 0 ||
+        structure1f_entry_index >= engine->current_level.structure1f_entry_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry = &engine->current_level.structure1f_entries[structure1f_entry_index];
+    if (entry->family < NEXUS_V1_DGN_STRUCTURE1F_ALCOVES ||
+        !entry->structure1a_relation_valid ||
+        !engine->current_level.structure1a_table_valid ||
+        !engine->current_level.structure3_directory.valid ||
+        entry->structure1a_index >=
+            (uint16_t)engine->current_level.structure1a_model_count ||
+        (int)entry->structure1a_structure3_model_index >=
+            engine->current_level.structure3_directory.entry_count ||
+        entry->face >= engine->current_level.structure3_entry_face_counts[
+            entry->structure1a_structure3_model_index]) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&attachment, 0, sizeof(attachment));
+    if (nexus_v1_level_structure3_attachment_receipt(
+            &engine->current_level, &attachment) != 0 ||
+        !attachment.complete ||
+        !attachment.record_to_face_normal_semantics_proven ||
+        attachment.normal_plane_transform_or_draw_semantics_proven ||
+        !nexus_v1_dgn_structure3_capture_target_build(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, engine->game.current_level, 1,
+            entry->structure1a_structure3_model_index, entry->face,
+            &receipt.face_target)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.level_index = engine->game.current_level;
+    receipt.source_byte_count = engine->current_level_dgn_size;
+    receipt.source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    receipt.structure1f_entry_index = structure1f_entry_index;
+    receipt.owner_x = entry->structure1a_owner_x;
+    receipt.owner_y = entry->structure1a_owner_y;
+    receipt.structure1a_index = entry->structure1a_index;
+    receipt.structure3_model_index = entry->structure1a_structure3_model_index;
+    receipt.z_rotation = entry->structure1a_z_rotation;
+    receipt.face_ordinal = entry->face;
+    receipt.model_to_entry_proven = 1;
+    receipt.face_ordinal_proven = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {
