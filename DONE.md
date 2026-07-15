@@ -17482,6 +17482,14 @@ opaque no-draw receipt. It does not infer that PALT produced the palette, nor
 any palette format, PRS3 relationship, CLUT behavior, decoder, or drawing.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 DM2 live G1 door-frame routing gate
+
+`DRAW_DOOR_FRAMES` now requires the source-owned active G1
+`MapGraphicsStyle` receipt before it may select a `GRAPHICSSET` frame. The
+former set-one renderer convenience cannot supply a door material on a
+source-required frame: the full door pass is blocked before any material
+fetch. Verification: `test_dm2_v1_door_material_gate`.
+
 # ✅ 2026-07-15 Nexus complete animated DGN source gate
 
 The complete active Structure3 scene now includes the full `08xx`

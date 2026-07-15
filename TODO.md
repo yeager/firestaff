@@ -6472,6 +6472,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     and any GDAT visual promotion remain blocked until a real source material
     route proves them.
 - DM2-010 — `skproject/SKULLWIN/c_gui_vp.cpp` `DM2_DRAW_WALL`, `DM2_DRAW_DOOR`, `DM2_DRAW_DOOR_FRAMES`, and `DM2_DRAW_DUNGEON_TILES`, plus `c_gfx_blit.cpp`/`c_gfx_stretch.cpp`: `src/dm2/dm2_v1_viewport_renderer.c` still permits fallback rectangles/colours. Door panel, frame, button, ornament, destroyed-mask, dynamic champion HUD pixels, walls, planes, and map chips now consume the exact 16-byte IMG3 local palette returned by `QUERY_GDAT_IMAGE_LOCALPAL`; a source-owned runtime image is blocked when that palette cannot be proven. Original `dt07/0x0A` Rect14 metadata reaches the host receipt and gates runtime viewport consumption. Champion names consume boot-owned `INTERFACE_GENERAL dt07/0`, while portraits and three status bars consume expanded original `dt04/0` IDs 173–176, 165–168, and 185–204. `SUMMARIZE_STONE_ROOM` calls the original random-decoration helper before it populates ornament details; Firestaff has no proven decoration table/seed contract, so that stage remains unavailable rather than randomized. Complete source cell ordering, clipping, door states, object/creature/cloud passes, scale/flip rules, and require verified GDAT material instead.
+  - 2026-07-15 update: source-required doors now require the active G1
+    `MapGraphicsStyle` scene receipt before `DRAW_DOOR_FRAMES` may resolve a
+    `GRAPHICSSET` frame. The old set-one renderer convenience is no longer a
+    valid material owner; absent scene routing blocks the entire door pass
+    before any GDAT fetch or pixel draw.
   - 2026-07-15 update: creature scene rendering now has only the selected
     `DRAW_MAP_CHIP`/Rect14 GDAT bitmap route. Generated fallback rectangles,
     colours, and health bars are removed; absent material is blocked and
