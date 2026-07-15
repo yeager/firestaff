@@ -292,6 +292,15 @@ typedef struct {
     uint8_t charges;
 } DM2_V1_OriginalRawWeaponReceipt;
 
+/* SKWIN/DME.h gives Weapon, Cloth, Scroll, and Miscellaneous_item the same
+ * ItemType() owner: bits 0..6 of their four-byte record's w2.  This keeps
+ * the common raw-save fact separate from Weapon-only charges/important bits. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t item_type;
+} DM2_V1_OriginalRawItemReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -410,6 +419,15 @@ int dm2_v1_original_raw_sksave_weapon_receipt(
     size_t buf_size,
     int record_index,
     DM2_V1_OriginalRawWeaponReceipt *out_receipt);
+/* Read only ItemType() from an original raw DB5 Weapon, DB6 Cloth, DB7
+ * Scroll, or DB10 Miscellaneous_item record.  GenericRecord::w0, inventory
+ * links, charges, and all other fields deliberately remain unowned here. */
+int dm2_v1_original_raw_sksave_item_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int db_pool,
+    int record_index,
+    DM2_V1_OriginalRawItemReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only
