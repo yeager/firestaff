@@ -1202,6 +1202,38 @@ int dm2_v1_original_raw_sksave_text_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_teleporter_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawTeleporterReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawTeleporterReceipt candidate;
+    uint16_t w2;
+    uint16_t w4;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 1, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 6u ||
+        candidate.record.record_offset > buf_size - 6u) {
+        return 0;
+    }
+    /* DME.h::Teleporter keeps the next ObjectID in w0. Read only the direct
+     * destination and transform fields used by the source map route. */
+    w2 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    w4 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 4u);
+    candidate.destination_x = (uint8_t)(w2 & 0x001fu);
+    candidate.destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
+    candidate.destination_map = (uint8_t)(w4 >> 8);
+    candidate.scope = (uint8_t)((w2 >> 13) & 3u);
+    candidate.sound = (uint8_t)((w2 >> 15) & 1u);
+    candidate.rotation = (uint8_t)((w2 >> 10) & 3u);
+    candidate.rotation_type = (uint8_t)((w2 >> 12) & 1u);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_original_raw_sksave_container_receipt(
     const uint8_t *buf, size_t buf_size, int record_index,
     DM2_V1_OriginalRawContainerReceipt *out_receipt)

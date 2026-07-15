@@ -294,6 +294,20 @@ typedef struct {
     uint16_t text_index;
 } DM2_V1_OriginalRawTextReceipt;
 
+/* DME.h::Teleporter owns the destination/scope fields in DB1 w2/w4. The
+ * GenericRecord::w0 next-link remains outside this raw-save receipt. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t destination_x;
+    uint8_t destination_y;
+    uint8_t destination_map;
+    uint8_t scope;
+    uint8_t sound;
+    uint8_t rotation;
+    uint8_t rotation_type;
+} DM2_V1_OriginalRawTeleporterReceipt;
+
 /* DME.h::Container owns the open/type bits in DB9 b4. Its GenericRecord::w0
  * and contained-object w2 are deliberately excluded. */
 typedef struct {
@@ -438,6 +452,11 @@ int dm2_v1_original_raw_sksave_text_receipt(
     size_t buf_size,
     int record_index,
     DM2_V1_OriginalRawTextReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_teleporter_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawTeleporterReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_container_receipt(
     const uint8_t *buf,
     size_t buf_size,
