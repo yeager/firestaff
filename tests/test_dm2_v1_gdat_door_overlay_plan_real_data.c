@@ -295,8 +295,26 @@ int main(void)
         viewport.asset_door_frame_drawn_count != 1 ||
         viewport.asset_door_button_drawn_count != 1 ||
         viewport.last_door_panel_asset_blit.transparent_color !=
-            material_plan.commands[0].color_key ||
+        material_plan.commands[0].color_key ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+    /* A receipt has already authenticated each decoded GDAT plane.  Mutating
+     * one byte after plan construction must block the full door transaction,
+     * rather than presenting a same-sized substitute through M11. */
+    material_plan.commands[0].pixels[0] ^= 0x0fu;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_button = 1;
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);
+    dm2_v1_render_doors(&viewport);
+    if (viewport.asset_door_panel_drawn_count != 0 ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
     printf("PASS: canonical GDAT door plan hash=%08x commands=%u reaches M11 directly\n",
            material_plan.command_hash, (unsigned)material_plan.command_count);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);

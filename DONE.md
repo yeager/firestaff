@@ -17134,3 +17134,6 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   `QUERY_TEMP_PICST` consumption now verifies the receipt's decoded
   ENVIRONMENT pixels and `QUERY_GDAT_IMAGE_LOCALPAL` hash. A substituted
   same-sized image or palette blocks the entire weather transaction.
+- 2026-07-15 DM2 skproject door material integrity: M11 now rehashes every
+  source-owned `DRAW_DOOR` decoded plane and local palette immediately before
+  presentation. Altered same-sized GDAT material blocks the complete pass.

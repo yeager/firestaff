@@ -4045,6 +4045,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         int stride;
         uint8_t palette16[16];
         uint32_t palette_hash;
+        uint32_t decoded_hash;
         int transparent_color;
         uint8_t light_palette;
         uint16_t rect_number;
@@ -4173,6 +4174,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         memcpy(material->palette16, command->palette16,
                                sizeof(material->palette16));
                         material->palette_hash = command->palette_hash;
+                        material->decoded_hash = command->decoded_hash;
                         material->light_palette = command->light_palette;
                         material->rect_number = command->rect_number;
                         material->source_rect = (DM2_V1_ViewportRect){
@@ -4198,9 +4200,18 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         &material->stride) != 0) ||
                     !material->pixels || material->width <= 0 ||
                     material->height <= 0 ||
+                    !material->decoded_hash ||
+                    dm2_v1_weather_pixels_hash(material->pixels,
+                                               material->width,
+                                               material->height,
+                                               material->stride) !=
+                        material->decoded_hash ||
                     (!material->palette_hash &&
                      (!s->active_asset_palette_ready ||
                       s->active_asset_palette_hash == 0u)) ||
+                    (material->palette_hash &&
+                     dm2_v1_weather_pixels_hash(material->palette16, 16, 1,
+                                                16) != material->palette_hash) ||
                     (kind == DM2_DOOR_MATERIAL_BUTTON &&
                      door->button_source_kind == 2 &&
                      !dm2_v1_wall_button_receipt_matches(
