@@ -8,6 +8,7 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -700,31 +701,9 @@ int dm1_v1_f0115_runtime_summary_from_world_pc34(
 static int dm1_f0115_item_subtype_from_thing_pc34(
     const struct DungeonThings_Compat* things, unsigned short thing)
 {
-    int type = THING_GET_TYPE(thing);
-    int index = THING_GET_INDEX(thing);
-
-    if (!things || index < 0) return -1;
-    switch (type) {
-    case THING_TYPE_WEAPON:
-        return things->weapons && index < things->weaponCount
-            ? (int)things->weapons[index].type : -1;
-    case THING_TYPE_ARMOUR:
-        return things->armours && index < things->armourCount
-            ? (int)things->armours[index].type : -1;
-    case THING_TYPE_POTION:
-        return things->potions && index < things->potionCount
-            ? (int)things->potions[index].type : -1;
-    case THING_TYPE_JUNK:
-        return things->junks && index < things->junkCount
-            ? (int)things->junks[index].type : -1;
-    case THING_TYPE_CONTAINER:
-        return things->containers && index < things->containerCount
-            ? (int)things->containers[index].type : -1;
-    case THING_TYPE_SCROLL:
-        return 0;
-    default:
-        return -1;
-    }
+    /* F0115 receives the source F0141/F0156 raw-record result.  Invalid
+     * data rejects the candidate; it does not borrow subtype-zero art. */
+    return dm1_v1_dungeon_get_object_subtype_pc34(things, thing);
 }
 
 int dm1_v1_f0115_world_candidates_pc34(

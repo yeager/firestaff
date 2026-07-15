@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 DUNGEON/OBJECT F0141/F0032/F0033: added the exact PC3.4
+  raw Thing-to-G0237 path for object-info index, base icon, and dynamic icon
+  variants. The resolver reads only F0156-owned raw records and preserves
+  F0141's source arithmetic, G0237's Type column, compass party direction,
+  G0029 torch charge bands, scroll closed state, and charged item variants.
+  F0115 world-candidate subtype extraction now uses that same raw boundary,
+  so an absent raw record cannot render as subtype-zero art. Focused test
+  covers weapon/torch, scroll, compass, potion, source arithmetic, and
+  missing-record rejection.
+
 - 2026-07-15 DM1 CHAMPION F0294: the ammunition compatibility gate now reads
   actual loaded PC3.4 weapon THING records through F0158 and the original
   G0238 WeaponInfo table. It preserves AMMO.C's launcher type, bow/sling

@@ -12,6 +12,27 @@ const unsigned char *dm1_v1_dungeon_get_thing_data_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing);
 
+/* ReDMCSB DUNGEON.C F0141 / OBJECT.C F0032/F0033.
+ * These consume the loaded PC3.4 raw Thing record.  Invalid Thing types,
+ * out-of-range subtypes, and missing raw records fail closed with -1; they
+ * never borrow a subtype-zero object or icon. */
+int dm1_v1_dungeon_get_object_subtype_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+int dm1_v1_dungeon_get_object_info_index_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+int dm1_v1_dungeon_get_object_type_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing);
+
+int dm1_v1_dungeon_get_object_icon_index_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing,
+    int partyDirection);
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void);
 
 #ifdef __cplusplus

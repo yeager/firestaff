@@ -6,6 +6,7 @@
  */
 
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -624,6 +625,66 @@ static void test_f0115_world_candidates_real_pc34_data(void) {
               "PC34 corpus yields a source-backed F0115 group or item candidate");
     F0504_DUNGEON_FreeThingData_Compat(&things);
     F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+}
+
+static void test_f0141_f0032_f0033_raw_object_icon_path(void)
+{
+    struct DungeonThings_Compat things;
+    unsigned char weapon[4] = { 0, 0, 2, 0x8au };
+    unsigned char scroll[4] = { 0, 0, 0, 0 };
+    unsigned char junk[4] = { 0, 0, 0, 0 };
+    unsigned char potion[4] = { 0, 0, 0, 0 };
+    unsigned short weaponThing = make_thing(THING_TYPE_WEAPON, 0, 0);
+    unsigned short scrollThing = make_thing(THING_TYPE_SCROLL, 0, 0);
+    unsigned short junkThing = make_thing(THING_TYPE_JUNK, 0, 0);
+    unsigned short potionThing = make_thing(THING_TYPE_POTION, 0, 0);
+
+    printf("  F0141/F0032/F0033 raw object icon path...\n");
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weapon;
+    things.rawThingData[THING_TYPE_SCROLL] = scroll;
+    things.rawThingData[THING_TYPE_JUNK] = junk;
+    things.rawThingData[THING_TYPE_POTION] = potion;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.thingCounts[THING_TYPE_SCROLL] = 1;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    things.thingCounts[THING_TYPE_POTION] = 1;
+
+    ASSERT_EQ(dm1_v1_dungeon_get_object_subtype_pc34(&things, weaponThing), 2,
+              "F0156 raw weapon subtype");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, weaponThing), 25,
+              "F0141 weapon G0237 index");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_type_pc34(&things, weaponThing), 4,
+              "F0032 torch base icon");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, weaponThing, 0), 6,
+              "F0033 lit torch charge icon via G0029");
+
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, scrollThing), 0,
+              "F0141 scroll G0237 index");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 30,
+              "F0033 open scroll icon");
+    scroll[3] = 0x04u;
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 31,
+              "F0033 closed scroll icon");
+
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, junkThing), 127,
+              "F0141 compass G0237 index");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, junkThing, 2), 2,
+              "F0033 compass follows G0308 party direction");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, potionThing), 2,
+              "F0141 potion G0237 index");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_type_pc34(&things, potionThing), 148,
+              "F0032 potion icon from G0237 type column");
+
+    weapon[2] = 127;
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, weaponThing), 150,
+              "F0141 preserves source arithmetic for raw in-range G0237 row");
+    things.rawThingData[THING_TYPE_WEAPON] = NULL;
+    ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, weaponThing), -1,
+              "missing raw weapon record rejects without subtype fallback");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, THING_NONE, 0), -1,
+              "THING_NONE rejects without an icon fallback");
 }
 
 static void test_projectile_sprite_blit_plan(void) {
@@ -1495,6 +1556,7 @@ int main(void) {
     test_f0115_runtime_instance_summary();
     test_f0115_runtime_summary_from_world();
     test_f0115_world_candidates_real_pc34_data();
+    test_f0141_f0032_f0033_raw_object_icon_path();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
     test_explosion_type_to_aspect();
