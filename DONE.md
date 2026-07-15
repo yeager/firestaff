@@ -89,6 +89,17 @@
   each moving source strip at its exact native geometry, and records every
   indexed package frame before the terminal C017/C040 HUD handoff.
 
+- ✅ 2026-07-15 CSB PC3.4 C001--C005 decoder and final-door receipt: the
+  active package consumer now uses CSBWin `Graphics.cpp::ExpandGraphic`'s
+  big-endian four-plane stream after the ReDMCSB F0490 archive/LZW boundary;
+  the generic F0488 packed-nibble route cannot decode title or entrance art.
+  C001 PRESENTS/CHAOS/STRIKES, C004+C002+C003, C017, and C040 have
+  canonical local-package raster hashes. The M11 capture additionally proves
+  all 31 F0807 frames, including steps 27--31 where C002 is fully clipped and
+  C004+C003 are the only two submitted source surfaces. Focused coverage:
+  `test_csb_v1_m11_launcher_handoff_boundary` (440/0), real package probe
+  (71/0), and its CTest entry.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
   a host transparency key, so source-black pixels erase prior bars and hands
@@ -113,11 +124,12 @@
   regression compares the complete map, so a host palette cannot silently
   replace the source route. Focused coverage:
   `m11_dm1_unreadable_inscription_host_presentation_receipt`.
-- ✅ 2026-07-15 CSB PC3.4 title/entrance decode correction: restored the
-  source-owned ReDMCSB `F0490` archive/LZW then `F0488` IMAGE2 expansion for
-  C001-C005/C017/C040. The prior planar substitution did not match canonical
-  `GRAPHICS.DAT`; the real-package probe now verifies C001 PRESENTS, CHAOS,
-  STRIKES, C017/C040, and C004+C002+C003 raster hashes without a fallback.
+- ✅ 2026-07-15 CSB PC3.4 title/entrance decode correction: F0490 owns the
+  archive/LZW boundary, then C001-C005/C017/C040 use CSBWin
+  `Graphics.cpp::ExpandGraphic`'s big-endian four-plane decoder. Generic
+  ReDMCSB F0488 IMAGE2 expansion is not a valid substitute for these PC3.4
+  streams. The real-package probe locks C001 PRESENTS, CHAOS, STRIKES,
+  C017/C040, and C004+C002+C003 raster hashes without a fallback.
 
 - ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C026 atlas gate: every D1C champion
   mirror draw now validates the native 256x87 atlas and the exact F0172

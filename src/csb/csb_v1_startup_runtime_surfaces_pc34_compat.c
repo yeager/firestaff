@@ -6,6 +6,7 @@
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
 #include "csb_v1_graphics_lzw_pc34_compat.h"
+#include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdlib.h>
@@ -71,15 +72,10 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     struct MemoryGraphicsDatSelection_Compat selection;
     unsigned char *compressed = NULL;
     unsigned char *decompressed = NULL;
-    unsigned char *packed_storage = NULL;
     unsigned char *pixels = NULL;
-    size_t packed_stride;
-    size_t packed_size;
     size_t pixel_count;
     size_t decompressed_size = 0u;
     int ok = 0;
-    int x;
-    int y;
 
     if (out_pixels) *out_pixels = NULL;
     if (out_width) *out_width = 0;
@@ -102,23 +98,20 @@ static int csb_v1_startup_surface_load_graphic_pc34(
             &header, graphic_index, &selection) ||
         selection.widthHeight.Width == 0 || selection.widthHeight.Height == 0) goto done;
     pixel_count = (size_t)selection.widthHeight.Width * selection.widthHeight.Height;
-    packed_stride = (((size_t)selection.widthHeight.Width + 1u) & ~1u) / 2u;
-    packed_size = packed_stride * selection.widthHeight.Height;
     if (pixel_count == 0u || pixel_count > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
-        packed_size > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
         selection.compressedByteCount == 0u ||
         selection.decompressedByteCount == 0u) goto done;
     compressed = (unsigned char *)calloc((size_t)selection.compressedByteCount + 16u, 1u);
     decompressed = (unsigned char *)calloc((size_t)selection.decompressedByteCount, 1u);
-    packed_storage = (unsigned char *)calloc(packed_size + 4u + 4096u, 1u);
     pixels = (unsigned char *)malloc(pixel_count);
-    if (!compressed || !decompressed || !packed_storage || !pixels ||
+    if (!compressed || !decompressed || !pixels ||
         !F0474_MEMORY_LoadGraphic_CPSDF_Compat(selection.offset,
             selection.compressedByteCount, &file_state, compressed)) goto done;
 
-    /* ReDMCSB MEMORY.C F0490 runs F0497 LZW before F0488/IMAGE2 expands
-     * C001-C005. The archive payload is neither a raw host raster nor a
-     * CSBWin-owned planar stream; interpret it only through this PC3.4 path. */
+    /* F0490 first owns the archive/LZW boundary.  C001-C005 then use
+     * CSBWin Graphics.cpp::ExpandGraphic's big-endian four-plane stream,
+     * not the generic ReDMCSB F0488 packed-nibble route.  The latter made
+     * the decoded title and entrance depend on a stale format assumption. */
     if (selection.compressedByteCount == selection.decompressedByteCount) {
         memcpy(decompressed, compressed, (size_t)selection.decompressedByteCount);
     } else if (csb_v1_graphics_lzw_decode_pc34_compat(
@@ -128,15 +121,11 @@ static int csb_v1_startup_surface_load_graphic_pc34(
                decompressed_size != (size_t)selection.decompressedByteCount) {
         goto done;
     }
-    F0488_MEMORY_ExpandGraphicToBitmap_Compat(
-        decompressed, packed_storage + 4u, &selection.widthHeight);
-    for (y = 0; y < (int)selection.widthHeight.Height; ++y) {
-        for (x = 0; x < (int)selection.widthHeight.Width; ++x) {
-            unsigned char packed = packed_storage[4u + (size_t)y * packed_stride +
-                                                   (size_t)x / 2u];
-            pixels[(size_t)y * selection.widthHeight.Width + (size_t)x] =
-                (x & 1) ? (packed & 0x0fu) : ((packed >> 4) & 0x0fu);
-        }
+    if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
+            decompressed, (size_t)selection.decompressedByteCount,
+            selection.widthHeight.Width, selection.widthHeight.Height,
+            pixels, pixel_count)) {
+        goto done;
     }
     *out_pixels = pixels;
     *out_width = selection.widthHeight.Width;
@@ -145,7 +134,6 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     ok = 1;
 done:
     free(pixels);
-    free(packed_storage);
     free(decompressed);
     free(compressed);
     F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&file_state);
@@ -845,10 +833,12 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
 {
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 receipt;
     uint32_t hash = 2166136261u;
+    int expected_opening_surface_count;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
+    expected_opening_surface_count = 0;
     if (!session || !plan ||
         !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
             session, plan, source_tick, &receipt.frame)) {
@@ -909,8 +899,15 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             receipt.host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34;
         } else if (plan->surface ==
                    CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+            /* ENTRANCE.C F0438 clips C002 away after source step 26.  The
+             * final five pages therefore contain C004 plus C003, not a
+             * fictitious third surface.  Count only the source rectangles
+             * which F0807 actually submits to the raster. */
+            expected_opening_surface_count = 1;
+            if (plan->opening_left_w > 0) expected_opening_surface_count++;
+            if (plan->opening_right_w > 0) expected_opening_surface_count++;
             if (!plan->opening_composite_valid || !receipt.raster.door_composited ||
-                receipt.raster.source_surface_count != 3 ||
+                receipt.raster.source_surface_count != expected_opening_surface_count ||
                 receipt.special_palette !=
                     VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
                 receipt.title_special_palette != -1) {
