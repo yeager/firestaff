@@ -7345,6 +7345,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     byte-to-code transfer only. Remaining: capture that sequence on real media
     and then prove the called code's record reads and grammar before publishing
     a level or object table.
+  - Update: descriptor 0 of the authenticated Stage-3 manifest now has an
+    explicit runtime boundary receipt. Its original three raw words, derived
+    record coordinate, raw MODE1 sector, user-data offset, byte count, and
+    FNV-1a hash must agree with the same `$3800` loader sector before startup
+    proceeds. The descriptor remains opaque: it proves neither a descriptor
+    grammar nor level, object, tile, palette, bitmap, or command semantics.
+    Next evidence remains a real post-`$3800` loader trace that connects a
+    non-self descriptor-selected record to its executing consumer.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02

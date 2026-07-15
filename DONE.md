@@ -18552,6 +18552,19 @@ wrong-target, or unmarked control rows reject. Verification: Ninja
 `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 manifest descriptor boundary
+
+Stage-three descriptor 0 now reaches the runtime loader gate as a strict
+original-media boundary receipt. Firestaff retains the descriptor's three raw
+words plus its derived Track 02 record, MODE1 raw sector, user-data offset,
+2048-byte length, and FNV-1a hash. All fields must resolve back to the same
+authenticated `$3800` Stage-3 sector before startup admission. The receipt is
+deliberately non-semantic: it does not classify the descriptor or sector as a
+level, object table, tile, palette, bitmap, command, or visual route. The
+focused descriptor probe covers valid coordinates and rejection of malformed
+MODE1/zero-selector records. Verification: Ninja probe, `test_theron_rendering`
+18/18, and `test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
