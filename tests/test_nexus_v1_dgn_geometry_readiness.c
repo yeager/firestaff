@@ -1343,6 +1343,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure2_payload.opaque_payload_size &&
               descriptor_target.descriptor_bytes_fnv1a64 != 0U &&
               descriptor_target.opaque_payload_fnv1a64 != 0U &&
+              descriptor_target.shared_image_palette_payload_anchor ==
+                  (descriptor_target.palette_payload_candidate_bound &&
+                   descriptor_target.image_payload_anchor_offset ==
+                       descriptor_target.palette_payload_anchor_offset) &&
               descriptor_target.capture_producer_required &&
               descriptor_target.original_saturn_capture_required &&
               descriptor_target.no_draw_only &&

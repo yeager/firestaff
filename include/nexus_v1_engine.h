@@ -655,6 +655,7 @@ typedef struct {
     uint64_t palette_payload_candidate_fnv1a64;
     int image_payload_candidate_bound;
     int palette_payload_candidate_bound;
+    int shared_image_palette_payload_anchor;
     int capture_producer_required;
     int original_saturn_capture_required;
     int no_draw_only;

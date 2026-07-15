@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
+  texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`
+  still fails on 39 broader startup completeness assertions: title/menu audio
+  readiness, first DGN render state after champion start, startup route proof
+  across Saturn title/menu/runtime assets, SAVE/TITLE host package capture
+  consumption, MENU.BPK/PRS3 blocking, and runtime DGN host-route/material
+  coverage. Keep MENU.BPK/PRS3 blocked without fallback visuals and do not
+  promote Structure2 opaque spans into decoded pixels or palette semantics
+  without authentic Saturn capture evidence.
+
 - 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
   now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped
   C001/TITLE.DAT substitution, holds the verified title through the original
