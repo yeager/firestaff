@@ -151,6 +151,7 @@ typedef struct {
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
+    DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -188,6 +189,9 @@ enum {
     DM2_SKPROJECT_TTY_MISSILE_0 = 0x1d,
     DM2_SKPROJECT_TTY_MISSILE_1 = 0x1e
 };
+
+static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
+                                                size_t size);
 
 static uint32_t dm2_runtime_timer_tick(const DM2_TimerEntry *timer)
 {
@@ -4172,6 +4176,27 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
           g_dm2_last_m11_frame.interface_action_palette_consumed));
     g_dm2_last_m11_frame.m11_consume_frame =
         g_dm2_last_m11_frame.valid;
+    /* The M10/M11 frame route may consume a raw save only after the active
+     * dungeon still has the exact GAME_LOAD prefix and party pose that were
+     * atomically published. A later map replacement leaves this receipt
+     * unconsumed instead of associating a frame with unrelated bytes. */
+    if (rt->raw_sksave_handoff.valid && rt->boot &&
+        rt->boot->dungeon_data) {
+        const DM2_V1_DungeonData *dungeon =
+            (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        if (dungeon->raw_data && dungeon->raw_size > 0 &&
+            (size_t)dungeon->raw_size ==
+                rt->raw_sksave_handoff.dungeon_byte_count &&
+            dm2_v1_runtime_raw_sksave_hash(
+                dungeon->raw_data, (size_t)dungeon->raw_size) ==
+                rt->raw_sksave_handoff.prefix_hash &&
+            rt->dungeon_level == (int)rt->raw_sksave_handoff.party_level &&
+            party_x == (int)rt->raw_sksave_handoff.party_x &&
+            party_y == (int)rt->raw_sksave_handoff.party_y &&
+            (party_dir & 3) == (int)rt->raw_sksave_handoff.party_dir) {
+            rt->raw_sksave_handoff.first_frame_consumed = 1;
+        }
+    }
     rt->weather.weather_seed = viewport.random_seed;
 
     return 0;
@@ -4201,6 +4226,14 @@ int dm2_v1_runtime_last_m11_frame_receipt(
 {
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_last_m11_frame;
+    return out_receipt->valid;
+}
+
+int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
+    DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.raw_sksave_handoff;
     return out_receipt->valid;
 }
 
@@ -5093,6 +5126,54 @@ static int dm2_v1_runtime_raw_sksave_reachable_records_are_valid(
     return dm2_v1_dungeon_validate_record_graph(dungeon);
 }
 
+static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
+                                                size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!data || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static void dm2_v1_runtime_raw_sksave_handoff_from_candidate(
+    const DM2_V1_SaveCandidate *candidate,
+    DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    int type;
+
+    if (!out_receipt) return;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!candidate || candidate->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        !candidate->dungeon_bytes || candidate->dungeon_size == 0u) {
+        return;
+    }
+    dungeon = &candidate->dungeon_receipt;
+    if (!dungeon->valid || dungeon->suppress_state_offset !=
+                               candidate->dungeon_size) {
+        return;
+    }
+    out_receipt->map_count = dungeon->map_count;
+    out_receipt->dungeon_byte_count = candidate->dungeon_size;
+    out_receipt->prefix_hash = dungeon->prefix_hash;
+    out_receipt->map_data_hash = dungeon->map_data_hash;
+    out_receipt->party_level = candidate->session.party_level;
+    out_receipt->party_x = candidate->session.party_x;
+    out_receipt->party_y = candidate->session.party_y;
+    out_receipt->party_dir = candidate->session.party_dir & 3u;
+    for (type = 0; type < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++type) {
+        out_receipt->db_record_counts[type] = dungeon->db_record_counts[type];
+    }
+    out_receipt->valid = out_receipt->map_count != 0u &&
+                         out_receipt->prefix_hash != 0u &&
+                         out_receipt->map_data_hash != 0u;
+}
+
 int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size)
 {
@@ -5101,6 +5182,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     DM2_V1_CreatureLiveState cleared_creatures;
     DM2_V1_DungeonData parsed_dungeon;
     DM2_V1_DungeonData saved_dungeon;
+    DM2_V1_RuntimeRawSaveHandoffReceipt raw_handoff;
     int parsed_original_dungeon = 0;
 
     if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
@@ -5116,6 +5198,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     }
 
     memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
+    memset(&raw_handoff, 0, sizeof(raw_handoff));
     if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
         /* skproject/SKWINSPX/src/v4/skcore.cpp::GAME_LOAD calls
          * READ_DUNGEON_STRUCTURE before it consumes skload_table_60.  The
@@ -5143,6 +5226,8 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
         *dungeon = parsed_dungeon;
         memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
         parsed_original_dungeon = 1;
+        dm2_v1_runtime_raw_sksave_handoff_from_candidate(&candidate,
+                                                          &raw_handoff);
     }
 
     /* Original SKSave has dungeon DB records but no Firestaff-only CCM cache.
@@ -5159,6 +5244,10 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     }
     if (parsed_original_dungeon) {
         dm2_v1_dungeon_free(&saved_dungeon);
+        g_dm2_runtime.raw_sksave_handoff = raw_handoff;
+    } else {
+        memset(&g_dm2_runtime.raw_sksave_handoff, 0,
+               sizeof(g_dm2_runtime.raw_sksave_handoff));
     }
     return 0;
 }
