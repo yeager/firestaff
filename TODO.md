@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 117, CSB 1, shared DM1/CSB 1611, DM2 1680; 3409 total open rows
+  DM1 117, CSB 1, shared DM1/CSB 1611, DM2 1675; 3404 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -42,7 +42,9 @@
   source-material lanes now pass focused DM2 syntax verification.
   `SHOW_MENU_SCREEN` now uses only the real `TITLE/0 dt07/4` menu surface and
   keeps `TITLE/0 dt07/1` as title receipt evidence, removing the synthetic
-  no-image text/rect fallback from startup capture. Remaining verification is
+  no-image text/rect fallback from startup capture. Skproject ANIM bootstrap
+  and IMG1 4bpp decode rows are now closed for swoosh/title argv, sequential
+  fill, setpixel, literal, and previous-row runs. Remaining verification is
   the executable `dm2_v1_boot_profile_smoke` run once the local build tree is
   repaired; current blockers are the missing `build/test_dm2_v1_boot_profile_smoke`
   executable, absent `test_dm2_v1_boot_profile_smoke` build target, and CMake
