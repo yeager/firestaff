@@ -741,6 +741,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES 100
 
 typedef struct {
     uint32_t location;
@@ -765,6 +766,12 @@ typedef struct {
     uint32_t values[8];
     uint8_t write_mask;
 } CSB_V1_CSBWinDSAPendingMonsterWrite;
+
+typedef struct {
+    uint32_t location;
+    uint32_t values[5];
+    uint8_t write_mask;
+} CSB_V1_CSBWinDSAPendingCellWrite;
 
 static int csb_v1_csbwin_dsa_pending_skin_lookup(
     const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
@@ -796,7 +803,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingGeneratorWrite *pending_generator_writes,
     int *pending_generator_write_count,
     CSB_V1_CSBWinDSAPendingMonsterWrite *pending_monster_writes,
-    int *pending_monster_write_count, int *staged_saves_disabled)
+    int *pending_monster_write_count,
+    CSB_V1_CSBWinDSAPendingCellWrite *pending_cell_writes,
+    int *pending_cell_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -813,10 +822,12 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_excell_writes || !pending_excell_write_count ||
         !pending_generator_writes || !pending_generator_write_count ||
         !pending_monster_writes || !pending_monster_write_count ||
+        !pending_cell_writes || !pending_cell_write_count ||
         !staged_saves_disabled ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
         *pending_monster_write_count < 0 ||
+        *pending_cell_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -1144,7 +1155,14 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (count == 0u) break;
         {
             uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
-            if (!context->get_cell_info ||
+            int pending = -1;
+            for (sv = 0; sv < *pending_cell_write_count; ++sv) {
+                if (pending_cell_writes[sv].location == w) pending = sv;
+            }
+            if (pending >= 0) {
+                memcpy(cell_values, pending_cell_writes[pending].values,
+                       sizeof(cell_values));
+            } else if (!context->get_cell_info ||
                 !context->get_cell_info(context->dungeon_user, w,
                                          cell_values)) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -1152,6 +1170,121 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             if (count > 5u) count = 5u;
             for (sv = 0; sv < (int32_t)count; ++sv) {
                 variables[v + (uint32_t)sv] = cell_values[sv];
+            }
+        }
+        break;
+    case 58u: /* STKOP_CellStore */
+        /* CSBWin DSA.cpp:3837-3956 changes only an existing source CELLFLAG
+         * and (where applicable) its first DB0/DB1 record. Keep a full
+         * post-write Cell@ image locally until bytecode acceptance. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        if ((int32_t)v < 0 || v > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            count > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - v || count == 0u) {
+            break;
+        }
+        {
+            uint32_t cell_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            uint32_t input_values[5] = { 0u, 0u, 0u, 0u, 0u };
+            uint8_t write_mask = 0u;
+            int pending = -1;
+            int resolved;
+            uint32_t i;
+
+            for (i = 0u; i < (uint32_t)*pending_cell_write_count; ++i) {
+                if (pending_cell_writes[i].location == w) pending = (int)i;
+            }
+            if (pending >= 0) {
+                memcpy(cell_values, pending_cell_writes[pending].values,
+                       sizeof(cell_values));
+            } else if (!context->get_cell_info ||
+                       !context->get_cell_info(context->dungeon_user, w,
+                                               cell_values)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            for (i = 0u; i < count && i < 5u; ++i) {
+                input_values[i] = variables[v + i];
+            }
+            if (input_values[0] != cell_values[0]) break;
+            if (!context->resolve_cell_store || !context->set_cell_info) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            resolved = context->resolve_cell_store(context->dungeon_user, w,
+                                                   cell_values[0]);
+            if (resolved < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (resolved == 0) break;
+            if (count < 2u) break;
+            switch (cell_values[0]) {
+            case 0u: /* roomSTONE */
+                cell_values[1] = input_values[1] & 0x0fu;
+                write_mask = 1u << 1;
+                break;
+            case 1u: /* roomOPEN */
+                cell_values[1] = input_values[1] & 0x01u;
+                write_mask = 1u << 1;
+                break;
+            case 2u: /* roomSTAIRS: source no-op */
+                break;
+            case 3u: /* roomPIT */
+                cell_values[1] = input_values[1] & 0x0du;
+                write_mask = 1u << 1;
+                break;
+            case 6u: /* roomFALSEWALL */
+                cell_values[1] = input_values[1] & 0x05u;
+                write_mask = 1u << 1;
+                break;
+            case 5u: /* roomTELEPORTER */
+                cell_values[1] = input_values[1] & 0x0cu;
+                write_mask = 1u << 1;
+                if (count >= 3u) {
+                    cell_values[2] = input_values[2] & 0x07u;
+                    write_mask |= 1u << 2;
+                }
+                if (count >= 4u) {
+                    cell_values[3] = input_values[3] & 0x03u;
+                    write_mask |= 1u << 3;
+                }
+                break;
+            case 4u: /* roomDOOR */
+                cell_values[1] = (cell_values[1] & 0x01u) |
+                    (input_values[1] & 0x1eu);
+                write_mask = 1u << 1;
+                if (count >= 3u) {
+                    if (cell_values[2] == 5u && input_values[2] == 0u) {
+                        cell_values[2] = 0u;
+                    } else if (cell_values[2] == 4u && input_values[2] == 5u) {
+                        cell_values[2] = 5u;
+                    }
+                    write_mask |= 1u << 2;
+                }
+                if (count >= 4u) {
+                    cell_values[3] = input_values[3] & 0x01u;
+                    write_mask |= 1u << 3;
+                }
+                if (count >= 5u) {
+                    cell_values[4] = input_values[4] & 0x0fu;
+                    write_mask |= 1u << 4;
+                }
+                break;
+            default:
+                break;
+            }
+            if (write_mask == 0u) break;
+            if (pending >= 0) {
+                memcpy(pending_cell_writes[pending].values, cell_values,
+                       sizeof(cell_values));
+                pending_cell_writes[pending].write_mask |= write_mask;
+            } else if (*pending_cell_write_count >=
+                       CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            } else {
+                pending_cell_writes[*pending_cell_write_count].location = w;
+                memcpy(pending_cell_writes[*pending_cell_write_count].values,
+                       cell_values, sizeof(cell_values));
+                pending_cell_writes[*pending_cell_write_count].write_mask =
+                    write_mask;
+                ++*pending_cell_write_count;
             }
         }
         break;
@@ -1640,6 +1773,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_generator_writes[CSB_V1_CSBWIN_DSA_PENDING_GENERATOR_WRITES];
     CSB_V1_CSBWinDSAPendingMonsterWrite
         pending_monster_writes[CSB_V1_CSBWIN_DSA_PENDING_MONSTER_WRITES];
+    CSB_V1_CSBWinDSAPendingCellWrite
+        pending_cell_writes[CSB_V1_CSBWIN_DSA_PENDING_CELL_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -1648,6 +1783,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_excell_write_count = 0;
     int pending_generator_write_count = 0;
     int pending_monster_write_count = 0;
+    int pending_cell_write_count = 0;
     int staged_saves_disabled;
     int i;
 
@@ -1864,7 +2000,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_skin_write_count, pending_excell_writes,
                 &pending_excell_write_count, pending_generator_writes,
                 &pending_generator_write_count, pending_monster_writes,
-                &pending_monster_write_count, &staged_saves_disabled);
+                &pending_monster_write_count, pending_cell_writes,
+                &pending_cell_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1898,6 +2035,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 context->dungeon_user, pending_monster_writes[i].thing,
                 pending_monster_writes[i].values,
                 pending_monster_writes[i].write_mask)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_cell_write_count; ++i) {
+        if (!context->set_cell_info(
+                context->dungeon_user, pending_cell_writes[i].location,
+                pending_cell_writes[i].values,
+                pending_cell_writes[i].write_mask)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2017,6 +2162,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.monster_invisible_enabled = runner->monster_invisible_enabled;
     context.monster_size4_enabled = runner->monster_size4_enabled;
     context.get_cell_info = runner->get_cell_info;
+    context.resolve_cell_store = runner->resolve_cell_store;
+    context.set_cell_info = runner->set_cell_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

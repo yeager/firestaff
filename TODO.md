@@ -3294,9 +3294,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       five-word room/flag/door/teleporter result layout and first clears the
       requested authenticated DSAVARS range. Invalid locations retain that
       cleared source result; legacy synthetic square layouts, missing records,
-      and unowned dungeon data remain unavailable. `CellStore` is still open
-      pending a complete staged CELLFLAG/DB0/DB1 write transaction and real
-      DSA-bearing save-corpus proof.
+      and unowned dungeon data remain unavailable.
+    - 2026-07-15 cell-store update: source `STKOP_CellStore` now stages writes
+      against that same loaded original byte-map. It changes only an existing
+      `CELLFLAG` byte and the existing first DB0 door or DB1 teleporter record
+      required by the source room type, then commits after authenticated
+      bytecode consumption. A later same-action `CellFetch` sees the staged
+      source-shaped five-word result. It cannot allocate cells, things, or
+      links; missing/malformed records and unsupported source words reject the
+      transaction without mutation. Positive original DSA-bearing save-corpus
+      proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
