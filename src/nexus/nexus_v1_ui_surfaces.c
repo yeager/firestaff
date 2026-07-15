@@ -615,6 +615,9 @@ int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
 
     if (!mgr) return -1;
     if (face_index < 0 || face_index >= 24) return -1;
+    /* Canonical FACE.BIN is a compact PRS3 container, never a raw portrait
+     * atlas. Its undecoded bytes must not enter this legacy raw helper. */
+    if (data && data_size >= 4 && memcmp(data, "FACE", 4) == 0) return -1;
     if (portrait_w <= 0 || portrait_h <= 0) {
         portrait_w = 48; portrait_h = 48;  /* default assumed size */
     }
