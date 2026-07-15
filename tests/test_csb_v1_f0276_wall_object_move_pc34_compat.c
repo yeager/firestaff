@@ -142,6 +142,7 @@ int main(void)
           "C003 rejects the matching object type before Revert/HOLD handling");
 
     make_loaded_chain(&dungeon, raw, 1, 1, 0);
+    put_le16(raw, 76, (unsigned short)((DM1_EFFECT_SET << 3) | (1u << 6)));
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
@@ -150,6 +151,20 @@ int main(void)
               profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
               profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
           "F0276 C001 object arrival consumes its loaded wall C03 record");
+    CHECK(profile.audio_runtime.pendingSoundIndex == CSB_V1_SOUND_SWITCH &&
+              profile.audio_runtime.pendingVolume == 64 &&
+              profile.audio_runtime.pendingPriority == 4u &&
+              profile.audio_runtime.totalRequests == 1u,
+          "Audible C001 requests the original prioritized switch sound");
+
+    make_loaded_chain(&dungeon, raw, 1, 0, 0);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    run_object_move(&profile);
+    CHECK(profile.timeline_queue.eventCount == 0 && raw[74] == 0u &&
+              raw[75] == 0u && profile.audio_runtime.totalRequests == 0u,
+          "C000 wall sensor stays disabled before object side effects or audio");
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;

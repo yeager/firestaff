@@ -73,6 +73,29 @@
    C49 regression also keeps non-wall chains fail-closed. Coverage:
    `csb_v1_f0276_wall_object_move_pc34_compat` (20/0).
 
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 C001 object move: the generic
+  wall pass independently authenticates its PC3.4 wall byte and C03 chain,
+  then admits C001's ordinary-object arrival through F0272/F0268. The focused
+  C49 regression also keeps non-wall chains fail-closed. Coverage:
+  `csb_v1_f0276_wall_object_move_pc34_compat` (20/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0276 C000 wall gate: disabled C03 records
+  now explicitly stop before every object-side-effect stage. A live C49
+  PC3.4-chain regression proves no F0272/F0268 event and no type-byte rewrite.
+  Coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (26/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0276 C001 audible object route: a loaded
+  C001 wall record reached by C49/F0267 emits the authentic prioritized switch
+  request and its F0272/F0268 event. The same regression proves C000 emits
+  neither. Coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (26/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 live wall-object move: C49
+  associated-object materialization now enters the source C001..C003 wall
+  sensor pass through its packed Thing cell. The source C003 inequality test
+  runs before Revert/HOLD, then authentic PC3.4 C03 data alone may schedule
+  F0272/F0268; non-wall chains and matching C003 objects stay inert. Focused
+  coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (15/0).
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 source projectile/object-material gate:
   M613 projectiles, F0142/G0209 thrown objects, and C2500 floor objects now
   require decoded loaded-pixel PC34 surfaces before their original placement
