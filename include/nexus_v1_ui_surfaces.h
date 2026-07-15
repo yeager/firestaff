@@ -175,6 +175,24 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_UI_FacePrs3CaptureTarget;
 
+/* Ordered source-only campaign for every canonical FACE.BIN PRS3 frame. The
+ * ledger is for acquiring a complete external trace set, not for admitting a
+ * decoder: it records byte identity and producer order only. */
+typedef struct {
+    int valid;
+    int frame_count;
+    size_t source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    uint64_t ordered_target_fnv1a64;
+    uint64_t source_lanes_fnv1a64;
+    size_t total_stream_byte_count;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_UI_FacePrs3CaptureCampaignReceipt;
+
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
     /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
@@ -283,6 +301,15 @@ int nexus_ui_face_prs3_capture_target(const uint8_t *data,
                                       int face_index,
                                       int source_hash_verified,
                                       Nexus_UI_FacePrs3CaptureTarget *out_target);
+
+/* Construct a complete ordered capture campaign for all canonical FACE.BIN
+ * PRS3 frames. It requires scanner-owned source identity and retains no
+ * loader, token, palette, or rendering semantics. */
+int nexus_ui_face_prs3_capture_campaign(
+    const uint8_t *data,
+    int data_size,
+    int source_hash_verified,
+    Nexus_UI_FacePrs3CaptureCampaignReceipt *out_receipt);
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,

@@ -17909,6 +17909,15 @@ loader trace without inventing palette, token, pixel, or portrait semantics.
 The target remains no-draw with fallback visuals disabled. Verification:
 `test_m11_nexus_startup_gate`.
 
+# ✅ 2026-07-15 Nexus FACE PRS3 capture campaign
+
+`nexus_ui_face_prs3_capture_campaign()` now covers every canonical FACE.BIN
+frame in producer order, with a separate ledger over target framing and its
+prefix/stream source lanes. The campaign rejects missing or malformed frames
+before external trace analysis, but establishes no loader execution, token,
+palette, pixel, or menu-placement semantics. It remains no-draw with fallback
+visuals disabled. Verification: `test_m11_nexus_startup_gate`.
+
 # ✅ 2026-07-15 DM2 c_dialog source panel viewport route
 
 `c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a
