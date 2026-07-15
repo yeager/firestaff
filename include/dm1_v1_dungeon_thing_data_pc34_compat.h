@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM1_V1_DUNGEON_THING_DATA_PC34_COMPAT_H
 
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +39,46 @@ int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing,
     unsigned short *outAttributes);
+
+/* ReDMCSB DUNGEON.C F0145-F0148.  On the party map, C04 Cells and
+ * Directions live in the matching ACTIVE_GROUP record; elsewhere they live
+ * in the loaded raw C04 record.  Missing raw C04 data or a missing active
+ * record on the party map is an error, never a decoded/default fallback. */
+int dm1_v1_dungeon_get_group_cells_f0145_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int *outCells);
+
+int dm1_v1_dungeon_set_group_cells_f0146_pc34(
+    struct DungeonThings_Compat *things,
+    struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int cells);
+
+int dm1_v1_dungeon_get_group_directions_f0147_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int *outDirections);
+
+int dm1_v1_dungeon_set_group_directions_f0148_pc34(
+    struct DungeonThings_Compat *things,
+    struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int directions);
 
 /* ReDMCSB GROUP.C F0175: first C04 group in a loaded square Thing chain. */
 unsigned short dm1_v1_group_get_thing_f0175_pc34(

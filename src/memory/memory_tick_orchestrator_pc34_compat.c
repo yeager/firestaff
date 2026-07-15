@@ -16,6 +16,7 @@
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
@@ -5016,35 +5017,41 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
             unsigned int rotatedDirections;
             unsigned int rotatedCells;
             unsigned int directions;
-            int activeIndex = orch_find_active_group_state_index_compat(
-                world, groupIndex);
-            int creatureSize = profile
-                ? (profile->attributes & DM1_ATTR_SIZE_MASK)
-                : DM1_SIZE_QUARTER_SQUARE;
+            unsigned int cells;
+            int creatureSize;
+
+            if (!profile) return 0;
+            creatureSize = profile->attributes & DM1_ATTR_SIZE_MASK;
 
             memset(&rotationTeleporter, 0, sizeof(rotationTeleporter));
             rotationTeleporter.destFacing = (int)tp.rotation;
             rotationTeleporter.absoluteRotation = tp.absoluteRotation ? 1 : 0;
-            directions = (unsigned int)(activeIndex >= 0
-                ? orch_active_group_directions_compat(
-                      &world->creatureAI[activeIndex], group)
-                : orch_pack_group_directions_compat(
-                      (int)group->direction, (int)group->count));
+            if (!dm1_v1_dungeon_get_group_directions_f0147_pc34(
+                    world->things, world->creatureAI, world->creatureAICount,
+                    world->partyMapIndex, *inOutMapIndex, groupIndex,
+                    &directions) ||
+                !dm1_v1_dungeon_get_group_cells_f0145_pc34(
+                    world->things, world->creatureAI, world->creatureAICount,
+                    world->partyMapIndex, *inOutMapIndex, groupIndex,
+                    &cells)) {
+                return 0;
+            }
             if (!DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(
                     &rotationTeleporter, (int)group->count, creatureSize,
-                    directions, (unsigned int)group->cells,
+                    directions, cells,
                     &rotatedDirections, &rotatedCells)) {
                 return 0;
             }
-            group->direction = (unsigned char)(rotatedDirections & 0x03u);
-            group->cells = (unsigned char)(rotatedCells & 0xffu);
-            if (activeIndex >= 0) {
-                world->creatureAI[activeIndex].groupDirection =
-                    (int)(rotatedDirections & 0xffu);
-                world->creatureAI[activeIndex].groupCells =
-                    (int)(rotatedCells & 0xffu);
+            if (!dm1_v1_dungeon_set_group_directions_f0148_pc34(
+                    world->things, world->creatureAI, world->creatureAICount,
+                    world->partyMapIndex, *inOutMapIndex, groupIndex,
+                    rotatedDirections) ||
+                !dm1_v1_dungeon_set_group_cells_f0146_pc34(
+                    world->things, world->creatureAI, world->creatureAICount,
+                    world->partyMapIndex, *inOutMapIndex, groupIndex,
+                    rotatedCells)) {
+                return 0;
             }
-            orch_write_raw_group_compat(world->things, groupIndex);
         }
 
         *inOutMapIndex = plan.targetMapIndex;

@@ -53,6 +53,157 @@ static const unsigned short s_creature_attributes_f0144_pc34[27] = {
     0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
 };
 
+static unsigned char *dm1_v1_dungeon_group_raw_mutable_pc34(
+    struct DungeonThings_Compat *things,
+    int groupIndex)
+{
+    if (!things || !things->loaded || !things->groups || groupIndex < 0 ||
+        groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        !things->rawThingData[THING_TYPE_GROUP]) {
+        return NULL;
+    }
+    return things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+}
+
+static const unsigned char *dm1_v1_dungeon_group_raw_pc34(
+    const struct DungeonThings_Compat *things,
+    int groupIndex)
+{
+    if (!things || !things->loaded || !things->groups || groupIndex < 0 ||
+        groupIndex >= things->groupCount ||
+        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        !things->rawThingData[THING_TYPE_GROUP]) {
+        return NULL;
+    }
+    return things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+}
+
+static int dm1_v1_dungeon_active_group_index_pc34(
+    const struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int groupIndex)
+{
+    int index;
+
+    if (!activeGroups || activeGroupCount < 0 || groupIndex < 0) return -1;
+    for (index = 0; index < activeGroupCount; ++index) {
+        if (activeGroups[index].reserved0 == groupIndex) return index;
+    }
+    return -1;
+}
+
+int dm1_v1_dungeon_get_group_cells_f0145_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int *outCells)
+{
+    const unsigned char *raw;
+    int activeIndex;
+
+    if (outCells) *outCells = 0;
+    if (!outCells) return 0;
+    raw = dm1_v1_dungeon_group_raw_pc34(things, groupIndex);
+    if (!raw) return 0;
+    if (mapIndex != partyMapIndex) {
+        *outCells = raw[5];
+        return 1;
+    }
+    activeIndex = dm1_v1_dungeon_active_group_index_pc34(
+        activeGroups, activeGroupCount, groupIndex);
+    if (activeIndex < 0) return 0;
+    *outCells = (unsigned int)activeGroups[activeIndex].groupCells & 0xffu;
+    return 1;
+}
+
+int dm1_v1_dungeon_set_group_cells_f0146_pc34(
+    struct DungeonThings_Compat *things,
+    struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int cells)
+{
+    unsigned char *raw;
+    int activeIndex;
+
+    raw = dm1_v1_dungeon_group_raw_mutable_pc34(things, groupIndex);
+    if (!raw) return 0;
+    if (mapIndex != partyMapIndex) {
+        things->groups[groupIndex].cells = (unsigned char)(cells & 0xffu);
+        raw[5] = (unsigned char)(cells & 0xffu);
+        return 1;
+    }
+    activeIndex = dm1_v1_dungeon_active_group_index_pc34(
+        activeGroups, activeGroupCount, groupIndex);
+    if (activeIndex < 0) return 0;
+    activeGroups[activeIndex].groupCells = (int)(cells & 0xffu);
+    return 1;
+}
+
+int dm1_v1_dungeon_get_group_directions_f0147_pc34(
+    const struct DungeonThings_Compat *things,
+    const struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int *outDirections)
+{
+    static const unsigned char groupDirections[4] = {
+        0x00u, 0x55u, 0xaau, 0xffu
+    };
+    const unsigned char *raw;
+    int activeIndex;
+
+    if (outDirections) *outDirections = 0;
+    if (!outDirections) return 0;
+    raw = dm1_v1_dungeon_group_raw_pc34(things, groupIndex);
+    if (!raw) return 0;
+    if (mapIndex != partyMapIndex) {
+        *outDirections = groupDirections[raw[15] & 0x03u];
+        return 1;
+    }
+    activeIndex = dm1_v1_dungeon_active_group_index_pc34(
+        activeGroups, activeGroupCount, groupIndex);
+    if (activeIndex < 0) return 0;
+    *outDirections = (unsigned int)activeGroups[activeIndex].groupDirection &
+        0xffu;
+    return 1;
+}
+
+int dm1_v1_dungeon_set_group_directions_f0148_pc34(
+    struct DungeonThings_Compat *things,
+    struct CreatureAIState_Compat *activeGroups,
+    int activeGroupCount,
+    int partyMapIndex,
+    int mapIndex,
+    int groupIndex,
+    unsigned int directions)
+{
+    unsigned char *raw;
+    int activeIndex;
+
+    raw = dm1_v1_dungeon_group_raw_mutable_pc34(things, groupIndex);
+    if (!raw) return 0;
+    if (mapIndex != partyMapIndex) {
+        things->groups[groupIndex].direction = (unsigned char)(directions & 3u);
+        raw[15] = (unsigned char)((raw[15] & ~0x03u) | (directions & 3u));
+        return 1;
+    }
+    if (directions > 0xffu) return 0;
+    activeIndex = dm1_v1_dungeon_active_group_index_pc34(
+        activeGroups, activeGroupCount, groupIndex);
+    if (activeIndex < 0) return 0;
+    activeGroups[activeIndex].groupDirection = (int)directions;
+    return 1;
+}
+
 const unsigned char *dm1_v1_dungeon_get_thing_data_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing)
@@ -332,5 +483,6 @@ const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void)
            "DUNGEON.C:F0141_DUNGEON_GetObjectInfoIndex:1136-1165; "
            "OBJECT.C:F0032_OBJECT_GetType:121-145; "
            "OBJECT.C:F0033_OBJECT_GetIconIndex:147-213; "
-           "DUNGEON.C:G0237_as_Graphic559_ObjectInfo[180].Type";
+           "DUNGEON.C:G0237_as_Graphic559_ObjectInfo[180].Type; "
+           "DUNGEON.C:F0145-F0148 active-group Cells/Directions overlay";
 }

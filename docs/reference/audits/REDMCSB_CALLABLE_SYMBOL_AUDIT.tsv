@@ -200,13 +200,13 @@ F	0143	F0143_DUNGEON_GetArmourDefense	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.
 F	143	F143_mzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0144	F0144_DUNGEON_GetCreatureAttributes	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;TIMELINE.C;MOVESENS.C	implemented-narrow	implemented_narrow	DM1 F0156 raw C04 GROUP.Type-to-G0243 Attributes accessor; rejects missing, non-group, and invalid source records without decoded-mirror substitution.
 F	144	F144_amzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0145	F0145_DUNGEON_GetGroupCells	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0145	F0145_DUNGEON_GetGroupCells	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	Loaded raw C04 Cells away from party map; matching active C04 overlay on party map. Missing original C04 or active record rejects.
 F	145	F145_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0146	F0146_DUNGEON_SetGroupCells	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0146	F0146_DUNGEON_SetGroupCells	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;MOVESENS.C	implemented-narrow	implemented_narrow	Writes loaded raw C04 Cells off-party or matching active overlay on party map; F0262 consumes the source route.
 F	146	F146_aczz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0147	F0147_DUNGEON_GetGroupDirections	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0147	F0147_DUNGEON_GetGroupDirections	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	Uses G0258 00/55/AA/FF raw-direction expansion off-party and matching active packed directions on party map; F0262 consumes it.
 F	147	F147_aawz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0148	F0148_DUNGEON_SetGroupDirections	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0148	F0148_DUNGEON_SetGroupDirections	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;MOVESENS.C	implemented-narrow	implemented_narrow	Writes normalized raw C04 Direction off-party or packed active directions on party map; unrepresentable or missing active state rejects.
 F	148	F148_aayz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0149	F0149_DUNGEON_IsWallOrnamentAnAlcove	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	149	F149_aawz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
