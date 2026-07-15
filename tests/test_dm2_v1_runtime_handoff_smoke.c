@@ -1164,50 +1164,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(slot >= 0 &&
               dm2_v1_runtime_render_frame(
                   0, 1, 1, framebuffer, 320, 320, 200) == 0,
-              "runtime renders active CCM creature instance");
-        CHECK(dm2_v1_runtime_last_asset_creature_count() == 1 &&
-              dm2_v1_runtime_last_fallback_creature_count() == 0,
-              "runtime active creature instance uses GDAT creature map-chip receipt");
-        CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
-              receipt.creature_type == DM2_AI_CAVE_BAT &&
-              receipt.source_kind == 1 &&
-              receipt.thing_handle == -1 &&
-              receipt.frame_index == 2 &&
-              receipt.direction == 1 &&
-              receipt.hp_pct == 100 &&
-              receipt.ccm_primary_state == DM2_CCM_CREATURE_ATTACKS_PARTY &&
-              receipt.ccm_secondary_state == 0 &&
-              receipt.attack_cooldown == 0 &&
-              receipt.frame_source == 2 &&
-              receipt.animation_tick == 1u &&
-              receipt.render_revision > 0u &&
-              receipt.map_x == 1 &&
-              receipt.map_y == 0 &&
-              receipt.screen_x == 112 &&
-              receipt.screen_y == 98 &&
-              receipt.depth == 0 &&
-              receipt.gdat_index ==
-                  dm2_v1_viewport_creature_graphic_index(DM2_AI_CAVE_BAT, 2) &&
-              receipt.draw_order == 0 &&
-              receipt.asset_blit_ready == 1 &&
-              receipt.fallback_drawn == 0 &&
-              receipt.asset_src_w == 32 &&
-              receipt.asset_src_h == 8 &&
-              receipt.asset_src_stride == 32 &&
-              receipt.asset_frame_count == 4 &&
-              receipt.requested_frame_index == 2 &&
-              receipt.party_direction == 0 &&
-              receipt.relative_direction == 3 &&
-              receipt.atlas_frame_index == 3 &&
-              receipt.atlas_frame_x == 24 &&
-              receipt.atlas_frame_w == 8 &&
-              receipt.atlas_frame_h == 8 &&
-              receipt.render_frame == 3 &&
-              receipt.asset_dst_rect.x == 108 &&
-              receipt.asset_dst_rect.y == 94 &&
-              receipt.asset_dst_rect.w == 8 &&
-              receipt.asset_dst_rect.h == 8,
-              "runtime active creature render receipt exposes live AI projection and atlas blit");
+              "runtime advances an active CCM creature without a viewport failure");
+        CHECK(dm2_v1_runtime_last_asset_creature_count() == 0 &&
+              dm2_v1_runtime_last_fallback_creature_count() == 0 &&
+              dm2_v1_runtime_last_creature_render_receipt(&receipt) == 0,
+              "runtime suppresses a CCM creature without a source-owned DB4 record");
         CHECK(dm2_v1_creature_deal_damage(slot, 0x7fff) == 0,
               "runtime live creature can despawn through damage writeback");
         dm2_v1_runtime_tick();
@@ -1237,24 +1198,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(slot >= 0 &&
               dm2_v1_runtime_render_frame(
                   0, 1, 1, framebuffer, 320, 320, 200) == 0,
-              "runtime renders active CCM creature fallback without GDAT provider");
+              "runtime advances active CCM creature without a GDAT provider");
         CHECK(dm2_v1_runtime_last_asset_creature_count() == 0 &&
-              dm2_v1_runtime_last_fallback_creature_count() == 1,
-              "runtime records creature fallback when GDAT sprite is absent");
-        CHECK(dm2_v1_runtime_last_creature_render_receipt(&receipt) == 1 &&
-              receipt.source_kind == 1 &&
-              receipt.creature_type == DM2_AI_WOLF &&
-              receipt.draw_order == 0 &&
-              receipt.asset_blit_ready == 0 &&
-              receipt.fallback_drawn == 1 &&
-              receipt.requested_frame_index == receipt.frame_index &&
-              receipt.party_direction == 0 &&
-              receipt.relative_direction == 2 &&
-              receipt.fallback_rect.x == 108 &&
-              receipt.fallback_rect.y == 94 &&
-              receipt.fallback_rect.w == 8 &&
-              receipt.fallback_rect.h == 8,
-              "runtime creature receipt exposes renderer-owned fallback consumption");
+              dm2_v1_runtime_last_fallback_creature_count() == 0 &&
+              dm2_v1_runtime_last_creature_render_receipt(&receipt) == 0,
+              "runtime never converts an unowned CCM creature into fallback art");
         clear_creature_pool_for_door_runtime_test();
     }
 
