@@ -319,6 +319,27 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt;
 
+/* Correlates an authenticated full VDP1-VRAM snapshot with the bounded
+ * CMDSRCA window of the same Structure3 capture. Matching bytes are capture
+ * provenance only: no texture decoder, palette interpretation, or drawing
+ * behavior is implied. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int original_saturn_capture_bound;
+    int complete_vdp1_vram_snapshot;
+    Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt command_framing;
+    int texture_lane_matches_vram_window;
+    int pixel_format_proven;
+    int palette_format_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3Vdp1VramWindowReceipt;
+
 /* Renderer-bound provenance for the active canonical LEV entry.  This makes
  * the package-to-viewport boundary inspectable without assigning a Saturn
  * decoding or drawing meaning to any captured bytes. */
@@ -341,6 +362,8 @@ typedef struct {
     int vdp1_command_format_framed;
     int vdp1_texture_format_framed;
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt vdp1_command_framing;
+    int vdp1_vram_window_bound;
+    Nexus_V1_DgnStructure3Vdp1VramWindowReceipt vdp1_vram_window;
     int texture_decode_unproven;
     int palette_decode_unproven;
     int vdp1_draw_unproven;
@@ -1489,6 +1512,11 @@ int nexus_v1_current_level_structure3_render_packet(
 int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt *out_receipt);
+/* Compare an authenticated full VDP1-VRAM snapshot with the command-local
+ * texture window. This validates capture provenance only and stays no-draw. */
+int nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3Vdp1VramWindowReceipt *out_receipt);
 /* Bind the active canonical LEV byte receipt to the viewport boundary. A
  * valid receipt remains no-draw even when an authenticated opaque capture is
  * present: texture, palette, VDP1, transform, and culling semantics are not

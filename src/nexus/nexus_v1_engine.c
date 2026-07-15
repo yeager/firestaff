@@ -2519,6 +2519,55 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
     return receipt.valid;
 }
 
+int nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3Vdp1VramWindowReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3Vdp1VramWindowReceipt receipt;
+    Nexus_V1_DgnStructure3RenderPacket packet;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
+                       engine, &receipt.command_framing) != 1 ||
+        !receipt.command_framing.valid ||
+        !receipt.command_framing.texture_format_framed ||
+        !receipt.command_framing.texture_span_size_matches_command) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&packet, 0, sizeof(packet));
+    if (nexus_v1_current_level_structure3_render_packet(engine, &packet) != 1 ||
+        !packet.valid || !packet.vdp1_state ||
+        packet.vdp1_state_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        !packet.texture_span || packet.texture_span_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = receipt.command_framing.level_index;
+    receipt.source_byte_count = receipt.command_framing.source_byte_count;
+    receipt.source_bytes_fnv1a64 = receipt.command_framing.source_bytes_fnv1a64;
+    receipt.original_saturn_capture_bound = 1;
+    receipt.complete_vdp1_vram_snapshot = 1;
+    if (receipt.command_framing.command.texture_source_byte_end >
+            NEXUS_V1_VDP1_VRAM_BYTES ||
+        packet.texture_span_size !=
+            (int)receipt.command_framing.command.texture_byte_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.texture_lane_matches_vram_window = memcmp(packet.texture_span,
+        packet.vdp1_state +
+            receipt.command_framing.command.texture_source_byte_offset,
+        (size_t)packet.texture_span_size) == 0;
+    receipt.valid = receipt.texture_lane_matches_vram_window;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_current_level_dgn_renderer_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveLevelRendererSourceReceipt *out_receipt)
@@ -2576,6 +2625,9 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
         out_receipt->vdp1_command_format_framed &&
         out_receipt->vdp1_command_framing.texture_format_framed &&
         out_receipt->vdp1_command_framing.texture_span_size_matches_command;
+    out_receipt->vdp1_vram_window_bound =
+        nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
+            engine, &out_receipt->vdp1_vram_window) == 1;
 
     /* The opaque capture may be source-bound, but the Saturn codecs and VDP1
      * command meaning are not known. Keep every renderer consumer fail-closed. */

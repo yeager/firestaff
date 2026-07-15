@@ -2793,7 +2793,7 @@ static void test_structure3_entry_header_boundaries(void) {
     uint8_t vdp1_command[NEXUS_V1_VDP1_COMMAND_BYTES];
     const uint8_t texture_span[] = { 0x12U, 0x34U, 0x56U, 0x78U };
     const uint8_t palette_state[] = { 0x56U };
-    const uint8_t vdp1_state[] = { 0x78U };
+    static uint8_t vdp1_state[NEXUS_V1_VDP1_VRAM_BYTES];
     const uint8_t transform_state[] = { 0x9aU };
     const uint8_t culling_state[] = { 0xbcU };
 
@@ -2958,6 +2958,8 @@ static void test_structure3_entry_header_boundaries(void) {
     wl16(vdp1_command, 0U);      /* normal texture primitive */
     wl16(vdp1_command + 8, 0x20U);
     wl16(vdp1_command + 10, 0x0101U); /* 8x1 command-table extent */
+    memset(vdp1_state, 0, sizeof(vdp1_state));
+    memcpy(vdp1_state + 0x100U, texture_span, sizeof(texture_span));
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
     candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
     candidate.typed_mesh_corpus_fnv1a32 = NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
@@ -3381,6 +3383,13 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_source.vdp1_command_framing.palette_format_proven &&
               !active_source.vdp1_command_framing.decoder_permitted &&
               active_source.vdp1_texture_format_framed &&
+              active_source.vdp1_vram_window_bound &&
+              active_source.vdp1_vram_window.valid &&
+              active_source.vdp1_vram_window.complete_vdp1_vram_snapshot &&
+              active_source.vdp1_vram_window.texture_lane_matches_vram_window &&
+              !active_source.vdp1_vram_window.pixel_format_proven &&
+              !active_source.vdp1_vram_window.palette_format_proven &&
+              !active_source.vdp1_vram_window.decoder_permitted &&
               active_source.texture_decode_unproven &&
               active_source.palette_decode_unproven &&
               active_source.vdp1_draw_unproven &&
@@ -3401,6 +3410,10 @@ static void test_structure3_entry_header_boundaries(void) {
                   .structure3_runtime_vdp1_command_framed &&
               viewport.last_dgn_render_receipt
                   .structure3_runtime_vdp1_texture_format_framed &&
+              viewport.last_dgn_render_receipt
+                  .structure3_runtime_vdp1_vram_window_bound &&
+              viewport.last_dgn_render_receipt.structure3_runtime_vdp1_vram_window
+                  .texture_lane_matches_vram_window &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command.valid &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
                   .command_format_parsed &&
