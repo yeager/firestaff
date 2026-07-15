@@ -21,6 +21,7 @@ main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
 main_ram_e009_owner_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_owner_trace.patch
+main_ram_loader_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -154,6 +155,11 @@ if ! grep -Fq 'main_ram_e009_fifo_destination dispatch_sequence=%u generation=%u
     printf 'FAIL: main-RAM e009 owner patch no longer retains writer provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'main_ram_loader_write sequence=%u dispatch_sequence=%u logical_destination=%04x physical_destination=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x' "$main_ram_loader_write_patch_file" ||
+   ! grep -Fq 'writer_physical_pc < 0x1f0000 || writer_physical_pc >= 0x1f8000' "$main_ram_loader_write_patch_file"; then
+    printf 'FAIL: main-RAM loader write patch no longer retains game-code ownership evidence\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -187,4 +193,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_dispatch_patch
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_fifo_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$g4_main_ram_read_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_owner_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_write_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

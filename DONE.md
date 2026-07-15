@@ -16302,6 +16302,15 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
+
+After authentic `$e009` dispatch, bounded tracing distinguishes writer
+ownership. USA Track 02 capture proves game-owned code at `0x1f0cc9` and
+`0x1f1173..` writes main-RAM state. It is not byte-linked to FIFO payload or
+a proven level/object record, so no semantics or fallback is promoted.
+
+Verification: Mednafen patch dry-run and real SDL2 USA Track 02 capture.
+
 # ✅ 2026-07-15 Theron `$e009` writer-provenance receipt
 
 FIFO destination receipts now retain the actual writer PC and physical PC.
