@@ -3107,6 +3107,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     The producer must bind its exact raw Mednafen bytes by FNV before the
     opaque host receipt is available. This still proves neither driver ABI,
     selector semantics, sample codec, nor playback.
+  - 2026-07-15 observation update: the bound raw trace must also contain the
+    requested selector-dispatch, SAL-read, and driver-output observations in
+    order before host intake. This is occurrence evidence only, not a driver
+    dispatch, selector interpretation, sample decode, or playback claim.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,

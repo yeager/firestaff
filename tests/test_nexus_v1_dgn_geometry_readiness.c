@@ -5201,8 +5201,11 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
     Nexus_V1_LevelSoundTraceAdmissionReceipt admission;
     Nexus_V1_LevelSoundTraceHostReceipt host;
     Nexus_V1_LevelSoundRouteReceipt route;
+    Nexus_V1_SalDispatchEvidenceReceipt evidence;
     static const uint8_t raw_trace[] =
-        "mednafen raw SDDRVS selector=7 sal=8+4 pcs=1000,1002,1004\n";
+        "pc=00001000 selector-dispatch\n"
+        "pc=00001002 sal-read\n"
+        "pc=00001004 driver-output\n";
     char trace[2048];
 
     memset(&engine, 0, sizeof(engine));
@@ -5301,6 +5304,17 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           admission.raw_trace_fnv1a64 == fnv1a64(raw_trace, sizeof(raw_trace) - 1) &&
           admission.raw_trace_byte_count == sizeof(raw_trace) - 1,
           "SAL admission binds the exact raw capture bytes");
+    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE &&
+          !host.playback_permitted,
+          "raw SAL bytes need observed dispatch chronology before host intake");
+    CHECK(nexus_v1_build_sal_dispatch_evidence(
+              &engine, raw_trace, sizeof(raw_trace) - 1, &evidence) == 1 &&
+          evidence.status == NEXUS_V1_SAL_DISPATCH_EVIDENCE_OBSERVED &&
+          evidence.raw_trace_bound && evidence.observation_order_proven &&
+          !evidence.driver_dispatch_proven && !evidence.sal_decode_proven &&
+          !evidence.playback_permitted,
+          "SAL raw trace retains ordered observation evidence without playback");
     CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 1 &&
           host.status == NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE &&
           host.active_sal_target_revalidated && host.admitted_trace_bound &&
