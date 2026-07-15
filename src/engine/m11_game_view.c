@@ -20292,6 +20292,7 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
     const M11_AssetSlot* portraits;
     const M11_AssetSlot* backing;
+    DM1_V1_ObjectIconSourceZonePc34 sourceZone;
 
     if (!state || !state->active || !state->assetsAvailable ||
         !m11_get_front_cell(state, &frontCell) ||
@@ -20309,6 +20310,15 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                      (unsigned int)renderReceipt.graphicIndex);
     if (!portraits || !portraits->loaded || !portraits->pixels ||
+        !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
+            (int)portraits->width, (int)portraits->height) ||
+        !dm1_v1_graphic_champion_portrait_source_zone_pc34(
+            renderReceipt.renderIndex, &sourceZone) ||
+        renderReceipt.graphicIndex != sourceZone.graphic_index ||
+        renderReceipt.sourceX != sourceZone.x ||
+        renderReceipt.sourceY != sourceZone.y ||
+        renderReceipt.width != sourceZone.w ||
+        renderReceipt.height != sourceZone.h ||
         renderReceipt.sourceX < 0 || renderReceipt.sourceY < 0 ||
         renderReceipt.width <= 0 || renderReceipt.height <= 0 ||
         portraits->width < renderReceipt.sourceX + renderReceipt.width ||
@@ -22761,12 +22771,22 @@ static int m11_draw_dm1_front_champion_portrait_host_receipt(
     int fbW,
     int fbH) {
     const M11_AssetSlot* portraits;
+    DM1_V1_ObjectIconSourceZonePc34 sourceZone;
     if (!state || !receipt || !receipt->drawChampionPortrait) {
         return 0;
     }
     portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                      (unsigned int)receipt->portraitGraphicIndex);
     if (!portraits || !portraits->loaded || !portraits->pixels ||
+        !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
+            (int)portraits->width, (int)portraits->height) ||
+        !dm1_v1_graphic_champion_portrait_source_zone_pc34(
+            receipt->renderIndex, &sourceZone) ||
+        receipt->portraitGraphicIndex != sourceZone.graphic_index ||
+        receipt->portraitSourceX != sourceZone.x ||
+        receipt->portraitSourceY != sourceZone.y ||
+        receipt->portraitWidth != sourceZone.w ||
+        receipt->portraitHeight != sourceZone.h ||
         receipt->portraitSourceX < 0 || receipt->portraitSourceY < 0 ||
         receipt->portraitWidth <= 0 || receipt->portraitHeight <= 0 ||
         receipt->portraitSourceX + receipt->portraitWidth >
@@ -22775,6 +22795,8 @@ static int m11_draw_dm1_front_champion_portrait_host_receipt(
             (int)portraits->height) {
         return 0;
     }
+    /* F0097 applies the source viewport palette after F0128; C026 retains
+     * its raw indices here and is copied without host scaling or remapping. */
     M11_AssetLoader_BlitRegion(portraits,
                                receipt->portraitSourceX,
                                receipt->portraitSourceY,
