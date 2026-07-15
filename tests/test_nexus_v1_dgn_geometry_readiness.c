@@ -5065,9 +5065,10 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
 }
 
 static void test_menu_bpk_palette_trailer_stays_opaque(void) {
-    uint8_t archive[552];
+    uint8_t archive[572];
     Nexus_V1_BpkPaletteTrailerReceipt palette;
     Nexus_V1_BpkRuntimeUploadReceipt upload;
+    Nexus_V1_BpkEntry last_entry;
     size_t index;
     const char *data_dir;
 
@@ -5078,16 +5079,22 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
     wb32(archive + 16, (uint32_t)sizeof(archive) - 12U);
     wb32(archive + 20, 1U);
     wb32(archive + 24, 28U);
-    wb32(archive + 28, NEXUS_V1_BPK_MAGIC_PALT);
-    wb32(archive + 32, 524U);
-    wb32(archive + 36, 256U);
-    for (index = 0; index < 512U; ++index) archive[40U + index] = (uint8_t)index;
+    wb32(archive + 48, NEXUS_V1_BPK_MAGIC_PALT);
+    wb32(archive + 52, 524U);
+    wb32(archive + 56, 256U);
+    for (index = 0; index < 512U; ++index) archive[60U + index] = (uint8_t)index;
+
+    CHECK(nexus_v1_bpk_archive_get_entry(
+              archive, sizeof(archive), 0U, &last_entry) == 0 &&
+          last_entry.offset == 28U && last_entry.next_offset == 48U &&
+          last_entry.stored_size == 20U,
+          "bounded MENU.BPK PALT tail is not part of final PRS3 entry span");
 
     CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
               archive, sizeof(archive), &palette) == 0 && palette.valid &&
-          palette.record_offset == 28U && palette.record_bytes == 524U &&
+          palette.record_offset == 48U && palette.record_bytes == 524U &&
           palette.entry_count == 256U && palette.entry_bytes == 512U &&
-          palette.entry_bytes_fnv1a64 == fnv1a64(archive + 40U, 512U) &&
+          palette.entry_bytes_fnv1a64 == fnv1a64(archive + 60U, 512U) &&
           palette.raw_entries_are_be16 && !palette.palette_format_proven &&
           !palette.decoder_promoted && !palette.fallback_visuals_permitted,
           "bounded MENU.BPK PALT trailer stays opaque without palette promotion");
@@ -5097,7 +5104,7 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           upload.route == NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES &&
           !upload.fallback_visuals_permitted,
           "BPK upload receipt carries PALT framing without creating a surface");
-    wb32(archive + 32, 522U);
+    wb32(archive + 52, 522U);
     CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
               archive, sizeof(archive), &palette) != 0 && !palette.valid &&
           !palette.fallback_visuals_permitted,
@@ -5109,6 +5116,8 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
         FILE *file;
         long size;
         uint8_t *real_archive;
+        Nexus_V1_BpkArchiveInfo real_info;
+        Nexus_V1_BpkEntry real_last_entry;
 
         snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir);
         file = fopen(path, "rb");
@@ -5134,6 +5143,15 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
                   palette.raw_entries_are_be16 && !palette.palette_format_proven &&
                   !palette.decoder_promoted && !palette.fallback_visuals_permitted,
                   "canonical MENU.BPK PALT trailer remains opaque source data");
+            CHECK(nexus_v1_bpk_archive_parse(
+                      real_archive, (size_t)size, &real_info) == 0 &&
+                  real_info.candidate_offset_count > 0U &&
+                  nexus_v1_bpk_archive_get_entry(
+                      real_archive, (size_t)size,
+                      real_info.candidate_offset_count - 1U,
+                      &real_last_entry) == 0 &&
+                  real_last_entry.next_offset == palette.record_offset,
+                  "canonical MENU.BPK PALT tail is excluded from final entry span");
             CHECK(nexus_v1_bpk_archive_runtime_upload_plan(
                       real_archive, (size_t)size, NULL, 0U, &upload) == 0 &&
                   upload.palette_trailer_observed && upload.palette_trailer.valid &&
