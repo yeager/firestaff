@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject object-category no-draw gate: floor objects,
+  creature possessions, and leader-hand overlays require the original
+  record-owned GDAT category. Missing categories and unknown DB pools no
+  longer become a generated `MISC` route; source profiles block the draw.
+
 - 2026-07-15 DM2 skproject weather M11 receipt: a source-backed
   `DistantEnvironment` weather transaction now reaches M11 only when every
   selected GDAT layer was consumed. The renderer records the exact receipt

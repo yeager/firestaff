@@ -1404,14 +1404,22 @@ static void test_sprite_asset_provider(void)
     viewport.items[1].screen_x = 81;
     viewport.items[1].screen_y = 91;
     memset(&item_plan, 0, sizeof(item_plan));
-    CHECK("DM2 item render plan filters offscreen floor objects",
+    CHECK("DM2 item render plan preserves an unavailable floor-item category",
           dm2_v1_viewport_build_item_render_plan(&viewport,
                                                  &item_plan) == 1 &&
               item_plan.item_count == 1 &&
               item_plan.items[0].item_index == 1 &&
-              item_plan.items[0].item_category == 0x15 &&
+              item_plan.items[0].item_category == 0 &&
+              item_plan.items[0].gdat_index == 0 &&
               item_plan.items[0].center_x == 81 &&
               item_plan.items[0].center_y == 91);
+    viewport.source_materials_required = 1;
+    dm2_v1_render_items(&viewport);
+    CHECK("DM2 unavailable floor-item category blocks without a MISC image",
+          viewport.asset_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) != 0 &&
+              framebuffer[(91 * 320) + 81] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1467,6 +1475,15 @@ static void test_sprite_asset_provider(void)
     CHECK("creature possession without source material blocks instead of fallback pixels",
           viewport.asset_creature_possession_item_drawn_count == 0 &&
               viewport.fallback_creature_possession_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION) != 0 &&
+              framebuffer[(80 * 320) + 100] == 0);
+
+    viewport.creature_possession_items[0].item_category = 0;
+    viewport.blocked_material_mask = 0u;
+    dm2_v1_render_creature_possession_items(&viewport);
+    CHECK("DM2 unavailable possession category blocks without a MISC image",
+          viewport.asset_creature_possession_item_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_POSSESSION) != 0 &&
               framebuffer[(80 * 320) + 100] == 0);
@@ -1534,6 +1551,15 @@ static void test_sprite_asset_provider(void)
     CHECK("carried item without source material blocks instead of fallback pixels",
           viewport.asset_carried_item_drawn_count == 0 &&
               viewport.fallback_carried_item_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM) != 0 &&
+              framebuffer[(70 * 320) + 120] == 0);
+
+    viewport.carried_item.item_category = 0;
+    viewport.blocked_material_mask = 0u;
+    dm2_v1_render_carried_item(&viewport);
+    CHECK("DM2 unavailable leader-hand category blocks without a MISC image",
+          viewport.asset_carried_item_drawn_count == 0 &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM) != 0 &&
               framebuffer[(70 * 320) + 120] == 0);

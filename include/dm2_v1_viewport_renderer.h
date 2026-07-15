@@ -575,7 +575,7 @@ typedef struct {
 } DM2_V1_CreatureAssetBlit;
 
 typedef struct {
-    uint8_t  item_category;   /* GDAT category, 0 = miscellaneous fallback */
+    uint8_t  item_category;   /* source-owned GDAT category; 0 = unavailable */
     uint8_t  item_type;       /* GDAT item index */
     uint8_t  frame_index;     /* animation frame */
     int16_t  depth;           /* depth sort key */
