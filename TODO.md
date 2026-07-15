@@ -6420,6 +6420,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   transform eller draw. En autentisk Saturn-trace måste visa dessa steg innan
   animationen får exekveras eller synas.
 
+  Viewporten traverserar nu samtliga aktiva `08xx`-ansikten genom den
+  källbundna Structure1G/Structure2-rutten. Att traversera en sekvens är inte
+  att exekvera den: den förblir no-draw tills en autentisk Saturn-trace binder
+  frameval, timing, pixelspan, palett och VDP1-kommandon till samma källa.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no

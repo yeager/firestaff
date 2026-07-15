@@ -50,6 +50,11 @@ typedef struct {
     int invalid_packet_count;
 } PackageGeometryVisitCount;
 
+typedef struct {
+    int packet_count;
+    int invalid_packet_count;
+} AnimatedMaterialVisitCount;
+
 static int count_package_geometry_packet(
     void *context, const Nexus_V1_DgnStructure3PackageGeometryPacket *packet)
 {
@@ -59,6 +64,23 @@ static int count_package_geometry_packet(
     if (!packet->valid || !packet->source_geometry_bound ||
         !packet->material_descriptor_bound || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render) {
+        ++count->invalid_packet_count;
+    }
+    return 0;
+}
+
+static int count_animated_material_packet(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialPacket *packet)
+{
+    AnimatedMaterialVisitCount *count = (AnimatedMaterialVisitCount *)context;
+    if (!count || !packet) return -1;
+    ++count->packet_count;
+    if (!packet->valid || !packet->source_geometry_bound ||
+        !packet->animation_declaration_bound || !packet->first_descriptor_bound ||
+        packet->animation_execution_permitted ||
+        packet->pixel_palette_vdp1_semantics_proven || packet->decoder_permitted ||
+        !packet->no_draw_only || packet->fallback_visuals_permitted ||
         !packet->blocks_real_dgn_mesh_render) {
         ++count->invalid_packet_count;
     }
@@ -643,6 +665,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure3PackageGeometrySceneReceipt package_scene;
         Nexus_V1_DgnStructure3AnimatedMaterialPacket animated_packet;
         Nexus_Viewport package_viewport;
+        Nexus_Viewport animated_viewport;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -1281,6 +1304,50 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       !animated_packet.fallback_visuals_permitted &&
                       animated_packet.blocks_real_dgn_mesh_render,
                       "retail Structure3 animated face binds its real Structure1G declaration and first Structure2 descriptor no-draw");
+                {
+                    Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt scene;
+                    AnimatedMaterialVisitCount visit_count;
+                    memset(&scene, 0, sizeof(scene));
+                    memset(&visit_count, 0, sizeof(visit_count));
+                    CHECK(nexus_v1_current_level_visit_structure3_animated_materials(
+                              &active_engine, count_animated_material_packet,
+                              &visit_count, &scene) == 1 && scene.valid &&
+                          scene.complete && scene.level_index == level &&
+                          scene.source_byte_count == (int)size &&
+                          scene.source_bytes_fnv1a64 ==
+                              fnv1a64(data, (size_t)size) &&
+                          scene.candidate_face_count ==
+                              loaded_level.structure3_faces.face_count &&
+                          scene.animated_face_count ==
+                              loaded_level.structure3_face_materials
+                                  .animated_texture_selector_count &&
+                          scene.animated_face_count == scene.consumed_face_count &&
+                          visit_count.packet_count == scene.consumed_face_count &&
+                          visit_count.invalid_packet_count == 0 &&
+                          !scene.animation_execution_permitted &&
+                          !scene.pixel_palette_vdp1_semantics_proven &&
+                          !scene.decoder_permitted && scene.no_draw_only &&
+                          !scene.fallback_visuals_permitted &&
+                          scene.blocks_real_dgn_mesh_render,
+                          "retail Structure3 traversal consumes every animated 08xx face no-draw");
+                    nexus_viewport_init(&animated_viewport);
+                    nexus_viewport_render(&animated_viewport, &active_engine);
+                    CHECK(animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_scene_consumed &&
+                          animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_scene.complete &&
+                          animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_scene
+                                  .consumed_face_count == scene.consumed_face_count &&
+                          animated_viewport.structure3_animated_material.valid &&
+                          animated_viewport.structure3_animated_material
+                              .face.fill_selector == animated_packet.face.fill_selector &&
+                          animated_viewport.last_dgn_render_receipt.blocked &&
+                          !animated_viewport.last_dgn_render_receipt.ready &&
+                          animated_viewport.last_dgn_render_receipt
+                              .rasterized_command_count == 0,
+                          "DGN viewport consumes the complete animated source scene without executing or drawing it");
+                }
                 ++structure3_animated_material_packet_level_count;
             } else {
                 CHECK(!found_animated_material_packet && !animated_packet.valid &&
