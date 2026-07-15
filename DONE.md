@@ -17588,6 +17588,10 @@ viewport draws neither half unless both are complete and valid. Verification:
 the canonical cached `GRAPHICS.DAT` gate exercises vertical and horizontal
 intermediate states and proves two source panel blits without fallback fetches.
 
+The same canonical-data gate now covers every zero-light horizontal route at
+D1C and D2C for states 1--3, including both source halves, RAW4 destinations,
+source order, decoded-pixel hashes, and the accompanying `GRAPHICSSET` frame.
+
 `nexus_v1_engine_build_structure1a_structure3_material_capture_target()` now
 bundles an active canonical Structure1F/1A owner/face request with a bounded
 static Structure3/Structure2 material request from the same LEV. Both lanes
