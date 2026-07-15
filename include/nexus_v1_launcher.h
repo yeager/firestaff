@@ -97,6 +97,7 @@ typedef struct {
     Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt direct_face;
     Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_capture;
     Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt joined_capture;
+    Nexus_V1_DgnStructure1FVdp1MaterialReceipt material_capture;
     int engine_capture_consumed;
     int no_draw_only;
     int fallback_visuals_permitted;

@@ -6449,6 +6449,86 @@ int nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
     return 1;
 }
 
+int nexus_v1_engine_bind_structure1f_vdp1_material_capture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    Nexus_V1_DgnStructure1FVdp1MaterialReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FVdp1MaterialReceipt receipt;
+    Nexus_V1_DgnStructure3RenderPacket packet;
+    const Nexus_V1_DgnStructure3CaptureImport *capture;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_MISSING;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !raw_capture) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
+        engine, structure1f_entry_index, direct_manifest_text,
+        direct_manifest_size, raw_capture, &receipt.direct_capture);
+    if (receipt.direct_capture.status !=
+        NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_ACCEPTED_OPAQUE) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_DIRECT_CAPTURE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&packet, 0, sizeof(packet));
+    capture = &raw_capture->raw_reader.import_packet;
+    if (nexus_v1_current_level_structure3_render_packet(engine, &packet) != 1 ||
+        !packet.valid || !packet.texture_span || !packet.palette_state ||
+        !packet.vdp1_state || !packet.vdp1_command ||
+        !capture->texture_span || !capture->palette_state ||
+        !capture->vdp1_state || !capture->vdp1_command ||
+        packet.texture_span_size != (int)capture->texture_span_size ||
+        packet.palette_state_size != (int)capture->palette_state_size ||
+        packet.vdp1_state_size != (int)capture->vdp1_state_size ||
+        packet.vdp1_command_size != (int)capture->vdp1_command_size ||
+        memcmp(packet.texture_span, capture->texture_span,
+               capture->texture_span_size) != 0 ||
+        memcmp(packet.palette_state, capture->palette_state,
+               capture->palette_state_size) != 0 ||
+        memcmp(packet.vdp1_state, capture->vdp1_state,
+               capture->vdp1_state_size) != 0 ||
+        memcmp(packet.vdp1_command, capture->vdp1_command,
+               capture->vdp1_command_size) != 0) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_RUNTIME_CAPTURE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.runtime_lanes_match_authenticated_capture = 1;
+    if (nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
+            engine, &receipt.texture_vram) != 1 ||
+        !receipt.texture_vram.valid ||
+        !receipt.texture_vram.texture_lane_matches_vram_window ||
+        nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
+            engine, &receipt.command_vram) != 1 ||
+        !receipt.command_vram.valid ||
+        !receipt.command_vram.command_record_unique_in_vram) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_VDP1_LINK;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.texture_command_vram_bound = 1;
+    receipt.palette_lane_bound = 1;
+    receipt.command_colour_control =
+        receipt.texture_vram.command_framing.command.colour_control;
+    receipt.command_colour_control_bound = 1;
+    receipt.texture_lane_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        packet.texture_span, (size_t)packet.texture_span_size);
+    receipt.palette_lane_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        packet.palette_state, (size_t)packet.palette_state_size);
+    receipt.status = NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_ACCEPTED_OPAQUE;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

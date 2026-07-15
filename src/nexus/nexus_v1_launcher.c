@@ -309,6 +309,14 @@ int nexus_v1_launcher_dgn_direct_face_raw_capture_intake(
         *out_receipt = receipt;
         return 0;
     }
+    (void)nexus_v1_engine_bind_structure1f_vdp1_material_capture(
+        &s_engine, structure1f_entry_index, direct_manifest_text,
+        direct_manifest_size, &receipt.raw_capture, &receipt.material_capture);
+    if (receipt.material_capture.status !=
+        NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_ACCEPTED_OPAQUE) {
+        *out_receipt = receipt;
+        return 0;
+    }
     *out_receipt = receipt;
     return 1;
 }
