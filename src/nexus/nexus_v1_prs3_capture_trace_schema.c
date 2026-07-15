@@ -426,6 +426,72 @@ int nexus_v1_prs3_sh2_zero_side_trace_bind(
     return receipt.observed_zero_side_merge;
 }
 
+int nexus_v1_prs3_control_grammar_review_bind(
+    const Nexus_V1_Prs3DecoderReadinessReceipt *decoder_review,
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *complete_trace,
+    const Nexus_V1_Prs3Sh2TransferTrace *nonzero_trace,
+    const Nexus_V1_Prs3Sh2TransferReceipt *nonzero_receipt,
+    const Nexus_V1_Prs3Sh2ZeroSideTrace *zero_trace,
+    const Nexus_V1_Prs3Sh2ZeroSideReceipt *zero_receipt,
+    Nexus_V1_Prs3ControlGrammarReviewReceipt *out_receipt) {
+    Nexus_V1_Prs3ControlGrammarReviewReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!decoder_review || !complete_trace || !nonzero_trace ||
+        !nonzero_receipt || !zero_trace || !zero_receipt) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.decoder_review_bound = decoder_review->valid &&
+        decoder_review->capture_source_bound &&
+        decoder_review->complete_input_range_bound &&
+        decoder_review->complete_output_range_bound &&
+        decoder_review->control_branch_coverage_bound;
+    receipt.nonzero_path_bound = nonzero_receipt->observed_byte_transfer &&
+        nonzero_receipt->entry_plan_matches &&
+        nonzero_trace->entry_index == complete_trace->entry_index &&
+        nonzero_trace->stream_offset == complete_trace->stream_offset &&
+        nonzero_trace->stream_size == complete_trace->stream_size &&
+        nonzero_trace->expected_output_bytes == complete_trace->expected_output_bytes &&
+        nonzero_trace->input_read_sequence >=
+            complete_trace->first_input_read_sequence &&
+        nonzero_trace->input_read_sequence <=
+            complete_trace->last_input_read_sequence &&
+        nonzero_trace->output_write_sequence >=
+            complete_trace->first_output_write_sequence &&
+        nonzero_trace->output_write_sequence <=
+            complete_trace->last_output_write_sequence;
+    receipt.zero_side_path_bound = zero_receipt->observed_zero_side_merge &&
+        zero_receipt->entry_plan_matches &&
+        zero_trace->entry_index == complete_trace->entry_index &&
+        zero_trace->stream_offset == complete_trace->stream_offset &&
+        zero_trace->stream_size == complete_trace->stream_size &&
+        zero_trace->expected_output_bytes == complete_trace->expected_output_bytes &&
+        zero_trace->first_payload_byte_offset + 1U ==
+            zero_trace->second_payload_byte_offset &&
+        zero_trace->second_payload_byte_offset < complete_trace->input_read_bytes &&
+        zero_trace->first_input_read_sequence >=
+            complete_trace->first_input_read_sequence &&
+        zero_trace->second_input_read_sequence <=
+            complete_trace->last_input_read_sequence;
+    receipt.control_branch_evidence_complete = receipt.nonzero_path_bound &&
+        receipt.zero_side_path_bound && complete_trace->control_branch_outcomes_mask == 3U &&
+        complete_trace->nonzero_control_observation_count > 0U &&
+        complete_trace->zero_control_observation_count > 0U;
+    receipt.valid = receipt.decoder_review_bound &&
+        receipt.control_branch_evidence_complete;
+    /* Captured paths are not authenticated Saturn execution and their byte
+     * operations have no proven PRS3 grammar interpretation yet. */
+    receipt.original_saturn_execution_authenticated = 0;
+    receipt.token_grammar_proven = 0;
+    receipt.decoder_ready = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_prs3_dm_bin_catalog_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt) {
