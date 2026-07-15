@@ -50,6 +50,18 @@ static int read_u32_be(const uint8_t *p) {
                      (uint32_t)p[3]) : 0;
 }
 
+static uint64_t nexus_sound_fnv1a64(const uint8_t *data, int size) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int i;
+
+    if (!data || size <= 0) return 0U;
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static void sal_window_profile(const uint8_t *data,
                                int data_size,
                                int offset,
@@ -436,6 +448,8 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     if (eng->map_data) { free(eng->map_data); eng->map_data = NULL; }
     eng->sal_size = 0;
     eng->map_size = 0;
+    eng->sal_source_fnv1a64 = 0U;
+    eng->map_source_fnv1a64 = 0U;
     clear_map_route(eng);
     clear_sal_profile(eng);
 
@@ -450,6 +464,8 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
         if (eng->sal_data) {
             memcpy(eng->sal_data, sal_data, sal_size);
             eng->sal_size = sal_size;
+            eng->sal_source_fnv1a64 =
+                nexus_sound_fnv1a64(eng->sal_data, eng->sal_size);
         }
     }
 
@@ -458,6 +474,8 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
         if (eng->map_data) {
             memcpy(eng->map_data, map_data, map_size);
             eng->map_size = map_size;
+            eng->map_source_fnv1a64 =
+                nexus_sound_fnv1a64(eng->map_data, eng->map_size);
         }
     }
     parse_map_record_table(eng);

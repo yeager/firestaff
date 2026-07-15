@@ -3064,6 +3064,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source-ownership authority. This is not a driver ABI, sample-frame, codec,
   or playback claim; remaining work is original `SDDRVS.TSK`/SH-2 codec,
   frame, and playback proof.
+  - 2026-07-15 active-byte binding update: SAL capture targets now retain
+    FNV-1a64 identities for the exact loaded SAL and MAP buffers. Missing or
+    changed active bytes block capture acquisition before a driver trace can
+    be requested. Codec, event, and playback semantics remain unproved.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,
