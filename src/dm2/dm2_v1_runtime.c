@@ -2935,6 +2935,91 @@ static void dm2_runtime_populate_g1_container_map_chip_items(
     }
 }
 
+static uint32_t dm2_runtime_indexed_pixel_hash(const uint8_t *pixels,
+                                               int width,
+                                               int height,
+                                               int stride)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!pixels || width <= 0 || height <= 0 || stride < width) return 0u;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
+}
+
+static void dm2_runtime_bind_g1_scene_item_material(
+    const DM2_V1_RuntimeState *rt,
+    DM2_V1_ViewportState *viewport)
+{
+    const DM2_ItemSprite *item = NULL;
+    const uint8_t *pixels = NULL;
+    uint8_t palette16[16];
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    uint32_t palette_hash = 0u;
+    uint32_t pixel_hash;
+    int gdat_index;
+
+    if (!rt || !viewport || !rt->viewport_asset_fetch ||
+        !rt->viewport_asset_palette_fetch) {
+        dm2_v1_viewport_set_g1_scene_item_material_direct(
+            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+        return;
+    }
+    for (int i = 0; i < viewport->item_count; ++i) {
+        const DM2_ItemSprite *candidate = &viewport->items[i];
+        if ((candidate->source_g1_weapon || candidate->source_g1_container) &&
+            candidate->source_static_object_admitted) {
+            item = candidate;
+            break;
+        }
+    }
+    if (!item) {
+        dm2_v1_viewport_set_g1_scene_item_material_direct(
+            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+        return;
+    }
+    gdat_index = dm2_v1_viewport_item_graphic_index(
+        item->item_category, item->item_type, item->source_gdat_field);
+    if (gdat_index == 0 ||
+        rt->viewport_asset_fetch(rt->viewport_asset_user, gdat_index,
+                                 &pixels, &width, &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width ||
+        rt->viewport_asset_palette_fetch(rt->viewport_asset_palette_user,
+                                         gdat_index, palette16,
+                                         &palette_hash) != 0 ||
+        palette_hash == 0u) {
+        dm2_v1_viewport_set_g1_scene_item_material_direct(
+            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+        return;
+    }
+    pixel_hash = dm2_runtime_indexed_pixel_hash(pixels, width, height, stride);
+    if ((item->source_g1_weapon &&
+         !dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
+             &rt->g1_weapon_map_chip_runtime, item->object_id,
+             item->map_x, item->map_y, item->item_type, width, height,
+             palette_hash, pixel_hash)) ||
+        (item->source_g1_container &&
+         !dm2_v1_g1_container_map_chip_matches_decoded_instance(
+             &rt->g1_container_map_chip_runtime, item->object_id,
+             item->map_x, item->map_y, item->item_type, width, height,
+             palette_hash, pixel_hash))) {
+        dm2_v1_viewport_set_g1_scene_item_material_direct(
+            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+        return;
+    }
+    dm2_v1_viewport_set_g1_scene_item_material_direct(
+        viewport, 1, item->item_category, item->item_type, gdat_index,
+        item->object_id, item->map_x, item->map_y, pixels, width, height,
+        stride, palette16, palette_hash, pixel_hash);
+}
+
 static void dm2_runtime_append_creature_possession_item(
     DM2_V1_ViewportState *viewport,
     uint16_t thing,
@@ -3419,6 +3504,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport,
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
         rt->viewport_asset_user != NULL);
+    /* Keep the selected DB5/DB9 F9 bytes stable through this M11 frame.
+     * The renderer consumes this direct receipt instead of resolving the
+     * virtual GDAT address a second time. */
+    dm2_runtime_bind_g1_scene_item_material(rt, &viewport);
     /* c_weather.cpp emits DistantEnvironment records before its image draw.
      * Generic weather intensity is not an image selector. Consume weather
      * pixels only when a source-owned slot was explicitly admitted and the

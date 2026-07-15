@@ -1422,6 +1422,49 @@ void dm2_v1_viewport_set_g1_scene_creature_material_direct(
            sizeof(s->g1_scene_creature_material_palette16));
 }
 
+void dm2_v1_viewport_set_g1_scene_item_material_direct(
+    DM2_V1_ViewportState *s, int ready, int item_category, int item_type,
+    int gdat_index, uint16_t object_id, int map_x, int map_y,
+    const uint8_t *pixels, int width, int height, int stride,
+    const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash)
+{
+    if (!s) return;
+    s->g1_scene_item_material_ready =
+        ready && (item_category == 0x10 || item_category == 0x14) &&
+        item_type >= 0 && item_type <= 0xff && gdat_index != 0 &&
+        object_id != 0xfffeu && pixels && width > 0 && height > 0 &&
+        stride >= width && palette16 && palette_hash != 0u &&
+        expected_pixel_hash != 0u;
+    s->g1_scene_item_material_category = item_category;
+    s->g1_scene_item_material_type = item_type;
+    s->g1_scene_item_material_gdat_index = gdat_index;
+    s->g1_scene_item_material_object_id = object_id;
+    s->g1_scene_item_material_map_x = map_x;
+    s->g1_scene_item_material_map_y = map_y;
+    s->g1_scene_item_material_width = width;
+    s->g1_scene_item_material_height = height;
+    s->g1_scene_item_material_stride = stride;
+    s->g1_scene_item_material_pixels = NULL;
+    s->g1_scene_item_material_pixel_hash = 0u;
+    memset(s->g1_scene_item_material_palette16, 0,
+           sizeof(s->g1_scene_item_material_palette16));
+    s->g1_scene_item_material_palette_hash = 0u;
+    s->g1_scene_item_material_consumed_count = 0;
+    if (!s->g1_scene_item_material_ready) return;
+    s->g1_scene_item_material_pixel_hash =
+        dm2_v1_viewport_indexed_pixel_hash(pixels, width, height, stride);
+    if (s->g1_scene_item_material_pixel_hash != expected_pixel_hash) {
+        s->g1_scene_item_material_ready = 0;
+        return;
+    }
+    s->g1_scene_item_material_pixels = pixels;
+    memcpy(s->g1_scene_item_material_palette16, palette16,
+           sizeof(s->g1_scene_item_material_palette16));
+    s->g1_scene_item_material_palette_hash = palette_hash;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
@@ -5472,6 +5515,16 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     for (int i = 0; i < plan.item_count; i++) {
         const DM2_V1_ItemRender *it = &plan.items[i];
         int drawn_asset = 0;
+        const int direct_g1_scene_material =
+            s->g1_scene_item_material_ready &&
+            s->g1_scene_item_material_pixels &&
+            s->g1_scene_item_material_pixel_hash != 0u &&
+            it->item_category == s->g1_scene_item_material_category &&
+            it->item_type == s->g1_scene_item_material_type &&
+            it->gdat_index == s->g1_scene_item_material_gdat_index &&
+            it->object_id == s->g1_scene_item_material_object_id &&
+            it->map_x == s->g1_scene_item_material_map_x &&
+            it->map_y == s->g1_scene_item_material_map_y;
 
         s->last_item_render_valid = 1;
         s->last_item_asset_blit_valid = 0;
@@ -5499,10 +5552,23 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            if (it->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, it->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+            if (direct_g1_scene_material) {
+                pixels = s->g1_scene_item_material_pixels;
+                src_w = s->g1_scene_item_material_width;
+                src_h = s->g1_scene_item_material_height;
+                src_stride = s->g1_scene_item_material_stride;
+                memcpy(s->active_asset_palette16,
+                       s->g1_scene_item_material_palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash =
+                    s->g1_scene_item_material_palette_hash;
+                s->active_asset_palette_ready = 1;
+            }
+            if ((direct_g1_scene_material ||
+                 (it->gdat_index != 0 &&
+                  dm2_v1_fetch_viewport_local_material(
+                      s, it->gdat_index, &pixels, &src_w, &src_h,
+                      &src_stride) == 0)) &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_ItemAssetBlit blit;
                 if (it->source_g1_weapon &&
@@ -5563,6 +5629,9 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                     s->last_item_asset_src_h = src_h;
                     s->last_item_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
+                    if (direct_g1_scene_material) {
+                        ++s->g1_scene_item_material_consumed_count;
+                    }
                     drawn_asset = 1;
                 }
             }
