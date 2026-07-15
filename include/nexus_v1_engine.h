@@ -1077,6 +1077,9 @@ typedef struct {
     int mednafen_debugger_provenance;
     int original_saturn_execution_claimed;
     int trace_sha256_present;
+    int raw_trace_bytes_bound;
+    uint64_t raw_trace_fnv1a64;
+    size_t raw_trace_byte_count;
     uint32_t selector_dispatch_pc;
     uint32_t sal_read_pc;
     uint32_t driver_output_pc;
@@ -1779,6 +1782,10 @@ int nexus_v1_engine_write_sal_capture_target(
     Nexus_V1_LevelSoundCaptureTargetReceipt *out_target);
 int nexus_v1_engine_admit_sal_driver_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_admit_sal_driver_trace_with_raw(
+    Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
     Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_sal_trace_admission_receipt(
     const Nexus_V1_Engine *engine,
