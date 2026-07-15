@@ -599,6 +599,12 @@
     candidate into a sprite. Only a proven live `QUERY_CREATURE_PICST` field
     or an exact G1/DB4 material receipt may draw. Remaining work is binding
     dynamic AI/animation ownership to an equally source-backed live route.
+  - 2026-07-15 update: the final DB4 `CREATURES/type/F9` viewport gate now
+    also consumes the direct record's `b15_0_1` direction. A material receipt
+    cannot be replayed after a direction change even when object ID, tile,
+    type, decoded dimensions, and local palette still match. The canonical
+    G1 regression proves both the accepted source direction and the blocked
+    mismatch; dynamic AI-owned orientation remains separately unavailable.
   - 2026-07-15 update: every successful creature GDAT blit now records its
     source key in draw order. Runtime folds the complete list into the M11
     material receipt and rejects a count/hash mismatch, so a multi-creature

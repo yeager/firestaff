@@ -343,6 +343,7 @@ int main(void)
     viewport.creatures[0].object_id = (uint16_t)root_object_id;
     viewport.creatures[0].map_x = (int16_t)creature_x;
     viewport.creatures[0].map_y = (int16_t)creature_y;
+    viewport.creatures[0].direction = material_receipt.materials[0].direction;
     viewport.creatures[0].screen_x = DM2_VP_WIDTH / 2;
     viewport.creatures[0].screen_y = DM2_VP_HEIGHT / 2;
     viewport.creatures[0].health_pct = 100;
@@ -357,6 +358,49 @@ int main(void)
               stderr);
         failures = 1;
         goto done;
+    }
+    /* The direct DB4 receipt owns b15_0_1 as well as its object, tile and
+     * CREATURES/type/F9 material. A changed live direction cannot replay the
+     * same decoded surface. */
+    {
+        int accepted_asset_drawn = viewport.asset_creature_drawn_count;
+        int accepted_scene_consumed =
+            viewport.g1_scene_creature_material_consumed_count;
+        int accepted_blocked = viewport.blocked_material_draw_count;
+
+        viewport.creatures[0].direction =
+            (uint8_t)((material_receipt.materials[0].direction + 1u) & 3u);
+        if (dm2_v1_g1_creature_map_chip_matches_decoded_instance(
+                &material_receipt, viewport.creatures[0].object_id,
+                viewport.creatures[0].map_x, viewport.creatures[0].map_y,
+                viewport.creatures[0].direction,
+                viewport.creatures[0].creature_type, handoff.material_width,
+                handoff.material_height, handoff.material_palette_hash)) {
+            fputs("FAIL: DB4 direction mismatch passed the decoded-instance gate\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+        dm2_v1_render_creatures(&viewport);
+        if (viewport.asset_creature_drawn_count != accepted_asset_drawn) {
+            fputs("FAIL: DB4 direction mismatch replayed a CREATURES/F9 material\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+        if (viewport.g1_scene_creature_material_consumed_count !=
+                accepted_scene_consumed) {
+            fputs("FAIL: DB4 direction mismatch consumed its scene handoff\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+        if (viewport.blocked_material_draw_count != accepted_blocked + 1) {
+            fputs("FAIL: DB4 direction mismatch did not block the viewport blit\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
     }
     dm2_v1_asset_free_pixels(trace.decoded_pixels);
     trace.decoded_pixels = NULL;
