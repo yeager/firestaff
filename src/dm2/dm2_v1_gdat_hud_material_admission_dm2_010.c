@@ -3,10 +3,14 @@
 #include <string.h>
 
 static int dm2_v1_gdat_hud_admission_source_valid(
-    const DM2_V1_GdatHudAdmissionSource *source, int category, int entry_type)
+    const DM2_V1_GdatHudAdmissionSource *source,
+    int category,
+    int entry_type,
+    int field)
 {
     return source && source->category == category &&
         source->index >= 0 && source->field >= 0 &&
+        (field < 0 || source->field == field) &&
         source->entry_type == entry_type && source->bytes &&
         source->byte_count > 0U && source->content_hash != 0U;
 }
@@ -32,22 +36,26 @@ int dm2_v1_gdat_hud_material_admit_dm2_010(
 
     if (!dm2_v1_gdat_hud_admission_source_valid(
             &request->layout, DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
-            DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE)) {
+            DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE,
+            DM2_V1_GDAT_HUD_ADMISSION_RECT14_FIELD)) {
         rejected |= DM2_V1_GDAT_HUD_ADMISSION_REJECT_LAYOUT;
     }
     if (!dm2_v1_gdat_hud_admission_source_valid(
             &request->palette, DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
-            DM2_V1_GDAT_HUD_ADMISSION_PALETTE16_TYPE)) {
+            DM2_V1_GDAT_HUD_ADMISSION_PALETTE16_TYPE,
+            DM2_V1_GDAT_HUD_ADMISSION_PALETTE16_FIELD)) {
         rejected |= DM2_V1_GDAT_HUD_ADMISSION_REJECT_PALETTE;
     }
     if (!dm2_v1_gdat_hud_admission_source_valid(
             &request->font, DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
-            DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE)) {
+            DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE,
+            DM2_V1_GDAT_HUD_ADMISSION_FONT_FIELD)) {
         rejected |= DM2_V1_GDAT_HUD_ADMISSION_REJECT_FONT;
     }
     if (!dm2_v1_gdat_hud_admission_source_valid(
             &request->champion, DM2_V1_GDAT_HUD_ADMISSION_CHAMPION_CATEGORY,
-            DM2_V1_GDAT_HUD_ADMISSION_IMAGE_TYPE)) {
+            DM2_V1_GDAT_HUD_ADMISSION_IMAGE_TYPE,
+            -1)) {
         rejected |= DM2_V1_GDAT_HUD_ADMISSION_REJECT_CHAMPION;
     }
 

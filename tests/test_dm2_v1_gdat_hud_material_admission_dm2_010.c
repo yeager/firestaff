@@ -14,6 +14,7 @@ static void check(int condition, const char *label)
 }
 
 static DM2_V1_GdatHudAdmissionSource source_for(int category, int type,
+                                                  int field,
                                                   const uint8_t *bytes,
                                                   size_t byte_count)
 {
@@ -21,7 +22,7 @@ static DM2_V1_GdatHudAdmissionSource source_for(int category, int type,
     source.category = category;
     source.index = 0;
     source.entry_type = type;
-    source.field = 0;
+    source.field = field;
     source.bytes = bytes;
     source.byte_count = byte_count;
     source.content_hash = 0x13579bdfu;
@@ -39,15 +40,19 @@ static DM2_V1_GdatHudAdmissionRequest valid_request(void)
     memset(&request, 0, sizeof(request));
     request.layout = source_for(DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
                                 DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE,
+                                DM2_V1_GDAT_HUD_ADMISSION_RECT14_FIELD,
                                 layout, sizeof(layout));
     request.palette = source_for(DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
                                  DM2_V1_GDAT_HUD_ADMISSION_PALETTE16_TYPE,
+                                 DM2_V1_GDAT_HUD_ADMISSION_PALETTE16_FIELD,
                                  palette, sizeof(palette));
     request.font = source_for(DM2_V1_GDAT_HUD_ADMISSION_INTERFACE_CATEGORY,
                               DM2_V1_GDAT_HUD_ADMISSION_RAW7_TYPE,
+                              DM2_V1_GDAT_HUD_ADMISSION_FONT_FIELD,
                               font, sizeof(font));
     request.champion = source_for(DM2_V1_GDAT_HUD_ADMISSION_CHAMPION_CATEGORY,
                                   DM2_V1_GDAT_HUD_ADMISSION_IMAGE_TYPE,
+                                  0,
                                   portrait, sizeof(portrait));
     request.champion_width = 2;
     request.champion_height = 2;
@@ -80,6 +85,22 @@ int main(void)
               (receipt.rejection_mask & DM2_V1_GDAT_HUD_ADMISSION_REJECT_CHAMPION) &&
               !receipt.admitted,
           "wrong GDAT provenance rejects font and champion material");
+
+    request = valid_request();
+    request.layout.field = DM2_V1_GDAT_HUD_ADMISSION_FONT_FIELD;
+    check(dm2_v1_gdat_hud_material_admit_dm2_010(&request, &receipt) == 0 &&
+              (receipt.rejection_mask & DM2_V1_GDAT_HUD_ADMISSION_REJECT_LAYOUT) &&
+              receipt.champion_pixels == NULL && !receipt.admitted,
+          "INTERFACE_GENERAL dt07/0 cannot satisfy the Rect14 layout owner");
+
+    request = valid_request();
+    request.palette.field = 0;
+    request.font.field = DM2_V1_GDAT_HUD_ADMISSION_RECT14_FIELD;
+    check(dm2_v1_gdat_hud_material_admit_dm2_010(&request, &receipt) == 0 &&
+              (receipt.rejection_mask & DM2_V1_GDAT_HUD_ADMISSION_REJECT_PALETTE) &&
+              (receipt.rejection_mask & DM2_V1_GDAT_HUD_ADMISSION_REJECT_FONT) &&
+              receipt.champion_pixels == NULL,
+          "palette and font fields remain distinct from Rect14 placement");
 
     request = valid_request();
     request.champion.byte_count = 5;
