@@ -8,6 +8,18 @@
   `python3 tools/symbol_backlog.py --limit 12`, and
   `python3 tools/symbol_backlog.py --game DM2 --limit 8 --json` pass.
 
+- ✅ 2026-07-16 Nexus MENU.BPK renderer fail-closed gate: tightened the
+  startup/menu handoff so missing, invalid, no-surface, PRS3-blocked, and
+  truncated MENU.BPK decode receipts all block real menu rendering without
+  permitting fallback visuals. The launcher now requires a valid renderer
+  handoff before marking the real-menu asset route ready; a missing receipt is
+  no longer accepted as an implicit pass. Verification: strict direct C11
+  `test_nexus_v1_menu_bpk_renderer_handoff_gate`, strict direct C11
+  `test_nexus_v1_startup_title_route_asset_gate`, object build of
+  `nexus_v1_launcher.c`, existing `test_nexus_v1_startup_title_pointer_contract`
+  passed 17/17, and CTest passed for `nexus_v1_startup_title_pointer_contract`
+  plus `nexus_v1_dgn_geometry_readiness`.
+
 - ✅ 2026-07-16 CSB ReDMCSB F2262 timer-A event boundary: added a
   CSB-owned F2262 adapter for the source input-wait state transition:
   `G0317_i_WaitForInputVerticalBlankCount` advances until
