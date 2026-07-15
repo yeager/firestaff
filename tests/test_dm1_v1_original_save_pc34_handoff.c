@@ -1722,8 +1722,10 @@ static void test_file_runtime_world_loader(void)
 static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char manifest_bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     char path[512];
     int written = 0;
+    size_t manifest_size = 0u;
     struct GameWorld_Compat start_world;
     struct GameWorld_Compat loaded_world;
     struct DungeonDatState_Compat start_dungeon;
@@ -1765,6 +1767,34 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
           "tail-less original save reuses start things");
     CHECK(loaded_world.ownsDungeon == 0,
           "borrowed start dungeon keeps original owner");
+
+    /* A Firestaff F0433 export remains valid handoff data for verification,
+     * but the product resume route must consume only external corpus bytes. */
+    CHECK(dm1_v1_original_save_pc34_roundtrip_world_bytes(
+              bytes, (size_t)written, 0x4d313031u,
+              manifest_bytes, sizeof(manifest_bytes), &manifest_size,
+              NULL, NULL) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "runtime materializer builds a manifest-bearing verification export");
+    CHECK(write_fixture_file(path, manifest_bytes, (int)manifest_size),
+          "runtime materializer writes manifest-bearing export");
+    F0883_WORLD_Free_Compat(&loaded_world);
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, NULL);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34,
+          "runtime materializer rejects Firestaff export as a resume source");
+    CHECK(loaded_world.dungeon == NULL && loaded_world.things == NULL,
+          "rejected Firestaff export leaves destination runtime untouched");
+    remove(path);
+
+    CHECK(write_fixture_file(path, bytes, written),
+          "runtime materializer restores external fixture after rejection");
+    rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
+        path, &start_world, &loaded_world, NULL, NULL);
+    remove(path);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "runtime materializer still consumes the external fixture");
+
     CHECK(dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
               &start_world, &loaded_world) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "DM1 handoff adopts materialized runtime world");
