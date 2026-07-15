@@ -675,7 +675,9 @@ static void test_floor_ceiling_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
     viewport.squares[DM2_SQ_D0C].door_gfx_index = 7;
     viewport.squares[DM2_SQ_D0C].ornament_index = 2;
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = 2;
@@ -703,9 +705,12 @@ static void test_floor_ceiling_asset_provider(void)
                   dm2_v1_viewport_door_destroyed_mask_graphic_index(
                       7, DM2_SQ_D0C));
     dm2_v1_render_doors(&viewport);
-    CHECK("door fallback counts when no asset provider is installed",
+    CHECK("door without source material blocks instead of drawing a fallback panel",
           viewport.asset_door_frame_drawn_count == 0 &&
-              viewport.fallback_door_drawn_count == 1);
+              viewport.fallback_door_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) != 0 &&
+              framebuffer[(50 * 320) + 112] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -762,11 +767,11 @@ static void test_floor_ceiling_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_doors(&viewport);
-    CHECK("door pass records panel fallback when frame GDAT succeeds",
+    CHECK("door pass leaves a missing panel blank when frame GDAT succeeds",
           s_asset_fetch_calls == 2 &&
               viewport.asset_door_panel_drawn_count == 0 &&
               viewport.asset_door_frame_drawn_count == 1 &&
-              viewport.fallback_door_drawn_count == 1);
+              viewport.fallback_door_drawn_count == 0);
     s_fail_asset_index = 0;
 
     memset(framebuffer, 0, sizeof(framebuffer));

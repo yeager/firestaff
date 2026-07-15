@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject door no-draw gate: `DRAW_DOOR` no longer paints
+  Firestaff's generated fallback panel when its selected `DOORS` GDAT bitmap
+  is unavailable. Source-material profiles report a blocked door; all other
+  profiles leave the panel blank. The focused viewport gate covers both the
+  fully unavailable and frame-only cases.
+
 - 2026-07-15 DM2 skproject map-chip no-draw gate: floor items, leader-hand
   items, projectiles, and clouds now require their selected GDAT bitmap, as
   do the previously gated creature routes. On a source-material route, missing

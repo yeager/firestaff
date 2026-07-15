@@ -3897,27 +3897,6 @@ static void dm2_v1_draw_legacy_wall_fallback(uint8_t *vp, int stride)
     }
 }
 
-static void dm2_v1_draw_door_panel_fallback_rect(uint8_t *vp,
-                                                 int stride,
-                                                 int view_square,
-                                                 const DM2_V1_ViewportRect *rect,
-                                                 uint8_t color)
-{
-    if (!vp || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
-        return;
-    }
-    dm2_v1_fill_rect(vp, stride, rect, color);
-    if (view_square == DM2_SQ_D0C) {
-        dm2_v1_stroke_rect(vp, stride, rect, DM2_COL_MIDGRAY);
-    } else {
-        DM2_V1_ViewportRect line =
-            (DM2_V1_ViewportRect){ rect->x, rect->y, 1, rect->h };
-        dm2_v1_fill_rect(vp, stride, &line, DM2_COL_MIDGRAY);
-        line.x = rect->x + rect->w - 1;
-        dm2_v1_fill_rect(vp, stride, &line, DM2_COL_MIDGRAY);
-    }
-}
-
 static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
                                          uint32_t material_mask)
 {
@@ -4250,7 +4229,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     int door_overlay_asset_count = 0;
     int door_asset_count = 0;
     int door_button_asset_count = 0;
-    int door_fallback_count = 0;
     DM2_V1_DoorRenderPlan plan;
     DM2_V1_DoorMaterial materials[DM2_V1_DOOR_RENDER_MAX]
                                    [DM2_DOOR_MATERIAL_COUNT];
@@ -4553,18 +4531,11 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 }
             }
             if (!panel_drawn_asset) {
-                if (s->source_materials_required) {
-                    /* skproject SKWIN/SkWinCore.cpp DRAW_DOOR resolves the
-                     * selected DOORS image before painting the panel. */
-                    dm2_v1_block_source_material(
-                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
-                } else {
-                    dm2_v1_draw_door_panel_fallback_rect(
-                        vp, stride, door->view_square,
-                        &render_door->panel_visible_rect,
-                        render_door->fallback_color);
-                    ++door_fallback_count;
-                }
+                /* DRAW_DOOR resolves the selected DOORS image before it
+                 * paints a panel.  Never replace a missing GDAT panel with
+                 * a generated rectangle. */
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
             }
         }
         {
@@ -4860,7 +4831,6 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
     s->asset_door_overlay_drawn_count += door_overlay_asset_count;
     s->asset_door_frame_drawn_count += door_asset_count;
     s->asset_door_button_drawn_count += door_button_asset_count;
-    s->fallback_door_drawn_count += door_fallback_count;
 }
 
 /* ── Creatures ───────────────────────────────────────────────────── */
