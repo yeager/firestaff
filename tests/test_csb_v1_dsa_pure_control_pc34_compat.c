@@ -73,6 +73,11 @@ static int32_t cause_poison_character;
 static int32_t cause_poison_value;
 static int discard_text_enabled;
 static int discard_text_count;
+static int sound_enabled;
+static int sound_count;
+static int32_t sound_number;
+static int32_t sound_volume;
+static int32_t sound_flags;
 static int actuator_copy_enabled;
 static int actuator_copy_store_count;
 static uint8_t actuator_copy_payloads[3][6];
@@ -522,6 +527,18 @@ static int discard_text(void *user)
     return 1;
 }
 
+static int play_sound(void *user, int32_t requested_number,
+                      int32_t requested_volume, int32_t requested_flags)
+{
+    (void)user;
+    if (!sound_enabled) return 0;
+    sound_number = requested_number;
+    sound_volume = requested_volume;
+    sound_flags = requested_flags;
+    ++sound_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -667,6 +684,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
         context.commit_cause_poison = commit_cause_poison;
     }
     if (discard_text_enabled) context.discard_text = discard_text;
+    if (sound_enabled) context.play_sound = play_sound;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -1039,6 +1057,10 @@ int main(void)
     };
     uint16_t discard_text[] = { 0x1ccbu };
     uint16_t discard_text_then_bad[] = { 0x1ccbu, 0x0000u };
+    uint16_t sound[] = { 0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu };
+    uint16_t sound_then_bad[] = {
+        0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu, 0x0000u
+    };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -1760,6 +1782,26 @@ int main(void)
               discard_text_count == 0,
           "DISCARDTEXT does not publish before a later rejected source word");
     discard_text_enabled = 0;
+
+    sound_enabled = 1;
+    sound_count = 0;
+    check(run(&state, &action, sound,
+              (int)(sizeof(sound) / sizeof(sound[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              sound_count == 1 && sound_number == 7 && sound_volume == 100 &&
+              sound_flags == 3,
+          "SOUND preserves CSBWin sound/volume/flags pop order");
+    sound_count = 0;
+    check(run(&state, &action, sound_then_bad,
+              (int)(sizeof(sound_then_bad) / sizeof(sound_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              sound_count == 0,
+          "SOUND does not publish before a later rejected source word");
+    sound_enabled = 0;
+    check(run(&state, &action, sound,
+              (int)(sizeof(sound) / sizeof(sound[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "SOUND remains closed without a CSB audio owner");
     check(run(&state, &action, discard_text, 1, parameters, &execution) ==
               CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "DISCARDTEXT rejects without the source UI owner");
