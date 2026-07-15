@@ -997,7 +997,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
             const char *target_path =
                 "/private/tmp/firestaff_nexus_structure2_descriptor_target.txt";
             char target_line[128];
+            char unverified_manifest[1024];
+            const uint8_t unverified_trace[] = { 0x53U, 0x32U, 0x54U, 0x52U };
             FILE *target_file;
+            Nexus_V1_DgnStructure2TraceAdmissionReceipt trace_receipt;
 
             CHECK(nexus_v1_engine_write_structure2_descriptor_capture_target(
                       &active_engine, 0, target_path, &descriptor_target) == 1 &&
@@ -1012,6 +1015,34 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   "Structure2 capture request carries its non-runtime target magic");
             if (target_file) fclose(target_file);
             remove(target_path);
+            snprintf(unverified_manifest, sizeof(unverified_manifest),
+                     "magic=%s\nproducer=external-saturn-capture\n"
+                     "level_index=%x\ndescriptor_index=%x\n"
+                     "source_fnv1a64=%016llx\ndescriptor_fnv1a64=%016llx\n"
+                     "opaque_payload_fnv1a64=%016llx\nraw_trace_size=%zx\n"
+                     "raw_trace_fnv1a64=%016llx\n",
+                     NEXUS_V1_STRUCTURE2_SATURN_RAW_TRACE_MAGIC, level, 0,
+                     (unsigned long long)descriptor_target.source_bytes_fnv1a64,
+                     (unsigned long long)descriptor_target.descriptor_bytes_fnv1a64,
+                     (unsigned long long)descriptor_target.opaque_payload_fnv1a64,
+                     sizeof(unverified_trace),
+                     (unsigned long long)fnv1a64(unverified_trace,
+                                                  sizeof(unverified_trace)));
+            CHECK(nexus_v1_engine_admit_structure2_descriptor_capture_trace(
+                      &active_engine, 0, unverified_manifest,
+                      strlen(unverified_manifest), unverified_trace,
+                      sizeof(unverified_trace), 0, &trace_receipt) == 0 &&
+                  trace_receipt.status ==
+                      NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_PROVENANCE &&
+                  trace_receipt.capture_target_bound &&
+                  trace_receipt.manifest_target_bound &&
+                  trace_receipt.raw_trace_bytes_bound &&
+                  !trace_receipt.original_saturn_capture_verified &&
+                  !trace_receipt.opaque_trace_admitted &&
+                  !trace_receipt.decoder_permitted && trace_receipt.no_draw_only &&
+                  !trace_receipt.fallback_visuals_permitted &&
+                  trace_receipt.blocks_real_dgn_mesh_render,
+                  "unverified Structure2 raw traces remain fail-closed after exact target binding");
         }
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 ^= 1U;
         CHECK(nexus_v1_current_level_structure3_face_material_receipt(

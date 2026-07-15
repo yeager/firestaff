@@ -3411,6 +3411,99 @@ static int nexus_v1_slev_trace_hex_u64(const char *text, uint64_t *out_value) {
     return 1;
 }
 
+int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
+    const Nexus_V1_Engine *engine, int descriptor_index,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnStructure2TraceAdmissionReceipt *out_receipt) {
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget target;
+    Nexus_V1_DgnStructure2TraceAdmissionReceipt receipt;
+    char value[96];
+    uint32_t parsed_index;
+    uint64_t expected_hash;
+    uint64_t actual_hash;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE2_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.descriptor_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
+        raw_trace_size == 0 ||
+        nexus_v1_engine_build_structure2_descriptor_capture_target(
+            engine, descriptor_index, &target) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = target.level_index;
+    receipt.descriptor_index = target.descriptor_index;
+    receipt.capture_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "magic", value,
+                                    sizeof(value)) ||
+        strcmp(value, NEXUS_V1_STRUCTURE2_SATURN_RAW_TRACE_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "producer", value,
+                                    sizeof(value)) ||
+        strcmp(value, "external-saturn-capture") != 0) {
+        receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "level_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        (int)parsed_index != target.level_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "descriptor_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        (int)parsed_index != target.descriptor_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "source_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.source_bytes_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "descriptor_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.descriptor_bytes_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "opaque_payload_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.opaque_payload_fnv1a64) {
+        receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "raw_trace_size", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != (uint64_t)raw_trace_size ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "raw_trace_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        !(actual_hash = nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size)) ||
+        actual_hash != expected_hash) {
+        receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_RAW_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bytes_bound = 1;
+    receipt.raw_trace_byte_count = raw_trace_size;
+    receipt.raw_trace_fnv1a64 = actual_hash;
+    if (!original_saturn_capture_verified) {
+        receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_PROVENANCE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.original_saturn_capture_verified = 1;
+    receipt.opaque_trace_admitted = 1;
+    receipt.status = NEXUS_V1_STRUCTURE2_TRACE_ADMITTED_OPAQUE;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_admit_slev_execution_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
     Nexus_V1_LevelScriptTraceAdmissionReceipt *out_receipt) {
