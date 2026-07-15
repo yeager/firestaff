@@ -8184,8 +8184,8 @@ static int m11_blit_spell_label_cell(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
     if (!slot || !slot->loaded || !slot->pixels ||
-        (int)slot->width != M11_SPELL_LABEL_CELL_W ||
-        (int)slot->height != (M11_SPELL_LABEL_CELL_H * 3)) {
+        (int)slot->width != DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 ||
+        (int)slot->height != DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34) {
         return 0;
     }
     M11_AssetLoader_BlitRegion(slot,
@@ -35059,11 +35059,19 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     if (!m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-        14, 39, 0, 13, 14, 12, 224, 50) ||
+        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
+        DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
+        0, DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34,
+        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
+        DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34, 224, 50) ||
         !m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-        14, 39, 0, 26, 14, 12, 224, 62)) {
+        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
+        DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
+        0, DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34,
+        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
+        DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34, 224, 62)) {
         return;
     }
     linesAsset = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,

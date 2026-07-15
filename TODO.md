@@ -75,10 +75,14 @@
   unavailable menu surface preserves the F0387 black clear. Its TEXT2 labels
   now require verified PC34 M653 entries 695/557 and use TEXT2 F0644's
   baseline-minus-four, six-pixel-cell raster rule for all header/action rows.
-  MENUDRAW F0397/F0398 use that same M653 primitive for available and selected
-  runes. Remaining work is real PC34/Mac capture of action-menu transitions,
-  spell refresh, and hit targets. Do not restore a permissive bitmap blit,
-  procedural panel, arbitrary font, or host-font route.
+  MENUDRAW F0397/F0398 use that same M653 primitive, exact C04/C00 colors,
+  and source line clipping for available and selected runes; F0396/F0392 now
+  consumes C011's complete 96x12 available/selected rows, not a 14-pixel
+  fragment; SPELDRAW F0393 consumes C009 pixels through the original inclusive
+  caster-tab invert boxes. Remaining work is real PC34/Mac capture of
+  action-menu transitions, spell refresh, tab inversion, and hit targets. Do
+   not restore a permissive bitmap blit, procedural panel, arbitrary font, or
+   host-font route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces

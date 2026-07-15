@@ -146,18 +146,23 @@ static void test_rune_contract_helpers(void)
     CHECK(abbrev[2] == '\0');
     CHECK(dm1_v1_spell_rune_abbrev_pc34(0, 0, 0) == 0);
 
+    CHECK(DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 == 96);
+    CHECK(DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 == 36);
+    CHECK(DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 == 12);
+    CHECK(DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 == 12);
+    CHECK(DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 == 24);
     CHECK(DM1_V1_SPELL_LABEL_CELL_W_PC34 == 14);
-    CHECK(DM1_V1_SPELL_LABEL_CELL_H_PC34 == 13);
-    CHECK(DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 == 13);
-    CHECK(DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 == 26);
+    CHECK(DM1_V1_SPELL_LABEL_CELL_H_PC34 == 12);
+    CHECK(DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 == 12);
+    CHECK(DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 == 24);
     CHECK(available.x == 0);
-    CHECK(available.y == 13);
+    CHECK(available.y == 12);
     CHECK(available.w == 14);
-    CHECK(available.h == 13);
+    CHECK(available.h == 12);
     CHECK(selected.x == 0);
-    CHECK(selected.y == 26);
+    CHECK(selected.y == 24);
     CHECK(selected.w == 14);
-    CHECK(selected.h == 13);
+    CHECK(selected.h == 12);
 }
 
 static void test_spell_panel_state_receipts(void)
