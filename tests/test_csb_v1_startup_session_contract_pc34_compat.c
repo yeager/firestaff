@@ -20,10 +20,13 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
 {
     static unsigned char c017_pixel;
     static unsigned char c040_pixel;
-    static unsigned char c001_pixel;
-    static unsigned char c002_pixel;
-    static unsigned char c003_pixel;
-    static unsigned char c004_pixel;
+    static unsigned char c001_pixels[320 * 153];
+    static unsigned char presents_pixels[320 * 16];
+    static unsigned char chaos_pixels[320 * 80];
+    static unsigned char strikes_pixels[320 * 57];
+    static unsigned char c002_pixels[105 * 161];
+    static unsigned char c003_pixels[128 * 161];
+    static unsigned char c004_pixels[320 * 200];
     CSB_V1_StartupRuntimeSurface_PC34 *c017;
     CSB_V1_StartupRuntimeSurface_PC34 *c040;
     CSB_V1_StartupRuntimeSurface_PC34 *title;
@@ -46,6 +49,11 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     session->playback.title_phase_mask = 0x0f;
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34;
     session->playback.entrance_complete = 1;
+    session->surfaces.valid = session->surfaces.real_asset_matched = 1;
+    session->surfaces.title_regions_ready = 1;
+    session->surfaces.opening_frame_ready = 1;
+    session->surfaces.entrance_screen_ready = 1;
+    session->surfaces.hud_surfaces_ready = 1;
     c017 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     c040 = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
     c017->valid = 1; c017->pixels = &c017_pixel; c017->source_asset_id = 17;
@@ -61,20 +69,23 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     left = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
     right = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
     entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
-    title->valid = 1; title->pixels = &c001_pixel; title->source_asset_id = 1;
+    title->valid = 1; title->pixels = c001_pixels; title->source_asset_id = 1;
     title->width = 320; title->height = 153; title->transparent_color = -1;
-    presents->valid = 1; presents->pixels = &c001_pixel; presents->source_asset_id = 1;
+    presents->valid = 1; presents->pixels = presents_pixels; presents->source_asset_id = 1;
     presents->source_x = 0; presents->source_y = 137;
     presents->width = 320; presents->height = 16; presents->transparent_color = -1;
-    chaos->valid = 1; chaos->pixels = &c001_pixel; chaos->source_asset_id = 1;
+    chaos->valid = 1; chaos->pixels = chaos_pixels; chaos->source_asset_id = 1;
     chaos->source_x = 0; chaos->source_y = 0;
     chaos->width = 320; chaos->height = 80; chaos->transparent_color = -1;
-    strikes->valid = 1; strikes->pixels = &c001_pixel; strikes->source_asset_id = 1;
+    strikes->valid = 1; strikes->pixels = strikes_pixels; strikes->source_asset_id = 1;
     strikes->source_x = 0; strikes->source_y = 80;
     strikes->width = 320; strikes->height = 57; strikes->transparent_color = 0;
-    left->valid = 1; left->pixels = &c002_pixel; left->source_asset_id = 2;
-    right->valid = 1; right->pixels = &c003_pixel; right->source_asset_id = 3;
-    entrance->valid = 1; entrance->pixels = &c004_pixel; entrance->source_asset_id = 4;
+    left->valid = 1; left->pixels = c002_pixels; left->source_asset_id = 2;
+    left->width = 105; left->height = 161; left->transparent_color = -1;
+    right->valid = 1; right->pixels = c003_pixels; right->source_asset_id = 3;
+    right->width = 128; right->height = 161; right->transparent_color = -1;
+    entrance->valid = 1; entrance->pixels = c004_pixels; entrance->source_asset_id = 4;
+    entrance->width = 320; entrance->height = 200; entrance->transparent_color = -1;
 }
 
 static void make_title_host(
@@ -234,6 +245,23 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 1;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "forged one-byte C003 cannot satisfy title/opening consumption");
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 128;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 1;
+    check(!csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt),
+          "forged one-line C001 cannot authorize terminal C017/C040");
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 153;
+    check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
+              receipt.valid,
+          "restored real-shaped C001 re-authorizes terminal C017/C040");
     opening_host.raster.door_composited = 0;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,

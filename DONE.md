@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB startup real-surface receipt hardening: terminal,
+  title/opening, and opening-door session receipts now require the resident
+  decoded C001 title surface, PRESENTS/CHAOS/STRIKES crops, C004 entrance,
+  and C002/C003 door strips to match their exact PC34 source dimensions and
+  asset ids before HUD/runtime handoff. Focused startup-session contract
+  coverage rejects forged one-line C001 and one-byte C003 stand-ins.
+
 - ✅ 2026-07-15 DM1 spell-HUD SymbolStep/tab receipt hardening:
   the F0394/F0397/F0398 spell-area overlay contract now admits only the
   original champion-owned SymbolStep ring `0..3` from SYMBOL.C F0399/F0400,
