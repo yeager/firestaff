@@ -1970,6 +1970,46 @@ static int nexus_v1_copy_structure3_capture_span(
     return 1;
 }
 
+/* This is a capture-admission gate, not a decoder. The raw lanes may enter
+ * engine-owned storage only when the full VDP1 snapshot independently
+ * contains both the captured command and its CMDSRCA texture window. */
+static int nexus_v1_structure3_capture_vdp1_snapshot_ready(
+    const Nexus_V1_DgnStructure3CaptureImport *capture)
+{
+    Nexus_V1_Vdp1TextureCommand command;
+    uint32_t offset;
+    int command_occurrences = 0;
+
+    if (!capture || !capture->texture_span || !capture->vdp1_state ||
+        !capture->vdp1_command ||
+        capture->vdp1_state_size != NEXUS_V1_VDP1_VRAM_BYTES ||
+        capture->vdp1_command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        capture->texture_span_size == 0U ||
+        nexus_v1_vdp1_texture_command_parse(capture->vdp1_command,
+            (int)capture->vdp1_command_size, &command) != 0 ||
+        !command.texture_command || !command.colour_mode_documented ||
+        !command.texture_source_range_valid ||
+        capture->texture_span_size != (size_t)command.texture_byte_count ||
+        command.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES ||
+        !command.link_target_range_valid) {
+        return 0;
+    }
+    if (memcmp(capture->texture_span,
+            capture->vdp1_state + command.texture_source_byte_offset,
+            capture->texture_span_size) != 0) {
+        return 0;
+    }
+    for (offset = 0U;
+         offset <= NEXUS_V1_VDP1_VRAM_BYTES - NEXUS_V1_VDP1_COMMAND_BYTES;
+         offset += 8U) {
+        if (memcmp(capture->vdp1_state + offset, capture->vdp1_command,
+                   NEXUS_V1_VDP1_COMMAND_BYTES) == 0) {
+            ++command_occurrences;
+        }
+    }
+    return command_occurrences == 1;
+}
+
 int nexus_v1_engine_consume_structure3_capture(
     Nexus_V1_Engine *engine,
     const Nexus_V1_DgnStructure3FaceCaptureCandidate *candidate,
@@ -2023,6 +2063,7 @@ int nexus_v1_engine_consume_structure3_capture(
      * the currently loaded canonical level. */
     if (nexus_v1_structure3_capture_bundle_fnv1a64(capture) !=
         capture->capture_bundle_fnv1a64) return 0;
+    if (!nexus_v1_structure3_capture_vdp1_snapshot_ready(capture)) return 0;
     memset(&rebound, 0, sizeof(rebound));
     if (nexus_v1_dgn_bind_structure3_face_capture_candidate(
             &engine->current_level, engine->current_level_dgn_data,
