@@ -661,6 +661,18 @@ int theron_v1_raw_loader_trace_import_mednafen_capture_file(
     const char *track02_md5,
     Theron_V1RawLoaderTraceReceipt *out);
 
+/* Resolve an observed System Card SCSI LBA/offset byte to the hash-verified
+ * Track 02 payload layout. Raw BIN images admit only MODE1 user-data bytes;
+ * ISO images use direct 2048-byte user-data offsets. */
+int theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    uint32_t source_lba,
+    uint32_t source_offset,
+    uint32_t *out_track02_record,
+    uint8_t *out_byte);
+
 /* Binds an accepted Mednafen CD_READ trace to the exact bytes of a
  * hash-verified raw Track 02 image.  It authenticates only the one-sector
  * $3800 transfer already observed in the original trace; it does not infer

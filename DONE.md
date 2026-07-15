@@ -984,6 +984,14 @@
   every original pixel copy. Complete startup receipts now represent only
   authenticated pixel output; no source-less panel clear or border remains.
 
+- 2026-07-15 Theron post-BRA JSR Track 02 byte-source gate: the
+  control-to-media receipt now verifies FIFO bytes through the concrete Track
+  02 payload layout instead of a raw-buffer shortcut. Hash-verified raw BIN
+  data admits only MODE1 user-data bytes, MODE1/2048 ISO data admits direct
+  user offsets, and unknown MD5s or sector header/tail offsets fail closed.
+  This remains byte provenance only; no dungeon/object/bitmap semantics were
+  promoted.
+
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original
   expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the
