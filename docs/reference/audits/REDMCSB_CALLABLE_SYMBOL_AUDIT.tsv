@@ -256,7 +256,7 @@ F	0174	F0174_DUNGEON_SetCurrentMapAndPartyMap	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS
 F	174	F174_aozz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0175	F0175_GROUP_GetThing	PANEL.C;ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;TIMELINE.C;ENDGAME.C;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	DM1 F0161 compact SFT then F0159 raw Generic.Next traversal to first C04 group; no decoded group-list substitute or default group.
 F	175	F175_gzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0176	F0176_GROUP_GetCreatureOrdinalInCell	ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW.C;DUNVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0176	F0176_GROUP_GetCreatureOrdinalInCell	ATARIST.H;GROUP.C;FMTOWNS.H;CLIKVIEW.C;DUNVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	Raw C04 Count and F0144 G0243 size select exact centered/full/half-square source cell scan; F0145/F0147 effective values remain explicit caller inputs and invalid source records return no ordinal.
 F	176	F176_avzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0177	F0177_GROUP_GetMeleeTargetCreatureOrdinal	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	177	F177_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

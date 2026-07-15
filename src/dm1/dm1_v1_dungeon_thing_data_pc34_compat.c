@@ -122,6 +122,50 @@ unsigned short dm1_v1_group_get_thing_f0175_pc34(
     return thing;
 }
 
+int dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short groupThing,
+    unsigned int groupCells,
+    unsigned int groupDirections,
+    unsigned int cell)
+{
+    const unsigned char *rawGroup;
+    unsigned short creatureAttributes;
+    unsigned int creatureIndex;
+    unsigned int creatureCell;
+
+    if (THING_GET_TYPE(groupThing) != THING_TYPE_GROUP ||
+        !dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
+            things, groupThing, &creatureAttributes)) {
+        return 0;
+    }
+    rawGroup = dm1_v1_dungeon_get_thing_data_pc34(things, groupThing);
+    if (!rawGroup) return 0;
+
+    /* GROUP.C F0176: a centered creature is present in every cell. */
+    if ((groupCells & 0xffu) == 0xffu) return 1;
+
+    creatureIndex = ((unsigned int)rawGroup[14] >> 5) & 0x03u;
+    cell &= 0x03u;
+    if ((creatureAttributes & 0x0003u) == 0x0001u) {
+        if ((groupDirections & 0x0001u) == (cell & 0x0001u)) {
+            cell = (cell + 3u) & 0x03u;
+        }
+        do {
+            creatureCell = (groupCells >> (creatureIndex << 1)) & 0x03u;
+            if (creatureCell == cell || creatureCell == ((cell + 1u) & 0x03u)) {
+                return (int)creatureIndex + 1;
+            }
+        } while (creatureIndex-- != 0u);
+    } else {
+        do {
+            creatureCell = (groupCells >> (creatureIndex << 1)) & 0x03u;
+            if (creatureCell == cell) return (int)creatureIndex + 1;
+        } while (creatureIndex-- != 0u);
+    }
+    return 0;
+}
+
 int dm1_v1_dungeon_get_object_subtype_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing)

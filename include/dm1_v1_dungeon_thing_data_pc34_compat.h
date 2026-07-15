@@ -47,6 +47,16 @@ unsigned short dm1_v1_group_get_thing_f0175_pc34(
     int mapX,
     int mapY);
 
+/* ReDMCSB GROUP.C F0176: one-based C04 creature ordinal for a cell.
+ * groupCells/groupDirections are the F0145/F0147 effective values: callers
+ * retain responsibility for selecting their active-group overlays. */
+int dm1_v1_group_get_creature_ordinal_in_cell_f0176_pc34(
+    const struct DungeonThings_Compat *things,
+    unsigned short groupThing,
+    unsigned int groupCells,
+    unsigned int groupDirections,
+    unsigned int cell);
+
 const char *dm1_v1_dungeon_thing_data_source_evidence_pc34(void);
 
 #ifdef __cplusplus
