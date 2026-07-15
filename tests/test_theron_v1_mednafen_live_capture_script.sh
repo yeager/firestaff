@@ -6,9 +6,16 @@ script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
+    exit 1
+fi
+if [[ ! -x "$later_raw_receipt" ]] ||
+   ! grep -Fq 'captured physical-to-raw Track 02 delta is not the observed US value' "$later_raw_receipt" ||
+   ! grep -Fq 'no Stage-3 descriptor binds the range, so payload semantics remain blocked' "$later_raw_receipt"; then
+    printf 'FAIL: later raw-sector receipt must retain its authenticated fail-closed boundary\n' >&2
     exit 1
 fi
 bash -n "$script"

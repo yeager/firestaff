@@ -1,0 +1,23 @@
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -76,16 +76,16 @@ static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
+  uint32 sector_fnv1a = 2166136261U;
+  const bool ok = Cur_CDIF->ReadRawSector(buffer, lba);
+ 
+- if(ok && trace_count < 32)
++ if(ok && trace_count < 4096)
+  {
+   if(!trace)
+   {
+    const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
+    if(path && *path)
+    {
+     trace = fopen(path, "a");
+     if(trace)
+     {
+-     fputs("source=mednafen-pce-instrumented-cd\\n", trace);
++     fputs("source=mednafen-pce-instrumented-cd\n", trace);
+      fflush(trace);
+     }
+    }
