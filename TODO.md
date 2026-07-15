@@ -8157,6 +8157,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     G1-referenced `MapGraphicsStyle`, requiring each matching `GRAPHICSSET`
     floor/ceiling transaction to decode and render callback-free. The negative
     cross-set plan remains an explicit blocked no-draw check.
+  - 2026-07-15 done: the M11 scene command builder now requires only the
+    active set's scene colorkey/flags plus exact floor/ceiling GDAT material.
+    Ambient light, highest-light, and ambient-darkness words are retained when
+    present for the separate `c_light` receipt, but missing light words no
+    longer block a real source scene or borrow another graphics set.
 - 🔧 2026-07-13 Nexus Structure1Fa special floor images: ITEM.IBS descriptors, inherited local BGR555 palettes and canonical-corpus-proven `0008` packed-4bpp spans now reach their matching DGN floor-command consumer. The LEV00–LEV15 corpus now proves 446 direct item records, including 174 separate `0008` floor-image references, all resolving to verified ITEM.IBS sources with no missing or unsupported descriptor. The codec gate now distinguishes the documented VDP1 high-nibble rule from game-specific proof and blocks retail ITEM.IBS until an original Nexus VDP1 command stream binds the mode and byte route. Exact Saturn command provenance and 3D item placement remain unproven, so the material consumer stays no-draw with no inventory-icon or synthetic fallback.
   - 2026-07-14 update: descriptor-`0008` expansion now accepts only an atomic capture binding that matches complete ITEM.IBS bytes, the selected descriptor, exact packed texture span, 16-colour palette bytes, VDP1 state/command fingerprints, texture-source extent, and ordered observation sequence. No retail capture packet is supplied, so canonical ITEM.IBS remains blocked and no DGN material is promoted or drawn. Remaining work is a genuine original-Saturn VDP1 packet, including the real command's colour-mode interpretation and DGN placement.
   - 2026-07-14 packet-shape update: the gate now parses only a complete

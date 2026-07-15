@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 active GRAPHICSSET scene-material gate: M11 scene
+  command planning now matches skproject `UPDATE_GFXSET` by requiring the
+  active set's `SCENE_COLORKEY`/`SCENE_FLAGS` plus real floor/ceiling GDAT
+  material, while retaining optional light words only for later `c_light`
+  consumers. Missing light words no longer block source-owned dungeon
+  surfaces or trigger cross-set/synthetic fallback. Focused coverage:
+  `test_dm2_v1_gdat_scene_plan_viewport_real_data` and
+  `dm2_v1_gdat_m11_material_receipt_real_data`.
+
 - ✅ 2026-07-15 DM2 runtime save/input route: DM2 runtime `SAVE_GAME`
   now writes the real `SKSave.dat` through `M11_GameView_QuickSave` instead
   of opening a blocked placeholder save panel. M11 direct save/resume and

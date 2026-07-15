@@ -411,10 +411,19 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     memset(&candidate, 0, sizeof(candidate));
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_COLORKEY, &candidate.scene_colorkey) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness) ||
-        candidate.ambient_darkness > 8u) return 0;
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags)) return 0;
+    /* skproject UPDATE_GFXSET admits the active GRAPHICSSET scene material
+     * after SCENE_COLORKEY/SCENE_FLAGS plus its floor/ceiling IMG3 records.
+     * Light control words are retained for c_light consumers when present,
+     * but missing light/weather semantics must not block the source-owned
+     * dungeon surface or trigger a borrowed graphics-set fallback. */
+    (void)dm2_v1_asset_load_word_value(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level);
+    (void)dm2_v1_asset_load_word_value(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness);
+    if (candidate.ambient_darkness > 8u) return 0;
     /* skproject QUERY_GDAT_ENTRY_DATA_INDEX returns zero for a missing
      * dtWordValue entry. GRAPHICSSET 2 in the canonical PC corpus has no
      * AMBIANT_LIGHT row, so preserve that source zero without borrowing a
