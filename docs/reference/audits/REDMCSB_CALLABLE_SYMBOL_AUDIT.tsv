@@ -293,7 +293,7 @@ F	0194	F0194_GROUP_RemoveAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS
 F	194	F194_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0195	F0195_GROUP_AddAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;NEWMAP.C	implemented-narrow	implemented_narrow	DM1 M10 startup consumes loaded current-map SFT/C04 chains in source X-major/Y-minor order; exact-square F0181 deletion, 60-slot F0183 bridge, and F0180 C37 GameTime+1 scheduling are focused-tested. Later map/save handoff remains separate.
 F	195	F195_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0196	F0196_GROUP_InitializeActiveGroups	ATARIST.H;GROUP.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0196	F0196_GROUP_InitializeActiveGroups	ATARIST.H;GROUP.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H	implemented-narrow	mapped_source_verified	DM1 PC3.4 world init consumes exact 60-slot GROUP.C allocation range; each source-owned active slot clears and receives the -1 GroupThingIndex sentinel via the live CreatureAI reserved group index. Save import owns separately serialized active records.
 F	196	F196_aozz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0197	F0197_GROUP_IsViewPartyBlocked	GROUP.C;IIGS.H	implemented-narrow	implemented_narrow	GROUP.C door C3/C4 opaque-sight and wall/fakewall predicates over caller-supplied decoded square facts.
 F	0198	F0198_GROUP_IsSmellPartyBlocked	GROUP.C;IIGS.H	implemented-narrow	implemented_narrow	GROUP.C wall/fakewall smell predicate, including imaginary fakewall pass-through, over caller-supplied decoded square facts.
