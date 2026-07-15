@@ -16363,6 +16363,17 @@ assigned.
 Verification: `test_theron_v1_main_ram_game_window_scsi_receipt`, Mednafen
 patch dry-run, and the authentic capture verifier.
 
+# ✅ 2026-07-15 Theron LBA 4165 raw Track 02 binding
+
+Bound the four sectors requested by the game-owned window path, LBA
+`4165..4168`, byte-exactly to raw Track 02 records `0x484..0x487` using the
+observed `raw_record = LBA - 3009` coordinate. The verifier checks each full
+2352-byte sector and its observed 32-byte prefix hash. This is a media
+identity receipt, not a level/object classification or a FIFO destination.
+
+Verification: `test_theron_v1_lba4165_track02_receipt` and the authentic US
+Track 02 capture.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
