@@ -24367,6 +24367,12 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
     int variant;
 
     if (!state || !state->assetsAvailable || ornamentOrdinal <= 0) return 0;
+    /* DM1 has already emitted F0108 through the source-owned layout-696
+     * zone plan in m11_draw_dm1_floor_ornaments().  This legacy helper uses
+     * proportional host geometry, so calling it again from the later F0115
+     * content pass double-exposes an ornament over real pits, stairs, and
+     * objects.  It remains for non-DM1/debug consumers only. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) return 0;
     if (!state->world.dungeon) return 0;
 
     mapIdx = state->world.party.mapIndex;
