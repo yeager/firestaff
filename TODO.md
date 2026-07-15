@@ -10,6 +10,14 @@
   promote Structure2 opaque spans into decoded pixels or palette semantics
   without authentic Saturn capture evidence.
 
+- 2026-07-16 CSB startup terminal capture follow-up: the terminal C017/C040
+  HUD receipt gate is now code-owned and rejects stale source ticks,
+  generation changes, wrappers, fallback routes, incomplete title phase masks,
+  stale door-open state, and mismatched HUD geometry/GRAPHICS.DAT ownership.
+  Remaining CSB startup evidence is real Mac/release app presented-frame
+  capture with local CSB data through that receipt path, not another synthetic
+  title/door/HUD path.
+
 - 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
   now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped
   C001/TITLE.DAT substitution, holds the verified title through the original
