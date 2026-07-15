@@ -1053,6 +1053,24 @@ typedef struct {
     uint8_t g1_scene_item_material_palette16[16];
     uint32_t g1_scene_item_material_palette_hash;
     int g1_scene_item_material_consumed_count;
+    /* A DB2/DB3 WALL_GFX field-1 image can be selected by
+     * DRAW_DEFAULT_DOOR_BUTTON. Keep that exact decoded surface with the
+     * M11 frame so the button never resolves a second, possibly stale asset. */
+    int g1_scene_wall_button_material_ready;
+    int g1_scene_wall_button_material_gdat_index;
+    int g1_scene_wall_button_material_wall_gfx_index;
+    int g1_scene_wall_button_material_field;
+    int g1_scene_wall_button_material_map_x;
+    int g1_scene_wall_button_material_map_y;
+    uint16_t g1_scene_wall_button_material_object_id;
+    int g1_scene_wall_button_material_width;
+    int g1_scene_wall_button_material_height;
+    int g1_scene_wall_button_material_stride;
+    const uint8_t *g1_scene_wall_button_material_pixels;
+    uint32_t g1_scene_wall_button_material_pixel_hash;
+    uint8_t g1_scene_wall_button_material_palette16[16];
+    uint32_t g1_scene_wall_button_material_palette_hash;
+    int g1_scene_wall_button_material_consumed_count;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
     int asset_carried_item_drawn_count;
@@ -1231,6 +1249,12 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
     int gdat_index, uint16_t object_id, int map_x, int map_y,
     const uint8_t *pixels, int width, int height, int stride,
     const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash);
+void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+    DM2_V1_ViewportState *s, int ready, int gdat_index,
+    int wall_gfx_index, int field, int map_x, int map_y,
+    uint16_t object_id, const uint8_t *pixels, int width, int height,
+    int stride, const uint8_t palette16[16], uint32_t palette_hash,
     uint32_t expected_pixel_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,

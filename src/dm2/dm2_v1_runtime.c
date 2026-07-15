@@ -3020,6 +3020,117 @@ static void dm2_runtime_bind_g1_scene_item_material(
         stride, palette16, palette_hash, pixel_hash);
 }
 
+static int dm2_runtime_g1_wall_button_receipt_matches(
+    const DM2_V1_RuntimeState *rt, const DM2_V1_DoorRender *door,
+    int width, int height, uint32_t palette_hash)
+{
+    int i;
+
+    if (!rt || !door || door->button_source_kind != 2 ||
+        door->wall_button_field != 1 || width <= 0 || height <= 0 ||
+        palette_hash == 0u) {
+        return 0;
+    }
+    if (rt->g1_map5_text_wall_gfx_runtime.valid &&
+        rt->g1_map5_text_wall_gfx_runtime.map == rt->dungeon_level) {
+        const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt =
+            &rt->g1_map5_text_wall_gfx_runtime;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1TextWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == door->wall_button_x &&
+                material->y == door->wall_button_y &&
+                material->object_id == door->wall_button_object_id &&
+                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
+                material->front_image_ready &&
+                material->front_image_width == (uint16_t)width &&
+                material->front_image_height == (uint16_t)height &&
+                material->local_palette_hash == palette_hash) {
+                return 1;
+            }
+        }
+    }
+    if (rt->g1_actuator_wall_gfx_runtime.valid &&
+        rt->g1_actuator_wall_gfx_runtime.map == rt->dungeon_level) {
+        const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt =
+            &rt->g1_actuator_wall_gfx_runtime;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1ActuatorWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == door->wall_button_x &&
+                material->y == door->wall_button_y &&
+                material->object_id == door->wall_button_object_id &&
+                material->wall_gfx_index == (uint8_t)door->wall_button_index &&
+                material->front_image_ready &&
+                material->front_image_width == (uint16_t)width &&
+                material->front_image_height == (uint16_t)height &&
+                material->local_palette_hash == palette_hash) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/* SKProject DRAW_DEFAULT_DOOR_BUTTON consumes a custom WALL_GFX field-1
+ * surface after DB2/DB3 has selected the root. Carry that single verified
+ * surface through M11; a missing receipt deliberately leaves the normal
+ * source plan to no-draw rather than substituting another door image. */
+static void dm2_runtime_bind_g1_scene_wall_button_material(
+    const DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
+    const DM2_V1_DoorRenderPlan *plan)
+{
+    const DM2_V1_DoorRender *door = NULL;
+    const uint8_t *pixels = NULL;
+    uint8_t palette16[16];
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int gdat_index;
+    uint32_t palette_hash = 0u;
+    uint32_t pixel_hash;
+
+    if (!rt || !viewport || !plan ||
+        rt->viewport_asset_fetch != dm2_v1_boot_viewport_asset_fetch ||
+        !rt->viewport_asset_user || !rt->viewport_asset_palette_fetch) {
+        goto clear;
+    }
+    for (int i = 0; i < plan->door_count; ++i) {
+        if (plan->doors[i].button_source_kind == 2) {
+            door = &plan->doors[i];
+            break;
+        }
+    }
+    if (!door || door->wall_button_field != 1 ||
+        door->wall_button_index < 0 || door->wall_button_index > 0xff) {
+        goto clear;
+    }
+    gdat_index = dm2_v1_viewport_wall_button_graphic_index(
+        door->wall_button_index, door->wall_button_field);
+    if (gdat_index == 0 || gdat_index != door->button_gdat_index ||
+        rt->viewport_asset_fetch(rt->viewport_asset_user, gdat_index,
+                                 &pixels, &width, &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width ||
+        rt->viewport_asset_palette_fetch(rt->viewport_asset_palette_user,
+                                         gdat_index, palette16,
+                                         &palette_hash) != 0 ||
+        !dm2_runtime_g1_wall_button_receipt_matches(
+            rt, door, width, height, palette_hash)) {
+        goto clear;
+    }
+    pixel_hash = dm2_runtime_indexed_pixel_hash(pixels, width, height, stride);
+    dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+        viewport, 1, gdat_index, door->wall_button_index,
+        door->wall_button_field, door->wall_button_x, door->wall_button_y,
+        door->wall_button_object_id, pixels, width, height, stride,
+        palette16, palette_hash, pixel_hash);
+    return;
+
+clear:
+    dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+        viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+}
+
 static void dm2_runtime_append_creature_possession_item(
     DM2_V1_ViewportState *viewport,
     uint16_t thing,
@@ -3594,6 +3705,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_v1_viewport_set_gdat_door_overlay_material_plan(
             &viewport, &rt->gdat_door_material_plan);
     }
+    dm2_runtime_bind_g1_scene_wall_button_material(
+        rt, &viewport, &door_render_plan);
     dm2_runtime_refresh_g1_scene_handoff(
         rt, rt->dungeon_level,
         party_x + forward_dx[party_dir & 3],
