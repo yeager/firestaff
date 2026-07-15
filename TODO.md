@@ -6336,6 +6336,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     from presenting a retail DGN scene before an original Saturn trace proves
     the Structure2 pixel/palette and VDP1 relations. The block is not a
     decoder, draw route, or substitute visual.
+  - 2026-07-15 VDP1 command-admission update: an already source-bound PRS3
+    V3 command sidecar can now be checked as one complete documented 32-byte
+    VDP1 texture command before any later capture analysis. Independent Saturn
+    provenance, PRS3 opcode grammar, pixel mode, palette format, and runtime
+    rendering remain explicitly unproved and blocked.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure1C source-route update: every addressable bounded

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nexus_v1_dungeon.h"
+
 /* Standalone schema gate for externally captured SH-2 PRS3 traces. It does
  * not read assets, decode a stream, or authorize a runtime route. */
 #define NEXUS_V1_PRS3_CAPTURE_TRACE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_TRACE_V1"
@@ -197,6 +199,24 @@ typedef struct {
     Nexus_V1_Prs3Vdp1CaptureFileReceipt trace_file;
 } Nexus_V1_Prs3Vdp1RawSidecarReceipt;
 
+/* Parsed hardware framing from a source-bound V3 VDP1 command sidecar. This
+ * does not authenticate the external producer and cannot establish PRS3
+ * opcodes, decoded pixels, palette interpretation, or a runtime draw route. */
+typedef struct {
+    int valid;
+    int capture_source_bound;
+    int command_sidecar_hash_bound;
+    int complete_vdp1_command_record;
+    int command_format_parsed;
+    Nexus_V1_Vdp1TextureCommand command;
+    int original_saturn_capture_verified;
+    int pixel_format_proven;
+    int palette_format_proven;
+    int decoder_promoted;
+    int runtime_import_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Vdp1CommandSidecarReceipt;
+
 /* Provenance ledger for a raw-sidecar admission. It binds the supplied files
  * to a named capture producer binary, but does not authenticate that producer
  * or claim original-Saturn execution. */
@@ -349,6 +369,13 @@ int nexus_v1_prs3_vdp1_capture_validate_raw_sidecars(
     const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
     const char *output_path, const char *vdp1_command_path,
     const char *palette_path, Nexus_V1_Prs3Vdp1RawSidecarReceipt *out_receipt);
+/* Consume an already source-bound V3 sidecar command as one documented VDP1
+ * packet. The caller must separately obtain independent Saturn provenance;
+ * this function is strictly a no-draw capture-analysis boundary. */
+int nexus_v1_prs3_vdp1_capture_inspect_command_sidecar(
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const uint8_t *vdp1_command, size_t vdp1_command_size,
+    Nexus_V1_Prs3Vdp1CommandSidecarReceipt *out_receipt);
 
 /* Validate a text provenance ledger against already admitted raw sidecars and
  * the exact trace/sidecar/producer files. This never changes the producer

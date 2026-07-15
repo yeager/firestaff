@@ -657,6 +657,51 @@ done:
     return receipt.raw_sidecars_bound;
 }
 
+int nexus_v1_prs3_vdp1_capture_inspect_command_sidecar(
+    const Nexus_V1_Prs3Vdp1RawSidecarReceipt *raw_sidecars,
+    const uint8_t *vdp1_command, size_t vdp1_command_size,
+    Nexus_V1_Prs3Vdp1CommandSidecarReceipt *out_receipt)
+{
+    Nexus_V1_Prs3Vdp1CommandSidecarReceipt receipt;
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *trace;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!raw_sidecars || !vdp1_command) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    trace = &raw_sidecars->trace_file.trace;
+    receipt.capture_source_bound = raw_sidecars->raw_sidecars_bound &&
+        raw_sidecars->trace_file.source_bound_capture &&
+        raw_sidecars->trace_file.v3_trace_parsed && trace->valid &&
+        trace->schema_version == 3U &&
+        trace->vdp1_command_consumption_observed;
+    receipt.command_sidecar_hash_bound = receipt.capture_source_bound &&
+        raw_sidecars->vdp1_command_sidecar_bound &&
+        vdp1_command_size == trace->vdp1_command_read_bytes &&
+        fnv1a64(vdp1_command, vdp1_command_size) ==
+            trace->vdp1_command_fnv1a64;
+    receipt.complete_vdp1_command_record = receipt.command_sidecar_hash_bound &&
+        vdp1_command_size == NEXUS_V1_VDP1_COMMAND_BYTES;
+    if (receipt.complete_vdp1_command_record &&
+        nexus_v1_vdp1_texture_command_parse(vdp1_command,
+            (int)vdp1_command_size, &receipt.command) == 0) {
+        receipt.command_format_parsed = 1;
+    }
+    receipt.valid = receipt.command_format_parsed;
+    /* The sidecar is source-bound but not independently authenticated, and
+     * packet fields alone cannot define texture/palette decoding. */
+    receipt.original_saturn_capture_verified = 0;
+    receipt.pixel_format_proven = 0;
+    receipt.palette_format_proven = 0;
+    receipt.decoder_promoted = 0;
+    receipt.runtime_import_permitted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_prs3_vdp1_capture_validate_provenance(
     const char *ledger_path, const char *trace_path, const char *output_path,
     const char *vdp1_command_path, const char *palette_path,
