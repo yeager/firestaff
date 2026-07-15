@@ -1874,6 +1874,30 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.structure1c_source_packet.no_draw_only &&
                       untextured_viewport.structure1c_source_packet
                           .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+                      ((untextured_viewport.structure1c_source_packet
+                            .referenced_by_structure1b &&
+                        untextured_viewport.structure1c_source_packet
+                            .reference_occurrence_count > 0 &&
+                        untextured_viewport.structure1c_source_packet
+                            .first_reference_x >= 0 &&
+                        untextured_viewport.structure1c_source_packet
+                            .first_reference_y >= 0 &&
+                        untextured_viewport.structure1c_source_packet
+                            .last_reference_x >= 0 &&
+                        untextured_viewport.structure1c_source_packet
+                            .last_reference_y >= 0) ||
+                       (!untextured_viewport.structure1c_source_packet
+                             .referenced_by_structure1b &&
+                        untextured_viewport.structure1c_source_packet
+                            .reference_occurrence_count == 0 &&
+                        untextured_viewport.structure1c_source_packet
+                            .first_reference_x == -1 &&
+                        untextured_viewport.structure1c_source_packet
+                            .first_reference_y == -1 &&
+                        untextured_viewport.structure1c_source_packet
+                            .last_reference_x == -1 &&
+                        untextured_viewport.structure1c_source_packet
+                            .last_reference_y == -1)) &&
                       untextured_viewport.last_dgn_render_receipt
                           .structure2_payload_anchor_scene_consumed &&
                       untextured_viewport.last_dgn_render_receipt
