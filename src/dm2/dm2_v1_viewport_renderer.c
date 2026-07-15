@@ -1561,7 +1561,7 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
                                        int frame_index)
 {
     int packed;
-    if (item_category < 0 || item_category > 0xFF ||
+    if (item_category <= 0 || item_category > 0xFF ||
         item_type < 0 || item_type > 0xFF ||
         frame_index < 0 || frame_index > 0xFF) {
         return 0;
@@ -1579,7 +1579,7 @@ int dm2_v1_viewport_item_category_for_db_pool(int db_pool)
     case 6:  return 0x11; /* CLOTH */
     case 7:  return 0x12; /* SCROLL */
     case 10: return 0x15; /* MISC */
-    default: return 0x15;
+    default: return 0;
     }
 }
 
@@ -2884,9 +2884,9 @@ int dm2_v1_viewport_build_item_render_plan(
 
     /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP/DRAW_TEMP_PICST routes
      * floor possessions through QUERY_DUNGEON_MAP_CHIP_PICT before the
-     * scaled draw call. Keep the object identity and bounded fallback in a
-     * DM2-owned plan; source-frame clipping still depends on the fetched
-     * bitmap dimensions and is resolved in the blit pass. */
+     * scaled draw call. The record-owned category is mandatory; source-frame
+     * clipping still depends on the fetched bitmap dimensions and is resolved
+     * in the blit pass. */
     for (int i = 0; i < s->item_count && i < DM2_MAX_ITEMS_PER_SQ; ++i) {
         const DM2_ItemSprite *src = &s->items[i];
         DM2_V1_ItemRender *row;
@@ -2898,7 +2898,7 @@ int dm2_v1_viewport_build_item_render_plan(
             continue;
         }
 
-        category = src->item_category ? src->item_category : 0x15;
+        category = src->item_category;
         row = &out_plan->items[out_plan->item_count++];
         row->item_index = i;
         row->item_category = category;
@@ -2940,9 +2940,9 @@ int dm2_v1_viewport_build_carried_item_render_plan(
     }
 
     /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM_IN_HAND selects the carried
-     * object's GDAT identity before drawing the cursor buffer. Firestaff's
-     * bounded viewport overlay keeps that identity/fallback state explicit. */
-    category = src->item_category ? src->item_category : 0x15;
+     * object's GDAT identity before drawing the cursor buffer. A missing
+     * original category cannot be normalized to a miscellaneous icon. */
+    category = src->item_category;
     row = &out_plan->item;
     out_plan->item_present = 1;
     row->item_index = 0;
@@ -2991,7 +2991,7 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
             continue;
         }
 
-        category = src->item_category ? src->item_category : 0x15;
+        category = src->item_category;
         row = &out_plan->items[out_plan->item_count++];
         row->item_index = i;
         row->item_category = category;
@@ -4855,9 +4855,8 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
     /* DM2 item rendering:
      * skproject SKWIN/SkWinCore.cpp lines 10523-10549 draws floor items
      * through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) and
-     * DRAW_CHIP_OF_MAGIC_MAP. The category is carried on the sprite when
-     * available; older population code leaves it at zero and therefore uses
-     * miscellaneous as a bounded fallback category. */
+     * DRAW_CHIP_OF_MAGIC_MAP. The category must be carried by the original
+     * record; an absent category has no source-owned GDAT image. */
 
     if (!dm2_v1_viewport_build_item_render_plan(s, &plan)) {
         return;
