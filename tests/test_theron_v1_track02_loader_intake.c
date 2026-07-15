@@ -37,12 +37,38 @@ static Theron_V1Track02LoaderReadFacts valid_facts(void) {
     return facts;
 }
 
+static Theron_V1Track02IsoLevelObjectReadFacts valid_iso_facts(
+    const uint8_t *payload, size_t payload_bytes) {
+    Theron_V1Track02IsoLevelObjectReadFacts facts;
+
+    memset(&facts, 0, sizeof(facts));
+    facts.authenticated_original_iso_capture = 1;
+    facts.cue_declares_mode1_2048 = 1;
+    facts.track02_variant = THERON_TRACK02_VARIANT_US_ISO;
+    facts.track02_record = THERON_V1_INITIAL_ENVELOPE_RECORD;
+    facts.destination = THERON_V1_INITIAL_ENVELOPE_DESTINATION;
+    facts.byte_count = THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES;
+    facts.complete_payload_witness_verified = 1;
+    facts.complete_payload_checksum = fnv1a32(payload, payload_bytes);
+    facts.level_envelope_witness_verified = 1;
+    facts.level_envelope_checksum =
+        fnv1a32(payload + THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+                THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES);
+    facts.post_envelope_witness_verified = 1;
+    facts.post_envelope_checksum =
+        fnv1a32(payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+                THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES);
+    return facts;
+}
+
 int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
+    Theron_V1Track02IsoLevelObjectReadFacts iso_facts;
     Theron_V1Track02LoaderIntakeReceipt receipt;
     Theron_V1Track02LoaderPayloadReceipt payload_receipt;
     Theron_V1Track02LoaderLevelEnvelopeReceipt level_envelope_receipt;
     Theron_V1Track02LoaderPostEnvelopeReceipt post_envelope_receipt;
+    Theron_V1Track02IsoLevelObjectReceipt iso_receipt;
     uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
     uint8_t raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES * 2u];
     uint8_t iso_track02[THERON_TRACK02_RAW_USER_DATA_BYTES * 2u];
@@ -173,6 +199,62 @@ int main(void) {
     CHECK(!level_envelope_receipt.handed_off &&
           level_envelope_receipt.status == NULL);
     payload_receipt.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    CHECK(theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    CHECK(iso_receipt.handed_off && iso_receipt.no_fallback);
+    CHECK(iso_receipt.original_iso_capture && iso_receipt.cue_mode1_2048);
+    CHECK(iso_receipt.no_raw_bin_trace_borrowing &&
+          iso_receipt.no_sector_conversion &&
+          iso_receipt.no_synthetic_dungeon);
+    CHECK(iso_receipt.track02_variant == THERON_TRACK02_VARIANT_US_ISO);
+    CHECK(iso_receipt.record == THERON_V1_INITIAL_ENVELOPE_RECORD);
+    CHECK(iso_receipt.destination == THERON_V1_INITIAL_ENVELOPE_DESTINATION);
+    CHECK(iso_receipt.payload_bytes == sizeof(payload));
+    CHECK(iso_receipt.payload_checksum == iso_facts.complete_payload_checksum);
+    CHECK(iso_receipt.level_envelope_offset ==
+          THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET);
+    CHECK(iso_receipt.level_envelope_bytes ==
+          THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES);
+    CHECK(memcmp(iso_receipt.level_envelope,
+                 payload + THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET,
+                 THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES) == 0);
+    CHECK(iso_receipt.post_envelope_offset ==
+          THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET);
+    CHECK(iso_receipt.post_envelope_bytes ==
+          THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES);
+    CHECK(memcmp(iso_receipt.post_envelope,
+                 payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+                 THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES) == 0);
+    CHECK(strcmp(iso_receipt.status,
+                 "iso_mode1_2048_initial_level_and_post_envelope_source_bytes_no_semantics") == 0);
+    iso_facts.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    CHECK(!iso_receipt.handed_off && iso_receipt.status == NULL);
+    iso_facts.track02_variant = THERON_TRACK02_VARIANT_JP_REV1_ISO;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    iso_facts.raw_bin_trace_borrowed = 1;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    iso_facts.sector_conversion_applied = 1;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    iso_facts.synthetic_dungeon_promoted = 1;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    iso_facts.level_envelope_checksum ^= 1u;
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload), &iso_receipt));
+    iso_facts = valid_iso_facts(payload, sizeof(payload));
+    CHECK(!theron_v1_track02_loader_intake_handoff_iso_level_object_record(
+        &iso_facts, payload, sizeof(payload) - 1u, &iso_receipt));
 
     facts.authenticated_original_trace = 0;
     CHECK(!theron_v1_track02_loader_intake_observe(&facts, &receipt));

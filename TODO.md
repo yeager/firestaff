@@ -795,9 +795,13 @@
   2026-07-16 update: that JP/US raw-BIN variant is now retained through the
   complete payload, initial level-envelope, and post-envelope receipts, folded
   into the raw handoff hash, and rechecked by boot/startup runtime consumers.
-  Remaining: bind a real ISO capture that proves the first level/object
-  record; no raw-BIN trace, sector conversion, or synthetic dungeon may
-  authorize it.
+  2026-07-16 update: a separate MODE1/2048 ISO first-sector handoff now
+  accepts only an authenticated US ISO capture, rejects raw-BIN trace
+  borrowing, sector conversion, JP zero ISO, and synthetic dungeon promotion,
+  and copies the initial level envelope plus post-envelope bytes as opaque
+  source material. Remaining: operator-stage a real ISO capture through that
+  gate and independently prove object/bitmap semantics; no raw-BIN trace,
+  sector conversion, or synthetic dungeon may authorize them.
 
 - 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
   receipt inspection is deliberately separate from the live Soul Room
