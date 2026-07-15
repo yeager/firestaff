@@ -353,7 +353,12 @@ static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
     case DM2_V1_GDAT_DOOR_FRAME:
         gdat_index = door->frame_gdat_index;
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
-        *out_index = DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
+        /* SKWIN/SkWinCore.cpp::DRAW_DOOR_FRAMES captures glbMapGraphicsSet
+         * before resolving either frame image.  An unbound value is invalid;
+         * the legacy default exists only for callers that have not attached a
+         * source scene receipt. */
+        *out_index = door->graphicsset_index;
+        if (*out_index < 0 || *out_index > 0xff) return 0;
         *out_field = dm2_v1_viewport_door_frame_field_for_square(door->view_square);
         break;
     case DM2_V1_GDAT_DOOR_BUTTON:
