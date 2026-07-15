@@ -1103,6 +1103,32 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure2TraceAdmissionReceipt;
 
+/* Admission result for one external trace that binds the complete atomic
+ * Structure1F/1A, Structure3, and Structure2 capture request. Successful
+ * admission keeps every lane opaque and cannot authorize a decoder or draw. */
+typedef enum {
+    NEXUS_V1_OWNER_MATERIAL_TRACE_MISSING = 0,
+    NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_BUNDLE = 1,
+    NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_TARGET = 2,
+    NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_STRUCTURE2 = 3,
+    NEXUS_V1_OWNER_MATERIAL_TRACE_ADMITTED_OPAQUE = 4
+} Nexus_V1_DgnOwnerMaterialTraceStatus;
+
+typedef struct {
+    Nexus_V1_DgnOwnerMaterialTraceStatus status;
+    int level_index;
+    int descriptor_index;
+    int atomic_target_bound;
+    int owner_face_bound;
+    int structure2_trace_admitted;
+    int original_saturn_capture_verified;
+    int opaque_trace_admitted;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt;
+
 /* Active party pose bound to the canonical LEV source and the bounded raw
  * Structure1A transform-selector evidence. This is camera input provenance,
  * not a decoded Saturn camera, transform, culling, or drawing rule. */
@@ -2018,6 +2044,16 @@ int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const uint8_t *raw_trace, size_t raw_trace_size,
     int original_saturn_capture_verified,
     Nexus_V1_DgnStructure2TraceAdmissionReceipt *out_receipt);
+/* Consume one external trace only after it identifies the active atomic
+ * owner/face/material target and passes the exact Structure2 admission gate.
+ * The trace stays opaque until independent format proof exists. */
+int nexus_v1_engine_admit_structure1a_structure3_material_capture_trace(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);

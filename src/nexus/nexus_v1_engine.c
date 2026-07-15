@@ -22,6 +22,9 @@ typedef struct {
     const char *md5;
 } Nexus_V1_KnownFileHash;
 
+static uint64_t nexus_v1_owner_material_capture_target_fnv1a64(
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target);
+
 static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
     {"TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"},
@@ -3940,6 +3943,7 @@ int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
                        "palette_candidate_present=%d\npalette_anchor_offset=%u\n"
                        "palette_next_anchor_offset=%u\npalette_candidate_byte_count=%u\n"
                        "palette_candidate_fnv1a64=%016llx\n"
+                       "capture_target_fnv1a64=%016llx\n"
                        "requested_observations=source-read,structure1a-owner,structure3-face,palette-state,vdp1-vram,vdp1-command,transform,culling\n"
                        "original_saturn_capture_required=1\nno_draw_only=1\n",
                        NEXUS_V1_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_MAGIC,
@@ -3984,7 +3988,10 @@ int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
                        target.material_target.descriptor_target
                            .palette_payload_candidate_byte_count,
                        (unsigned long long)target.material_target.descriptor_target
-                           .palette_payload_candidate_fnv1a64) > 0;
+                           .palette_payload_candidate_fnv1a64,
+                       (unsigned long long)
+                           nexus_v1_owner_material_capture_target_fnv1a64(
+                               &target)) > 0;
     if (fclose(file) != 0) write_ok = 0;
     if (!write_ok || rename(temporary_path, path) != 0) {
         remove(temporary_path);
@@ -6023,6 +6030,79 @@ static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static uint64_t nexus_v1_capture_target_hash_mix(uint64_t hash,
+                                                  uint64_t value)
+{
+    int byte_index;
+    for (byte_index = 0; byte_index < 8; ++byte_index) {
+        hash ^= (value >> (byte_index * 8)) & 0xffU;
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static uint64_t nexus_v1_owner_material_capture_target_fnv1a64(
+    const Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *target)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *owner;
+    const Nexus_V1_DgnStructure2DescriptorCaptureTarget *descriptor;
+
+    if (!target || !target->valid) return 0;
+    owner = &target->owner_face_target;
+    descriptor = &target->material_target.descriptor_target;
+    hash = nexus_v1_capture_target_hash_mix(hash, (uint64_t)target->level_index);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            target->material_target.source_bytes_fnv1a64);
+    hash = nexus_v1_capture_target_hash_mix(hash, (uint64_t)owner->owner_x);
+    hash = nexus_v1_capture_target_hash_mix(hash, (uint64_t)owner->owner_y);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            (uint64_t)owner->structure1f_entry_index);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            (uint64_t)owner->structure1f_family);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure1f_tag);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure1f_face_selector);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure1a_index);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure1a_kind);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure3_model_index);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->z_rotation);
+    hash = nexus_v1_capture_target_hash_mix(hash, owner->structure3_payload_fnv1a32);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.entry_index);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.face_ordinal);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.face_row_fnv1a32);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.referenced_vertex_rows_fnv1a32);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.normal_row_fnv1a32);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, owner->face_target.candidate.fill_selector);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            (uint64_t)descriptor->descriptor_index);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            descriptor->descriptor_bytes_fnv1a64);
+    hash = nexus_v1_capture_target_hash_mix(hash,
+                                            descriptor->image_payload_anchor_offset);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->image_payload_next_anchor_offset);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->image_payload_candidate_byte_count);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->image_payload_candidate_fnv1a64);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->palette_payload_candidate_bound);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->palette_payload_anchor_offset);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->palette_payload_next_anchor_offset);
+    hash = nexus_v1_capture_target_hash_mix(
+        hash, descriptor->palette_payload_candidate_byte_count);
+    return nexus_v1_capture_target_hash_mix(
+        hash, descriptor->palette_payload_candidate_fnv1a64);
+}
+
 static int nexus_v1_slev_trace_hex_u64(const char *text, uint64_t *out_value) {
     uint64_t value = 0;
     const char *cursor;
@@ -6176,6 +6256,110 @@ int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     receipt.original_saturn_capture_verified = 1;
     receipt.opaque_trace_admitted = 1;
     receipt.status = NEXUS_V1_STRUCTURE2_TRACE_ADMITTED_OPAQUE;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_v1_engine_admit_structure1a_structure3_material_capture_trace(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt target_route;
+    Nexus_V1_DgnStructure2TraceAdmissionReceipt structure2_receipt;
+    Nexus_V1_DgnOwnerMaterialTraceAdmissionReceipt receipt;
+    const Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt *owner;
+    char value[96];
+    uint32_t parsed_u32;
+    uint64_t parsed_u64;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_MISSING;
+    receipt.level_index = -1;
+    receipt.descriptor_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&target, 0, sizeof(target));
+    memset(&target_route, 0, sizeof(target_route));
+    if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
+        raw_trace_size == 0 ||
+        nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+            engine, topology_candidate_index, structure3_entry_index,
+            structure3_face_ordinal, &target, &target_route) != 1) {
+        receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_BUNDLE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    owner = &target.owner_face_target;
+    receipt.level_index = target.level_index;
+    receipt.descriptor_index = target.material_target.descriptor_target
+        .descriptor_index;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "capture_target_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != nexus_v1_owner_material_capture_target_fnv1a64(&target) ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "owner_x",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)owner->owner_x ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "owner_y",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)owner->owner_y ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1f_entry_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)owner->structure1f_entry_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != owner->structure1a_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure3_entry_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != owner->face_target.candidate.entry_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "face_ordinal", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != owner->face_target.candidate.face_ordinal ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "face_row_fnv1a32", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != owner->face_target.candidate.face_row_fnv1a32 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "descriptor_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        (int)parsed_u32 != receipt.descriptor_index) {
+        receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_TARGET;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.atomic_target_bound = 1;
+    receipt.owner_face_bound = 1;
+    memset(&structure2_receipt, 0, sizeof(structure2_receipt));
+    if (nexus_v1_engine_admit_structure2_descriptor_capture_trace(
+            engine, receipt.descriptor_index, manifest_text, manifest_size,
+            raw_trace, raw_trace_size, original_saturn_capture_verified,
+            &structure2_receipt) != 1) {
+        receipt.original_saturn_capture_verified =
+            structure2_receipt.original_saturn_capture_verified;
+        receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_STRUCTURE2;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.structure2_trace_admitted = structure2_receipt.opaque_trace_admitted;
+    receipt.original_saturn_capture_verified =
+        structure2_receipt.original_saturn_capture_verified;
+    receipt.opaque_trace_admitted = receipt.structure2_trace_admitted;
+    receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_ADMITTED_OPAQUE;
     *out_receipt = receipt;
     return 1;
 }
