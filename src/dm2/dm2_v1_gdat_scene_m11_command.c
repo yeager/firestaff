@@ -168,12 +168,15 @@ int dm2_v1_gdat_scene_light_m11_receipt(
     }
     memset(&candidate, 0, sizeof(candidate));
     candidate.graphicsset = plan->graphicsset;
+    candidate.ambient_light = plan->ambient_light;
     candidate.highest_light_level = plan->highest_light_level;
     candidate.ambient_darkness = plan->ambient_darkness;
     candidate.scene_control_hash = plan->command_hash;
     hash = hash_bytes(hash, &candidate.graphicsset, sizeof(candidate.graphicsset));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.scene_control_hash,
                       sizeof(candidate.scene_control_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.ambient_light,
+                      sizeof(candidate.ambient_light));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.highest_light_level,
                       sizeof(candidate.highest_light_level));
     hash = hash_bytes(hash, (const uint8_t *)&candidate.ambient_darkness,
@@ -203,12 +206,13 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_COLORKEY, &candidate.scene_colorkey) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags) ||
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_LIGHT, &candidate.ambient_light) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness) ||
         candidate.ambient_darkness > 8u) return 0;
-    /* skproject CHECK_RECOMPUTE_LIGHT clamps this exact GRAPHICSSET field at
-     * eight. Every live G1 set carries it; AMBIANT_LIGHT does not, so it is
-     * intentionally outside this fail-closed scene/light command family. */
+    /* skproject RECALC_LIGHT_LEVEL adds AMBIANT_LIGHT before it selects the
+     * live light level; CHECK_RECOMPUTE_LIGHT separately clamps darkness at
+     * eight. Both controls belong to this active G1 scene transaction. */
     candidate.graphicsset = graphicsset;
     if (!dm2_v1_gdat_scene_query_blit_rect_receipt(
             loader, &candidate.query_blit_rect) ||
@@ -294,6 +298,7 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
                       sizeof(candidate.query_blit_rect_hash));
     hash ^= candidate.scene_colorkey; hash *= 16777619u;
     hash ^= candidate.scene_flags; hash *= 16777619u;
+    hash ^= candidate.ambient_light; hash *= 16777619u;
     hash ^= candidate.highest_light_level; hash *= 16777619u;
     hash ^= candidate.ambient_darkness; hash *= 16777619u;
     if (!hash) { dm2_v1_gdat_scene_m11_command_plan_free(&candidate); return 0; }

@@ -38,6 +38,7 @@ typedef struct {
     uint8_t graphicsset;
     uint16_t scene_colorkey;
     uint16_t scene_flags;
+    uint16_t ambient_light;
     uint16_t highest_light_level;
     uint16_t ambient_darkness;
     uint32_t command_hash;
@@ -58,6 +59,7 @@ typedef struct {
 typedef struct {
     int valid;
     uint8_t graphicsset;
+    uint16_t ambient_light;
     uint16_t highest_light_level;
     uint16_t ambient_darkness;
     uint32_t scene_control_hash;

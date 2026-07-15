@@ -216,6 +216,8 @@ int main(void)
         uint8_t *decoded_floor = NULL;
         uint8_t *decoded_ceiling = NULL;
         uint16_t ambient_darkness = 0u;
+        uint16_t ambient_light = 0u;
+        int has_ambient_light;
         int has_ambient_darkness;
         int complete = dm2_v1_asset_load_image_metadata(
                 &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
@@ -235,6 +237,9 @@ int main(void)
         has_ambient_darkness = dm2_v1_asset_load_word_value(
             &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
             DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &ambient_darkness);
+        has_ambient_light = dm2_v1_asset_load_word_value(
+            &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, style,
+            DM2_GDAT_GFXSET_AMBIANT_LIGHT, &ambient_light);
         for (uint16_t entry = 0u; entry < loader.entry_count; ++entry) {
             const DM2_V1_GdatEntry *candidate = &loader.entries[entry];
             if (candidate->cls1 != DM2_GDAT_CATEGORY_GRAPHICSSET ||
@@ -292,6 +297,7 @@ int main(void)
                 !command_plan.commands[0].pixels || !command_plan.commands[1].pixels ||
                 command_plan.commands[0].palette_hash == 0u ||
                 command_plan.commands[1].palette_hash == 0u ||
+                !has_ambient_light || command_plan.ambient_light != ambient_light ||
                 !has_ambient_darkness || ambient_darkness > 8u ||
                 command_plan.ambient_darkness != ambient_darkness) {
                 ++failures;
