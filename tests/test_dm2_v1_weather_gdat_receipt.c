@@ -284,6 +284,26 @@ int main(void)
     check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[1], &draw_context,
                                         &draw_plan) && draw_plan.mirror_flip,
           "weather draw plan follows source FW=2 parity flip");
+    {
+        const uint8_t dynamic_slot[DM2_V1_DISTANT_ENVIRONMENT_BYTES] = {
+            0x68u, 2u, 0x71u, 0x17u, 20u, 0u, 10u, 0u, 0x20u, 0x30u
+        };
+
+        draw_context.map_x = 1;
+        draw_context.moving_other_offset_y = 13;
+        check(dm2_v1_weather_distant_environment_receipt(
+                  &receipt, 0x68u, 0u, dynamic_slot, &distant) &&
+                  dm2_v1_weather_gdat_draw_plan_from_distant_environment(
+                      &receipt.commands[1], &distant, &draw_context,
+                      &draw_plan) && draw_plan.valid && !draw_plan.mirror_flip &&
+                  draw_plan.scale_x == 26u && draw_plan.scale_y == 39u &&
+                  draw_plan.draw_offset_x == 16 && draw_plan.draw_offset_y == 21,
+              "live DistantEnvironment w4/w6/b8/b9 control the weather blit");
+        distant.raw[1] = 8u;
+        check(!dm2_v1_weather_gdat_draw_plan_from_distant_environment(
+                  &receipt.commands[1], &distant, &draw_context, &draw_plan),
+              "weather draw rejects a live slot with mismatched cmFW");
+    }
     draw_context.player_moving = 0;
     draw_context.scene_flags = 0x20u;
     draw_context.player_direction = 1u;
@@ -314,8 +334,8 @@ int main(void)
           "restored weather state carries only validated runtime fields");
     {
         const uint8_t source_slots[2][DM2_V1_DISTANT_ENVIRONMENT_BYTES] = {
-            { 0x68u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0x40u, 0x40u },
-            { 0x6bu, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0x40u, 0x40u }
+            { 0x68u, 2u, 0x71u, 0x17u, 0u, 0u, 0u, 0u, 0x40u, 0x40u },
+            { 0x6bu, 0u, 0x75u, 0x17u, 0u, 0u, 0u, 0u, 0x40u, 0x40u }
         };
         DM2_V1_DistantEnvironmentReceipt source_receipts[2];
 

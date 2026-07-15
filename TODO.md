@@ -6495,6 +6495,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     pixels, rect, or transparency mode produces no backdrop; no generic panel
     tile or replacement image is available.
 - DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_SET_TIMER_WEATHER`, `DM2_UPDATE_WEATHER`, `DM2_weather_3df7_0037`, `c_light.cpp`, and `c_cloud.cpp`: `src/dm2/dm2_v1_weather.c`, `dm2_v1_outdoor_renderer.c`, and `dm2_v1_runtime.c` lack the source timer/reseed/light/cloud interaction chain. The runtime now forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: source timer dispatcher, reseed/light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, and real-data capture. Do not add a procedural visual substitute.
+  - 2026-07-15 update: presented weather now consumes the live ten-byte
+    `DistantEnvironment` register image rather than reinitializing it at the
+    renderer. `cmFW`, `cmCD`, `w4/w6`, and `b8/b9` are hash-validated against
+    the selected GDAT command and drive the original mirror, offset, and
+    scale branches through the final `QUERY_TEMP_PICST` receipt. Altered,
+    mismatched, or out-of-range slot data is no-draw. Remaining: source timer
+    dispatch/reseed and corpus-backed live slot production.
   - 2026-07-15 update: a presented source weather transaction now carries its
     exact `WeatherRendererReceipt` hash and command count through the viewport
     into M11. M11 accepts it only after every selected `DistantEnvironment`
