@@ -8576,3 +8576,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     02-derived source address `$3c88`. This is byte provenance only, not a
     decoder, routine name, or level/object grammar. Remaining: a real trace
     must observe the entered routine's next data read or call.
+  - Update: the immediate entry-successor now also has to remain inside that
+    same copied TII span and match its mapped original Track 02 byte. This
+    proves two bounded execution bytes, not instruction length, routine role,
+    record format, or dungeon semantics. Remaining: observe a real CD-read,
+    data access, or call from this copied routine.

@@ -19210,3 +19210,11 @@ The entered routine at the Track 02-derived TII destination now requires its
 observed opcode to equal the exact first source byte copied from `$3c88`.
 The receipt retains copied and original source addresses while leaving routine,
 level, object, palette, bitmap, and rendering semantics unclassified.
+
+# ✅ 2026-07-15 Theron Track 02 copied-entry successor receipt
+
+The first observed successor after the copied destination entry now has to
+remain inside the same TII destination span and match its corresponding
+original byte (`$3c89`). This extends the byte-to-execution chain without
+assigning instruction, record, dungeon, object, palette, bitmap, or rendering
+meaning.

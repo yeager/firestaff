@@ -470,6 +470,20 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt;
 
+/* The immediate observed successor to the copied destination entry. Both
+ * observed opcodes must map back into the same bounded Track 02 copy span. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt
+        entry_copy;
+    uint16_t next_pc;
+    uint32_t next_physical_pc;
+    uint16_t original_source_address;
+    uint8_t next_source_byte;
+    int copied_successor_byte_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyNextReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -765,6 +779,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt *out);
+
+/* Requires the next observed instruction after the copied destination entry
+ * to remain inside that copy span and match its original Track 02 byte. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy_next(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyNextReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
