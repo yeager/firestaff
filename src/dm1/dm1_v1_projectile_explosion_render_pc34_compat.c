@@ -32,6 +32,39 @@ int dm1_v1_projectile_subtype_graphic_index(int subtype) {
     return DM1_GFX_FIRST_PROJECTILE + first;
 }
 
+int dm1_v1_f0142_get_projectile_aspect_pc34(
+    int projectileSubtype,
+    int associatedThingType,
+    int associatedThingSubtype,
+    int weaponProjectileAspectOrdinal)
+{
+    int aspect;
+
+    if (associatedThingType >= THING_TYPE_WEAPON &&
+        associatedThingType <= THING_TYPE_JUNK) {
+        if (associatedThingType == THING_TYPE_WEAPON &&
+            weaponProjectileAspectOrdinal > 0) {
+            if (weaponProjectileAspectOrdinal > DM1_PROJECTILE_ASPECT_COUNT) {
+                return DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34;
+            }
+            return -weaponProjectileAspectOrdinal;
+        }
+
+        aspect = dm1_item_aspect_index(associatedThingType,
+                                       associatedThingSubtype);
+        if (aspect < 0) {
+            return DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34;
+        }
+        return aspect;
+    }
+
+    aspect = dm1_v1_projectile_subtype_to_aspect(projectileSubtype);
+    if (aspect < 0 || aspect >= DM1_PROJECTILE_ASPECT_COUNT) {
+        return DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34;
+    }
+    return -(aspect + 1);
+}
+
 int dm1_v1_c100_rebirth_lightning_graphic_index_pc34(void)
 {
     /* ReDMCSB DUNVIEW.C F0115:5965-5969,5977-5979 resolves the original
@@ -64,36 +97,24 @@ int dm1_v1_projectile_material_resolve_pc34(
     /* ReDMCSB DUNGEON.C F0142: weapons with M066's nonzero ordinal use
      * G0210 projectile art; every other carried object uses G0237/G0209.
      * DUNVIEW.C F0115:5896-5900 then enters the object draw path. */
-    if (associatedThingType >= THING_TYPE_WEAPON &&
-        associatedThingType <= THING_TYPE_JUNK) {
-        if (associatedThingType == THING_TYPE_WEAPON &&
-            weaponProjectileAspectOrdinal > 0) {
-            aspect = weaponProjectileAspectOrdinal - 1;
-            if (aspect < 0 || aspect >= DM1_PROJECTILE_ASPECT_COUNT) {
-                return 0;
-            }
-            resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
-            resolution.aspect_index = aspect;
-        } else {
-            aspect = dm1_item_aspect_index(associatedThingType,
-                                           associatedThingSubtype);
-            if (aspect < 0) {
-                return 0;
-            }
-            resolution.uses_object_aspect = 1;
-            resolution.graphic_index = (int)dm1_object_aspect_graphic_index(aspect);
-            resolution.aspect_index = aspect;
-            if (resolution.graphic_index <= 0) {
-                return 0;
-            }
-        }
-    } else {
-        aspect = dm1_v1_projectile_subtype_to_aspect(projectileSubtype);
-        if (aspect < 0) {
-            return 0;
-        }
+    aspect = dm1_v1_f0142_get_projectile_aspect_pc34(
+        projectileSubtype, associatedThingType, associatedThingSubtype,
+        weaponProjectileAspectOrdinal);
+    if (aspect == DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34) {
+        return 0;
+    }
+
+    if (aspect < 0) {
+        aspect = -aspect - 1;
         resolution.graphic_index = dm1_v1_projectile_graphic_index(aspect, 0);
         resolution.aspect_index = aspect;
+    } else {
+        resolution.uses_object_aspect = 1;
+        resolution.graphic_index = (int)dm1_object_aspect_graphic_index(aspect);
+        resolution.aspect_index = aspect;
+        if (resolution.graphic_index <= 0) {
+            return 0;
+        }
     }
 
     resolution.valid = 1;

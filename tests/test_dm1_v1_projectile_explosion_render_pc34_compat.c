@@ -179,6 +179,58 @@ static void test_projectile_subtype_mapping(void) {
               DM1_GFX_FIRST_PROJECTILE, "kinetic subtype gfx");
 }
 
+static void test_f0142_signed_projectile_aspect_contract(void) {
+    int potionAspect;
+
+    printf("  F0142 signed projectile aspect contract...\n");
+
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_FIREBALL, -1, -1, 0),
+              -(DM1_PROJ_ASPECT_FIREBALL + 1),
+              "fireball returns negative projectile-aspect ordinal");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_LIGHTNING_BOLT, -1, -1, 0),
+              -(DM1_PROJ_ASPECT_LIGHTNING_BOLT + 1),
+              "lightning returns negative projectile-aspect ordinal");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_POISON_CLOUD, -1, -1, 0),
+              -(DM1_PROJ_ASPECT_POISON + 1),
+              "poison cloud returns negative projectile-aspect ordinal");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_OPEN_DOOR, -1, -1, 0),
+              -(DM1_PROJ_ASPECT_DEFAULT + 1),
+              "open-door returns default negative projectile-aspect ordinal");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_KINETIC_ARROW, -1, -1, 0),
+              -1,
+              "kinetic arrow returns first projectile-aspect ordinal");
+
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                  THING_TYPE_WEAPON, 8, 2),
+              -2,
+              "weapon M066 ordinal remains negative");
+
+    potionAspect = dm1_item_aspect_index(THING_TYPE_POTION, 0);
+    ASSERT_TRUE(potionAspect >= 0, "potion object aspect exists");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                  THING_TYPE_POTION, 0, 0),
+              potionAspect,
+              "ordinary object returns G0237 object-aspect index");
+
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                  THING_TYPE_WEAPON, 8, DM1_PROJECTILE_ASPECT_COUNT + 1),
+              DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34,
+              "out-of-range weapon projectile ordinal fails closed");
+    ASSERT_EQ(dm1_v1_f0142_get_projectile_aspect_pc34(
+                  PROJECTILE_SUBTYPE_KINETIC_ARROW,
+                  THING_TYPE_POTION, 99, 0),
+              DM1_F0142_INVALID_PROJECTILE_ASPECT_PC34,
+              "unresolved object aspect fails closed");
+}
+
 /* ReDMCSB DUNGEON.C F0142 and DUNVIEW.C F0115:5891-5900: a live thrown
  * Slot is not always a 454.. projectile bitmap.  This verifies the same
  * G0237/G0209 object-material handoff without fabricating any pixels. */
@@ -1593,6 +1645,7 @@ int main(void) {
     test_c100_rebirth_lightning_material();
     test_projectile_bitmap_deltas();
     test_projectile_subtype_mapping();
+    test_f0142_signed_projectile_aspect_contract();
     test_thrown_object_material_resolution();
     test_projectile_scale();
     test_projectile_d4_is_source_nodraw();

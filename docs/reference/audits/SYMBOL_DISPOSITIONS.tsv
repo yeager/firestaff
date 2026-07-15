@@ -1,1 +1,2 @@
 reference	symbol	disposition	owner	evidence	notes
+ReDMCSB	F0142_DUNGEON_GetProjectileAspect	VERIFIED_SOURCE_MAPPING	DM1	tests/test_dm1_v1_f0142_projectile_aspect_pc34_compat.c; src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c	Models DUNGEON.C:1165-1224 signed return contract: negative PROJECTIL_ASPECT ordinal for spells/weapon M066 projectile art, zero/positive G0237 OBJECT_ASPECT index for ordinary thrown objects; consumed by DM1 projectile material resolution.
