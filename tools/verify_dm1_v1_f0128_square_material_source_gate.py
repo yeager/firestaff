@@ -59,7 +59,7 @@ def main() -> int:
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
     d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells);")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
-    assert effect >= 0 and d0 > effect and mirror > d0
+    assert mirror >= 0 and effect >= 0 and mirror < effect < d0
     print("ok: F0128 D3..D1 material is not side-culled and D0 is final")
     return 0
 
