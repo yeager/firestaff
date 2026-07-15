@@ -3926,6 +3926,32 @@ static int dm2_v1_boot_startup_typed_raw_gdat_hash(
     return 1;
 }
 
+int dm2_v1_boot_wall_gfx_ornate_animation_field(
+    DM2_V1_BootProfile *profile, uint8_t wall_gfx_index, uint32_t tick,
+    uint32_t delta, uint8_t *out_field, uint32_t *out_receipt_hash)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    uint16_t frame = 0u;
+    uint32_t receipt = 0u;
+
+    if (out_field) *out_field = 0u;
+    if (out_receipt_hash) *out_receipt_hash = 0u;
+    if (!profile || !profile->graphics_dat || !out_field ||
+        !out_receipt_hash) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!dm2_v1_asset_query_ornate_animation_frame(
+            &gfx->loader, DM2_GDAT_CATEGORY_WALL_GFX, wall_gfx_index,
+            tick, delta, &frame, &receipt) || frame > 63u) {
+        return 0;
+    }
+    /* SUMMARIZE_STONE_ROOM packs frame in bits 10.. then the viewport's
+     * WALL_GFX resolver uses ((packed >> 8) & 0xff) + 1. */
+    *out_field = (uint8_t)(frame * 4u + 1u);
+    *out_receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        receipt, *out_field);
+    return *out_receipt_hash != 0u;
+}
+
 int dm2_v1_boot_gdat_raw_asset_proof(
     DM2_V1_BootProfile *profile,
     int category,

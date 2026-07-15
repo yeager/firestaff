@@ -7336,6 +7336,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     route stays no-draw when authentic runtime evidence is absent.
   - 2026-07-15 update: source-required M11 square projection no longer assigns a synthetic per-tile full-light value (`15`). The active G1 `GRAPHICSSET` receipt supplies only proven ambient controls; until `c_light` produces an authenticated per-square result, projected squares retain light level zero and cannot claim a fully-lit source route. Compatibility-only callers retain the old default outside the original-data path.
   - 2026-07-15 update: the source-bound terminal `c_light.cpp::DM2_RECALC_LIGHT_LEVEL` receipt is now implemented: dynamic maps consume an authenticated pre-darkness `v1e0974` value, non-dynamic maps use the original base level one, then the receipt subtracts authenticated `v1e0978` and clamps to 0..5. It refuses a missing raw-state hash and does not derive brightness from GRAPHICSSET. The authenticated result now has a fail-closed M11 dungeon-square metadata consumer, the source `DISPLAY_VIEWPORT` `light_level * 10` palette parameter, a source-frame identity binding, and a raw `Map_definitions::Difficulty()` receipt that rejects the wrong fixed/dynamic state branch. Remaining: bind the inventory/record accumulator and darkness state from a real PC runtime/save before live M11 can publish or remap a palette.
+  - 2026-07-15 update: live legacy DB0-door wall-button material now resolves
+    SKProject `QUERY_ORNATE_ANIM_FRAME(WALL_GFX, index, tick, 0)` before M11
+    selects its `dtImage` field. The exact `dtWordValue/0x0d` length/high-bit
+    base or NUL-terminated `dtText/0x0d` base-36 sequence is required; bad
+    sequence bytes, missing data, or an unavailable selected image remain
+    no-draw. G1 direct-door roots and wall/floor ornament placement still
+    need their own source-backed animation-record handoff.
   - 2026-07-15 update: `DRAW_DOOR_FRAMES` side jambs now consume their
     separate `GRAPHICSSET` fields through exact `QUERY_TEMP_PICST` inputs:
     `QUERY_GDAT_SUMMARY_IMAGE` offsets, RAW4 `QUERY_CREATURE_BLIT_RECTI`

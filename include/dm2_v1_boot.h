@@ -1857,6 +1857,12 @@ int dm2_v1_boot_gdat_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
+/* Resolves SKProject QUERY_ORNATE_ANIM_FRAME from boot-owned GDAT and turns
+ * its frame into the WALL_GFX dtImage field used by the live viewport. */
+int dm2_v1_boot_wall_gfx_ornate_animation_field(
+    DM2_V1_BootProfile *profile, uint8_t wall_gfx_index, uint32_t tick,
+    uint32_t delta, uint8_t *out_field, uint32_t *out_receipt_hash);
+
 int dm2_v1_boot_gdat_typed_raw_asset_proof(
     DM2_V1_BootProfile *profile,
     int category,

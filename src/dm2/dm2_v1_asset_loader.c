@@ -842,6 +842,59 @@ int dm2_v1_asset_load_word_value(
     return 1;
 }
 
+int dm2_v1_asset_query_ornate_animation_frame(
+    const DM2_V1_AssetLoader *loader, int category, int index,
+    uint32_t tick, uint32_t delta, uint16_t *out_frame,
+    uint32_t *out_receipt_hash)
+{
+    enum { ANIMATION_FIELD = 0x0d };
+    uint16_t length = 0u;
+    uint16_t frame_base = 0u;
+    uint32_t hash = 2166136261u;
+    const uint8_t *sequence = NULL;
+    size_t sequence_size = 0u;
+    size_t sequence_length = 0u;
+
+    if (out_frame) *out_frame = 0u;
+    if (out_receipt_hash) *out_receipt_hash = 0u;
+    if (!loader || !out_frame || !out_receipt_hash || category < 0 ||
+        index < 0 || index > 0xff) return 0;
+    if (dm2_v1_asset_load_word_value(loader, category, index,
+                                     ANIMATION_FIELD, &length)) {
+        if (length & 0x8000u) frame_base = 1u;
+        length &= 0x7fffu;
+        if (length == 0u) return 0;
+        *out_frame = (uint16_t)(((tick + delta) % length) + frame_base);
+        hash ^= (uint32_t)category; hash *= 16777619u;
+        hash ^= (uint32_t)index; hash *= 16777619u;
+        hash ^= length; hash *= 16777619u;
+        hash ^= frame_base; hash *= 16777619u;
+    } else {
+        sequence = dm2_v1_asset_load_text_sized(loader, category, index,
+                                                 ANIMATION_FIELD,
+                                                 &sequence_size);
+        if (!sequence || sequence_size == 0u) return 0;
+        while (sequence_length < sequence_size && sequence[sequence_length])
+            ++sequence_length;
+        if (sequence_length == 0u || sequence_length == sequence_size)
+            return 0;
+        for (size_t i = 0u; i < sequence_length; ++i) {
+            uint8_t value = sequence[i];
+            if (value >= '0' && value <= '9') value -= '0';
+            else if (value >= 'A' && value <= 'Z') value -= 'A' - 10u;
+            else return 0;
+            if (i == (size_t)((tick + delta) % sequence_length))
+                *out_frame = value;
+            hash ^= sequence[i]; hash *= 16777619u;
+        }
+    }
+    hash ^= tick; hash *= 16777619u;
+    hash ^= delta; hash *= 16777619u;
+    hash ^= *out_frame; hash *= 16777619u;
+    *out_receipt_hash = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_asset_load_image_offset(
     const DM2_V1_AssetLoader *loader,
     int category,
