@@ -1209,9 +1209,31 @@ void dm2_v1_viewport_set_g1_scene_creature_material(
     s->g1_scene_creature_material_width = width;
     s->g1_scene_creature_material_height = height;
     s->g1_scene_creature_material_stride = stride;
+    s->g1_scene_creature_material_pixels = NULL;
+    memset(s->g1_scene_creature_material_palette16, 0,
+           sizeof(s->g1_scene_creature_material_palette16));
     s->g1_scene_creature_material_palette_hash = palette_hash;
     s->g1_scene_creature_material_consumed_count = 0;
     s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_g1_scene_creature_material_direct(
+    DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
+    int creature_type, int gdat_index, const uint8_t *pixels,
+    int width, int height, int stride, const uint8_t palette16[16],
+    uint32_t palette_hash)
+{
+    dm2_v1_viewport_set_g1_scene_creature_material(
+        s, ready, map_x, map_y, creature_type, gdat_index, width, height,
+        stride, palette_hash);
+    if (!s) return;
+    if (!s->g1_scene_creature_material_ready || !pixels || !palette16) {
+        s->g1_scene_creature_material_ready = 0;
+        return;
+    }
+    s->g1_scene_creature_material_pixels = pixels;
+    memcpy(s->g1_scene_creature_material_palette16, palette16,
+           sizeof(s->g1_scene_creature_material_palette16));
 }
 
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
@@ -4847,10 +4869,34 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
             int src_w = 0;
             int src_h = 0;
             int src_stride = 0;
-            if (c->gdat_index != 0 &&
-                dm2_v1_fetch_viewport_local_material(
-                    s, c->gdat_index, &pixels, &src_w, &src_h,
-                    &src_stride) == 0 &&
+            const int direct_g1_scene_material =
+                c->source_kind == 2 &&
+                s->g1_scene_creature_material_ready &&
+                s->g1_scene_creature_material_pixels &&
+                c->map_x == s->g1_scene_creature_material_map_x &&
+                c->map_y == s->g1_scene_creature_material_map_y &&
+                c->creature_type == s->g1_scene_creature_material_type &&
+                c->gdat_index == s->g1_scene_creature_material_gdat_index;
+            if (direct_g1_scene_material) {
+                /* c_map owns QUERY_DUNGEON_MAP_CHIP_PICT before c_gui_vp
+                 * draws it.  M10 consumes that bounded handoff directly;
+                 * querying the provider again could swap GDAT bytes mid-frame. */
+                pixels = s->g1_scene_creature_material_pixels;
+                src_w = s->g1_scene_creature_material_width;
+                src_h = s->g1_scene_creature_material_height;
+                src_stride = s->g1_scene_creature_material_stride;
+                memcpy(s->active_asset_palette16,
+                       s->g1_scene_creature_material_palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash =
+                    s->g1_scene_creature_material_palette_hash;
+                s->active_asset_palette_ready = 1;
+            }
+            if ((direct_g1_scene_material ||
+                 (c->gdat_index != 0 &&
+                  dm2_v1_fetch_viewport_local_material(
+                      s, c->gdat_index, &pixels, &src_w, &src_h,
+                      &src_stride) == 0)) &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
                 if (c->source_kind == 2 &&

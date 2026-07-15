@@ -333,10 +333,12 @@ int main(void)
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_g1_creature_map_chip_materials(
         &viewport, &material_receipt);
-    dm2_v1_viewport_set_g1_scene_creature_material(
+    dm2_v1_viewport_set_g1_scene_creature_material_direct(
         &viewport, 1, creature_x, creature_y, trace.creature_type,
-        handoff.gdat_index, handoff.material_width, handoff.material_height,
-        handoff.material_stride, handoff.material_palette_hash);
+        handoff.gdat_index, handoff.material_pixels,
+        handoff.material_width, handoff.material_height,
+        handoff.material_stride, handoff.material_palette16,
+        handoff.material_palette_hash);
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = (uint8_t)trace.creature_type;
     viewport.creatures[0].source_kind = 2;
@@ -352,8 +354,8 @@ int main(void)
         viewport.fallback_creature_drawn_count != 0 ||
         viewport.blocked_material_draw_count != 0 ||
         viewport.g1_scene_creature_material_consumed_count != 1 ||
-        !viewport.last_creature_asset_blit_valid || trace.fetch_calls != 2 ||
-        trace.palette_calls != 2) {
+        !viewport.last_creature_asset_blit_valid || trace.fetch_calls != 1 ||
+        trace.palette_calls != 1) {
         fputs("FAIL: canonical DB4 owner did not consume its F9 material draw\n",
               stderr);
         failures = 1;

@@ -103,6 +103,11 @@ int main(int argc, char **argv)
         fputs("FAIL: real wall route did not bind its material receipt\n", stderr);
         return 1;
     }
+    if (!receipt.material_pixels || receipt.material_palette16[1] != 0x2a) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: handoff did not retain its decoded GDAT material\n", stderr);
+        return 1;
+    }
     if (!dm2_v1_g1_scene_runtime_handoff(
             &dungeon, 0, 0, 4, resolve_material, &calls, fetch_material,
             &calls, fetch_palette, &calls, &receipt) || !receipt.valid ||
