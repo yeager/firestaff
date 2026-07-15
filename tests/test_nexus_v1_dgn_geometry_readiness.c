@@ -757,6 +757,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   vdp1_state_write.vdp1_register_0x04_write_proven &&
                   vdp1_state_write.vdp1_register_0x04_value == 2U &&
                   vdp1_state_write.vdp1_command_control_candidate_proven &&
+                  vdp1_state_write.vdp1_vram_base_literal_offset == 0x7d4bc &&
+                  vdp1_state_write.vdp1_vram_base_load_offset == 0x7d3e8 &&
+                  vdp1_state_write.vdp1_vram_base_r14_store_offset == 0x7d3ea &&
+                  vdp1_state_write.vdp1_vram_base_r14_store_proven &&
+                  !vdp1_state_write.vdp1_vram_command_list_proven &&
                   vdp1_state_write.vdp1_register_0x06_write_proven &&
                   vdp1_state_write.vdp1_register_0x06_value == 0x8000U &&
                   vdp1_state_write.vdp1_register_0x08_write_proven &&

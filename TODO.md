@@ -7087,6 +7087,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     control-register write, but not proof that a frame executes it or that a
     command list is emitted. Preserve no-draw until a real Saturn trace joins
     this path to VDP1 command bytes, palette state, transform state, and DGN.
+  - 2026-07-15 VDP1-VRAM handoff update: `DM.BIN+0x7d3e8` loads its verified
+    `0x25C00000` literal, immediately followed by `MOV.L R2,@R14`. Firestaff
+    retains this exact original memory handoff but does not assign an owner to
+    `R14`, infer a command-list address or bytes, or claim execution. A trace
+    must still bind palette/transform state and an active DGN face.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
