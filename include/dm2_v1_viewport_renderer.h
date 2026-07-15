@@ -500,6 +500,8 @@ typedef struct {
 #define DM2_MAX_CREATURES_PER_SQ  4
 #define DM2_MAX_ITEMS_PER_SQ      8
 #define DM2_MAX_CREATURE_POSSESSION_ITEMS 8
+#define DM2_MAX_PRESENTED_ITEM_MATERIALS \
+    (DM2_MAX_ITEMS_PER_SQ + DM2_MAX_CREATURE_POSSESSION_ITEMS + 1)
 #define DM2_MAX_PROJECTILES       16
 
 #define DM2_V1_PROJECTILE_RENDER_MISSILE 0
@@ -951,6 +953,11 @@ typedef struct {
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
     int asset_carried_item_drawn_count;
     int fallback_carried_item_drawn_count;
+    /* All successful visible object map-chip blits in presentation order.
+     * source_kind is 1=floor, 2=creature possession, 3=leader hand. */
+    int item_material_drawn_count;
+    int item_material_gdat_indices[DM2_MAX_PRESENTED_ITEM_MATERIALS];
+    uint8_t item_material_source_kinds[DM2_MAX_PRESENTED_ITEM_MATERIALS];
     int last_item_render_valid;
     int last_item_asset_blit_valid;
     int last_item_source_kind;

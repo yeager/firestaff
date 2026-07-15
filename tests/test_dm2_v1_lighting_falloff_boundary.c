@@ -1476,6 +1476,36 @@ static void test_sprite_asset_provider(void)
     CHECK("item map-chip atlas draws only the selected frame",
           framebuffer[((90 - 3) * 320) + (80 - 3)] == 6 &&
               framebuffer[(90 * 320) + 80] == 6);
+    CHECK("item receipt preserves the floor-item GDAT owner",
+          viewport.item_material_drawn_count == 1 &&
+              viewport.item_material_source_kinds[0] == 1 &&
+              viewport.item_material_gdat_indices[0] ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.item_count = 2;
+    viewport.items[0].item_category = 0x10;
+    viewport.items[0].item_type = 0x22;
+    viewport.items[0].frame_index = 0x04;
+    viewport.items[0].screen_x = 80;
+    viewport.items[0].screen_y = 90;
+    viewport.items[1].item_category = 0x10;
+    viewport.items[1].item_type = 0x23;
+    viewport.items[1].frame_index = 0x02;
+    viewport.items[1].screen_x = 112;
+    viewport.items[1].screen_y = 90;
+    dm2_v1_viewport_set_asset_provider(&viewport, test_dm2_asset_fetch, NULL);
+    dm2_v1_render_items(&viewport);
+    CHECK("item receipt cannot collapse a multi-blit source frame",
+          viewport.asset_item_drawn_count == 2 &&
+              viewport.item_material_drawn_count == 2 &&
+              viewport.item_material_source_kinds[0] == 1 &&
+              viewport.item_material_source_kinds[1] == 1 &&
+              viewport.item_material_gdat_indices[0] ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) &&
+              viewport.item_material_gdat_indices[1] ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x23, 0x02));
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1551,6 +1581,11 @@ static void test_sprite_asset_provider(void)
                   dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0) &&
               viewport.asset_creature_possession_item_drawn_count == 1 &&
               viewport.fallback_creature_possession_item_drawn_count == 0);
+    CHECK("item receipt retains the creature-possession source pass",
+          viewport.item_material_drawn_count == 1 &&
+              viewport.item_material_source_kinds[0] == 2 &&
+              viewport.item_material_gdat_indices[0] ==
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0));
     CHECK("creature possession overlay applies skproject object flip mirror",
           framebuffer[((80 - 3) * 320) + (100 - 3)] == 36 &&
               framebuffer[((80 - 3) * 320) + (100 + 3)] == 30);
@@ -1614,6 +1649,11 @@ static void test_sprite_asset_provider(void)
               viewport.asset_carried_item_drawn_count == 1 &&
               viewport.fallback_carried_item_drawn_count == 0 &&
               framebuffer[(70 * 320) + 120] == 6);
+    CHECK("item receipt retains the leader-hand source pass",
+          viewport.item_material_drawn_count == 1 &&
+              viewport.item_material_source_kinds[0] == 3 &&
+              viewport.item_material_gdat_indices[0] ==
+                  dm2_v1_viewport_item_graphic_index(0x15, 0x22, 0x04));
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
