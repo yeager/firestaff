@@ -2128,7 +2128,13 @@ int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
         }
         for (skill = 0; skill < CHAMPION_SKILL_COUNT &&
                         skill < CSB_V1_SKILL_COUNT; ++skill) {
-            dst->skillLevels[skill] = src->Skills[skill];
+            /* CSBWin Code17818.cpp::DetermineMastery is the live CHARDESC
+             * owner when a loaded CSBWin save supplies the complete 20-row
+             * SKILL table.  Do not mirror the lossy cached 16-byte row after
+             * a DSA Magic.cpp::AddToSkill mutation. */
+            int level = csb_v1_runtime_get_champion_skill_level(
+                profile, i, skill);
+            dst->skillLevels[skill] = (uint8_t)((level > 0) ? level : 1);
         }
         /* ReDMCSB: DEFS.H C00_SLOT_READY_HAND/C01_SLOT_ACTION_HAND and
          * PANEL.C F0354 status boxes read champion slots by semantic slot.

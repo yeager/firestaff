@@ -111,6 +111,12 @@
   A mastery transition remains fail-closed until the complete random/stat/UI
   `LevelUp` transaction is source-owned; do not publish XP while omitting
   those effects.
+  - 2026-07-15 follow-up: the same loaded 20-row `CHARDESC::skills92`
+    owner now supplies the live M11 party-skill mirror through
+    `Code17818.cpp::DetermineMastery`, rather than the stale 16-byte cached
+    level row. The bounded non-level-up DSA mutation also reaches the
+    CSBWin CHARDESC save-summary writer. `LevelUp` remains fail-closed until
+    its complete random/stat/UI transaction is owned.
 
 - 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
   exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
@@ -900,6 +906,11 @@
     positive action path separately from an unavailable package. It neither
     predicts a timer nor synthesizes a DSA action; current local data has no
     checksum-valid extended save to exercise this positive branch.
+  - 2026-07-15 follow-up: the bounded authenticated
+    `STKOP_ExperiencePlus` route now carries its source-owned CHARDESC skill
+    mutation into both M11's party snapshot and the CSBWin save-summary
+    writer. This is only the non-level-up `Magic.cpp::AddToSkill` path; no
+    DSA fixture, synthetic skill level, or partial `LevelUp` result is used.
 
 - REDMCSB-CSB-GAP-002 — **CSBWin's restored timer queue is not ReDMCSB's
   timeline.** ReDMCSB `TIMELINE.C F0240/F0261` owns heap EVENT records, while
