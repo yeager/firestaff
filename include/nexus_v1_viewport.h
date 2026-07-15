@@ -37,6 +37,9 @@ typedef struct {
     int structure3_animated_material_scene_consumed;
     Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt
         structure3_animated_material_scene;
+    int structure3_untextured_face_scene_consumed;
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt
+        structure3_untextured_face_scene;
     int party_x;
     int party_y;
     int party_dir;
@@ -125,6 +128,7 @@ typedef struct {
      * traversal of the complete source-bound static-material scene. */
     Nexus_V1_DgnStructure3PackageGeometryPacket structure3_package_geometry;
     Nexus_V1_DgnStructure3AnimatedMaterialPacket structure3_animated_material;
+    Nexus_V1_DgnStructure3UntexturedFacePacket structure3_untextured_face;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 

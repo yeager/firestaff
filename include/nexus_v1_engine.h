@@ -608,6 +608,56 @@ typedef struct {
 typedef int (*Nexus_V1_DgnStructure3AnimatedMaterialConsumer)(
     void *context, const Nexus_V1_DgnStructure3AnimatedMaterialPacket *packet);
 
+/* A non-texture-flagged Structure3 face with its exact typed geometry. The
+ * raw fill selector stays opaque: no flat-colour, blend, palette, VDP1, or
+ * raster meaning is assigned before original Saturn evidence exists. */
+typedef struct {
+    int valid;
+    int source_geometry_bound;
+    int raw_fill_bound;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    int face_byte_offset;
+    uint64_t face_bytes_fnv1a64;
+    Nexus_V1_DgnStructure3Face face;
+    Nexus_V1_DgnStructure3Vector vertices[4];
+    int vertex_slot_count;
+    Nexus_V1_DgnStructure3Vector normal;
+    uint16_t raw_fill_selector;
+    int flat_fill_semantics_proven;
+    int transform_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3UntexturedFacePacket;
+
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int structure3_entry_count;
+    int candidate_face_count;
+    int untextured_face_count;
+    int consumed_face_count;
+    int complete;
+    int flat_fill_semantics_proven;
+    int transform_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt;
+
+typedef int (*Nexus_V1_DgnStructure3UntexturedFaceConsumer)(
+    void *context, const Nexus_V1_DgnStructure3UntexturedFacePacket *packet);
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1336,6 +1386,18 @@ int nexus_v1_current_level_visit_structure3_animated_materials(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3AnimatedMaterialConsumer consumer, void *context,
     Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt *out_receipt);
+/* Build one source-bound non-textured Structure3 face packet. Raw fill bytes
+ * are retained solely for later capture correlation and cannot draw a colour. */
+int nexus_v1_current_level_structure3_untextured_face_packet(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal,
+    Nexus_V1_DgnStructure3UntexturedFacePacket *out_packet);
+/* Traverse every non-texture-flagged Structure3 face from the active
+ * canonical LEV through source-only no-draw packets. */
+int nexus_v1_current_level_visit_structure3_untextured_faces(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3UntexturedFaceConsumer consumer, void *context,
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt *out_receipt);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

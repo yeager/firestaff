@@ -3720,6 +3720,204 @@ int nexus_v1_current_level_visit_structure3_animated_materials(
     return receipt.complete ? 1 : 0;
 }
 
+int nexus_v1_current_level_structure3_untextured_face_packet(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal,
+    Nexus_V1_DgnStructure3UntexturedFacePacket *out_packet)
+{
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+    Nexus_V1_DgnStructure3MeshEntryReceipt mesh_receipt;
+    Nexus_V1_DgnStructure3Vector *vertices = NULL;
+    Nexus_V1_DgnStructure3Vector *normals = NULL;
+    Nexus_V1_DgnStructure3Face *faces = NULL;
+    const Nexus_V1_DgnStructure3Face *face;
+    const uint8_t *data;
+    uint32_t entry_relative_offset;
+    uint32_t face_relative_offset;
+    uint16_t source_face_count;
+    int face_byte_offset;
+    int slot_count;
+    int result = 0;
+
+    if (!out_packet) return -1;
+    memset(out_packet, 0, sizeof(*out_packet));
+    out_packet->level_index = -1;
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
+    if (!engine ||
+        nexus_v1_current_level_structure3_face_material_receipt(
+            engine, &material_receipt) != 1 ||
+        structure3_entry_index >=
+            (uint32_t)engine->current_level.structure3_directory.entry_count ||
+        !engine->current_level_dgn_data) {
+        return 0;
+    }
+    data = engine->current_level_dgn_data;
+    entry_relative_offset = nexus_v1_dgn_read_be32(
+        data + engine->current_level.structure3_payload.byte_offset + 4 +
+        structure3_entry_index * 4U);
+    if (entry_relative_offset >
+            (uint32_t)engine->current_level.structure3_payload.byte_size ||
+        (uint32_t)engine->current_level.structure3_payload.byte_size -
+            entry_relative_offset < 40U) return 0;
+    source_face_count = (uint16_t)((unsigned int)
+        data[engine->current_level.structure3_payload.byte_offset +
+             entry_relative_offset + 6] << 8 |
+        data[engine->current_level.structure3_payload.byte_offset +
+             entry_relative_offset + 7]);
+    face_relative_offset = nexus_v1_dgn_read_be32(
+        data + engine->current_level.structure3_payload.byte_offset +
+        entry_relative_offset + 16);
+    if (face_ordinal >= source_face_count ||
+        face_relative_offset >
+            (uint32_t)engine->current_level.structure3_payload.byte_size ||
+        (uint32_t)engine->current_level.structure3_payload.byte_size -
+            face_relative_offset < 12U ||
+        face_ordinal > ((uint32_t)engine->current_level.structure3_payload.byte_size -
+                        face_relative_offset - 12U) / 12U) return 0;
+    face_byte_offset = engine->current_level.structure3_payload.byte_offset +
+        (int)face_relative_offset + (int)face_ordinal * 12;
+    if (face_byte_offset < engine->current_level.structure3_payload.byte_offset ||
+        face_byte_offset > engine->current_level_dgn_size - 12 ||
+        (data[face_byte_offset + 8] & 0x40U) != 0U) return 0;
+
+    memset(&mesh_receipt, 0, sizeof(mesh_receipt));
+    if (nexus_v1_current_level_extract_structure3_mesh_entry(
+            engine, (int)structure3_entry_index, NULL, 0, NULL, 0, NULL, 0,
+            &mesh_receipt) != -1 || !mesh_receipt.source_identity_valid ||
+        mesh_receipt.vertex_count <= 0 || mesh_receipt.face_count <= 0 ||
+        mesh_receipt.normal_count < mesh_receipt.face_count ||
+        face_ordinal >= (uint32_t)mesh_receipt.face_count) return 0;
+    vertices = (Nexus_V1_DgnStructure3Vector *)malloc(
+        (size_t)mesh_receipt.vertex_count * sizeof(*vertices));
+    faces = (Nexus_V1_DgnStructure3Face *)malloc(
+        (size_t)mesh_receipt.face_count * sizeof(*faces));
+    normals = (Nexus_V1_DgnStructure3Vector *)malloc(
+        (size_t)mesh_receipt.normal_count * sizeof(*normals));
+    if (!vertices || !faces || !normals) goto cleanup;
+    if (nexus_v1_current_level_extract_structure3_mesh_entry(
+            engine, (int)structure3_entry_index, vertices,
+            mesh_receipt.vertex_count, faces, mesh_receipt.face_count, normals,
+            mesh_receipt.normal_count, &mesh_receipt) != 0 ||
+        !mesh_receipt.valid || !mesh_receipt.source_identity_valid) goto cleanup;
+    face = &faces[face_ordinal];
+    slot_count = face->triangle ? 3 : 4;
+    if (slot_count < 3 || slot_count > 4 ||
+        face->vertex_indexes[0] >= (uint16_t)mesh_receipt.vertex_count ||
+        face->vertex_indexes[1] >= (uint16_t)mesh_receipt.vertex_count ||
+        face->vertex_indexes[2] >= (uint16_t)mesh_receipt.vertex_count ||
+        (slot_count == 4 &&
+         face->vertex_indexes[3] >= (uint16_t)mesh_receipt.vertex_count) ||
+        face->flags != data[face_byte_offset + 8] ||
+        face->raw_byte_9 != data[face_byte_offset + 9] ||
+        face->fill_selector != (uint16_t)(((unsigned int)
+            data[face_byte_offset + 10] << 8) | data[face_byte_offset + 11])) {
+        goto cleanup;
+    }
+    out_packet->valid = 1;
+    out_packet->source_geometry_bound = 1;
+    out_packet->raw_fill_bound = 1;
+    out_packet->level_index = engine->game.current_level;
+    out_packet->source_byte_count = engine->current_level_dgn_size;
+    out_packet->source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    out_packet->structure3_entry_index = structure3_entry_index;
+    out_packet->face_ordinal = face_ordinal;
+    out_packet->face_byte_offset = face_byte_offset;
+    out_packet->face_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + face_byte_offset, 12);
+    out_packet->face = *face;
+    out_packet->vertex_slot_count = slot_count;
+    out_packet->vertices[0] = vertices[face->vertex_indexes[0]];
+    out_packet->vertices[1] = vertices[face->vertex_indexes[1]];
+    out_packet->vertices[2] = vertices[face->vertex_indexes[2]];
+    if (slot_count == 4)
+        out_packet->vertices[3] = vertices[face->vertex_indexes[3]];
+    out_packet->normal = normals[face_ordinal];
+    out_packet->raw_fill_selector = face->fill_selector;
+    result = 1;
+
+cleanup:
+    free(normals);
+    free(faces);
+    free(vertices);
+    return result;
+}
+
+int nexus_v1_current_level_visit_structure3_untextured_faces(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3UntexturedFaceConsumer consumer, void *context,
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt receipt;
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+    int entry_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded ||
+        nexus_v1_current_level_structure3_face_material_receipt(
+            engine, &material_receipt) != 1 || !material_receipt.valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = material_receipt.level_index;
+    receipt.source_byte_count = material_receipt.source_byte_count;
+    receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    receipt.structure3_entry_count =
+        engine->current_level.structure3_directory.entry_count;
+    if (receipt.structure3_entry_count <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (entry_index = 0; entry_index < receipt.structure3_entry_count;
+         ++entry_index) {
+        int face_ordinal;
+        int face_count =
+            engine->current_level.structure3_entry_face_counts[entry_index];
+        if (face_count < 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        for (face_ordinal = 0; face_ordinal < face_count; ++face_ordinal) {
+            Nexus_V1_DgnStructure3UntexturedFacePacket packet;
+            ++receipt.candidate_face_count;
+            if (nexus_v1_current_level_structure3_untextured_face_packet(
+                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
+                    &packet) != 1) continue;
+            ++receipt.untextured_face_count;
+            if (!packet.valid || !packet.source_geometry_bound ||
+                !packet.raw_fill_bound || packet.flat_fill_semantics_proven ||
+                packet.transform_semantics_proven ||
+                packet.pixel_palette_vdp1_semantics_proven ||
+                packet.decoder_permitted || !packet.no_draw_only ||
+                packet.fallback_visuals_permitted ||
+                !packet.blocks_real_dgn_mesh_render ||
+                (packet.face.flags & 0x40U) != 0U) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            if (consumer && consumer(context, &packet) != 0) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.consumed_face_count;
+        }
+    }
+    if (receipt.candidate_face_count != material_receipt.faces.face_count ||
+        receipt.untextured_face_count !=
+            material_receipt.materials.non_textured_face_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.complete = receipt.consumed_face_count == receipt.untextured_face_count;
+    *out_receipt = receipt;
+    return receipt.complete ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

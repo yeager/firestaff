@@ -6433,6 +6433,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   att exekvera den: den förblir no-draw tills en autentisk Saturn-trace binder
   frameval, timing, pixelspan, palett och VDP1-kommandon till samma källa.
 
+  De återstående icke-texturerade Structure3-ansiktena traverseras också i
+  viewporten med råa fill-selector-bytes bundna till exakt geometri. De bytes
+  har ännu ingen bevisad flat-färg-, blend-, palett- eller VDP1-betydelse och
+  kan därför inte ritas innan en autentisk Saturn-capture etablerar den.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no
