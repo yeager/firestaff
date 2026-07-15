@@ -3124,7 +3124,8 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
 static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
                                 int md5Count,
                                 char outPaths[][ASSET_PATH_MAX],
-                                int matched[], int depth, int maxDepth) {
+                                int matched[], int depth, int maxDepth,
+                                int scanContainers) {
     DIR *d;
     struct dirent *ent;
     struct stat st;
@@ -3148,6 +3149,9 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
         if (S_ISREG(st.st_mode)) {
             int matchIndex;
             if (is_supported_container_path(path)) {
+                if (!scanContainers) {
+                    continue;
+                }
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -3173,7 +3177,8 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
         } else if (S_ISDIR(st.st_mode)) {
             foundCount += scan_dir_by_md5_list(path, md5List, md5Count,
                                                outPaths, matched,
-                                               depth + 1, maxDepth);
+                                               depth + 1, maxDepth,
+                                               scanContainers);
             if (foundCount >= md5Count) {
                 closedir(d);
                 return foundCount;
@@ -3238,7 +3243,8 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
                                 int md5Count,
                                 char outPaths[][ASSET_PATH_MAX],
-                                int matched[], int depth, int maxDepth) {
+                                int matched[], int depth, int maxDepth,
+                                int scanContainers) {
     WIN32_FIND_DATAA fd;
     HANDLE h;
     char pattern[ASSET_PATH_MAX], path[ASSET_PATH_MAX];
@@ -3256,7 +3262,8 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
         if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             foundCount += scan_dir_by_md5_list(path, md5List, md5Count,
                                                outPaths, matched,
-                                               depth + 1, maxDepth);
+                                               depth + 1, maxDepth,
+                                               scanContainers);
             if (foundCount >= md5Count) {
                 FindClose(h);
                 return foundCount;
@@ -3267,6 +3274,9 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             sz.LowPart = fd.nFileSizeLow;
             sz.HighPart = fd.nFileSizeHigh;
             if (is_supported_container_path(path)) {
+                if (!scanContainers) {
+                    continue;
+                }
                 foundCount += scan_container_by_md5_list(path, md5List, md5Count,
                                                          outPaths, matched);
                 if (foundCount >= md5Count) {
@@ -3397,7 +3407,7 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
     }
     if (normalizedCount > 0) {
         (void)scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
-                                   foundPaths, matched, 0, maxDepth);
+                                   foundPaths, matched, 0, maxDepth, 1);
         for (i = 0; i < normalizedCount; ++i) {
             if (matched[i] &&
                 copy_match_path(foundPaths[i], outPath, outPathLen)) {
@@ -3419,10 +3429,10 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
     return 0;
 }
 
-int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List,
-                               char outPaths[][ASSET_PATH_MAX],
-                               int *outMatched, int maxMatches,
-                               int maxDepth) {
+static int asset_find_all_by_md5_list_internal(
+    const char *searchDir, const char *const *md5List,
+    char outPaths[][ASSET_PATH_MAX], int *outMatched, int maxMatches,
+    int maxDepth, int scanContainers) {
     char (*normalized)[33];
     const char **normalizedPtrs;
     char (*normalizedPaths)[ASSET_PATH_MAX];
@@ -3468,7 +3478,7 @@ int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List
     if (normalizedCount > 0) {
         foundCount = scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
                                           normalizedPaths, normalizedMatched,
-                                          0, maxDepth);
+                                          0, maxDepth, scanContainers);
         for (i = 0; i < normalizedCount; ++i) {
             if (normalizedMatched[i]) {
                 int original = originalIndices[i];
@@ -3485,6 +3495,23 @@ int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List
     free(normalizedMatched);
     free(originalIndices);
     return foundCount;
+}
+
+int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List,
+                               char outPaths[][ASSET_PATH_MAX],
+                               int *outMatched, int maxMatches,
+                               int maxDepth) {
+    return asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
+                                               outMatched, maxMatches, maxDepth, 1);
+}
+
+int asset_find_all_files_by_md5_list(const char *searchDir,
+                                     const char *const *md5List,
+                                     char outPaths[][ASSET_PATH_MAX],
+                                     int *outMatched, int maxMatches,
+                                     int maxDepth) {
+    return asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
+                                               outMatched, maxMatches, maxDepth, 0);
 }
 
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath) {

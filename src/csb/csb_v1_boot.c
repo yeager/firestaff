@@ -1024,11 +1024,58 @@ static int csb_v1_boot_scan_required_paths(const char *root,
                                            size_t dungeon_path_size,
                                            int *dungeon_match)
 {
+    const char *hashes[8];
+    char paths[8][ASSET_PATH_MAX];
+    int matched[8];
+    int graphics_hash_count = 0;
+    int hash_count = 0;
+    int i;
     int graphics_verified;
     int dungeon_verified;
     if (!root || !graphics_path || !graphics_match ||
         !dungeon_path || !dungeon_match) {
         return 0;
+    }
+
+    graphics_path[0] = '\0';
+    dungeon_path[0] = '\0';
+    *graphics_match = -1;
+    *dungeon_match = -1;
+
+    /* A normal CSB install is a loose GRAPHICS.DAT/DUNGEON.DAT pair.  Verify
+     * that pair by content before considering any container.  In particular,
+     * do not ask archive tools to enumerate unrelated, potentially enormous
+     * media under a shared .firestaff/data root.  The complete container scan
+     * below remains the archive-only media path. */
+    while (g_csb_boot_graphics_hashes[graphics_hash_count] != NULL &&
+           hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1) {
+        hashes[hash_count++] = g_csb_boot_graphics_hashes[graphics_hash_count++];
+    }
+    for (i = 0; g_csb_boot_dungeon_hashes[i] != NULL &&
+                hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1; ++i) {
+        hashes[hash_count++] = g_csb_boot_dungeon_hashes[i];
+    }
+    hashes[hash_count] = NULL;
+    memset(paths, 0, sizeof(paths));
+    memset(matched, 0, sizeof(matched));
+    (void)asset_find_all_files_by_md5_list(root, hashes, paths, matched,
+                                           hash_count, 4);
+    for (i = 0; i < graphics_hash_count; ++i) {
+        if (matched[i]) {
+            csb_v1_boot_copy(graphics_path, graphics_path_size, paths[i]);
+            *graphics_match = i;
+            break;
+        }
+    }
+    for (i = graphics_hash_count; i < hash_count; ++i) {
+        if (matched[i]) {
+            csb_v1_boot_copy(dungeon_path, dungeon_path_size, paths[i]);
+            *dungeon_match = i - graphics_hash_count;
+            break;
+        }
+    }
+    if (*graphics_match >= 0 && *dungeon_match >= 0) {
+        return 1;
     }
 
     graphics_path[0] = '\0';
