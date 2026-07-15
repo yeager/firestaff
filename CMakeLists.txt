@@ -9086,6 +9086,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_startup_menu_action_contract
     )
 
+    add_executable(test_dm2_v1_anim_bootstrap
+        tests/test_dm2_v1_anim_bootstrap.c
+    )
+    target_include_directories(test_dm2_v1_anim_bootstrap PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_anim_bootstrap PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_anim_bootstrap PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_anim_bootstrap
+        COMMAND test_dm2_v1_anim_bootstrap
+    )
+
     add_executable(test_dm2_v1_startup_audio_menu
         tests/test_dm2_v1_startup_audio_menu.c
     )

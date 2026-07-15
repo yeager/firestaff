@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject ANIM bootstrap/decode slice:
+  added source-mapped `ANIM_BOOTSTRAP_SWOOSH`,
+  `ANIM_BOOTSTRAP_TITLE`, `ANIM_DECODE_IMG1`,
+  `ANIM_FILL_SEQ_4BPP`, and `ANIM_SETPIXEL_SEQ_4BPP` receipts/helpers.
+  The exact skproject argv lists are pinned for swoosh/title, and IMG1
+  4bpp fill, literal, previous-row, and truncated-stream behavior is covered
+  by a permanent CMake test. Verification: `test_dm2_v1_anim_bootstrap`.
+
 - ✅ 2026-07-16 DM2 skproject SHOW_MENU_SCREEN real-GDAT startup route:
   startup presentation now emits only the original `TITLE/0 dt07/4`
   menu surface for `SHOW_MENU_SCREEN`; `TITLE/0 dt07/1` remains source
