@@ -1760,6 +1760,44 @@ static void test_remove_all_active_groups_f0194(void) {
               "F0194 rejects before mutating raw C04 data");
 }
 
+/* GROUP.C F0208: an earlier aspect update becomes C33-C36 and retains the
+ * later C38-C41 timing in C.Ticks. */
+static void test_group_add_event_f0208(void) {
+    struct DM1GroupAddEventPlan_Compat plan;
+
+    memset(&plan, 0, sizeof(plan));
+    EXPECT_EQ(F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+                  DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0, 120u, 108u, &plan),
+              1, "F0208 early aspect plan succeeds");
+    EXPECT_EQ(plan.valid, 1, "F0208 early aspect plan is valid");
+    EXPECT_EQ(plan.eventType, DM1_EVENT_UPDATE_ASPECT_CREATURE_0,
+              "F0208 subtracts five to create C33");
+    EXPECT_EQ((int)plan.mapTime, 108,
+              "F0208 moves Map_Time to the earlier aspect update");
+    EXPECT_EQ((int)plan.ticks, 12,
+              "F0208 stores the later C38 delay in C.Ticks");
+    EXPECT_EQ(plan.promotedAspectEvent, 1,
+              "F0208 records C38-to-C33 promotion");
+
+    memset(&plan, 0, sizeof(plan));
+    EXPECT_EQ(F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+                  DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 2, 120u, 137u, &plan),
+              1, "F0208 later aspect plan succeeds");
+    EXPECT_EQ(plan.eventType, DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + 2,
+              "F0208 keeps C40 when its Map_Time is earlier");
+    EXPECT_EQ((int)plan.mapTime, 120,
+              "F0208 preserves the caller event Map_Time");
+    EXPECT_EQ((int)plan.ticks, 17,
+              "F0208 stores future aspect difference in C.Ticks");
+    EXPECT_EQ(plan.promotedAspectEvent, 0,
+              "F0208 does not promote a later aspect update");
+    EXPECT_EQ(F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+                  DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 77u, 77u, &plan),
+              1, "F0208 equal timestamps succeed");
+    EXPECT_EQ((int)plan.ticks, 0,
+              "F0208 equal timestamps retain zero C.Ticks");
+}
+
 static void test_group_path_blockers_f0197_to_f0199(void) {
     struct DM1GroupSightSquare_Compat square;
     struct F0199BlockGrid grid;
@@ -1861,6 +1899,7 @@ int main(void) {
     test_reaction_apply_plan_no_event_and_wander_default();
     test_reaction_schedule_plan_owns_c30_insert_fields();
     test_remove_all_active_groups_f0194();
+    test_group_add_event_f0208();
     test_group_path_blockers_f0197_to_f0199();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);

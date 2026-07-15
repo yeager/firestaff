@@ -214,6 +214,25 @@ struct DM1ActiveGroup_Compat {
     int aspect[4];           /* per-creature aspect flags */
 };
 
+/* Source-shaped result for GROUP.C F0208_GROUP_AddEvent. `mapTime` is the
+ * EVENT.Map_Time timestamp and `ticks` is the C.Ticks union member. */
+struct DM1GroupAddEventPlan_Compat {
+    int valid;
+    int eventType;
+    uint32_t mapTime;
+    uint32_t ticks;
+    int promotedAspectEvent;
+};
+
+/* ReDMCSB GROUP.C F0208 lines 3145-3157. `eventMapTime` is the caller's
+ * prepared EVENT.Map_Time and `requestedTime` is F0179's aspect-update
+ * timestamp. F0238 insertion remains caller-owned. */
+int F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+    int eventType,
+    uint32_t eventMapTime,
+    uint32_t requestedTime,
+    struct DM1GroupAddEventPlan_Compat* out);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {
