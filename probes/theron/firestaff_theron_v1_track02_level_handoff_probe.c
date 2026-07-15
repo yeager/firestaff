@@ -1101,7 +1101,6 @@ static void probe_real_data_initial_candidate(const char *label,
     Theron_Track02InitialLevelEnvelopeReceipt envelope;
     Theron_Track02InitialLevelLoaderSemanticReceipt semantics;
     Theron_Track02InitialLevelLoaderRoute loader_route;
-    Theron_V1_Level loader_level;
     Theron_Track02LevelHandoffStatus status;
     Theron_Track02SignalStatus user_offset_status;
     size_t expected_candidate_offset = 0u;
@@ -1282,43 +1281,16 @@ static void probe_real_data_initial_candidate(const char *label,
 
     signal_status = theron_v1_track02_decode_initial_level_loader_semantics(
         data, size, local_md5, &semantics);
-    check_int("real initial loader semantics decode status", signal_status,
-              THERON_TRACK02_SIGNAL_OK);
-    check_int("real initial loader semantics valid", semantics.valid, 1);
-    check_int("real initial loader semantics envelope retained",
-              semantics.envelope.receipt_hash == envelope.receipt_hash, 1);
-    check_int("real initial loader semantics map accepted",
-              semantics.map_status, THERON_MAP_OK);
-    check_size("real initial loader semantics grid cells",
-               semantics.grid_cell_count, 0x360u);
-    check_int("real initial loader semantics proven",
-              semantics.loader_grid_semantics_proven, 1);
-    check_int("real initial loader semantics extension remains opaque",
-              semantics.header_extension_semantics_proven, 0);
-    check_int("real initial loader semantics object tail remains opaque",
-              semantics.object_tail_semantics_proven, 0);
-    check_int("real initial loader semantics blocks fallback visuals",
-              semantics.fallback_visuals_allowed, 0);
-    check_int("real initial loader semantics receipt fingerprinted",
-              semantics.receipt_hash != 0u, 1);
+    check_int("real initial loader semantics remain unproven", signal_status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("real initial loader semantics receipt cleared", semantics.valid, 0);
 
     signal_status = theron_v1_track02_load_initial_level_loader_route(
         data, size, local_md5, THERON_DUNGEON_1_HALL_OF_RECORDS, 0,
         &loader_route);
-    check_int("real initial loader route status", signal_status,
-              THERON_TRACK02_SIGNAL_OK);
-    check_int("real initial loader route valid", loader_route.valid, 1);
-    check_int("real initial loader route has no object claim",
-              loader_route.object_tail_semantics_proven, 0);
-    check_int("real initial loader route blocks fallback visuals",
-              loader_route.fallback_visuals_allowed, 0);
-    check_int("real initial loader route grid matches receipt",
-              loader_route.level.start_x == semantics.start_x &&
-              loader_route.level.start_y == semantics.start_y &&
-              loader_route.level.start_dir == semantics.start_dir, 1);
-    check_int("real initial loader route fingerprinted",
-              loader_route.route_hash != 0u, 1);
-    loader_level = loader_route.level;
+    check_int("real initial loader route remains unproven", signal_status,
+              THERON_TRACK02_SIGNAL_NOT_FOUND);
+    check_int("real initial loader route cleared", loader_route.valid, 0);
     signal_status = theron_v1_track02_load_initial_level_loader_route(
         data, size, local_md5, THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 0,
         &loader_route);
@@ -1402,11 +1374,6 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial candidate start x", level.start_x, 4);
     check_int("real initial candidate start y", level.start_y, 0);
     check_int("real initial candidate start dir", level.start_dir, 0);
-    check_int("real initial candidate preserves loader pose",
-              level.start_x == loader_level.start_x &&
-              level.start_y == loader_level.start_y &&
-              level.start_dir == loader_level.start_dir,
-              1);
     check_size("real initial candidate scan/loader offset",
                catalog.candidates[0].absolute_offset,
                handoff.absolute_offset);

@@ -240,6 +240,24 @@ int main(void)
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
         return 1;
     }
+
+    {
+        Theron_Track02InitialLevelLoaderSemanticReceipt direct_semantics;
+        Theron_Track02InitialLevelLoaderRoute direct_route;
+
+        if (theron_v1_track02_decode_initial_level_loader_semantics(
+                raw, raw_size, md5, &direct_semantics) !=
+                THERON_TRACK02_SIGNAL_NOT_FOUND ||
+            direct_semantics.valid ||
+            theron_v1_track02_load_initial_level_loader_route(
+                raw, raw_size, md5, THERON_DUNGEON_1_HALL_OF_RECORDS, 0,
+                &direct_route) != THERON_TRACK02_SIGNAL_NOT_FOUND ||
+            direct_route.valid) {
+            free(raw);
+            printf("FAIL: opaque $3800 sector bypassed the loader semantic gate\n");
+            return 1;
+        }
+    }
     memset(&manifest, 0, sizeof(manifest));
     manifest.valid = 1;
     snprintf(manifest.track02_path, sizeof(manifest.track02_path),
