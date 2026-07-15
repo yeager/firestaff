@@ -14,6 +14,25 @@
     real source evidence. Keep rows in TODO until either Firestaff code maps
     them or a reviewed disposition row excludes them from the open queue.
 
+- 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
+  is now isolated and tested, with the FM-Towns SND branch recorded as a
+  non-PC34 platform branch unless a future FM-Towns target supplies real
+  counter/volume state. Remaining CSB save/startup work from the current
+  ReDMCSB missing set is HINTLOAD `F1910_LoadSavedGamePart`,
+  `F1913_LoadAndDeobfuscateSavedGamePart`, and
+  `F1914_LoadAndDeobfuscateSavedGameHeader`, preferably through the existing
+  CSB save/header import path rather than a synthetic save envelope.
+
+- 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
+  viewport GDAT frame/HUD/weather contracts, direct render material receipts,
+  directional HUD text-palette state, creature source identity, and runtime
+  source-material lanes now pass focused DM2 syntax verification. Remaining
+  verification is the executable `dm2_v1_boot_profile_smoke` run once the
+  local build tree is repaired; current blockers are the missing
+  `build/test_dm2_v1_boot_profile_smoke` executable, absent
+  `test_dm2_v1_boot_profile_smoke` build target, and CMake regeneration
+  failure from many unrelated missing non-DM2/probe/shared sources.
+
 - 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
   texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`
   still fails on 39 broader startup completeness assertions: title/menu audio
