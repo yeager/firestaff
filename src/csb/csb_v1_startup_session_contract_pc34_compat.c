@@ -299,6 +299,21 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         presents_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 ||
         chaos_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 ||
         strikes_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 ||
+        presents_host->special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS ||
+        presents_host->title_special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS ||
+        chaos_host->special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS ||
+        chaos_host->title_special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS ||
+        strikes_host->special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES ||
+        strikes_host->title_special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES ||
+        opening_host->special_palette !=
+            VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+        opening_host->title_special_palette != -1 ||
         /* The host rasterizes TITLE.C F0437's rectangles from resident
          * C001.  The phase surfaces above are retained only as package
          * geometry evidence, never as a second blit coordinate system. */

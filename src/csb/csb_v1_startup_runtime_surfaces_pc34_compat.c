@@ -6,6 +6,7 @@
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
 #include "csb_v1_graphics_lzw_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -646,6 +647,8 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
     out_frame->door_ready = session->door_assets_ready ? 1 : 0;
     out_frame->no_legacy_wrappers =
         session->rejects_legacy_wrappers ? 1 : 0;
+    out_frame->special_palette = plan->special_palette;
+    out_frame->title_special_palette = plan->title_special_palette;
     out_frame->source_tick = source_tick;
     out_frame->session_generation = session->generation;
     out_frame->stage = (CSB_V1_StartupStage_PC34)plan->title_stage;
@@ -711,6 +714,15 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->opening_step);
     out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
         out_frame->frame_route_hash, (uint32_t)out_frame->title_phase_mask);
+    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 ||
+        plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
+        out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+            out_frame->frame_route_hash,
+            (uint32_t)(out_frame->special_palette + 1));
+        out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
+            out_frame->frame_route_hash,
+            (uint32_t)(out_frame->title_special_palette + 1));
+    }
     out_frame->frame_route_hash = csb_v1_startup_frame_hash_step_pc34(
         out_frame->frame_route_hash, out_frame->hud_binding_hash);
     out_frame->valid =
@@ -767,6 +779,8 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
         receipt.frame.hud_resurrect_surface->source_asset_id == 40 &&
         receipt.frame.hud_resurrect_surface->transparent_color == 6 &&
         receipt.frame.hud_resurrect_pixel_hash != 0u;
+    receipt.special_palette = receipt.frame.special_palette;
+    receipt.title_special_palette = receipt.frame.title_special_palette;
 
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34) {
         /* ReDMCSB ENTRANCE.C F0806 leaves the temporary entrance loop before
@@ -797,7 +811,9 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
         }
         if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
             if (!receipt.raster.title_composited ||
-                receipt.raster.source_surface_count != 1) {
+                receipt.raster.source_surface_count != 1 ||
+                receipt.special_palette < 0 ||
+                receipt.special_palette != receipt.title_special_palette) {
                 csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
                     &receipt);
                 return 0;
@@ -806,7 +822,10 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
         } else if (plan->surface ==
                    CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
             if (!plan->opening_composite_valid || !receipt.raster.door_composited ||
-                receipt.raster.source_surface_count != 3) {
+                receipt.raster.source_surface_count != 3 ||
+                receipt.special_palette !=
+                    VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+                receipt.title_special_palette != -1) {
                 csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
                     &receipt);
                 return 0;
@@ -852,6 +871,14 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
                                                  (uint32_t)receipt.host_surface);
     hash = csb_v1_startup_frame_hash_step_pc34(
         hash, receipt.frame.hud_binding_hash);
+    if (receipt.host_surface == CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        receipt.host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34) {
+        hash = csb_v1_startup_frame_hash_step_pc34(
+            hash, (uint32_t)(receipt.special_palette + 1));
+        hash = csb_v1_startup_frame_hash_step_pc34(
+            hash, (uint32_t)(receipt.title_special_palette + 1));
+    }
     receipt.host_surface_hash = hash;
     receipt.source_evidence =
         "ReDMCSB TITLE.C F0437 lines 424-463; ENTRANCE.C F0806 lines "

@@ -11,6 +11,12 @@
   D0C is excluded from this tile-loop route because cell zero is absent from
   `table1d7029`; it cannot borrow the later player-tile route. Focused
   coverage: `test_dm2_v1_door_side_frame_source_route`.
+- ✅ 2026-07-15 CSB PC3.4 host palette/raster handoff: C001 PRESENTS, CHAOS,
+  and STRIKES retain their distinct ReDMCSB `TITLE.C F0437` palette phase in
+  the owned runtime frame and host-receipt hash. C004/C002/C003 opening-door
+  presentation now requires the ENTRANCE palette with its canonical indexed
+  raster hash. The real-package probe verifies all four host handoffs without
+  a planar, generic, or generated fallback.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0107 unreadable-inscription palette receipt:
   side/depth M648 substitutes now publish the exact source plan's C10 key and

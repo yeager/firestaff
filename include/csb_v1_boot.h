@@ -1063,6 +1063,11 @@ typedef struct CSB_V1_StartupRuntimeAssetFrame_PC34 {
     int door_ready;
     int no_legacy_wrappers;
     int title_phase_mask;
+    /* TITLE.C F0437 selects a distinct indexed palette for each C001 phase.
+     * Retain the source plan's selection with the resident bitmap so host
+     * presentation cannot pair a valid raster with a different palette. */
+    int special_palette;
+    int title_special_palette;
     uint32_t frame_route_hash;
     uint32_t source_tick;
     uint32_t session_generation;
@@ -1128,6 +1133,8 @@ typedef struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 {
     int runtime_hud_decision;
     int uses_c017_inventory;
     int uses_c040_resurrect;
+    int special_palette;
+    int title_special_palette;
     uint32_t host_surface_hash;
     CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
