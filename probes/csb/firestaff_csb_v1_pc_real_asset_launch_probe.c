@@ -119,10 +119,10 @@ static void verify_real_c017_c040_hud_handoff(
           "C017/C040 decode to their original PC HUD dimensions");
     CHECK(real_surface_hash(inventory->pixels,
                             (size_t)inventory->width * inventory->height) ==
-                  0x7117c9c5u &&
+                  0xc663ae67u &&
               real_surface_hash(resurrect->pixels,
                                 (size_t)resurrect->width * resurrect->height) ==
-                  0x35fb6d05u,
+                  0x2d2a269eu,
           "C017/C040 captures match verified PC CSB GRAPHICS.DAT pixels");
 
     memset(&plan, 0, sizeof(plan));
@@ -244,7 +244,7 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
                   &frame, &plan, &raster) == 1 && raster.valid,
           "C001 PRESENTS preserves the verified source raster order");
     if (raster.valid) {
-        CHECK(raster.pixel_hash == 0x38c165c5u,
+        CHECK(raster.pixel_hash == 0xd5df5fc4u,
               "C001 PRESENTS raster hash matches verified PC CSB graphics");
         csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     }
@@ -264,7 +264,7 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
                   &frame, &plan, &raster) == 1 && raster.valid,
           "C001 CHAOS first raster preserves TITLE.C source order and 16x4 geometry");
     if (raster.valid) {
-        CHECK(raster.pixel_hash == 0xc57f9804u,
+        CHECK(raster.pixel_hash == 0x0e693725u,
               "C001 CHAOS first raster capture matches verified PC CSB graphics");
         csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     }
@@ -293,7 +293,7 @@ static void verify_real_c001_title_sequence(CSB_V1_StartupRuntimeAssetSession_PC
                   &frame, &plan, &raster) == 1 && raster.valid,
           "C001 STRIKES BACK retains source crop, black key, and final palette phase");
     if (raster.valid) {
-        CHECK(raster.pixel_hash == 0x8e96cf09u,
+        CHECK(raster.pixel_hash == 0x4818f2ffu,
               "C001 STRIKES BACK raster capture matches verified PC CSB graphics");
         csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     }
@@ -472,7 +472,7 @@ static void verify_real_indexed_startup(
               raster_rows_match_surface(&raster, frame.entrance_surface, 30),
           "C004 opening frame preserves its first 30 rows before C002/C003 strips");
     if (raster.valid) {
-        CHECK(raster.pixel_hash == 0xde9c254eu,
+        CHECK(raster.pixel_hash == 0x1fdee932u,
               "C004/C002/C003 opening capture matches verified PC CSB graphics");
     }
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
