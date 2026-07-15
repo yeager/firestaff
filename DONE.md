@@ -74,6 +74,17 @@
   startup receipt coverage verifies pixels are emitted while synthetic
   rectangle calls remain zero.
 
+- 2026-07-15 Theron source-owned startup UI gate: the legacy `ui_chrome`
+  compositor now leaves a complete authenticated Track 02 startup surface
+  untouched. Its generated bars, blocks, glyphs, and compass remain blocked
+  until original loader/CD evidence identifies the corresponding UI art.
+
+- 2026-07-15 Theron startup receipt contract correction: all five remaining
+  full-start, raw-media, snapshot, and host receipt assertions now require an
+  executed authenticated atlas with nonzero source pixels and zero generated
+  fill/border calls. The runtime receipt chain remains complete while the
+  old UI chrome stays fail-closed.
+
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original
   expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the

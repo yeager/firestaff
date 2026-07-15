@@ -7607,6 +7607,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   without authenticated loader/CD bitmap evidence remain untouched; the
   remaining gap is positive original evidence for the missing panel/cursor
   art, not a generated replacement.
+  - 2026-07-15 update: the legacy `ui_chrome` compositor is also blocked once
+    the authenticated atlas is restored. Its topbar, right-panel, champion,
+    glyph, bar, and compass blocks have no bound original UI bank; it may
+    remain available only before source-owned startup media exists.
+  - 2026-07-15 receipt update: all five startup graphics receipt wrappers now
+    require an executed Track 02 atlas, a nonzero source-pixel receipt, and
+    zero generated fill/border calls. This proves the presentation boundary
+    remains complete while unbound UI art is fail-closed.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and

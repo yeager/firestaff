@@ -344,6 +344,15 @@ void tr_ui_render(TQR_PlanarFramebuffer *fb,
                    uint32_t ui_flags) {
     if (!fb || !fb->data || !world) return;
 
+    /* Track 02's complete title/stage/Soul Room/forcefield atlas owns the
+     * startup frame. This older chrome compositor has only generated bars,
+     * blocks, and glyph stand-ins, so it must not alter an authenticated
+     * original-media surface until a loader/CD capture binds its UI art. */
+    if (world->runtime_media.restored &&
+        world->runtime_media.identity.ready) {
+        return;
+    }
+
     if (ui_flags & TR_UI_TOPBAR) {
         tr_ui_render_topbar(fb, world, 0);
     }
