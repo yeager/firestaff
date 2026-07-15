@@ -302,6 +302,15 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_structure3_animated_materials(vp, engine);
         viewport_stage_structure3_untextured_faces(vp, engine);
         viewport_stage_structure3_complete_source_scene(vp, engine);
+        /* Structure1B/MNS supplies an older host material path, but it has
+         * no proven mapping to this complete source-owned Structure3 scene.
+         * Do not let it rasterize a different interpretation of the same
+         * retail level while Saturn material/palette/VDP1 semantics are open. */
+        if (vp->last_dgn_render_receipt.structure3_complete_source_scene_consumed) {
+            vp->last_dgn_render_receipt.no_draw_structure3_source_scene = 1;
+            vp->last_dgn_render_receipt.blocked = 1;
+            return;
+        }
         /* The real runtime must not convert a decoded DMDF-only bank into
          * visible DGN material. FLOORS/WALLS need independently verified BPK
          * containers and completed host routes; missing Track 1 containers
@@ -512,6 +521,8 @@ int nexus_viewport_dgn_host_route_receipt(
         render->no_draw_structure2_source ? 1 : 0;
     out_receipt->no_draw_structure1f_semantics =
         render->no_draw_structure1f_semantics ? 1 : 0;
+    out_receipt->no_draw_structure3_source_scene =
+        render->no_draw_structure3_source_scene ? 1 : 0;
     out_receipt->active_level_source_consumed =
         render->active_level_source_consumed ? 1 : 0;
     out_receipt->active_level_source = render->active_level_source;
@@ -546,6 +557,13 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->max_post_grid_0x30_ref =
         handoff.max_post_grid_0x30_ref;
 
+    /* A complete source scene is an explicit runtime barrier, independent of
+     * whether the older Structure1B handoff happens to be renderable. */
+    if (render->no_draw_structure3_source_scene) {
+        out_receipt->status =
+            NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE3_SOURCE_SCENE;
+        return 0;
+    }
     if (!handoff.can_render_dgn_mesh ||
         handoff.blocks_real_dgn_mesh_render ||
         handoff.fallback_visuals_permitted) {
@@ -603,6 +621,8 @@ const char *nexus_viewport_dgn_host_route_status_name(
         return "blocked-structure2-source";
     case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE1F_SEMANTICS:
         return "blocked-structure1f-semantics";
+    case NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE3_SOURCE_SCENE:
+        return "blocked-structure3-source-scene";
     case NEXUS_V1_DGN_HOST_ROUTE_MISSING:
     default:
         return "missing";

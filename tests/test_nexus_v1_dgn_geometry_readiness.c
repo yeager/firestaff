@@ -1488,6 +1488,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.last_dgn_render_receipt
                           .structure3_complete_source_scene
                               .traversed_face_count == complete_scene.face_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .no_draw_structure3_source_scene &&
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&
@@ -1496,6 +1498,22 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.last_dgn_render_receipt
                           .rasterized_command_count == 0,
                       "DGN viewport consumes complete non-textured source geometry without flat-fill drawing");
+                {
+                    Nexus_V1_DgnViewportHostRouteReceipt host_route;
+                    memset(&host_route, 0, sizeof(host_route));
+                    CHECK(nexus_viewport_dgn_host_route_receipt(
+                              &untextured_viewport, &active_engine,
+                              &host_route) == 0 &&
+                          host_route.no_draw_structure3_source_scene &&
+                          host_route.blocks_runtime_dgn &&
+                          !host_route.can_present_runtime_dgn &&
+                          host_route.status ==
+                              NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE3_SOURCE_SCENE &&
+                          strcmp(nexus_viewport_dgn_host_route_status_name(
+                                     host_route.status),
+                                 "blocked-structure3-source-scene") == 0,
+                          "complete source geometry blocks the legacy material raster route");
+                }
             }
         }
         if (level == 0) {
@@ -3300,6 +3318,7 @@ static void test_structure3_entry_header_boundaries(void) {
               host_route.active_level_source.palette_decode_unproven &&
               host_route.active_level_source.vdp1_draw_unproven &&
               host_route.active_level_source.no_draw_only &&
+              !host_route.no_draw_structure3_source_scene &&
               host_route.blocks_runtime_dgn,
               "host route carries the exact active LEV source receipt while Saturn decoding remains blocked");
         candidate.first_sequence = 10U;
