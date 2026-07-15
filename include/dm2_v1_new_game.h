@@ -284,6 +284,25 @@ typedef struct {
     uint16_t hp1;
 } DM2_V1_OriginalRawCreatureReceipt;
 
+/* DME.h::Text owns these fields in DB2 w2. GenericRecord::w0 and the text
+ * table stay outside the raw-save receipt until their links are proven. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t visible;
+    uint8_t mode;
+    uint16_t text_index;
+} DM2_V1_OriginalRawTextReceipt;
+
+/* DME.h::Container owns the open/type bits in DB9 b4. Its GenericRecord::w0
+ * and contained-object w2 are deliberately excluded. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t opened;
+    uint8_t container_type;
+} DM2_V1_OriginalRawContainerReceipt;
+
 typedef struct {
     int valid;
     DM2_V1_OriginalRawDbRecordReceipt record;
@@ -414,6 +433,16 @@ int dm2_v1_original_raw_sksave_creature_receipt(
     size_t buf_size,
     int record_index,
     DM2_V1_OriginalRawCreatureReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_text_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawTextReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_container_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawContainerReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_weapon_receipt(
     const uint8_t *buf,
     size_t buf_size,

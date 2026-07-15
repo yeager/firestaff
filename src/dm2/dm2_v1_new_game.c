@@ -1178,6 +1178,52 @@ int dm2_v1_original_raw_sksave_creature_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_text_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawTextReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawTextReceipt candidate;
+    uint16_t attributes;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 2, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 4u ||
+        candidate.record.record_offset > buf_size - 4u) {
+        return 0;
+    }
+    attributes = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    candidate.visible = (uint8_t)(attributes & 1u);
+    candidate.mode = (uint8_t)((attributes >> 1) & 3u);
+    candidate.text_index = (uint16_t)((attributes >> 3) & 0x1fffu);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_original_raw_sksave_container_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawContainerReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawContainerReceipt candidate;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 9, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 8u ||
+        candidate.record.record_offset > buf_size - 8u) {
+        return 0;
+    }
+    candidate.opened = (uint8_t)(buf[candidate.record.record_offset + 4u] & 1u);
+    candidate.container_type = (uint8_t)(
+        (buf[candidate.record.record_offset + 4u] >> 1) & 3u);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_original_raw_sksave_weapon_receipt(
     const uint8_t *buf, size_t buf_size, int record_index,
     DM2_V1_OriginalRawWeaponReceipt *out_receipt)
