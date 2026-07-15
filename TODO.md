@@ -6995,6 +6995,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `GRAPHICSSET` dialogue-shell/glyph IMG3-plus-local-palette receipt for
     field `0xfd` into frame ownership. It remains evidence-only and no-draw.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
+  - 2026-07-15 update: removed the active M11 leader-hand cursor icon route.
+    Its icon bytes were GDAT-backed, but it scaled them into an arbitrary
+    14x14 host cursor rectangle. SKProject `DRAW_ITEM_ICON` instead derives
+    an object-selected field and `QUERY_EXPANDED_RECT`/`QUERY_BLIT_RECT`
+    geometry before its palette-aware blit. The verified inventory material
+    consumer is retained, but no icon is drawn until that exact rect route is
+    bound; do not use pointer coordinates as replacement geometry.
   - 2026-07-15 update: the active M11 DM2 leader-hand name overlay is now
     no-draw. The previous DM1 rectangle/host-font path converted ObjectIDs to
     catalog labels such as `DM2 MISC 51`; SKProject `GET_ITEM_NAME` instead

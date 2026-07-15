@@ -5,6 +5,12 @@
   Missing or malformed C028 clears C113..C116 rather than showing M11's
   color-only fallback. The real-package launcher regression corrupts the
   cached C028 dimensions and verifies the icon zone stays black.
+- ✅ 2026-07-15 DM2 M11 leader-hand cursor-icon gate: removed the active
+  arbitrary 14x14 pointer-scaled icon overlay. Although it fetched GDAT
+  pixels, it did not consume SKProject `DRAW_ITEM_ICON`'s
+  `QUERY_EXPANDED_RECT`/`QUERY_BLIT_RECT` geometry. The original-data
+  inventory material consumer remains available, but M11 now draws no
+   substitute icon until the source rect route is bound.
 
 - ✅ 2026-07-15 DM2 M11 leader-hand name source gate: stopped drawing the
   active DM1 rectangle/host-font catalog label over DM2 runtime frames.
