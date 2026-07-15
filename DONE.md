@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 status-hand source-material gate: normal V1 F0291 now
+  draws C211..C218 only from exact loaded-pixel C033/C034/C035 hand-box
+  surfaces. The host black/gray rectangle fallback is removed, so a missing
+  source surface leaves the F0292 status clear intact before any icon route.
+
 - ✅ 2026-07-15 DM1 leader-hand name source-font gate: normal V1 F0034 now
   retains the original C017 black clear and draws only the bounded source
   name through loaded M653 glyphs at the C017 geometry. The generic host-font
