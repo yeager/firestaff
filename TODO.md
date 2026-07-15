@@ -7116,6 +7116,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     scale branches through the final `QUERY_TEMP_PICST` receipt. Altered,
     mismatched, or out-of-range slot data is no-draw. Remaining: source timer
     dispatch/reseed and corpus-backed live slot production.
+  - 2026-07-15 update: a live `DistantEnvironment` slot now binds only after
+    it is revalidated against the current map's `MapGraphicsStyle` and exact
+    GDAT weather receipt. Every scene-control refresh clears prior slots, so
+    a matching command byte from another level cannot inherit a weather image
+    or destination. Remaining: source timer dispatch/reseed and corpus-backed
+    live slot production.
   - 2026-07-15 update: a presented source weather transaction now carries its
     exact `WeatherRendererReceipt` hash and command count through the viewport
     into M11. M11 accepts it only after every selected `DistantEnvironment`

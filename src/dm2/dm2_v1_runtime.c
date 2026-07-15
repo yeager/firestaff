@@ -125,6 +125,9 @@ typedef struct {
     uint32_t gdat_weather_destination_mask;
     DM2_V1_DistantEnvironmentReceipt weather_distant_slots[2];
     unsigned int weather_distant_slot_count;
+    uint32_t weather_distant_slots_map_token;
+    uint32_t weather_distant_slots_source_receipt_hash;
+    uint8_t weather_distant_slots_graphicsset;
     int gdat_weather_renderer_ready;
     uint32_t gdat_weather_renderer_hash;
     uint32_t gdat_weather_renderer_command_count;
@@ -888,6 +891,14 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     DM2_V1_DialogueGdatReceipt dialogue_shell;
 
     if (!rt) return;
+    /* DistantEnvironment is timer-owned live state.  It is meaningful only
+     * for the exact GRAPHICSSET receipt that admitted it; a new source
+     * transaction must ask the original timer route to publish fresh slots. */
+    memset(rt->weather_distant_slots, 0, sizeof(rt->weather_distant_slots));
+    rt->weather_distant_slot_count = 0u;
+    rt->weather_distant_slots_map_token = 0u;
+    rt->weather_distant_slots_source_receipt_hash = 0u;
+    rt->weather_distant_slots_graphicsset = 0u;
     dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
     memset(&rt->gdat_scene_light_receipt, 0,
            sizeof(rt->gdat_scene_light_receipt));
@@ -3384,6 +3395,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&weather_renderer, 0, sizeof(weather_renderer));
     if (rt->outdoor && !rt->scene_movement_pending &&
         rt->weather_distant_slot_count > 0u &&
+        rt->weather_distant_slots_map_token ==
+            dm2_v1_runtime_g1_scene_map_token(rt->dungeon_level,
+                                               rt->map_graphics_style,
+                                               rt->outdoor) &&
+        rt->weather_distant_slots_source_receipt_hash ==
+            rt->gdat_weather_receipt_hash &&
+        rt->weather_distant_slots_graphicsset ==
+            (uint8_t)rt->map_graphics_style &&
         dm2_v1_weather_restored_state_receipt(&rt->weather, &weather_state)) {
         weather_context.direction = (uint8_t)(party_dir & 3);
         weather_context.player_direction = (uint8_t)(party_dir & 3);
@@ -5595,26 +5614,59 @@ void dm2_v1_runtime_set_weather_seed(uint32_t seed) {
 int dm2_v1_runtime_bind_weather_distant_environment(
     const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count)
 {
+    DM2_V1_WeatherGdatReceipt weather;
+    DM2_V1_DistantEnvironmentReceipt admitted[2];
+    uint32_t map_token;
+
     if (slot_count > 2u || (slot_count != 0u && !slots)) return 0;
     if (slot_count == 0u) {
         memset(g_dm2_runtime.weather_distant_slots, 0,
                sizeof(g_dm2_runtime.weather_distant_slots));
         g_dm2_runtime.weather_distant_slot_count = 0u;
+        g_dm2_runtime.weather_distant_slots_map_token = 0u;
+        g_dm2_runtime.weather_distant_slots_source_receipt_hash = 0u;
+        g_dm2_runtime.weather_distant_slots_graphicsset = 0u;
         return 1;
     }
+    /* c_weather's DistantEnvironment slots are selected through the active
+     * MapGraphicsStyle.  A raw ten-byte slot alone is not portable across
+     * levels or GRAPHICSSETs, even if its command byte happens to exist in
+     * both sets. Rebuild its current GDAT owner before accepting it. */
+    if (!g_dm2_runtime.boot || !g_dm2_runtime.outdoor ||
+        g_dm2_runtime.map_graphics_style < 0 ||
+        g_dm2_runtime.map_graphics_style > 0xff ||
+        !g_dm2_runtime.gdat_weather_receipt_ready ||
+        g_dm2_runtime.gdat_weather_receipt_hash == 0u ||
+        !dm2_v1_boot_weather_gdat_receipt(
+            g_dm2_runtime.boot, g_dm2_runtime.map_graphics_style, &weather) ||
+        !weather.valid || weather.receipt_hash == 0u ||
+        weather.receipt_hash != g_dm2_runtime.gdat_weather_receipt_hash ||
+        (map_token = dm2_v1_runtime_g1_scene_map_token(
+             g_dm2_runtime.dungeon_level, g_dm2_runtime.map_graphics_style,
+             g_dm2_runtime.outdoor)) == 0u) {
+        return 0;
+    }
+    memset(admitted, 0, sizeof(admitted));
     for (unsigned int i = 0u; i < slot_count; ++i) {
         if (!slots[i].valid || slots[i].slot_index != i ||
             slots[i].raw_hash == 0u || slots[i].raw[0] != slots[i].command ||
-            slots[i].command < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
-            slots[i].command > DM2_V1_WEATHER_RAIN_STORM_CMD) {
+            !dm2_v1_weather_distant_environment_receipt(
+                &weather, slots[i].command, (uint8_t)i, slots[i].raw,
+                &admitted[i]) ||
+            admitted[i].raw_hash != slots[i].raw_hash) {
             return 0;
         }
     }
     memset(g_dm2_runtime.weather_distant_slots, 0,
            sizeof(g_dm2_runtime.weather_distant_slots));
-    memcpy(g_dm2_runtime.weather_distant_slots, slots,
-           (size_t)slot_count * sizeof(slots[0]));
+    memcpy(g_dm2_runtime.weather_distant_slots, admitted,
+           (size_t)slot_count * sizeof(admitted[0]));
     g_dm2_runtime.weather_distant_slot_count = slot_count;
+    g_dm2_runtime.weather_distant_slots_map_token = map_token;
+    g_dm2_runtime.weather_distant_slots_source_receipt_hash =
+        weather.receipt_hash;
+    g_dm2_runtime.weather_distant_slots_graphicsset =
+        (uint8_t)g_dm2_runtime.map_graphics_style;
     return 1;
 }
 

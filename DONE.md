@@ -18645,3 +18645,11 @@ implicitly accepting an incomplete indoor receipt.
 rotation-selector corpus as a source-only transform capture target. It stays
  no-draw and requires original Saturn execution evidence before any transform
  or camera semantics can be promoted.
+# ✅ 2026-07-15 DM2 live weather source-context binding
+
+`DistantEnvironment` slots now enter the runtime only when their ten original
+bytes revalidate through the current `MapGraphicsStyle` weather GDAT receipt.
+The runtime retains that map token, graphics set, and source receipt identity
+with the admitted slots and clears all slots whenever scene control refreshes.
+This blocks a same-command weather record from a previous map from drawing on
+the next map; unavailable timer output remains no-draw.
