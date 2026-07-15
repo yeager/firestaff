@@ -6237,6 +6237,84 @@ int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     return 1;
 }
 
+static uint8_t *nexus_v1_read_transform_trace_sidecar(const char *path,
+                                                       size_t *out_size)
+{
+    FILE *file;
+    long end;
+    uint8_t *bytes = NULL;
+
+    if (out_size) *out_size = 0U;
+    if (!path || !path[0] || !out_size) return NULL;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (end = ftell(file)) <= 0L || end > INT_MAX ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)end + 1U)) ||
+        fread(bytes, 1U, (size_t)end, file) != (size_t)end) {
+        if (file) fclose(file);
+        free(bytes);
+        return NULL;
+    }
+    fclose(file);
+    bytes[end] = 0U;
+    *out_size = (size_t)end;
+    return bytes;
+}
+
+int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const Nexus_V1_DgnStructure1FTransformTracePaths *paths,
+    const Nexus_V1_DgnStructure1FTransformTraceAttestation *attestation,
+    Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt receipt;
+    uint8_t *manifest = NULL;
+    uint8_t *raw_trace = NULL;
+    uint8_t *transform_state = NULL;
+    size_t manifest_size = 0U;
+    size_t raw_trace_size = 0U;
+    size_t transform_state_size = 0U;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !paths || !attestation || !paths->manifest_path ||
+        !paths->raw_trace_path || !paths->transform_state_path ||
+        !paths->manifest_path[0] || !paths->raw_trace_path[0] ||
+        !paths->transform_state_path[0] ||
+        strcmp(paths->manifest_path, paths->raw_trace_path) == 0 ||
+        strcmp(paths->manifest_path, paths->transform_state_path) == 0 ||
+        strcmp(paths->raw_trace_path, paths->transform_state_path) == 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.sidecar_paths_distinct = 1;
+    manifest = nexus_v1_read_transform_trace_sidecar(paths->manifest_path,
+                                                      &manifest_size);
+    raw_trace = nexus_v1_read_transform_trace_sidecar(paths->raw_trace_path,
+                                                       &raw_trace_size);
+    transform_state = nexus_v1_read_transform_trace_sidecar(
+        paths->transform_state_path, &transform_state_size);
+    receipt.manifest_bytes_read = manifest != NULL;
+    receipt.raw_trace_bytes_read = raw_trace != NULL;
+    receipt.transform_state_bytes_read = transform_state != NULL;
+    if (manifest && raw_trace && transform_state) {
+        (void)nexus_v1_engine_admit_structure1f_transform_capture_trace(
+            engine, structure1f_entry_index, (const char *)manifest,
+            manifest_size, raw_trace, raw_trace_size, transform_state,
+            transform_state_size,
+            attestation->original_saturn_source_attested,
+            &receipt.admission);
+    }
+    free(transform_state);
+    free(raw_trace);
+    free(manifest);
+    *out_receipt = receipt;
+    return receipt.admission.opaque_trace_admitted;
+}
+
 int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target)

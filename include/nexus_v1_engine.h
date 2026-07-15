@@ -1367,6 +1367,30 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt;
 
+/* External sidecars for one direct-owner Saturn transform observation. Files
+ * remain opaque and distinct: the manifest is never allowed to double as an
+ * execution lane or transform-state snapshot. */
+typedef struct {
+    const char *manifest_path;
+    const char *raw_trace_path;
+    const char *transform_state_path;
+} Nexus_V1_DgnStructure1FTransformTracePaths;
+
+typedef struct {
+    int original_saturn_source_attested;
+} Nexus_V1_DgnStructure1FTransformTraceAttestation;
+
+typedef struct {
+    int sidecar_paths_distinct;
+    int manifest_bytes_read;
+    int raw_trace_bytes_read;
+    int transform_state_bytes_read;
+    Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt admission;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt;
+
 /* One direct Structure1F owner joined to the exact static Structure3 face
  * material target selected by the same documented Structure1A model/face
  * fields. This is capture provenance only: the Structure2 payload remains
@@ -2385,6 +2409,11 @@ int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const uint8_t *transform_state, size_t transform_state_size,
     int original_saturn_capture_verified,
     Nexus_V1_DgnStructure1FTransformTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const Nexus_V1_DgnStructure1FTransformTracePaths *paths,
+    const Nexus_V1_DgnStructure1FTransformTraceAttestation *attestation,
+    Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt *out_receipt);
 /* Bind one direct Structure1F source owner to its exact static Structure2
  * material target. Non-static, untextured, or unresolved faces remain
  * unavailable rather than selecting a substitute material. */

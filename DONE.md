@@ -18712,3 +18712,8 @@ The direct-owner transform-trace admission now rechecks that table identity,
 the owner selector, model/face, raw execution lane, and transform-state
 snapshot before storing an opaque trace receipt. Missing Saturn provenance
 leaves the route blocked; admission never interprets transform bytes.
+
+An external capture can now enter through separate manifest, raw-execution,
+and transform-state sidecars. The file reader requires distinct paths and
+passes all bytes through the same source gate, but cannot manufacture Saturn
+attestation or make the retained state drawable.

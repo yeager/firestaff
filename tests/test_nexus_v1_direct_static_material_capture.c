@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int failures;
 
@@ -267,6 +268,66 @@ int main(void)
                   !trace.fallback_visuals_permitted &&
                   trace.blocks_real_dgn_mesh_render,
                   "source-bound transform trace remains blocked without Saturn provenance");
+            {
+                Nexus_V1_DgnStructure1FTransformTracePaths paths;
+                Nexus_V1_DgnStructure1FTransformTraceAttestation attestation;
+                Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt intake;
+                char manifest_path[128];
+                char raw_trace_path[128];
+                char transform_state_path[128];
+                FILE *sidecar;
+
+                snprintf(manifest_path, sizeof(manifest_path),
+                         "/tmp/firestaff-nexus-transform-manifest-%ld.txt",
+                         (long)getpid());
+                snprintf(raw_trace_path, sizeof(raw_trace_path),
+                         "/tmp/firestaff-nexus-transform-trace-%ld.bin",
+                         (long)getpid());
+                snprintf(transform_state_path, sizeof(transform_state_path),
+                         "/tmp/firestaff-nexus-transform-state-%ld.bin",
+                         (long)getpid());
+                sidecar = fopen(manifest_path, "wb");
+                CHECK(sidecar != NULL &&
+                      fwrite(manifest, 1U, strlen(manifest), sidecar) ==
+                          strlen(manifest),
+                      "transform manifest sidecar writes");
+                if (sidecar) fclose(sidecar);
+                sidecar = fopen(raw_trace_path, "wb");
+                CHECK(sidecar != NULL &&
+                      fwrite(raw_trace, 1U, sizeof(raw_trace), sidecar) ==
+                          sizeof(raw_trace),
+                      "transform raw-trace sidecar writes");
+                if (sidecar) fclose(sidecar);
+                sidecar = fopen(transform_state_path, "wb");
+                CHECK(sidecar != NULL &&
+                      fwrite(transform_state, 1U, sizeof(transform_state), sidecar) ==
+                          sizeof(transform_state),
+                      "transform-state sidecar writes");
+                if (sidecar) fclose(sidecar);
+                memset(&paths, 0, sizeof(paths));
+                paths.manifest_path = manifest_path;
+                paths.raw_trace_path = raw_trace_path;
+                paths.transform_state_path = transform_state_path;
+                memset(&attestation, 0, sizeof(attestation));
+                memset(&intake, 0, sizeof(intake));
+                CHECK(nexus_v1_engine_ingest_structure1f_transform_capture_trace(
+                          &engine, source_entry, &paths, &attestation,
+                          &intake) == 0 && intake.sidecar_paths_distinct &&
+                      intake.manifest_bytes_read && intake.raw_trace_bytes_read &&
+                      intake.transform_state_bytes_read &&
+                      intake.admission.status ==
+                          NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_PROVENANCE &&
+                      intake.admission.capture_target_bound &&
+                      intake.admission.manifest_target_bound &&
+                      intake.admission.raw_trace_bytes_bound &&
+                      intake.admission.transform_state_bytes_bound &&
+                      intake.no_draw_only && !intake.fallback_visuals_permitted &&
+                      intake.blocks_real_dgn_mesh_render,
+                      "file intake preserves source-bound transform lanes without a draw claim");
+                remove(manifest_path);
+                remove(raw_trace_path);
+                remove(transform_state_path);
+            }
             break;
         }
         for (source_entry = 0;
