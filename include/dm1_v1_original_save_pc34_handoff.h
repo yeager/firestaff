@@ -140,12 +140,17 @@ typedef struct {
 typedef struct {
     int scan_succeeded;
     int scanned_file_count;
+    int rejected_count;
+    int truncated_count;
     int pc34_candidate_count;
     int roundtrip_attempted_count;
     int roundtrip_succeeded_count;
     int core_state_match_count;
     int roundtrip_failed_count;
+    int firestaff_manifest_rejected_count;
+    int nonoriginal_envelope_rejected_count;
     int first_failure_result;
+    uint32_t provenance_fingerprint;
     char first_pc34_path[DM1_ORIGINAL_SAVE_PATH_MAX];
     char first_roundtrip_path[DM1_ORIGINAL_SAVE_PATH_MAX];
 } DM1OriginalSavePC34CorpusRoundtripReport;
