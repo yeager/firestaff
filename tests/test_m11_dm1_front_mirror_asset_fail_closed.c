@@ -59,6 +59,10 @@ int main(void)
             "if (drawReceipt.candidatePanelOwnsCell)") &&
          strstr(source, "receipt->portraitSourceX + receipt->portraitWidth >") &&
          strstr(source, "receipt->portraitSourceY + receipt->portraitHeight >") &&
+         strstr(source, "dm1_v1_graphic_validate_champion_portrait_atlas_pc34(") &&
+         strstr(source, "dm1_v1_graphic_champion_portrait_source_zone_pc34(") &&
+         strstr(source, "receipt->portraitSourceX != sourceZone.x") &&
+         strstr(source, "C026 retains\n     * its raw indices") &&
          strstr(source, "receipt->backingSourceX + receipt->backingWidth >") &&
          strstr(source, "receipt->backingSourceY + receipt->backingHeight >") &&
          strstr(source, "receipt->backingSourceX + sourceOffsetX") &&

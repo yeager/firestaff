@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C026 atlas gate: every D1C champion
+  mirror draw now validates the native 256x87 atlas and the exact F0172
+  render-index source cell before its unscaled raw-index blit. Palette
+  application remains with the final F0097 viewport pass. Focused coverage:
+  `m11_dm1_front_mirror_asset_fail_closed`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C346 source-rectangle gate: the D1C
   mirror backing now requires and samples exactly its G0205 64x43 source
   rectangle. A larger or malformed asset can no longer stretch unrelated
