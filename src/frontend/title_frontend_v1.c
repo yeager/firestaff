@@ -311,8 +311,9 @@ V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
      *   TITLE.C:319-324 blits PRESENTS from source y=137.
      *   TITLE.C:333-340 prepares the 320x57 MASTER/STRIKES BACK strip from
      *   source y=80, then TITLE.C:340-360 builds the 320x80 zoom bitmaps.
-     * Firestaff's decoded TITLE.DAT bank is a visible fallback only when the
-     * GRAPHICS.DAT C001 bitmap cannot satisfy those source blits. */
+     * Firestaff records TITLE.DAT availability only as rejected evidence here:
+     * the PC34 runtime may not substitute a decoded TITLE.DAT frame bank for
+     * the source C001 operation when the C001 bitmap is absent or malformed. */
     decision.graphicsC001Usable =
         graphicsC001CandidateAvailable &&
         graphicsC001Width >= 320u &&
@@ -323,8 +324,6 @@ V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
 
     if (decision.graphicsC001Usable) {
         decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001;
-    } else if (decision.titleDatFallbackUsable) {
-        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK;
     } else {
         decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
     }

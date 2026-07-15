@@ -9,12 +9,13 @@
  *   - lines 340-360 build the 18 C001 zoom bitmaps.
  *   - lines 362-367 switch to C13_DUNGEON + C14_MASTER before the zoom.
  *
- * The decoded TITLE.DAT bank is Firestaff's visible fallback when GRAPHICS.DAT
- * C001 is absent or too small.  It must not replace a usable C001 runtime path.
- * pass842 still owns deep TITLE.DAT frame/palette regression coverage, pass897
- * still owns SDL/Metal special-palette readback, and the SWSH handoff probe
- * still owns RGBA->indexed texture-state reset.  This gate only pins the source
- * selection seam those probes intentionally do not own.
+ * The decoded TITLE.DAT bank is recorded only as rejected evidence when
+ * GRAPHICS.DAT C001 is absent or too small.  It must not replace the source
+ * C001 runtime path.  pass842 still owns deep TITLE.DAT frame/palette
+ * regression coverage, pass897 still owns SDL/Metal special-palette readback,
+ * and the SWSH handoff probe still owns RGBA->indexed texture-state reset.
+ * This gate only pins the source selection seam those probes intentionally do
+ * not own.
  */
 
 #include "asset_loader_m11.h"
@@ -111,19 +112,19 @@ static void check_selection_contract(void) {
              c001BeatsFallback.titleDatFallbackUsable,
              1);
 
-    expect_source("319-wide C001 falls back to TITLE.DAT",
+    expect_source("319-wide C001 rejects TITLE.DAT substitution",
                   widthTooSmall,
-                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK);
+                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP);
     expect_i("319-wide C001 is not usable", widthTooSmall.graphicsC001Usable, 0);
 
-    expect_source("174-high C001 falls back to TITLE.DAT",
+    expect_source("174-high C001 rejects TITLE.DAT substitution",
                   heightTooSmall,
-                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK);
+                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP);
     expect_i("174-high C001 is not usable", heightTooSmall.graphicsC001Usable, 0);
 
-    expect_source("missing C001 with TITLE.DAT selects fallback",
+    expect_source("missing C001 with TITLE.DAT skips title",
                   missingC001,
-                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK);
+                  V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP);
     expect_i("missing C001 is not usable", missingC001.graphicsC001Usable, 0);
 
     expect_source("candidate flag is authoritative even with source dimensions",
