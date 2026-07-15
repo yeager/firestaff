@@ -546,6 +546,18 @@ int F0515_DUNGEON_UnlinkThingFromList_Compat(
     int mapX,
     int mapY);
 
+/* ReDMCSB DUNGEON.C F0166. The optional discard callback is the caller's
+ * already-source-backed F0165 route: it must unlink/delete a real record and
+ * return its type-and-index Thing, or THING_NONE. No slot is invented. */
+typedef unsigned short (*DungeonDiscardThingFn_Compat)(void* context,
+                                                        unsigned short thingType);
+
+unsigned short F0516_DUNGEON_GetUnusedThing_Compat(
+    struct DungeonThings_Compat* things,
+    unsigned short requestedThingType,
+    DungeonDiscardThingFn_Compat discardThing,
+    void* discardContext);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*

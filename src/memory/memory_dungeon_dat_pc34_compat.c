@@ -1924,3 +1924,76 @@ int F0515_DUNGEON_UnlinkThingFromList_Compat(
     if (!dungeon_set_thing_next_compat(things, previous, F0512_DUNGEON_GetThingNext_Compat(things, next))) return 0;
     return dungeon_set_thing_next_compat(things, target, THING_ENDOFLIST);
 }
+
+static void dungeon_clear_thing_decoded_compat(
+    struct DungeonThings_Compat* things, int type, int index)
+{
+    if (!things || index < 0) return;
+    switch (type) {
+    case THING_TYPE_DOOR: if (things->doors && index < things->doorCount) memset(&things->doors[index], 0, sizeof(things->doors[index])); break;
+    case THING_TYPE_TELEPORTER: if (things->teleporters && index < things->teleporterCount) memset(&things->teleporters[index], 0, sizeof(things->teleporters[index])); break;
+    case THING_TYPE_TEXTSTRING: if (things->textStrings && index < things->textStringCount) memset(&things->textStrings[index], 0, sizeof(things->textStrings[index])); break;
+    case THING_TYPE_SENSOR: if (things->sensors && index < things->sensorCount) memset(&things->sensors[index], 0, sizeof(things->sensors[index])); break;
+    case THING_TYPE_GROUP: if (things->groups && index < things->groupCount) memset(&things->groups[index], 0, sizeof(things->groups[index])); break;
+    case THING_TYPE_WEAPON: if (things->weapons && index < things->weaponCount) memset(&things->weapons[index], 0, sizeof(things->weapons[index])); break;
+    case THING_TYPE_ARMOUR: if (things->armours && index < things->armourCount) memset(&things->armours[index], 0, sizeof(things->armours[index])); break;
+    case THING_TYPE_SCROLL: if (things->scrolls && index < things->scrollCount) memset(&things->scrolls[index], 0, sizeof(things->scrolls[index])); break;
+    case THING_TYPE_POTION: if (things->potions && index < things->potionCount) memset(&things->potions[index], 0, sizeof(things->potions[index])); break;
+    case THING_TYPE_CONTAINER: if (things->containers && index < things->containerCount) memset(&things->containers[index], 0, sizeof(things->containers[index])); break;
+    case THING_TYPE_JUNK: if (things->junks && index < things->junkCount) memset(&things->junks[index], 0, sizeof(things->junks[index])); break;
+    case THING_TYPE_PROJECTILE: if (things->projectiles && index < things->projectileCount) memset(&things->projectiles[index], 0, sizeof(things->projectiles[index])); break;
+    case THING_TYPE_EXPLOSION: if (things->explosions && index < things->explosionCount) memset(&things->explosions[index], 0, sizeof(things->explosions[index])); break;
+    default: break;
+    }
+}
+
+unsigned short F0516_DUNGEON_GetUnusedThing_Compat(
+    struct DungeonThings_Compat* things,
+    unsigned short requestedThingType,
+    DungeonDiscardThingFn_Compat discardThing,
+    void* discardContext)
+{
+    const unsigned short championBonesRequest =
+        (unsigned short)(0x8000u | THING_TYPE_JUNK);
+    unsigned short thingType = (unsigned short)(requestedThingType & 0x7fffu);
+    unsigned short thing = THING_NONE;
+    unsigned char* raw;
+    int count;
+    int index;
+
+    if ((requestedThingType & 0x8000u) && requestedThingType != championBonesRequest) {
+        return THING_NONE;
+    }
+    if (!things || !things->loaded || thingType >= DUNGEON_THING_TYPE_COUNT ||
+        s_thingDataByteCount[thingType] < 2 || !things->rawThingData[thingType]) {
+        return THING_NONE;
+    }
+    count = things->thingCounts[thingType];
+    if (requestedThingType == championBonesRequest) {
+        thingType = THING_TYPE_JUNK;
+    } else if (thingType == THING_TYPE_JUNK) {
+        count -= 3; /* DUNGEON.C F0166 keeps three JUNK records for bones. */
+    }
+    if (count < 0 || !things->rawThingData[thingType]) return THING_NONE;
+
+    for (index = 0; index < count; ++index) {
+        raw = things->rawThingData[thingType] + index * s_thingDataByteCount[thingType];
+        if (read_u16_le_mem(raw) == THING_NONE) {
+            thing = (unsigned short)((thingType << 10) | index);
+            break;
+        }
+    }
+    if (thing == THING_NONE) {
+        if (!discardThing) return THING_NONE;
+        thing = discardThing(discardContext, thingType);
+        if (thing == THING_NONE || THING_GET_TYPE(thing) != thingType ||
+            !dungeon_thing_record_compat(things, thing, &raw)) return THING_NONE;
+        index = THING_GET_INDEX(thing);
+    } else {
+        if (!dungeon_thing_record_compat(things, thing, &raw)) return THING_NONE;
+    }
+    memset(raw, 0, s_thingDataByteCount[thingType]);
+    dungeon_clear_thing_decoded_compat(things, thingType, index);
+    if (!dungeon_set_thing_next_compat(things, thing, THING_ENDOFLIST)) return THING_NONE;
+    return thing;
+}
