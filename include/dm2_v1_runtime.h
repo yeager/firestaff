@@ -61,6 +61,8 @@ typedef struct {
     int outdoor_sky_gdat_blits;
     int outdoor_ground_gdat_blits;
     int wall_gdat_blits;
+    int wall_gdat_material_evidence_count;
+    uint32_t wall_gdat_material_evidence_hash;
     int gdat_wall_material_plan_consumed;
     int item_gdat_blits;
     int projectile_gdat_blits;
@@ -160,6 +162,7 @@ typedef struct {
     uint32_t floor_material_hash;
     uint32_t ceiling_material_hash;
     uint32_t wall_material_plan_hash;
+    int wall_material_plan_command_count;
     /* DRAW_DOOR/DRAW_DOOR_FRAMES only participate when this exact frame
      * presented source-owned door material.  Keeping the conditional bit
      * prevents a no-door frame from needing a made-up door identity. */

@@ -2034,6 +2034,54 @@ static int dm2_runtime_creature_drawn_material_identity(
     return 1;
 }
 
+/* DRAW_WALL preflights the complete visible GRAPHICSSET set and records one
+ * consumed bit per panel. Rebuild the same source plan here so M11 owns every
+ * actual wall material, not just an arbitrary representative cell. */
+static int dm2_runtime_wall_drawn_material_identity(
+    const DM2_V1_ViewportState *viewport,
+    uint32_t *out_hash,
+    int *out_count)
+{
+    DM2_V1_WallPanelRenderPlan plan;
+    uint32_t hash = 2166136261u;
+    int count = 0;
+    int i;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_count) *out_count = 0;
+    if (!viewport || !out_hash || !out_count ||
+        !viewport->source_materials_required ||
+        viewport->asset_wall_drawn_count <= 0 ||
+        viewport->last_dungeon_wall_material_required_mask == 0u ||
+        viewport->last_dungeon_wall_material_required_mask !=
+            viewport->last_dungeon_wall_material_consumed_mask ||
+        !dm2_v1_viewport_build_wall_panel_render_plan(viewport, &plan)) {
+        return 0;
+    }
+    for (i = 0; i < plan.panel_count; ++i) {
+        const DM2_V1_WallPanelRender *panel = &plan.panels[i];
+        uint16_t bit;
+
+        if (panel->view_square < 0 || panel->view_square >= 16 ||
+            panel->gdat_index == 0) {
+            return 0;
+        }
+        bit = (uint16_t)(1u << (unsigned)panel->view_square);
+        if ((viewport->last_dungeon_wall_material_consumed_mask & bit) == 0u) {
+            return 0;
+        }
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)panel->view_square);
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)panel->gdat_index);
+        ++count;
+    }
+    if (count != viewport->asset_wall_drawn_count) return 0;
+    *out_count = count;
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static int dm2_runtime_teleporter_material_plan_identity(
     DM2_V1_BootProfile *boot,
     const DM2_V1_ViewportState *viewport,
@@ -2848,6 +2896,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int creature_material_plan_consumed = 0;
     int creature_material_plan_count = 0;
     int creature_drawn_material_count = 0;
+    uint32_t wall_drawn_material_hash = 0u;
+    int wall_drawn_material_count = 0;
+    int wall_material_plan_command_count = 0;
+    int wall_material_plan_consumed = 0;
     uint32_t teleporter_material_plan_hash = 0u;
     int teleporter_material_plan_required = 0;
     int teleporter_material_plan_consumed = 0;
@@ -3144,6 +3196,24 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         creature_drawn_material_hash = 0u;
         creature_drawn_material_count = 0;
     }
+    if (viewport.asset_wall_drawn_count > 0 &&
+        viewport.source_materials_required &&
+        dm2_runtime_wall_drawn_material_identity(
+            &viewport, &wall_drawn_material_hash,
+            &wall_drawn_material_count) &&
+        rt->gdat_wall_material_plan.valid &&
+        rt->gdat_wall_material_plan.command_count > 0 &&
+        viewport.gdat_wall_material_plan_consumed_count ==
+            viewport.asset_wall_drawn_count &&
+        wall_drawn_material_count == viewport.asset_wall_drawn_count &&
+        wall_drawn_material_count > 0) {
+        wall_material_plan_command_count =
+            wall_drawn_material_count;
+        wall_material_plan_consumed = 1;
+    } else {
+        wall_drawn_material_hash = 0u;
+        wall_drawn_material_count = 0;
+    }
     teleporter_material_plan_required =
         viewport.asset_teleporter_drawn_count > 0;
     teleporter_material_plan_consumed =
@@ -3257,6 +3327,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_outdoor_ground_drawn_count;
     g_dm2_frame_ownership.wall_gdat_blits =
         viewport.asset_wall_drawn_count;
+    g_dm2_frame_ownership.wall_gdat_material_evidence_count =
+        wall_drawn_material_count;
+    g_dm2_frame_ownership.wall_gdat_material_evidence_hash =
+        wall_drawn_material_hash;
     g_dm2_frame_ownership.gdat_wall_material_plan_consumed =
         viewport.gdat_wall_material_plan_consumed_count;
     g_dm2_frame_ownership.hud_core_gdat_blits =
@@ -3320,14 +3394,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                 viewport.gdat_scene_material_index,
                 DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING));
     }
-    if (viewport.asset_wall_drawn_count > 0) {
-        int wall_graphicsset_index = viewport.gdat_scene_control_ready
-            ? viewport.gdat_scene_material_index
-            : DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
-        dm2_runtime_add_viewport_asset_evidence(
-            &g_dm2_frame_ownership,
-            dm2_v1_viewport_wall_graphic_index_for_graphicsset(
-                wall_graphicsset_index, DM2_SQ_D0L));
+    if (wall_material_plan_consumed) {
+        DM2_V1_WallPanelRenderPlan wall_plan;
+        if (dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
+                                                         &wall_plan)) {
+            for (int i = 0; i < wall_plan.panel_count; ++i) {
+                dm2_runtime_add_viewport_asset_evidence(
+                    &g_dm2_frame_ownership,
+                    wall_plan.panels[i].gdat_index);
+            }
+        }
     }
     if (viewport.asset_teleporter_drawn_count > 0) {
         dm2_runtime_add_viewport_asset_evidence(
@@ -3622,6 +3698,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.wall_material_plan_hash =
         rt->gdat_wall_material_plan.valid
             ? rt->gdat_wall_material_plan.command_hash : 0u;
+    g_dm2_last_m11_frame.wall_material_plan_command_count =
+        wall_material_plan_command_count;
     /* skproject DM2_DRAW_DOOR/DRAW_DOOR_FRAMES resolve a multi-category
      * material plan before the viewport blits it.  Carry that exact plan to
      * M11 only when the presented frame actually used a door material; a

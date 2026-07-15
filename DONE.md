@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject all-wall M11 receipt: runtime now carries every
+  source-consumed `DRAW_WALL` GRAPHICSSET panel, in source draw order, into
+  frame ownership. The visible command count/hash covers the ten viewport
+  fields rather than claiming that unused cached wall fields were drawn.
+
 - 2026-07-15 DM2 skproject multi-creature M11 receipt: every successful
   `DRAW_MAP_CHIP`/`QUERY_CREATURE_PICST` blit now preserves its GDAT key in
   draw order. Runtime and M11 require the complete command count and hash;
