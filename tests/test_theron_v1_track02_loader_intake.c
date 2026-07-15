@@ -38,6 +38,7 @@ int main(void) {
     Theron_V1Track02LoaderReadFacts facts = valid_facts();
     Theron_V1Track02LoaderIntakeReceipt receipt;
     Theron_V1Track02LoaderPayloadReceipt payload_receipt;
+    Theron_V1Track02LoaderPostEnvelopeReceipt post_envelope_receipt;
     uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
     size_t i;
 
@@ -67,6 +68,26 @@ int main(void) {
     CHECK(memcmp(payload_receipt.payload, payload, sizeof(payload)) == 0);
     CHECK(strcmp(payload_receipt.status,
                  "initial_envelope_payload_handoff_no_semantics") == 0);
+    CHECK(theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
+        &payload_receipt,
+        fnv1a32(payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+                THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES),
+        &post_envelope_receipt));
+    CHECK(post_envelope_receipt.handed_off && post_envelope_receipt.no_fallback);
+    CHECK(post_envelope_receipt.record == THERON_V1_INITIAL_ENVELOPE_RECORD);
+    CHECK(post_envelope_receipt.record_user_data_offset ==
+          THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET);
+    CHECK(post_envelope_receipt.byte_count ==
+          THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES);
+    CHECK(memcmp(post_envelope_receipt.bytes,
+                 payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+                 THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES) == 0);
+    CHECK(strcmp(post_envelope_receipt.status,
+                 "initial_level_post_envelope_source_bytes_no_object_semantics") == 0);
+    CHECK(!theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
+        &payload_receipt, post_envelope_receipt.checksum ^ 1u,
+        &post_envelope_receipt));
+    CHECK(!post_envelope_receipt.handed_off && post_envelope_receipt.status == NULL);
     ++payload[0];
     CHECK(!theron_v1_track02_loader_intake_handoff_complete_payload(
         &receipt, payload, sizeof(payload), &payload_receipt));

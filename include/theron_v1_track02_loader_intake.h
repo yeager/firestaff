@@ -12,6 +12,12 @@
 #define THERON_V1_INITIAL_ENVELOPE_DESTINATION 0x3800u
 #define THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES 2048u
 #define THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES (12u + 32u * 27u)
+#define THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET \
+    (THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET + \
+     THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES)
+#define THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES \
+    (THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES - \
+     THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET)
 
 /* This is an observation boundary, not a payload decoder. The destination and
  * byte count are retained only when an original later loader read reports
@@ -70,6 +76,21 @@ typedef struct {
     const char *status;
 } Theron_V1Track02LoaderLevelEnvelopeReceipt;
 
+/* The remaining bytes in the same original sector after the proven level
+ * envelope. Their ownership and grammar are not established: the name avoids
+ * calling them an object table. They are copied only after the authenticated
+ * full-sector handoff and the raw-media boundary agree exactly. */
+typedef struct {
+    int handed_off;
+    int no_fallback;
+    uint32_t record;
+    uint32_t record_user_data_offset;
+    uint32_t byte_count;
+    uint32_t checksum;
+    uint8_t bytes[THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES];
+    const char *status;
+} Theron_V1Track02LoaderPostEnvelopeReceipt;
+
 /* Accepts only a provenance-authenticated later read of the source-locked
  * initial envelope. It deliberately leaves payload intake blocked until
  * authenticated trace must also retain the observed $3800 one-sector payload
@@ -97,5 +118,12 @@ int theron_v1_track02_loader_intake_handoff_level_envelope(
     uint32_t envelope_bytes,
     uint32_t envelope_checksum,
     Theron_V1Track02LoaderLevelEnvelopeReceipt *out_receipt);
+
+/* Preserves the source-locked tail immediately following the initial level
+ * envelope. This is an opaque byte handoff, not an object-record decoder. */
+int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
+    const Theron_V1Track02LoaderPayloadReceipt *payload,
+    uint32_t post_envelope_checksum,
+    Theron_V1Track02LoaderPostEnvelopeReceipt *out_receipt);
 
 #endif

@@ -213,6 +213,9 @@ typedef struct {
      * intake receipt. It is opaque runtime input, never a decoded level. */
     Theron_V1Track02LoaderPayloadReceipt loader_payload;
     Theron_V1Track02LoaderLevelEnvelopeReceipt loader_level_envelope;
+    /* Byte-faithful continuation of the same authenticated sector. It remains
+     * opaque until an original loader consumer proves object semantics. */
+    Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
     Theron_Track02InitialLevelObjectBoundaryReceipt initial_level_boundary;
     Theron_Track02InitialLevelLoaderRoute initial_level_route;
     int object_tail_semantics_proven;

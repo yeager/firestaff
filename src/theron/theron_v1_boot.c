@@ -218,6 +218,18 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
                THERON_TRACK02_RAW_USER_DATA_BYTES &&
            initial_level->loader_payload.payload_checksum ==
                initial_level->complete_payload_checksum &&
+           initial_level->loader_post_envelope.handed_off &&
+           initial_level->loader_post_envelope.no_fallback &&
+           initial_level->loader_post_envelope.record ==
+               initial_level->observed_track02_record &&
+           initial_level->loader_post_envelope.record_user_data_offset ==
+               initial_level->initial_level_boundary
+                   .object_boundary_user_data_offset_in_record &&
+           initial_level->loader_post_envelope.byte_count ==
+               initial_level->initial_level_boundary
+                   .following_user_data_bytes_in_record &&
+           initial_level->loader_post_envelope.checksum ==
+               initial_level->initial_level_boundary.following_user_data_hash &&
            !initial_level->object_tail_semantics_proven &&
            !initial_level->fallback_visuals_allowed &&
            theron_v1_raw_loader_trace_manifest_initial_level_handoff_is_complete(

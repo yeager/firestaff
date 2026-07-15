@@ -168,6 +168,13 @@ int main(void)
             THERON_V1_INITIAL_LEVEL_ENVELOPE_BYTES ||
         handoff.loader_level_envelope.envelope_checksum !=
             handoff.initial_level_boundary.level_payload_hash ||
+        !handoff.loader_post_envelope.handed_off ||
+        !handoff.loader_post_envelope.no_fallback ||
+        handoff.loader_post_envelope.record != handoff.observed_track02_record ||
+        handoff.loader_post_envelope.record_user_data_offset != 0x480u ||
+        handoff.loader_post_envelope.byte_count != 0x380u ||
+        handoff.loader_post_envelope.checksum !=
+            handoff.initial_level_boundary.following_user_data_hash ||
         handoff.object_tail_semantics_proven || handoff.fallback_visuals_allowed) {
         free(raw);
         printf("FAIL: fixture composition did not preserve the bounded handoff contract\n");
@@ -254,6 +261,15 @@ int main(void)
         return 1;
     }
     --profile.track02_initial_level_handoff.loader_level_envelope.envelope[0];
+    ++profile.track02_initial_level_handoff.loader_post_envelope.bytes[0];
+    if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
+            &profile, &world, raw, raw_size,
+            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+        free(raw);
+        printf("FAIL: altered post-envelope source bytes reached runtime\n");
+        return 1;
+    }
+    --profile.track02_initial_level_handoff.loader_post_envelope.bytes[0];
     ++raw[payload_receipt.raw_track02_offset];
     if (theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             &profile, raw, raw_size, &payload_receipt)) {
@@ -262,6 +278,16 @@ int main(void)
         return 1;
     }
     --raw[payload_receipt.raw_track02_offset];
+    ++raw[payload_receipt.raw_track02_offset +
+          handoff.loader_post_envelope.record_user_data_offset];
+    if (theron_v1_startup_runtime_consume_boot_profile_initial_payload(
+            &profile, raw, raw_size, &payload_receipt)) {
+        free(raw);
+        printf("FAIL: altered raw post-envelope bytes reached runtime\n");
+        return 1;
+    }
+    --raw[payload_receipt.raw_track02_offset +
+          handoff.loader_post_envelope.record_user_data_offset];
     coalesced.later_post_return_step_verified = 0;
     if (theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &coalesced, raw, raw_size, md5, &handoff)) {

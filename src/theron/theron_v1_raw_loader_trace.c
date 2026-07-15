@@ -1017,6 +1017,18 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_level_envelope.envelope_checksum;
     hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.handed_off ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.no_fallback ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.record;
+    hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.record_user_data_offset;
+    hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.byte_count;
+    hash *= 16777619u;
+    hash ^= receipt->loader_post_envelope.checksum;
+    hash *= 16777619u;
     hash ^= receipt->capture_manifest_bound ? 1u : 0u;
     hash *= 16777619u;
     hash ^= tqr_trace_fnv1a_bytes(
@@ -1085,6 +1097,20 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                receipt->initial_level_boundary.level_byte_count &&
            receipt->loader_level_envelope.envelope_checksum ==
                receipt->initial_level_boundary.level_payload_hash &&
+           receipt->loader_post_envelope.handed_off &&
+           receipt->loader_post_envelope.no_fallback &&
+           receipt->loader_post_envelope.record == receipt->loader_payload.record &&
+           receipt->loader_post_envelope.record_user_data_offset ==
+               receipt->initial_level_boundary.object_boundary_user_data_offset_in_record &&
+           receipt->loader_post_envelope.byte_count ==
+               receipt->initial_level_boundary.following_user_data_bytes_in_record &&
+           receipt->loader_post_envelope.byte_count ==
+               THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES &&
+           receipt->loader_post_envelope.checksum ==
+               receipt->initial_level_boundary.following_user_data_hash &&
+           tqr_trace_fnv1a_bytes(receipt->loader_post_envelope.bytes,
+                                 receipt->loader_post_envelope.byte_count) ==
+               receipt->loader_post_envelope.checksum &&
            receipt->receipt_hash != 0u &&
            receipt->receipt_hash == tqr_trace_initial_level_handoff_hash(receipt);
 }
@@ -1170,6 +1196,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     Theron_V1Track02LoaderIntakeReceipt loader_intake;
     Theron_V1Track02LoaderPayloadReceipt loader_payload;
     Theron_V1Track02LoaderLevelEnvelopeReceipt loader_level_envelope;
+    Theron_V1Track02LoaderPostEnvelopeReceipt loader_post_envelope;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!coalesced_receipt || !track02_data || !track02_md5 || !out ||
@@ -1218,6 +1245,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     memset(&loader_intake, 0, sizeof(loader_intake));
     memset(&loader_payload, 0, sizeof(loader_payload));
     memset(&loader_level_envelope, 0, sizeof(loader_level_envelope));
+    memset(&loader_post_envelope, 0, sizeof(loader_post_envelope));
     loader_facts.authenticated_original_trace = 1;
     loader_facts.later_than_stage2_transfer = 1;
     loader_facts.track02_record = coalesced_receipt->later_track02_record;
@@ -1285,6 +1313,15 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             &loader_level_envelope)) {
         return 0;
     }
+    if (boundary.object_boundary_user_data_offset_in_record !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET ||
+        boundary.following_user_data_bytes_in_record !=
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES ||
+        !theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
+            &loader_payload, boundary.following_user_data_hash,
+            &loader_post_envelope)) {
+        return 0;
+    }
 
     out->valid = 1;
     out->variant = coalesced_receipt->variant;
@@ -1304,6 +1341,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->loader_intake = loader_intake;
     out->loader_payload = loader_payload;
     out->loader_level_envelope = loader_level_envelope;
+    out->loader_post_envelope = loader_post_envelope;
     out->initial_level_boundary = boundary;
     out->initial_level_route = route;
     out->object_tail_semantics_proven = 0;
