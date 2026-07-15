@@ -766,7 +766,7 @@ static CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *depth, int *forced_state, uint32_t *variables,
     uint8_t *variable_state, uint32_t *parameters, int parameter_count,
-    const CSB_V1_CSBWinDSAStackContext *context,
+    CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
     int *pending_skin_write_count, int *staged_saves_disabled)
 {
@@ -1215,6 +1215,38 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
         break;
+    case 135u: /* STKOP_TalentsStore, reached via AMPERSAND2 + 128 */
+        /* DSA.cpp:4291-4338 pops character index then talents. Party data is
+         * runner-owned; wing writes retain CHARDESC::SaveToWings ownership. */
+        if (!context->party_champions_valid ||
+            context->party_champion_count < 0 ||
+            context->party_champion_count > 4 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        sv = (int32_t)v;
+        if (sv == 4) sv = context->party_leader_index;
+        if (((uint32_t)sv & 0x10000u) != 0u) {
+            uint32_t old_talents = 0u;
+            int wing_result;
+
+            if (!context->get_wing_talents || !context->set_wing_talents) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            wing_result = context->get_wing_talents(context->wing_user,
+                                                     (uint16_t)sv,
+                                                     &old_talents);
+            if (wing_result < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (wing_result > 0 && old_talents != w &&
+                context->set_wing_talents(context->wing_user,
+                                          (uint16_t)sv, w) < 0) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+        } else if (sv >= 0 && sv < context->party_champion_count) {
+            context->party_champion_talents[sv] = w;
+        }
+        break;
     case 131u: /* STKOP_GetSkin, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:3107-3120 pops the packed five/five/six-bit
          * location, reads the loaded SKIN_CACHE, then pushes its byte. */
@@ -1266,6 +1298,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     uint8_t variable_state[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
     CSB_V1_CSBWinDSAPendingSkinWrite
         pending_skin_writes[CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES];
+    CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
     int depth = 0;
@@ -1289,6 +1322,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     for (i = 0; i < context->global_variable_count; ++i) {
         global_variables[i] = context->global_variables[i];
     }
+    context_candidate = *context;
     memset(&candidate, 0, sizeof(candidate));
     candidate.forced_state = -1;
     staged_saves_disabled = context->saves_disabled ? 1 : 0;
@@ -1481,7 +1515,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             rc = csb_v1_csbwin_dsa_execute_stack_subcode(
                 subcode, stack, &depth, &candidate.forced_state, variables,
                 variable_state, parameters,
-                context->parameter_count, context, pending_skin_writes,
+                context->parameter_count, &context_candidate, pending_skin_writes,
                 &pending_skin_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -1504,6 +1538,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     if (context->saves_disabled_valid) {
         context->saves_disabled = staged_saves_disabled;
     }
+    memcpy(context->party_champion_talents,
+           context_candidate.party_champion_talents,
+           sizeof(context->party_champion_talents));
     candidate.words_consumed = (uint16_t)cursor;
     candidate.stack_depth = (uint16_t)depth;
     *out_execution = candidate;
@@ -1596,6 +1633,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.skin_user = runner->skin_user;
     context.get_wing_talents = runner->get_wing_talents;
     context.has_wing_character = runner->has_wing_character;
+    context.set_wing_talents = runner->set_wing_talents;
     context.wing_user = runner->wing_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

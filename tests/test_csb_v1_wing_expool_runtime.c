@@ -111,6 +111,12 @@ int main(void)
           "CSBWin restores a complete eight-record EDT_Character wing");
     check(csb_v1_runtime_has_csbwin_wing_character(&profile, 0x1234u) == 1,
           "CSBWin WHEREISCHAR finds its source first EDT_Character record");
+    check(csb_v1_runtime_set_csbwin_wing_talents(
+              &profile, 0x1234u, 0x10203040u) == 1 &&
+              csb_v1_runtime_read_csbwin_wing_talents(
+                  &profile, 0x1234u, &talents) == 1 &&
+              talents == 0x10203040u,
+          "CSBWin SaveToWings rewrites all existing character records");
     check(csb_v1_runtime_read_csbwin_wing_talents(
               &profile, 0x9999u, &talents) == 0 && talents == 0u,
           "CSBWin reports an authenticated absent wing as source zero");

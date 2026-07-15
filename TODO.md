@@ -3301,6 +3301,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       contract for its `4`/`5` status result. It checks only the source first
       25-word record, unlike `GetFromWings` which requires all eight records;
       both remain tied to the current authenticated save tail.
+    - 2026-07-15 talent-store update: source `STKOP_TalentsStore` now stages
+      party talent words through the profile-owned DSA runner and follows
+      `CHARDESC::SaveToWings` for high-bit wing identifiers: all eight
+      existing 25-word `EDT_Character` records are read then rewritten in
+      source order, with no EXPOOL enlargement. Missing wings retain the
+      source no-op; malformed or unavailable tails reject. Character swaps,
+      skill experience, and other CHARDESC mutation remain open.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original

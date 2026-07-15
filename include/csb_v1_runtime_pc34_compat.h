@@ -666,6 +666,13 @@ int csb_v1_runtime_read_csbwin_wing_talents(
 int csb_v1_runtime_has_csbwin_wing_character(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t fingerprint);
+/* CSBWin Character.cpp CHARDESC::SaveToWings rewrites all eight existing
+ * 25-word EDT_Character records. This routine follows that order without
+ * EXPOOL growth or invented records. */
+int csb_v1_runtime_set_csbwin_wing_talents(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    uint32_t talents);
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
