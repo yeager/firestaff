@@ -131,9 +131,21 @@ static size_t build_extended_features_fixture(uint8_t *bytes,
     header[36u] = (uint8_t)'Z';
     header[37u] = 0u;
     write_le16(header, 38u, dsa_count);
+    write_le32(header, 40u, 0x12345678u);
     write_le32(header, 44u, 23u);
     write_le32(header, 48u, 99u);
+    write_le32(header, 52u, 0x10203040u);
+    write_le32(header, 56u, 0x50607080u);
+    write_le32(header, 60u, 0x81234567u);
     write_le32(header, 64u, 0xA5u);
+    write_le32(header, 68u, 3u);
+    write_le32(header, 72u, 0xfffffffdu);
+    write_le32(header, 76u, 0x10203040u);
+    write_le32(header, 80u, 0x80000000u);
+    write_le32(header, 84u, 0x7fffffffu);
+    write_le32(header, 88u, 0xa1b2c3d4u);
+    write_le32(header, 92u, 0xe5f60718u);
+    for (i = 0u; i < 8u; ++i) header[96u + i] = (uint8_t)(0x90u + i);
     type_map = bytes + 512u;
     index_map = type_map + map_length;
     for (i = 0u; i < map_length; ++i) {
@@ -1460,7 +1472,17 @@ static int test_extended_features_container_gate(void)
                 report.data_map_length == 4u &&
                 report.extension_payload_offset == size &&
                 report.game_info_size == 23u && report.cell_flag_array_size == 99u &&
-                report.extended_flags == 0xA5u);
+                report.extended_flags == 0xA5u &&
+                report.editing_options == 0x12345678u &&
+                report.graphics_signature1 == 0x10203040u &&
+                report.graphics_signature2 == 0x50607080u &&
+                report.spell_filter_location == 0x81234567u &&
+                report.overlay_ordinal == 3 && report.overlay_p1 == -3 &&
+                report.overlay_p2 == (int32_t)0x10203040u &&
+                report.overlay_p3 == INT32_MIN && report.overlay_p4 == INT32_MAX &&
+                report.csbgraphics_signature1 == 0xa1b2c3d4u &&
+                report.csbgraphics_signature2 == 0xe5f60718u &&
+                report.hint_key[0] == 0x90u && report.hint_key[7] == 0x97u);
 
     bytes[512u] ^= 0x01u;
     rc = csb_v1_csbwin_512_inspect_extended_features(bytes, size, &report);

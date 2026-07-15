@@ -379,7 +379,22 @@ typedef struct {
     uint8_t                 csbwin_extended_features_version;
     uint8_t                 csbwin_extended_features_flags;
     uint32_t                csbwin_extended_features_flags32;
+    /* Exact EXTENDEDFEATURESBLOCK save header fields. These are retained
+     * after the header/map checks but never select a renderer, overlay, or
+     * graphics package without that source-owned consumer. */
+    uint32_t                csbwin_extended_editing_options;
     uint32_t                csbwin_extended_cell_flag_array_size;
+    uint32_t                csbwin_extended_graphics_signature1;
+    uint32_t                csbwin_extended_graphics_signature2;
+    uint32_t                csbwin_extended_spell_filter_location;
+    int32_t                 csbwin_extended_overlay_ordinal;
+    int32_t                 csbwin_extended_overlay_p1;
+    int32_t                 csbwin_extended_overlay_p2;
+    int32_t                 csbwin_extended_overlay_p3;
+    int32_t                 csbwin_extended_overlay_p4;
+    uint32_t                csbwin_extended_csbgraphics_signature1;
+    uint32_t                csbwin_extended_csbgraphics_signature2;
+    uint8_t                 csbwin_extended_hint_key[8];
     char                    *csbwin_extended_game_info;
     uint32_t                csbwin_extended_game_info_size;
     uint32_t                csbwin_extended_game_info_fnv1a;
