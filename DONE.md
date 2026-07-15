@@ -16786,6 +16786,19 @@ row before any game-owned loader, level, object, palette, or visual claim.
 Verification: `test_theron_v1_fifo_origin_main_ram_receipt`, the Mednafen
 patch application/compile probe, and the negative headless capture.
 
+# ✅ 2026-07-15 Theron FIFO-origin game-consumer gate
+
+The trace now tracks a bounded set of raw-CD FIFO cells after they reach
+physical main RAM. A consumer receipt is emitted only when a physical
+`0x1fxxxx` game-code reader reads the exact same still-valid destination and
+value; every later write invalidates that cell, including a same-value write.
+System Card readers are excluded. The verifier requires the matching prior
+raw LBA/offset receipt, so this cannot promote a timing correlation to a game
+handoff. No authentic consumer row has been observed yet.
+
+Verification: `test_theron_v1_fifo_origin_main_ram_consumer` and the Mednafen
+patch application/compile probe.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
