@@ -239,7 +239,7 @@ F	163	F163_amzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0164	F0164_DUNGEON_UnlinkThingFromList	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;REVIVE.C;DEFS.H;TIMELINE.C;ENDGAME.C;PROJEXPL.C;MOVESENS.C	implemented	implemented	CSB loaded-PC34 owner follows square-first removal and Generic.Next repair; complete raw arena rollback preserves the original when link admission fails.
 F	164	F164_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0165	F0165_DUNGEON_GetDiscardedThing	DUNGEON.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0166	F0166_DUNGEON_GetUnusedThing	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;ENDGAME.C;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0166	F0166_DUNGEON_GetUnusedThing	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;ENDGAME.C;PROJEXPL.C	implemented	implemented	CSB real-PC34 DB allocator scans source records, preserves three ordinary JUNK records for champion bones, clears the selected full record, and delegates exhaustion only to a caller-owned F0165 path.
 F	166	F166_szzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0167	F0167_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	167	F167_aozz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

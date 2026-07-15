@@ -6094,8 +6094,10 @@ static int csb_v1_runtime_find_unused_object_record(
     uint8_t **out_record,
     int *out_index)
 {
-    int i;
-    int byte_count = 4;
+    uint16_t thing;
+    int thing_size;
+    int thing_index;
+    const uint8_t *record;
 
     if (out_record) *out_record = NULL;
     if (out_index) *out_index = -1;
@@ -6106,16 +6108,15 @@ static int csb_v1_runtime_find_unused_object_record(
         return 0;
     }
 
-    for (i = 0; i < dungeon->thing_type_counts[thing_type]; ++i) {
-        int offset = dungeon->thing_data_bases[thing_type] + i * byte_count;
-        if (offset < 0 || offset + byte_count > dungeon->raw_size) return 0;
-        if (csb_v1_runtime_read_u16(dungeon->raw_data + offset) == 0xFFFFu) {
-            if (out_record) *out_record = dungeon->raw_data + offset;
-            if (out_index) *out_index = i;
-            return 1;
-        }
-    }
-    return 0;
+    thing = csb_v1_dungeon_f0166_get_unused_thing_pc34(
+        dungeon, (uint16_t)thing_type, NULL, NULL);
+    if (thing == 0xffffu) return 0;
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, thing, NULL, &thing_index, &thing_size);
+    if (!record || thing_size < 4 || thing_index < 0) return 0;
+    if (out_record) *out_record = (uint8_t *)record;
+    if (out_index) *out_index = thing_index;
+    return 1;
 }
 
 static uint16_t csb_v1_runtime_allocate_fixed_possession_thing(

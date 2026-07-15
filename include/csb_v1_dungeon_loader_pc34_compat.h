@@ -157,6 +157,18 @@ int csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
 int csb_v1_dungeon_f0155_get_stairs_exit_direction_pc34(
     const CSB_V1_DungeonData *d, int level, int map_x, int map_y);
 
+/* Caller-owned F0165 discard path used only after F0166 has exhausted the
+ * actual DB record range. It must return a matching live Thing or 0xffff. */
+typedef uint16_t (*CSB_V1_DungeonDiscardThingPc34Compat)(
+    uint16_t thing_type, void *user);
+
+/* ReDMCSB DUNGEON.C F0166. Allocates only an actual unused DB record, keeps
+ * three ordinary JUNK entries reserved for champion bones, and clears the
+ * complete source record before setting Generic.Next to ENDOFLIST. */
+uint16_t csb_v1_dungeon_f0166_get_unused_thing_pc34(
+    CSB_V1_DungeonData *d, uint16_t requested_thing_type,
+    CSB_V1_DungeonDiscardThingPc34Compat discard_thing, void *discard_user);
+
 /* Return a read-only pointer to a decoded dungeon thing record.
  * Returns NULL if the thing handle is invalid, the type has no records, or
  * the record would exceed raw_data bounds.  out_type/out_index/out_size are

@@ -691,6 +691,71 @@ const uint8_t *csb_v1_dungeon_get_thing_record(
     return d->raw_data + offset;
 }
 
+uint16_t csb_v1_dungeon_f0166_get_unused_thing_pc34(
+    CSB_V1_DungeonData *d, uint16_t requested_thing_type,
+    CSB_V1_DungeonDiscardThingPc34Compat discard_thing, void *discard_user)
+{
+    const uint16_t type_mask = 0x7fffu;
+    const uint16_t champion_bones = 0x8000u;
+    const uint16_t thing_none = 0xffffu;
+    const uint16_t thing_end = 0xfffeu;
+    uint16_t thing_type = requested_thing_type & type_mask;
+    int thing_count;
+    int record_size;
+    int index;
+    uint16_t thing = thing_none;
+    uint8_t *record = NULL;
+    int actual_type;
+    int actual_index;
+    int actual_size;
+
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        thing_type >= CSB_THING_TYPE_COUNT ||
+        ((requested_thing_type & champion_bones) != 0 && thing_type != 10)) {
+        return thing_none;
+    }
+    thing_count = d->thing_type_counts[thing_type];
+    record_size = csb_thing_data_record_byte_count((int)thing_type);
+    if (thing_count <= 0 || record_size <= 0 ||
+        d->thing_data_bases[thing_type] < 0) {
+        return thing_none;
+    }
+
+    /* ReDMCSB DUNGEON.C F0166 lines 2085-2127: ordinary JUNK allocation
+     * excludes the final three source records, reserved for champion bones. */
+    if ((requested_thing_type & champion_bones) == 0 && thing_type == 10) {
+        if (thing_count <= 3) return thing_none;
+        thing_count -= 3;
+    }
+    for (index = 0; index < thing_count; ++index) {
+        int offset = d->thing_data_bases[thing_type] + index * record_size;
+        if (offset < 0 || offset > d->raw_size - record_size) return thing_none;
+        if (rd16(d->raw_data + offset) == thing_none) {
+            thing = (uint16_t)((thing_type << 10) | (uint16_t)index);
+            record = d->raw_data + offset;
+            break;
+        }
+    }
+    if (!record && discard_thing) {
+        thing = discard_thing(thing_type, discard_user);
+        if (thing == thing_none || ((thing >> 10) & 0x0fu) != thing_type) {
+            return thing_none;
+        }
+        record = (uint8_t *)csb_v1_dungeon_get_thing_record(
+            d, thing, &actual_type, &actual_index, &actual_size);
+        if (!record || actual_type != thing_type || actual_index < 0 ||
+            actual_size != record_size) {
+            return thing_none;
+        }
+    }
+    if (!record) return thing_none;
+
+    memset(record, 0, (size_t)record_size);
+    record[0] = (uint8_t)(thing_end & 0xffu);
+    record[1] = (uint8_t)(thing_end >> 8);
+    return thing;
+}
+
 int csb_v1_dungeon_decode_dsa_filter_location(
     const CSB_V1_DungeonData *d, uint32_t record_word, int movement_filter,
     CSB_V1_DSAFilterLocation *out)
