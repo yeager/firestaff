@@ -385,8 +385,13 @@ static void verify_real_indexed_startup(
               &session, &plan, 1u, &presents_host) == 1 && presents_host.valid &&
               presents_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
-              presents_host.raster.title_composited,
-          "runtime host consumes the real C001 PRESENTS surface");
+              presents_host.raster.title_composited &&
+              presents_host.raster.pixel_hash == 0x38c165c5u &&
+              presents_host.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
+              presents_host.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
+          "runtime host consumes C001 PRESENTS with its F0437 palette phase");
 
     CHECK(real_c001_title_plan(60, &plan) &&
               csb_v1_boot_startup_runtime_asset_session_frame_pc34(
@@ -400,8 +405,13 @@ static void verify_real_indexed_startup(
               &session, &plan, 2u, &chaos_host) == 1 && chaos_host.valid &&
               chaos_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
-              chaos_host.raster.title_composited,
-          "runtime host consumes the real C001 CHAOS surface");
+              chaos_host.raster.title_composited &&
+              chaos_host.raster.pixel_hash == 0xc57f9804u &&
+              chaos_host.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
+              chaos_host.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
+          "runtime host consumes C001 CHAOS with its F0437 palette phase");
 
     CHECK(real_c001_title_plan(100, &plan) &&
               csb_v1_boot_startup_runtime_asset_session_frame_pc34(
@@ -415,8 +425,13 @@ static void verify_real_indexed_startup(
               &session, &plan, 3u, &strikes_host) == 1 && strikes_host.valid &&
               strikes_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
-              strikes_host.raster.title_composited,
-          "runtime host consumes the real C001 STRIKES BACK surface");
+              strikes_host.raster.title_composited &&
+              strikes_host.raster.pixel_hash == 0x8e96cf09u &&
+              strikes_host.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
+              strikes_host.title_special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES,
+          "runtime host consumes C001 STRIKES BACK with its F0437 palette phase");
 
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
@@ -442,6 +457,8 @@ static void verify_real_indexed_startup(
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
     plan.surface_w = 320;
     plan.surface_h = 200;
+    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    plan.title_special_palette = -1;
     plan.opening_composite_valid = 1;
     plan.opening_left_source_x = 0;
     plan.opening_left_w = 97;
@@ -471,8 +488,12 @@ static void verify_real_indexed_startup(
               host_surface.door_opening_decision &&
               host_surface.raster.door_composited &&
               host_surface.raster.source_surface_count == 3 &&
+              host_surface.raster.pixel_hash == 0xde9c254eu &&
+              host_surface.special_palette ==
+                  VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              host_surface.title_special_palette == -1 &&
               host_surface.no_synthetic_surface,
-          "runtime host opening decision consumes C004 plus original C002/C003 strips");
+          "runtime host opening handoff consumes C004/C002/C003 with entrance palette");
     memset(&input_outcome, 0, sizeof(input_outcome));
     memset(&runtime_apply, 0, sizeof(runtime_apply));
     memset(&state_receipt, 0, sizeof(state_receipt));
