@@ -6118,6 +6118,17 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                    sizeof(ground_material.palette16));
             ground_material.palette_hash = s->active_asset_palette_hash;
             ground_material.ready = 1;
+            /* T600 binds each GRAPHICSSET IMG3 to its own local palette
+             * before either scene plane is presented. A palette provider
+             * must not be able to relabel changed bytes with an old receipt. */
+            if (dm2_v1_weather_pixels_hash(sky_material.palette16, 16, 1,
+                                           16) != sky_material.palette_hash ||
+                dm2_v1_weather_pixels_hash(ground_material.palette16, 16, 1,
+                                           16) != ground_material.palette_hash) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
             sky_pixels = sky_material.pixels;
             sky_w = sky_material.width;
             sky_h_src = sky_material.height;
