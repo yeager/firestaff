@@ -11,6 +11,7 @@ typedef struct {
     int sky_index;
     int ground_index;
     int palette_seen[2];
+    int corrupt_palette;
 } FetchTrace;
 
 static int checks;
@@ -21,6 +22,16 @@ static int passed;
     if (condition) { ++passed; } \
     else { printf("FAIL: %s\n", label); } \
 } while (0)
+
+static uint32_t palette_hash(const uint8_t palette[16])
+{
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < 16; ++i) {
+        hash ^= palette[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static int fetch_outdoor_scene(void *user,
                                int gdat_index,
@@ -53,6 +64,7 @@ static int fetch_outdoor_local_palette(void *user,
                                        uint32_t *out_hash)
 {
     FetchTrace *trace = (FetchTrace *)user;
+    uint8_t receipt_palette[16];
 
     ++trace->palette_fetches;
     memset(out_palette16, 0, 16);
@@ -65,7 +77,9 @@ static int fetch_outdoor_local_palette(void *user,
     } else {
         return -1;
     }
-    if (out_hash) *out_hash = (uint32_t)gdat_index ^ 0x4f555444u;
+    memcpy(receipt_palette, out_palette16, sizeof(receipt_palette));
+    if (trace->corrupt_palette) out_palette16[0] ^= 0x80u;
+    if (out_hash) *out_hash = palette_hash(receipt_palette);
     return 0;
 }
 
@@ -112,6 +126,24 @@ int main(void)
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) == 0u);
 
+    memset(framebuffer, 0x3c, sizeof(framebuffer));
+    memset(&trace, 0, sizeof(trace));
+    trace.sky_index = dm2_v1_viewport_scene_material_graphic_index(
+        0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING);
+    trace.ground_index = dm2_v1_viewport_scene_material_graphic_index(
+        0, DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_FLOOR);
+    trace.corrupt_palette = 1;
+    setup_outdoor(&viewport, framebuffer, &trace, 1);
+    dm2_v1_viewport_render(&viewport);
+    CHECK("outdoor scene rejects an altered source palette before either plane",
+          trace.asset_fetches == 2 && trace.palette_fetches == 2 &&
+              viewport.asset_outdoor_sky_drawn_count == 0 &&
+              viewport.asset_outdoor_ground_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) != 0u &&
+              framebuffer[40 * DM2_VP_WIDTH + 100] == 0x3cu &&
+              framebuffer[140 * DM2_VP_WIDTH + 100] == 0x3cu);
+
     memset(framebuffer, 0x7e, sizeof(framebuffer));
     memset(&trace, 0, sizeof(trace));
     trace.sky_index = dm2_v1_viewport_scene_material_graphic_index(
@@ -121,7 +153,7 @@ int main(void)
     setup_outdoor(&viewport, framebuffer, &trace, 0);
     dm2_v1_viewport_render(&viewport);
     CHECK("source-required outdoor scene fails closed without local palettes",
-          trace.asset_fetches == 2 && trace.palette_fetches == 0 &&
+          trace.asset_fetches == 1 && trace.palette_fetches == 0 &&
               viewport.asset_outdoor_sky_drawn_count == 0 &&
               viewport.asset_outdoor_ground_drawn_count == 0 &&
               (viewport.blocked_material_mask &
