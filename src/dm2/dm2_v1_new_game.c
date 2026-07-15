@@ -1054,6 +1054,44 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
                                                    out_receipt);
 }
 
+int dm2_v1_original_raw_sksave_db_record_receipt(
+    const uint8_t *buf, size_t buf_size, int db_pool, int record_index,
+    DM2_V1_OriginalRawDbRecordReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    DM2_V1_OriginalRawDbRecordReceipt candidate;
+    size_t record_size;
+    size_t offset;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!buf || db_pool < 0 || db_pool >= DM2_RAW_SKSAVE_DB_POOL_COUNT ||
+        record_index < 0 ||
+        !dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size, &dungeon) ||
+        !dungeon.valid || record_index >= dungeon.db_record_counts[db_pool]) {
+        return 0;
+    }
+    record_size = (size_t)s_dm2_raw_db_record_size[db_pool];
+    if (record_size == 0u || (size_t)record_index > SIZE_MAX / record_size) {
+        return 0;
+    }
+    offset = dungeon.db_pool_offsets[db_pool] + (size_t)record_index * record_size;
+    if (offset < dungeon.db_pool_offsets[db_pool] ||
+        record_size > dungeon.suppress_state_offset - offset ||
+        offset + record_size > buf_size) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.db_pool = (uint8_t)db_pool;
+    candidate.record_index = (uint16_t)record_index;
+    candidate.record_size = (uint16_t)record_size;
+    candidate.record_offset = offset;
+    candidate.pool_hash = dungeon.db_pool_hashes[db_pool];
+    candidate.record_hash = dm2_v1_raw_sksave_hash(buf + offset, record_size);
+    candidate.valid = candidate.pool_hash != 0u && candidate.record_hash != 0u;
+    if (!candidate.valid) return 0;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)
