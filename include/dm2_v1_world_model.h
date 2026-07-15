@@ -54,6 +54,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "dm2_v1_dungeon_loader.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -204,6 +205,10 @@ typedef struct {
     uint32_t dungeon_seed;
     /* Platform/version */
     int platform;
+    int source_dungeon_valid;
+    int g1_record_pool_addresses_valid;
+    int g1_record_graph_complete;
+    DM2_V1_DungeonData source_dungeon;
 } dm2_dungeon_world_t;
 
 /* Build world model from an in-memory DUNGEON.DAT image.
@@ -237,6 +242,10 @@ int dm2_world_is_walkable(const dm2_dungeon_world_t *world,
  * Returns 1 for OUTDOOR levels, 0 for INDOOR/BUILDING.
  * Source: SKULL.ASM T600 outdoor tick */
 int dm2_world_is_outdoor(const dm2_dungeon_world_t *world, int level);
+
+const DM2_V1_DungeonData *dm2_world_get_verified_g1_map_source(
+    const dm2_dungeon_world_t *world);
+int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world);
 
 /* Free world model and all owned resources.
  * Safe to call with NULL. */

@@ -1215,7 +1215,10 @@ static void dm2_runtime_append_creature_sprite(
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
     dst->screen_y = (int16_t)screen_y;
+    dst->map_x = (int16_t)map_x;
+    dst->map_y = (int16_t)map_y;
     dst->health_pct = 100;
+    dst->source_kind = 2;
     if (record_size >= 8) {
         dst->direction = (uint8_t)(record[7] & 3u);
     }
@@ -1284,8 +1287,11 @@ static void dm2_runtime_append_creature_instance_sprite(
     dst->depth = (int16_t)placement->depth;
     dst->screen_x = (int16_t)placement->screen_x;
     dst->screen_y = (int16_t)placement->screen_y;
+    dst->map_x = (int16_t)inst->world_x;
+    dst->map_y = (int16_t)inst->world_y;
     dst->health_pct = (uint8_t)hp_pct;
     dst->direction = (uint8_t)(inst->direction & 3);
+    dst->source_kind = 1;
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     g_dm2_last_creature_render.valid = 1;

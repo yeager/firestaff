@@ -75,6 +75,25 @@ typedef struct {
 } DM2_V1_G1RecordPoolEvidence;
 
 typedef struct {
+    int valid;
+    int committed;
+    int incomplete;
+    int map_count;
+    int square_bytes;
+    int column_index_base;
+    int ground_stack_base;
+    int ground_stack_count;
+    int text_data_base;
+    int text_word_count;
+    int candidate_pool_base;
+    int candidate_pool_end;
+    int g1_extension_base;
+    int g1_extension_size;
+    int raw_map_data_base;
+    int record_graph_complete;
+} DM2_V1_G1PartialMapBootReceipt;
+
+typedef struct {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
@@ -98,6 +117,7 @@ typedef struct {
     /* Set only when the source layout has materialized every map-to-record
      * ownership table.  A byte-square map alone is not a playable graph. */
     int record_graph_complete;
+    DM2_V1_G1PartialMapBootReceipt partial_map_boot;
     uint8_t *raw_data;
     int raw_size;
     /* DM2 outdoor extension */
@@ -162,6 +182,7 @@ int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
  * PC G1 files whose direct graph is incomplete return 0 instead of being
  * promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
+int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d);
 /* Collect non-mutating PC G1 c_record provenance for the source-ordered pool
  * span. Record lookup/traversal is available only when record_graph_complete
  * is set by the independent bounded graph validator. */

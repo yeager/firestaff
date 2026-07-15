@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
+  viewport GDAT frame/HUD/weather contracts, direct render material receipts,
+  directional HUD text-palette state, creature source identity, and runtime
+  source-material lanes now pass focused DM2 syntax verification. Remaining
+  verification is the executable `dm2_v1_boot_profile_smoke` run once the
+  local build tree is repaired; current blockers are the missing
+  `build/test_dm2_v1_boot_profile_smoke` executable, absent
+  `test_dm2_v1_boot_profile_smoke` build target, and CMake regeneration
+  failure from many unrelated missing non-DM2/probe/shared sources.
+
 - 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
   classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
   bitmap, level, object, audio, and visual fallback routes, and allows capture

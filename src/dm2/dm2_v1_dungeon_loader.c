@@ -362,6 +362,24 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->record_graph_complete = 1;
     if (!dm2_v1_dungeon_validate_record_graph(out))
         out->record_graph_complete = 0;
+    out->partial_map_boot.valid = 1;
+    out->partial_map_boot.committed = 1;
+    out->partial_map_boot.incomplete = out->record_graph_complete ? 0 : 1;
+    out->partial_map_boot.map_count = out->level_count;
+    out->partial_map_boot.square_bytes = out->square_bytes;
+    out->partial_map_boot.column_index_base = out->column_index_base;
+    out->partial_map_boot.ground_stack_base = out->square_first_thing_base;
+    out->partial_map_boot.ground_stack_count = out->square_first_thing_count;
+    out->partial_map_boot.text_data_base = out->text_data_base;
+    out->partial_map_boot.text_word_count = out->text_word_count;
+    out->partial_map_boot.candidate_pool_base =
+        out->text_data_base + out->text_word_count * 2;
+    out->partial_map_boot.candidate_pool_end = out->g1_extension_base;
+    out->partial_map_boot.g1_extension_base = out->g1_extension_base;
+    out->partial_map_boot.g1_extension_size = out->g1_extension_size;
+    out->partial_map_boot.raw_map_data_base = out->raw_map_data_base;
+    out->partial_map_boot.record_graph_complete =
+        out->record_graph_complete;
     return 1;
 }
 
@@ -826,6 +844,28 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
     }
 
     out->available = 1;
+    return 1;
+}
+
+int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d) {
+    DM2_V1_G1RecordPoolEvidence evidence;
+
+    if (!d || !dm2_v1_dungeon_collect_g1_record_pool_evidence(d, &evidence))
+        return 0;
+    if (!evidence.available || evidence.candidate_bytes <= 0 ||
+        evidence.candidate_base != d->partial_map_boot.candidate_pool_base ||
+        evidence.candidate_end != d->partial_map_boot.candidate_pool_end ||
+        evidence.candidate_end != d->g1_extension_base ||
+        evidence.text_end != evidence.candidate_base) {
+        return 0;
+    }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] > 0 &&
+            s_dm2_db_record_size[type] > 0 &&
+            evidence.candidate_pool_bases[type] != d->thing_data_bases[type]) {
+            return 0;
+        }
+    }
     return 1;
 }
 

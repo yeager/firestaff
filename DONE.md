@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 real-profile GDAT runtime receipt repair: completed the
+  DM2 V1 source contracts needed by `dm2_v1_boot_profile_smoke` for partial
+  PC G1 map boot evidence, record-pool validation, runtime creature source
+  identity, viewport GDAT scene/weather/HUD text-palette receipts, direct
+  render material accounting, and G1 creature/wall material gates. The change
+  keeps incomplete G1 record graphs from being promoted while still proving
+  source pool addresses and source-owned GDAT material lanes. Verification:
+  focused `-fsyntax-only` builds passed for `dm2_v1_dungeon_loader.c`,
+  `dm2_v1_world_model.c`, `dm2_v1_viewport_renderer.c`,
+  `dm2_v1_runtime.c`, `dm2_v1_boot.c`, and
+  `tests/test_dm2_v1_boot_profile_smoke.c`. The executable smoke run remains
+  blocked by the build-tree issue recorded in TODO.
+
 - ✅ 2026-07-16 Theron ISO/Track02 media gate handoff: added the missing
   ISO-end and track-media gates, then threaded their receipts through the
   Theron media inventory, profile availability, launch gate, launch decision,
