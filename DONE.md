@@ -8,6 +8,18 @@
   `python3 tools/symbol_backlog.py --limit 12`, and
   `python3 tools/symbol_backlog.py --game DM2 --limit 8 --json` pass.
 
+- ✅ 2026-07-16 source-symbol disposition queue support: the backlog tool now
+  reads `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`, hides explicitly
+  closed dispositions by default, exposes `--include-disposed` for audits, and
+  includes disposition evidence in JSON/text output. The disposition TSV is a
+  schema gate only; no symbol is closed without an evidence row. Verification:
+  `python3 -m py_compile tools/symbol_backlog.py`,
+  `python3 tools/symbol_backlog.py --limit 0`, and
+  `python3 tools/symbol_backlog.py --include-disposed --limit 0` pass. The
+  fixture test `python3 tests/test_symbol_backlog_dispositions.py` also passes
+  and proves closed rows are hidden by default but visible with evidence under
+  `--include-disposed`.
+
 - ✅ 2026-07-16 DM2 G1 boot pose and runtime HUD capture closure: DM2
   boot now consumes the source-validated G1 File_header party pose decoded by
   the dungeon loader instead of replacing it with the old 15,15,N synthetic
