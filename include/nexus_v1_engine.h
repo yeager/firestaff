@@ -1118,6 +1118,34 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelSoundTraceHostReceipt;
 
+/* Raw-trace occurrence proof for the three observations requested by a SAL
+ * capture target. It establishes occurrence and chronology only; it is not a
+ * driver ABI, selector mapping, sample decoder, or playback permission. */
+typedef enum {
+    NEXUS_V1_SAL_DISPATCH_EVIDENCE_MISSING = 0,
+    NEXUS_V1_SAL_DISPATCH_EVIDENCE_BLOCKED_RAW = 1,
+    NEXUS_V1_SAL_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION = 2,
+    NEXUS_V1_SAL_DISPATCH_EVIDENCE_OBSERVED = 3
+} Nexus_V1_SalDispatchEvidenceStatus;
+
+typedef struct {
+    Nexus_V1_SalDispatchEvidenceStatus status;
+    int level_index;
+    int raw_trace_bound;
+    int selector_dispatch_observed;
+    int sal_read_observed;
+    int driver_output_observed;
+    size_t selector_dispatch_raw_offset;
+    size_t sal_read_raw_offset;
+    size_t driver_output_raw_offset;
+    int observation_order_proven;
+    int driver_dispatch_proven;
+    int sal_decode_proven;
+    int playback_permitted;
+    int blocks_real_sfx_playback;
+    int fallback_visuals_permitted;
+} Nexus_V1_SalDispatchEvidenceReceipt;
+
 /* Active-level ownership for the corpus-verified SLEV SH-2 entry profile.
  * This binds only the observed entry framing and literal locations to the
  * engine's current level. It does not identify task-body opcodes, callback
@@ -1541,6 +1569,7 @@ struct Nexus_V1_Engine {
     Nexus_V1_LevelScriptTraceHostReceipt script_trace_host_receipt;
     Nexus_V1_LevelSoundTraceAdmissionReceipt sound_trace_admission;
     Nexus_V1_LevelSoundTraceHostReceipt sound_trace_host_receipt;
+    Nexus_V1_SalDispatchEvidenceReceipt sound_dispatch_evidence;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
@@ -1796,6 +1825,9 @@ int nexus_v1_engine_consume_sal_driver_trace(
 int nexus_v1_current_level_sal_trace_host_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelSoundTraceHostReceipt *out_receipt);
+int nexus_v1_build_sal_dispatch_evidence(
+    Nexus_V1_Engine *engine, const uint8_t *raw_trace, size_t raw_trace_size,
+    Nexus_V1_SalDispatchEvidenceReceipt *out_receipt);
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt);

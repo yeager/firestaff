@@ -5018,6 +5018,8 @@ static int nexus_v1_slev_trace_hex_u64(const char *text,
                                        uint64_t *out_value);
 static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data,
                                             size_t size);
+static int nexus_v1_slev_raw_trace_find(const uint8_t *data, size_t size,
+                                        const char *needle, size_t *out_offset);
 
 int nexus_v1_engine_admit_sal_driver_trace(
     Nexus_V1_Engine *engine, const char *trace_text, size_t trace_size,
@@ -5202,6 +5204,7 @@ int nexus_v1_engine_consume_sal_driver_trace(
     Nexus_V1_LevelSoundTraceHostReceipt receipt;
     Nexus_V1_LevelSoundCaptureTargetReceipt target;
     const Nexus_V1_LevelSoundTraceAdmissionReceipt *trace;
+    const Nexus_V1_SalDispatchEvidenceReceipt *evidence;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -5215,6 +5218,7 @@ int nexus_v1_engine_consume_sal_driver_trace(
     }
     receipt.level_index = engine->level_aux_runtime_receipt.level_index;
     trace = &engine->sound_trace_admission;
+    evidence = &engine->sound_dispatch_evidence;
     if (trace->status != NEXUS_V1_SAL_TRACE_ADMITTED_OPAQUE ||
         trace->level_index != receipt.level_index ||
         !trace->capture_target_bound || !trace->mednafen_debugger_provenance ||
@@ -5224,6 +5228,18 @@ int nexus_v1_engine_consume_sal_driver_trace(
         !trace->trace_chain_complete || trace->driver_dispatch_proven ||
         trace->sal_decode_proven || trace->playback_permitted ||
         !trace->blocks_real_sfx_playback || trace->fallback_visuals_permitted) {
+        receipt.status = NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (evidence->status != NEXUS_V1_SAL_DISPATCH_EVIDENCE_OBSERVED ||
+        evidence->level_index != receipt.level_index ||
+        !evidence->raw_trace_bound || !evidence->selector_dispatch_observed ||
+        !evidence->sal_read_observed || !evidence->driver_output_observed ||
+        !evidence->observation_order_proven || evidence->driver_dispatch_proven ||
+        evidence->sal_decode_proven || evidence->playback_permitted ||
+        !evidence->blocks_real_sfx_playback ||
+        evidence->fallback_visuals_permitted) {
         receipt.status = NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE;
         *out_receipt = receipt;
         return 0;
@@ -5658,6 +5674,66 @@ static int nexus_v1_slev_raw_trace_find(const uint8_t *data, size_t size,
         }
     }
     return 0;
+}
+
+int nexus_v1_build_sal_dispatch_evidence(
+    Nexus_V1_Engine *engine, const uint8_t *raw_trace, size_t raw_trace_size,
+    Nexus_V1_SalDispatchEvidenceReceipt *out_receipt) {
+    Nexus_V1_SalDispatchEvidenceReceipt receipt;
+    const Nexus_V1_LevelSoundTraceAdmissionReceipt *trace;
+    char selector_dispatch[64];
+    char sal_read[64];
+    char driver_output[64];
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_MISSING;
+    receipt.level_index = -1;
+    receipt.blocks_real_sfx_playback = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    trace = &engine->sound_trace_admission;
+    receipt.level_index = trace->level_index;
+    if (trace->status != NEXUS_V1_SAL_TRACE_ADMITTED_OPAQUE ||
+        !trace->raw_trace_bytes_bound ||
+        trace->raw_trace_byte_count != raw_trace_size ||
+        trace->raw_trace_fnv1a64 !=
+            nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size)) {
+        receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_BLOCKED_RAW;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bound = 1;
+    snprintf(selector_dispatch, sizeof(selector_dispatch),
+             "pc=%08x selector-dispatch", trace->selector_dispatch_pc);
+    snprintf(sal_read, sizeof(sal_read), "pc=%08x sal-read",
+             trace->sal_read_pc);
+    snprintf(driver_output, sizeof(driver_output), "pc=%08x driver-output",
+             trace->driver_output_pc);
+    receipt.selector_dispatch_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, selector_dispatch,
+        &receipt.selector_dispatch_raw_offset);
+    receipt.sal_read_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, sal_read, &receipt.sal_read_raw_offset);
+    receipt.driver_output_observed = nexus_v1_slev_raw_trace_find(
+        raw_trace, raw_trace_size, driver_output,
+        &receipt.driver_output_raw_offset);
+    receipt.observation_order_proven = receipt.selector_dispatch_observed &&
+        receipt.sal_read_observed && receipt.driver_output_observed &&
+        receipt.selector_dispatch_raw_offset < receipt.sal_read_raw_offset &&
+        receipt.sal_read_raw_offset < receipt.driver_output_raw_offset;
+    if (!receipt.observation_order_proven) {
+        receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_BLOCKED_OBSERVATION;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_OBSERVED;
+    engine->sound_dispatch_evidence = receipt;
+    *out_receipt = receipt;
+    return 1;
 }
 
 int nexus_v1_build_slev_dispatch_evidence(
