@@ -38,7 +38,9 @@
   the source UI16 increment, 0x10000000 XP cap, and hidden-skill-to-basic-skill
   write, then publishes only after full action acceptance. A mastery change
   rejects atomically because `LevelUp`'s random/stat/UI transaction is not yet
-  complete. Verification: `csb_v1_dsa_queued_localstate2_timer`.
+  complete. The live M11 party snapshot and CSBWin CHARDESC save-summary now
+  consume the same 20-row skill owner through `DetermineMastery`, rather than
+  a stale cached level. Verification: `csb_v1_dsa_queued_localstate2_timer`.
 
 - 2026-07-15 CSBWin TIMER pool/runtime ownership: `SaveGame.cpp`'s fixed
   `MaxTimers` array and independent active `NumTimer` `TimerQueue` are now

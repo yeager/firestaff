@@ -55,6 +55,8 @@ static void test_experience_plus_runtime_bridge(void)
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     CSB_V1_RuntimeDSAFilterBinding binding;
+    CSB_V1_RuntimePartyMirrorReceipt_PC34 mirror;
+    CSB_V1_CSBWin512BodyReport exported;
     int parameters[1] = { 0 };
 
     memset(&action, 0, sizeof(action));
@@ -84,6 +86,19 @@ static void test_experience_plus_runtime_bridge(void)
               profile.party_state.Champions[0].SkillExperience[7] == 800u &&
               profile.party_state.Champions[0].SkillExperience[0] == 800u,
           "DSA ExperiencePlus commits source AddToSkill XP to selected and basic skills");
+
+    memset(&mirror, 0, sizeof(mirror));
+    memset(&exported, 0, sizeof(exported));
+    check(csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
+              &profile, &mirror) == 1 && mirror.valid == 1 &&
+              mirror.party.champions[0].skillLevels[0] == 2u &&
+              csb_v1_runtime_get_champion_skill_level(&profile, 0, 7) == 2,
+          "DSA ExperiencePlus reaches M11 base-skill and hidden-skill runtime mastery");
+    check(csb_v1_runtime_export_csbwin_champion_summaries(
+              &profile, &exported) == 1 && exported.champions[0].valid == 1 &&
+              exported.champions[0].skill_experience[0] == 800u &&
+              exported.champions[0].skill_experience[7] == 800u,
+          "DSA ExperiencePlus reaches the CSBWin CHARDESC save-summary owner");
 
     action.program_words = level_up_program;
     action.program_word_count = (int)(sizeof(level_up_program) /
