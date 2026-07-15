@@ -474,7 +474,16 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
         handoff->loader_payload.payload_checksum !=
             handoff->complete_payload_checksum ||
         handoff->loader_payload.payload_checksum !=
-            handoff->loader_intake.observed_payload_checksum) {
+            handoff->loader_intake.observed_payload_checksum ||
+        !handoff->loader_post_envelope.handed_off ||
+        !handoff->loader_post_envelope.no_fallback ||
+        handoff->loader_post_envelope.record != handoff->observed_track02_record ||
+        handoff->loader_post_envelope.record_user_data_offset !=
+            handoff->initial_level_boundary.object_boundary_user_data_offset_in_record ||
+        handoff->loader_post_envelope.byte_count !=
+            handoff->initial_level_boundary.following_user_data_bytes_in_record ||
+        handoff->loader_post_envelope.checksum !=
+            handoff->initial_level_boundary.following_user_data_hash) {
         return 0;
     }
     /* The loader record is INDEX 01-relative; the bound boundary retains
@@ -488,8 +497,17 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             hucard_rom + raw_offset,
             handoff->loader_payload.payload_bytes) !=
             handoff->loader_payload.payload_checksum ||
+        theron_v1_startup_runtime_fnv1a32(
+            hucard_rom + raw_offset +
+                handoff->loader_post_envelope.record_user_data_offset,
+            handoff->loader_post_envelope.byte_count) !=
+            handoff->loader_post_envelope.checksum ||
         memcmp(hucard_rom + raw_offset, handoff->loader_payload.payload,
-               handoff->loader_payload.payload_bytes) != 0) {
+               handoff->loader_payload.payload_bytes) != 0 ||
+        memcmp(hucard_rom + raw_offset +
+                   handoff->loader_post_envelope.record_user_data_offset,
+               handoff->loader_post_envelope.bytes,
+               handoff->loader_post_envelope.byte_count) != 0) {
         return 0;
     }
 
@@ -543,6 +561,9 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
             handoff->initial_level_boundary.level_byte_count ||
         handoff->loader_level_envelope.envelope_checksum !=
             handoff->initial_level_boundary.level_payload_hash ||
+        !handoff->loader_post_envelope.handed_off ||
+        handoff->loader_post_envelope.checksum !=
+            handoff->initial_level_boundary.following_user_data_hash ||
         theron_v1_level_load(&payload_level,
             handoff->loader_level_envelope.envelope,
             (int)handoff->loader_level_envelope.envelope_bytes,

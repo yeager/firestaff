@@ -6949,6 +6949,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   its dungeon/object/tile/bitmap/palette grammar and a positive level
   transition still need original execution evidence.
 
+- 🔧 2026-07-15 Track 02 level/object boundary: the authenticated original
+  `$e009` sector at record `0x0b52` is now split only at the source-proven
+  boundary: level envelope `[0x114,0x480)` and the remaining opaque bytes
+  `[0x480,0x800)`. The latter is copied from the same rehashed 2048-byte
+  loader witness, carries its own FNV-1a receipt, and is rechecked against the
+  raw MODE1 sector before the Hall of Records route enters runtime. It is not
+  an object table, is not parsed, and cannot create objects, graphics, or a
+  fallback. Still required: an original game-owned consumer that establishes
+  the record grammar and connects it to a later level/object transition.
+
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
   MODE1/2352 declaration canonically resolves to the independently

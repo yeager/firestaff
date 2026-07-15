@@ -118,3 +118,38 @@ int theron_v1_track02_loader_intake_handoff_level_envelope(
     *out_receipt = receipt;
     return 1;
 }
+
+int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
+    const Theron_V1Track02LoaderPayloadReceipt *payload,
+    uint32_t post_envelope_checksum,
+    Theron_V1Track02LoaderPostEnvelopeReceipt *out_receipt) {
+    Theron_V1Track02LoaderPostEnvelopeReceipt receipt = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!payload || !out_receipt || !payload->handed_off ||
+        !payload->no_fallback ||
+        payload->record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
+        payload->payload_bytes != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
+        post_envelope_checksum == 0u ||
+        theron_v1_track02_loader_intake_fnv1a32(
+            payload->payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+            THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES) !=
+            post_envelope_checksum) {
+        return 0;
+    }
+
+    receipt.handed_off = 1;
+    receipt.no_fallback = 1;
+    receipt.record = payload->record;
+    receipt.record_user_data_offset =
+        THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET;
+    receipt.byte_count = THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_BYTES;
+    receipt.checksum = post_envelope_checksum;
+    memcpy(receipt.bytes,
+           payload->payload + THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET,
+           sizeof(receipt.bytes));
+    receipt.status =
+        "initial_level_post_envelope_source_bytes_no_object_semantics";
+    *out_receipt = receipt;
+    return 1;
+}
