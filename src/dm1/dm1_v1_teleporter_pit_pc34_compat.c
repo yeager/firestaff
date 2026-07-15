@@ -11,11 +11,14 @@ static unsigned int dm1_v1_get_group_value_pc34(unsigned int packed, int creatur
     return (packed >> (creatureIndex * 2)) & 3u;
 }
 
-static unsigned int dm1_v1_set_group_value_pc34(unsigned int packed, int creatureIndex, unsigned int value) {
-    unsigned int shift = (unsigned int)(creatureIndex * 2);
-    packed &= ~(3u << shift);
-    packed |= (value & 3u) << shift;
-    return packed;
+unsigned int DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+        unsigned int groupValue,
+        unsigned int creatureIndex,
+        unsigned int creatureValue) {
+    /* GROUP.C F0178: the caller owns the source-valid 0..3 index. */
+    creatureValue &= 0x0003u;
+    creatureValue <<= (creatureIndex <<= 1);
+    return creatureValue | (groupValue & ~(3u << creatureIndex));
 }
 
 int DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterDefPc34* teleporter,
@@ -43,7 +46,8 @@ int DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterDe
         int newDirection = absoluteRotation
             ? rotation
             : dm1_v1_normalize_direction_or_cell_pc34(oldDirection + rotation);
-        directions = dm1_v1_set_group_value_pc34(directions, i, (unsigned int)newDirection);
+        directions = DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+            directions, (unsigned int)i, (unsigned int)newDirection);
 
         if (inCells != DM1_V1_GROUP_CELL_SINGLE_CENTERED_PC34) {
             int cellRotation = 0;
@@ -56,8 +60,10 @@ int DM1_V1_ApplyGroupTeleporterRotationF0262Pc34Compat(const DM1_V1_TeleporterDe
             }
             if (cellRotation) {
                 int oldCell = (int)dm1_v1_get_group_value_pc34(inCells, i);
-                cells = dm1_v1_set_group_value_pc34(cells, i,
-                    (unsigned int)dm1_v1_normalize_direction_or_cell_pc34(oldCell + cellRotation));
+                cells = DM1_V1_GroupValueUpdatedWithCreatureValueF0178Pc34Compat(
+                    cells, (unsigned int)i,
+                    (unsigned int)dm1_v1_normalize_direction_or_cell_pc34(
+                        oldCell + cellRotation));
             }
         }
     }
@@ -124,7 +130,7 @@ int DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(int thingKind,
 }
 
 const char* DM1_V1_TeleporterRotation_SourceEvidencePc34Compat(void) {
-    return "ReDMCSB WIP20210206 Toolchains/Common/Source: MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
+    return "ReDMCSB WIP20210206 Toolchains/Common/Source: GROUP.C:174-185 F0178 packed creature value replacement; MOVESENS.C:33-111 F0262 group teleporter direction/cell rotation; MOVESENS.C:120-133 F0263 projectile teleporter rotation; MOVESENS.C:316-322 F0267 source-map sentinel contract; MOVESENS.C:493-518 party absolute/relative teleporter rotation; MOVESENS.C:520-524 group audible buzz and F0262 dispatch; MOVESENS.C:526-531 projectile/object teleporter rotation and projectile-associated object exception";
 }
 
 int DM1_V1_PlanGroupMoveRemovalAfterPitTeleporterF0267Pc34Compat(
