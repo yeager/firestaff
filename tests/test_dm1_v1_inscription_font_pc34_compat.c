@@ -27,15 +27,13 @@ int main(void)
     DM1_V1_InscriptionLinePlanPc34 linePlan;
     int decodedLen;
 
-    /* ReDMCSB DATA.C:137-209 G0018 entry 61 is
-     * M648_GRAPHIC_INSCRIPTION_FONT. M648 is a variable identifier; the
-     * loader takes the table's GRAPHICS.DAT ordinal, not the stale guessed
-     * value 258. */
+    /* G0018 entry 61 is the mandatory preload slot 120. DUNVIEW.C F0107
+     * consumes M648's actual GRAPHICS.DAT bitmap 258, not that slot value. */
     check_int("M648.raw.graphics.dat.ordinal",
-              DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34, 120);
+              DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34, 258);
     check_int("M648.G0018.entry.61",
               mandatory ? mandatory[61] : -1,
-              DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+              120);
 
     check_int("source.raw.A",
               DM1_V1_InscriptionGlyphIndexFromSourceByte(0),
