@@ -53,6 +53,7 @@ int csb_v1_boot_startup_playback_complete_swoosh_pc34(
     session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34;
     session->playback.title_stage = CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
     session->playback.title_frame = 0;
+    session->playback.title_phase_mask = 0;
     session->playback.swoosh_active = 0;
     if (out_audio_action) {
         *out_audio_action = CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34;
@@ -102,6 +103,30 @@ int csb_v1_boot_startup_playback_title_frame_pc34(
             : CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34;
     session->playback.title_frame = title_frame;
     session->playback.title_stage = title_stage;
+    if (title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
+        session->playback.title_phase_mask |= 0x01;
+    } else if (title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
+        session->playback.title_phase_mask |= 0x02;
+    } else if (title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
+        session->playback.title_phase_mask |= 0x08;
+    }
+    return 1;
+}
+
+int csb_v1_boot_startup_playback_complete_entrance_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    if (!csb_v1_startup_playback_session_owned_pc34(session) ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+        !session->playback.entrance_music_active ||
+        session->playback.title_phase_mask != 0x0b ||
+        !session->playback.entrance_scene_presented ||
+        !session->playback.door_frame_presented ||
+        session->playback.last_door_opening_step != 31 ||
+        session->playback.next_door_opening_step != 32) {
+        return 0;
+    }
+    session->playback.entrance_complete = 1;
     return 1;
 }
 
@@ -110,7 +135,8 @@ int csb_v1_boot_startup_playback_enter_hud_pc34(
 {
     if (!csb_v1_startup_playback_session_owned_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        !session->playback.entrance_music_active) {
+        !session->playback.entrance_music_active ||
+        !session->playback.entrance_complete) {
         return 0;
     }
     /* ENTRANCE.C F0806 owns the closed-door menu until entering the dungeon;

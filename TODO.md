@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 CSB startup terminal capture follow-up: the terminal C017/C040
+  HUD receipt gate is now code-owned and rejects stale source ticks,
+  generation changes, wrappers, and fallback routes. Remaining CSB startup
+  evidence is real Mac/release app presented-frame capture with local CSB data
+  through that receipt path, not another synthetic title/door/HUD path.
+
 - 2026-07-15 Nexus startup title-route follow-up: the runtime-state title
   route receipt now has an `asset-blocked` route and the launcher wrappers
   are wired to refuse save/champion presentation when startup menu assets are

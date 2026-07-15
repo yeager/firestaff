@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB terminal startup HUD receipt gate: the verified CSB
+  startup session now carries title phase mask, entrance-door completion,
+  terminal C017/C040 source identity, neutral-palette live HUD raster, and
+  stale tick/generation rejection through a CSB-owned receipt. ReDMCSB
+  `TITLE.C F0437`, `ENTRANCE.C F0806/F0807`, and `PANEL.C F0346/F0347`
+  remain the source boundary; no synthetic title, door, or HUD fallback can
+  satisfy this gate. Verification: strict C11 object builds for
+  `csb_v1_startup_playback_pc34_compat.c`,
+  `csb_v1_startup_runtime_surfaces_pc34_compat.c`, and
+  `csb_v1_startup_terminal_receipt_pc34_compat.c`.
+
 - ✅ 2026-07-15 DM1 F0399/G0485/G0486 symbol mana-cost receipt: added a
   DM1-owned receipt that computes spell-symbol mana cost from the real PC34
   G0485 base table and G0486 power multiplier table before any champion mana
