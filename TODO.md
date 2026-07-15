@@ -7060,6 +7060,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     command-list emission, DGN ownership, palette/transform semantics, or a
     drawable primitive. The next evidence must be a real execution trace that
     connects this executable route to a command snapshot and active DGN face.
+  - 2026-07-15 state-route update: a second unique `DM.BIN` table at
+    `+0x7d498` is statically consumed by 21 decoded SH-2 PC-relative literal
+    loads. Six loads target VDP1 register literals and one targets
+    `0x25C00000` (VDP1 VRAM), making it a verified command-storage candidate
+    in the original executable. This is not execution evidence: command
+    production, active DGN ownership, transform, palette, and drawing still
+    require an authentic Saturn trace.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's

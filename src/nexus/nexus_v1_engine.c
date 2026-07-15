@@ -2027,6 +2027,103 @@ int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
     return receipt.static_vdp1_register_table_proven ? 1 : 0;
 }
 
+int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1StateRouteReceipt *out_receipt)
+{
+    /* The static map is retained verbatim from the canonical Japanese retail
+     * executable. It has one VDP1-VRAM base and six VDP1 register literals.
+     * We only decode the documented SH-2 MOV.L @(disp,PC),Rn addressing needed
+     * to prove that executable code references the map; no opcode is run. */
+    static const uint32_t expected_words[19] = {
+        UINT32_C(0x25d00002), UINT32_C(0x25d00004), UINT32_C(0x00008000),
+        UINT32_C(0x25d00006), UINT32_C(0x25d00008), UINT32_C(0x0000ffff),
+        UINT32_C(0x25d0000a), UINT32_C(0x060972ba), UINT32_C(0x060972b6),
+        UINT32_C(0x25c00000), UINT32_C(0x0609747c), UINT32_C(0x060972bc),
+        UINT32_C(0x25d00000), UINT32_C(0x06097490), UINT32_C(0x060972b4),
+        UINT32_C(0x060972b8), UINT32_C(0x0609748e), UINT32_C(0x060972c0),
+        UINT32_C(0x060972c2)
+    };
+    Nexus_V1_DmBinVdp1StateRouteReceipt receipt;
+    uint8_t *data;
+    int size = 0;
+    int offset;
+    int word;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.table_offset = -1;
+    receipt.first_sh2_literal_load_offset = -1;
+    receipt.last_sh2_literal_load_offset = -1;
+    receipt.no_draw_only = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine ||
+        nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
+        !receipt.source.canonical_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data || size < (int)sizeof(expected_words)) {
+        free(data);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = size;
+    receipt.source_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(data, size);
+    for (offset = 0; offset <= size - (int)sizeof(expected_words); offset += 4) {
+        for (word = 0; word < (int)(sizeof(expected_words) / sizeof(expected_words[0]));
+             ++word) {
+            if (nexus_v1_dgn_read_be32(data + offset + word * 4) !=
+                expected_words[word]) {
+                break;
+            }
+        }
+        if (word == (int)(sizeof(expected_words) / sizeof(expected_words[0]))) {
+            if (receipt.table_offset < 0) receipt.table_offset = offset;
+            ++receipt.table_occurrence_count;
+        }
+    }
+    if (receipt.table_occurrence_count != 1) {
+        free(data);
+        *out_receipt = receipt;
+        return 0;
+    }
+    /* SH-2 MOV.L @(disp,PC),Rn is Dnxx. Its word-aligned target is
+     * (PC + 4) rounded down to four bytes plus disp * 4. */
+    for (offset = 0; offset + 1 < size; offset += 2) {
+        uint16_t opcode = nexus_v1_dgn_read_be16(data + offset);
+        int target;
+        uint32_t literal;
+
+        if ((opcode & UINT16_C(0xf000)) != UINT16_C(0xd000)) continue;
+        target = ((offset + 4) & ~3) + (int)((opcode & UINT16_C(0x00ff)) * 4U);
+        if (target < receipt.table_offset || target + 4 > receipt.table_offset +
+                (int)sizeof(expected_words)) {
+            continue;
+        }
+        literal = nexus_v1_dgn_read_be32(data + target);
+        ++receipt.sh2_pc_relative_literal_load_count;
+        if (receipt.first_sh2_literal_load_offset < 0)
+            receipt.first_sh2_literal_load_offset = offset;
+        receipt.last_sh2_literal_load_offset = offset;
+        if ((literal & UINT32_C(0xfffffff0)) == UINT32_C(0x25d00000))
+            ++receipt.vdp1_register_literal_load_count;
+        if (literal == UINT32_C(0x25c00000))
+            ++receipt.vdp1_vram_literal_load_count;
+    }
+    free(data);
+    receipt.static_sh2_literal_loads_proven =
+        receipt.sh2_pc_relative_literal_load_count == 21 &&
+        receipt.vdp1_register_literal_load_count == 6 &&
+        receipt.vdp1_vram_literal_load_count == 1;
+    receipt.vdp1_vram_command_storage_candidate_proven =
+        receipt.static_sh2_literal_loads_proven;
+    *out_receipt = receipt;
+    return receipt.static_sh2_literal_loads_proven ? 1 : 0;
+}
+
 static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
 {
     uint8_t *data;
