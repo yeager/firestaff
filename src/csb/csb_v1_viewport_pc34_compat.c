@@ -3454,6 +3454,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
         cfg->real_graphics_session = 0;
+        cfg->graphic_provider_callback = NULL;
+        cfg->graphic_provider_user_data = NULL;
         return;
     }
     cfg->object_sprite_drawer = binding->object_sprite_drawer;
@@ -3467,6 +3469,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
     cfg->real_graphics_session = binding->real_graphics_session ? 1 : 0;
+    cfg->graphic_provider_callback = binding->graphic_provider_callback;
+    cfg->graphic_provider_user_data = binding->graphic_provider_user_data;
 }
 
 void csb_v1_viewport_runtime_draw_counts_reset(
@@ -4076,6 +4080,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.floor_area = cfg->viewport_pixels +
                     DM1_VIEWPORT_FLOOR_Y * vp.viewport_stride;
     vp.floor_ceiling_dirty = true;
+    vp.graphic_provider_callback = cfg->graphic_provider_callback;
+    vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
 
     /* Wire dungeon grid for CSB back-wall rendering (D3L2/D3R2/D2L2/D2R2).
      * The dungeon grid enables element-specific routing for CSB four-sided
