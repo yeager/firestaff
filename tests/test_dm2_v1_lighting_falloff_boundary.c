@@ -1338,7 +1338,10 @@ static void test_sprite_asset_provider(void)
               viewport.fallback_creature_drawn_count == 0);
     CHECK("live creature draw consumes its selected direct GDAT field",
           framebuffer[((50 - 4) * 320) + (40 - 4)] == 12 &&
-              framebuffer[(50 * 320) + 40] == 12);
+              framebuffer[(50 * 320) + 40] == 12 &&
+              viewport.creature_material_drawn_count == 1 &&
+              viewport.creature_material_gdat_indices[0] ==
+                  dm2_v1_viewport_creature_field_graphic_index(0x12, 1));
     CHECK("creature health state does not generate a scene health bar",
           framebuffer[(42 * 320) + 32] == 0 &&
               framebuffer[(42 * 320) + 40] == 0);
@@ -1366,7 +1369,10 @@ static void test_sprite_asset_provider(void)
     CHECK("live creature render uses the selected source GDAT image field",
           viewport.asset_creature_drawn_count == 1 &&
               framebuffer[((50 - 4) * 320) + (40 - 4)] == 9 &&
-              framebuffer[(50 * 320) + 40] == 9);
+              framebuffer[(50 * 320) + 40] == 9 &&
+              viewport.creature_material_drawn_count == 1 &&
+              viewport.creature_material_gdat_indices[0] ==
+                  dm2_v1_viewport_creature_field_graphic_index(0x12, 2));
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

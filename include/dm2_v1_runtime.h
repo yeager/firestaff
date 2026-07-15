@@ -52,6 +52,8 @@ typedef struct {
     int hud_core_gdat_blits;
     int door_gdat_blits;
     int creature_gdat_blits;
+    int creature_gdat_material_evidence_count;
+    uint32_t creature_gdat_material_evidence_hash;
     int floor_ceiling_gdat_blits;
     uint8_t floor_ceiling_material_required_mask;
     uint8_t floor_ceiling_material_consumed_mask;
@@ -171,6 +173,7 @@ typedef struct {
     int hud_material_plan_consumed;
     int creature_material_plan_required;
     uint32_t creature_material_plan_hash;
+    int creature_material_plan_command_count;
     int creature_material_plan_consumed;
     int teleporter_material_plan_required;
     uint32_t teleporter_material_plan_hash;

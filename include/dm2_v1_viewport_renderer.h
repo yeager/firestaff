@@ -917,6 +917,12 @@ typedef struct {
     DM2_V1_DoorAssetBlit last_door_button_asset_blit;
     int asset_creature_drawn_count;
     int fallback_creature_drawn_count;
+    /* Every successful DRAW_MAP_CHIP/QUERY_CREATURE_PICST blit records its
+     * source GDAT key in draw order. Runtime folds this exact list into the
+     * M11 material receipt; it must never infer missing creature material
+     * from the final blit alone. */
+    int creature_material_drawn_count;
+    int creature_material_gdat_indices[DM2_MAX_CREATURES_PER_SQ];
     int last_creature_asset_blit_valid;
     int last_creature_render_valid;
     int last_creature_draw_order;

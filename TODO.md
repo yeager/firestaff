@@ -495,6 +495,11 @@
     candidate into a sprite. Only a proven live `QUERY_CREATURE_PICST` field
     or an exact G1/DB4 material receipt may draw. Remaining work is binding
     dynamic AI/animation ownership to an equally source-backed live route.
+  - 2026-07-15 update: every successful creature GDAT blit now records its
+    source key in draw order. Runtime folds the complete list into the M11
+    material receipt and rejects a count/hash mismatch, so a multi-creature
+    frame cannot be represented by the last blit alone. Remaining work is
+    authentic dynamic CCM/DB4 ownership and mutable animation state.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

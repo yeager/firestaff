@@ -2001,6 +2001,39 @@ static int dm2_runtime_creature_material_plan_identity(
     return 1;
 }
 
+/* DRAW_MAP_CHIP and QUERY_CREATURE_PICST may consume several creatures in a
+ * frame. Keep the renderer's actual GDAT key list separate from the source
+ * plan: a valid plan must not let an omitted or substituted later blit hide
+ * behind the final creature receipt. */
+static int dm2_runtime_creature_drawn_material_identity(
+    const DM2_V1_ViewportState *viewport,
+    uint32_t *out_hash,
+    int *out_count)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_count) *out_count = 0;
+    if (!viewport || !out_hash || !out_count ||
+        viewport->asset_creature_drawn_count <= 0 ||
+        viewport->creature_material_drawn_count !=
+            viewport->asset_creature_drawn_count ||
+        viewport->creature_material_drawn_count >
+            DM2_MAX_CREATURES_PER_SQ) {
+        return 0;
+    }
+    for (i = 0; i < viewport->creature_material_drawn_count; ++i) {
+        int gdat_index = viewport->creature_material_gdat_indices[i];
+        if (gdat_index == 0) return 0;
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)gdat_index);
+    }
+    *out_count = viewport->creature_material_drawn_count;
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static int dm2_runtime_teleporter_material_plan_identity(
     DM2_V1_BootProfile *boot,
     const DM2_V1_ViewportState *viewport,
@@ -2810,9 +2843,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int hud_material_plan_required = 0;
     int hud_material_plan_consumed = 0;
     uint32_t creature_material_plan_hash = 0u;
+    uint32_t creature_drawn_material_hash = 0u;
     int creature_material_plan_required = 0;
     int creature_material_plan_consumed = 0;
     int creature_material_plan_count = 0;
+    int creature_drawn_material_count = 0;
     uint32_t teleporter_material_plan_hash = 0u;
     int teleporter_material_plan_required = 0;
     int teleporter_material_plan_consumed = 0;
@@ -3099,9 +3134,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         dm2_runtime_creature_material_plan_identity(
             &rt->g1_creature_map_chip_runtime, &viewport,
             &creature_material_plan_hash, &creature_material_plan_count) &&
-        creature_material_plan_count == viewport.asset_creature_drawn_count;
+        dm2_runtime_creature_drawn_material_identity(
+            &viewport, &creature_drawn_material_hash,
+            &creature_drawn_material_count) &&
+        creature_material_plan_count == viewport.asset_creature_drawn_count &&
+        creature_drawn_material_count == viewport.asset_creature_drawn_count;
     if (!creature_material_plan_consumed) {
         creature_material_plan_hash = 0u;
+        creature_drawn_material_hash = 0u;
+        creature_drawn_material_count = 0;
     }
     teleporter_material_plan_required =
         viewport.asset_teleporter_drawn_count > 0;
@@ -3230,6 +3271,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_door_button_drawn_count;
     g_dm2_frame_ownership.creature_gdat_blits =
         viewport.asset_creature_drawn_count;
+    g_dm2_frame_ownership.creature_gdat_material_evidence_count =
+        creature_drawn_material_count;
+    g_dm2_frame_ownership.creature_gdat_material_evidence_hash =
+        creature_drawn_material_hash;
     g_dm2_frame_ownership.item_gdat_blits =
         viewport.asset_item_drawn_count +
         viewport.asset_creature_possession_item_drawn_count +
@@ -3340,11 +3385,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_door_render.destroyed_mask_gdat_index);
     }
-    if (viewport.asset_creature_drawn_count > 0 &&
-        g_dm2_last_creature_render.gdat_index != 0) {
-        dm2_runtime_add_viewport_asset_evidence(
-            &g_dm2_frame_ownership,
-            g_dm2_last_creature_render.gdat_index);
+    if (creature_material_plan_consumed) {
+        for (int i = 0; i < viewport.creature_material_drawn_count; ++i) {
+            dm2_runtime_add_viewport_asset_evidence(
+                &g_dm2_frame_ownership,
+                viewport.creature_material_gdat_indices[i]);
+        }
     }
     if ((viewport.asset_item_drawn_count > 0 ||
          viewport.asset_creature_possession_item_drawn_count > 0 ||
@@ -3543,6 +3589,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.total_runtime_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0 &&
         g_dm2_frame_ownership.blocked_material_draws == 0 &&
+        (g_dm2_frame_ownership.creature_gdat_blits == 0 ||
+         (g_dm2_frame_ownership.creature_gdat_material_evidence_count ==
+              g_dm2_frame_ownership.creature_gdat_blits &&
+          g_dm2_frame_ownership.creature_gdat_material_evidence_hash != 0u)) &&
         (!g_dm2_frame_ownership.is_outdoor ||
          g_dm2_frame_ownership.outdoor_gdat_frame_valid);
     g_dm2_frame_ownership.valid =
@@ -3599,6 +3649,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         creature_material_plan_required;
     g_dm2_last_m11_frame.creature_material_plan_hash =
         creature_material_plan_hash;
+    g_dm2_last_m11_frame.creature_material_plan_command_count =
+        creature_material_plan_consumed ? creature_material_plan_count : 0;
     g_dm2_last_m11_frame.creature_material_plan_consumed =
         creature_material_plan_consumed;
     g_dm2_last_m11_frame.teleporter_material_plan_required =
@@ -3677,6 +3729,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
           g_dm2_last_m11_frame.hud_material_plan_consumed)) &&
         (!g_dm2_last_m11_frame.creature_material_plan_required ||
          (g_dm2_last_m11_frame.creature_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.creature_material_plan_command_count > 0 &&
           g_dm2_last_m11_frame.creature_material_plan_consumed)) &&
         (!g_dm2_last_m11_frame.teleporter_material_plan_required ||
          (g_dm2_last_m11_frame.teleporter_material_plan_hash != 0u &&

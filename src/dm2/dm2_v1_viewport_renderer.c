@@ -4685,6 +4685,9 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     s->last_creature_asset_src_w = 0;
     s->last_creature_asset_src_h = 0;
     s->last_creature_asset_src_stride = 0;
+    s->creature_material_drawn_count = 0;
+    memset(s->creature_material_gdat_indices, 0,
+           sizeof(s->creature_material_gdat_indices));
 
     for (int i = 0; i < plan.creature_count; i++) {
         const DM2_V1_CreatureRender *c = &plan.creatures[i];
@@ -4768,6 +4771,12 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                     s->last_creature_asset_src_h = src_h;
                     s->last_creature_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
+                    if (s->creature_material_drawn_count <
+                        DM2_MAX_CREATURES_PER_SQ) {
+                        s->creature_material_gdat_indices[
+                            s->creature_material_drawn_count++] =
+                            c->gdat_index;
+                    }
                     drawn_asset = 1;
                     if (c->rect14_applied) {
                         /* Count only a rendered source-selected row, not a
