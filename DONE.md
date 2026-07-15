@@ -18324,3 +18324,15 @@ explicitly marked no-semantic-promotion: no level, object, palette, bitmap,
 or visual behavior is inferred and no fallback is enabled. Verification:
 Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
+
+# ✅ 2026-07-15 Theron Track 02 loader-envelope boundary
+
+Runtime admission now derives the documented boundary inside the authenticated
+`$0b52` CD-read record: the loader-provided initial envelope must begin at its
+record-relative offset, match original Track 02 bytes and checksum, and end
+exactly where the separately hash-verified opaque continuation begins. The
+world receipt retains both spans only after these checks pass. This proves
+source-byte boundaries and continuity, not level-grid, object-table, palette,
+or visual semantics; the runtime remains no-draw without a captured game-owned
+consumer. Verification: Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.

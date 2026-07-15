@@ -472,6 +472,12 @@ int main(void)
             payload_receipt.raw_track02_offset ||
         route_receipt.loader_record_payload_checksum !=
             payload_receipt.payload_checksum ||
+        route_receipt.level_envelope_offset !=
+            handoff.loader_level_envelope.record_user_data_offset ||
+        route_receipt.level_envelope_bytes !=
+            handoff.loader_level_envelope.envelope_bytes ||
+        route_receipt.level_envelope_checksum !=
+            handoff.loader_level_envelope.envelope_checksum ||
         !world.runtime_media.loader_record.ready ||
         !world.runtime_media.loader_record.raw_source_verified ||
         !world.runtime_media.loader_record.no_semantic_promotion ||
@@ -479,6 +485,16 @@ int main(void)
         world.runtime_media.loader_record.record != handoff.observed_track02_record ||
         world.runtime_media.loader_record.payload_checksum !=
             handoff.complete_payload_checksum ||
+        !world.runtime_media.loader_record.level_envelope_bound ||
+        world.runtime_media.loader_record.level_envelope_offset !=
+            handoff.loader_level_envelope.record_user_data_offset ||
+        world.runtime_media.loader_record.level_envelope_bytes !=
+            handoff.loader_level_envelope.envelope_bytes ||
+        world.runtime_media.loader_record.level_envelope_checksum !=
+            handoff.loader_level_envelope.envelope_checksum ||
+        world.runtime_media.loader_record.post_envelope_offset !=
+            world.runtime_media.loader_record.level_envelope_offset +
+                world.runtime_media.loader_record.level_envelope_bytes ||
         world.runtime_media.loader_record.post_envelope_checksum !=
             handoff.loader_post_envelope.checksum) {
         free(raw);

@@ -88,6 +88,10 @@ typedef struct {
     size_t raw_user_data_offset;
     size_t payload_bytes;
     uint32_t payload_checksum;
+    int level_envelope_bound;
+    size_t level_envelope_offset;
+    size_t level_envelope_bytes;
+    uint32_t level_envelope_checksum;
     size_t post_envelope_offset;
     size_t post_envelope_bytes;
     uint32_t post_envelope_checksum;
@@ -409,6 +413,9 @@ int theron_v1_world_runtime_media_set_loader_record(
     size_t raw_user_data_offset,
     size_t payload_bytes,
     uint32_t payload_checksum,
+    size_t level_envelope_offset,
+    size_t level_envelope_bytes,
+    uint32_t level_envelope_checksum,
     size_t post_envelope_offset,
     size_t post_envelope_bytes,
     uint32_t post_envelope_checksum);
