@@ -66,6 +66,11 @@ typedef struct {
     int faces_fallback;
     int menu_bpk_upload_receipt_valid;
     Nexus_V1_BpkRuntimeUploadRoute menu_bpk_upload_route;
+    int menu_bpk_archive_entries;
+    int menu_bpk_surface_entries;
+    int menu_bpk_directory_trailer_found;
+    int menu_bpk_directory_trailer_at_entry_zero;
+    int menu_bpk_directory_trailer_valid;
     int menu_bpk_planned_rows;
     int menu_bpk_blocked_prs3_uploads;
     int menu_bpk_blocks_real_menu_surface_render;
@@ -966,6 +971,14 @@ typedef struct {
     int fallback_visuals_permitted;
     unsigned int complete_route_mask;
     unsigned int expected_route_mask;
+    int saturn_title_capture_frame;
+    int saturn_save_capture_frame;
+    int saturn_champion_capture_frame;
+    int saturn_dungeon_capture_frame;
+    unsigned int saturn_non_title_capture_mask;
+    unsigned int saturn_expected_capture_mask;
+    int saturn_non_title_capture_count;
+    int saturn_non_title_capture_complete;
     int all_nexus_startup_routes_complete;
     int all_nexus_runtime_routes_complete;
     int complete_support_ready;

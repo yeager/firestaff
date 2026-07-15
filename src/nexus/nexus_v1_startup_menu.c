@@ -1949,6 +1949,8 @@ const char *nexus_v1_startup_title_route_name(
         return "champion-select";
     case NEXUS_V1_STARTUP_TITLE_ROUTE_RETURN_TO_LAUNCHER:
         return "return-to-launcher";
+    case NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED:
+        return "asset-blocked";
     default: return "unknown";
     }
 }

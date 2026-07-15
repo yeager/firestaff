@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 Nexus startup title-route receipt hardening slice: added a
+  stable `asset-blocked` title route name and restored the startup save-route
+  action receipt declarations that the Nexus startup menu source already
+  consumes. The focused strict C11 compile of `src/nexus/nexus_v1_startup_menu.c`
+  and the new title-route asset-gate regression source both pass syntax, and
+  the existing `build/test_nexus_v1_startup_title_pointer_contract` passes
+  17/17. Full launcher-object verification remains blocked by the Nexus
+  runtime-handoff header drift recorded in TODO.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0396/F0397/F0398 spell-HUD symbol gap:
   the champion-panel spell-area overlay contract now explicitly owns
   MENUDRAW.C's C011 line-stack load, six available-symbol window, and
