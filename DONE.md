@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 original SKSave DB1 Teleporter admission: raw six-byte
+  teleporter rows now expose only `DME.h`'s destination, scope, sound, and
+  rotation fields after the complete DB-pool receipt validates them. Focused
+  `dm2_v1_save_load` coverage proves the source fields survive the standard
+  raw runtime handoff and rejects a missing row. No GenericRecord link,
+  movement, map mutation, or inferred world route is admitted.
+
 - ✅ 2026-07-15 DM2 original SKSave DB2/DB9 record admission: added bounded,
   hash-bound raw receipts for `DME.h::Text` (`w2` visibility/mode/text index)
   and `DME.h::Container` (`b4` open/type). The expanded source-order corpus
