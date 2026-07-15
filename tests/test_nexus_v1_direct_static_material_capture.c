@@ -217,6 +217,8 @@ int main(void)
             char capture_text[4096];
             FILE *capture_file;
             size_t capture_size;
+            Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt manifest_receipt;
+            char *level_value;
 
             memset(&target, 0, sizeof(target));
             if (nexus_v1_engine_build_structure1f_transform_capture_target(
@@ -269,6 +271,38 @@ int main(void)
                   strstr(capture_text, "original_saturn_capture_required=1") &&
                   strstr(capture_text, "no_draw_only=1"),
                   "direct face bridge retains package rows and remains capture-only");
+            memset(&manifest_receipt, 0, sizeof(manifest_receipt));
+            CHECK(nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+                      &engine, source_entry, capture_text, capture_size,
+                      &manifest_receipt) == 1 &&
+                  manifest_receipt.status ==
+                      NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW &&
+                  manifest_receipt.package_bytes_bound &&
+                  manifest_receipt.manifest_target_bound &&
+                  manifest_receipt.owner_geometry_bound &&
+                  manifest_receipt.transform_selectors_bound &&
+                  manifest_receipt.original_saturn_capture_required &&
+                  manifest_receipt.no_draw_only &&
+                  !manifest_receipt.fallback_visuals_permitted &&
+                  manifest_receipt.blocks_real_dgn_mesh_render,
+                  "package boundary accepts only its exact no-draw direct-face manifest");
+            level_value = strstr(capture_text, "level_index=");
+            CHECK(level_value != NULL, "direct face manifest retains its level identity");
+            if (level_value) {
+                level_value += strlen("level_index=");
+                *level_value = 'x';
+                memset(&manifest_receipt, 0, sizeof(manifest_receipt));
+                CHECK(nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+                          &engine, source_entry, capture_text, capture_size,
+                          &manifest_receipt) == 0 &&
+                      manifest_receipt.status ==
+                          NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_TARGET_MISMATCH &&
+                      manifest_receipt.package_bytes_bound &&
+                      !manifest_receipt.manifest_target_bound &&
+                      manifest_receipt.no_draw_only &&
+                      manifest_receipt.blocks_real_dgn_mesh_render,
+                      "package boundary rejects a changed owner manifest without enabling draw");
+            }
             remove(capture_path);
             break;
         }

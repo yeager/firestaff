@@ -1366,6 +1366,28 @@ typedef struct {
 #define NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC \
     "FIRESTAFF_NEXUS_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_V1"
 
+/* Package/host-side verification for an emitted direct-face request. This
+ * proves only that the manifest still names the loaded canonical bytes; it
+ * cannot promote an observation into a transform, material, or draw. */
+typedef enum {
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_MISSING = 0,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW = 3
+} Nexus_V1_DgnStructure1FDirectFaceCaptureManifestStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestStatus status;
+    int package_bytes_bound;
+    int manifest_target_bound;
+    int owner_geometry_bound;
+    int transform_selectors_bound;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt;
+
 /* Admission for a future original-Saturn transform observation of one direct
  * Structure1F owner. It binds source bytes and captured state identity only;
  * it never interprets transform words or authorizes a draw. */
@@ -2462,6 +2484,10 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
 int nexus_v1_engine_write_structure1f_direct_face_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *path, Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target);
+int nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *manifest_text, size_t manifest_size,
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt *out_receipt);
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,
