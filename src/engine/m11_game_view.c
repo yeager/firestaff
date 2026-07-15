@@ -32727,9 +32727,8 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         "STRENGTH", "DEXTERITY", "WISDOM", "VITALITY", "ANTI-MAGIC", "ANTI-FIRE"
     };
     const struct ChampionState_Compat* champ;
-    M11_TextStyle textStyle;
+    const M11_AssetSlot* panel;
     int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
-    int drewPanel = 0;
     int skillY;
     int i;
 
@@ -32753,31 +32752,26 @@ static int m11_draw_v1_inventory_champion_stats_panel(
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];
     if (!champ->present) return 0;
 
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* panel = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader,
-            (unsigned int)dm1_v1_graphic_panel_empty_pc34());
-        if (panel && (int)panel->width == panelW && (int)panel->height == panelH) {
-            M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
-                                 M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                                 M11_COLOR_RED);
-            drewPanel = 1;
-        }
+    /* PANEL.C F0351 owns C020/C101 followed by C557/C559 M653 text.
+     * A host panel or font would change both the geometry and glyph width,
+     * so incomplete PC34 material leaves the C017 base untouched. */
+    if (!state->assetsAvailable) return 0;
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 (unsigned int)dm1_v1_graphic_panel_empty_pc34());
+    if (!panel ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            dm1_v1_graphic_panel_empty_pc34(),
+            dm1_v1_graphic_panel_empty_pc34(),
+            panel->loaded, panel->pixels != NULL,
+            panel->width, panel->height, panelW, panelH)) {
+        return 0;
     }
-    if (!drewPanel) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                      panelW, panelH, M11_COLOR_BROWN);
+    M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
+                         M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                         M11_COLOR_RED);
+    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return 1;
     }
-
-    textStyle = g_text_small;
-    textStyle.color = M11_COLOR_SILVER;
-    textStyle.shadowDx = 0;
-    textStyle.shadowDy = 0;
-    textStyle.shadowColor = M11_COLOR_BLACK;
 
     skillY = panelY + 6;
     for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
@@ -32786,10 +32780,11 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         char line[32];
         if (!levelName) continue;
         snprintf(line, sizeof(line), "%s %s", levelName, skillNames[i]);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX + 28,
-                      M11_VIEWPORT_Y + skillY,
-                      line, &textStyle);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + panelX + 28,
+                            M11_VIEWPORT_Y + skillY,
+                            line, M11_COLOR_SILVER, -1, 1);
         skillY += DM1_PANEL_TEXT_LINE_HEIGHT;
     }
 
@@ -32804,21 +32799,21 @@ static int m11_draw_v1_inventory_champion_stats_panel(
             continue;
         }
 
-        textStyle.color = (unsigned char)row.nameColor;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX + row.nameX,
-                      M11_VIEWPORT_Y + panelY + row.y,
-                      statNames[i], &textStyle);
-        textStyle.color = (unsigned char)row.currentColor;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX + row.currentX,
-                      M11_VIEWPORT_Y + panelY + row.y,
-                      row.currentText, &textStyle);
-        textStyle.color = (unsigned char)row.maximumColor;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_VIEWPORT_X + panelX + row.maximumX,
-                      M11_VIEWPORT_Y + panelY + row.y,
-                      row.maximumText, &textStyle);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + panelX + row.nameX,
+                            M11_VIEWPORT_Y + panelY + row.y,
+                            statNames[i], (unsigned char)row.nameColor, -1, 1);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + panelX + row.currentX,
+                            M11_VIEWPORT_Y + panelY + row.y,
+                            row.currentText, (unsigned char)row.currentColor, -1, 1);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            M11_VIEWPORT_X + panelX + row.maximumX,
+                            M11_VIEWPORT_Y + panelY + row.y,
+                            row.maximumText, (unsigned char)row.maximumColor, -1, 1);
     }
     return 1;
 }

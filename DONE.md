@@ -10,6 +10,13 @@
   later mesh decoder a source-owned selection point without any inferred mesh
   or material semantics.
 
+- ✅ 2026-07-15 DM1 champion-statistics source-material gate: normal V1
+  F0351 now presents only exact loaded-pixel C020 and M653 glyphs at the
+  source C557/C559 row geometry. Removed the host panel and generic-font
+  fallback; unavailable PC34 media leaves the C017-cleared surface intact.
+  Runtime coverage exercises both unavailable no-draw and real C020/M653
+  panel setup.
+
 - ✅ 2026-07-15 DM1 object-description source-material gate: normal V1
   F0342 uses only exact loaded-pixel C020 (panel), C029 (circle), real object
   icon pixels, and the loaded M653 font. The continuation text now begins at
