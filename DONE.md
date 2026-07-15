@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 source static-object cell gate: direct G1 DB5 weapon and
+  DB9 container map-chip rows now carry a `DM2_DRAW_STATIC_OBJECT` cell and
+  `DM2_DRAW_DUNGEON_TILES` pass only when their live coordinate is one of the
+  source-proven D1C/D2C centre cells (cells 3/6, passes 17/14). The previous
+  generic map-to-screen projection is no longer allowed to place real floor
+  object pixels at D0C, side, or deep cells without the original `DRAW_ITEM`
+  geometry tables. The item render plan retains source pass order and blocks
+  missing or altered admission receipts. Source: SKProject
+  `c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES`, `DM2_DRAW_STATIC_OBJECT`, and
+  `DM2_DRAW_PUT_DOWN_ITEM`; `dm2data.cpp::table1d7029`. Verification:
+  DB5 gate 6/6, DB9 gate 3/3, boot smoke 88/88, save/load 26/26.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
   a host transparency key, so source-black pixels erase prior bars and hands

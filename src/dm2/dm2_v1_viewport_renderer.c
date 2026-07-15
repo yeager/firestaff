@@ -185,6 +185,53 @@ int dm2_v1_viewport_project_map_to_sprite(
     return 1;
 }
 
+int dm2_v1_viewport_static_object_cell_for_map(
+    int map_x,
+    int map_y,
+    int party_dir,
+    int party_x,
+    int party_y,
+    int *out_cell,
+    int *out_pass)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    int dir;
+    int right;
+    int rel_x;
+    int rel_y;
+    int forward;
+    int lateral;
+    int cell;
+    int pass;
+
+    if (out_cell) *out_cell = -1;
+    if (out_pass) *out_pass = -1;
+    dir = party_dir & 3;
+    right = (dir + 1) & 3;
+    rel_x = map_x - party_x;
+    rel_y = map_y - party_y;
+    forward = rel_x * dx[dir] + rel_y * dy[dir];
+    lateral = rel_x * dx[right] + rel_y * dy[right];
+
+    /* c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES dispatches the centre tiles
+     * D0C/D1C/D2C as source cells 0/3/6.  The existing live terrain route
+     * proves these map offsets.  Cell 0 has no table1d7029 pass, so it is
+     * intentionally not promoted to a generic object draw. */
+    if (lateral != 0) return 0;
+    switch (forward) {
+    case 1: cell = 0; break;
+    case 2: cell = 3; break;
+    case 3: cell = 6; break;
+    default: return 0;
+    }
+    pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
+    if (pass < 0) return 0;
+    if (out_cell) *out_cell = cell;
+    if (out_pass) *out_pass = pass;
+    return 1;
+}
+
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
@@ -3218,8 +3265,30 @@ int dm2_v1_viewport_build_item_render_plan(
         row->map_y = src->map_y;
         row->source_g1_weapon = src->source_g1_weapon;
         row->source_g1_container = src->source_g1_container;
+        row->source_static_object_admitted =
+            src->source_static_object_admitted;
+        row->source_static_object_cell = src->source_static_object_cell;
+        row->source_static_object_pass = src->source_static_object_pass;
         row->fallback_radius = 4;
         row->fallback_color = 3;
+    }
+
+    /* DM2_DRAW_DUNGEON_TILES runs static objects inside table1d7029's
+     * source pass.  Preserve that ordering for the exact centre-line cells
+     * that the runtime can prove; unrelated item kinds retain their own
+     * source call order. */
+    for (int i = 0; i < out_plan->item_count; ++i) {
+        for (int j = i + 1; j < out_plan->item_count; ++j) {
+            DM2_V1_ItemRender *a = &out_plan->items[i];
+            DM2_V1_ItemRender *b = &out_plan->items[j];
+            if (a->source_static_object_admitted &&
+                b->source_static_object_admitted &&
+                b->source_static_object_pass < a->source_static_object_pass) {
+                DM2_V1_ItemRender swap = *a;
+                *a = *b;
+                *b = swap;
+            }
+        }
     }
     return 1;
 }
@@ -5413,6 +5482,17 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
         s->last_item_asset_src_w = 0;
         s->last_item_asset_src_h = 0;
         s->last_item_asset_src_stride = 0;
+
+        if ((it->source_g1_weapon || it->source_g1_container) &&
+            (!it->source_static_object_admitted ||
+             it->source_static_object_pass < 0 ||
+             dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
+                 it->source_static_object_cell) !=
+                 it->source_static_object_pass)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
+            continue;
+        }
 
         {
             const uint8_t *pixels = NULL;

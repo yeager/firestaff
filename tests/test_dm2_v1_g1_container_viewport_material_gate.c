@@ -88,6 +88,9 @@ static void setup(DM2_V1_ViewportState *viewport, uint8_t *framebuffer,
     viewport->items[0].direction = material->direction;
     viewport->items[0].source_gdat_field = 0xf9;
     viewport->items[0].source_g1_container = 1;
+    viewport->items[0].source_static_object_admitted = 1;
+    viewport->items[0].source_static_object_cell = 6;
+    viewport->items[0].source_static_object_pass = 14;
     dm2_v1_viewport_set_g1_container_map_chip_materials(viewport, receipt);
     dm2_v1_viewport_set_asset_provider(viewport, fetch_material, expected_index);
     dm2_v1_viewport_set_asset_palette_provider(viewport, fetch_palette,
