@@ -17,7 +17,15 @@ int main(void)
 {
     DM2_V1_AnimBootstrapReceipt boot;
     DM2_V1_AnimDecodeImg1Receipt decode;
+    DM2_V1_AnimFileReceipt file_receipt;
     uint8_t pixels[16];
+    uint8_t file_bytes[40000];
+    uint8_t file_read[40000];
+    char text[32];
+    const char *tmp_path = "/tmp/firestaff_dm2_anim_bootstrap_test.bin";
+    FILE *tmp;
+    int handle;
+    size_t i;
     const uint8_t img_fill[] = {
         0x00, 0x04, 0x00, 0x02,
         0x33, 0x37
@@ -59,6 +67,49 @@ int main(void)
               boot.source_line == 2045,
           "ANIM_BOOTSTRAP_TITLE owns exact skproject argv");
 
+    for (i = 0; i < sizeof(file_bytes); ++i) {
+        file_bytes[i] = (uint8_t)(i & 0xffu);
+    }
+    tmp = fopen(tmp_path, "wb");
+    check(tmp != NULL, "test fixture file opens for writing");
+    if (tmp) {
+        check(fwrite(file_bytes, 1, sizeof(file_bytes), tmp) ==
+                  sizeof(file_bytes),
+              "test fixture file writes all bytes");
+        fclose(tmp);
+    }
+    memset(file_read, 0, sizeof(file_read));
+    handle = dm2_v1_anim_file_open(tmp_path, &file_receipt);
+    check(handle > 0 && file_receipt.valid &&
+              file_receipt.source_line == 915,
+          "ANIM_FILE_OPEN returns a source-mapped handle");
+    check(dm2_v1_anim_get_file_size(handle, &file_receipt) ==
+              sizeof(file_bytes) &&
+              file_receipt.file_size == sizeof(file_bytes) &&
+              file_receipt.source_line == 924,
+          "ANIM_GET_FILE_SIZE preserves the file position and size");
+    check(dm2_v1_anim_read_huge_file(handle,
+                                     (uint32_t)sizeof(file_read),
+                                     file_read,
+                                     &file_receipt) &&
+              memcmp(file_bytes, file_read, sizeof(file_bytes)) == 0 &&
+              file_receipt.chunk_count == 2 &&
+              file_receipt.source_line == 939,
+          "ANIM_READ_HUGE_FILE reads in 0x8000-sized chunks");
+    dm2_v1_anim_file_close(handle, &file_receipt);
+    check(file_receipt.valid && file_receipt.source_line == 970,
+          "ANIM_FILE_CLOSE closes the source-mapped handle");
+    remove(tmp_path);
+
+    check(dm2_v1_anim_strcpy(text, "anim", &file_receipt) == text &&
+              strcmp(text, "anim") == 0 &&
+              file_receipt.source_line == 984,
+          "ANIM_STRCPY returns the destination like strcpy");
+    check(dm2_v1_anim_toupper('q', &file_receipt) == 'Q' &&
+              dm2_v1_anim_toupper(-1, &file_receipt) == -1 &&
+              file_receipt.source_line == 1308,
+          "ANIM_TOUPPER keeps EOF and uppercases lowercase ASCII");
+
     memset(pixels, 0, sizeof(pixels));
     check(dm2_v1_anim_decode_img1(img_fill, sizeof(img_fill), pixels,
                                   sizeof(pixels), &decode) &&
@@ -88,6 +139,20 @@ int main(void)
           "ANIM_DECODE_IMG1 copies previous-row runs and trailing color");
     check(!dm2_v1_anim_decode_img1(img_fill, 5, pixels, sizeof(pixels), NULL),
           "ANIM_DECODE_IMG1 rejects truncated stream");
+
+    memset(pixels, 0, sizeof(pixels));
+    check(dm2_v1_anim_blit_to_memory_row_4to4bpp(
+              (const uint8_t *)"\x12\x34\x56",
+              3,
+              1,
+              pixels,
+              sizeof(pixels),
+              2,
+              4,
+              &file_receipt) &&
+              pixels[1] == 0x23u && pixels[2] == 0x45u &&
+              file_receipt.source_line == 1399,
+          "ANIM_BLIT_TO_MEMORY_ROW_4TO4BPP copies unaligned nibbles");
 
     if (failures != 0) {
         printf("dm2_v1_anim_bootstrap: %d failures\n", failures);

@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject ANIM file/blit slice:
+  added source-mapped `ANIM_FILE_OPEN`, `ANIM_GET_FILE_SIZE`,
+  `ANIM_READ_HUGE_FILE`, `ANIM_FILE_CLOSE`, `ANIM_STRCPY`,
+  `ANIM_TOUPPER`, and `ANIM_BLIT_TO_MEMORY_ROW_4TO4BPP` helpers.
+  The permanent ANIM test now covers real file handles, 0x8000-byte chunked
+  reads, EOF-preserving uppercase, strcpy return semantics, and unaligned
+  4bpp nibble row copies. Verification: `test_dm2_v1_anim_bootstrap`.
+
 - ✅ 2026-07-16 DM2 skproject ANIM bootstrap/decode slice:
   added source-mapped `ANIM_BOOTSTRAP_SWOOSH`,
   `ANIM_BOOTSTRAP_TITLE`, `ANIM_DECODE_IMG1`,
