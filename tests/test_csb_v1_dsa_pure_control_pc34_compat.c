@@ -669,6 +669,30 @@ static CSB_V1_CSBWinDSAStackResult run_save_policy(
     }
 }
 
+static CSB_V1_CSBWinDSAStackResult run_modify_message(
+    CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
+    uint16_t *words, int word_count, uint8_t modifiers[3])
+{
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&context, 0, sizeof(context));
+    memset(&execution, 0, sizeof(execution));
+    action->program_words = words;
+    action->program_word_count = word_count;
+    context.timer_type_modifiers_valid = 1;
+    memcpy(context.timer_type_modifiers, modifiers,
+           sizeof(context.timer_type_modifiers));
+    {
+        CSB_V1_CSBWinDSAStackResult result =
+            csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                state, 7, 1u, 0, &context, &execution);
+        memcpy(modifiers, context.timer_type_modifiers,
+               sizeof(context.timer_type_modifiers));
+        return result;
+    }
+}
+
 static CSB_V1_CSBWinDSAStackResult run_without_party_location(
     CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
     uint16_t *words, int word_count, uint32_t *parameters)
@@ -990,11 +1014,18 @@ int main(void)
     uint16_t disable_saves_then_bad[] = {
         0x0686u, 1u, 0x090bu, 0x0000u
     };
+    uint16_t modify_message[] = {
+        0x0686u, 2u, 0x0686u, 9u, 0x0686u, 7u, 0x0295u
+    };
+    uint16_t modify_message_then_bad[] = {
+        0x0686u, 2u, 0x0686u, 9u, 0x0686u, 7u, 0x0295u, 0x0000u
+    };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackExecution execution;
     int saves_disabled = -1;
+    uint8_t timer_type_modifiers[3] = { 0u, 1u, 2u };
 
     memset(&action, 0, sizeof(action));
     memset(&execution, 0, sizeof(execution));
@@ -1877,6 +1908,28 @@ int main(void)
                           &saves_disabled) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               saves_disabled == 0,
           "DISABLESAVES rejects without publishing before a later bad opcode");
+
+    timer_type_modifiers[0] = 0u;
+    timer_type_modifiers[1] = 1u;
+    timer_type_modifiers[2] = 2u;
+    check(run_modify_message(&state, &action, modify_message,
+              (int)(sizeof(modify_message) / sizeof(modify_message[0])),
+              timer_type_modifiers) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              timer_type_modifiers[0] == 3u &&
+              timer_type_modifiers[1] == 3u &&
+              timer_type_modifiers[2] == 2u,
+          "MODIFYMESSAGE preserves source SET/CLEAR/TOGGLE stack order and clamps above three");
+    timer_type_modifiers[0] = 0u;
+    timer_type_modifiers[1] = 1u;
+    timer_type_modifiers[2] = 2u;
+    check(run_modify_message(&state, &action, modify_message_then_bad,
+              (int)(sizeof(modify_message_then_bad) /
+                    sizeof(modify_message_then_bad[0])),
+              timer_type_modifiers) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              timer_type_modifiers[0] == 0u &&
+              timer_type_modifiers[1] == 1u &&
+              timer_type_modifiers[2] == 2u,
+          "MODIFYMESSAGE does not publish a timer remap before a later rejected word");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
