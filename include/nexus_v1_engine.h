@@ -1323,7 +1323,9 @@ typedef struct {
 typedef struct {
     int valid;
     Nexus_V1_DgnStructure1FDirectMeshGeometryPacket geometry;
+    Nexus_V1_DgnStructure1ATransformTableReceipt transform_table;
     Nexus_V1_DgnStructure1ATransformSelectorReceipt transform_selectors;
+    int transform_table_source_bound;
     int owner_transform_selector_source_bound;
     int capture_producer_required;
     int original_saturn_capture_required;

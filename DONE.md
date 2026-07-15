@@ -18641,7 +18641,7 @@ count; a stale or invented plan is rejected. The map-transition and watermark
 fixtures now include the required source command-count evidence instead of
 implicitly accepting an incomplete indoor receipt.
 
- The same owner geometry can now be emitted with the bounded Structure1A
+The same owner geometry can now be emitted with the bounded Structure1A
 rotation-selector corpus as a source-only transform capture target. It stays
  no-draw and requires original Saturn execution evidence before any transform
  or camera semantics can be promoted.
@@ -18653,3 +18653,8 @@ The runtime retains that map token, graphics set, and source receipt identity
 with the admitted slots and clears all slots whenever scene control refreshes.
 This blocks a same-command weather record from a previous map from drawing on
 the next map; unavailable timer output remains no-draw.
+
+ That capture target now also carries the exact full 24-byte Structure1A table
+and a separate selector-column fingerprint from the active canonical LEV.
+ This locks a future trace to the raw table without claiming a rotation unit,
+ matrix, camera convention, culling rule, or draw behavior.

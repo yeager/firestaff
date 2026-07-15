@@ -3421,6 +3421,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     selected mesh beside the exact raw Structure1A rotation-selector corpus.
     It does not assign that byte a rotation unit, matrix, camera convention,
     or draw behavior; a real Saturn trace remains required.
+  - The target now also carries the complete, byte-locked 24-byte Structure1A
+    table and an independent selector-column fingerprint from the active
+    canonical LEV. This proves table identity and parsed-row agreement only;
+    transform-table grammar, units, matrix order, camera use, culling, and
+    drawing still require an original Saturn trace.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.

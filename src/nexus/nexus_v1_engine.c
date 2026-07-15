@@ -6079,12 +6079,20 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
             engine, structure1f_entry_index, &target.geometry) != 1 ||
         !target.geometry.valid || !target.geometry.source_geometry_bound ||
         !target.geometry.no_draw_only || target.geometry.fallback_visuals_permitted ||
+        nexus_v1_level_structure1a_transform_table_receipt(
+            &engine->current_level, engine->current_level_dgn_data,
+            engine->current_level_dgn_size, &target.transform_table) != 1 ||
+        !target.transform_table.valid || !target.transform_table.source_table_bound ||
+        !target.transform_table.parsed_model_rows_match ||
+        !target.transform_table.selectors.complete ||
         nexus_v1_level_structure1a_transform_selector_receipt(
             &engine->current_level, &target.transform_selectors) != 0 ||
-        target.transform_selectors.resolved_selector_count <= 0) {
+        target.transform_selectors.resolved_selector_count <= 0 ||
+        target.transform_table.selector_column_fnv1a64 == 0U) {
         *out_target = target;
         return 0;
     }
+    target.transform_table_source_bound = 1;
     target.owner_transform_selector_source_bound = 1;
     target.capture_producer_required = 1;
     target.original_saturn_capture_required = 1;

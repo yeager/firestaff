@@ -2746,6 +2746,80 @@ int nexus_v1_level_structure1a_transform_selector_receipt(
     return 0;
 }
 
+int nexus_v1_level_structure1a_transform_table_receipt(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    Nexus_V1_DgnStructure1ATransformTableReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1ATransformTableReceipt receipt;
+    const uint8_t *table;
+    int structure1_offset;
+    uint32_t count;
+    uint32_t relative_offset;
+    int byte_count;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!level || !dgn_data || dgn_size <= 0 || !level->structure1a_table_valid ||
+        level->structure1a_model_count < 0 ||
+        level->structure1a_model_count > NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    structure1_offset = level->geometry_info.structure1_offset;
+    if (structure1_offset < 0 || structure1_offset > dgn_size - 0x14) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    count = rb32(dgn_data + structure1_offset + 0x0c);
+    relative_offset = rb32(dgn_data + structure1_offset + 0x10);
+    if (relative_offset != 0x38U ||
+        count != (uint32_t)level->structure1a_model_count ||
+        count > (uint32_t)(INT_MAX / NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    byte_count = (int)count * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES;
+    if ((int)relative_offset > dgn_size - structure1_offset - byte_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    table = dgn_data + structure1_offset + relative_offset;
+    for (index = 0; index < (int)count; ++index) {
+        const uint8_t *row = table + index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES;
+        const Nexus_V1_DgnStructure1AModel *model =
+            &level->structure1a_models[index];
+        if (row[0] != model->kind ||
+            row[1] != model->structure3_model_index ||
+            row[2] != model->z_rotation) {
+            *out_receipt = receipt;
+            return 0;
+        }
+    }
+    if (nexus_v1_level_structure1a_relation_receipt(level, &receipt.relation) != 0 ||
+        nexus_v1_level_structure1a_transform_selector_receipt(
+            level, &receipt.selectors) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.table_byte_offset = structure1_offset + (int)relative_offset;
+    receipt.entry_count = (int)count;
+    receipt.table_byte_count = byte_count;
+    receipt.raw_table_fnv1a64 = nexus_v1_fnv1a64(table, byte_count);
+    receipt.selector_column_fnv1a64 = UINT64_C(1469598103934665603);
+    for (index = 0; index < (int)count; ++index) {
+        receipt.selector_column_fnv1a64 ^=
+            table[index * NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES + 2];
+        receipt.selector_column_fnv1a64 *= UINT64_C(1099511628211);
+    }
+    receipt.parsed_model_rows_match = 1;
+    receipt.source_table_bound = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_level_structure1f_face_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFaceSelectorReceipt *out_receipt)
