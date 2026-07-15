@@ -1871,6 +1871,66 @@ typedef struct {
     int palette_or_cram_semantics_proven;
 } Nexus_V1_Vdp1LookupDecodeReceipt;
 
+/* A VDP2 palette observation has to carry both the complete 4 KiB colour RAM
+ * and the captured register image.  RAMCTL selects CRAM mode at +0x0e and
+ * CRAOFB selects the sprite colour-RAM address offset at +0xe6.  These are
+ * raw SH-2 little-endian register bytes, not a host palette. */
+#define NEXUS_V1_VDP2_CRAM_BYTES 4096U
+#define NEXUS_V1_VDP2_RAMCTL_OFFSET 0x0eU
+#define NEXUS_V1_VDP2_CRAOFB_OFFSET 0xe6U
+#define NEXUS_V1_VDP2_CAPTURE_REGISTERS_MIN_BYTES 0xe8U
+
+typedef struct {
+    const uint8_t *colour_ram;
+    size_t colour_ram_size;
+    const uint8_t *registers;
+    size_t registers_size;
+    int original_saturn_capture_verified;
+} Nexus_V1_Vdp2ColourRamCapture;
+
+typedef enum {
+    NEXUS_V1_VDP1_MODE1_PIXEL_BLOCKED = 0,
+    NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT = 1,
+    NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE = 2,
+    NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END = 3,
+    NEXUS_V1_VDP1_MODE1_PIXEL_RGB555 = 4,
+    NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555 = 5,
+    NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB888 = 6
+} Nexus_V1_Vdp1Mode1PixelKind;
+
+/* Source-derived, display-independent result for one mode-1 texture sample.
+ * `red`, `green`, and `blue` are the hardware's 8-bit output components; no
+ * host framebuffer, blending, priority, or VDP2 composition is implied. */
+typedef struct {
+    Nexus_V1_Vdp1Mode1PixelKind kind;
+    uint8_t texture_index;
+    uint16_t raw_colour_code;
+    uint16_t colour_ram_address;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} Nexus_V1_Vdp1Mode1PalettePixel;
+
+typedef struct {
+    int valid;
+    int original_saturn_capture_verified;
+    int mode1_lookup_bound;
+    int vdp2_cram_bound;
+    int vdp2_registers_bound;
+    uint8_t vdp2_cram_mode;
+    uint8_t vdp2_sprite_colour_ram_offset;
+    int source_index_zero_transparent;
+    int source_index_f_end_code;
+    int direct_rgb555_proven;
+    int vdp2_cram_address_proven;
+    int vdp2_cram_rgb_proven;
+    uint32_t output_pixel_count;
+    uint64_t colour_ram_fnv1a64;
+    uint64_t registers_fnv1a64;
+    int no_draw_only;
+    int renderer_permitted;
+} Nexus_V1_Vdp1Mode1PaletteResolveReceipt;
+
 /* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
  * has not yet been tied to an original VDP1 command stream. These records
  * keep generic Saturn knowledge separate from an asset-bound observation. */
@@ -2432,6 +2492,23 @@ int nexus_v1_vdp1_decode_mode1_lookup_texture(
 int nexus_v1_vdp1_lookup_colour_codes_match(
     const uint16_t *decoded, size_t decoded_count,
     const uint16_t *expected, size_t expected_count);
+/* Resolves the documented palette chain for an authenticated Saturn mode-1
+ * capture. VDP1 index 0 transparency and index F end-code behaviour are
+ * taken from CMDPMOD; direct RGB555 and VDP2 CRAM codes are decoded exactly.
+ * It is deliberately no-draw: final VDP1 framebuffer/VDP2 composition still
+ * requires a byte-for-byte captured output witness. */
+int nexus_v1_vdp1_resolve_mode1_palette_capture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *texture_span, int texture_span_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    Nexus_V1_Vdp1Mode1PalettePixel *out_pixels, size_t out_pixel_count,
+    Nexus_V1_Vdp1Mode1PaletteResolveReceipt *out_receipt);
+/* Exact comparison for a separately captured resolved-pixel witness. It does
+ * not authenticate the witness and never authorizes rendering. */
+int nexus_v1_vdp1_mode1_palette_pixels_match(
+    const Nexus_V1_Vdp1Mode1PalettePixel *resolved, size_t resolved_count,
+    const Nexus_V1_Vdp1Mode1PalettePixel *expected, size_t expected_count);
 /* Atomically binds one descriptor-0008 image to original Saturn capture
  * bytes. The source ITEM.IBS, packed span, palette, VDP1 state/command, and
  * texture-before-command ordering all have to match. It never authorizes a

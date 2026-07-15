@@ -8139,6 +8139,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     remaining requirement is a real Nexus capture whose command is mode 1 and
     whose independently observed colour-code output proves the game-specific
     VDP2/CRAM handling; raw codes are not RGBA pixels and cannot be drawn.
+  - 2026-07-15 mode-1 palette-chain update: VDP1 `CMDPMOD` now supplies the
+    documented source-index-0 transparency and source-index-F end-code gates;
+    lookup words with bit 15 set resolve as direct RGB555, while colour-bank
+    words use captured VDP2 `SPCAOS`, `RAMCTL/CRMD`, and the complete 4 KiB
+    CRAM image to select the exact RGB555/RGB888 entry. The decoder rejects a
+    partial CRAM/register image, prohibited CRMD=3, or an unattested capture,
+    and deliberately emits no host draw. What remains is an independently
+    authenticated Nexus Saturn capture containing this complete VDP2 state
+    plus the final VDP1/VDP2 output pixels; only a byte-for-byte match against
+    that output can promote this hardware chain into real DGN rendering.
   - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
     a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
     its contiguous output address range, sequence interval, and byte witness.
