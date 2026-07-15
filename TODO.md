@@ -6376,7 +6376,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   a source-backed write into the thunk.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
-  are System Card-owned. No game-RAM or level/object consumer is admitted.
+  are System Card-owned. The full 17-sector raw span is now ordered and
+  CPU-bounded through System Card `$ea50/$ea52`, with subsequent System Card
+  main-RAM reads. It is explicitly not a game-owned consumer. No game-RAM or
+  level/object consumer is admitted.
   Generation 7 now has byte-exact FIFO provenance for LBA `4847..4851` /
   records `0x72e..0x732`, followed by game-owned `0x1f11xx..0x1f18xx` writes.
   There is no byte-exact game-RAM destination, so semantics remain blocked.

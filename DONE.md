@@ -16737,6 +16737,22 @@ meaning is inferred from the two patched bytes.
 Verification: `test_theron_v1_post_g7_parameter_thunk_receipt` and the
 authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
 
+# ✅ 2026-07-15 Theron generation-4 System Card CD-to-main-RAM receipt
+
+The authenticated USA Track 02 generation-4 READ(6) now has a complete
+CPU-provenance boundary. Its CDB reads the ordered 17-sector span LBA
+4233..4249 (records `0x4c8..0x4d8`); all 34,816 raw data-port bytes are
+checked for contiguous LBA/offset order. The observed FIFO values
+`38/50/37/04` are read by System Card `$ea50`, written by System Card `$ea52`
+to physical main RAM `0x1f0256..0x1f0259`, and the first three cells are then
+read by low physical System Card code. The verifier rejects a game-owned
+writer. This is a positive CD-to-main-RAM receipt, but it proves System Card
+ownership only: it does not bind game code, a loader table, level data,
+objects, palettes, or rendering semantics.
+
+Verification: `test_theron_v1_generation4_system_card_receipt` and the
+authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
