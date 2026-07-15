@@ -18,9 +18,10 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
          * resolves WALL_GFX for indoor frames; an outdoor frame instead
          * carries its real sky/ground planes and is not made invalid merely
          * because there is no indoor wall plan. */
-        (((boot_receipt->runtime_m11_frame_map_load_token &
+         (((boot_receipt->runtime_m11_frame_map_load_token &
            UINT32_C(0x80000000)) == 0u) &&
-         boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u) ||
+         (boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u ||
+          boot_receipt->runtime_m11_frame_wall_material_plan_command_count <= 0)) ||
         (boot_receipt->runtime_m11_frame_door_material_plan_required &&
          (boot_receipt->runtime_m11_frame_door_material_plan_hash == 0u ||
           boot_receipt->runtime_m11_frame_door_material_plan_command_count <= 0 ||
@@ -73,6 +74,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_ceiling_material_hash &&
         runtime_receipt->wall_material_plan_hash ==
             boot_receipt->runtime_m11_frame_wall_material_plan_hash &&
+        runtime_receipt->wall_material_plan_command_count > 0 &&
+        runtime_receipt->wall_material_plan_command_count ==
+            boot_receipt->runtime_m11_frame_wall_material_plan_command_count &&
         runtime_receipt->door_material_plan_required ==
             boot_receipt->runtime_m11_frame_door_material_plan_required &&
         (!runtime_receipt->door_material_plan_required ||
