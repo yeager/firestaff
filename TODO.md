@@ -104,6 +104,14 @@
   bytecode acceptance. Broader DSA coverage remains open; no DB3 substitute
   record or synthetic payload is accepted.
 
+- 2026-07-15 CSBWin DSA `STKOP_ExperiencePlus` now reaches the loaded
+  CHARDESC `Magic.cpp::AddToSkill` owner for verified non-level-up writes:
+  its source UI16 increment, selected/subskill base row, and
+  `LimitSkillExperience` cap publish only after whole authenticated bytecode.
+  A mastery transition remains fail-closed until the complete random/stat/UI
+  `LevelUp` transaction is source-owned; do not publish XP while omitting
+  those effects.
+
 - 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
   exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
   `Magic.cpp::AddToSkill` owner after complete authenticated bytecode. The

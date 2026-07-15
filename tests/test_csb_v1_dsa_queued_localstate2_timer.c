@@ -43,6 +43,62 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static void test_experience_plus_runtime_bridge(void)
+{
+    uint16_t accepted_program[] = {
+        0x0686u, 0u, 0x0686u, 7u, 0x0686u, 200u, 0x1c4bu
+    };
+    uint16_t level_up_program[] = {
+        0x0686u, 0u, 0x0686u, 7u, 0x0686u, 1000u, 0x1c4bu
+    };
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_RuntimeDSAFilterBinding binding;
+    int parameters[1] = { 0 };
+
+    memset(&action, 0, sizeof(action));
+    action.dsa_id = 11u;
+    action.state_index = 3u;
+    action.program_words = accepted_program;
+    action.program_word_count = (int)(sizeof(accepted_program) /
+                                      sizeof(accepted_program[0]));
+    memset(&binding, 0, sizeof(binding));
+    binding.dsa_id = action.dsa_id;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].SkillExperienceValid = 1u;
+    profile.party_state.Champions[0].SkillExperience[0] = 600u;
+    profile.party_state.Champions[0].SkillExperience[7] = 600u;
+
+    check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
+              &profile, &binding, action.state_index, 0, 0u, &runner) == 1 &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, parameters, 1, NULL) == 1 &&
+              profile.party_state.Champions[0].SkillExperience[7] == 800u &&
+              profile.party_state.Champions[0].SkillExperience[0] == 800u,
+          "DSA ExperiencePlus commits source AddToSkill XP to selected and basic skills");
+
+    action.program_words = level_up_program;
+    action.program_word_count = (int)(sizeof(level_up_program) /
+                                      sizeof(level_up_program[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 0 &&
+              profile.party_state.Champions[0].SkillExperience[7] == 800u &&
+              profile.party_state.Champions[0].SkillExperience[0] == 800u,
+          "DSA ExperiencePlus rejects unimplemented LevelUp atomically");
+
+    profile.csbwin_extended_dsa_state.imported_actions = NULL;
+    profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_runtime_cleanup(&profile);
+}
+
 int main(void)
 {
     uint8_t raw[16] = { 0 };
@@ -159,5 +215,6 @@ int main(void)
               &profile, &dungeon, &location, 0u) == 0 &&
               profile.csbwin_global_variables[1] == before,
           "parameter-message timers stay on their authenticated payload route");
+    test_experience_plus_runtime_bridge();
     return failures == 0 ? 0 : 1;
 }

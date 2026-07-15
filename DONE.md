@@ -21,6 +21,24 @@
   projectiles, pits, and explosions no longer receive host-colored stand-ins.
   Missing `GRAPHICS.DAT` material is no-draw; the newer source-owned F0115 and
   F0128 routes remain intact. The focused fail-closed source gate is wired.
+- 2026-07-15 CSBWin DSA `STKOP_ExperiencePlus` runtime bridge:
+  authenticated DSA bytecode now commits `Magic.cpp::AddToSkill`'s real
+  non-level-up CHARDESC mutation through the candidate profile. It preserves
+  the source UI16 increment, 0x10000000 XP cap, and hidden-skill-to-basic-skill
+  write, then publishes only after full action acceptance. A mastery change
+  rejects atomically because `LevelUp`'s random/stat/UI transaction is not yet
+  complete. Verification: `csb_v1_dsa_queued_localstate2_timer`.
+
+- 2026-07-15 CSBWin TIMER pool/runtime ownership: `SaveGame.cpp`'s fixed
+  `MaxTimers` array and independent active `NumTimer` `TimerQueue` are now
+  validated as two source-owned structures before M10 materializes a saved
+  timer. Only unique, non-empty queue slots become live events; spare TIMER
+  slots remain unavailable to M10 and DSA. Reheapification and core-save
+  export preserve the full slot pool while requiring every active event to
+   retain one queue receipt. The DSA queued-timer path consumes the same pool
+   contract, so a valid active `TT_STONEROOM` can reach its authenticated DSA
+   owner even when free timer slots exist. Focused Ninja/CTest coverage passes
+   timer restart/export, duplicate/free-slot rejection, and queued DSA.
 
 - 2026-07-15 CSB PC3.4 real startup handoff: production playback now consumes
   the single ReDMCSB `TITLE.C F0437` state-to-plan contract for C001 PRESENTS,
