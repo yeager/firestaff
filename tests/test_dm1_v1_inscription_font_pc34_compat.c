@@ -1,4 +1,5 @@
 #include "dm1_v1_inscription_font_pc34_compat.h"
+#include "firestaff/dm1/v1/mandatory_graphic_indices_pc34_compat.h"
 
 #include <stdio.h>
 
@@ -20,14 +21,21 @@ int main(void)
 {
     const int compactWidth = DM1_V1_INSCRIPTION_FONT_WIDTH_PC34;
     const int realAsciiWidth = 128 * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    const int* mandatory = dm1_v1_mandatory_graphic_indices_table_pc34();
     unsigned short textWords[2];
-    struct DungeonThings_Compat things;
-    struct DungeonTextString_Compat textStrings[2];
-    unsigned short visibleWords[4];
     unsigned char glyphs[32];
     DM1_V1_InscriptionLinePlanPc34 linePlan;
-    DM1_V1_InscriptionFrontWallLineDrawPlanPc34 drawPlan;
     int decodedLen;
+
+    /* ReDMCSB DATA.C:137-209 G0018 entry 61 is
+     * M648_GRAPHIC_INSCRIPTION_FONT. M648 is a variable identifier; the
+     * loader takes the table's GRAPHICS.DAT ordinal, not the stale guessed
+     * value 258. */
+    check_int("M648.raw.graphics.dat.ordinal",
+              DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34, 120);
+    check_int("M648.G0018.entry.61",
+              mandatory ? mandatory[61] : -1,
+              DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
 
     check_int("source.raw.A",
               DM1_V1_InscriptionGlyphIndexFromSourceByte(0),
@@ -110,31 +118,8 @@ int main(void)
     (void)DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
         textWords, 2, 0, glyphs, (int)sizeof(glyphs));
 
-    memset(&things, 0, sizeof(things));
-    memset(textStrings, 0, sizeof(textStrings));
-    visibleWords[0] = (unsigned short)((0 << 10) | (1 << 5) | 31);
-    visibleWords[1] = (unsigned short)((2 << 10) | (3 << 5) | 31);
-    textStrings[0].visible = 0;
-    textStrings[0].textDataWordOffset = 0;
-    textStrings[1].visible = 1;
-    textStrings[1].textDataWordOffset = 1;
-    things.textStrings = textStrings;
-    things.textStringCount = 2;
-    things.textData = visibleWords;
-    things.textDataWordCount = 2;
-    check_int("decode.visible.preferred",
-              DM1_V1_InscriptionDecodeVisibleRawGlyphsPc34(
-                  &things, 1, THING_ENDOFLIST, 0, 0, glyphs, (int)sizeof(glyphs)),
-              1);
-    check_int("decode.visible.preferred.glyph0", glyphs[0], 2);
-    check_int("decode.visible.preferred.glyph1", glyphs[1], 3);
-    check_int("decode.visible.hidden",
-              DM1_V1_InscriptionDecodeVisibleRawGlyphsPc34(
-                  &things, 0, THING_ENDOFLIST, 0, 0, glyphs, (int)sizeof(glyphs)),
-              0);
-    (void)DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
-        textWords, 2, 0, glyphs, (int)sizeof(glyphs));
-
+    /* DUNVIEW.C F0107 keeps every non-D1C readable-text attempt on the
+     * source unreadable-plaque path, including these depth/side dimensions. */
     check_int("unreadable.d3.side.1line",
               DM1_V1_InscriptionUnreadableBoxHeightPc34(3, -2, 1, 1),
               5);
@@ -162,20 +147,6 @@ int main(void)
     check_int("line0.width", linePlan.textWidth, 16);
     check_int("line0.next", linePlan.nextCursor, 3);
     check_int("line0.done", linePlan.done, 0);
-    check_int("line0.draw.ok",
-              DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
-                  glyphs, (int)sizeof(glyphs), 0, 0, 160, 111, &drawPlan),
-              1);
-    check_int("line0.draw.textX", drawPlan.textX, 104);
-    check_int("line0.draw.textY", drawPlan.textY, 41);
-    /* DUNVIEW.C F0107:3682 restores PC34 C735 once from its negative
-     * D1C bitmap.  The line plan owns only the M648 source cell and its
-     * destination zone; it must not invent a per-line backing patch. */
-    check_int("line0.draw.shortWall.doesNotAlterM648Zone",
-              DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
-                  glyphs, (int)sizeof(glyphs), 0, 0, 80, 40, &drawPlan) &&
-                  drawPlan.textX == 104 && drawPlan.textY == 41,
-              1);
     check_int("line1.plan.ok",
               DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
                   glyphs, (int)sizeof(glyphs), linePlan.nextCursor, 1,

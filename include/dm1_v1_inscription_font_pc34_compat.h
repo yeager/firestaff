@@ -9,7 +9,10 @@
  * not the generic message/scroll font.  ReDMCSB DUNVIEW.C:3619 loads
  * M648_GRAPHIC_INSCRIPTION_FONT, DUNVIEW.C:3627 centers with count << 2,
  * and DUNVIEW.C:3631-3637 blits 8-pixel glyph cells with C10 transparency. */
-#define DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 258
+/* `M648` is the ReDMCSB variable name, not its GRAPHICS.DAT ordinal.
+ * DATA.C G0018's PC 3.4 mandatory bitmap table binds M648 to raw entry 120.
+ * M11_AssetLoader_Load consumes that raw ordinal directly. */
+#define DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 120
 #define DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 288
 #define DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34 8
 #define DM1_V1_INSCRIPTION_GLYPH_WIDTH 8
