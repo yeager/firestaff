@@ -131,6 +131,34 @@ static int verify_direct_handoff(int style,
     return 1;
 }
 
+static int hide_graphicsset_word_entries(DM2_V1_AssetLoader *loader,
+                                         int graphicsset,
+                                         const uint8_t *fields,
+                                         size_t field_count,
+                                         uint8_t *saved_types,
+                                         size_t saved_capacity)
+{
+    size_t saved_count = 0u;
+
+    if (!loader || !fields || !saved_types) return -1;
+    for (uint16_t i = 0; i < loader->entry_count; ++i) {
+        DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 != DM2_GDAT_CATEGORY_GRAPHICSSET ||
+            entry->cls2 != (uint8_t)graphicsset ||
+            entry->cls3 != DM2_GDAT_ENTRY_TYPE_WORD_VALUE) {
+            continue;
+        }
+        for (size_t f = 0u; f < field_count; ++f) {
+            if (entry->cls4 != fields[f]) continue;
+            if (saved_count >= saved_capacity) return -1;
+            saved_types[saved_count++] = entry->cls3;
+            entry->cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+            break;
+        }
+    }
+    return (int)saved_count;
+}
+
 int main(void)
 {
     uint8_t *graphics = NULL;
@@ -254,6 +282,63 @@ int main(void)
         fputs("FAIL: no G1 MapGraphicsStyle yielded a complete plane plan\n", stderr);
         failures = 1;
         goto done;
+    }
+
+    {
+        static const uint8_t light_fields[] = {
+            DM2_GDAT_GFXSET_AMBIANT_LIGHT,
+            DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL,
+            DM2_GDAT_GFXSET_AMBIANT_DARKNESS
+        };
+        uint8_t saved_types[3] = { 0 };
+        int hidden_count = hide_graphicsset_word_entries(
+            &loader, first_style, light_fields,
+            sizeof(light_fields) / sizeof(light_fields[0]), saved_types,
+            sizeof(saved_types) / sizeof(saved_types[0]));
+        DM2_V1_GdatSceneM11CommandPlan missing_light;
+
+        memset(&missing_light, 0, sizeof(missing_light));
+        if (hidden_count < 0) {
+            fputs("FAIL: could not isolate active GRAPHICSSET light words\n",
+                  stderr);
+            failures = 1;
+        } else if (hidden_count > 0) {
+            if (!dm2_v1_gdat_scene_m11_command_plan_build(
+                    &loader, (uint8_t)first_style, &missing_light) ||
+                !missing_light.valid ||
+                missing_light.graphicsset != (uint8_t)first_style ||
+                missing_light.scene_colorkey != mismatched.scene_colorkey ||
+                missing_light.scene_flags != mismatched.scene_flags ||
+                missing_light.ambient_light != 0u ||
+                missing_light.highest_light_level != 0u ||
+                missing_light.ambient_darkness != 0u ||
+                missing_light.commands[0].raw_hash !=
+                    mismatched.commands[0].raw_hash ||
+                missing_light.commands[1].raw_hash !=
+                    mismatched.commands[1].raw_hash ||
+                missing_light.command_hash == mismatched.command_hash ||
+                !verify_direct_handoff(first_style, &missing_light)) {
+                fputs("FAIL: missing GRAPHICSSET light words blocked the "
+                      "source scene material plan\n", stderr);
+                failures = 1;
+            }
+            dm2_v1_gdat_scene_m11_command_plan_free(&missing_light);
+        }
+        for (uint16_t i = 0; i < loader.entry_count && hidden_count > 0; ++i) {
+            DM2_V1_GdatEntry *entry = &loader.entries[i];
+            if (entry->cls1 != DM2_GDAT_CATEGORY_GRAPHICSSET ||
+                entry->cls2 != (uint8_t)first_style ||
+                entry->cls3 != DM2_GDAT_ENTRY_TYPE_TEXT) {
+                continue;
+            }
+            for (size_t f = 0u; f < sizeof(light_fields) / sizeof(light_fields[0]); ++f) {
+                if (entry->cls4 == light_fields[f]) {
+                    entry->cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+                    --hidden_count;
+                    break;
+                }
+            }
+        }
     }
 
     {
