@@ -1,0 +1,38 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -105,0 +106,7 @@ static uint8 TheronPCECDDataReadValue;
++static bool TheronPCECDOriginRAMPending;
++static uint16 TheronPCECDOriginRAMReaderPC;
++static uint8 TheronPCECDOriginRAMValue;
++static unsigned TheronPCECDOriginRAMGeneration;
++static uint32 TheronPCECDOriginRAMLBA;
++static uint16 TheronPCECDOriginRAMOffset;
++static unsigned TheronPCECDOriginRAMReceiptCount;
+@@ -253,0 +261,14 @@ void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_desti
++ if(TheronPCECDOriginRAMPending)
++ {
++  TheronPCECDOriginRAMPending = false;
++  if(physical_destination >= 0x1f0000 && physical_destination < 0x1f8000 &&
++     stored_value == TheronPCECDOriginRAMValue && TheronPCECDOriginRAMReceiptCount < 4096)
++  {
++   TheronPCECDTraceFifoReceipt("pce_cd_origin_main_ram_receipt sequence=%u generation=%u source_lba=%u source_offset=%u reader_pc=%04x logical_destination=%04x physical_destination=%06x writer_pc=%04x writer_physical_pc=%06x value=%02x\n",
++                               TheronPCECDOriginRAMReceiptCount++,
++                               TheronPCECDOriginRAMGeneration, TheronPCECDOriginRAMLBA,
++                               TheronPCECDOriginRAMOffset, TheronPCECDOriginRAMReaderPC,
++                               logical_destination, physical_destination, writer_pc,
++                               writer_physical_pc, stored_value);
++  }
++ }
+@@ -336,0 +358 @@ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destinatio
++ {
+@@ -337,0 +360,2 @@ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destinatio
++  TheronPCECDOriginRAMPending = false;
++ }
+@@ -812,0 +837,6 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
++     TheronPCECDOriginRAMPending = TheronPCECDDataReadHasOrigin;
++     TheronPCECDOriginRAMReaderPC = TheronPCECDDataReadPC;
++     TheronPCECDOriginRAMValue = ret;
++     TheronPCECDOriginRAMGeneration = TheronPCECDDataReadGeneration;
++     TheronPCECDOriginRAMLBA = TheronPCECDDataReadLBA;
++     TheronPCECDOriginRAMOffset = TheronPCECDDataReadOffset;
