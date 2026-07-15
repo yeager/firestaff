@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject weather host receipt: source-backed weather
+  renderer hash/count now cross runtime, boot, and M11. M11 rejects a
+  mismatched weather command list before presentation.
+
 - 2026-07-15 DM2 skproject creature host receipt: ordered creature GDAT plan
   hash/count now cross runtime, boot, and M11. M11 rejects a mismatched
   multi-creature pass before presentation.
