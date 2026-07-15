@@ -312,6 +312,9 @@ typedef struct {
     uint32_t                game_time;       /* V1 game_time */
     uint64_t                total_play_ms;   /* wall-clock ms */
     uint32_t                tick_count;       /* how many V1 ticks elapsed */
+    /* CSBWin Data.h d.PartySleeping is transient runtime state used by
+     * Code17818.cpp::DetermineMastery. It is deliberately not a save field. */
+    int                     csbwin_party_sleeping;
     int                     csbwin_gameblock2_summary_valid;
     uint32_t                csbwin_random_seed;
     uint16_t                csbwin_object_in_hand;

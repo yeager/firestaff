@@ -51,6 +51,12 @@ static void test_experience_plus_runtime_bridge(void)
     uint16_t level_up_program[] = {
         0x0686u, 0u, 0x0686u, 7u, 0x0686u, 1000u, 0x1c4bu
     };
+    uint16_t mastery_program[] = {
+        0x0686u, 4u, 0x0686u, 7u, 0x0686u, 3u, 0x0c4bu, 0x000du
+    };
+    uint16_t possession_mastery_program[] = {
+        0x0686u, 4u, 0x0686u, 7u, 0x0686u, 0u, 0x0c4bu, 0x000du
+    };
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
@@ -78,6 +84,8 @@ static void test_experience_plus_runtime_bridge(void)
     profile.party_state.Champions[0].SkillExperienceValid = 1u;
     profile.party_state.Champions[0].SkillExperience[0] = 600u;
     profile.party_state.Champions[0].SkillExperience[7] = 600u;
+    profile.leader_index = 0;
+    profile.party_state.LeaderIndex = 0;
 
     check(csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
               &profile, &binding, action.state_index, 0, 0u, &runner) == 1 &&
@@ -99,6 +107,34 @@ static void test_experience_plus_runtime_bridge(void)
               exported.champions[0].skill_experience[0] == 800u &&
               exported.champions[0].skill_experience[7] == 800u,
           "DSA ExperiencePlus reaches the CSBWin CHARDESC save-summary owner");
+
+    profile.party_state.Champions[0].SkillTemporaryExperience[0] = 1000;
+    profile.party_state.Champions[0].SkillTemporaryExperience[7] = 1000;
+    action.program_words = mastery_program;
+    action.program_word_count = (int)(sizeof(mastery_program) /
+                                      sizeof(mastery_program[0]));
+    parameters[0] = -1;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 1 &&
+              parameters[0] == 2,
+          "DSA Mastery uses HandChar and ignores temporary XP when source flags request it");
+
+    profile.csbwin_party_sleeping = 1;
+    parameters[0] = -1;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 1 &&
+              parameters[0] == 1,
+          "DSA Mastery returns the source sleeping mastery before skill lookup");
+    profile.csbwin_party_sleeping = 0;
+
+    action.program_words = possession_mastery_program;
+    action.program_word_count = (int)(sizeof(possession_mastery_program) /
+                                      sizeof(possession_mastery_program[0]));
+    parameters[0] = -1;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters, 1, NULL) == 0 &&
+              parameters[0] == -1,
+          "DSA Mastery rejects unowned possession bonuses without a substitute item map");
 
     action.program_words = level_up_program;
     action.program_word_count = (int)(sizeof(level_up_program) /

@@ -54,6 +54,14 @@
   projectiles, pits, and explosions no longer receive host-colored stand-ins.
   Missing `GRAPHICS.DAT` material is no-draw; the newer source-owned F0115 and
   F0128 routes remain intact. The focused fail-closed source gate is wired.
+- 2026-07-15 CSBWin DSA `STKOP_Mastery` runtime bridge: authenticated
+  `DSA.cpp:3389-3409` bytecode now consumes the loaded CHARDESC skill rows
+  through selector-four hand-character, temporary-XP, hidden-skill averaging,
+  and transient `PartySleeping` rules from `DetermineMastery`. Possession
+  bonuses have no verified CSBWin object-name-index owner, so calls that do
+  not suppress possessions fail closed. Verification:
+  `csb_v1_dsa_queued_localstate2_timer` and
+  `csb_v1_dsa_pure_control_pc34_compat`.
 - 2026-07-15 CSBWin DSA `STKOP_ExperiencePlus` runtime bridge:
   authenticated DSA bytecode now commits `Magic.cpp::AddToSkill`'s real
   non-level-up CHARDESC mutation through the candidate profile. It preserves
