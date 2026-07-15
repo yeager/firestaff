@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C346 source-rectangle gate: the D1C
+  mirror backing now requires and samples exactly its G0205 64x43 source
+  rectangle. A larger or malformed asset can no longer stretch unrelated
+  trailing pixels into the fixed C026 portrait frame. Focused coverage:
+  `m11_dm1_front_mirror_asset_fail_closed` and the real-PC34 HoC receipt
+  regression.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0172 C127 projection gate: a C127 sensor now
   bypasses the generic F0107 wall-ornament loop. Only DUNVIEW's fixed D1C
   C346/C026 route may render it, preventing an invented perspective mirror at
