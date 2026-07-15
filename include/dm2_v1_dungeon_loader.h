@@ -850,6 +850,18 @@ typedef struct {
     int weather_zone_count;
 } DM2_V1_DungeonData;
 
+/* SKProject DME.h::Map_definitions::Difficulty() is the high nibble of w12.
+ * c_light.cpp selects its fixed-light branch only for difficulty zero. Keep
+ * this raw map-descriptor proof separate from the later live light
+ * accumulator and modifier state. */
+typedef struct {
+    int valid;
+    int level;
+    uint8_t difficulty;
+    uint8_t dynamic_light;
+    uint32_t descriptor_hash;
+} DM2_V1_CLightMapDescriptorReceipt;
+
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out, const uint8_t *dat, int size);
 int dm2_v1_dungeon_get_square_type(const DM2_V1_DungeonData *d, int level, int x, int y);
 int dm2_v1_dungeon_get_tile_raw(const DM2_V1_DungeonData *d, int level, int x, int y);
@@ -927,6 +939,9 @@ int dm2_v1_dungeon_get_map_door_ornate_list(
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
     int level);
+int dm2_v1_dungeon_c_light_map_descriptor_receipt(
+    const DM2_V1_DungeonData *d, int level,
+    DM2_V1_CLightMapDescriptorReceipt *out);
 
 typedef struct { int valid; int dir,x,y; uint8_t tile_w2,tile_type,oriented_bits[4]; int first_record_link; uint8_t neighbor_tile_w2[4]; } DM2_V1_StoneRoomInputReceipt;
 int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out);

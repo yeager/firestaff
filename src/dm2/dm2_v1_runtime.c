@@ -99,6 +99,7 @@ typedef struct {
     uint8_t map_door_ornate_list[16];
     int map_door_ornate_count;
     int map_graphics_style;
+    DM2_V1_CLightMapDescriptorReceipt c_light_map_descriptor;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
     DM2_V1_GdatSceneLightM11Receipt gdat_scene_light_receipt;
     DM2_V1_CLightM11Receipt c_light_receipt;
@@ -904,6 +905,8 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     memset(&rt->gdat_scene_light_receipt, 0,
            sizeof(rt->gdat_scene_light_receipt));
     memset(&rt->c_light_receipt, 0, sizeof(rt->c_light_receipt));
+    memset(&rt->c_light_map_descriptor, 0,
+           sizeof(rt->c_light_map_descriptor));
     dm2_v1_gdat_wall_m11_command_plan_free(&rt->gdat_wall_material_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&rt->gdat_door_material_plan);
     rt->map_graphics_style = -1;
@@ -944,6 +947,10 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     rt->map_graphics_style = dm2_v1_dungeon_get_map_graphics_style(
         dd, rt->dungeon_level);
     if (rt->map_graphics_style < 0) return;
+    if (!dm2_v1_dungeon_c_light_map_descriptor_receipt(
+            dd, rt->dungeon_level, &rt->c_light_map_descriptor)) {
+        return;
+    }
 
     /* skproject UPDATE_GFXSET loads the selected GRAPHICSSET image pair and
      * CHECK_RECOMPUTE_LIGHT consumes its darkness word before dungeon draw.

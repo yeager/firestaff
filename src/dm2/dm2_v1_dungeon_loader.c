@@ -3139,6 +3139,36 @@ int dm2_v1_dungeon_get_map_graphics_style(
     return (int)((RD16(map_desc + 14) >> 4) & 0x0fu);
 }
 
+int dm2_v1_dungeon_c_light_map_descriptor_receipt(
+    const DM2_V1_DungeonData *d, int level,
+    DM2_V1_CLightMapDescriptorReceipt *out)
+{
+    const uint8_t *map_desc;
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!d || !d->raw_data || d->raw_size <= 0 || level < 0 ||
+        level >= d->level_count || level >= DM2_V1_MAX_LEVELS ||
+        d->raw_size < DM2_DUNGEON_HEADER_SIZE +
+                          (level + 1) * DM2_MAP_DESC_SIZE) {
+        return 0;
+    }
+    map_desc = d->raw_data + DM2_DUNGEON_HEADER_SIZE +
+               level * DM2_MAP_DESC_SIZE;
+    for (int i = 0; i < DM2_MAP_DESC_SIZE; ++i) {
+        hash ^= map_desc[i];
+        hash *= 16777619u;
+    }
+    if (hash == 0u) return 0;
+    out->valid = 1;
+    out->level = level;
+    out->difficulty = (uint8_t)((RD16(map_desc + 12u) >> 12) & 0x0fu);
+    out->dynamic_light = out->difficulty != 0u;
+    out->descriptor_hash = hash;
+    return 1;
+}
+
 static uint32_t dm2_v1_g1_raw_hash(const uint8_t *data, uint32_t byte_count)
 {
     uint32_t hash = 2166136261u;
