@@ -146,8 +146,13 @@ int main(void)
               correlation.warning_clut_fnv1a64 != 0U &&
               correlation.matching_entry_count == 224U &&
               correlation.mismatched_entry_count == 32U &&
+              correlation.bgr555_low15_matching_entry_count == 255U &&
+              correlation.bgr555_low15_mismatched_entry_count == 1U &&
+              correlation.high_bit_only_mismatch_count == 31U &&
+              correlation.colour_word_mismatch_count == 1U &&
               correlation.indexed_word_alignment_proven &&
               correlation.bgr555_word_encoding_correlation_proven &&
+              correlation.bgr555_low15_correlation_proven &&
               !correlation.prs3_palette_association_proven &&
               !correlation.palette_application_proven &&
               !correlation.decoder_promoted && correlation.no_draw_only &&

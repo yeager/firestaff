@@ -3443,6 +3443,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     BGR555 CLUT at the same indices. The other 32 PALT words remain raw
     source values. This proves no PRS3 entry ownership, palette application,
     pixel decoding, or draw route; those still require Saturn evidence.
+    Under the documented DGT2 low-15-bit BGR555 reader, 31 of those raw
+    differences are bit-15-only and 255 of 256 indexed colours correlate;
+    one real colour-word mismatch remains at index 130. This is still not a
+    declaration that PALT is DGT2 or a license to use it for PRS3.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

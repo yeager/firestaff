@@ -18807,3 +18807,8 @@ DGT2 CLUT share 224 identical indexed big-endian 16-bit words. This establishes
 only a source-owned BGR555 word-encoding correlation. The other 32 PALT words
 remain raw source values; no PRS3 entry association, palette application, pixel
 decode, or rendering route is enabled.
+
+The documented DGT2 BGR555 reader's low-15-bit colour mask also matches 255 of
+256 indexed PALT words: 31 raw mismatches are bit-15-only, while index 130 is
+one actual colour-word difference. This strengthens the byte correlation but
+does not declare PALT to be DGT2 or promote any decoder/palette route.

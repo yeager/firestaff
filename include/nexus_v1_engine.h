@@ -192,8 +192,13 @@ typedef struct {
     uint64_t warning_clut_fnv1a64;
     uint32_t matching_entry_count;
     uint32_t mismatched_entry_count;
+    uint32_t bgr555_low15_matching_entry_count;
+    uint32_t bgr555_low15_mismatched_entry_count;
+    uint32_t high_bit_only_mismatch_count;
+    uint32_t colour_word_mismatch_count;
     int indexed_word_alignment_proven;
     int bgr555_word_encoding_correlation_proven;
+    int bgr555_low15_correlation_proven;
     int prs3_palette_association_proven;
     int palette_application_proven;
     int decoder_promoted;
