@@ -2137,10 +2137,6 @@ int main(void) {
         int name_y = 0;
         int name_w = 0;
         int name_h = 0;
-        int icon_x = 0;
-        int icon_y = 0;
-        int icon_w = 0;
-        int icon_h = 0;
 
         memcpy(framebuffer_without_hand, framebuffer, sizeof(framebuffer));
         dm2_v1_runtime_set_leader_hand_object(dm2_db_make_handle(10, 0x0033));
@@ -2186,44 +2182,11 @@ int main(void) {
             expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
                             icon_handle,
                         "M11 DM2 leader-hand ObjectID accessor follows runtime icon handle");
-            expect_true(M11_GameView_Dm2LeaderHandObjectIconAvailable(&view),
-                        "M11 DM2 reports GDAT-backed leader-hand icon availability");
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(M11_GameView_GetDm2LeaderHandObjectIconZone(&icon_x,
-                                                                    &icon_y,
-                                                                    &icon_w,
-                                                                    &icon_h),
-                        "M11 DM2 leader-hand icon zone is available");
-            expect_true(framebuffer_zone_has_nonzero(framebuffer,
-                                                     320,
-                                                     200,
-                                                     icon_x,
-                                                     icon_y,
-                                                     icon_w,
-                                                     icon_h),
-                        "M11 DM2 draw overlays a GDAT-backed leader-hand icon when available");
+            expect_true(!M11_GameView_Dm2LeaderHandObjectIconAvailable(&view),
+                        "M11 DM2 blocks leader-hand presentation without a source rect");
             expect_true(M11_GameView_HandlePointerMove(&view, 120, 80) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 pointer motion redraws while carrying a GDAT-backed object");
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
-                            &view,
-                            &icon_x,
-                            &icon_y,
-                            &icon_w,
-                            &icon_h) &&
-                            icon_x == 120 && icon_y == 80,
-                        "M11 DM2 leader-hand cursor icon follows pointer source coordinates");
-            expect_true(framebuffer_zone_has_nonzero(framebuffer,
-                                                     320,
-                                                     200,
-                                                     icon_x,
-                                                     icon_y,
-                                                     icon_w,
-                                                     icon_h),
-                        "M11 DM2 draw overlays the GDAT-backed leader-hand icon at the pointer");
+                            M11_GAME_INPUT_IGNORED,
+                        "M11 DM2 pointer motion cannot request an unowned icon redraw");
             expect_true(M11_GameView_HandleInput(&view,
                                                  M12_MENU_INPUT_INVENTORY_TOGGLE) ==
                             M11_GAME_INPUT_REDRAW,
@@ -2232,37 +2195,11 @@ int main(void) {
                         strstr(view.lastOutcome,
                                "DM2 INVENTORY GDAT REQUIRED") != NULL,
                         "M11 DM2 inventory remains blocked until its GDAT layout is bound");
-            memset(framebuffer, 0, sizeof(framebuffer));
-            M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
-                            &view,
-                            &icon_x,
-                            &icon_y,
-                            &icon_w,
-                            &icon_h) &&
-                            icon_x == 120 && icon_y == 80,
-                        "M11 DM2 inventory keeps the leader-hand icon at the pointer");
-            expect_true(framebuffer_zone_has_nonzero(framebuffer,
-                                                     320,
-                                                     200,
-                                                     icon_x,
-                                                     icon_y,
-                                                     icon_w,
-                                                     icon_h),
-                        "M11 DM2 inventory draw keeps the GDAT leader-hand icon visible");
             expect_true(!M11_GameView_IsInventoryPanelActive(&view),
                         "M11 DM2 startup inventory panel remains unavailable");
             expect_true(M11_GameView_HandlePointerMove(&view, 319, 199) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 pointer motion redraws at the framebuffer edge");
-            expect_true(M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
-                            &view,
-                            &icon_x,
-                            &icon_y,
-                            &icon_w,
-                            &icon_h) &&
-                            icon_x == 306 && icon_y == 186,
-                        "M11 DM2 leader-hand cursor icon clamps to the framebuffer edge");
+                            M11_GAME_INPUT_IGNORED,
+                        "M11 DM2 pointer motion stays ignored without an icon route");
             dm2_v1_runtime_set_leader_hand_object(0u);
             view.dm2State.leader_hand_object = 0u;
         }

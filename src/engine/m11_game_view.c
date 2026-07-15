@@ -32080,31 +32080,12 @@ uint32_t M11_GameView_GetDm2InventoryObject(const M11_GameViewState* state,
 
 int M11_GameView_Dm2LeaderHandObjectIconAvailable(
     const M11_GameViewState* state) {
-    DM2_V1_BootProfile *profile;
-    uint8_t *pixels = NULL;
-    int srcW = 0;
-    int srcH = 0;
-    int srcStride = 0;
-    int available;
-
-    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        state->dm2State.leader_hand_object == 0u || !state->dm2BootProfile) {
-        return 0;
-    }
-    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    /* DM2 uses skproject-style ObjectID handles, not DM1/CSB THING values.
-     * Keep the startup/resume handoff visible through a DM2-specific query
-     * and prove icon readiness through the boot-owned GRAPHICS.DAT provider. */
-    available = dm2_v1_boot_object_icon_asset_fetch(
-                    profile,
-                    state->dm2State.leader_hand_object,
-                    &pixels,
-                    &srcW,
-                    &srcH,
-                    &srcStride) == 0 &&
-                pixels && srcW > 0 && srcH > 0 && srcStride > 0;
-    dm2_v1_boot_object_icon_asset_free(pixels);
-    return available ? 1 : 0;
+    (void)state;
+    /* Decoded GDAT pixels alone do not authorize presentation. SKProject
+     * DRAW_ITEM_ICON consumes the ObjectID-selected image through a source
+     * expanded/blit rectangle. M11 has no verified leader-hand rect, so it
+     * must not turn pointer coordinates into a replacement icon surface. */
+    return 0;
 }
 
 /* Source runtime bridge for the object in the DM1 leader hand.
@@ -33847,34 +33828,6 @@ static void m11_draw_dm2_inventory_object_icons(const M11_GameViewState* state,
             drawH,
             0);
     }
-}
-
-static void m11_draw_dm2_leader_hand_object_icon(const M11_GameViewState* state,
-                                                 unsigned char* framebuffer,
-                                                 int framebufferWidth,
-                                                 int framebufferHeight) {
-    int dstX = 0;
-    int dstY = 0;
-    int dstW = 0;
-    int dstH = 0;
-
-    if (!state || !framebuffer ||
-        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        state->dm2State.leader_hand_object == 0u ||
-        !M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
-            state, &dstX, &dstY, &dstW, &dstH)) {
-        return;
-    }
-    (void)m11_draw_dm2_object_icon_at(state,
-                                      state->dm2State.leader_hand_object,
-                                      framebuffer,
-                                      framebufferWidth,
-                                      framebufferHeight,
-                                      dstX,
-                                      dstY,
-                                      dstW,
-                                      dstH,
-                                      1);
 }
 
 /* c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL expands raw4 rectangles and
@@ -39233,9 +39186,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                                 framebufferWidth,
                                                 framebufferHeight);
-            m11_draw_dm2_leader_hand_object_icon(state, framebuffer,
-                                                 framebufferWidth,
-                                                 framebufferHeight);
             (void)m11_draw_dm2_save_dialogue_panel(state, framebuffer,
                                                    framebufferWidth,
                                                    framebufferHeight);
