@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0223: source walkability gate now accepts only corridor,
+  teleporter, pit, and door target squares for Lord Chaos escape routing.
+
 - 2026-07-15 DM1 F0222: raw square-chain Lord Chaos lookup now returns the
   actual C04 Thing only when its source creature type is C23.
 

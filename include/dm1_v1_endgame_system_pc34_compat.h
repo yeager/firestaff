@@ -118,6 +118,10 @@ int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
     int mapIndex, int mapX, int mapY,
     unsigned short* outThing);
 
+int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex, int mapX, int mapY, int* outAllowed);
+
 /* -- Fuse action evaluation -- */
 typedef struct DM1EndgameFuseActionResult {
     int32_t fuseSequenceTriggered;

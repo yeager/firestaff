@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
+  complete; F0224 still needs real Lord Chaos escape-route capture.
+
 - 2026-07-15 DM1 F0222 follow-up: F0224/FUSE still needs broader real-map
   route capture; do not substitute a creature-type-only result for raw C04.
 
