@@ -177,6 +177,17 @@ int main(void)
               profile.audio_runtime.totalRequests == 1u,
           "Audible C001 requests the original prioritized switch sound");
 
+    make_loaded_chain(&dungeon, raw, 1, 1, 0);
+    put_le16(raw, 76, (unsigned short)((DM1_EFFECT_HOLD << 3) | (1u << 5)));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    run_object_move(&profile);
+    CHECK(profile.timeline_queue.eventCount == 1 &&
+              profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
+              profile.timeline_queue.events[0].c_effect == DM1_EFFECT_CLEAR,
+          "C001 AddThing xor Revert maps HOLD arrival to F0268 CLEAR");
+
     make_loaded_chain(&dungeon, raw, 1, 2, 27);
     put_le16(raw, 76, (unsigned short)((DM1_EFFECT_SET << 3) | (1u << 2)));
     csb_v1_runtime_init(&profile, NULL);
