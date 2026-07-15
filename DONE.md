@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 SKSave corpus first-importable provenance receipt:
+  extended `DM2_SKSaveCorpusReceipt` with a bounded public source-kind enum
+  and first-importable payload byte count. `dm2_v1_sksave_corpus_scan` now
+  records provenance only after the existing runtime save-candidate parser
+  accepts the payload, preserving rejection behavior and avoiding synthetic
+  save promotion. Verification: `test_dm2_v1_save_load` passed 26/26.
+
 - ✅ 2026-07-16 DM2 skproject ANIM memory helpers: added source-mapped
   `ANIM_farmalloc`, `ANIM_farfree`, and `ANIM_farcoreleft` helpers to the
   ANIM receipt layer. The test pins malloc-backed allocation/free and the

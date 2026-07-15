@@ -53,6 +53,13 @@
   regeneration failure from many unrelated missing non-DM2/probe/shared
   sources.
 
+- 2026-07-16 DM2 SKSave corpus follow-up: the corpus receipt now exposes the
+  first accepted importable payload's source kind and byte size, distinguishing
+  Firestaff session envelopes from original SKSave envelopes without promoting
+  rejected raw/backup-shaped candidates. The full `test_dm2_v1_save_load`
+  executable now passes; remaining corpus work is external real-save breadth,
+  not synthetic fixture promotion.
+
 - 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
   texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`
   still fails on 39 broader startup completeness assertions: title/menu audio

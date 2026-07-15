@@ -1749,6 +1749,8 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.invalid_candidate_count != 0 ||
         receipt.importable_candidate_count != 0 ||
         receipt.import_rejected_candidate_count != 0 ||
+        receipt.first_importable_kind != DM2_SK_SAVE_KIND_NONE ||
+        receipt.first_importable_payload_size != 0u ||
         receipt.recursive_scan_depth_limit != 4 ||
         receipt.recursive_scan_candidate_cap != 64 ||
         receipt.recursive_scan_truncated != 0 ||
@@ -1796,6 +1798,8 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
+        receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
+        receipt.first_importable_payload_size != payload_b_size ||
         receipt.importable_kind_mask !=
             ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
              (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
@@ -1932,6 +1936,8 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
+        receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
+        receipt.first_importable_payload_size != payload_b_size ||
         receipt.importable_kind_mask !=
             ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
              (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
@@ -1993,6 +1999,8 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 2 ||
         receipt.original_raw_candidate_count != 1 ||
+        receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
+        receipt.first_importable_payload_size != payload_b_size ||
         receipt.recursive_candidate_count != 2 ||
         receipt.recursive_importable_candidate_count != 2 ||
         receipt.alternate_name_candidate_count != 2 ||
