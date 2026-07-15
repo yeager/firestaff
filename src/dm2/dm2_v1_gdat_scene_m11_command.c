@@ -188,6 +188,55 @@ int dm2_v1_gdat_scene_light_m11_receipt(
     return 1;
 }
 
+int dm2_v1_c_light_m11_receipt_build(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightSourceState *source,
+    DM2_V1_CLightM11Receipt *out_receipt)
+{
+    DM2_V1_CLightM11Receipt candidate;
+    int level;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!scene || !scene->valid || scene->scene_control_hash == 0u ||
+        !source || !source->valid || source->source_state_hash == 0u ||
+        source->dynamic_map > 1u || source->base_light > 5u ||
+        source->darkness_offset > 12u) {
+        return 0;
+    }
+
+    /* SKProject c_light.cpp::DM2_RECALC_LIGHT_LEVEL: a non-dynamic map
+     * begins at level one; an admitted dynamic map supplies v1e0974. The
+     * final c_light operation subtracts v1e0978 and clamps to [0, 5]. */
+    level = source->dynamic_map ? source->base_light : 1;
+    level -= source->darkness_offset;
+    if (level < 0) level = 0;
+    if (level > 5) level = 5;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.graphicsset = scene->graphicsset;
+    candidate.light_level = (uint8_t)level;
+    candidate.dynamic_map = source->dynamic_map;
+    candidate.scene_control_hash = scene->scene_control_hash;
+    candidate.source_state_hash = source->source_state_hash;
+    hash = hash_bytes(hash, &candidate.graphicsset,
+                      sizeof(candidate.graphicsset));
+    hash = hash_bytes(hash, &candidate.light_level,
+                      sizeof(candidate.light_level));
+    hash = hash_bytes(hash, &candidate.dynamic_map,
+                      sizeof(candidate.dynamic_map));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.scene_control_hash,
+                      sizeof(candidate.scene_control_hash));
+    hash = hash_bytes(hash, (const uint8_t *)&candidate.source_state_hash,
+                      sizeof(candidate.source_state_hash));
+    if (hash == 0u) return 0;
+    candidate.receipt_hash = hash;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_gdat_scene_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader, uint8_t graphicsset,
     DM2_V1_GdatSceneM11CommandPlan *out_plan)

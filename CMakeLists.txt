@@ -8841,6 +8841,19 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_scene_ambient_light_receipt
              COMMAND test_dm2_v1_scene_ambient_light_receipt)
 
+    add_executable(test_dm2_v1_c_light_receipt
+        tests/test_dm2_v1_c_light_receipt.c)
+    target_include_directories(test_dm2_v1_c_light_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_c_light_receipt
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_c_light_receipt PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_c_light_receipt
+             COMMAND test_dm2_v1_c_light_receipt)
+
     add_executable(test_dm2_v1_frame_presentation_state
         tests/test_dm2_v1_frame_presentation_state.c)
     target_include_directories(test_dm2_v1_frame_presentation_state PRIVATE

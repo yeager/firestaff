@@ -14,12 +14,17 @@
   than inventing a placement. Focused coverage:
   `m11_dm1_f0115_material_asset_fail_closed` and
   `test_dm1_v1_creature_render_pc34_compat_integration`.
-=======
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 wall-object gate: the generic
   C002 wall-object side-effect path now requires a loaded PC3.4 wall square
    and its authentic Thing chain before it can reach F0272/F0268. The focused
-   regression proves C002 -> fakewall SET and rejects a corridor chain without
-   queuing a host substitute event.
+  regression proves C002 -> fakewall SET and rejects a corridor chain without
+  queuing a host substitute event.
+- ✅ 2026-07-15 DM2 `c_light` terminal receipt: added a source-locked
+  `DM2_RECALC_LIGHT_LEVEL` result builder. It accepts only an authenticated
+  raw dynamic-state hash, applies the source non-dynamic base level or dynamic
+   accumulator, then subtracts darkness and clamps to 0..5. No GRAPHICSSET
+   value can stand in for runtime brightness. Focused coverage:
+   `test_dm2_v1_c_light_receipt` (4/4).
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 source projectile/object-material gate:
   M613 projectiles, F0142/G0209 thrown objects, and C2500 floor objects now
