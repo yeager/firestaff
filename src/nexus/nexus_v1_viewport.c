@@ -222,6 +222,25 @@ static void viewport_stage_structure3_untextured_faces(
     vp->last_dgn_render_receipt.structure3_untextured_face_scene = scene;
 }
 
+static void viewport_stage_structure3_complete_source_scene(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt scene;
+
+    if (!vp) return;
+    memset(&scene, 0, sizeof(scene));
+    if (!engine ||
+        nexus_v1_current_level_structure3_complete_source_scene_receipt(
+            engine, &scene) != 1 || !scene.valid ||
+        !scene.category_coverage_complete ||
+        scene.traversed_face_count != scene.face_count ||
+        !scene.no_draw_only || scene.decoder_permitted ||
+        scene.fallback_visuals_permitted ||
+        !scene.blocks_real_dgn_mesh_render) return;
+    vp->last_dgn_render_receipt.structure3_complete_source_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure3_complete_source_scene = scene;
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -282,6 +301,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_structure3_package_geometry(vp, engine);
         viewport_stage_structure3_animated_materials(vp, engine);
         viewport_stage_structure3_untextured_faces(vp, engine);
+        viewport_stage_structure3_complete_source_scene(vp, engine);
         /* The real runtime must not convert a decoded DMDF-only bank into
          * visible DGN material. FLOORS/WALLS need independently verified BPK
          * containers and completed host routes; missing Track 1 containers

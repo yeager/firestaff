@@ -6447,6 +6447,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   har ännu ingen bevisad flat-färg-, blend-, palett- eller VDP1-betydelse och
   kan därför inte ritas innan en autentisk Saturn-capture etablerar den.
 
+  Den aktiva DGN-rutten kräver nu full facekategori-täckning från samma
+  hashbundna LEV innan en framtida Saturn-renderer får betrakta scenen som
+  komplett. Denna gate är endast källgeometri: verkliga pixel-, palett-, VDP1-
+  och transformbevis saknas fortfarande och all presentation är fortsatt
+  blockerad.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no

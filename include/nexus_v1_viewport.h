@@ -40,6 +40,9 @@ typedef struct {
     int structure3_untextured_face_scene_consumed;
     Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt
         structure3_untextured_face_scene;
+    int structure3_complete_source_scene_consumed;
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt
+        structure3_complete_source_scene;
     int party_x;
     int party_y;
     int party_dir;
