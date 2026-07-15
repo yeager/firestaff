@@ -53,6 +53,11 @@ static uint32_t missile_info_stored[4];
 static int mastery_enabled;
 static int party_info_enabled;
 static int character_info_enabled;
+static int character_store_enabled;
+static int character_store_count;
+static int32_t character_store_selector;
+static uint32_t character_store_values[59];
+static uint32_t character_store_word_count;
 
 static int wing_talents_enabled;
 
@@ -355,6 +360,32 @@ static int get_character_info(void *user, int32_t character_selector,
     return 1;
 }
 
+static int prepare_character_store(void *user, int32_t character_selector,
+                                   uint32_t values[59], uint32_t word_count)
+{
+    (void)user;
+    if (!character_store_enabled || !values || word_count > 59u) return -1;
+    if (character_selector == 99) return 0;
+    if (character_selector != 4) return -1;
+    if (word_count > 2u && values[2] > 100u) values[2] = 100u;
+    return 1;
+}
+
+static int set_character_info(void *user, int32_t character_selector,
+                              const uint32_t values[59], uint32_t word_count)
+{
+    (void)user;
+    if (!character_store_enabled || !values || character_selector != 4 ||
+        word_count > 59u) {
+        return 0;
+    }
+    character_store_selector = character_selector;
+    character_store_word_count = word_count;
+    memcpy(character_store_values, values, sizeof(character_store_values));
+    ++character_store_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -479,6 +510,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (mastery_enabled) context.get_mastery = get_mastery;
     if (party_info_enabled) context.get_party_info = get_party_info;
     if (character_info_enabled) context.get_character_info = get_character_info;
+    if (character_store_enabled) {
+        context.prepare_character_store = prepare_character_store;
+        context.set_character_info = set_character_info;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -746,6 +781,21 @@ int main(void)
     uint16_t character_fetch_negative[] = {
         0x0786u, 0xffffu, 0xffffu, 0x0686u, 0u, 0x0686u, 1u, 0x104bu,
         0x0686u, 1u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t character_store[] = {
+        0x0686u, 421u, 0x0686u, 1u, 0x0686u, 1u, 0x0215u,
+        0x0686u, 250u, 0x0686u, 2u, 0x0686u, 1u, 0x0215u,
+        0x0686u, 144u, 0x0686u, 4u, 0x0686u, 1u, 0x0215u,
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 5u, 0x108bu,
+        0x0686u, 1u, 0x0686u, 2u, 0x0a4bu
+    };
+    uint16_t character_store_then_bad[] = {
+        0x0686u, 421u, 0x0686u, 1u, 0x0686u, 1u, 0x0215u,
+        0x0686u, 250u, 0x0686u, 2u, 0x0686u, 1u, 0x0215u,
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 5u, 0x108bu, 0x0000u
+    };
+    uint16_t character_store_invalid[] = {
+        0x0686u, 99u, 0x0686u, 0u, 0x0686u, 5u, 0x108bu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1303,6 +1353,41 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "CHAR@ rejects without a complete CHARDESC owner");
+    character_store_enabled = 1;
+    character_store_count = 0;
+    memset(character_store_values, 0, sizeof(character_store_values));
+    parameters[0] = 77u;
+    check(run(&state, &action, character_store,
+              (int)(sizeof(character_store) / sizeof(character_store[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_store_count == 1 && character_store_selector == 4 &&
+              character_store_word_count == 5u &&
+              character_store_values[1] == 321u &&
+              character_store_values[2] == 100u &&
+              character_store_values[4] == 44u && parameters[0] == 100u,
+          "CHAR! stages source CHARDESC fields and exposes clamped health");
+    character_store_count = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, character_store_then_bad,
+              (int)(sizeof(character_store_then_bad) /
+                    sizeof(character_store_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              character_store_count == 0 && parameters[0] == 77u,
+          "CHAR! does not publish before a later rejected source word");
+    character_store_count = 0;
+    check(run(&state, &action, character_store_invalid,
+              (int)(sizeof(character_store_invalid) /
+                    sizeof(character_store_invalid[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              character_store_count == 0,
+          "CHAR! preserves the source invalid-character no-op");
+    character_store_enabled = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, character_store,
+              (int)(sizeof(character_store) / sizeof(character_store[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "CHAR! rejects without a complete CHARDESC owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

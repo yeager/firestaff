@@ -291,6 +291,15 @@ typedef int (*CSB_V1_CSBWinDSAGetPartyInfoFn)(
  * invalid in that exact owner and therefore produces the source zero image. */
 typedef int (*CSB_V1_CSBWinDSAGetCharacterInfoFn)(
     void *user, int32_t character_selector, uint32_t out_values[59]);
+/* STKOP_CharStore mutates only selected CHARDESC fields. Preparation may
+ * clamp the source-visible health DSAVAR, but must not publish a live write;
+ * the executor calls set_character_info only after full action acceptance. */
+typedef int (*CSB_V1_CSBWinDSAPrepareCharacterStoreFn)(
+    void *user, int32_t character_selector, uint32_t values[59],
+    uint32_t word_count);
+typedef int (*CSB_V1_CSBWinDSASetCharacterInfoFn)(
+    void *user, int32_t character_selector, const uint32_t values[59],
+    uint32_t word_count);
 
 typedef struct {
     uint32_t master_location;
@@ -359,6 +368,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
+    CSB_V1_CSBWinDSAPrepareCharacterStoreFn prepare_character_store;
+    CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -621,6 +632,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     CSB_V1_CSBWinDSAGetPartyInfoFn get_party_info;
     CSB_V1_CSBWinDSAGetCharacterInfoFn get_character_info;
+    CSB_V1_CSBWinDSAPrepareCharacterStoreFn prepare_character_store;
+    CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
