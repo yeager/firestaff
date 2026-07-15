@@ -4280,6 +4280,8 @@ int nexus_v1_current_level_visit_structure3_animated_material_images(
     }
     receipt.valid = 1;
     receipt.level_index = face_scene.level_index;
+    receipt.source_byte_count = face_scene.source_byte_count;
+    receipt.source_bytes_fnv1a64 = face_scene.source_bytes_fnv1a64;
     receipt.complete = 1;
     *out_receipt = receipt;
     return 1;
@@ -4511,6 +4513,33 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     receipt.source_byte_count = material_receipt.source_byte_count;
     receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
     receipt.face_count = material_receipt.faces.face_count;
+    if (receipt.animated_scene.animated_face_count > 0) {
+        if (nexus_v1_current_level_visit_structure3_animated_material_images(
+                engine, NULL, NULL, &receipt.animated_image_scene) != 1 ||
+            !receipt.animated_image_scene.valid ||
+            !receipt.animated_image_scene.complete ||
+            receipt.animated_image_scene.declared_image_instruction_count <= 0 ||
+            receipt.animated_image_scene.consumed_image_instruction_count !=
+                receipt.animated_image_scene.declared_image_instruction_count ||
+            receipt.animated_image_scene.animated_face_count !=
+                receipt.animated_scene.animated_face_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.animated_image_coverage_complete = 1;
+    } else {
+        /* No 08xx face has no image sequence to resolve, but remains no-draw. */
+        receipt.animated_image_scene.valid = 1;
+        receipt.animated_image_scene.complete = 1;
+        receipt.animated_image_scene.level_index = receipt.level_index;
+        receipt.animated_image_scene.source_byte_count =
+            receipt.source_byte_count;
+        receipt.animated_image_scene.source_bytes_fnv1a64 =
+            receipt.source_bytes_fnv1a64;
+        receipt.animated_image_scene.no_draw_only = 1;
+        receipt.animated_image_scene.blocks_real_dgn_mesh_render = 1;
+        receipt.animated_image_coverage_complete = 1;
+    }
     receipt.traversed_face_count =
         receipt.static_scene.consumed_face_count +
         receipt.animated_scene.consumed_face_count +
@@ -4518,10 +4547,18 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     receipt.category_coverage_complete =
         receipt.static_scene.valid && receipt.static_scene.complete &&
         receipt.animated_scene.valid && receipt.animated_scene.complete &&
+        receipt.animated_image_coverage_complete &&
+        receipt.animated_image_scene.valid &&
+        receipt.animated_image_scene.complete &&
         receipt.untextured_scene.valid && receipt.untextured_scene.complete &&
         receipt.static_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
         receipt.animated_scene.source_bytes_fnv1a64 ==
+            receipt.source_bytes_fnv1a64 &&
+        receipt.animated_image_scene.level_index == receipt.level_index &&
+        receipt.animated_image_scene.source_byte_count ==
+            receipt.source_byte_count &&
+        receipt.animated_image_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
         receipt.untextured_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
