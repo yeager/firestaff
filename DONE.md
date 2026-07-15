@@ -16694,6 +16694,24 @@ as a negative capture result, not replaced with injected controller state.
 Verification: `test_theron_v1_game_owned_origin_ram_receipt`, full Mednafen
 patch dry-run, instrumented Mednafen build, and the authentic-media capture.
 
+# ✅ 2026-07-15 Theron PID foreground capture gate
+
+PID-targeted Quartz delivery now requires the same foreground ownership proof
+as the global-HID route. The helper activates the target, rechecks
+`NSWorkspace`, and emits `quartz_frontmost_pid` only before posting a key.
+The capture wrapper requires that receipt, so a `posted_to_pid` line cannot be
+mistaken for SDL delivery from a background or login session.
+
+The direct live check found the Mednafen target at PID `8739` while foreground
+ownership remained with `loginwindow` PID `622`; it failed before posting. No
+controller state, CD read, FIFO/RAM handoff, or Track02 semantics were
+invented. A positive run still needs both real Aqua foreground ownership and
+Mednafen's own SDL event receipt.
+
+Verification: `swiftc -typecheck`,
+`test_theron_v1_mednafen_live_capture_script`, and the direct live negative
+foreground receipt.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
 
 The engine now binds Structure3 entry-header boundaries and face-row local

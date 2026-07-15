@@ -25,18 +25,19 @@ if !CGPreflightPostEventAccess() {
     exit(1)
 }
 
+guard let targetApplication = NSRunningApplication(processIdentifier: targetPid) else {
+    fputs("quartz_target_missing\\n", stderr)
+    exit(1)
+}
+_ = targetApplication.activate()
+Thread.sleep(forTimeInterval: 0.2)
+let observedPid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
+guard observedPid == targetPid else {
+    fputs("quartz_target_not_frontmost expected=\(targetPid) observed=\(observedPid)\\n", stderr)
+    exit(1)
+}
+
 if globalHid {
-    guard let targetApplication = NSRunningApplication(processIdentifier: targetPid) else {
-        fputs("quartz_global_target_missing\\n", stderr)
-        exit(1)
-    }
-    _ = targetApplication.activate()
-    Thread.sleep(forTimeInterval: 0.2)
-    let observedPid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
-    guard observedPid == targetPid else {
-        fputs("quartz_global_target_not_frontmost expected=\(targetPid) observed=\(observedPid)\\n", stderr)
-        exit(1)
-    }
     down.post(tap: .cghidEventTap)
 } else {
     down.postToPid(targetPid)
@@ -50,3 +51,4 @@ if globalHid {
 print("quartz_event_access=granted")
 print(globalHid ? "quartz_keypair=posted_to_global_hid" : "quartz_keypair=posted_to_pid")
 print("quartz_target_pid=\(targetPid)")
+print("quartz_frontmost_pid=\(observedPid)")

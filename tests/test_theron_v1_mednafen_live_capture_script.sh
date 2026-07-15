@@ -34,12 +34,17 @@ if [[ ! -f "$quartz_helper" ]] ||
    ! grep -Fq 'CGPreflightPostEventAccess()' "$quartz_helper" ||
    ! grep -Fq 'NSWorkspace.shared.frontmostApplication?.processIdentifier' "$quartz_helper" ||
    ! grep -Fq 'targetApplication.activate()' "$quartz_helper" ||
-   ! grep -Fq 'quartz_global_target_not_frontmost expected=' "$quartz_helper" ||
+   ! grep -Fq 'quartz_target_not_frontmost expected=' "$quartz_helper" ||
    ! grep -Fq 'down.postToPid(targetPid)' "$quartz_helper" ||
    ! grep -Fq 'up.postToPid(targetPid)' "$quartz_helper" ||
    ! grep -Fq 'down.post(tap: .cghidEventTap)' "$quartz_helper" ||
    ! grep -Fq 'quartz_keypair=posted_to_global_hid' "$quartz_helper"; then
-    printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
+   printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
+   exit 1
+fi
+if ! grep -Fq 'quartz_frontmost_pid=$mednafen_ui_pid' "$script" ||
+   ! grep -Fq 'quartz_frontmost_pid=\(observedPid)' "$quartz_helper"; then
+    printf 'FAIL: capture must attest that the target owns the foreground\n' >&2
     exit 1
 fi
 if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
