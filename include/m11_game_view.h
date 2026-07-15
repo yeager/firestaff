@@ -1152,6 +1152,12 @@ typedef struct {
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
+        int g1_context_ready;
+        int g1_context_level;
+        int g1_context_graphicsset;
+        uint32_t g1_context_map_load_token;
+        uint32_t g1_context_scene_control_hash;
+        uint32_t g1_context_palette_hash;
         uint32_t leader_hand_object;
         uint32_t champion_inventory_objects[4][30];
     } dm2State;

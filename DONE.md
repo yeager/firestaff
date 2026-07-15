@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 G1 startup-to-runtime context handoff: boot detach and
+  post-menu session application now preserve a source-owned G1 receipt for
+  the active level, `MapGraphicsStyle`, `runtime_g1_scene_map_token`, GDAT
+  scene-control hash, and original interface-palette hash. The first M11
+  runtime frame must match that exact receipt as well as the existing GDAT
+  material gate; otherwise the host clears and blocks the frame. The focused
+  real-data boot smoke coverage verifies the context before rendering and its
+  identity in the presented GDAT frame.
+
 - 2026-07-15 DM2 G1 direct door runtime handoff: connected the verified
   `DME.h::Door::w2` DB0 receipt to the active runtime map and its matching
   source-owned D0C GDAT panel command. Canonical G1 door metadata no longer

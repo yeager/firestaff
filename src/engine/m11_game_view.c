@@ -464,6 +464,50 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
 }
 
+static void m11_dm2_store_g1_context(
+    M11_GameViewState *state,
+    const DM2_V1_BootRuntimeG1ContextReceipt *context)
+{
+    if (!state) {
+        return;
+    }
+    state->dm2State.g1_context_ready = context && context->valid;
+    state->dm2State.g1_context_level =
+        context && context->valid ? context->level : -1;
+    state->dm2State.g1_context_graphicsset =
+        context && context->valid ? context->map_graphics_style : -1;
+    state->dm2State.g1_context_map_load_token =
+        context && context->valid ? context->map_load_token : 0u;
+    state->dm2State.g1_context_scene_control_hash =
+        context && context->valid ? context->scene_control_hash : 0u;
+    state->dm2State.g1_context_palette_hash =
+        context && context->valid ? context->interface_palette_hash : 0u;
+}
+
+static void m11_dm2_refresh_g1_context(M11_GameViewState *state)
+{
+    DM2_V1_BootRuntimeG1ContextReceipt context;
+
+    memset(&context, 0, sizeof(context));
+    if (state && state->dm2BootProfile) {
+        (void)dm2_v1_boot_runtime_g1_context_receipt(
+            (DM2_V1_BootProfile *)state->dm2BootProfile, &context);
+    }
+    m11_dm2_store_g1_context(state, &context);
+}
+
+static int m11_dm2_g1_context_matches_frame(
+    const M11_GameViewState *state,
+    const DM2_V1_ViewportM11FrameReceipt *frame)
+{
+    return state && frame && frame->valid &&
+        state->dm2State.g1_context_ready &&
+        state->dm2State.g1_context_map_load_token == frame->map_load_token &&
+        state->dm2State.g1_context_scene_control_hash ==
+            frame->scene_control_hash &&
+        state->dm2State.g1_context_palette_hash == frame->palette_hash;
+}
+
 static int m11_dm2_boot_v2_render_callback(int party_dir,
                                            int party_x,
                                            int party_y,
@@ -817,6 +861,7 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
     }
     m11_dm2_mirror_session_party(state, session);
     m11_sync_dm2_state_from_runtime(state);
+    m11_dm2_refresh_g1_context(state);
     return 1;
 }
 
@@ -986,6 +1031,7 @@ static int m11_dm2_apply_boot_runtime_receipt(
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
     state->dm2State.level_loaded = 1;
+    m11_dm2_store_g1_context(state, &receipt->g1_context);
     m11_dm2_configure_v2_presentation(state, receipt->profile);
     m11_sync_dm2_state_from_runtime(state);
     return 1;
@@ -39256,14 +39302,18 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (rendered == 0) {
             (void)dm2_v1_runtime_last_m11_frame_receipt(
                 &runtime_frame_receipt);
-            runtime_frame_accepted = M11_Dm2RuntimeFrameReceipt_ShouldPresent(
-                &runtime_render_receipt, &runtime_frame_receipt);
+            runtime_frame_accepted =
+                runtime_render_receipt.runtime_g1_context_matches_frame &&
+                m11_dm2_g1_context_matches_frame(state,
+                                                  &runtime_frame_receipt) &&
+                M11_Dm2RuntimeFrameReceipt_ShouldPresent(
+                    &runtime_render_receipt, &runtime_frame_receipt);
             if (!runtime_frame_accepted) {
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               0, 0, framebufferWidth, framebufferHeight,
                               M11_COLOR_BLACK);
                 m11_set_status((M11_GameViewState *)state,
-                               "RUNTIME", "DM2 GDAT FRAME BLOCKED");
+                               "RUNTIME", "DM2 G1 GDAT FRAME BLOCKED");
                 rendered = -1;
             }
         }
