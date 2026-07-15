@@ -14,6 +14,14 @@
   coverage rejects relabeled PRESENTS-as-CHAOS and duplicated title pixels;
   adjacent startup CTests pass.
 
+- ✅ 2026-07-15 CSB full C001 title-surface gate: the startup session and
+  package-consumption receipts now require the resident GRAPHICS.DAT C001
+  title surface to remain the full 320x200 decoded bitmap, while the
+  PRESENTS/CHAOS/STRIKES sub-surfaces stay cropped by their ReDMCSB F0437
+  source rectangles. This prevents valid full-title media from failing the
+  handoff as a cropped 320x153 substitute. Focused CSB startup-session and
+  terminal-handoff tests pass.
+
 - ✅ 2026-07-15 DM1 title C001 startup gate hardening: DM1 startup now
   requires the exact 320x200 GRAPHICS.DAT C001 surface before publishing the
   ReDMCSB TITLE.C F0437 title route, rejects cropped C001/TITLE.DAT fallback

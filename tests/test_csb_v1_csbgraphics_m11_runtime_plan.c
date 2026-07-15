@@ -1485,7 +1485,7 @@ static void test_viewport_render_auto_room_slots_custom_background_layer(void)
 static void test_startup_package_hud_and_door_surfaces(void)
 {
     enum {
-        TITLE_PIXELS = 320 * 153,
+        TITLE_PIXELS = 320 * 200,
         ENTRANCE_PIXELS = 320 * 200,
         DOOR_PIXELS = 105 * 161,
         INVENTORY_PIXELS = 224 * 136,
@@ -1498,7 +1498,7 @@ static void test_startup_package_hud_and_door_surfaces(void)
     uint8_t *inventory = (uint8_t *)calloc(INVENTORY_PIXELS, 1u);
     uint8_t *resurrect = (uint8_t *)calloc(RESURRECT_PIXELS, 1u);
     const CSB_V1_CSBGraphicsStartupPackageSpec specs[] = {
-        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE, 1u, 320u, 153u },
+        { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_TITLE, 1u, 320u, 200u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_SCREEN, 2u, 320u, 200u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_LEFT_DOOR, 3u, 105u, 161u },
         { CSB_V1_CSBGRAPHICS_STARTUP_ASSET_ENTRANCE_RIGHT_DOOR, 4u, 105u, 161u },
