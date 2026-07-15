@@ -20,6 +20,7 @@ enum {
     DM1_JUNK_WATERSKIN_PC34 = 1,
     DM1_POTION_VEN_PC34 = 3,
     DM1_POTION_FUL_BOMB_PC34 = 19,
+    DM1_POTION_EMPTY_FLASK_PC34 = 20,
     DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34 = 11,
     DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34 = 0xFF,
     DM1_PROJECTILE_BLACK_FLAME_MAX_HEALTH_PC34 = 1000,
@@ -400,6 +401,14 @@ int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight);
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType);
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType);
 int dm1_v1_throw_junk_weight_f0140_pc34(int junkType, int chargeCount);
+
+/* ReDMCSB DUNGEON.C F0140. Reads only loaded PC3.4 F0156 records and
+ * traverses a raw CONTAINER.Slot chain through F0159. Unsupported, missing,
+ * out-of-range, and cyclic source records fail closed. */
+int dm1_v1_dungeon_get_object_weight_f0140_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int* outWeight);
 int dm1_v1_throw_xp_for_object_pc34(int isWeapon,
                                     int hasWeaponInfo,
                                     int weaponClass,

@@ -2,19 +2,12 @@
 
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <string.h>
-
-static const unsigned char DM1_ARMOUR_WEIGHT_F0140_PC34[58] = {
-      3,   4,   3,   6,  16,   4,   4,   3,   3,   4,
-      2,   4,   5,   3,   3,   4,   6,   8,  14,   6,
-      5,   5,   5,   4,   6,  11,  14,  15,  11,  10,
-     14,  21,  65,  53,  52,  41,  16,  16,  19, 120,
-     80,  28,  34,  17, 108,  72,  24,  30,  35, 141,
-     90,  31,  40,  14,  57,  81,   3,   2
-};
 
 static const unsigned char DM1_JUNK_WEIGHT_F0140_PC34[53] = {
       1,   3,   2,   2,   4,  15,   1,   1,   1,   2,
@@ -42,13 +35,10 @@ int dm1_v1_throwing_stamina_cost_from_weight_pc34(int objectWeight) {
 }
 
 int dm1_v1_throw_armour_weight_f0140_pc34(int armourType) {
-    /* ReDMCSB: DUNGEON.C F0140 lines 1103-1130, armour table. */
-    if (armourType < 0 ||
-        armourType >= (int)(sizeof(DM1_ARMOUR_WEIGHT_F0140_PC34) /
-                            sizeof(DM1_ARMOUR_WEIGHT_F0140_PC34[0]))) {
-        return -1;
-    }
-    return (int)DM1_ARMOUR_WEIGHT_F0140_PC34[armourType];
+    DM1_ArmourInfoPc34 info;
+
+    /* F0140 reads the same G0239 ARMOUR_INFO row as F0143. */
+    return dm1_armour_info_pc34(armourType, &info) ? info.weight : -1;
 }
 
 int dm1_v1_throw_junk_base_weight_f0140_pc34(int junkType) {
@@ -69,6 +59,99 @@ int dm1_v1_throw_junk_weight_f0140_pc34(int junkType, int chargeCount) {
         weight += chargeCount << 1;
     }
     return weight;
+}
+
+static int dm1_v1_f0140_maximum_raw_things_pc34(
+    const struct DungeonThings_Compat* things)
+{
+    int type;
+    int maximum = 0;
+
+    if (!things) return 0;
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        if (things->thingCounts[type] > 0) maximum += things->thingCounts[type];
+    }
+    return maximum;
+}
+
+static int dm1_v1_dungeon_get_object_weight_f0140_impl_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int* remaining,
+    int* outWeight)
+{
+    const unsigned char* raw;
+    int type;
+    int weight;
+
+    if (outWeight) *outWeight = 0;
+    if (!things || !remaining || !outWeight) return 0;
+    if (thing == THING_NONE) return 1;
+    if (thing == THING_ENDOFLIST || *remaining <= 0) return 0;
+    --*remaining;
+
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, thing);
+    if (!raw) return 0;
+    type = THING_GET_TYPE(thing);
+    switch (type) {
+    case THING_TYPE_WEAPON: {
+        DM1_WeaponInfo info;
+        if (!dm1_weapon_info_pc34(raw[2] & 0x7f, &info)) return 0;
+        *outWeight = info.weight;
+        return 1;
+    }
+    case THING_TYPE_ARMOUR: {
+        DM1_ArmourInfoPc34 info;
+        if (!dm1_armour_info_pc34(raw[2] & 0x7f, &info)) return 0;
+        *outWeight = info.weight;
+        return 1;
+    }
+    case THING_TYPE_JUNK:
+        weight = dm1_v1_throw_junk_base_weight_f0140_pc34(raw[2] & 0x7f);
+        if (weight < 0) return 0;
+        if ((raw[2] & 0x7f) == DM1_JUNK_WATERSKIN_PC34) {
+            weight += ((raw[3] >> 6) & 0x03) << 1;
+        }
+        *outWeight = weight;
+        return 1;
+    case THING_TYPE_CONTAINER: {
+        unsigned short child = (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8));
+        weight = 50;
+        while (child != THING_ENDOFLIST) {
+            int childWeight;
+            if (!dm1_v1_dungeon_get_object_weight_f0140_impl_pc34(
+                    things, child, remaining, &childWeight)) {
+                return 0;
+            }
+            weight += childWeight;
+            child = F0512_DUNGEON_GetThingNext_Compat(things, child);
+        }
+        *outWeight = weight;
+        return 1;
+    }
+    case THING_TYPE_POTION:
+        *outWeight = (raw[3] & 0x7f) == DM1_POTION_EMPTY_FLASK_PC34 ? 1 : 3;
+        return 1;
+    case THING_TYPE_SCROLL:
+        *outWeight = 1;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+int dm1_v1_dungeon_get_object_weight_f0140_pc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short thing,
+    int* outWeight)
+{
+    int remaining;
+
+    if (outWeight) *outWeight = 0;
+    if (!outWeight || !things || !things->loaded) return 0;
+    remaining = dm1_v1_f0140_maximum_raw_things_pc34(things);
+    return dm1_v1_dungeon_get_object_weight_f0140_impl_pc34(
+        things, thing, &remaining, outWeight);
 }
 
 int dm1_v1_throw_xp_for_object_pc34(int isWeapon,

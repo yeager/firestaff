@@ -39,6 +39,97 @@ static void test_throw_weight_and_stamina(void) {
               "junk weight invalid");
 }
 
+static void test_f0140_raw_object_weight(void) {
+    struct DungeonThings_Compat things;
+    unsigned char weapons[4] = {0};
+    unsigned char armours[4] = {0};
+    unsigned char junks[4] = {0};
+    unsigned char potions[2 * 4] = {0};
+    unsigned char scrolls[4] = {0};
+    unsigned char containers[8] = {0};
+    unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
+    unsigned short armourThing = (unsigned short)(THING_TYPE_ARMOUR << 10);
+    unsigned short junkThing = (unsigned short)(THING_TYPE_JUNK << 10);
+    unsigned short potionThing = (unsigned short)(THING_TYPE_POTION << 10);
+    unsigned short scrollThing = (unsigned short)(THING_TYPE_SCROLL << 10);
+    unsigned short containerThing = (unsigned short)(THING_TYPE_CONTAINER << 10);
+    int weight = -1;
+
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weapons;
+    things.rawThingData[THING_TYPE_ARMOUR] = armours;
+    things.rawThingData[THING_TYPE_JUNK] = junks;
+    things.rawThingData[THING_TYPE_POTION] = potions;
+    things.rawThingData[THING_TYPE_SCROLL] = scrolls;
+    things.rawThingData[THING_TYPE_CONTAINER] = containers;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.thingCounts[THING_TYPE_ARMOUR] = 1;
+    things.thingCounts[THING_TYPE_JUNK] = 1;
+    things.thingCounts[THING_TYPE_POTION] = 2;
+    things.thingCounts[THING_TYPE_SCROLL] = 1;
+    things.thingCounts[THING_TYPE_CONTAINER] = 1;
+
+    /* Dagger G0238 weight 5, Torso Plate G0239 weight 120. */
+    weapons[2] = 8;
+    weapons[0] = (unsigned char)armourThing;
+    weapons[1] = (unsigned char)(armourThing >> 8);
+    armours[2] = 39;
+    armours[0] = 0xfe;
+    armours[1] = 0xff;
+    junks[2] = 1;
+    junks[3] = 0xc0; /* Waterskin charge count 3 -> 3 + (3 << 1). */
+    potions[3] = 20; /* EMPTY FLASK. */
+    potions[7] = 3;  /* Non-empty potion. */
+    containers[2] = (unsigned char)weaponThing;
+    containers[3] = (unsigned char)(weaponThing >> 8);
+
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, THING_NONE, &weight), 1,
+              "F0140 accepts THING_NONE");
+    ASSERT_EQ(weight, 0, "F0140 THING_NONE has zero weight");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, weaponThing, &weight), 1,
+              "F0140 reads raw WEAPON.Type");
+    ASSERT_EQ(weight, 5, "F0140 Dagger weight comes from G0238");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, armourThing, &weight), 1,
+              "F0140 reads raw ARMOUR.Type");
+    ASSERT_EQ(weight, 120, "F0140 Torso Plate weight comes from G0239");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, junkThing, &weight), 1,
+              "F0140 reads raw JUNK.Type");
+    ASSERT_EQ(weight, 9, "F0140 waterskin adds raw charge count");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, potionThing, &weight), 1,
+              "F0140 reads raw empty flask type");
+    ASSERT_EQ(weight, 1, "F0140 empty flask weighs one");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, (unsigned short)(potionThing | 1), &weight), 1,
+              "F0140 reads raw non-empty potion type");
+    ASSERT_EQ(weight, 3, "F0140 non-empty potion weighs three");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, scrollThing, &weight), 1,
+              "F0140 accepts loaded scroll");
+    ASSERT_EQ(weight, 1, "F0140 scroll weighs one");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, containerThing, &weight), 1,
+              "F0140 follows raw CONTAINER.Slot through F0159");
+    ASSERT_EQ(weight, 175, "F0140 container is 50 plus raw linked contents");
+
+    armours[2] = 58;
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, armourThing, &weight), 0,
+              "F0140 rejects out-of-range raw ARMOUR.Type");
+    ASSERT_EQ(weight, 0, "failed F0140 does not supply a fallback weight");
+    armours[2] = 39;
+    weapons[0] = (unsigned char)weaponThing;
+    weapons[1] = (unsigned char)(weaponThing >> 8);
+    ASSERT_EQ(dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                  &things, containerThing, &weight), 0,
+              "F0140 rejects cyclic raw container chains");
+}
+
 static void test_throw_runtime_math(void) {
     DM1_ThrowF0328ProjectileInputPc34 throwIn;
     DM1_ThrowF0328ProjectilePlanPc34 throwOut;
@@ -1606,6 +1697,7 @@ static void test_explosion_party_damage_plan(void) {
 
 int main(void) {
     test_throw_weight_and_stamina();
+    test_f0140_raw_object_weight();
     test_throw_runtime_math();
     test_projectile_shapes_and_launch();
     test_shoot_runtime_math();

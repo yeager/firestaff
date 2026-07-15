@@ -190,7 +190,7 @@ F	0137	F0137_CPSEF_PatchFunctionWithHiddenCodeLauncher	PANEL.C;ATARIST.H;DUNVIEW
 F	137	F137_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0139	F0139_DUNGEON_IsCreatureAllowedOnMap	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	139	F139_aqzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0140	F0140_DUNGEON_GetObjectWeight	PANEL.C;ATARIST.H;LOADSAVE.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;PROJEXPL.C;CLIKCHAM.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0140	F0140_DUNGEON_GetObjectWeight	PANEL.C;ATARIST.H;LOADSAVE.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;PROJEXPL.C;CLIKCHAM.C	implemented-narrow	implemented_narrow	DM1 raw F0156 object-weight implementation covers exact source object families, waterskin charge bits, and raw container Slot recursion through F0159; incomplete source data fails closed.
 F	140	F140_yzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0141	F0141_DUNGEON_GetObjectInfoIndex	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.C;OBJECT.C;DUNVIEW.C;IIGS.H;REVIVE.C;MENU.C;DEFS.H;ACTIDRAW.C;CHAMPION.C;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	141	F141_anzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
