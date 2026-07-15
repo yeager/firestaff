@@ -3514,6 +3514,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     MENU.BPK byte, the retail output-store PC, an ordered observed output byte,
     and its bounded output address. The route proves one source-bound direct
     transfer candidate only, not a complete literal rule or decoder.
+  - Capture schema V8 now carries the two adjacent real MENU.BPK source bytes
+    for one zero-side route, their locked SH-2 read PCs, and exact raw merge.
+    The source corridor has no proven direct output store, so no output pair
+    is claimed. A real trace must still establish the merged value's role.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

@@ -16,6 +16,7 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V5_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V5"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V6"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V7_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V7"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V8_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V8"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -328,6 +329,17 @@ typedef struct {
     uint32_t nonzero_output_address;
     uint64_t nonzero_output_write_sequence;
     int dynamic_nonzero_byte_transfer_observed;
+    /* V8 captures the zero-side's two real source bytes and static SH-2
+     * merge result. This path has no verified direct output store, so V8
+     * deliberately does not invent one. */
+    uint32_t zero_first_input_instruction_offset;
+    uint32_t zero_second_input_instruction_offset;
+    uint32_t zero_first_input_payload_byte_offset;
+    uint32_t zero_second_input_payload_byte_offset;
+    uint32_t zero_observed_first_input_byte;
+    uint32_t zero_observed_second_input_byte;
+    uint32_t zero_observed_merged_control_value;
+    int dynamic_zero_source_merge_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
