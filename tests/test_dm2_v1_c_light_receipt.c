@@ -1,4 +1,5 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -19,7 +20,10 @@ int main(void)
     DM2_V1_CLightSourceState source;
     DM2_V1_CLightM11Receipt receipt;
     DM2_V1_ViewportState viewport;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_CLightMapDescriptorReceipt map_receipt;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    uint8_t raw_dungeon[44u + 16u];
 
     memset(&scene, 0, sizeof(scene));
     memset(&source, 0, sizeof(source));
@@ -96,6 +100,24 @@ int main(void)
     CHECK("missing raw c_light state cannot borrow scene controls",
           !dm2_v1_c_light_m11_receipt_build(&scene, &source, &receipt) &&
               !receipt.valid);
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw_dungeon, 0, sizeof(raw_dungeon));
+    dungeon.level_count = 1;
+    dungeon.raw_data = raw_dungeon;
+    dungeon.raw_size = (int)sizeof(raw_dungeon);
+    raw_dungeon[44u + 12u] = 0x00u;
+    raw_dungeon[44u + 13u] = 0x30u;
+    CHECK("c_light reads dynamic branch from raw map Difficulty",
+          dm2_v1_dungeon_c_light_map_descriptor_receipt(
+              &dungeon, 0, &map_receipt) && map_receipt.valid &&
+              map_receipt.difficulty == 3u && map_receipt.dynamic_light &&
+              map_receipt.descriptor_hash != 0u);
+    raw_dungeon[44u + 13u] = 0x00u;
+    CHECK("difficulty-zero map selects c_light fixed-light branch",
+          dm2_v1_dungeon_c_light_map_descriptor_receipt(
+              &dungeon, 0, &map_receipt) && !map_receipt.dynamic_light &&
+              map_receipt.descriptor_hash != 0u);
 
     printf("DM2 c_light receipt: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;

@@ -87,6 +87,12 @@
   frame still has no light pixels until the original palette path is fully
   available. Focused coverage: `test_dm2_v1_frame_presentation_state`.
 
+- ✅ 2026-07-15 DM2 `c_light` map-descriptor branch receipt: runtime now
+  reads and hashes the active raw G1 `Map_definitions::Difficulty()` field
+  (w12 high nibble), exactly as SKProject uses it to choose the fixed-light or
+  dynamic-light branch. It does not infer the later accumulator or darkness
+  inputs. Focused coverage extends `test_dm2_v1_c_light_receipt`.
+
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 C001 object move: the generic
   wall pass independently authenticates its PC3.4 wall byte and C03 chain,
   then admits C001's ordinary-object arrival through F0272/F0268. The focused
