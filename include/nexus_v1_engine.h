@@ -498,6 +498,33 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure3StaticMaterialCaptureTarget;
 
+/* One bounded Structure3 face in the active canonical LEV, joined to its
+ * exact Structure2 static-material source anchors. This is the package-side
+ * renderer input for an eventual Saturn-backed path, not a decoded surface:
+ * the copied vectors remain original 16.16 rows and the descriptor payload
+ * remains opaque until an independent trace proves pixel/palette/VDP1 rules. */
+typedef struct {
+    int valid;
+    int source_geometry_bound;
+    int material_descriptor_bound;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    Nexus_V1_DgnStructure3Face face;
+    Nexus_V1_DgnStructure3Vector vertices[4];
+    int vertex_slot_count;
+    Nexus_V1_DgnStructure3Vector normal;
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+    int transform_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3PackageGeometryPacket;
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1197,6 +1224,14 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
     Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *out_target);
+/* Joins an exact typed Structure3 face/vertices/normal extraction to the
+ * source-bound static Structure2 descriptor target. The returned package
+ * packet is deliberately no-draw: it has no inferred transform, texel,
+ * palette, VDP1, or fallback-visual semantics. */
+int nexus_v1_current_level_structure3_package_geometry_packet(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal,
+    Nexus_V1_DgnStructure3PackageGeometryPacket *out_packet);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

@@ -618,6 +618,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure2FormatEvidenceReceipt structure2_format;
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+        Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -1094,6 +1095,42 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       material_target.no_draw_only &&
                       !material_target.fallback_visuals_permitted,
                       "retail Structure3 static face binds its exact Structure2 capture descriptor only");
+                memset(&package_geometry, 0, sizeof(package_geometry));
+                CHECK(nexus_v1_current_level_structure3_package_geometry_packet(
+                          &active_engine, material_target.structure3_entry_index,
+                          material_target.face_ordinal, &package_geometry) == 1 &&
+                      package_geometry.valid &&
+                      package_geometry.source_geometry_bound &&
+                      package_geometry.material_descriptor_bound &&
+                      package_geometry.level_index == level &&
+                      package_geometry.source_byte_count == (int)size &&
+                      package_geometry.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      package_geometry.structure3_entry_index ==
+                          material_target.structure3_entry_index &&
+                      package_geometry.face_ordinal == material_target.face_ordinal &&
+                      package_geometry.face.vertex_indexes[0] ==
+                          material_target.face.vertex_indexes[0] &&
+                      package_geometry.face.vertex_indexes[1] ==
+                          material_target.face.vertex_indexes[1] &&
+                      package_geometry.face.vertex_indexes[2] ==
+                          material_target.face.vertex_indexes[2] &&
+                      package_geometry.face.vertex_indexes[3] ==
+                          material_target.face.vertex_indexes[3] &&
+                      package_geometry.face.fill_selector ==
+                          material_target.face.fill_selector &&
+                      package_geometry.vertex_slot_count ==
+                          (material_target.face.triangle ? 3 : 4) &&
+                      package_geometry.material_target.valid &&
+                      package_geometry.material_target.face_bytes_fnv1a64 ==
+                          material_target.face_bytes_fnv1a64 &&
+                      !package_geometry.transform_semantics_proven &&
+                      !package_geometry.pixel_palette_vdp1_semantics_proven &&
+                      !package_geometry.decoder_permitted &&
+                      package_geometry.no_draw_only &&
+                      !package_geometry.fallback_visuals_permitted &&
+                      package_geometry.blocks_real_dgn_mesh_render,
+                      "retail Structure3 package geometry joins exact source mesh rows to opaque Structure2 anchors no-draw");
                 ++structure3_static_material_capture_target_level_count;
             } else {
                 CHECK(!found_static_material_target && !material_target.valid &&
@@ -1176,12 +1213,22 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               !structure2_format.fallback_visuals_permitted,
               "stale LEV identity withdraws Structure2 format evidence");
         if (material_target.valid) {
+            uint32_t stale_entry_index = material_target.structure3_entry_index;
+            uint32_t stale_face_ordinal = material_target.face_ordinal;
             CHECK(nexus_v1_engine_build_structure3_static_material_capture_target(
-                      &active_engine, material_target.structure3_entry_index,
-                      material_target.face_ordinal, &material_target) == 0 &&
+                      &active_engine, stale_entry_index, stale_face_ordinal,
+                      &material_target) == 0 &&
                   !material_target.valid && material_target.no_draw_only &&
                   !material_target.fallback_visuals_permitted,
                   "stale LEV identity withdraws Structure3-to-Structure2 capture targets");
+            memset(&package_geometry, 0, sizeof(package_geometry));
+            CHECK(nexus_v1_current_level_structure3_package_geometry_packet(
+                      &active_engine, stale_entry_index, stale_face_ordinal,
+                      &package_geometry) == 0 &&
+                  !package_geometry.valid && package_geometry.no_draw_only &&
+                  !package_geometry.fallback_visuals_permitted &&
+                  package_geometry.blocks_real_dgn_mesh_render,
+                  "stale LEV identity withdraws package-side Structure3 geometry");
         }
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
