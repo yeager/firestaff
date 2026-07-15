@@ -16,6 +16,7 @@ host_key=${THERON_CAPTURE_HOST_KEY:-}
 host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-8}
 host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
+input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
 host_key_code=
@@ -96,6 +97,10 @@ if [[ -n "$host_key" ]]; then
     fi
     if [[ "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
+        exit 1
+    fi
+    if [[ "$input_route" != pid && "$input_route" != global_hid ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' >&2
         exit 1
     fi
     case "$host_key" in
@@ -305,24 +310,37 @@ APPLESCRIPT
         printf '%s\n' 'FAIL: macOS could not focus Mednafen and send Return; grant accessibility permission to the invoking terminal' >&2
         exit 1
     fi
+    # Cocoa activation is asynchronous; wait until the activated process owns
+    # the foreground before using the global HID route.
+    if [[ "$input_route" == global_hid ]]; then
+        sleep 1
+    fi
     # Send real Quartz key-down/up pairs after PID-bound focus.
     # The old AppleScript tap never consumed THERON_CAPTURE_HOST_KEY_HOLD, so
     # its receipt overstated what reached SDL.  These explicit pairs make the
     # requested duration and repeat count observable at the host boundary;
     # only Mednafen's own input trace can establish emulated delivery.
     for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
-        quartz_receipt=$(swift "$quartz_keypair_script" "$host_key_code" "$host_key_hold" "$mednafen_ui_pid") || {
+        quartz_arguments=("$host_key_code" "$host_key_hold" "$mednafen_ui_pid")
+        if [[ "$input_route" == global_hid ]]; then
+            quartz_arguments+=(--global-hid)
+        fi
+        quartz_receipt=$(swift "$quartz_keypair_script" "${quartz_arguments[@]}") || {
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: macOS could not deliver the requested Quartz key pair' >&2
             exit 1
         }
+        expected_quartz_route=quartz_keypair=posted_to_pid
+        if [[ "$input_route" == global_hid ]]; then
+            expected_quartz_route=quartz_keypair=posted_to_global_hid
+        fi
         if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
-              "$quartz_receipt" != *$'quartz_keypair=posted_to_pid'* ||
+              "$quartz_receipt" != *"$expected_quartz_route"* ||
               "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
-            printf '%s\n' 'FAIL: Quartz helper did not attest PID-targeted key delivery' >&2
+            printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2
             exit 1
         fi
         sleep 0.2
@@ -374,7 +392,7 @@ transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candid
         printf 'requested_host_key=%s\n' "$host_key"
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
-        printf 'host_input_delivery=quartz_pid_key_down_up\n'
+        printf 'host_input_delivery=quartz_%s_key_down_up\n' "$input_route"
         printf 'host_input_delivery_key_code=%s\n' "$host_key_code"
         printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
