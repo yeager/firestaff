@@ -12150,6 +12150,43 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
             &thing_size);
         if (!record) break;
         if (thing_type >= 4) break;
+        if (thing_type == 2) {
+            /* ReDMCSB MOVESENS.C F0276:1630-1633 decodes a TextString when
+             * the party enters its square.  Firestaff owns only one C015
+             * receipt, so admit one visible original C02 record and reject a
+             * multi-text list rather than inventing QuePrintLines behavior. */
+            if (add_party && !party_square && dungeon->square_bytes == 1 &&
+                thing_size >= 4) {
+                int scan = first_thing;
+                int scan_guard;
+                int text_count = 0;
+                CSB_V1_RuntimeTextMessageReceipt message_receipt;
+
+                for (scan_guard = 0;
+                     scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
+                     ++scan_guard) {
+                    int scan_type;
+                    if (!csb_v1_dungeon_get_thing_record(
+                            dungeon, (uint16_t)scan, &scan_type, NULL, NULL)) {
+                        break;
+                    }
+                    if (scan_type == 2) ++text_count;
+                    scan = csb_v1_runtime_sensor_next_thing(
+                        dungeon, (uint16_t)scan);
+                }
+                if (text_count == 1) {
+                    memset(&message_receipt, 0, sizeof(message_receipt));
+                    if (csb_v1_runtime_stage_openroom_text_message(
+                            profile, (uint16_t)thing,
+                            csb_v1_runtime_read_u16(record + 2),
+                            &message_receipt)) {
+                        profile->csbwin_text_message_receipt = message_receipt;
+                    }
+                }
+            }
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
         if (thing_type != 3 || thing_size < 8) {
             thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
             continue;

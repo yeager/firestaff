@@ -155,6 +155,11 @@
   yielding the original F0268 CLEAR event. Coverage:
   `csb_v1_f0276_wall_object_move_pc34_compat` (41/0).
 
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0276 party TextString route: a sole visible
+  PC3.4 C02 record entered by the party now reaches the existing F0168 C015
+  receipt. Hidden, malformed, and multi-text chains remain no-draw rather than
+  becoming host messages. Coverage: `csb_v1_f0276_party_text_pc34_compat`.
+
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 live wall-object move: C49
   associated-object materialization now enters the source C001..C003 wall
   sensor pass through its packed Thing cell. The source C003 inequality test
