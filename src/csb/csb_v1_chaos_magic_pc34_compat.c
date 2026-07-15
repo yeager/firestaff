@@ -748,6 +748,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 
 typedef struct {
     uint32_t location;
@@ -812,6 +813,11 @@ typedef struct {
     int32_t poison_value;
 } CSB_V1_CSBWinDSAPendingPoisonWrite;
 
+typedef struct {
+    uint16_t thing;
+    uint8_t payload[6];
+} CSB_V1_CSBWinDSAPendingActuatorCopy;
+
 static int csb_v1_csbwin_dsa_pending_object_property_lookup(
     const CSB_V1_CSBWinDSAPendingObjectPropertyWrite *writes,
     int write_count,
@@ -849,6 +855,22 @@ static int csb_v1_csbwin_dsa_pending_skin_lookup(
     return 0;
 }
 
+static int csb_v1_csbwin_dsa_pending_actuator_copy_lookup(
+    const CSB_V1_CSBWinDSAPendingActuatorCopy *copies, int copy_count,
+    uint16_t thing, uint8_t out_payload[6])
+{
+    int i;
+
+    if (!copies || !out_payload || copy_count < 0) return 0;
+    for (i = copy_count - 1; i >= 0; --i) {
+        if (copies[i].thing == thing) {
+            memcpy(out_payload, copies[i].payload, sizeof(copies[i].payload));
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static CSB_V1_CSBWinDSAStackResult
 csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *depth, int *forced_state, uint32_t *variables,
@@ -876,7 +898,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingCharacterSwap *pending_character_swaps,
     int *pending_character_swap_count,
     CSB_V1_CSBWinDSAPendingPoisonWrite *pending_poison_writes,
-    int *pending_poison_write_count, int *discard_text_requested)
+    int *pending_poison_write_count,
+    CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
+    int *pending_actuator_copy_count, int *discard_text_requested)
 {
     uint32_t v;
     uint32_t w;
@@ -887,6 +911,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int32_t sw;
     int info_a;
     int info_b;
+    uint8_t actuator_payload[6];
+    uint8_t destination_payload[6];
 
     if (!stack || !depth || !forced_state || !variables || !variable_state ||
         !parameters || !context ||
@@ -903,6 +929,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_experience_writes || !pending_experience_write_count ||
         !pending_character_swaps || !pending_character_swap_count ||
         !pending_poison_writes || !pending_poison_write_count ||
+        !pending_actuator_copies || !pending_actuator_copy_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -914,6 +941,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_experience_write_count < 0 ||
         *pending_character_swap_count < 0 ||
         *pending_poison_write_count < 0 ||
+        *pending_actuator_copy_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -2320,6 +2348,44 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, w)) goto underflow;
         break;
+    case 76u: /* STKOP_Copy, CSBWin DSA.cpp:4696-4721. */
+        /* The source pops destination before source, casts both words to
+         * Thing indices, accepts DB3 only, and copies exactly sizeof(DB3)-2
+         * bytes. Keep the result action-local until every later source word
+         * has been accepted; later COPY commands see the staged DB3 image. */
+        if (!context->get_actuator_payload || !context->set_actuator_payload ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (!csb_v1_csbwin_dsa_pending_actuator_copy_lookup(
+                pending_actuator_copies, *pending_actuator_copy_count,
+                (uint16_t)w, actuator_payload)) {
+            sv = context->get_actuator_payload(context->dungeon_user,
+                                                (uint16_t)w,
+                                                actuator_payload);
+            if (sv < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (sv == 0) break;
+        }
+        if (!csb_v1_csbwin_dsa_pending_actuator_copy_lookup(
+                pending_actuator_copies, *pending_actuator_copy_count,
+                (uint16_t)v, destination_payload)) {
+            sv = context->get_actuator_payload(context->dungeon_user,
+                                                (uint16_t)v,
+                                                destination_payload);
+            if (sv < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (sv == 0) break;
+        }
+        if (*pending_actuator_copy_count >=
+            CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_actuator_copies[*pending_actuator_copy_count].thing =
+            (uint16_t)v;
+        memcpy(pending_actuator_copies[*pending_actuator_copy_count].payload,
+               actuator_payload, sizeof(actuator_payload));
+        ++*pending_actuator_copy_count;
+        break;
     case 116u: /* STKOP_WhereIsChar */
         /* CSBWin DSA.cpp:4383-4411 scans the party fingerprints (retaining
          * the final matching index), then asks EXPOOL for EDT_Character|fp. */
@@ -2477,6 +2543,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_character_swaps[CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS];
     CSB_V1_CSBWinDSAPendingPoisonWrite
         pending_poison_writes[CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES];
+    CSB_V1_CSBWinDSAPendingActuatorCopy
+        pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -2492,6 +2560,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_experience_write_count = 0;
     int pending_character_swap_count = 0;
     int pending_poison_write_count = 0;
+    int pending_actuator_copy_count = 0;
     int discard_text_requested = 0;
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -2725,7 +2794,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_character_write_count, pending_experience_writes,
                 &pending_experience_write_count, pending_character_swaps,
                 &pending_character_swap_count, pending_poison_writes,
-                &pending_poison_write_count, &discard_text_requested);
+                &pending_poison_write_count, pending_actuator_copies,
+                &pending_actuator_copy_count, &discard_text_requested);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2822,6 +2892,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 context->dungeon_user,
                 pending_poison_writes[i].character_selector,
                 pending_poison_writes[i].poison_value)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_actuator_copy_count; ++i) {
+        if (!context->set_actuator_payload ||
+            context->set_actuator_payload(
+                context->dungeon_user, pending_actuator_copies[i].thing,
+                pending_actuator_copies[i].payload) <= 0) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -2975,6 +3053,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_object_property = runner->get_object_property;
     context.set_object_property = runner->set_object_property;
     context.normalize_object_property = runner->normalize_object_property;
+    context.get_actuator_payload = runner->get_actuator_payload;
+    context.set_actuator_payload = runner->set_actuator_payload;
     context.get_champion_possession = runner->get_champion_possession;
     context.get_monster_possession = runner->get_monster_possession;
     context.inspect_cells = runner->inspect_cells;

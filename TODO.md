@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSBWin DSA `STKOP_Copy` is source-backed for loaded DB3
+  actuators: `DSA.cpp:4696-4721` copies only bytes 2..7 after both Thing
+  integers validate as actuators. The authenticated runtime stages chained
+  copies inside one action and writes the profile candidate only after full
+  bytecode acceptance. Broader DSA coverage remains open; no DB3 substitute
+  record or synthetic payload is accepted.
+
 - 2026-07-15 DM1 GROUP F0177 follow-up: raw adjacent C04 melee target
   selection now consumes F0175/F0176 and the original F0229/G0023 cell order.
   Remaining work is routing live M10/M11 attack consumers through effective
