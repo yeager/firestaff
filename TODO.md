@@ -6345,7 +6345,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-15 Nexus Structure3 static-material capture: hash-verified
   LEV00–LEV15 data now yields a capture target that joins one real textured
-  Structure3 face row to its exact static Structure2 descriptor and opaque
-  payload. This is source acquisition only. Authentic Saturn trace evidence
-  must still prove pixel order, palette addressing, UV/VDP1 semantics, and
-  the render route before any decoder or draw can be enabled.
+  Structure3 face row to its exact static Structure2 descriptor, image-payload
+  byte anchor, and optional palette-payload byte anchor. This is source
+  acquisition only. Authentic Saturn trace evidence must still prove pixel
+  order, palette addressing, UV/VDP1 semantics, and the render route before
+  any decoder or draw can be enabled.
