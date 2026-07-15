@@ -11,6 +11,25 @@ static int dm2_v1_g1_creature_map_chip_gdat_index(int creature_type)
         (creature_type << DM2_V1_VIEWPORT_GFX_CREATURE_INDEX_SHIFT);
 }
 
+static uint32_t dm2_v1_g1_scene_indexed_pixel_hash(const uint8_t *pixels,
+                                                    int width,
+                                                    int height,
+                                                    int stride)
+{
+    uint32_t hash = 2166136261u;
+    int y;
+
+    if (!pixels || width <= 0 || height <= 0 || stride < width) return 0u;
+    for (y = 0; y < height; ++y) {
+        int x;
+        for (x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
+}
+
 int dm2_v1_g1_scene_runtime_handoff(
     const DM2_V1_DungeonData *dungeon,
     int level,
@@ -76,6 +95,13 @@ int dm2_v1_g1_scene_runtime_handoff(
     candidate.material_width = width;
     candidate.material_height = height;
     candidate.material_stride = stride;
+    candidate.material_pixel_hash = dm2_v1_g1_scene_indexed_pixel_hash(
+        pixels, width, height, stride);
+    if (candidate.material_pixel_hash == 0u) {
+        candidate.blocked = 1;
+        *out = candidate;
+        return 0;
+    }
     candidate.material_pixels = pixels;
     memcpy(candidate.material_palette16, palette16,
            sizeof(candidate.material_palette16));

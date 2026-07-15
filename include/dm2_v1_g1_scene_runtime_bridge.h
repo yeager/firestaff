@@ -21,6 +21,8 @@ typedef struct {
     int material_width;
     int material_height;
     int material_stride;
+    /* Hash of decoded indexed pixels, excluding any stride padding. */
+    uint32_t material_pixel_hash;
     /* The G1 resolver has already selected and decoded this exact GDAT image.
      * The boot-owned provider retains these bytes through the M10 frame; a
      * consumer must not resolve the same GDAT address again. */

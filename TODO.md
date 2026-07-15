@@ -6879,6 +6879,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     colours, and health bars are removed; absent material is blocked and
     leaves no creature overlay. Remaining work is authentic DB4/CCM ownership
     and source placement/animation semantics.
+  - 2026-07-15 update: the direct G1 DB4 creature handoff now binds decoded
+    `CREATURES/type/F9` bytes with a row-wise FNV receipt in addition to
+    dimensions and its IMG3 local palette. The viewport recomputes that
+    receipt immediately before blitting, so a mutated/stale provider buffer
+    is blocked rather than replayed under old provenance.
   - 2026-07-15 update: missile and cloud map chips now require the source-owned
     GDAT category selected by the runtime record. Category zero no longer
     becomes a generic spell-missile (`0x0d`) image; it is no-draw and strict

@@ -44,6 +44,11 @@
 #include <stdlib.h>
 #include <math.h>
 
+static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
+                                                    int width,
+                                                    int height,
+                                                    int stride);
+
 /* ── Lighting helper: DM2 object illumination decay ──────────────── */
 /* ReDMCSB DUNVIEW.C F0115:4960-5037 uses a per-view depth scale table for
  * object sprites; outside the valid depth window objects are not drawn. We
@@ -1261,6 +1266,7 @@ void dm2_v1_viewport_set_g1_scene_creature_material(
     s->g1_scene_creature_material_height = height;
     s->g1_scene_creature_material_stride = stride;
     s->g1_scene_creature_material_pixels = NULL;
+    s->g1_scene_creature_material_pixel_hash = 0u;
     memset(s->g1_scene_creature_material_palette16, 0,
            sizeof(s->g1_scene_creature_material_palette16));
     s->g1_scene_creature_material_palette_hash = palette_hash;
@@ -1272,7 +1278,7 @@ void dm2_v1_viewport_set_g1_scene_creature_material_direct(
     DM2_V1_ViewportState *s, int ready, int map_x, int map_y,
     int creature_type, int gdat_index, const uint8_t *pixels,
     int width, int height, int stride, const uint8_t palette16[16],
-    uint32_t palette_hash)
+    uint32_t palette_hash, uint32_t expected_pixel_hash)
 {
     dm2_v1_viewport_set_g1_scene_creature_material(
         s, ready, map_x, map_y, creature_type, gdat_index, width, height,
@@ -1283,6 +1289,14 @@ void dm2_v1_viewport_set_g1_scene_creature_material_direct(
         return;
     }
     s->g1_scene_creature_material_pixels = pixels;
+    s->g1_scene_creature_material_pixel_hash =
+        dm2_v1_viewport_indexed_pixel_hash(pixels, width, height, stride);
+    if (s->g1_scene_creature_material_pixel_hash == 0u ||
+        (expected_pixel_hash != 0u &&
+         s->g1_scene_creature_material_pixel_hash != expected_pixel_hash)) {
+        s->g1_scene_creature_material_ready = 0;
+        return;
+    }
     memcpy(s->g1_scene_creature_material_palette16, palette16,
            sizeof(s->g1_scene_creature_material_palette16));
 }
@@ -2559,6 +2573,25 @@ static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
         return logical_color;
     }
     return s->gdat_interface_palette16[logical_color];
+}
+
+static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
+                                                    int width,
+                                                    int height,
+                                                    int stride)
+{
+    uint32_t hash = 2166136261u;
+    int y;
+
+    if (!pixels || width <= 0 || height <= 0 || stride < width) return 0u;
+    for (y = 0; y < height; ++y) {
+        int x;
+        for (x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
 }
 
 static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
@@ -4993,6 +5026,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                 c->source_kind == 2 &&
                 s->g1_scene_creature_material_ready &&
                 s->g1_scene_creature_material_pixels &&
+                s->g1_scene_creature_material_pixel_hash != 0u &&
                 c->map_x == s->g1_scene_creature_material_map_x &&
                 c->map_y == s->g1_scene_creature_material_map_y &&
                 c->creature_type == s->g1_scene_creature_material_type &&
@@ -5040,6 +5074,10 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                      src_w != s->g1_scene_creature_material_width ||
                      src_h != s->g1_scene_creature_material_height ||
                      src_stride != s->g1_scene_creature_material_stride ||
+                     (s->g1_scene_creature_material_pixels &&
+                      dm2_v1_viewport_indexed_pixel_hash(
+                          pixels, src_w, src_h, src_stride) !=
+                          s->g1_scene_creature_material_pixel_hash) ||
                      s->active_asset_palette_hash !=
                          s->g1_scene_creature_material_palette_hash)) {
                     dm2_v1_block_source_material(

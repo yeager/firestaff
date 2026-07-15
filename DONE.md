@@ -25,6 +25,11 @@
   regression seeds a fake M11 champion, invalidates the source receipt, and
   proves both icon and status zones remain black.
 
+- ✅ 2026-07-15 DM2 G1 DB4 decoded-pixel binding: direct
+  `CREATURES/type/F9` handoffs now carry and recheck a row-wise indexed-pixel
+  hash. Changed decoded bytes block the viewport material before blitting;
+  dimensions and local-palette checks remain in force.
+
 - 2026-07-15 CSB C033-C035 status-hand source gate: CSB F0291 hand slots
   now require the exact 18x18 GRAPHICS.DAT C033/C034/C035 source surface.
   A missing or malformed hand box leaves the C12 F0292 status clear intact
