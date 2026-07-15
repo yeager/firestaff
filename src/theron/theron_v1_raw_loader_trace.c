@@ -742,6 +742,40 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_import_initial_post_envelope_tii_transfer_file(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *path,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out)
+{
+    FILE *file;
+    long size;
+    char *capture;
+    int result;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !path || !out || !(file = fopen(path, "rb"))) {
+        return 0;
+    }
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        (size_t)size > THERON_V1_RAW_LOADER_TRACE_MAX_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(capture = (char *)malloc((size_t)size + 1u))) {
+        fclose(file);
+        return 0;
+    }
+    if (fread(capture, 1u, (size_t)size, file) != (size_t)size) {
+        fclose(file);
+        free(capture);
+        return 0;
+    }
+    fclose(file);
+    capture[size] = '\0';
+    result = theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
+        handoff, capture, out);
+    free(capture);
+    return result;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,

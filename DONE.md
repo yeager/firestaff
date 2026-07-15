@@ -18489,6 +18489,15 @@ unreached original route; the script manufactures no trace or candidate.
 Verification: `test_theron_v1_mednafen_live_capture_script.sh` passes; the
 patch-shape gate passes and skip-cleans without `MEDNAFEN_SOURCE`.
 
+# ✅ 2026-07-15 Theron Track 02 TII sidecar import
+
+The continuation-transfer admission now accepts one explicit bounded
+main-RAM-loader sidecar file and forwards its original text unchanged to the
+strict TII parser. Missing, empty, oversize, and malformed sidecars reject;
+the import does not create rows, bytes, or semantic fallback. This makes the
+live capture producer directly consumable once authentic media reaches the
+post-`$3800` transfer route.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
