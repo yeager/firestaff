@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Theron Track02 accepted-trace raw-grid level route: the
+  Track02 loader intake now carries an `authenticated_v3_trace` gate from the
+  accepted IRQ2 provenance path through raw BIN rehash, envelope decode, and
+  raw-grid handoff. Only that source-verified 32x27 grid can publish the new
+  level-route receipt; bitmap and object routes stay explicitly blocked with
+  no visual fallback, and forged/synthetic grid receipts no longer satisfy the
+  object-table blocker. Verification: strict direct C11 build/run of
+  `test_theron_v1_track02_loader_intake` and
+  `test_theron_v1_dungeon_handoff`, plus seven focused Theron probes covering
+  trace acceptance/provenance, runtime admission, launch media/decision,
+  track-media availability, and v3 schema.
+
 - ✅ 2026-07-16 DM2 real-profile GDAT runtime receipt repair: completed the
   DM2 V1 source contracts needed by `dm2_v1_boot_profile_smoke` for partial
   PC G1 map boot evidence, record-pool validation, runtime creature source
