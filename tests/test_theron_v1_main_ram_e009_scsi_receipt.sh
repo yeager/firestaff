@@ -24,4 +24,9 @@ if perl "$verifier" "$work/invalid.trace"; then
     printf 'FAIL: verifier accepted a non-adjacent SCSI read\n' >&2
     exit 1
 fi
+sed 's/cdb=080010a10100/cdb=080010a20100/' "$work/valid.trace" >"$work/cdb-mismatch.trace"
+if perl "$verifier" "$work/cdb-mismatch.trace"; then
+    printf 'FAIL: verifier accepted a CDB/LBA mismatch\n' >&2
+    exit 1
+fi
 printf 'PASS: main-RAM e009/SCSI verifier is fail-closed\n'
