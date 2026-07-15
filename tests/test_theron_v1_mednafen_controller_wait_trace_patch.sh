@@ -122,7 +122,7 @@ if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x 
     printf 'FAIL: later FIFO receipt patch no longer preserves an untruncated CPU-write binding\n' >&2
     exit 1
 fi
-if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x' "$main_ram_loader_patch_file" ||
+if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x a=%02x x=%02x y=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_block_transfer logical_pc=%04x physical_pc=%06x operation=%s source=%04x destination=%04x length=%04x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'physical_pc >= 0x1f0000 && physical_pc < 0x1f8000' "$main_ram_loader_patch_file"; then

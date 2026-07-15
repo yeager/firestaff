@@ -16261,6 +16261,17 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron parameterised main-RAM `$e009` receipt
+
+The HuC6280 main-RAM trace now captures A/X/Y at each executed loader call.
+Real USA Track 02 capture proves physical `0x1f1840` calls `$e009` after the
+`0x1f1836` TII workspace transfer, including `a=20 x=03 y=02`. Parameters
+vary across calls and remain opaque: no record, level, object, or visual
+semantics are assigned.
+
+Verification: Mednafen 1.32.1 patch dry-run and real SDL2 USA Track 02
+capture.
+
 # ✅ 2026-07-15 Theron main-RAM loader control receipt
 
 Added a HuC6280-core trace patch that resolves executed PCs through active MPR
