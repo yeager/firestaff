@@ -78,6 +78,10 @@ typedef struct {
     uint32_t stream_byte_read_offset;
     uint32_t output_byte_store_offset;
     uint32_t loop_branch_offset;
+    uint32_t loop_body_start_offset;
+    uint32_t loop_body_byte_count;
+    uint32_t loop_back_target_offset;
+    uint64_t loop_body_fnv1a64;
     uint16_t control_test_instruction;
     uint16_t stream_byte_read_instruction;
     uint16_t output_byte_store_instruction;
@@ -85,6 +89,8 @@ typedef struct {
     int sh2_control_path_verified;
     int sh2_stream_read_verified;
     int sh2_output_store_verified;
+    int sh2_loop_back_target_verified;
+    int sh2_loop_body_bound;
     int menu_frame_binding_proven;
     int vdp1_command_proven;
     int opcode_grammar_proven;

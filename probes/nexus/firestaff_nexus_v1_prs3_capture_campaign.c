@@ -89,6 +89,7 @@ int main(int argc, char **argv)
         nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             dm_bin, dm_size, 1, &sh2) != 1 || !sh2.sh2_control_path_verified ||
         !sh2.sh2_stream_read_verified || !sh2.sh2_output_store_verified ||
+        !sh2.sh2_loop_back_target_verified || !sh2.sh2_loop_body_bound ||
         sh2.decoder_promoted) {
         fprintf(stderr, "retail PRS3 source framing is incomplete\n");
         free(menu);
@@ -122,6 +123,8 @@ int main(int argc, char **argv)
                     "menu_bpk_fnv1a64=%016llx\ndm_bin_fnv1a64=%016llx\n"
                     "entry_index=%x\nstream_offset=%x\nstream_size=%x\n"
                     "expected_output_bytes=%x\nmode=%x\nwidth=%x\nheight=%x\n"
+                    "sh2_loop_body_start_offset=%x\nsh2_loop_body_byte_count=%x\n"
+                    "sh2_loop_back_target_offset=%x\nsh2_loop_body_fnv1a64=%016llx\n"
                     "capture_kind=original_saturn_sh2_prs3\n"
                     "required_observations=input_reads,output_writes,vdp1_command,palette_state\n"
                     "dm_bin_v1_sh2_route_verified=1\n"
@@ -131,7 +134,9 @@ int main(int argc, char **argv)
                     (unsigned long long)menu_fnv, (unsigned long long)dm_fnv,
                     index, plan.stream_offset, plan.stream_size,
                     plan.expected_output_bytes, plan.mode, plan.width,
-                    plan.height) < 0) {
+                    plan.height, sh2.loop_body_start_offset,
+                    sh2.loop_body_byte_count, sh2.loop_back_target_offset,
+                    (unsigned long long)sh2.loop_body_fnv1a64) < 0) {
             fclose(file);
             remove(path);
             fprintf(stderr, "could not write PRS3 target %u\n", index);
