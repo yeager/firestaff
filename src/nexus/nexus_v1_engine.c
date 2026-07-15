@@ -5637,6 +5637,11 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     Nexus_V1_DgnStructure1CSourceSceneReceipt receipt;
     const Nexus_V1_DgnStructure2SourceReceipt *source;
     uint8_t referenced[4096];
+    uint16_t reference_occurrences[4096];
+    uint8_t first_reference_x[4096];
+    uint8_t first_reference_y[4096];
+    uint8_t last_reference_x[4096];
+    uint8_t last_reference_y[4096];
     int x, y, index;
 
     if (!out_receipt) return -1;
@@ -5645,6 +5650,11 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     receipt.no_draw_only = 1;
     receipt.blocks_real_dgn_mesh_render = 1;
     memset(referenced, 0, sizeof(referenced));
+    memset(reference_occurrences, 0, sizeof(reference_occurrences));
+    memset(first_reference_x, 0xff, sizeof(first_reference_x));
+    memset(first_reference_y, 0xff, sizeof(first_reference_y));
+    memset(last_reference_x, 0xff, sizeof(last_reference_x));
+    memset(last_reference_y, 0xff, sizeof(last_reference_y));
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -5682,6 +5692,17 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
             uint16_t ref = engine->current_level.collision_refs[y][x];
             if (ref > 0U && ref < (uint16_t)receipt.record_count) {
                 referenced[ref] = 1U;
+                if (reference_occurrences[ref] == 0U) {
+                    first_reference_x[ref] = (uint8_t)x;
+                    first_reference_y[ref] = (uint8_t)y;
+                }
+                if (reference_occurrences[ref] == UINT16_MAX) {
+                    *out_receipt = receipt;
+                    return 0;
+                }
+                ++reference_occurrences[ref];
+                last_reference_x[ref] = (uint8_t)x;
+                last_reference_y[ref] = (uint8_t)y;
                 ++receipt.reference_occurrence_count;
             }
         }
@@ -5699,6 +5720,15 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
         packet.record_index = index;
         memcpy(packet.raw_bytes, record, sizeof(packet.raw_bytes));
         packet.referenced_by_structure1b = referenced[index] ? 1 : 0;
+        packet.reference_occurrence_count = reference_occurrences[index];
+        packet.first_reference_x = referenced[index]
+            ? (int)first_reference_x[index] : -1;
+        packet.first_reference_y = referenced[index]
+            ? (int)first_reference_y[index] : -1;
+        packet.last_reference_x = referenced[index]
+            ? (int)last_reference_x[index] : -1;
+        packet.last_reference_y = referenced[index]
+            ? (int)last_reference_y[index] : -1;
         packet.no_draw_only = 1;
         packet.blocks_real_dgn_mesh_render = 1;
         if (consumer && consumer(context, &packet) != 0) {

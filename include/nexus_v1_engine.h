@@ -1042,6 +1042,11 @@ typedef struct {
     int record_index;
     uint8_t raw_bytes[4];
     int referenced_by_structure1b;
+    int reference_occurrence_count;
+    int first_reference_x;
+    int first_reference_y;
+    int last_reference_x;
+    int last_reference_y;
     int no_draw_only;
     int fallback_visuals_permitted;
     int blocks_real_dgn_mesh_render;

@@ -11,6 +11,10 @@
   their decoded interface palette. Removed Firestaff's independent
   per-resource colors (`2,11,12`); future mutations remain gated on an
    authenticated runtime owner.
+- 2026-07-15 Nexus Structure1C cell binding: source packets now retain each
+  record's exact Structure1B reference count and first/last owning grid cell.
+  This is authenticated DGN geometry provenance only and cannot draw or infer
+   collision semantics.
 
 - 2026-07-15 CSB C028 champion-icon source gate: CSB party-position icons
   now require the complete 76x14 C028 strip from the selected GRAPHICS.DAT.
