@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
+  retain bounded bytes plus FNV provenance. Next is slot-table heap mutation.
+
 - 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
   handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/
   TT_BASH_DOOR duplicate rules, allocates `m_firstAvailTimer`, copies the full

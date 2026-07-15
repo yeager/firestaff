@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB save decode retains verified raw TIMER slot and queue spans
+  with FNV provenance for the source-owned GameTimers adapter.
+
 - 2026-07-15 CSBWin timerheap contract audit: extracted SetTimer/DeleteTimer
   source ownership and rejected a partial Firestaff adapter before it could
   fabricate timer IDs or heap mutation.
