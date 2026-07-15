@@ -86,6 +86,24 @@ static void build_wing_tail(uint8_t *tail, size_t size, uint16_t fingerprint,
     put_le16(tail, (size_t)(2u * 64u + 3u) * 4u + 80u, fingerprint);
 }
 
+static void build_extended_cell_flags_tail(uint8_t *tail, size_t size)
+{
+    const uint32_t record_id = (2u << 24) | (3u << 5) | 4u;
+    const uint32_t bucket = 32u + ((record_id * 0xbb40e62du) >> 27);
+    const uint32_t node = 1u;
+    uint8_t *payload;
+
+    memset(tail, 0, size);
+    put_le16(tail, 2u, 10u);
+    put_le32(tail, (size_t)node * 4u, 0u);
+    put_le32(tail, (size_t)(node + 1u) * 4u, record_id);
+    payload = tail + (size_t)(node + 2u) * 4u;
+    put_le32(payload, 0u, 1u << 2);
+    put_le32(payload, 12u, 1u << 2);
+    put_le32(payload, 28u, 1u << 2);
+    put_le32(tail, (size_t)bucket * 4u, node);
+}
+
 static void prepare_profile(CSB_V1_RuntimeProfile *profile,
                             const uint8_t *tail, size_t size)
 {
@@ -102,6 +120,7 @@ int main(void)
     uint8_t tail[character_records * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     CSB_V1_RuntimeProfile profile;
     uint32_t talents = 0u;
+    uint32_t flags[8];
 
     build_wing_tail(tail, sizeof(tail), 0x1234u, 0x89abcdefu);
     prepare_profile(&profile, tail, sizeof(tail));
@@ -134,6 +153,18 @@ int main(void)
     check(csb_v1_runtime_read_csbwin_wing_talents(
               &profile, 0x1234u, &talents) == -1 && talents == 0u,
           "CSBWin rejects an altered wing EXPOOL receipt");
+
+    build_extended_cell_flags_tail(tail, sizeof(tail));
+    prepare_profile(&profile, tail, sizeof(tail));
+    check(csb_v1_runtime_read_csbwin_extended_cell_flags(
+              &profile, 0x0c82u, flags) == 1 &&
+              flags[0] == (1u << 2) && flags[3] == (1u << 2) &&
+              flags[7] == (1u << 2),
+          "CSBWin reads one real-shaped eight-word EDT_ExtendedCellFlags record");
+    profile.csbwin_appended_tail_fnv1a ^= 1u;
+    check(csb_v1_runtime_read_csbwin_extended_cell_flags(
+              &profile, 0x0c82u, flags) == -1,
+          "CSBWin rejects an altered ExtendedCellFlags EXPOOL receipt");
 
     return failures == 0 ? 0 : 1;
 }

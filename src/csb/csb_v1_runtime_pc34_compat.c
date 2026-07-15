@@ -89,6 +89,9 @@ static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
                                         int *out_selector, int *out_state,
                                         int *out_parameter_a,
                                         int *out_parameter_b);
+static int csb_v1_runtime_dsa_get_excell_flags(void *user,
+                                                uint32_t location,
+                                                uint32_t out_words[8]);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -16974,6 +16977,46 @@ static int csb_v1_runtime_dsa_get_info(void *user, uint16_t thing,
     return 1;
 }
 
+int csb_v1_runtime_read_csbwin_extended_cell_flags(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t location,
+    uint32_t out_words[8])
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    uint32_t record_id;
+    unsigned int i;
+
+    if (!out_words || !profile || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+    memset(out_words, 0, 8u * sizeof(out_words[0]));
+    record_id = (2u << 24) | (((location >> 10) & 63u) << 5) |
+        ((location >> 5) & 31u);
+    if (!csb_v1_runtime_locate_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        !payload || payload_size < 8u * sizeof(uint32_t)) {
+        return 1;
+    }
+    for (i = 0u; i < 8u; ++i) {
+        out_words[i] = csb_v1_runtime_read_le32(
+            payload + i * sizeof(uint32_t));
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_get_excell_flags(void *user,
+                                                uint32_t location,
+                                                uint32_t out_words[8])
+{
+    return csb_v1_runtime_read_csbwin_extended_cell_flags(
+        (const CSB_V1_RuntimeProfile *)user, location, out_words);
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19550,6 +19593,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     }
     candidate.get_wing_talents = csb_v1_runtime_dsa_get_wing_talents;
     candidate.has_wing_character = csb_v1_runtime_dsa_has_wing_character;
+    candidate.get_excell_flags = csb_v1_runtime_dsa_get_excell_flags;
+    candidate.excell_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =
@@ -19648,6 +19693,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.set_wing_talents = csb_v1_runtime_dsa_set_wing_talents;
     candidate.get_dsa_info = csb_v1_runtime_dsa_get_info;
     candidate.wing_user = &profile_candidate;
+    candidate.get_excell_flags = csb_v1_runtime_dsa_get_excell_flags;
+    candidate.excell_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
     }

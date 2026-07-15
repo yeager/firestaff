@@ -3226,6 +3226,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       pose, including direction. Unrecognized selectors retain source zero;
       selector one rejects without a party pose rather than manufacturing a
       location. It reads no dungeon, timer, filter, or substitute world state.
+    - 2026-07-15 EXPOOL cell-flags update: source `STKOP_FetchExCellFlg`
+      now reads only the current FNV-authenticated CSBWin
+      `EDT_ExtendedCellFlags` record. It folds the selected Y bit from the
+      eight original little-endian words in DSA.cpp order; absent or short
+      records retain source zero, while a missing or altered tail rejects.
+      `StoreExCellFlg` remains unavailable until its full EXPOOL write route
+      can be exercised against an original DSA-bearing save corpus.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

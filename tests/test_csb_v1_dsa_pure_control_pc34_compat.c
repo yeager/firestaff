@@ -1,6 +1,7 @@
 /* CSBWin DSA pure-control and pure-stack opcode regression.
  * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
  * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
+ * STKOP_FetchExCellFlg:3270-3297,
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
  * 2956-3044,4850-4887, plus STKOP_GlobalFetch:3958-3973 and
  * STKOP_PartyDistance:4057-4072,
@@ -17,6 +18,7 @@
 static int failures;
 static uint32_t last_party_talents[4];
 static int dsa_info_enabled;
+static int excell_flags_enabled;
 
 static int wing_talents_enabled;
 
@@ -50,6 +52,18 @@ static int get_dsa_info(void *user, uint16_t thing, int *out_selector,
     *out_state = 9;
     *out_parameter_a = 0x4567;
     *out_parameter_b = 0x89ab;
+    return 1;
+}
+
+static int get_excell_flags(void *user, uint32_t location,
+                            uint32_t out_words[8])
+{
+    (void)user;
+    if (!excell_flags_enabled || location != 0x0c82u || !out_words) return -1;
+    memset(out_words, 0, 8u * sizeof(out_words[0]));
+    out_words[0] = 1u << 2;
+    out_words[3] = 1u << 2;
+    out_words[7] = 1u << 2;
     return 1;
 }
 
@@ -106,6 +120,7 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.has_wing_character = has_wing_character;
     }
     if (dsa_info_enabled) context.get_dsa_info = get_dsa_info;
+    if (excell_flags_enabled) context.get_excell_flags = get_excell_flags;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -201,6 +216,9 @@ int main(void)
     };
     uint16_t global_fetch_unknown_selector[] = {
         0x0686u, 2u, 0x0ecbu, 0x000du
+    };
+    uint16_t excell_flags_fetch[] = {
+        0x0686u, 0x0c82u, 0x0b0bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -375,6 +393,21 @@ int main(void)
               parameters) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "GLOBAL@ refuses selector one without a runtime-owned party pose");
+
+    excell_flags_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, excell_flags_fetch,
+              (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x89u && execution.stack_depth == 0u,
+          "ECF@ folds the selected source cell bit from all eight EXPOOL words");
+    excell_flags_enabled = 0;
+    parameters[0] = 77u;
+    check(run(&state, &action, excell_flags_fetch,
+              (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "ECF@ rejects without an authenticated EXPOOL owner");
 
     parameters[0] = 10u;
     parameters[1] = 20u;

@@ -673,6 +673,14 @@ int csb_v1_runtime_set_csbwin_wing_talents(
     CSB_V1_RuntimeProfile *profile,
     uint16_t fingerprint,
     uint32_t talents);
+/* CSBWin DSA.cpp STKOP_FetchExCellFlg reads an authenticated eight-word
+ * EDT_ExtendedCellFlags record. One means an available tail (including an
+ * absent/short source record, which yields eight zero words); minus one means
+ * unavailable or altered source data. */
+int csb_v1_runtime_read_csbwin_extended_cell_flags(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t location,
+    uint32_t out_words[8]);
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);

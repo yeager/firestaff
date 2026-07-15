@@ -1016,6 +1016,33 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
         break;
+    case 44u: /* STKOP_FetchExCellFlg */
+        /* CSBWin DSA.cpp:3270-3297 queries one eight-word
+         * EDT_ExtendedCellFlags record and folds the selected Y bit into
+         * eight result bits.  EXPOOL remains runtime-owned. */
+        if (!context->get_excell_flags ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        {
+            uint32_t cell_words[8];
+            uint32_t flags = 0u;
+
+            if (context->get_excell_flags(context->excell_user, v,
+                                           cell_words) <= 0) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            for (count = 0u; count < 8u; ++count) {
+                if ((cell_words[count] & (1u << (v & 31u))) != 0u) {
+                    flags |= 0x100u;
+                }
+                flags >>= 1;
+            }
+            if (!csb_v1_csbwin_dsa_stack_push(stack, depth, flags)) {
+                goto underflow;
+            }
+        }
+        break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
         if (!context->game_time_valid ||
@@ -1678,6 +1705,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_wing_talents = runner->set_wing_talents;
     context.get_dsa_info = runner->get_dsa_info;
     context.wing_user = runner->wing_user;
+    context.get_excell_flags = runner->get_excell_flags;
+    context.excell_user = runner->excell_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
             runner->action_ordinal, &context, &execution) !=
