@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_ExperiencePlus`: the authenticated DSA executor
+  now stages CSBWin `DSA.cpp:4542-4557` and `Magic.cpp::AddToSkill` through
+  source-owned prepare/commit callbacks. It keeps the original pop order and
+  nonpositive-XP no-op, and does not publish XP or level effects after a later
+  rejected bytecode word. Focused regression covers valid, unavailable,
+  nonpositive, rejected, and missing-owner paths.
+
 - 2026-07-15 DM2 skproject all-wall M11 receipt: runtime now carries every
   source-consumed `DRAW_WALL` GRAPHICSSET panel, in source draw order, into
   frame ownership. The visible command count/hash covers the ten viewport

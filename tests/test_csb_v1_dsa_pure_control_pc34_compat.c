@@ -58,6 +58,11 @@ static int character_store_count;
 static int32_t character_store_selector;
 static uint32_t character_store_values[59];
 static uint32_t character_store_word_count;
+static int experience_plus_enabled;
+static int experience_plus_count;
+static int32_t experience_plus_character;
+static int32_t experience_plus_skill;
+static int32_t experience_plus_amount;
 
 static int wing_talents_enabled;
 
@@ -386,6 +391,33 @@ static int set_character_info(void *user, int32_t character_selector,
     return 1;
 }
 
+static int prepare_experience_plus(void *user, int32_t character_selector,
+                                   int32_t skill_number, int32_t experience)
+{
+    (void)user;
+    if (!experience_plus_enabled) return -1;
+    if (character_selector == 99) return 0;
+    if (character_selector != 1 || skill_number != 7 || experience != 200) {
+        return -1;
+    }
+    return 1;
+}
+
+static int add_experience_plus(void *user, int32_t character_selector,
+                               int32_t skill_number, int32_t experience)
+{
+    (void)user;
+    if (!experience_plus_enabled || character_selector != 1 ||
+        skill_number != 7 || experience != 200) {
+        return 0;
+    }
+    experience_plus_character = character_selector;
+    experience_plus_skill = skill_number;
+    experience_plus_amount = experience;
+    ++experience_plus_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -513,6 +545,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (character_store_enabled) {
         context.prepare_character_store = prepare_character_store;
         context.set_character_info = set_character_info;
+    }
+    if (experience_plus_enabled) {
+        context.prepare_experience_plus = prepare_experience_plus;
+        context.add_experience_plus = add_experience_plus;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -796,6 +832,18 @@ int main(void)
     };
     uint16_t character_store_invalid[] = {
         0x0686u, 99u, 0x0686u, 0u, 0x0686u, 5u, 0x108bu
+    };
+    uint16_t experience_plus[] = {
+        0x0686u, 1u, 0x0686u, 7u, 0x0686u, 200u, 0x1c4bu
+    };
+    uint16_t experience_plus_then_bad[] = {
+        0x0686u, 1u, 0x0686u, 7u, 0x0686u, 200u, 0x1c4bu, 0x0000u
+    };
+    uint16_t experience_plus_invalid[] = {
+        0x0686u, 99u, 0x0686u, 7u, 0x0686u, 200u, 0x1c4bu
+    };
+    uint16_t experience_plus_zero[] = {
+        0x0686u, 1u, 0x0686u, 7u, 0x0686u, 0u, 0x1c4bu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1388,6 +1436,38 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "CHAR! rejects without a complete CHARDESC owner");
+    experience_plus_enabled = 1;
+    experience_plus_count = 0;
+    check(run(&state, &action, experience_plus,
+              (int)(sizeof(experience_plus) / sizeof(experience_plus[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              experience_plus_count == 1 && experience_plus_character == 1 &&
+              experience_plus_skill == 7 && experience_plus_amount == 200,
+          "EXPERIENCE+ preserves CSBWin character, skill, and XP stack order");
+    experience_plus_count = 0;
+    check(run(&state, &action, experience_plus_then_bad,
+              (int)(sizeof(experience_plus_then_bad) /
+                    sizeof(experience_plus_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              experience_plus_count == 0,
+          "EXPERIENCE+ does not publish before a later rejected source word");
+    check(run(&state, &action, experience_plus_invalid,
+              (int)(sizeof(experience_plus_invalid) /
+                    sizeof(experience_plus_invalid[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              experience_plus_count == 0,
+          "EXPERIENCE+ preserves the source unavailable-character no-op");
+    check(run(&state, &action, experience_plus_zero,
+              (int)(sizeof(experience_plus_zero) /
+                    sizeof(experience_plus_zero[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              experience_plus_count == 0,
+          "EXPERIENCE+ preserves AddToSkill's nonpositive-XP no-op");
+    experience_plus_enabled = 0;
+    check(run(&state, &action, experience_plus,
+              (int)(sizeof(experience_plus) / sizeof(experience_plus[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "EXPERIENCE+ rejects without a complete skill owner");
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
