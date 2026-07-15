@@ -1033,14 +1033,16 @@ static void test_sprite_asset_provider(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     dm2_v1_render_ui_chrome(&viewport);
-    CHECK("DM2 UI chrome render consumes HUD plan regions",
-          framebuffer[0] == 1 &&
-              framebuffer[28 * 320] == 7 &&
-              framebuffer[176 * 320 + 280] == 6 &&
-              framebuffer[180 * 320 + 288] == 11 &&
-              framebuffer[180 * 320 + 222] == 12 &&
-              framebuffer[138 * 320 + 244] == 7 &&
-              framebuffer[140 * 320 + 246] == 14);
+    CHECK("DM2 UI chrome leaves unavailable source HUD surfaces blank",
+          viewport.asset_hud_core_drawn_count == 0 &&
+              viewport.fallback_hud_core_drawn_count == 0 &&
+              framebuffer[0] == 0 &&
+              framebuffer[28 * 320] == 0 &&
+              framebuffer[176 * 320 + 280] == 0 &&
+              framebuffer[180 * 320 + 288] == 0 &&
+              framebuffer[180 * 320 + 222] == 0 &&
+              framebuffer[138 * 320 + 244] == 0 &&
+              framebuffer[140 * 320 + 246] == 0);
 
     {
         uint8_t palette16[16];
@@ -1050,12 +1052,13 @@ static void test_sprite_asset_provider(void)
         dm2_v1_viewport_set_gdat_interface_palette(
             &viewport, 1, 0x51a7c0deu, palette16);
         dm2_v1_render_ui_chrome(&viewport);
-        CHECK("DM2 HUD consumes the bound GDAT palette16 logical colours",
+        CHECK("DM2 HUD palette alone cannot invent source HUD surfaces",
               viewport.gdat_interface_palette_ready == 1 &&
-                  viewport.gdat_interface_palette_consumed_count > 0 &&
-                  framebuffer[0] == palette16[1] &&
-                  framebuffer[28 * 320] == palette16[7] &&
-                  framebuffer[176 * 320 + 280] == palette16[6]);
+                  viewport.asset_hud_core_drawn_count == 0 &&
+                  viewport.fallback_hud_core_drawn_count == 0 &&
+                  framebuffer[0] == 0 &&
+                  framebuffer[28 * 320] == 0 &&
+                  framebuffer[176 * 320 + 280] == 0);
 
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1256,7 +1259,7 @@ static void test_sprite_asset_provider(void)
     dm2_v1_render_ui_chrome(&viewport);
     CHECK("DM2 outdoor UI chrome skips portrait panel region",
           framebuffer[140 * 320 + 246] == 0 &&
-              framebuffer[180 * 320 + 222] == 12);
+              framebuffer[180 * 320 + 222] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

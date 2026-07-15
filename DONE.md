@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject HUD-core no-draw gate: `DM2_DRAW_INTERFACE` no
+  longer replaces unavailable `INTERFACE_GENERAL` chrome with generated bars,
+  dividers, coin discs, icon frames, portrait surrounds, or name markers.
+  Real GDAT remains the only HUD-chrome route; live champion state bars and
+  leader state remain runtime overlays.
+
 - 2026-07-15 DM2 skproject portrait no-draw gate: `DRAW_CHAMPION_PICTURE`
   no longer replaces a missing `CHAMPIONS` GDAT bitmap with a generated colour
   fill. Strict profiles report a blocked portrait; other profiles leave its
