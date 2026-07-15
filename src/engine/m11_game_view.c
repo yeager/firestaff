@@ -35754,7 +35754,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     {
         int centerContentMask =
             visibility.center_visible_depth_mask;
-        for (depth = 0; depth < 3; ++depth) {
+        /* F0128 invokes F0118/F0121/F0124 in D3, D2, D1 order.  The
+         * source F0115 content pass belongs to that same far-to-near
+         * progression: a nearer center object must overpaint a farther one.
+         * Do not traverse this center lane near-to-far after the side pass. */
+        for (depth = 2; depth >= 0; --depth) {
             if ((centerContentMask & (1 << depth)) != 0) {
                 m11_draw_wall_contents(framebuffer, framebufferWidth,
                                        framebufferHeight,
