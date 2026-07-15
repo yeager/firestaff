@@ -127,6 +127,17 @@
   deliberately does not claim a macOS app/window capture. Verification:
   real package probe 73/0 and M11 launcher handoff 440/0.
 
+- ✅ 2026-07-15 CSB SDL-presented host capture: the common M11 presentation
+  edge is no longer named or scoped as a DM1 HoC helper. For CSB it records
+  C001-C005/C017/C040 only after a successful SDL presentation has produced
+  a nonempty renderer RGBA buffer; an allocated SDL window alone cannot set
+  the macOS-window receipt. The indexed source frame remains the exact
+  C001--C005 package composition, while the renderer buffer proves that the
+  host actually accepted a presentation. A local `firestaff --game csb
+  --duration 0` macOS smoke reached this path with verified CSB data. Full
+  visible app/window capture over the complete sequence remains a separate
+  external-capture task.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
   a host transparency key, so source-black pixels erase prior bars and hands

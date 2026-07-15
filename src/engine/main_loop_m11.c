@@ -447,31 +447,41 @@ static int m11_running_from_macos_app_bundle(void)
 #endif
 }
 
-/* ReDMCSB ENTRANCE.C F0797/F0441 hands the opened Hall to DRAWVIEW before
- * input. Keep every later materialized HoC frame on this same M11->M12 edge:
- * capture may observe only a successfully presented game frame, never a
- * prior frame from a bare renderer call. */
-static int m11_present_game_frame_and_publish_dm1_hoc_capture(
+/* ReDMCSB/CSBWin startup hands source-owned pages to the host before input.
+ * Capture may observe only a completed SDL presentation, never a pre-upload
+ * framebuffer or a merely allocated window. */
+static int m11_present_game_frame_and_publish_startup_capture(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     const unsigned char* presented_frame = NULL;
+    const unsigned char* presented_rgba = NULL;
+    int presented_width = 0;
+    int presented_height = 0;
+    int mac_window_capture_ready = 0;
 
     if (!m11_present_game_frame(gameView, &presented_frame)) {
         return 0;
     }
+    /* M11_Render_GetPresentedRGBA is populated in the renderer immediately
+     * before SDL_RenderPresent.  Do not promote a CSB startup receipt when
+     * that actual host buffer is absent, even if SDL still has a window. */
+    presented_rgba = M11_Render_GetPresentedRGBA(&presented_width,
+                                                  &presented_height);
+#ifdef __APPLE__
+    mac_window_capture_ready =
+        M11_Render_GetWindow() != NULL && presented_rgba != NULL &&
+        presented_width > 0 && presented_height > 0;
+#endif
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        presented_frame) {
+        presented_frame && presented_rgba && presented_width > 0 &&
+        presented_height > 0) {
         M11_GameView_RecordCSBPresentedIndexedFrame(
             (M11_GameViewState *)gameView,
             presented_frame,
             M11_FB_WIDTH,
             M11_FB_HEIGHT,
             m11_running_from_macos_app_bundle(),
-#ifdef __APPLE__
-            M11_Render_GetWindow() != NULL
-#else
-            0
-#endif
+            mac_window_capture_ready
         );
     }
     m11_publish_dm1_hoc_presented_capture_to_m12(gameView, menuState);
@@ -4722,7 +4732,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * V1 palette/nearest scaling and V2 targets are applied before the
          * M12 presented-capture consumer records the PC34 receipt.  Calling
          * bare Render_Present() here bypassed that contract on first launch. */
-        (void)m11_present_game_frame_and_publish_dm1_hoc_capture(
+        (void)m11_present_game_frame_and_publish_startup_capture(
             &gameView, &menuState);
     } else {
         m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
@@ -4993,7 +5003,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 DM1_CombatLog_Render(&gameView,
                                      M11_Render_GetFramebuffer(),
                                      M11_FB_WIDTH, M11_FB_HEIGHT);
-                (void)m11_present_game_frame_and_publish_dm1_hoc_capture(
+                (void)m11_present_game_frame_and_publish_startup_capture(
                     &gameView, &menuState);
                 gameFrameNeedsPresent = 0;
             }
