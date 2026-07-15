@@ -612,6 +612,94 @@ int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     return 0;
 }
 
+int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    int draw_resurrect_panel,
+    unsigned char *destination,
+    int destination_width,
+    int destination_height,
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 *out_receipt)
+{
+    enum {
+        CSB_V1_STARTUP_HUD_SCREEN_X_PC34 = 0,
+        CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 = 33
+    };
+    CSB_V1_StartupRenderPlan_PC34 plan;
+    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
+    CSB_V1_StartupRuntimeRaster_PC34 raster;
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 receipt;
+    int row;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&plan, 0, sizeof(plan));
+    memset(&frame, 0, sizeof(frame));
+    memset(&raster, 0, sizeof(raster));
+    memset(&receipt, 0, sizeof(receipt));
+    /* After ENTRANCE.C F0807, PANEL.C F0347 receives the live C017/C040
+     * session. A closed entrance surface plus DUNGEON_RUNTIME selects that
+     * exact terminal frame without re-entering any entrance draw wrapper. */
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
+    plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.title_special_palette = -1;
+    plan.special_palette = -1;
+    if (!session || !destination || !out_receipt ||
+        destination_width < CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 ||
+        destination_height < CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 +
+            CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 ||
+        !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+            session, &plan, session->source_tick, &frame) ||
+        !csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
+            &frame, draw_resurrect_panel ? 1 : 0, &raster) ||
+        !raster.valid || !raster.real_asset_matched ||
+        raster.width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
+        raster.height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 ||
+        raster.source_surface_count != (draw_resurrect_panel ? 2 : 1)) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+        return 0;
+    }
+
+    /* Copy only PANEL.C's source-owned 224x136 region. The dungeon page
+     * behind it remains the M11 viewport result; no black host page or
+     * generated HUD substitute is introduced. */
+    for (row = 0; row < CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34; ++row) {
+        memcpy(destination +
+                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
+                       (size_t)destination_width +
+                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
+               raster.pixels +
+                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
+                       CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 +
+                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
+               CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34);
+    }
+    receipt.real_asset_matched = frame.real_asset_matched;
+    receipt.c017_presented = 1;
+    receipt.c040_presented = draw_resurrect_panel ? 1 : 0;
+    receipt.no_legacy_wrappers = frame.no_legacy_wrappers;
+    receipt.no_synthetic_surface = 1;
+    receipt.source_tick = frame.source_tick;
+    receipt.session_generation = frame.session_generation;
+    receipt.c017_pixel_hash = frame.hud_inventory_pixel_hash;
+    receipt.c040_pixel_hash = draw_resurrect_panel
+        ? frame.hud_resurrect_pixel_hash : 0u;
+    receipt.panel_hash = csb_v1_startup_frame_hash_step_pc34(
+        csb_v1_startup_frame_hash_step_pc34(raster.pixel_hash,
+                                            receipt.c017_pixel_hash),
+        receipt.c040_pixel_hash);
+    receipt.source_evidence =
+        "ReDMCSB PANEL.C F0347/F0346 lines 2376-2448; "
+        "CSBWin Character.cpp TAG0189a8 lines 3836-3844";
+    receipt.valid = receipt.real_asset_matched && receipt.c017_presented &&
+        receipt.no_legacy_wrappers && receipt.no_synthetic_surface &&
+        receipt.c017_pixel_hash != 0u &&
+        (!receipt.c040_presented || receipt.c040_pixel_hash != 0u) &&
+        receipt.panel_hash != 0u;
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+    if (!receipt.valid) return 0;
+    *out_receipt = receipt;
+    return 1;
+}
+
 static int csb_v1_startup_frame_title_phase_mask_pc34(
     CSB_V1_StartupStage_PC34 stage)
 {

@@ -11,6 +11,11 @@
   `c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES`, `DM2_DRAW_STATIC_OBJECT`, and
   `DM2_DRAW_PUT_DOWN_ITEM`; `dm2data.cpp::table1d7029`. Verification:
   DB5 gate 6/6, DB9 gate 3/3, boot smoke 88/88, save/load 26/26.
+- ✅ 2026-07-15 CSB live HUD ownership: moved the PC3.4 C017/C040 panel
+  composition from M11 into CSB's source-owned `PANEL.C F0347/F0346` adapter.
+  M11 now consumes only the completed terminal-session receipt; the real
+  package probe compares the copied 224x136 region byte-for-byte with the
+  authentic indexed raster. No generated HUD or transparency wrapper remains.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without

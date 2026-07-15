@@ -1141,6 +1141,25 @@ typedef struct CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34;
 
+/* PANEL.C F0347 first restores C017 at (0,33), then F0346 optionally
+ * composites C040 at panel-relative (80,52) with transparency key 6. Keep
+ * the resulting destination update in CSB so M11 never reads startup
+ * surfaces or recreates the composition itself. */
+typedef struct CSB_V1_StartupRuntimeHudPanelReceipt_PC34 {
+    int valid;
+    int real_asset_matched;
+    int c017_presented;
+    int c040_presented;
+    int no_legacy_wrappers;
+    int no_synthetic_surface;
+    uint32_t source_tick;
+    uint32_t session_generation;
+    uint32_t c017_pixel_hash;
+    uint32_t c040_pixel_hash;
+    uint32_t panel_hash;
+    const char *source_evidence;
+} CSB_V1_StartupRuntimeHudPanelReceipt_PC34;
+
 /* Runtime-only startup presentation.  This is the CSB boundary for title,
  * entrance/HUD, utility, and opening-door plans when verified game data is
  * present.  The older snapshot helpers remain inspection adapters. */
@@ -1387,6 +1406,13 @@ int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     int draw_resurrect_panel,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    int draw_resurrect_panel,
+    unsigned char *destination,
+    int destination_width,
+    int destination_height,
+    CSB_V1_StartupRuntimeHudPanelReceipt_PC34 *out_receipt);
 void csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *receipt);
 int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
