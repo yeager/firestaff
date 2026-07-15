@@ -3317,7 +3317,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 2026-07-15 Nexus FACE.BIN: portraits remain unavailable until authenticated
    PRS3 decode evidence exists; all generic raw portrait materialization is
-   retired.
+  retired.
+
+- 2026-07-15 Nexus DGT2 UI palette: WARNING.BIN and GAMEOVER.BIN now carry
+  their documented BGR555 CLUTs into UI/title state. TITLE.CG, MENU.BPK,
+  FACE.BIN, STABG.BIN, and DGN materials remain unavailable until their own
+  original palette/decode routes are proven; do not borrow DGT2 palettes.
 
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not

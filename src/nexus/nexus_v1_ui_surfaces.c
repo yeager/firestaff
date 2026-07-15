@@ -21,6 +21,7 @@
  * Failed real-media decodes leave the surface unavailable. */
 
 #include "nexus_v1_ui_surfaces.h"
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,22 @@ static uint32_t nexus_ui_read_be32_u(const uint8_t *data)
 {
     return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
            ((uint32_t)data[2] << 8) | data[3];
+}
+
+static uint32_t nexus_ui_fnv1a32(const uint8_t *data, size_t size)
+{
+    uint32_t hash = 2166136261U;
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619U;
+    }
+    return hash;
+}
+
+static uint8_t nexus_ui_expand_5bit(uint16_t value)
+{
+    return (uint8_t)((value << 3) | (value >> 2));
 }
 
 /* ── Manager lifecycle ──────────────────────────────────────────── */
@@ -70,9 +87,8 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     /* Free previous if owned */
     if (surf->owns_data && surf->data) {
         free(surf->data);
-        surf->data = NULL;
-        surf->owns_data = 0;
     }
+    memset(surf, 0, sizeof(*surf));
 
     if (!data || data_size < w * h) {
         /* Saturn startup media is all-or-nothing. A missing or short source
@@ -292,6 +308,53 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
                                  out_view);
 }
 
+int nexus_ui_dgt2_pp_palette_rgba(const Nexus_UI_Dgt2PpView *view,
+                                  uint32_t out_palette[256])
+{
+    size_t i;
+    if (!view || !view->clut_bgr555_be || !out_palette) {
+        return -1;
+    }
+    for (i = 0U; i < 256U; ++i) {
+        uint16_t bgr555 = nexus_ui_read_be16(view->clut_bgr555_be + i * 2U);
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        out_palette[i] = 0xff000000U | ((uint32_t)red << 16) |
+                         ((uint32_t)green << 8) | (uint32_t)blue;
+    }
+    return 0;
+}
+
+static int nexus_ui_load_dgt2_pp_surface(Nexus_UI_Manager *mgr,
+                                          Nexus_UISurfaceType which,
+                                          const Nexus_UI_Dgt2PpView *view,
+                                          const char *source)
+{
+    Nexus_UI_Surface *surface;
+    int result;
+
+    if (!mgr || !view || !view->pixels || !view->clut_bgr555_be ||
+        view->pixel_bytes > (size_t)INT_MAX) {
+        return -1;
+    }
+    result = nexus_ui_surface_load(mgr, which, view->pixels,
+                                   (int)view->pixel_bytes,
+                                   view->width, view->height, 0, 0, source);
+    if (result <= 0) {
+        return result;
+    }
+    surface = &mgr->surfaces[which];
+    if (nexus_ui_dgt2_pp_palette_rgba(view, surface->dgt2_palette_rgba) != 0) {
+        nexus_ui_surface_free(mgr, which);
+        return -1;
+    }
+    surface->dgt2_palette_fnv1a32 =
+        nexus_ui_fnv1a32(view->clut_bgr555_be, 512U);
+    surface->dgt2_palette_loaded = 1;
+    return result;
+}
+
 /* ── Surface-specific loaders ──────────────────────────────────── */
 
 int nexus_ui_load_title(Nexus_UI_Manager *mgr,
@@ -345,9 +408,8 @@ int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
         printf("Nexus UI: WARNING.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
-    return nexus_ui_surface_load(mgr, NEXUS_SURFACE_WARNING,
-        view.pixels, (int)view.pixel_bytes,
-        view.width, view.height, 0, 0, "WARNING.BIN/DGT2#0");
+    return nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_WARNING,
+                                         &view, "WARNING.BIN/DGT2#0");
 }
 
 /* GAMEOVER.BIN is a verified RES* DGT2 PP container, not a raw 320x200
@@ -364,9 +426,8 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
         printf("Nexus UI: GAMEOVER.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
-    return nexus_ui_surface_load(mgr, NEXUS_SURFACE_GAMEOVER,
-        view.pixels, (int)view.pixel_bytes,
-        view.width, view.height, 0, 0, "GAMEOVER.BIN/DGT2#0");
+    return nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_GAMEOVER,
+                                         &view, "GAMEOVER.BIN/DGT2#0");
 }
 
 /* STABG.BIN has verified source identity but no proven Saturn surface

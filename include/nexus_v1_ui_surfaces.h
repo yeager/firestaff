@@ -42,6 +42,12 @@ typedef struct {
     int       owns_data;  /* 1=calloc'd, 0=borrowed ref */
     const char *source;   /* e.g. "TITLE.CG" */
     uint64_t  hash;       /* SHA-256 hash of source file (if known) */
+    /* DGT2 PP surfaces retain their source-owned 256-entry BGR555 CLUT as
+     * RGBA. Other formats leave this unavailable rather than borrowing a
+     * host or generated palette. */
+    uint32_t  dgt2_palette_rgba[256];
+    uint32_t  dgt2_palette_fnv1a32;
+    int       dgt2_palette_loaded;
 } Nexus_UI_Surface;
 
 /* Named surfaces */
@@ -184,6 +190,11 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
                               size_t data_size,
                               uint32_t resource_id,
                               Nexus_UI_Dgt2PpView *out_view);
+
+/* Convert the documented big-endian BGR555 DGT2 CLUT to the host's RGBA
+ * framebuffer representation. The caller must provide all 256 entries. */
+int nexus_ui_dgt2_pp_palette_rgba(const Nexus_UI_Dgt2PpView *view,
+                                  uint32_t out_palette[256]);
 
 /* Decode the verified Saturn TITLE.CG atlas. The loader rejects any shape
  * other than the observed 32-byte zero prefix plus packed 4bpp payload. */

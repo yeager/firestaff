@@ -11,6 +11,10 @@
   `QUERY_EXPANDED_RECT`/`QUERY_BLIT_RECT` geometry. The original-data
   inventory material consumer remains available, but M11 now draws no
    substitute icon until the source rect route is bound.
+- 2026-07-15 Nexus DGT2 UI CLUT binding: verified WARNING.BIN/GAMEOVER.BIN
+  RES*/DGT2 PP loads retain the exact 256-entry BGR555 CLUT as RGBA and the
+  warning title phase consumes that source palette. No generated palette is
+   used for these original UI surfaces.
 
 - ✅ 2026-07-15 DM2 M11 leader-hand name source gate: stopped drawing the
   active DM1 rectangle/host-font catalog label over DM2 runtime frames.

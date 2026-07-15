@@ -1,5 +1,7 @@
 /* Nexus startup media must be decoded before it is presented by M11. */
 #include "nexus_v1_engine.h"
+#include "nexus_v1_rasterizer.h"
+#include "nexus_v1_title.h"
 #include "nexus_v1_ui_surfaces.h"
 
 #include <stdio.h>
@@ -7,6 +9,21 @@
 #include <string.h>
 
 static int failures;
+
+static unsigned char expand_5bit(unsigned value)
+{
+    return (unsigned char)((value << 3) | (value >> 2));
+}
+
+static unsigned dgt2_rgba(const unsigned char *clut, int index)
+{
+    unsigned value = ((unsigned)clut[index * 2] << 8) |
+                     (unsigned)clut[index * 2 + 1];
+    return 0xff000000U |
+           ((unsigned)expand_5bit((value >> 10) & 0x1fU) << 16) |
+           ((unsigned)expand_5bit((value >> 5) & 0x1fU) << 8) |
+           (unsigned)expand_5bit(value & 0x1fU);
+}
 
 static void expect_true(int condition, const char *message)
 {
@@ -98,6 +115,8 @@ int main(void)
     if (!local_warning) {
         puts("SKIP: local Nexus WARNING.BIN not present");
     } else {
+        Nexus_TitleScreen title;
+        Nexus_Framebuffer framebuffer;
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_res_dgt2_pp_view(local_warning, local_warning_size,
                                                0U, &warning_view) == 0 &&
@@ -111,8 +130,29 @@ int main(void)
                         ui.surfaces[NEXUS_SURFACE_WARNING].w == 240 &&
                         ui.surfaces[NEXUS_SURFACE_WARNING].h == 96 &&
                         ui.surfaces[NEXUS_SURFACE_WARNING].data[0] ==
-                            local_warning[0x256],
-                    "WARNING.BIN loads its decoded Saturn DGT2 pixel plane");
+                            local_warning[0x256] &&
+                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_loaded &&
+                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[0] ==
+                            dgt2_rgba(warning_view.clut_bgr555_be, 0) &&
+                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[255] ==
+                            dgt2_rgba(warning_view.clut_bgr555_be, 255),
+                    "WARNING.BIN binds its documented DGT2 pixel plane and BGR555 CLUT");
+        memset(&title, 0, sizeof(title));
+        title.warning_pixels = ui.surfaces[NEXUS_SURFACE_WARNING].data;
+        title.warning_width = ui.surfaces[NEXUS_SURFACE_WARNING].w;
+        title.warning_height = ui.surfaces[NEXUS_SURFACE_WARNING].h;
+        title.warning_loaded = 1;
+        memcpy(title.warning_palette_rgba,
+               ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba,
+               sizeof(title.warning_palette_rgba));
+        title.warning_palette_loaded = 1;
+        nexus_fb_init(&framebuffer);
+        nexus_render_title(&title, &framebuffer, 0);
+        expect_true(framebuffer.palette[0] ==
+                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[0] &&
+                        framebuffer.palette[255] ==
+                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[255],
+                    "Nexus warning title phase consumes the source DGT2 CLUT");
         nexus_ui_manager_free(&ui);
         free(local_warning);
     }
@@ -128,8 +168,11 @@ int main(void)
                                                (int)local_warning_size, NULL) > 0 &&
                         ui.surfaces[NEXUS_SURFACE_GAMEOVER].w == warning_view.width &&
                         ui.surfaces[NEXUS_SURFACE_GAMEOVER].h == warning_view.height &&
-                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].data[0] == warning_view.pixels[0],
-                    "GAMEOVER.BIN loads its verified DGT2 PP pixel plane");
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].data[0] == warning_view.pixels[0] &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].dgt2_palette_loaded &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].dgt2_palette_rgba[0] ==
+                            dgt2_rgba(warning_view.clut_bgr555_be, 0),
+                    "GAMEOVER.BIN binds its verified DGT2 PP pixels and CLUT");
         nexus_ui_manager_free(&ui);
         free(local_gameover);
     }
