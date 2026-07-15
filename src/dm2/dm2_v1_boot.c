@@ -4617,6 +4617,38 @@ int dm2_v1_boot_weather_gdat_destination_receipt(
     return out_receipt->valid;
 }
 
+int dm2_v1_boot_weather_renderer_receipt(
+    DM2_V1_BootProfile *profile,
+    int graphicsset_index,
+    const DM2_V1_WeatherRestoredStateReceipt *restored_state,
+    const DM2_V1_DistantEnvironmentReceipt *slots,
+    unsigned int slot_count,
+    const DM2_V1_WeatherDrawContext *context,
+    DM2_V1_WeatherRendererReceipt *out_receipt)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_WeatherGdatReceipt weather;
+    const uint8_t *rect_table;
+    size_t rect_table_size = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat || !restored_state || !slots ||
+        slot_count == 0u || slot_count > 2u || !context || !out_receipt ||
+        graphicsset_index < 0 || graphicsset_index > 0xff ||
+        !dm2_v1_boot_weather_gdat_receipt(profile, graphicsset_index,
+                                           &weather) || !weather.valid) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    rect_table = dm2_v1_asset_load_typed_sized(
+        &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &rect_table_size);
+    if (!rect_table || rect_table_size == 0u) return 0;
+    return dm2_v1_weather_gdat_renderer_receipt(
+        restored_state, &weather, slots, slot_count, context,
+        rect_table, rect_table_size, out_receipt);
+}
+
 int dm2_v1_boot_dialogue_gdat_receipt(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,

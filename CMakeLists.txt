@@ -8915,6 +8915,17 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_load_new_dungeon_contract
     )
 
+    add_executable(test_dm2_v1_weather_runtime_slot_gate
+        tests/test_dm2_v1_weather_runtime_slot_gate.c)
+    target_include_directories(test_dm2_v1_weather_runtime_slot_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_weather_runtime_slot_gate PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_runtime_slot_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_weather_runtime_slot_gate
+             COMMAND test_dm2_v1_weather_runtime_slot_gate)
+
     add_executable(test_dm2_v1_startup_pointer_hit_contract
         tests/test_dm2_v1_startup_pointer_hit_contract.c
     )

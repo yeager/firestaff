@@ -120,6 +120,11 @@ typedef struct {
     int gdat_weather_destination_ready;
     uint32_t gdat_weather_destination_hash;
     uint32_t gdat_weather_destination_mask;
+    DM2_V1_DistantEnvironmentReceipt weather_distant_slots[2];
+    unsigned int weather_distant_slot_count;
+    int gdat_weather_renderer_ready;
+    uint32_t gdat_weather_renderer_hash;
+    uint32_t gdat_weather_renderer_command_count;
     int gdat_dialogue_shell_receipt_ready;
     uint32_t gdat_dialogue_shell_receipt_hash;
     int gdat_interface_palette_ready;
@@ -2909,6 +2914,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_InterfaceRect14HostReceipt rect14_host;
     DM2_V1_DialogueBoxHostCommand save_dialogue_command;
     DM2_V1_DialogueOpenPanelHostCommand save_dialogue_open_panel;
+    DM2_V1_WeatherRestoredStateReceipt weather_state;
+    DM2_V1_WeatherDrawContext weather_context;
+    DM2_V1_WeatherRendererReceipt weather_renderer;
+    int map_offset_x = 0;
+    int map_offset_y = 0;
     static const int forward_dx[4] = { 0, 1, 0, -1 };
     static const int forward_dy[4] = { -1, 0, 1, 0 };
 
@@ -2934,6 +2944,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             dm2_v1_viewport_set_gdat_scene_map_origin(
                 &viewport, dungeon->map_offset_x[rt->dungeon_level],
                 dungeon->map_offset_y[rt->dungeon_level]);
+            map_offset_x = dungeon->map_offset_x[rt->dungeon_level];
+            map_offset_y = dungeon->map_offset_y[rt->dungeon_level];
         }
     }
     dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
@@ -2982,6 +2994,40 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport,
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
         rt->viewport_asset_user != NULL);
+    /* c_weather.cpp emits DistantEnvironment records before its image draw.
+     * Generic weather intensity is not an image selector. Consume weather
+     * pixels only when a source-owned slot was explicitly admitted and the
+     * party is stationary, where the source transform is fully known. */
+    rt->gdat_weather_renderer_ready = 0;
+    rt->gdat_weather_renderer_hash = 0u;
+    rt->gdat_weather_renderer_command_count = 0u;
+    memset(&weather_state, 0, sizeof(weather_state));
+    memset(&weather_context, 0, sizeof(weather_context));
+    memset(&weather_renderer, 0, sizeof(weather_renderer));
+    if (rt->outdoor && !rt->scene_movement_pending &&
+        rt->weather_distant_slot_count > 0u &&
+        dm2_v1_weather_restored_state_receipt(&rt->weather, &weather_state)) {
+        weather_context.direction = (uint8_t)(party_dir & 3);
+        weather_context.player_direction = (uint8_t)(party_dir & 3);
+        weather_context.map_x = (int16_t)party_x;
+        weather_context.map_y = (int16_t)party_y;
+        weather_context.map_offset_x = (int16_t)map_offset_x;
+        weather_context.map_offset_y = (int16_t)map_offset_y;
+        weather_context.map_level = (int16_t)rt->dungeon_level;
+        weather_context.scene_flags = rt->gdat_scene_flags;
+        weather_context.game_tick = (uint16_t)rt->tick_count;
+        if (dm2_v1_boot_weather_renderer_receipt(
+                rt->boot, rt->map_graphics_style, &weather_state,
+                rt->weather_distant_slots, rt->weather_distant_slot_count,
+                &weather_context, &weather_renderer) && weather_renderer.valid) {
+            dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+                &viewport, (uint8_t)rt->map_graphics_style, &weather_renderer);
+            rt->gdat_weather_renderer_ready = 1;
+            rt->gdat_weather_renderer_hash = weather_renderer.renderer_hash;
+            rt->gdat_weather_renderer_command_count =
+                weather_renderer.command_count;
+        }
+    }
     dm2_v1_viewport_set_g1_creature_map_chip_materials(
         &viewport, &rt->g1_creature_map_chip_runtime);
     dm2_v1_viewport_set_g1_wall_gfx_materials(
@@ -3450,6 +3496,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_weather_destination_hash;
     g_dm2_frame_ownership.gdat_weather_destination_mask =
         rt->gdat_weather_destination_mask;
+    g_dm2_frame_ownership.gdat_weather_renderer_ready =
+        rt->gdat_weather_renderer_ready;
+    g_dm2_frame_ownership.gdat_weather_renderer_hash =
+        rt->gdat_weather_renderer_hash;
+    g_dm2_frame_ownership.gdat_weather_renderer_command_count =
+        rt->gdat_weather_renderer_command_count;
     g_dm2_frame_ownership.gdat_dialogue_shell_receipt_ready =
         rt->gdat_dialogue_shell_receipt_ready;
     g_dm2_frame_ownership.gdat_dialogue_shell_receipt_hash =
@@ -4762,6 +4814,32 @@ uint32_t dm2_v1_runtime_get_weather_seed(void) {
 
 void dm2_v1_runtime_set_weather_seed(uint32_t seed) {
     dm2_v1_weather_set_seed(&g_dm2_runtime.weather, seed);
+}
+
+int dm2_v1_runtime_bind_weather_distant_environment(
+    const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count)
+{
+    if (slot_count > 2u || (slot_count != 0u && !slots)) return 0;
+    if (slot_count == 0u) {
+        memset(g_dm2_runtime.weather_distant_slots, 0,
+               sizeof(g_dm2_runtime.weather_distant_slots));
+        g_dm2_runtime.weather_distant_slot_count = 0u;
+        return 1;
+    }
+    for (unsigned int i = 0u; i < slot_count; ++i) {
+        if (!slots[i].valid || slots[i].slot_index != i ||
+            slots[i].raw_hash == 0u || slots[i].raw[0] != slots[i].command ||
+            slots[i].command < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+            slots[i].command > DM2_V1_WEATHER_RAIN_STORM_CMD) {
+            return 0;
+        }
+    }
+    memset(g_dm2_runtime.weather_distant_slots, 0,
+           sizeof(g_dm2_runtime.weather_distant_slots));
+    memcpy(g_dm2_runtime.weather_distant_slots, slots,
+           (size_t)slot_count * sizeof(slots[0]));
+    g_dm2_runtime.weather_distant_slot_count = slot_count;
+    return 1;
 }
 
 /* dm2_v1_runtime_has_dungeon_data — returns 1 if dungeon state is available.
