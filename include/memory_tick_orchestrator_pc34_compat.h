@@ -174,6 +174,10 @@
 
 #define TICK_EMISSION_CAPACITY          64
 #define GAMEWORLD_CREATURE_AI_CAPACITY  64
+/* ReDMCSB PC3.4 GROUP.C F0196 initializes exactly 60 ACTIVE_GROUP slots.
+ * The larger host array remains an implementation container; F0195 must not
+ * admit a sixty-first original-map group into its PC3.4 active prefix. */
+#define DM1_PC34_ACTIVE_GROUP_CAPACITY  60
 #define TICK_INPUT_SERIALIZED_SIZE      16
 #define TICK_EMISSION_SERIALIZED_SIZE   20
 #define TICK_STREAM_RECORD_SERIALIZED_SIZE 24
@@ -323,6 +327,14 @@ int F0182_DM1_GROUP_StopAttacking_Compat(
     int mapIndex,
     int mapX,
     int mapY);
+
+/* ReDMCSB GROUP.C F0195: walk the loaded current-map SFT/C04 chains in
+ * column-major map order, create the corresponding active states, remove
+ * square-local C29..C41 reactions, and start C37 wandering at GameTime + 1.
+ * Returns the number of C04 states admitted, or -1 for incomplete/invalid
+ * original dungeon state.  It never manufactures a group or square chain. */
+int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
+    struct GameWorld_Compat* world);
 
 /* ================================================================
  *  Group B — Tick Orchestrator (F0884-F0886)

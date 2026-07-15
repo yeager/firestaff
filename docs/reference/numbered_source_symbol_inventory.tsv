@@ -1161,7 +1161,7 @@ F	192	F192_ayzz_	ATARIST.H	unmapped_or_unverified
 F	0193	F0193_GROUP_StealFromChampion	GROUP.C;IIGS.H;DEFS.H;DATA.C	referenced_not_verified
 F	0194	F0194_GROUP_RemoveAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;NEWMAP.C	referenced_not_verified
 F	194	F194_hzzz_	ATARIST.H	unmapped_or_unverified
-F	0195	F0195_GROUP_AddAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;NEWMAP.C	unmapped_or_unverified
+F	0195	F0195_GROUP_AddAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;NEWMAP.C	implemented_narrow
 F	195	F195_akzz_	ATARIST.H	unmapped_or_unverified
 F	0196	F0196_GROUP_InitializeActiveGroups	ATARIST.H;GROUP.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H	unmapped_or_unverified
 F	196	F196_aozz_	ATARIST.H	unmapped_or_unverified

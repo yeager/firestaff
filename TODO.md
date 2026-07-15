@@ -7178,9 +7178,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   but retain all other maps and squares exactly as GROUP.C does.
 - 2026-07-15 DM1 GROUP F0194 follow-up: source-defined active-group
   retirement now writes raw loaded C04 cells, low packed direction, and the
-  F0184 behavior threshold before retiring every slot. Remaining work is to
-  route the M10 map/save handoff through this common DM1 helper; malformed
+  F0184 behavior threshold before retiring every slot. F0195 now consumes
+  loaded C04 chains for initial map activation; remaining work is to route
+  later M10 map/save handoffs through the same retirement boundary. Malformed
   C04 references must remain a no-mutation failure, without default groups.
+- 2026-07-15 DM1 GROUP F0195 follow-up: initial PC3.4 startup now consumes
+  the loaded map's native SFT/C04 chains in source order, deleting exact-square
+  C29..C41 events and scheduling C37 at GameTime + 1. Remaining work is the
+  F0194/F0195 pair for later map and original-save transitions; do not retain
+  an old active table or manufacture a missing C04 group/square chain.
 - 2026-07-15 DM1 GROUP F0197-F0199 follow-up: source-defined sight, smell,
   and route primitives now require decoded square/door facts and a loaded-map
   blocker callback. Remaining work is binding M10's live F0157/current-map

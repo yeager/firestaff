@@ -17,6 +17,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0182_group_stop_attack
              COMMAND test_dm1_v1_f0182_group_stop_attacking_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat.c")
+    add_executable(test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat
+        tests/test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0195_group_add_all_active_groups_pc34_compat
+             COMMAND test_dm1_v1_f0195_group_add_all_active_groups_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c")
  add_executable(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c src/shared/redmcsb_f0675_get_scaled_bitmap_pc34_compat.c)
  target_include_directories(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

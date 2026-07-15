@@ -1065,6 +1065,12 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     (void)F0284_CHAMPION_SetPartyDirection_Compat(&outWorld->party, direction);
     outWorld->partyMapIndex = 0;
 
+    /* ReDMCSB STARTUP2.C reaches NEWMAP.C F0003 after the initial party
+     * location is decoded.  F0003 installs the current map and then invokes
+     * GROUP.C F0195, so the loaded C04 chains own initial active state and
+     * C37 scheduling rather than an empty host-only AI table. */
+    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(outWorld) < 0) goto fail;
+
     /* Schedule an initial watchdog / generator-placeholder event at tick 1
      * so the timeline is non-empty at init (invariant C14). */
     memset(&ev, 0, sizeof(ev));
@@ -2706,29 +2712,23 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
     }
 }
 
-int F0182_DM1_GROUP_StopAttacking_Compat(
+/* ReDMCSB GROUP.C F0181: only C29..C41 reactions on the exact current-map
+ * square are deleted.  F0182 and F0195 share this primitive. */
+static int orch_delete_group_reaction_events_f0181_compat(
     struct GameWorld_Compat* world,
-    struct DM1ActiveGroup_Compat* activeGroup,
     int mapIndex,
     int mapX,
     int mapY)
 {
-    int aspectIndex;
     int oldEventCount;
     int readIndex;
     int writeIndex = 0;
 
-    if (!world || !activeGroup || world->timeline.count < 0 ||
+    if (!world || world->timeline.count < 0 ||
         world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
         return 0;
     }
     oldEventCount = world->timeline.count;
-
-    /* GROUP.C F0182:374-381 clears only MASK0x0080 in all four Aspect
-     * bytes, then delegates the square-local C29..C41 removal to F0181. */
-    for (aspectIndex = 0; aspectIndex < 4; ++aspectIndex) {
-        activeGroup->aspect[aspectIndex] &= ~0x80;
-    }
     for (readIndex = 0; readIndex < oldEventCount; ++readIndex) {
         const struct TimelineEvent_Compat* event =
             &world->timeline.events[readIndex];
@@ -2749,6 +2749,25 @@ int F0182_DM1_GROUP_StopAttacking_Compat(
         ++writeIndex;
     }
     return 1;
+}
+
+int F0182_DM1_GROUP_StopAttacking_Compat(
+    struct GameWorld_Compat* world,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    int aspectIndex;
+    if (!world || !activeGroup) return 0;
+
+    /* GROUP.C F0182:374-381 clears only MASK0x0080 in all four Aspect
+     * bytes, then delegates the square-local C29..C41 removal to F0181. */
+    for (aspectIndex = 0; aspectIndex < 4; ++aspectIndex) {
+        activeGroup->aspect[aspectIndex] &= ~0x80;
+    }
+    return orch_delete_group_reaction_events_f0181_compat(
+        world, mapIndex, mapX, mapY);
 }
 
 static void orch_cmd_attack_target_square_compat(
@@ -8872,7 +8891,8 @@ static int orch_add_generated_group_active_state_compat(
     const struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int activeGroupCapacity)
 {
     struct CreatureAIState_Compat* ai;
     DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
@@ -8881,7 +8901,7 @@ static int orch_add_generated_group_active_state_compat(
     if (!DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
             world->partyMapIndex, mapIndex, mapX, mapY, groupIndex,
             group->creatureType, group->cells, group->direction,
-            world->creatureAICount, GAMEWORLD_CREATURE_AI_CAPACITY,
+            world->creatureAICount, activeGroupCapacity,
             world->gameTick, &plan) ||
         !plan.valid) {
         return 0;
@@ -8944,6 +8964,109 @@ static void orch_schedule_generated_group_wandering_event_compat(
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
 }
 
+int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
+    struct GameWorld_Compat* world)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int mapX;
+    int mapY;
+    int added = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->dungeon->tilesLoaded || !world->dungeon->maps ||
+        !world->dungeon->tiles || !world->things->loaded ||
+        world->things->groupCount < 0 ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount > DM1_PC34_ACTIVE_GROUP_CAPACITY) {
+        return -1;
+    }
+    if (world->partyMapIndex < 0 ||
+        world->partyMapIndex >= (int)world->dungeon->header.mapCount) {
+        return -1;
+    }
+    map = &world->dungeon->maps[world->partyMapIndex];
+    tiles = &world->dungeon->tiles[world->partyMapIndex];
+    if (!tiles->squareData || map->width == 0 || map->height == 0 ||
+        tiles->squareCount < (int)map->width * (int)map->height ||
+        world->things->squareFirstThingCount < 0) {
+        return -1;
+    }
+
+    /* GROUP.C F0195: G0271 and G0283 are walked in X-major/Y-minor order.
+     * For a square with a Thing list, only the first C04 reached in that
+     * native chain receives F0181/F0183/F0180. */
+    for (mapX = 0; mapX < (int)map->width; ++mapX) {
+        for (mapY = 0; mapY < (int)map->height; ++mapY) {
+            unsigned short thing;
+            int sftIndex;
+            int guard;
+
+            if (!(tiles->squareData[mapX * (int)map->height + mapY] &
+                  DUNGEON_SQUARE_MASK_THING_LIST)) {
+                continue;
+            }
+            if (!world->things->squareFirstThings) return -1;
+            sftIndex = orch_square_first_thing_list_index_compat(
+                world->dungeon, world->partyMapIndex, mapX, mapY);
+            if (sftIndex < 0 ||
+                sftIndex >= world->things->squareFirstThingCount) {
+                return -1;
+            }
+            thing = world->things->squareFirstThings[sftIndex];
+            for (guard = 0; guard < 1024 && thing != THING_NONE &&
+                 thing != THING_ENDOFLIST; ++guard) {
+                int groupIndex;
+                const struct DungeonGroup_Compat* group;
+                int wasActive;
+                int eventCount;
+
+                if (THING_GET_TYPE(thing) != THING_TYPE_GROUP) {
+                    unsigned short next = orch_next_thing_compat(
+                        world->things, thing);
+                    if (next == THING_NONE) return -1;
+                    thing = next;
+                    continue;
+                }
+                groupIndex = (int)THING_GET_INDEX(thing);
+                if (!world->things->groups || groupIndex < 0 ||
+                    groupIndex >= world->things->groupCount) {
+                    return -1;
+                }
+                group = &world->things->groups[groupIndex];
+                wasActive = orch_find_active_group_state_index_compat(
+                    world, groupIndex) >= 0;
+                if (!orch_delete_group_reaction_events_f0181_compat(
+                        world, world->partyMapIndex, mapX, mapY)) {
+                    return -1;
+                }
+                if (world->creatureAICount < DM1_PC34_ACTIVE_GROUP_CAPACITY) {
+                    if (!orch_add_generated_group_active_state_compat(
+                            world, groupIndex, group, world->partyMapIndex,
+                            mapX, mapY, DM1_PC34_ACTIVE_GROUP_CAPACITY)) {
+                        return -1;
+                    }
+                }
+                if (!wasActive && orch_find_active_group_state_index_compat(
+                        world, groupIndex) >= 0) {
+                    ++added;
+                }
+                eventCount = world->timeline.count;
+                orch_schedule_generated_group_wandering_event_compat(
+                    world, groupIndex, group, world->partyMapIndex,
+                    mapX, mapY);
+                if (world->timeline.count != eventCount + 1) return -1;
+                break;
+            }
+            if (guard == 1024 && thing != THING_NONE &&
+                thing != THING_ENDOFLIST) {
+                return -1;
+            }
+        }
+    }
+    return added;
+}
+
 static int orch_link_existing_group_to_square_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
@@ -8967,7 +9090,8 @@ static int orch_link_existing_group_to_square_compat(
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
 
     (void)orch_add_generated_group_active_state_compat(
-        world, groupIndex, group, mapIndex, mapX, mapY);
+        world, groupIndex, group, mapIndex, mapX, mapY,
+        GAMEWORLD_CREATURE_AI_CAPACITY);
     orch_schedule_generated_group_wandering_event_compat(
         world, groupIndex, group, mapIndex, mapX, mapY);
     return 1;
@@ -9766,7 +9890,8 @@ static int orch_handle_creature_reaction_event_compat(
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
     if (activeIndex < 0) {
         (void)orch_add_generated_group_active_state_compat(
-            world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY);
+            world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY,
+            GAMEWORLD_CREATURE_AI_CAPACITY);
         activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
     }
     if (activeIndex < 0) return 1;
