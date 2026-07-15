@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 real-profile MBCS HUD gate: high-bit champion text now follows skproject `DRAW_STRING`/`DRAW_MBCS_STR` when the real GDAT has no category-0x1c font records, consuming the unsupported MBCS bytes without painting an ASCII or synthetic substitute. This removes false HUD-material blocking while preserving a fail-closed visual outcome. Verification: real boot smoke.
+
+- 2026-07-15 DM2 verified HUD HeroType bootstrap: runtime boot now binds the
+  four startup HUD slots only after every corresponding `CHAMPIONS/type`
+  `dtText/0x18`, `dt08/0`, and image record passes the existing skproject
+  `REVIVE_PLAYER`/`DRAW_CHAMPION_PICTURE` source gate. The bound value is the
+  original `Champion::heroType` byte 255, never the old Firestaff portrait
+  ordinal. A failed source record leaves the session unchanged.
+
+- 2026-07-15 DM2 G1 scene-plan regression repair: `AMBIANT_LIGHT` is now
+  optional exactly as skproject `QUERY_GDAT_ENTRY_DATA_INDEX` defines for
+  missing `dtWordValue` rows. The canonical graphics set 2 therefore carries
+  source value zero instead of invalidating G1/GDAT startup and first-frame
+  receipts; no graphics set or light value is substituted.
+
+- 2026-07-15 DM2 G1 startup-to-runtime context handoff: boot detach and
+  post-menu session application now preserve a source-owned G1 receipt for
+  the active level, `MapGraphicsStyle`, `runtime_g1_scene_map_token`, GDAT
+  scene-control hash, and original interface-palette hash. The first M11
+  runtime frame must match that exact receipt as well as the existing GDAT
+  material gate; otherwise the host clears and blocks the frame. The focused
+  real-data boot smoke coverage verifies the context before rendering and its
+  identity in the presented GDAT frame.
+
 - 2026-07-15 DM2 G1 direct door runtime handoff: connected the verified
   `DME.h::Door::w2` DB0 receipt to the active runtime map and its matching
   source-owned D0C GDAT panel command. Canonical G1 door metadata no longer
