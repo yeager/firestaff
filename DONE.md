@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 G1 boot pose and runtime HUD capture closure: DM2
+  boot now consumes the source-validated G1 File_header party pose decoded by
+  the dungeon loader instead of replacing it with the old 15,15,N synthetic
+  default. Four-direction HUD/runtime sampling now restores the original G1
+  pose after probing, so boot, render, HUD, action, turn, and move receipts
+  all remain source-positioned. Verification: CTests `dm2_v1_boot_profile_smoke`,
+  `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass in
+  `build-local-ninja`.
+
 - ✅ 2026-07-16 DM1 spell-HUD material bundle gate: M11 now requires the
   complete source-owned spell HUD bundle before rendering an open spell
   panel: exact loaded C009 pixels, exact loaded C011 pixels, and a verified
@@ -20,8 +29,8 @@
   until at least one original SKSave candidate parses into source-owned state
   with no rejected original candidates. Verification: focused Ninja build
   passes; CTests `dm2_v1_save_load` and `dm2_v1_runtime_handoff_smoke` pass.
-  `dm2_v1_boot_profile_smoke` verifies this save-corpus block but remains
-  blocked by seven broader real-profile runtime GDAT checks.
+  `dm2_v1_boot_profile_smoke` now also passes after the G1 boot-pose and
+  runtime HUD restore fix above.
 
 - ✅ 2026-07-16 Theron ISO first-sector source handoff gate: the Track 02
   loader-intake boundary now has a separate MODE1/2048 ISO route for the

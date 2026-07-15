@@ -5475,6 +5475,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-11 update: DM2 startup composite capture now consumes the skproject `TITLE` `dt07/4` raw menu screen directly and suppresses the old synthetic panel/text overlay when that real screen is present. Remaining startup work is final Mac/app packaged capture and timing evidence, not synthetic menu drawing.
   - 2026-07-10 update: CCM opcode breadth now includes 0x07/0x08 special-state phases and 0x18 door-attack state in the bounded byteprogram decoder/runner, and stale evidence no longer lists already implemented 0x03/0x04/0x06/0x0B/0x0C as stubbed. Remaining DM2 work is broader Mac packaged capture, exact interface decode breadth, creature sprite atlas parity, still more CCM opcodes, and broader real save corpus import.
   - 2026-07-10 update: DM2 boot now exposes one complete-support receipt that joins skproject GDAT startup title/menu queries, HUD handoff, four-direction runtime HUD/dungeon capture, raw/decoded GDAT hashes, and no-fallback runtime visual gates. Remaining DM2 work is broader Mac packaged capture, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus import.
+  - 2026-07-16 update: real-profile boot now consumes the G1
+    File_header start pose admitted by the dungeon loader (`3,5,S` for the
+    local canonical PC corpus) instead of the old synthetic `15,15,N`
+    default. The four-direction runtime HUD probe restores that exact source
+    pose after sampling. `dm2_v1_boot_profile_smoke`,
+    `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass. Remaining
+    DM2 work is still broader Mac packaged capture, deeper interface/render
+    semantics, creature animation state, more CCM opcodes, and real save
+    corpus import, not this boot-pose/runtime-smoke gate.
   - 2026-07-10 update: DM2 runtime frame ownership now requires full GDAT-backed HUD plus dungeon base rendering (floor/ceiling, walls, HUD core/portraits, and any visible door/object/creature/projectile overlays) with zero fallback draws before the frame is accepted as a full GDAT render. Remaining DM2 work is broader real packaged capture on Mac, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
   - 2026-07-10 update: DM2 save/load now exposes a real SKSave corpus scan receipt for SKSave.dat, SKSave.bak, and SKSave%02u.dat candidates, including slot mask, backup selection, payload totals, and invalid-save counts before full session import. Remaining DM2 work is real GDAT capture, exact interface decode breadth, creature sprite atlas parity, and broader real save corpus import.
   - 2026-07-15 update: a valid `SKSave.dat` now owns last-session corpus
