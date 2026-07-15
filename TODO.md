@@ -633,6 +633,11 @@
     closed C004/C002/C003 surface, but step 0 and step 32+ no longer publish
     an opening-frame receipt. Remaining work is still external Mac/app
     capture.
+  - 2026-07-15 update: the lower-level CSB source render-plan route now uses
+    the same C002/C003 step gate directly, so a host cannot bypass the receipt
+    path and obtain an opening-frame plan with step 0, step 32+, or a pre-open
+    delay carrying a real door step. Remaining work is still external
+    Mac/app capture.
 
 - 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
   bound, including vertical and D0/D1/D2 horizontal intermediate states.

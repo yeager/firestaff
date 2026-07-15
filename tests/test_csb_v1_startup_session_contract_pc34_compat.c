@@ -209,6 +209,26 @@ int main(void)
               plan.title_dest_w == 16 && plan.title_dest_h == 4 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
           "C001 CHAOS retains source-owned zoom geometry and palette");
+    memset(&state, 0, sizeof(state));
+    state.entrance_active = 1;
+    state.entrance_source_step = 4;
+    state.opening_active = 1;
+    state.opening_delay_ticks = 1;
+    state.opening_step = 1;
+    check(!csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan),
+          "pre-open delay cannot publish a real C002/C003 door step");
+    state.opening_delay_ticks = 0;
+    state.opening_step = 0;
+    check(!csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan),
+          "door-opening frame cannot publish before ReDMCSB step 1");
+    state.opening_step = 32;
+    check(!csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan),
+          "door-opening frame cannot publish past ReDMCSB step 31");
+    state.opening_step = 1;
+    check(csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan) &&
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              plan.opening_door_valid && plan.opening_door_step == 1,
+          "source-owned door-opening frame starts at ReDMCSB step 1");
 
     make_terminal_session(&session);
     memset(&package_receipt, 0, sizeof(package_receipt));

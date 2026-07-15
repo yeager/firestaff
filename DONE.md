@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB opening-door source-plan step gate: the public CSB
+  source render-plan route now rejects pre-open delay states that carry a
+  real door step and rejects opening-frame plans outside ReDMCSB's C002/C003
+  step range 1..31. This closes the direct-plan path that could describe a
+  door-opening frame without valid door rectangles. Focused startup-session
+  contract and adjacent startup CTests pass.
+
 - ✅ 2026-07-15 DM2 item/icon M11 scene receipt gate: source-required DM2
   item, carried-hand, and possession icon material receipts now carry the G1
   scene-control hash through runtime, boot, and the M11 presentation gate.
