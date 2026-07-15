@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject multi-creature M11 receipt: every successful
+  `DRAW_MAP_CHIP`/`QUERY_CREATURE_PICST` blit now preserves its GDAT key in
+  draw order. Runtime and M11 require the complete command count and hash;
+  an omitted or substituted later creature blocks the frame rather than
+  inheriting the final creature's material identity.
+
 - 2026-07-15 DM2 skproject creature ownership no-draw gate: unknown local
   creature candidates can no longer derive a GDAT image from type/frame, and
   Rect14 cannot upgrade them into a drawable sprite. Only a proven live
