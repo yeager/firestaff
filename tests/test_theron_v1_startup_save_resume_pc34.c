@@ -26,6 +26,7 @@
 #include "theron_v1_startup_receipt.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_overlay_pc34.h"
+#include "theron/theron_v1_ui_chrome.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -3438,6 +3439,27 @@ static void test_startup_session_facts_wrappers(void) {
                     media_graphics_counters.rect_count == 0 &&
                     media_graphics_counters.pixel_count > 0,
                 "boot graphics route receipt excludes synthetic panel and cursor graphics");
+    {
+        Theron_V1_World source_ui_world = world;
+        TQR_PlanarFramebuffer source_ui_frame;
+        uint8_t source_ui_pixels[320u * 224u];
+
+        memset(source_ui_pixels, 0xa5, sizeof(source_ui_pixels));
+        memset(&source_ui_frame, 0, sizeof(source_ui_frame));
+        source_ui_frame.data = source_ui_pixels;
+        source_ui_frame.w = 320;
+        source_ui_frame.h = 224;
+        source_ui_frame.stride = 320;
+        source_ui_world.runtime_media.restored = 1;
+        source_ui_world.runtime_media.identity.ready = 1;
+        tr_ui_render(&source_ui_frame,
+                     &source_ui_world,
+                     TR_UI_TOPBAR | TR_UI_RIGHT_PANEL | TR_UI_BOTTOM_PANEL);
+        expect_true(source_ui_pixels[0] == 0xa5 &&
+                        source_ui_pixels[319] == 0xa5 &&
+                        source_ui_pixels[223u * 320u + 319u] == 0xa5,
+                    "verified Track02 atlas blocks synthetic UI chrome compositor");
+    }
     memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
@@ -3476,9 +3498,12 @@ static void test_startup_session_facts_wrappers(void) {
                         &media_graphics_executor,
                         &graphics_route_receipt) &&
                     graphics_route_receipt.track02_startup_graphics_executed &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "host consumes complete raw media receipt without Track02 rescan");
+                    graphics_route_receipt.track02_atlas_startup_graphics_executed &&
+                    graphics_route_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "host consumes complete raw media receipt as source-only Track02 pixels");
     {
         Theron_StartupMediaStateReceipt unpackaged_media_receipt =
             media_receipt;
@@ -3759,8 +3784,12 @@ static void test_startup_session_facts_wrappers(void) {
                     graphics_route_receipt.render_route_valid &&
                     graphics_route_receipt.graphics_executed &&
                     graphics_route_receipt.startup_menu_render_allowed &&
-                    media_graphics_counters.fill_count > 0,
-                "boot snapshot graphics route consumes Track02 media receipt without raw UI adapter");
+                    graphics_route_receipt.track02_atlas_startup_graphics_executed &&
+                    graphics_route_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "boot snapshot graphics route consumes source-only Track02 atlas receipt");
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_full_start_receipt_from_snapshot_with_media_receipt(
                     &media_snapshot,
@@ -3811,10 +3840,14 @@ static void test_startup_session_facts_wrappers(void) {
                     !full_start_receipt.fallback_visuals_allowed &&
                     !full_start_receipt.raw_prompt_roster_required &&
                     !full_start_receipt.raw_session_rebuild_required &&
-                    media_graphics_counters.fill_count > 0 &&
+                    full_start_receipt.track02_atlas_startup_graphics_executed &&
+                    full_start_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0 &&
                     strcmp(full_start_receipt.status,
                            "FULL START GRAPHICS READY") == 0,
-                "boot full-start receipt owns title stage soul-room save-resume graphics readiness");
+                "boot full-start receipt retains complete source-only Track02 graphics readiness");
     {
         Theron_StartupMediaStateReceipt iso_full_media_receipt =
             media_receipt;
@@ -3985,9 +4018,12 @@ static void test_startup_session_facts_wrappers(void) {
                         .track02_startup_graphic_receipt_valid &&
                     host_render_receipt.track02_startup_graphic_receipt.kind ==
                         THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "boot runtime-state host render receipt consumes executor and returns full-start graphics proof");
+                    host_render_receipt.track02_atlas_startup_graphics_executed &&
+                    host_render_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "boot runtime-state host receipt preserves source-only Track02 graphics proof");
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
     expect_true(theron_v1_boot_startup_host_render_receipt_from_snapshot_with_media_receipt_and_executor(
@@ -4005,9 +4041,12 @@ static void test_startup_session_facts_wrappers(void) {
                     !host_render_receipt.raw_prompt_roster_required &&
                     !host_render_receipt.raw_session_rebuild_required &&
                     !host_render_receipt.raw_graphics_plan_consumer_required &&
-                    media_graphics_counters.fill_count > 0 &&
-                    media_graphics_counters.rect_count > 0,
-                "boot snapshot host-render receipt consumes Track02 media executor without runtime field rebuild");
+                    host_render_receipt.track02_atlas_startup_graphics_executed &&
+                    host_render_receipt.track02_atlas_graphics_pixel_count > 0u &&
+                    media_graphics_counters.fill_count == 0 &&
+                    media_graphics_counters.rect_count == 0 &&
+                    media_graphics_counters.pixel_count > 0,
+                "boot snapshot host receipt consumes source-only Track02 media without field rebuild");
     theron_v1_boot_startup_host_render_receipt_init(&host_render_receipt);
     expect_true(theron_v1_boot_startup_host_render_receipt_from_runtime_state_with_media_receipt(
                     &host_render_receipt,
