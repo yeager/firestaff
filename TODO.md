@@ -31,6 +31,13 @@
     cells. Remaining work is real PC34/Mac capture across every HoC and
     non-HoC projection; side/depth continues to use its original unreadable
     ornament route, not host text.
+  - 2026-07-15 fail-closed receipt update: malformed F0172 selected-wall and
+    F0168 world TextString lookups now clear the caller's M648/C10 material
+    receipt on failure, so stale readable wall text cannot survive a rejected
+    raw record. Focused material and M11 inscription CTests pass. Remaining
+    work is unchanged: real PC34/Mac capture across every HoC and non-HoC
+    projection; side/depth continues to use its original unreadable ornament
+    route, not host text.
 
 - 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
   route no longer uses the generic cyan host frame when C008 or another

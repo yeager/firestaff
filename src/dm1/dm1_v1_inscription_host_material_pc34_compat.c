@@ -82,6 +82,9 @@ static int dm1_v1_inscription_host_material_from_selected_offset_pc34(
     int cursor = 0;
     int line;
 
+    if (outReceipt) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+    }
     if (!things || !things->textData || things->textDataWordCount <= 0 ||
         !outReceipt || textIndex < 0 || textDataWordOffset < 0) {
         return 0;
@@ -138,6 +141,9 @@ int dm1_v1_inscription_host_material_from_selected_wall_pc34(
 {
     int textDataWordOffset;
 
+    if (outReceipt) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+    }
     /* ReDMCSB DUNGEON.C F0172 publishes one current G0290 TextString for
      * the visible wall.  F0107 consumes that exact record; it must not scan
      * an unrelated list member when the selected raw record is unavailable. */
@@ -158,6 +164,9 @@ int dm1_v1_inscription_host_material_from_world_pc34(
     int textIndex;
     int textDataWordOffset;
 
+    if (outReceipt) {
+        memset(outReceipt, 0, sizeof(*outReceipt));
+    }
     if (!outReceipt) {
         return 0;
     }
