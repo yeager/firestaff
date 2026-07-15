@@ -1,18 +1,15 @@
 diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 --- a/src/cdrom/scsicd.cpp
 +++ b/src/cdrom/scsicd.cpp
-@@ -68,5 +68,10 @@
- static unsigned TheronSCSIReadCommandGeneration;
- static uint32 TheronSCSIReadCommandStartLBA;
- static uint32 TheronSCSIReadCommandSectorCount;
- 
+@@ -120,3 +120,8 @@ static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
+  return ok;
+ }
++
 +unsigned TheronSCSITraceCurrentReadGeneration(void)
 +{
 + return TheronSCSIReadCommandGeneration;
 +}
-+
- static bool TheronTraceReadRawSector(uint8 *buffer, int32 lba)
- {
+ // Internal operation to the SCSI CD unit.  Only pass 1 or 0 to these macros!
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp

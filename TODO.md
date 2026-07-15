@@ -163,12 +163,24 @@
   receipts.
   The next 2026-07-15 authentic run now has bounded lower-level receipts: 38
   PC Engine SCSI READ commands, 32 command-to-physical-sector bindings, and
-  17 byte-exact CD data-FIFO to System Card RAM destination candidates. This
-  proves the observed early media path reaches the System Card, but not a
+  17 byte-exact CD data-FIFO destination candidates. This proves the observed
+  early media path reaches the System Card, but not a
   game-owned loader call, later `$e009` dispatch, Track 02 record coordinate,
   or dungeon layout. Keep every candidate non-admissible; next capture must
   cross the later game loader boundary with an independently observed caller,
   destination, and raw-sector ordering.
+  A later authenticated real-SDL2 capture now resolves generation 7 exactly:
+  System Card `$e981` issues READ(6) for LBA 4847, eight sectors, which maps
+  to US Track 02 records `0x72e..0x735`. All 16,384 MODE1 user-data bytes are
+  read by System Card PC `$eb33` and compare byte-for-byte against that raw
+  media span. The CPU destinations alternate `$1802/$1803` (physical
+  `$1fe002/$1fe003`), which Mednafen maps to CD control registers, not RAM.
+  This is a positive FIFO/media receipt and a negative RAM/loader boundary:
+  it cannot identify a game loader, level, object table, bitmap, palette, or
+  dungeon handoff. Next blocker: a separate later caller must copy or consume
+  this control-mediated payload into game-owned memory with an original format
+  contract; do not reinterpret the System Card acknowledgement traffic as
+  dungeon data.
 
 - 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
   now writes the renderer-owned EPX/Scale2x RGBA surface for an active DM1
