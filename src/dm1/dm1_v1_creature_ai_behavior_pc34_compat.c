@@ -56,6 +56,36 @@ static int bounded_val(int min, int value, int max) {
     return value;
 }
 
+int F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+    int eventType,
+    uint32_t eventMapTime,
+    uint32_t requestedTime,
+    struct DM1GroupAddEventPlan_Compat* out)
+{
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    /* GROUP.C F0208:
+     * if (requestedTime < EVENT.Map_Time) {
+     *     EVENT.Type -= 5;
+     *     EVENT.C.Ticks = EVENT.Map_Time - requestedTime;
+     *     EVENT.Map_Time = requestedTime;
+     * } else EVENT.C.Ticks = requestedTime - EVENT.Map_Time;
+     * F0238 inserts that exact event. */
+    out->valid = 1;
+    out->eventType = eventType;
+    out->mapTime = eventMapTime;
+    if (requestedTime < eventMapTime) {
+        out->eventType = eventType - 5;
+        out->ticks = eventMapTime - requestedTime;
+        out->mapTime = requestedTime;
+        out->promotedAspectEvent = 1;
+    } else {
+        out->ticks = requestedTime - eventMapTime;
+    }
+    return 1;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }

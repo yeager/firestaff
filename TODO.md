@@ -7087,3 +7087,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   no longer substitutes a fireball for BUG0_13's undefined C25/C26 Thing or
   an invented Trolin palette. Remaining work is live M10 F0212 consumption of
   the verified projectile plan and true attack-sound ownership.
+- 2026-07-15 DM1 GROUP F0208 follow-up: the exact C38-C41 to C33-C36
+  event-plan transform is now available. Remaining work is consuming that
+  plan when M10 creates initial attack events, with the real F0179 aspect
+  timestamp and F0238 timeline insertion; do not replace it with a fixed
+  aspect delay.
