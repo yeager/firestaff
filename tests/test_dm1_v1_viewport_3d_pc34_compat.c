@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
@@ -34,6 +35,30 @@ typedef struct FloorCeilingProviderFixture {
     int ceiling_height;
     int floor_height;
 } FloorCeilingProviderFixture;
+
+typedef struct IndexedGraphicProviderFixture {
+    int graphic_index;
+    const uint8_t *pixels;
+    int width;
+    int height;
+} IndexedGraphicProviderFixture;
+
+static int indexed_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    const IndexedGraphicProviderFixture *fixture =
+        (const IndexedGraphicProviderFixture *)user_data;
+
+    if (!fixture || !out_pixels || !out_width || !out_height ||
+        graphic_index != fixture->graphic_index || !fixture->pixels) {
+        return 0;
+    }
+    *out_pixels = fixture->pixels;
+    *out_width = fixture->width;
+    *out_height = fixture->height;
+    return 1;
+}
 
 static int floor_ceiling_graphic_provider(
     void *user_data, int graphic_index, const uint8_t **out_pixels,
@@ -2904,8 +2929,8 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3l2_asset.floor_ornament_height == 6, 1);
         check_int("d3l2_d3r2_gate.d3l2_floor_provider_unbound",
                   d3l2_asset.floor_ornament_graphics_dat_bound ? 1 : 0, 0);
-        check_int("d3l2_d3r2_gate.d3l2_floor_bounded_fallback",
-                  d3l2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3l2_floor_missing_media_no_fallback",
+                  d3l2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 0);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_bound",
                   d3l2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3l2_door_asset_index",
@@ -2931,8 +2956,8 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
                   d3r2_asset.floor_ornament_height == 6, 1);
         check_int("d3l2_d3r2_gate.d3r2_floor_provider_unbound",
                   d3r2_asset.floor_ornament_graphics_dat_bound ? 1 : 0, 0);
-        check_int("d3l2_d3r2_gate.d3r2_floor_bounded_fallback",
-                  d3r2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 1);
+        check_int("d3l2_d3r2_gate.d3r2_floor_missing_media_no_fallback",
+                  d3r2_asset.floor_ornament_used_bounded_fallback ? 1 : 0, 0);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_bound",
                   d3r2_asset.door_front_asset_bound ? 1 : 0, 1);
         check_int("d3l2_d3r2_gate.d3r2_door_asset_index",
@@ -3035,8 +3060,8 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
     check_int("d3l2_d3r2_gate.raw_corridor_does_not_draw_wall",
               viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0xee);
-    check_int("d3l2_d3r2_gate.raw_corridor_draws_f0108_floor_zone",
-              viewport[66 * DM1_VIEWPORT_WIDTH + 32], 0x23);
+    check_int("d3l2_d3r2_gate.raw_corridor_missing_media_keeps_f0108_floor_zone",
+              viewport[66 * DM1_VIEWPORT_WIDTH + 32], 0xee);
     check_int("d3l2_d3r2_gate.raw_corridor_old_diamond_zone_untouched",
               viewport[50 * DM1_VIEWPORT_WIDTH + 2], 0xee);
     grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
@@ -4607,6 +4632,47 @@ static void test_f0104_f0105_use_native_and_owned_flip_routes(void)
     check_int("F0105.source_temp_flips_second_row_right", viewport[DM1_VIEWPORT_WIDTH + 1], 3);
 }
 
+static void test_f0108_requires_original_graphics_dat_pixels(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t ornament[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    DM1_FloorOrnamentRenderPlanPc34 plan;
+    IndexedGraphicProviderFixture fixture;
+    DM1_Viewport3DState state;
+    size_t destination;
+
+    check_int("F0108.source_zone", dm1_v1_floor_ornament_source_zone_pc34(
+                  3, -1, &plan), 1);
+    memset(&state, 0, sizeof(state));
+    memset(viewport, 0x5au, sizeof(viewport));
+    memset(ornament, 0x24, sizeof(ornament));
+    ornament[0] = 10u; /* ReDMCSB DEFS.H C10_COLOR_FLESH. */
+    state.viewport_pixels = viewport;
+    state.viewport_stride = DM1_VIEWPORT_WIDTH;
+    destination = (size_t)plan.blit.dstY * DM1_VIEWPORT_WIDTH +
+                  (size_t)plan.blit.dstX;
+
+    check_int("F0108.no_source_media_is_no_draw",
+              dm1_viewport_3d_draw_floor_ornament(
+                  &state, DM1_VIEW_SQUARE_D3L, 42), 0);
+    check_int("F0108.no_source_media_preserves_pixel",
+              viewport[destination], 0x5a);
+
+    fixture.graphic_index = 42;
+    fixture.pixels = ornament;
+    fixture.width = DM1_VIEWPORT_WIDTH;
+    fixture.height = DM1_VIEWPORT_HEIGHT;
+    state.graphic_provider_callback = indexed_graphic_provider;
+    state.graphic_provider_user_data = &fixture;
+    check_int("F0108.source_media_draws",
+              dm1_viewport_3d_draw_floor_ornament(
+                  &state, DM1_VIEW_SQUARE_D3L, 42), 1);
+    check_int("F0108.source_c10_preserves_destination",
+              viewport[destination], 0x5a);
+    check_int("F0108.source_media_pixel",
+              viewport[destination + 1], 0x24);
+}
+
 int main(void)
 {
     test_redmcsb_g0163_wall_frames();
@@ -4652,6 +4718,7 @@ int main(void)
     test_center_line_clear_contract();
     test_f0103_requires_f0128_owned_temporary_bitmap();
     test_f0104_f0105_use_native_and_owned_flip_routes();
+    test_f0108_requires_original_graphics_dat_pixels();
     test_door_front_occlusion_split_passes();
     test_side_door_stairs_occlusion_cell_orders();
     test_floor_field_stairs_pit_teleporter_order();

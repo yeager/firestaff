@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
+  host-colored fallback. F0108 now draws only callback-provided original
+  expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the
+  destination when source media is absent. Focused tests cover both paths.
+
 - 2026-07-15 DM1 F0104/F0105 source-owned floor/pit/stairs primitives:
   added the explicit native C10 route and its F0099 horizontal-flip sibling.
   F0102/F0103 now reuse those canonical paths. F0105 only accepts the
