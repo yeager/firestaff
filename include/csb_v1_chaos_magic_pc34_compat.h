@@ -278,6 +278,10 @@ typedef int (*CSB_V1_CSBWinDSAGetMissileInfoFn)(
     void *user, uint16_t thing, uint32_t out_values[4]);
 typedef int (*CSB_V1_CSBWinDSASetMissileInfoFn)(
     void *user, uint16_t thing, const uint32_t values[4]);
+/* DSA.cpp STKOP_Mastery delegates to the live CHARDESC/skill owner. */
+typedef int (*CSB_V1_CSBWinDSAGetMasteryFn)(
+    void *user, uint32_t champion_index, uint32_t skill_index,
+    uint32_t flags, uint32_t *out_mastery);
 
 typedef struct {
     uint32_t master_location;
@@ -343,6 +347,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
+    CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -602,6 +607,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
     CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
+    CSB_V1_CSBWinDSAGetMasteryFn get_mastery;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
