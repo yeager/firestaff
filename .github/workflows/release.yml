@@ -301,6 +301,12 @@ jobs:
       - name: Install dependencies
         run: |
           set -euo pipefail
+          if [[ "$FIRESTAFF_ARCH" == "arm64" ]]; then
+            for source_list in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+              [[ -f "$source_list" ]] || continue
+              sudo sed -i 's|http://ports.ubuntu.com/ubuntu-ports|https://ports.ubuntu.com/ubuntu-ports|g' "$source_list"
+            done
+          fi
           for attempt in 1 2 3 4 5; do
             if sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 update && \
               sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 install -y \
