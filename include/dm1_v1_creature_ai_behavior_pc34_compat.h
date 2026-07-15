@@ -557,7 +557,8 @@ int F0816_DM1_GROUP_ShouldUseProjectile_Compat(
 /*
  * F0817: Set direction for creature(s) in group.
  *
- * Handles half-square creature pair direction setting.
+ * Legacy direct-turn helper. It handles half-square pair setting but rejects
+ * opposite turns because the original F0205 requires the live RNG variant.
  * Source: GROUP.C F0205_GROUP_SetDirection, F0206_GROUP_SetDirectionGroup
  */
 int F0817_DM1_GROUP_SetGroupDirection_Compat(
@@ -568,8 +569,8 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     int creatureCount);
 
 /*
- * F0817a: Live-RNG form of GROUP.C F0205/F0206.  Unlike the legacy
- * single-creature adapter above, this consumes the original random gates:
+ * F0817a: Live-RNG form of GROUP.C F0205/F0206. It consumes the original
+ * random gates:
  * F0206 visits the group from its highest creature index down and gives
  * non-zero indices the M005_RANDOM(2) gate; F0205 consumes M006_RANDOM(65536)
  * only for an opposite-direction turn.  M10 uses this form when it persists

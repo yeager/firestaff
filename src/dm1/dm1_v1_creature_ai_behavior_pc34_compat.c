@@ -868,7 +868,6 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     int creatureCount)
 {
     int currentDir;
-    int newDir;
     int diff;
 
     if (!activeGroup || direction < 0 || direction > 3) return 0;
@@ -877,26 +876,21 @@ int F0817_DM1_GROUP_SetGroupDirection_Compat(
     currentDir = (activeGroup->directions >> (creatureIndex * 2)) & 0x03;
     diff = normalize_dir(currentDir - direction);
     if (diff == 2) {
-        /* Opposite — pick a random intermediate step
-         * Source: F0205 M017_NEXT((M006_RANDOM(65536) & 0x0002) + direction) */
-        /* ReDMCSB F0205: M017_NEXT((M006_RANDOM(65536) & 0x0002) + direction)
-         * Random bit selects CW or CCW. We use direction LSB as pseudo-random
-         * since this function doesn't receive RNG state. */
-        newDir = (direction & 1) ? next_dir(direction) : normalize_dir(direction - 1);
-    } else {
-        newDir = direction;
+        /* F0205 consumes M006_RANDOM(65536) for this branch. Do not invent
+         * a direction when the caller has not supplied the original RNG. */
+        return 0;
     }
 
     /* Update packed directions for this creature */
     activeGroup->directions &= ~(0x03 << (creatureIndex * 2));
-    activeGroup->directions |= (newDir & 0x03) << (creatureIndex * 2);
+    activeGroup->directions |= (direction & 0x03) << (creatureIndex * 2);
 
     /* Source: F0205 — half-square pairs get synchronized direction */
     if (creatureSize == DM1_SIZE_HALF_SQUARE && creatureCount > 0) {
         int pairIndex = creatureIndex ^ 1;
         if (pairIndex <= creatureCount) {
             activeGroup->directions &= ~(0x03 << (pairIndex * 2));
-            activeGroup->directions |= (newDir & 0x03) << (pairIndex * 2);
+            activeGroup->directions |= (direction & 0x03) << (pairIndex * 2);
         }
     }
 

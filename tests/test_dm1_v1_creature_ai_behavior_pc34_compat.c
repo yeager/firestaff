@@ -557,6 +557,25 @@ static void test_set_group_direction(void) {
     EXPECT_EQ(dir0, 1, "set_dir: creature 0 faces East");
 }
 
+static void test_set_group_direction_requires_live_rng_f0205(void) {
+    struct DM1ActiveGroup_Compat ag = make_default_ag();
+    struct RngState_Compat rng;
+
+    ag.directions = 0;
+    EXPECT_EQ(F0817_DM1_GROUP_SetGroupDirection_Compat(
+                  &ag, 2, 0, DM1_SIZE_QUARTER_SQUARE, 0), 0,
+              "F0205 legacy helper rejects an opposite turn without RNG");
+    EXPECT_EQ(ag.directions, 0,
+              "F0205 legacy helper leaves direction unmodified without RNG");
+
+    F0730_COMBAT_RngInit_Compat(&rng, 1u);
+    EXPECT_EQ(F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+                  &ag, 2, 0, DM1_SIZE_QUARTER_SQUARE, 0, &rng), 1,
+              "F0205 live helper consumes source RNG for an opposite turn");
+    EXPECT_EQ((ag.directions & 3) == 1 || (ag.directions & 3) == 3, 1,
+              "F0205 live helper chooses only a one-step intermediate turn");
+}
+
 /* =========================================================
  *  Test 12b: F0202 typed destination facts keep source order
  * ========================================================= */
@@ -1810,6 +1829,7 @@ int main(void) {
     test_vexirk_projectile_type_table();
     test_dispatch_projectile_payload();
     test_set_group_direction();
+    test_set_group_direction_requires_live_rng_f0205();
     test_group_movement_facts();
     test_first_movement_direction_f0203_test_state();
     test_archenemy_double_movement_f0204();
