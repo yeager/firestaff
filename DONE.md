@@ -16445,6 +16445,13 @@ Authentic capture proves byte-exact FIFO origin for LBA `4847..4851` / Track
 generation-7 FIFO window precedes game-owned `0x1f11xx..0x1f18xx` writes.
 That is ordering only, not a byte destination or record semantic.
 
+# ✅ 2026-07-15 Theron main-RAM CDB byte-consistency gate
+
+The authentic main-RAM `$e009` dispatch receipt now decodes each READ(6) CDB
+and rejects a mismatch between its LBA/count bytes and the emitted SCSI
+command. This binds the game-owned dispatch route to the observed raw record
+ranges without inventing a FIFO destination or record semantics.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
