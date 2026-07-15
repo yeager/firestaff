@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject vertical-door geometry: intermediate vertical
+  `DRAW_DOOR` states 1..3 now resolve `tlbRectnoDoorPosition + state` through
+  RAW4 `QUERY_BLIT_RECT` and M11 consumes the resulting source rectangle.
+  Horizontal split-panel openings remain blocked until both source blits are
+  carried together.
+
 - 2026-07-15 DM2 skproject closed-door geometry: D0-D3 `DRAW_DOOR` panels
   now carry their `tlbRectnoDoorPosition` RAW4 `QUERY_BLIT_RECT` destination,
   row/table hashes, and geometry hash through the GDAT M11 command. The

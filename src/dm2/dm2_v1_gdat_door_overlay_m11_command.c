@@ -216,17 +216,29 @@ static int door_panel_rect_number(int view_square, uint16_t *out_rect_number)
     }
 }
 
-static int bind_closed_door_panel_geometry(
+static int bind_door_panel_geometry(
     const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRender *door,
     DM2_V1_GdatDoorOverlayM11Command *command)
 {
+    uint16_t rect_number;
+
     const uint8_t *table;
     const uint8_t *row;
     size_t table_size = 0u;
     DM2_V1_DoorRawRect rect;
 
-    if (!loader || !door || !command || door->door_state != 4u) return 1;
-    if (!door_panel_rect_number(door->view_square, &command->rect_number)) return 0;
+    if (!loader || !door || !command) return 0;
+    if (door->door_state == 0u) return 1;
+    if (!door_panel_rect_number(door->view_square, &rect_number)) return 0;
+    /* SKWIN/SkWinCore.cpp::DRAW_DOOR adds the intermediate state (1..3)
+     * to tlbRectnoDoorPosition for vertical openings. Horizontal openings
+     * split the source bitmap across two different rects and stay no-draw
+     * until that dual-blit transaction is carried by M11. */
+    if (door->door_state < 4u) {
+        if (door->door_opening_dir == 0u) return 1;
+        rect_number = (uint16_t)(rect_number + door->door_state);
+    }
+    command->rect_number = rect_number;
     table = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
@@ -438,7 +450,7 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)field);
     if (kind == DM2_V1_GDAT_DOOR_PANEL) {
-        if (!bind_closed_door_panel_geometry(loader, door, command)) return 0;
+        if (!bind_door_panel_geometry(loader, door, command)) return 0;
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_DOORS, index,
                 DM2_V1_DOOR_GDAT_COLORKEY_FIELD, &command->color_key)) {
