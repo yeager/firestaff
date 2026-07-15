@@ -7600,6 +7600,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   palette, or broader transition interpretation; those require separate
   original execution evidence.
 
+- 🔧 2026-07-15 Theron startup synthetic-visual audit: verified Track 02
+  title, stage, Soul Room, and forcefield atlas routes now own startup
+  presentation exclusively. Firestaff plan fill/border/cursor rectangles are
+  suppressed on that route rather than painted over original pixels. Regions
+  without authenticated loader/CD bitmap evidence remain untouched; the
+  remaining gap is positive original evidence for the missing panel/cursor
+  art, not a generated replacement.
+
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and
   leaves its existing host page untouched when the receipt is incomplete.
