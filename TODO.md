@@ -7299,6 +7299,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     must still bind palette/transform state and an active DGN face.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
+    a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
+    its contiguous output address range, sequence interval, and byte witness.
+    The asset binder rechecks the two store PCs against the original `DM.BIN`
+    SH-2 receipt. The trace itself remains untrusted external evidence: it
+    does not prove PRS3 grammar or authorize decoding, palette use, VDP1
+    upload, or drawing.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).

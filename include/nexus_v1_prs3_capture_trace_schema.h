@@ -12,6 +12,7 @@
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V1"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V2_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V2"
 #define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V3_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V3"
+#define NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V4_MAGIC "NEXUS_PRS3_SH2_VDP1_TRACE_V4"
 #define NEXUS_V1_PRS3_VDP1_PRODUCER_ATTESTATION_MAGIC \
     "NEXUS_PRS3_V3_PRODUCER_ATTESTATION_V1"
 #define NEXUS_V1_PRS3_DM_BIN_MAX_MARKERS 16U
@@ -186,6 +187,18 @@ typedef struct {
     uint32_t palette_last_read_address;
     uint32_t palette_read_bytes;
     uint64_t palette_fnv1a64;
+    /* V4 capture claims. They remain external evidence until independent
+     * original-Saturn provenance is admitted. */
+    uint32_t output_index_copy_instruction_offset;
+    uint32_t output_store_instruction_offset;
+    uint64_t first_output_store_sequence;
+    uint64_t last_output_store_sequence;
+    uint32_t first_output_store_address;
+    uint32_t last_output_store_address;
+    uint32_t output_store_bytes;
+    uint64_t output_store_fnv1a64;
+    int output_store_predecessor_observed;
+    int complete_output_store_range_observed;
     int exact_vdp1_handoff_observed;
     int vdp1_texture_consumption_observed;
     int vdp1_command_consumption_observed;
@@ -473,7 +486,8 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
  * decoder-output range. V3 additionally requires raw VDP1 command and
  * palette read intervals/fingerprints from the original capture. All versions
  * remain evidence-only until an independently reviewed opcode and Saturn
- * palette grammar exists. */
+ * palette grammar exists. V4 additionally carries the complete output-store
+ * lane; binding rechecks its two PCs against the original DM.BIN receipt. */
 int nexus_v1_prs3_vdp1_capture_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3Vdp1CaptureReceipt *out_receipt);
@@ -486,7 +500,7 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
     const uint8_t *dm_bin, size_t dm_bin_size,
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt *out_receipt);
 
-/* Read a text V3 capture plus ordinary canonical MENU.BPK and DM.BIN files.
+/* Read a text V3/V4 capture plus ordinary canonical MENU.BPK and DM.BIN files.
  * The two source files must match the original Track 1 MD5 identities before
  * their bytes are handed to the schema binder. This importer is read-only and
  * deliberately never enables decoding, rendering, or fallback visuals. */
@@ -494,7 +508,7 @@ int nexus_v1_prs3_vdp1_capture_validate_files(
     const char *trace_path, const char *menu_bpk_path, const char *dm_bin_path,
     Nexus_V1_Prs3Vdp1CaptureFileReceipt *out_receipt);
 
-/* Admit a V3 candidate only when its three raw capture sidecars exactly
+/* Admit a V3/V4 candidate only when its three raw capture sidecars exactly
  * match the trace's lengths and FNV witnesses. The caller must separately
  * establish the emulator/original-Saturn provenance of the artifacts; this
  * routine does not infer it and never exposes sidecar bytes to runtime. */
