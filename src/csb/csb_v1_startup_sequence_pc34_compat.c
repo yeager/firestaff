@@ -3392,8 +3392,11 @@ static int csb_v1_startup_presentation_facts_are_source_coherent_pc34(
     if (opening_active) {
         return entrance_active && !facts->entrance_dismissed &&
                facts->opening_delay_ticks >= 0 &&
-               facts->opening_step >= 0 &&
-               facts->opening_step <= CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34;
+               (facts->opening_delay_ticks > 0
+                    ? facts->opening_step == 0
+                    : facts->opening_step >= 1 &&
+                          facts->opening_step <=
+                              CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34);
     }
     return !facts->entrance_dismissed || !entrance_active;
 }
