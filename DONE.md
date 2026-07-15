@@ -16834,6 +16834,17 @@ an opaque byte-flow receipt, not a dungeon, grid, level, object, bitmap,
 palette, or transition decoder. Verification: the focused raw-loader probe
 rejects a mutated source byte and a CDB/LBA mismatch.
 
+# ✅ 2026-07-15 Theron game-RAM initial-envelope correlation gate
+
+An admitted game-RAM payload byte can now be joined to the source-locked Hall
+of Records envelope only when its physical Track 02 sector and exact raw-sector
+offset fall inside the authenticated envelope. The join deliberately uses the
+IPL-derived physical `level_first_raw_sector`, not descriptor-relative record
+`0x0b52`, preventing INDEX 01/file-sector coordinate confusion. It rejects a
+pre-envelope byte and altered source media, and publishes no level grammar,
+dungeon, object, grid, bitmap, palette, or transition semantics. Verification:
+the focused US Track 02 raw-loader probe.
+
 # ✅ 2026-07-15 Theron LBA 4165 raw Track 02 binding
 
 Bound the four sectors requested by the game-owned window path, LBA

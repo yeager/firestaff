@@ -6463,6 +6463,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   promote dungeon, grid, level, object, bitmap, palette, or transition
   semantics. A positive original capture with this complete chain is still
   required before investigating the selected record grammar.
+  2026-07-15 update: a captured game-RAM byte can now be correlated to the
+  source-locked Hall of Records envelope only by its physical raw-sector and
+  exact raw-sector offset. The correlation deliberately compares against
+  `level_first_raw_sector`, rather than descriptor-relative record `0x0b52`,
+  so INDEX 01 coordinates cannot be mistaken for file-sector coordinates.
+  It proves envelope overlap only; a positive original capture still needs a
+  separate loader/consumer proof before any level, object, graphics, palette,
+  grid, or transition semantics may be investigated.
   2026-07-15 update: dispatch-bounded FIFO tracing proves dispatch 0 / SCSI
   generation 4 materializes bytes at physical `0x1f0256..0x1f0259`; later
   dispatches also show System Card workspace writes. Neither destination has

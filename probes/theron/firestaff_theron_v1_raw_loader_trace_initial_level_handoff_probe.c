@@ -120,7 +120,10 @@ int main(void)
     size_t projection_sector;
     uint8_t saved_tail_byte;
     uint8_t saved_game_payload_byte;
+    uint8_t saved_envelope_byte;
     Theron_V1RawLoaderTraceGamePayloadReceipt game_payload;
+    Theron_V1RawLoaderTraceGamePayloadReceipt envelope_payload;
+    Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt envelope_byte;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
 
@@ -196,6 +199,52 @@ int main(void)
         printf("FAIL: raw Track 02 did not retain the opaque post-level witness\n");
         return 1;
     }
+    memset(&envelope_payload, 0, sizeof(envelope_payload));
+    envelope_payload.valid = 1;
+    envelope_payload.variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(envelope_payload.track02_md5,
+             sizeof(envelope_payload.track02_md5), "%s", md5);
+    envelope_payload.raw_track02_record =
+        (uint32_t)boundary.level_first_raw_sector;
+    envelope_payload.source_offset = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+        (unsigned int)boundary.level_user_data_offset_in_record;
+    saved_envelope_byte = raw[boundary.level_first_raw_sector *
+        THERON_TRACK02_RAW_SECTOR_BYTES + envelope_payload.source_offset];
+    envelope_payload.source_byte = saved_envelope_byte;
+    envelope_payload.cdb_read6_verified = 1;
+    envelope_payload.fifo_to_game_ram_verified = 1;
+    envelope_payload.game_ram_consumer_verified = 1;
+    if (!theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
+            &envelope_payload, raw, raw_size, md5, &envelope_byte) ||
+        !envelope_byte.valid ||
+        envelope_byte.track02_record != boundary.track02_record ||
+        envelope_byte.raw_sector != boundary.level_first_raw_sector ||
+        envelope_byte.envelope_offset != 0u ||
+        !envelope_byte.game_payload_chain_verified ||
+        !envelope_byte.source_envelope_overlap_verified ||
+        envelope_byte.level_semantics_proven) {
+        free(raw);
+        printf("FAIL: game-RAM payload did not remain an opaque initial-envelope byte\n");
+        return 1;
+    }
+    --envelope_payload.source_offset;
+    if (theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
+            &envelope_payload, raw, raw_size, md5, &envelope_byte)) {
+        free(raw);
+        printf("FAIL: pre-envelope game-RAM byte reached the initial-envelope receipt\n");
+        return 1;
+    }
+    ++envelope_payload.source_offset;
+    raw[boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
+        envelope_payload.source_offset] ^= 0x01u;
+    if (theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
+            &envelope_payload, raw, raw_size, md5, &envelope_byte)) {
+        free(raw);
+        printf("FAIL: altered initial-envelope source byte reached the game-RAM receipt\n");
+        return 1;
+    }
+    raw[boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
+        envelope_payload.source_offset] = saved_envelope_byte;
     saved_tail_byte = raw[boundary.object_boundary_raw_offset];
     raw[boundary.object_boundary_raw_offset] ^= 0x01u;
     if (theron_v1_track02_capture_initial_level_object_boundary(
