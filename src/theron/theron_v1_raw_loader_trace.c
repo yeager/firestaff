@@ -507,6 +507,59 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payload,
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt *out)
+{
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    size_t envelope_first_offset;
+    size_t envelope_end_offset;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!payload || !track02_data || !track02_md5 || !out || !payload->valid ||
+        !payload->cdb_read6_verified || !payload->fifo_to_game_ram_verified ||
+        !payload->game_ram_consumer_verified || payload->payload_semantics_proven ||
+        strcmp(payload->track02_md5, track02_md5) != 0 ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        theron_v1_track02_capture_initial_level_object_boundary(
+            track02_data, track02_size, track02_md5, &boundary) !=
+            THERON_TRACK02_SIGNAL_OK || !boundary.valid ||
+        boundary.object_table_parsed || boundary.object_table_semantics_proven ||
+        !boundary.promotion_blocked || payload->variant != boundary.variant ||
+        payload->raw_track02_record != boundary.level_first_raw_sector) {
+        return 0;
+    }
+
+    envelope_first_offset = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+        boundary.level_user_data_offset_in_record;
+    if (boundary.level_byte_count > SIZE_MAX - envelope_first_offset) return 0;
+    envelope_end_offset = envelope_first_offset + boundary.level_byte_count;
+    if (payload->source_offset < envelope_first_offset ||
+        payload->source_offset >= envelope_end_offset ||
+        payload->raw_track02_record >=
+            track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        track02_data[(size_t)payload->raw_track02_record *
+                         THERON_TRACK02_RAW_SECTOR_BYTES +
+                     payload->source_offset] != payload->source_byte) {
+        return 0;
+    }
+
+    out->valid = 1;
+    out->variant = boundary.variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->track02_record = boundary.track02_record;
+    out->raw_sector = boundary.level_first_raw_sector;
+    out->raw_sector_offset = payload->source_offset;
+    out->envelope_offset = payload->source_offset - envelope_first_offset;
+    out->source_byte = payload->source_byte;
+    out->game_payload_chain_verified = 1;
+    out->source_envelope_overlap_verified = 1;
+    out->level_semantics_proven = 0;
+    return 1;
+}
+
 static uint32_t tqr_trace_fnv1a_user_data_range(const uint8_t *track02_data,
                                                  size_t first_raw_sector,
                                                  size_t sector_count)

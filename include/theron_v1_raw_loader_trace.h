@@ -217,6 +217,24 @@ typedef struct {
     int payload_semantics_proven;
 } Theron_V1RawLoaderTraceGamePayloadReceipt;
 
+/* A byte-level join between an authenticated game-RAM payload receipt and the
+ * one source-locked initial envelope. It proves only that a captured byte
+ * lies within the already-bounded raw-media envelope; it does not decode that
+ * envelope or promote dungeon, object, graphics, palette, or grid semantics. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t track02_record;
+    size_t raw_sector;
+    size_t raw_sector_offset;
+    size_t envelope_offset;
+    uint8_t source_byte;
+    int game_payload_chain_verified;
+    int source_envelope_overlap_verified;
+    int level_semantics_proven;
+} Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt;
+
 /* Narrow composition of two independently source-locked facts: an ordered,
  * complete-sector later $e009 receipt and the one authenticated initial-level
  * envelope. It accepts only an observed one-sector read of record 0x0b52,
@@ -358,6 +376,17 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceGamePayloadReceipt *out);
+
+/* Correlates an admitted game-RAM payload byte with the source-locked Hall of
+ * Records initial envelope. It compares physical raw-sector coordinates, not
+ * descriptor-relative record numbers, so Track 02 INDEX 01 offsets cannot be
+ * silently confused with file-sector offsets. */
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payload,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt *out);
 
 /* Promotes the existing source-locked initial-level loader route only after
  * a coalesced original loader/CD receipt selects its exact one-sector record.
