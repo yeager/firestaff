@@ -53,6 +53,21 @@ typedef enum {
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE = 6
 } Nexus_V1_MenuBpkRendererHandoffStatus;
 
+/* This is intentionally a startup diagnostic, not a decoder capability.
+ * MENU.BPK is permitted to reach Saturn presentation only after each of these
+ * independently evidenced steps is available.  The retail PRS3 route remains
+ * blocked at AUTHENTIC_DECODER until an original-Saturn execution proves its
+ * command grammar and output relation. */
+typedef enum {
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING = 0,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED = 1,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_INVALID = 2,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_FRAME_INCOMPLETE = 3,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER = 4,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION = 5,
+    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED = 6
+} Nexus_V1_MenuBpkPrs3PrerequisiteStatus;
+
 /* Corpus-wide, hash-bound owner topology for one LEV. Structure1F rows are
  * joined through their decoded Structure1B owner and Structure1A model row to
  * the raw Structure3 model/face selectors. This establishes source ownership
@@ -75,6 +90,7 @@ typedef struct {
 
 typedef struct {
     Nexus_V1_MenuBpkRendererHandoffStatus status;
+    Nexus_V1_MenuBpkPrs3PrerequisiteStatus prs3_prerequisite_status;
     Nexus_V1_BpkRuntimeDecodeRoute decode_route;
     int attempted;
     int receipt_valid;
@@ -2326,6 +2342,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt);
 const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     Nexus_V1_MenuBpkRendererHandoffStatus status);
+const char *nexus_v1_menu_bpk_prs3_prerequisite_status_name(
+    Nexus_V1_MenuBpkPrs3PrerequisiteStatus status);
 int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);

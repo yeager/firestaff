@@ -7501,6 +7501,33 @@ nexus_v1_menu_bpk_handoff_status_from_decode_route(
     }
 }
 
+static Nexus_V1_MenuBpkPrs3PrerequisiteStatus
+nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(
+    const Nexus_V1_MenuBpkRendererHandoffReceipt *handoff) {
+    if (!handoff) {
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING;
+    }
+    if (!handoff->canonical_source_hash_verified) {
+        return handoff->status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING
+            ? NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING
+            : NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED;
+    }
+    switch (handoff->status) {
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED:
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED;
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED:
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_FRAME_INCOMPLETE;
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3:
+        /* A bounded PRS3 frame is not decoded merely because its container
+         * parsed. Original SH-2 opcode/output evidence comes first. */
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER;
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES:
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID:
+    default:
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_INVALID;
+    }
+}
+
 int nexus_v1_menu_bpk_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt) {
@@ -7509,6 +7536,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->status = NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING;
+    out_receipt->prs3_prerequisite_status =
+        NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING;
     out_receipt->decode_route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
     /* MENU.BPK absence is never permission for a replacement menu surface. */
     out_receipt->blocks_real_menu_surface_render = 1;
@@ -7528,6 +7557,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
             out_receipt->status =
                 NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE;
         }
+        out_receipt->prs3_prerequisite_status =
+            nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
         return 0;
     }
     if (engine->menu_bpk_upload_receipt_valid &&
@@ -7542,6 +7573,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
             engine->menu_bpk_upload_receipt.palette_trailer;
     }
     if (!out_receipt->receipt_valid) {
+        out_receipt->prs3_prerequisite_status =
+            nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
         return 0;
     }
 
@@ -7575,6 +7608,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
     out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->prs3_prerequisite_status =
+        nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
     return 0;
 }
 
@@ -7593,6 +7628,27 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE:
         return "blocked-source";
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID: return "invalid";
+    default: return "unknown";
+    }
+}
+
+const char *nexus_v1_menu_bpk_prs3_prerequisite_status_name(
+    Nexus_V1_MenuBpkPrs3PrerequisiteStatus status) {
+    switch (status) {
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING:
+        return "archive-missing";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED:
+        return "source-unverified";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_INVALID:
+        return "archive-invalid";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_FRAME_INCOMPLETE:
+        return "frame-incomplete";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER:
+        return "authentic-decoder-required";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION:
+        return "saturn-presentation-required";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED:
+        return "ready-stored";
     default: return "unknown";
     }
 }
