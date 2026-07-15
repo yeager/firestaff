@@ -4003,6 +4003,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     const int movement_floor_y = s->gdat_scene_movement_active ? 3 : 0;
     const int ceiling_mirror = dm2_v1_scene_plane_flip_from_position(s, 0x20u);
     const int floor_mirror = dm2_v1_scene_plane_flip_from_position(s, 1u);
+    uint8_t ceiling_trim = 0u;
+    uint8_t floor_trim = 0u;
 
     s->last_floor_ceiling_material_required_mask = 0u;
     s->last_floor_ceiling_material_consumed_mask = 0u;
@@ -4084,6 +4086,24 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
+            }
+            /* c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT: a fully blocked D1
+             * cluster overrides D2 and submits GRAPHICSSET 0x70; otherwise a
+             * blocked D2 cluster submits 0x71. TRIM_BLIT_RECT consumes the
+             * low byte before ceiling and high byte before floor. */
+            if ((s->squares[DM2_SQ_D1L].flags & DM2_SQF_HAS_WALL) &&
+                (s->squares[DM2_SQ_D1C].flags & DM2_SQF_HAS_WALL) &&
+                (s->squares[DM2_SQ_D1R].flags & DM2_SQF_HAS_WALL)) {
+                /* QUERY_GDAT_ENTRY_DATA_INDEX yields source zero when the
+                 * optional trim word is absent; DISPLAY_VIEWPORT passes that
+                 * zero straight to TRIM_BLIT_RECT. */
+                ceiling_trim = (uint8_t)plan->trim_wall_d1;
+                floor_trim = (uint8_t)(plan->trim_wall_d1 >> 8);
+            } else if ((s->squares[DM2_SQ_D2L].flags & DM2_SQF_HAS_WALL) &&
+                       (s->squares[DM2_SQ_D2C].flags & DM2_SQF_HAS_WALL) &&
+                       (s->squares[DM2_SQ_D2R].flags & DM2_SQF_HAS_WALL)) {
+                ceiling_trim = (uint8_t)plan->trim_wall_d2;
+                floor_trim = (uint8_t)(plan->trim_wall_d2 >> 8);
             }
             if (floor_rect->rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
                 ceiling_rect->rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
@@ -4199,6 +4219,12 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         ceiling_w_dst = rect->width;
         ceiling_h = rect->height;
     }
+    if (ceiling_trim >= ceiling_h) {
+        dm2_v1_block_source_material(s,
+            DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+        return;
+    }
+    ceiling_h -= ceiling_trim;
     if (ceiling_asset) {
         dm2_v1_blit_tiled_material_bitmap(s,
                                  vp,
@@ -4240,6 +4266,13 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
         floor_w_dst = rect->width;
         floor_h = rect->height;
     }
+    if (floor_trim >= floor_h) {
+        dm2_v1_block_source_material(s,
+            DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+        return;
+    }
+    floor_y += floor_trim;
+    floor_h -= floor_trim;
     /* QUERY_GDAT_IMAGE_LOCALPAL belongs to the decoded IMG3 being drawn.
      * Fetch the floor only after the ceiling blit: the viewport intentionally
      * keeps one active palette binding, so prefetching both would present the

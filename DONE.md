@@ -8,6 +8,12 @@
   Firestaff session. Focused `dm2_v1_save_load` coverage restores the chosen
   original raw candidate and proves a stale selected file is rejected without
   mutating runtime despite a valid Firestaff save in the same corpus.
+- ✅ 2026-07-15 DM2 SKProject floor/ceiling trim composition: source-required
+  M11 frames now consume `DM2_DISPLAY_VIEWPORT`'s real GRAPHICSSET 0x70/0x71
+  trim words when the D1 or D2 three-wall cluster blocks the view. The low
+  byte trims ceiling and the high byte trims floor exactly in source order;
+  an absent optional word remains the source's zero/no-trim result. Verification:
+  DM2 scene/viewport syntax gate plus isolated Ninja boot/GDAT/save targets.
 
 - ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
   legacy DB0-door wall-button material now resolves the real WALL_GFX
