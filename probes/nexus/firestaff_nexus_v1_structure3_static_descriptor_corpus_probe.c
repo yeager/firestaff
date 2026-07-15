@@ -36,6 +36,7 @@ static uint32_t next_anchor(const Nexus_V1_Level *level, uint32_t anchor) {
 }
 int main(int argc, char **argv) {
     uint64_t corpus = UINT64_C(1469598103934665603); int static_faces = 0, levels = 0, level;
+    uint64_t raw_window_bytes = 0U;
     if (argc != 2) { fprintf(stderr, "usage: %s NEXUS_DATA_DIRECTORY\n", argv[0]); return 2; }
     for (level = 0; level < 16; ++level) {
         char name[16], path[1024]; const char *md5; uint8_t *bytes; int size, entry; Nexus_V1_Level data;
@@ -43,6 +44,8 @@ int main(int argc, char **argv) {
         if (snprintf(path, sizeof(path), "%s/%s", argv[1], name) >= (int)sizeof(path) || !md5 || !asset_file_matches_md5(path, md5) || !(bytes = read_file(path, &size))) goto fail;
         memset(&data, 0, sizeof(data));
         if (nexus_v1_level_load(&data, bytes, size, level) || !data.structure3_face_materials.valid || !data.structure3_face_materials.selector_bindings_complete || !data.structure2_texture_table_valid || !data.structure2_payload.descriptor_offset_envelope_valid) { free(bytes); goto fail; }
+        uint32_t structure2_base = (uint32_t)be16(bytes + 0x14U) * 2048U;
+        if (structure2_base >= (uint32_t)size) { free(bytes); goto fail; }
         corpus = hbyte(corpus, (uint8_t)level);
         for (entry = 0; entry < data.structure3_directory.entry_count; ++entry) {
             uint32_t off = be32(bytes + data.structure3_payload.byte_offset + 4 + entry * 4);
@@ -62,15 +65,23 @@ int main(int argc, char **argv) {
                     uint32_t image_next = next_anchor(&data, d->image_relative_offset);
                     uint32_t palette_next = d->palette_relative_offset ? next_anchor(&data, d->palette_relative_offset) : 0U;
                     if (image_next <= d->image_relative_offset || (d->palette_relative_offset && palette_next <= d->palette_relative_offset)) { free(bytes); goto fail; }
+                    if (structure2_base + image_next > (uint32_t)size ||
+                        (d->palette_relative_offset && structure2_base + palette_next > (uint32_t)size)) { free(bytes); goto fail; }
                     corpus = hu32(corpus, d->image_relative_offset); corpus = hu32(corpus, image_next);
                     corpus = hu32(corpus, d->palette_relative_offset); corpus = hu32(corpus, palette_next);
+                    for (uint32_t i = d->image_relative_offset; i < image_next; ++i) corpus = hbyte(corpus, bytes[structure2_base + i]);
+                    raw_window_bytes += image_next - d->image_relative_offset;
+                    if (d->palette_relative_offset) {
+                        for (uint32_t i = d->palette_relative_offset; i < palette_next; ++i) corpus = hbyte(corpus, bytes[structure2_base + i]);
+                        raw_window_bytes += palette_next - d->palette_relative_offset;
+                    }
                 }
                 ++static_faces;
             }
         }
         free(bytes); ++levels;
     }
-    printf("verified_levels=%d\nstatic_face_descriptor_bindings=%d\n", levels, static_faces);
+    printf("verified_levels=%d\nstatic_face_descriptor_bindings=%d\nraw_capture_window_bytes=%llu\n", levels, static_faces, (unsigned long long)raw_window_bytes);
     printf("structure3_static_descriptor_corpus_fnv1a64=%016llx\n", (unsigned long long)corpus);
     printf("payload_decoder_proven=0\nrenderer_authorized=0\n"); return 0;
 fail: fprintf(stderr, "canonical Structure3/Structure2 descriptor corpus unavailable\n"); return 1;

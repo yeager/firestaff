@@ -55,6 +55,10 @@
   corpus now also locks each descriptor's next raw anchor boundary for capture
   acquisition. The intervals are not decoded image or palette sizes.
 
+- 2026-07-15 Nexus static raw-window witness: the capture-window corpus hash
+  now includes the exact original bytes in every bounded candidate interval.
+  This remains evidence-only, with no payload codec claim.
+
 
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
