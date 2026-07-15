@@ -308,6 +308,43 @@ static void viewport_stage_structure1c_source_scene(
     vp->last_dgn_render_receipt.structure1c_source_scene = scene;
 }
 
+static int viewport_consume_structure2_payload_anchor(
+    void *context, const Nexus_V1_DgnStructure2PayloadAnchorPacket *packet)
+{
+    Nexus_Viewport *vp = (Nexus_Viewport *)context;
+
+    if (!vp || !packet || !packet->valid || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render ||
+        packet->candidate_byte_count == 0U ||
+        packet->next_anchor_offset <= packet->payload_anchor_offset) return -1;
+    if (!vp->structure2_payload_anchor_packet.valid)
+        vp->structure2_payload_anchor_packet = *packet;
+    return 0;
+}
+
+static void viewport_stage_structure2_payload_anchors(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt scene;
+
+    if (!vp) return;
+    memset(&vp->structure2_payload_anchor_packet, 0,
+           sizeof(vp->structure2_payload_anchor_packet));
+    memset(&scene, 0, sizeof(scene));
+    if (!engine || nexus_v1_current_level_visit_structure2_payload_anchors(
+                       engine, viewport_consume_structure2_payload_anchor, vp,
+                       &scene) != 1 || !scene.valid ||
+        scene.descriptor_count <= 0 || scene.anchor_count <= 0 ||
+        scene.consumed_anchor_count != scene.anchor_count ||
+        scene.image_anchor_count != scene.descriptor_count ||
+        !vp->structure2_payload_anchor_packet.valid || !scene.no_draw_only ||
+        scene.fallback_visuals_permitted || !scene.blocks_real_dgn_mesh_render)
+        return;
+    vp->last_dgn_render_receipt.structure2_payload_anchor_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure2_payload_anchor_scene = scene;
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -371,6 +408,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_structure3_complete_source_scene(vp, engine);
         viewport_stage_structure1f_source_scene(vp, engine);
         viewport_stage_structure1c_source_scene(vp, engine);
+        viewport_stage_structure2_payload_anchors(vp, engine);
         /* Structure1B/MNS supplies an older host material path, but it has
          * no proven mapping to this complete source-owned Structure3 scene.
          * Do not let it rasterize a different interpretation of the same

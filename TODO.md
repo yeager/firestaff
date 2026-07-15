@@ -6360,6 +6360,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     rendering remain explicitly unproved and blocked.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
+    image anchor and each nonzero palette anchor now reaches the hash-bound
+    viewport boundary with the next observed anchor (or bounded payload end).
+    These intervals are capture framing only, not image lengths, palette
+    lengths, texels, colours, encoding claims, VDP1 state, decoder input, or
+    draw authorization. An authentic Saturn trace must still establish every
+    one of those semantics independently.
   - 2026-07-15 Structure1C source-route update: every addressable bounded
     four-byte Structure1C record now reaches the active hash-bound viewport
     boundary with its Structure1B reference occurrence retained. The bytes

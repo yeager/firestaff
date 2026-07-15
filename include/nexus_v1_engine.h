@@ -757,6 +757,46 @@ typedef struct {
 typedef int (*Nexus_V1_DgnStructure1CSourceConsumer)(
     void *context, const Nexus_V1_DgnStructure1CSourcePacket *packet);
 
+/* One descriptor-owned Structure2 payload anchor. The interval ends at the
+ * next observed descriptor anchor (or payload end) only as a bounded capture
+ * candidate; it is not an image span, palette span, or codec claim. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int descriptor_index;
+    int palette_anchor;
+    uint32_t payload_anchor_offset;
+    uint32_t next_anchor_offset;
+    uint32_t candidate_byte_count;
+    Nexus_V1_DgnStructure2Texture descriptor;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure2PayloadAnchorPacket;
+
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int descriptor_count;
+    int anchor_count;
+    int consumed_anchor_count;
+    int image_anchor_count;
+    int palette_anchor_count;
+    int unique_anchor_count;
+    int reused_anchor_count;
+    int candidate_interval_byte_count;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt;
+
+typedef int (*Nexus_V1_DgnStructure2PayloadAnchorConsumer)(
+    void *context, const Nexus_V1_DgnStructure2PayloadAnchorPacket *packet);
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1515,6 +1555,13 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure1CSourceConsumer consumer, void *context,
     Nexus_V1_DgnStructure1CSourceSceneReceipt *out_receipt);
+/* Traverse descriptor-owned Structure2 payload anchors from the active
+ * canonical LEV. Candidate intervals are source bounds only, never decoded
+ * texture or palette spans. */
+int nexus_v1_current_level_visit_structure2_payload_anchors(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2PayloadAnchorConsumer consumer, void *context,
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt *out_receipt);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

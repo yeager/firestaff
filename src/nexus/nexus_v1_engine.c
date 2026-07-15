@@ -3117,6 +3117,143 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
     return out_receipt->valid;
 }
 
+int nexus_v1_current_level_visit_structure2_payload_anchors(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure2PayloadAnchorConsumer consumer, void *context,
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnActiveStructure2DescriptorReceipt descriptor_receipt;
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt receipt;
+    const Nexus_V1_Level *level;
+    uint32_t anchors[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES * 2];
+    uint32_t opaque_start, opaque_end;
+    int anchor_count = 0;
+    int packet_ordinal = 0;
+    int descriptor_index, index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || nexus_v1_current_level_structure2_descriptor_receipt(
+                       engine, &descriptor_receipt) != 1 ||
+        !descriptor_receipt.valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    level = &engine->current_level;
+    if (level->structure2_texture_count <= 0 ||
+        level->structure2_texture_count > NEXUS_DGN_MAX_STRUCTURE2_TEXTURES ||
+        level->structure2_payload.opaque_payload_offset < 0 ||
+        level->structure2_payload.opaque_payload_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    opaque_start = (uint32_t)level->structure2_payload.opaque_payload_offset;
+    if ((uint32_t)level->structure2_payload.opaque_payload_size >
+        UINT32_MAX - opaque_start) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    opaque_end = opaque_start +
+        (uint32_t)level->structure2_payload.opaque_payload_size;
+    if (opaque_end <= opaque_start) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (descriptor_index = 0;
+         descriptor_index < level->structure2_texture_count;
+         ++descriptor_index) {
+        const Nexus_V1_DgnStructure2Texture *descriptor =
+            &level->structure2_textures[descriptor_index];
+
+        if (descriptor->width == 0U || descriptor->height == 0U ||
+            descriptor->image_relative_offset < opaque_start ||
+            descriptor->image_relative_offset >= opaque_end) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        anchors[anchor_count++] = descriptor->image_relative_offset;
+        if (descriptor->palette_relative_offset != 0U) {
+            if (descriptor->palette_relative_offset < opaque_start ||
+                descriptor->palette_relative_offset >= opaque_end) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            anchors[anchor_count++] = descriptor->palette_relative_offset;
+        }
+    }
+    receipt.level_index = engine->game.current_level;
+    receipt.source_byte_count = engine->current_level_dgn_size;
+    receipt.source_bytes_fnv1a64 = descriptor_receipt.source_bytes_fnv1a64;
+    receipt.descriptor_count = level->structure2_texture_count;
+    receipt.anchor_count = anchor_count;
+    for (descriptor_index = 0;
+         descriptor_index < level->structure2_texture_count;
+         ++descriptor_index) {
+        const Nexus_V1_DgnStructure2Texture *descriptor =
+            &level->structure2_textures[descriptor_index];
+        int lane;
+
+        for (lane = 0; lane < 2; ++lane) {
+            Nexus_V1_DgnStructure2PayloadAnchorPacket packet;
+            uint32_t anchor = lane == 0 ? descriptor->image_relative_offset :
+                descriptor->palette_relative_offset;
+            uint32_t next_anchor = opaque_end;
+            int unique = 1;
+
+            if (lane == 1 && anchor == 0U) continue;
+            for (index = 0; index < anchor_count; ++index) {
+                if (anchors[index] > anchor && anchors[index] < next_anchor)
+                    next_anchor = anchors[index];
+                if (anchors[index] == anchor && index < packet_ordinal)
+                    unique = 0;
+            }
+            if (next_anchor <= anchor ||
+                next_anchor - anchor > (uint32_t)INT_MAX ||
+                receipt.candidate_interval_byte_count > INT_MAX -
+                    (int)(next_anchor - anchor)) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            memset(&packet, 0, sizeof(packet));
+            packet.valid = 1;
+            packet.level_index = receipt.level_index;
+            packet.source_byte_count = receipt.source_byte_count;
+            packet.source_bytes_fnv1a64 = receipt.source_bytes_fnv1a64;
+            packet.descriptor_index = descriptor_index;
+            packet.palette_anchor = lane;
+            packet.payload_anchor_offset = anchor;
+            packet.next_anchor_offset = next_anchor;
+            packet.candidate_byte_count = next_anchor - anchor;
+            packet.descriptor = *descriptor;
+            packet.no_draw_only = 1;
+            packet.blocks_real_dgn_mesh_render = 1;
+            if (consumer && consumer(context, &packet) != 0) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.consumed_anchor_count;
+            if (lane == 0) ++receipt.image_anchor_count;
+            else ++receipt.palette_anchor_count;
+            if (unique) ++receipt.unique_anchor_count;
+            else ++receipt.reused_anchor_count;
+            receipt.candidate_interval_byte_count +=
+                (int)packet.candidate_byte_count;
+            ++packet_ordinal;
+        }
+    }
+    receipt.valid = receipt.consumed_anchor_count == receipt.anchor_count &&
+        receipt.image_anchor_count == receipt.descriptor_count &&
+        receipt.image_anchor_count + receipt.palette_anchor_count ==
+            receipt.anchor_count &&
+        receipt.unique_anchor_count + receipt.reused_anchor_count ==
+            receipt.anchor_count;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
+}
+
 int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
