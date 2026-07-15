@@ -6646,3 +6646,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     exposed to renderer or viewport receipts. Partial `vdp1_state` lanes stay
     opaque and cannot establish this relation. Pixel order, colour expansion,
     palette/CLUT state, and draw semantics remain unproved and blocked.
+  - 2026-07-15 coordinate-framing update: authenticated commands now retain
+    the documented signed `CMDXA`--`CMDYD` and `CMDGRDA` words through the
+    active renderer/viewport receipts. A real Saturn trace must still bind
+    those words to Structure3 transforms, camera, clipping, Gouraud data, and
+    command ordering before any geometry can draw.

@@ -2512,6 +2512,8 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
         receipt.command.texture_source_range_valid;
     receipt.texture_span_size_matches_command = receipt.texture_format_framed &&
         packet.texture_span_size == (int)receipt.command.texture_byte_count;
+    receipt.coordinate_words_framed = receipt.texture_primitive_observed &&
+        receipt.command.coordinate_words_framed;
     /* Command-table framing never proves payload byte order, VDP1 colour
      * interpretation, palette/CLUT relation, or host draw behavior. */
     receipt.valid = receipt.command_format_parsed;
@@ -2625,6 +2627,9 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
         out_receipt->vdp1_command_format_framed &&
         out_receipt->vdp1_command_framing.texture_format_framed &&
         out_receipt->vdp1_command_framing.texture_span_size_matches_command;
+    out_receipt->vdp1_coordinate_words_framed =
+        out_receipt->vdp1_command_format_framed &&
+        out_receipt->vdp1_command_framing.coordinate_words_framed;
     out_receipt->vdp1_vram_window_bound =
         nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
             engine, &out_receipt->vdp1_vram_window) == 1;

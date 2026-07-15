@@ -6286,6 +6286,15 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.draw_mode = rl16(command + 4);
     parsed.colour_control = rl16(command + 6);
     parsed.texture_source_word = rl16(command + 8);
+    parsed.xa = (int16_t)rl16(command + 12);
+    parsed.ya = (int16_t)rl16(command + 14);
+    parsed.xb = (int16_t)rl16(command + 16);
+    parsed.yb = (int16_t)rl16(command + 18);
+    parsed.xc = (int16_t)rl16(command + 20);
+    parsed.yc = (int16_t)rl16(command + 22);
+    parsed.xd = (int16_t)rl16(command + 24);
+    parsed.yd = (int16_t)rl16(command + 26);
+    parsed.gouraud_table_word = rl16(command + 28);
     parsed.command_type = (uint8_t)(parsed.control & 0x000fU);
     parsed.colour_mode = (uint8_t)((parsed.draw_mode >> 3) & 0x0007U);
     parsed.texture_width = (uint16_t)((rl16(command + 10) & 0x003fU) * 8U);
@@ -6316,6 +6325,7 @@ int nexus_v1_vdp1_texture_command_parse(
     }
     parsed.four_bpp_colour_bank = parsed.texture_command &&
         parsed.colour_mode == 0U;
+    parsed.coordinate_words_framed = parsed.texture_command;
     *out_command = parsed;
     return 0;
 }
