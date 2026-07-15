@@ -110,8 +110,9 @@ if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x 
    ! grep -Fq 'pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceDataWrite(address, (wmpr << 13) | (address & 0x1FFF), V);' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronPCECDFifoReceiptCapacity = 65536' "$generation7_receipt_patch_file" ||
-   ! grep -Fq 'TheronSCSITraceCurrentReadGeneration() == 7' "$generation7_receipt_patch_file"; then
-    printf 'FAIL: generation-7 FIFO receipt patch no longer preserves an untruncated CPU-write binding\n' >&2
+   ! grep -Fq 'TheronSCSITraceCurrentReadGeneration() >= 7' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'TheronSCSITraceCurrentReadGeneration() <= 10' "$generation7_receipt_patch_file"; then
+    printf 'FAIL: later FIFO receipt patch no longer preserves an untruncated CPU-write binding\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||

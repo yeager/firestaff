@@ -88,11 +88,12 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
  
  static void TheronTracePCECDState(const char *format, ...)
  {
-@@ -603,6 +664,9 @@
+@@ -603,6 +664,10 @@
       TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u\\n",
                             TheronPCECDDataReadPC, ret,
                             Mednafen::TheronSCSITraceCurrentReadGeneration());
-+     if(Mednafen::TheronSCSITraceCurrentReadGeneration() == 7)
++     if(Mednafen::TheronSCSITraceCurrentReadGeneration() >= 7 &&
++        Mednafen::TheronSCSITraceCurrentReadGeneration() <= 10)
 +      TheronPCECDQueueFifoReceipt(TheronPCECDDataReadPC, ret,
 +                                  Mednafen::TheronSCSITraceCurrentReadGeneration());
      }
