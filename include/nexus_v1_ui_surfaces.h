@@ -28,9 +28,8 @@
  *   Saturn SDK         — VDP1 bitmap surfaces, VDP2 background layers
  *   docs/NEXUS_FILE_CLASSIFICATION.md  — file sizes / formats
  *
- * Deterministic fallback:
- *   Any surface that fails to load produces a deterministic solid-color
- *   placeholder from the corresponding palette range, no crash. */
+ * Missing, truncated, or unsupported media remains unavailable. No solid
+ * placeholder, generated surface, or substitute palette is permitted. */
 
 /* ── Surface descriptor ───────────────────────────────────────── */
 #define NEXUS_UI_MAX_SURFACES 8

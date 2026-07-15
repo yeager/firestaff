@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Nexus UI synthetic-fallback audit: the public UI contract now
+  matches the implementation: missing or unsupported title/menu surfaces stay
+  unavailable. Verified TITLE.CG and WARNING.BIN routes continue consuming
+  original bytes; PRS3 remains blocked without decoder evidence.
+
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original
   expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the
