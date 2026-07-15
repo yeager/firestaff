@@ -1154,6 +1154,25 @@ int dm2_v1_original_raw_sksave_actuator_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_creature_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawCreatureReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawCreatureReceipt candidate;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 4, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 16u ||
+        candidate.record.record_offset > buf_size - 16u) return 0;
+    /* SKWIN/DME.h Creature: possession w2 stays opaque. */
+    candidate.creature_type = buf[candidate.record.record_offset + 4u];
+    candidate.hp1 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 6u);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)
