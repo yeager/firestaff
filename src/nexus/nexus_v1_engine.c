@@ -3973,6 +3973,109 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     return receipt.valid ? 1 : 0;
 }
 
+int nexus_v1_current_level_visit_structure1f_source_scene(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure1FSourceConsumer consumer, void *context,
+    Nexus_V1_DgnStructure1FSourceSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FSourceSceneReceipt receipt;
+    Nexus_V1_DgnStructure1FSpatialReceipt spatial;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&spatial, 0, sizeof(spatial));
+    memset(&relation, 0, sizeof(relation));
+    if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size) ||
+        nexus_v1_level_structure1f_spatial_receipt(&engine->current_level,
+                                                   &spatial) != 0 ||
+        !spatial.valid ||
+        nexus_v1_level_structure1a_relation_receipt(&engine->current_level,
+                                                    &relation) != 0 ||
+        (spatial.structure1a_bound_entry_count > 0 && !relation.complete)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = engine->game.current_level;
+    receipt.source_byte_count = engine->current_level_dgn_size;
+    receipt.source_bytes_fnv1a64 = source->loaded_dgn_fnv1a64;
+    receipt.entry_count = engine->current_level.structure1f_entry_count;
+    for (index = 0; index < receipt.entry_count; ++index) {
+        const Nexus_V1_DgnStructure1FEntry *entry =
+            &engine->current_level.structure1f_entries[index];
+        Nexus_V1_DgnStructure1FSourcePacket packet;
+        int direct = entry->family <= NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS;
+        int owned = entry->family >= NEXUS_V1_DGN_STRUCTURE1F_ALCOVES;
+
+        if ((!direct && !owned) || (direct && owned) ||
+            (owned && !entry->structure1a_relation_valid)) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        switch (entry->family) {
+        case NEXUS_V1_DGN_STRUCTURE1F_ITEMS: ++receipt.item_entry_count; break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS:
+            ++receipt.floor_decoration_entry_count; break;
+        case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
+            ++receipt.floor_sensor_entry_count; break;
+        case NEXUS_V1_DGN_STRUCTURE1F_ALCOVES: ++receipt.alcove_entry_count; break;
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_DECORATIONS:
+            ++receipt.wall_decoration_entry_count; break;
+        case NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS:
+            ++receipt.wall_sensor_entry_count; break;
+        default:
+            *out_receipt = receipt;
+            return 0;
+        }
+        memset(&packet, 0, sizeof(packet));
+        packet.valid = 1;
+        packet.level_index = receipt.level_index;
+        packet.source_byte_count = receipt.source_byte_count;
+        packet.source_bytes_fnv1a64 = receipt.source_bytes_fnv1a64;
+        packet.entry_index = index;
+        packet.entry = *entry;
+        packet.direct_coordinate_source = direct;
+        packet.structure1a_owner_source = owned;
+        packet.no_draw_only = 1;
+        packet.blocks_real_dgn_mesh_render = 1;
+        if (consumer && consumer(context, &packet) != 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        ++receipt.consumed_entry_count;
+        if (direct) ++receipt.direct_coordinate_entry_count;
+        if (owned) ++receipt.structure1a_owner_entry_count;
+    }
+    receipt.family_coverage_complete =
+        receipt.entry_count == receipt.consumed_entry_count &&
+        receipt.direct_coordinate_entry_count == spatial.direct_coordinate_entry_count &&
+        receipt.structure1a_owner_entry_count == spatial.structure1a_bound_entry_count &&
+        receipt.item_entry_count == spatial.item_entry_count &&
+        receipt.floor_decoration_entry_count == spatial.floor_decoration_entry_count &&
+        receipt.floor_sensor_entry_count == spatial.floor_sensor_entry_count &&
+        receipt.alcove_entry_count + receipt.wall_decoration_entry_count +
+            receipt.wall_sensor_entry_count == spatial.structure1a_bound_entry_count;
+    receipt.valid = receipt.family_coverage_complete;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

@@ -6317,6 +6317,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     decoder, draw route, or substitute visual.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 source-route update: every parsed Structure1F row now reaches
+    the viewport boundary from the active hash-bound LEV, retaining direct
+    coordinates and Structure1A-owned rows separately. This is source
+    transport only: object placement, trigger behavior, transforms, meshes,
+    texture/palette/VDP1 semantics, and drawing remain blocked pending an
+    original Saturn capture.
   - 2026-07-15 update: the active canonical LEV route can now atomically emit
     its verified dual-source Structure1F/Structure1A and Structure3-face
     target for an external capture producer. The written request contains no
