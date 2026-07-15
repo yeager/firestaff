@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Nexus STABG synthetic-surface removal: the old file-size based
+  320x170/320x200 guess is removed. Original STABG.BIN remains no-surface
+  until its native framing is proven.
+
 - 2026-07-15 Nexus UI synthetic-fallback audit: the public UI contract now
   matches the implementation: missing or unsupported title/menu surfaces stay
   unavailable. Verified TITLE.CG and WARNING.BIN routes continue consuming
