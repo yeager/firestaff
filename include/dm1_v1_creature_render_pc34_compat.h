@@ -218,15 +218,17 @@ int dm1_creature_aspect_vertical_offset(uint8_t aspectBits);
 /* Source-locked single-creature / multi-creature group placement.
  * ReDMCSB GROUP.C F0185_GROUP_GetUnusedGroupThing lines 510-560.
  *
- *   - count == 0 → return DM1_GROUP_CELL_SINGLE_CENTERED (0xFF)
- *   - count >= 1 → return packed 2-bit-per-creature cells value where
- *     each slot is a random cell in [0..3] except quarter-square creatures
- *     (MASK0x0003_SIZE == 0) skip one cell per slot so two quarter-square
- *     creatures can share a tile.
+ *   - `creatureLastOrdinal == 0` → return
+ *     DM1_GROUP_CELL_SINGLE_CENTERED (0xFF)
+ *   - `creatureLastOrdinal >= 1` → draw one source RNG cell, then pack
+ *     ordinal `creatureLastOrdinal` down through ordinal zero.  Each step is
+ *     +1, plus one more only for half-square creatures.
  *
- * rng must return non-negative ints in [0, range). Pure, no globals. */
+ * `creatureLastOrdinal` is the raw GROUP.Count field, not a creature total.
+ * rng must return non-negative ints in [0, range). A multi-creature request
+ * without it returns -1 rather than inventing a placement. */
 #define DM1_GROUP_CELL_SINGLE_CENTERED 0xFFu
-int dm1_creature_place_group_cells(int creatureCount, int creatureSize,
+int dm1_creature_place_group_cells(int creatureLastOrdinal, int creatureSize,
                                    int (*rng)(void* user, int range),
                                    void* rngUser);
 int dm1_creature_coordinate_set(int creatureType);
