@@ -11826,6 +11826,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * directory or the physical ISO/BIN/CUE image before calling the Nexus
          * engine. Source: nexus_v1_launcher.c, nexus_v1_engine.c. */
         if (!M11_GameView_ResolveNexusRuntimeDataDir(spec, dd, sizeof(dd))) {
+            /* Resolver failure occurs before the launcher can publish its
+             * source receipt; retain an explicit data diagnostic for M11. */
+            m11_set_status(state, "NEXUS STARTUP", "NEXUS DATA ERROR");
             return 0;
         }
         {
@@ -12991,14 +12994,35 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     if (!nexus_v1_launcher_boot_level0_runtime_startup(dataDir,
                                                        title,
                                                        &runtime_receipt)) {
+        char dm_bin_path[M11_GAME_VIEW_PATH_CAPACITY];
+        char segadata_path[M11_GAME_VIEW_PATH_CAPACITY];
+        int bootstrap_data_observed;
+        const char *failure_status =
+            runtime_receipt.startup_receipt.host_receipt.status;
         (void)m11_nexus_apply_startup_launch_receipt(state,
                                                      &runtime_receipt.startup_receipt);
+        /* Init can fail before the launcher owns a complete host receipt.
+         * Report that scanner/data failure consistently, while retaining the
+         * source-owned level distinction when it was established. */
+        bootstrap_data_observed =
+            m11_path_has_extension(dataDir, ".cue") ||
+            m11_path_has_extension(dataDir, ".iso") ||
+            (m11_path_has_extension(dataDir, ".bin") &&
+             !m11_path_tail_equals_ascii(dataDir, "DM.BIN")) ||
+            (FSP_JoinPath(dm_bin_path, sizeof(dm_bin_path), dataDir, "DM.BIN") &&
+             FSP_FileExists(dm_bin_path)) ||
+            (FSP_JoinPath(segadata_path, sizeof(segadata_path), dataDir,
+                          "SEGADATA.BIN") && FSP_FileExists(segadata_path));
+        if (bootstrap_data_observed) {
+            failure_status = "NEXUS LEVEL ERROR";
+        } else {
+            failure_status = "NEXUS DATA ERROR";
+        }
+        m11_set_status(state, "NEXUS STARTUP", failure_status);
         m11_log_event(state,
                       M11_COLOR_RED,
                       "T0: %s",
-                      runtime_receipt.startup_receipt.host_receipt.status
-                          ? runtime_receipt.startup_receipt.host_receipt.status
-                          : "NEXUS STARTUP FAILED");
+                      failure_status);
         if (title) {
             nexus_title_free(title);
             free(title);
@@ -39250,11 +39274,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                 commands,
                                                 command_count);
             } else if (host_caller_ready) {
+                Nexus_V1_MenuBpkRendererHandoffReceipt menu_handoff;
+                const char *blocker = "MENU.BPK ASSET ROUTE BLOCKED";
+                if (state->nexusEngine &&
+                    nexus_v1_menu_bpk_renderer_handoff_receipt(
+                        state->nexusEngine, &menu_handoff) == 0) {
+                    blocker = nexus_v1_menu_bpk_prs3_prerequisite_message(
+                        menu_handoff.prs3_prerequisite_status);
+                }
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               18, 18, "NEXUS STARTUP ASSET BLOCKED",
                               &g_text_title);
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              18, 36, "REAL SATURN DECODER REQUIRED",
+                              18, 36, blocker,
                               &g_text_shadow);
             }
         } else if (state->nexusEngine) {

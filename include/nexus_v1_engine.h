@@ -2369,6 +2369,10 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
     Nexus_V1_MenuBpkRendererHandoffStatus status);
 const char *nexus_v1_menu_bpk_prs3_prerequisite_status_name(
     Nexus_V1_MenuBpkPrs3PrerequisiteStatus status);
+/* Short user-facing explanation for the same source-bound prerequisite.
+ * It reports package/capture state only and never suggests a decoder exists. */
+const char *nexus_v1_menu_bpk_prs3_prerequisite_message(
+    Nexus_V1_MenuBpkPrs3PrerequisiteStatus status);
 int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target);

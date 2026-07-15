@@ -5791,6 +5791,9 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
                      handoff.prs3_prerequisite_status),
                  "authentic-decoder-required") == 0 &&
+          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_message(
+                     handoff.prs3_prerequisite_status),
+                 "MENU.BPK PRS3 TRACE REQUIRED") == 0 &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
