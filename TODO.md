@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 Theron Track02 route follow-up: the raw-grid route now has
+  separate fail-closed bitmap and dungeon-named receipts over the same
+  authenticated JP/US Track02 grid. Remaining Theron work is still original
+  later-read evidence for real bitmap ownership and object-table bytes beyond
+  the opaque 32x27 startup grid; do not promote generated visuals, ISO-end
+  bytes, or forged grid receipts.
+
 - 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
   is now isolated and tested, with the FM-Towns SND branch recorded as a
   non-PC34 platform branch unless a future FM-Towns target supplies real
