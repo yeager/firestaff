@@ -209,6 +209,7 @@ int main(void)
             &coalesced, raw, raw_size, md5, &handoff) || !handoff.valid ||
         handoff.observed_track02_record != 0x0b52u ||
         !handoff.complete_initial_level_envelope_proven ||
+        handoff.initial_level_semantics_proven ||
         !handoff.complete_payload_witness_proven ||
         handoff.complete_payload_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES ||
         !handoff.loader_intake.observed ||
@@ -288,18 +289,11 @@ int main(void)
         return 1;
     }
     theron_v1_world_init(&world);
-    if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
+    if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt) ||
-        !route_receipt.received || !route_receipt.no_fallback ||
-        route_receipt.route_hash != handoff.initial_level_route.route_hash ||
-        route_receipt.payload_checksum != handoff.complete_payload_checksum ||
-        route_receipt.envelope_checksum !=
-            handoff.loader_level_envelope.envelope_checksum ||
-        world.current_dungeon != THERON_DUNGEON_1_HALL_OF_RECORDS ||
-        !world.level_loaded[0][0] || world.levels[0][0].thing_count != 0) {
+            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
         free(raw);
-        printf("FAIL: authenticated initial-level route did not reach runtime\n");
+        printf("FAIL: loader-executed sector reached runtime as an unproven level\n");
         return 1;
     }
     ++profile.track02_initial_level_handoff.initial_level_route.route_hash;
