@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 SKProject `DRAW_ITEM_IN_HAND` GDAT field handoff:
+  leader-hand items now select their exact `dtImage` through
+  `SkWinCore::_2405_014a`'s proven tick, record-index, and direction modes,
+  and the M11 item key preserves that field through source pixel and palette
+  resolution. Unsupported random, charge, and equipment-context modes fail
+  closed instead of substituting `F9`/field zero. Focused coverage:
+  `dm2_v1_gdat_word_values`, `dm2_v1_carried_item_local_palette_gate`,
+  `dm2_v1_boot_profile_smoke`, and `dm2_v1_save_load`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0282 C160/C161 first-sensor ownership: M11
   resolves the front-square's first source SENSOR exactly once at command
   entry, retains that index through the candidate-panel mutation, then clears

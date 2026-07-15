@@ -6,6 +6,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -164,6 +165,29 @@ static void test_item_word_values_real_data(void)
     free(graphics);
 }
 
+static void test_carried_item_selector(void)
+{
+    uint8_t field = 0u;
+
+    CHECK(dm2_v1_viewport_select_carried_item_image_field(
+              0u, 7u, 91u, 2, &field) && field == 0x18u,
+          "missing dtWordValue(6) retains SKProject image field 0x18");
+    CHECK(dm2_v1_viewport_select_carried_item_image_field(
+              0x0003u, 7u, 8u, 0, &field) && field == 0x1au,
+          "mode-0 hand selector follows the source game tick");
+    CHECK(dm2_v1_viewport_select_carried_item_image_field(
+              0x0503u, 7u, 8u, 0, &field) && field == 0x18u,
+          "mode-5 hand selector includes the source record index");
+    CHECK(dm2_v1_viewport_select_carried_item_image_field(
+              0x0204u, 7u, 8u, 3, &field) && field == 0x1bu,
+          "mode-2 hand selector follows the source party direction");
+    CHECK(!dm2_v1_viewport_select_carried_item_image_field(
+               0x0102u, 7u, 8u, 0, &field) &&
+              !dm2_v1_viewport_select_carried_item_image_field(
+               0x8002u, 7u, 8u, 0, &field),
+          "random and equipment-dependent selectors fail closed");
+}
+
 static void test_interface_palette_real_data(void)
 {
     uint8_t *graphics = NULL;
@@ -320,6 +344,7 @@ static void test_img3_local_palette_fixture(void)
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
+    test_carried_item_selector();
     test_interface_palette_decoder_fixture();
     test_img3_local_palette_fixture();
     test_interface_palette_real_data();

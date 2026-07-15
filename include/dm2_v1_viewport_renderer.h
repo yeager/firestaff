@@ -232,6 +232,14 @@ int dm2_v1_viewport_item_category_for_db_pool(int db_pool);
 int dm2_v1_viewport_item_graphic_index(int item_category,
                                        int item_type,
                                        int frame_index);
+/* skproject SkWinCore.cpp::_2405_014a, used by DRAW_ITEM_IN_HAND. The caller
+ * supplies the original item's dtWordValue(6) selector. Unsupported modes
+ * require record state Firestaff does not yet own and fail closed. */
+int dm2_v1_viewport_select_carried_item_image_field(uint16_t selector,
+                                                    uint32_t object_index,
+                                                    uint32_t game_tick,
+                                                    int party_direction,
+                                                    uint8_t *out_image_field);
 int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int projectile_type,
                                              int frame_index);

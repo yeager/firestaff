@@ -1963,6 +1963,49 @@ int dm2_v1_viewport_item_graphic_index(int item_category,
     return DM2_V1_VIEWPORT_GFX_ITEM_FIELD_BASE - packed;
 }
 
+int dm2_v1_viewport_select_carried_item_image_field(uint16_t selector,
+                                                    uint32_t object_index,
+                                                    uint32_t game_tick,
+                                                    int party_direction,
+                                                    uint8_t *out_image_field)
+{
+    uint16_t frame_count;
+    uint16_t mode;
+    uint8_t field = 0x18u;
+
+    if (!out_image_field || party_direction < 0 || party_direction > 3) {
+        return 0;
+    }
+    frame_count = selector & 0x000fu;
+    if (frame_count == 0u) {
+        *out_image_field = field;
+        return 1;
+    }
+    /* _2405_014a delegates this to IS_ITEM_FIT_FOR_EQUIP, whose record and
+     * action context is not yet owned by the leader cursor. */
+    if ((selector & 0x8000u) != 0u) {
+        return 0;
+    }
+    mode = (selector >> 8) & 0x001fu;
+    switch (mode) {
+    case 0u:
+        field = (uint8_t)(field + (game_tick % frame_count));
+        break;
+    case 2u:
+        field = (uint8_t)(field + party_direction);
+        break;
+    case 5u:
+        field = (uint8_t)(field +
+                          ((game_tick + object_index) % frame_count));
+        break;
+    default:
+        /* Modes 1/3/4/6 read random or record charge state. */
+        return 0;
+    }
+    *out_image_field = field;
+    return 1;
+}
+
 int dm2_v1_viewport_item_category_for_db_pool(int db_pool)
 {
     switch (db_pool) {

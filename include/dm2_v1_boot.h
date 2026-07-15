@@ -130,6 +130,18 @@ int dm2_v1_boot_dialogue_box_draw_plan(
     const DM2_V1_BootProfile *profile,
     DM2_V1_DialogueBoxDrawPlan *out);
 
+/* Resolve the exact dtImage selected by SKProject _2405_014a for a
+ * leader-hand object. Missing source state returns zero; callers must not
+ * substitute a generic map-chip image. */
+int dm2_v1_boot_leader_hand_image_field(
+    const DM2_V1_BootProfile *profile,
+    int gdat_category,
+    int gdat_index,
+    uint32_t object_index,
+    uint32_t game_tick,
+    int party_direction,
+    uint8_t *out_image_field);
+
 typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_OK = 0,
     DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT,

@@ -3358,18 +3358,28 @@ static void dm2_runtime_populate_carried_item(const DM2_V1_RuntimeState *rt,
                                               DM2_V1_ViewportState *viewport)
 {
     uint8_t pool = 0;
+    uint8_t image_field = 0u;
     uint32_t index = 0u;
+    int category;
     DM2_ItemSprite *dst;
 
     if (!rt || !viewport) return;
     if (!dm2_db_decode_handle(rt->leader_hand_object, &pool, &index)) return;
+    category = dm2_v1_viewport_item_category_for_db_pool((int)pool);
+    if (index > 0xffu || category == 0 || !rt->boot || !rt->boot->graphics_dat ||
+        !dm2_v1_boot_leader_hand_image_field(
+            rt->boot, category, (int)index, index,
+            (uint32_t)rt->tick_count, rt->view_dir, &image_field)) {
+        /* DRAW_ITEM_IN_HAND needs its selected source dtImage and local
+         * palette. The former map-chip field-0 route was not equivalent. */
+        return;
+    }
 
     dst = &viewport->carried_item;
     memset(dst, 0, sizeof(*dst));
-    dst->item_category =
-        (uint8_t)dm2_v1_viewport_item_category_for_db_pool((int)pool);
+    dst->item_category = (uint8_t)category;
     dst->item_type = (uint8_t)(index & 0xffu);
-    dst->frame_index = 0;
+    dst->frame_index = image_field;
     dst->depth = 0;
     dst->screen_x = 300;
     dst->screen_y = 184;

@@ -157,6 +157,51 @@ int dm2_v1_boot_dialogue_box_draw_plan(
     return dm2_v1_dialogue_box_draw_plan(&gfx->loader, out);
 }
 
+int dm2_v1_boot_leader_hand_image_field(
+    const DM2_V1_BootProfile *profile,
+    int gdat_category,
+    int gdat_index,
+    uint32_t object_index,
+    uint32_t game_tick,
+    int party_direction,
+    uint8_t *out_image_field)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_GdatImageMetadata metadata;
+    uint8_t palette16[16];
+    uint32_t palette_hash = 0u;
+    uint16_t selector = 0u;
+    uint8_t image_field = 0u;
+
+    if (out_image_field) *out_image_field = 0u;
+    if (!profile || !profile->graphics_dat || !out_image_field ||
+        gdat_category < DM2_GDAT_CATEGORY_WEAPONS ||
+        gdat_category > DM2_GDAT_CATEGORY_MISCELLANEOUS ||
+        gdat_index < 0 || gdat_index > 0xff) {
+        return 0;
+    }
+    gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    /* _2405_014a starts at image 0x18; an absent dtWordValue(6) leaves that
+     * source default intact. */
+    (void)dm2_v1_asset_load_word_value(&gfx->loader, gdat_category,
+                                       gdat_index, 6, &selector);
+    if (!dm2_v1_viewport_select_carried_item_image_field(
+            selector, object_index, game_tick, party_direction,
+            &image_field) ||
+        !dm2_v1_asset_load_image_metadata(&gfx->loader, gdat_category,
+                                          gdat_index, image_field,
+                                          &metadata) ||
+        metadata.bits_per_pixel != 4u ||
+        !dm2_v1_asset_load_image_local_palette(&gfx->loader, gdat_category,
+                                               gdat_index, image_field,
+                                               palette16, &palette_hash) ||
+        palette_hash == 0u) {
+        return 0;
+    }
+    *out_image_field = image_field;
+    return 1;
+}
+
 static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     DM2_V1_BootProfile *profile,
     int *out_portrait_count,
@@ -9064,7 +9109,7 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         int slot = -1;
         category = (packed >> DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff;
         index = (packed >> DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) & 0xff;
-        field = DM2_GDAT_IMG_MAP_CHIP;
+        field = packed & DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK;
         if (category < DM2_GDAT_CATEGORY_WEAPONS ||
             category > DM2_GDAT_CATEGORY_MISCELLANEOUS) {
             return -1;
@@ -9426,7 +9471,7 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
             (packed >> DM2_V1_VIEWPORT_GFX_ITEM_CATEGORY_SHIFT) & 0xff;
         *out_index =
             (packed >> DM2_V1_VIEWPORT_GFX_ITEM_INDEX_SHIFT) & 0xff;
-        *out_field = DM2_GDAT_IMG_MAP_CHIP;
+        *out_field = packed & DM2_V1_VIEWPORT_GFX_ITEM_FIELD_MASK;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
                gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {
         packed = DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE - gdat_index;
