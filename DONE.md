@@ -15609,6 +15609,13 @@ CreatureType and `w6` HP1 from a hash-bound DB4 record. Possession, remaining
 HP words, animation state, AI, and links stay opaque. Verification: focused
 save/load 26/26 with source-sized DB4 data and invalid-index rejection.
 
+# ✅ 2026-07-15 DM2 raw SKSave DB5 Weapon receipt
+
+The original-save path now decodes only `SKWIN/DME.h::Weapon` `w2` ItemType,
+Important, and Charges from a hash-bound DB5 record. `w0`, ownership/location,
+and all links remain opaque. Verification: focused save/load 26/26 with a
+source-sized DB5 record and invalid-index rejection.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at

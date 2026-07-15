@@ -954,6 +954,7 @@ static int build_raw_sksave_payload(
     write_u16_le_at(payload, 12u, 1u); /* one source-sized DB0 record */
     write_u16_le_at(payload, 18u, 1u); /* one source-sized DB3 record */
     write_u16_le_at(payload, 20u, 1u); /* one source-sized DB4 record */
+    write_u16_le_at(payload, 22u, 1u); /* one source-sized DB5 record */
     payload[68u] = 0x34u;
     payload[69u] = 0x12u;
     payload[70u] = 0xe3u;
@@ -967,7 +968,9 @@ static int build_raw_sksave_payload(
     payload[84u] = 0x2au;
     payload[86u] = 0x34u;
     payload[87u] = 0x12u;
-    pos = 116u;
+    payload[98u] = 0xaeu;
+    payload[99u] = 0x28u;
+    pos = 120u;
 
     n = dm2_suppress_encode_gamestate(gs, enc, sizeof(enc));
     if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
@@ -1314,6 +1317,7 @@ static int test_raw_sksave_resume_import(void)
     DM2_V1_OriginalRawDoorReceipt door_receipt;
     DM2_V1_OriginalRawActuatorReceipt actuator_receipt;
     DM2_V1_OriginalRawCreatureReceipt creature_receipt;
+    DM2_V1_OriginalRawWeaponReceipt weapon_receipt;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
@@ -1384,10 +1388,12 @@ static int test_raw_sksave_resume_import(void)
         dungeon_receipt.db_pool_offsets[3] != 72u ||
         dungeon_receipt.db_record_counts[4] != 1u ||
         dungeon_receipt.db_pool_offsets[4] != 80u ||
-        dungeon_receipt.map_data_offset != 96u ||
+        dungeon_receipt.db_record_counts[5] != 1u ||
+        dungeon_receipt.db_pool_offsets[5] != 96u ||
+        dungeon_receipt.map_data_offset != 100u ||
         dungeon_receipt.prefix_hash == 0u ||
         dungeon_receipt.map_data_hash == 0u ||
-        dungeon_receipt.suppress_state_offset != 116u ||
+        dungeon_receipt.suppress_state_offset != 120u ||
         !dm2_v1_original_raw_sksave_db_record_receipt(
             payload, payload_size, 0, 0, &db0_receipt) ||
         !db0_receipt.valid || db0_receipt.record_size != 4u ||
@@ -1420,7 +1426,13 @@ static int test_raw_sksave_resume_import(void)
         !creature_receipt.valid || creature_receipt.creature_type != 42u ||
         creature_receipt.hp1 != 0x1234u ||
         dm2_v1_original_raw_sksave_creature_receipt(
-            payload, payload_size, 1, &creature_receipt)) {
+            payload, payload_size, 1, &creature_receipt) ||
+        !dm2_v1_original_raw_sksave_weapon_receipt(
+            payload, payload_size, 0, &weapon_receipt) || !weapon_receipt.valid ||
+        weapon_receipt.item_type != 46u || weapon_receipt.important != 1u ||
+        weapon_receipt.charges != 10u ||
+        dm2_v1_original_raw_sksave_weapon_receipt(
+            payload, payload_size, 1, &weapon_receipt)) {
         printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
