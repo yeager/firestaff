@@ -6913,3 +6913,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   each live group-retirement owner consume this common primitive rather than
   duplicating its bounded cleanup loop; delete the complete C29..C41 range
   but retain all other maps and squares exactly as GROUP.C does.
+- 2026-07-15 DM1 GROUP F0194 follow-up: source-defined active-group
+  retirement now writes raw loaded C04 cells, low packed direction, and the
+  F0184 behavior threshold before retiring every slot. Remaining work is to
+  route the M10 map/save handoff through this common DM1 helper; malformed
+  C04 references must remain a no-mutation failure, without default groups.

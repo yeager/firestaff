@@ -16966,3 +16966,9 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   repair path; other squares and maps remain. The DM1 event-timer regression
   covers both deletion boundaries and every retention gate. Source: ReDMCSB
   `GROUP.C` F0181:340-371.
+- ✅ 2026-07-15 DM1 GROUP F0194: added source-defined all-active-group
+  retirement. It composes F0194's active-slot scan with F0184's loaded C04
+  writeback: Cells, low packed Direction, Behavior >= C4 to wander, then
+  inactive slot. The regression covers sparse active slots and malformed raw
+  references failing before any mutation. Source: ReDMCSB `GROUP.C`
+  F0194/F0184.

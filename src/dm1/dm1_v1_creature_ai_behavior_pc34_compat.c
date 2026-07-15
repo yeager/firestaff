@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 /* Direction deltas — PC DM convention (source: DEFS.H G0233/G0234) */
 static const int g_dx[4] = {  0, +1,  0, -1 };
@@ -874,6 +875,65 @@ int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
         }
     }
     return 1;
+}
+
+/*
+ * ReDMCSB GROUP.C F0184:447-479 and F0194:1094-1107.
+ *
+ * F0194 scans the active-group table until G0377 reaches zero; each F0184
+ * write returns the packed Cells and creature-zero Direction to raw C04,
+ * resets unusable behavior to wander, and marks the active slot unused.
+ */
+int F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
+    struct DM1ActiveGroup_Compat* activeGroups,
+    int activeGroupCapacity,
+    int* currentActiveGroupCount,
+    struct DungeonGroup_Compat* groups,
+    int groupCount)
+{
+    int activeIndex;
+    int activeCount;
+    int observedCount = 0;
+    int removed = 0;
+
+    if (!activeGroups || !currentActiveGroupCount || !groups ||
+        activeGroupCapacity < 0 || groupCount < 0) {
+        return 0;
+    }
+    activeCount = *currentActiveGroupCount;
+    if (activeCount < 0 || activeCount > activeGroupCapacity) return 0;
+
+    /* Validate first: original state cannot name a synthetic C04 record. */
+    for (activeIndex = 0; activeIndex < activeGroupCapacity; ++activeIndex) {
+        int groupIndex = activeGroups[activeIndex].groupThingIndex;
+        if (groupIndex < 0) continue;
+        if (groupIndex >= groupCount) return 0;
+        ++observedCount;
+    }
+    if (observedCount != activeCount) return 0;
+
+    for (activeIndex = 0; activeCount > 0; ++activeIndex) {
+        struct DM1ActiveGroup_Compat* active;
+        struct DungeonGroup_Compat* group;
+        int groupIndex;
+
+        if (activeIndex >= activeGroupCapacity) return 0;
+        active = &activeGroups[activeIndex];
+        groupIndex = active->groupThingIndex;
+        if (groupIndex < 0) continue;
+        group = &groups[groupIndex];
+
+        group->cells = (unsigned char)(active->cells & 0xff);
+        group->direction = (unsigned char)(active->directions & 0x03);
+        if (group->behavior >= DM1_BEHAVIOR_USELESS4) {
+            group->behavior = DM1_BEHAVIOR_WANDER;
+        }
+        active->groupThingIndex = -1;
+        --activeCount;
+        ++removed;
+    }
+    *currentActiveGroupCount = activeCount;
+    return removed;
 }
 
 int F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
