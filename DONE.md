@@ -16284,6 +16284,16 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron G4 RAM consumer negative receipt
+
+The HuC6280 read path now records exact reads of G4's materialized
+`0x1f0256..0x1f0259` bytes. Real USA Track 02 capture shows their subsequent
+readers are System Card physical code, including `0x002c1a..0x002c69`, rather
+than game-owned main-RAM code. The G4 route is therefore explicitly blocked
+from level/object promotion; no fallback or semantic inference was added.
+
+Verification: Mednafen patch dry-run and real SDL2 USA Track 02 capture.
+
 # ✅ 2026-07-15 Theron `$e009` FIFO-to-main-RAM receipt
 
 Dispatch-bounded FIFO tracing now ties real `$e009` SCSI data reads to strict

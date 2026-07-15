@@ -1,0 +1,68 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -11,6 +11,7 @@
+ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination);
+ void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc, uint8 accumulator, uint8 x, uint8 y);
++void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
+
+ class alignas(128) HuC6280
+ {
+@@ -399,13 +400,24 @@
+ 	// Logical
+ 	INLINE uint8 RdMem(unsigned int address)
+ 	{
+-	 if(FastPageR[address >> 13])
+-	  return *(uint8*)(FastPageR[address >> 13] + address);
+-
+-	 LastLogicalReadAddr = address;
+-
+ 	 uint8 wmpr = MPR[address >> 13];
+-	 return ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
++	 uint8 ret;
++	 if(FastPageR[address >> 13])
++	  ret = *(uint8*)(FastPageR[address >> 13] + address);
++	 else
++	 {
++	  LastLogicalReadAddr = address;
++	  ret = ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
++	 }
++	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 if(physical_address >= 0x1f0256 && physical_address <= 0x1f0259)
++	 {
++	  const uint16 reader_pc = GetRegister(GSREG_PC);
++	  const uint8 reader_mpr = MPR[reader_pc >> 13];
++	  TheronPCECDTraceG4MainRAMRead(address, physical_address, ret, reader_pc,
++	                                 (reader_mpr << 13) | (reader_pc & 0x1FFF));
++	 }
++	 return ret;
+ 	}
+
+ 	// Logical
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -122,6 +122,7 @@
+ static unsigned TheronPCECDMainRAMLoaderE009CallCount;
+ static bool TheronPCECDMainRAMLoaderE009Active;
+ static unsigned TheronPCECDMainRAMLoaderE009Sequence;
++static unsigned TheronPCECDG4MainRAMReadCount;
+
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -154,6 +155,16 @@
+  TheronPCECDMainRAMLoaderE009Active = true;
+ }
+
++void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address,
++                                   uint8 value, uint16 reader_pc, uint32 reader_physical_pc)
++{
++ if(TheronPCECDG4MainRAMReadCount >= 64)
++  return;
++ TheronPCECDTraceFifoReceipt("g4_main_ram_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n",
++                             TheronPCECDG4MainRAMReadCount++, logical_address,
++                             physical_address, value, reader_pc, reader_physical_pc);
++}
++
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
+ {
+  if(TheronPCECDFifoReceiptCount == TheronPCECDFifoReceiptCapacity)
