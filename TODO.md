@@ -3350,6 +3350,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     expose only the exact referenced record. It remains blocked for empty,
     invalid, stale, or unverified cells and assigns no collision meaning.
 
+- 2026-07-15 Nexus Structure1F mesh-source lookup: active canonical rows can
+  now be selected by exact source index through the full family receipt. This
+  exposes only typed raw ownership and direct-coordinate provenance; model
+  placement, transforms, face selection, materials, and drawing remain blocked
+  until original Saturn evidence proves them.
+
 - 2026-07-15 Nexus STABG.BIN: source bytes are discovered but its Saturn
   surface framing remains unproven. It is intentionally unavailable; derive a
   decoder only from original capture/code evidence.

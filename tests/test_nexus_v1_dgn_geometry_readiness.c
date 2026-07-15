@@ -832,6 +832,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_Viewport package_viewport;
         Nexus_Viewport animated_viewport;
         Nexus_Viewport untextured_viewport;
+        Nexus_V1_DgnStructure1FSourcePacket structure1f_source;
         Nexus_V1_DgnStructure1CCellSourcePacket structure1c_cell_source;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
@@ -1119,6 +1120,25 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         active_engine.current_level_structure2_source.loaded_dgn_size = (int)size;
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
+        memset(&structure1f_source, 0, sizeof(structure1f_source));
+        if (active_engine.current_level.structure1f_entry_count > 0) {
+            CHECK(nexus_v1_current_level_lookup_structure1f_source_entry(
+                      &active_engine, 0, &structure1f_source) == 1 &&
+                  structure1f_source.valid &&
+                  structure1f_source.entry_index == 0 &&
+                  structure1f_source.source_bytes_fnv1a64 ==
+                      fnv1a64(data, (size_t)size) &&
+                  structure1f_source.no_draw_only &&
+                  !structure1f_source.fallback_visuals_permitted &&
+                  structure1f_source.blocks_real_dgn_mesh_render,
+                  "active Structure1F source rows resolve only through the canonical no-draw scene");
+        }
+        CHECK(nexus_v1_current_level_lookup_structure1f_source_entry(
+                  &active_engine, -1, &structure1f_source) == 0 &&
+              !structure1f_source.valid && structure1f_source.no_draw_only &&
+              !structure1f_source.fallback_visuals_permitted &&
+              structure1f_source.blocks_real_dgn_mesh_render,
+              "invalid Structure1F rows cannot manufacture a mesh source route");
         memset(&structure1c_cell_source, 0, sizeof(structure1c_cell_source));
         for (structure1c_cell_y = 0;
              structure1c_cell_y < active_engine.current_level.height &&

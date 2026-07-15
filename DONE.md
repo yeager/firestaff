@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 Nexus Structure1F active-row lookup: canonical source rows now
+  resolve by exact index through the complete no-draw family receipt, giving a
+  later mesh decoder a source-owned selection point without any inferred mesh
+  or material semantics.
+
 - ✅ 2026-07-15 DM1 object-description source-material gate: normal V1
   F0342 uses only exact loaded-pixel C020 (panel), C029 (circle), real object
   icon pixels, and the loaded M653 font. The continuation text now begins at

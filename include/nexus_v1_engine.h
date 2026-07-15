@@ -2204,6 +2204,12 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure1FSourceConsumer consumer, void *context,
     Nexus_V1_DgnStructure1FSourceSceneReceipt *out_receipt);
+
+/* Resolve one active Structure1F row through the complete canonical source
+ * scene. The returned row is source provenance for later mesh work only. */
+int nexus_v1_current_level_lookup_structure1f_source_entry(
+    const Nexus_V1_Engine *engine, int entry_index,
+    Nexus_V1_DgnStructure1FSourcePacket *out_packet);
 /* Traverse every addressable bounded Structure1C source record from the
  * canonical active LEV without assigning the record bytes a collision grammar. */
 int nexus_v1_current_level_visit_structure1c_source_scene(
