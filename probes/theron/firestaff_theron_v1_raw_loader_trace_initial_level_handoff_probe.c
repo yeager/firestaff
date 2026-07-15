@@ -129,6 +129,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt continuation_byte;
     Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt continuation_prefix;
     Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt continuation_transfer;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt continuation_execution;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -537,6 +538,31 @@ int main(void)
             &handoff, game_payload_capture, &continuation_transfer)) {
         free(raw);
         printf("FAIL: unmarked TII trace reached the continuation receipt\n");
+        return 1;
+    }
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
+             "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n");
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
+            &handoff, game_payload_capture, &continuation_execution) ||
+        !continuation_execution.valid ||
+        !continuation_execution.continuation_execution_proven ||
+        continuation_execution.level_or_object_semantics_proven ||
+        continuation_execution.call_pc != 0x3850u ||
+        continuation_execution.call_physical_pc != 0x1f1850u ||
+        continuation_execution.call_target != 0x2000u ||
+        continuation_execution.transfer.source_checksum !=
+            continuation_transfer.source_checksum) {
+        free(raw);
+        printf("FAIL: continuation execution handoff was not source-bound\n");
+        return 1;
+    }
+    *(strstr(game_payload_capture, "target=2000") + strlen("target=")) = '1';
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
+            &handoff, game_payload_capture, &continuation_execution)) {
+        free(raw);
+        printf("FAIL: wrong continuation JSR target reached execution receipt\n");
         return 1;
     }
     ++manifest.trace_md5[0];

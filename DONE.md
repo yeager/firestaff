@@ -18517,6 +18517,16 @@ the import does not create rows, bytes, or semantic fallback. This makes the
 live capture producer directly consumable once authentic media reaches the
 post-`$3800` transfer route.
 
+# ✅ 2026-07-15 Theron Track 02 continuation execution handoff
+
+The raw loader-trace route now binds a source-verified `$3c80` continuation
+`TII` to a later main-RAM `JSR` only when the call target exactly equals the
+TII destination. This demonstrates an original CD-byte-to-code stage handoff
+without interpreting the copied memory as a level or object table. Duplicate,
+wrong-target, or unmarked control rows reject. Verification: Ninja
+`test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
