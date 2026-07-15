@@ -1,5 +1,6 @@
 #define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "asset_status_m12.h"
+#include "theron_v1_boot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,11 +93,16 @@ int main(void) {
     char extrasTrackPath[512];
     char extrasCuePath[512];
     char extrasAudioPath[512];
+    char isoCueDir[512];
+    char isoCuePath[512];
+    char isoTrackPath[512];
+    char isoAudioPath[512];
     char looseTrackPath[512];
     char trackMd5[M12_ASSET_MD5_CAPACITY];
     M12_AssetStatus status;
     M12_AssetStatus directRootStatus;
     M12_AssetStatus directCueStatus;
+    M12_AssetStatus isoCueStatus;
     M12_AssetStatus specificTheronStatus;
     M12_AssetStatus looseDirStatus;
     M12_AssetStatusScanMetrics directRootMetrics;
@@ -106,6 +112,8 @@ int main(void) {
     const FirestaffTheronMediaStatus* media;
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* required;
+    const char* isoLaunchPath;
+    Theron_V1_BootProfile isoProfile;
 
     check_int(make_isolated_root(root, sizeof(root)),
               "temporary Theron data root created");
@@ -139,6 +147,27 @@ int main(void) {
                          "  TRACK 02 MODE1/2352\n"
                          "    INDEX 01 00:00:00\n"),
               "strict paired Theron CUE fixture written");
+    snprintf(isoCueDir, sizeof(isoCueDir), "%s/theron-iso", root);
+    check_int(make_dir_if_needed(isoCueDir),
+              "Theron ISO CUE fixture directory created");
+    snprintf(isoTrackPath, sizeof(isoTrackPath), "%s/Track 02.iso", isoCueDir);
+    check_int(write_file(isoTrackPath, trackPayload),
+              "Theron ISO Track 02 fixture written");
+    snprintf(isoAudioPath, sizeof(isoAudioPath), "%s/Track 01.bin", isoCueDir);
+    {
+        unsigned char audio[2352] = {0};
+        check_int(write_bytes(isoAudioPath, audio, sizeof(audio)),
+                  "Theron ISO CUE Track 01 fixture written");
+    }
+    snprintf(isoCuePath, sizeof(isoCuePath), "%s/Therons Quest.cue", isoCueDir);
+    check_int(write_file(isoCuePath,
+                         "FILE \"Track 01.bin\" BINARY\n"
+                         "  TRACK 01 AUDIO\n"
+                         "    INDEX 01 00:00:00\n"
+                         "FILE \"Track 02.iso\" BINARY\n"
+                         "  TRACK 02 MODE1/2048\n"
+                         "    INDEX 01 00:00:00\n"),
+              "strict MODE1/2048 Theron CUE fixture written");
     snprintf(looseDir, sizeof(looseDir), "%s/renamed-media", root);
     check_int(make_dir_if_needed(looseDir),
               "arbitrary renamed Theron media directory created");
@@ -198,6 +227,31 @@ int main(void) {
     check_int(strcmp(M12_AssetStatus_GetTheronLaunchMediaPath(&directCueStatus),
                      extrasCuePath) == 0,
               "Theron direct CUE scan preserves CUE provenance for launch");
+
+    /* The scanner verifies the declared ISO payload by hash, keeps the CUE
+     * only as launch provenance, and the boot handoff resolves it back to
+     * that ISO. A MODE1/2048 layout must not need a raw IPL receipt. */
+    memset(&isoCueStatus, 0, sizeof(isoCueStatus));
+    M12_AssetStatus_ScanGame(&isoCueStatus, isoCuePath, "theron");
+    check_int(M12_AssetStatus_GameAvailable(&isoCueStatus, "theron") == 1,
+              "Theron direct ISO CUE scan accepts MODE1/2048 Track 02");
+    media = M12_AssetStatus_GetTheronMediaStatus(&isoCueStatus);
+    check_int(media && media->paired_track01_track02 &&
+                  media->track02_mode1_sector_bytes == 2048 &&
+                  strcmp(media->track02_path, isoTrackPath) == 0,
+              "Theron scanner preserves the declared 2048-byte ISO Track 02 path");
+    check_int(!M12_AssetStatus_GetTheronTrack02LoaderReceipt(&isoCueStatus)->valid,
+              "MODE1/2048 ISO CUE does not claim a raw Track02 IPL receipt");
+    isoLaunchPath = M12_AssetStatus_GetTheronLaunchMediaPath(&isoCueStatus);
+    check_int(isoLaunchPath && strcmp(isoLaunchPath, isoCuePath) == 0,
+              "Theron ISO CUE reaches the startup handoff as CUE provenance");
+    memset(&isoProfile, 0, sizeof(isoProfile));
+    check_int(theron_v1_boot_load_verified_path(&isoProfile,
+                                                isoLaunchPath,
+                                                THERON_TRACK02_MD5_US_ISO) == 0 &&
+                  strcmp(isoProfile.graphics_path, isoTrackPath) == 0 &&
+                  strcmp(isoProfile.dungeon_path, isoTrackPath) == 0,
+              "Theron startup handoff resolves MODE1/2048 CUE to its verified ISO payload");
 
     memset(&specificTheronStatus, 0, sizeof(specificTheronStatus));
     M12_AssetStatus_ScanGame(&specificTheronStatus, theronDir, "theron");
