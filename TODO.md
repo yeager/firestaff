@@ -455,11 +455,13 @@
   uses the real `TITLE/0` GDAT `dt07/1` + `dt07/4` surfaces and focused
   startup contracts pass. The broader M11 profile test still fails after
   NEW GAME on real GDAT dungeon/HUD runtime capture, object-icon resolution,
-  tick/input redraw, and SKSave resume restore. Real
+  and resume inventory ObjectID routing. Real
   archive-backed `GRAPHICS.DAT`/`DUNGEON.DAT` materialization and original
   `dt04/0` NEW/RESUME hit geometry now cross the M11 startup pointer route.
   Runtime boot-pose mirroring now uses skproject/T520 `(15,15,N)`; do not
   re-promote the decoded header pose into NEW GAME startup.
+  Runtime save/resume and turn/action input now cross M11 through the real
+  DM2 quicksave route; do not restore the old blocked save-panel wrapper.
   Do not add synthetic menu, dungeon, HUD, or party substitutes; next work
   must bind the remaining consumers to real `GRAPHICS.DAT`, `DUNGEON.DAT`,
   and save-corpus data.
