@@ -1287,6 +1287,30 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DmBinVdp1StateRouteReceipt;
 
+/* A bounded static SH-2 dataflow proof for three 16-bit VDP1 state writes.
+ * It proves only original instruction/literal relationships in DM.BIN; it
+ * does not establish that the path executes in a given frame or emits a VDP1
+ * command, and cannot authorize palette, transform, or drawing behavior. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int code_window_offset;
+    int state_table_offset;
+    int static_instruction_dataflow_proven;
+    int vdp1_register_0x06_write_proven;
+    uint16_t vdp1_register_0x06_value;
+    int vdp1_register_0x08_write_proven;
+    uint16_t vdp1_register_0x08_value;
+    int vdp1_register_0x0a_write_proven;
+    uint16_t vdp1_register_0x0a_value;
+    int vdp1_command_emission_proven;
+    int palette_semantics_proven;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DmBinVdp1StateWriteReceipt;
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;
@@ -2165,6 +2189,11 @@ int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
 int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
     Nexus_V1_Engine *engine,
     Nexus_V1_DmBinVdp1StateRouteReceipt *out_receipt);
+/* Verify the original static instruction/literal dataflow for three VDP1
+ * state-register stores. This is not a live command-emission claim. */
+int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1StateWriteReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

@@ -703,6 +703,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnMaterialCorpusReceipt corpus;
         Nexus_V1_DmBinVdp1RegisterTableReceipt vdp1_table;
         Nexus_V1_DmBinVdp1StateRouteReceipt vdp1_state_route;
+        Nexus_V1_DmBinVdp1StateWriteReceipt vdp1_state_write;
         int corpus_level;
 
         memset(&corpus_engine, 0, sizeof(corpus_engine));
@@ -746,6 +747,25 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   vdp1_state_route.no_draw_only &&
                   !vdp1_state_route.fallback_visuals_permitted,
               "canonical DM.BIN statically loads the VDP1 state map without command or draw claims");
+        memset(&vdp1_state_write, 0, sizeof(vdp1_state_write));
+        CHECK(nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
+                  &corpus_engine, &vdp1_state_write) == 1 &&
+                  vdp1_state_write.source.canonical_hash_verified &&
+                  vdp1_state_write.code_window_offset == 0x7d3c0 &&
+                  vdp1_state_write.state_table_offset == 0x7d498 &&
+                  vdp1_state_write.static_instruction_dataflow_proven &&
+                  vdp1_state_write.vdp1_register_0x06_write_proven &&
+                  vdp1_state_write.vdp1_register_0x06_value == 0x8000U &&
+                  vdp1_state_write.vdp1_register_0x08_write_proven &&
+                  vdp1_state_write.vdp1_register_0x08_value == 0U &&
+                  vdp1_state_write.vdp1_register_0x0a_write_proven &&
+                  vdp1_state_write.vdp1_register_0x0a_value == 0xffffU &&
+                  !vdp1_state_write.vdp1_command_emission_proven &&
+                  !vdp1_state_write.palette_semantics_proven &&
+                  !vdp1_state_write.transform_semantics_proven &&
+                  vdp1_state_write.no_draw_only &&
+                  !vdp1_state_write.fallback_visuals_permitted,
+              "canonical DM.BIN statically proves three VDP1 state stores but no draw route");
         memset(&corpus, 0, sizeof(corpus));
         CHECK(nexus_v1_inspect_dgn_material_corpus(&corpus_engine, &corpus) == 0 &&
                   corpus.parsed_level_count == 16 &&

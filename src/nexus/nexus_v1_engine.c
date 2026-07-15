@@ -2124,6 +2124,87 @@ int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
     return receipt.static_sh2_literal_loads_proven ? 1 : 0;
 }
 
+int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1StateWriteReceipt *out_receipt)
+{
+    enum {
+        CODE_WINDOW_OFFSET = 0x7d3c0,
+        STATE_TABLE_OFFSET = 0x7d498
+    };
+    /* The sequence below keeps each source literal and its consuming SH-2
+     * MOV.W visible. It is not an emulator: the verifier accepts only this
+     * exact static dataflow corridor in the hash-bound original executable. */
+    static const uint16_t expected_code_words[12] = {
+        UINT16_C(0xdd3a), UINT16_C(0x2321), UINT16_C(0x2011),
+        UINT16_C(0xe300), UINT16_C(0xd235), UINT16_C(0xd136),
+        UINT16_C(0xd039), UINT16_C(0x2121), UINT16_C(0xd235),
+        UINT16_C(0x2231), UINT16_C(0xd336), UINT16_C(0x23d1)
+    };
+    Nexus_V1_DmBinVdp1StateWriteReceipt receipt;
+    uint8_t *data;
+    int size = 0;
+    int word;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.code_window_offset = CODE_WINDOW_OFFSET;
+    receipt.state_table_offset = STATE_TABLE_OFFSET;
+    receipt.no_draw_only = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine ||
+        nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
+        !receipt.source.canonical_hash_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data || CODE_WINDOW_OFFSET + (int)sizeof(expected_code_words) > size ||
+        STATE_TABLE_OFFSET + 28 > size) {
+        free(data);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = size;
+    receipt.source_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(data, size);
+    for (word = 0; word < (int)(sizeof(expected_code_words) / sizeof(expected_code_words[0]));
+         ++word) {
+        if (nexus_v1_dgn_read_be16(data + CODE_WINDOW_OFFSET + word * 2) !=
+            expected_code_words[word]) {
+            free(data);
+            *out_receipt = receipt;
+            return 0;
+        }
+    }
+    /* PC-relative source literals for D235, D136, D235, D336 and DD3A.
+     * The immediately following MOV.W opcodes encode Rm -> @Rn, so the
+     * observed dataflow is: 0x8000 -> 0x25d00006, zero -> 0x25d00008,
+     * and 0xffff -> 0x25d0000a. */
+    receipt.vdp1_register_0x06_write_proven =
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 8) ==
+            UINT32_C(0x00008000) &&
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 12) ==
+            UINT32_C(0x25d00006);
+    receipt.vdp1_register_0x06_value = UINT16_C(0x8000);
+    receipt.vdp1_register_0x08_write_proven =
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 16) ==
+            UINT32_C(0x25d00008);
+    receipt.vdp1_register_0x08_value = 0U;
+    receipt.vdp1_register_0x0a_write_proven =
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 20) ==
+            UINT32_C(0x0000ffff) &&
+        nexus_v1_dgn_read_be32(data + STATE_TABLE_OFFSET + 24) ==
+            UINT32_C(0x25d0000a);
+    receipt.vdp1_register_0x0a_value = UINT16_C(0xffff);
+    receipt.static_instruction_dataflow_proven =
+        receipt.vdp1_register_0x06_write_proven &&
+        receipt.vdp1_register_0x08_write_proven &&
+        receipt.vdp1_register_0x0a_write_proven;
+    free(data);
+    *out_receipt = receipt;
+    return receipt.static_instruction_dataflow_proven ? 1 : 0;
+}
+
 static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
 {
     uint8_t *data;
