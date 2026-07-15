@@ -19,6 +19,12 @@ static void put_le16(unsigned char *bytes, int offset, unsigned short value)
     bytes[offset + 1] = (unsigned char)(value >> 8);
 }
 
+static unsigned short get_le16(const unsigned char *bytes, int offset)
+{
+    return (unsigned short)(bytes[offset] |
+                            ((unsigned short)bytes[offset + 1] << 8));
+}
+
 static unsigned short sensor_target(int x, int y, int cell)
 {
     return (unsigned short)(((cell & 3) << 4) |
@@ -156,6 +162,17 @@ int main(void)
               profile.audio_runtime.pendingPriority == 4u &&
               profile.audio_runtime.totalRequests == 1u,
           "Audible C001 requests the original prioritized switch sound");
+
+    make_loaded_chain(&dungeon, raw, 1, 2, 27);
+    put_le16(raw, 76, (unsigned short)((DM1_EFFECT_SET << 3) | (1u << 2)));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    run_object_move(&profile);
+    CHECK(profile.timeline_queue.eventCount == 1 &&
+              profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
+              get_le16(raw, 74) == (unsigned short)(27u << 7),
+          "C002 OnceOnly clears its type before publishing F0272/F0268");
 
     make_loaded_chain(&dungeon, raw, 1, 0, 0);
     csb_v1_runtime_init(&profile, NULL);
