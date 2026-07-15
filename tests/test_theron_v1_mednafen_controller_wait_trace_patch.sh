@@ -18,6 +18,7 @@ later_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_fifo_generation
 generation7_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_generation7_fifo_ram_receipt.patch
 main_ram_loader_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
+main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
 if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
@@ -136,6 +137,11 @@ if ! grep -Fq 'main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physica
     printf 'FAIL: main-RAM e009 dispatch patch no longer retains direct PCECD receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'main_ram_e009_fifo_read dispatch_sequence=%u generation=%u fifo_sequence=%llu reader_pc=%04x value=%02x' "$main_ram_e009_fifo_patch_file" ||
+   ! grep -Fq 'if(TheronPCECDMainRAMLoaderE009Active)' "$main_ram_e009_fifo_patch_file"; then
+    printf 'FAIL: main-RAM e009 FIFO patch no longer retains dispatch-bounded FIFO evidence\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
@@ -166,4 +172,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$later_fifo_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$generation7_receipt_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_dispatch_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_fifo_patch_file"
 printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

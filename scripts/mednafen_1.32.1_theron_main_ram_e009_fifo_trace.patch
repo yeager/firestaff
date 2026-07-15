@@ -1,0 +1,53 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -109,6 +109,7 @@
+  uint16 reader_pc;
+  uint8 value;
+  unsigned generation;
++ unsigned dispatch_sequence;
+  uint64 sequence;
+ };
+ static TheronPCECDFifoReceipt TheronPCECDFifoReceipts[TheronPCECDFifoReceiptCapacity];
+@@ -119,6 +120,8 @@
+ static bool TheronPCECDGeneration7FifoComplete;
+ static unsigned TheronPCECDPostGeneration7RAMWriteCount;
+ static unsigned TheronPCECDMainRAMLoaderE009CallCount;
++static bool TheronPCECDMainRAMLoaderE009Active;
++static unsigned TheronPCECDMainRAMLoaderE009Sequence;
+
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -147,6 +150,8 @@
+  TheronPCECDTraceFifoReceipt("main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x\n",
+                              TheronPCECDMainRAMLoaderE009CallCount++, logical_pc,
+                              physical_pc, accumulator, x, y);
++ TheronPCECDMainRAMLoaderE009Sequence = TheronPCECDMainRAMLoaderE009CallCount - 1;
++ TheronPCECDMainRAMLoaderE009Active = true;
+ }
+
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
+@@ -158,10 +163,14 @@
+  receipt->reader_pc = reader_pc;
+  receipt->value = value;
+  receipt->generation = generation;
++ receipt->dispatch_sequence = TheronPCECDMainRAMLoaderE009Sequence;
+  receipt->sequence = TheronPCECDFifoReceiptSequence++;
+  TheronPCECDFifoReceiptCount++;
+  TheronPCECDTraceFifoReceipt("pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x value=%02x\n",
+                              generation, (unsigned long long)receipt->sequence, reader_pc, value);
++ TheronPCECDTraceFifoReceipt("main_ram_e009_fifo_read dispatch_sequence=%u generation=%u fifo_sequence=%llu reader_pc=%04x value=%02x\n",
++                             receipt->dispatch_sequence, generation,
++                             (unsigned long long)receipt->sequence, reader_pc, value);
+ }
+
+ void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value)
+@@ -708,8 +717,7 @@
+      TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u\n",
+                            TheronPCECDDataReadPC, ret,
+                            Mednafen::TheronSCSITraceCurrentReadGeneration());
+-     if(Mednafen::TheronSCSITraceCurrentReadGeneration() >= 7 &&
+-        Mednafen::TheronSCSITraceCurrentReadGeneration() <= 10)
++     if(TheronPCECDMainRAMLoaderE009Active)
+       TheronPCECDQueueFifoReceipt(TheronPCECDDataReadPC, ret,
+                                   Mednafen::TheronSCSITraceCurrentReadGeneration());
+     }
