@@ -70,6 +70,23 @@ int nexus_v1_launcher_startup_structure3_raw_capture_intake(
     const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
     Nexus_V1_DgnStructure3RawCaptureHostReceipt *out_receipt);
 
+/* Launcher-owned boundary for one Structure1F direct-face capture request.
+ * It validates only package ownership and no-draw capture identity; it does
+ * not consume a transform, material, palette, VDP1 command, or pixels. */
+typedef struct {
+    int launcher_initialized;
+    int active_level_bound;
+    int package_source_bound;
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt capture_target;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt;
+
+int nexus_v1_launcher_dgn_direct_face_capture_intake(
+    int structure1f_entry_index, const char *manifest_text, size_t manifest_size,
+    Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt *out_receipt);
+
 typedef struct {
     int title_surface_loaded;
     int warning_surface_loaded;

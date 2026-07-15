@@ -1,4 +1,5 @@
 #include "nexus_v1_engine.h"
+#include "nexus_v1_launcher.h"
 #include "asset_find_by_hash.h"
 
 #include <stdint.h>
@@ -128,6 +129,21 @@ int main(void)
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_NEXUS_DATA_DIR is not set");
         return 0;
+    }
+    {
+        Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt host_receipt;
+
+        memset(&host_receipt, 0, sizeof(host_receipt));
+        CHECK(nexus_v1_launcher_dgn_direct_face_capture_intake(
+                  0, "unavailable\n", sizeof("unavailable\n") - 1U,
+                  &host_receipt) == 0 &&
+              !host_receipt.launcher_initialized &&
+              !host_receipt.active_level_bound &&
+              !host_receipt.package_source_bound &&
+              host_receipt.no_draw_only &&
+              !host_receipt.fallback_visuals_permitted &&
+              host_receipt.blocks_real_dgn_mesh_render,
+              "uninitialized launcher cannot bypass direct-face package ownership");
     }
     {
         Nexus_V1_Engine correlation_engine;
