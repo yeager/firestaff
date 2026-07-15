@@ -1111,6 +1111,102 @@ bool dm2_v1_original_timer_format_corpus_probe(
     return true;
 }
 
+static int dm2_v1_original_raw_timer_stream_receipt(
+    const uint8_t *payload,
+    size_t payload_size,
+    uint8_t expected_timer_count,
+    uint32_t *out_offset,
+    uint32_t *out_byte_count,
+    uint32_t *out_hash)
+{
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    DM2_GameStateBlock gs;
+    DM2_ChampionRecord champion;
+    uint8_t champion_mask[261];
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE];
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE];
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE];
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
+    DM2_TimerEntry timer;
+    size_t pos;
+    size_t timer_start;
+    size_t timer_end;
+    int decoded;
+    int champion_count;
+
+    if (out_offset) *out_offset = 0u;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (out_hash) *out_hash = 0u;
+    if (!payload || !out_offset || !out_byte_count || !out_hash ||
+        payload_size > UINT32_MAX ||
+        !dm2_v1_original_raw_sksave_dungeon_receipt(payload, payload_size,
+                                                     &dungeon) ||
+        !dungeon.valid) {
+        return 0;
+    }
+
+    pos = dungeon.suppress_state_offset;
+    decoded = dm2_suppress_decode_gamestate(payload + pos,
+                                            payload_size - pos, &gs, 0);
+    if (decoded <= 0) return 0;
+    pos += (size_t)decoded;
+
+    decoded = dm2_suppress_decode_global_flags(payload + pos,
+                                               payload_size - pos,
+                                               global_flags, 0);
+    if (decoded <= 0) return 0;
+    pos += (size_t)decoded;
+
+    decoded = dm2_suppress_decode_global_bytes(payload + pos,
+                                               payload_size - pos,
+                                               global_bytes, 0);
+    if (decoded <= 0) return 0;
+    pos += (size_t)decoded;
+
+    decoded = dm2_suppress_decode_global_words(payload + pos,
+                                               payload_size - pos,
+                                               global_words, 0);
+    if (decoded <= 0) return 0;
+    pos += (size_t)decoded;
+
+    champion_count = (int)gs.wChampionsCount;
+    if (champion_count < 0 || champion_count > 4) return 0;
+    dm2_suppress_champion_mask(champion_mask);
+    for (int i = 0; i < champion_count; ++i) {
+        decoded = dm2_suppress_decode_champion(payload + pos,
+                                               payload_size - pos,
+                                               champion_mask, &champion, 0);
+        if (decoded <= 0) return 0;
+        pos += (size_t)decoded;
+    }
+
+    decoded = dm2_suppress_decode_spell_effects(payload + pos,
+                                                payload_size - pos,
+                                                spell_effects, 0);
+    if (decoded <= 0) return 0;
+    pos += (size_t)decoded;
+
+    timer_start = pos;
+    if (expected_timer_count > DM2_MAX_TIMERS) return 0;
+    for (int i = 0; i < (int)expected_timer_count; ++i) {
+        decoded = dm2_suppress_decode_timer(payload + pos,
+                                            payload_size - pos, &timer, 0);
+        if (decoded <= 0) return 0;
+        pos += (size_t)decoded;
+    }
+    timer_end = pos;
+    if (timer_start > UINT32_MAX || timer_end < timer_start ||
+        timer_end - timer_start > UINT32_MAX) {
+        return 0;
+    }
+
+    *out_offset = (uint32_t)timer_start;
+    *out_byte_count = (uint32_t)(timer_end - timer_start);
+    *out_hash = dm2_sksave_corpus_payload_hash(
+        payload + timer_start, timer_end - timer_start, 2166136261u);
+    return 1;
+}
+
 bool dm2_v1_original_save_state_corpus_probe(
     const char *save_base,
     DM2_OriginalSaveStateCorpusReceipt *out_receipt)
@@ -1199,6 +1295,16 @@ bool dm2_v1_original_save_state_corpus_probe(
                 target->raw_db_record_counts[pool] =
                     candidate.dungeon_receipt.db_record_counts[pool];
             }
+            if (!dm2_v1_original_raw_timer_stream_receipt(
+                    payload, payload_size, target->timer_count,
+                    &target->raw_timer_stream_offset,
+                    &target->raw_timer_stream_byte_count,
+                    &target->raw_timer_stream_hash)) {
+                out_receipt->original_candidate_list_complete = 0;
+                out_receipt->rejected_candidate_count++;
+                --out_receipt->entry_count;
+                continue;
+            }
         }
         hash = dm2_sksave_corpus_hash_step(hash, target->candidate.source_file_hash);
         hash = dm2_sksave_corpus_hash_step(hash, target->game_tick);
@@ -1220,6 +1326,12 @@ bool dm2_v1_original_save_state_corpus_probe(
             target->state_hash, target->global_words_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->spell_effects_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_timer_stream_offset);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_timer_stream_byte_count);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_timer_stream_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, (uint32_t)target->raw_dungeon_layout_valid);
         target->state_hash = dm2_sksave_corpus_hash_step(

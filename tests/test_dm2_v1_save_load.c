@@ -1679,6 +1679,7 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
     uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    DM2_TimerEntry raw_timer;
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     DM2_SKSaveCorpusReceipt receipt;
     DM2_OriginalTimerFormatCorpusReceipt timer_receipt;
@@ -1703,6 +1704,12 @@ static int test_sksave_corpus_scan_receipt(void)
     global_bytes[7] = 0x4du;
     global_words[3] = 0x81f2u;
     spell_effects[5] = 0x37u;
+    memset(&raw_timer, 0, sizeof(raw_timer));
+    raw_timer.timer_id = 0x0012u;
+    raw_timer.current_tick = 0x0034u;
+    raw_timer.interval_ticks = 0x0005u;
+    raw_timer.flags = 0x0001u;
+    raw_timer.user_data = 0x0022u;
     dm2_v1_session_new(&session);
     session.game_tick = 0x1234u;
     payload_c_size = dm2_v1_session_serialize(&session, payload_c,
@@ -1711,14 +1718,19 @@ static int test_sksave_corpus_scan_receipt(void)
         !build_resume_payload(gs, &champion, global_flags, global_bytes,
                               global_words, spell_effects, NULL, 0,
                               payload_b, sizeof(payload_b), &payload_b_size,
-                              &enc_gs_size, &enc_champ_size) ||
-        !build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
-                                  global_words, spell_effects, NULL, 0,
-                                  inventory, 0u, payload_a,
+                              &enc_gs_size, &enc_champ_size)) {
+        printf("    FAIL: could not build SKSave corpus importer fixtures\n");
+        return 0;
+    }
+    gs->wTimersCount = 1;
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, &raw_timer, 1,
+                                  inventory, dm2_db_make_handle(5, 0u), payload_a,
                                   sizeof(payload_a), &payload_a_size)) {
         printf("    FAIL: could not build SKSave corpus importer fixtures\n");
         return 0;
     }
+    gs->wTimersCount = 0;
     largest_payload_size = payload_b_size;
     if ((size_t)payload_c_size > largest_payload_size) {
         largest_payload_size = (size_t)payload_c_size;
@@ -1752,7 +1764,7 @@ static int test_sksave_corpus_scan_receipt(void)
         return 0;
     }
     r = dm2_sl_save_last_session(tmpdir, "LastA",
-                                 payload_a, payload_a_size);
+                                 payload_b, payload_b_size);
     if (r != 0) {
         printf("    FAIL: could not write first last-session save (%d)\n", r);
         cleanup_slot_dir(tmpdir);
@@ -1864,6 +1876,9 @@ static int test_sksave_corpus_scan_receipt(void)
             corpus_hash_words_le(global_words, DM2_GLOBAL_WORDS_SIZE) ||
         state_receipt.entries[0].spell_effects_hash !=
             corpus_hash_bytes(spell_effects, sizeof(spell_effects)) ||
+        state_receipt.entries[0].raw_timer_stream_offset != 0u ||
+        state_receipt.entries[0].raw_timer_stream_byte_count != 0u ||
+        state_receipt.entries[0].raw_timer_stream_hash != 0u ||
         state_receipt.entries[0].state_hash == 0u ||
         state_receipt.corpus_hash == 0u) {
         printf("    FAIL: original save state census lost source-decoded fields\n");
@@ -1912,15 +1927,16 @@ static int test_sksave_corpus_scan_receipt(void)
         !receipt.last_session_uses_backup ||
         receipt.valid_slot_count != 1 ||
         receipt.invalid_candidate_count != 2 ||
-        receipt.importable_candidate_count != 1 ||
-        receipt.import_rejected_candidate_count != 1 ||
+        receipt.importable_candidate_count != 2 ||
+        receipt.import_rejected_candidate_count != 0 ||
         receipt.firestaff_session_candidate_count != 1 ||
-        receipt.original_envelope_candidate_count != 0 ||
+        receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
         receipt.importable_kind_mask !=
-            (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) ||
+            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
         receipt.importable_payload_hash == 0u ||
-        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL ||
+        strstr(receipt.first_importable_path, "SKSave.bak") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.bak") == NULL) {
         printf("    FAIL: backup-selected corpus receipt did not match "
                "expected fields\n");
@@ -1933,14 +1949,14 @@ static int test_sksave_corpus_scan_receipt(void)
     if (!dm2_v1_sksave_corpus_load_first_importable(
             tmpdir, loaded_payload, sizeof(loaded_payload),
             &loaded_payload_size, &receipt) ||
-        loaded_payload_size != (size_t)payload_c_size ||
+        loaded_payload_size != payload_b_size ||
         dm2_v1_session_parse_save_candidate(&loaded_candidate,
                                              loaded_payload,
                                              loaded_payload_size) != 0 ||
-        loaded_candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
-        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
+        loaded_candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE ||
+        strstr(receipt.first_importable_path, "SKSave.bak") == NULL) {
         printf("    FAIL: corpus loader did not fall through to first "
-               "importable slot candidate\n");
+               "importable backup candidate\n");
         cleanup_slot_dir(tmpdir);
         return 0;
     }
@@ -1963,7 +1979,7 @@ static int test_sksave_corpus_scan_receipt(void)
     snprintf(renamed_save_path, sizeof(renamed_save_path),
              "%s/captured-original.bin", nested_dir);
     if (write_valid_sksave_file_at_path(renamed_save_path, "Captured",
-                                        payload_b, payload_b_size) != 0) {
+                                        payload_a, payload_a_size) != 0) {
         printf("    FAIL: could not write renamed corpus save\n");
         (void)remove(nested_save_path);
         FS_RMDIR(nested_dir);
@@ -1973,9 +1989,10 @@ static int test_sksave_corpus_scan_receipt(void)
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
         receipt.valid_slot_count != 1 ||
-        receipt.importable_candidate_count != 3 ||
+        receipt.importable_candidate_count != 4 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 2 ||
+        receipt.original_raw_candidate_count != 1 ||
         receipt.recursive_candidate_count != 2 ||
         receipt.recursive_importable_candidate_count != 2 ||
         receipt.alternate_name_candidate_count != 2 ||
@@ -1983,12 +2000,13 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.extra_valid_candidate_count != 2 ||
         receipt.importable_kind_mask !=
             ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
-             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) |
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)) ||
         receipt.importable_payload_hash == 0u ||
         receipt.recursive_scan_depth_limit != 4 ||
         receipt.recursive_scan_candidate_cap != 64 ||
         receipt.recursive_scan_truncated != 0 ||
-        strstr(receipt.first_importable_path, "SKSave03.dat") == NULL) {
+        strstr(receipt.first_importable_path, "SKSave.bak") == NULL) {
         printf("    FAIL: recursive corpus receipt did not match expected "
                "fields (importable=%u rec=%u rec_imp=%u alt=%u header=%u "
                "extra=%u first=%s)\n",
@@ -2004,6 +2022,56 @@ static int test_sksave_corpus_scan_receipt(void)
         FS_RMDIR(nested_dir);
         cleanup_slot_dir(tmpdir);
         return 0;
+    }
+    memset(&state_receipt, 0, sizeof(state_receipt));
+    if (!dm2_v1_original_save_state_corpus_probe(tmpdir, &state_receipt) ||
+        state_receipt.scan_complete != 1 ||
+        state_receipt.original_candidate_list_complete != 1 ||
+        state_receipt.original_candidate_count != 3 ||
+        state_receipt.parsed_candidate_count != 3 ||
+        state_receipt.rejected_candidate_count != 0 ||
+        state_receipt.entry_count != 3) {
+        printf("    FAIL: recursive original state census did not retain "
+               "both envelope and raw candidates\n");
+        (void)remove(renamed_save_path);
+        (void)remove(nested_save_path);
+        FS_RMDIR(nested_dir);
+        cleanup_slot_dir(tmpdir);
+        return 0;
+    }
+    {
+        const DM2_OriginalSaveStateCorpusEntry *raw_entry = NULL;
+        for (uint8_t ei = 0u; ei < state_receipt.entry_count; ++ei) {
+            if (state_receipt.entries[ei].candidate.kind ==
+                DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+                raw_entry = &state_receipt.entries[ei];
+                break;
+            }
+        }
+        if (!raw_entry ||
+            raw_entry->timer_count != 1u ||
+            raw_entry->raw_dungeon_layout_valid != 1 ||
+            raw_entry->raw_timer_stream_offset == 0u ||
+            raw_entry->raw_timer_stream_byte_count == 0u ||
+            raw_entry->raw_timer_stream_hash == 0u ||
+            raw_entry->raw_timer_stream_offset >=
+                raw_entry->candidate.payload_size ||
+            raw_entry->raw_timer_stream_byte_count >
+                raw_entry->candidate.payload_size -
+                    raw_entry->raw_timer_stream_offset ||
+            raw_entry->raw_timer_stream_hash !=
+                corpus_hash_bytes(payload_a +
+                    raw_entry->raw_timer_stream_offset,
+                    raw_entry->raw_timer_stream_byte_count) ||
+            raw_entry->state_hash == 0u) {
+            printf("    FAIL: raw original timer byte-span receipt was not "
+                   "source-bound\n");
+            (void)remove(renamed_save_path);
+            (void)remove(nested_save_path);
+            FS_RMDIR(nested_dir);
+            cleanup_slot_dir(tmpdir);
+            return 0;
+        }
     }
     (void)remove(renamed_save_path);
     (void)remove(nested_save_path);
