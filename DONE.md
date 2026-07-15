@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 real-GDAT HUD receipt hardening: M11 now recomputes the
+  complete HUD command-plan hash before consuming source material, so altered
+  portrait `RECT_173..176` table receipts cannot reach runtime drawing. In
+  source-required mode, a rejected champion portrait plan now blocks instead
+  of falling back to local material fetch. Focused real `GRAPHICS.DAT` HUD
+  coverage passes.
+
 - ✅ 2026-07-15 DM1 SAVEUTIL F0419 cursor hardening: the original-PC34
   save-part reader now validates the incoming cursor with subtraction-based
   bounds before reading the F0420 length prefix or body, so malformed caller

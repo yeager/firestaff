@@ -440,6 +440,13 @@
 - 2026-07-15 DM2 HUD follow-up: M11 now verifies each decoded GDAT HUD
   command before its blit. Remaining work is real save-corpus state binding.
 
+- 2026-07-15 DM2 HUD follow-up: M11 now recomputes the real GDAT HUD command
+  plan receipt at consumption time and blocks source-required champion
+  portraits if the `RECT_173..176` table identity drifts. Remaining work is
+  still live save-corpus state binding, object-icon resolution, and broader
+  dungeon/HUD runtime capture; do not replace missing state with local
+  material fallback.
+
 - 2026-07-15 DM2 startup/runtime follow-up: skproject title/menu startup now
   uses the real `TITLE/0` GDAT `dt07/1` + `dt07/4` surfaces and focused
   startup contracts pass. The broader M11 profile test still fails after
