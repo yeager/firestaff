@@ -5,6 +5,7 @@
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -77,64 +78,79 @@ static int verify_front_mirror_backing_pixel(
     const unsigned char *framebuffer,
     int renderIndex)
 {
-    DM1_V1_ChampionMirrorFrontWallReceiptPc34 frontWall;
-    DM1_V1_ChampionMirrorRenderReceiptPc34 render;
-    DM1_V1_ChampionMirrorHostDrawReceiptPc34 hostDraw;
+    DM1_FrontMirrorRenderPlanPc34 plan;
+    M11_Dm1HoCMirrorHostPresentationReceipt presented;
     const M11_AssetSlot *backing;
-    int y;
 
     if (!state || !framebuffer ||
-        !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
-            127, renderIndex, 4, 2, 2, &frontWall) ||
-        !DM1_V1_ChampionMirror_BuildRenderReceiptPc34(&frontWall, &render) ||
-        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
-            &render, 0, 1, &hostDraw) || !hostDraw.valid ||
-        !hostDraw.drawMirrorBackingAsset || hostDraw.candidatePanelOwnsCell) {
+        !dm1_v1_front_mirror_render_plan_pc34(renderIndex, &plan)) {
         return 0;
     }
     backing = M11_AssetLoader_Load(&state->assetLoader,
-                                   (unsigned int)hostDraw.backingGraphicIndex);
+                                   (unsigned int)plan.ornament.graphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
-        hostDraw.backingSourceX < 0 || hostDraw.backingSourceY < 0 ||
-        hostDraw.backingWidth <= 0 || hostDraw.backingHeight <= 0 ||
-        hostDraw.backingSourceX + hostDraw.backingWidth > (int)backing->width ||
-        hostDraw.backingSourceY + hostDraw.backingHeight > (int)backing->height) {
+        plan.ornament.srcX < 0 || plan.ornament.srcY < 0 ||
+        plan.backingSourceWidth <= 0 || plan.backingSourceHeight <= 0 ||
+        plan.backingWidth <= 0 || plan.backingHeight <= 0 ||
+        plan.ornament.srcX + plan.backingSourceWidth > (int)backing->width ||
+        plan.ornament.srcY + plan.backingSourceHeight > (int)backing->height) {
         return 0;
     }
-    for (y = 0; y < hostDraw.backingHeight; ++y) {
-        int x;
-        for (x = 0; x < hostDraw.backingWidth; ++x) {
-            int dstX = hostDraw.backingDstX + x;
-            int dstY = hostDraw.backingDstY + y;
-            int sourceX = hostDraw.backingSourceX +
-                (hostDraw.backingFlipHorizontal ? hostDraw.backingWidth - 1 - x : x);
-            int sourceY = hostDraw.backingSourceY + y;
-            unsigned char expected = backing->pixels[
-                sourceY * (int)backing->width + sourceX];
-            int framebufferX = dstX;
-            int framebufferY = 33 + dstY; /* COORD.C G2067/G2068: (0,33). */
+    memset(&presented, 0, sizeof(presented));
+    M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(&presented);
+    if (!presented.valid || presented.renderIndex != renderIndex ||
+        presented.backingGraphicIndex != plan.ornament.graphicIndex ||
+        presented.backingSourceWidth != plan.backingSourceWidth ||
+        presented.backingSourceHeight != plan.backingSourceHeight ||
+        presented.backingDestinationX != plan.backingDstX ||
+        presented.backingDestinationY != 33 + plan.backingDstY ||
+        presented.backingWidth != plan.backingWidth ||
+        presented.backingHeight != plan.backingHeight ||
+        presented.backingTransparentColor != plan.ornament.transparentColor ||
+        presented.backingPaletteMapValid != plan.ornament.paletteMapValid ||
+        (presented.backingPaletteMapValid &&
+         memcmp(presented.backingPaletteMap, plan.ornament.paletteMap,
+                sizeof(presented.backingPaletteMap)) != 0) ||
+        presented.portraitGraphicIndex != plan.portraitGraphicIndex ||
+        presented.portraitSourceX != plan.portraitSrcX ||
+        presented.portraitSourceY != plan.portraitSrcY ||
+        presented.portraitDestinationX != plan.portraitDstX ||
+        presented.portraitDestinationY != 33 + plan.portraitDstY ||
+        presented.portraitWidth != plan.portraitWidth ||
+        presented.portraitHeight != plan.portraitHeight ||
+        presented.portraitTransparentColor != plan.portraitTransparentColor) {
+        return 0;
+    }
+    {
+        int y;
+        for (y = 0; y < plan.backingHeight; ++y) {
+            int x;
+            for (x = 0; x < plan.backingWidth; ++x) {
+                const int dstX = plan.backingDstX + x;
+                const int dstY = plan.backingDstY + y;
+                const int sourceX = plan.ornament.srcX +
+                    (x * plan.backingSourceWidth) / plan.backingWidth;
+                const int sourceY = plan.ornament.srcY +
+                    (y * plan.backingSourceHeight) / plan.backingHeight;
+                unsigned char expected = backing->pixels[
+                    sourceY * (int)backing->width + sourceX];
 
-            if (expected == (unsigned char)hostDraw.backingTransparentColor ||
-                (dstX >= hostDraw.portraitDstX &&
-                 dstX < hostDraw.portraitDstX + hostDraw.portraitWidth &&
-                 dstY >= hostDraw.portraitDstY &&
-                 dstY < hostDraw.portraitDstY + hostDraw.portraitHeight)) {
-                continue;
+                if (expected == (unsigned char)plan.ornament.transparentColor ||
+                    (dstX >= plan.portraitDstX &&
+                     dstX < plan.portraitDstX + plan.portraitWidth &&
+                     dstY >= plan.portraitDstY &&
+                     dstY < plan.portraitDstY + plan.portraitHeight)) {
+                    continue;
+                }
+                if (plan.ornament.paletteMapValid) {
+                    expected = plan.ornament.paletteMap[expected & 0x0f];
+                }
+                return framebuffer[(33 + dstY) * kFramebufferWidth + dstX] ==
+                    expected;
             }
-            if (hostDraw.backingPaletteMapValid) {
-                expected = hostDraw.backingPaletteMap[expected & 0x0f];
-            }
-            if (framebufferX < 0 || framebufferX >= kFramebufferWidth ||
-                framebufferY < 0 || framebufferY >= kFramebufferHeight) {
-                return 0;
-            }
-            if (framebuffer[framebufferY * kFramebufferWidth + framebufferX] != expected) {
-                return 0;
-            }
-            return 1;
         }
     }
-    return 0;
+    return 1;
 }
 
 int main(void)

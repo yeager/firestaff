@@ -146,6 +146,8 @@ int main(void)
         render.width != expectedPortrait.w || render.height != expectedPortrait.h ||
         render.dstX != 96 || render.dstY != 35 ||
         render.backingGraphicIndex != 346 ||
+        render.backingSourceWidth != expectedMirror.backingSourceWidth ||
+        render.backingSourceHeight != expectedMirror.backingSourceHeight ||
         render.backingDstX != expectedMirror.backingDstX ||
         render.backingDstY != expectedMirror.backingDstY ||
         render.backingWidth != expectedMirror.backingWidth ||

@@ -54,7 +54,7 @@ int main(void)
          contains_between(route, route_end,
             "if (!m11_draw_dm1_front_mirror_backing_host_receipt(") &&
          contains_between(route, route_end,
-            "return;\n    }\n    (void)m11_draw_dm1_front_champion_portrait_host_receipt(") &&
+            "return;\n    }\n    if (m11_draw_dm1_front_champion_portrait_host_receipt(") &&
          contains_between(route, route_end,
             "if (drawReceipt.candidatePanelOwnsCell)") &&
          strstr(source, "receipt->portraitSourceX + receipt->portraitWidth >") &&
@@ -63,9 +63,10 @@ int main(void)
          strstr(source, "dm1_v1_graphic_champion_portrait_source_zone_pc34(") &&
          strstr(source, "receipt->portraitSourceX != sourceZone.x") &&
          strstr(source, "C026 retains\n     * its raw indices") &&
-         strstr(source, "receipt->backingSourceX + receipt->backingWidth >") &&
-         strstr(source, "receipt->backingSourceY + receipt->backingHeight >") &&
-         strstr(source, "receipt->backingSourceX + sourceOffsetX") &&
+         strstr(source, "receipt->backingSourceX + receipt->backingSourceWidth >") &&
+         strstr(source, "receipt->backingSourceY + receipt->backingSourceHeight >") &&
+         strstr(source, "m11_blit_scaled_palette_map_region(") &&
+         strstr(source, "receipt->backingSourceWidth") &&
          ornaments && ornaments_end && ornaments_end > ornaments &&
          contains_between(ornaments, ornaments_end,
             "if (cell.championPortraitOrdinal >= 0)") &&

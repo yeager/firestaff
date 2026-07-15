@@ -388,6 +388,8 @@ static M11_Dm1DoorHostPresentationReceipt
     s_m11_dm1_door_host_presentation_receipt;
 static M11_Dm1WallOrnamentHostPresentationReceipt
     s_m11_dm1_wall_ornament_host_presentation_receipt;
+static M11_Dm1HoCMirrorHostPresentationReceipt
+    s_m11_dm1_hoc_mirror_host_presentation_receipt;
 static M11_Dm1InscriptionHostPresentationReceipt
     s_m11_dm1_inscription_host_presentation_receipt;
 static M11_Dm1UnreadableInscriptionHostPresentationReceipt
@@ -20125,10 +20127,12 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
                                    (unsigned int)renderReceipt.backingGraphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
         renderReceipt.backingSourceX < 0 || renderReceipt.backingSourceY < 0 ||
+        renderReceipt.backingSourceWidth <= 0 ||
+        renderReceipt.backingSourceHeight <= 0 ||
         renderReceipt.backingWidth <= 0 || renderReceipt.backingHeight <= 0 ||
-        renderReceipt.backingSourceX + renderReceipt.backingWidth >
+        renderReceipt.backingSourceX + renderReceipt.backingSourceWidth >
             (int)backing->width ||
-        renderReceipt.backingSourceY + renderReceipt.backingHeight >
+        renderReceipt.backingSourceY + renderReceipt.backingSourceHeight >
             (int)backing->height ||
         !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
             &renderReceipt, 0, 1, &hostDraw) ||
@@ -22516,9 +22520,8 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
     int fbH) {
     const M11_AssetSlot* backing;
     const unsigned char* paletteMap;
-    int y;
-
     if (!state || !receipt || !framebuffer || !receipt->drawMirrorBackingAsset ||
+        receipt->backingSourceWidth <= 0 || receipt->backingSourceHeight <= 0 ||
         receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
         return 0;
     }
@@ -22526,36 +22529,32 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
                                    (unsigned int)receipt->backingGraphicIndex);
     if (!backing || !backing->loaded || !backing->pixels ||
         receipt->backingSourceX < 0 || receipt->backingSourceY < 0 ||
-        receipt->backingSourceX + receipt->backingWidth > (int)backing->width ||
-        receipt->backingSourceY + receipt->backingHeight > (int)backing->height) {
+        receipt->backingSourceX + receipt->backingSourceWidth >
+            (int)backing->width ||
+        receipt->backingSourceY + receipt->backingSourceHeight >
+            (int)backing->height ||
+        receipt->backingFlipHorizontal) {
         return 0;
     }
     paletteMap = receipt->backingPaletteMapValid
         ? receipt->backingPaletteMap : NULL;
-    for (y = 0; y < receipt->backingHeight; ++y) {
-        const int sourceY = receipt->backingSourceY + y;
-        const int framebufferY = M11_VIEWPORT_Y + receipt->backingDstY + y;
-        int x;
-        if (framebufferY < 0 || framebufferY >= fbH) {
-            continue;
-        }
-        for (x = 0; x < receipt->backingWidth; ++x) {
-            const int sourceOffsetX = receipt->backingFlipHorizontal
-                ? receipt->backingWidth - 1 - x : x;
-            const int sourceX = receipt->backingSourceX + sourceOffsetX;
-            const int framebufferX = M11_VIEWPORT_X + receipt->backingDstX + x;
-            unsigned char pixel;
-            if (framebufferX < 0 || framebufferX >= fbW) {
-                continue;
-            }
-            pixel = backing->pixels[sourceY * (int)backing->width + sourceX];
-            if (pixel == (unsigned char)receipt->backingTransparentColor) {
-                continue;
-            }
-            framebuffer[framebufferY * fbW + framebufferX] = paletteMap
-                ? paletteMap[pixel & 0x0f] : pixel;
-        }
-    }
+    /* C127 has only the D1C projection. F0791 consumes the native C346
+     * raster into G0205's wider destination without a side-wall flip. */
+    m11_blit_scaled_palette_map_region(
+        backing,
+        receipt->backingSourceX,
+        receipt->backingSourceY,
+        receipt->backingSourceWidth,
+        receipt->backingSourceHeight,
+        framebuffer,
+        fbW,
+        fbH,
+        M11_VIEWPORT_X + receipt->backingDstX,
+        M11_VIEWPORT_Y + receipt->backingDstY,
+        receipt->backingWidth,
+        receipt->backingHeight,
+        receipt->backingTransparentColor,
+        paletteMap);
     return 1;
 }
 
@@ -22606,6 +22605,39 @@ static int m11_draw_dm1_front_champion_portrait_host_receipt(
     return 1;
 }
 
+static void m11_publish_dm1_hoc_mirror_host_presentation(
+    const DM1_V1_ChampionMirrorHostDrawReceiptPc34* receipt)
+{
+    M11_Dm1HoCMirrorHostPresentationReceipt* published =
+        &s_m11_dm1_hoc_mirror_host_presentation_receipt;
+
+    if (!receipt) {
+        return;
+    }
+    memset(published, 0, sizeof(*published));
+    published->valid = 1;
+    published->renderIndex = receipt->renderIndex;
+    published->backingGraphicIndex = receipt->backingGraphicIndex;
+    published->backingSourceWidth = receipt->backingSourceWidth;
+    published->backingSourceHeight = receipt->backingSourceHeight;
+    published->backingDestinationX = M11_VIEWPORT_X + receipt->backingDstX;
+    published->backingDestinationY = M11_VIEWPORT_Y + receipt->backingDstY;
+    published->backingWidth = receipt->backingWidth;
+    published->backingHeight = receipt->backingHeight;
+    published->backingTransparentColor = receipt->backingTransparentColor;
+    published->backingPaletteMapValid = receipt->backingPaletteMapValid;
+    memcpy(published->backingPaletteMap, receipt->backingPaletteMap,
+           sizeof(published->backingPaletteMap));
+    published->portraitGraphicIndex = receipt->portraitGraphicIndex;
+    published->portraitSourceX = receipt->portraitSourceX;
+    published->portraitSourceY = receipt->portraitSourceY;
+    published->portraitDestinationX = M11_VIEWPORT_X + receipt->portraitDstX;
+    published->portraitDestinationY = M11_VIEWPORT_Y + receipt->portraitDstY;
+    published->portraitWidth = receipt->portraitWidth;
+    published->portraitHeight = receipt->portraitHeight;
+    published->portraitTransparentColor = receipt->portraitTransparentColor;
+}
+
 static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
                                             const M11_ViewportCell* frontCell,
                                             unsigned char* framebuffer,
@@ -22654,8 +22686,10 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
             state, &drawReceipt, framebuffer, fbW, fbH)) {
         return;
     }
-    (void)m11_draw_dm1_front_champion_portrait_host_receipt(
-        state, &drawReceipt, framebuffer, fbW, fbH);
+    if (m11_draw_dm1_front_champion_portrait_host_receipt(
+            state, &drawReceipt, framebuffer, fbW, fbH)) {
+        m11_publish_dm1_hoc_mirror_host_presentation(&drawReceipt);
+    }
 }
 
 static int m11_draw_dm1_wall_ornament_host_material_receipt(
@@ -35362,12 +35396,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
-    /* ReDMCSB DUNVIEW.C F0107:3913-3928 draws C346/C026 as part of the
-     * D1C wall-ornament pass.  Keeping the C127 mirror until frame end
-     * makes it paint over the later side-wall replay and door occluders.
-     * Draw it here, before those nearer layers are restored. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -35416,6 +35444,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                    nearMaxVisibleForward, cells);
         }
     }
+
+    /* ReDMCSB DUNVIEW.C F0128 completes D1L/D1R before its D1C F0107
+     * ornament branch. M11's split renderer may replay those side panels
+     * after the first ornament batch; consume C127's C346->C026 pair only
+     * after that replay, but before D1C F0115 objects/projectiles. This
+     * keeps a live mirror from being erased by a side-wall material pass
+     * without letting it cover the later thing layer. */
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
 
     /* ReDMCSB DUNVIEW.C F0128 calls F0115 in full square order:
      * D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Keep the current
@@ -38748,6 +38785,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_door_host_presentation_receipt));
     memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
+    memset(&s_m11_dm1_hoc_mirror_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_hoc_mirror_host_presentation_receipt));
     memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     /* ReDMCSB DUNVIEW.C F0128:8318-8616 rebuilds a full viewport from the
@@ -40678,6 +40717,14 @@ void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_wall_ornament_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(
+    M11_Dm1HoCMirrorHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_hoc_mirror_host_presentation_receipt;
     }
 }
 

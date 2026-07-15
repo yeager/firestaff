@@ -326,6 +326,8 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
         outReceipt->backingGraphicIndex = mirrorPlan.ornament.graphicIndex;
         outReceipt->backingSourceX = mirrorPlan.ornament.srcX;
         outReceipt->backingSourceY = mirrorPlan.ornament.srcY;
+        outReceipt->backingSourceWidth = mirrorPlan.backingSourceWidth;
+        outReceipt->backingSourceHeight = mirrorPlan.backingSourceHeight;
         outReceipt->backingDstX = mirrorPlan.backingDstX;
         outReceipt->backingDstY = mirrorPlan.backingDstY;
         outReceipt->backingWidth = mirrorPlan.backingWidth;
@@ -536,6 +538,8 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     outReceipt->backingGraphicIndex = renderReceipt->backingGraphicIndex;
     outReceipt->backingSourceX = renderReceipt->backingSourceX;
     outReceipt->backingSourceY = renderReceipt->backingSourceY;
+    outReceipt->backingSourceWidth = renderReceipt->backingSourceWidth;
+    outReceipt->backingSourceHeight = renderReceipt->backingSourceHeight;
     outReceipt->backingDstX = renderReceipt->backingDstX;
     outReceipt->backingDstY = renderReceipt->backingDstY;
     outReceipt->backingWidth = renderReceipt->backingWidth;

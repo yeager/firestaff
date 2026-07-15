@@ -315,9 +315,11 @@ static void test_f0172_front_wall_sensor_receipt(void)
 
     CHECK_ANCHOR(
         render.backingGraphicIndex == 346 &&
-            render.backingDstX == 80 &&
-            render.backingDstY == 29 &&
-            render.backingWidth == 64 &&
+        render.backingDstX == 80 &&
+        render.backingDstY == 29 &&
+        render.backingSourceWidth == 48 &&
+        render.backingSourceHeight == 43 &&
+        render.backingWidth == 64 &&
             render.backingHeight == 43 &&
             render.backingTransparentColor == 10 &&
             render.backingPaletteMapValid == 1,

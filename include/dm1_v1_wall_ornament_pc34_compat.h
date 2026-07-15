@@ -108,6 +108,10 @@ typedef struct DM1_FrontMirrorRenderPlanPc34 {
     int portraitTransparentColor;
     int backingDstX;
     int backingDstY;
+    /* C346 decodes natively as 48x43. G0205's D1C box is 64x43, and
+     * DUNVIEW.C:3922 reaches F0791 to scale this source into that zone. */
+    int backingSourceWidth;
+    int backingSourceHeight;
     int backingWidth;
     int backingHeight;
 } DM1_FrontMirrorRenderPlanPc34;
