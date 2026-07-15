@@ -1,22 +1,5 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-15 CSB ReDMCSB F0145--F0148 effective-group owner: the available
-  source corpus gives the complete `DUNGEON.C` bodies at
-  `firestaff_pc34_repro_probe.c:923-970`. F0145 reads `GROUP.Cells` but, on
-  `G0309_i_PartyMapIndex`, returns `G0375_ps_ActiveGroups[GROUP.Cells].Cells`;
-  F0146 writes `ActiveGroups[GROUP.ActiveGroupIndex].Cells` on that map and
-  raw `GROUP.Cells` elsewhere; F0147 returns
-  `ActiveGroups[GROUP.ActiveGroupIndex].Directions` on that map and otherwise
-  `G0258_auc_Graphic559_GroupDirections[GROUP.Direction]`; F0148 performs the
-  matching active/raw write with `M021_NORMALIZE`. Firestaff has independent
-  raw C04 helpers (`csb_v1_dungeon_world_pc34_compat.c:26-55` and
-  `csb_v1_f0146_dungeon_set_group_cells_pc34_compat.c:3-7`) but no caller-owned
-  binding from a loaded C04 record to the live `CSB_V1_RuntimeActiveGroupState`
-  plus party-map identity. Do not extend any one helper: first add one bounded
-  runtime owner that validates the C04 record, resolves its ActiveGroup index,
-  and stages raw/active mutations atomically. Until then, callers must not use
-  the raw helpers as effective F0145--F0148 state.
-
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Next is slot-table heap mutation.
 
