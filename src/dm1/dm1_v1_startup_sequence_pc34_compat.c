@@ -3599,7 +3599,11 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
             dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,
                                                              &corpus_receipt) ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-            corpus_receipt.scan_succeeded) {
+            corpus_receipt.scan_succeeded &&
+            corpus_receipt.pc34_candidate_count > 0 &&
+            corpus_receipt.roundtrip_succeeded_count ==
+                corpus_receipt.pc34_candidate_count &&
+            corpus_receipt.roundtrip_failed_count == 0) {
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
                 corpus_receipt.scanned_file_count;
@@ -4991,12 +4995,12 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         title_timing.sourceAnimationStepCount;
     receipt.title_frame_bank_equivalent_steps =
         title_timing.frameBankEquivalentStepCount;
-    /* TITLE.DAT exposes 53 decoded fallback records, but the production
-     * PC/F20 path has only the 23 source-visible TITLE.C events. Do not
-     * let the fallback-bank boundary hold the C001 title surface before
-     * ENTRANCE.C gets control. */
+    /* TITLE.C F0437 consumes 23 source-visible events, but the original
+     * startup front-end does not release into ENTRANCE.C until the V1 title
+     * frame-bank-equivalent boundary is crossed. Hold the verified C001
+     * surface through that boundary without admitting TITLE.DAT pixels. */
     receipt.title_menu_boundary_frame =
-        DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 + 1U;
+        title_timing.frameBankEquivalentStepCount + 1U;
     receipt.title_presents_palette = presents_palette;
     receipt.title_zoom_palette = title_palette;
     receipt.title_menu_eligible = 1;
@@ -5142,7 +5146,7 @@ int dm1_v1_startup_title_timing_receipt_valid_pc34(
         media_receipt->title_frame_bank_equivalent_steps ==
             timing.frameBankEquivalentStepCount &&
         media_receipt->title_menu_boundary_frame ==
-            timing.sourceAnimationStepCount + 1u &&
+            timing.frameBankEquivalentStepCount + 1u &&
         media_receipt->title_presents_palette == presents_palette &&
         media_receipt->title_zoom_palette == title_palette;
 }
@@ -5173,6 +5177,11 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
         title_dat_fallback_available);
 
     receipt.handled = 1;
+    if (decision.source == V1_TITLE_FRONTEND_RUNTIME_SOURCE_GRAPHICS_C001 &&
+        (graphics_c001_width != 320U || graphics_c001_height != 200U)) {
+        decision.graphicsC001Usable = 0;
+        decision.source = V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP;
+    }
     receipt.graphics_c001_usable = decision.graphicsC001Usable ? 1 : 0;
     receipt.title_dat_fallback_usable =
         decision.titleDatFallbackUsable ? 1 : 0;
@@ -5190,8 +5199,9 @@ int dm1_v1_startup_title_runtime_source_receipt_pc34(
     receipt.fallback_is_visible_last_resort = 0;
     receipt.source_evidence =
         "ReDMCSB TITLE.C F0437 lines 309-324 loads C001_GRAPHIC_TITLE "
-        "before PRESENTS; DM1 PC34 startup rejects TITLE.DAT substitution "
-        "when C001 is unavailable or too small.";
+        "before PRESENTS; DM1 PC34 startup requires the exact 320x200 "
+        "C001 surface and rejects TITLE.DAT substitution when C001 is "
+        "unavailable, cropped, or malformed.";
     *out_receipt = receipt;
     return 1;
 }
