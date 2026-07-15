@@ -18674,6 +18674,22 @@ tile, command, or rendering semantics. Verification: Ninja focused targets,
 258/258, patch-shape test skip-cleans without `MEDNAFEN_SOURCE`, and capture
 script contract test passes.
 
+# ✅ 2026-07-15 Theron Track 02 copied-continuation post-RTS receipt
+
+The instrumented main-RAM loader trace now emits the first observed main-RAM
+instruction after each captured RTS. Continuation admission requires that row
+to reference the single RTS inside the source-bound `$3c80` TII destination
+span and to land at the matching JSR return PC. The receipt retains its
+physical PC and opcode alongside the already source-bound Track 02 transfer.
+This proves control flow from copied original bytes back to the observed
+return target only; it does not classify a descriptor, record, level, object,
+tile, palette, bitmap, command, or visual route. Verification: focused
+raw-loader probe (skip-safe without the authentic corpus),
+`test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, patch-shape test
+skip-cleans without `MEDNAFEN_SOURCE`, and the capture-script contract test
+passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3

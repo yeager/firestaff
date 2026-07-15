@@ -602,18 +602,23 @@ int main(void)
              "source=mednafen-pce-instrumented-main-ram-loader\n"
              "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
              "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
-             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n");
+             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n"
+             "main_ram_loader_post_rts source_logical_pc=2010 source_physical_pc=1f2010 logical_pc=3853 physical_pc=1f1853 opcode=ea\n");
     if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
             &handoff, game_payload_capture, &continuation_execution) ||
         !continuation_execution.valid ||
         !continuation_execution.continuation_execution_proven ||
         !continuation_execution.continuation_termination_instruction_proven ||
+        !continuation_execution.continuation_post_return_target_proven ||
         continuation_execution.level_or_object_semantics_proven ||
         continuation_execution.call_pc != 0x3850u ||
         continuation_execution.call_physical_pc != 0x1f1850u ||
         continuation_execution.call_target != 0x2000u ||
         continuation_execution.return_instruction_pc != 0x2010u ||
         continuation_execution.return_instruction_physical_pc != 0x1f2010u ||
+        continuation_execution.post_return_pc != 0x3853u ||
+        continuation_execution.post_return_physical_pc != 0x1f1853u ||
+        continuation_execution.post_return_opcode != 0xeau ||
         continuation_execution.transfer.source_checksum !=
             continuation_transfer.source_checksum) {
         free(raw);
@@ -631,11 +636,24 @@ int main(void)
              "source=mednafen-pce-instrumented-main-ram-loader\n"
              "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
              "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
-             "main_ram_loader_rts logical_pc=2020 physical_pc=1f2020\n");
+             "main_ram_loader_rts logical_pc=2020 physical_pc=1f2020\n"
+             "main_ram_loader_post_rts source_logical_pc=2020 source_physical_pc=1f2020 logical_pc=3853 physical_pc=1f1853 opcode=ea\n");
     if (theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
             &handoff, game_payload_capture, &continuation_execution)) {
         free(raw);
         printf("FAIL: RTS outside copied continuation reached execution receipt\n");
+        return 1;
+    }
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
+             "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n"
+             "main_ram_loader_post_rts source_logical_pc=2010 source_physical_pc=1f2010 logical_pc=3854 physical_pc=1f1854 opcode=ea\n");
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
+            &handoff, game_payload_capture, &continuation_execution)) {
+        free(raw);
+        printf("FAIL: changed post-RTS target reached execution receipt\n");
         return 1;
     }
     ++manifest.trace_md5[0];

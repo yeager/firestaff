@@ -7455,8 +7455,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     destination span of the source-bound `$3c80` TII, after the matching JSR.
     This proves that execution reached a copied original termination
     instruction, not a return target, level/object grammar, or visual route.
-    Remaining: authentic capture of this sequence followed by a proven
-    non-self descriptor record consumer.
+  - Update: the same source-owned capture now records the first main-RAM
+    instruction observed after that RTS. Admission requires that row to name
+    the exact captured RTS and to land at the original JSR return address.
+    The receipt carries the observed opcode and physical PC while retaining
+    the TII's verified Track 02 source transfer. This proves a bounded
+    copied-code return target only, not a descriptor grammar, level/object
+    consumer, tile, palette, bitmap, or visual route. Remaining: authentic
+    capture of this sequence followed by a proven non-self descriptor record
+    consumer.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
