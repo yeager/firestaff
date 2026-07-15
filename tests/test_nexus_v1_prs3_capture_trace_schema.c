@@ -315,12 +315,20 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.stream_byte_read_offset == 85460U &&
                receipt.output_byte_store_offset == 85464U &&
                receipt.loop_branch_offset == 85472U &&
+               receipt.control_reentry_offset == 85428U &&
+               receipt.control_shift_offset == 85430U &&
+               receipt.control_refill_byte_read_offset == 85440U &&
+               receipt.control_refill_merge_offset == 85446U &&
+               receipt.control_sentinel_literal_offset == 85644U &&
+               receipt.control_sentinel_word == 0x0100U &&
+               receipt.control_zero_branch_target_offset == 85476U &&
                receipt.control_test_instruction == 0x23b8U &&
                receipt.stream_byte_read_instruction == 0x62c4U &&
                receipt.output_byte_store_instruction == 0x0d24U &&
                receipt.loop_branch_instruction == 0xafe8U &&
                receipt.sh2_control_path_verified &&
                receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
+               receipt.sh2_control_refill_verified &&
                !receipt.menu_frame_binding_proven && !receipt.vdp1_command_proven &&
                !receipt.opcode_grammar_proven && !receipt.decoder_promoted,
            "retail DM.BIN imports SH-2 control/read/store evidence without decode");

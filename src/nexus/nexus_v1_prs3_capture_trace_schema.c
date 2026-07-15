@@ -75,6 +75,29 @@ static int sh2_bra_target(uint16_t instruction, uint32_t instruction_offset,
     return 1;
 }
 
+static int sh2_movw_pc_literal_target(uint16_t instruction,
+                                      uint32_t instruction_offset,
+                                      uint32_t *out_target) {
+    uint32_t displacement;
+
+    if (!out_target || (instruction & 0xf000U) != 0x9000U) return 0;
+    displacement = (uint32_t)(instruction & 0x00ffU) * 2U;
+    *out_target = ((instruction_offset + 4U) & ~3U) + displacement;
+    return 1;
+}
+
+static int sh2_conditional_branch_target(uint16_t instruction,
+                                         uint32_t instruction_offset,
+                                         uint32_t *out_target) {
+    int32_t displacement;
+
+    if (!out_target || (instruction & 0xff00U) != 0x8900U) return 0;
+    displacement = (int32_t)(int8_t)(instruction & 0x00ffU);
+    if (displacement < -((int32_t)instruction_offset + 4)) return 0;
+    *out_target = (uint32_t)((int32_t)instruction_offset + 4 + displacement * 2);
+    return 1;
+}
+
 static uint32_t read_be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
         ((uint32_t)p[2] << 8) | (uint32_t)p[3];
@@ -397,7 +420,17 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 96U,
         SH2_LOOP_BODY_START_OFFSET = SH2_V1_CALLEE_OFFSET + 52U,
         SH2_LOOP_BODY_BYTE_COUNT =
-            SH2_LOOP_BRANCH_OFFSET + 2U - SH2_LOOP_BODY_START_OFFSET
+            SH2_LOOP_BRANCH_OFFSET + 2U - SH2_LOOP_BODY_START_OFFSET,
+        SH2_CONTROL_REENTRY_OFFSET = SH2_V1_CALLEE_OFFSET + 52U,
+        SH2_CONTROL_SHIFT_OFFSET = SH2_V1_CALLEE_OFFSET + 54U,
+        SH2_CONTROL_REFILL_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 56U,
+        SH2_CONTROL_REFILL_SKIP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 58U,
+        SH2_CONTROL_REFILL_GUARD_OFFSET = SH2_V1_CALLEE_OFFSET + 60U,
+        SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 62U,
+        SH2_CONTROL_REFILL_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 64U,
+        SH2_CONTROL_REFILL_MERGE_OFFSET = SH2_V1_CALLEE_OFFSET + 70U,
+        SH2_CONTROL_LOW_BIT_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 74U,
+        SH2_CONTROL_ZERO_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 76U
     };
     Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
 
@@ -441,7 +474,42 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.loop_body_fnv1a64 = fnv1a64(
             dm_bin + receipt.loop_body_start_offset,
             receipt.loop_body_byte_count);
-        receipt.sh2_loop_body_bound = receipt.loop_body_fnv1a64 != 0U;
+    receipt.sh2_loop_body_bound = receipt.loop_body_fnv1a64 != 0U;
+    receipt.control_reentry_offset = SH2_CONTROL_REENTRY_OFFSET;
+    receipt.control_shift_offset = SH2_CONTROL_SHIFT_OFFSET;
+    receipt.control_refill_test_offset = SH2_CONTROL_REFILL_TEST_OFFSET;
+    receipt.control_refill_skip_branch_offset = SH2_CONTROL_REFILL_SKIP_BRANCH_OFFSET;
+    receipt.control_refill_guard_offset = SH2_CONTROL_REFILL_GUARD_OFFSET;
+    receipt.control_refill_failure_branch_offset = SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET;
+    receipt.control_refill_byte_read_offset = SH2_CONTROL_REFILL_BYTE_READ_OFFSET;
+    receipt.control_refill_merge_offset = SH2_CONTROL_REFILL_MERGE_OFFSET;
+    receipt.control_low_bit_test_offset = SH2_CONTROL_LOW_BIT_TEST_OFFSET;
+    receipt.control_zero_branch_offset = SH2_CONTROL_ZERO_BRANCH_OFFSET;
+    receipt.sh2_control_refill_verified =
+        sh2_bra_target(read_be16(dm_bin + SH2_LOOP_BRANCH_OFFSET),
+                       SH2_LOOP_BRANCH_OFFSET, &receipt.control_reentry_offset) &&
+        receipt.control_reentry_offset == SH2_CONTROL_REENTRY_OFFSET &&
+        read_be16(dm_bin + SH2_CONTROL_REENTRY_OFFSET) == 0x926aU &&
+        sh2_movw_pc_literal_target(read_be16(dm_bin + SH2_CONTROL_REENTRY_OFFSET),
+                                   SH2_CONTROL_REENTRY_OFFSET,
+                                   &receipt.control_sentinel_literal_offset) &&
+        receipt.control_sentinel_literal_offset + 2U <= dm_bin_size &&
+        (receipt.control_sentinel_word = read_be16(
+             dm_bin + receipt.control_sentinel_literal_offset)) == 0x0100U &&
+        read_be16(dm_bin + SH2_CONTROL_SHIFT_OFFSET) == 0x4b21U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_TEST_OFFSET) == 0x22b8U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_SKIP_BRANCH_OFFSET) == 0x8b05U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_GUARD_OFFSET) == 0x2ee8U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_FAILURE_BRANCH_OFFSET) == 0x8932U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_BYTE_READ_OFFSET) == 0x6bc4U &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_BYTE_READ_OFFSET + 2U) == 0x7effU &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_MERGE_OFFSET) == 0x2b9bU &&
+        read_be16(dm_bin + SH2_CONTROL_LOW_BIT_TEST_OFFSET) == 0x23b8U &&
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + SH2_CONTROL_ZERO_BRANCH_OFFSET),
+            SH2_CONTROL_ZERO_BRANCH_OFFSET,
+            &receipt.control_zero_branch_target_offset) &&
+        receipt.control_zero_branch_target_offset == SH2_V1_CALLEE_OFFSET + 100U;
     }
     receipt.sh2_control_path_verified =
         receipt.control_test_instruction == 0x23b8U &&
