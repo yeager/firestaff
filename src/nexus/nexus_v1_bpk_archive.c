@@ -550,6 +550,10 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
     out_receipt->all_stored_surface_payloads_fit =
         all_stored_surface_payloads_fit;
     out_receipt->requires_prs3_decoder = (prs3_surface_entries > 0U) ? 1 : 0;
+    out_receipt->palette_trailer_observed =
+        nexus_v1_bpk_archive_inspect_palette_trailer(
+            data, data_size, &out_receipt->palette_trailer) == 0 &&
+        out_receipt->palette_trailer.valid;
 
     if (surface_entries == 0U) {
         out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_NO_SURFACES;
@@ -1753,6 +1757,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         directory_trailer_at_entry_zero;
     out_receipt->directory_trailer_valid =
         directory_trailer_entries == 1U && directory_trailer_at_entry_zero;
+    out_receipt->palette_trailer_observed =
+        nexus_v1_bpk_archive_inspect_palette_trailer(
+            data, data_size, &out_receipt->palette_trailer) == 0 &&
+        out_receipt->palette_trailer.valid;
     if (out_receipt->surface_entries == 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES;
     } else if (out_receipt->blocked_prs3_uploads > 0U) {

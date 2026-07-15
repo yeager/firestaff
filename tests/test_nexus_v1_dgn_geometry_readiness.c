@@ -5067,6 +5067,7 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
 static void test_menu_bpk_palette_trailer_stays_opaque(void) {
     uint8_t archive[552];
     Nexus_V1_BpkPaletteTrailerReceipt palette;
+    Nexus_V1_BpkRuntimeUploadReceipt upload;
     size_t index;
     const char *data_dir;
 
@@ -5090,6 +5091,12 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           palette.raw_entries_are_be16 && !palette.palette_format_proven &&
           !palette.decoder_promoted && !palette.fallback_visuals_permitted,
           "bounded MENU.BPK PALT trailer stays opaque without palette promotion");
+    CHECK(nexus_v1_bpk_archive_runtime_upload_plan(
+              archive, sizeof(archive), NULL, 0U, &upload) == 0 &&
+          upload.palette_trailer_observed && upload.palette_trailer.valid &&
+          upload.route == NEXUS_V1_BPK_UPLOAD_ROUTE_NO_SURFACES &&
+          !upload.fallback_visuals_permitted,
+          "BPK upload receipt carries PALT framing without creating a surface");
     wb32(archive + 32, 522U);
     CHECK(nexus_v1_bpk_archive_inspect_palette_trailer(
               archive, sizeof(archive), &palette) != 0 && !palette.valid &&
@@ -5127,6 +5134,13 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
                   palette.raw_entries_are_be16 && !palette.palette_format_proven &&
                   !palette.decoder_promoted && !palette.fallback_visuals_permitted,
                   "canonical MENU.BPK PALT trailer remains opaque source data");
+            CHECK(nexus_v1_bpk_archive_runtime_upload_plan(
+                      real_archive, (size_t)size, NULL, 0U, &upload) == 0 &&
+                  upload.palette_trailer_observed && upload.palette_trailer.valid &&
+                  upload.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+                  upload.blocked_prs3_uploads > 0U &&
+                  !upload.fallback_visuals_permitted,
+                  "canonical BPK host receipt preserves PALT while PRS3 stays blocked");
         } else {
             CHECK(0, "canonical MENU.BPK PALT trailer keeps its bounded layout");
         }
