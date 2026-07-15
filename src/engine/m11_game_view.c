@@ -3883,8 +3883,8 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         host_surface.host_surface_hash == 0u ||
         !host_surface.raster.valid || !host_surface.raster.real_asset_matched ||
         !host_surface.raster.pixels ||
-        host_surface.raster.width != framebufferWidth ||
-        host_surface.raster.height != framebufferHeight) {
+        host_surface.raster.width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
+        host_surface.raster.height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
             &host_surface);
         return;
