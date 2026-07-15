@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSBgraphics runtime inventory: verified local ownership chain is
+  `Graphics.cpp:1643 LocateNthGraphic` -> bounded entry spans/LZW boundary ->
+  MD5 signature gate -> runtime plan. `Bitmaps.cpp:661` proves overlay-palette
+  reads through `CGT_OverlayPalette`; title/HUD/door still lack a captured
+  source type/id-to-entry correlation. Do not bind a numbered entry to those
+  consumers until a matching real CSBgraphics.dat capture supplies it.
+
 - 2026-07-15 CSB callable-audit: local `REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv`
   MISSING candidates were mechanically rechecked. The high-priority rows
   available locally resolve only to declarations/platform stubs (not complete

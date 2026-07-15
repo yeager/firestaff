@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBgraphics ownership audit: confirmed the existing hash-owned
+  `LocateNthGraphic` span, LZW boundary, and runtime-plan chain; no unverified
+  title/HUD/door entry was promoted.
+
 - 2026-07-15 CSB callable audit refresh: verified local full-audit MISSING
   candidates against the available source corpus and excluded declaration-only,
   platform-only, graphics-blocked, and already landed routes from implementation.
