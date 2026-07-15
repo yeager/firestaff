@@ -512,9 +512,9 @@ static void check_title_to_menu_boundary(void) {
                  media.title_zoom_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
                  media.title_presents_palette != media.title_zoom_palette,
              1);
-    expect_i("DM1 title runtime source receipt selects GRAPHICS.DAT C001",
+    expect_i("DM1 title runtime source receipt selects exact GRAPHICS.DAT C001",
              dm1_v1_startup_title_runtime_source_receipt_pc34(
-                 "dm1", 1, 320u, 175u, 1, &titleSource) &&
+                 "dm1", 1, 320u, 200u, 1, &titleSource) &&
                  titleSource.handled &&
                  titleSource.graphics_c001_usable &&
                  titleSource.title_dat_fallback_usable &&
@@ -523,16 +523,26 @@ static void check_title_to_menu_boundary(void) {
                  titleSource.require_graphics_c001_for_release_start &&
                  !titleSource.fallback_is_visible_last_resort,
              1);
-    expect_i("DM1 title runtime source receipt permits TITLE.DAT fallback only as last resort",
+    expect_i("DM1 title runtime source receipt rejects cropped C001 and TITLE.DAT fallback",
              dm1_v1_startup_title_runtime_source_receipt_pc34(
                  "dm1", 1, 319u, 175u, 1, &titleSource) &&
                  titleSource.handled &&
                  !titleSource.graphics_c001_usable &&
                  titleSource.title_dat_fallback_usable &&
                  titleSource.selected_runtime_source ==
-                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_TITLE_DAT_FALLBACK &&
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP &&
                  !titleSource.require_graphics_c001_for_release_start &&
-                 titleSource.fallback_is_visible_last_resort,
+                 !titleSource.fallback_is_visible_last_resort,
+             1);
+    expect_i("DM1 title runtime source receipt rejects 320x175 C001 crop",
+             dm1_v1_startup_title_runtime_source_receipt_pc34(
+                 "dm1", 1, 320u, 175u, 1, &titleSource) &&
+                 titleSource.handled &&
+                 !titleSource.graphics_c001_usable &&
+                 titleSource.selected_runtime_source ==
+                     (int)V1_TITLE_FRONTEND_RUNTIME_SOURCE_SKIP &&
+                 !titleSource.require_graphics_c001_for_release_start &&
+                 !titleSource.fallback_is_visible_last_resort,
              1);
     expect_i("DM1 title runtime source receipt no-ops non-DM1",
              dm1_v1_startup_title_runtime_source_receipt_pc34(
@@ -3523,27 +3533,26 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_full_graphics.complete_support.ready &&
                  hoc_boot_full_graphics.complete_support
                      .complete_save_corpus_route &&
+                 !hoc_boot_full_graphics.complete_support
+                      .user_save_corpus_scan_consumed &&
+                 !hoc_boot_full_graphics.complete_support
+                      .user_save_corpus_pc34_ready &&
+                 !hoc_boot_full_graphics.complete_support
+                      .user_save_corpus_part_envelope_ready &&
+                 !hoc_boot_full_graphics.complete_support
+                      .user_save_corpus_roundtrip_ready &&
                  hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_scan_consumed &&
-                 hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_pc34_ready &&
-                 hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_part_envelope_ready &&
-                 hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_roundtrip_ready &&
-                 hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_roundtrip_verified == 1 &&
+                     .user_save_corpus_roundtrip_verified == 0 &&
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_roundtrip_failed == 0 &&
                  hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_roundtrip_hash != 0u &&
+                     .user_save_corpus_roundtrip_hash == 0u &&
                  hoc_boot_full_graphics.complete_support
-                     .user_save_corpus_rejected == 1 &&
+                     .user_save_corpus_rejected == 0 &&
                  hoc_boot_full_graphics.complete_support
                      .user_save_corpus_truncated == 0 &&
-                 strstr(hoc_boot_full_graphics.complete_support
-                            .user_save_corpus_first_pc34_path,
-                        "slot-seven-real-save.bin") != NULL &&
+                 hoc_boot_full_graphics.complete_support
+                         .user_save_corpus_first_pc34_path[0] == '\0' &&
                  hoc_boot_full_graphics.complete_support
                      .complete_original_save_roundtrip_route,
              1);
@@ -3578,16 +3587,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  hoc_boot_summary.presented_capture_chain_ready &&
                  hoc_boot_summary.complete_support_ready &&
                  hoc_boot_summary.complete_host_app_capture_route &&
-                 hoc_boot_summary.user_save_corpus_pc34_ready &&
-                 hoc_boot_summary.user_save_corpus_part_envelope_ready &&
-                 hoc_boot_summary.user_save_corpus_roundtrip_ready &&
-                 hoc_boot_summary.user_save_corpus_roundtrip_verified == 1 &&
+                 !hoc_boot_summary.user_save_corpus_pc34_ready &&
+                 !hoc_boot_summary.user_save_corpus_part_envelope_ready &&
+                 !hoc_boot_summary.user_save_corpus_roundtrip_ready &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_verified == 0 &&
                  hoc_boot_summary.user_save_corpus_roundtrip_failed == 0 &&
-                 hoc_boot_summary.user_save_corpus_roundtrip_hash != 0u &&
-                 hoc_boot_summary.user_save_corpus_rejected == 1 &&
+                 hoc_boot_summary.user_save_corpus_roundtrip_hash == 0u &&
+                 hoc_boot_summary.user_save_corpus_rejected == 0 &&
                  hoc_boot_summary.user_save_corpus_truncated == 0 &&
-                 strstr(hoc_boot_summary.user_save_corpus_first_pc34_path,
-                        "slot-seven-real-save.bin") != NULL &&
+                 hoc_boot_summary.user_save_corpus_first_pc34_path[0] == '\0' &&
                  hoc_boot_summary.complete_original_save_roundtrip_route,
              1);
     memset(&hoc_presented_export, 0, sizeof(hoc_presented_export));

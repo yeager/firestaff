@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
+  now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped
+  C001/TITLE.DAT substitution, holds the verified title through the original
+  frame-bank-equivalent handoff boundary, and refuses failed staged
+  save-corpus scans as HoC complete-support evidence. Remaining work is a real
+  PC34/Mac capture of the full title-to-HoC handoff and an operator-staged
+  external original-save corpus run; do not promote synthetic title frames or
+  checksum-authenticated fixture envelopes as external evidence.
+
 - 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
   original-PC34 part reader now rejects overflowing cursor state before
   touching the F0420 length prefix or body. Remaining work is an

@@ -8,6 +8,13 @@
   coverage rejects relabeled PRESENTS-as-CHAOS and duplicated title pixels;
   adjacent startup CTests pass.
 
+- ✅ 2026-07-15 DM1 title C001 startup gate hardening: DM1 startup now
+  requires the exact 320x200 GRAPHICS.DAT C001 surface before publishing the
+  ReDMCSB TITLE.C F0437 title route, rejects cropped C001/TITLE.DAT fallback
+  substitution, holds the verified C001 surface through the frame-bank
+  equivalent handoff boundary, and keeps failed staged save-corpus scans out
+  of HoC complete-support readiness. Focused DM1 startup/title tests pass.
+
 - ✅ 2026-07-15 DM1 HoC C026 direct mirror atlas gate: the low-level
   `dm1_v1_front_mirror_render_plan_pc34()` path now rejects portrait indices
   outside ReDMCSB's 8x3 C026 atlas before computing source coordinates, so
