@@ -693,7 +693,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         free(menu); free(dm_bin); return;
     }
     snprintf(text, sizeof(text),
-        "NEXUS_PRS3_SH2_VDP1_TRACE_V6\n"
+        "NEXUS_PRS3_SH2_VDP1_TRACE_V7\n"
         "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
         "entry_index=%x\nstream_offset=%x\nstream_size=%x\nexpected_output_bytes=%x\n"
         "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
@@ -735,6 +735,12 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         "zero_counter_decrement_sequence=19\nzero_first_input_read_sequence=20\n"
         "zero_second_input_read_sequence=21\n"
         "dynamic_control_operands_observed=1\n"
+        "nonzero_input_payload_byte_offset=0\n"
+        "nonzero_observed_input_byte=%x\nnonzero_observed_output_byte=%x\n"
+        "nonzero_output_store_instruction_offset=14dd8\n"
+        "nonzero_output_byte_offset=0\nnonzero_output_address=%x\n"
+        "nonzero_output_write_sequence=16\n"
+        "dynamic_nonzero_byte_transfer_observed=1\n"
         "decoder_returned_success=1\ncapture_complete=1\n",
         fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
         plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
@@ -744,7 +750,8 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         plan.expected_output_bytes, output_base, plan.expected_output_bytes,
         output_base, output_base + plan.expected_output_bytes - 1U,
         plan.expected_output_bytes, output_base,
-        output_base + plan.expected_output_bytes - 1U, plan.expected_output_bytes);
+        output_base + plan.expected_output_bytes - 1U, plan.expected_output_bytes,
+        menu[plan.stream_offset], menu[plan.stream_offset], output_base);
     expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                text, strlen(text), &trace) &&
            nexus_v1_prs3_vdp1_capture_schema_bind_assets(
@@ -752,8 +759,9 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            binding.valid && binding.vdp1_command_consumption_observed &&
            binding.palette_consumption_observed && !binding.decoder_promoted &&
            !binding.fallback_visuals_permitted &&
-           trace.schema_version == 6U && trace.dynamic_control_operands_observed,
-           "V6 binds source-owned dynamic control operands without decoding");
+           trace.schema_version == 7U && trace.dynamic_control_operands_observed &&
+           trace.dynamic_nonzero_byte_transfer_observed,
+           "V7 binds a source-owned nonzero byte transfer without decoding");
     expect(nexus_v1_prs3_decoder_readiness_bind_capture(
                &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&
            readiness.valid && readiness.capture_source_bound &&
@@ -853,6 +861,18 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
                &readiness, &trace, &transfer_trace, &transfer_receipt,
                &token_receipt) && !token_receipt.valid,
            "token review rejects a transfer offset not represented by its receipt");
+    memcpy(strstr(text, "nonzero_output_store_instruction_offset=14dd8"),
+           "nonzero_output_store_instruction_offset=14dd9",
+           sizeof("nonzero_output_store_instruction_offset=14dd9") - 1U);
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) &&
+           !nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, &binding) &&
+           !binding.valid,
+           "V7 rejects a nonzero byte witness at the wrong retail store PC");
+    memcpy(strstr(text, "nonzero_output_store_instruction_offset=14dd9"),
+           "nonzero_output_store_instruction_offset=14dd8",
+           sizeof("nonzero_output_store_instruction_offset=14dd8") - 1U);
     memcpy(strstr(text, "nonzero_counter_after=4"),
            "nonzero_counter_after=5",
            sizeof("nonzero_counter_after=5") - 1U);

@@ -1048,6 +1048,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     uint32_t complete_output_store_range_observed;
     uint32_t complete_control_branch_coverage_observed;
     uint32_t dynamic_control_operands_observed;
+    uint32_t dynamic_nonzero_byte_transfer_observed;
     const char *cursor;
     size_t magic_size;
 
@@ -1055,6 +1056,12 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!text) return 0;
+    magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V7_MAGIC) - 1U;
+    if (text_size > magic_size &&
+        memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V7_MAGIC, magic_size) == 0 &&
+        text[magic_size] == '\n') {
+        receipt.schema_version = 7U;
+    } else {
     magic_size = sizeof(NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC) - 1U;
     if (text_size > magic_size &&
         memcmp(text, NEXUS_V1_PRS3_VDP1_CAPTURE_SCHEMA_V6_MAGIC, magic_size) == 0 &&
@@ -1091,6 +1098,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
             text[magic_size] != '\n') return 0;
         receipt.schema_version = 1U;
         }
+    }
     }
     }
     }
@@ -1180,6 +1188,15 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           !read_u64(&cursor, "zero_first_input_read_sequence=", &receipt.zero_first_input_read_sequence) ||
           !read_u64(&cursor, "zero_second_input_read_sequence=", &receipt.zero_second_input_read_sequence) ||
           !read_u32(&cursor, "dynamic_control_operands_observed=", &dynamic_control_operands_observed))) ||
+        (receipt.schema_version >= 7U &&
+         (!read_u32(&cursor, "nonzero_input_payload_byte_offset=", &receipt.nonzero_input_payload_byte_offset) ||
+          !read_u32(&cursor, "nonzero_observed_input_byte=", &receipt.nonzero_observed_input_byte) ||
+          !read_u32(&cursor, "nonzero_observed_output_byte=", &receipt.nonzero_observed_output_byte) ||
+          !read_u32(&cursor, "nonzero_output_store_instruction_offset=", &receipt.nonzero_output_store_instruction_offset) ||
+          !read_u32(&cursor, "nonzero_output_byte_offset=", &receipt.nonzero_output_byte_offset) ||
+          !read_u32(&cursor, "nonzero_output_address=", &receipt.nonzero_output_address) ||
+          !read_u64(&cursor, "nonzero_output_write_sequence=", &receipt.nonzero_output_write_sequence) ||
+          !read_u32(&cursor, "dynamic_nonzero_byte_transfer_observed=", &dynamic_nonzero_byte_transfer_observed))) ||
         !read_u32(&cursor, "decoder_returned_success=", &decoder_returned_success) ||
         !read_u32(&cursor, "capture_complete=", &capture_complete) || *cursor != '\0') return 0;
     if (!receipt.menu_bpk_fnv1a64 || !receipt.dm_bin_fnv1a64 ||
@@ -1278,6 +1295,18 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
           receipt.zero_first_input_read_sequence >= receipt.zero_second_input_read_sequence ||
           receipt.zero_second_input_read_sequence > receipt.last_control_sequence ||
           dynamic_control_operands_observed != 1U)) ||
+        (receipt.schema_version >= 7U &&
+         (receipt.nonzero_input_payload_byte_offset >= receipt.stream_size ||
+          receipt.nonzero_observed_input_byte > 0xffU ||
+          receipt.nonzero_observed_output_byte > 0xffU ||
+          !receipt.nonzero_output_store_instruction_offset ||
+          receipt.nonzero_output_byte_offset >= receipt.expected_output_bytes ||
+          receipt.nonzero_output_address != receipt.output_ram_address +
+              receipt.nonzero_output_byte_offset ||
+          receipt.nonzero_output_write_sequence <= receipt.nonzero_input_read_sequence ||
+          receipt.nonzero_output_write_sequence < receipt.first_output_write_sequence ||
+          receipt.nonzero_output_write_sequence > receipt.last_output_write_sequence ||
+          dynamic_nonzero_byte_transfer_observed != 1U)) ||
         decoder_returned_success != 1U || capture_complete != 1U) return 0;
     receipt.valid = 1;
     receipt.complete_capture = 1;
@@ -1289,6 +1318,7 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     receipt.complete_output_store_range_observed = receipt.schema_version >= 4U;
     receipt.complete_control_branch_coverage_observed = receipt.schema_version >= 5U;
     receipt.dynamic_control_operands_observed = receipt.schema_version >= 6U;
+    receipt.dynamic_nonzero_byte_transfer_observed = receipt.schema_version >= 7U;
     receipt.opcode_grammar_proven = 0;
     receipt.decoder_promoted = 0;
     receipt.fallback_visuals_permitted = 0;
@@ -1379,6 +1409,27 @@ int nexus_v1_prs3_vdp1_capture_schema_bind_assets(
             receipt.vdp1_command_consumption_observed && dynamic_operand_route_matches;
         receipt.palette_consumption_observed =
             receipt.palette_consumption_observed && dynamic_operand_route_matches;
+    }
+    if (trace->schema_version >= 7U) {
+        int dynamic_nonzero_transfer_matches =
+            nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                dm_bin, dm_bin_size, 1, &sh2) &&
+            sh2.sh2_nonzero_output_commit_reentry_proven &&
+            trace->nonzero_output_store_instruction_offset ==
+                sh2.output_byte_store_offset &&
+            trace->nonzero_input_payload_byte_offset < plan.stream_size &&
+            trace->nonzero_observed_input_byte ==
+                menu_bpk[plan.stream_offset + trace->nonzero_input_payload_byte_offset] &&
+            trace->nonzero_observed_output_byte == trace->nonzero_observed_input_byte &&
+            trace->dynamic_nonzero_byte_transfer_observed;
+        receipt.exact_vdp1_handoff_observed =
+            receipt.exact_vdp1_handoff_observed && dynamic_nonzero_transfer_matches;
+        receipt.vdp1_texture_consumption_observed =
+            receipt.vdp1_texture_consumption_observed && dynamic_nonzero_transfer_matches;
+        receipt.vdp1_command_consumption_observed =
+            receipt.vdp1_command_consumption_observed && dynamic_nonzero_transfer_matches;
+        receipt.palette_consumption_observed =
+            receipt.palette_consumption_observed && dynamic_nonzero_transfer_matches;
     }
     receipt.valid = receipt.exact_vdp1_handoff_observed;
     receipt.decoder_promoted = 0;
