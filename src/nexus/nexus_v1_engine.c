@@ -3772,6 +3772,9 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
                     (int)anchor_search.palette.payload_anchor_offset,
                 (int)anchor_search.palette.candidate_byte_count);
         out_target->palette_payload_candidate_bound = 1;
+        out_target->shared_image_palette_payload_anchor =
+            anchor_search.palette.payload_anchor_offset ==
+            anchor_search.image.payload_anchor_offset;
     }
     out_target->capture_producer_required = 1;
     out_target->original_saturn_capture_required = 1;
@@ -3814,6 +3817,7 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
                        "palette_anchor_offset=%u\npalette_next_anchor_offset=%u\n"
                        "palette_candidate_byte_count=%u\npalette_candidate_fnv1a64=%016llx\n"
                        "palette_candidate_present=%d\n"
+                       "shared_image_palette_payload_anchor=%d\n"
                        "requested_observations=source-read,palette-state,vdp1-vram,vdp1-command\n"
                        "original_saturn_capture_required=1\nno_draw_only=1\n",
                        target.level_index, target.source_byte_count,
@@ -3835,7 +3839,8 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
                        target.palette_payload_next_anchor_offset,
                        target.palette_payload_candidate_byte_count,
                        (unsigned long long)target.palette_payload_candidate_fnv1a64,
-                       target.palette_payload_candidate_bound) >= 0;
+                       target.palette_payload_candidate_bound,
+                       target.shared_image_palette_payload_anchor) >= 0;
     if (!write_ok || fclose(file) != 0 || rename(temporary_path, path) != 0) {
         remove(temporary_path);
         return 0;

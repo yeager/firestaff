@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Nexus Structure2 shared texture/palette anchor proof:
+  Structure2 descriptor capture targets now explicitly report when image and
+  palette payload anchors resolve to the same bounded opaque DGN span. The
+  target writer emits `shared_image_palette_payload_anchor`, preserving the
+  real Saturn capture request without promoting shared bytes into decoded
+  pixels, palette semantics, or fallback visuals. Verification: focused Ninja
+  build plus CTest for `nexus_v1_dgn_geometry_readiness`,
+  `nexus_v1_structure2_no_draw_receipt`, `nexus_v1_dgn_material_raster`, and
+  `nexus_v1_bpk_prs3_payload_evidence` pass in `build-local-ninja`.
+  Remaining blocker: `nexus_v1_startup_menu_pc34_compat` still fails on the
+  broader startup/menu/DGN route completeness gates, including MENU.BPK/PRS3
+  and runtime DGN host-route assertions.
+
 - ✅ 2026-07-16 DM2 runtime scene local-palette unblock: source-required
   DM2 dungeon rendering now accepts the strict provider-backed
   GRAPHICSSET image plus `QUERY_GDAT_IMAGE_LOCALPAL` route when no
