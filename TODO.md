@@ -7000,3 +7000,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   scent ordering now consumes the F0198/F0199 loaded-map route. Remaining
   work is binding M10's party-scent table and current-map reader; no scent
   record or callback may be substituted with guessed direction data.
+- 2026-07-15 DM1 GROUP F0202 follow-up: destination movement now rejects a
+  missing loaded M10 square/door/Thing snapshot rather than assuming a clear
+  square. Remaining work is routing every M10 movement owner through typed
+  destination facts and preserving source tested-direction state.

@@ -563,11 +563,10 @@ int F0811_DM1_GROUP_IsMovementPossible_Compat(
 
     facts = &ctx->groupMovementFacts[direction];
     if (!facts->available) {
-        /* Compatibility boundary for callers not yet upgraded to the typed
-         * M10 destination snapshot. A tested direction remains unavailable
-         * only on this legacy path; real F0202 marks it tested before it
-         * evaluates the destination. */
-        return ctx->groupMovementTestedDirs[direction] ? 0 : 1;
+        /* F0202 reads the destination square, door, and Thing chain before
+         * returning movement. Without that loaded-map snapshot there is no
+         * source basis for treating the square as clear. */
+        return 0;
     }
 
     /* ReDMCSB GROUP.C F0202 lines 1603-1623: bounds, wall, stairs, open
