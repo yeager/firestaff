@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
+  F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
+  C04/ACTIVE_GROUP paths and focused tests already present in the tree.
+
 - 2026-07-15 DM2 source-owned boot HUD: the real G1 startup path now draws
   only verified GDAT chrome until a real game load or new-game handoff owns
   `Champion::HeroType`; no synthetic party portraits are generated. The
