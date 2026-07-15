@@ -136,7 +136,12 @@
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0272 C003 lifecycle: a real PC3.4 C49/F0267
   arrival clears the OnceOnly type before publishing C003's exact three-tick
   delayed F0268 event at map time four. Coverage:
-  `csb_v1_f0276_wall_object_move_pc34_compat` (36/0).
+  `csb_v1_f0276_wall_object_move_pc34_compat` (41/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0276 C001 Revert/HOLD lifecycle: a loaded
+  C49 object arrival computes `AddThing ^ RevertEffect` before converting HOLD,
+  yielding the original F0268 CLEAR event. Coverage:
+  `csb_v1_f0276_wall_object_move_pc34_compat` (41/0).
 
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 live wall-object move: C49
   associated-object materialization now enters the source C001..C003 wall
