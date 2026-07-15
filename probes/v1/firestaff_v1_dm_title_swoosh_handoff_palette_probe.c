@@ -150,23 +150,23 @@ static void verify_original_startup_palette_frame(
 
     (void)M11_Render_SetV2Filters(0, 0, 1, 100, -25, 0,
                                   0, 0, 0, 0, 0);
-    snprintf(id, sizeof(id), "%s_V20_FILTERED_PRESENT", name);
+    snprintf(id, sizeof(id), "%s_V20_SPECIAL_PALETTE_PRESENT", name);
     record(stats, id,
            M11_Render_PresentIndexedWithSpecialPalette(
                framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, specialPalette) ==
                M11_RENDER_OK,
-           "V2.0 filters only the source palette-expanded presentation copy");
+           "special-palette presentation reaches the host");
     presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
-    snprintf(id, sizeof(id), "%s_V20_FILTERED_PIXEL", name);
+    snprintf(id, sizeof(id), "%s_V20_SPECIAL_PALETTE_EXACT", name);
     if (presented && sampleX < presentedW && sampleY < presentedH) {
         const unsigned char* px = presented +
             ((sampleY * presentedW + sampleX) * 4);
         record(stats, id,
-               px[0] != expected[0] || px[1] != expected[1] ||
-                   px[2] != expected[2],
-               "V2.0 changes the expanded original RGB sample");
+               px[0] == expected[0] && px[1] == expected[1] &&
+                   px[2] == expected[2],
+               "V2.0 preserves source-owned special-palette RGB");
     } else {
-        record(stats, id, 0, "filtered original sample unavailable");
+        record(stats, id, 0, "special-palette sample unavailable");
     }
     snprintf(id, sizeof(id), "%s_SOURCE_INDEXED_UNCHANGED", name);
     record(stats, id, hash_indexed_frame(framebuffer) == sourceHash,
@@ -372,18 +372,17 @@ int main(int argc, char** argv) {
                "SDL renderer readback unavailable");
     }
 
-    /* V2.0 is allowed to filter only the RGBA presentation copy after the
-     * original C001 palette expansion. The original indexed C001 frame must
-     * remain intact and a disabled filter returns the exact source RGB. */
+    /* TITLE.C/ENTRANCE.C special palettes are source-owned. V2 settings may
+     * be active for the later game frame, but must not mutate these RGB rows. */
     M11_Render_SetV2PresentationActive(1);
     (void)M11_Render_SetV2Filters(0, 0, 1, 100, -25, 0,
                                   0, 0, 0, 0, 0);
     record(&stats,
-           "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PRESENT",
+           "TITLE_SWOOSH_HANDOFF_V20_SPECIAL_PALETTE_PRESENT",
            M11_Render_PresentIndexedWithSpecialPalette(
                framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
                VGA_PALETTE_PC34_SPECIAL_TITLE) == M11_RENDER_OK,
-           "V2.0 filters the expanded C001 special-palette presentation");
+           "special-palette C001 presentation reaches the host");
     presented = M11_Render_GetPresentedRGBA(&presentedW, &presentedH);
     if (presented && sampleX >= 0 && sampleY >= 0 &&
         sampleX < presentedW && sampleY < presentedH) {
@@ -393,14 +392,14 @@ int main(int argc, char** argv) {
         filteredRgb[1] = px[1];
         filteredRgb[2] = px[2];
         record(&stats,
-               "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PIXELS",
-               filteredRgb[0] != readbackRgb[0] ||
-                   filteredRgb[1] != readbackRgb[1] ||
-                   filteredRgb[2] != readbackRgb[2],
-               "V2.0 changes only the presented C001 RGB sample");
+               "TITLE_SWOOSH_HANDOFF_V20_SPECIAL_PALETTE_EXACT",
+               filteredRgb[0] == readbackRgb[0] &&
+                   filteredRgb[1] == readbackRgb[1] &&
+                   filteredRgb[2] == readbackRgb[2],
+               "V2.0 preserves the source C001 RGB sample");
     } else {
-        record(&stats, "TITLE_SWOOSH_HANDOFF_V20_FILTERED_PIXELS", 0,
-               "filtered C001 sample unavailable");
+        record(&stats, "TITLE_SWOOSH_HANDOFF_V20_SPECIAL_PALETTE_EXACT", 0,
+               "special-palette C001 sample unavailable");
     }
     record(&stats,
            "TITLE_SWOOSH_HANDOFF_SOURCE_INDEXED_UNCHANGED",
