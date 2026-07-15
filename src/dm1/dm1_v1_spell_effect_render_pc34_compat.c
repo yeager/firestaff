@@ -19,9 +19,9 @@
  *   Printed at x positions starting at 225, incrementing by 14.
  *   Cyan text on black background.
  *
- * F0396_MENUS_DrawMovementArrows:
- *   Blits movement arrow graphic (C013) to zone 009.
- *   (Movement arrows, not spell-specific, but in same file.)
+ * F0396_MENUS_LoadSpellAreaLinesBitmap:
+ *   Loads C011_GRAPHIC_MENU_SPELL_AREA_LINES for the line 2/line 3
+ *   spell-area stack consumed before F0397/F0398 redraws rune glyphs.
  */
 
 void DM1_V1_SpellRender_InitPc34Compat(DM1_V1_SpellRenderStatePc34 *s)
@@ -162,6 +162,7 @@ const char *DM1_V1_SpellRender_SourceEvidencePc34Compat(void)
         "  Character codes: 96 + 6*step + index.\n"
         "  X positions: start 225, increment 14 per symbol.\n"
         "  4 steps × 6 symbols = 24 total spell symbols.\n"
-        "F0396_MENUS_DrawMovementArrows: blit C013 graphic to zone 009.\n"
+        "F0396_MENUS_LoadSpellAreaLinesBitmap: load C011 graphic for the "
+        "spell-area line stack before F0397/F0398 glyph redraw.\n"
         "MENUDRAW.C includes SPELDRAW.C via #include in PC34 builds.";
 }
