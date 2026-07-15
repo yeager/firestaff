@@ -186,27 +186,27 @@
   the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
   original Mac/app capture, not a fallback texture path.
 
-- 2026-07-15 DM2 DRAW_DOOR remaining: closed D0-D3 panels now consume their
+- 2026-07-15 DM2 DRAW_DOOR remaining: closed D0-D3 panels consume their
   exact `tlbRectnoDoorPosition` -> RAW4 `QUERY_BLIT_RECT` destinations.
-  Vertical state-1..3 panels consume `tlbRectnoDoorPosition + state` through
-  the same source route. Horizontal split-panel opening, distance
-  stretch/light-palette execution,
-  `DRAW_DOOR_FRAMES`, and broader door-type routing still need direct
-  skproject bindings. No generic panel/frame fallback.
+  Vertical state-1..3 and horizontal state-1..3 at D0/D1/D2 now use the
+  original source panels. Horizontal draws are atomic right/left image crops,
+  not a scaled substitute. Remaining: distance stretch/light-palette
+  execution, `DRAW_DOOR_FRAMES`, and broader door-type routing. No generic
+  panel/frame fallback.
 
 - 2026-07-15 DM2 `DRAW_DOOR` follow-up: map `UseDoor0/UseDoor1` now gates
   the matching DB0 `DoorType` before a `DOORS` material plan can exist.
-  Remaining door work is source-proven horizontal split-panel crop/timing,
-  per-distance light palette execution, and the unresolved wider
-  `DRAW_DOOR_FRAMES` geometry. Do not revive an inactive type with a default
-  door panel.
+  Horizontal split-panel crop/order is now source-proven for D0/D1/D2 states
+  1..3. Remaining: per-distance light palette execution and the unresolved
+  wider `DRAW_DOOR_FRAMES` geometry. Do not revive an inactive type with a
+  default door panel.
 
 - 2026-07-15 DM2 `DRAW_DOOR` follow-up: DB0 `OrnateIndex` now resolves
-  through the source-owned map-local `glbMapDoorOrnatesList`. Remaining door
-  work is the conflicting horizontal split-panel crop sequence, source
-  distance/light-palette execution, and `DRAW_DOOR_FRAMES` pixels when the
-  active corpus supplies the selected graphicsset fields. Do not treat an
-  ornament ordinal as a direct `DOOR_GFX` entry.
+  through the source-owned map-local `glbMapDoorOrnatesList`. The horizontal
+  split-panel sequence is now the source right-then-left crop transaction.
+  Remaining: distance/light-palette execution and `DRAW_DOOR_FRAMES` pixels
+  when the active corpus supplies the selected graphicsset fields. Do not
+  treat an ornament ordinal as a direct `DOOR_GFX` entry.
 
 - 2026-07-15 DM2 skproject wall follow-up: D2/D3 side-wall M11 commands now
   own G0163 source and destination geometry and fail closed on a mismatch.
@@ -225,10 +225,9 @@
   the verified terminal surface. Do not reopen substitute presentation paths.
 
 - 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
-  bound, including vertical intermediate states. Horizontal split-panel
-  geometry, `DRAW_DOOR_FRAMES` timing, and complete map door-type routing
-  still need direct skproject bindings. Do not
-  substitute a generic panel or frame.
+  bound, including vertical and D0/D1/D2 horizontal intermediate states.
+  `DRAW_DOOR_FRAMES` timing and complete map door-type routing still need
+  direct skproject bindings. Do not substitute a generic panel or frame.
 
 - 2026-07-15 DM1 F0098 follow-up: bind the packaged M11 DM1 asset loader to
   the viewport provider with verified map-floor-set graphic identities. Do not
