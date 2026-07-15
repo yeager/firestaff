@@ -97,7 +97,7 @@ timing and inventory routes.
 
 ## Latest Release
 
-**Current version:** `3.0.78`.
+**Current version:** `3.0.79`.
 
 Release-specific details live in
 [GitHub Releases](https://github.com/yeager/firestaff/releases/latest). The
