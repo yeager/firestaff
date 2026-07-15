@@ -18247,3 +18247,15 @@ preserves the selected Track 02 identity through startup.
   source data draws nothing. `test_dm2_v1_boot_profile_smoke` now locks the
   direct route: no V2 attempt, successful V1 render, real-material receipt,
   and zero core fallbacks.
+
+# ✅ 2026-07-15 Theron Track 02 runtime bitmap provenance
+
+The existing verified title, stage, Soul Room, and forcefield indexed bitmap
+routes now carry their original Track 02 MD5 plus raw and MODE1 user-data
+offset envelope into `Theron_V1_World`. A selected runtime level-bank receipt
+copies that same source envelope, so a later consumer can require exact
+source bytes instead of treating retained pixels as unowned data. The bind
+rejects unknown/mismatched variants and incomplete spans. It still performs
+no palette binding, RGB conversion, layout inference, object-table decoding,
+or drawing. Verification: Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.

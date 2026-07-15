@@ -681,12 +681,19 @@ int theron_v1_startup_media_bind_runtime_receipt(
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM,
         THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD
     };
+    Theron_Track02Variant variant;
     size_t i;
     size_t route_index;
 
     if (!world || !receipt ||
         !theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
             receipt)) {
+        return 0;
+    }
+    variant = theron_v1_track02_variant_for_md5(receipt->track02_md5);
+    if (variant == THERON_TRACK02_VARIANT_UNKNOWN ||
+        receipt->track02_variant != (int)variant ||
+        receipt->startup_bitmap_atlas.variant != variant) {
         return 0;
     }
     /* A runtime receipt carries the source-captured indexed atlas forward
@@ -713,29 +720,42 @@ int theron_v1_startup_media_bind_runtime_receipt(
             route->nonzero_pixel_count == 0u || route->checksum == 0u) {
             return 0;
         }
+        if (route->first_raw_offset == 0u ||
+            route->first_raw_offset > route->last_raw_offset ||
+            route->first_user_data_offset == 0u) {
+            return 0;
+        }
     }
     theron_v1_world_runtime_media_clear(world);
     if (!theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, routes[0]->route_bit,
-            routes[0]->width, routes[0]->height, routes[0]->tile_count,
+            world, THERON_RUNTIME_MEDIA_SURFACE_TITLE, receipt->track02_md5,
+            routes[0]->route_bit, routes[0]->width, routes[0]->height,
+            routes[0]->first_raw_offset, routes[0]->last_raw_offset,
+            routes[0]->first_user_data_offset, routes[0]->tile_count,
             routes[0]->nonzero_pixel_count, routes[0]->checksum,
             routes[0]->pixels,
             (size_t)routes[0]->width * (size_t)routes[0]->height) ||
         !theron_v1_world_runtime_media_set_surface(
-            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, routes[1]->route_bit,
-            routes[1]->width, routes[1]->height, routes[1]->tile_count,
+            world, THERON_RUNTIME_MEDIA_SURFACE_STAGE, receipt->track02_md5,
+            routes[1]->route_bit, routes[1]->width, routes[1]->height,
+            routes[1]->first_raw_offset, routes[1]->last_raw_offset,
+            routes[1]->first_user_data_offset, routes[1]->tile_count,
             routes[1]->nonzero_pixel_count, routes[1]->checksum,
             routes[1]->pixels,
             (size_t)routes[1]->width * (size_t)routes[1]->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_SOUL_ROOM,
-            routes[2]->route_bit, routes[2]->width, routes[2]->height,
+            receipt->track02_md5, routes[2]->route_bit, routes[2]->width,
+            routes[2]->height, routes[2]->first_raw_offset,
+            routes[2]->last_raw_offset, routes[2]->first_user_data_offset,
             routes[2]->tile_count, routes[2]->nonzero_pixel_count,
             routes[2]->checksum, routes[2]->pixels,
             (size_t)routes[2]->width * (size_t)routes[2]->height) ||
         !theron_v1_world_runtime_media_set_surface(
             world, THERON_RUNTIME_MEDIA_SURFACE_FORCEFIELD,
-            routes[3]->route_bit, routes[3]->width, routes[3]->height,
+            receipt->track02_md5, routes[3]->route_bit, routes[3]->width,
+            routes[3]->height, routes[3]->first_raw_offset,
+            routes[3]->last_raw_offset, routes[3]->first_user_data_offset,
             routes[3]->tile_count, routes[3]->nonzero_pixel_count,
             routes[3]->checksum, routes[3]->pixels,
             (size_t)routes[3]->width * (size_t)routes[3]->height) ||

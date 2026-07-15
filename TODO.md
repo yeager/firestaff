@@ -8034,3 +8034,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
     verified Nexus media, so no authentic trace or format-derived decoder was
     produced here.
+
+## Theron Track 02 remaining evidence
+
+- 2026-07-15: Runtime level-bank selection now retains the authenticated
+  startup bitmap's Track 02 MD5 and raw/user-data sector envelope. Remaining:
+  obtain original loader/CD-read evidence that binds a post-startup bitmap or
+  object-table record to a concrete runtime consumer. Do not infer palette,
+  layout, object fields, or draw behavior from the retained startup envelope.

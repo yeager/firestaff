@@ -60,9 +60,16 @@ typedef enum {
 
 typedef struct {
     int ready;
+    /* Indexed pixels remain tied to their authenticated Track 02 envelope.
+     * This does not assert palette or screen-layout semantics. */
+    int raw_source_verified;
+    char track02_md5[33];
     unsigned int route_bit;
     uint16_t width;
     uint16_t height;
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
     size_t tile_count;
     size_t nonzero_pixel_count;
     uint32_t checksum;
@@ -101,6 +108,11 @@ typedef struct {
     Theron_DungeonID dungeon_id;
     int level_index;
     unsigned int route_bit;
+    int raw_source_verified;
+    char track02_md5[33];
+    size_t first_raw_offset;
+    size_t last_raw_offset;
+    size_t first_user_data_offset;
     uint16_t width;
     uint16_t height;
     size_t tile_count;
@@ -352,9 +364,13 @@ void theron_v1_world_runtime_media_invalidate_cache(Theron_V1_World *world);
 int theron_v1_world_runtime_media_set_surface(
     Theron_V1_World *world,
     Theron_RuntimeMediaSurfaceKind kind,
+    const char *track02_md5,
     unsigned int route_bit,
     uint16_t width,
     uint16_t height,
+    size_t first_raw_offset,
+    size_t last_raw_offset,
+    size_t first_user_data_offset,
     size_t tile_count,
     size_t nonzero_pixel_count,
     uint32_t checksum,
