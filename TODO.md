@@ -8181,3 +8181,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     candidates in its transition receipt. No candidate is generated when the
     original run does not execute one. Remaining: stage real media to acquire
     an admissible TII row and its later consumer evidence.
+  - Update: the TII admission route now imports only an explicit bounded
+    main-RAM-loader sidecar file, so a later real capture can feed the exact
+    `$3c80` transfer receipt without reformatting trace text. Missing, empty,
+    oversized, or unmarked files reject. Remaining: authentic transfer and
+    follow-on consumer capture, not a synthetic sidecar.

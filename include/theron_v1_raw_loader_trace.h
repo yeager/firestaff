@@ -499,6 +499,12 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out);
 
+/* Bounded file wrapper for one explicit main-RAM-loader capture sidecar. */
+int theron_v1_raw_loader_trace_import_initial_post_envelope_tii_transfer_file(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *path,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out);
+
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
  * receipt only and never decodes the header. */
