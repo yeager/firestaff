@@ -17,6 +17,18 @@
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
 
+- 2026-07-15 DM1 F0128 follow-up: F0115 now runs in source square order
+  D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Remaining viewport work is
+  merging the existing F0104/F0107/F0111/F0113 material families into the
+  same per-square scheduler, including real field-after-things and door/object
+  occlusion capture. No host substitutes are permitted.
+
+- 2026-07-15 DM1 TITLE/Entrance follow-up: the M11 special-palette route now
+  preserves the exact source RGB output and the 53-tick C001 cadence receipt.
+  Remaining evidence is a real macOS release capture across SWSH -> TITLE ->
+  Entrance; do not re-enable V2 color/motion filters for source-owned palette
+  phases or replace the capture with a synthetic frame sequence.
+
 - 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
   complete; F0224 still needs real Lord Chaos escape-route capture.
 

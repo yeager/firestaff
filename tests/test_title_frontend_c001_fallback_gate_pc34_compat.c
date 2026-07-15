@@ -558,10 +558,13 @@ static void check_startup_source_timing_contract(void) {
     expect_u("startup TITLE uses 18 source zoom steps",
              media.title_zoom_step_count,
              18u);
-    expect_u("startup TITLE has no synthetic PRESENTS hold",
+    /* TITLE.C builds the 18 C001 zoom rasters while PRESENTS remains on the
+     * physical screen.  The host must retain that source-visible interval;
+     * a zero hold makes the macOS title jump into the zoom sequence. */
+    expect_u("startup TITLE retains the source PRESENTS build hold",
              media.title_presents_hold_ms,
-             0u);
-    expect_u("startup TITLE uses 20ms VBlank zoom cadence",
+             dm1_v1_startup_title_presents_hold_ms_pc34());
+    expect_u("startup TITLE uses the source VBlank zoom cadence",
              media.title_zoom_frame_delay_ms,
              dm1_v1_startup_title_vblank_tick_ms_pc34());
     expect_u("startup TITLE retains only source post-zoom guard",

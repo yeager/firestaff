@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 TITLE/Entrance source-palette presentation: M11 now sends
+  ReDMCSB TITLE.C/SWSH.C/ENTRANCE.C indexed pixels through their complete
+  source VGA palette without V2 gamma, CRT, sharpening, or motion postpasses.
+  The C001 gate now checks the real 53-tick cadence, retaining the PRESENTS
+  build interval before the zoom sequence. TITLE special-palette readback,
+  cadence, C001, and action-area gates pass.
+
+- 2026-07-15 DM1 F0128/F0115 square scheduler: M11 now invokes the existing
+  source-backed side F0115 consumer immediately before the same-depth center
+  consumer: D3L/D3R/D3C, D2L/D2R/D2C, D1L/D1R/D1C. The current F0107/C127
+  mirror route remains before F0115 exactly as owned by main. No material,
+  geometry, or fallback route was changed.
+
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.

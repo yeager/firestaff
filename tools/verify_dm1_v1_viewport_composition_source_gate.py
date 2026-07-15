@@ -29,17 +29,18 @@ def function_body(source: str, signature: str) -> str:
 def main() -> int:
     source = M11.read_text(encoding="utf-8")
     viewport = function_body(source, "static void m11_draw_viewport")
-    side_contents = function_body(source, "static void m11_draw_dm1_side_contents")
+    side_contents = function_body(source, "static void m11_draw_dm1_side_contents_at_depth")
     ornaments = function_body(source, "static void m11_draw_dm1_wall_ornaments")
 
     assert re.search(
         r"centerContentMask\s*=.*?for \(depth = 2; depth >= 0; --depth\).*?"
+        r"m11_draw_dm1_side_contents_at_depth.*?"
         r"m11_draw_wall_contents",
         viewport,
         re.S,
-    ), "center F0115 content must run D3 -> D2 -> D1"
-    assert re.search(r"for \(depth = 2; depth >= 0; --depth\)", side_contents), (
-        "side F0115 content must run D3 -> D2 -> D1")
+    ), "F0128 must run side F0115 before same-depth center F0115 in D3 -> D2 -> D1"
+    assert "int depth," in side_contents
+    assert "for (sideSlot = 0; sideSlot < 2; ++sideSlot)" in side_contents
 
     center_contents = viewport.find("centerContentMask")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
