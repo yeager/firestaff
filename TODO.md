@@ -552,6 +552,12 @@
   wrappers are removed. Remaining work is external Mac/app capture; do not
   reopen substitute presentation paths or retain a startup page as runtime
   backing storage.
+  - 2026-07-15 update: the CSB startup presentation receipt now rejects an
+    active door-opening frame until the ReDMCSB C002/C003 animation has a
+    real step in the 1..31 range. The pre-open delay may still retain the
+    closed C004/C002/C003 surface, but step 0 and step 32+ no longer publish
+    an opening-frame receipt. Remaining work is still external Mac/app
+    capture.
 
 - 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
   bound, including vertical and D0/D1/D2 horizontal intermediate states.

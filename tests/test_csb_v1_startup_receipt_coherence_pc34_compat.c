@@ -109,6 +109,21 @@ int main(void)
 
     make_entrance_facts(&facts);
     facts.opening_active = 1;
+    facts.opening_delay_ticks = 1;
+    facts.opening_step = 0;
+    check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &receipt) &&
+              receipt.valid &&
+              receipt.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34,
+          "pre-open delay may retain the C004/C002/C003 closed-door surface");
+
+    facts.opening_delay_ticks = 0;
+    check(!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &receipt) &&
+              !receipt.valid,
+          "door opening cannot publish a frame before C002/C003 step 1");
+
     facts.opening_step = 1;
     check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
               &facts, &receipt) &&
@@ -116,6 +131,12 @@ int main(void)
               receipt.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34,
           "source-bounded door opening reaches the opening receipt");
+
+    facts.opening_step = facts.door_step_count + 1;
+    check(!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
+              &facts, &receipt) &&
+              !receipt.valid,
+          "door opening cannot publish past ReDMCSB's final C002/C003 step");
 
     return failures ? 1 : 0;
 }

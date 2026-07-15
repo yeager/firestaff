@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB startup opening-step receipt gate: the presentation
+  receipt now rejects an active C004/C002/C003 door-opening frame before
+  ReDMCSB's first real animation step and after the final step. The pre-open
+  delay still admits the closed entrance surface, but step 0 can no longer
+  publish an opening-frame receipt with empty C002/C003 geometry. Focused CSB
+  startup tests pass (`terminal_handoff_real_data`, `receipt_coherence`,
+  `img3_decode`, `raster_present`).
+
 - ✅ 2026-07-15 DM2 real-GDAT HUD receipt hardening: M11 now recomputes the
   complete HUD command-plan hash before consuming source material, so altered
   portrait `RECT_173..176` table receipts cannot reach runtime drawing. In
