@@ -387,6 +387,11 @@
   substitutes a palette. The M11 pointer route continues to consume only the
   original dt04/0 `0xD7` NEW rectangle; the unbound `0xD9` selector stays
   unavailable.
+- 2026-07-15 DM2 title-menu logical-pointer regression gate: the M11 test now
+  maps a macOS-style logical FIT/content window coordinate back into the
+  source GDAT `dt04/0` `0xD7` NEW rectangle, then verifies the real startup
+  route emits its GAME_LOAD state boundary. This guards window scaling without
+  widening the unproven `0xD9` resume selector.
 
 - 2026-07-15 DM2 M11 HUD/scene composition: real HUD delivery now requires
   the same G1 scene-control receipt as its GDAT planes.

@@ -2516,6 +2516,14 @@ int main(void) {
     if (profile) {
         DM2_V1_StartupMenuPointerLayout pointer_layout;
         DM2_V1_StartupMenuPointerHitReceipt pointer_hit;
+        int present_x = 0;
+        int present_y = 0;
+        int present_w = 0;
+        int present_h = 0;
+        int window_x;
+        int window_y;
+        int source_x = 0;
+        int source_y = 0;
         dm2_v1_boot_set_save_root(profile, save_root);
         view.dm2State.startup_menu_active = 1;
         view.dm2State.startup_menu_selected_row = 0;
@@ -2557,13 +2565,35 @@ int main(void) {
                         DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE &&
                     pointer_hit.table_hash == pointer_layout.table_hash,
                     "DM2 startup retains 0xD9 geometry without inventing a resume selector");
+        /* SDL mouse positions are Cocoa logical window points. Exercise the
+         * same fit/content inverse used before M11 sends a pointer into the
+         * source-owned 0xD7 rectangle. The 2x drawable is intentionally not
+         * used as an input extent. */
+        source_x = pointer_layout.new_game.x + pointer_layout.new_game.w / 2;
+        source_y = pointer_layout.new_game.y + pointer_layout.new_game.h / 2;
+        expect_true(M11_Render_ComputePresentationRect(
+                        1512, 982, 320, 200, M11_SCALE_FIT, 0,
+                        M11_DISPLAY_ASPECT_CONTENT,
+                        &present_x, &present_y, &present_w, &present_h) ==
+                        M11_RENDER_OK &&
+                    present_w > 0 && present_h > 0,
+                    "DM2 startup computes a logical fit rectangle for pointer input");
+        window_x = present_x + (source_x * present_w) / 320;
+        window_y = present_y + (source_y * present_h) / 200;
+        expect_true(M11_Render_MapPointToFramebuffer(
+                        window_x, window_y, 1512, 982, 320, 200,
+                        M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT,
+                        &source_x, &source_y) == 1 &&
+                    source_x >= pointer_layout.new_game.x &&
+                    source_x < pointer_layout.new_game.x + pointer_layout.new_game.w &&
+                    source_y >= pointer_layout.new_game.y &&
+                    source_y < pointer_layout.new_game.y + pointer_layout.new_game.h,
+                    "DM2 logical window click maps back into original NEW rectangle");
         expect_true(M11_GameView_HandlePointerButton(
-                        &view,
-                        pointer_layout.new_game.x + pointer_layout.new_game.w / 2,
-                        pointer_layout.new_game.y + pointer_layout.new_game.h / 2,
+                        &view, source_x, source_y,
                         DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup pointer consumes original NEW rectangle");
+                    "M11 DM2 startup logical pointer consumes original NEW rectangle");
         expect_true(view.dm2State.startup_menu_active == 1,
                     "M11 DM2 startup NEW pointer keeps title menu until GAME_LOAD");
         expect_true(strstr(view.lastOutcome, "DM2 GAME_LOAD DATA REQUIRED") != NULL,
