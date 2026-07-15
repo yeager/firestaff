@@ -6273,6 +6273,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   carry no observed `$e009` CDB route. It does not claim the absence of a
   later game loader; the next admissible step is a later game-owned writer or
   reader with an exact FIFO/CDB origin.
+  2026-07-15 update: the post-G7 control continuation is now source-bounded:
+  physical game-RAM `0x1f1840` dispatches `$e009` sequence 4, 5, and 6 after
+  G7, producing authenticated READ(6) routes G8 `LBA 4859` / record `0x73a`,
+  G9 `LBA 4855..4857` / records `0x736..0x738`, and G10 `LBA 4858` / record
+  `0x739`. The caller remains logical `0x3840`, physical `0x1f1840`, with
+  `A=0x20`, `X=0xff`, `Y=0x04`. This identifies the post-G7 loader control
+  entry and record route; the trace patch emits it only for disassembled
+  HuC6280 `0x20 $e009` (`JSR $e009`). It is not a payload destination: no FIFO byte reaches a
+  game-owned RAM consumer in this capture. The next positive receipt must
+  bind one of these CDB generations to a game-RAM write or read.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
   are System Card-owned. No game-RAM or level/object consumer is admitted.

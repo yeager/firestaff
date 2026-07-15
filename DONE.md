@@ -16654,6 +16654,22 @@ semantics were added.
 Verification: `test_theron_v1_game_loader_writer_negative_receipt` and the
 authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
 
+# ✅ 2026-07-15 Theron post-G7 game-loader record-route receipt
+
+The authentic USA trace now fixes the post-G7 game-loader control boundary.
+After G7, physical game-RAM `0x1f1840` continues to call `$e009` from logical
+`0x3840`: dispatches 4, 5, and 6 have `A=20`, `X=ff`, `Y=04` and issue the
+exact READ(6) CDB routes G8 LBA 4859 (record `0x73a`), G9 LBA 4855..4857
+(records `0x736..0x738`), and G10 LBA 4858 (record `0x739`). This is the
+verified loader entry/record route after G7. The trace patch emits the entry
+only after disassembling HuC6280 opcode `0x20` with operand `$e009`, i.e.
+`JSR $e009`. The trace still has no
+FIFO-to-game-RAM destination or game-owned record reader, so no level, object,
+palette, or visual semantics are assigned.
+
+Verification: `test_theron_v1_post_generation7_loader_route_receipt` and the
+authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
