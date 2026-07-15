@@ -78,6 +78,8 @@ int main(void)
     dungeon.square_bytes = 1;
     dungeon.square_first_thing_base = 62;
     dungeon.square_first_thing_count = 1;
+    dungeon.text_data_base = 104;
+    dungeon.text_word_count = 2;
     dungeon.thing_data_bases[CSB_V1_THING_TYPE_ACTUATOR] = 90;
     dungeon.thing_type_counts[CSB_V1_THING_TYPE_ACTUATOR] = 1;
     dungeon.raw_data = raw;
@@ -201,8 +203,9 @@ int main(void)
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x14u,
           "restored falsewall TOGGLE uses its source-owned SET arm");
 
-    /* ProcessTT_OPENROOM changes DB2::show directly when the target has one
-     * text record. Keeping the party elsewhere excludes QuePrintLines. */
+    /* ProcessTT_OPENROOM changes DB2::show directly.  A newly visible sole
+     * DB2 under the party reaches CSBWin's QuePrintLines source path through
+     * the bounded F0168 runtime receipt, never a host message log. */
     memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
     memset(profile.csbwin_timeline_event_queue_slot, 0xff,
            sizeof(profile.csbwin_timeline_event_queue_slot));
@@ -212,8 +215,11 @@ int main(void)
     put_le16(raw, 62u, (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10));
     put_le16(raw, 100u, 0xfffeu);
     put_le16(raw, 102u, 0u);
-    profile.party_x = 1;
-    profile.party_y = 1;
+    /* H,E,L then end marker in ReDMCSB F0168's three five-bit codes/word. */
+    put_le16(raw, 104u, (uint16_t)((7u << 10) | (4u << 5) | 11u));
+    put_le16(raw, 106u, (uint16_t)(31u << 10));
+    profile.party_x = 0;
+    profile.party_y = 0;
     profile.csbwin_timers[0].function = 5u;
     profile.csbwin_timers[0].ubyte5 = 0u;
     profile.csbwin_timers[0].ubyte6 = 0u;
@@ -224,8 +230,14 @@ int main(void)
     profile.csbwin_timers[0].time = profile.game_time;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
               csb_v1_runtime_tick_v1(&profile) == 1 && raw[102] == 1u &&
-              profile.timeline_queue.eventCount == 0,
-          "DSA-free TT_OPENROOM retains its DB2 visibility owner");
+              profile.timeline_queue.eventCount == 0 &&
+              profile.csbwin_text_message_receipt.valid &&
+              strcmp(profile.csbwin_text_message_receipt.text, "HEL") == 0,
+          "TT_OPENROOM exposes only its real DB2/F0168 party message");
+    profile.party_x = 1;
+    profile.party_y = 1;
+    put_le16(raw, 104u, 0u);
+    put_le16(raw, 106u, 0u);
 
     /* A DSA-owned mixed list can execute only its pure-stack receipt; it
      * must not reach the generic C05 text mutation. */

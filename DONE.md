@@ -129,6 +129,14 @@
   rows through G0074; absent or malformed source remains no-draw. Focused
   viewport assertions cover no-media rejection and both packed/provider paths.
 
+- 2026-07-15 CSB TT_OPENROOM DB2 -> C015 source message: CSBWin
+  `Timer.cpp::ProcessTT_OPENROOM` now carries a newly visible, sole TextString
+  on the party square through the original `DUNGEON.DAT` text-word bank and
+  ReDMCSB `DUNGEON.C F0168` message decode.  M11 clears C015 first with
+  `TEXT.C F0049`, then uses only the loaded original font for that runtime
+  receipt. Missing/malformed records, a non-source font, queue-like wrapping,
+  and M11's host log remain black/no-draw. The focused restored-timer bridge
+  verifies packed `HEL` words through the live timer dispatch.
 - 2026-07-15 CSB C015 message-area source gate: removed the active generic
   M11 `messageLog` renderer from the CSB V1 runtime HUD. The CSB path keeps
   ReDMCSB `TEXT.C F0049`'s C015 black clear but refuses to display host

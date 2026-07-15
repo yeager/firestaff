@@ -36,6 +36,7 @@
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
@@ -3125,6 +3126,56 @@ static uint16_t csb_v1_runtime_read_u16(const uint8_t *p)
 {
     if (!p) return 0;
     return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
+static int csb_v1_runtime_stage_openroom_text_message(
+    CSB_V1_RuntimeProfile *profile, uint16_t thing, uint16_t text_word,
+    CSB_V1_RuntimeTextMessageReceipt *out_receipt)
+{
+    CSB_V1_DungeonData *dungeon;
+    struct DungeonTextString_Compat text_string;
+    struct DungeonThings_Compat things;
+    int text_offset;
+    int decoded;
+
+    if (!profile || !out_receipt || !profile->dungeon_handle) return 0;
+    dungeon = profile->dungeon_handle;
+    text_offset = (int)((text_word >> 3) & 0x1fffu);
+    if (!(text_word & 0x0001u) || dungeon->text_data_base < 0 ||
+        dungeon->text_word_count <= 0 || !dungeon->raw_data ||
+        text_offset < 0 || text_offset >= dungeon->text_word_count ||
+        (long)dungeon->text_data_base +
+            (long)dungeon->text_word_count * 2L > dungeon->raw_size) {
+        return 0;
+    }
+
+    memset(&text_string, 0, sizeof(text_string));
+    memset(&things, 0, sizeof(things));
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    text_string.visible = 1;
+    text_string.textDataWordOffset = (unsigned short)text_offset;
+    things.textData = (unsigned short *)(void *)(dungeon->raw_data +
+                                                 dungeon->text_data_base);
+    things.textDataWordCount = dungeon->text_word_count;
+    things.textStrings = &text_string;
+    things.textStringCount = 1;
+    decoded = F0508_DUNGEON_DecodeTextStringThing_Compat(
+        &things, 0, DUNGEON_TEXT_TYPE_MESSAGE, out_receipt->text,
+        (int)sizeof(out_receipt->text));
+    /* F0168 prepends the source message separator.  C015 owns a single
+     * QuePrintLines row here, so reject multi-line/empty output rather than
+     * approximating the unavailable queue and wrapping behavior. */
+    if (decoded <= 1 || out_receipt->text[0] != '\n' ||
+        strchr(out_receipt->text + 1, '\n') != NULL) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    memmove(out_receipt->text, out_receipt->text + 1,
+            strlen(out_receipt->text));
+    out_receipt->valid = 1;
+    out_receipt->text_thing = thing;
+    out_receipt->source_game_time = profile->game_time;
+    return 1;
 }
 
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
@@ -20142,12 +20193,15 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         int thing_type;
         int thing_size;
         uint16_t text_word;
+        uint16_t next_text_word;
+        int target_is_party_square;
+        CSB_V1_RuntimeTextMessageReceipt message_receipt;
 
         /* CSBWin Timer.cpp::ProcessTT_OPENROOM:1641-1711 changes DB2::show
          * with timerTypeModifier[0..2]. If a newly visible text is under the
-         * party, it also enters the unavailable QuePrintLines HUD path. Keep
-         * only a single authenticated DB2 target outside the party square;
-         * DSA and mixed lists retain no complete source mutation owner. */
+         * party, it enters QuePrintLines.  Admit that narrow source path only
+         * for a sole authenticated DB2 record and retain its F0168 bytes as
+         * a runtime receipt; DSA and mixed lists remain outside this owner. */
         if (!timer->valid || timer->truncated ||
             timer->source_index != timer_index ||
             record->eventType != timer->function ||
@@ -20155,9 +20209,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             record->mapX != timer->ubyte6 || record->mapY != timer->ubyte7 ||
             record->cell != timer->ubyte8 || record->effect != timer->ubyte9 ||
             record->aux0 != timer->ubyte5 || timer->ubyte9 > 2u ||
-            !profile->dungeon_handle ||
-            (profile->party_x == timer->ubyte6 &&
-             profile->party_y == timer->ubyte7)) {
+            !profile->dungeon_handle) {
             return 1;
         }
         thing = csb_v1_dungeon_get_first_thing(
@@ -20173,10 +20225,31 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                 return 1;
             }
             text_word = csb_v1_runtime_read_u16(text_record + 2);
-            if (timer->ubyte9 == 0u) text_word |= 0x0001u;
-            else if (timer->ubyte9 == 1u) text_word &= (uint16_t)~0x0001u;
-            else text_word ^= 0x0001u;
-            csb_v1_runtime_write_u16(text_record + 2, text_word);
+            next_text_word = text_word;
+            if (timer->ubyte9 == 0u) next_text_word |= 0x0001u;
+            else if (timer->ubyte9 == 1u) {
+                next_text_word &= (uint16_t)~0x0001u;
+            } else next_text_word ^= 0x0001u;
+            target_is_party_square = timer->level == profile->current_level &&
+                profile->party_x == timer->ubyte6 &&
+                profile->party_y == timer->ubyte7;
+            memset(&message_receipt, 0, sizeof(message_receipt));
+            if (target_is_party_square && !(text_word & 0x0001u) &&
+                (next_text_word & 0x0001u)) {
+                (void)csb_v1_runtime_stage_openroom_text_message(
+                    profile, (uint16_t)thing, next_text_word,
+                    &message_receipt);
+            }
+            csb_v1_runtime_write_u16(text_record + 2, next_text_word);
+            if (message_receipt.valid) {
+                profile->csbwin_text_message_receipt = message_receipt;
+            } else if (target_is_party_square &&
+                       profile->csbwin_text_message_receipt.valid &&
+                       profile->csbwin_text_message_receipt.text_thing ==
+                           (uint16_t)thing && !(next_text_word & 0x0001u)) {
+                memset(&profile->csbwin_text_message_receipt, 0,
+                       sizeof(profile->csbwin_text_message_receipt));
+            }
             return 1;
         }
     }
