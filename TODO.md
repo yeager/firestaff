@@ -3432,6 +3432,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     canonical LEV. This proves table identity and parsed-row agreement only;
     transform-table grammar, units, matrix order, camera use, culling, and
     drawing still require an original Saturn trace.
+  - A future transform trace is now admitted only when its raw execution lane
+    and transform-state snapshot match one direct owner, exact Structure1A
+    table bytes, selector-column fingerprint, Structure3 model/face, and raw
+    owner selector. No authenticated transform trace is present locally, so
+    matrix, coordinate, culling, and draw semantics remain blocked.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.
