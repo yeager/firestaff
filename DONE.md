@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 F0292 status-bar geometry fix: the public champion-status
+  layout now reports the ReDMCSB/F0287 PC34 bar container at y=2 instead of
+  the status-box top edge y=0, matching the existing live bar-fill model and
+  preventing fallback HUD consumers from drawing HP/stamina/mana bars two
+  pixels too high.
+
 - ✅ 2026-07-15 DM2 leader-hand injected-provider item receipt: the runtime
   keeps source-required leader-hand rendering strict on boot-owned GDAT, while
   allowing the synthetic viewport provider smoke to bind the carried ObjectID

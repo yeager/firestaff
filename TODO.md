@@ -46,6 +46,10 @@
   black pixels clear stale bars and hands. Remaining work is real PC34/Mac
   capture across dead/alive, shields, hands, and four-champion transitions;
   absent source material must remain no-draw.
+  - 2026-07-15 update: the public champion-status layout now exposes the
+    F0287 PC34 bar container at y=2, matching the existing live bar-fill model
+    and ReDMCSB's 4x25 split. This closes the stale y=0 HUD geometry path;
+    remaining work is still real PC34/Mac capture breadth.
 
 - 2026-07-15 DM1 F0172/C127 mirror-material follow-up: the live D1C route
   now treats C346 followed by C026 as one source-owned operation. A missing or
