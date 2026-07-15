@@ -768,7 +768,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     uint8_t *variable_state, uint32_t *parameters, int parameter_count,
     const CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
-    int *pending_skin_write_count)
+    int *pending_skin_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -780,6 +780,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     if (!stack || !depth || !forced_state || !variables || !variable_state ||
         !parameters || !context ||
         !pending_skin_writes || !pending_skin_write_count ||
+        !staged_saves_disabled ||
         *pending_skin_write_count < 0 || parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -896,6 +897,15 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     case 26u: /* STKOP_SetNewState */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
         *forced_state = (int32_t)v;
+        break;
+    case 36u: /* STKOP_DisableSaves */
+        /* CSBWin DSA.cpp:2946-2955 assigns the SaveGame.cpp policy gate.
+         * Retain it locally until the complete authenticated action succeeds. */
+        if (!context->saves_disabled_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        *staged_saves_disabled = v != 0u;
         break;
     case 27u: /* STKOP_Less */
     case 50u: /* STKOP_ULess */
@@ -1229,6 +1239,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int cursor = 0;
     int depth = 0;
     int pending_skin_write_count = 0;
+    int staged_saves_disabled;
     int i;
 
     if (!state || !context || !out_execution ||
@@ -1249,6 +1260,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     }
     memset(&candidate, 0, sizeof(candidate));
     candidate.forced_state = -1;
+    staged_saves_disabled = context->saves_disabled ? 1 : 0;
     while (cursor < action->program_word_count) {
         uint16_t command = action->program_words[cursor++];
         uint8_t opcode = (uint8_t)(command & 0x3fu);
@@ -1439,7 +1451,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 subcode, stack, &depth, &candidate.forced_state, variables,
                 variable_state, parameters,
                 context->parameter_count, context, pending_skin_writes,
-                &pending_skin_write_count);
+                &pending_skin_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1457,6 +1469,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     for (i = 0; i < 26 && i < context->parameter_count; ++i) context->parameters[i] = parameters[i];
     for (i = 0; i < context->global_variable_count; ++i) {
         context->global_variables[i] = global_variables[i];
+    }
+    if (context->saves_disabled_valid) {
+        context->saves_disabled = staged_saves_disabled;
     }
     candidate.words_consumed = (uint16_t)cursor;
     candidate.stack_depth = (uint16_t)depth;
@@ -1538,6 +1553,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
            sizeof(context.party_champion_wounds));
     memcpy(context.party_champion_health, runner->party_champion_health,
            sizeof(context.party_champion_health));
+    context.saves_disabled_valid = runner->saves_disabled_valid;
+    context.saves_disabled = runner->saves_disabled;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;
@@ -1552,6 +1569,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];
     }
+    runner->saves_disabled = context.saves_disabled;
     runner->last_execution = execution;
     ++runner->execution_count;
     return 1;

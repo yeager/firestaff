@@ -1,6 +1,7 @@
 /* CSBWin LocalState=1 DSA save/runtime regression.
  * Source: CSBWin DSA.cpp GetState/PutState:548-572, ProcessDSATimer6:
- * 5315-5465; SaveGame.cpp ReadDSAs/WriteDSAs:211-241,775-790; data.cpp
+ * 5315-5465, STKOP_DisableSaves:2946-2955; SaveGame.cpp
+ * ReadDSAs/WriteDSAs:211-241,775-790, save policy:856-873; data.cpp
  * RCS(ui8 *, i32):1818-1827. */
 
 #include "csb_v1_runtime_pc34_compat.h"
@@ -150,6 +151,12 @@ int main(void)
     const CSB_V1_DSAImportedAction *action;
     CSB_V1_CSBWinExtendedDSAReport report;
     CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_RuntimeProfile policy_profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext policy_runner;
+    CSB_V1_DSAImportedAction policy_action;
+    uint16_t policy_disable_words[] = { 0x0686u, 1u, 0x090bu };
+    uint16_t policy_enable_words[] = { 0x0686u, 0u, 0x090bu };
+    uint16_t policy_bad_words[] = { 0x0686u, 1u, 0x090bu, 0x0000u };
     uint32_t before_hash;
 
     make_real_shape(bytes);
@@ -271,7 +278,55 @@ int main(void)
               profile.csbwin_appended_tail_preserved_size, &report,
               &features) == CSB_V1_CSBWIN_EXTENDED_OK && report.valid &&
               report.stored_checksum == report.computed_checksum,
-          "JUMP PutState recomputes its complete DSA receipt checksum");
+              "JUMP PutState recomputes its complete DSA receipt checksum");
     csb_v1_chaos_cleanup(&profile.csbwin_extended_dsa_state);
+
+    /* The profile runner stages SaveGame's DSA policy state separately from
+     * the synthetic test action; production still requires imported action
+     * pointer identity before it can reach this bridge. */
+    csb_v1_runtime_init(&policy_profile, NULL);
+    memset(&policy_runner, 0, sizeof(policy_runner));
+    memset(&policy_action, 0, sizeof(policy_action));
+    policy_action.dsa_id = 11u;
+    policy_action.state_index = 1u;
+    policy_action.column = 0u;
+    policy_action.program_words = policy_disable_words;
+    policy_action.program_word_count = (int)(sizeof(policy_disable_words) /
+                                             sizeof(policy_disable_words[0]));
+    policy_profile.csbwin_extended_features_valid = 1;
+    policy_profile.csbwin_extended_dsa_state.imported_actions = &policy_action;
+    policy_profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    policy_runner.programs = &policy_profile.csbwin_extended_dsa_state;
+    policy_runner.dsa_id = 11;
+    policy_runner.state_index = 1u;
+    policy_runner.action_ordinal = 0;
+    policy_runner.saves_disabled_valid = 1;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &policy_profile, &policy_runner, &policy_action,
+              NULL, 0, NULL) == 1 &&
+              policy_profile.csbwin_saves_disabled == 1 &&
+              policy_runner.saves_disabled == 1,
+          "DSA save-policy action reaches the live CSBWin save gate");
+    policy_action.program_words = policy_enable_words;
+    policy_action.program_word_count = (int)(sizeof(policy_enable_words) /
+                                             sizeof(policy_enable_words[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &policy_profile, &policy_runner, &policy_action,
+              NULL, 0, NULL) == 1 &&
+              policy_profile.csbwin_saves_disabled == 0 &&
+              policy_runner.saves_disabled == 0,
+          "DSA save-policy zero reopens the live CSBWin save gate");
+    policy_action.program_words = policy_bad_words;
+    policy_action.program_word_count = (int)(sizeof(policy_bad_words) /
+                                             sizeof(policy_bad_words[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &policy_profile, &policy_runner, &policy_action,
+              NULL, 0, NULL) == 0 &&
+              policy_profile.csbwin_saves_disabled == 0 &&
+              policy_runner.saves_disabled == 0,
+          "rejected DSA bytecode cannot alter the live CSBWin save gate");
+    policy_profile.csbwin_extended_dsa_state.imported_actions = NULL;
+    policy_profile.csbwin_extended_dsa_state.imported_action_count = 0;
+    csb_v1_runtime_cleanup(&policy_profile);
     return failures == 0 ? 0 : 1;
 }

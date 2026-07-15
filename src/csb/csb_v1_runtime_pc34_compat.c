@@ -19319,6 +19319,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.game_time = profile->game_time;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
     candidate.dsa_slave_thing = binding->location.actuator_thing;
+    candidate.saves_disabled_valid = 1;
+    candidate.saves_disabled = profile->csbwin_saves_disabled ? 1 : 0;
     candidate.party_leader_index = -1;
     if (profile->party_state_valid &&
         profile->party_state.ChampionCount >= 0 &&
@@ -19375,6 +19377,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int staged_parameters[26];
     int global_count;
     int globals_changed;
+    int saves_disabled_changed;
     int expool_changed;
     int dsa_state_changed;
     int i;
@@ -19407,6 +19410,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.global_variable_count = global_count;
     memcpy(candidate.global_variables, profile->csbwin_global_variables,
            (size_t)global_count * sizeof(candidate.global_variables[0]));
+    candidate.saves_disabled_valid = 1;
+    candidate.saves_disabled = profile->csbwin_saves_disabled ? 1 : 0;
     /* CSBWin DSA.cpp:3107-3135 reaches the loaded SKIN_CACHE through the
      * DSA stack.  Bind it to a profile candidate so an unsupported record,
      * bad location, or later bytecode failure cannot publish an EXPOOL edit. */
@@ -19437,6 +19442,11 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             return 0;
         }
     }
+    saves_disabled_changed = candidate.saves_disabled !=
+        (profile->csbwin_saves_disabled ? 1 : 0);
+    if (saves_disabled_changed) {
+        profile_candidate.csbwin_saves_disabled = candidate.saves_disabled;
+    }
     dsa_state_changed = 0;
     if (profile_candidate.csbwin_appended_tail_valid &&
         profile_candidate.csbwin_appended_tail_preserved_size >=
@@ -19462,6 +19472,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcpy(profile->csbwin_global_variables,
                profile_candidate.csbwin_global_variables,
                sizeof(profile->csbwin_global_variables));
+    }
+    if (saves_disabled_changed) {
+        profile->csbwin_saves_disabled =
+            profile_candidate.csbwin_saves_disabled;
     }
     if (expool_changed) {
         memcpy(profile->csbwin_appended_tail,

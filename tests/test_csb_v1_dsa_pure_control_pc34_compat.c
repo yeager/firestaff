@@ -5,7 +5,7 @@
  * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
  * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
  * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
- * STKOP_TalentsFetch:4243-4283. These
+ * STKOP_TalentsFetch:4243-4283 and STKOP_DisableSaves:2946-2955. These
  * commands and STKOP_Fetch/Store:2473-2488 have no filter or world effect. */
 
 #include "csb_v1_chaos_magic_pc34_compat.h"
@@ -60,6 +60,28 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_champion_health[3] = 30;
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
+}
+
+static CSB_V1_CSBWinDSAStackResult run_save_policy(
+    CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
+    uint16_t *words, int word_count, int initial, int *out_value)
+{
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&context, 0, sizeof(context));
+    memset(&execution, 0, sizeof(execution));
+    action->program_words = words;
+    action->program_word_count = word_count;
+    context.saves_disabled_valid = 1;
+    context.saves_disabled = initial;
+    {
+        CSB_V1_CSBWinDSAStackResult result =
+            csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                state, 7, 1u, 0, &context, &execution);
+        if (out_value) *out_value = context.saves_disabled;
+        return result;
+    }
 }
 
 int main(void)
@@ -124,10 +146,16 @@ int main(void)
     uint16_t talents_fetch_wing[] = {
         0x0786u, 0u, 1u, 0x0195u, 0x000du
     };
+    uint16_t disable_saves[] = { 0x0686u, 1u, 0x090bu };
+    uint16_t enable_saves[] = { 0x0686u, 0u, 0x090bu };
+    uint16_t disable_saves_then_bad[] = {
+        0x0686u, 1u, 0x090bu, 0x0000u
+    };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackExecution execution;
+    int saves_disabled = -1;
 
     memset(&action, 0, sizeof(action));
     memset(&execution, 0, sizeof(execution));
@@ -349,6 +377,27 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "TALENTS@ keeps unbound CSBWin wing records unavailable");
+
+    check(run_save_policy(&state, &action, disable_saves,
+                          (int)(sizeof(disable_saves) /
+                                sizeof(disable_saves[0])), 0,
+                          &saves_disabled) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              saves_disabled == 1,
+          "DISABLESAVES stages the source save-policy disable state");
+
+    check(run_save_policy(&state, &action, enable_saves,
+                          (int)(sizeof(enable_saves) /
+                                sizeof(enable_saves[0])), 1,
+                          &saves_disabled) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              saves_disabled == 0,
+          "DISABLESAVES clears the source save-policy state with zero");
+
+    check(run_save_policy(&state, &action, disable_saves_then_bad,
+                          (int)(sizeof(disable_saves_then_bad) /
+                                sizeof(disable_saves_then_bad[0])), 0,
+                          &saves_disabled) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              saves_disabled == 0,
+          "DISABLESAVES rejects without publishing before a later bad opcode");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
