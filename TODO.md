@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB title/HUD receipt capture: current main does not contain
+  `firestaff_csb_v1_pc34_title_cadence_hud_receipt_probe`. Local candidate
+  `/Users/bosse/firestaff-work/firestaff/DATA` contains only GRAPHICS.DAT,
+  DUNGEON.DAT, and SONG.DAT with no verified CSB identity or CSBgraphics.dat.
+  Discovery must hash/classify a real CSB package before release receipt use.
+
 - 2026-07-15 CSBgraphics runtime inventory: verified local ownership chain is
   `Graphics.cpp:1643 LocateNthGraphic` -> bounded entry spans/LZW boundary ->
   MD5 signature gate -> runtime plan. `Bitmaps.cpp:661` proves overlay-palette
