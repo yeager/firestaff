@@ -25,6 +25,15 @@ static int bounded_anchor(const Nexus_V1_DgnStructure2Payload *p, uint32_t x) {
     uint32_t end = (uint32_t)(p->opaque_payload_offset + p->opaque_payload_size);
     return x == 0U || (x >= (uint32_t)p->opaque_payload_offset && x < end && (x & 1U) == 0U);
 }
+static uint32_t next_anchor(const Nexus_V1_Level *level, uint32_t anchor) {
+    uint32_t next = (uint32_t)(level->structure2_payload.opaque_payload_offset + level->structure2_payload.opaque_payload_size); int i;
+    for (i = 0; i < level->structure2_texture_count; ++i) {
+        const Nexus_V1_DgnStructure2Texture *d = &level->structure2_textures[i];
+        if (d->image_relative_offset > anchor && d->image_relative_offset < next) next = d->image_relative_offset;
+        if (d->palette_relative_offset > anchor && d->palette_relative_offset < next) next = d->palette_relative_offset;
+    }
+    return next;
+}
 int main(int argc, char **argv) {
     uint64_t corpus = UINT64_C(1469598103934665603); int static_faces = 0, levels = 0, level;
     if (argc != 2) { fprintf(stderr, "usage: %s NEXUS_DATA_DIRECTORY\n", argv[0]); return 2; }
@@ -49,7 +58,14 @@ int main(int argc, char **argv) {
                 corpus = hu16(corpus, (uint16_t)entry); corpus = hu16(corpus, (uint16_t)face);
                 corpus = hu16(corpus, fill); corpus = hu16(corpus, d->encoding); corpus = hu16(corpus, d->palette_id);
                 corpus = hu16(corpus, d->width); corpus = hu16(corpus, d->height);
-                corpus = hu32(corpus, d->image_relative_offset); corpus = hu32(corpus, d->palette_relative_offset); ++static_faces;
+                {
+                    uint32_t image_next = next_anchor(&data, d->image_relative_offset);
+                    uint32_t palette_next = d->palette_relative_offset ? next_anchor(&data, d->palette_relative_offset) : 0U;
+                    if (image_next <= d->image_relative_offset || (d->palette_relative_offset && palette_next <= d->palette_relative_offset)) { free(bytes); goto fail; }
+                    corpus = hu32(corpus, d->image_relative_offset); corpus = hu32(corpus, image_next);
+                    corpus = hu32(corpus, d->palette_relative_offset); corpus = hu32(corpus, palette_next);
+                }
+                ++static_faces;
             }
         }
         free(bytes); ++levels;

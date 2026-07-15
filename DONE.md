@@ -46,6 +46,11 @@
   bounded anchors across LEV00--LEV15. Payload decoder and rendering remain
   explicitly disabled.
 
+- 2026-07-15 Nexus static face capture windows: the canonical static-face
+  corpus now also locks each descriptor's next raw anchor boundary for capture
+  acquisition. The intervals are not decoded image or palette sizes.
+
+
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
