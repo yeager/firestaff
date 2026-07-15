@@ -273,9 +273,11 @@ typedef int (*CSB_V1_CSBWinDSAIsCarriedFn)(
     int32_t *out_result);
 typedef int (*CSB_V1_CSBWinDSAGetLevelMultiplierFn)(
     void *user, int32_t level, int32_t *out_multiplier);
-/* DSA.cpp STKOP_MissileInfoFetch reads DB14 plus the owning TIMER word8. */
+/* DSA.cpp STKOP_MissileInfoFetch/Store access DB14 plus its TIMER word8. */
 typedef int (*CSB_V1_CSBWinDSAGetMissileInfoFn)(
     void *user, uint16_t thing, uint32_t out_values[4]);
+typedef int (*CSB_V1_CSBWinDSASetMissileInfoFn)(
+    void *user, uint16_t thing, const uint32_t values[4]);
 
 typedef struct {
     uint32_t master_location;
@@ -340,6 +342,7 @@ typedef struct {
     CSB_V1_CSBWinDSAIsCarriedFn is_carried;
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
+    CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -598,6 +601,7 @@ typedef struct {
     CSB_V1_CSBWinDSAIsCarriedFn is_carried;
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
+    CSB_V1_CSBWinDSASetMissileInfoFn set_missile_info;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

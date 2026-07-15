@@ -125,6 +125,8 @@ static int csb_v1_runtime_dsa_get_level_multiplier(
     void *user, int32_t level, int32_t *out_multiplier);
 static int csb_v1_runtime_dsa_get_missile_info(
     void *user, uint16_t thing, uint32_t out_values[4]);
+static int csb_v1_runtime_dsa_set_missile_info(
+    void *user, uint16_t thing, const uint32_t values[4]);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17727,6 +17729,60 @@ static int csb_v1_runtime_dsa_get_missile_info(
     return 1;
 }
 
+/* Commit the two source owners together: DB14 range/damage and the saved
+ * missile timer's word8 direction. The mapped live timer event receives the
+ * same byte, preserving the existing original-save queue contract. */
+static int csb_v1_runtime_dsa_set_missile_info(
+    void *user, uint16_t thing, const uint32_t values[4])
+{
+    CSB_V1_RuntimeProfile *profile = user;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *record;
+    CSB_V1_CSBWin512TimerSummary *timer;
+    struct DM1_Event_V1 *event = NULL;
+    uint16_t timer_index;
+    uint16_t event_index;
+    int type;
+    int size;
+    int matches = 0;
+
+    if (!profile || !profile->dungeon_handle || !values) return 0;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1 ||
+        !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue_summary_total !=
+            profile->csbwin_timer_queue_summary_count ||
+        !csb_v1_runtime_validate_csbwin_timer_heap(profile)) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(dungeon, thing, &type, &size);
+    if (!record || type != 14 || size < 8) return 0;
+    timer_index = csb_v1_runtime_read_u16(record + 6);
+    if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+    timer = &profile->csbwin_timers[timer_index];
+    if (!timer->valid || timer->truncated ||
+        timer->source_index != timer_index) return 0;
+    for (event_index = 0u; event_index < DM1_EVENT_MAX_COUNT; ++event_index) {
+        const uint16_t queue_slot =
+            profile->csbwin_timeline_event_queue_slot[event_index];
+        if (queue_slot >= profile->csbwin_timer_queue_summary_count ||
+            profile->csbwin_timer_queue[queue_slot] != timer_index) {
+            continue;
+        }
+        if (++matches != 1 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+        event = &profile->timeline_queue.events[event_index];
+    }
+    if (matches != 1 || !event) return 0;
+    record[4] = (uint8_t)values[1];
+    record[5] = (uint8_t)values[2];
+    timer->ubyte8 = (uint8_t)((timer->ubyte8 & ~0x0cu) |
+                              ((values[3] & 3u) << 2));
+    event->c_cell = timer->ubyte8;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20731,6 +20787,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
+    candidate.set_missile_info = csb_v1_runtime_dsa_set_missile_info;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20765,6 +20822,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
 {
     CSB_V1_CSBWinDSAFilterStackRunnerContext candidate;
     CSB_V1_RuntimeProfile profile_candidate;
+    CSB_V1_DungeonData dungeon_candidate;
+    uint8_t *dungeon_raw_candidate = NULL;
     const CSB_V1_DSAImportedAction *expected;
     int staged_parameters[26];
     int global_count;
@@ -20774,6 +20833,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int dsa_state_changed;
     int party_talents_changed;
     int random_state_changed;
+    int dungeon_changed = 0;
     int i;
 
     if (!profile || !runner || !action ||
@@ -20800,6 +20860,19 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
      * bytes cannot become runtime state. */
     candidate = *runner;
     profile_candidate = *profile;
+    /* DSA stores address the loaded DB records directly.  The profile copy is
+     * otherwise shallow, so give the candidate its own raw dungeon bytes and
+     * publish them only after every save-side effect has been persisted. */
+    if (profile->dungeon_handle && profile->dungeon_handle->raw_data &&
+        profile->dungeon_handle->raw_size > 0) {
+        dungeon_candidate = *profile->dungeon_handle;
+        dungeon_raw_candidate = (uint8_t *)malloc(dungeon_candidate.raw_size);
+        if (!dungeon_raw_candidate) return 0;
+        memcpy(dungeon_raw_candidate, dungeon_candidate.raw_data,
+               dungeon_candidate.raw_size);
+        dungeon_candidate.raw_data = dungeon_raw_candidate;
+        profile_candidate.dungeon_handle = &dungeon_candidate;
+    }
     memset(candidate.global_variables, 0, sizeof(candidate.global_variables));
     candidate.global_variable_count = global_count;
     memcpy(candidate.global_variables, profile->csbwin_global_variables,
@@ -20859,6 +20932,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
+    candidate.set_missile_info = csb_v1_runtime_dsa_set_missile_info;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20877,6 +20951,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     if (!csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
             action, staged_parameters, parameter_count, flgs_inout,
             &candidate)) {
+        free(dungeon_raw_candidate);
         return 0;
     }
 
@@ -20892,6 +20967,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                candidate.global_variables,
                (size_t)global_count * sizeof(candidate.global_variables[0]));
         if (csb_v1_runtime_write_csbwin_global_variables(&profile_candidate) != 0) {
+            free(dungeon_raw_candidate);
             return 0;
         }
     }
@@ -20926,6 +21002,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             candidate.dsa_id].local_state == 1u) {
         if (!csb_v1_runtime_persist_csbwin_localstate1_dsa(
                 &profile_candidate, runner, &candidate)) {
+            free(dungeon_raw_candidate);
             return 0;
         }
         dsa_state_changed = 1;
@@ -20974,6 +21051,16 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             .persistent_state =
             profile_candidate.csbwin_extended_dsa_state.imported_headers[
                 candidate.dsa_id].persistent_state;
+    }
+    if (dungeon_raw_candidate) {
+        dungeon_changed = memcmp(dungeon_raw_candidate,
+                                 profile->dungeon_handle->raw_data,
+                                 profile->dungeon_handle->raw_size) != 0;
+        if (dungeon_changed) {
+            memcpy(profile->dungeon_handle->raw_data, dungeon_raw_candidate,
+                   profile->dungeon_handle->raw_size);
+        }
+        free(dungeon_raw_candidate);
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = staged_parameters[i];

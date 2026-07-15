@@ -48,6 +48,8 @@ static int random_state_enabled;
 static uint32_t random_state;
 static int level_multiplier_enabled;
 static int missile_info_enabled;
+static int missile_info_store_count;
+static uint32_t missile_info_stored[4];
 
 static int wing_talents_enabled;
 
@@ -297,6 +299,16 @@ static int get_missile_info(void *user, uint16_t thing,
     return 1;
 }
 
+static int set_missile_info(void *user, uint16_t thing,
+                            const uint32_t values[4])
+{
+    (void)user;
+    if (!missile_info_enabled || !values || thing != 0x014eu) return 0;
+    memcpy(missile_info_stored, values, sizeof(missile_info_stored));
+    ++missile_info_store_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -414,7 +426,10 @@ static CSB_V1_CSBWinDSAStackResult run(
     if (level_multiplier_enabled) {
         context.get_level_multiplier = get_level_multiplier;
     }
-    if (missile_info_enabled) context.get_missile_info = get_missile_info;
+    if (missile_info_enabled) {
+        context.get_missile_info = get_missile_info;
+        context.set_missile_info = set_missile_info;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -632,6 +647,14 @@ int main(void)
     };
     uint16_t missile_info_fetch[] = {
         0x0686u, 0x014eu, 0x194bu, 0x000du, 0x004du, 0x008du, 0x00cdu
+    };
+    uint16_t missile_info_store[] = {
+        0x0686u, 77u, 0x0686u, 66u, 0x0686u, 2u, 0x0686u, 0x014eu,
+        0x198bu
+    };
+    uint16_t missile_info_store_then_bad_opcode[] = {
+        0x0686u, 77u, 0x0686u, 66u, 0x0686u, 2u, 0x0686u, 0x014eu,
+        0x198bu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1068,6 +1091,23 @@ int main(void)
               parameters[2] == 55u && parameters[3] == 0x0123u &&
               execution.stack_depth == 0u,
           "MISSILEINFO@ reads DB14 and source timer direction in stack order");
+    missile_info_store_count = 0;
+    memset(missile_info_stored, 0, sizeof(missile_info_stored));
+    check(run(&state, &action, missile_info_store,
+              (int)(sizeof(missile_info_store) /
+                    sizeof(missile_info_store[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              missile_info_store_count == 1 && missile_info_stored[0] == 0x0123u &&
+              missile_info_stored[1] == 77u && missile_info_stored[2] == 66u &&
+              missile_info_stored[3] == 2u,
+          "MISSILEINFO! commits DB14 range damage and timer direction together");
+    missile_info_store_count = 0;
+    check(run(&state, &action, missile_info_store_then_bad_opcode,
+              (int)(sizeof(missile_info_store_then_bad_opcode) /
+                    sizeof(missile_info_store_then_bad_opcode[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              missile_info_store_count == 0,
+          "MISSILEINFO! remains staged after a later rejected opcode");
     missile_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
