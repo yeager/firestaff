@@ -1120,6 +1120,40 @@ int dm2_v1_original_raw_sksave_door_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_actuator_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawActuatorReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawActuatorReceipt candidate;
+    uint16_t w2, w4, w6;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 3, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 8u ||
+        candidate.record.record_offset > buf_size - 8u) return 0;
+    w2 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    w4 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 4u);
+    w6 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 6u);
+    candidate.actuator_type = (uint8_t)(w2 & 0x007fu);
+    candidate.actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
+    candidate.graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
+    candidate.disabled = (uint8_t)((w4 >> 11) & 1u);
+    candidate.delay = (uint8_t)((w4 >> 7) & 0x000fu);
+    candidate.sound_effect = (uint8_t)((w4 >> 6) & 1u);
+    candidate.revert_effect = (uint8_t)((w4 >> 5) & 1u);
+    candidate.action_type = (uint8_t)((w4 >> 3) & 3u);
+    candidate.once_only = (uint8_t)((w4 >> 2) & 1u);
+    candidate.active_status = (uint8_t)(w4 & 1u);
+    candidate.target_direction = (uint8_t)((w6 >> 4) & 3u);
+    candidate.target_x = (uint8_t)((w6 >> 6) & 0x001fu);
+    candidate.target_y = (uint8_t)((w6 >> 11) & 0x001fu);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)

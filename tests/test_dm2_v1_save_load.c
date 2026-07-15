@@ -952,11 +952,18 @@ static int build_raw_sksave_payload(
     write_u16_le_at(payload, 44u + 8u,
                     (uint16_t)((3u << 6) | (4u << 11)));
     write_u16_le_at(payload, 12u, 1u); /* one source-sized DB0 record */
+    write_u16_le_at(payload, 18u, 1u); /* one source-sized DB3 record */
     payload[68u] = 0x34u;
     payload[69u] = 0x12u;
     payload[70u] = 0xe3u;
     payload[71u] = 0x09u;
-    pos = 92u;
+    payload[74u] = 0xaau;
+    payload[75u] = 0x80u;
+    payload[76u] = 0x75u;
+    payload[77u] = 0x3au;
+    payload[78u] = 0xe0u;
+    payload[79u] = 0x49u;
+    pos = 100u;
 
     n = dm2_suppress_encode_gamestate(gs, enc, sizeof(enc));
     if (n <= 0 || !append_blob(payload, payload_cap, &pos, enc, (size_t)n)) {
@@ -1301,6 +1308,7 @@ static int test_raw_sksave_resume_import(void)
     DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
     DM2_V1_OriginalRawDbRecordReceipt db0_receipt;
     DM2_V1_OriginalRawDoorReceipt door_receipt;
+    DM2_V1_OriginalRawActuatorReceipt actuator_receipt;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
@@ -1367,10 +1375,12 @@ static int test_raw_sksave_resume_import(void)
         dungeon_receipt.text_word_count != 0u ||
         dungeon_receipt.db_pool_offsets[0] != 68u ||
         dungeon_receipt.db_record_counts[0] != 1u ||
-        dungeon_receipt.map_data_offset != 72u ||
+        dungeon_receipt.db_record_counts[3] != 1u ||
+        dungeon_receipt.db_pool_offsets[3] != 72u ||
+        dungeon_receipt.map_data_offset != 80u ||
         dungeon_receipt.prefix_hash == 0u ||
         dungeon_receipt.map_data_hash == 0u ||
-        dungeon_receipt.suppress_state_offset != 92u ||
+        dungeon_receipt.suppress_state_offset != 100u ||
         !dm2_v1_original_raw_sksave_db_record_receipt(
             payload, payload_size, 0, 0, &db0_receipt) ||
         !db0_receipt.valid || db0_receipt.record_size != 4u ||
@@ -1385,7 +1395,19 @@ static int test_raw_sksave_resume_import(void)
         door_receipt.destroyable_by_fireball != 1u ||
         door_receipt.bashable_by_chopping != 1u ||
         dm2_v1_original_raw_sksave_door_receipt(
-            payload, payload_size, 1, &door_receipt)) {
+            payload, payload_size, 1, &door_receipt) ||
+        !dm2_v1_original_raw_sksave_actuator_receipt(
+            payload, payload_size, 0, &actuator_receipt) ||
+        !actuator_receipt.valid || actuator_receipt.actuator_type != 42u ||
+        actuator_receipt.actuator_data != 0x101u ||
+        actuator_receipt.graphic_number != 3u || actuator_receipt.disabled != 1u ||
+        actuator_receipt.delay != 4u || actuator_receipt.sound_effect != 1u ||
+        actuator_receipt.revert_effect != 1u || actuator_receipt.action_type != 2u ||
+        actuator_receipt.once_only != 1u || actuator_receipt.active_status != 1u ||
+        actuator_receipt.target_direction != 2u || actuator_receipt.target_x != 7u ||
+        actuator_receipt.target_y != 9u ||
+        dm2_v1_original_raw_sksave_actuator_receipt(
+            payload, payload_size, 1, &actuator_receipt)) {
         printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
