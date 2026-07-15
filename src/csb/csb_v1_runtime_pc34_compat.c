@@ -113,6 +113,9 @@ static int csb_v1_runtime_dsa_get_champion_possession(
 static int csb_v1_runtime_dsa_get_monster_possession(
     void *user, uint16_t monster_thing, uint32_t possession_index,
     int32_t *out_thing);
+static int csb_v1_runtime_dsa_inspect_cells(
+    void *user, uint32_t location, uint32_t criteria_mask,
+    uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17340,6 +17343,147 @@ static int csb_v1_runtime_dsa_get_monster_possession(
     return 1;
 }
 
+/* CSBWin DSA.cpp ExamineCell:2210-2309.  This owns no synthesized room or
+ * Thing chain: every bit is classified from the loaded CELLFLAG byte and
+ * the existing DB1/DB4 records in the same original dungeon. */
+static int csb_v1_runtime_dsa_inspect_cells(
+    void *user, uint32_t location, uint32_t criteria_mask,
+    uint32_t first_cell, uint32_t last_cell, uint32_t *out_result)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    uint32_t result = 0u;
+    uint32_t result_bit = 1u;
+    uint32_t i;
+    int level;
+    int base_x;
+    int base_y;
+
+    if (!out_result || !profile || !profile->dungeon_handle ||
+        first_cell > last_cell || last_cell > 4u) {
+        return -1;
+    }
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1) return -1;
+    level = (int)((location >> 10) & 0x3fu);
+    base_x = (int)((location >> 5) & 0x1fu);
+    base_y = (int)(location & 0x1fu);
+
+    for (i = first_cell; i <= last_cell; ++i, result_bit <<= 1) {
+        int map_x = base_x;
+        int map_y = base_y;
+        int raw_square;
+        int room_type;
+        uint32_t cell_bits = 0u;
+
+        if (i == 0u) --map_y;
+        else if (i == 1u) ++map_x;
+        else if (i == 2u) ++map_y;
+        else if (i == 3u) --map_x;
+
+        raw_square = csb_v1_dungeon_get_raw_square(dungeon, level,
+                                                    map_x, map_y);
+        if (raw_square < 0) {
+            cell_bits = (1u << 0) | (1u << 31);
+        } else {
+            int thing;
+            int guard;
+            room_type = (raw_square >> 5) & 0x07;
+            switch (room_type) {
+            case 0: /* roomSTONE */
+                cell_bits = (1u << 1) | (1u << 31);
+                break;
+            case 1: /* roomOPEN */
+            case 2: /* roomPIT */
+            case 3: /* roomSTAIRS */
+            case 4: /* roomDOOR */
+            case 5: /* roomTELEPORTER */
+            case 6: /* roomFALSEWALL */
+                break;
+            default:
+                return -1;
+            }
+            if (room_type == 1) {
+                cell_bits |= 1u << 19;
+            } else if (room_type == 2) {
+                if ((raw_square & 0x01) != 0) cell_bits |= 1u << 4;
+                else if ((raw_square & 0x08) != 0) cell_bits |= 1u << 2;
+                else cell_bits |= 1u << 3;
+            } else if (room_type == 3) {
+                cell_bits |= (raw_square & 0x04) != 0 ? 1u << 23 : 1u << 24;
+            } else if (room_type == 4) {
+                cell_bits |= 1u << (((raw_square & 0x07) > 5) ? 9 :
+                                    ((raw_square & 0x07) + 5));
+            } else if (room_type == 5) {
+                int found_teleporter = 0;
+                thing = csb_v1_dungeon_get_first_thing(dungeon, level,
+                                                        map_x, map_y);
+                for (guard = 0;
+                     thing >= 0 && thing != THING_NONE &&
+                         thing != THING_ENDOFLIST && guard < 128;
+                     ++guard) {
+                    const uint8_t *record;
+                    int type;
+                    int size;
+
+                    record = csb_v1_dungeon_get_thing_record(
+                        dungeon, (uint16_t)thing, &type, NULL, &size);
+                    if (!record || size < 2) return -1;
+                    if (type == THING_TYPE_TELEPORTER && size >= 4) {
+                        uint16_t word2 = csb_v1_runtime_read_u16(record + 2);
+                        int bit = 11 + (int)((word2 >> 10) & 0x03u);
+                        if ((raw_square & 0x08) == 0) ++bit;
+                        cell_bits |= 1u << bit;
+                        found_teleporter = 1;
+                        break;
+                    }
+                    thing = (int)csb_v1_runtime_read_u16(record);
+                }
+                if (guard >= 128 && !found_teleporter) return -1;
+            } else if (room_type == 6) {
+                if ((raw_square & 0x04) != 0) cell_bits |= 1u << 22;
+                else if ((raw_square & 0x01) != 0) cell_bits |= 1u << 20;
+                else cell_bits |= 1u << 21;
+            }
+
+            if (profile->party_state_valid && profile->current_level == level &&
+                profile->party_x == map_x && profile->party_y == map_y) {
+                cell_bits |= 1u << 29;
+            } else {
+                int found_group = 0;
+                thing = csb_v1_dungeon_get_first_thing(dungeon, level,
+                                                        map_x, map_y);
+                for (guard = 0;
+                     thing >= 0 && thing != THING_NONE &&
+                         thing != THING_ENDOFLIST && guard < 128;
+                     ++guard) {
+                    const uint8_t *record;
+                    int type;
+                    int size;
+
+                    record = csb_v1_dungeon_get_thing_record(
+                        dungeon, (uint16_t)thing, &type, NULL, &size);
+                    if (!record || size < 2) return -1;
+                    if (type == CSB_V1_THING_TYPE_GROUP) {
+                        found_group = 1;
+                        break;
+                    }
+                    thing = (int)csb_v1_runtime_read_u16(record);
+                }
+                if (guard >= 128 && !found_group) return -1;
+                cell_bits |= found_group ? 1u << 30 : 1u << 31;
+            }
+        }
+        if ((criteria_mask & cell_bits & 0x01ffffffu) != 0u &&
+            (criteria_mask & cell_bits & 0xe0000000u) != 0u) {
+            result |= result_bit;
+        }
+    }
+    *out_result = result;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20337,6 +20481,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_champion_possession =
         csb_v1_runtime_dsa_get_champion_possession;
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
+    candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20457,6 +20602,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_champion_possession =
         csb_v1_runtime_dsa_get_champion_possession;
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
+    candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =

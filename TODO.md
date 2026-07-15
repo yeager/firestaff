@@ -3352,6 +3352,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       source empty result; absent or malformed dungeon ownership rejects,
       rather than deriving a possession list from metadata or a fallback.
       Positive original DSA-bearing save-corpus proof remains required.
+    - 2026-07-15 cell-inspection update: source `STKOP_ThisCell` and
+      `STKOP_Neighbors` now execute CSBWin `ExamineCell` only through the
+      loaded original byte-map, DB1 teleporter chain, DB4 group chain, and
+      live party pose. The original room, door-state, pit, stair,
+      false-wall, teleporter-open/type, party/group/empty criteria bits and
+      low/high criteria-mask conjunction are retained. Missing, cyclic, or
+      malformed chains reject; no room, monster, teleporter, or occupancy
+      surrogate is constructed. Positive original DSA-bearing save-corpus
+      proof remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
