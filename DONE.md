@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject object host receipt: ordered floor-object,
+  possession, and leader-hand GDAT plan hash/count now cross runtime, boot,
+  and M11. M11 rejects a mismatched object pass before presentation.
+
 - 2026-07-15 DM2 skproject projectile host receipt: ordered missile/cloud
   GDAT plan hash and command count now cross runtime, boot, and M11. M11
   rejects a mismatched projectile pass before presentation.
