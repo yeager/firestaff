@@ -107,6 +107,7 @@
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
+#include "touch_click_zone_matrix_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
@@ -8402,6 +8403,88 @@ int M11_GameView_ClearSpell(M11_GameViewState* state) {
                       (unsigned int)state->world.gameTick);
     }
     return 1;
+}
+
+/* ReDMCSB SYMBOL.C F0400 removes the latest symbol only.  It does not
+ * refund the F0399 mana spend and it leaves the C009/C011 spell panel
+ * visible, unlike the launcher's generic clear-panel command. */
+static int m11_dm1_spell_panel_recant_last_rune(M11_GameViewState* state)
+{
+    DM1_V1_SpellPanelStatePc34 panel =
+        m11_dm1_spell_panel_state_pc34(state);
+    int removedIndex;
+
+    if (!dm1_v1_spell_panel_command_allowed_pc34(&panel) ||
+        !panel.panel_open || panel.rune_count <= 0) {
+        return 0;
+    }
+    removedIndex = panel.rune_count - 1;
+    state->spellBuffer.runes[removedIndex] = 0;
+    state->spellBuffer.runeCount = removedIndex;
+    state->spellRuneRow = (state->spellRuneRow + 3) & 3;
+    m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL RUNE RECANTED",
+                  (unsigned int)state->world.gameTick);
+    return 1;
+}
+
+/* COMMAND.C G0447 first resolves C100 against the narrow C013 parent box.
+ * Once F0370 has opened the panel, G0454 re-dispatches the child zones from
+ * layout-696.  The matrix is the source-owned owner of every hit rectangle;
+ * M11 never derives a hit target from glyph positions or host scaling. */
+static M11_GameInputResult
+m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
+{
+    DM1_V1_SpellAreaRectPc34 parent;
+    TouchClickZonePc34Compat zone;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        state->showDebugHUD || state->inventoryPanelActive ||
+        !m11_v1_chrome_mode_enabled()) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    parent = dm1_v1_spell_area_click_rect_pc34();
+    if (!m11_point_in_rect(x, y, parent.x, parent.y, parent.w, parent.h)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* C100_COMMAND_CLICK_IN_SPELL_AREA enters F0370.  Child zones are not
+     * active until F0394 has installed the spell-area presentation. */
+    if (!state->spellPanelOpen) {
+        return M11_GameView_OpenSpellPanel(state)
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
+    }
+    if (!TOUCHCLICK_Compat_HitTestWithButton(
+            x, y, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (zone.commandId >= DM1_V1_CPSAO_CMD_RUNE_FIRST_PC34 &&
+        zone.commandId <= DM1_V1_CPSAO_CMD_RUNE_LAST_PC34) {
+        return M11_GameView_EnterRune(
+                   state,
+                   (int)zone.commandId - DM1_V1_CPSAO_CMD_RUNE_FIRST_PC34)
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
+    }
+    if (zone.commandId == DM1_V1_CPSAO_CMD_RECANT_PC34) {
+        return m11_dm1_spell_panel_recant_last_rune(state)
+                   ? M11_GAME_INPUT_REDRAW
+                   : M11_GAME_INPUT_IGNORED;
+    }
+    if (zone.commandId == DM1_V1_CPSAO_CMD_CAST_PC34) {
+        if (state->spellBuffer.runeCount < 2) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        (void)M11_GameView_CastSpell(state);
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* C109's source owner is F0394 and preserves a separate Symbols[] /
+     * SymbolStep record for each caster. M11 retains one validated runtime
+     * sequence today, so a different tab must fail closed rather than let a
+     * second champion inherit the first champion's symbols. */
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static int m11_nexus_light_runtime_ensure(M11_GameViewState* state) {
@@ -17052,6 +17135,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    {
+        M11_GameInputResult spellResult =
+            m11_handle_dm1_spell_area_pointer(state, x, y);
+        if (spellResult != M11_GAME_INPUT_IGNORED) {
+            return spellResult;
+        }
     }
 
     if (state->inventoryPanelActive && !state->showDebugHUD) {
