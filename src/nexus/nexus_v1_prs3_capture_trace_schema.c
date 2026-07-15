@@ -82,7 +82,7 @@ static int sh2_movw_pc_literal_target(uint16_t instruction,
 
     if (!out_target || (instruction & 0xf000U) != 0x9000U) return 0;
     displacement = (uint32_t)(instruction & 0x00ffU) * 2U;
-    *out_target = ((instruction_offset + 4U) & ~3U) + displacement;
+    *out_target = instruction_offset + 4U + displacement;
     return 1;
 }
 
@@ -500,7 +500,13 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_CONTROL_REFILL_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 64U,
         SH2_CONTROL_REFILL_MERGE_OFFSET = SH2_V1_CALLEE_OFFSET + 70U,
         SH2_CONTROL_LOW_BIT_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 74U,
-        SH2_CONTROL_ZERO_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 76U
+        SH2_CONTROL_ZERO_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 76U,
+        SH2_ZERO_FIRST_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 108U,
+        SH2_ZERO_SECOND_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 112U,
+        SH2_ZERO_MERGE_OR_OFFSET = SH2_V1_CALLEE_OFFSET + 124U,
+        SH2_ZERO_INDEX_MASK_LITERAL_LOAD_OFFSET = SH2_V1_CALLEE_OFFSET + 50U,
+        SH2_ZERO_INDEX_MASK_OFFSET = SH2_V1_CALLEE_OFFSET + 144U,
+        SH2_ZERO_INDEXED_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 148U
     };
     Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
 
@@ -580,6 +586,25 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             SH2_CONTROL_ZERO_BRANCH_OFFSET,
             &receipt.control_zero_branch_target_offset) &&
         receipt.control_zero_branch_target_offset == SH2_V1_CALLEE_OFFSET + 100U;
+    receipt.zero_first_byte_read_offset = SH2_ZERO_FIRST_BYTE_READ_OFFSET;
+    receipt.zero_second_byte_read_offset = SH2_ZERO_SECOND_BYTE_READ_OFFSET;
+    receipt.zero_merge_or_offset = SH2_ZERO_MERGE_OR_OFFSET;
+    receipt.zero_index_mask_offset = SH2_ZERO_INDEX_MASK_OFFSET;
+    receipt.zero_indexed_byte_read_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET;
+    receipt.sh2_zero_side_index_read_verified =
+        read_be16(dm_bin + SH2_ZERO_FIRST_BYTE_READ_OFFSET) == 0x64c4U &&
+        read_be16(dm_bin + SH2_ZERO_SECOND_BYTE_READ_OFFSET) == 0x67c4U &&
+        read_be16(dm_bin + SH2_ZERO_MERGE_OR_OFFSET) == 0x243bU &&
+        read_be16(dm_bin + SH2_ZERO_INDEX_MASK_LITERAL_LOAD_OFFSET) == 0x956aU &&
+        sh2_movw_pc_literal_target(
+            read_be16(dm_bin + SH2_ZERO_INDEX_MASK_LITERAL_LOAD_OFFSET),
+            SH2_ZERO_INDEX_MASK_LITERAL_LOAD_OFFSET,
+            &receipt.zero_index_mask_literal_offset) &&
+        receipt.zero_index_mask_literal_offset + 2U <= dm_bin_size &&
+        (receipt.zero_index_mask_word = read_be16(
+             dm_bin + receipt.zero_index_mask_literal_offset)) == 0x0fffU &&
+        read_be16(dm_bin + SH2_ZERO_INDEX_MASK_OFFSET) == 0x2059U &&
+        read_be16(dm_bin + SH2_ZERO_INDEXED_BYTE_READ_OFFSET) == 0x01dcU;
     }
     receipt.sh2_control_path_verified =
         receipt.control_test_instruction == 0x23b8U &&

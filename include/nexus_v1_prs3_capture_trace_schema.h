@@ -105,6 +105,14 @@ typedef struct {
     uint32_t control_sentinel_literal_offset;
     uint16_t control_sentinel_word;
     int sh2_control_refill_verified;
+    uint32_t zero_first_byte_read_offset;
+    uint32_t zero_second_byte_read_offset;
+    uint32_t zero_merge_or_offset;
+    uint32_t zero_index_mask_literal_offset;
+    uint32_t zero_index_mask_word;
+    uint32_t zero_index_mask_offset;
+    uint32_t zero_indexed_byte_read_offset;
+    int sh2_zero_side_index_read_verified;
     int menu_frame_binding_proven;
     int vdp1_command_proven;
     int opcode_grammar_proven;
