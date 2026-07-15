@@ -1117,6 +1117,130 @@ int F0818_DM1_GROUP_GetDistanceToVisibleParty_Compat(
     return 1;
 }
 
+static int dm1_group_destination_visible_from_source(int direction,
+                                                      int sourceMapX,
+                                                      int sourceMapY,
+                                                      int destinationMapX,
+                                                      int destinationMapY)
+{
+    int temp;
+
+    switch (direction & 3) {
+    case 2:
+        temp = sourceMapX;
+        sourceMapX = destinationMapY;
+        destinationMapY = temp;
+        temp = destinationMapX;
+        destinationMapX = sourceMapY;
+        sourceMapY = temp;
+        break;
+    case 1:
+        temp = sourceMapX;
+        sourceMapX = destinationMapX;
+        destinationMapX = temp;
+        temp = destinationMapY;
+        destinationMapY = sourceMapY;
+        sourceMapY = temp;
+        break;
+    case 0:
+        temp = sourceMapX;
+        sourceMapX = sourceMapY;
+        sourceMapY = temp;
+        temp = destinationMapX;
+        destinationMapX = destinationMapY;
+        destinationMapY = temp;
+        break;
+    default:
+        break;
+    }
+    sourceMapX -= destinationMapX - 1;
+    return sourceMapX > 0 &&
+           dm1_abs_int(sourceMapY - destinationMapY) <= sourceMapX;
+}
+
+/* ReDMCSB GROUP.C F0200 and F0227. The old F0818 context adapter remains
+ * for callers that only have a previously established sight distance; this
+ * form is the live source path and refuses to infer a map route. */
+int F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* activeGroup,
+    int creatureIndex,
+    struct RngState_Compat* rng,
+    int* outDistance)
+{
+    int viewDirections[4];
+    int viewDirectionCount = 0;
+    int sightRange;
+    int index;
+
+    if (!ctx || !rng || !outDistance ||
+        ctx->currentMapIndex != ctx->partyMapIndex ||
+        !ctx->isViewSquareBlocked || ctx->creatureCount < 0 ||
+        ctx->creatureCount > 3 || creatureIndex > ctx->creatureCount) {
+        return 0;
+    }
+    *outDistance = 0;
+
+    if (ctx->creatureInfo.attributes & 0x0004) {
+        viewDirections[viewDirectionCount++] = 0;
+    } else {
+        if (!activeGroup) return 0;
+        if (creatureIndex < 0) {
+            for (index = ctx->creatureCount; index >= 0; --index) {
+                int direction = (activeGroup->directions >> (index << 1)) & 3;
+                int seen = 0;
+                int prior;
+                for (prior = 0; prior < viewDirectionCount; ++prior) {
+                    if (viewDirections[prior] == direction) {
+                        seen = 1;
+                        break;
+                    }
+                }
+                if (!seen) viewDirections[viewDirectionCount++] = direction;
+            }
+        } else {
+            viewDirections[viewDirectionCount++] =
+                (activeGroup->directions >> (creatureIndex << 1)) & 3;
+        }
+    }
+
+    while (viewDirectionCount-- > 0) {
+        if (!(ctx->creatureInfo.attributes & 0x0004) &&
+            !dm1_group_destination_visible_from_source(
+                viewDirections[viewDirectionCount], ctx->currentGroupMapX,
+                ctx->currentGroupMapY, ctx->partyMapX, ctx->partyMapY)) {
+            continue;
+        }
+        sightRange = DM1_SIGHT_RANGE(ctx->creatureInfo.ranges);
+        if (ctx->partyInvisibilityEventCount &&
+            !(ctx->creatureInfo.attributes & 0x0800)) {
+            sightRange = -10;
+        } else if (!(ctx->creatureInfo.attributes & 0x1000)) {
+            sightRange -= ctx->dungeonViewPaletteIndex >> 1;
+        }
+        if (ctx->currentGroupDistanceToParty > sightRange) {
+            if (ctx->currentGroupDistanceToParty == 1) {
+                sightRange += F0732_COMBAT_RngRandom_Compat(
+                    rng, DM1_XXX_RANGE(ctx->creatureInfo.ranges) + 1);
+                sightRange += F0732_COMBAT_RngRandom_Compat(
+                    rng, DM1_SMELL_RANGE(ctx->creatureInfo.ranges) + 1);
+                if (!F0732_COMBAT_RngRandom_Compat(rng, 8)) {
+                    sightRange += F0732_COMBAT_RngRandom_Compat(rng, 1) + 5;
+                }
+            }
+            if (ctx->currentGroupDistanceToParty >
+                sightRange + F0732_COMBAT_RngRandom_Compat(rng, 8) - 3) {
+                return 0;
+            }
+        }
+        *outDistance = F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+            ctx->currentGroupMapX, ctx->currentGroupMapY, ctx->partyMapX,
+            ctx->partyMapY, ctx->isViewSquareBlocked, ctx->viewBlockerContext);
+        return *outDistance > 0;
+    }
+    return 0;
+}
+
 /* =========================================================================
  *  F0819: Smelled party direction ordinal
  *

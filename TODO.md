@@ -6964,3 +6964,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   and route primitives now require decoded square/door facts and a loaded-map
   blocker callback. Remaining work is binding M10's live F0157/current-map
   reader to those inputs; do not replace a missing callback with a clear map.
+- 2026-07-15 DM1 GROUP F0200 follow-up: the complete source sight decision
+  now consumes active directions, visibility range, invisibility, palette,
+  RNG, and F0197/F0199 route facts. Remaining work is to bind this live form
+  in M10; cross-map or callback-free requests must remain non-visible.
