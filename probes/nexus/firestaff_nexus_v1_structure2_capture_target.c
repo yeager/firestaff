@@ -25,53 +25,67 @@ int main(int argc, char **argv)
     char path[1024];
     int level;
     int descriptor;
+    int all_levels;
     int all_descriptors;
+    int final_level;
     int written = 0;
 
-    if (argc != 5 || !parse_nonnegative(argv[2], &level) || level > 15 ||
+    if (argc != 5 ||
+        (strcmp(argv[2], "all") != 0 &&
+         (!parse_nonnegative(argv[2], &level) || level > 15)) ||
         (strcmp(argv[3], "all") != 0 && !parse_nonnegative(argv[3], &descriptor))) {
         fprintf(stderr,
-                "usage: %s <nexus-data-dir> <level-0..15> "
+                "usage: %s <nexus-data-dir> <level-0..15|all> "
                 "<descriptor-index|all> <output-target|output-directory>\n",
                 argv[0]);
         return 2;
     }
-    if (nexus_v1_init(&engine, argv[1]) != 0 ||
-        nexus_v1_load_level(&engine, level) != 0) {
+    if (nexus_v1_init(&engine, argv[1]) != 0) {
         fprintf(stderr,
-                "could not load a canonical LEV for Structure2 capture\n");
+                "could not initialize a canonical Nexus corpus\n");
         return 1;
     }
+    all_levels = strcmp(argv[2], "all") == 0;
     all_descriptors = strcmp(argv[3], "all") == 0;
-    if (!all_descriptors && descriptor >= engine.current_level.structure2_texture_count) {
-        fprintf(stderr, "descriptor index is outside the selected LEV\n");
-        return 2;
-    }
-    for (descriptor = all_descriptors ? 0 : descriptor;
-         descriptor < engine.current_level.structure2_texture_count;
-         ++descriptor) {
-        if (all_descriptors) {
-            if (snprintf(path, sizeof(path), "%s/LEV%02d-Structure2-%04d.target",
-                         argv[4], level, descriptor) >= (int)sizeof(path)) {
+    if (all_levels) level = 0;
+    final_level = all_levels ? 15 : level;
+    for (; level <= final_level; ++level) {
+        if (nexus_v1_load_level(&engine, level) != 0) {
+            fprintf(stderr, "could not load canonical LEV%02d\n", level);
+            return 1;
+        }
+        if (!all_descriptors && descriptor >= engine.current_level.structure2_texture_count) {
+            fprintf(stderr, "descriptor index is outside LEV%02d\n", level);
+            return 2;
+        }
+        for (descriptor = all_descriptors ? 0 : descriptor;
+             descriptor < engine.current_level.structure2_texture_count;
+             ++descriptor) {
+            if (all_descriptors || all_levels) {
+                if (snprintf(path, sizeof(path),
+                             "%s/LEV%02d-Structure2-%04d.target", argv[4], level,
+                             descriptor) >= (int)sizeof(path)) {
+                    fprintf(stderr, "capture target path is too long\n");
+                    return 2;
+                }
+            } else if (snprintf(path, sizeof(path), "%s", argv[4]) >=
+                       (int)sizeof(path)) {
                 fprintf(stderr, "capture target path is too long\n");
                 return 2;
             }
-        } else if (snprintf(path, sizeof(path), "%s", argv[4]) >=
-                   (int)sizeof(path)) {
-            fprintf(stderr, "capture target path is too long\n");
-            return 2;
+            if (nexus_v1_engine_write_structure2_descriptor_capture_target(
+                    &engine, descriptor, path, &target) != 1 || !target.valid ||
+                !target.no_draw_only || !target.capture_producer_required ||
+                !target.original_saturn_capture_required) {
+                fprintf(stderr, "could not create LEV%02d Structure2 target %d\n",
+                        level, descriptor);
+                return 1;
+            }
+            ++written;
+            if (!all_descriptors) break;
         }
-        if (nexus_v1_engine_write_structure2_descriptor_capture_target(
-                &engine, descriptor, path, &target) != 1 || !target.valid ||
-            !target.no_draw_only || !target.capture_producer_required ||
-            !target.original_saturn_capture_required) {
-            fprintf(stderr, "could not create Structure2 target %d\n", descriptor);
-            return 1;
-        }
-        ++written;
-        if (!all_descriptors) break;
     }
-    printf("wrote %d no-draw Structure2 target%s for LEV%02d\n", written,
-           all_descriptors ? "s" : "", level);
+    printf("wrote %d no-draw Structure2 target%s for %s\n", written,
+           written == 1 ? "" : "s", all_levels ? "LEV00-LEV15" : "selected LEV");
     return 0;
 }

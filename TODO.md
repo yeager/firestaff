@@ -6749,3 +6749,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     The tool can now emit every descriptor target in a selected LEV, allowing
     one authenticated Saturn campaign to cover all active Structure2 classes
     instead of choosing a representative byte pattern.
+    The all-level campaign now emits 1,678 targets from LEV00--LEV15. The
+    installed Mednafen 1.32.1 reaches its Saturn module but cannot boot this
+    corpus without the configured `sega_101.bin` BIOS; provide a legal local
+    BIOS, then capture the VDP1/CRAM lanes against these targets. Do not use a
+    substitute BIOS, generated trace, or inferred decoder.
