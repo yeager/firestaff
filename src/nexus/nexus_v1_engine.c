@@ -2508,7 +2508,8 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
         receipt.command.texture_command;
     receipt.texture_format_framed = receipt.texture_primitive_observed &&
         receipt.command.colour_mode_documented &&
-        receipt.command.texture_byte_count > 0U;
+        receipt.command.texture_byte_count > 0U &&
+        receipt.command.texture_source_range_valid;
     receipt.texture_span_size_matches_command = receipt.texture_format_framed &&
         packet.texture_span_size == (int)receipt.command.texture_byte_count;
     /* Command-table framing never proves payload byte order, VDP1 colour

@@ -3370,6 +3370,11 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_command_framing.texture_span_size_matches_command &&
               active_source.vdp1_command_framing.command.texture_bits_per_pixel == 4U &&
               active_source.vdp1_command_framing.command.texture_byte_count == 4U &&
+              active_source.vdp1_command_framing.command.texture_source_byte_offset ==
+                  0x100U &&
+              active_source.vdp1_command_framing.command.texture_source_byte_end ==
+                  0x104U &&
+              active_source.vdp1_command_framing.command.texture_source_range_valid &&
               active_source.vdp1_command_framing.command.texture_width == 8U &&
               active_source.vdp1_command_framing.command.texture_height == 1U &&
               !active_source.vdp1_command_framing.pixel_format_proven &&
@@ -4920,6 +4925,9 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
           inspection.command.texture_source_word == 0x0010U &&
           inspection.command.texture_bits_per_pixel == 4U &&
           inspection.command.texture_byte_count == 4U &&
+          inspection.command.texture_source_byte_offset == 0x80U &&
+          inspection.command.texture_source_byte_end == 0x84U &&
+          inspection.command.texture_source_range_valid &&
           inspection.command.texture_width == 8U &&
           inspection.command.texture_height == 1U &&
           !inspection.original_saturn_capture_verified &&
