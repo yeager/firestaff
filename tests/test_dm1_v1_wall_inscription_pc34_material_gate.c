@@ -97,6 +97,45 @@ static int find_visible_wall_text(const struct DungeonDatState_Compat* dungeon,
     return 0;
 }
 
+static int verify_unscaled_raster_binding(
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* receipt)
+{
+    int line;
+
+    if (!receipt || !DM1_V1_InscriptionHostMaterialRasterGatePc34(
+            receipt, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34)) {
+        return 0;
+    }
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* plan =
+            &receipt->lines[line];
+        int glyphOffset;
+        for (glyphOffset = 0; glyphOffset < plan->glyphCount; ++glyphOffset) {
+            DM1_V1_InscriptionRasterCellBindingPc34 binding;
+            const int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(
+                receipt->glyphBytes[plan->glyphStart + glyphOffset]);
+            if (glyph < 0 ||
+                !DM1_V1_InscriptionBuildRasterCellBindingPc34(
+                    receipt, line, glyphOffset, &binding) ||
+                binding.fontGraphicIndex !=
+                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
+                binding.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
+                binding.sourceX != glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH ||
+                binding.sourceY != 0 || binding.sourceWidth != 8 ||
+                binding.sourceHeight != 8 ||
+                binding.destinationX != plan->textX + glyphOffset * 8 ||
+                binding.destinationY != plan->textY) {
+                return 0;
+            }
+        }
+        if (plan->done) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -107,6 +146,7 @@ int main(void)
     struct DungeonDatState_Compat dungeon;
     struct DungeonThings_Compat things;
     DM1_V1_InscriptionHostMaterialReceiptPc34 receipt;
+    DM1_V1_InscriptionHostMaterialReceiptPc34 selectedReceipt;
     unsigned char decoded[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     unsigned short firstThing = THING_ENDOFLIST;
     int textIndex = -1;
@@ -145,6 +185,20 @@ int main(void)
         !dm1_v1_inscription_host_material_from_world_pc34(
             &things, textIndex, firstThing, &receipt)) {
         fprintf(stderr, "could not build a real PC34 F0168/F0107 inscription receipt\n");
+        result = 0;
+        goto cleanup;
+    }
+
+    /* F0172's selected-wall route and F0168's world route must reach the
+     * identical original M648 cells.  This locks HoC/non-HoC call sites to
+     * byte<<3, native 8x8 scale and C10 rather than a host text substitute. */
+    memset(&selectedReceipt, 0, sizeof(selectedReceipt));
+    if (!dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            &things, textIndex, &selectedReceipt) ||
+        memcmp(&selectedReceipt, &receipt, sizeof(receipt)) != 0 ||
+        !verify_unscaled_raster_binding(&receipt) ||
+        !verify_unscaled_raster_binding(&selectedReceipt)) {
+        fprintf(stderr, "F0168/F0172 M648 raster/palette routes diverged\n");
         result = 0;
         goto cleanup;
     }
@@ -205,7 +259,7 @@ int main(void)
         }
     }
 
-    printf("ok: real PC34 wall TextString %d reaches only M648 material; missing texture is no-draw\n",
+    printf("ok: real PC34 wall TextString %d keeps exact M648/C10 8x8 cells across F0168/F0172\n",
            textIndex);
 
 cleanup:

@@ -7,6 +7,14 @@
   receipt retains exact F0107 geometry, C10 key, and palette map. Remaining
   work is real PC34/Mac capture across every HoC and non-HoC projection; no
   host text, font, or palette substitute.
+  - 2026-07-15 raster-source binding update: both F0168 world discovery and
+    F0172 selected-wall consumption now prove the same raw M648 receipt,
+    with each decoded byte bound to `byte << 3`, an unscaled native 8x8 cell,
+    original GRAPHICS.DAT entry 120, and C10 transparency. The gate rejects
+    padded/scaled font dimensions as well as altered source or destination
+    cells. Remaining work is real PC34/Mac capture across every HoC and
+    non-HoC projection; side/depth continues to use its original unreadable
+    ornament route, not host text.
 
 - 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
   route no longer uses the generic cyan host frame when C008 or another

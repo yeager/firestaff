@@ -31,6 +31,14 @@
   matrix, never glyph bounds or host scaling. C109 remains fail-closed until
   M11 owns the original per-caster `Symbols[]`/`SymbolStep` records. Focused
   coverage: `m11_dm1_spell_pointer_routes_pc34_compat`.
+- ✅ 2026-07-15 DM1 ReDMCSB F0168/F0172 M648 raster-source binding:
+  the raw selected-wall and world discovery routes now agree byte-for-byte on
+  the original inscription receipt. Every readable glyph is constrained to
+  GRAPHICS.DAT entry 120 at `decodedByte << 3`, native unscaled 8x8 size,
+  exact F0107 destination spacing, and C10 transparency. Padded/scaled font
+  surfaces or altered cells fail closed. Focused coverage:
+  `dm1_v1_inscription_source_raster_gate` and
+  `dm1_v1_wall_inscription_pc34_material_gate`.
 
 - ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
   legacy DB0-door wall-button material now resolves the real WALL_GFX

@@ -84,7 +84,29 @@ int main(void)
         fprintf(stderr, "undersized M648 raster accepted\n");
         return 1;
     }
+    if (DM1_V1_InscriptionHostMaterialRasterGatePc34(
+            &material, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 + 8,
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34)) {
+        fprintf(stderr, "padded/scaled M648 raster accepted\n");
+        return 1;
+    }
+    {
+        DM1_V1_InscriptionRasterCellBindingPc34 binding;
+        if (!DM1_V1_InscriptionBuildRasterCellBindingPc34(&material, 0, 0,
+                                                           &binding) ||
+            binding.fontGraphicIndex !=
+                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
+            binding.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
+            binding.sourceX != 19 * DM1_V1_INSCRIPTION_GLYPH_WIDTH ||
+            binding.sourceY != 0 || binding.sourceWidth != 8 ||
+            binding.sourceHeight != 8 ||
+            binding.destinationX != material.lines[0].textX ||
+            binding.destinationY != material.lines[0].textY) {
+            fprintf(stderr, "M648 byte<<3 unscaled raster binding rejected\n");
+            return 1;
+        }
+    }
 
-    puts("ok: F0107 M648/C10 raster gate rejects malformed source receipts");
+    puts("ok: F0107 M648/C10 raster gate binds exact unscaled source cells");
     return 0;
 }
