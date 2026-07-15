@@ -347,6 +347,9 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight);
+static int m11_build_dm1_spell_area_overlay_plan(
+    const M11_GameViewState* state,
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34* outPlan);
 static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
@@ -8244,6 +8247,75 @@ m11_dm1_spell_panel_state_pc34(const M11_GameViewState* state)
     return panel;
 }
 
+/* CASTER.C F0394 owns G0514 independently of the party leader.  M11's
+ * established spellBuffer is a presentation/consumer view, so preserve it
+ * only through the selected Champion.Symbols[5]/SymbolStep record. */
+static int m11_dm1_spell_caster_index(const M11_GameViewState* state)
+{
+    int caster;
+    if (!state) return -1;
+    caster = state->dm1SpellCasting.magicCasterIndex;
+    if (caster >= 0 && caster < CHAMPION_MAX_PARTY) return caster;
+    return state->world.party.activeChampionIndex;
+}
+
+static void m11_dm1_spell_sync_legacy_to_caster(M11_GameViewState* state)
+{
+    DM1_ChampionSpellInput* input;
+    int caster;
+    int i;
+
+    if (!state) return;
+    caster = state->dm1SpellCasting.magicCasterIndex;
+    if (caster < 0 || caster >= CHAMPION_MAX_PARTY) return;
+    input = &state->dm1SpellCasting.input[caster];
+    memset(input->symbols, 0, sizeof(input->symbols));
+    for (i = 0; i < state->spellBuffer.runeCount && i < DM1_MAX_SPELL_SYMBOLS;
+         ++i) {
+        input->symbols[i] = (char)state->spellBuffer.runes[i];
+    }
+    input->symbolStep = (uint8_t)(state->spellRuneRow & 3);
+}
+
+static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state)
+{
+    const DM1_ChampionSpellInput* input;
+    int caster;
+    int i;
+
+    if (!state) return;
+    caster = state->dm1SpellCasting.magicCasterIndex;
+    if (caster < 0 || caster >= CHAMPION_MAX_PARTY) return;
+    input = &state->dm1SpellCasting.input[caster];
+    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    for (i = 0; i < DM1_MAX_SPELL_SYMBOLS && input->symbols[i] != '\0'; ++i) {
+        state->spellBuffer.runes[i] = (unsigned char)input->symbols[i];
+        state->spellBuffer.runeCount = i + 1;
+    }
+    state->spellRuneRow = input->symbolStep & 3;
+}
+
+static int m11_dm1_spell_select_caster(M11_GameViewState* state, int caster)
+{
+    const struct ChampionState_Compat* champion;
+
+    if (!state || caster < 0 || caster >= state->world.party.championCount ||
+        caster >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[caster];
+    if (!champion->present || champion->hp.current == 0) {
+        return 0; /* CASTER.C F0394 dead-champion rejection. */
+    }
+    if (state->dm1SpellCasting.magicCasterIndex == caster) {
+        return 0; /* F0394 same-caster short-circuit. */
+    }
+    m11_dm1_spell_sync_legacy_to_caster(state);
+    state->dm1SpellCasting.magicCasterIndex = caster;
+    m11_dm1_spell_sync_caster_to_legacy(state);
+    return 1;
+}
+
 static void
 m11_apply_dm1_spell_panel_receipt(
     M11_GameViewState* state,
@@ -8261,6 +8333,7 @@ m11_apply_dm1_spell_panel_receipt(
             receipt->rune_value;
         state->spellBuffer.runeCount = receipt->rune_count;
     }
+    m11_dm1_spell_sync_legacy_to_caster(state);
 }
 
 int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
@@ -8269,6 +8342,11 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_open_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && state->dm1SpellCasting.magicCasterIndex < 0 &&
+        !m11_dm1_spell_select_caster(
+            state, state->world.party.activeChampionIndex)) {
+        return 0;
+    }
     m11_apply_dm1_spell_panel_receipt(state, &receipt);
     m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: SPELL PANEL OPENED",
                   (unsigned int)state->world.gameTick);
@@ -8422,6 +8500,7 @@ static int m11_dm1_spell_panel_recant_last_rune(M11_GameViewState* state)
     state->spellBuffer.runes[removedIndex] = 0;
     state->spellBuffer.runeCount = removedIndex;
     state->spellRuneRow = (state->spellRuneRow + 3) & 3;
+    m11_dm1_spell_sync_legacy_to_caster(state);
     m11_log_event(state, M11_COLOR_YELLOW, "T%u: SPELL RUNE RECANTED",
                   (unsigned int)state->world.gameTick);
     return 1;
@@ -8480,10 +8559,26 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
         return M11_GAME_INPUT_REDRAW;
     }
 
-    /* C109's source owner is F0394 and preserves a separate Symbols[] /
-     * SymbolStep record for each caster. M11 retains one validated runtime
-     * sequence today, so a different tab must fail closed rather than let a
-     * second champion inherit the first champion's symbols. */
+    if (zone.commandId == DM1_V1_CPSAO_CMD_SET_CASTER_PC34) {
+        DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+        int i;
+        if (!m11_build_dm1_spell_area_overlay_plan(state, &plan)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        /* C109 owns only the coarse top strip.  F0393 owns the exact
+         * per-champion inclusive tab boxes, including the wider leader tab. */
+        for (i = 0; i < plan.tab_count; ++i) {
+            const DM1_V1_ChampionPanelSpellAreaOverlayLine1Pc34* tab =
+                &plan.line1[i];
+            if (tab->present && x >= tab->tab_x0 && x <= tab->tab_x1 &&
+                y >= tab->tab_y0 && y <= tab->tab_y1) {
+                return m11_dm1_spell_select_caster(state, tab->champion_index)
+                           ? M11_GAME_INPUT_REDRAW
+                           : M11_GAME_INPUT_IGNORED;
+            }
+        }
+    }
+
     return M11_GAME_INPUT_IGNORED;
 }
 
@@ -8615,6 +8710,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     int failureReason = 0;
     int spellPowerOrdinal = 1;
     int spellExperience = 0;
+    int casterIndex;
     char champName[16];
 
     if (!dm1_v1_spell_panel_command_allowed_pc34(&panel)) {
@@ -8629,12 +8725,12 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         return m11_cast_nexus_light_spell(state);
     }
-    if (state->world.party.activeChampionIndex < 0 ||
-        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+    casterIndex = m11_dm1_spell_caster_index(state);
+    if (casterIndex < 0 || casterIndex >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "CAST", "NO ACTIVE CHAMPION");
         return 0;
     }
-    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    champ = &state->world.party.champions[casterIndex];
     if (!champ->present || champ->hp.current == 0) {
         m11_set_status(state, "CAST", "CHAMPION CANNOT ACT");
         return 0;
@@ -8688,11 +8784,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
 
     /* Build a cast request */
     memset(&req, 0, sizeof(req));
-    req.championIndex = state->world.party.activeChampionIndex;
+    req.championIndex = casterIndex;
     req.currentMana = (int)champ->mana.current;
     req.maximumMana = (int)champ->mana.maximum;
     req.skillLevelForSpell = M11_GameView_GetSkillLevel(
-        state, state->world.party.activeChampionIndex, spell.skillIndex);
+        state, casterIndex, spell.skillIndex);
     if (req.skillLevelForSpell < 0) {
         req.skillLevelForSpell = 0;
     }
@@ -8704,10 +8800,10 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     req.partyMapY = state->world.party.mapY;
     req.hasEmptyFlaskInHand =
         m11_find_empty_flask_in_hand_f0411(
-            state, state->world.party.activeChampionIndex) >= 0;
+            state, casterIndex) >= 0;
     req.hasMagicMapInHand =
         m11_action_hand_has_magic_map_f0802(
-            state, state->world.party.activeChampionIndex);
+            state, casterIndex);
     req.gameTimeTicksLow = (int)(state->world.gameTick & 0x7FFFFFFF);
     req.spellTableIndex = tableIndex;
     req.rawSymbolsPacked = (int)packed;
@@ -8742,7 +8838,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                  * skill delta when the practice RNG check fails. */
                 m11_award_magic_xp(
                     state,
-                    state->world.party.activeChampionIndex,
+                    casterIndex,
                     spell.skillIndex,
                     spellExperience >> missingSkillLevels);
             }
@@ -8769,7 +8865,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         memset(&input, 0, sizeof(input));
         input.tick = state->world.gameTick;
         input.command = CMD_CAST_SPELL;
-        input.commandArg1 = (uint8_t)state->world.party.activeChampionIndex;
+        input.commandArg1 = (uint8_t)casterIndex;
         input.commandArg2 = (uint8_t)tableIndex;
         input.reserved = (uint8_t)spellPowerOrdinal;
         input.reserved2 =
@@ -8779,7 +8875,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
              CMD_CAST_SPELL_RESERVED2_SPELL_XP_MASK);
         if (spell.kind == C1_SPELL_KIND_POTION_COMPAT) {
             int flaskSlot = m11_find_empty_flask_in_hand_f0411(
-                state, state->world.party.activeChampionIndex);
+                state, casterIndex);
             if (flaskSlot >= 0) {
                 input.reserved2 |=
                     CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK |
@@ -10783,6 +10879,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
         return;
     }
     memset(state, 0, sizeof(*state));
+    dm1_spell_init(&state->dm1SpellCasting);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
     (void)M11_Audio_Init(&state->audioState);
     /* V1 presentation: debug HUD off by default, opt-in via env */
@@ -35215,7 +35312,7 @@ static int m11_build_dm1_spell_area_overlay_plan(
     int i;
 
     if (!state || !outPlan) return 0;
-    active = state->world.party.activeChampionIndex;
+    active = m11_dm1_spell_caster_index(state);
     if (active < 0 || active >= state->world.party.championCount ||
         active >= DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
         return 0;
@@ -35224,17 +35321,30 @@ static int m11_build_dm1_spell_area_overlay_plan(
     input.previous_caster_index = DM1_V1_CPSAO_CHAMPION_NONE_PC34;
     input.requested_caster_index = active;
     input.party_champion_count = state->world.party.championCount;
-    input.symbol_step = (unsigned int)state->spellRuneRow;
+    input.symbol_step = (unsigned int)(
+        state->dm1SpellCasting.magicCasterIndex >= 0
+            ? state->dm1SpellCasting.input[active].symbolStep
+            : state->spellRuneRow);
     for (i = 0; i < input.party_champion_count; ++i) {
         input.champions[i].index = i;
         input.champions[i].current_health =
             state->world.party.champions[i].present
                 ? (int)state->world.party.champions[i].hp.current : 0;
     }
-    for (i = 0; i < state->spellBuffer.runeCount &&
-                i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
-        input.champions[active].symbols[i] =
-            (char)state->spellBuffer.runes[i];
+    for (i = 0; i < input.party_champion_count; ++i) {
+        memcpy(input.champions[i].symbols,
+               state->dm1SpellCasting.input[i].symbols,
+               sizeof(input.champions[i].symbols));
+    }
+    /* Compatibility for pre-C109 callers that seed only the historical
+     * presentation view.  Live C100/C109 paths always own G0514 and never
+     * use this bridge. */
+    if (state->dm1SpellCasting.magicCasterIndex < 0) {
+        for (i = 0; i < state->spellBuffer.runeCount &&
+                    i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
+            input.champions[active].symbols[i] =
+                (char)state->spellBuffer.runes[i];
+        }
     }
     return dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
         &input, outPlan) && outPlan->valid &&
