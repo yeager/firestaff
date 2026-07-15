@@ -365,6 +365,21 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt;
 
+/* A source-observed return from the routine invoked at the authenticated
+ * copied-code return point. This retains only bounded control-flow facts. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt call;
+    uint16_t return_instruction_pc;
+    uint32_t return_instruction_physical_pc;
+    uint16_t post_return_pc;
+    uint32_t post_return_physical_pc;
+    uint8_t post_return_opcode;
+    int post_return_call_termination_proven;
+    int post_return_call_return_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallTerminationReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -604,6 +619,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt *out);
+
+/* Requires an observed main-RAM RTS after the bound post-return routine call
+ * and the resulting original trace row at that JSR's return address. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call_termination(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallTerminationReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

@@ -18733,6 +18733,20 @@ bitmap, command, or visual route. Verification: Ninja focused targets,
 (skip-safe without the authentic corpus), patch-shape test skip-cleans without
 `MEDNAFEN_SOURCE`, and the capture-script contract test passes.
 
+# ✅ 2026-07-15 Theron Track 02 post-return routine termination receipt
+
+The post-return routine-call receipt now requires one later main-RAM `RTS`
+with a linked original `post_rts` row returning to the exact caller address.
+Nested returns remain opaque and do not satisfy the receipt unless their
+observed return address is the bound caller. This extends the authentic
+Track 02 TII/copy/call/return control-flow chain without assigning any called
+routine, table, record, level, object, tile, palette, bitmap, command, or
+visual semantics. Verification: Ninja focused targets,
+`test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), patch-shape test skip-cleans without
+`MEDNAFEN_SOURCE`, and the capture-script contract test passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
