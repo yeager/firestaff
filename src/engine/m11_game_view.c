@@ -22963,11 +22963,11 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (spec.relForward > maxVisibleForward) {
             continue;
         }
-        if (!m11_dm1_side_lane_clear_for_rel(cells,
-                                             spec.relForward,
-                                             spec.relSide)) {
-            continue;
-        }
+        /* F0107 is part of the F0128 wall-square dispatch.  A side wall's
+         * real ornament material follows its D3/D2/D1 wall panel even when
+         * a nearer side square is closed; the nearer panel supplies the
+         * source overpaint.  The side-lane-open gate is for floor/content
+         * passes only, not for wall material. */
         if (!m11_sample_viewport_cell(state, spec.relForward, spec.relSide, &cell)) {
             continue;
         }
