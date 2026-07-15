@@ -252,6 +252,26 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3DecoderReadinessReceipt;
 
+/* One source-bound nonzero path can be joined to a complete-stream review
+ * receipt. This is an opaque byte-emission candidate, not a PRS3 literal or
+ * token grammar rule: independent Saturn authentication remains required. */
+typedef struct {
+    int valid;
+    int decoder_review_bound;
+    int nonzero_transfer_bound;
+    int input_output_sequence_bound;
+    int original_saturn_execution_authenticated;
+    int token_operation_proven;
+    int opcode_grammar_proven;
+    int decoder_ready;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+    uint32_t payload_byte_offset;
+    uint32_t output_byte_offset;
+    uint8_t observed_input_byte;
+    uint8_t observed_output_byte;
+} Nexus_V1_Prs3TokenGrammarReceipt;
+
 /* File-backed import receipt for an externally captured V3 trace. The trace
  * is evidence supplied by a capture tool, not a runtime asset: successful
  * import only proves that its stated spans bind to canonical MENU.BPK/DM.BIN
@@ -473,6 +493,16 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3Sh2TransferTrace *out_trace,
     Nexus_V1_Prs3Sh2TransferReceipt *out_receipt);
+
+/* Join a complete V5 decoder-review receipt with one separately source-bound
+ * nonzero SH-2 transfer. The result records only a byte-emission candidate;
+ * it never calls that candidate a literal or enables decoder execution. */
+int nexus_v1_prs3_token_grammar_nonzero_candidate_bind(
+    const Nexus_V1_Prs3DecoderReadinessReceipt *decoder_review,
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *complete_trace,
+    const Nexus_V1_Prs3Sh2TransferTrace *transfer_trace,
+    const Nexus_V1_Prs3Sh2TransferReceipt *transfer_receipt,
+    Nexus_V1_Prs3TokenGrammarReceipt *out_receipt);
 
 /* Bind one external zero-low-bit observation to exact original bytes and the
  * SH-2 two-byte path. This validates only the observed merge algebra already

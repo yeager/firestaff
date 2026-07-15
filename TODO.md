@@ -7324,6 +7324,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     outcomes to the locked SH-2 PCs. This produces a grammar-review receipt,
     not decoder readiness: authentic emulator provenance, token meanings,
     bit order, termination, pixel/palette semantics, and drawing remain open.
+  - 2026-07-15 first-operation update: the V5 receipt can now join the
+    source-bound nonzero SH-2 byte path to one exact `MENU.BPK` input/output
+    position. It is deliberately an opaque byte-emission candidate, not a
+    literal/token rule: the local corpus has no independently authenticated
+    Saturn trace, so token grammar and all decoder/render permissions remain
+    blocked.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).

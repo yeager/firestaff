@@ -311,6 +311,64 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     return receipt.observed_byte_transfer;
 }
 
+int nexus_v1_prs3_token_grammar_nonzero_candidate_bind(
+    const Nexus_V1_Prs3DecoderReadinessReceipt *decoder_review,
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *complete_trace,
+    const Nexus_V1_Prs3Sh2TransferTrace *transfer_trace,
+    const Nexus_V1_Prs3Sh2TransferReceipt *transfer_receipt,
+    Nexus_V1_Prs3TokenGrammarReceipt *out_receipt) {
+    Nexus_V1_Prs3TokenGrammarReceipt receipt;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!decoder_review || !complete_trace || !transfer_trace ||
+        !transfer_receipt) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.decoder_review_bound = decoder_review->valid &&
+        decoder_review->capture_source_bound &&
+        decoder_review->complete_input_range_bound &&
+        decoder_review->complete_output_range_bound &&
+        decoder_review->control_branch_coverage_bound;
+    receipt.nonzero_transfer_bound = transfer_receipt->observed_byte_transfer &&
+        transfer_receipt->menu_bpk_matches && transfer_receipt->dm_bin_matches &&
+        transfer_receipt->entry_plan_matches &&
+        transfer_receipt->sh2_instruction_route_matches &&
+        transfer_receipt->nonzero_control_fallthrough_observed &&
+        complete_trace->entry_index == transfer_trace->entry_index &&
+        complete_trace->stream_offset == transfer_trace->stream_offset &&
+        complete_trace->stream_size == transfer_trace->stream_size &&
+        complete_trace->expected_output_bytes == transfer_trace->expected_output_bytes;
+    receipt.input_output_sequence_bound = receipt.nonzero_transfer_bound &&
+        transfer_trace->input_read_sequence >=
+            complete_trace->first_input_read_sequence &&
+        transfer_trace->input_read_sequence <=
+            complete_trace->last_input_read_sequence &&
+        transfer_trace->output_write_sequence >=
+            complete_trace->first_output_write_sequence &&
+        transfer_trace->output_write_sequence <=
+            complete_trace->last_output_write_sequence &&
+        transfer_trace->payload_byte_offset < complete_trace->input_read_bytes &&
+        transfer_trace->output_byte_offset < complete_trace->output_store_bytes;
+    receipt.payload_byte_offset = transfer_trace->payload_byte_offset;
+    receipt.output_byte_offset = transfer_trace->output_byte_offset;
+    receipt.observed_input_byte = (uint8_t)transfer_trace->input_byte;
+    receipt.observed_output_byte = (uint8_t)transfer_trace->output_byte;
+    receipt.valid = receipt.decoder_review_bound && receipt.nonzero_transfer_bound &&
+        receipt.input_output_sequence_bound;
+    /* The current capture contracts bind bytes and control flow but do not
+     * authenticate a Saturn producer or classify the byte as a PRS3 token. */
+    receipt.original_saturn_execution_authenticated = 0;
+    receipt.token_operation_proven = 0;
+    receipt.opcode_grammar_proven = 0;
+    receipt.decoder_ready = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_prs3_sh2_zero_side_trace_bind(
     const Nexus_V1_Prs3Sh2ZeroSideTrace *trace,
     const uint8_t *menu_bpk, size_t menu_bpk_size,

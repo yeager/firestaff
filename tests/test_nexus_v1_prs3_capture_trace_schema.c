@@ -506,11 +506,15 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     Nexus_V1_Prs3Vdp1CaptureReceipt trace;
     Nexus_V1_Prs3Vdp1CaptureBindingReceipt binding;
     Nexus_V1_Prs3DecoderReadinessReceipt readiness;
+    Nexus_V1_Prs3Sh2TransferTrace transfer_trace;
+    Nexus_V1_Prs3Sh2TransferReceipt transfer_receipt;
+    Nexus_V1_Prs3TokenGrammarReceipt token_receipt;
     unsigned char *menu;
     unsigned char *dm_bin;
     size_t menu_size = 0U, dm_bin_size = 0U;
     unsigned int index;
     char text[4096];
+    char transfer_text[1024];
     uint32_t output_base = 0x06020000U;
 
     menu = read_asset(data_dir, "MENU.BPK", &menu_size);
@@ -583,6 +587,40 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            !readiness.opcode_grammar_proven && !readiness.decoder_ready &&
            !readiness.decoder_promoted && !readiness.fallback_visuals_permitted,
            "V5 reaches decoder-grammar review only, never a decoder route");
+    snprintf(transfer_text, sizeof(transfer_text),
+        "NEXUS_PRS3_SH2_TRANSFER_TRACE_V1\n"
+        "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
+        "entry_index=%x\nstream_offset=%x\nstream_size=%x\n"
+        "expected_output_bytes=%x\npayload_byte_offset=0\n"
+        "control_test_instruction_offset=14dca\nzero_branch_instruction_offset=14dcc\n"
+        "fallthrough_counter_decrement_offset=14dce\n"
+        "observed_control_low_bit=1\nobserved_zero_branch_taken=0\n"
+        "input_instruction_offset=14dd4\noutput_instruction_offset=14dd8\n"
+        "input_read_sequence=11\noutput_write_sequence=13\n"
+        "output_byte_offset=0\ninput_byte=%x\noutput_byte=%x\n",
+        fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
+        plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
+        menu[plan.stream_offset], menu[plan.stream_offset]);
+    expect(nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               transfer_text, strlen(transfer_text), menu, menu_size, dm_bin,
+               dm_bin_size, 1, &transfer_trace, &transfer_receipt) &&
+           nexus_v1_prs3_token_grammar_nonzero_candidate_bind(
+               &readiness, &trace, &transfer_trace, &transfer_receipt,
+               &token_receipt) && token_receipt.valid &&
+           token_receipt.decoder_review_bound &&
+           token_receipt.nonzero_transfer_bound &&
+           token_receipt.input_output_sequence_bound &&
+           token_receipt.observed_input_byte == token_receipt.observed_output_byte &&
+           !token_receipt.original_saturn_execution_authenticated &&
+           !token_receipt.token_operation_proven &&
+           !token_receipt.opcode_grammar_proven && !token_receipt.decoder_ready &&
+           !token_receipt.decoder_promoted && !token_receipt.fallback_visuals_permitted,
+           "one real MENU.BPK byte reaches opaque token review without grammar promotion");
+    transfer_trace.output_byte_offset = plan.expected_output_bytes;
+    expect(!nexus_v1_prs3_token_grammar_nonzero_candidate_bind(
+               &readiness, &trace, &transfer_trace, &transfer_receipt,
+               &token_receipt) && !token_receipt.valid,
+           "token review rejects a transfer offset not represented by its receipt");
     memcpy(strstr(text, "control_branch_outcomes_mask=3"),
            "control_branch_outcomes_mask=1",
            sizeof("control_branch_outcomes_mask=1") - 1U);
