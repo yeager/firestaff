@@ -8,6 +8,20 @@
   `python3 tools/symbol_backlog.py --limit 12`, and
   `python3 tools/symbol_backlog.py --game DM2 --limit 8 --json` pass.
 
+- ✅ 2026-07-16 DM1 ReDMCSB DUNGEON F0150-F0153 behavior mapping:
+  added DM1-owned callable wrappers for `F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement`,
+  `F0151_DUNGEON_GetSquare`, `F0152_DUNGEON_GetRelativeSquare`, and
+  `F0153_DUNGEON_GetRelativeSquareType`. The mapping preserves the source
+  direction/right-step transform, column-major square addressing, and F0151's
+  exact map-edge synthetic wall behavior: corridor/pit edges emit the
+  inward-facing random-ornament wall flag, while wall edges, diagonals, and
+  farther-out coordinates remain plain walls. The ReDMCSB callable audit rows
+  are closed as `VERIFIED_SOURCE_MAPPING`, reducing DM1 open symbol rows from
+  122 to 118. Verification: strict direct C11
+  build/run of `tests/test_dm1_v1_dungeon_f0150_f0153_pc34_compat.c` with
+  `src/dm1/dm1_v1_dungeon_square_structs_pc34_compat.c`, plus strict
+  `-fsyntax-only` on the touched DM1 source.
+
 - ✅ 2026-07-16 Nexus MENU.BPK renderer fail-closed gate: tightened the
   startup/menu handoff so missing, invalid, no-surface, PRS3-blocked, and
   truncated MENU.BPK decode receipts all block real menu rendering without

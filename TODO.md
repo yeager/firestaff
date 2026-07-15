@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 122, CSB 1, shared DM1/CSB 1614, DM2 1682; 3419 total open rows
+  DM1 118, CSB 1, shared DM1/CSB 1614, DM2 1682; 3415 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -13,6 +13,18 @@
     is intentionally empty except for its schema until each disposition has
     real source evidence. Keep rows in TODO until either Firestaff code maps
     them or a reviewed disposition row excludes them from the open queue.
+
+- 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
+  `F0150`-`F0153` are now DM1-owned behavior mappings for relative coordinate
+  resolution, square lookup, relative square lookup, and relative square type;
+  the audit rows are closed as `VERIFIED_SOURCE_MAPPING`. Remaining
+  prioritized backlog symbols are `F0139`, `F0142`, `F0173`,
+  `F0174`, `F0179`-`F0193`, `F0208`, and `F0222`-`F0224`. Prefer the next
+  coherent `GROUP` slice only when it can be bound to real runtime data or an
+  existing source-shaped behavioral fixture; do not promote numeric-token
+  audit hits as implementation evidence. Note: `tools/symbol_backlog.py` was
+  absent in this checkout during the 2026-07-16 pass, so the row selection used
+  `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv` instead.
 
 - 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
   is now isolated and tested, with the FM-Towns SND branch recorded as a

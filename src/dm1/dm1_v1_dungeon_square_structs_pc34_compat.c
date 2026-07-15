@@ -162,6 +162,140 @@ void dm1_get_relative_map_coords(int party_x, int party_y, int direction,
     *out_y = y;
 }
 
+static uint8_t dm1_v1_square_byte_pc34(int element, int flags)
+{
+    return (uint8_t)(((element & 7) << 5) | (flags & 0x1f));
+}
+
+int dm1_v1_dungeon_f0150_update_map_coordinates_after_relative_movement_pc34(
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right,
+    DM1_V1_DungeonF0150CoordinatesPc34 *out)
+{
+    int x;
+    int y;
+
+    if (!out) {
+        return 0;
+    }
+    out->valid = 0;
+    out->x = party_x;
+    out->y = party_y;
+
+    dm1_get_relative_map_coords(party_x, party_y, direction,
+                                steps_forward, steps_right, &x, &y);
+    out->valid = 1;
+    out->x = x;
+    out->y = y;
+    return 1;
+}
+
+uint8_t dm1_v1_dungeon_f0151_get_square_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int map_x,
+    int map_y)
+{
+    int x_in_bounds;
+    int y_in_bounds;
+
+    if (!column_major_squares || width <= 0 || height <= 0) {
+        return dm1_v1_square_byte_pc34(DM1_ELEMENT_WALL, 0);
+    }
+
+    x_in_bounds = map_x >= 0 && map_x < width;
+    y_in_bounds = map_y >= 0 && map_y < height;
+
+    if (x_in_bounds && y_in_bounds) {
+        return column_major_squares[(map_x * height) + map_y];
+    }
+
+    /* ReDMCSB DUNGEON.C F0151 returns a synthetic wall just outside a
+     * corridor/pit map edge, with the random-ornament flag facing back into
+     * the map. Diagonal and farther-out coordinates are plain walls. */
+    if (y_in_bounds) {
+        if (map_x == -1) {
+            int edge_type = DM1_SQUARE_TYPE(column_major_squares[map_y]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR ||
+                edge_type == DM1_ELEMENT_PIT) {
+                return dm1_v1_square_byte_pc34(
+                    DM1_ELEMENT_WALL, DM1_WALL_EAST_RANDOM_ORN);
+            }
+        } else if (map_x == width) {
+            int edge_type =
+                DM1_SQUARE_TYPE(column_major_squares[((width - 1) * height) +
+                                                     map_y]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR ||
+                edge_type == DM1_ELEMENT_PIT) {
+                return dm1_v1_square_byte_pc34(
+                    DM1_ELEMENT_WALL, DM1_WALL_WEST_RANDOM_ORN);
+            }
+        }
+    } else if (x_in_bounds) {
+        if (map_y == -1) {
+            int edge_type =
+                DM1_SQUARE_TYPE(column_major_squares[map_x * height]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR ||
+                edge_type == DM1_ELEMENT_PIT) {
+                return dm1_v1_square_byte_pc34(
+                    DM1_ELEMENT_WALL, DM1_WALL_SOUTH_RANDOM_ORN);
+            }
+        } else if (map_y == height) {
+            int edge_type =
+                DM1_SQUARE_TYPE(column_major_squares[(map_x * height) +
+                                                     (height - 1)]);
+            if (edge_type == DM1_ELEMENT_CORRIDOR ||
+                edge_type == DM1_ELEMENT_PIT) {
+                return dm1_v1_square_byte_pc34(
+                    DM1_ELEMENT_WALL, DM1_WALL_NORTH_RANDOM_ORN);
+            }
+        }
+    }
+
+    return dm1_v1_square_byte_pc34(DM1_ELEMENT_WALL, 0);
+}
+
+uint8_t dm1_v1_dungeon_f0152_get_relative_square_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right)
+{
+    DM1_V1_DungeonF0150CoordinatesPc34 coords;
+
+    if (!dm1_v1_dungeon_f0150_update_map_coordinates_after_relative_movement_pc34(
+            party_x, party_y, direction, steps_forward, steps_right,
+            &coords) ||
+        !coords.valid) {
+        return dm1_v1_square_byte_pc34(DM1_ELEMENT_WALL, 0);
+    }
+    return dm1_v1_dungeon_f0151_get_square_pc34(
+        column_major_squares, width, height, coords.x, coords.y);
+}
+
+int dm1_v1_dungeon_f0153_get_relative_square_type_pc34(
+    const uint8_t *column_major_squares,
+    int width,
+    int height,
+    int party_x,
+    int party_y,
+    int direction,
+    int steps_forward,
+    int steps_right)
+{
+    return DM1_SQUARE_TYPE(dm1_v1_dungeon_f0152_get_relative_square_pc34(
+        column_major_squares, width, height, party_x, party_y, direction,
+        steps_forward, steps_right));
+}
+
 
 /* =======================================================================
  * dm1_compute_view_square_coords
