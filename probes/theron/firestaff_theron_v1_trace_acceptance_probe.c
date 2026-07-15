@@ -1,0 +1,2 @@
+#include "theron_v1_trace_acceptance.h"
+int main(void){Theron_V1CaptureConfig c={1,"raw","card","raw_track_required_ready",1,1};Theron_V1TraceAcceptanceFacts f={1,1,1,1,1};Theron_V1TraceAcceptanceReceipt r=theron_v1_trace_acceptance(&f,&c,"v3:raw:card");return r.accepted&&!r.session_allocated&&!theron_v1_trace_acceptance(&f,&c,"v3:changed:card").accepted&&theron_v1_trace_acceptance_status(&f,&r)[6]=='a'?(f.v3_trace_validated=0,theron_v1_trace_acceptance_status(&f,&r)[0]=='t'?0:1):1;}

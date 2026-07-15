@@ -9,6 +9,17 @@
   `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass in
   `build-local-ninja`.
 
+- ✅ 2026-07-16 Theron ISO/Track02 media gate handoff: added the missing
+  ISO-end and track-media gates, then threaded their receipts through the
+  Theron media inventory, profile availability, launch gate, launch decision,
+  and v3 trace command plan. Raw Track02-ready media is the only path that
+  prepares bitmap, level-route, and object-route capture; JP/US ISO end
+  variants remain opaque and block loader/runtime use with visual fallback
+  disabled. Verification: strict C11 direct build/run of 17 focused Theron
+  probes covering ISO-end receipt, track media availability, media inventory,
+  profile media availability/audio, launch gate, launch decision, and v3 trace
+  schema.
+
 - ✅ 2026-07-16 DM1 original-save corpus report gate: exposed the
   PC34 corpus-roundtrip receipt counters already maintained by the handoff
   implementation: rejected/truncated scan counts, Firestaff-manifest and
