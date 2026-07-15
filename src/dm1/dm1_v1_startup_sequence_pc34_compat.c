@@ -5644,8 +5644,19 @@ unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
 }
 
 unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
-    /* TITLE.C has no timed hold between PRESENTS and C001 preparation. */
-    return 0u;
+    /* TITLE.C F0437 has 23 source events, but PRESENTS and the
+     * MASTER/STRIKES BACK blit themselves do not consume M526 VBlanks.
+     * The host title duration must account for the 18 zoom waits, two
+     * post-zoom waits, and final guard: 21 paced ticks.  Subtracting all 23
+     * events made the C001 path two 55 ms ticks too short on macOS. */
+    unsigned int paced_ticks =
+        DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 +
+        DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 +
+        DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34;
+    if (DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 <= paced_ticks) {
+        return 0u;
+    }
+    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 - paced_ticks;
 }
 
 unsigned int dm1_v1_startup_title_vblank_tick_ms_pc34(void) {
