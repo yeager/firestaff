@@ -4980,6 +4980,44 @@ static int dm2_v1_runtime_raw_sksave_dungeon_matches_receipt(
     return 1;
 }
 
+static int dm2_v1_runtime_raw_sksave_reachable_records_are_valid(
+    DM2_V1_DungeonData *dungeon)
+{
+    int level;
+    int has_map_record_root = 0;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1 ||
+        dungeon->level_count <= 0) {
+        return 0;
+    }
+
+    /* c_map.cpp reads a first ObjectID only for a thing-bearing square, then
+     * c_record.cpp follows GenericRecord::w0. Unused pool slots are
+     * allocation state and must not make an otherwise valid save fail. */
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int x;
+        if (dungeon->level_widths[level] <= 0 ||
+            dungeon->level_heights[level] <= 0) {
+            return 0;
+        }
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            int y;
+            for (y = 0; y < dungeon->level_heights[level]; ++y) {
+                const int tile = dm2_v1_dungeon_get_tile_raw(
+                    dungeon, level, x, y);
+                if (tile < 0) return 0;
+                if ((tile & 0x10) != 0) has_map_record_root = 1;
+            }
+        }
+    }
+    if (!has_map_record_root) return 1;
+
+    /* The raw SKSave has no untyped G1 extension. A marked map square is
+     * therefore admitted only with a complete, bounded source record graph. */
+    dungeon->record_graph_complete = 1;
+    return dm2_v1_dungeon_validate_record_graph(dungeon);
+}
+
 int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size)
 {
@@ -5014,6 +5052,8 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                 (int)candidate.dungeon_size) != 0 ||
             !dm2_v1_runtime_raw_sksave_dungeon_matches_receipt(
                 &parsed_dungeon, &candidate) ||
+            !dm2_v1_runtime_raw_sksave_reachable_records_are_valid(
+                &parsed_dungeon) ||
             candidate.session.party_level >= parsed_dungeon.level_count ||
             candidate.session.party_x >=
                 (uint16_t)parsed_dungeon.level_widths[

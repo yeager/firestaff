@@ -15667,6 +15667,16 @@ span. This consumes no record links or object fields. Verification: focused
 raw-SKSave candidate test plus syntax checks for the DM2 parser, runtime, and
 save/load test translation units.
 
+# ✅ 2026-07-15 DM2 raw SKSave reachable-record gate
+
+Original raw-SKSave runtime restoration now gives `GenericRecord::w0` meaning
+only after `c_map.cpp` marks a square as thing-bearing. Those roots must pass
+the bounded `c_record.cpp` ObjectID/pool/terminating-chain gate before the
+candidate can replace the live dungeon. A malformed marked square with no
+ground-stack root is rejected atomically; unused pool slots remain opaque and
+cannot cause rejection. Verification: focused raw-SKSave runtime regression
+plus syntax checks for DM2 runtime and save/load test translation units.
+
 # ✅ 2026-07-15 DM2 raw SKSave DB0 Door receipt
 
 The corpus path can now decode `SKWIN/DME.h::Door` fields from raw DB0 `w2`
