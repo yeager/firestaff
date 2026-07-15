@@ -317,7 +317,7 @@ F	0212	F0212_PROJECTILE_Create	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;CHAMPIO
 F	212	F212_mzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0213	F0213_EXPLOSION_Create	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;ENDGAME.C;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	213	F213_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0214	F0214_PROJECTILE_DeleteEvent	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0214	F0214_PROJECTILE_DeleteEvent	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	M10 consumes only raw C14 PROJECTILE.EventIndex when it names the exact C49 owner; ordered host queue shifts and F0219 requeue preserve that binding, otherwise fail closed.
 F	214	F214_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0215	F0215_PROJECTILE_Delete	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	215	F215_lzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
