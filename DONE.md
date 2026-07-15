@@ -18851,6 +18851,36 @@ Ninja focused targets, `test_theron_rendering` 18/18,
 (skip-safe without the authentic corpus), patch-shape test skip-cleans without
 `MEDNAFEN_SOURCE`, and the capture-script contract test passes.
 
+# ✅ 2026-07-15 Theron Track 02 caller-next-call entry receipt
+
+The instrumented original Mednafen trace now writes a call-entry row only
+when the target of the bound next-caller `JSR` is actually executed in main
+RAM. Firestaff requires exact caller logical/physical PCs, target, entry
+logical/physical PCs, and opcode before retaining the nested Track 02
+TII/copy/call/return chain. An unobserved or non-main-RAM target admits no
+receipt. This proves executed control flow only and assigns no ABI,
+descriptor, CD read, table, record, level, object, tile, palette, bitmap,
+command, or visual meaning. Verification: genuine Mednafen 1.32.1 patch
+dry-run, Ninja focused targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), and the capture-script contract test
+passes.
+
+# ✅ 2026-07-15 Theron Track 02 caller-next-call entry receipt
+
+The instrumented original Mednafen trace now writes a call-entry row only
+when the target of the bound next-caller `JSR` is actually executed in main
+RAM. Firestaff requires exact caller logical/physical PCs, target, entry
+logical/physical PCs, and opcode before retaining the nested Track 02
+TII/copy/call/return chain. An unobserved or non-main-RAM target admits no
+receipt. This proves executed control flow only and assigns no ABI,
+descriptor, CD read, table, record, level, object, tile, palette, bitmap,
+command, or visual meaning. Verification: Ninja focused targets,
+`test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), patch-shape test skip-cleans without
+`MEDNAFEN_SOURCE`, and the capture-script contract test passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3

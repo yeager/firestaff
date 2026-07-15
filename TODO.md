@@ -7582,6 +7582,22 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     descriptor, CD read, table, level, object, or graphics meaning is claimed.
     Remaining: capture a verified CD-read or descriptor-table access from one
     of these bounded routine paths.
+  - Update: the capture producer now records a main-RAM call-entry row only
+    when the next-caller JSR target is actually executed at that target. The
+    receipt requires exact caller PC, physical PC, target, entry PC, physical
+    PC, and opcode, while retaining the prior authenticated Track 02 chain.
+    A non-main-RAM or unobserved target stays unadmitted. This proves target
+    execution only, never a routine ABI, data-table layout, CD read, level,
+    object, palette, bitmap, or rendering semantics. Remaining: bind an
+    authenticated loader data read from an observed entry path.
+  - Update: the capture producer now records a main-RAM call-entry row only
+    when the next-caller JSR target is actually executed at that target. The
+    receipt requires exact caller PC, physical PC, target, entry PC, physical
+    PC, and opcode, while retaining the prior authenticated Track 02 chain.
+    A non-main-RAM or unobserved target stays unadmitted. This proves target
+    execution only, never a routine ABI, data-table layout, CD read, level,
+    object, palette, bitmap, or rendering semantics. Remaining: bind an
+    authenticated loader data read from an observed entry path.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
