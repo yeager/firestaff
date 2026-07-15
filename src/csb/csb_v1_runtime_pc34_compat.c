@@ -116,6 +116,8 @@ static int csb_v1_runtime_dsa_get_monster_possession(
 static int csb_v1_runtime_dsa_inspect_cells(
     void *user, uint32_t location, uint32_t criteria_mask,
     uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
+static int csb_v1_runtime_dsa_get_thing_type(
+    void *user, int32_t thing_index, int32_t *out_type);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17484,6 +17486,107 @@ static int csb_v1_runtime_dsa_inspect_cells(
     return 1;
 }
 
+/* CSBWin DSA.cpp EX_TYPE:1388-1511.  This is deliberately a raw DB decoder:
+ * Firestaff object names, icons, and renderer metadata are not inputs. */
+static int csb_v1_runtime_dsa_get_thing_type(
+    void *user, int32_t thing_index, int32_t *out_type)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    uint16_t word2;
+    int type;
+    int size;
+    int id = 0;
+
+    if (!out_type || !profile || !profile->dungeon_handle) return -1;
+    *out_type = -1;
+    if (thing_index < 0 || thing_index > UINT16_MAX) return 1;
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing_index,
+                                              &type, NULL, &size);
+    if (!record || size < 2) return 1;
+    if (type >= 0 && type <= 10 && size < 4) return -1;
+    word2 = size >= 4 ? csb_v1_runtime_read_u16(record + 2) : 0u;
+    switch (type) {
+    case 0: /* DB0 */
+        id = (word2 >> 6) & 1;
+        if ((word2 & 0x0100u) != 0) id |= 2;
+        if ((word2 & 0x0080u) != 0) id |= 4;
+        id |= ((word2 >> 5) & 1) << 3;
+        id |= ((word2 >> 1) & 15) << 4;
+        id |= (word2 & 1) << 8;
+        break;
+    case 1: /* DB1 */
+        id = (word2 >> 10) & 3;
+        id |= ((word2 >> 12) & 1) << 2;
+        id |= ((word2 >> 13) & 3) << 3;
+        id |= ((word2 >> 15) & 1) << 5;
+        break;
+    case 2: /* DB2 */
+        id = word2 & 1;
+        break;
+    case 3: /* DB3 */
+        if (size < 6) return -1;
+        id = (csb_v1_runtime_read_u16(record + 4) >> 6) & 1;
+        id |= ((csb_v1_runtime_read_u16(record + 4) >> 2) & 1) << 1;
+        id |= (word2 & 0x007fu) << 2;
+        break;
+    case 4: /* DB4 */
+        if (size < 5) return -1;
+        id = record[4] & 0x1f;
+        break;
+    case 5: /* DB5 */
+    case 6: /* DB6 */
+    case 10: /* DB10 */
+        id = word2 & 0x007f;
+        break;
+    case 7: /* DB7 */
+        id = 0;
+        break;
+    case 8: /* DB8 */
+        id = (word2 & 0x00ffu) | (((word2 >> 8) & 0x007fu) << 8);
+        break;
+    case 9: /* DB9 */
+        {
+            uint16_t child = word2;
+            int guard;
+
+            if (size < 8) return -1;
+            for (guard = 0;
+                 child != THING_NONE && child != THING_ENDOFLIST &&
+                     guard < 128;
+                 ++guard) {
+                const uint8_t *child_record;
+                int child_size;
+
+                child_record = csb_v1_dungeon_get_thing_record(
+                    dungeon, child, NULL, NULL, &child_size);
+                if (!child_record || child_size < 2) return -1;
+                ++id;
+                child = csb_v1_runtime_read_u16(child_record);
+            }
+            if (guard >= 128 && child != THING_NONE &&
+                child != THING_ENDOFLIST) return -1;
+        }
+        break;
+    case 11: /* DB11 / EXPOOL */
+    case 12: /* source unused DB12 */
+    case 13: /* source unused DB13 */
+    case 14: /* DB14 missile */
+        id = 0;
+        break;
+    default:
+        /* Firestaff's type 15 currently denotes its DSA record surface,
+         * while CSBWin's DB15 is a cloud.  Do not label it as either until
+         * the original raw layout is proven. */
+        return -1;
+    }
+    *out_type = type * 10000 + id;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20482,6 +20585,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         csb_v1_runtime_dsa_get_champion_possession;
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
+    candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20603,6 +20707,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         csb_v1_runtime_dsa_get_champion_possession;
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
+    candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =

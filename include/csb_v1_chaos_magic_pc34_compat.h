@@ -266,6 +266,8 @@ typedef int (*CSB_V1_CSBWinDSAGetMonsterPossessionFn)(
 typedef int (*CSB_V1_CSBWinDSAInspectCellsFn)(
     void *user, uint32_t location, uint32_t criteria_mask,
     uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
+typedef int (*CSB_V1_CSBWinDSAGetThingTypeFn)(
+    void *user, int32_t thing_index, int32_t *out_type);
 
 typedef struct {
     uint32_t master_location;
@@ -323,6 +325,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
+    CSB_V1_CSBWinDSAGetThingTypeFn get_thing_type;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -575,6 +578,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
+    CSB_V1_CSBWinDSAGetThingTypeFn get_thing_type;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
