@@ -35761,19 +35761,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
-    m11_probe_d2r2_trace_checkpoint(framebuffer, framebufferWidth, framebufferHeight);
-
     /* ReDMCSB DUNVIEW.C F0125/F0126/F0127 dispatches D0 only after the
      * D1 F0115 route has completed.  Keep the near pit/stair/field material
      * out of the early D3..D1 primitive batches so it receives the original
      * final overpaint order.  The source F0108 plan has no verified D0 zone,
      * so floor ornaments deliberately remain D1..D3-only. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             0, cells);
+                             0, 0, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        0, cells);
+                        0, 0, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  0, cells);
+                                  0, 0, cells);
     m11_draw_dm1_d0c_projectile_pass(state, framebuffer,
                                      framebufferWidth, framebufferHeight);
     m11_draw_dm1_d0c_deferred_explosion_pass(state, framebuffer,
