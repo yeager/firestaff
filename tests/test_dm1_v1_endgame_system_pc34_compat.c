@@ -145,6 +145,33 @@ static void test_lord_chaos_identification(void)
     ASSERT_EQ(DM1_Endgame_IsLordChaosOnSquare(0),  0, "creature 0 != Lord Chaos");
 }
 
+static void test_f0222_raw_lord_chaos_thing(void)
+{
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat group;
+    unsigned char square = DUNGEON_ELEMENT_CORRIDOR << 5;
+    unsigned short firstThing = (unsigned short)(THING_TYPE_GROUP << 10);
+    unsigned short base = 0, found = 0;
+    memset(&dungeon, 0, sizeof(dungeon)); memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles)); memset(&things, 0, sizeof(things));
+    memset(&group, 0, sizeof(group));
+    printf("  F0222 raw Lord Chaos Thing...\n");
+    square |= DUNGEON_SQUARE_MASK_THING_LIST;
+    map.width = map.height = 1; tiles.squareData = &square; tiles.squareCount = 1;
+    dungeon.header.mapCount = 1; dungeon.maps = &map; dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1; dungeon.columnsCumulativeSquareFirstThingCount = &base;
+    dungeon.dungeonColumnCount = 1;
+    things.loaded = 1; things.squareFirstThings = &firstThing;
+    things.squareFirstThingCount = 1; things.groups = &group; things.groupCount = 1;
+    group.next = THING_ENDOFLIST; group.creatureType = DM1_CREATURE_LORD_CHAOS_ID;
+    ASSERT_EQ(DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
+                  &dungeon, &things, 0, 0, 0, &found), 1, "F0222 query succeeds");
+    ASSERT_EQ(found, firstThing, "F0222 returns raw Lord Chaos Thing");
+}
+
 /* ── Test: Fuse action — Lord Chaos not present ──────────────────── */
 static void test_fuse_action_no_lord_chaos(void)
 {
@@ -341,6 +368,7 @@ int main(void)
     test_firestaff_skill_bonus();
     test_fluxcage_count();
     test_lord_chaos_identification();
+    test_f0222_raw_lord_chaos_thing();
     test_fuse_action_no_lord_chaos();
     test_fuse_action_chaos_escapes();
     test_fuse_action_chaos_trapped();

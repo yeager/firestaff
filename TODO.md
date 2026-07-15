@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0222 follow-up: F0224/FUSE still needs broader real-map
+  route capture; do not substitute a creature-type-only result for raw C04.
+
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
   retain bounded bytes plus FNV provenance. Next is slot-table heap mutation.
 

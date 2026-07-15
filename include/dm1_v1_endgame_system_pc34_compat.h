@@ -34,6 +34,7 @@
 #define DM1_V1_ENDGAME_SYSTEM_PC34_COMPAT_H
 
 #include <stdint.h>
+#include "memory_dungeon_dat_pc34_compat.h"
 
 /* -- Endgame creature constants (DEFS.H) -- */
 #define DM1_CREATURE_LORD_CHAOS_ID          23  /* C23_CREATURE_LORD_CHAOS */
@@ -110,6 +111,12 @@ int32_t DM1_Endgame_CountFluxcagesAroundSquare(const int32_t fluxcagePresent[4])
 
 /* -- Lord Chaos identification -- */
 int32_t DM1_Endgame_IsLordChaosOnSquare(int32_t creatureTypeOnSquare);
+
+int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY,
+    unsigned short* outThing);
 
 /* -- Fuse action evaluation -- */
 typedef struct DM1EndgameFuseActionResult {

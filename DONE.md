@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0222: raw square-chain Lord Chaos lookup now returns the
+  actual C04 Thing only when its source creature type is C23.
+
 - 2026-07-15 CSB ReDMCSB F0149: implemented the exact current-map
   alcove-ornament membership predicate from `DUNGEON.C:1330-1347`. The API
   reads only caller-owned G0267-equivalent data, rejects negative ordinals,
