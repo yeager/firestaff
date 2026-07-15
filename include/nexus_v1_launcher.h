@@ -286,12 +286,18 @@ typedef struct {
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt render_plan;
+    Nexus_V1_DgnStructure1HostProvenanceReceipt structure1_host_provenance;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
     Nexus_ScriptRuntimeReceipt script_receipt;
     int runtime_ready;
     int dgn_render_ready;
     int dgn_viewport_render_ready;
     int hud_ready;
     int dgn_render_blocked;
+    int structure1_host_provenance_consumed;
+    int dgn_static_material_source_consumed;
+    int structure2_source_materialization_bound;
     int script_runtime_ready;
     int script_runtime_blocked;
     int level_loaded;
@@ -323,6 +329,8 @@ typedef struct {
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
+    uint32_t dgn_command_buffer_hash;
+    int dgn_command_buffer_exact;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int viewport_written_pixels;
@@ -358,6 +366,8 @@ typedef struct {
     int dgn_ceiling_material_command_count;
     int dgn_wall_material_command_count;
     int dgn_material_semantics_complete;
+    int structure2_source_materialization_bound;
+    int dgn_static_material_source_consumed;
     int dgn_viewport_render_ready;
     int dgn_viewport_rasterized_command_count;
     int dgn_viewport_material_surface_count;
@@ -376,6 +386,8 @@ typedef struct {
     int bpk_prs3_material_surface_count;
     int dgn_material_plan_consumed;
     int dgn_commands_copied_from_material_plan;
+    uint32_t dgn_command_buffer_hash;
+    int dgn_command_buffer_exact;
     int dgn_material_viewport_consumed;
     int bpk_material_path_consumed;
     int dgn_viewport_written_pixels;
@@ -711,6 +723,8 @@ typedef struct {
     Nexus_V1_MenuBpkRendererHandoffReceipt menu_bpk_handoff;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
     Nexus_V1_DgnRenderPlanReceipt dgn_render_plan;
+    Nexus_V1_DgnStaticMaterialSourceReceipt static_material_sources;
+    Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
     int receipt_owner_is_nexus;
     int title_menu_receipt_owned;
     int capture_receipt_owned;
@@ -806,11 +820,13 @@ typedef struct {
     uint32_t dgn_viewport_frame_hash;
     int dgn_material_surface_coverage_complete;
     int dgn_material_semantics_complete;
+    int dgn_static_material_source_consumed;
     int runtime_dgn_material_path_consumed;
     int host_route_consumes_dgn_material_path;
     int bpk_material_surface_count;
     int bpk_truecolor_material_surface_count;
     int bpk_prs3_material_surface_count;
+    int copied_dgn_command_count;
     Nexus_V1_StartupCaptureRoute capture_route;
     Nexus_V1_StartupDrawKind first_startup_draw_kind;
     Nexus_V1_DgnRenderCommandKind first_dgn_draw_kind;
@@ -821,6 +837,22 @@ typedef struct {
     const char *status_scope;
     const char *status;
 } Nexus_V1_StartupRealAssetOwnershipReceipt;
+
+typedef struct {
+    int active_frame;
+    int expected_title_frame;
+    int warning_boundary;
+    int title_boundary;
+    int start_ready_boundary;
+    int warning_surface_verified;
+    int title_surface_verified;
+    int timing_verified;
+    int menu_bpk_prs3_blocked;
+    Nexus_V1_StartupDrawKind expected_draw_kind;
+    int command_verified;
+    int consumer_ready;
+    const char *status;
+} Nexus_V1_StartupTitleTransitionCaptureReceipt;
 
 typedef struct {
     Nexus_V1_StartupRealAssetOwnershipReceipt ownership;

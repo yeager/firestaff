@@ -38,6 +38,8 @@
 #define NEXUS_DGN_STRUCTURE3_ENTRY_HEADER_BYTES 40
 #define NEXUS_V1_DGN_VIEW_DISTANCE 4
 #define NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS 48
+#define NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX \
+    NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS
 #define NEXUS_V1_DGN_VIEWPORT_UNITS 1024
 
 /* These are real Structure1 header offsets observed across LEV00..LEV15.
@@ -760,6 +762,52 @@ typedef struct {
     int valid;
     int material_or_draw_semantics_proven;
 } Nexus_V1_DgnStructure3FaceMaterialReceipt;
+
+typedef struct {
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+} Nexus_V1_LevelAuxSourceReceipt;
+
+typedef struct {
+    int level_index;
+    char canonical_name[16];
+    char canonical_md5[33];
+    int exact_source_entry_observed;
+    int hash_discovery_attempted;
+    int canonical_hash_verified;
+    int structure2_payload_envelope_valid;
+    int materialization_bound;
+    int payload_decoder_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure2SourceReceipt;
+
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt floor_mns;
+    Nexus_V1_LevelAuxSourceReceipt wall_mns;
+    int canonical_pair_bound;
+    int structure1b_selector_binding_proven;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStaticMaterialSourceReceipt;
+
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int parsed_bank_valid;
+    int source_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_ItemIbsRuntimeSourceReceipt;
+
+typedef struct {
+    int level_index;
+    Nexus_V1_LevelAuxSourceReceipt slev;
+    Nexus_V1_LevelAuxSourceReceipt sal;
+    Nexus_V1_LevelAuxSourceReceipt map;
+    Nexus_V1_LevelAuxSourceReceipt sound_driver;
+    int canonical_pair_bound;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelAuxRuntimeReceipt;
 
 /* Structure3b's documented, entry-local vertex indexes also permit a raw
  * edge-incidence measurement. Endpoints are canonicalized only to count

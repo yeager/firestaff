@@ -113,8 +113,31 @@ typedef struct {
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
     NEXUS_UI_FACE_RECORD_RAW_48X48,
-    NEXUS_UI_FACE_RECORD_COMPACT_PADDED
+    NEXUS_UI_FACE_RECORD_COMPACT_PADDED,
+    NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN
 } Nexus_UI_FaceRecordDecodeKind;
+
+typedef struct {
+    Nexus_UI_FaceRecordDecodeKind kind;
+    int valid;
+    int face_index;
+    int record_offset;
+    int record_size;
+    size_t prefix_offset;
+    int prefix_size;
+    size_t prs3_offset;
+    size_t prs3_size;
+    size_t stream_offset;
+    size_t stream_size;
+    uint32_t prs3_version;
+    uint32_t pixel_count;
+    uint32_t declared_pixel_count;
+    int payload_offset;
+    int payload_size;
+    int width;
+    int height;
+    int blocks_real_portrait_decode;
+} Nexus_UI_FaceCompactRecordDescriptor;
 
 typedef struct {
     Nexus_UI_FaceRecordDecodeKind kind;
@@ -198,6 +221,11 @@ int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h
 int nexus_ui_face_layout_detect(const uint8_t *data,
     int data_size,
     Nexus_UI_FaceLayout *out_layout);
+int nexus_ui_face_compact_record_descriptor(
+    const uint8_t *data,
+    int data_size,
+    int face_index,
+    Nexus_UI_FaceCompactRecordDescriptor *out_descriptor);
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,

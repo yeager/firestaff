@@ -112,6 +112,9 @@ typedef struct {
     int last_event_window_distinct_byte_count;
     int last_event_window_transition_count;
     int sal_package_profile_supported;
+    int sal_container_preamble_supported;
+    int sal_payload_offset;
+    int sal_opaque_payload_size;
     int sal_word_count;
     int sal_nonzero_byte_count;
     int sal_high_bit_byte_count;
@@ -120,6 +123,9 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
+    int sound_driver_canonical_source_verified;
     uint16_t event_sample_index[32];
     uint32_t event_sal_offset[32];
     uint16_t event_sal_size[32];
@@ -199,6 +205,9 @@ typedef struct {
     int last_event_window_distinct_byte_count;
     int last_event_window_transition_count;
     int sal_package_profile_supported;
+    int sal_container_preamble_supported;
+    int sal_payload_offset;
+    int sal_opaque_payload_size;
     int sal_word_count;
     int sal_nonzero_byte_count;
     int sal_high_bit_byte_count;
@@ -207,11 +216,15 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    int sal_canonical_source_verified;
+    int map_canonical_source_verified;
+    int sound_driver_canonical_source_verified;
     int playback_enabled;
     int blocks_real_sfx_playback;
     int fallback_visuals_permitted;
     Nexus_V1_AudioReceipt sal_receipt;
     Nexus_V1_AudioReceipt map_receipt;
+    Nexus_V1_AudioReceipt sound_driver_receipt;
 } Nexus_SfxRuntimeReceipt;
 
 /* Init sound system */
@@ -225,6 +238,16 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng);
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
                             const uint8_t *sal_data, int sal_size,
                             const uint8_t *map_data, int map_size);
+int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng,
+                                      int level_index,
+                                      const uint8_t *sal_data,
+                                      int sal_size,
+                                      const uint8_t *map_data,
+                                      int map_size,
+                                      int sal_canonical_source_verified,
+                                      int map_canonical_source_verified);
+void nexus_sound_set_driver_canonical_source_verified(
+    Nexus_SoundEngine *eng, int verified);
 int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
                                       Nexus_SfxRuntimeReceipt *out_receipt);
 const char *nexus_sound_sfx_runtime_status_name(
