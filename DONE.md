@@ -16302,6 +16302,14 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
+
+The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
+initialization: the authenticated writes are only `00`/`ff` sentinels from
+the observed main-RAM writers. It cannot be promoted to level/object data.
+
+Verification: focused initialization receipt test.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
