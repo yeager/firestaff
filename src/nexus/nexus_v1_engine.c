@@ -8533,11 +8533,24 @@ int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
         const uint8_t *palt_word = menu_bpk + receipt.palt.record_offset +
             12U + entry * 2U;
         const uint8_t *warning_word = warning_view.clut_bgr555_be + entry * 2U;
+        uint16_t palt_value = (uint16_t)((uint16_t)palt_word[0] << 8) |
+            (uint16_t)palt_word[1];
+        uint16_t warning_value = (uint16_t)((uint16_t)warning_word[0] << 8) |
+            (uint16_t)warning_word[1];
         if (palt_word[0] == warning_word[0] &&
             palt_word[1] == warning_word[1]) {
             ++receipt.matching_entry_count;
         } else {
             ++receipt.mismatched_entry_count;
+        }
+        if ((palt_value & 0x7fffU) == (warning_value & 0x7fffU)) {
+            ++receipt.bgr555_low15_matching_entry_count;
+            if (palt_value != warning_value) {
+                ++receipt.high_bit_only_mismatch_count;
+            }
+        } else {
+            ++receipt.bgr555_low15_mismatched_entry_count;
+            ++receipt.colour_word_mismatch_count;
         }
     }
     /* This fixed canonical pair shares 224 indexed BE16 words. The 32
@@ -8549,6 +8562,15 @@ int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
         receipt.mismatched_entry_count == 32U;
     receipt.bgr555_word_encoding_correlation_proven =
         receipt.indexed_word_alignment_proven;
+    /* The documented DGT2 reader uses only BGR555's low 15 colour bits.
+     * Thirty-one non-identical PALT words differ only in bit 15; index 130
+     * remains a genuine colour-word disagreement. This is correlation, not
+     * a PALT format declaration or an authorization to apply the palette. */
+    receipt.bgr555_low15_correlation_proven =
+        receipt.bgr555_low15_matching_entry_count == 255U &&
+        receipt.bgr555_low15_mismatched_entry_count == 1U &&
+        receipt.high_bit_only_mismatch_count == 31U &&
+        receipt.colour_word_mismatch_count == 1U;
     receipt.valid = receipt.indexed_word_alignment_proven;
     free(warning);
     free(menu_bpk);
