@@ -24,7 +24,11 @@
   route capture; do not substitute a creature-type-only result for raw C04.
 
 - 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
-  retain bounded bytes plus FNV provenance. Next is slot-table heap mutation.
+  retain bounded bytes plus FNV provenance. Runtime now admits CSBWin's full
+  `MaxTimers` slot pool separately from its active `NumTimer` heap; free slots
+  do not materialize into M10 or DSA. Remaining work is exact
+  `SetTimer`/`DeleteTimer` free-list mutation and full requeue semantics from
+  a real CSBWin save corpus.
 
 - 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
   handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/

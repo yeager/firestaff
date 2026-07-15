@@ -65,12 +65,16 @@ int main(void)
      * Timer.cpp SetTimer and collapse already saved duplicate slots. */
     profile.csbwin_body_runtime_summary_valid = 1;
     profile.csbwin_delete_duplicate_timers = 1u;
-    profile.csbwin_timer_summary_count = 2u;
-    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_max_timers = 3u;
+    profile.csbwin_num_timer = 2u;
+    profile.csbwin_first_avail_timer = 2u;
+    profile.csbwin_timer_summary_count = 3u;
+    profile.csbwin_timer_summary_total = 3u;
     profile.csbwin_timer_queue_summary_count = 2u;
     profile.csbwin_timer_queue_summary_total = 2u;
     memset(profile.csbwin_timers, 0, sizeof(profile.csbwin_timers));
     profile.csbwin_timers[0].valid = 1;
+    profile.csbwin_timers[0].source_index = 0u;
     profile.csbwin_timers[0].time = 200u;
     profile.csbwin_timers[0].level = 3u;
     profile.csbwin_timers[0].function = DM1_EVENT_WALL;
@@ -79,14 +83,18 @@ int main(void)
     profile.csbwin_timers[0].ubyte8 = 1u;
     profile.csbwin_timers[0].ubyte9 = 0u;
     profile.csbwin_timers[1] = profile.csbwin_timers[0];
+    profile.csbwin_timers[1].source_index = 1u;
     profile.csbwin_timers[1].ubyte9 = 2u;
+    profile.csbwin_timers[2].valid = 1;
+    profile.csbwin_timers[2].source_index = 2u;
+    profile.csbwin_timers[2].function = DM1_EVENT_NONE;
     profile.csbwin_timer_queue[0] = 0u;
     profile.csbwin_timer_queue[1] = 1u;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 2 &&
               profile.timeline_queue.eventCount == 2 &&
               profile.csbwin_timeline_event_queue_slot[0] == 0u &&
               profile.csbwin_timeline_event_queue_slot[1] == 1u,
-          "CSBWin restore preserves both serialized duplicate timer slots");
+          "CSBWin restore projects only active queue slots, not free TIMER slots");
 
     profile.csbwin_timer_queue[1] = 2u;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
@@ -96,12 +104,12 @@ int main(void)
           "CSBWin restore rejects an invalid queue slot without replacing live timers");
 
     profile.csbwin_timer_queue[1] = 1u;
-    profile.csbwin_timer_summary_total = 3u;
+    profile.csbwin_timer_summary_total = 2u;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
               profile.timeline_queue.eventCount == 2,
           "CSBWin restore rejects a truncated timer summary without replacing live timers");
 
-    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_timer_summary_total = 3u;
     profile.csbwin_timer_queue[0] = 1u;
     profile.csbwin_timer_queue[1] = 0u;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
