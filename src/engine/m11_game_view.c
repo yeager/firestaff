@@ -26006,6 +26006,28 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
     return 1;
 }
 
+static int m11_panel_asset_source_loaded(const M11_GameViewState* state,
+                                         unsigned int gfxIdx,
+                                         int expectedW,
+                                         int expectedH,
+                                         int *outWidth,
+                                         int *outHeight) {
+    const M11_AssetSlot* slot;
+    if (outWidth) *outWidth = 0;
+    if (outHeight) *outHeight = 0;
+    if (!state || !state->assetsAvailable) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
+        return 0;
+    }
+    if (outWidth) *outWidth = (int)slot->width;
+    if (outHeight) *outHeight = (int)slot->height;
+    return (int)slot->width == expectedW && (int)slot->height == expectedH;
+}
+
 /* ReDMCSB MENUDRAW.C F0396 loads C011 as three 96x12 rows.  Only rows
  * one and two are copied to the logical screen by CASTER.C F0394. */
 static int m11_blit_panel_asset_region_native(const M11_GameViewState* state,
@@ -35387,8 +35409,9 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            int framebufferHeight) {
     int spellX, spellY, spellW, spellH;
     int i;
-    const M11_AssetSlot* linesAsset;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
     if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
         m11_v2_vertical_slice_enabled()) {
         return;
@@ -35413,6 +35436,32 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     /* CASTER.C F0394: clear G0000, paint C009, then copy C011 rows 1 and 2
      * to the two symbol lines.  C011 is not optional decoration: it owns
      * the controls behind the source-font glyphs. */
+    memset(&facts, 0, sizeof(facts));
+    facts.c009_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34;
+    facts.c009_loaded_pixels = m11_panel_asset_source_loaded(
+        state,
+        (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
+        spellW, spellH, &facts.c009_width, &facts.c009_height);
+    facts.c011_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_LINES_PC34;
+    facts.c011_loaded_pixels = m11_panel_asset_source_loaded(
+        state,
+        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
+        DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
+        &facts.c011_width, &facts.c011_height);
+    facts.m653_source_bound = m11_dm1_pc34_hud_font_is_source_bound(state);
+    facts.m653_graphic_index =
+        facts.m653_source_bound && g_activeOriginalFont
+            ? M11_Font_ResolvedGraphicIndex(g_activeOriginalFont)
+            : 0;
+    if (!m11_build_dm1_spell_area_overlay_plan(state, &plan) ||
+        !dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+            &plan, &facts, &receipt) ||
+        !receipt.drawable) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+        return;
+    }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
     /* C009 is stored for the physical G0000 spell box, not the smaller
@@ -35441,16 +35490,6 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         0, DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34,
         DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
         DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34, 224, 62)) {
-        return;
-    }
-    linesAsset = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                       (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
-    if (!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||
-        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
-        return;
-    }
-
-    if (!m11_build_dm1_spell_area_overlay_plan(state, &plan)) {
         return;
     }
     /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has

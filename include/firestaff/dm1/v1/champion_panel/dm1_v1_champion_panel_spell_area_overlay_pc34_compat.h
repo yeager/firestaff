@@ -160,6 +160,10 @@ extern "C" {
 #define DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34 9
 #define DM1_V1_CPSAO_GFX_SPELL_AREA_LINES_PC34 11
 #define DM1_V1_CPSAO_ZONE_SPELL_AREA_PC34 13
+#define DM1_V1_CPSAO_LINES_WIDTH_PC34 96
+#define DM1_V1_CPSAO_LINES_HEIGHT_PC34 36
+#define DM1_V1_CPSAO_M653_GRAPHIC_PC34 695
+#define DM1_V1_CPSAO_M653_GRAPHIC_LEGACY_PC34 557
 
 typedef enum DM1_V1_CpsaoRejectReasonPc34 {
     DM1_V1_CPSAO_REJECT_NONE_PC34 = 0,
@@ -295,6 +299,51 @@ typedef struct DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 {
         [DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34];
 } DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34;
 
+typedef enum DM1_V1_CpsaoMaterialRejectReasonPc34 {
+    DM1_V1_CPSAO_MATERIAL_ACCEPTED_PC34 = 0,
+    DM1_V1_CPSAO_MATERIAL_REJECT_INVALID_PLAN_PC34 = 1,
+    DM1_V1_CPSAO_MATERIAL_REJECT_PLAN_NO_DRAW_PC34 = 2,
+    DM1_V1_CPSAO_MATERIAL_REJECT_C009_PC34 = 3,
+    DM1_V1_CPSAO_MATERIAL_REJECT_C011_PC34 = 4,
+    DM1_V1_CPSAO_MATERIAL_REJECT_M653_PC34 = 5
+} DM1_V1_CpsaoMaterialRejectReasonPc34;
+
+typedef struct DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 {
+    int c009_loaded_pixels;
+    int c009_graphic_index;
+    int c009_width;
+    int c009_height;
+    int c011_loaded_pixels;
+    int c011_graphic_index;
+    int c011_width;
+    int c011_height;
+    int m653_source_bound;
+    int m653_graphic_index;
+} DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34;
+
+typedef struct DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 {
+    int valid;
+    int drawable;
+    DM1_V1_CpsaoMaterialRejectReasonPc34 reject_reason;
+    int c009_required;
+    int c009_source_bound;
+    int c009_graphic_index;
+    int c009_width;
+    int c009_height;
+    int c011_required;
+    int c011_source_bound;
+    int c011_graphic_index;
+    int c011_width;
+    int c011_height;
+    int m653_required;
+    int m653_source_bound;
+    int m653_graphic_index;
+    int plan_draws_background;
+    int plan_draws_lines;
+    int plan_draws_font;
+    int no_host_fallback_visuals;
+} DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34;
+
 const DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract *
 dm1_v1_champion_panel_spell_area_overlay_contract_pc34(void);
 
@@ -304,6 +353,11 @@ dm1_v1_champion_panel_spell_area_overlay_source_evidence_pc34(void);
 int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     const DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 *input,
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *out_plan);
+
+int dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+    const DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *plan,
+    const DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 *facts,
+    DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 *out_receipt);
 
 #ifdef __cplusplus
 }
