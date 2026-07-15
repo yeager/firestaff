@@ -7284,3 +7284,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source-owned capture windows, never guessed texture/palette lengths or a
   decoder contract. Saturn pixel, palette, VDP1, transform, and draw evidence
   remain required.
+- 🔧 2026-07-15 Nexus descriptor capture target: each Structure2 capture
+  request now includes hash-bound image and optional palette candidate windows
+  from the same canonical LEV. An admitted external trace must repeat those
+  exact source windows before it can become even an opaque receipt. This does
+  not assert source-read semantics, decompression, pixel order, palette
+  format, VDP1 state, decoder behavior, or drawing; all remain blocked pending
+  authentic Saturn observations.

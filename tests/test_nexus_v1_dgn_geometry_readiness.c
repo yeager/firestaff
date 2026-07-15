@@ -1702,12 +1702,27 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                      "magic=%s\nproducer=external-saturn-capture\n"
                      "level_index=%x\ndescriptor_index=%x\n"
                      "source_fnv1a64=%016llx\ndescriptor_fnv1a64=%016llx\n"
-                     "opaque_payload_fnv1a64=%016llx\nraw_trace_size=%zx\n"
+                     "opaque_payload_fnv1a64=%016llx\n"
+                     "image_anchor_offset=%x\nimage_next_anchor_offset=%x\n"
+                     "image_candidate_byte_count=%x\nimage_candidate_fnv1a64=%016llx\n"
+                     "palette_candidate_present=%x\n"
+                     "palette_anchor_offset=%x\npalette_next_anchor_offset=%x\n"
+                     "palette_candidate_byte_count=%x\npalette_candidate_fnv1a64=%016llx\n"
+                     "raw_trace_size=%zx\n"
                      "raw_trace_fnv1a64=%016llx\n",
                      NEXUS_V1_STRUCTURE2_SATURN_RAW_TRACE_MAGIC, level, 0,
                      (unsigned long long)descriptor_target.source_bytes_fnv1a64,
                      (unsigned long long)descriptor_target.descriptor_bytes_fnv1a64,
                      (unsigned long long)descriptor_target.opaque_payload_fnv1a64,
+                     descriptor_target.image_payload_anchor_offset,
+                     descriptor_target.image_payload_next_anchor_offset,
+                     descriptor_target.image_payload_candidate_byte_count,
+                     (unsigned long long)descriptor_target.image_payload_candidate_fnv1a64,
+                     descriptor_target.palette_payload_candidate_bound,
+                     descriptor_target.palette_payload_anchor_offset,
+                     descriptor_target.palette_payload_next_anchor_offset,
+                     descriptor_target.palette_payload_candidate_byte_count,
+                     (unsigned long long)descriptor_target.palette_payload_candidate_fnv1a64,
                      sizeof(unverified_trace),
                      (unsigned long long)fnv1a64(unverified_trace,
                                                   sizeof(unverified_trace)));
@@ -1719,6 +1734,9 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_PROVENANCE &&
                   trace_receipt.capture_target_bound &&
                   trace_receipt.manifest_target_bound &&
+                  trace_receipt.image_payload_candidate_bound &&
+                  trace_receipt.palette_payload_candidate_bound ==
+                      descriptor_target.palette_payload_candidate_bound &&
                   trace_receipt.raw_trace_bytes_bound &&
                   !trace_receipt.original_saturn_capture_verified &&
                   !trace_receipt.opaque_trace_admitted &&
@@ -3241,20 +3259,10 @@ static void test_structure3_entry_header_boundaries(void) {
         memset(&animated_image_visits, 0, sizeof(animated_image_visits));
         CHECK(nexus_v1_current_level_visit_structure3_animated_material_images(
                   &engine, count_animated_material_image_packet,
-                  &animated_image_visits, &animated_images) == 1 &&
-              animated_images.valid && animated_images.complete &&
-              animated_images.level_index == 0 &&
-              animated_images.animated_face_count == 1 &&
-              animated_images.declared_image_instruction_count == 1 &&
-              animated_images.consumed_image_instruction_count == 1 &&
-              animated_image_visits.packet_count == 1 &&
-              animated_image_visits.invalid_packet_count == 0 &&
-              !animated_images.animation_execution_permitted &&
-              !animated_images.pixel_palette_vdp1_semantics_proven &&
-              !animated_images.decoder_permitted && animated_images.no_draw_only &&
-              !animated_images.fallback_visuals_permitted &&
+                  &animated_image_visits, &animated_images) == 0 &&
+              !animated_images.valid && animated_images.no_draw_only &&
               animated_images.blocks_real_dgn_mesh_render,
-              "a bounded 08xx face reaches each declared Structure1G image descriptor no-draw");
+              "an 08xx image route without bounded Structure2 windows remains fail-closed");
         memset(&animated_payloads, 0, sizeof(animated_payloads));
         CHECK(nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
                   &engine, &animated_payloads) == 0 && !animated_payloads.valid &&

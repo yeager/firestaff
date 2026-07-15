@@ -16482,6 +16482,16 @@ image or palette length, and no pixel codec, palette format, VDP1 mode,
 transform, or draw path is inferred. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus descriptor capture windows
+
+Every Structure2 descriptor capture target now contains the exact bounded
+image candidate window and, where present, palette candidate window from the
+canonical LEV. The raw-trace admission manifest must bind these hashes and
+offsets before provenance is considered. This enables a real capture producer
+to state its source-read targets without claiming that it observed, decoded,
+or drew them. Pixel/palette/VDP1 semantics and rendering remain fail-closed.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-15 Nexus Structure2 descriptor capture target
 
 The active canonical LEV route can now build and atomically write an external
