@@ -16248,6 +16248,17 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron main-RAM loader control receipt
+
+Added a HuC6280-core trace patch that resolves executed PCs through active MPR
+banks before recording bounded main-RAM `JSR` and block-transfer edges. Real
+USA Track 02 capture records physical `0x1fxxxx` loader calls, including
+`JSR $e009` at `0x1f0cc7` and `0x1f1840`. This proves control flow only, not
+level, object, payload, or visual semantics.
+
+Verification: Mednafen 1.32.1 patch dry-run and real SDL2 capture against
+MD5-pinned USA Track 02 media.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
 
 The engine now binds Structure3 entry-header boundaries and face-row local

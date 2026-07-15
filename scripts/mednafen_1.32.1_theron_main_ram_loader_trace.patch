@@ -1,0 +1,85 @@
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -30,6 +30,8 @@
+ #include <mednafen/mednafen.h>
+ #include "huc6280.h"
+ 
++#include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ 
+ #ifdef WANT_DEBUGGER
+@@ -38,7 +40,43 @@
+ 
+ namespace MDFN_IEN_PCE
+ {
++
++static FILE *TheronMainRAMLoaderTrace;
++static bool TheronMainRAMLoaderTraceInitialized;
++static unsigned TheronMainRAMLoaderTraceCount;
++
++static void TheronTraceMainRAMLoaderOperation(uint16 logical_pc, uint32 physical_pc, uint8 opcode,
++                                              uint16 first, uint16 second, uint16 third)
++{
++ if(!TheronMainRAMLoaderTraceInitialized)
++ {
++  TheronMainRAMLoaderTraceInitialized = true;
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE");
++  if(path && *path)
++   TheronMainRAMLoaderTrace = fopen(path, "w");
++ }
++ if(!TheronMainRAMLoaderTrace || TheronMainRAMLoaderTraceCount >= 96)
++  return;
++
++ if(opcode == 0x20)
++ {
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x\n",
++          logical_pc, physical_pc, first);
++ }
++ else if(opcode == 0x73 || opcode == 0xc3 || opcode == 0xd3 || opcode == 0xe3 || opcode == 0xf3)
++ {
++  const char *operation = opcode == 0x73 ? "tii" : opcode == 0xc3 ? "tdd" :
++                          opcode == 0xd3 ? "tin" : opcode == 0xe3 ? "tia" : "tai";
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_block_transfer logical_pc=%04x physical_pc=%06x operation=%s source=%04x destination=%04x length=%04x\n",
++          logical_pc, physical_pc, operation, first, second, third);
++ }
++ else
++  return;
+ 
++ TheronMainRAMLoaderTraceCount++;
++ fflush(TheronMainRAMLoaderTrace);
++}
++
+ INLINE void HuC6280::LastCycle(void)
+ {
+  /*assert(((P & I_FLAG) ? 0 : (uint32)~0) == PIMaskCache);*/
+@@ -573,6 +611,10 @@
+ NO_INLINE void HuC6280::RunSub(void)
+ {
+  uint32 old_PC;
++ uint32 physical_pc;
++ uint16 first;
++ uint16 second;
++ uint16 third;
+ 
+  if(in_block_move)
+  {
+@@ -677,9 +719,17 @@
+            }
+ 	  }
+ 	 }
+-         PC &= 0xFFFF;     // Our cpu core can only handle PC going about 8192 bytes over, so make sure it never gets that far...
++	 PC &= 0xFFFF;     // Our cpu core can only handle PC going about 8192 bytes over, so make sure it never gets that far...
+ 
+ 	 lastop = RdOp(PC);
++	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
++	 if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)
++	 {
++	  first = RdOp(PC + 1) | (RdOp(PC + 2) << 8);
++	  second = RdOp(PC + 3) | (RdOp(PC + 4) << 8);
++	  third = RdOp(PC + 5) | (RdOp(PC + 6) << 8);
++	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third);
++	 }
+ 
+ 	 PC++;
+ 
