@@ -1653,6 +1653,8 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const char *cursor;
     const char *line;
     size_t length;
+    size_t copy_source_offset;
+    size_t next_copy_offset;
     size_t source_offset;
     unsigned int successor_pc;
     unsigned int successor_physical_pc;
@@ -1689,8 +1691,21 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
             return 0;
         }
         parent = &successor.entry_copy.entry.call.transfer.next.entry.call.termination.call.execution.transfer;
-        source_offset = next_pc -
+        if (successor.entry_copy.entry.call.transfer.source_address <
+            parent->destination_address) {
+            return 0;
+        }
+        copy_source_offset =
+            successor.entry_copy.entry.call.transfer.source_address -
+            parent->destination_address;
+        next_copy_offset = next_pc -
             successor.entry_copy.entry.call.transfer.destination_address;
+        if (copy_source_offset >= parent->byte_count ||
+            next_copy_offset >= successor.entry_copy.entry.call.transfer.byte_count ||
+            copy_source_offset > parent->byte_count - next_copy_offset) {
+            return 0;
+        }
+        source_offset = copy_source_offset + next_copy_offset;
         if (source_offset >= parent->byte_count ||
             parent->source_address > UINT16_MAX - source_offset ||
             next_opcode != handoff->loader_post_envelope.bytes[source_offset]) {
