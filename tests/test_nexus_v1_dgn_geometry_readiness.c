@@ -718,6 +718,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure2FormatEvidenceReceipt structure2_format;
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+        Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget
+            owner_material_target;
+        Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt
+            owner_material_route;
         Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
         Nexus_V1_DgnStructure3PackageGeometrySceneReceipt package_scene;
         Nexus_V1_DgnStructure3AnimatedMaterialPacket animated_packet;
@@ -1211,6 +1215,60 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       material_target.no_draw_only &&
                       !material_target.fallback_visuals_permitted,
                       "retail Structure3 static face binds its exact Structure2 capture descriptor only");
+                {
+                    int owner_candidate_index;
+                    int found_owner_material_target = 0;
+
+                    memset(&owner_material_target, 0,
+                           sizeof(owner_material_target));
+                    memset(&owner_material_route, 0,
+                           sizeof(owner_material_route));
+                    for (owner_candidate_index = 0;
+                         owner_candidate_index <
+                             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS &&
+                         !found_owner_material_target;
+                         ++owner_candidate_index) {
+                        if (nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+                                &active_engine, owner_candidate_index,
+                                material_target.structure3_entry_index,
+                                material_target.face_ordinal,
+                                &owner_material_target,
+                                &owner_material_route) == 1) {
+                            found_owner_material_target = 1;
+                        } else if (owner_candidate_index >=
+                                   active_engine.dgn_material_plan
+                                       .structure1a_structure3_topology_candidate_receipt
+                                       .topology_candidate_count) {
+                            break;
+                        }
+                    }
+                    if (active_engine.dgn_material_plan
+                            .structure1a_structure3_topology_candidate_receipt
+                            .topology_candidate_count > 0) {
+                        CHECK(found_owner_material_target &&
+                              owner_material_target.valid &&
+                              owner_material_target.level_index == level &&
+                              owner_material_target.owner_face_source_bound &&
+                              owner_material_target.static_material_source_bound &&
+                              !owner_material_target.owner_to_entry_mapping_proven &&
+                              owner_material_target.capture_producer_required &&
+                              owner_material_target.original_saturn_capture_required &&
+                              owner_material_target.no_draw_only &&
+                              !owner_material_target.fallback_visuals_permitted &&
+                              owner_material_target.blocks_real_dgn_mesh_render &&
+                              owner_material_target.owner_face_target
+                                      .face_target.candidate.entry_index ==
+                                  material_target.structure3_entry_index &&
+                              owner_material_target.owner_face_target
+                                      .face_target.candidate.face_ordinal ==
+                                  material_target.face_ordinal &&
+                              owner_material_target.material_target
+                                      .image_payload_byte_offset ==
+                                  material_target.image_payload_byte_offset &&
+                              owner_material_route.target_built,
+                              "retail LEV binds independent owner and material source lanes into one no-draw capture request");
+                    }
+                }
                 memset(&package_geometry, 0, sizeof(package_geometry));
                 CHECK(nexus_v1_current_level_structure3_package_geometry_packet(
                           &active_engine, material_target.structure3_entry_index,
@@ -5187,6 +5245,20 @@ static void test_palette_source_gate(void) {
           "a truncated palette source withdraws the renderable palette");
 }
 
+static void test_owner_material_capture_target_blocks_without_canonical_lev(void) {
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt route;
+
+    memset(&target, 0xff, sizeof(target));
+    memset(&route, 0xff, sizeof(route));
+    CHECK(nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+              NULL, 0, 0U, 0U, &target, &route) == 0 &&
+          !target.valid && target.level_index == -1 &&
+          target.no_draw_only && target.blocks_real_dgn_mesh_render &&
+          !target.fallback_visuals_permitted && !route.target_built,
+          "an owner/material bundle blocks without one canonical LEV source");
+}
+
 static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
@@ -5770,6 +5842,7 @@ int main(void) {
     test_real_structure1f_direct_cell_corpus();
     test_vdp1_command_sidecar_stays_no_draw();
     test_palette_source_gate();
+    test_owner_material_capture_target_blocks_without_canonical_lev();
     test_menu_bpk_missing_handoff_blocks_fallback();
     test_menu_bpk_palette_trailer_stays_opaque();
     test_menu_bpk_handoff_requires_canonical_source();

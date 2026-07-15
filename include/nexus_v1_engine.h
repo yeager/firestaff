@@ -667,6 +667,24 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure3StaticMaterialCaptureTarget;
 
+/* A producer-facing bundle with independently source-bound owner/face and
+ * static material inputs. The owner-to-entry mapping remains explicitly
+ * unproven; this requests a trace that can establish it, never a draw. */
+typedef struct {
+    int valid;
+    int level_index;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt owner_face_target;
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+    int owner_face_source_bound;
+    int static_material_source_bound;
+    int owner_to_entry_mapping_proven;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget;
+
 /* One bounded Structure3 face in the active canonical LEV, joined to its
  * exact Structure2 static-material source anchors. This is the package-side
  * renderer input for an eventual Saturn-backed path, not a decoded surface:
@@ -1896,6 +1914,14 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
     Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *out_target);
+/* Bundle an independently selected Structure1F/1A owner and one static
+ * Structure3 material face for a real capture producer. No mapping between
+ * the owner model index and entry index is inferred. */
+int nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt);
 /* Joins an exact typed Structure3 face/vertices/normal extraction to the
  * source-bound static Structure2 descriptor target. The returned package
  * packet is deliberately no-draw: it has no inferred transform, texel,

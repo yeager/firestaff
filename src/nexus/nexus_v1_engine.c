@@ -3834,6 +3834,61 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt owner_route;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetReceipt owner_target;
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+
+    if (!out_target || !out_receipt) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&owner_route, 0, sizeof(owner_route));
+    memset(&owner_target, 0, sizeof(owner_target));
+    memset(&material_target, 0, sizeof(material_target));
+    out_target->level_index = -1;
+    out_target->no_draw_only = 1;
+    out_target->blocks_real_dgn_mesh_render = 1;
+    if (!engine ||
+        nexus_v1_engine_build_structure1a_structure3_capture_target(
+            engine, topology_candidate_index, structure3_entry_index,
+            structure3_face_ordinal, &owner_target, &owner_route) != 1 ||
+        !owner_route.active_canonical_lev_bound ||
+        !owner_route.material_plan_prepared ||
+        !owner_route.topology_candidate_bound || !owner_route.target_built ||
+        !owner_target.valid || owner_target.structure3_entry_mapping_proven ||
+        !owner_target.no_draw_only || owner_target.fallback_visuals_permitted ||
+        nexus_v1_engine_build_structure3_static_material_capture_target(
+            engine, structure3_entry_index, structure3_face_ordinal,
+            &material_target) != 1 || !material_target.valid ||
+        !material_target.static_selector_descriptor_bound ||
+        !material_target.image_payload_interval_bound ||
+        material_target.image_payload_candidate_byte_count == 0U ||
+        (material_target.descriptor_target.descriptor.palette_relative_offset != 0U &&
+         (!material_target.palette_payload_interval_bound ||
+          material_target.palette_payload_candidate_byte_count == 0U)) ||
+        !material_target.no_draw_only || material_target.fallback_visuals_permitted) {
+        *out_receipt = owner_route;
+        return 0;
+    }
+    out_target->valid = 1;
+    out_target->level_index = owner_target.level_index;
+    out_target->owner_face_target = owner_target;
+    out_target->material_target = material_target;
+    out_target->owner_face_source_bound = 1;
+    out_target->static_material_source_bound = 1;
+    /* The two source inputs share a capture session but not a proved model map. */
+    out_target->owner_to_entry_mapping_proven = 0;
+    out_target->capture_producer_required = 1;
+    out_target->original_saturn_capture_required = 1;
+    *out_receipt = owner_route;
+    return 1;
+}
+
 int nexus_v1_current_level_structure3_package_geometry_packet(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
