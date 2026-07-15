@@ -67,6 +67,13 @@
   not suppress possessions fail closed. Verification:
   `csb_v1_dsa_queued_localstate2_timer` and
   `csb_v1_dsa_pure_control_pc34_compat`.
+- 2026-07-15 CSBWin DSA `STKOP_PartyFetch` runtime bridge: authenticated
+  `DSA.cpp:4127-4165` bytecode now reads the complete twelve-word party image
+  from verified GAMEBLOCK2 and character-tail state, including pose,
+  `PartySleeping`, hand character, spell effects, and signed shields. Missing
+  or inconsistent ownership rejects the entire query. Verification:
+  `csb_v1_dsa_queued_localstate2_timer` and
+  `csb_v1_dsa_pure_control_pc34_compat`.
 - 2026-07-15 CSBWin DSA `STKOP_ExperiencePlus` runtime bridge:
   authenticated DSA bytecode now commits `Magic.cpp::AddToSkill`'s real
   non-level-up CHARDESC mutation through the candidate profile. It preserves

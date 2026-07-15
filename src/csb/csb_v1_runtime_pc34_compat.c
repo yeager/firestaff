@@ -159,6 +159,8 @@ static int csb_v1_runtime_dsa_add_experience_plus(
 static int csb_v1_runtime_dsa_get_mastery(
     void *user, uint32_t champion_index, uint32_t skill_index,
     uint32_t flags, uint32_t *out_mastery);
+static int csb_v1_runtime_dsa_get_party_info(
+    void *user, uint32_t out_values[12]);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -5253,6 +5255,53 @@ static int csb_v1_runtime_dsa_get_mastery(
         ++mastery;
     }
     *out_mastery = (uint32_t)mastery;
+    return 1;
+}
+
+/* DSA.cpp:4127-4165 copies this exact GAMEBLOCK2/character-tail image into
+ * DSAVARS.  GAMEBLOCK2 owns pose, count, and HandChar; the verified body
+ * owns spell-effect tail values.  Do not assemble a partial party image. */
+static int csb_v1_runtime_dsa_get_party_info(
+    void *user, uint32_t out_values[12])
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    int champion_count;
+    int hand_character;
+
+    if (!profile || !out_values || !profile->party_state_valid ||
+        !profile->csbwin_gameblock2_summary_valid ||
+        !profile->csbwin_body_runtime_summary_valid) {
+        return -1;
+    }
+    champion_count = profile->party_state.ChampionCount;
+    if (champion_count < 0 || champion_count > CSB_V1_MAX_CHAMPIONS ||
+        profile->champion_count != champion_count) {
+        return -1;
+    }
+    hand_character = profile->leader_index;
+    if (hand_character < 0 || hand_character >= champion_count) {
+        hand_character = profile->party_state.LeaderIndex;
+    }
+    if (champion_count != 0 &&
+        (hand_character < 0 || hand_character >= champion_count)) {
+        return -1;
+    }
+
+    out_values[0] = (uint32_t)champion_count;
+    out_values[1] = (uint32_t)profile->current_level;
+    out_values[2] = (uint32_t)profile->party_x;
+    out_values[3] = (uint32_t)profile->party_y;
+    out_values[4] = (uint32_t)(profile->party_dir & 3);
+    out_values[5] = profile->csbwin_party_sleeping ? 1u : 0u;
+    out_values[6] = profile->csbwin_character_tail_see_thru_walls;
+    out_values[7] = profile->csbwin_character_tail_magic_footprints_active;
+    out_values[8] = champion_count == 0 ? 0u : (uint32_t)hand_character;
+    out_values[9] = profile->csbwin_character_tail_invisible;
+    out_values[10] = (uint32_t)(int32_t)
+        profile->csbwin_character_tail_fire_shield;
+    out_values[11] = (uint32_t)(int32_t)
+        profile->csbwin_character_tail_spell_shield;
     return 1;
 }
 
@@ -20967,6 +21016,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
+    candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -21119,6 +21169,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
+    candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
