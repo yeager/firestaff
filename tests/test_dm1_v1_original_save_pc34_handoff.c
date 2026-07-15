@@ -1768,8 +1768,9 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     CHECK(loaded_world.ownsDungeon == 0,
           "borrowed start dungeon keeps original owner");
 
-    /* A Firestaff F0433 export remains valid handoff data for verification,
-     * but the product resume route must consume only external corpus bytes. */
+    /* An explicitly selected F0433 export remains valid F0435 handoff data.
+     * Corpus discovery, rather than the parser, excludes it when choosing an
+     * external original-save candidate. */
     CHECK(dm1_v1_original_save_pc34_roundtrip_world_bytes(
               bytes, (size_t)written, 0x4d313031u,
               manifest_bytes, sizeof(manifest_bytes), &manifest_size,
@@ -1781,14 +1782,17 @@ static void test_runtime_materializer_reuses_start_dungeon_and_normalizes_hoc(vo
     memset(&loaded_world, 0, sizeof(loaded_world));
     rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
         path, &start_world, &loaded_world, NULL, NULL);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34,
-          "runtime materializer rejects Firestaff export as a resume source");
-    CHECK(loaded_world.dungeon == NULL && loaded_world.things == NULL,
-          "rejected Firestaff export leaves destination runtime untouched");
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "runtime materializer accepts explicitly selected F0433 export");
+    CHECK(loaded_world.dungeon == &start_dungeon &&
+              loaded_world.things == &start_things,
+          "explicit F0433 export retains the source dungeon backing");
+    F0883_WORLD_Free_Compat(&loaded_world);
+    memset(&loaded_world, 0, sizeof(loaded_world));
     remove(path);
 
     CHECK(write_fixture_file(path, bytes, written),
-          "runtime materializer restores external fixture after rejection");
+          "runtime materializer restores external fixture after explicit export");
     rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
         path, &start_world, &loaded_world, NULL, NULL);
     remove(path);
