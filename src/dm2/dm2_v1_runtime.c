@@ -5287,6 +5287,23 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
     }
 
     out->selected_state_hash = admitted->state_hash;
+    if (admitted->candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        if (!admitted->raw_dungeon_layout_valid ||
+            admitted->raw_dungeon_map_count == 0u ||
+            admitted->raw_dungeon_prefix_hash == 0u ||
+            admitted->raw_map_data_hash == 0u) {
+            out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+            return 0;
+        }
+        out->selected_raw_dungeon_layout_valid = 1;
+        out->selected_raw_dungeon_map_count = admitted->raw_dungeon_map_count;
+        out->selected_raw_dungeon_prefix_hash =
+            admitted->raw_dungeon_prefix_hash;
+        out->selected_raw_map_data_hash = admitted->raw_map_data_hash;
+        memcpy(out->selected_raw_db_record_counts,
+               admitted->raw_db_record_counts,
+               sizeof(out->selected_raw_db_record_counts));
+    }
     if (!dm2_v1_runtime_import_sksave_receipted_candidate(
             &admitted->candidate, &out->runtime_import)) {
         return 0;
