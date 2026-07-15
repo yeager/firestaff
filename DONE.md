@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB discovery census: no hash-verifiable CSB asset candidate was
+  found in configured local data roots; no runtime receipt was emitted.
+
 - 2026-07-15 CSB capture discovery audit: rejected the unclassified local
   DATA directory as a title/HUD capture source; no cross-game asset fallback.
 

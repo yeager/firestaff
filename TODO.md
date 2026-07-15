@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 CSB hash-discovery census: scanned `/Users/bosse/.firestaff` and
+  `/Users/bosse/firestaff-work` for CSBgraphics/CSB-save/dungeon candidates.
+  No CSBgraphics.dat or csbgame candidate exists; the sole DUNGEON.DAT is
+  unclassified and is not accepted by filename. A future receipt requires a
+  hash-classified CSB package in a configured data root.
+
 - 2026-07-15 CSB title/HUD receipt capture: current main does not contain
   `firestaff_csb_v1_pc34_title_cadence_hud_receipt_probe`. Local candidate
   `/Users/bosse/firestaff-work/firestaff/DATA` contains only GRAPHICS.DAT,
