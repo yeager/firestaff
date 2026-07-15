@@ -43,6 +43,10 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_creature_material_plan_required = 1;
     receipt.runtime_m11_frame_creature_material_plan_hash = 0x43524541u;
     receipt.runtime_m11_frame_creature_material_plan_consumed = 1;
+    receipt.runtime_m11_frame_projectile_material_plan_required = 1;
+    receipt.runtime_m11_frame_projectile_material_plan_hash = 0x50524f4au;
+    receipt.runtime_m11_frame_projectile_material_plan_command_count = 2;
+    receipt.runtime_m11_frame_projectile_material_plan_consumed = 1;
     receipt.runtime_m11_frame_teleporter_material_plan_required = 1;
     receipt.runtime_m11_frame_teleporter_material_plan_hash = 0x54454c45u;
     receipt.runtime_m11_frame_teleporter_material_plan_consumed = 1;
@@ -92,6 +96,10 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.creature_material_plan_required = 1;
     receipt.creature_material_plan_hash = 0x43524541u;
     receipt.creature_material_plan_consumed = 1;
+    receipt.projectile_material_plan_required = 1;
+    receipt.projectile_material_plan_hash = 0x50524f4au;
+    receipt.projectile_material_plan_command_count = 2;
+    receipt.projectile_material_plan_consumed = 1;
     receipt.teleporter_material_plan_required = 1;
     receipt.teleporter_material_plan_hash = 0x54454c45u;
     receipt.teleporter_material_plan_consumed = 1;
@@ -217,6 +225,10 @@ int main(void)
     runtime.creature_material_plan_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects an unconsumed GDAT creature material plan");
+    runtime = make_runtime_receipt();
+    runtime.projectile_material_plan_command_count++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a GDAT projectile command-count mismatch");
     runtime = make_runtime_receipt();
 
     runtime.teleporter_material_plan_hash++;
