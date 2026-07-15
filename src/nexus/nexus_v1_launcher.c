@@ -418,6 +418,11 @@ static int nexus_v1_launcher_startup_asset_handoff_from_parts(
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
         out_receipt->status_scope = "ASSETS";
         out_receipt->status = "blocked-menu-bpk-prs3";
+    } else if (renderer_handoff.status ==
+               NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE) {
+        out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
+        out_receipt->status_scope = "ASSETS";
+        out_receipt->status = "blocked-menu-bpk-source";
     } else if (!out_receipt->real_menu_asset_handoff_ready) {
         out_receipt->route = NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED;
         out_receipt->status_scope = "ASSETS";

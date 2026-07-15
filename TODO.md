@@ -6524,6 +6524,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   with broader DSA/door/world effects and package-app capture evidence.
 - 🔧 2026-07-11 CSB F0115 native object composition: chests, scrolls, potions, all PC34 weapon rows, and food junk rows now resolve through ReDMCSB `F0141 -> G0237 -> G0209` to native `GRAPHICS.DAT` entries with F0115's source mirror gate. Remaining families (armour and non-food junk) stay blocked until their exact object-aspect and composition coverage is added.
 - 🔧 2026-07-10 Nexus follow-up: remaining real-asset promotion is fixing/promoting the real MENU.BPK PRS3 opcode/stream decode against the optional corpus checks, plus real Saturn capture comparison beyond the DGN material block. 2026-07-11 update: BPK material host-route receipts and per-category floor/ceiling/wall material-coverage receipts are now covered by Nexus-owned BPK/DMDF tests; truecolor/decoded PRS3 synthetic material import also stays verified there.
+  - 2026-07-15 MENU.BPK source-admission update: startup now binds the archive to the canonical retail Track 1 hash before it can produce a decode/upload receipt or reach the launcher. A parseable same-named archive remains blocked; the still-required work is an authentic PRS3 decoder/capture, not a substitute menu surface.
 - 🔧 2026-07-13 DM2 G1 scene runtime follow-up: canonical G1 maps use
   `MapGraphicsStyle()` 1..5, and each exact `GRAPHICSSET` now has verified
   floor/ceiling IMG3 metadata plus source-required scene colorkey/flag words.

@@ -1698,6 +1698,14 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
            sizeof(engine->menu_bpk_upload_receipt));
     memset(engine->menu_bpk_upload_rows, 0,
            sizeof(engine->menu_bpk_upload_rows));
+    (void)nexus_v1_level_aux_source_receipt(engine, "MENU.BPK",
+                                             &engine->menu_bpk_source);
+    /* The archive parser accepts generic BPPK shapes for diagnostics and
+     * tests. The startup route must only consume the authenticated retail
+     * MENU.BPK, never a same-named custom archive. */
+    if (!engine->menu_bpk_source.canonical_hash_verified) {
+        return;
+    }
 
     data = nexus_v1_read_file(engine, "MENU.BPK", &size);
     if (!data || size <= 0) {
@@ -5607,7 +5615,18 @@ int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine) {
 }
 
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine) {
-    return engine ? engine->menu_bpk_decode_receipt_valid : 0;
+    return engine && engine->menu_bpk_source.canonical_hash_verified
+        ? engine->menu_bpk_decode_receipt_valid : 0;
+}
+
+int nexus_v1_menu_bpk_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt) {
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!engine) return 0;
+    *out_receipt = engine->menu_bpk_source;
+    return 0;
 }
 
 int nexus_v1_menu_bpk_decode_receipt(
@@ -5682,8 +5701,21 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
 
     if (!engine) return -1;
     out_receipt->attempted = engine->menu_bpk_decode_receipt_attempted;
-    out_receipt->receipt_valid = engine->menu_bpk_decode_receipt_valid;
-    if (!engine->menu_bpk_decode_receipt_valid) {
+    out_receipt->canonical_source_hash_verified =
+        engine->menu_bpk_source.canonical_hash_verified ? 1 : 0;
+    out_receipt->receipt_valid = engine->menu_bpk_decode_receipt_valid &&
+        out_receipt->canonical_source_hash_verified;
+    if (!out_receipt->canonical_source_hash_verified) {
+        /* Preserve the user-facing distinction between no archive at all and
+         * a present archive that fails the retail source identity gate. */
+        if (engine->menu_bpk_source.exact_source_entry_observed ||
+            engine->menu_bpk_source.hash_discovery_attempted) {
+            out_receipt->status =
+                NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE;
+        }
+        return 0;
+    }
+    if (!out_receipt->receipt_valid) {
         return 0;
     }
 
@@ -5732,6 +5764,8 @@ const char *nexus_v1_menu_bpk_renderer_handoff_status_name(
         return "blocked-truncated";
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES:
         return "no-surfaces";
+    case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE:
+        return "blocked-source";
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID: return "invalid";
     default: return "unknown";
     }

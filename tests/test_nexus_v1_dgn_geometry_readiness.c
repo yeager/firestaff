@@ -5063,6 +5063,57 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
           "missing MENU.BPK cannot promote launcher main-menu readiness");
 }
 
+static void test_menu_bpk_handoff_requires_canonical_source(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+    Nexus_V1_LauncherRuntimeReceipt runtime;
+    Nexus_V1_StartupAssetHandoffReceipt asset_handoff;
+
+    memset(&engine, 0, sizeof(engine));
+    engine.menu_bpk_decode_receipt_valid = 1;
+    engine.menu_bpk_decode_receipt_attempted = 1;
+    engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
+    engine.menu_bpk_decode_receipt.ready_stored_surfaces = 1U;
+    engine.menu_bpk_source.exact_source_entry_observed = 1;
+    engine.menu_bpk_source.hash_discovery_attempted = 1;
+    memset(&handoff, 0, sizeof(handoff));
+    CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE &&
+          !handoff.canonical_source_hash_verified && !handoff.receipt_valid &&
+          !handoff.can_render_stored_surfaces &&
+          handoff.blocks_real_menu_surface_render &&
+          !handoff.fallback_visuals_permitted,
+          "a parseable non-canonical MENU.BPK cannot enter the renderer");
+
+    memset(&runtime, 0, sizeof(runtime));
+    memset(&asset_handoff, 0, sizeof(asset_handoff));
+    runtime.engine = &engine;
+    runtime.level_loaded = 1;
+    runtime.title_loaded = 1;
+    runtime.startup_assets.title_route_ready = 1;
+    runtime.startup_assets.real_menu_surface_route_ready = 1;
+    runtime.startup_assets.startup_audio_handoff_ready = 1;
+    runtime.startup_assets.startup_menu_asset_route = "ready-real-menu-surfaces";
+    CHECK(nexus_v1_launcher_startup_asset_handoff_from_runtime_receipt(
+              &runtime, &asset_handoff) &&
+          asset_handoff.route == NEXUS_V1_STARTUP_ASSET_HANDOFF_MENU_BLOCKED &&
+          strcmp(asset_handoff.status, "blocked-menu-bpk-source") == 0 &&
+          !asset_handoff.main_menu_route_ready &&
+          !asset_handoff.fallback_visuals_permitted,
+          "the launcher names a non-canonical MENU.BPK source block");
+
+    engine.menu_bpk_source.canonical_hash_verified = 1;
+    CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
+          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
+          handoff.canonical_source_hash_verified && handoff.receipt_valid &&
+          handoff.can_render_stored_surfaces &&
+          !handoff.blocks_real_menu_surface_render &&
+          !handoff.fallback_visuals_permitted &&
+          nexus_v1_menu_bpk_decode_receipt_ready(&engine),
+          "only an authenticated source can expose an otherwise-ready BPK receipt");
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -5086,6 +5137,7 @@ int main(void) {
     test_vdp1_command_sidecar_stays_no_draw();
     test_palette_source_gate();
     test_menu_bpk_missing_handoff_blocks_fallback();
+    test_menu_bpk_handoff_requires_canonical_source();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);
