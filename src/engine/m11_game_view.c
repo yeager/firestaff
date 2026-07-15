@@ -23265,22 +23265,13 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
         if (!spec || spec->center_wall) {
             continue;
         }
-        blit.depthIndex = spec->runtime_rel_forward;
-        blit.relForward = spec->runtime_rel_forward;
-        blit.relSide = spec->runtime_rel_side;
-        blit.graphicIndex =
-            dm1_v1_graphic_wallset0_index_pc34((int)spec->native_wall);
-        blit.dstX = spec->runtime_dst_x;
-        blit.dstY = spec->runtime_dst_y;
-        blit.width = spec->runtime_width;
-        blit.height = spec->runtime_height;
         /* Far to near: ReDMCSB DUNVIEW.C F0128 lines 8478-8533 draws side wall
          * squares far-to-near without testing nearer side-lane occupancy;
          * nearer D1/D2 side walls and center walls overpaint farther panels.
          * Firestaff's split primitive passes still must honor the nearest
          * center blocker; same-side blockers are drawn later in the same
          * far-to-near pass and overpaint the farther side panel. */
-        if (blit.relForward > maxVisibleForward) {
+        if (spec->runtime_rel_forward > maxVisibleForward) {
             continue;
         }
         /* F0128 dispatches every wall square itself, in far-to-near order:
