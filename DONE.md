@@ -67,6 +67,13 @@
   unavailable. Focused coverage verifies the exact multiply and mismatch
   rejection in `test_dm2_v1_c_light_receipt`.
 
+- ✅ 2026-07-15 DM2 `c_light` presentation receipt: a consumed live
+  `c_light` result now contributes its receipt, raw-state identity and level
+  to the M11 presentation-state hash. Partial provenance, an out-of-range
+  level, or a result not consumed by the viewport rejects the identity. The
+  frame still has no light pixels until the original palette path is fully
+  available. Focused coverage: `test_dm2_v1_frame_presentation_state`.
+
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 C001 object move: the generic
   wall pass independently authenticates its PC3.4 wall byte and C03 chain,
   then admits C001's ordinary-object arrival through F0272/F0268. The focused
