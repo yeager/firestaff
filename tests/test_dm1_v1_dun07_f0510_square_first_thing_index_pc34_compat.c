@@ -53,6 +53,11 @@ int main(void)
     unsigned char rawWeapon[4];
     unsigned char rawJunk[20];
     struct DungeonJunk_Compat decodedJunks[5];
+    struct DungeonThings_Compat objectThings;
+    unsigned char objectWeapons[8];
+    unsigned char objectJunks[16];
+    struct DungeonWeapon_Compat decodedObjectWeapons[2];
+    struct DungeonJunk_Compat decodedObjectJunks[4];
     unsigned short staticDoor;
     unsigned short staticText;
     unsigned short staticSensor;
@@ -61,10 +66,11 @@ int main(void)
     unsigned short linkedWeapon;
     unsigned short discardedJunk;
     unsigned short allocatedJunk;
+    unsigned short generatedThing;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
-    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160-F0166 lines 1715-2137\n");
+    printf("sourceEvidence=ReDMCSB DUNGEON.C:F0160-F0167 lines 1715-2200\n");
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -79,6 +85,11 @@ int main(void)
     memset(rawWeapon, 0, sizeof(rawWeapon));
     memset(rawJunk, 0, sizeof(rawJunk));
     memset(decodedJunks, 0, sizeof(decodedJunks));
+    memset(&objectThings, 0, sizeof(objectThings));
+    memset(objectWeapons, 0, sizeof(objectWeapons));
+    memset(objectJunks, 0, sizeof(objectJunks));
+    memset(decodedObjectWeapons, 0, sizeof(decodedObjectWeapons));
+    memset(decodedObjectJunks, 0, sizeof(decodedObjectJunks));
 
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
@@ -248,9 +259,36 @@ int main(void)
         THING_TYPE_JUNK, discard_thing_for_f0166, &discardedJunk);
     ok &= expect_thing("F0166 obtains full normal pool from F0165 callback", allocatedJunk, discardedJunk);
 
+    objectWeapons[0] = (unsigned char)(THING_NONE & 0xffu);
+    objectWeapons[1] = (unsigned char)(THING_NONE >> 8);
+    objectJunks[0] = (unsigned char)(THING_NONE & 0xffu);
+    objectJunks[1] = (unsigned char)(THING_NONE >> 8);
+    objectThings.loaded = 1;
+    objectThings.rawThingData[THING_TYPE_WEAPON] = objectWeapons;
+    objectThings.rawThingData[THING_TYPE_JUNK] = objectJunks;
+    objectThings.thingCounts[THING_TYPE_WEAPON] = 2;
+    objectThings.thingCounts[THING_TYPE_JUNK] = 4;
+    objectThings.weapons = decodedObjectWeapons;
+    objectThings.weaponCount = 2;
+    objectThings.junks = decodedObjectJunks;
+    objectThings.junkCount = 4;
+    generatedThing = F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+        &objectThings, 51, NULL, NULL);
+    ok &= expect_thing("F0167 creates only an arrow from C051", generatedThing,
+        MAKE_THING(THING_TYPE_WEAPON, 0, 0));
+    ok &= expect_int("F0167 writes C27 arrow type", decodedObjectWeapons[0].type, 27);
+    generatedThing = F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+        &objectThings, 128, NULL, NULL);
+    ok &= expect_thing("F0167 creates only a boulder from C128", generatedThing,
+        MAKE_THING(THING_TYPE_JUNK, 0, 0));
+    ok &= expect_int("F0167 writes C25 boulder type", decodedObjectJunks[0].type, 25);
+    ok &= expect_thing("F0167 rejects a non-source icon",
+        F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+            &objectThings, 127, NULL, NULL), THING_NONE);
+
     if (!ok) {
         return 1;
     }
-    printf("PASS compact SFT and unused-Thing allocation match ReDMCSB F0160-F0166\n");
+    printf("PASS compact SFT and object allocation match ReDMCSB F0160-F0167\n");
     return 0;
 }
