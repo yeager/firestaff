@@ -102,6 +102,10 @@
   real PC34/Mac capture of those transitions. Do not restore a permissive
   bitmap blit, procedural panel, arbitrary
   font, or host-font route.
+  2026-07-15 update: pass929/G0500 now exposes the two-action menu box as
+  ReDMCSB's real `int16_t[4]` data and its focused verifier is re-pinned to
+  `MENU.C:36/496`; remaining work is still the real transition capture above,
+  not a synthetic table or bitmap fallback.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
