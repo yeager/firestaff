@@ -28,7 +28,7 @@ def function_body(source: str, signature: str) -> str:
 def main() -> int:
     source = M11.read_text(encoding="utf-8")
     center = function_body(source, "static void m11_draw_wall_contents")
-    side = function_body(source, "static void m11_draw_dm1_side_contents")
+    side = function_body(source, "static void m11_draw_dm1_side_contents_at_depth")
     effects = function_body(source, "static void m11_draw_effect_cue")
     explosions = function_body(source, "static int m11_draw_explosion_material")
     projectile = function_body(source, "static int m11_draw_viewport_projectile_sprite")
@@ -39,7 +39,7 @@ def main() -> int:
     assert "m11_draw_dm1_f0115_floor_item_sprite" in side
     assert "m11_draw_creature_sprite_ex" in side
     assert "m11_draw_viewport_projectile_sprite" in side
-    assert "m11_fill_rect" not in side[side.find("static void m11_draw_dm1_side_contents"):]
+    assert "m11_fill_rect" not in side
 
     assert "m11_draw_viewport_projectile_sprite" in effects
     assert "m11_draw_projectile_sprite" in projectile

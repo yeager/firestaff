@@ -1947,10 +1947,12 @@ int M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer
                                         logicalHeight,
                                         specialPalette);
     }
-    /* Preserve the source palette expansion above; V2.0 filters are a
-     * presentation-only post-pass over this RGBA copy. */
-    m11_apply_v2_special_palette_correction(uploadW, uploadH);
-    m11_apply_v2_filters_rgba_post(uploadW, uploadH);
+    /* TITLE.C, SWSH.C and ENTRANCE.C own both the indexed pixels and the
+     * complete VGA palette at this boundary.  Applying the optional V2
+     * gamma/CRT/motion passes here mutates that source-owned RGB result and
+     * is especially visible on the Metal/HiDPI path as a wrong DM title or
+     * entrance palette.  V2 filtering resumes with the ordinary game-frame
+     * presenter; special palettes always reach the host unchanged. */
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     sourceRect.x = 0.0f;
     sourceRect.y = 0.0f;

@@ -24895,52 +24895,50 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 }
 
-static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
-                                       unsigned char* framebuffer,
-                                       int framebufferWidth,
-                                       int framebufferHeight,
-                                       const M11_ViewRect frames[4],
-                                       const M11_ViewportCell cells[3][3]) {
-    int depth;
-    int blockingCenterDepth;
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
-    if (!state || !framebuffer || !frames || !cells) {
+static void m11_draw_dm1_side_contents_at_depth(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const M11_ViewRect frames[4],
+    const M11_ViewportCell cells[3][3],
+    int depth,
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int blockingCenterDepth) {
+    int sideSlot;
+    const M11_ViewRect* outer;
+    const M11_ViewRect* inner;
+    int paneY;
+    int paneH;
+    if (!state || !framebuffer || !frames || !cells || !visibility ||
+        depth < 0 || depth >= 3) {
         return;
     }
 
-    visibility = m11_dm1_lane_visibility(cells);
-    blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);
-
-    /* Source-bound side contents pass.  DUNVIEW.C F0115 places side-cell
+    /* Source-bound side-cell F0115 pass. DUNVIEW.C F0128 dispatches DnL and
+     * DnR immediately before the matching DnC route. F0115 places side-cell
      * objects through the same layout-696 C2500 object zones and C3200
-     * creature zones as center cells.  The debug side-feature renderer
-     * already consumed those source tables, but normal V1 never called it;
-     * as a result side-lane items, creatures, and missiles disappeared
-     * unless debug HUD was enabled.  Draw only contents here (no invented
-     * pane fill/border), after source wall/door panels and before center
-     * contents, in ReDMCSB far-to-near square order, and stop at nearer
-     * closed center-line blockers. */
-    for (depth = 2; depth >= 0; --depth) {
-        int sideSlot;
-        const M11_ViewRect* outer = &frames[depth];
-        const M11_ViewRect* inner = &frames[depth + 1];
-        int paneY = inner->y + 3;
-        int paneH = inner->h - 6;
-        if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth) {
+     * creature zones as center cells. Draw only source material and return
+     * to the F0128 caller for the same-depth center square. */
+    outer = &frames[depth];
+    inner = &frames[depth + 1];
+    paneY = inner->y + 3;
+    paneH = inner->h - 6;
+    if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth) {
             /* ReDMCSB DUNVIEW.C F0128 draws DnL/DnR before DnC.  Firestaff's
              * split renderer draws center walls/doors before this late side
              * contents pass, so same-depth/farther side contents must not be
              * allowed to repaint over the nearest blocking center square. */
-            break;
-        }
-        if (!dm1_viewport_3d_center_line_clear_from_visibility_pc34(&visibility,
-                                                                    depth)) {
-            break;
-        }
-        if (paneH <= 4) {
-            continue;
-        }
-        for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
+        return;
+    }
+    if (!dm1_viewport_3d_center_line_clear_from_visibility_pc34(visibility,
+                                                                 depth)) {
+        return;
+    }
+    if (paneH <= 4) {
+        return;
+    }
+    for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
             int side = sideSlot == 0 ? -1 : 1;
             int sideIndex = side < 0 ? 0 : 2;
             const M11_ViewportCell* cell = &cells[depth][sideIndex];
@@ -25046,7 +25044,6 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
              * after every packed side/center cell has drawn objects,
              * creatures, and projectiles (ReDMCSB DUNVIEW.C:5915-5933). */
 
-        }
     }
 }
 
@@ -35616,23 +35613,19 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         }
     }
 
-    m11_draw_dm1_side_contents(state, framebuffer, framebufferWidth, framebufferHeight,
-                               frames, cells);
-
-    /* Until the full C2500/C3200 object+creature zone pass lands, keep
-     * visible center-lane objects and creatures alive in normal V1 by
-     * drawing the existing source-asset-backed contents layer over open
-     * center cells.  The old procedural wall geometry remains debug-only;
-     * this call only draws floor ornaments/items/creatures/projectiles for
-     * open cells and gives M612/M618 changes a visual gate. */
+    /* ReDMCSB DUNVIEW.C F0128 calls F0115 in full square order:
+     * D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Keep the current
+     * source-material consumers, but run each side pair immediately before
+     * the matching center route instead of batching all sides first. */
     {
         int centerContentMask =
             visibility.center_visible_depth_mask;
-        /* F0128 invokes F0118/F0121/F0124 in D3, D2, D1 order.  The
-         * source F0115 content pass belongs to that same far-to-near
-         * progression: a nearer center object must overpaint a farther one.
-         * Do not traverse this center lane near-to-far after the side pass. */
+        int blockingCenterDepth =
+            visibility.nearest_blocking_center_depth_index;
         for (depth = 2; depth >= 0; --depth) {
+            m11_draw_dm1_side_contents_at_depth(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                frames, cells, depth, &visibility, blockingCenterDepth);
             if ((centerContentMask & (1 << depth)) != 0) {
                 m11_draw_wall_contents(framebuffer, framebufferWidth,
                                        framebufferHeight,
