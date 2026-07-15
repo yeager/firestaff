@@ -23,6 +23,12 @@
     Focused Ninja/CTest passed. Remaining work is unchanged: real PC34/Mac
     title-to-HoC capture plus operator-staged external original-save corpus
     evidence.
+  - 2026-07-16 update: the legacy DM1 title state helper now also requires
+    an exact 320x200 C001-sized source before loading or publishing a
+    real-asset receipt, and its draw pass follows the last requested source
+    zoom step instead of the double-buffer index. Focused Ninja/CTest passed.
+    Remaining work is unchanged: real PC34/Mac title-to-HoC capture plus
+    operator-staged external original-save corpus evidence.
 
 - 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
   original-PC34 part reader now rejects overflowing cursor state before

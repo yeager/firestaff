@@ -5,6 +5,10 @@
 #include <stdbool.h>
 
 #define DM1_TITLE_ZOOM_STEPS 18
+#define DM1_V1_TITLE_C001_WIDTH_PC34 320
+#define DM1_V1_TITLE_C001_HEIGHT_PC34 200
+#define DM1_V1_TITLE_C001_BYTES_PC34 \
+    (DM1_V1_TITLE_C001_WIDTH_PC34 * DM1_V1_TITLE_C001_HEIGHT_PC34)
 #define DM1_V1_TITLE_GRAPHIC_TITLE_PRESENTS_PC34 562
 
 typedef struct {
@@ -19,6 +23,7 @@ typedef struct {
     uint8_t* title_bitmap;
     uint32_t title_bitmap_size;
     uint8_t* master_bitmap;
+    uint8_t current_zoom_step;
     bool use_byte_coords;
     bool initialized;
 } DM1_V1_TitleStatePc34;

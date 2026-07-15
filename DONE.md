@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM1 legacy title C001 helper hardening: the
+  `DM1_V1_Title_*` compatibility state now loads only exact 320x200
+  C001-sized title data, refuses cropped title sources before allocating
+  runtime buffers, and refuses to publish a real-asset receipt unless the
+  exact C001-sized source is live. The draw path now consumes the last
+  source zoom step selected by `DM1_V1_Title_AnimateZoomPc34Compat` instead
+  of deriving the zoom frame from the active double-buffer index.
+  Verification: focused Ninja build plus CTests
+  `dm1_v1_intro_skip_state_cleanup_pc34_compat`,
+  `title_frontend_c001_fallback_gate_pc34_compat`,
+  `title_frontend_runtime_cadence_source_lock`, and
+  `title_frontend_step_palette_v1_pc34_compat` pass in `build-local-ninja`.
+  Remaining blocker: real PC34/Mac title-to-HoC capture and an
+  operator-staged external original-save corpus run.
+
 - ✅ 2026-07-16 CSB title/opening resident-surface ownership gate: the
   title/opening consumption receipt now requires PRESENTS, CHAOS, and
   STRIKES host frames to reference the resident C001 title surface and
