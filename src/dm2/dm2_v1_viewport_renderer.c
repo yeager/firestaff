@@ -4042,6 +4042,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
             if (!s->gdat_scene_control_ready ||
                 plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
                 plan->command_hash != s->gdat_scene_control_hash ||
+                plan->highest_light_level != s->gdat_highest_light_level ||
+                plan->ambient_darkness != s->gdat_ambient_darkness ||
                 floor->field != DM2_GDAT_GFXSET_FLOOR ||
                 ceiling->field != DM2_GDAT_GFXSET_CEIL ||
                 !floor->pixels || !ceiling->pixels ||
