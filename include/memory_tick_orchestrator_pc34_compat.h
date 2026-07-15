@@ -328,6 +328,12 @@ int F0182_DM1_GROUP_StopAttacking_Compat(
     int mapX,
     int mapY);
 
+/* ReDMCSB GROUP.C F0196, PC 3.4 branch: initialize exactly the sixty
+ * ACTIVE_GROUP owners used by a new DM1 world. Firestaff maps the original
+ * GroupThingIndex sentinel to CreatureAIState_Compat.reserved0. */
+int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
+    struct GameWorld_Compat* world);
+
 /* ReDMCSB GROUP.C F0195: walk the loaded current-map SFT/C04 chains in
  * column-major map order, create the corresponding active states, remove
  * square-local C29..C41 reactions, and start C37 wandering at GameTime + 1.

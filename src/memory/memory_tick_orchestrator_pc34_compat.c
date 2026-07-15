@@ -1012,9 +1012,7 @@ int F0881_WORLD_InitDefault_Compat(struct GameWorld_Compat* world, uint32_t seed
     memset(&world->pendingSensorEffects, 0, sizeof(world->pendingSensorEffects));
     memset(&world->projectiles, 0, sizeof(world->projectiles));
     memset(&world->explosions, 0, sizeof(world->explosions));
-    for (i = 0; i < GAMEWORLD_CREATURE_AI_CAPACITY; i++)
-        memset(&world->creatureAI[i], 0, sizeof(world->creatureAI[i]));
-    world->creatureAICount = 0;
+    if (!F0196_DM1_GROUP_InitializeActiveGroups_Compat(world)) return 0;
     memset(&world->lifecycle, 0, sizeof(world->lifecycle));
     F0859_LIFECYCLE_Init_Compat(&world->lifecycle, &world->party);
 
@@ -8969,6 +8967,30 @@ static void orch_schedule_generated_group_wandering_event_compat(
     wander.aux1 = plan.wanderCreatureType;
     wander.aux2 = plan.wanderEventType;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
+}
+
+int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
+    struct GameWorld_Compat* world)
+{
+    int activeIndex;
+
+    if (!world || GAMEWORLD_CREATURE_AI_CAPACITY <
+                      DM1_PC34_ACTIVE_GROUP_CAPACITY) {
+        return 0;
+    }
+
+    /* GROUP.C:F0196 PC 3.4 allocates sixty ACTIVE_GROUP records for a new
+     * game and sets every GroupThingIndex to -1. M10 uses fixed caller-owned
+     * storage; initialize exactly that source range and preserve spare slots. */
+    for (activeIndex = 0;
+         activeIndex < DM1_PC34_ACTIVE_GROUP_CAPACITY;
+         ++activeIndex) {
+        memset(&world->creatureAI[activeIndex], 0,
+               sizeof(world->creatureAI[activeIndex]));
+        world->creatureAI[activeIndex].reserved0 = -1;
+    }
+    world->creatureAICount = 0;
+    return 1;
 }
 
 int F0195_DM1_GROUP_AddAllActiveGroups_Compat(

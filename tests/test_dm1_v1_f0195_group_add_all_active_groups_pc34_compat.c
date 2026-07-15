@@ -45,6 +45,30 @@ int main(void)
     unsigned short capSft[61];
     int index;
 
+    /* GROUP.C F0196 (PC 3.4): a new world owns exactly sixty initialized
+     * ACTIVE_GROUP records. M10 maps GroupThingIndex to reserved0 and must
+     * leave its four non-source spare records untouched. */
+    memset(&world, 0x5a, sizeof(world));
+    world.creatureAICount = 17;
+    CHECK(F0196_DM1_GROUP_InitializeActiveGroups_Compat(&world),
+          "F0196 initializes the PC3.4 active-group storage");
+    CHECK(world.creatureAICount == 0,
+          "F0196 clears the active-group count");
+    for (index = 0; index < DM1_PC34_ACTIVE_GROUP_CAPACITY; ++index) {
+        CHECK(world.creatureAI[index].reserved0 == -1 &&
+                  world.creatureAI[index].groupMapIndex == 0,
+              "F0196 clears a source slot and writes its unused sentinel");
+    }
+    CHECK(world.creatureAI[DM1_PC34_ACTIVE_GROUP_CAPACITY].reserved0 ==
+              (int)0x5a5a5a5a,
+          "F0196 leaves non-source spare storage untouched");
+
+    CHECK(F0881_WORLD_InitDefault_Compat(&world, 0x196u),
+          "world initialization consumes F0196");
+    CHECK(world.creatureAI[0].reserved0 == -1 &&
+              world.creatureAI[DM1_PC34_ACTIVE_GROUP_CAPACITY - 1].reserved0 == -1,
+          "world initialization retains all sixty F0196 unused sentinels");
+
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&map, 0, sizeof(map));

@@ -108,6 +108,12 @@
   buzz. Remaining work is authentic original generator/save capture; do not
   replace a missing RNG, Thing slot, or move result with a generated group.
 
+- 2026-07-15 DM1 GROUP F0196 follow-up: PC3.4 new-world initialization now
+  owns exactly sixty cleared active-group slots with the original unused
+  sentinel before F0195 traverses real C04 chains. Remaining work is authentic
+  original-save corpus coverage; do not infer active entries outside the
+  serialized source range.
+
 - 2026-07-15 DM1 DUNGEON F0144 follow-up: raw PC3.4 `GROUP.Type` now
   selects exact G0243 Attributes through F0156. Remaining work is routing
   separately-owned live M10/M11 creature consumers through this raw accessor;
