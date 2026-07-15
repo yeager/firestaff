@@ -498,6 +498,53 @@ int csb_v1_dungeon_f0153_get_relative_square_type_pc34(
     return csb_v1_f0151_square_type((uint8_t)square);
 }
 
+uint16_t csb_v1_dungeon_f0159_get_next_thing_pc34(
+    const CSB_V1_DungeonData *d, uint16_t thing)
+{
+    const uint8_t *record;
+    int size;
+
+    if (!d || d->square_bytes != 1 || thing == 0xfffeu || thing == 0xffffu) {
+        return 0xfffeu;
+    }
+    record = csb_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
+    if (!record || size < 2) return 0xfffeu;
+
+    /* ReDMCSB DUNGEON.C F0159 lines 1664-1676: GENERIC.Next is the first
+     * little-endian word of every concrete Thing record. */
+    return rd16(record);
+}
+
+uint16_t csb_v1_dungeon_f0162_get_square_first_object_pc34(
+    const CSB_V1_DungeonData *d, int level, int x, int y)
+{
+    uint16_t thing;
+    int first_thing;
+    int maximum_links = 0;
+    int type;
+
+    if (!d || d->square_bytes != 1) return 0xfffeu;
+    for (type = 0; type < CSB_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0 ||
+            maximum_links > 0x7fff - d->thing_type_counts[type]) {
+            return 0xfffeu;
+        }
+        maximum_links += d->thing_type_counts[type];
+    }
+    if (maximum_links == 0) return 0xfffeu;
+
+    /* ReDMCSB DUNGEON.C F0162 lines 1748-1760: start at F0161's square
+     * head and advance F0159 while the Thing type is below C04_GROUP. */
+    first_thing = csb_v1_dungeon_get_first_thing(d, level, x, y);
+    if (first_thing < 0) return 0xfffeu;
+    thing = (uint16_t)first_thing;
+    while (thing != 0xfffeu && maximum_links-- > 0) {
+        if (((thing >> 10) & 0x0fu) >= CSB_V1_THING_TYPE_GROUP) return thing;
+        thing = csb_v1_dungeon_f0159_get_next_thing_pc34(d, thing);
+    }
+    return 0xfffeu;
+}
+
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y) {
     int v = csb_v1_dungeon_get_raw_square(d, level, x, y);
     if (v < 0) return -1;

@@ -140,6 +140,14 @@ int csb_v1_dungeon_f0153_get_relative_square_type_pc34(
     const CSB_V1_DungeonData *d, int level, int direction,
     int steps_forward, int steps_right, int map_x, int map_y);
 
+/* Explicit real-data owners for ReDMCSB DUNGEON.C F0159/F0162.  A missing
+ * record, malformed chain, or non-PC34 byte map returns THING_ENDOFLIST
+ * (0xfffe); no decoded or fixture-only chain is substituted. */
+uint16_t csb_v1_dungeon_f0159_get_next_thing_pc34(
+    const CSB_V1_DungeonData *d, uint16_t thing);
+uint16_t csb_v1_dungeon_f0162_get_square_first_object_pc34(
+    const CSB_V1_DungeonData *d, int level, int x, int y);
+
 /* Return a read-only pointer to a decoded dungeon thing record.
  * Returns NULL if the thing handle is invalid, the type has no records, or
  * the record would exceed raw_data bounds.  out_type/out_index/out_size are
