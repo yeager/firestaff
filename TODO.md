@@ -6398,6 +6398,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   presentation route: no authentic Saturn pixel/palette/VDP1 format proof is
   available, so the packet cannot produce a host frame or unblock rendering.
 
+  The active viewport now traverses every static-textured Structure3 face with
+  an exact Structure2 descriptor anchor through its renderer consumer. Dynamic
+  and otherwise unproven faces remain outside that route. Traversal is still
+  source-only: it cannot infer transforms, texels, palettes, UVs, VDP1 state,
+  culling, or a host draw from the package bytes.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no

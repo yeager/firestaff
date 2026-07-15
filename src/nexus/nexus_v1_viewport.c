@@ -123,38 +123,43 @@ static int viewport_sync_dgn_material_palette(
 /* Stage one real static-textured Structure3 face from the active package for
  * a later Saturn-backed renderer. This intentionally has no fallback when a
  * level has no such source row, and it never turns package bytes into pixels. */
+static int viewport_consume_structure3_package_geometry(
+    void *context, const Nexus_V1_DgnStructure3PackageGeometryPacket *packet)
+{
+    Nexus_Viewport *vp = (Nexus_Viewport *)context;
+
+    if (!vp || !packet || !packet->valid) return -1;
+    /* Keep an exact source exemplar for inspection; traversal completion and
+     * counts below cover every static package face, not just this first one. */
+    if (!vp->structure3_package_geometry.valid)
+        vp->structure3_package_geometry = *packet;
+    return 0;
+}
+
 static void viewport_stage_structure3_package_geometry(
     Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
 {
-    int entry_index;
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt scene;
 
     if (!vp) return;
     memset(&vp->structure3_package_geometry, 0,
            sizeof(vp->structure3_package_geometry));
-    if (!engine) return;
-    for (entry_index = 0;
-         entry_index < engine->current_level.structure3_directory.entry_count;
-         ++entry_index) {
-        int face_ordinal;
-        for (face_ordinal = 0;
-             face_ordinal <
-                 engine->current_level.structure3_entry_face_counts[entry_index];
-             ++face_ordinal) {
-            if (nexus_v1_current_level_structure3_package_geometry_packet(
-                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
-                    &vp->structure3_package_geometry) == 1) {
-                vp->last_dgn_render_receipt.structure3_package_geometry_consumed =
-                    1;
-                vp->last_dgn_render_receipt.structure3_package_geometry_bound =
-                    vp->structure3_package_geometry.source_geometry_bound &&
-                    vp->structure3_package_geometry.material_descriptor_bound;
-                vp->last_dgn_render_receipt.structure3_package_geometry_no_draw =
-                    vp->structure3_package_geometry.no_draw_only &&
-                    vp->structure3_package_geometry.blocks_real_dgn_mesh_render;
-                return;
-            }
-        }
-    }
+    memset(&scene, 0, sizeof(scene));
+    if (!engine || nexus_v1_current_level_visit_structure3_package_geometry(
+                       engine, viewport_consume_structure3_package_geometry,
+                       vp, &scene) != 1 || !scene.valid || !scene.complete ||
+        scene.static_material_face_count <= 0 ||
+        scene.static_material_face_count != scene.consumed_face_count ||
+        !vp->structure3_package_geometry.valid) return;
+    vp->last_dgn_render_receipt.structure3_package_geometry_consumed = 1;
+    vp->last_dgn_render_receipt.structure3_package_geometry_bound =
+        vp->structure3_package_geometry.source_geometry_bound &&
+        vp->structure3_package_geometry.material_descriptor_bound;
+    vp->last_dgn_render_receipt.structure3_package_geometry_no_draw =
+        scene.no_draw_only && scene.blocks_real_dgn_mesh_render &&
+        !scene.decoder_permitted;
+    vp->last_dgn_render_receipt.structure3_package_geometry_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure3_package_geometry_scene = scene;
 }
 
 /* Render visible dungeon squares from party position */

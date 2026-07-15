@@ -3362,6 +3362,82 @@ cleanup:
     return result;
 }
 
+int nexus_v1_current_level_visit_structure3_package_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3PackageGeometryConsumer consumer, void *context,
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt receipt;
+    int entry_index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    /* The face-material receipt API requires an output object. Keep the
+     * source admission explicit rather than treating a loaded level alone as
+     * permission to traverse package geometry. */
+    {
+        Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+        if (nexus_v1_current_level_structure3_face_material_receipt(
+                engine, &material_receipt) != 1 || !material_receipt.valid) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.level_index = material_receipt.level_index;
+        receipt.source_byte_count = material_receipt.source_byte_count;
+        receipt.source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    }
+    receipt.structure3_entry_count =
+        engine->current_level.structure3_directory.entry_count;
+    if (receipt.structure3_entry_count <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (entry_index = 0; entry_index < receipt.structure3_entry_count;
+         ++entry_index) {
+        int face_ordinal;
+        int face_count =
+            engine->current_level.structure3_entry_face_counts[entry_index];
+        if (face_count < 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        for (face_ordinal = 0; face_ordinal < face_count; ++face_ordinal) {
+            Nexus_V1_DgnStructure3PackageGeometryPacket packet;
+            ++receipt.candidate_face_count;
+            if (nexus_v1_current_level_structure3_package_geometry_packet(
+                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
+                    &packet) != 1) {
+                continue;
+            }
+            if (!packet.valid || !packet.source_geometry_bound ||
+                !packet.material_descriptor_bound || !packet.no_draw_only ||
+                packet.fallback_visuals_permitted ||
+                !packet.blocks_real_dgn_mesh_render) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.static_material_face_count;
+            if (consumer && consumer(context, &packet) != 0) {
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.consumed_face_count;
+        }
+    }
+    receipt.valid = 1;
+    receipt.complete =
+        receipt.consumed_face_count == receipt.static_material_face_count;
+    *out_receipt = receipt;
+    return receipt.complete ? 1 : 0;
+}
+
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt)

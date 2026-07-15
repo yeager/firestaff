@@ -31,6 +31,9 @@ typedef struct {
     int structure3_package_geometry_consumed;
     int structure3_package_geometry_bound;
     int structure3_package_geometry_no_draw;
+    int structure3_package_geometry_scene_consumed;
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt
+        structure3_package_geometry_scene;
     int party_x;
     int party_y;
     int party_dir;
@@ -115,6 +118,8 @@ typedef struct {
     uint8_t wall_material_palette_map[NEXUS_DMDF_MATERIAL_COUNT][256];
     int material_palette_valid;
     Nexus_V1_DgnStructure3RenderPacket structure3_source_packet;
+    /* First packet is retained as an inspection exemplar; the receipt records
+     * traversal of the complete source-bound static-material scene. */
     Nexus_V1_DgnStructure3PackageGeometryPacket structure3_package_geometry;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
