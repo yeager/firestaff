@@ -67,6 +67,7 @@ static void make_open_door_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_MAGIC;
     p->flags = 0;
+    p->reserved1 = make_thing(THING_TYPE_JUNK, 0);
     p->reserved3 = 1;
 }
 
@@ -89,6 +90,7 @@ static void make_non_weapon_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
+    p->reserved1 = make_thing(THING_TYPE_JUNK, 1);
     p->reserved3 = 1;
 }
 
@@ -111,6 +113,7 @@ static void make_weapon_arrow_projectile(struct ProjectileInstance_Compat* p)
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode = COMBAT_ATTACK_NORMAL;
     p->flags = 0;
+    p->reserved1 = make_thing(THING_TYPE_WEAPON, 1);
     p->reserved3 = 1;
 }
 
@@ -295,6 +298,30 @@ static void test_weapon_arrow_projectile_wall_impact_metallic_thud(void)
                "F0219 lines 699-714 decrements energy before wall impact");
 }
 
+static void test_ownerless_arrow_does_not_infer_metallic_thud(void)
+{
+    struct ProjectileInstance_Compat in;
+    struct CellContentDigest_Compat digest;
+    struct ProjectileTickResult_Compat result;
+
+    printf("test_ownerless_arrow_does_not_infer_metallic_thud\n");
+
+    make_weapon_arrow_projectile(&in);
+    in.reserved1 = (int)THING_NONE;
+    make_north_wall_digest(&digest);
+    memset(&result, 0, sizeof(result));
+
+    expect_int("ownerless_arrow.resolve.rc",
+               F0820_PROJECTILE_ResolveCollision_Compat(
+                   &in, &digest, PROJECTILE_RESULT_HIT_WALL, 748u, NULL,
+                   &result),
+               1,
+               "ReDMCSB PROJEXPL.C:F0217 lines 587-600");
+    expect_int("ownerless_arrow.result.sound", result.emittedSoundCode,
+               DM1_SND_WOODEN_THUD,
+               "F0217 classifies raw Projectile.Slot, not arrow subtype");
+}
+
 static void test_weapon_associated_thing_wall_impact_metallic_thud(void)
 {
     struct ProjectileInstance_Compat in;
@@ -366,6 +393,7 @@ int main(void)
     test_open_door_projectile_wall_impact_wooden_thud();
     test_non_weapon_projectile_wall_impact_wooden_thud();
     test_weapon_arrow_projectile_wall_impact_metallic_thud();
+    test_ownerless_arrow_does_not_infer_metallic_thud();
     test_weapon_associated_thing_wall_impact_metallic_thud();
     test_non_weapon_associated_thing_wall_impact_wooden_thud();
 
