@@ -584,6 +584,7 @@ typedef struct {
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
     int first_failure_result;
+    uint32_t provenance_fingerprint;
     int discovery_receipt_count;
     DM1OriginalSavePC34CorpusDiscoveryReceipt
         discovery_receipts[DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP];

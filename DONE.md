@@ -9,6 +9,16 @@
   `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass in
   `build-local-ninja`.
 
+- ✅ 2026-07-16 DM1 original-save corpus report gate: exposed the
+  PC34 corpus-roundtrip receipt counters already maintained by the handoff
+  implementation: rejected/truncated scan counts, Firestaff-manifest and
+  malformed-envelope rejection counts, first failure result, and the
+  path-independent provenance fingerprint. Verification: strict direct C11
+  compile of `src/dm1/dm1_v1_original_save_classifier.c`, strict direct C11
+  compile of `tests/test_dm1_v1_original_save_classifier_pc34.c`, and a
+  strict direct C11 executable contract check for
+  `DM1OriginalSavePC34CorpusRoundtripReport`.
+
 - ✅ 2026-07-16 CSB terminal door-runtime handoff hardening: the CSB
   entrance-to-runtime receipt now rejects legacy one-byte C017/C040 wrapper
   shapes, incomplete PRESENTS/CHAOS/STRIKES playback, stale door-open state,
