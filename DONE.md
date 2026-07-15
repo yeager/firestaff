@@ -19251,3 +19251,13 @@ entry's first successor. Firestaff admits it only when it remains inside the
 same copied TII span and matches original Track 02 byte `$3c8a`. This proves a
 third bounded byte-to-execution observation, not instruction role, control
 semantics, CD-record selection, dungeon data, or visual meaning.
+
+# Nexus Structure1F direct face host manifest gate (2026-07-15)
+
+The package boundary now consumes a direct face capture manifest only after
+rebuilding the active canonical Structure1F target and matching its LEV hash,
+owner location, Structure1A/Structure3 references, face/vertex/normal row
+fingerprints, vertex indexes, and transform-table fingerprints. Any malformed
+or changed field is fail-closed. Acceptance preserves `no_draw_only`; it is
+not evidence of a Saturn transform, culling result, material, VDP1 command,
+palette, pixels, or rendering.

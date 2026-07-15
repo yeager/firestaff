@@ -28,6 +28,8 @@ static int nexus_v1_slev_trace_value(const char *text, size_t size,
                                      const char *key, char *out_value,
                                      size_t out_value_size);
 static int nexus_v1_slev_trace_hex_u32(const char *text, uint32_t *out_value);
+static int nexus_v1_slev_trace_decimal_u32(const char *text,
+                                           uint32_t *out_value);
 static int nexus_v1_slev_trace_is_sha256(const char *text);
 static int nexus_v1_slev_trace_hex_u64(const char *text,
                                        uint64_t *out_value);
@@ -6191,6 +6193,162 @@ int nexus_v1_engine_write_structure1f_direct_face_capture_target(
     return write_ok ? 1 : 0;
 }
 
+int nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *manifest_text, size_t manifest_size,
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *face_target;
+    const Nexus_V1_DgnStructure2SourceReceipt *source;
+    Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt receipt;
+    char value[96];
+    char vertex_indexes[48];
+    uint32_t parsed_u32;
+    uint64_t parsed_u64;
+    size_t magic_size;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_MISSING;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !manifest_text || manifest_size == 0U ||
+        !engine->level_loaded || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0 ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &target) != 1 || !target.valid ||
+        !target.geometry.source_geometry_bound ||
+        !target.transform_table_source_bound ||
+        !target.owner_transform_selector_source_bound) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    source = &engine->current_level_structure2_source;
+    if (source->level_index != engine->game.current_level ||
+        !source->canonical_hash_verified || !source->materialization_bound ||
+        !source->loaded_bytes_bound ||
+        source->loaded_dgn_size != engine->current_level_dgn_size ||
+        !nexus_v1_dgn_source_bytes_match(source, engine->current_level_dgn_data,
+                                         engine->current_level_dgn_size)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.package_bytes_bound = 1;
+    magic_size = strlen(NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC);
+    if (manifest_size <= magic_size ||
+        memcmp(manifest_text,
+               NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC,
+               magic_size) != 0 ||
+        (manifest_text[magic_size] != '\n' && manifest_text[magic_size] != '\r')) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    face_target = &target.geometry.direct_mesh.face_target.candidate;
+    (void)snprintf(vertex_indexes, sizeof(vertex_indexes), "%u,%u,%u,%u",
+                   target.geometry.face.vertex_indexes[0],
+                   target.geometry.face.vertex_indexes[1],
+                   target.geometry.face.vertex_indexes[2],
+                   target.geometry.face.vertex_indexes[3]);
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "level_index",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.level_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "source_byte_count", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.source_byte_count ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "source_bytes_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.geometry.direct_mesh.source_bytes_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1f_entry_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1f_entry_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "owner_x",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.owner_x ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "owner_y",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.owner_y ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1a_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure3_model_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure3_model_index ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "face_ordinal",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.face_ordinal ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "z_rotation",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.z_rotation ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "face_row_fnv1a32", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != face_target->face_row_fnv1a32 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "referenced_vertex_rows_fnv1a32", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != face_target->referenced_vertex_rows_fnv1a32 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "normal_row_fnv1a32", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != face_target->normal_row_fnv1a32 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "fill_selector", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != face_target->fill_selector ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "vertex_indexes", value, sizeof(value)) ||
+        strcmp(value, vertex_indexes) != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_offset", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.transform_table.table_byte_offset ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_bytes", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_decimal_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.transform_table.table_byte_count ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "structure1a_table_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.raw_table_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "selector_column_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.selector_column_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "original_saturn_capture_required", value,
+                                    sizeof(value)) || strcmp(value, "1") != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "no_draw_only",
+                                    value, sizeof(value)) || strcmp(value, "1") != 0) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_target_bound = 1;
+    receipt.owner_geometry_bound = 1;
+    receipt.transform_selectors_bound = 1;
+    receipt.original_saturn_capture_required = 1;
+    receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,
@@ -7016,6 +7174,23 @@ static int nexus_v1_slev_trace_hex_u32(const char *text, uint32_t *out_value) {
         else return 0;
         if (value > 0x0fffffffu) return 0;
         value = (value << 4) | digit;
+    }
+    *out_value = value;
+    return 1;
+}
+
+static int nexus_v1_slev_trace_decimal_u32(const char *text,
+                                           uint32_t *out_value) {
+    uint32_t value = 0;
+    const char *cursor;
+
+    if (!text || !text[0] || !out_value) return 0;
+    for (cursor = text; *cursor; ++cursor) {
+        uint32_t digit;
+        if (*cursor < '0' || *cursor > '9') return 0;
+        digit = (uint32_t)(*cursor - '0');
+        if (value > (UINT32_MAX - digit) / 10U) return 0;
+        value = value * 10U + digit;
     }
     *out_value = value;
     return 1;
