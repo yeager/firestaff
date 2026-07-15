@@ -15457,12 +15457,123 @@ static int csb_v1_runtime_validate_csbwin_timer_heap(
     return 1;
 }
 
-/* CSBWin Timer.cpp::DeleteTimer/SetTimer preserves the TIMER slot when a
- * supported runtime path consumes and requeues it, then AdjustTimerQueue
- * restores heap order. Firestaff retains that slot as a source receipt. Once
- * the due M10 event is gone, rebuild only the serialized heap topology and
- * its event-to-slot receipts. Any consumed timer, generated event, duplicate
- * receipt, or malformed queue leaves the profile untouched and unexportable. */
+/* CSBWin Timer.cpp DeleteTimer:912-941 followed by SetTimer:944-1172.
+ * A dispatched timer is removed from the serialized heap before its source
+ * successor obtains the source allocator's first available TIMER slot. Keep
+ * that whole mutation in
+ * local arrays: a failed successor must leave both the restored slot pool and
+ * Firestaff's event-to-slot receipts unchanged. */
+static int csb_v1_runtime_replace_dispatched_csbwin_timer(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t consumed_queue_slot,
+    uint16_t consumed_timer_index,
+    const CSB_V1_CSBWin512TimerSummary *successor,
+    int successor_event_index)
+{
+    CSB_V1_CSBWin512TimerSummary
+        staged_timers[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES];
+    uint16_t staged_queue[CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES];
+    uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
+    uint16_t old_count;
+    uint16_t last_queue_slot;
+    uint16_t next_free;
+    uint16_t staged_first_avail;
+    uint16_t staged_sequence;
+    uint16_t i;
+
+    if (!profile || !successor || successor_event_index < 0 ||
+        successor_event_index >= DM1_EVENT_MAX_COUNT ||
+        !csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
+        consumed_queue_slot >= profile->csbwin_timer_queue_summary_count ||
+        consumed_timer_index >= profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_queue[consumed_queue_slot] !=
+            consumed_timer_index ||
+        !profile->csbwin_timers[consumed_timer_index].valid ||
+        profile->csbwin_timers[consumed_timer_index].truncated ||
+        profile->csbwin_timers[consumed_timer_index].function ==
+            DM1_EVENT_NONE ||
+        profile->csbwin_timers[consumed_timer_index].source_index !=
+            consumed_timer_index ||
+        !successor->valid || successor->truncated ||
+        successor->function == DM1_EVENT_NONE ||
+        profile->csbwin_timeline_event_queue_slot[successor_event_index] !=
+            CSB_V1_CSBWIN_TIMER_QUEUE_NONE) {
+        return 0;
+    }
+
+    old_count = profile->csbwin_timer_queue_summary_count;
+    if (old_count == 0u || old_count > CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        profile->timeline_queue.eventCount < 0 ||
+        profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT) {
+        return 0;
+    }
+    memcpy(staged_timers, profile->csbwin_timers, sizeof(staged_timers));
+    memcpy(staged_queue, profile->csbwin_timer_queue,
+           (size_t)old_count * sizeof(staged_queue[0]));
+    memcpy(staged_slots, profile->csbwin_timeline_event_queue_slot,
+           sizeof(staged_slots));
+
+    /* DeleteTimer clears only Function, moves the final heap handle into the
+     * vacated queue position, and makes the deleted handle eligible for the
+     * next SetTimer allocation. */
+    staged_timers[consumed_timer_index].function = DM1_EVENT_NONE;
+    last_queue_slot = (uint16_t)(old_count - 1u);
+    if (consumed_queue_slot != last_queue_slot) {
+        staged_queue[consumed_queue_slot] = staged_queue[last_queue_slot];
+    }
+
+    for (i = 0u; i < DM1_EVENT_MAX_COUNT; ++i) {
+        if (i == (uint16_t)successor_event_index) continue;
+        if (staged_slots[i] == consumed_queue_slot) return 0;
+        if (consumed_queue_slot != last_queue_slot &&
+            staged_slots[i] == last_queue_slot) {
+            staged_slots[i] = consumed_queue_slot;
+        }
+    }
+
+    /* DeleteTimer changes firstAvail only when the released handle precedes
+     * it. SetTimer consumes that exact cursor; it does not rescan from slot
+     * zero and thereby alter the saved allocator's deterministic ownership. */
+    staged_first_avail = profile->csbwin_first_avail_timer;
+    if (consumed_timer_index < staged_first_avail) {
+        staged_first_avail = consumed_timer_index;
+    }
+    next_free = staged_first_avail;
+    if (next_free >= profile->csbwin_max_timers ||
+        staged_timers[next_free].function != DM1_EVENT_NONE) {
+        return 0;
+    }
+
+    staged_timers[next_free] = *successor;
+    staged_timers[next_free].valid = 1;
+    staged_timers[next_free].truncated = 0;
+    staged_timers[next_free].source_index = next_free;
+    staged_sequence = profile->csbwin_timer_sequence;
+    staged_timers[next_free].sequence = staged_sequence;
+    staged_queue[last_queue_slot] = next_free;
+    staged_slots[successor_event_index] = last_queue_slot;
+
+    staged_first_avail = profile->csbwin_max_timers;
+    for (i = (uint16_t)(next_free + 1u); i < profile->csbwin_max_timers; ++i) {
+        if (staged_timers[i].function == DM1_EVENT_NONE) {
+            staged_first_avail = i;
+            break;
+        }
+    }
+    memcpy(profile->csbwin_timers, staged_timers, sizeof(staged_timers));
+    memcpy(profile->csbwin_timer_queue, staged_queue,
+           (size_t)old_count * sizeof(staged_queue[0]));
+    memcpy(profile->csbwin_timeline_event_queue_slot, staged_slots,
+           sizeof(staged_slots));
+    profile->csbwin_timer_sequence = (uint16_t)(staged_sequence + 1u);
+    profile->csbwin_first_avail_timer = staged_first_avail;
+    return 1;
+}
+
+/* Timer.cpp DeleteTimer removes the dispatched handle and SetTimer assigns a
+ * fresh first-available handle before AdjustTimerQueue restores heap order.
+ * Once a source transaction has staged that exact ownership change, rebuild
+ * only the serialized heap topology and its event-to-slot receipts. */
 static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
@@ -19616,15 +19727,16 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
     timer = &profile->csbwin_timers[timer_index];
     if (timer->function == DM1_EVENT_WATCHDOG) {
         struct DM1_Event_V1 next;
+        CSB_V1_CSBWin512TimerSummary successor;
         uint32_t next_time;
         int event_index;
 
         /* CSBWin CSBCode.cpp:6504 delegates TT_53 to Timer.cpp:2770-2782.
          * SetWatchdogTimer creates a zero-payload level-zero TT_53 exactly
-         * 300 game ticks after the current d.Time. Retain the original
-         * TIMER summary and queue slot for the successor: a separately
-         * invented M10 C53 event would lose the original-save owner and
-         * could not round-trip through the CSBWin timer queue. */
+         * 300 game ticks after the current d.Time. Timer.cpp DeleteTimer
+         * removes the consumed handle, then SetTimer assigns the successor
+         * to the first real TT_EMPTY slot. A separately invented M10 C53
+         * event would lose original-save ownership and cannot round-trip. */
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
@@ -19639,16 +19751,20 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             next.type = DM1_EVENT_WATCHDOG;
             event_index = csb_v1_runtime_add_timeline_event(profile, &next);
             if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
-                /* Commit only after the successor has a live heap slot. */
-                timer->time = next_time;
-                timer->level = 0u;
-                timer->ubyte5 = 0u;
-                timer->ubyte6 = 0u;
-                timer->ubyte7 = 0u;
-                timer->ubyte8 = 0u;
-                timer->ubyte9 = 0u;
-                profile->csbwin_timeline_event_queue_slot[event_index] =
-                    queue_slot;
+                successor = *timer;
+                successor.time = next_time;
+                successor.level = 0u;
+                successor.ubyte5 = 0u;
+                successor.ubyte6 = 0u;
+                successor.ubyte7 = 0u;
+                successor.ubyte8 = 0u;
+                successor.ubyte9 = 0u;
+                if (!csb_v1_runtime_replace_dispatched_csbwin_timer(
+                        profile, queue_slot, timer_index, &successor,
+                        event_index)) {
+                    (void)dm1v1_event_delete(&profile->timeline_queue,
+                                              event_index);
+                }
             }
         }
         /* TT_53 aliases the M10 watchdog classification. A malformed saved
