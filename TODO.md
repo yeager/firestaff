@@ -6738,3 +6738,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Structure2 target with an independently authenticated Saturn producer to
     obtain the descriptor's palette-state, VDP1 command/VRAM, and texture
     lanes. Only then may the actual pixel/palette format work begin.
+    The tool can now emit every descriptor target in a selected LEV, allowing
+    one authenticated Saturn campaign to cover all active Structure2 classes
+    instead of choosing a representative byte pattern.
