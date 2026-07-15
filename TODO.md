@@ -28,6 +28,13 @@
   bytecode acceptance. Broader DSA coverage remains open; no DB3 substitute
   record or synthetic payload is accepted.
 
+- 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
+  exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
+  `Magic.cpp::AddToSkill` owner after complete authenticated bytecode. The
+  remaining live gap is binding that owner to the original skill-adjustment
+  route; do not retain parameters in a synthetic global or apply them outside
+  the source skill path.
+
 - 2026-07-15 DM1 GROUP F0177 follow-up: raw adjacent C04 melee target
   selection now consumes F0175/F0176 and the original F0229/G0023 cell order.
   Remaining work is routing live M10/M11 attack consumers through effective

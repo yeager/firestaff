@@ -332,6 +332,11 @@ typedef int (*CSB_V1_CSBWinDSACommitCausePoisonFn)(
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
+/* CSBWin DSA.cpp::STKOP_SetAdjustSkillsParameters updates the five global
+ * values consumed by Magic.cpp::AddToSkill.  Their runtime owner must accept
+ * the complete replacement after the authenticated action succeeds. */
+typedef int (*CSB_V1_CSBWinDSASetAdjustSkillsParametersFn)(
+    void *user, const uint32_t values[5]);
 
 typedef struct {
     uint32_t master_location;
@@ -379,6 +384,7 @@ typedef struct {
      * movement-filter execution; STKOP_MonBlk then owns its replacement. */
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
+    CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -667,6 +673,7 @@ typedef struct {
     int jitter_changed;
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
+    CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

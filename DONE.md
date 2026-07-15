@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSBWin `STKOP_SetAdjustSkillsParameters`: implemented
+  `DSA.cpp:3034-3043` as a source-ordered, transactional five-word update.
+  The values reach only an explicit `Magic.cpp::AddToSkill` owner after full
+  authenticated bytecode acceptance; a missing owner or later bad word
+  publishes nothing.
+
 - 2026-07-15 CSBWin `STKOP_MonBlk`: implemented `DSA.cpp:4625-4636` as a
   transactional four-direction movement-filter mask. It accepts no absent
   owner and does not publish after a later malformed DSA word.

@@ -79,6 +79,9 @@ static int32_t sound_number;
 static int32_t sound_volume;
 static int32_t sound_flags;
 static int monster_move_inhibit_enabled;
+static int adjust_skills_parameters_enabled;
+static int adjust_skills_parameters_count;
+static uint32_t adjust_skills_parameters_values[5];
 static int actuator_copy_enabled;
 static int actuator_copy_store_count;
 static uint8_t actuator_copy_payloads[3][6];
@@ -540,6 +543,17 @@ static int play_sound(void *user, int32_t requested_number,
     return 1;
 }
 
+static int set_adjust_skills_parameters(void *user,
+                                        const uint32_t values[5])
+{
+    (void)user;
+    if (!adjust_skills_parameters_enabled || !values) return 0;
+    memcpy(adjust_skills_parameters_values, values,
+           sizeof(adjust_skills_parameters_values));
+    ++adjust_skills_parameters_count;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -686,6 +700,9 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     }
     if (discard_text_enabled) context.discard_text = discard_text;
     if (sound_enabled) context.play_sound = play_sound;
+    if (adjust_skills_parameters_enabled) {
+        context.set_adjust_skills_parameters = set_adjust_skills_parameters;
+    }
     context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -1065,6 +1082,14 @@ int main(void)
     };
     uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
     uint16_t monblk_then_bad[] = { 0x0686u, 0x0du, 0x11cbu, 0x0000u };
+    uint16_t set_adjust_skills[] = {
+        0x0686u, 10u, 0x0686u, 20u, 0x0686u, 30u, 0x0686u, 40u,
+        0x0686u, 50u, 0x170bu
+    };
+    uint16_t set_adjust_skills_then_bad[] = {
+        0x0686u, 10u, 0x0686u, 20u, 0x0686u, 30u, 0x0686u, 40u,
+        0x0686u, 50u, 0x170bu, 0x0000u
+    };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -1818,6 +1843,32 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "MONBLK rejects a later malformed source word");
     monster_move_inhibit_enabled = 0;
+    adjust_skills_parameters_enabled = 1;
+    adjust_skills_parameters_count = 0;
+    memset(adjust_skills_parameters_values, 0,
+           sizeof(adjust_skills_parameters_values));
+    check(run(&state, &action, set_adjust_skills,
+              (int)(sizeof(set_adjust_skills) / sizeof(set_adjust_skills[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              adjust_skills_parameters_count == 1 &&
+              adjust_skills_parameters_values[0] == 10u &&
+              adjust_skills_parameters_values[1] == 20u &&
+              adjust_skills_parameters_values[2] == 30u &&
+              adjust_skills_parameters_values[3] == 40u &&
+              adjust_skills_parameters_values[4] == 50u,
+          "SETADJUSTSKILLSPARAMETERS preserves CSBWin's five-value pop order");
+    adjust_skills_parameters_count = 0;
+    check(run(&state, &action, set_adjust_skills_then_bad,
+              (int)(sizeof(set_adjust_skills_then_bad) /
+                    sizeof(set_adjust_skills_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              adjust_skills_parameters_count == 0,
+          "SETADJUSTSKILLSPARAMETERS does not publish before later rejection");
+    adjust_skills_parameters_enabled = 0;
+    check(run(&state, &action, set_adjust_skills,
+              (int)(sizeof(set_adjust_skills) / sizeof(set_adjust_skills[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "SETADJUSTSKILLSPARAMETERS remains closed without Magic owner");
     check(run(&state, &action, discard_text, 1, parameters, &execution) ==
               CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "DISCARDTEXT rejects without the source UI owner");
