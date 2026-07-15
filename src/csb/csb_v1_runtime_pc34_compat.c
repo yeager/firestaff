@@ -123,6 +123,8 @@ static int csb_v1_runtime_dsa_is_carried(
     int32_t *out_result);
 static int csb_v1_runtime_dsa_get_level_multiplier(
     void *user, int32_t level, int32_t *out_multiplier);
+static int csb_v1_runtime_dsa_get_missile_info(
+    void *user, uint16_t thing, uint32_t out_values[4]);
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
@@ -17681,6 +17683,50 @@ static int csb_v1_runtime_dsa_get_level_multiplier(
     return 1;
 }
 
+/* CSBWin DSA.cpp:2795-2822 reads DB14's exact four mutable fields and the
+ * owning TIMER word8 direction. Both owners must come from one complete
+ * loaded CSBWin save/runtime profile; DB14 alone cannot supply direction. */
+static int csb_v1_runtime_dsa_get_missile_info(
+    void *user, uint16_t thing, uint32_t out_values[4])
+{
+    const CSB_V1_RuntimeProfile *profile = user;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    const CSB_V1_CSBWin512TimerSummary *timer;
+    uint16_t timer_index;
+    int type;
+    int size;
+
+    if (!out_values || !profile || !profile->dungeon_handle) return -1;
+    out_values[0] = UINT32_MAX;
+    out_values[1] = UINT32_MAX;
+    out_values[2] = UINT32_MAX;
+    out_values[3] = UINT32_MAX;
+    dungeon = profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1 ||
+        !profile->csbwin_body_runtime_summary_valid ||
+        profile->csbwin_timer_summary_total !=
+            profile->csbwin_timer_summary_count ||
+        profile->csbwin_timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES) {
+        return -1;
+    }
+    record = csb_v1_dungeon_get_thing_record(dungeon, thing, &type, NULL,
+                                              &size);
+    if (!record || type != 14) return 0;
+    if (size < 8) return -1;
+    timer_index = csb_v1_runtime_read_u16(record + 6);
+    if (timer_index >= profile->csbwin_timer_summary_count) return -1;
+    timer = &profile->csbwin_timers[timer_index];
+    if (!timer->valid || timer->truncated ||
+        timer->source_index != timer_index) return -1;
+    out_values[0] = csb_v1_runtime_read_u16(record + 2);
+    out_values[1] = record[4];
+    out_values[2] = record[5];
+    out_values[3] = (timer->ubyte8 >> 2) & 0x03u;
+    return 1;
+}
+
 /* CSBWin DSA.cpp:3411-3675.  These opcodes operate on the raw DB5/DB6/DB8/
  * DB10 word2 field, never on Firestaff object metadata.  Return zero for the
  * original silent wrong-type/invalid-Thing result and -1 only when no loaded
@@ -20684,6 +20730,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
+    candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
     candidate.monster_invisible_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =
@@ -20811,6 +20858,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
+    candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
     candidate.monster_invisible_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000002u) != 0u;
     candidate.monster_size4_enabled =

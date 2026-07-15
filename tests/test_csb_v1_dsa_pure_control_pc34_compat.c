@@ -47,6 +47,7 @@ static int is_carried_enabled;
 static int random_state_enabled;
 static uint32_t random_state;
 static int level_multiplier_enabled;
+static int missile_info_enabled;
 
 static int wing_talents_enabled;
 
@@ -283,6 +284,19 @@ static int get_level_multiplier(void *user, int32_t level, int32_t *out)
     return 1;
 }
 
+static int get_missile_info(void *user, uint16_t thing,
+                            uint32_t out_values[4])
+{
+    (void)user;
+    if (!missile_info_enabled || !out_values) return -1;
+    if (thing != 0x014eu) return 0;
+    out_values[0] = 0x0123u;
+    out_values[1] = 55u;
+    out_values[2] = 44u;
+    out_values[3] = 3u;
+    return 1;
+}
+
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
                                      uint32_t input_value,
@@ -400,6 +414,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     if (level_multiplier_enabled) {
         context.get_level_multiplier = get_level_multiplier;
     }
+    if (missile_info_enabled) context.get_missile_info = get_missile_info;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -614,6 +629,9 @@ int main(void)
     };
     uint16_t false_pit_then_bad_opcode[] = {
         0x0686u, 0x0c82u, 0x0686u, 1u, 0x084bu, 0x0000u
+    };
+    uint16_t missile_info_fetch[] = {
+        0x0686u, 0x014eu, 0x194bu, 0x000du, 0x004du, 0x008du, 0x00cdu
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -1040,6 +1058,17 @@ int main(void)
           "FALSEPIT remains staged after a later rejected opcode");
     false_pit_enabled = 0;
     cell_info_enabled = 0;
+    missile_info_enabled = 1;
+    memset(parameters, 0, sizeof(parameters));
+    check(run(&state, &action, missile_info_fetch,
+              (int)(sizeof(missile_info_fetch) /
+                    sizeof(missile_info_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 3u && parameters[1] == 44u &&
+              parameters[2] == 55u && parameters[3] == 0x0123u &&
+              execution.stack_depth == 0u,
+          "MISSILEINFO@ reads DB14 and source timer direction in stack order");
+    missile_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

@@ -889,6 +889,34 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
         }
         break;
+    case 101u: /* STKOP_MissileInfoFetch, CSBWin DSA.cpp:2795-2822. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        {
+            uint32_t missile_values[4] = {
+                UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX
+            };
+            if (v <= UINT16_MAX) {
+                if (!context->get_missile_info) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                if (context->get_missile_info(context->dungeon_user,
+                                              (uint16_t)v,
+                                              missile_values) < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+            }
+            if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                               missile_values[0]) ||
+                !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                               missile_values[1]) ||
+                !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                               missile_values[2]) ||
+                !csb_v1_csbwin_dsa_stack_push(stack, depth,
+                                               missile_values[3])) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+        }
+        break;
     case 3u: /* STKOP_Pick */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
             count >= (uint32_t)*depth ||
@@ -2489,6 +2517,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_thing_type = runner->get_thing_type;
     context.is_carried = runner->is_carried;
     context.get_level_multiplier = runner->get_level_multiplier;
+    context.get_missile_info = runner->get_missile_info;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
