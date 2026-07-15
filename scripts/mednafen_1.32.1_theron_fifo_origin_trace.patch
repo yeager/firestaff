@@ -183,7 +183,7 @@ index 67f97398e..1d2dafbcc 100644
 +                                        unsigned generation, uint32 lba,
 +                                        uint16 offset, uint8 value)
 +{
-+ if(TheronPCECDDataOriginCount >= 16384)
++ if(TheronPCECDDataOriginCount >= 65536)
 +  return;
 + TheronPCECDTraceFifoReceipt("pce_cd_data_origin sequence=%u cpu_pc=%04x port=%04x source_generation=%u source_lba=%u source_offset=%u data=%02x\n",
 +                             TheronPCECDDataOriginCount++, cpu_pc, port,
