@@ -218,6 +218,14 @@ int dm1v1_event_delete(
 
     if (!queue) return 0;
     if (eventIndex < 0 || eventIndex >= queue->maxEvents) return 0;
+    if (queue->eventCount <= 0 ||
+        queue->events[eventIndex].type == DM1_EVENT_NONE) return 0;
+
+    /* F0237 still needs the old heap extent to find the event when it is
+     * the final timeline entry. The prior order decremented eventCount
+     * first, making that valid entry invisible to the lookup. */
+    timelineIndex = dm1v1_event_get_timeline_index(queue, eventIndex);
+    if (timelineIndex < 0) return 0;
 
     queue->events[eventIndex].type = DM1_EVENT_NONE;
 
@@ -229,9 +237,6 @@ int dm1v1_event_delete(
     lastEventCount = --queue->eventCount;
     if (lastEventCount == 0) return 1;
 
-    timelineIndex = dm1v1_event_get_timeline_index(queue, eventIndex);
-    if (timelineIndex < 0) return 0;
-
     if (timelineIndex == lastEventCount) {
         /* Deleted event was last in timeline — no fix needed */
         return 1;
@@ -241,6 +246,44 @@ int dm1v1_event_delete(
     queue->timeline[timelineIndex] = queue->timeline[lastEventCount];
     dm1v1_event_fix_placement(queue, timelineIndex);
     return 1;
+}
+
+/*
+ * ReDMCSB GROUP.C F0181 lines 340-371.
+ *
+ * The original walks the allocated event array rather than the timeline
+ * heap, deleting every C29..C41 event at the supplied square on G0272.
+ * Deleting an event repairs the heap but does not move its event record, so
+ * the increasing array index remains the source ordering contract.
+ */
+int dm1v1_group_delete_events_f0181(
+    struct DM1_EventQueue_V1* queue,
+    int currentMapIndex,
+    int mapX,
+    int mapY)
+{
+    int eventIndex;
+    int deleted = 0;
+
+    if (!queue || currentMapIndex < 0 || currentMapIndex > 0xff ||
+        mapX < 0 || mapX > 0xff || mapY < 0 || mapY > 0xff) {
+        return 0;
+    }
+
+    for (eventIndex = 0; eventIndex < queue->maxEvents; ++eventIndex) {
+        const struct DM1_Event_V1* event = &queue->events[eventIndex];
+
+        if (DM1_MAP_TIME_MAP(event->map_time) != currentMapIndex ||
+            event->type < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
+            event->type > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 ||
+            event->b_mapX != mapX || event->b_mapY != mapY) {
+            continue;
+        }
+        if (dm1v1_event_delete(queue, eventIndex)) {
+            ++deleted;
+        }
+    }
+    return deleted;
 }
 
 /* ================================================================

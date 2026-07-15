@@ -16942,3 +16942,9 @@ LEV00–LEV15 corpus fixes the observed split at 1,553 `0x0008` descriptors and
 keeps pixel span, palette addressing, VDP1 format, decoder permission, and
 drawing false. This is concrete format evidence, not a format inference.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
+- ✅ 2026-07-15 DM1 GROUP F0181: added the exact current-map group-event
+  deletion primitive. It scans event records and removes the complete
+  C29..C41 range at the requested square through the existing F0237 heap
+  repair path; other squares and maps remain. The DM1 event-timer regression
+  covers both deletion boundaries and every retention gate. Source: ReDMCSB
+  `GROUP.C` F0181:340-371.

@@ -192,6 +192,14 @@ int dm1v1_event_delete(
     struct DM1_EventQueue_V1* queue,
     int eventIndex);
 
+/* ReDMCSB GROUP.C F0181: delete only the C29..C41 group-event family
+ * belonging to one square on the current map. Returns deleted events. */
+int dm1v1_group_delete_events_f0181(
+    struct DM1_EventQueue_V1* queue,
+    int currentMapIndex,
+    int mapX,
+    int mapY);
+
 int dm1v1_event_extract_first(
     struct DM1_EventQueue_V1* queue,
     struct DM1_Event_V1* outEvent);

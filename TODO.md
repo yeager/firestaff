@@ -6883,3 +6883,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     corpus without the configured `sega_101.bin` BIOS; provide a legal local
     BIOS, then capture the VDP1/CRAM lanes against these targets. Do not use a
     substitute BIOS, generated trace, or inferred decoder.
+- 2026-07-15 DM1 GROUP F0181 follow-up: the source C29..C41 event deletion
+  primitive is now DM1-owned and source-locked. Remaining work is having
+  each live group-retirement owner consume this common primitive rather than
+  duplicating its bounded cleanup loop; delete the complete C29..C41 range
+  but retain all other maps and squares exactly as GROUP.C does.
