@@ -123,6 +123,13 @@
     level row. The bounded non-level-up DSA mutation also reaches the
     CSBWin CHARDESC save-summary writer. `LevelUp` remains fail-closed until
     its complete random/stat/UI transaction is owned.
+  - 2026-07-15 follow-up: `STKOP_Mastery` now binds `DSA.cpp:3389-3409` to
+    the same loaded CHARDESC rows, including selector-four hand character,
+    temporary-XP suppression, hidden-skill averaging, and transient
+    `PartySleeping`. Only callers that request CSBWin's possession suppression
+    are accepted: Firestaff has no verified original name-index owner for
+    possession bonuses, so the unflagged route remains unavailable rather
+    than mapping a host item.
 
 - 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
   exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
@@ -3641,9 +3648,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-15 mastery update: authenticated `STKOP_Mastery` now preserves
       CSBWin's character, skill, and flag stack order through an explicit
       CHARDESC mastery owner, including source zero for invalid character or
-      skill. A live runtime binding remains closed until party sleeping and
-      original possession name-index bonuses are both retained; it does not
-      infer either from Firestaff item metadata.
+      skill. The live bridge owns source hand-character resolution,
+      `PartySleeping`, temporary-XP flags, and hidden-skill averaging from the
+      loaded CHARDESC rows. Original possession name-index bonuses remain
+      unavailable: unflagged callers reject instead of inferring an item from
+      Firestaff metadata.
     - 2026-07-15 party-fetch update: authenticated `STKOP_PartyFetch` now
       preserves CSBWin's `(index,num)` stack order, 100-cell no-op boundary,
       and all twelve GAMEBLOCK2 words through one explicit snapshot callback.
@@ -3666,9 +3675,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-15 experience update: authenticated `STKOP_ExperiencePlus`
       now retains CSBWin's `(character,skill,experience)` stack order and
       stages a source-owned `AddToSkill` candidate until full bytecode
-      acceptance. The live binding remains closed until one original skill
-      owner supplies selected/base-skill XP, experience limits, mastery, and
-      level-up side effects as one transaction.
+      acceptance. The live owner now supplies selected/base-skill XP,
+      experience limits, and non-level-up mastery checks; full `LevelUp`
+      random/stat/UI side effects remain unavailable as one transaction.
     - 2026-07-15 character-swap update: authenticated `STKOP_SwapCharacter`
       now preserves the source `(index,fingerprint)` stack order and its
       returned status through a staged roster candidate. The live binding

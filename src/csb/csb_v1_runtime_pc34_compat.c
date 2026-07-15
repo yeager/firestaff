@@ -156,6 +156,9 @@ static int csb_v1_runtime_dsa_prepare_experience_plus(
 static int csb_v1_runtime_dsa_add_experience_plus(
     void *user, int32_t character_selector, int32_t skill_number,
     int32_t experience);
+static int csb_v1_runtime_dsa_get_mastery(
+    void *user, uint32_t champion_index, uint32_t skill_index,
+    uint32_t flags, uint32_t *out_mastery);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -5187,6 +5190,69 @@ static int csb_v1_runtime_dsa_add_experience_plus(
         .SkillExperience[skill_number] = skill_experience;
     profile->party_state.Champions[character_selector]
         .SkillExperience[basic_skill] = basic_experience;
+    return 1;
+}
+
+/* CSBWin DSA.cpp:3389-3409 passes the original flags through to
+ * Code17818.cpp::DetermineMastery.  The loaded CHARDESC rows own experience
+ * and temporary adjustments.  The runtime has no verified CSBWin name-index
+ * owner for Firestaff/Pendant/Gem possession bonuses, therefore only the
+ * source caller flag which suppresses possessions is accepted here. */
+static int csb_v1_runtime_dsa_get_mastery(
+    void *user, uint32_t champion_index, uint32_t skill_index,
+    uint32_t flags, uint32_t *out_mastery)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_Champion *champion;
+    int64_t experience;
+    int leader;
+    int mastery;
+
+    if (!profile || !out_mastery || !profile->party_state_valid) return -1;
+    if (champion_index == 4u) {
+        leader = profile->leader_index;
+        if (leader < 0 || leader >= profile->party_state.ChampionCount) {
+            leader = profile->party_state.LeaderIndex;
+        }
+        if (leader < 0 || leader >= profile->party_state.ChampionCount) {
+            return 0;
+        }
+        champion_index = (uint32_t)leader;
+    }
+    if (champion_index >= (uint32_t)profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        skill_index >= CSB_V1_FULL_SKILL_COUNT) {
+        return 0;
+    }
+    if ((flags & 1u) == 0u) return -1;
+    if (profile->csbwin_party_sleeping) {
+        *out_mastery = 1u;
+        return 1;
+    }
+
+    champion = &profile->party_state.Champions[champion_index];
+    if (!champion->SkillExperienceValid) return -1;
+    experience = (int64_t)champion->SkillExperience[skill_index];
+    if ((flags & 2u) == 0u) {
+        experience += champion->SkillTemporaryExperience[skill_index];
+    }
+    if (skill_index > 3u) {
+        const uint32_t basic_skill = (skill_index - 4u) >> 2;
+
+        experience += champion->SkillExperience[basic_skill];
+        if ((flags & 2u) == 0u) {
+            experience += champion->SkillTemporaryExperience[basic_skill];
+        }
+        experience >>= 1;
+    }
+    if (experience < 0) experience = 0;
+    mastery = 1;
+    while (experience >= 500) {
+        experience >>= 1;
+        ++mastery;
+    }
+    *out_mastery = (uint32_t)mastery;
     return 1;
 }
 
@@ -13753,6 +13819,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->game_time     = 0;
     profile->total_play_ms = 0;
     profile->tick_count    = 0;
+    profile->csbwin_party_sleeping = 0;
     dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
     csb_v1_audio_runtime_init(&profile->audio_runtime);
     memset(&profile->last_timeline_dispatch, 0,
@@ -20899,6 +20966,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
+    candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -21050,6 +21118,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.prepare_experience_plus =
         csb_v1_runtime_dsa_prepare_experience_plus;
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
+    candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
