@@ -202,12 +202,13 @@ typedef struct {
     uint32_t master_location;
     uint32_t *parameters;
     int parameter_count;
-    /* CSBWin DSA.cpp STKOP_PartyDistance reads only d.partyLevel/X/Y.
-     * This is supplied by the runtime profile that owns the live party. */
+    /* CSBWin DSA.cpp STKOP_PartyDistance and STKOP_GlobalFetch read this
+     * live party pose.  It is supplied by the runtime profile that owns it. */
     int party_location_valid;
     int party_level;
     int party_x;
     int party_y;
+    int party_direction;
     int game_time_valid;
     uint32_t game_time;
     int dsa_slave_thing_valid;
@@ -444,6 +445,7 @@ typedef struct {
     int party_level;
     int party_x;
     int party_y;
+    int party_direction;
     int game_time_valid;
     uint32_t game_time;
     int dsa_slave_thing_valid;

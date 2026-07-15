@@ -998,6 +998,24 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             goto underflow;
         }
         break;
+    case 59u: /* STKOP_GlobalFetch */
+        /* CSBWin DSA.cpp:3958-3973 recognizes selector one as the live
+         * party LOCATIONREL.  Keep the source packing used by Loc2AbsCoord:
+         * facing bits 16..17, level 10..15, X 5..9, and Y 0..4. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        if (v == 1u) {
+            if (!context->party_location_valid) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            v = ((uint32_t)(context->party_direction & 3) << 16) |
+                ((uint32_t)(context->party_level & 0x3f) << 10) |
+                ((uint32_t)(context->party_x & 0x1f) << 5) |
+                (uint32_t)(context->party_y & 0x1f);
+        } else {
+            v = 0u;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, v)) goto underflow;
+        break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
         if (!context->game_time_valid ||
@@ -1631,6 +1649,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.party_level = runner->party_level;
     context.party_x = runner->party_x;
     context.party_y = runner->party_y;
+    context.party_direction = runner->party_direction;
     context.game_time_valid = runner->game_time_valid;
     context.game_time = runner->game_time;
     context.dsa_slave_thing_valid = runner->dsa_slave_thing_valid;

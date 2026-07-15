@@ -3221,6 +3221,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       runner. It returns CSBWin's same-level Manhattan distance or negative
       level distance and rejects when a profile has no valid party pose. It
       does not inspect or mutate dungeon, timer, filter, or save state.
+    - 2026-07-15 party-location update: source `STKOP_GlobalFetch` selector
+      one now returns the profile-owned CSBWin `LOCATIONREL::Integer()` party
+      pose, including direction. Unrecognized selectors retain source zero;
+      selector one rejects without a party pose rather than manufacturing a
+      location. It reads no dungeon, timer, filter, or substitute world state.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.

@@ -19508,6 +19508,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.party_level = profile->current_level;
     candidate.party_x = profile->party_x;
     candidate.party_y = profile->party_y;
+    candidate.party_direction = profile->party_dir & 3;
     candidate.game_time_valid = 1;
     candidate.game_time = profile->game_time;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
