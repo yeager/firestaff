@@ -6933,3 +6933,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   F0184 behavior threshold before retiring every slot. Remaining work is to
   route the M10 map/save handoff through this common DM1 helper; malformed
   C04 references must remain a no-mutation failure, without default groups.
+- 2026-07-15 DM1 GROUP F0197-F0199 follow-up: source-defined sight, smell,
+  and route primitives now require decoded square/door facts and a loaded-map
+  blocker callback. Remaining work is binding M10's live F0157/current-map
+  reader to those inputs; do not replace a missing callback with a clear map.

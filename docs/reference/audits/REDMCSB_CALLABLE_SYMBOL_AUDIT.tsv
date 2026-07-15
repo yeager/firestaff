@@ -295,9 +295,9 @@ F	0195	F0195_GROUP_AddAllActiveGroups	ATARIST.H;GROUP.C;FMTOWNS.H;IIGS.H;DEFS.H;
 F	195	F195_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0196	F0196_GROUP_InitializeActiveGroups	ATARIST.H;GROUP.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	196	F196_aozz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0197	F0197_GROUP_IsViewPartyBlocked	GROUP.C;IIGS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0198	F0198_GROUP_IsSmellPartyBlocked	GROUP.C;IIGS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0199	F0199_GROUP_GetDistanceBetweenUnblockedSquares	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0197	F0197_GROUP_IsViewPartyBlocked	GROUP.C;IIGS.H	implemented-narrow	implemented_narrow	GROUP.C door C3/C4 opaque-sight and wall/fakewall predicates over caller-supplied decoded square facts.
+F	0198	F0198_GROUP_IsSmellPartyBlocked	GROUP.C;IIGS.H	implemented-narrow	implemented_narrow	GROUP.C wall/fakewall smell predicate, including imaginary fakewall pass-through, over caller-supplied decoded square facts.
+F	0199	F0199_GROUP_GetDistanceBetweenUnblockedSquares	GROUP.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	GROUP.C source-tested path walk uses a mandatory loaded-map blocker callback; returns zero on any source-tested blocker and Manhattan distance otherwise.
 F	0200	F0200_GROUP_GetDistanceToVisibleParty	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0201	F0201_GROUP_GetSmelledPartyPrimaryDirectionOrdinal	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0202	F0202_GROUP_IsMovementPossible	GROUP.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

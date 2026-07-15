@@ -1554,6 +1554,66 @@ static void test_remove_all_active_groups_f0194(void) {
               "F0194 rejects before mutating raw C04 data");
 }
 
+struct F0199BlockGrid {
+    int firstX;
+    int firstY;
+    int secondX;
+    int secondY;
+};
+
+static int f0199_is_blocked(int mapX, int mapY, void* context)
+{
+    const struct F0199BlockGrid* grid = context;
+    return grid && ((mapX == grid->firstX && mapY == grid->firstY) ||
+                    (mapX == grid->secondX && mapY == grid->secondY));
+}
+
+static void test_group_path_blockers_f0197_to_f0199(void) {
+    struct DM1GroupSightSquare_Compat square;
+    struct F0199BlockGrid grid;
+
+    memset(&square, 0, sizeof(square));
+    square.elementType = DUNGEON_ELEMENT_DOOR;
+    square.doorState = 3;
+    EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,
+              "F0197 blocks a three-quarter closed opaque door");
+    square.creaturesCanSeeThrough = 1;
+    EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 0,
+              "F0197 permits a see-through door");
+    square.elementType = DUNGEON_ELEMENT_FAKEWALL;
+    square.doorState = 0;
+    square.creaturesCanSeeThrough = 0;
+    square.fakeWallOpen = 0;
+    square.fakeWallImaginary = 1;
+    EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,
+              "F0197 keeps an imaginary closed fake wall sight-blocking");
+    EXPECT_EQ(F0817e_DM1_GROUP_IsSmellPartyBlocked_Compat(&square), 0,
+              "F0198 lets smell pass an imaginary fake wall");
+
+    memset(&grid, 0xff, sizeof(grid));
+    EXPECT_EQ(F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+                  0, 0, 0, 1, NULL, NULL), 1,
+              "F0199 adjacent squares do not require a callback");
+    EXPECT_EQ(F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+                  0, 0, 3, 0, f0199_is_blocked, &grid), 3,
+              "F0199 returns Manhattan distance on an unblocked row");
+    grid.firstX = 2;
+    grid.firstY = 0;
+    EXPECT_EQ(F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+                  0, 0, 3, 0, f0199_is_blocked, &grid), 0,
+              "F0199 rejects a source-tested row blocker");
+    grid.firstX = 2;
+    grid.firstY = 3;
+    grid.secondX = 3;
+    grid.secondY = 2;
+    EXPECT_EQ(F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+                  0, 0, 3, 3, f0199_is_blocked, &grid), 0,
+              "F0199 rejects a diagonal when both source branches block");
+    EXPECT_EQ(F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+                  0, 0, 3, 0, NULL, NULL), 0,
+              "F0199 rejects a non-adjacent route without loaded-map callback");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -1604,6 +1664,7 @@ int main(void) {
     test_reaction_apply_plan_no_event_and_wander_default();
     test_reaction_schedule_plan_owns_c30_insert_fields();
     test_remove_all_active_groups_f0194();
+    test_group_path_blockers_f0197_to_f0199();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
