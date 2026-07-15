@@ -93,6 +93,12 @@
   dynamic-light branch. It does not infer the later accumulator or darkness
   inputs. Focused coverage extends `test_dm2_v1_c_light_receipt`.
 
+- ✅ 2026-07-15 DM2 `c_light` map-state gate: an authenticated live light
+  state now must agree with the active raw `Difficulty()` receipt before
+  `DM2_RECALC_LIGHT_LEVEL` can publish a result. A fixed-map state cannot
+  become dynamic, and vice versa. Focused coverage:
+  `test_dm2_v1_c_light_receipt`.
+
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 C001 object move: the generic
   wall pass independently authenticates its PC3.4 wall byte and C03 chain,
   then admits C001's ordinary-object arrival through F0272/F0268. The focused

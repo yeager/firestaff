@@ -237,6 +237,22 @@ int dm2_v1_c_light_m11_receipt_build(
     return 1;
 }
 
+int dm2_v1_c_light_m11_receipt_build_for_map(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightMapDescriptorReceipt *map,
+    const DM2_V1_CLightSourceState *source,
+    DM2_V1_CLightM11Receipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!map || !map->valid || map->descriptor_hash == 0u ||
+        map->dynamic_light > 1u || !source ||
+        source->dynamic_map != map->dynamic_light) {
+        return 0;
+    }
+    return dm2_v1_c_light_m11_receipt_build(scene, source, out_receipt);
+}
+
 int dm2_v1_c_light_m11_palette_darkness(
     const DM2_V1_GdatSceneLightM11Receipt *scene,
     const DM2_V1_CLightM11Receipt *receipt,

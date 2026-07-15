@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V1_GDAT_SCENE_M11_COMMAND_H
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dungeon_loader.h"
 
 typedef struct {
     uint8_t field;
@@ -105,6 +106,13 @@ int dm2_v1_gdat_scene_light_m11_receipt(
     DM2_V1_GdatSceneLightM11Receipt *out_receipt);
 int dm2_v1_c_light_m11_receipt_build(
     const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightSourceState *source,
+    DM2_V1_CLightM11Receipt *out_receipt);
+/* A raw live c_light state is admissible only when its fixed/dynamic branch
+ * agrees with the active G1 Map_definitions::Difficulty() receipt. */
+int dm2_v1_c_light_m11_receipt_build_for_map(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightMapDescriptorReceipt *map,
     const DM2_V1_CLightSourceState *source,
     DM2_V1_CLightM11Receipt *out_receipt);
 /* SKProject c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT stores
