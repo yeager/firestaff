@@ -1588,7 +1588,7 @@ int dm2_v1_viewport_projectile_graphic_index(int projectile_category,
                                              int frame_index)
 {
     int packed;
-    if (projectile_category < 0 || projectile_category > 0xFF ||
+    if (projectile_category <= 0 || projectile_category > 0xFF ||
         projectile_type < 0 || projectile_type > 0xFF ||
         frame_index < 0 || frame_index > 0xFF) {
         return 0;
@@ -3114,8 +3114,7 @@ int dm2_v1_viewport_build_projectile_render_plan(
             continue;
         }
 
-        category = src->projectile_category ?
-            src->projectile_category : 0x0d;
+        category = src->projectile_category;
         row = &out_plan->projectiles[out_plan->projectile_count++];
         row->projectile_index = i;
         row->projectile_category = category;
@@ -5123,8 +5122,8 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
     /* DM2 projectile rendering:
      * skproject SKWIN/SkWinCore.cpp lines 10672-10750 routes missiles and
      * clouds through QUERY_DUNGEON_MAP_CHIP_PICT before DRAW_CHIP_OF_MAGIC_MAP.
-     * The runtime drain gives this pass a GDAT category/type pair; missing
-     * or unmapped graphics keep the bounded streak fallback. */
+     * The runtime drain must supply that original GDAT category/type pair;
+     * unmapped graphics have no source-owned draw. */
 
     if (!dm2_v1_viewport_build_projectile_render_plan(s, &plan)) {
         return;

@@ -629,7 +629,7 @@ typedef struct {
 } DM2_V1_ItemAssetBlit;
 
 typedef struct {
-    uint8_t  projectile_category; /* GDAT category, 0 = spell-missile fallback */
+    uint8_t  projectile_category; /* source-owned GDAT category; 0 = unavailable */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
     uint8_t  frame_index;     /* animation frame */
     int16_t  depth;           /* depth sort key */
