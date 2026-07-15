@@ -5629,6 +5629,53 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
     return receipt.valid ? 1 : 0;
 }
 
+typedef struct {
+    int wanted_entry_index;
+    int found;
+    Nexus_V1_DgnStructure1FSourcePacket packet;
+} Nexus_V1_DgnStructure1FEntryLookupContext;
+
+static int nexus_v1_structure1f_entry_lookup_consumer(
+    void *context, const Nexus_V1_DgnStructure1FSourcePacket *packet)
+{
+    Nexus_V1_DgnStructure1FEntryLookupContext *lookup =
+        (Nexus_V1_DgnStructure1FEntryLookupContext *)context;
+    if (!lookup || !packet || !packet->valid ||
+        packet->entry_index != lookup->wanted_entry_index) {
+        return 0;
+    }
+    lookup->packet = *packet;
+    lookup->found = 1;
+    return 1;
+}
+
+int nexus_v1_current_level_lookup_structure1f_source_entry(
+    const Nexus_V1_Engine *engine, int entry_index,
+    Nexus_V1_DgnStructure1FSourcePacket *out_packet)
+{
+    Nexus_V1_DgnStructure1FEntryLookupContext lookup;
+    Nexus_V1_DgnStructure1FSourceSceneReceipt scene;
+
+    if (!out_packet) return -1;
+    memset(out_packet, 0, sizeof(*out_packet));
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
+    if (!engine || !engine->level_loaded || entry_index < 0 ||
+        entry_index >= engine->current_level.structure1f_entry_count) {
+        return 0;
+    }
+    memset(&lookup, 0, sizeof(lookup));
+    memset(&scene, 0, sizeof(scene));
+    lookup.wanted_entry_index = entry_index;
+    if (nexus_v1_current_level_visit_structure1f_source_scene(
+            engine, nexus_v1_structure1f_entry_lookup_consumer, &lookup,
+            &scene) != 1 || !scene.valid || !lookup.found) {
+        return 0;
+    }
+    *out_packet = lookup.packet;
+    return 1;
+}
+
 int nexus_v1_current_level_visit_structure1c_source_scene(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure1CSourceConsumer consumer, void *context,
