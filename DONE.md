@@ -19177,3 +19177,12 @@ the input byte against the selected real stream and rejects an output byte that
 does not match the source-owned direct-byte route. This is one capture-bound
 transfer candidate, not a complete PRS3 literal/token grammar, decoder,
 palette/pixel interpretation, or render permission.
+
+# Nexus PRS3 V8 zero-side source/merge witness (2026-07-15)
+
+V8 now admits a bounded zero-side witness only when two adjacent MENU.BPK
+source bytes match the selected real stream, their read PCs match the retail
+DM.BIN corridor, and their observed merge equals `byte0 | ((byte1 << 4) &
+0x0f00)`. The zero-side corridor has no proven direct output store, so V8
+deliberately records no fabricated output pair. This does not identify a
+token, offset, history copy, length, output, palette, decoded pixel, or draw.

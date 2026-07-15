@@ -693,7 +693,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         free(menu); free(dm_bin); return;
     }
     snprintf(text, sizeof(text),
-        "NEXUS_PRS3_SH2_VDP1_TRACE_V7\n"
+        "NEXUS_PRS3_SH2_VDP1_TRACE_V8\n"
         "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
         "entry_index=%x\nstream_offset=%x\nstream_size=%x\nexpected_output_bytes=%x\n"
         "payload_ram_address=6010000\nfirst_input_read_address=6010000\n"
@@ -741,6 +741,12 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         "nonzero_output_byte_offset=0\nnonzero_output_address=%x\n"
         "nonzero_output_write_sequence=16\n"
         "dynamic_nonzero_byte_transfer_observed=1\n"
+        "zero_first_input_instruction_offset=14dec\n"
+        "zero_second_input_instruction_offset=14df0\n"
+        "zero_first_input_payload_byte_offset=0\nzero_second_input_payload_byte_offset=1\n"
+        "zero_observed_first_input_byte=%x\nzero_observed_second_input_byte=%x\n"
+        "zero_observed_merged_control_value=%x\n"
+        "dynamic_zero_source_merge_observed=1\n"
         "decoder_returned_success=1\ncapture_complete=1\n",
         fnv1a64(menu, menu_size), fnv1a64(dm_bin, dm_bin_size), index,
         plan.stream_offset, plan.stream_size, plan.expected_output_bytes,
@@ -751,7 +757,10 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         output_base, output_base + plan.expected_output_bytes - 1U,
         plan.expected_output_bytes, output_base,
         output_base + plan.expected_output_bytes - 1U, plan.expected_output_bytes,
-        menu[plan.stream_offset], menu[plan.stream_offset], output_base);
+        menu[plan.stream_offset], menu[plan.stream_offset], output_base,
+        menu[plan.stream_offset], menu[plan.stream_offset + 1U],
+        menu[plan.stream_offset] |
+            ((uint32_t)menu[plan.stream_offset + 1U] << 4U & 0x0f00U));
     expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                text, strlen(text), &trace) &&
            nexus_v1_prs3_vdp1_capture_schema_bind_assets(
@@ -759,9 +768,10 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            binding.valid && binding.vdp1_command_consumption_observed &&
            binding.palette_consumption_observed && !binding.decoder_promoted &&
            !binding.fallback_visuals_permitted &&
-           trace.schema_version == 7U && trace.dynamic_control_operands_observed &&
-           trace.dynamic_nonzero_byte_transfer_observed,
-           "V7 binds a source-owned nonzero byte transfer without decoding");
+           trace.schema_version == 8U && trace.dynamic_control_operands_observed &&
+           trace.dynamic_nonzero_byte_transfer_observed &&
+           trace.dynamic_zero_source_merge_observed,
+           "V8 binds real zero-side source bytes and merge without decoding");
     expect(nexus_v1_prs3_decoder_readiness_bind_capture(
                &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&
            readiness.valid && readiness.capture_source_bound &&
@@ -873,6 +883,33 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     memcpy(strstr(text, "nonzero_output_store_instruction_offset=14dd9"),
            "nonzero_output_store_instruction_offset=14dd8",
            sizeof("nonzero_output_store_instruction_offset=14dd8") - 1U);
+    memcpy(strstr(text, "zero_first_input_instruction_offset=14dec"),
+           "zero_first_input_instruction_offset=14ded",
+           sizeof("zero_first_input_instruction_offset=14ded") - 1U);
+    memcpy(strstr(text, "zero_second_input_instruction_offset=14df0"),
+           "zero_second_input_instruction_offset=14df1",
+           sizeof("zero_second_input_instruction_offset=14df1") - 1U);
+    expect(nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) &&
+           !nexus_v1_prs3_vdp1_capture_schema_bind_assets(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, &binding) &&
+           !binding.valid,
+           "V8 rejects a zero-side witness at the wrong retail read PC");
+    memcpy(strstr(text, "zero_first_input_instruction_offset=14ded"),
+           "zero_first_input_instruction_offset=14dec",
+           sizeof("zero_first_input_instruction_offset=14dec") - 1U);
+    memcpy(strstr(text, "zero_second_input_instruction_offset=14df1"),
+           "zero_second_input_instruction_offset=14df0",
+           sizeof("zero_second_input_instruction_offset=14df0") - 1U);
+    memcpy(strstr(text, "zero_second_input_payload_byte_offset=1"),
+           "zero_second_input_payload_byte_offset=2",
+           sizeof("zero_second_input_payload_byte_offset=2") - 1U);
+    expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+               text, strlen(text), &trace) && !trace.valid,
+           "V8 rejects a non-adjacent zero-side source pair");
+    memcpy(strstr(text, "zero_second_input_payload_byte_offset=2"),
+           "zero_second_input_payload_byte_offset=1",
+           sizeof("zero_second_input_payload_byte_offset=1") - 1U);
     memcpy(strstr(text, "nonzero_counter_after=4"),
            "nonzero_counter_after=5",
            sizeof("nonzero_counter_after=5") - 1U);
