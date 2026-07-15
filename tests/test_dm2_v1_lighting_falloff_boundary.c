@@ -524,12 +524,14 @@ static void test_floor_ceiling_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     dm2_v1_render_floor_ceiling(&viewport);
-    CHECK("floor/ceiling fallback draws when no asset provider is installed",
+    CHECK("floor/ceiling without source material blocks instead of fallback pixels",
           viewport.asset_floor_ceiling_drawn_count == 0 &&
-              viewport.fallback_floor_ceiling_drawn_count == 2 &&
-              framebuffer[0] == 1 &&
-              framebuffer[(66 * 320)] == 5);
+              viewport.fallback_floor_ceiling_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING) != 0 &&
+              framebuffer[0] == 0 && framebuffer[(66 * 320)] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -584,10 +586,14 @@ static void test_floor_ceiling_asset_provider(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.source_materials_required = 1;
     dm2_v1_render_walls(&viewport);
-    CHECK("wall fallback counts when no asset provider is installed",
+    CHECK("walls without source material block instead of fallback pixels",
           viewport.asset_wall_drawn_count == 0 &&
-              viewport.fallback_wall_drawn_count == 1);
+              viewport.fallback_wall_drawn_count == 0 &&
+              (viewport.blocked_material_mask &
+               DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL) != 0 &&
+              framebuffer[0] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -616,10 +622,10 @@ static void test_floor_ceiling_asset_provider(void)
                                        test_dm2_asset_fetch,
                                        NULL);
     dm2_v1_render_walls(&viewport);
-    CHECK("wall pass uses per-panel fallback when one asset is missing",
+    CHECK("wall pass leaves a missing panel unpainted",
           s_asset_fetch_calls == 10 &&
               viewport.asset_wall_drawn_count == 9 &&
-              viewport.fallback_wall_drawn_count == 1);
+              viewport.fallback_wall_drawn_count == 0);
     s_fail_asset_index = 0;
 
     memset(framebuffer, 0, sizeof(framebuffer));

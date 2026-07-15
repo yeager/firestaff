@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject scene no-draw gate: `DRAW_DUNGEON_TILES` planes
+  and `DRAW_WALL` cells no longer paint generated ceiling, floor, or wall
+  substitutes. Missing source GDAT leaves the region blank and strict profiles
+  record the matching blocked material class. The focused viewport gate covers
+  unavailable planes, unavailable walls, and a single missing wall cell.
+
 - 2026-07-15 DM2 skproject door no-draw gate: `DRAW_DOOR` no longer paints
   Firestaff's generated fallback panel when its selected `DOORS` GDAT bitmap
   is unavailable. Source-material profiles report a blocked door; all other
