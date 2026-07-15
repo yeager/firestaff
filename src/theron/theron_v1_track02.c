@@ -5394,6 +5394,120 @@ theron_v1_track02_capture_initial_level_object_boundary(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_verify_canonical_iso_projection(
+    const uint8_t *raw_track02_data,
+    size_t raw_track02_size,
+    const char *raw_track02_md5,
+    const uint8_t *iso_data,
+    size_t iso_size,
+    Theron_Track02CanonicalIsoProjectionReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    size_t raw_sector_count;
+    size_t iso_sector_count;
+    size_t sector;
+    size_t first_level_offset;
+    size_t post_envelope_offset;
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!raw_track02_data || raw_track02_size == 0u || !raw_track02_md5 ||
+        !iso_data || iso_size == 0u || !out_receipt ||
+        raw_track02_size % TQR_RAW_SECTOR_BYTES != 0u ||
+        iso_size % TQR_RAW_SECTOR_USER_DATA_BYTES != 0u ||
+        theron_v1_track02_find_ipl_loader(raw_track02_data, raw_track02_size,
+                                          raw_track02_md5, &loader) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !loader.valid ||
+        theron_v1_track02_capture_initial_level_object_boundary(
+            raw_track02_data, raw_track02_size, raw_track02_md5, &boundary) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !boundary.valid || boundary.track02_record != 0x0b52u) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    raw_sector_count = raw_track02_size / TQR_RAW_SECTOR_BYTES;
+    if (loader.data_track_index01_raw_sector >= raw_sector_count ||
+        raw_sector_count - loader.data_track_index01_raw_sector >
+            SIZE_MAX / TQR_RAW_SECTOR_USER_DATA_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    iso_sector_count = raw_sector_count - loader.data_track_index01_raw_sector;
+    if (iso_size != iso_sector_count * TQR_RAW_SECTOR_USER_DATA_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (sector = 0u; sector < iso_sector_count; ++sector) {
+        size_t raw_offset =
+            (loader.data_track_index01_raw_sector + sector) *
+                TQR_RAW_SECTOR_BYTES +
+            TQR_RAW_SECTOR_USER_DATA_OFFSET;
+        size_t iso_offset = sector * TQR_RAW_SECTOR_USER_DATA_BYTES;
+        if (memcmp(raw_track02_data + raw_offset, iso_data + iso_offset,
+                   TQR_RAW_SECTOR_USER_DATA_BYTES) != 0) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+    }
+    if (boundary.level_user_data_offset_in_record >
+            TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        boundary.level_byte_count > TQR_RAW_SECTOR_USER_DATA_BYTES -
+            boundary.level_user_data_offset_in_record ||
+        (size_t)boundary.track02_record * TQR_RAW_SECTOR_USER_DATA_BYTES >
+            iso_size ||
+        boundary.level_user_data_offset_in_record > iso_size -
+            boundary.track02_record * TQR_RAW_SECTOR_USER_DATA_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    first_level_offset = (size_t)boundary.track02_record *
+            TQR_RAW_SECTOR_USER_DATA_BYTES +
+        boundary.level_user_data_offset_in_record;
+    post_envelope_offset = (size_t)boundary.track02_record *
+            TQR_RAW_SECTOR_USER_DATA_BYTES +
+        boundary.object_boundary_user_data_offset_in_record;
+    if (first_level_offset > iso_size || boundary.level_byte_count >
+            iso_size - first_level_offset ||
+        post_envelope_offset > iso_size ||
+        boundary.following_user_data_bytes_in_record >
+            iso_size - post_envelope_offset ||
+        tqr_hash_bytes(iso_data + first_level_offset,
+                       boundary.level_byte_count) != boundary.level_payload_hash ||
+        tqr_hash_bytes(iso_data + post_envelope_offset,
+                       boundary.following_user_data_bytes_in_record) !=
+            boundary.following_user_data_hash) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->data_track_index01_raw_sector =
+        loader.data_track_index01_raw_sector;
+    out_receipt->iso_sector_count = iso_sector_count;
+    out_receipt->iso_byte_count = iso_size;
+    out_receipt->first_level_track02_record = boundary.track02_record;
+    out_receipt->first_level_iso_user_data_offset = first_level_offset;
+    out_receipt->first_level_byte_count = boundary.level_byte_count;
+    out_receipt->first_level_hash = boundary.level_payload_hash;
+    out_receipt->post_envelope_iso_user_data_offset = post_envelope_offset;
+    out_receipt->post_envelope_byte_count =
+        boundary.following_user_data_bytes_in_record;
+    out_receipt->post_envelope_hash = boundary.following_user_data_hash;
+    out_receipt->object_semantics_proven = 0;
+    out_receipt->fallback_allowed = 0;
+    hash ^= (uint32_t)out_receipt->data_track_index01_raw_sector;
+    hash *= 16777619u;
+    hash ^= out_receipt->first_level_track02_record;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->first_level_iso_user_data_offset;
+    hash *= 16777619u;
+    hash ^= out_receipt->first_level_hash;
+    hash *= 16777619u;
+    hash ^= (uint32_t)out_receipt->post_envelope_iso_user_data_offset;
+    hash *= 16777619u;
+    hash ^= out_receipt->post_envelope_hash;
+    hash *= 16777619u;
+    out_receipt->receipt_hash = hash;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_envelope(
     const uint8_t *track02_data,
     size_t track02_size,
