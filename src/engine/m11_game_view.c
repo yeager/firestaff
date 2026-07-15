@@ -35152,8 +35152,14 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)dm1_v1_movement_arrows_graphic_id_pc34(),
         arrowW, arrowH, arrowX, arrowY);
-    m11_draw_v1_movement_arrow_visual_feedback(
-        state, framebuffer, framebufferWidth, framebufferHeight);
+    /* The C013 panel is authentic CSB GRAPHICS.DAT material.  The extra
+     * hatch/cyan keyboard cue below is an M11 affordance, not a CSBWin or
+     * ReDMCSB framebuffer operation; CSB therefore keeps C013 unchanged
+     * until a source-owned pressed-arrow state is available. */
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        m11_draw_v1_movement_arrow_visual_feedback(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+    }
 }
 
 static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,

@@ -14,6 +14,10 @@
   toggles now report `DM2 INVENTORY GDAT REQUIRED` and preserve the verified
   dungeon frame, because SKProject `CHANGE_VIEWPORT_TO_INVENTORY` owns a
   separate `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and click route.
+- 2026-07-15 CSB C013 movement-arrow source gate: CSB runtime keeps the
+  verified GRAPHICS.DAT C013 panel unchanged and rejects M11's generic
+  hatch/cyan keyboard overlay. The real-package launcher regression proves a
+   pending keyboard visual mask cannot alter the original C013 rectangle.
 
 - 2026-07-15 DM1 F0111 D3 door-front real-media gate: removed the active
   host-colored fallback from the F0676/F0677 C3700/C3710 panel route. It now

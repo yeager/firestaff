@@ -26,6 +26,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
@@ -174,6 +175,28 @@ static int rows_are_color(const unsigned char* pixels,
     return 1;
 }
 
+static int frame_rect_matches(const unsigned char* first,
+                              const unsigned char* second,
+                              int x,
+                              int y,
+                              int w,
+                              int h) {
+    int row;
+
+    if (!first || !second || x < 0 || y < 0 || w <= 0 || h <= 0 ||
+        x + w > 320 || y + h > 200) {
+        return 0;
+    }
+    for (row = 0; row < h; ++row) {
+        if (memcmp(first + (size_t)(y + row) * 320u + (size_t)x,
+                   second + (size_t)(y + row) * 320u + (size_t)x,
+                   (size_t)w) != 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int frame_matches_source_rect(const unsigned char* frame,
                                      const CSB_V1_StartupRuntimeSurface_PC34* source,
                                      int source_x,
@@ -316,6 +339,7 @@ static void run_real_launcher_handoff_if_available(void) {
     unsigned char title_strikes_frame[320 * 200];
     unsigned char entrance_closed_frame[320 * 200];
     unsigned char entrance_opening_frame[320 * 200];
+    unsigned char movement_base_frame[320 * 200];
     int tick_before;
     int entrance_frame_before;
 
@@ -626,6 +650,27 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(rows_are_color(framebuffer, 173, 200, 0u),
                 "M11 CSB clears C015 but never renders generic host telemetry as CSB text");
+    {
+        DM1_V1_MovementArrowRectPc34 arrows;
+        view.v1MovementArrowVisualTicks = 0;
+        view.v1MovementArrowVisualMask = 0;
+        memset(movement_base_frame, 0xff, sizeof(movement_base_frame));
+        M11_GameView_Draw(&view, movement_base_frame, 320, 200);
+        expect_true(dm1_v1_movement_arrows_outer_rect_pc34(&arrows) == 1,
+                    "M11 CSB resolves the source C013 movement-arrow box");
+        view.v1MovementArrowVisualTicks =
+            DM1_V1_MOVEMENT_ARROW_VIS_TICKS_PC34;
+        view.v1MovementArrowVisualMask =
+            DM1_V1_MOVEMENT_ARROW_VIS_TURN_LEFT_PC34;
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(frame_rect_matches(movement_base_frame, framebuffer,
+                                       arrows.x, arrows.y,
+                                       arrows.w, arrows.h),
+                    "M11 CSB preserves source C013 without generic keyboard hatch overlay");
+        view.v1MovementArrowVisualTicks = 0;
+        view.v1MovementArrowVisualMask = 0;
+    }
     {
         CSB_V1_StartupRuntimeAssetSession_PC34 *session =
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
