@@ -7,6 +7,12 @@
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
+  - 2026-07-16 update: `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv` is
+    now the required evidence file for closing symbol rows as implemented,
+    external/host-owned, or source-nonapplicable without code work. The file
+    is intentionally empty except for its schema until each disposition has
+    real source evidence. Keep rows in TODO until either Firestaff code maps
+    them or a reviewed disposition row excludes them from the open queue.
 
 - 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
   texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`

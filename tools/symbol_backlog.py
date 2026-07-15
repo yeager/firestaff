@@ -17,9 +17,11 @@ from typing import Iterable
 ROOT = Path(__file__).resolve().parents[1]
 REDMCSB_AUDIT = ROOT / "docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv"
 SKPROJECT_AUDIT = ROOT / "docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv"
+SYMBOL_DISPOSITIONS = ROOT / "docs/reference/audits/SYMBOL_DISPOSITIONS.tsv"
 
 REDMCSB_OPEN = {"MISSING", "UNCERTAIN_NUMBERED_EVIDENCE"}
 SKPROJECT_OPEN = {"MISSING", "UNCERTAIN"}
+OPEN_DISPOSITIONS = {"", "OPEN", "NEEDS_IMPLEMENTATION", "NEEDS_VERIFICATION"}
 
 REDMCSB_RUNTIME_FAMILIES = {
     "CHAMPION",
@@ -65,6 +67,34 @@ def read_tsv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle, delimiter="\t"))
 
 
+def read_dispositions(path: Path = SYMBOL_DISPOSITIONS) -> dict[tuple[str, str], dict[str, str]]:
+    if not path.exists():
+        return {}
+    dispositions: dict[tuple[str, str], dict[str, str]] = {}
+    for row in read_tsv(path):
+        reference = row.get("reference", "").strip()
+        symbol = row.get("symbol", "").strip()
+        disposition = row.get("disposition", "").strip().upper()
+        if not reference or not symbol:
+            continue
+        normalized = dict(row)
+        normalized["disposition"] = disposition
+        dispositions[(reference, symbol)] = normalized
+    return dispositions
+
+
+def disposition_for(
+    dispositions: dict[tuple[str, str], dict[str, str]],
+    reference: str,
+    symbol: str,
+) -> dict[str, str]:
+    return dispositions.get((reference, symbol), {})
+
+
+def is_open_disposition(disposition: str) -> bool:
+    return disposition.strip().upper() in OPEN_DISPOSITIONS
+
+
 def redmcsb_game(row: dict[str, str]) -> str:
     family = row.get("family", "")
     source = row.get("reference_source", "")
@@ -92,11 +122,20 @@ def priority(status: str, family: str, source: str) -> int:
     return score
 
 
-def redmcsb_backlog(rows: Iterable[dict[str, str]]) -> list[dict[str, object]]:
+def redmcsb_backlog(
+    rows: Iterable[dict[str, str]],
+    dispositions: dict[tuple[str, str], dict[str, str]],
+    include_disposed: bool,
+) -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
     for row in rows:
         status = row.get("status", "")
         if status not in REDMCSB_OPEN:
+            continue
+        symbol = row.get("symbol", "")
+        disposition = disposition_for(dispositions, "ReDMCSB", symbol)
+        disposition_name = disposition.get("disposition", "")
+        if not include_disposed and not is_open_disposition(disposition_name):
             continue
         family = row.get("family", "")
         source = row.get("reference_source", "")
@@ -104,32 +143,47 @@ def redmcsb_backlog(rows: Iterable[dict[str, str]]) -> list[dict[str, object]]:
         items.append({
             "game": game,
             "reference": "ReDMCSB",
-            "symbol": row.get("symbol", ""),
+            "symbol": symbol,
             "family": family,
             "source": source,
             "status": status,
             "firestaff_mapping": row.get("firestaff_mapping", ""),
+            "disposition": disposition_name or "OPEN",
+            "disposition_owner": disposition.get("owner", ""),
+            "disposition_evidence": disposition.get("evidence", ""),
             "priority": priority(status, family, source),
         })
     return sorted(items, key=lambda item: (-int(item["priority"]), str(item["game"]), str(item["symbol"])))
 
 
-def skproject_backlog(rows: Iterable[dict[str, str]]) -> list[dict[str, object]]:
+def skproject_backlog(
+    rows: Iterable[dict[str, str]],
+    dispositions: dict[tuple[str, str], dict[str, str]],
+    include_disposed: bool,
+) -> list[dict[str, object]]:
     items: list[dict[str, object]] = []
     for row in rows:
         status = row.get("status", "")
         if status not in SKPROJECT_OPEN:
+            continue
+        symbol = row.get("symbol", "")
+        disposition = disposition_for(dispositions, "skproject", symbol)
+        disposition_name = disposition.get("disposition", "")
+        if not include_disposed and not is_open_disposition(disposition_name):
             continue
         source = row.get("source_file", "")
         family = row.get("family", "")
         items.append({
             "game": "DM2",
             "reference": "skproject",
-            "symbol": row.get("symbol", ""),
+            "symbol": symbol,
             "family": family,
             "source": f"{source}:{row.get('line', '')}",
             "status": status,
             "firestaff_mapping": row.get("firestaff_mapping", ""),
+            "disposition": disposition_name or "OPEN",
+            "disposition_owner": disposition.get("owner", ""),
+            "disposition_evidence": disposition.get("evidence", ""),
             "priority": priority(status, family, source),
         })
     return sorted(items, key=lambda item: (-int(item["priority"]), str(item["source"]), str(item["symbol"])))
@@ -165,9 +219,13 @@ def print_text(items: list[dict[str, object]], limit: int) -> None:
     print()
     for item in items[:limit]:
         mapping = str(item.get("firestaff_mapping") or "-")
+        disposition = str(item.get("disposition") or "OPEN")
+        evidence = str(item.get("disposition_evidence") or "")
+        suffix = f" [{disposition}: {evidence}]" if disposition != "OPEN" and evidence else ""
         print(
             f"{item['game']} {item['reference']} {item['status']} "
             f"p{item['priority']} {item['symbol']} {item['source']} -> {mapping}"
+            f"{suffix}"
         )
 
 
@@ -176,10 +234,18 @@ def main() -> int:
     parser.add_argument("--game", choices=["DM1", "CSB", "DM1/CSB", "DM2"], help="only emit one queue")
     parser.add_argument("--limit", type=int, default=50)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--include-disposed", action="store_true", help="include rows with explicit closed dispositions")
+    parser.add_argument(
+        "--dispositions",
+        type=Path,
+        default=SYMBOL_DISPOSITIONS,
+        help="TSV with reference/symbol disposition evidence",
+    )
     args = parser.parse_args()
 
-    items = redmcsb_backlog(read_tsv(REDMCSB_AUDIT))
-    items.extend(skproject_backlog(read_tsv(SKPROJECT_AUDIT)))
+    dispositions = read_dispositions(args.dispositions)
+    items = redmcsb_backlog(read_tsv(REDMCSB_AUDIT), dispositions, args.include_disposed)
+    items.extend(skproject_backlog(read_tsv(SKPROJECT_AUDIT), dispositions, args.include_disposed))
     if args.game:
         items = [item for item in items if item["game"] == args.game]
     items.sort(key=lambda item: (-int(item["priority"]), str(item["game"]), str(item["symbol"])))
