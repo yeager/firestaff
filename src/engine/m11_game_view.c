@@ -37568,24 +37568,29 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
             dm1_v1_champion_panel_food_bar_zone_pc34();
         dm1_v1_champion_panel_food_water_bar_zone_pc34_t waterBar =
             dm1_v1_champion_panel_water_bar_zone_pc34();
+
+        /* PANEL.C F0344 supplies both the warning thresholds and the two
+         * normal colours consumed by F0343's horizontal C103/C104 fills.
+         * There is no source-defined default palette if that contract is
+         * unavailable, so retain the authentic C020/C030/C031 panel but do
+         * not invent alternate food or water bars. */
+        if (!foodWaterContract) {
+            return 1;
+        }
         m11_draw_v1_food_water_bar(framebuffer, framebufferWidth, framebufferHeight,
                                    M11_VIEWPORT_X + foodBar.x,
                                    M11_VIEWPORT_Y + foodBar.y,
                                    foodBar.w, foodBar.h,
                                    foodBar.shadow_offset,
                                    (int)champ->food,
-                                   foodWaterContract
-                                       ? foodWaterContract->food_base_color
-                                       : 5);
+                                   foodWaterContract->food_base_color);
         m11_draw_v1_food_water_bar(framebuffer, framebufferWidth, framebufferHeight,
                                    M11_VIEWPORT_X + waterBar.x,
                                    M11_VIEWPORT_Y + waterBar.y,
                                    waterBar.w, waterBar.h,
                                    waterBar.shadow_offset,
                                    (int)champ->water,
-                                   foodWaterContract
-                                       ? foodWaterContract->water_base_color
-                                       : M11_COLOR_LIGHT_BLUE);
+                                   foodWaterContract->water_base_color);
     }
     return 1;
 }
