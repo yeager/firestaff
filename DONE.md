@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB title/opening receipt door-raster gate: the
+  title-to-opening startup consumption receipt now rejects a host opening
+  page unless its raster proves the real C004 entrance plus C002/C003 door
+  strips from the same C001 package session. Focused startup session contract
+  coverage now accepts the complete C001 PRESENTS/CHAOS/STRIKES path and
+  rejects missing or partial opening-door composition.
+
 - ✅ 2026-07-15 CSB title CHAOS receipt off-by-one: startup presentation
   coherence now validates `TITLE.C F0437` against the current title frame,
   not the previous frame. This restores the first and last CHAOS zoom render

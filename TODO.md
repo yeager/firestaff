@@ -191,6 +191,11 @@
     compared `TITLE.C F0437` source step against the previous title frame.
     First and last CHAOS zoom frames now produce valid real C001 render plans.
     Remaining work is still the real Mac/window capture and broader app route,
+  - 2026-07-15 update: the title/opening consumption receipt now requires the
+    host opening raster to prove C004 entrance plus C002/C003 door-strip
+    composition from the same package session. Remaining work is still external
+    original-window capture and broader live app coverage, not host-wrapper or
+    partial opening-surface admission.
     not synthetic title/entrance replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
