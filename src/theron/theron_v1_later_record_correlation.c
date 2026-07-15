@@ -151,6 +151,8 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
     uint32_t resolved_record;
     size_t raw_offset;
     size_t index;
+    size_t descriptor_source_offset;
+    const uint8_t *descriptor_source;
     const uint8_t *sector;
 
     if (!out_boundary) return 0;
@@ -165,10 +167,38 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
         return 0;
     }
 
+    if (manifest->raw_sector != manifest->track02_record ||
+        manifest->raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
+        manifest->raw_offset != manifest->raw_sector *
+            THERON_V1_RAW_SECTOR_BYTES ||
+        manifest->user_data_offset != manifest->raw_offset +
+            THERON_V1_MODE1_USER_DATA_OFFSET) {
+        return 0;
+    }
+
     descriptor = &manifest->descriptors[descriptor_ordinal];
     if (descriptor->word2 == 0u ||
         (uint32_t)descriptor->word2 >
             UINT32_MAX - correlation.derived_record_base) {
+        return 0;
+    }
+    if (descriptor_ordinal > (SIZE_MAX - 4u) / 6u ||
+        manifest->user_data_offset > track02_size ||
+        4u + descriptor_ordinal * 6u >
+            track02_size - manifest->user_data_offset ||
+        6u > track02_size - (manifest->user_data_offset + 4u +
+                              descriptor_ordinal * 6u)) {
+        return 0;
+    }
+    descriptor_source_offset = manifest->user_data_offset + 4u +
+        descriptor_ordinal * 6u;
+    descriptor_source = track02_data + descriptor_source_offset;
+    if (((uint16_t)descriptor_source[0] << 8u | descriptor_source[1]) !=
+            descriptor->word0 ||
+        ((uint16_t)descriptor_source[2] << 8u | descriptor_source[3]) !=
+            descriptor->word1 ||
+        ((uint16_t)descriptor_source[4] << 8u | descriptor_source[5]) !=
+            descriptor->word2) {
         return 0;
     }
     resolved_record = correlation.derived_record_base + descriptor->word2;
@@ -198,6 +228,12 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
     out_boundary->user_data_hash = theron_v1_later_record_fnv1a_bytes(
         sector + THERON_V1_MODE1_USER_DATA_OFFSET,
         THERON_V1_MODE1_USER_DATA_BYTES);
+    out_boundary->descriptor_source_raw_offset = descriptor_source_offset;
+    out_boundary->descriptor_source_bytes = 6u;
+    out_boundary->descriptor_source_hash = theron_v1_later_record_fnv1a_bytes(
+        descriptor_source, out_boundary->descriptor_source_bytes);
+    out_boundary->descriptor_source_bytes_proven =
+        out_boundary->descriptor_source_hash != 0u;
     out_boundary->record_coordinate_proven = 1;
     out_boundary->mode1_user_data_proven = out_boundary->user_data_hash != 0u;
     out_boundary->selector_first_ordinal = manifest->descriptor_count;
@@ -228,6 +264,7 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
         out_boundary->selector_row_hash != 0u;
     out_boundary->descriptor_semantics_proven = 0;
     if (!out_boundary->mode1_user_data_proven ||
+        !out_boundary->descriptor_source_bytes_proven ||
         !out_boundary->selector_aliases_proven) {
         memset(out_boundary, 0, sizeof(*out_boundary));
         return 0;

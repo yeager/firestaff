@@ -110,6 +110,10 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_source_raw_offset;
+    size_t descriptor_source_bytes;
+    uint32_t descriptor_source_hash;
+    int descriptor_source_bytes_proven;
     size_t descriptor_selector_occurrence_count;
     size_t descriptor_selector_first_ordinal;
     size_t descriptor_selector_last_ordinal;
@@ -179,6 +183,10 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_source_raw_offset;
+    size_t descriptor_source_bytes;
+    uint32_t descriptor_source_hash;
+    int descriptor_source_bytes_proven;
     size_t descriptor_selector_occurrence_count;
     size_t descriptor_selector_first_ordinal;
     size_t descriptor_selector_last_ordinal;
@@ -377,6 +385,10 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_source_raw_offset;
+    size_t descriptor_source_bytes;
+    uint32_t descriptor_source_hash;
+    int descriptor_source_bytes_proven;
     size_t descriptor_selector_occurrence_count;
     size_t descriptor_selector_first_ordinal;
     size_t descriptor_selector_last_ordinal;

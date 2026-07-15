@@ -1618,6 +1618,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         !descriptor_boundary.valid ||
         !descriptor_boundary.record_coordinate_proven ||
         !descriptor_boundary.mode1_user_data_proven ||
+        !descriptor_boundary.descriptor_source_bytes_proven ||
         !descriptor_boundary.selector_aliases_proven ||
         descriptor_boundary.descriptor_semantics_proven ||
         descriptor_boundary.descriptor.word2 != selector ||
@@ -1657,6 +1658,11 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         descriptor_boundary.user_data_hash;
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_source_raw_offset =
+        descriptor_boundary.descriptor_source_raw_offset;
+    out->descriptor_source_bytes = descriptor_boundary.descriptor_source_bytes;
+    out->descriptor_source_hash = descriptor_boundary.descriptor_source_hash;
+    out->descriptor_source_bytes_proven = 1;
     out->descriptor_selector_occurrence_count =
         descriptor_boundary.selector_occurrence_count;
     out->descriptor_selector_first_ordinal =
@@ -1714,6 +1720,14 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash ^= receipt->descriptor_row_media_bound ? 1u : 0u;
     hash *= 16777619u;
     hash ^= receipt->descriptor_semantics_proven ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->descriptor_source_raw_offset;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->descriptor_source_bytes;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_source_hash;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_source_bytes_proven ? 1u : 0u;
     hash *= 16777619u;
     hash ^= (uint32_t)receipt->descriptor_selector_occurrence_count;
     hash *= 16777619u;
@@ -1817,6 +1831,9 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            !receipt->initial_level_semantics_proven &&
            receipt->descriptor_row_media_bound &&
            !receipt->descriptor_semantics_proven &&
+           receipt->descriptor_source_bytes_proven &&
+           receipt->descriptor_source_bytes == 6u &&
+           receipt->descriptor_source_hash != 0u &&
            receipt->descriptor_selector_aliases_proven &&
            receipt->descriptor_selector_occurrence_count != 0u &&
            receipt->descriptor_selector_first_ordinal <=
@@ -1976,6 +1993,9 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !coalesced_receipt->selector_sector_bytes_verified ||
         !coalesced_receipt->descriptor_row_media_bound ||
         coalesced_receipt->descriptor_semantics_proven ||
+        !coalesced_receipt->descriptor_source_bytes_proven ||
+        coalesced_receipt->descriptor_source_bytes != 6u ||
+        coalesced_receipt->descriptor_source_hash == 0u ||
         !coalesced_receipt->descriptor_selector_aliases_proven ||
         coalesced_receipt->descriptor_selector_occurrence_count == 0u ||
         coalesced_receipt->descriptor_selector_first_ordinal >
@@ -2015,6 +2035,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !descriptor_boundary.valid ||
         !descriptor_boundary.record_coordinate_proven ||
         !descriptor_boundary.mode1_user_data_proven ||
+        !descriptor_boundary.descriptor_source_bytes_proven ||
         !descriptor_boundary.selector_aliases_proven ||
         descriptor_boundary.descriptor_semantics_proven ||
         descriptor_boundary.descriptor.word2 !=
@@ -2027,6 +2048,12 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             coalesced_receipt->later_track02_record ||
         descriptor_boundary.user_data_hash !=
             coalesced_receipt->descriptor_record_user_data_hash ||
+        descriptor_boundary.descriptor_source_raw_offset !=
+            coalesced_receipt->descriptor_source_raw_offset ||
+        descriptor_boundary.descriptor_source_bytes !=
+            coalesced_receipt->descriptor_source_bytes ||
+        descriptor_boundary.descriptor_source_hash !=
+            coalesced_receipt->descriptor_source_hash ||
         descriptor_boundary.selector_occurrence_count !=
             coalesced_receipt->descriptor_selector_occurrence_count ||
         descriptor_boundary.selector_first_ordinal !=
@@ -2140,6 +2167,11 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         coalesced_receipt->descriptor_record_user_data_hash;
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_source_raw_offset =
+        coalesced_receipt->descriptor_source_raw_offset;
+    out->descriptor_source_bytes = coalesced_receipt->descriptor_source_bytes;
+    out->descriptor_source_hash = coalesced_receipt->descriptor_source_hash;
+    out->descriptor_source_bytes_proven = 1;
     out->descriptor_selector_occurrence_count =
         coalesced_receipt->descriptor_selector_occurrence_count;
     out->descriptor_selector_first_ordinal =

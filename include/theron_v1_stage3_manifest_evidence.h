@@ -24,6 +24,8 @@ typedef struct {
     int valid;
     Theron_Track02Variant variant;
     uint32_t track02_record;
+    size_t raw_sector;
+    size_t raw_offset;
     size_t user_data_offset;
     uint16_t prefix_word0;
     uint16_t prefix_word1;

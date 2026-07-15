@@ -44,6 +44,8 @@ int theron_v1_stage3_manifest_evidence_from_payload(
     out_evidence->valid = 1;
     out_evidence->variant = payload->variant;
     out_evidence->track02_record = payload->track02_record;
+    out_evidence->raw_sector = payload->raw_sector;
+    out_evidence->raw_offset = payload->raw_offset;
     out_evidence->user_data_offset = payload->user_data_offset;
     out_evidence->prefix_word0 = read_be16(manifest);
     out_evidence->prefix_word1 = read_be16(manifest + 2u);

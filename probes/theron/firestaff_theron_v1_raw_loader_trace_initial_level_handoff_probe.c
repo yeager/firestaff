@@ -93,6 +93,12 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
         raw + raw_offset, THERON_TRACK02_RAW_USER_DATA_BYTES);
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_source_raw_offset =
+        descriptor_boundary.descriptor_source_raw_offset;
+    out->descriptor_source_bytes = descriptor_boundary.descriptor_source_bytes;
+    out->descriptor_source_hash = descriptor_boundary.descriptor_source_hash;
+    out->descriptor_source_bytes_proven =
+        descriptor_boundary.descriptor_source_bytes_proven;
     out->descriptor_selector_occurrence_count =
         descriptor_boundary.selector_occurrence_count;
     out->descriptor_selector_first_ordinal =
@@ -477,6 +483,9 @@ int main(void)
         handoff.descriptor_semantics_proven ||
         handoff.descriptor_record_user_data_hash !=
             handoff.complete_payload_checksum ||
+        !handoff.descriptor_source_bytes_proven ||
+        handoff.descriptor_source_bytes != 6u ||
+        handoff.descriptor_source_hash == 0u ||
         !handoff.descriptor_selector_aliases_proven ||
         handoff.descriptor_selector_occurrence_count == 0u ||
         handoff.descriptor_selector_first_ordinal >
