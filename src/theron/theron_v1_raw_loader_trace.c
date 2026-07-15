@@ -1634,16 +1634,16 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
         }
         if (next_pc > UINT16_MAX || next_opcode > UINT8_MAX ||
             next_physical_pc < 0x1f0000u || next_physical_pc >= 0x1f8000u ||
-            successor.successor.entry_copy.entry.call.transfer.destination_address >
-                UINT16_MAX - successor.successor.entry_copy.entry.call.transfer.byte_count ||
-            next_pc < successor.successor.entry_copy.entry.call.transfer.destination_address ||
-            next_pc >= successor.successor.entry_copy.entry.call.transfer.destination_address +
-                successor.successor.entry_copy.entry.call.transfer.byte_count) {
+            successor.entry_copy.entry.call.transfer.destination_address >
+                UINT16_MAX - successor.entry_copy.entry.call.transfer.byte_count ||
+            next_pc < successor.entry_copy.entry.call.transfer.destination_address ||
+            next_pc >= successor.entry_copy.entry.call.transfer.destination_address +
+                successor.entry_copy.entry.call.transfer.byte_count) {
             return 0;
         }
-        parent = &successor.successor.entry_copy.entry.call.transfer.next.entry.call.termination.call.execution.transfer;
+        parent = &successor.entry_copy.entry.call.transfer.next.entry.call.termination.call.execution.transfer;
         source_offset = next_pc -
-            successor.successor.entry_copy.entry.call.transfer.destination_address;
+            successor.entry_copy.entry.call.transfer.destination_address;
         if (source_offset >= parent->byte_count ||
             parent->source_address > UINT16_MAX - source_offset ||
             next_opcode != handoff->loader_post_envelope.bytes[source_offset]) {
