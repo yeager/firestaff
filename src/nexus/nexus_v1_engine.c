@@ -6114,6 +6114,17 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
         }
         return 0;
     }
+    if (engine->menu_bpk_upload_receipt_valid &&
+        engine->menu_bpk_upload_receipt.palette_trailer_observed &&
+        engine->menu_bpk_upload_receipt.palette_trailer.valid &&
+        !engine->menu_bpk_upload_receipt.palette_trailer.palette_format_proven &&
+        !engine->menu_bpk_upload_receipt.palette_trailer.decoder_promoted &&
+        !engine->menu_bpk_upload_receipt.palette_trailer
+             .fallback_visuals_permitted) {
+        out_receipt->canonical_palette_trailer_bound = 1;
+        out_receipt->palette_trailer =
+            engine->menu_bpk_upload_receipt.palette_trailer;
+    }
     if (!out_receipt->receipt_valid) {
         return 0;
     }

@@ -73,6 +73,8 @@ typedef struct {
     uint32_t first_blocked_stream_offset;
     uint32_t first_blocked_stream_size;
     uint32_t first_blocked_expected_output_bytes;
+    int canonical_palette_trailer_bound;
+    Nexus_V1_BpkPaletteTrailerReceipt palette_trailer;
 } Nexus_V1_MenuBpkRendererHandoffReceipt;
 
 /* A DGN view plan is not renderable until every referenced material has a

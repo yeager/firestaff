@@ -5160,12 +5160,21 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     engine.menu_bpk_decode_receipt.route =
         NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     engine.menu_bpk_decode_receipt.ready_stored_surfaces = 1U;
+    engine.menu_bpk_upload_receipt_valid = 1;
+    engine.menu_bpk_upload_receipt.palette_trailer_observed = 1;
+    engine.menu_bpk_upload_receipt.palette_trailer.valid = 1;
+    engine.menu_bpk_upload_receipt.palette_trailer.record_bytes = 524U;
+    engine.menu_bpk_upload_receipt.palette_trailer.entry_count = 256U;
+    engine.menu_bpk_upload_receipt.palette_trailer.entry_bytes = 512U;
+    engine.menu_bpk_upload_receipt.palette_trailer.entry_bytes_fnv1a64 = 1U;
+    engine.menu_bpk_upload_receipt.palette_trailer.raw_entries_are_be16 = 1;
     engine.menu_bpk_source.exact_source_entry_observed = 1;
     engine.menu_bpk_source.hash_discovery_attempted = 1;
     memset(&handoff, 0, sizeof(handoff));
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE &&
           !handoff.canonical_source_hash_verified && !handoff.receipt_valid &&
+          !handoff.canonical_palette_trailer_bound &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
@@ -5192,6 +5201,10 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
           handoff.canonical_source_hash_verified && handoff.receipt_valid &&
+          handoff.canonical_palette_trailer_bound &&
+          handoff.palette_trailer.record_bytes == 524U &&
+          handoff.palette_trailer.entry_count == 256U &&
+          !handoff.palette_trailer.palette_format_proven &&
           handoff.can_render_stored_surfaces &&
           !handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted &&
