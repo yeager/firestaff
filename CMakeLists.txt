@@ -1567,9 +1567,6 @@ set(M11_SOURCES
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
     src/csb/csb_v1_keyboard_commands_pc34_compat.c
     src/engine/render_sdl_m11.c
@@ -4263,9 +4260,6 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -4287,9 +4281,6 @@ add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -4313,9 +4304,6 @@ add_executable(firestaff_csb_v1_pc_package_presentation_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
