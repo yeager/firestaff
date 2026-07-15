@@ -2887,6 +2887,13 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   blocks the complete wall frame. Verification: canonical
   `test_dm2_v1_gdat_wall_plan_viewport_real_data`.
 
+- ✅ 2026-07-15 DM2 moving-wall source gate: source-required M10 now blocks
+  stationary `DRAW_WALL` commands while movement is active. SKProject changes
+  the signed RAW4 request by the live viewport-cell Y distance, which the
+  stationary plan cannot represent. This prevents a stale crop/destination
+  from becoming an invented motion frame. Verification: canonical
+  `test_dm2_v1_gdat_wall_plan_viewport_real_data`.
+
 - ✅ 2026-07-14 DM2 GDAT door-overlay material plan: skproject
   `DM2_DRAW_DOOR`'s `Door::OrnateIndex()` and destroyed-door branches now
   decode their exact `DOOR_GFX` or `DOORS` IMG3 plus local palette before M11
