@@ -217,6 +217,10 @@ typedef int (*CSB_V1_CSBWinDSASetGeneratorDelayFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSAGetMonsterInfoFn)(void *user,
                                                 uint16_t thing,
                                                 uint32_t out_values[8]);
+typedef int (*CSB_V1_CSBWinDSASetMonsterInfoFn)(void *user,
+                                                uint16_t thing,
+                                                const uint32_t values[8],
+                                                uint8_t write_mask);
 
 typedef struct {
     uint32_t master_location;
@@ -262,6 +266,9 @@ typedef struct {
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
     CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
+    CSB_V1_CSBWinDSASetMonsterInfoFn set_monster_info;
+    int monster_invisible_enabled;
+    int monster_size4_enabled;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -502,6 +509,9 @@ typedef struct {
     CSB_V1_CSBWinDSAGetGeneratorDelayFn get_generator_delay;
     CSB_V1_CSBWinDSASetGeneratorDelayFn set_generator_delay;
     CSB_V1_CSBWinDSAGetMonsterInfoFn get_monster_info;
+    CSB_V1_CSBWinDSASetMonsterInfoFn set_monster_info;
+    int monster_invisible_enabled;
+    int monster_size4_enabled;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
