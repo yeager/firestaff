@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject wall command-count host receipt: visible
+  `DRAW_WALL` count now crosses runtime, boot, and M11 with the material hash.
+  M11 rejects a count mismatch before presenting the frame.
+
 - 2026-07-15 CSBWin `STKOP_DiscardText`: the authenticated DSA executor now
   stages `DSA.cpp:3161-3167` against a source-owned scrolling-text callback.
   The discard publishes only after complete bytecode acceptance; unavailable
