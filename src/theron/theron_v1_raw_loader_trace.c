@@ -1618,6 +1618,7 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         !descriptor_boundary.valid ||
         !descriptor_boundary.record_coordinate_proven ||
         !descriptor_boundary.mode1_user_data_proven ||
+        !descriptor_boundary.selector_aliases_proven ||
         descriptor_boundary.descriptor_semantics_proven ||
         descriptor_boundary.descriptor.word2 != selector ||
         descriptor_boundary.resolved_track02_record != record) return 0;
@@ -1656,6 +1657,14 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
         descriptor_boundary.user_data_hash;
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_selector_occurrence_count =
+        descriptor_boundary.selector_occurrence_count;
+    out->descriptor_selector_first_ordinal =
+        descriptor_boundary.selector_first_ordinal;
+    out->descriptor_selector_last_ordinal =
+        descriptor_boundary.selector_last_ordinal;
+    out->descriptor_selector_row_hash = descriptor_boundary.selector_row_hash;
+    out->descriptor_selector_aliases_proven = 1;
     out->caller_pc = (uint16_t)caller_pc;
     out->return_pc = (uint16_t)return_pc;
     out->later_caller_opcode = (uint8_t)caller_opcode;
@@ -1705,6 +1714,16 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash ^= receipt->descriptor_row_media_bound ? 1u : 0u;
     hash *= 16777619u;
     hash ^= receipt->descriptor_semantics_proven ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->descriptor_selector_occurrence_count;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->descriptor_selector_first_ordinal;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->descriptor_selector_last_ordinal;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_selector_row_hash;
+    hash *= 16777619u;
+    hash ^= receipt->descriptor_selector_aliases_proven ? 1u : 0u;
     hash *= 16777619u;
     hash ^= (uint32_t)receipt->complete_payload_bytes;
     hash *= 16777619u;
@@ -1798,6 +1817,13 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            !receipt->initial_level_semantics_proven &&
            receipt->descriptor_row_media_bound &&
            !receipt->descriptor_semantics_proven &&
+           receipt->descriptor_selector_aliases_proven &&
+           receipt->descriptor_selector_occurrence_count != 0u &&
+           receipt->descriptor_selector_first_ordinal <=
+               receipt->descriptor_selector_ordinal &&
+           receipt->descriptor_selector_ordinal <=
+               receipt->descriptor_selector_last_ordinal &&
+           receipt->descriptor_selector_row_hash != 0u &&
            receipt->descriptor_record_user_data_hash ==
                receipt->complete_payload_checksum &&
            receipt->complete_payload_witness_proven &&
@@ -1950,6 +1976,13 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !coalesced_receipt->selector_sector_bytes_verified ||
         !coalesced_receipt->descriptor_row_media_bound ||
         coalesced_receipt->descriptor_semantics_proven ||
+        !coalesced_receipt->descriptor_selector_aliases_proven ||
+        coalesced_receipt->descriptor_selector_occurrence_count == 0u ||
+        coalesced_receipt->descriptor_selector_first_ordinal >
+            coalesced_receipt->descriptor_selector_ordinal ||
+        coalesced_receipt->descriptor_selector_ordinal >
+            coalesced_receipt->descriptor_selector_last_ordinal ||
+        coalesced_receipt->descriptor_selector_row_hash == 0u ||
         !coalesced_receipt->later_destination_local_ram_verified ||
         !coalesced_receipt->later_destination_media_span_verified ||
         !coalesced_receipt->later_destination_payload_verified ||
@@ -1982,6 +2015,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !descriptor_boundary.valid ||
         !descriptor_boundary.record_coordinate_proven ||
         !descriptor_boundary.mode1_user_data_proven ||
+        !descriptor_boundary.selector_aliases_proven ||
         descriptor_boundary.descriptor_semantics_proven ||
         descriptor_boundary.descriptor.word2 !=
             coalesced_receipt->descriptor_selector ||
@@ -1993,6 +2027,14 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
             coalesced_receipt->later_track02_record ||
         descriptor_boundary.user_data_hash !=
             coalesced_receipt->descriptor_record_user_data_hash ||
+        descriptor_boundary.selector_occurrence_count !=
+            coalesced_receipt->descriptor_selector_occurrence_count ||
+        descriptor_boundary.selector_first_ordinal !=
+            coalesced_receipt->descriptor_selector_first_ordinal ||
+        descriptor_boundary.selector_last_ordinal !=
+            coalesced_receipt->descriptor_selector_last_ordinal ||
+        descriptor_boundary.selector_row_hash !=
+            coalesced_receipt->descriptor_selector_row_hash ||
         theron_v1_track02_capture_initial_level_object_boundary(
             track02_data, track02_size, track02_md5, &boundary) !=
             THERON_TRACK02_SIGNAL_OK ||
@@ -2098,6 +2140,15 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         coalesced_receipt->descriptor_record_user_data_hash;
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_selector_occurrence_count =
+        coalesced_receipt->descriptor_selector_occurrence_count;
+    out->descriptor_selector_first_ordinal =
+        coalesced_receipt->descriptor_selector_first_ordinal;
+    out->descriptor_selector_last_ordinal =
+        coalesced_receipt->descriptor_selector_last_ordinal;
+    out->descriptor_selector_row_hash =
+        coalesced_receipt->descriptor_selector_row_hash;
+    out->descriptor_selector_aliases_proven = 1;
     out->coalesced_loader_cd_receipt_proven = 1;
     out->initial_level_record_proven = 1;
     out->complete_initial_level_envelope_proven = 1;

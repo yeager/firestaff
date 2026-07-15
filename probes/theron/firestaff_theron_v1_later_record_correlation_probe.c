@@ -36,6 +36,7 @@ static void test_bounded_selector_catalog(void) {
     manifest.descriptors[0].word2 = 10u;
     manifest.descriptors[1].word2 = 11u;
     manifest.descriptors[3].word2 = 100u;
+    manifest.descriptors[4].word2 = 11u;
 
     memset(raw_track, 0, sizeof(raw_track));
     for (index = 0u; index < 40u; ++index) {
@@ -56,8 +57,8 @@ static void test_bounded_selector_catalog(void) {
 
     check(theron_v1_later_record_correlation_from_manifest(
               &manifest, 40u * 2352u, &correlation) &&
-              correlation.nonzero_selector_count == 3u &&
-              correlation.resolved_selector_count == 2u &&
+              correlation.nonzero_selector_count == 4u &&
+              correlation.resolved_selector_count == 3u &&
               correlation.out_of_bounds_selector_count == 1u &&
               correlation.self_reference_proven &&
               correlation.self_resolved_record_in_bounds &&
@@ -75,6 +76,11 @@ static void test_bounded_selector_catalog(void) {
               boundary.user_data_offset == 21u * 2352u + 16u &&
               boundary.user_data_bytes == 2048u &&
               boundary.user_data_hash != 0u &&
+              boundary.selector_occurrence_count == 2u &&
+              boundary.selector_first_ordinal == 1u &&
+              boundary.selector_last_ordinal == 4u &&
+              boundary.selector_row_hash != 0u &&
+              boundary.selector_aliases_proven &&
               boundary.record_coordinate_proven &&
               boundary.mode1_user_data_proven &&
               !boundary.descriptor_semantics_proven,

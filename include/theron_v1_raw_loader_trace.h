@@ -110,6 +110,11 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_selector_occurrence_count;
+    size_t descriptor_selector_first_ordinal;
+    size_t descriptor_selector_last_ordinal;
+    uint32_t descriptor_selector_row_hash;
+    int descriptor_selector_aliases_proven;
     uint16_t caller_pc;
     uint16_t return_pc;
     uint8_t sector_count;
@@ -174,6 +179,11 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_selector_occurrence_count;
+    size_t descriptor_selector_first_ordinal;
+    size_t descriptor_selector_last_ordinal;
+    uint32_t descriptor_selector_row_hash;
+    int descriptor_selector_aliases_proven;
     uint16_t caller_pc;
     uint16_t return_pc;
     /* Exact caller instruction bytes observed by the capture hook. This proves
@@ -367,6 +377,11 @@ typedef struct {
     uint32_t descriptor_record_user_data_hash;
     int descriptor_row_media_bound;
     int descriptor_semantics_proven;
+    size_t descriptor_selector_occurrence_count;
+    size_t descriptor_selector_first_ordinal;
+    size_t descriptor_selector_last_ordinal;
+    uint32_t descriptor_selector_row_hash;
+    int descriptor_selector_aliases_proven;
     int coalesced_loader_cd_receipt_proven;
     int initial_level_record_proven;
     int complete_initial_level_envelope_proven;

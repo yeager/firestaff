@@ -18594,6 +18594,19 @@ are promoted. Verification: focused raw-handoff probe (skip-safe without the
 authentic corpus), `test_theron_rendering` 18/18, and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 descriptor alias-table receipt
+
+Descriptor-to-record admission now retains the selected raw selector's table
+relationship: occurrence count, first and last descriptor ordinal, and an
+FNV-1a hash over every matching `(ordinal, word0, word1, word2)` row. The
+coalesced loader/CD receipt and runtime handoff both independently re-derive
+this relation from the authentic Stage-3 manifest, rejecting changed aliases
+or a mismatched selected row. These are table-identity facts only: aliases and
+their ordering do not identify a level, object, tile, palette, bitmap, loader
+command, or visual route. Verification: descriptor-correlation probe covers a
+duplicated selector relation and rejection paths; `test_theron_rendering`
+18/18 and `test_theron_v1_startup_save_resume_pc34` 258/258.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
