@@ -43,6 +43,7 @@ static int f0199_is_blocked(int mapX, int mapY, void* context)
 /* Helper to create a default context */
 static struct DM1GroupBehaviorContext_Compat make_default_ctx(void) {
     struct DM1GroupBehaviorContext_Compat ctx;
+    int direction;
     memset(&ctx, 0, sizeof(ctx));
     ctx.currentGroupMapX = 5;
     ctx.currentGroupMapY = 5;
@@ -68,6 +69,12 @@ static struct DM1GroupBehaviorContext_Compat make_default_ctx(void) {
     ctx.creatureInfo.animationTicks = 0x0334;
     ctx.creatureInfo.attack = 40;
     ctx.creatureInfo.attributes = 0;
+    /* This unit fixture models four decoded, empty destination squares. Each
+     * test that needs a blocker overwrites the corresponding source fact. */
+    for (direction = 0; direction < 4; ++direction) {
+        ctx.groupMovementFacts[direction].available = 1;
+        ctx.groupMovementFacts[direction].inBounds = 1;
+    }
     return ctx;
 }
 
@@ -557,6 +564,11 @@ static void test_group_movement_facts(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
     struct DM1GroupMovementFacts_Compat* facts;
     int wall = 0, door = 0, party = 0, group = 0;
+
+    ctx.groupMovementFacts[1].available = 0;
+    EXPECT_EQ(F0811_DM1_GROUP_IsMovementPossible_Compat(
+                  &ctx, 1, 0, &wall, &door, &party, &group),
+              0, "movement_facts: missing loaded-map snapshot fails closed");
 
     facts = &ctx.groupMovementFacts[1];
     memset(facts, 0, sizeof(*facts));

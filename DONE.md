@@ -17036,3 +17036,8 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   supplied original stored scent, preserving the source ordering and range
   gate. Regression covers clear route priority and blocked-route stored scent.
   Source: ReDMCSB `GROUP.C` F0201/F0198/F0199.
+- ✅ 2026-07-15 DM1 GROUP F0202: removed the legacy clear-destination
+  assumption. F0202 now accepts only supplied decoded destination facts and
+  otherwise blocks movement, while retaining source terrain, Fluxcage,
+  teleporter, party, door, and group ordering. Regression fixtures explicitly
+  provide decoded empty squares. Source: ReDMCSB `GROUP.C` F0202.
