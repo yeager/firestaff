@@ -3184,11 +3184,50 @@ int nexus_v1_current_level_structure2_descriptor_receipt(
     return 1;
 }
 
+typedef struct {
+    int descriptor_index;
+    uint32_t image_offset;
+    uint32_t palette_offset;
+    Nexus_V1_DgnStructure2PayloadAnchorPacket image;
+    Nexus_V1_DgnStructure2PayloadAnchorPacket palette;
+    int image_found;
+    int palette_found;
+} Nexus_V1_DescriptorCaptureAnchorSearch;
+
+static int nexus_v1_find_descriptor_capture_anchor(
+    void *context, const Nexus_V1_DgnStructure2PayloadAnchorPacket *packet)
+{
+    Nexus_V1_DescriptorCaptureAnchorSearch *search =
+        (Nexus_V1_DescriptorCaptureAnchorSearch *)context;
+
+    if (!search || !packet || !packet->valid || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render ||
+        packet->descriptor_index != search->descriptor_index ||
+        packet->candidate_byte_count == 0U ||
+        packet->next_anchor_offset <= packet->payload_anchor_offset) {
+        return -1;
+    }
+    if (!packet->palette_anchor &&
+        packet->payload_anchor_offset == search->image_offset) {
+        search->image = *packet;
+        search->image_found = 1;
+    }
+    if (packet->palette_anchor && search->palette_offset != 0U &&
+        packet->payload_anchor_offset == search->palette_offset) {
+        search->palette = *packet;
+        search->palette_found = 1;
+    }
+    return 0;
+}
+
 int nexus_v1_engine_build_structure2_descriptor_capture_target(
     const Nexus_V1_Engine *engine, int descriptor_index,
     Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target)
 {
     Nexus_V1_DgnActiveStructure2DescriptorReceipt source_receipt;
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt anchor_scene;
+    Nexus_V1_DescriptorCaptureAnchorSearch anchor_search;
     const Nexus_V1_Level *level;
     const uint8_t *data;
     int size;
@@ -3228,6 +3267,28 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
             level->structure2_payload.opaque_payload_size) {
         return 0;
     }
+    memset(&anchor_scene, 0, sizeof(anchor_scene));
+    memset(&anchor_search, 0, sizeof(anchor_search));
+    anchor_search.descriptor_index = descriptor_index;
+    anchor_search.image_offset =
+        level->structure2_textures[descriptor_index].image_relative_offset;
+    anchor_search.palette_offset =
+        level->structure2_textures[descriptor_index].palette_relative_offset;
+    if (nexus_v1_current_level_visit_structure2_payload_anchors(
+            engine, nexus_v1_find_descriptor_capture_anchor, &anchor_search,
+            &anchor_scene) != 1 || !anchor_scene.valid ||
+        anchor_scene.level_index != engine->game.current_level ||
+        anchor_scene.source_byte_count != size ||
+        anchor_scene.source_bytes_fnv1a64 != source_receipt.source_bytes_fnv1a64 ||
+        !anchor_search.image_found ||
+        (anchor_search.palette_offset != 0U && !anchor_search.palette_found) ||
+        structure2_byte_offset + (int)anchor_search.image.payload_anchor_offset >
+            size - (int)anchor_search.image.candidate_byte_count ||
+        (anchor_search.palette_offset != 0U &&
+         structure2_byte_offset + (int)anchor_search.palette.payload_anchor_offset >
+             size - (int)anchor_search.palette.candidate_byte_count)) {
+        return 0;
+    }
     out_target->valid = 1;
     out_target->level_index = engine->game.current_level;
     out_target->source_byte_count = size;
@@ -3243,6 +3304,31 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
     out_target->opaque_payload_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
         data + opaque_payload_byte_offset,
         level->structure2_payload.opaque_payload_size);
+    out_target->image_payload_anchor_offset =
+        anchor_search.image.payload_anchor_offset;
+    out_target->image_payload_next_anchor_offset =
+        anchor_search.image.next_anchor_offset;
+    out_target->image_payload_candidate_byte_count =
+        anchor_search.image.candidate_byte_count;
+    out_target->image_payload_candidate_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + structure2_byte_offset +
+            (int)anchor_search.image.payload_anchor_offset,
+        (int)anchor_search.image.candidate_byte_count);
+    out_target->image_payload_candidate_bound = 1;
+    if (anchor_search.palette_offset != 0U) {
+        out_target->palette_payload_anchor_offset =
+            anchor_search.palette.payload_anchor_offset;
+        out_target->palette_payload_next_anchor_offset =
+            anchor_search.palette.next_anchor_offset;
+        out_target->palette_payload_candidate_byte_count =
+            anchor_search.palette.candidate_byte_count;
+        out_target->palette_payload_candidate_fnv1a64 =
+            nexus_v1_dgn_bytes_fnv1a64(
+                data + structure2_byte_offset +
+                    (int)anchor_search.palette.payload_anchor_offset,
+                (int)anchor_search.palette.candidate_byte_count);
+        out_target->palette_payload_candidate_bound = 1;
+    }
     out_target->capture_producer_required = 1;
     out_target->original_saturn_capture_required = 1;
     return 1;
@@ -3278,6 +3364,12 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
                        "image_relative_offset=%u\npalette_relative_offset=%u\n"
                        "opaque_payload_byte_offset=%d\nopaque_payload_byte_count=%d\n"
                        "descriptor_fnv1a64=%016llx\nopaque_payload_fnv1a64=%016llx\n"
+                       "image_anchor_offset=%u\nimage_next_anchor_offset=%u\n"
+                       "image_candidate_byte_count=%u\nimage_candidate_fnv1a64=%016llx\n"
+                       "palette_anchor_offset=%u\npalette_next_anchor_offset=%u\n"
+                       "palette_candidate_byte_count=%u\npalette_candidate_fnv1a64=%016llx\n"
+                       "palette_candidate_present=%d\n"
+                       "requested_observations=source-read,palette-state,vdp1-vram,vdp1-command\n"
                        "original_saturn_capture_required=1\nno_draw_only=1\n",
                        target.level_index, target.source_byte_count,
                        (unsigned long long)target.source_bytes_fnv1a64,
@@ -3289,7 +3381,16 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
                        target.opaque_payload_byte_offset,
                        target.opaque_payload_byte_count,
                        (unsigned long long)target.descriptor_bytes_fnv1a64,
-                       (unsigned long long)target.opaque_payload_fnv1a64) >= 0;
+                       (unsigned long long)target.opaque_payload_fnv1a64,
+                       target.image_payload_anchor_offset,
+                       target.image_payload_next_anchor_offset,
+                       target.image_payload_candidate_byte_count,
+                       (unsigned long long)target.image_payload_candidate_fnv1a64,
+                       target.palette_payload_anchor_offset,
+                       target.palette_payload_next_anchor_offset,
+                       target.palette_payload_candidate_byte_count,
+                       (unsigned long long)target.palette_payload_candidate_fnv1a64,
+                       target.palette_payload_candidate_bound) >= 0;
     if (!write_ok || fclose(file) != 0 || rename(temporary_path, path) != 0) {
         remove(temporary_path);
         return 0;
@@ -5842,7 +5943,52 @@ int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
         *out_receipt = receipt;
         return 0;
     }
+    if (!target.image_payload_candidate_bound ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "image_anchor_offset", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        parsed_index != target.image_payload_anchor_offset ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "image_next_anchor_offset", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        parsed_index != target.image_payload_next_anchor_offset ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "image_candidate_byte_count", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        parsed_index != target.image_payload_candidate_byte_count ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "image_candidate_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.image_payload_candidate_fnv1a64 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palette_candidate_present", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+        (parsed_index != 0U) != (target.palette_payload_candidate_bound != 0) ||
+        (target.palette_payload_candidate_bound &&
+         (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                      "palette_anchor_offset", value, sizeof(value)) ||
+          !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+          parsed_index != target.palette_payload_anchor_offset ||
+          !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                      "palette_next_anchor_offset", value, sizeof(value)) ||
+          !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+          parsed_index != target.palette_payload_next_anchor_offset ||
+          !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                      "palette_candidate_byte_count", value, sizeof(value)) ||
+          !nexus_v1_slev_trace_hex_u32(value, &parsed_index) ||
+          parsed_index != target.palette_payload_candidate_byte_count ||
+          !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                      "palette_candidate_fnv1a64", value, sizeof(value)) ||
+          !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+          expected_hash != target.palette_payload_candidate_fnv1a64))) {
+        receipt.status = NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
     receipt.manifest_target_bound = 1;
+    receipt.image_payload_candidate_bound = 1;
+    receipt.palette_payload_candidate_bound =
+        target.palette_payload_candidate_bound;
     if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
                                     "raw_trace_size", value, sizeof(value)) ||
         !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||

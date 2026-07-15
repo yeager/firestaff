@@ -582,6 +582,16 @@ typedef struct {
     int opaque_payload_byte_count;
     uint64_t descriptor_bytes_fnv1a64;
     uint64_t opaque_payload_fnv1a64;
+    uint32_t image_payload_anchor_offset;
+    uint32_t image_payload_next_anchor_offset;
+    uint32_t image_payload_candidate_byte_count;
+    uint64_t image_payload_candidate_fnv1a64;
+    uint32_t palette_payload_anchor_offset;
+    uint32_t palette_payload_next_anchor_offset;
+    uint32_t palette_payload_candidate_byte_count;
+    uint64_t palette_payload_candidate_fnv1a64;
+    int image_payload_candidate_bound;
+    int palette_payload_candidate_bound;
     int capture_producer_required;
     int original_saturn_capture_required;
     int no_draw_only;
@@ -1060,6 +1070,8 @@ typedef struct {
     int descriptor_index;
     int capture_target_bound;
     int manifest_target_bound;
+    int image_payload_candidate_bound;
+    int palette_payload_candidate_bound;
     int raw_trace_bytes_bound;
     size_t raw_trace_byte_count;
     uint64_t raw_trace_fnv1a64;
