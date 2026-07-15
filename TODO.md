@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
+  raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
+
 - 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
   complete; F0224 still needs real Lord Chaos escape-route capture.
 

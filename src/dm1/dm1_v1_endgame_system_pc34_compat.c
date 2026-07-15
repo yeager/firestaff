@@ -5,6 +5,7 @@
  * Secondary reference: CSBWin Attack.cpp (_Fusion, _FusionSequence).
  */
 #include "dm1_v1_endgame_system_pc34_compat.h"
+#include "memory_runtime_dynamics_pc34_compat.h"
 #include <string.h>
 
 /* ===================================================================
@@ -123,6 +124,47 @@ int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
     *outAllowed = type == DUNGEON_ELEMENT_CORRIDOR ||
                   type == DUNGEON_ELEMENT_TELEPORTER ||
                   type == DUNGEON_ELEMENT_PIT || type == DUNGEON_ELEMENT_DOOR;
+    return 1;
+}
+
+int DM1_Endgame_F0225_MoveLordChaosEscapePc34Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY, struct RngState_Compat* rng,
+    int* outEscaped, int* outFuseSequence)
+{
+    static const int dx[4] = {-1, 1, 0, 0};
+    static const int dy[4] = {0, 0, -1, 1};
+    unsigned short chaos;
+    int cages[4], count = 0, start, attempt, allowed;
+    if (outEscaped) *outEscaped = 0;
+    if (outFuseSequence) *outFuseSequence = 0;
+    if (!dungeon || !things || !rng || !outEscaped || !outFuseSequence ||
+        !DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
+            dungeon, things, mapIndex, mapX, mapY, &chaos)) return 0;
+    for (attempt = 0; attempt < 4; ++attempt) {
+        int found = 0;
+        if (!F0221_GROUP_IsFluxcageOnSquare_Compat(
+                dungeon, things, mapIndex, mapX + dx[attempt], mapY + dy[attempt], &found)) return 0;
+        cages[attempt] = found; count += found;
+    }
+    while (count++ < 4) {
+        start = (int)F0732_COMBAT_RngRandom_Compat(rng, 4);
+        for (attempt = 0; attempt < 4; ++attempt) {
+            int direction = (start + attempt) & 3;
+            int targetX, targetY;
+            if (cages[direction]) continue;
+            cages[direction] = 1;
+            targetX = mapX + dx[direction]; targetY = mapY + dy[direction];
+            if (!DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                    dungeon, mapIndex, targetX, targetY, &allowed) || !allowed) break;
+            if (!F0515_DUNGEON_UnlinkThingFromList_Compat(
+                    dungeon, things, chaos, 0, mapIndex, mapX, mapY) ||
+                !F0514_DUNGEON_LinkThingToList_Compat(
+                    dungeon, things, chaos, 0, mapIndex, targetX, targetY)) return 0;
+            *outEscaped = 1; return 1;
+        }
+    }
+    *outFuseSequence = 1;
     return 1;
 }
 
