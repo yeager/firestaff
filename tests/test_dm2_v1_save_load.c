@@ -1318,6 +1318,7 @@ static int test_raw_sksave_resume_import(void)
     DM2_V1_OriginalRawActuatorReceipt actuator_receipt;
     DM2_V1_OriginalRawCreatureReceipt creature_receipt;
     DM2_V1_OriginalRawWeaponReceipt weapon_receipt;
+    DM2_V1_OriginalRawItemReceipt item_receipt;
     DM2_V1_SaveCandidate raw_candidate;
     int r;
 
@@ -1375,6 +1376,24 @@ static int test_raw_sksave_resume_import(void)
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
     }
+    /* Extend the raw fixture with real four-byte DB6/DB7/DB10 item records
+     * and an eight-byte DB9 container. The parser must retain each pool's
+     * source order before it reaches the map and SUPPRESS sections. */
+    if (payload_size + 20u > sizeof(payload)) {
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+    memmove(payload + 120u, payload + 100u, payload_size - 100u);
+    payload_size += 20u;
+    memset(payload + 100u, 0, 20u);
+    write_u16_le_at(payload, 24u, 1u); /* DB6 Cloth */
+    write_u16_le_at(payload, 26u, 1u); /* DB7 Scroll */
+    write_u16_le_at(payload, 30u, 1u); /* DB9 Container */
+    write_u16_le_at(payload, 32u, 1u); /* DB10 Misc */
+    payload[102u] = 0xd5u;             /* DB6 w2: ItemType 85 */
+    payload[106u] = 0x3cu;             /* DB7 w2: ItemType 60 */
+    payload[112u] = 0x05u;             /* DB9 b4: open, type 2 */
+    payload[118u] = 0x55u;             /* DB10 w2: ItemType 85 */
     memset(&dungeon_receipt, 0, sizeof(dungeon_receipt));
     if (!dm2_v1_original_raw_sksave_dungeon_receipt(
             payload, payload_size, &dungeon_receipt) ||
@@ -1391,10 +1410,18 @@ static int test_raw_sksave_resume_import(void)
         dungeon_receipt.db_pool_offsets[4] != 80u ||
         dungeon_receipt.db_record_counts[5] != 1u ||
         dungeon_receipt.db_pool_offsets[5] != 96u ||
-        dungeon_receipt.map_data_offset != 100u ||
+        dungeon_receipt.db_record_counts[6] != 1u ||
+        dungeon_receipt.db_pool_offsets[6] != 100u ||
+        dungeon_receipt.db_record_counts[7] != 1u ||
+        dungeon_receipt.db_pool_offsets[7] != 104u ||
+        dungeon_receipt.db_record_counts[9] != 1u ||
+        dungeon_receipt.db_pool_offsets[9] != 108u ||
+        dungeon_receipt.db_record_counts[10] != 1u ||
+        dungeon_receipt.db_pool_offsets[10] != 116u ||
+        dungeon_receipt.map_data_offset != 120u ||
         dungeon_receipt.prefix_hash == 0u ||
         dungeon_receipt.map_data_hash == 0u ||
-        dungeon_receipt.suppress_state_offset != 120u ||
+        dungeon_receipt.suppress_state_offset != 140u ||
         !dm2_v1_original_raw_sksave_db_record_receipt(
             payload, payload_size, 0, 0, &db0_receipt) ||
         !db0_receipt.valid || db0_receipt.record_size != 4u ||
@@ -1433,7 +1460,23 @@ static int test_raw_sksave_resume_import(void)
         weapon_receipt.item_type != 46u || weapon_receipt.important != 1u ||
         weapon_receipt.charges != 10u ||
         dm2_v1_original_raw_sksave_weapon_receipt(
-            payload, payload_size, 1, &weapon_receipt)) {
+            payload, payload_size, 1, &weapon_receipt) ||
+        !dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 5, 0, &item_receipt) ||
+        !item_receipt.valid || item_receipt.item_type != 46u ||
+        !dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 6, 0, &item_receipt) ||
+        item_receipt.item_type != 85u ||
+        !dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 7, 0, &item_receipt) ||
+        item_receipt.item_type != 60u ||
+        !dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 10, 0, &item_receipt) ||
+        item_receipt.item_type != 85u ||
+        dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 9, 0, &item_receipt) ||
+        dm2_v1_original_raw_sksave_item_receipt(
+            payload, payload_size, 6, 1, &item_receipt)) {
         printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;

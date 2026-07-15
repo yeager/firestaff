@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 original SKSave common-item record admission: the raw
+  save parser now reads `DME.h::ItemType()` only from hash-bound four-byte
+  DB5 Weapon, DB6 Cloth, DB7 Scroll, and DB10 Miscellaneous_item rows. It
+  enforces the original pool/index/stride boundaries and exposes no links,
+  inventory graph, non-Weapon charges, contents, or graphics. Focused
+  `dm2_v1_save_load` coverage verifies all four families and rejects DB9 and
+  out-of-range rows.
+
 - ✅ 2026-07-15 DM2 original-save corpus selected-row handoff: added a
   `DM2_SELECT_LOAD_GAME`-shaped import boundary that accepts only an exact
   row from a fresh, fully parsed original envelope/raw census and revalidates

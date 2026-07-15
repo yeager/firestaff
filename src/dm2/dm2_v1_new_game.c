@@ -1199,6 +1199,31 @@ int dm2_v1_original_raw_sksave_weapon_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_item_receipt(
+    const uint8_t *buf, size_t buf_size, int db_pool, int record_index,
+    DM2_V1_OriginalRawItemReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawItemReceipt candidate;
+    uint16_t attributes;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if ((db_pool != 5 && db_pool != 6 && db_pool != 7 && db_pool != 10) ||
+        !dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, db_pool, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 4u ||
+        candidate.record.record_offset > buf_size - 4u) {
+        return 0;
+    }
+    /* DME.h Weapon::ItemType, Cloth::ItemType, Scroll::ItemType, and
+     * Miscellaneous_item::ItemType all read w2 bits 0..6. */
+    attributes = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    candidate.item_type = (uint8_t)(attributes & 0x007fu);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)
