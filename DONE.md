@@ -1068,6 +1068,13 @@
   `READWRIT.C`. A short section fails before materialization; the focused
   handoff test covers accumulation, wrap, failure, and runtime handoff.
 
+- 2026-07-15 DM1 SAVEUTIL F0420: original-PC34 F0433 export now invokes an
+  explicit DM1-owned save-part writer. It prefixes the bounded even-byte part,
+  applies exactly one F0417 obfuscation/checksum pass, and rejects odd or
+  truncated spans before the envelope can advance. The focused gate proves
+  the encoded bytes, reverse F0417 recovery, checksum agreement, and both
+  rejection paths.
+
 - 2026-07-15 DM1 DUNGEON F0168: HoC wall inscriptions use the original PC3.4
   raw TEXTSTRING record for Visible and TextDataWordOffset before the source
   glyph decoder builds the F0107 M648/C10 material receipt. The focused
