@@ -320,6 +320,7 @@ typedef struct {
     int runtime_m11_frame_hud_material_plan_consumed;
     int runtime_m11_frame_creature_material_plan_required;
     uint32_t runtime_m11_frame_creature_material_plan_hash;
+    int runtime_m11_frame_creature_material_plan_command_count;
     int runtime_m11_frame_creature_material_plan_consumed;
     int runtime_m11_frame_projectile_material_plan_required;
     uint32_t runtime_m11_frame_projectile_material_plan_hash;

@@ -33,6 +33,7 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
           !boot_receipt->runtime_m11_frame_hud_material_plan_consumed)) ||
         (boot_receipt->runtime_m11_frame_creature_material_plan_required &&
          (boot_receipt->runtime_m11_frame_creature_material_plan_hash == 0u ||
+          boot_receipt->runtime_m11_frame_creature_material_plan_command_count <= 0 ||
           !boot_receipt->runtime_m11_frame_creature_material_plan_consumed)) ||
         (boot_receipt->runtime_m11_frame_projectile_material_plan_required &&
          (boot_receipt->runtime_m11_frame_projectile_material_plan_hash == 0u ||
@@ -111,9 +112,12 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_creature_material_plan_required &&
         (!runtime_receipt->creature_material_plan_required ||
          (runtime_receipt->creature_material_plan_hash != 0u &&
+          runtime_receipt->creature_material_plan_command_count > 0 &&
           runtime_receipt->creature_material_plan_consumed &&
           runtime_receipt->creature_material_plan_hash ==
-              boot_receipt->runtime_m11_frame_creature_material_plan_hash)) &&
+              boot_receipt->runtime_m11_frame_creature_material_plan_hash &&
+          runtime_receipt->creature_material_plan_command_count ==
+              boot_receipt->runtime_m11_frame_creature_material_plan_command_count)) &&
         runtime_receipt->projectile_material_plan_required ==
             boot_receipt->runtime_m11_frame_projectile_material_plan_required &&
         (!runtime_receipt->projectile_material_plan_required ||
