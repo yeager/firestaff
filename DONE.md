@@ -19532,6 +19532,19 @@ capture's final VDP1/VDP2 pixel stream must still byte-match before rendering
 can be enabled. Verification: `nexus_v1_vdp1_lookup_decode`,
 `nexus_v1_direct_static_material_capture`, and
 `nexus_v1_dgn_geometry_readiness` pass.
+# DM1 HoC all-C127 C026 atlas source boundary (2026-07-15)
+
+The DM1 F0172/F0107 mirror receipt now rejects C127 `sensorData` outside the
+real C026 8x3 atlas rather than deriving an out-of-bounds source rectangle or
+showing fallback art. It clears the portrait/materialized payload while
+retaining the normal fail-closed wall route. The real-PC34 HoC directional
+gate now scans every map-0 C127 sensor, validates its 0..23 C026 index, tests
+the one visible wall cell plus all three negative directions, and requires
+the original C346 backing before C026. This is source/material proof only;
+an operator-captured Mac/release frame is still required for app-level visual
+evidence. Verification: `dm1_v1_champion_mirror_pc34_compat`,
+`dm1_v1_hoc_mirror_pc34_material_gate`, and
+ `dm1_v1_hoc_mirror_directional_pc34_material_gate` pass.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually

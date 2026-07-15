@@ -293,6 +293,16 @@ int DM1_V1_ChampionMirror_BuildRenderReceiptPc34(
     }
 
     renderIndex = frontWallReceipt->championPortraitRenderIndex;
+    /* C026 is exactly the ReDMCSB 8x3, 32x29 champion strip. Original HoC
+     * sensors are valid, but a damaged/custom C127 record must not make M11
+     * sample beyond that source atlas or replace it with host art. */
+    if (renderIndex >= DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) {
+        outReceipt->suppressChampionPortrait = 1;
+        outReceipt->suppressMaterializedItemPayload = 1;
+        outReceipt->clearStaleChampionPortraitOrdinal = 1;
+        outReceipt->clearStaleMaterializedItemPayload = 1;
+        return 1;
+    }
     outReceipt->drawChampionPortrait = 1;
     outReceipt->drawMirrorBacking = 1;
     outReceipt->sourceOrdinal = frontWallReceipt->championPortraitOrdinal;

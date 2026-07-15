@@ -28,6 +28,15 @@
   both C346 and C026 blits succeed, so a prior mirror cannot masquerade as
   current HoC material. Remaining work is real PC34/Mac capture across every
   HoC C127 sensor and candidate-panel state.
+  - 2026-07-15 all-C127 source proof update: the C026 portrait source is now
+    explicitly bounded to ReDMCSB's 8x3 (24-cell) 32x29 atlas. A malformed
+    C127 `sensorData` clears the current mirror route and its materialized
+    payload instead of sampling outside C026 or using a fallback. The
+    real-PC34 directional gate now walks every C127 sensor in HoC map 0,
+    proves its visible-wall-only C346->C026 route, rejects all three other
+    wall cells, and records the number of sensors and distinct source
+    portraits. Remaining work is an operator-captured Mac/release frame for
+    these genuine routes, not a host portrait substitute.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and verified PC34 M653 font
