@@ -543,6 +543,10 @@
   - 2026-07-15 update: source-backed weather renderer hash/count now cross
     boot/M11. A mismatched weather command list is rejected before host
     presentation; no intensity-only overlay is admitted.
+  - 2026-07-15 update: every source-owned `DRAW_DOOR` panel, frame, button,
+    ornate, and destroyed-mask plane is rehashed at the viewport boundary.
+    A modified decoded image or local palette blocks the complete door pass
+    before the first blit; same-sized material cannot impersonate GDAT.
   - 2026-07-15 update: the final weather viewport fetch now also matches the
     receipt's decoded ENVIRONMENT pixel and local-palette hashes. A same-sized
     altered image or palette blocks the complete cloud/rain transaction before
