@@ -6384,7 +6384,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   LBA/offset through each FIFO-to-main-RAM receipt, but the new MD5-pinned
   headless capture stayed at the System Card wait and emitted no such row.
   A later authentic runtime capture must produce the receipt before it can
-  establish a game-owned consumer.
+  establish a game-owned consumer. The tracer now retains only fresh
+  FIFO-origin cells and emits a consumer only for a matching physical
+  `0x1fxxxx` reader; any later write invalidates the cell. No such reader has
+  yet been observed.
   Generation 7 now has byte-exact FIFO provenance for LBA `4847..4851` /
   records `0x72e..0x732`, followed by game-owned `0x1f11xx..0x1f18xx` writes.
   There is no byte-exact game-RAM destination, so semantics remain blocked.
