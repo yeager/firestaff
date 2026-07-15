@@ -6674,3 +6674,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     before its documented `CMDLINK * 8` address is retained. Command-flow
     control bits, target-table identity, palette/CLUT behavior, texel format,
     and raster output remain unproved and blocked pending a real trace.
+  - 2026-07-15 link-target update: the bounded `CMDLINK` target is now framed
+    as a complete raw command from the same authenticated snapshot. A real
+    Saturn trace must still prove control-flow selection, target command role,
+    ordering, palette/CLUT state, texel semantics, and output before drawing.

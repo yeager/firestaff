@@ -2620,8 +2620,16 @@ int nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
     receipt.command_link_byte_offset = receipt.command_framing.command.link_byte_offset;
     receipt.command_link_target_bounded =
         receipt.command_framing.command.link_target_range_valid;
+    if (receipt.command_link_target_bounded) {
+        receipt.command_link_target_record_framed =
+            nexus_v1_vdp1_texture_command_parse(packet.vdp1_state +
+                    receipt.command_link_byte_offset,
+                NEXUS_V1_VDP1_COMMAND_BYTES,
+                &receipt.command_link_target) == 0;
+    }
     receipt.valid = receipt.command_record_unique_in_vram &&
-        receipt.command_link_target_bounded;
+        receipt.command_link_target_bounded &&
+        receipt.command_link_target_record_framed;
     *out_receipt = receipt;
     return receipt.valid;
 }
