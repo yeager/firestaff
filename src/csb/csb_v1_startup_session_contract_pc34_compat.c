@@ -170,6 +170,15 @@ static int csb_v1_startup_session_opening_host_raster_matches_pc34(
         host->raster.source_surface_count == 3;
 }
 
+static int csb_v1_startup_session_opening_playback_active_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    return session && session->playback.no_fallback_routes &&
+        session->playback.title_phase_mask == 0x0f &&
+        session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 &&
+        !session->playback.entrance_complete;
+}
+
 int csb_v1_startup_session_hud_surface_contract_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {
@@ -347,6 +356,7 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
         !package_receipt->title_to_hud_same_session ||
         !package_receipt->no_legacy_wrappers ||
         !package_receipt->no_fallback_routes || !host_surface->valid ||
+        !csb_v1_startup_session_opening_playback_active_pc34(session) ||
         !host_surface->real_asset_matched ||
         !host_surface->no_legacy_wrappers ||
         !host_surface->no_synthetic_surface ||
@@ -415,6 +425,7 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         !package_receipt->title_to_entrance_same_session ||
         !package_receipt->no_legacy_wrappers ||
         !package_receipt->no_fallback_routes ||
+        !csb_v1_startup_session_opening_playback_active_pc34(session) ||
         package_receipt->session_generation != session->generation ||
         package_receipt->real_asset_receipt_hash == 0u ||
         package_receipt->consumed_surface_hash == 0u) return 0;
