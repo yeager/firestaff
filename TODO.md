@@ -6710,3 +6710,5 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     disabled; incomplete source spans now block indexed lookup. The remaining
     task is a positive authentic Saturn capture that proves the palette source
     and format plus its `CMDCOLR`/CLUT relation for an admitted DGN command.
+    The next implementation step must consume that authentic trace; no legacy
+    palette accessor or flat-colour substitute remains available.

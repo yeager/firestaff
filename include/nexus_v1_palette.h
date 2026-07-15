@@ -58,11 +58,6 @@ typedef struct {
 } Nexus_PaletteState;
 
 /* Source palette API. A palette stays unavailable until source bytes bind it. */
-extern const uint16_t g_nexus_default_palette_bgr555[NEXUS_PALETTE_SIZE];
-
-/* Flat color used for any texture slot with no loaded bitmap */
-#define NEXUS_TEXTURE_FLAT_COLOR  7  /* palette entry 7 = mid-gray  */
-
 /* ── Palette API ────────────────────────────────────────────────────── */
 
 /* Initialize from a complete STONE.BIN source span. Returns entries loaded,
