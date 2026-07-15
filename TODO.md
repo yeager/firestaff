@@ -423,6 +423,15 @@
 - 2026-07-15 DM2 HUD follow-up: M11 now verifies each decoded GDAT HUD
   command before its blit. Remaining work is real save-corpus state binding.
 
+- 2026-07-15 DM2 startup/runtime follow-up: skproject title/menu startup now
+  uses the real `TITLE/0` GDAT `dt07/1` + `dt07/4` surfaces and focused
+  startup contracts pass. The broader M11 profile test still fails after
+  NEW GAME on real GDAT dungeon/HUD runtime capture, original `dt04/0`
+  NEW-rectangle input geometry, object-icon resolution, and SKSave resume
+  restore. Do not add synthetic menu, dungeon, HUD, or party substitutes;
+  next work must bind those remaining consumers to real `GRAPHICS.DAT`,
+  `DUNGEON.DAT`, and save-corpus data.
+
 - 2026-07-15 DM1 F0094/F0098: packaged active-map C079/C078 assets now reach
   the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
   original Mac/app capture, not a fallback texture path.

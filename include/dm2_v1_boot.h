@@ -874,6 +874,7 @@ typedef struct {
     int executed_rect_count;
     int executed_text_count;
     int title_gdat_command_count;
+    int menu_gdat_command_count;
     int title_gdat_asset_required;
     int title_gdat_asset_consumed;
     int title_gdat_asset_ready;

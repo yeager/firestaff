@@ -133,10 +133,10 @@ int main(void)
               strcmp(runtime_handoff.animation, "dm2-startup-menu") == 0 &&
               runtime_handoff.title_animation_tick == 0 &&
               runtime_handoff.title_frame == 0 &&
-              runtime_handoff.animation_active == 0 &&
-              runtime_handoff.title_frame_max == 0 &&
-              runtime_handoff.title_frame_duration_ticks == 0 &&
-              runtime_handoff.title_ready == 1 &&
+              runtime_handoff.animation_active == 1 &&
+              runtime_handoff.title_frame_max == 7 &&
+              runtime_handoff.title_frame_duration_ticks == 6 &&
+              runtime_handoff.title_ready == 0 &&
               runtime_handoff.runtime_menu_ready == 1 &&
               runtime_handoff.runtime_action_ready == 0 &&
               runtime_handoff.first_hud_frame_ready == 0,
@@ -144,13 +144,13 @@ int main(void)
     check(dm2_v1_startup_runtime_handoff_receipt_from_tick(
               &runtime_handoff, 1, 1, 13) &&
               runtime_handoff.valid &&
-              runtime_handoff.animation_active == 0 &&
-              runtime_handoff.title_animation_tick == 0 &&
-              runtime_handoff.title_frame == 0 &&
-              runtime_handoff.title_frame_max == 0 &&
-              runtime_handoff.title_frame_duration_ticks == 0 &&
-              runtime_handoff.title_ready == 1,
-          "runtime handoff keeps SKProject static menu timing");
+              runtime_handoff.animation_active == 1 &&
+              runtime_handoff.title_animation_tick == 13 &&
+              runtime_handoff.title_frame == 2 &&
+              runtime_handoff.title_frame_max == 7 &&
+              runtime_handoff.title_frame_duration_ticks == 6 &&
+              runtime_handoff.title_ready == 0,
+          "runtime handoff keeps SKProject title/menu timing");
     check(dm2_v1_startup_runtime_handoff_receipt_from_state(
               &runtime_handoff, 0, 1) &&
               runtime_handoff.valid &&
@@ -394,13 +394,13 @@ int main(void)
                      "T0: DM2 START MENU") == 0 &&
               launch_receipt.runtime_handoff.valid &&
               launch_receipt.runtime_handoff.startup_menu_active == 1 &&
-              launch_receipt.runtime_handoff.animation_active == 0 &&
+              launch_receipt.runtime_handoff.animation_active == 1 &&
               strcmp(launch_receipt.runtime_handoff.animation,
                      "dm2-startup-menu") == 0 &&
               launch_receipt.runtime_handoff.title_frame == 0 &&
-              launch_receipt.runtime_handoff.title_frame_max == 0 &&
-              launch_receipt.runtime_handoff.title_frame_duration_ticks == 0 &&
-              launch_receipt.runtime_handoff.title_ready == 1 &&
+              launch_receipt.runtime_handoff.title_frame_max == 7 &&
+              launch_receipt.runtime_handoff.title_frame_duration_ticks == 6 &&
+              launch_receipt.runtime_handoff.title_ready == 0 &&
               launch_receipt.runtime_handoff.initialize_v2_runtime == 1 &&
               launch_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
               launch_receipt.runtime_handoff.initialize_touch_runtime == 1 &&
@@ -457,7 +457,7 @@ int main(void)
               render_receipt.title_gdat_found &&
               render_receipt.title_gdat_category == 0x05 &&
               render_receipt.title_gdat_index == 0 &&
-              render_receipt.title_gdat_field == 4 &&
+              render_receipt.title_gdat_field == 1 &&
               render_receipt.menu_gdat_found &&
               render_receipt.menu_gdat_category == 0x05 &&
               render_receipt.menu_gdat_index == 0 &&
@@ -501,7 +501,7 @@ int main(void)
     draw_probe.gdat_result = 1;
     check(dm2_v1_startup_execute_draw_commands(
               commands, row_count, &draw_executor) &&
-              draw_probe.gdat_calls == 1,
+              draw_probe.gdat_calls == 2,
           "startup draw accepts a consumed original TITLE menu surface");
     host_facts.startup_menu_active = 1;
     check(dm2_v1_startup_presentation_view_receipt_from_host_facts(
@@ -529,10 +529,10 @@ int main(void)
               view_receipt.render.full_start_graphics_ready == 1 &&
               view_receipt.runtime_handoff.valid &&
               view_receipt.runtime_handoff.startup_menu_active == 1 &&
-              view_receipt.runtime_handoff.animation_active == 0 &&
+              view_receipt.runtime_handoff.animation_active == 1 &&
               strcmp(view_receipt.runtime_handoff.animation,
                      "dm2-startup-menu") == 0 &&
-              view_receipt.runtime_handoff.title_ready == 1 &&
+              view_receipt.runtime_handoff.title_ready == 0 &&
               view_receipt.runtime_handoff.initialize_hud_runtime == 1 &&
               view_receipt.runtime_handoff.hud_runtime_ready == 1 &&
               view_receipt.runtime_handoff.runtime_menu_ready == 1 &&
@@ -552,15 +552,15 @@ int main(void)
               boot_host_view_receipt.title_timing_ready == 1 &&
               boot_host_view_receipt.title_animation_tick == 0 &&
               boot_host_view_receipt.title_frame == 0 &&
-              boot_host_view_receipt.title_frame_max == 0 &&
-              boot_host_view_receipt.title_frame_duration_ticks == 0 &&
-              boot_host_view_receipt.title_cycle_ticks == 0 &&
+              boot_host_view_receipt.title_frame_max == 7 &&
+              boot_host_view_receipt.title_frame_duration_ticks == 6 &&
+              boot_host_view_receipt.title_cycle_ticks == 48 &&
               boot_host_view_receipt.title_cycle_position_tick == 0 &&
               boot_host_view_receipt.title_frame_start_tick == 0 &&
-              boot_host_view_receipt.title_next_frame_tick == 0 &&
+              boot_host_view_receipt.title_next_frame_tick == 6 &&
               boot_host_view_receipt.title_frame_elapsed_ticks == 0 &&
-              boot_host_view_receipt.title_frame_remaining_ticks == 0 &&
-              boot_host_view_receipt.title_cycle_remaining_ticks == 0 &&
+              boot_host_view_receipt.title_frame_remaining_ticks == 6 &&
+              boot_host_view_receipt.title_cycle_remaining_ticks == 48 &&
               boot_host_view_receipt.exact_title_timing_ready == 1 &&
               boot_host_view_receipt.menu_row_count == 3 &&
               boot_host_view_receipt.menu_text_count == 0 &&
@@ -586,10 +586,10 @@ int main(void)
               boot_full_start_package.packaged_full_start_hash != 0u &&
               boot_full_start_package.title_animation_tick == 0 &&
               boot_full_start_package.title_frame_start_tick == 0 &&
-              boot_full_start_package.title_next_frame_tick == 0 &&
-              boot_full_start_package.title_frame_remaining_ticks == 0 &&
-              boot_full_start_package.capture_proof.title_ready == 1 &&
-              boot_full_start_package.title_ready == 1 &&
+              boot_full_start_package.title_next_frame_tick == 6 &&
+              boot_full_start_package.title_frame_remaining_ticks == 6 &&
+              boot_full_start_package.capture_proof.title_ready == 0 &&
+              boot_full_start_package.title_ready == 0 &&
               boot_full_start_package.menu_capture_ready == 1 &&
               boot_full_start_package.hud_handoff_capture_ready == 1 &&
               boot_full_start_package.runtime_menu_ready == 1 &&
@@ -609,8 +609,8 @@ int main(void)
               boot_consumer_receipt.startup_active == 1 &&
               boot_consumer_receipt.startup_animation_active == 1 &&
               boot_consumer_receipt.startup_title_frame == 0 &&
-              boot_consumer_receipt.startup_title_frame_max == 0 &&
-              boot_consumer_receipt.startup_title_ready == 1 &&
+              boot_consumer_receipt.startup_title_frame_max == 7 &&
+              boot_consumer_receipt.startup_title_ready == 0 &&
               boot_consumer_receipt.startup_hud_runtime_ready == 1 &&
               boot_consumer_receipt.packaged_title_timing_consumed == 1 &&
               boot_consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
@@ -639,7 +639,7 @@ int main(void)
               boot_host_frame_receipt.next_title_tick_delta == 0 &&
               boot_host_frame_receipt.title_animation_tick == 0 &&
               boot_host_frame_receipt.title_frame == 0 &&
-              boot_host_frame_receipt.title_frame_remaining_ticks == 0 &&
+              boot_host_frame_receipt.title_frame_remaining_ticks == 6 &&
               boot_host_frame_receipt.startup_draw_command_count ==
                   boot_consumer_receipt.startup_draw_command_count &&
               boot_host_frame_receipt.packaged_full_start_hash ==
@@ -659,8 +659,9 @@ int main(void)
                   boot_consumer_receipt.startup_draw_command_count &&
               boot_render_ownership_receipt.executed_command_count ==
                   boot_render_ownership_receipt.draw_command_count &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.executed_rect_count == 0 &&
               boot_render_ownership_receipt.executed_text_count == 0 &&
               boot_render_ownership_receipt.title_gdat_asset_required == 0 &&
@@ -689,16 +690,16 @@ int main(void)
               13,
               &boot_host_view_receipt) &&
               boot_host_view_receipt.valid &&
-              boot_host_view_receipt.title_animation_tick == 0 &&
-              boot_host_view_receipt.title_frame == 0 &&
-              boot_host_view_receipt.title_frame_elapsed_ticks == 0 &&
-              boot_host_view_receipt.title_frame_remaining_ticks == 0 &&
+              boot_host_view_receipt.title_animation_tick == 13 &&
+              boot_host_view_receipt.title_frame == 2 &&
+              boot_host_view_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_host_view_receipt.title_frame_remaining_ticks == 5 &&
               boot_host_view_receipt.m11_host_view_ready == 1 &&
               boot_host_view_receipt.capture_proof_valid == 1 &&
-              boot_host_view_receipt.capture_proof.title_animation_tick == 0 &&
-              boot_host_view_receipt.capture_proof.title_frame_start_tick == 0 &&
-              boot_host_view_receipt.capture_proof.title_next_frame_tick == 0,
-          "boot host-view receipt ignores synthetic title ticks");
+              boot_host_view_receipt.capture_proof.title_animation_tick == 13 &&
+              boot_host_view_receipt.capture_proof.title_frame_start_tick == 12 &&
+              boot_host_view_receipt.capture_proof.title_next_frame_tick == 18,
+          "boot host-view receipt owns real title ticks");
     check(dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
               NULL,
               1,
@@ -709,17 +710,17 @@ int main(void)
               13,
               &boot_full_start_package) &&
               boot_full_start_package.valid &&
-              boot_full_start_package.title_animation_tick == 0 &&
-              boot_full_start_package.title_frame == 0 &&
-              boot_full_start_package.title_frame_elapsed_ticks == 0 &&
-              boot_full_start_package.title_frame_remaining_ticks == 0 &&
-              boot_full_start_package.title_cycle_position_tick == 0 &&
-              boot_full_start_package.title_frame_start_tick == 0 &&
-              boot_full_start_package.title_next_frame_tick == 0 &&
-              boot_full_start_package.capture_proof.title_ready == 1 &&
+              boot_full_start_package.title_animation_tick == 13 &&
+              boot_full_start_package.title_frame == 2 &&
+              boot_full_start_package.title_frame_elapsed_ticks == 1 &&
+              boot_full_start_package.title_frame_remaining_ticks == 5 &&
+              boot_full_start_package.title_cycle_position_tick == 13 &&
+              boot_full_start_package.title_frame_start_tick == 12 &&
+              boot_full_start_package.title_next_frame_tick == 18 &&
+              boot_full_start_package.capture_proof.title_ready == 0 &&
               boot_full_start_package.menu_capture_ready == 1 &&
               boot_full_start_package.m11_consumer_ready == 1,
-          "boot packaged full-start receipt ignores synthetic title ticks");
+          "boot packaged full-start receipt owns real title ticks");
     check(dm2_v1_boot_startup_packaged_consumer_receipt_from_runtime_state(
               NULL,
               1,
@@ -730,16 +731,16 @@ int main(void)
               13,
               &boot_consumer_receipt) &&
               boot_consumer_receipt.valid &&
-              boot_consumer_receipt.startup_title_frame == 0 &&
-              boot_consumer_receipt.title_frame_start_tick == 0 &&
-              boot_consumer_receipt.title_next_frame_tick == 0 &&
+              boot_consumer_receipt.startup_title_frame == 2 &&
+              boot_consumer_receipt.title_frame_start_tick == 12 &&
+              boot_consumer_receipt.title_next_frame_tick == 18 &&
               boot_consumer_receipt.packaged_title_timing_consumed == 1 &&
               boot_consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
               boot_consumer_receipt.m11_startup_receipt_ready == 1 &&
               boot_consumer_receipt.startup_draw_command_count ==
                   boot_full_start_package.command_count &&
               boot_consumer_receipt.startup_draw_ready == 1,
-          "boot packaged consumer receipt keeps static startup draw timing");
+          "boot packaged consumer receipt keeps real startup draw timing");
     check(dm2_v1_boot_startup_host_frame_receipt_from_runtime_state(
               NULL,
               1,
@@ -755,12 +756,12 @@ int main(void)
               boot_host_frame_receipt.suppress_game_hud == 1 &&
               boot_host_frame_receipt.schedule_next_title_tick == 0 &&
               boot_host_frame_receipt.next_title_tick_delta == 0 &&
-              boot_host_frame_receipt.title_animation_tick == 0 &&
-              boot_host_frame_receipt.title_frame == 0 &&
-              boot_host_frame_receipt.title_frame_elapsed_ticks == 0 &&
-              boot_host_frame_receipt.title_frame_remaining_ticks == 0 &&
-              boot_host_frame_receipt.title_next_frame_tick == 0,
-          "boot host-frame receipt schedules no synthetic title tick");
+              boot_host_frame_receipt.title_animation_tick == 13 &&
+              boot_host_frame_receipt.title_frame == 2 &&
+              boot_host_frame_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_host_frame_receipt.title_frame_remaining_ticks == 5 &&
+              boot_host_frame_receipt.title_next_frame_tick == 18,
+          "boot host-frame receipt consumes real title tick");
     check(dm2_v1_boot_startup_render_ownership_receipt_from_runtime_state(
               NULL,
               1,
@@ -771,14 +772,15 @@ int main(void)
               13,
               &boot_render_ownership_receipt) &&
               boot_render_ownership_receipt.valid &&
-              boot_render_ownership_receipt.title_animation_tick == 0 &&
-              boot_render_ownership_receipt.title_frame == 0 &&
-              boot_render_ownership_receipt.title_frame_elapsed_ticks == 0 &&
-              boot_render_ownership_receipt.title_frame_remaining_ticks == 0 &&
+              boot_render_ownership_receipt.title_animation_tick == 13 &&
+              boot_render_ownership_receipt.title_frame == 2 &&
+              boot_render_ownership_receipt.title_frame_elapsed_ticks == 1 &&
+              boot_render_ownership_receipt.title_frame_remaining_ticks == 5 &&
               boot_render_ownership_receipt.next_title_tick_delta == 0 &&
-              boot_render_ownership_receipt.title_next_frame_tick == 0 &&
-              boot_render_ownership_receipt.executed_gdat_image_count == 1 &&
+              boot_render_ownership_receipt.title_next_frame_tick == 18 &&
+              boot_render_ownership_receipt.executed_gdat_image_count == 2 &&
               boot_render_ownership_receipt.title_gdat_command_count == 1 &&
+              boot_render_ownership_receipt.menu_gdat_command_count == 1 &&
               boot_render_ownership_receipt.fallback_title_blit_used == 0 &&
               boot_render_ownership_receipt.final_m11_draw_caller_ready == 1 &&
               boot_render_ownership_receipt.final_m11_draw_caller_consumes_ownership == 1 &&
@@ -787,7 +789,7 @@ int main(void)
               boot_render_ownership_receipt.real_gdat_title_asset_receipt_breadth == 1 &&
               boot_render_ownership_receipt.menu_hud_startup_receipt_breadth == 1 &&
               boot_render_ownership_receipt.suppress_game_hud == 1,
-          "boot render-ownership receipt owns one static GDAT draw");
+          "boot render-ownership receipt owns real GDAT title/menu draw");
     check(!dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
               NULL,
               1,
