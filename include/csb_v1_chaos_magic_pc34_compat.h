@@ -186,6 +186,8 @@ typedef int (*CSB_V1_CSBWinDSASetSkinFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSAGetWingTalentsFn)(void *user,
                                                 uint16_t fingerprint,
                                                 uint32_t *out_talents);
+typedef int (*CSB_V1_CSBWinDSAHasWingCharacterFn)(void *user,
+                                                   uint16_t fingerprint);
 
 typedef struct {
     uint32_t master_location;
@@ -205,6 +207,7 @@ typedef struct {
     int party_champion_count;
     int party_leader_index;
     uint32_t party_champion_talents[4];
+    uint16_t party_champion_fingerprints[4];
     uint16_t party_champion_wounds[4];
     int party_champion_health[4];
     int saves_disabled_valid;
@@ -219,6 +222,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetSkinFn set_skin;
     void *skin_user;
     CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
+    CSB_V1_CSBWinDSAHasWingCharacterFn has_wing_character;
     void *wing_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -437,6 +441,7 @@ typedef struct {
     int party_champion_count;
     int party_leader_index;
     uint32_t party_champion_talents[4];
+    uint16_t party_champion_fingerprints[4];
     uint16_t party_champion_wounds[4];
     int party_champion_health[4];
     int saves_disabled_valid;
@@ -447,6 +452,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetSkinFn set_skin;
     void *skin_user;
     CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
+    CSB_V1_CSBWinDSAHasWingCharacterFn has_wing_character;
     void *wing_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

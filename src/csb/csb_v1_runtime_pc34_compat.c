@@ -80,6 +80,8 @@ static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes);
 static int csb_v1_runtime_dsa_get_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t *out_talents);
+static int csb_v1_runtime_dsa_has_wing_character(void *user,
+                                                  uint16_t fingerprint);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -16841,12 +16843,46 @@ int csb_v1_runtime_read_csbwin_wing_talents(
     return 1;
 }
 
+int csb_v1_runtime_has_csbwin_wing_character(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (8u << 24) | fingerprint;
+
+    if (!profile || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size == 0u ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return -1;
+    }
+    if (!csb_v1_runtime_locate_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size)) {
+        return 0;
+    }
+    return payload && payload_size == 25u * sizeof(uint32_t) ? 1 : -1;
+}
+
 static int csb_v1_runtime_dsa_get_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t *out_talents)
 {
     return csb_v1_runtime_read_csbwin_wing_talents(
         (const CSB_V1_RuntimeProfile *)user, fingerprint, out_talents);
+}
+
+static int csb_v1_runtime_dsa_has_wing_character(void *user,
+                                                  uint16_t fingerprint)
+{
+    return csb_v1_runtime_has_csbwin_wing_character(
+        (const CSB_V1_RuntimeProfile *)user, fingerprint);
 }
 
 int csb_v1_runtime_get_csbwin_dsa_tracing(
@@ -19414,6 +19450,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
 
             candidate.party_champion_talents[champion_index] =
                 champion->Talents;
+            candidate.party_champion_fingerprints[champion_index] =
+                champion->Fingerprint;
             candidate.party_champion_wounds[champion_index] =
                 champion->Wounds;
             candidate.party_champion_health[champion_index] =
@@ -19421,6 +19459,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
         }
     }
     candidate.get_wing_talents = csb_v1_runtime_dsa_get_wing_talents;
+    candidate.has_wing_character = csb_v1_runtime_dsa_has_wing_character;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
         candidate.global_variable_count =

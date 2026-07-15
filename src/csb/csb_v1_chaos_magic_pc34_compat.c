@@ -1162,6 +1162,34 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         }
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth, w)) goto underflow;
         break;
+    case 116u: /* STKOP_WhereIsChar */
+        /* CSBWin DSA.cpp:4383-4411 scans the party fingerprints (retaining
+         * the final matching index), then asks EXPOOL for EDT_Character|fp. */
+        if (!context->party_champions_valid ||
+            context->party_champion_count < 0 ||
+            context->party_champion_count > 4 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        w = 4u;
+        for (sv = 0; sv < context->party_champion_count; ++sv) {
+            if (context->party_champion_fingerprints[sv] == (uint16_t)v) {
+                w = (uint32_t)sv;
+            }
+        }
+        if (w == 4u) {
+            int wing_state;
+
+            if (!context->has_wing_character) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            wing_state = context->has_wing_character(context->wing_user,
+                                                      (uint16_t)v);
+            if (wing_state < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            if (wing_state > 0) w = 5u;
+        }
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, w)) goto underflow;
+        break;
     case 134u: /* STKOP_TalentsFetch, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:4243-4283 maps index four to d.HandChar and
          * returns the selected CHARDESC talents.  High-bit indices name a
@@ -1552,6 +1580,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.party_leader_index = runner->party_leader_index;
     memcpy(context.party_champion_talents, runner->party_champion_talents,
            sizeof(context.party_champion_talents));
+    memcpy(context.party_champion_fingerprints,
+           runner->party_champion_fingerprints,
+           sizeof(context.party_champion_fingerprints));
     memcpy(context.party_champion_wounds, runner->party_champion_wounds,
            sizeof(context.party_champion_wounds));
     memcpy(context.party_champion_health, runner->party_champion_health,
@@ -1564,6 +1595,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_skin = runner->set_skin;
     context.skin_user = runner->skin_user;
     context.get_wing_talents = runner->get_wing_talents;
+    context.has_wing_character = runner->has_wing_character;
     context.wing_user = runner->wing_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

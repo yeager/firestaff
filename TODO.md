@@ -3243,6 +3243,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       records and the serialized fingerprint at its original CHARDESC offset;
       missing first records retain source zero, while partial, altered, or
       unavailable tails reject rather than using a substitute character.
+    - 2026-07-15 party-location update: source `STKOP_WhereIsChar` now scans
+      the profile-owned champion fingerprints in CSBWin order, retaining the
+      final matching party index, then reads the original first 25-word
+      `EDT_Character|fingerprint` EXPOOL record for the source wing status
+      five. The lookup is FNV-authenticated and read-only; absent records
+      retain source status four, while unavailable tails reject. `SwapCharacter`
+      and every wing mutation remain outside the admitted runtime.
     - 2026-07-15 save-policy update: authenticated `STKOP_DisableSaves` now
       stages CSBWin's `disableSaves = k != 0` against the existing
       profile-owned SaveGame gate. The value commits only after the complete
@@ -3289,6 +3296,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       `EDT_Character` bundle, verifies the saved fingerprint, and exposes
       only the source `talents` word. Wing mutation, swapping, revival, and
       all other CHARDESC fields remain outside this bounded handoff.
+    - 2026-07-15 wing-location restore: DSA `STKOP_WhereIsChar` now consumes
+      the source `EXPOOL::Locate((EDT_Character << 24) | fingerprint)`
+      contract for its `4`/`5` status result. It checks only the source first
+      25-word record, unlike `GetFromWings` which requires all eight records;
+      both remain tied to the current authenticated save tail.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original
