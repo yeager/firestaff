@@ -91,6 +91,18 @@
     Remaining work is unchanged: real PC34/Mac title-to-HoC capture plus
     operator-staged external original-save corpus evidence.
 
+- 2026-07-16 Nexus startup/DGN follow-up: the runtime-handoff declaration drift
+  below the startup title route is repaired, and
+  `tests/test_nexus_v1_startup_title_route_asset_gate.c` now passes against
+  the real launcher object. The MENU.BPK renderer handoff is now fail-closed
+  for missing, invalid, no-surface, PRS3-blocked, and truncated routes, and
+  the launcher no longer treats a missing renderer receipt as a real-menu
+  asset handoff. Remaining Nexus work is still real MENU.BPK PRS3 decode,
+  original Structure2/ITEM.IBS/VDP1 texture-palette binding, broad DGN
+  command-plan readiness repair, Structure3 mesh draw admission, and Saturn
+  capture comparison. Keep the startup/menu/DGN path fail-closed; do not
+  promote fallback startup menu or synthetic dungeon visuals.
+
 - 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
   original-PC34 part reader now rejects overflowing cursor state before
   touching the F0420 length prefix or body. Remaining work is an
