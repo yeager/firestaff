@@ -643,6 +643,14 @@ typedef struct {
     int palette_payload_byte_offset;
     int image_payload_anchor_bound;
     int palette_payload_anchor_bound;
+    /* Bounded next-anchor intervals are capture windows only; they do not
+     * define image/palette lengths or any Saturn graphics format. */
+    uint32_t image_payload_next_anchor_offset;
+    uint32_t image_payload_candidate_byte_count;
+    uint32_t palette_payload_next_anchor_offset;
+    uint32_t palette_payload_candidate_byte_count;
+    int image_payload_interval_bound;
+    int palette_payload_interval_bound;
     int capture_producer_required;
     int original_saturn_capture_required;
     int no_draw_only;

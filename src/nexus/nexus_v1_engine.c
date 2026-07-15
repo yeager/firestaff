@@ -3513,6 +3513,47 @@ int nexus_v1_current_level_visit_structure2_payload_anchors(
     return receipt.valid ? 1 : 0;
 }
 
+typedef struct {
+    int descriptor_index;
+    uint32_t image_offset;
+    uint32_t palette_offset;
+    uint32_t image_next_anchor_offset;
+    uint32_t image_candidate_byte_count;
+    uint32_t palette_next_anchor_offset;
+    uint32_t palette_candidate_byte_count;
+    int image_anchor_found;
+    int palette_anchor_found;
+} Nexus_V1_StaticMaterialPayloadAnchorSearch;
+
+static int nexus_v1_find_static_material_payload_anchor(
+    void *context, const Nexus_V1_DgnStructure2PayloadAnchorPacket *packet)
+{
+    Nexus_V1_StaticMaterialPayloadAnchorSearch *search =
+        (Nexus_V1_StaticMaterialPayloadAnchorSearch *)context;
+
+    if (!search || !packet || !packet->valid || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render ||
+        packet->descriptor_index != search->descriptor_index ||
+        packet->candidate_byte_count == 0U ||
+        packet->next_anchor_offset <= packet->payload_anchor_offset) {
+        return -1;
+    }
+    if (!packet->palette_anchor &&
+        packet->payload_anchor_offset == search->image_offset) {
+        search->image_anchor_found = 1;
+        search->image_next_anchor_offset = packet->next_anchor_offset;
+        search->image_candidate_byte_count = packet->candidate_byte_count;
+    }
+    if (packet->palette_anchor && search->palette_offset != 0U &&
+        packet->payload_anchor_offset == search->palette_offset) {
+        search->palette_anchor_found = 1;
+        search->palette_next_anchor_offset = packet->next_anchor_offset;
+        search->palette_candidate_byte_count = packet->candidate_byte_count;
+    }
+    return 0;
+}
+
 int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
@@ -3520,6 +3561,8 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
 {
     Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
     Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt anchor_scene;
+    Nexus_V1_StaticMaterialPayloadAnchorSearch anchor_search;
     const Nexus_V1_Level *level;
     const uint8_t *data;
     uint32_t entry_relative_offset;
@@ -3617,6 +3660,23 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
              engine->current_level_dgn_size)) {
         return 0;
     }
+    memset(&anchor_scene, 0, sizeof(anchor_scene));
+    memset(&anchor_search, 0, sizeof(anchor_search));
+    anchor_search.descriptor_index = descriptor_index;
+    anchor_search.image_offset = descriptor_target.descriptor.image_relative_offset;
+    anchor_search.palette_offset = descriptor_target.descriptor.palette_relative_offset;
+    if (nexus_v1_current_level_visit_structure2_payload_anchors(
+            engine, nexus_v1_find_static_material_payload_anchor, &anchor_search,
+            &anchor_scene) != 1 || !anchor_scene.valid ||
+        anchor_scene.level_index != engine->game.current_level ||
+        anchor_scene.source_byte_count != engine->current_level_dgn_size ||
+        anchor_scene.source_bytes_fnv1a64 !=
+            descriptor_target.source_bytes_fnv1a64 ||
+        !anchor_search.image_anchor_found ||
+        (anchor_search.palette_offset != 0U &&
+         !anchor_search.palette_anchor_found)) {
+        return 0;
+    }
     out_target->valid = 1;
     out_target->level_index = engine->game.current_level;
     out_target->source_byte_count = engine->current_level_dgn_size;
@@ -3651,10 +3711,20 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     out_target->image_payload_byte_offset = structure2_byte_offset +
         (int)descriptor_target.descriptor.image_relative_offset;
     out_target->image_payload_anchor_bound = 1;
+    out_target->image_payload_next_anchor_offset =
+        anchor_search.image_next_anchor_offset;
+    out_target->image_payload_candidate_byte_count =
+        anchor_search.image_candidate_byte_count;
+    out_target->image_payload_interval_bound = 1;
     if (descriptor_target.descriptor.palette_relative_offset != 0U) {
         out_target->palette_payload_byte_offset = structure2_byte_offset +
             (int)descriptor_target.descriptor.palette_relative_offset;
         out_target->palette_payload_anchor_bound = 1;
+        out_target->palette_payload_next_anchor_offset =
+            anchor_search.palette_next_anchor_offset;
+        out_target->palette_payload_candidate_byte_count =
+            anchor_search.palette_candidate_byte_count;
+        out_target->palette_payload_interval_bound = 1;
     } else {
         out_target->palette_payload_byte_offset = -1;
     }

@@ -16468,6 +16468,16 @@ candidate interval bounds are not pixel spans, palette format/addressing,
 texel order, VDP1 mode, timing, decoder, or drawing proof. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Nexus static DGN face payload intervals
+
+Every active static Structure3 material face now carries the bounded
+next-anchor candidate interval for its exact Structure2 image payload and,
+when present, its palette payload. The viewport refuses a static source packet
+without those intervals. This is capture framing only: neither interval is an
+image or palette length, and no pixel codec, palette format, VDP1 mode,
+transform, or draw path is inferred. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
+
 # ✅ 2026-07-15 Nexus Structure2 descriptor capture target
 
 The active canonical LEV route can now build and atomically write an external

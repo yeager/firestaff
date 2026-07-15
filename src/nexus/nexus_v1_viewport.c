@@ -128,7 +128,15 @@ static int viewport_consume_structure3_package_geometry(
 {
     Nexus_Viewport *vp = (Nexus_Viewport *)context;
 
-    if (!vp || !packet || !packet->valid) return -1;
+    if (!vp || !packet || !packet->valid ||
+        !packet->material_target.image_payload_interval_bound ||
+        packet->material_target.image_payload_candidate_byte_count == 0U ||
+        (packet->material_target.descriptor_target.descriptor
+                 .palette_relative_offset != 0U &&
+         (!packet->material_target.palette_payload_interval_bound ||
+          packet->material_target.palette_payload_candidate_byte_count == 0U))) {
+        return -1;
+    }
     /* Keep an exact source exemplar for inspection; traversal completion and
      * counts below cover every static package face, not just this first one. */
     if (!vp->structure3_package_geometry.valid)

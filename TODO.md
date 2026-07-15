@@ -7261,3 +7261,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   one exists. This is source provenance rather than image decoding: candidate
   interval lengths, palette layout, texel order, VDP1 mode, timing, and draw
   semantics remain fail-closed pending an authentic Saturn trace.
+- 🔧 2026-07-15 Nexus static face payload intervals: every active static
+  Structure3 face now carries the exact next-anchor bounded Structure2 image
+  interval and the matching palette interval when present. These are only
+  source-owned capture windows, never guessed texture/palette lengths or a
+  decoder contract. Saturn pixel, palette, VDP1, transform, and draw evidence
+  remain required.
