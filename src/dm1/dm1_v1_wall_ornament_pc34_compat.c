@@ -18,7 +18,9 @@ enum {
     DM1_PORTRAIT_HEIGHT_PC34 = 29,
     DM1_PORTRAIT_DST_X_PC34 = 96,
     DM1_PORTRAIT_DST_Y_PC34 = 35,
-    DM1_PORTRAIT_TRANSPARENT_COLOR_PC34 = 1
+    DM1_PORTRAIT_TRANSPARENT_COLOR_PC34 = 1,
+    DM1_FRONT_MIRROR_BACKING_SOURCE_WIDTH_PC34 = 48,
+    DM1_FRONT_MIRROR_BACKING_SOURCE_HEIGHT_PC34 = 43
 };
 
 static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
@@ -307,8 +309,8 @@ int dm1_v1_front_mirror_render_plan_pc34(
     }
 
     /* ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData as G0289.
-     * DUNVIEW.C:3913-3928 then draws wall ornament C346 and the C026
-     * champion portrait at G0109_ac_Box_ChampionPortraitOnWall. */
+     * DUNVIEW.C:3913-3928 sends C346 through F0791: its native 48x43
+     * raster goes into G0205's 64x43 D1C zone before C026 at G0109. */
     outPlan->portraitGraphicIndex = DM1_GFX_CHAMPION_PORTRAITS_PC34;
     outPlan->portraitSrcX =
         (portraitOrdinal & 7) * DM1_PORTRAIT_WIDTH_PC34;
@@ -321,6 +323,8 @@ int dm1_v1_front_mirror_render_plan_pc34(
     outPlan->portraitTransparentColor = DM1_PORTRAIT_TRANSPARENT_COLOR_PC34;
     outPlan->backingDstX = outPlan->ornament.dstX;
     outPlan->backingDstY = outPlan->ornament.dstY;
+    outPlan->backingSourceWidth = DM1_FRONT_MIRROR_BACKING_SOURCE_WIDTH_PC34;
+    outPlan->backingSourceHeight = DM1_FRONT_MIRROR_BACKING_SOURCE_HEIGHT_PC34;
     outPlan->backingWidth = outPlan->ornament.width;
     outPlan->backingHeight = outPlan->ornament.height;
     return 1;

@@ -2227,6 +2227,35 @@ typedef struct M11_Dm1WallOrnamentHostPresentationReceipt {
 void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
     M11_Dm1WallOrnamentHostPresentationReceipt* outReceipt);
 
+/* ReDMCSB DUNVIEW.C F0107:3913-3928 consumes a C127 champion mirror as
+ * one C346 backing plus one C026 atlas-cell operation. Published only after
+ * both source-backed M11 blits succeed in the current frame. */
+typedef struct M11_Dm1HoCMirrorHostPresentationReceipt {
+    int valid;
+    int renderIndex;
+    int backingGraphicIndex;
+    int backingSourceWidth;
+    int backingSourceHeight;
+    int backingDestinationX;
+    int backingDestinationY;
+    int backingWidth;
+    int backingHeight;
+    int backingTransparentColor;
+    int backingPaletteMapValid;
+    unsigned char backingPaletteMap[16];
+    int portraitGraphicIndex;
+    int portraitSourceX;
+    int portraitSourceY;
+    int portraitDestinationX;
+    int portraitDestinationY;
+    int portraitWidth;
+    int portraitHeight;
+    int portraitTransparentColor;
+} M11_Dm1HoCMirrorHostPresentationReceipt;
+
+void M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(
+    M11_Dm1HoCMirrorHostPresentationReceipt* outReceipt);
+
 typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
     int valid;
     int textStringIndex;

@@ -31,6 +31,13 @@
   before asking the source-bound F0128 viewport and HUD consumers to build the
   first live dungeon frame. The obsolete M11 opening-composite asset wrapper
   is removed, so the real package session is the only owner of door pixels.
+- ✅ 2026-07-15 DM1 ReDMCSB F0107 HoC C127 materialization: M11 now consumes
+  the native PC34 C346 48x43 raster through F0791 into G0205's 64x43 D1C
+  destination before C026, rather than treating the destination width as a
+  source crop and rejecting the authentic bitmap. It publishes C346/C026
+  provenance only after both source-backed blits complete; the real-PC34 HoC
+  regression compares source/destination geometry, palette/key, and C026
+  atlas cell against that live receipt.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without

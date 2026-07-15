@@ -99,6 +99,8 @@ typedef struct DM1_V1_ChampionMirrorRenderReceiptPc34 {
     int backingGraphicIndex;
     int backingSourceX;
     int backingSourceY;
+    int backingSourceWidth;
+    int backingSourceHeight;
     int backingDstX;
     int backingDstY;
     int backingWidth;
@@ -173,6 +175,8 @@ typedef struct DM1_V1_ChampionMirrorHostDrawReceiptPc34 {
     int backingGraphicIndex;
     int backingSourceX;
     int backingSourceY;
+    int backingSourceWidth;
+    int backingSourceHeight;
     int backingDstX;
     int backingDstY;
     int backingWidth;

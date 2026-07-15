@@ -209,6 +209,8 @@ int main(void)
                mirrorPlan.portraitTransparentColor, 1);
     expect_int("mirror.plan.18.backingX", mirrorPlan.backingDstX, 80);
     expect_int("mirror.plan.18.backingY", mirrorPlan.backingDstY, 29);
+    expect_int("mirror.plan.18.backingSourceW", mirrorPlan.backingSourceWidth, 48);
+    expect_int("mirror.plan.18.backingSourceH", mirrorPlan.backingSourceHeight, 43);
     expect_int("mirror.plan.18.backingW", mirrorPlan.backingWidth, 64);
     expect_int("mirror.plan.18.backingH", mirrorPlan.backingHeight, 43);
 
