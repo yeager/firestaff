@@ -5594,97 +5594,18 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02InitialLevelLoaderSemanticReceipt *out_receipt) {
-
-    Theron_Track02LevelHandoffStatus copy_status;
-    Theron_V1_Level level;
-    uint8_t envelope[12u + TQR_RAW_INITIAL_LEVEL_WIDTH *
-                      TQR_RAW_INITIAL_LEVEL_HEIGHT];
-    size_t copied_byte_count = 0u;
-    size_t copied_user_data_offset = 0u;
-    size_t cell_index;
-    uint32_t hash;
-
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!track02_data || track02_size == 0u || !md5_hex || !out_receipt) {
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
     }
 
-    if (theron_v1_track02_decode_initial_level_envelope(
-            track02_data, track02_size, md5_hex,
-            &out_receipt->envelope) != THERON_TRACK02_SIGNAL_OK ||
-        !out_receipt->envelope.valid ||
-        out_receipt->envelope.grid_byte_count !=
-            TQR_RAW_INITIAL_LEVEL_WIDTH * TQR_RAW_INITIAL_LEVEL_HEIGHT) {
-        memset(out_receipt, 0, sizeof(*out_receipt));
-        return THERON_TRACK02_SIGNAL_NOT_FOUND;
-    }
-
-    copy_status = theron_v1_track02_copy_initial_level_user_data_window(
-        track02_data, track02_size, md5_hex,
-        out_receipt->envelope.variant == THERON_TRACK02_VARIANT_JP_BIN
-            ? g_jp_bin_descriptor_offsets[0]
-            : g_us_bin_descriptor_offsets[0],
-        envelope, sizeof(envelope), &copied_byte_count,
-        &copied_user_data_offset);
-    if (copy_status != THERON_TRACK02_LEVEL_HANDOFF_OK ||
-        copied_byte_count != sizeof(envelope) ||
-        copied_user_data_offset != out_receipt->envelope.level_user_data_offset) {
-        memset(out_receipt, 0, sizeof(*out_receipt));
-        return THERON_TRACK02_SIGNAL_NOT_FOUND;
-    }
-
-    out_receipt->map_status = theron_v1_level_load(
-        &level, envelope, (int)sizeof(envelope),
-        THERON_DUNGEON_1_HALL_OF_RECORDS, 0);
-    if (out_receipt->map_status != THERON_MAP_OK ||
-        level.width != (int)out_receipt->envelope.width ||
-        level.height != (int)out_receipt->envelope.height) {
-        memset(out_receipt, 0, sizeof(*out_receipt));
-        return THERON_TRACK02_SIGNAL_NOT_FOUND;
-    }
-
-    out_receipt->grid_cell_count = out_receipt->envelope.grid_byte_count;
-    for (cell_index = 0u; cell_index < out_receipt->grid_cell_count;
-         ++cell_index) {
-        uint8_t raw = envelope[12u + cell_index];
-        uint8_t tile = (uint8_t)(raw & 0x1fu);
-
-        if ((raw & 0xe0u) != 0u) {
-            ++out_receipt->raw_high_bit_cell_count;
-        }
-        ++out_receipt->loader_tile_value_counts[tile];
-        out_receipt->loader_tile_value_mask |= 1u << tile;
-    }
-    out_receipt->start_x = level.start_x;
-    out_receipt->start_y = level.start_y;
-    out_receipt->start_dir = level.start_dir;
-    out_receipt->loader_grid_semantics_proven = 1;
-    out_receipt->header_extension_semantics_proven = 0;
-    out_receipt->object_tail_semantics_proven = 0;
-    out_receipt->fallback_visuals_allowed = 0;
-
-    hash = out_receipt->envelope.receipt_hash;
-    hash ^= (uint32_t)out_receipt->grid_cell_count;
-    hash *= 16777619u;
-    hash ^= (uint32_t)out_receipt->raw_high_bit_cell_count;
-    hash *= 16777619u;
-    hash ^= out_receipt->loader_tile_value_mask;
-    hash *= 16777619u;
-    for (cell_index = 0u;
-         cell_index < THERON_TRACK02_LOADER_TILE_VALUE_COUNT;
-         ++cell_index) {
-        hash ^= (uint32_t)out_receipt->loader_tile_value_counts[cell_index];
-        hash *= 16777619u;
-    }
-    hash ^= (uint32_t)out_receipt->start_x;
-    hash *= 16777619u;
-    hash ^= (uint32_t)out_receipt->start_y;
-    hash *= 16777619u;
-    hash ^= (uint32_t)out_receipt->start_dir;
-    hash *= 16777619u;
-    out_receipt->receipt_hash = hash;
-    out_receipt->valid = 1;
-    return THERON_TRACK02_SIGNAL_OK;
+    /* `0x0b52` reaches the loader through an authenticated dynamic CD_READ,
+     * but the available original control-flow evidence ends at the banked
+     * `$3800` handoff. The old code parsed a convenient byte shape with the
+     * host level loader and treated that as original dungeon semantics. Keep
+     * this compatibility entry point closed until a captured game consumer
+     * proves the record's grammar, object ownership, and bitmap relation. */
+    return THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(

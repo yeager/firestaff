@@ -6990,8 +6990,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   disassembly shows the completed `$e009` read being copied to `$3800` and
   immediately transferred with `jmp $3800`. Thus record `0x0b52` is an
   executed loader sector, not a proven initial level/object record. Firestaff
-  now blocks its former level-shaped subrange from runtime promotion. Required
-  next evidence is a game-owned post-`$3800` consumer that reads a separately
+  now blocks its former level-shaped subrange from runtime promotion. The
+  legacy direct semantic/grid APIs now fail closed too, so no caller can
+  bypass that runtime gate with Firestaff's host level loader. Required next
+  evidence is a game-owned post-`$3800` consumer that reads a separately
   hash-bound level/object record and proves its grammar.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now

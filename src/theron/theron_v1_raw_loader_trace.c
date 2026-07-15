@@ -1194,7 +1194,6 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *out)
 {
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
-    Theron_Track02InitialLevelLoaderRoute route;
     Theron_V1Track02LoaderReadFacts loader_facts;
     Theron_V1Track02LoaderIntakeReceipt loader_intake;
     Theron_V1Track02LoaderPayloadReceipt loader_payload;
@@ -1232,15 +1231,7 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
         !boundary.valid ||
         !boundary.promotion_blocked || boundary.object_table_parsed ||
         boundary.object_table_semantics_proven ||
-        coalesced_receipt->later_track02_record != boundary.track02_record ||
-        theron_v1_track02_load_initial_level_loader_route(
-            track02_data, track02_size, track02_md5,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &route) !=
-            THERON_TRACK02_SIGNAL_OK ||
-        !route.valid || route.semantics.envelope.track02_record !=
-            boundary.track02_record ||
-        route.semantics.object_tail_semantics_proven ||
-        route.fallback_visuals_allowed) {
+        coalesced_receipt->later_track02_record != boundary.track02_record) {
         return 0;
     }
 
@@ -1347,7 +1338,9 @@ int theron_v1_raw_loader_trace_bind_initial_level_handoff(
     out->loader_level_envelope = loader_level_envelope;
     out->loader_post_envelope = loader_post_envelope;
     out->initial_level_boundary = boundary;
-    out->initial_level_route = route;
+    /* The source-bound `$3800` transfer is a loader/media fact. Keep the
+     * historical route member zeroed until a captured game consumer proves
+     * that any bytes in this sector belong to a dungeon record. */
     out->object_tail_semantics_proven = 0;
     out->fallback_visuals_allowed = 0;
 

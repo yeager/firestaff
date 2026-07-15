@@ -1778,10 +1778,15 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_envelope(
     const char *md5_hex,
     Theron_Track02InitialLevelEnvelopeReceipt *out_receipt);
 
-/* Decode the source-locked startup grid through the existing level loader.
- * Only authenticated JP/US raw Track 02 media can produce a receipt.  This
- * function neither publishes a level nor interprets the header extension or
- * post-grid tail as objects, routes, visuals, or any other payload. */
+/* Historical compatibility entry point for the former startup-grid decoder.
+ *
+ * The source-locked Stage 2 disassembly now proves only the dynamic `$e009`
+ * transfer and its control handoff to banked local RAM at `$3800`. It does
+ * not prove that the selected sector, including its level-shaped bytes, is a
+ * dungeon grid. This API therefore fail-closes for authentic media until a
+ * game-owned post-$3800 consumer establishes the record grammar. The
+ * byte-level envelope and loader-transfer receipts remain available to
+ * capture tooling; neither may be promoted through this entry point. */
 Theron_Track02SignalStatus
 theron_v1_track02_decode_initial_level_loader_semantics(
     const uint8_t *track02_data,
@@ -1789,8 +1794,9 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     const char *md5_hex,
     Theron_Track02InitialLevelLoaderSemanticReceipt *out_receipt);
 
-/* Materialize the one loader-proven startup grid as a positive dungeon route.
- * Only Hall of Records level 0 is admitted; the opaque tail stays unclaimed. */
+/* Historical compatibility entry point for the former Hall of Records route.
+ * It remains fail-closed until the original game-owned post-$3800 consumer
+ * proves a dungeon-record grammar and ownership relation. */
 Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
     const uint8_t *track02_data,
     size_t track02_size,
