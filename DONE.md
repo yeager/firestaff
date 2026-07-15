@@ -22,6 +22,15 @@
   byte trims ceiling and the high byte trims floor exactly in source order;
   an absent optional word remains the source's zero/no-trim result. Verification:
   DM2 scene/viewport syntax gate plus isolated Ninja boot/GDAT/save targets.
+- ✅ 2026-07-15 DM1 ReDMCSB COMMAND.C G0447/G0454 spell pointer runtime:
+  C100 now opens the real C009/C011 spell panel through C013, C101..C106
+  consume only their exact layout-696 C245..C250 rune boxes, C108 consumes
+  C252, and C107/C254 now follows SYMBOL.C F0400 by deleting just the final
+  rune, preserving the earlier runes and open source panel. The input path
+  is source-session-only and takes all hit geometry from the PC34 touch
+  matrix, never glyph bounds or host scaling. C109 remains fail-closed until
+  M11 owns the original per-caster `Symbols[]`/`SymbolStep` records. Focused
+  coverage: `m11_dm1_spell_pointer_routes_pc34_compat`.
 
 - ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
   legacy DB0-door wall-button material now resolves the real WALL_GFX

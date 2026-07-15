@@ -79,10 +79,12 @@
   and source line clipping for available and selected runes; F0396/F0392 now
   consumes C011's complete 96x12 available/selected rows, not a 14-pixel
   fragment; SPELDRAW F0393 consumes C009 pixels through the original inclusive
-  caster-tab invert boxes. Remaining work is real PC34/Mac capture of
-  action-menu transitions, spell refresh, tab inversion, and hit targets. Do
-  not restore a permissive bitmap blit, procedural panel, arbitrary font, or
-  host-font route.
+  caster-tab invert boxes. C100 and C101..C108 now use the exact C013/C245..
+  C250/C252/C254 source hit boxes, including F0400 single-rune recant.
+  Remaining work is real PC34/Mac capture of action-menu transitions, spell
+  refresh, tab inversion, and the C109 per-caster `Symbols[]`/`SymbolStep`
+  owner. Do not restore a permissive bitmap blit, procedural panel, arbitrary
+  font, or host-font route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
