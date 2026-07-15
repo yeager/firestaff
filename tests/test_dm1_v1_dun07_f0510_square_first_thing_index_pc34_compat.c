@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #define MAKE_THING(type, index, cell) \
     ((unsigned short)((((cell) & 0x03) << 14) | (((type) & 0x0F) << 10) | ((index) & 0x03FF)))
@@ -67,6 +68,7 @@ int main(void)
     unsigned short discardedJunk;
     unsigned short allocatedJunk;
     unsigned short generatedThing;
+    const unsigned char *thingData;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
@@ -186,6 +188,23 @@ int main(void)
     ok &= expect_thing("later map flagged square returns compact SFT[4]",
         F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 1, 1),
         squareFirstThings[4]);
+
+    /* F0156 uses the Thing reference's type/index only: the cell bits do
+     * not participate in its G0284 base + G0235 stride calculation. */
+    rawJunk[16] = 0xA5u;
+    rawJunk[17] = 0x5Au;
+    thingData = dm1_v1_dungeon_get_thing_data_pc34(
+        &things, MAKE_THING(THING_TYPE_JUNK, 4, 3));
+    ok &= expect_int("F0156 returns the exact typed raw record",
+        thingData == rawJunk + 16, 1);
+    ok &= expect_int("F0156 preserves raw record contents",
+        thingData && thingData[1] == 0x5Au, 1);
+    ok &= expect_int("F0156 rejects absent source records",
+        dm1_v1_dungeon_get_thing_data_pc34(&things,
+            MAKE_THING(THING_TYPE_WEAPON, 1, 0)) == NULL, 1);
+    ok &= expect_int("F0156 rejects end-of-list sentinel",
+        dm1_v1_dungeon_get_thing_data_pc34(&things, THING_ENDOFLIST) == NULL,
+        1);
 
     squareFirstThings[0] = staticDoor;
     ok &= expect_thing("F0162 skips static door/text/sensor records",

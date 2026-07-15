@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 DUNGEON F0156 follow-up: the source-defined raw Thing-data
+  accessor now owns the live door-button read path. Remaining work is to
+  route other DM1 raw Thing consumers through this accessor while preserving
+  their caller-owned mutation rules. Do not infer a record from decoded
+  mirrors, or return data for absent, reserved, or out-of-range source slots.
+
 - 2026-07-15 DM2 HUD follow-up: HUD now binds to its G1 scene receipt. Save corpus remains.
 
 - 2026-07-15 DM2 HUD follow-up: exact real HUD command counts now cross M11.
