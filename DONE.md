@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 source-symbol backlog queue tooling: added
+  `tools/symbol_backlog.py`, which reads the ReDMCSB callable-symbol and
+  skproject DM2 named-symbol TSV audits, keeps MISSING/UNCERTAIN rows open,
+  prioritizes runtime families, and emits per-game work queues in text or JSON.
+  Verification: `python3 -m py_compile tools/symbol_backlog.py`,
+  `python3 tools/symbol_backlog.py --limit 12`, and
+  `python3 tools/symbol_backlog.py --game DM2 --limit 8 --json` pass.
+
 - ✅ 2026-07-16 DM2 G1 boot pose and runtime HUD capture closure: DM2
   boot now consumes the source-validated G1 File_header party pose decoded by
   the dungeon loader instead of replacing it with the old 15,15,N synthetic

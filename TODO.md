@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
+  now derives reproducible work queues from the ReDMCSB and skproject TSV
+  audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
+  DM1 122, CSB 1, shared DM1/CSB 1614, DM2 1682; 3419 total open rows
+  across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
+  is actual source-backed implementation or explicit non-applicability
+  decisions per row; the backlog tool is queue evidence only, not completion.
+
 - 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
   texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`
   still fails on 39 broader startup completeness assertions: title/menu audio
