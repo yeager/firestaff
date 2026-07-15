@@ -989,6 +989,17 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_misty_map = ready ? misty_map : 0u;
     s->gdat_thunder_position = ready ? thunder_position : 0u;
     s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    /* UPDATE_GFXSET replaces the active scene as one transaction. A retained
+     * plane plan from an earlier map/style cannot remain drawable after its
+     * G1 control owner changes. */
+    if (s->gdat_scene_material_plan &&
+        (!s->gdat_scene_control_ready ||
+         s->gdat_scene_material_plan->graphicsset !=
+             (uint8_t)s->gdat_scene_material_index ||
+         s->gdat_scene_material_plan->command_hash !=
+             s->gdat_scene_control_hash)) {
+        s->gdat_scene_material_plan = NULL;
+    }
     s->dirty = 1;
 }
 
@@ -997,7 +1008,12 @@ void dm2_v1_viewport_set_gdat_scene_material_plan(
     const DM2_V1_GdatSceneM11CommandPlan *plan)
 {
     if (!s) return;
-    s->gdat_scene_material_plan = plan && plan->valid ? plan : NULL;
+    /* The material pair is only meaningful as the same source transaction
+     * that produced the current G1 MapGraphicsStyle control receipt. */
+    s->gdat_scene_material_plan = plan && plan->valid &&
+        s->gdat_scene_control_ready &&
+        plan->graphicsset == (uint8_t)s->gdat_scene_material_index &&
+        plan->command_hash == s->gdat_scene_control_hash ? plan : NULL;
     s->dirty = 1;
 }
 
@@ -3495,6 +3511,11 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
         s->last_floor_ceiling_material_required_mask =
             DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
+        if (!s->gdat_scene_control_ready || !plan) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+            return;
+        }
         /* skproject c_gui_vp consumes the decoded UPDATE_GFXSET result. When
          * M11 has that exact boot-owned plan, do not re-query GDAT or permit a
          * callback to substitute another graphics set. */

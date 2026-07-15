@@ -6503,6 +6503,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     rule. It refuses to emit any `GRAPHICSSET` plan without a live
     `MapGraphicsStyle` receipt, rather than encoding the historical set-one
     default for later consumption.
+  - 2026-07-15 update: a presented floor/ceiling M11 plan now stays attached
+    only while its exact `GRAPHICSSET` index and command hash match the active
+    G1 scene-control transaction. A changed map/style or a mismatched plan is
+    detached before rendering and therefore remains no-draw.
   - 2026-07-15 update: creature scene rendering now has only the selected
     `DRAW_MAP_CHIP`/Rect14 GDAT bitmap route. Generated fallback rectangles,
     colours, and health bars are removed; absent material is blocked and
