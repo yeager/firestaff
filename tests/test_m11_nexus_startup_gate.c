@@ -427,6 +427,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_FaceLayout layout;
     Nexus_UI_FaceRecordDecodeInfo decode_info;
     Nexus_UI_FaceCompactRecordDescriptor compact_last;
+    Nexus_UI_FacePrs3CorpusReceipt corpus;
     unsigned char expanded_face[48 * 48];
     int compact_size;
     int compact_cursor;
@@ -487,6 +488,16 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     compact_last.prs3_version == 1U &&
                     compact_last.declared_pixel_count == 56 * 56,
                 "Nexus FACE descriptor preserves compact version-1 frame boundaries");
+    memset(&corpus, 0, sizeof(corpus));
+    expect_true(nexus_ui_face_prs3_corpus_receipt(compact_face, compact_size,
+                                                   &corpus) == 1 &&
+                    corpus.valid && corpus.frame_count == 20 &&
+                    corpus.source_byte_count == (size_t)compact_size &&
+                    corpus.total_stream_byte_count == 20U &&
+                    corpus.declared_total_pixel_count == 20U * 56U * 56U &&
+                    !corpus.decoder_permitted && corpus.no_draw_only &&
+                    !corpus.fallback_visuals_permitted,
+                "Nexus FACE PRS3 corpus retains all authenticated frame boundaries without decoding");
     memset(&decode_info, 0, sizeof(decode_info));
     memset(expanded_face, 0xaa, sizeof(expanded_face));
     expect_true(nexus_ui_expand_face_record_48x48(compact_face + compact_last.prs3_offset,
@@ -687,6 +698,7 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
     Nexus_UI_FaceLayout layout;
     Nexus_UI_FaceRecordDecodeInfo decode_info;
     Nexus_UI_FaceCompactRecordDescriptor descriptor;
+    Nexus_UI_FacePrs3CorpusReceipt corpus;
     FILE* file;
 
     snprintf(path, sizeof(path), "%s%sFACE.BIN", data_dir, TEST_PATH_SEP);
@@ -725,6 +737,16 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
                     decode_info.kind == NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN &&
                     decode_info.copied_pixels == 0 && expanded[0] == 0xa5,
                 "real Nexus FACE.BIN PRS3 frame is blocked without a partial portrait");
+    memset(&corpus, 0, sizeof(corpus));
+    expect_true(nexus_ui_face_prs3_corpus_receipt(bytes, (int)sizeof(bytes),
+                                                   &corpus) == 1 &&
+                    corpus.valid && corpus.frame_count == 20 &&
+                    corpus.source_byte_count == sizeof(bytes) &&
+                    corpus.total_stream_byte_count > 0U &&
+                    corpus.declared_total_pixel_count == 20U * 56U * 56U &&
+                    !corpus.decoder_permitted && corpus.no_draw_only &&
+                    !corpus.fallback_visuals_permitted,
+                "real Nexus FACE.BIN yields a complete no-draw PRS3 corpus receipt");
 }
 
 int main(void) {

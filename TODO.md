@@ -3331,6 +3331,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 2026-07-15 Nexus FACE.BIN: portraits remain unavailable until authenticated
    PRS3 decode evidence exists; all generic raw portrait materialization is
   retired.
+  - The complete 20-frame PRS3 corpus now has source/header/stream witnesses
+    and declared-output totals. Token grammar, bit order, prefix palette,
+    decoded pixels, and portrait presentation remain unproven and blocked.
 
 - 2026-07-15 Nexus DGT2 UI palette: WARNING.BIN and GAMEOVER.BIN now carry
   their documented BGR555 CLUTs into UI/title state. TITLE.CG, MENU.BPK,

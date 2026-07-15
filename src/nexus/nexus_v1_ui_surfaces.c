@@ -48,6 +48,18 @@ static uint32_t nexus_ui_fnv1a32(const uint8_t *data, size_t size)
     return hash;
 }
 
+static uint64_t nexus_ui_fnv1a64_append(uint64_t hash,
+                                        const uint8_t *data,
+                                        size_t size)
+{
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= (uint64_t)data[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static uint8_t nexus_ui_expand_5bit(uint16_t value)
 {
     return (uint8_t)((value << 3) | (value >> 2));
@@ -560,6 +572,54 @@ int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
         return 0;
     }
     return nexus_ui_face_compact_walk(data, data_size, face_index, out_descriptor);
+}
+
+int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
+                                      int data_size,
+                                      Nexus_UI_FacePrs3CorpusReceipt *out_receipt)
+{
+    Nexus_UI_FacePrs3CorpusReceipt receipt;
+    int index;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!data || data_size <= 0 ||
+        !nexus_ui_face_compact_walk(data, data_size, -1, NULL)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = (size_t)data_size;
+    receipt.source_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037), data, receipt.source_byte_count);
+    receipt.prs3_headers_fnv1a64 = UINT64_C(14695981039346656037);
+    receipt.stream_bytes_fnv1a64 = UINT64_C(14695981039346656037);
+    for (index = 0; index < NEXUS_UI_FACE_CANONICAL_FRAME_COUNT; ++index) {
+        Nexus_UI_FaceCompactRecordDescriptor descriptor;
+        if (!nexus_ui_face_compact_record_descriptor(data, data_size, index,
+                                                     &descriptor) ||
+            !descriptor.valid || descriptor.prs3_offset > (size_t)data_size ||
+            descriptor.prs3_size > (size_t)data_size - descriptor.prs3_offset ||
+            descriptor.stream_offset > (size_t)data_size ||
+            descriptor.stream_size > (size_t)data_size - descriptor.stream_offset) {
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.no_draw_only = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.prs3_headers_fnv1a64 = nexus_ui_fnv1a64_append(
+            receipt.prs3_headers_fnv1a64, data + descriptor.prs3_offset,
+            NEXUS_UI_FACE_PRS3_HEADER_BYTES);
+        receipt.stream_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+            receipt.stream_bytes_fnv1a64, data + descriptor.stream_offset,
+            descriptor.stream_size);
+        receipt.total_stream_byte_count += descriptor.stream_size;
+        receipt.declared_total_pixel_count += descriptor.declared_pixel_count;
+        ++receipt.frame_count;
+    }
+    receipt.valid = receipt.frame_count == NEXUS_UI_FACE_CANONICAL_FRAME_COUNT;
+    *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
 }
 
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
