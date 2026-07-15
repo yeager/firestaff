@@ -19158,3 +19158,12 @@ PCs, before/after R14 values, before/after R12 cursor values, and decrement to
 input-read sequence order. Source binding rechecks both PCs against the locked
 DM.BIN receipt. The witness remains unauthenticated capture evidence and does
 not prove PRS3 token grammar, output semantics, palette, pixels, or drawing.
+# ✅ 2026-07-15 Theron Track 02 transfer-destination call-entry receipt
+
+The original Mednafen trace now admits the Track 02-derived TII destination
+only when its bound JSR reaches an exact main-RAM entry row. The nested receipt
+retains original byte-range and call provenance without classifying code or
+data. Verification: genuine Mednafen 1.32.1 patch dry-run, Ninja focused
+targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, raw-loader probe skip-safe,
+and the capture contract pass.

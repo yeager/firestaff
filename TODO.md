@@ -8552,3 +8552,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `$3c80` transfer receipt without reformatting trace text. Missing, empty,
     oversized, or unmarked files reject. Remaining: authentic transfer and
     follow-on consumer capture, not a synthetic sidecar.
+  - Update: the Track 02-derived TII destination now requires an observed
+    main-RAM `JSR` entry at exactly that target. This extends only the
+    original-byte-to-execution chain; it does not identify a routine, data
+    table, dungeon, object, palette, bitmap, or rendering role. Remaining:
+    capture a real data read or subsequent call from the entered destination.
