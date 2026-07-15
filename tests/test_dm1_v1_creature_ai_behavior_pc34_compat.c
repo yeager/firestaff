@@ -94,6 +94,21 @@ static struct RngState_Compat make_rng(uint32_t seed) {
     return rng;
 }
 
+static void test_f0264_levitation_classifier(void) {
+    EXPECT_EQ(F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_GROUP,
+                                                  DM1_ATTR_LEVITATION), 1,
+              "F0264 C04 reads raw levitation attribute");
+    EXPECT_EQ(F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_GROUP, 0), 0,
+              "F0264 C04 without raw levitation does not levitate");
+    EXPECT_EQ(F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_PROJECTILE, 0), 1,
+              "F0264 C14 projectile always levitates");
+    EXPECT_EQ(F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_EXPLOSION, 0), 1,
+              "F0264 C15 explosion always levitates");
+    EXPECT_EQ(F0264_DM1_MOVE_IsLevitating_Compat(THING_TYPE_WEAPON,
+                                                  DM1_ATTR_LEVITATION), 0,
+              "F0264 does not apply creature attributes to ordinary Things");
+}
+
 /* =========================================================
  *  Test 1: Wander behavior — visible party in range → attack
  * ========================================================= */
@@ -1976,6 +1991,7 @@ int main(void) {
     test_remove_all_active_groups_f0194();
     test_group_add_event_f0208();
     test_group_path_blockers_f0197_to_f0199();
+    test_f0264_levitation_classifier();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

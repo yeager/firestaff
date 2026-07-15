@@ -274,6 +274,13 @@ int F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
     unsigned int cellSource,
     struct RngState_Compat* rng);
 
+/* ReDMCSB MOVESENS.C F0264 lines 11919-11936. A C04 group levitates only
+ * when its raw G0243 Attributes has MASK0x0020; C14 projectiles and C15
+ * explosions always levitate. Every other Thing type does not. */
+int F0264_DM1_MOVE_IsLevitating_Compat(
+    int thingType,
+    int creatureAttributes);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {

@@ -7879,7 +7879,7 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     }
 
     result.valid = 1;
-    result.levitates = (type == THING_TYPE_PROJECTILE) ? 1 : 0;
+    result.levitates = F0264_DM1_MOVE_IsLevitating_Compat(type, 0);
     if (!orch_f0267_resolve_non_group_chain_compat(
             world, &resolvedRequest.thing, &resolvedRequest.destinationMapIndex,
             &resolvedRequest.destinationMapX, &resolvedRequest.destinationMapY, &result)) {
@@ -7891,8 +7891,8 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.finalMapY = resolvedRequest.destinationMapY;
     result.finalThing = resolvedRequest.thing;
     /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
-     * source unlink for ordinary things.  Projectiles are levitating and
-     * therefore use F0164 directly. */
+     * source unlink for ordinary things. C14 projectiles and C15 explosions
+     * levitate under F0264 and therefore use F0164 directly. */
     if (!result.levitates) {
         result.sourceSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
@@ -7907,7 +7907,7 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.sourceUnlinked = 1;
 
     /* MOVESENS.C:F0267 lines 892-897 runs the destination F0276 pass
-     * before linking ordinary things; C14 projectile stays levitating. */
+     * before linking ordinary things; F0264 keeps C14/C15 levitating. */
     if (!result.levitates) {
         result.destinationSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
             world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
