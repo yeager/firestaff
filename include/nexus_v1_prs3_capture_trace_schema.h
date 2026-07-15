@@ -466,6 +466,22 @@ typedef struct {
     int decoder_promoted, fallback_visuals_permitted;
 } Nexus_V1_Prs3Sh2ZeroSideReceipt;
 
+/* Joins the two observed low-bit paths for one V5 complete stream. This
+ * establishes review coverage only: neither branch is assigned a PRS3 token,
+ * literal, copy, length, or offset meaning. */
+typedef struct {
+    int valid;
+    int decoder_review_bound;
+    int nonzero_path_bound;
+    int zero_side_path_bound;
+    int control_branch_evidence_complete;
+    int original_saturn_execution_authenticated;
+    int token_grammar_proven;
+    int decoder_ready;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3ControlGrammarReviewReceipt;
+
 int nexus_v1_prs3_capture_trace_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3CaptureTraceSchemaReceipt *out_receipt);
@@ -512,6 +528,17 @@ int nexus_v1_prs3_sh2_zero_side_trace_bind(
     const uint8_t *menu_bpk, size_t menu_bpk_size,
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3Sh2ZeroSideReceipt *out_receipt);
+
+/* Combine source-bound nonzero and zero-side observations under the same V5
+ * complete-stream receipt. A successful result is still grammar review only. */
+int nexus_v1_prs3_control_grammar_review_bind(
+    const Nexus_V1_Prs3DecoderReadinessReceipt *decoder_review,
+    const Nexus_V1_Prs3Vdp1CaptureReceipt *complete_trace,
+    const Nexus_V1_Prs3Sh2TransferTrace *nonzero_trace,
+    const Nexus_V1_Prs3Sh2TransferReceipt *nonzero_receipt,
+    const Nexus_V1_Prs3Sh2ZeroSideTrace *zero_trace,
+    const Nexus_V1_Prs3Sh2ZeroSideReceipt *zero_receipt,
+    Nexus_V1_Prs3ControlGrammarReviewReceipt *out_receipt);
 
 /* Catalogs only literal PRS3 framing markers in hash-verified original
  * DM.BIN bytes. Unknown executable occurrences and truncated records remain

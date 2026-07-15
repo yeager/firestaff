@@ -509,6 +509,9 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     Nexus_V1_Prs3Sh2TransferTrace transfer_trace;
     Nexus_V1_Prs3Sh2TransferReceipt transfer_receipt;
     Nexus_V1_Prs3TokenGrammarReceipt token_receipt;
+    Nexus_V1_Prs3Sh2ZeroSideTrace zero_trace;
+    Nexus_V1_Prs3Sh2ZeroSideReceipt zero_receipt;
+    Nexus_V1_Prs3ControlGrammarReviewReceipt control_review;
     unsigned char *menu;
     unsigned char *dm_bin;
     size_t menu_size = 0U, dm_bin_size = 0U;
@@ -616,6 +619,61 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
            !token_receipt.opcode_grammar_proven && !token_receipt.decoder_ready &&
            !token_receipt.decoder_promoted && !token_receipt.fallback_visuals_permitted,
            "one real MENU.BPK byte reaches opaque token review without grammar promotion");
+    memset(&zero_trace, 0, sizeof(zero_trace));
+    zero_trace.menu_bpk_fnv1a64 = fnv1a64(menu, menu_size);
+    zero_trace.dm_bin_fnv1a64 = fnv1a64(dm_bin, dm_bin_size);
+    zero_trace.entry_index = index;
+    zero_trace.stream_offset = plan.stream_offset;
+    zero_trace.stream_size = plan.stream_size;
+    zero_trace.expected_output_bytes = plan.expected_output_bytes;
+    zero_trace.first_payload_byte_offset = 0U;
+    zero_trace.second_payload_byte_offset = 1U;
+    zero_trace.zero_branch_instruction_offset = 0x14dccU;
+    zero_trace.zero_branch_target_offset = 0x14de4U;
+    zero_trace.counter_decrement_offset = 0x14de4U;
+    zero_trace.first_input_instruction_offset = 0x14decU;
+    zero_trace.second_input_instruction_offset = 0x14df0U;
+    zero_trace.first_input_read_sequence = 0x11U;
+    zero_trace.second_input_read_sequence = 0x12U;
+    zero_trace.first_input_byte = menu[plan.stream_offset];
+    zero_trace.second_input_byte = menu[plan.stream_offset + 1U];
+    zero_trace.merged_control_value = zero_trace.first_input_byte |
+        ((zero_trace.second_input_byte << 4U) & 0x0f00U);
+    expect(nexus_v1_prs3_sh2_zero_side_trace_bind(
+               &zero_trace, menu, menu_size, dm_bin, dm_bin_size, 1,
+               &zero_receipt) && zero_receipt.observed_zero_side_merge,
+           "real zero-side bytes bind to the original SH-2 merge route");
+    (void)nexus_v1_prs3_control_grammar_review_bind(
+        &readiness, &trace, &transfer_trace, &transfer_receipt,
+        &zero_trace, &zero_receipt, &control_review);
+    expect(control_review.decoder_review_bound,
+           "combined review retains V5 decoder-review binding");
+    expect(control_review.nonzero_path_bound,
+           "combined review retains source-bound nonzero path");
+    expect(zero_receipt.entry_plan_matches,
+           "zero-side receipt retains the selected stream plan");
+    expect(zero_trace.entry_index == trace.entry_index &&
+           zero_trace.stream_offset == trace.stream_offset &&
+           zero_trace.stream_size == trace.stream_size &&
+           zero_trace.expected_output_bytes == trace.expected_output_bytes,
+           "zero-side identity matches the V5 stream");
+    expect(zero_trace.second_payload_byte_offset < trace.input_read_bytes &&
+           zero_trace.first_input_read_sequence >= trace.first_input_read_sequence &&
+           zero_trace.second_input_read_sequence <= trace.last_input_read_sequence,
+           "zero-side range fits the V5 input interval");
+    expect(control_review.zero_side_path_bound,
+           "combined review retains source-bound zero-side path");
+    expect(control_review.valid && control_review.control_branch_evidence_complete &&
+           !control_review.original_saturn_execution_authenticated &&
+           !control_review.token_grammar_proven && !control_review.decoder_ready &&
+           !control_review.decoder_promoted &&
+           !control_review.fallback_visuals_permitted,
+           "both real low-bit paths join only as opaque grammar review evidence");
+    zero_trace.second_input_read_sequence = 0x13U;
+    expect(!nexus_v1_prs3_control_grammar_review_bind(
+               &readiness, &trace, &transfer_trace, &transfer_receipt,
+               &zero_trace, &zero_receipt, &control_review) && !control_review.valid,
+           "combined review rejects a zero-side observation outside the complete input interval");
     transfer_trace.output_byte_offset = plan.expected_output_bytes;
     expect(!nexus_v1_prs3_token_grammar_nonzero_candidate_bind(
                &readiness, &trace, &transfer_trace, &transfer_receipt,

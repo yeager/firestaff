@@ -7348,6 +7348,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     literal/token rule: the local corpus has no independently authenticated
     Saturn trace, so token grammar and all decoder/render permissions remain
     blocked.
+  - 2026-07-15 dual-branch review update: V5 now joins the bounded nonzero
+    byte-emission path and the independent zero-side two-byte merge under one
+    full-stream receipt. This proves capture coverage, not grammar: neither
+    branch has a literal/copy/length/offset meaning until authenticated Saturn
+    execution evidence supplies those facts.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).
