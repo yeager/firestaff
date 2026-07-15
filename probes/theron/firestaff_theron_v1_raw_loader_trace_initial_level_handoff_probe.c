@@ -128,6 +128,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt envelope_byte;
     Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt continuation_byte;
     Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt continuation_prefix;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt continuation_transfer;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -507,6 +508,35 @@ int main(void)
             &handoff)) {
         free(raw);
         printf("FAIL: authenticated manifest did not bind the e009 handoff\n");
+        return 1;
+    }
+    /* Parser fixture only: the source coordinate and bytes are derived from
+     * the authenticated raw handoff. A runtime receipt still needs the exact
+     * marker emitted by the instrumented original Mednafen producer. */
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n");
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
+            &handoff, game_payload_capture, &continuation_transfer) ||
+        !continuation_transfer.valid ||
+        continuation_transfer.track02_record != handoff.observed_track02_record ||
+        continuation_transfer.source_address != 0x3c80u ||
+        continuation_transfer.destination_address != 0x2000u ||
+        continuation_transfer.byte_count != 0x20u ||
+        continuation_transfer.source_checksum != fnv1a_bytes(
+            handoff.loader_post_envelope.bytes, 0x20u) ||
+        !continuation_transfer.manifest_bound ||
+        !continuation_transfer.source_continuation_transfer_verified ||
+        continuation_transfer.object_table_semantics_proven) {
+        free(raw);
+        printf("FAIL: authenticated continuation TII did not remain source-only\n");
+        return 1;
+    }
+    game_payload_capture[0] = 'x';
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
+            &handoff, game_payload_capture, &continuation_transfer)) {
+        free(raw);
+        printf("FAIL: unmarked TII trace reached the continuation receipt\n");
         return 1;
     }
     ++manifest.trace_md5[0];

@@ -276,6 +276,26 @@ typedef struct {
     int object_table_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt;
 
+/* An observed HuC6280 TII transfer whose source begins at the directly
+ * adjacent continuation in the authenticated `$3800` loader sector. This
+ * establishes byte movement only: destination memory and its eventual
+ * consumer are not assigned a level, object, palette, bitmap, or grid role. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t track02_record;
+    uint16_t transfer_pc;
+    uint32_t transfer_physical_pc;
+    uint16_t source_address;
+    uint16_t destination_address;
+    size_t byte_count;
+    uint32_t source_checksum;
+    int manifest_bound;
+    int source_continuation_transfer_verified;
+    int object_table_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -470,6 +490,14 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope_pref
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt *out);
+
+/* Binds one provenance-marked original Mednafen main-RAM-loader `TII` row to
+ * the beginning of the authenticated post-envelope continuation. The row may
+ * establish byte movement only; it never promotes destination semantics. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
