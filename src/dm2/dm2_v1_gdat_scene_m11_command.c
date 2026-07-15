@@ -206,13 +206,17 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_COLORKEY, &candidate.scene_colorkey) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_LIGHT, &candidate.ambient_light) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_HIGHEST_LIGHT_LEVEL, &candidate.highest_light_level) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness) ||
         candidate.ambient_darkness > 8u) return 0;
-    /* skproject RECALC_LIGHT_LEVEL adds AMBIANT_LIGHT before it selects the
-     * live light level; CHECK_RECOMPUTE_LIGHT separately clamps darkness at
-     * eight. Both controls belong to this active G1 scene transaction. */
+    /* skproject QUERY_GDAT_ENTRY_DATA_INDEX returns zero for a missing
+     * dtWordValue entry. GRAPHICSSET 2 in the canonical PC corpus has no
+     * AMBIANT_LIGHT row, so preserve that source zero without borrowing a
+     * control value from another graphics set. */
+    candidate.ambient_light = 0u;
+    (void)dm2_v1_asset_load_word_value(
+        loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+        DM2_GDAT_GFXSET_AMBIANT_LIGHT, &candidate.ambient_light);
     candidate.graphicsset = graphicsset;
     if (!dm2_v1_gdat_scene_query_blit_rect_receipt(
             loader, &candidate.query_blit_rect) ||

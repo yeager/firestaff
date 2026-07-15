@@ -297,7 +297,9 @@ int main(void)
                 !command_plan.commands[0].pixels || !command_plan.commands[1].pixels ||
                 command_plan.commands[0].palette_hash == 0u ||
                 command_plan.commands[1].palette_hash == 0u ||
-                !has_ambient_light || command_plan.ambient_light != ambient_light ||
+                (has_ambient_light
+                    ? command_plan.ambient_light != ambient_light
+                    : command_plan.ambient_light != 0u) ||
                 !has_ambient_darkness || ambient_darkness > 8u ||
                 command_plan.ambient_darkness != ambient_darkness) {
                 ++failures;
