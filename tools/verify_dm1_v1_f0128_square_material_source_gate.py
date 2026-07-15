@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lock F0128 D3..D1 square-material dispatch outside F0115 lane culling."""
+"""Lock F0128 material dispatch and its final D0 source order."""
 
 from pathlib import Path
 import sys
@@ -39,14 +39,28 @@ def main() -> int:
             f"{source_name} must remain a F0128 square-material route")
         assert "plan.relForward > maxVisibleForward" in body
 
+    for signature, source_name in (
+        ("static void m11_draw_dm1_floor_pits", "F0104 pit"),
+        ("static void m11_draw_dm1_stairs", "F0104 stairs"),
+        ("static void m11_draw_dm1_teleporter_fields", "F0113 field"),
+    ):
+        body = function_body(source, signature)
+        assert "plan.relForward < minVisibleForward" in body, (
+            f"{source_name} must support the final D0-only pass")
+
     for call in (
-        "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             3, cells);",
+        "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells);",
         "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  3, cells);",
-        "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        3, cells);",
-        "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  3, cells);",
+        "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, 3, cells);",
+        "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);",
     ):
         assert call in viewport, "viewport must retain full D3..D1 source dispatch"
-    print("ok: F0128 D3..D1 pit/ornament/stairs/field material is not side-culled")
+
+    effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
+    d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells);")
+    mirror = viewport.find("m11_draw_dm1_front_mirror_route")
+    assert effect >= 0 and d0 > effect and mirror > d0
+    print("ok: F0128 D3..D1 material is not side-culled and D0 is final")
     return 0
 
 
