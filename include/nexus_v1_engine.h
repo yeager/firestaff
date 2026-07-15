@@ -1312,6 +1312,36 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget;
 
+/* One direct Structure1F owner joined to its exact non-textured Structure3
+ * face packet. The raw fill selector is kept opaque for capture correlation;
+ * it is never promoted to a flat colour, palette entry, or draw command. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt direct_mesh;
+    Nexus_V1_DgnStructure3UntexturedFacePacket untextured_face;
+    int direct_face_untextured_bound;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget;
+
+/* One direct Structure1F owner joined to its exact 08xx Structure3 material
+ * declaration. Sequence execution and Structure2 decoding stay blocked; the
+ * packet preserves only source-owned descriptor and instruction provenance. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt direct_mesh;
+    Nexus_V1_DgnStructure3AnimatedMaterialPacket animated_material;
+    int direct_face_animated_material_bound;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget;
+
 /* A static table observed in the hash-verified retail DM.BIN executable.
  * This is a capture-producer anchor only: it does not prove that the SH-2
  * writes either VDP1 register, emits a command list, selects DGN geometry,
@@ -2277,6 +2307,18 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
 int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target);
+/* Bind one direct Structure1F source owner to its exact non-textured face.
+ * Textured faces remain outside this raw-fill route, and no flat fill or
+ * substitute image is permitted. */
+int nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget *out_target);
+/* Bind one direct Structure1F source owner to its exact 08xx material
+ * declaration. Static and non-textured faces remain unavailable here; no
+ * animation, palette, pixel, or fallback behavior is inferred. */
+int nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget *out_target);
 /* Find the one known static VDP1 register table in canonical retail DM.BIN.
  * A successful receipt deliberately remains insufficient for rendering. */
 int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(

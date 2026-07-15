@@ -6051,6 +6051,92 @@ int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget target;
+
+    if (!out_target) return -1;
+    memset(&target, 0, sizeof(target));
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
+    if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+            engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
+        !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
+        !target.direct_mesh.face_ordinal_proven ||
+        !target.direct_mesh.no_draw_only ||
+        target.direct_mesh.fallback_visuals_permitted ||
+        nexus_v1_current_level_structure3_untextured_face_packet(
+            engine, target.direct_mesh.structure3_model_index,
+            target.direct_mesh.face_ordinal, &target.untextured_face) != 1 ||
+        !target.untextured_face.valid || !target.untextured_face.source_geometry_bound ||
+        !target.untextured_face.raw_fill_bound ||
+        !target.untextured_face.no_draw_only ||
+        target.untextured_face.fallback_visuals_permitted ||
+        !target.untextured_face.blocks_real_dgn_mesh_render ||
+        target.untextured_face.level_index != target.direct_mesh.level_index ||
+        target.untextured_face.source_byte_count != target.direct_mesh.source_byte_count ||
+        target.untextured_face.source_bytes_fnv1a64 !=
+            target.direct_mesh.source_bytes_fnv1a64 ||
+        target.untextured_face.structure3_entry_index !=
+            target.direct_mesh.structure3_model_index ||
+        target.untextured_face.face_ordinal != target.direct_mesh.face_ordinal) {
+        *out_target = target;
+        return 0;
+    }
+    target.direct_face_untextured_bound = 1;
+    target.capture_producer_required = 1;
+    target.original_saturn_capture_required = 1;
+    target.valid = 1;
+    *out_target = target;
+    return 1;
+}
+
+int nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget target;
+
+    if (!out_target) return -1;
+    memset(&target, 0, sizeof(target));
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
+    if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+            engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
+        !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
+        !target.direct_mesh.face_ordinal_proven ||
+        !target.direct_mesh.no_draw_only ||
+        target.direct_mesh.fallback_visuals_permitted ||
+        nexus_v1_current_level_structure3_animated_material_packet(
+            engine, target.direct_mesh.structure3_model_index,
+            target.direct_mesh.face_ordinal, &target.animated_material) != 1 ||
+        !target.animated_material.valid ||
+        !target.animated_material.source_geometry_bound ||
+        !target.animated_material.animation_declaration_bound ||
+        !target.animated_material.no_draw_only ||
+        target.animated_material.fallback_visuals_permitted ||
+        !target.animated_material.blocks_real_dgn_mesh_render ||
+        target.animated_material.level_index != target.direct_mesh.level_index ||
+        target.animated_material.source_byte_count !=
+            target.direct_mesh.source_byte_count ||
+        target.animated_material.source_bytes_fnv1a64 !=
+            target.direct_mesh.source_bytes_fnv1a64 ||
+        target.animated_material.structure3_entry_index !=
+            target.direct_mesh.structure3_model_index ||
+        target.animated_material.face_ordinal != target.direct_mesh.face_ordinal) {
+        *out_target = target;
+        return 0;
+    }
+    target.direct_face_animated_material_bound = 1;
+    target.capture_producer_required = 1;
+    target.original_saturn_capture_required = 1;
+    target.valid = 1;
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt) {

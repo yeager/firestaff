@@ -26,6 +26,8 @@ int main(void)
     Nexus_V1_Level level;
     int source_entry;
     int found = 0;
+    int untextured_found = 0;
+    int animated_found = 0;
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_NEXUS_DATA_DIR is not set");
@@ -108,15 +110,95 @@ int main(void)
         }
         CHECK(!found,
               "canonical LEV01 direct owners cannot invent a static material lane");
+        for (source_entry = 0;
+             source_entry < engine.current_level.structure1f_entry_count;
+             ++source_entry) {
+            Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget target;
+
+            memset(&target, 0, sizeof(target));
+            if (nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
+                    &engine, source_entry, &target) != 1) {
+                continue;
+            }
+            untextured_found = 1;
+            CHECK(target.valid && target.direct_face_untextured_bound &&
+                  target.direct_mesh.structure1f_entry_index == source_entry &&
+                  target.untextured_face.structure3_entry_index ==
+                      target.direct_mesh.structure3_model_index &&
+                  target.untextured_face.face_ordinal ==
+                      target.direct_mesh.face_ordinal &&
+                  target.untextured_face.raw_fill_bound &&
+                  !target.untextured_face.flat_fill_semantics_proven &&
+                  !target.untextured_face.transform_semantics_proven &&
+                  !target.untextured_face.pixel_palette_vdp1_semantics_proven &&
+                  !target.untextured_face.decoder_permitted &&
+                  target.capture_producer_required &&
+                  target.original_saturn_capture_required && target.no_draw_only &&
+                  !target.fallback_visuals_permitted &&
+                  target.blocks_real_dgn_mesh_render,
+                  "direct owner retains only its exact opaque non-textured face");
+            break;
+        }
+        CHECK(!untextured_found,
+              "canonical LEV01 direct owners cannot invent an untextured face route");
+        for (source_entry = 0;
+             source_entry < engine.current_level.structure1f_entry_count;
+             ++source_entry) {
+            Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget target;
+
+            memset(&target, 0, sizeof(target));
+            if (nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
+                    &engine, source_entry, &target) != 1) {
+                continue;
+            }
+            animated_found = 1;
+            CHECK(target.valid && target.direct_face_animated_material_bound &&
+                  target.direct_mesh.structure1f_entry_index == source_entry &&
+                  target.animated_material.structure3_entry_index ==
+                      target.direct_mesh.structure3_model_index &&
+                  target.animated_material.face_ordinal ==
+                      target.direct_mesh.face_ordinal &&
+                  target.animated_material.animation_declaration_bound &&
+                  !target.animated_material.animation_execution_permitted &&
+                  !target.animated_material.pixel_palette_vdp1_semantics_proven &&
+                  !target.animated_material.decoder_permitted &&
+                  target.capture_producer_required &&
+                  target.original_saturn_capture_required && target.no_draw_only &&
+                  !target.fallback_visuals_permitted &&
+                  target.blocks_real_dgn_mesh_render,
+                  "direct owner retains only its exact 08xx material declaration");
+            break;
+        }
+        CHECK(!animated_found,
+              "canonical LEV01 direct owners cannot invent an 08xx material route");
     }
     {
-        Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget target;
-        memset(&target, 0, sizeof(target));
+        Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget static_target;
+        Nexus_V1_DgnStructure1FDirectUntexturedFaceCaptureTarget untextured_target;
+        Nexus_V1_DgnStructure1FDirectAnimatedMaterialCaptureTarget animated_target;
+        memset(&static_target, 0, sizeof(static_target));
         CHECK(nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
-                  &engine, engine.current_level.structure1f_entry_count, &target) == 0 &&
-              !target.valid && target.no_draw_only &&
-              !target.fallback_visuals_permitted && target.blocks_real_dgn_mesh_render,
+                  &engine, engine.current_level.structure1f_entry_count,
+                  &static_target) == 0 && !static_target.valid &&
+              static_target.no_draw_only && !static_target.fallback_visuals_permitted &&
+              static_target.blocks_real_dgn_mesh_render,
               "out-of-range owner cannot manufacture a material or fallback");
+        memset(&untextured_target, 0, sizeof(untextured_target));
+        CHECK(nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
+                  &engine, engine.current_level.structure1f_entry_count,
+                  &untextured_target) == 0 && !untextured_target.valid &&
+              untextured_target.no_draw_only &&
+              !untextured_target.fallback_visuals_permitted &&
+              untextured_target.blocks_real_dgn_mesh_render,
+              "out-of-range owner cannot manufacture an untextured face or fallback");
+        memset(&animated_target, 0, sizeof(animated_target));
+        CHECK(nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
+                  &engine, engine.current_level.structure1f_entry_count,
+                  &animated_target) == 0 && !animated_target.valid &&
+              animated_target.no_draw_only &&
+              !animated_target.fallback_visuals_permitted &&
+              animated_target.blocks_real_dgn_mesh_render,
+              "out-of-range owner cannot manufacture animation or fallback");
     }
     free(data);
     if (failures != 0) {
