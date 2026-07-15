@@ -24964,6 +24964,23 @@ if(NOT MSVC)
     )
 endif()
 
+# Rebuilds the campaign requests from canonical LEV bytes and rejects any
+# missing or altered source-only target before an external Saturn capture uses it.
+add_executable(firestaff_nexus_v1_structure3_face_capture_campaign_verify
+    probes/nexus/firestaff_nexus_v1_structure3_face_capture_campaign_verify.c
+)
+target_link_libraries(firestaff_nexus_v1_structure3_face_capture_campaign_verify PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_structure3_face_capture_campaign_verify PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure3_face_capture_campaign_verify PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Emits a visible Structure1F/Structure1A owner context beside one bounded
 # Structure3 face for an external original-Saturn capture. No mesh mapping or
 # draw semantics are inferred by this producer request.

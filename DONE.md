@@ -19,6 +19,11 @@
    `test_nexus_v1_structure3_capture_manifest` plus a direct canonical
    LEV00--LEV15 campaign run.
 
+- 2026-07-15 Nexus Structure3 campaign verifier: a companion probe rebuilds
+  all face requests from canonical LEV00--LEV15 bytes and rejects any altered
+  target or ledger before an external capture producer consumes it. It leaves
+  Saturn decoder and rendering authorization disabled.
+
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
