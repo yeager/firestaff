@@ -110,37 +110,6 @@ static const int step_dx[4] = { 0, +1,  0, -1 };
 static const int step_dy[4] = {-1,  0, +1,  0 };
 
 
-static int collision_find_square_first_thing_index(
-    const struct DungeonDatState_Compat* dungeon,
-    int mapIndex,
-    int mapX,
-    int mapY)
-{
-    const struct DungeonMapDesc_Compat* map;
-    int squareIdx;
-    int m, sq, count, total = 0;
-
-    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return -1;
-    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return -1;
-    map = &dungeon->maps[mapIndex];
-    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return -1;
-    if (!dungeon->tiles[mapIndex].squareData) return -1;
-    squareIdx = mapX * map->height + mapY;
-    if (!(dungeon->tiles[mapIndex].squareData[squareIdx] & DUNGEON_SQUARE_MASK_THING_LIST)) return -1;
-
-    for (m = 0; m < mapIndex; ++m) {
-        count = dungeon->maps[m].width * dungeon->maps[m].height;
-        for (sq = 0; sq < count; ++sq) {
-            if (dungeon->tiles[m].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
-        }
-    }
-    count = map->width * map->height;
-    for (sq = 0; sq <= squareIdx && sq < count; ++sq) {
-        if (dungeon->tiles[mapIndex].squareData[sq] & DUNGEON_SQUARE_MASK_THING_LIST) ++total;
-    }
-    return total - 1;
-}
-
 static int collision_front_door_has_button(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -149,23 +118,31 @@ static int collision_front_door_has_button(
     int mapY,
     int* outDoorIndex)
 {
-    int sftIndex;
     unsigned short thingRef;
     int thingType;
     int thingIndex;
+    const unsigned char* rawDoor;
 
     if (outDoorIndex) *outDoorIndex = -1;
-    if (!things || !things->loaded || !things->squareFirstThings || !things->doors) return 0;
-    sftIndex = collision_find_square_first_thing_index(dungeon, mapIndex, mapX, mapY);
-    if (sftIndex < 0 || sftIndex >= things->squareFirstThingCount) return 0;
+    if (!things || !things->loaded) return 0;
 
-    thingRef = things->squareFirstThings[sftIndex];
+    /* DUNGEON.C F0157 is exactly F0156(F0161(x, y)).  F0511 is the
+     * source-locked loaded G0280/SquareFirstThings F0161 path; do not
+     * rebuild its compact index from mutable square flags here. */
+    thingRef = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, mapIndex, mapX, mapY);
     if (thingRef == THING_NONE || thingRef == THING_ENDOFLIST) return 0;
     thingType = THING_GET_TYPE(thingRef);
     thingIndex = THING_GET_INDEX(thingRef);
-    if (thingType != THING_TYPE_DOOR || thingIndex < 0 || thingIndex >= things->doorCount) return 0;
+    if (thingType != THING_TYPE_DOOR || thingIndex < 0 ||
+        thingIndex >= things->thingCounts[THING_TYPE_DOOR] ||
+        !things->rawThingData[THING_TYPE_DOOR]) return 0;
+
+    /* F0156 returns the raw DOOR record.  Button is bit 6 of its PC34
+     * Type_Ornament_Attributes word, not a host-only decoded substitute. */
+    rawDoor = things->rawThingData[THING_TYPE_DOOR] + (thingIndex * 4);
     if (outDoorIndex) *outDoorIndex = thingIndex;
-    return things->doors[thingIndex].button ? 1 : 0;
+    return (rawDoor[2] & 0x40u) != 0;
 }
 
 /* ---- Public API ---- */
@@ -428,17 +405,17 @@ int DM1_V1_Door_ProcessClick(
      * arbitrary front door from the viewport: CLIKVIEW.C:F0377:365-385
      * first resolves the front square's DOOR thing through F0157 and
      * requires DOOR->Button before scheduling C10_EVENT_DOOR.  When
-     * decoded thing data is available, preserve that gate here. */
+     * loaded original G0280/SFT and DOOR bytes are available, preserve that
+     * gate here.  Missing source data is not a permission to toggle. */
     doorSt = collision_door_state(squareByte);
     outResult->previousDoorState = doorSt;
     outResult->doorVertical = (squareByte & 0x08) ? 1 : 0;
-    if (things && things->loaded) {
-        if (!collision_front_door_has_button(dungeon, things, party->mapIndex, frontX, frontY, NULL)) {
-            outResult->code = DM1_DOOR_CLICK_NO_BUTTON;
-            return 0;
-        }
-        outResult->doorHasButton = 1;
+    if (!collision_front_door_has_button(
+            dungeon, things, party->mapIndex, frontX, frontY, NULL)) {
+        outResult->code = DM1_DOOR_CLICK_NO_BUTTON;
+        return 0;
     }
+    outResult->doorHasButton = 1;
 
     /* Destroyed doors cannot be toggled */
     if (doorSt == DM1_DOOR_STATE_DESTROYED) {
@@ -541,5 +518,6 @@ const char* DM1_V1_CollisionDoor_SourceEvidence(void)
            "MOVESENS.C:F0275:1309+ (click-on-wall sensor routing); "
            "CLIKVIEW.C:F0372 (front cell computation); "
            "CLIKVIEW.C:F0377:365-385 (DOOR->Button gate -> EVENT_DOOR toggle); "
+           "DUNGEON.C:F0157:1641-1649 (F0156(F0161) raw DOOR record); "
            "DEFS.H:C0-C5 door states, MASK0x0008_PIT_OPEN, MASK0x0001_PIT_IMAGINARY";
 }
