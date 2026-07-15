@@ -23389,7 +23389,10 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return;
     }
-    for (depth = 0; depth < 3; ++depth) {
+    /* F0128 invokes F0118, F0121, then F0124.  Keep every center door
+     * material route and let the closer source panel overpaint the farther
+     * one; selecting only the nearest door loses valid D2C/D3C frames. */
+    for (depth = 2; depth >= 0; --depth) {
         DM1_CenterDoorHostMaterialReceiptPc34 material;
         const M11_ViewportCell* cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR) {
@@ -23408,7 +23411,6 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
         }
         (void)m11_draw_dm1_center_door_material_receipt(
             state, framebuffer, fbW, fbH, &material);
-        break;
     }
 }
 
@@ -23417,17 +23419,12 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
                                                int fbW,
                                                int fbH,
                                                const M11_ViewportCell cells[3][3]) {
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     int depth;
     if (!state || !state->assetsAvailable) {
         return;
     }
-    visibility = m11_dm1_lane_visibility(cells);
-    depth = visibility.nearest_blocking_center_door_depth;
-    if (depth < 0) {
-        return;
-    }
-    {
+    /* F0111 owns the ornament in each D3C/D2C/D1C door panel. */
+    for (depth = 2; depth >= 0; --depth) {
         const M11_ViewportCell* cell = &cells[depth][1];
         M11_DM1ZoneBlit panels[2];
         int panelCount;
@@ -23507,7 +23504,6 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
                                                     int fbW,
                                                     int fbH,
                                                     const M11_ViewportCell cells[3][3]) {
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     int depth;
     const M11_ViewportCell* cell;
     DM1_CenterDoorRenderPlanPc34 plan;
@@ -23515,21 +23511,19 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
     if (!state || !state->assetsAvailable) {
         return;
     }
-    visibility = m11_dm1_lane_visibility(cells);
-    depth = visibility.nearest_blocking_center_door_depth;
-    if (depth < 0) {
-        return;
+    /* F0111 applies destroyed masks to each source door panel in the same
+     * D3C -> D2C -> D1C order as the panel itself. */
+    for (depth = 2; depth >= 0; --depth) {
+        cell = &cells[depth][1];
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
+            cell->doorState != 5 ||
+            !dm1_v1_center_door_render_plan_for_depth_pc34(depth, &plan)) {
+            continue;
+        }
+        panel = m11_dm1_center_door_blit_from_plan(&plan.closedPanel);
+        m11_draw_dm1_destroyed_door_mask_on_panel(state, framebuffer, fbW, fbH,
+                                                  &panel);
     }
-    cell = &cells[depth][1];
-    if (cell->doorState != 5) {
-        return;
-    }
-    if (!dm1_v1_center_door_render_plan_for_depth_pc34(depth, &plan)) {
-        return;
-    }
-    panel = m11_dm1_center_door_blit_from_plan(&plan.closedPanel);
-    m11_draw_dm1_destroyed_door_mask_on_panel(state, framebuffer, fbW, fbH,
-                                              &panel);
 }
 
 static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
@@ -23537,52 +23531,53 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              int fbW,
                                              int fbH,
                                              const M11_ViewportCell cells[3][3]) {
-    DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     int depth;
     const M11_ViewportCell* cell;
     const M11_AssetSlot* slot;
-    DM1_ViewportCenterDoorButtonHostPlanPc34 plan;
+    const DM1_WallFrame* frame;
+    int viewIndex;
     if (!state || !state->assetsAvailable) {
-        return;
-    }
-    visibility = m11_dm1_lane_visibility(cells);
-    depth = visibility.nearest_blocking_center_door_depth;
-    if (depth < 0) {
-        return;
-    }
-    cell = &cells[depth][1];
-    if (!cell->hasDoorThing) {
         return;
     }
     if (!state->world.things || !state->world.things->doors) {
         return;
     }
-    {
+    /* F0110 is reached from each F0118/F0121/F0124 door-front route. */
+    for (depth = 2; depth >= 0; --depth) {
+        cell = &cells[depth][1];
+        if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
+            !cell->hasDoorThing) {
+            continue;
+        }
         int doorIdx = THING_GET_INDEX(cell->firstThing);
         if (doorIdx < 0 || doorIdx >= state->world.things->doorCount ||
             !state->world.things->doors[doorIdx].button) {
+            continue;
+        }
+        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    M11_GFX_DOOR_BUTTON_BASE);
+        if (!slot || slot->width <= 0 || slot->height <= 0) {
             return;
         }
+        viewIndex = depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
+            (depth == 1 ? DM1_VIEW_DOOR_BUTTON_D2C : DM1_VIEW_DOOR_BUTTON_D3C);
+        frame = dm1_v1_viewport_get_door_button_frame_pc34(1, viewIndex);
+        if (!frame) {
+            continue;
+        }
+        /* ReDMCSB DUNVIEW.C F0110 line 4163 selects G0208[button][view],
+         * then lines 4204-4207 blit C0_DOOR_BUTTON with C10 transparency.
+         * Geometry and derived D2/D3 remaps are owned by dm1_v1_viewport_3d. */
+        m11_blit_scaled_palette_map(slot,
+                                    framebuffer, fbW, fbH,
+                                    M11_VIEWPORT_X + frame->left_x,
+                                    M11_VIEWPORT_Y + frame->top_y,
+                                    (int)frame->right_x - (int)frame->left_x + 1,
+                                    (int)frame->bottom_y - (int)frame->top_y + 1,
+                                    10,
+                                    dm1_v1_viewport_get_door_button_palette_remap_pc34(
+                                        viewIndex));
     }
-    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                M11_GFX_DOOR_BUTTON_BASE);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
-        return;
-    }
-    if (!dm1_viewport_3d_center_door_button_host_plan_pc34(depth, &plan)) {
-        return;
-    }
-    /* ReDMCSB DUNVIEW.C F0110 line 4163 selects G0208[button][view],
-     * then lines 4204-4207 blit C0_DOOR_BUTTON with C10 transparency.
-     * Geometry and derived D2/D3 remaps are owned by dm1_v1_viewport_3d. */
-    m11_blit_scaled_palette_map(slot,
-                                framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + plan.frame->left_x,
-                                M11_VIEWPORT_Y + plan.frame->top_y,
-                                (int)plan.frame->right_x - (int)plan.frame->left_x + 1,
-                                (int)plan.frame->bottom_y - (int)plan.frame->top_y + 1,
-                                plan.transparent_color,
-                                plan.palette_remap);
 }
 
 static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
