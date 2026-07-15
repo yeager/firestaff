@@ -18592,3 +18592,13 @@ The source-bound Structure1F owner relation now exposes the exact selected
  Structure3 face, vertex rows, and paired normal from canonical LEV bytes.
 The LEV00-LEV15 corpus test verifies that this route remains no-draw and does
 not claim transforms, materials, palettes, VDP1, or decoder semantics.
+# ✅ 2026-07-15 DM2 source-owned map-transition context
+
+Trigger and direct G1 teleporter level handoffs now refresh their complete
+map-owned runtime context: door/ornament lists, bounded G1 c_record material
+receipts, `UPDATE_GFXSET` scene planes, `CHECK_RECOMPUTE_LIGHT` receipt, and
+weather material/destination receipts. The target level's original map type
+also selects outdoor mode. All previous receipts are cleared before this
+transaction, so a missing destination route fails closed rather than drawing
+the prior map's GDAT pixels. Verification: boot smoke 88/88 and save/load
+26/26.

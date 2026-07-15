@@ -4973,6 +4973,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     source clears the old receipt instead of allowing a previous dungeon
     frame to lend it pixels. Remaining work is source-proven live semantics
     and geometry for those record families, not reuse of stale material.
+  - 2026-07-15 update: level-changing trigger and direct G1 teleporter routes
+    now rebuild map door lists, bounded G1 c_record material receipts, and the
+    exact active `GRAPHICSSET` scene/light/weather transaction together. The
+    destination map's source level type selects outdoor mode; a missing or
+    invalid destination has no retained prior-map GDAT plan. Remaining work
+    is still exact live light-source and weather-object semantics, not a
+    borrowed scene or generated image during map handoff.
   - 2026-07-14 update: creature-atlas admission now requires the SKProject `GET_CREATURE_ANIMATION_FRAME` raw-table triad (`dtRaw8/FB`, `dtRaw7/FC`, `dtRaw7/FD`) to coexist for one real `CREATURES` index. The receipt retains the complete-index mask and hash; isolated table sightings cannot promote animation readiness. Remaining creature work is decoding the selected command/sequence semantics into the live frame choice. In particular, the dynamic route still needs the source-owned mutable sequence state, random branch, and AI/static classification; the bounded direct-DB4 route may not fabricate any of those fields.
   - 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a GDAT-backed AI definition classifies the type as non-static. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
   - 2026-07-14 update: runtime now carries an admitted live V5 receipt from
