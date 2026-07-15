@@ -16405,6 +16405,13 @@ proves Track 02 record `0x484` / LBA 4165 offsets `0..31` reach System Card
 CPU `0xea9c` through `$1808`, with exact byte comparison. No game-owned RAM,
 level, or object-record consumer is claimed.
 
+# ✅ 2026-07-15 Theron generation-4 System Card boundary
+
+Generation 4 is CDB `080010891100`: LBA `4233..4249` / Track 02 records
+`0x4c8..0x4d8`. Its FIFO origin is System Card `0xea9c`; all four observed
+`0x1f0256..0x1f0259` stores are written by System Card `0x000a52`. This route
+is excluded from game-data semantics.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
