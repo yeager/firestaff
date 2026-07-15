@@ -22,6 +22,9 @@ static void check(int condition, const char *name) {
 static void test_bounded_selector_catalog(void) {
     Theron_V1Stage3ManifestEvidence manifest;
     Theron_V1LaterRecordCorrelation correlation;
+    Theron_V1Stage3DescriptorRecordBoundary boundary;
+    uint8_t raw_track[40u * 2352u];
+    size_t index;
 
     memset(&manifest, 0, sizeof(manifest));
     manifest.valid = 1;
@@ -34,6 +37,23 @@ static void test_bounded_selector_catalog(void) {
     manifest.descriptors[1].word2 = 11u;
     manifest.descriptors[3].word2 = 100u;
 
+    memset(raw_track, 0, sizeof(raw_track));
+    for (index = 0u; index < 40u; ++index) {
+        uint8_t *sector = raw_track + index * 2352u;
+        size_t byte_index;
+
+        sector[0] = 0x00u;
+        for (byte_index = 1u; byte_index < 11u; ++byte_index) {
+            sector[byte_index] = 0xffu;
+        }
+        sector[11] = 0x00u;
+        sector[15] = 0x01u;
+    }
+    for (index = 0u; index < 2048u; ++index) {
+        raw_track[21u * 2352u + 16u + index] =
+            (uint8_t)(index ^ 0x5au);
+    }
+
     check(theron_v1_later_record_correlation_from_manifest(
               &manifest, 40u * 2352u, &correlation) &&
               correlation.nonzero_selector_count == 3u &&
@@ -43,6 +63,30 @@ static void test_bounded_selector_catalog(void) {
               correlation.self_resolved_record_in_bounds &&
               correlation.resolved_selector_hash != 0u,
           "bounded descriptor selectors retain only in-range Track02 records");
+    check(theron_v1_stage3_descriptor_record_boundary_from_manifest(
+              raw_track, sizeof(raw_track), &manifest, 1u, &boundary) &&
+              boundary.valid &&
+              boundary.descriptor_ordinal == 1u &&
+              boundary.descriptor.word2 == 11u &&
+              boundary.derived_record_base == 10u &&
+              boundary.resolved_track02_record == 21u &&
+              boundary.raw_sector == 21u &&
+              boundary.raw_offset == 21u * 2352u &&
+              boundary.user_data_offset == 21u * 2352u + 16u &&
+              boundary.user_data_bytes == 2048u &&
+              boundary.user_data_hash != 0u &&
+              boundary.record_coordinate_proven &&
+              boundary.mode1_user_data_proven &&
+              !boundary.descriptor_semantics_proven,
+          "descriptor selector binds one exact opaque MODE1 user-data boundary");
+    raw_track[21u * 2352u + 15u] = 0x02u;
+    check(!theron_v1_stage3_descriptor_record_boundary_from_manifest(
+              raw_track, sizeof(raw_track), &manifest, 1u, &boundary),
+          "descriptor boundary rejects a non-MODE1 sector");
+    raw_track[21u * 2352u + 15u] = 0x01u;
+    check(!theron_v1_stage3_descriptor_record_boundary_from_manifest(
+              raw_track, sizeof(raw_track), &manifest, 2u, &boundary),
+          "descriptor boundary rejects a zero opaque selector");
 }
 
 static uint8_t *read_file_bytes(const char *path, size_t *out_size) {

@@ -44,6 +44,29 @@ typedef struct {
     int both_self_references_proven;
 } Theron_V1LaterRecordCorrelationComparison;
 
+/* One source-owned descriptor-to-sector receipt.  The stage-three loader
+ * manifest gives an opaque 16-bit selector; the established base resolves it
+ * to one physical MODE1 Track 02 sector.  This keeps the original descriptor
+ * words and the exact user-data identity together without assigning a level,
+ * object, tile, palette, bitmap, or command grammar to either the descriptor
+ * or the sector payload. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t descriptor_ordinal;
+    Theron_V1Stage3ManifestWordTriple descriptor;
+    uint32_t derived_record_base;
+    uint32_t resolved_track02_record;
+    size_t raw_sector;
+    size_t raw_offset;
+    size_t user_data_offset;
+    size_t user_data_bytes;
+    uint32_t user_data_hash;
+    int record_coordinate_proven;
+    int mode1_user_data_proven;
+    int descriptor_semantics_proven;
+} Theron_V1Stage3DescriptorRecordBoundary;
+
 int theron_v1_later_record_correlation_from_manifest(
     const Theron_V1Stage3ManifestEvidence *manifest,
     size_t raw_track02_size,
@@ -53,5 +76,15 @@ int theron_v1_later_record_correlation_compare(
     const Theron_V1LaterRecordCorrelation *first,
     const Theron_V1LaterRecordCorrelation *second,
     Theron_V1LaterRecordCorrelationComparison *out_comparison);
+
+/* Resolves one non-zero manifest selector against its authenticated Track 02
+ * bytes.  The input must be raw 2352-byte MODE1 data; unknown variants,
+ * malformed sectors, absent selectors, and changed bytes reject. */
+int theron_v1_stage3_descriptor_record_boundary_from_manifest(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_V1Stage3ManifestEvidence *manifest,
+    size_t descriptor_ordinal,
+    Theron_V1Stage3DescriptorRecordBoundary *out_boundary);
 
 #endif /* THERON_V1_LATER_RECORD_CORRELATION_H */

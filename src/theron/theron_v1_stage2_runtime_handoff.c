@@ -134,6 +134,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     Theron_V1Stage3Mode1HeaderReceipt mode1_header;
     Theron_V1Stage3ManifestEvidence manifest;
     Theron_V1LaterRecordCorrelation correlation;
+    Theron_V1Stage3DescriptorRecordBoundary first_descriptor_boundary;
     size_t preload_raw_sector;
     size_t preload_table_offset;
     size_t preload_raw_offset;
@@ -183,6 +184,7 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
     memset(&mode1_header, 0, sizeof(mode1_header));
     memset(&manifest, 0, sizeof(manifest));
     memset(&correlation, 0, sizeof(correlation));
+    memset(&first_descriptor_boundary, 0, sizeof(first_descriptor_boundary));
     if (theron_v1_track02_find_ipl_loader(
             track02_data, track02_size, md5_hex, &loader) !=
             THERON_TRACK02_SIGNAL_OK || !loader.valid ||
@@ -221,6 +223,9 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
             track02_data, track02_size, &payload, &manifest) ||
         !theron_v1_later_record_correlation_from_manifest(
             &manifest, track02_size, &correlation) ||
+        !theron_v1_stage3_descriptor_record_boundary_from_manifest(
+            track02_data, track02_size, &manifest, 0u,
+            &first_descriptor_boundary) ||
         !correlation.valid || correlation.variant != variant ||
         correlation.stage3_track02_record != payload.track02_record ||
         !correlation.self_reference_proven ||
@@ -230,6 +235,16 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         correlation.resolved_selector_count !=
             correlation.nonzero_selector_count ||
         correlation.resolved_selector_hash == 0u ||
+        !first_descriptor_boundary.valid ||
+        !first_descriptor_boundary.record_coordinate_proven ||
+        !first_descriptor_boundary.mode1_user_data_proven ||
+        first_descriptor_boundary.descriptor_semantics_proven ||
+        first_descriptor_boundary.resolved_track02_record !=
+            payload.track02_record ||
+        first_descriptor_boundary.raw_sector != payload.raw_sector ||
+        first_descriptor_boundary.user_data_offset != payload.user_data_offset ||
+        first_descriptor_boundary.user_data_bytes != payload.user_data_bytes ||
+        first_descriptor_boundary.user_data_hash != payload.user_data_hash ||
         !theron_v1_stage2_runtime_handoff_from_dynamic_payload(
             &payload, out_handoff) ||
         !theron_v1_stage3_mode1_header_from_original_media(
@@ -349,6 +364,20 @@ int theron_v1_stage2_runtime_handoff_from_original_media(
         correlation.out_of_bounds_selector_count;
     out_handoff->stage3_resolved_descriptor_selector_hash =
         correlation.resolved_selector_hash;
+    out_handoff->stage3_first_descriptor_record_boundary_verified = 1;
+    out_handoff->stage3_first_descriptor_word0 =
+        first_descriptor_boundary.descriptor.word0;
+    out_handoff->stage3_first_descriptor_word1 =
+        first_descriptor_boundary.descriptor.word1;
+    out_handoff->stage3_first_descriptor_raw_sector =
+        first_descriptor_boundary.raw_sector;
+    out_handoff->stage3_first_descriptor_user_data_offset =
+        first_descriptor_boundary.user_data_offset;
+    out_handoff->stage3_first_descriptor_user_data_bytes =
+        first_descriptor_boundary.user_data_bytes;
+    out_handoff->stage3_first_descriptor_user_data_hash =
+        first_descriptor_boundary.user_data_hash;
+    out_handoff->stage3_first_descriptor_semantics_proven = 0;
     out_handoff->ipl_preload_user_data_bytes =
         THERON_V1_IPL_PRELOAD_SECTOR_COUNT * THERON_V1_MODE1_USER_DATA_BYTES;
     theron_v1_mode1_user_data_summary(

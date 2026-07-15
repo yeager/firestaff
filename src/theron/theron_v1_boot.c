@@ -1090,7 +1090,17 @@ int theron_v1_boot_validate_track02_loader_receipt(
         stage2_handoff.stage3_out_of_bounds_descriptor_selector_count != 0u ||
         stage2_handoff.stage3_resolved_descriptor_selector_count !=
             stage2_handoff.stage3_nonzero_descriptor_selector_count ||
-        stage2_handoff.stage3_resolved_descriptor_selector_hash == 0u) {
+        stage2_handoff.stage3_resolved_descriptor_selector_hash == 0u ||
+        !stage2_handoff.stage3_first_descriptor_record_boundary_verified ||
+        stage2_handoff.stage3_first_descriptor_raw_sector !=
+            stage2_handoff.stage3_cd_read_raw_sector ||
+        stage2_handoff.stage3_first_descriptor_user_data_offset !=
+            stage2_handoff.stage3_cd_read_user_data_offset ||
+        stage2_handoff.stage3_first_descriptor_user_data_bytes !=
+            stage2_handoff.user_data_bytes ||
+        stage2_handoff.stage3_first_descriptor_user_data_hash !=
+            stage2_handoff.user_data_hash ||
+        stage2_handoff.stage3_first_descriptor_semantics_proven) {
         free(bytes);
         return 0;
     }

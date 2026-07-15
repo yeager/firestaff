@@ -93,6 +93,17 @@ typedef struct {
     size_t stage3_resolved_descriptor_selector_count;
     size_t stage3_out_of_bounds_descriptor_selector_count;
     uint32_t stage3_resolved_descriptor_selector_hash;
+    /* Descriptor 0 is retained as the loader's self-resolved original-media
+     * boundary. Its three words stay opaque and the hashed sector is not
+     * promoted to a level, object, tile, palette, or graphics record. */
+    int stage3_first_descriptor_record_boundary_verified;
+    uint16_t stage3_first_descriptor_word0;
+    uint16_t stage3_first_descriptor_word1;
+    size_t stage3_first_descriptor_raw_sector;
+    size_t stage3_first_descriptor_user_data_offset;
+    size_t stage3_first_descriptor_user_data_bytes;
+    uint32_t stage3_first_descriptor_user_data_hash;
+    int stage3_first_descriptor_semantics_proven;
 } Theron_V1Stage2RuntimeHandoff;
 
 /* Converts an already hash-gated, structurally validated dynamic-payload
