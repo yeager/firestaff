@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_track02.h"
+
 /* The original loader trace identifies this later Track 02 envelope before
  * its payload format is known. Keep the physical record facts here rather
  * than depending on an unimplemented dungeon-handoff API. */
@@ -25,6 +27,7 @@
 typedef struct {
     int authenticated_original_trace;
     int later_than_stage2_transfer;
+    Theron_Track02Variant track02_variant;
     uint32_t track02_record;
     uint32_t record_user_data_offset;
     uint32_t destination;

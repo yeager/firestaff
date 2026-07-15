@@ -1,5 +1,17 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM1 TITLE.C C001 source-selector fallback closure: the DM1 V1
+  title runtime source selector now treats TITLE.DAT availability as rejected
+  evidence only. Malformed, cropped, or missing GRAPHICS.DAT C001 selects
+  `SKIP` rather than `TITLE_DAT_FALLBACK`, matching the already fail-closed
+  M11 startup receipt and ReDMCSB `TITLE.C F0437` C001 path. This removes the
+  last low-level selector route that could describe a synthetic TITLE.DAT
+  frame bank as the drawable PC34 title source. Verification: Ninja
+  `test_title_frontend_c001_fallback_gate_pc34_compat` and focused CTest
+  `title_frontend_c001_fallback_gate_pc34_compat` pass. Remaining blocker:
+  real PC34/Mac title-to-HoC capture and an operator-staged external
+  original-save corpus run.
+
 - ✅ 2026-07-16 CSB opening-door source-tick gate: opening-door and
   title/opening consumption receipts now require the package receipt and
   C004/C002/C003 opening host frame to match the active startup session source
@@ -19977,3 +19989,12 @@ or ambiguous CUE metadata. No dungeon, object, bitmap, palette, or fallback
 semantics are inferred. Verification: `test_theron_v1_track02_cue_layout`,
 `test_firestaff_theron_media_classify`, and
 `test_m12_theron_missing_track02_popup_gate` pass.
+
+# ✅ 2026-07-16 Theron Track 02 raw-only initial-envelope intake
+
+The `$0b52` initial-envelope loader intake now carries the authenticated
+Track 02 media variant and admits the complete-payload handoff only for the
+JP/US raw BIN variants. ISO byte lookup remains an inspection boundary, but a
+`MODE1/2048` ISO cannot reuse a raw-BIN loader/object-table route or become a
+synthetic dungeon substitute. Verification: `theron_v1_track02_loader_intake`
+and `theron_v1_raw_loader_trace_initial_level_handoff` pass.

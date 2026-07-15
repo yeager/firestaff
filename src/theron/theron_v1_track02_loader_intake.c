@@ -25,6 +25,8 @@ int theron_v1_track02_loader_intake_observe(
     }
     if (!facts || !out_receipt || !facts->authenticated_original_trace ||
         !facts->later_than_stage2_transfer ||
+        (facts->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         facts->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
         facts->track02_record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
         facts->record_user_data_offset !=
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
