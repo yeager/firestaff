@@ -129,6 +129,12 @@ typedef struct {
     uint32_t zero_low_mask_load_offset;
     int32_t zero_low_mask_immediate;
     uint32_t zero_low_mask_and_offset;
+    uint32_t zero_low_fragment_increment_offset;
+    int32_t zero_low_fragment_increment;
+    uint32_t zero_merged_value_add_offset;
+    uint32_t zero_merged_branch_compare_offset;
+    uint32_t zero_merged_branch_offset;
+    uint32_t zero_merged_branch_target_offset;
     uint32_t zero_index_mask_literal_offset;
     uint32_t zero_index_mask_word;
     uint32_t zero_index_mask_offset;
@@ -142,6 +148,10 @@ typedef struct {
      * low nibble of the zero-extended second byte shifted left four places.
      * This proves byte order and masks, not a PRS3 field, copy, or texture. */
     int sh2_zero_byte_merge_order_proven;
+    /* The post-merge `CMP/GT; BT` branch is a source-owned control re-entry
+     * condition only. It cannot be named a token rejection or termination
+     * without an execution trace that establishes the registers' roles. */
+    int sh2_zero_merged_branch_condition_proven;
     uint32_t zero_post_read_compare_offset;
     uint32_t zero_repeat_counter_increment_offset;
     uint32_t zero_repeat_branch_offset;

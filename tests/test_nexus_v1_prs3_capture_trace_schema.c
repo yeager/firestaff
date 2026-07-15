@@ -370,6 +370,12 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.zero_low_mask_load_offset == 85482U &&
                receipt.zero_low_mask_immediate == 15 &&
                receipt.zero_low_mask_and_offset == 85502U &&
+               receipt.zero_low_fragment_increment_offset == 85504U &&
+               receipt.zero_low_fragment_increment == 2 &&
+               receipt.zero_merged_value_add_offset == 85506U &&
+               receipt.zero_merged_branch_compare_offset == 85508U &&
+               receipt.zero_merged_branch_offset == 85510U &&
+               receipt.zero_merged_branch_target_offset == 85428U &&
                receipt.zero_index_mask_word == 0x0fffU &&
                receipt.zero_index_mask_offset == 85520U &&
                receipt.zero_indexed_byte_read_offset == 85524U &&
@@ -398,6 +404,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_two_byte_input_span_proven &&
                receipt.sh2_zero_byte_merge_order_proven &&
+               receipt.sh2_zero_merged_branch_condition_proven &&
                receipt.sh2_zero_side_repeat_control_verified &&
                receipt.sh2_zero_repeat_termination_proven &&
                receipt.sh2_zero_side_linear_route_verified &&
@@ -425,6 +432,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    !receipt.sh2_control_low_bit_semantics_proven &&
                    !receipt.sh2_nonzero_direct_byte_path_proven,
                "changed low-bit mask setup rejects the source byte-path receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85510U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_zero_merged_branch_condition_proven,
+               "changed post-merge branch rejects the control-edge receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);
