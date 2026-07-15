@@ -16678,6 +16678,22 @@ palette, or visual semantics are assigned.
 Verification: `test_theron_v1_post_generation7_loader_route_receipt` and the
 authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
 
+# ✅ 2026-07-15 Theron post-G7 indirect CDB-parameter receipt
+
+The post-G7 loader trace now proves a bounded ABI fact. Game code at physical
+`0x1f1837` writes `ff/20/04` into physical `0x1f01e5..0x1f01e7` immediately
+before dispatch 4, exactly shadowing `X/A/Y` at the `0x1f1840` `JSR $e009`.
+Dispatches 4--6 keep that same register tuple but produce three distinct
+authenticated READ(6) CDBs: `080012fb0100`, `080012f70300`, and
+`080012fa0100`. The tuple is therefore not direct LBA/count encoding; it is
+an indirect loader ABI whose additional parameter source and RAM consumer are
+still unobserved. A new passive MD5-pinned CUE capture reached only the System
+Card wait and contributes no loader route. No game-data, level, object,
+palette, or visual meaning was inferred.
+
+Verification: `test_theron_v1_post_generation7_cdb_parameter_receipt` and
+the authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer

@@ -6297,6 +6297,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   HuC6280 `0x20 $e009` (`JSR $e009`). It is not a payload destination: no FIFO byte reaches a
   game-owned RAM consumer in this capture. The next positive receipt must
   bind one of these CDB generations to a game-RAM write or read.
+  2026-07-15 update: G8--G10 also prove the `$e009` ABI is indirect. Before
+  dispatch 4, game code at physical `0x1f1837` mirrors `X/A/Y = ff/20/04` to
+  physical `0x1f01e5..0x1f01e7`; dispatches 4--6 retain that same tuple, while
+  their verified CDBs differ (`080012fb0100`, `080012f70300`,
+  `080012fa0100`). Thus the register tuple is not a direct LBA/count encoding;
+  the unobserved parameter source/consumer is still required. A passive
+  MD5-pinned CUE capture reached only the System Card wait and is explicitly
+  excluded from this route proof.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
   are System Card-owned. No game-RAM or level/object consumer is admitted.
