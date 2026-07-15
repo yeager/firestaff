@@ -1,0 +1,45 @@
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -114 +114,3 @@ static DECLFR(BaseRAMReadSGX)
+-extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value);
++extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value,
++                                         unsigned *generation, uint32 *lba,
++                                         uint16 *offset);
+@@ -122,0 +125,3 @@ static void TheronTracePCECDDataDestination(uint32 physical, uint8 stored_value)
++ unsigned generation;
++ uint32 lba;
++ uint16 offset;
+@@ -124 +129 @@ static void TheronTracePCECDDataDestination(uint32 physical, uint8 stored_value)
+- if(!TheronPCECDTraceTakeDataRead(&reader_pc, &read_value) || trace_count >= 256)
++ if(!TheronPCECDTraceTakeDataRead(&reader_pc, &read_value, &generation, &lba, &offset) || trace_count >= 256)
+@@ -142,0 +148,4 @@ if(read_value != stored_value)
++ fprintf(trace,
++         "pce_cd_origin_ram_receipt generation=%u source_lba=%u source_offset=%u reader_pc=%04x writer_pc=%04x logical_destination=%04x physical_destination=%08x value=%02x\n",
++         generation, lba, offset, reader_pc, writer_pc, HuCPU.GetLastLogicalWriteAddr(),
++         physical, stored_value);
+@@ -1302 +1310,0 @@ MDFN_HIDE extern const MDFNGI EmulatedPCE =
+-
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -105,0 +106,4 @@ static uint8 TheronPCECDDataReadValue;
++static bool TheronPCECDDataReadHasOrigin;
++static unsigned TheronPCECDDataReadGeneration;
++static uint32 TheronPCECDDataReadLBA;
++static uint16 TheronPCECDDataReadOffset;
+@@ -315 +319,3 @@ static void TheronTracePCECDState(const char *format, ...)
+-bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value)
++bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value,
++                                  unsigned *generation, uint32 *lba,
++                                  uint16 *offset)
+@@ -322 +328,4 @@ bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value)
+- return true;
++ *generation = TheronPCECDDataReadGeneration;
++ *lba = TheronPCECDDataReadLBA;
++ *offset = TheronPCECDDataReadOffset;
++ return TheronPCECDDataReadHasOrigin;
+@@ -800,0 +810,3 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
++     TheronPCECDDataReadHasOrigin = Mednafen::TheronSCSITraceCurrentDataOrigin(
++         &TheronPCECDDataReadLBA, &TheronPCECDDataReadOffset,
++         &TheronPCECDDataReadGeneration);

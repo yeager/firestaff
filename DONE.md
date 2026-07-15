@@ -16599,6 +16599,24 @@ level, object, payload, or visual semantics.
 Verification: Mednafen 1.32.1 patch dry-run and real SDL2 capture against
 MD5-pinned USA Track 02 media.
 
+# ✅ 2026-07-15 Theron all-generation Track 02 source-to-RAM receipt gate
+
+The instrumented Mednafen build now carries an exact raw SCSI origin
+(`generation`, `LBA`, and in-sector byte offset) through the pending FIFO read
+and emits `pce_cd_origin_ram_receipt` only when that same byte is immediately
+stored in physical main RAM. The receipt verifier rejects non-main-RAM
+destinations and offsets outside the 2048-byte sector. It neither assigns
+writer ownership nor record, level, object, palette, or visual semantics.
+
+A fresh MD5-pinned USA CUE/System Card run without host input reached only the
+System Card wait: no raw-sector SCSI transfer and no receipt were observed.
+That negative result is deliberately not promoted to a game-data conclusion;
+the next positive capture must show a game-owned consumer before any semantic
+work may begin.
+
+Verification: `test_theron_v1_origin_ram_receipt`, Mednafen patch dry-run,
+and an instrumented authentic-media boot capture.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
 
 The engine now binds Structure3 entry-header boundaries and face-row local

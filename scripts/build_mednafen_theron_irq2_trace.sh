@@ -81,6 +81,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch"
 
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would
