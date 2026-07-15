@@ -4287,6 +4287,124 @@ int nexus_v1_current_level_visit_structure3_animated_material_images(
     return 1;
 }
 
+typedef struct {
+    int descriptor_index;
+    uint32_t image_offset;
+    uint32_t palette_offset;
+    int image_anchor_found;
+    int palette_anchor_found;
+} Nexus_V1_AnimatedImagePayloadAnchorSearch;
+
+static int nexus_v1_find_animated_image_payload_anchor(
+    void *context, const Nexus_V1_DgnStructure2PayloadAnchorPacket *packet)
+{
+    Nexus_V1_AnimatedImagePayloadAnchorSearch *search =
+        (Nexus_V1_AnimatedImagePayloadAnchorSearch *)context;
+
+    if (!search || !packet || !packet->valid || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render ||
+        packet->descriptor_index != search->descriptor_index) {
+        return -1;
+    }
+    if (!packet->palette_anchor &&
+        packet->payload_anchor_offset == search->image_offset) {
+        search->image_anchor_found = 1;
+    }
+    if (packet->palette_anchor && search->palette_offset != 0U &&
+        packet->payload_anchor_offset == search->palette_offset) {
+        search->palette_anchor_found = 1;
+    }
+    return 0;
+}
+
+typedef struct {
+    const Nexus_V1_Engine *engine;
+    Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt *receipt;
+} Nexus_V1_AnimatedMaterialPayloadVisitor;
+
+static int nexus_v1_visit_structure3_animated_material_payload_anchor(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *image)
+{
+    Nexus_V1_AnimatedMaterialPayloadVisitor *visitor =
+        (Nexus_V1_AnimatedMaterialPayloadVisitor *)context;
+    Nexus_V1_DgnStructure2PayloadAnchorSceneReceipt anchor_scene;
+    Nexus_V1_AnimatedImagePayloadAnchorSearch search;
+
+    if (!visitor || !visitor->engine || !visitor->receipt || !image ||
+        !image->valid || !image->source_geometry_bound ||
+        !image->animation_declaration_bound || !image->descriptor_bound ||
+        !image->descriptor_target.valid ||
+        image->animation_execution_permitted ||
+        image->pixel_palette_vdp1_semantics_proven || image->decoder_permitted ||
+        !image->no_draw_only || image->fallback_visuals_permitted ||
+        !image->blocks_real_dgn_mesh_render) {
+        return -1;
+    }
+    memset(&anchor_scene, 0, sizeof(anchor_scene));
+    memset(&search, 0, sizeof(search));
+    search.descriptor_index = image->descriptor_target.descriptor_index;
+    search.image_offset = image->descriptor_target.descriptor.image_relative_offset;
+    search.palette_offset = image->descriptor_target.descriptor.palette_relative_offset;
+    if (nexus_v1_current_level_visit_structure2_payload_anchors(
+            visitor->engine, nexus_v1_find_animated_image_payload_anchor,
+            &search, &anchor_scene) != 1 || !anchor_scene.valid ||
+        anchor_scene.level_index != image->level_index ||
+        anchor_scene.source_byte_count != image->descriptor_target.source_byte_count ||
+        anchor_scene.source_bytes_fnv1a64 !=
+            image->descriptor_target.source_bytes_fnv1a64 ||
+        !search.image_anchor_found ||
+        (search.palette_offset != 0U && !search.palette_anchor_found)) {
+        return -1;
+    }
+    ++visitor->receipt->declared_image_instruction_count;
+    ++visitor->receipt->consumed_image_instruction_count;
+    ++visitor->receipt->image_payload_anchor_count;
+    if (search.palette_offset != 0U)
+        ++visitor->receipt->palette_payload_anchor_count;
+    return 0;
+}
+
+int nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3AnimatedMaterialPayloadSceneReceipt receipt;
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt image_scene;
+    Nexus_V1_AnimatedMaterialPayloadVisitor visitor;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    memset(&image_scene, 0, sizeof(image_scene));
+    memset(&visitor, 0, sizeof(visitor));
+    visitor.engine = engine;
+    visitor.receipt = &receipt;
+    if (!engine ||
+        nexus_v1_current_level_visit_structure3_animated_material_images(
+            engine, nexus_v1_visit_structure3_animated_material_payload_anchor,
+            &visitor, &image_scene) != 1 || !image_scene.valid ||
+        !image_scene.complete || image_scene.declared_image_instruction_count <= 0 ||
+        receipt.declared_image_instruction_count !=
+            image_scene.declared_image_instruction_count ||
+        receipt.consumed_image_instruction_count !=
+            receipt.declared_image_instruction_count ||
+        receipt.image_payload_anchor_count !=
+            receipt.declared_image_instruction_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.level_index = image_scene.level_index;
+    receipt.source_byte_count = image_scene.source_byte_count;
+    receipt.source_bytes_fnv1a64 = image_scene.source_bytes_fnv1a64;
+    receipt.complete = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_structure3_untextured_face_packet(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
@@ -4552,7 +4670,21 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
             *out_receipt = receipt;
             return 0;
         }
+        if (nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
+                engine, &receipt.animated_payload_scene) != 1 ||
+            !receipt.animated_payload_scene.valid ||
+            !receipt.animated_payload_scene.complete ||
+            receipt.animated_payload_scene.declared_image_instruction_count !=
+                receipt.animated_image_scene.declared_image_instruction_count ||
+            receipt.animated_payload_scene.consumed_image_instruction_count !=
+                receipt.animated_payload_scene.declared_image_instruction_count ||
+            receipt.animated_payload_scene.image_payload_anchor_count !=
+                receipt.animated_payload_scene.declared_image_instruction_count) {
+            *out_receipt = receipt;
+            return 0;
+        }
         receipt.animated_image_coverage_complete = 1;
+        receipt.animated_payload_coverage_complete = 1;
     } else {
         /* No 08xx face has no image sequence to resolve, but remains no-draw. */
         receipt.animated_image_scene.valid = 1;
@@ -4565,6 +4697,16 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
         receipt.animated_image_scene.no_draw_only = 1;
         receipt.animated_image_scene.blocks_real_dgn_mesh_render = 1;
         receipt.animated_image_coverage_complete = 1;
+        receipt.animated_payload_scene.valid = 1;
+        receipt.animated_payload_scene.complete = 1;
+        receipt.animated_payload_scene.level_index = receipt.level_index;
+        receipt.animated_payload_scene.source_byte_count =
+            receipt.source_byte_count;
+        receipt.animated_payload_scene.source_bytes_fnv1a64 =
+            receipt.source_bytes_fnv1a64;
+        receipt.animated_payload_scene.no_draw_only = 1;
+        receipt.animated_payload_scene.blocks_real_dgn_mesh_render = 1;
+        receipt.animated_payload_coverage_complete = 1;
     }
     receipt.traversed_face_count =
         receipt.static_scene.consumed_face_count +
@@ -4576,6 +4718,9 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
         receipt.animated_image_coverage_complete &&
         receipt.animated_image_scene.valid &&
         receipt.animated_image_scene.complete &&
+        receipt.animated_payload_coverage_complete &&
+        receipt.animated_payload_scene.valid &&
+        receipt.animated_payload_scene.complete &&
         receipt.untextured_scene.valid && receipt.untextured_scene.complete &&
         receipt.static_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
@@ -4585,6 +4730,11 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
         receipt.animated_image_scene.source_byte_count ==
             receipt.source_byte_count &&
         receipt.animated_image_scene.source_bytes_fnv1a64 ==
+            receipt.source_bytes_fnv1a64 &&
+        receipt.animated_payload_scene.level_index == receipt.level_index &&
+        receipt.animated_payload_scene.source_byte_count ==
+            receipt.source_byte_count &&
+        receipt.animated_payload_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
         receipt.untextured_scene.source_bytes_fnv1a64 ==
             receipt.source_bytes_fnv1a64 &&
