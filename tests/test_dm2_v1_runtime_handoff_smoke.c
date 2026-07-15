@@ -1845,6 +1845,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         DM2_V1_ProjectileRender direct_projectile;
         DM2_V1_ProjectileAssetBlit direct_blit;
         DM2_V1_RuntimeProjectileRenderReceipt projectile_receipt;
+        DM2_V1_ViewportM11FrameReceipt m11_receipt;
         uint32_t direct_seed = 0x12345678u;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
@@ -2049,6 +2050,13 @@ static void test_first_tick_after_boot_profile_handoff(void)
               "runtime projectile receipt exposes GDAT missile map-chip blit");
         CHECK(framebuffer[(84 * 320) + 112] == 13,
               "runtime projects the projectile to the depth-1 first-person row");
+        memset(&m11_receipt, 0, sizeof(m11_receipt));
+        (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt);
+        CHECK(m11_receipt.projectile_material_plan_required == 1 &&
+                  m11_receipt.projectile_material_plan_consumed == 1 &&
+                  m11_receipt.projectile_material_plan_command_count == 1 &&
+                  m11_receipt.projectile_material_plan_hash != 0u,
+              "runtime carries the real projectile GDAT receipt into M11");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         dm2_v1_projectile_test_reset_list();
 

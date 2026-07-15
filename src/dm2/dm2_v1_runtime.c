@@ -2034,6 +2034,38 @@ static int dm2_runtime_creature_drawn_material_identity(
     return 1;
 }
 
+/* SKWIN routes every missile and cloud through QUERY_DUNGEON_MAP_CHIP_PICT
+ * before DRAW_CHIP_OF_MAGIC_MAP. Preserve the renderer's actual GDAT-key
+ * order: the final projectile receipt is useful for diagnostics, but cannot
+ * stand in for an earlier material in the same presented frame. */
+static int dm2_runtime_projectile_drawn_material_identity(
+    const DM2_V1_ViewportState *viewport,
+    uint32_t *out_hash,
+    int *out_count)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (out_hash) *out_hash = 0u;
+    if (out_count) *out_count = 0;
+    if (!viewport || !out_hash || !out_count ||
+        viewport->asset_projectile_drawn_count <= 0 ||
+        viewport->projectile_material_drawn_count !=
+            viewport->asset_projectile_drawn_count ||
+        viewport->projectile_material_drawn_count > DM2_MAX_PROJECTILES) {
+        return 0;
+    }
+    for (i = 0; i < viewport->projectile_material_drawn_count; ++i) {
+        int gdat_index = viewport->projectile_material_gdat_indices[i];
+        if (gdat_index == 0) return 0;
+        hash = dm2_runtime_creature_material_plan_step(
+            hash, (uint32_t)gdat_index);
+    }
+    *out_count = viewport->projectile_material_drawn_count;
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 /* DRAW_WALL preflights the complete visible GRAPHICSSET set and records one
  * consumed bit per panel. Rebuild the same source plan here so M11 owns every
  * actual wall material, not just an arbitrary representative cell. */
@@ -2896,6 +2928,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     int creature_material_plan_consumed = 0;
     int creature_material_plan_count = 0;
     int creature_drawn_material_count = 0;
+    uint32_t projectile_drawn_material_hash = 0u;
+    int projectile_material_plan_required = 0;
+    int projectile_material_plan_consumed = 0;
+    int projectile_drawn_material_count = 0;
     uint32_t wall_drawn_material_hash = 0u;
     int wall_drawn_material_count = 0;
     int wall_material_plan_command_count = 0;
@@ -3196,6 +3232,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         creature_drawn_material_hash = 0u;
         creature_drawn_material_count = 0;
     }
+    projectile_material_plan_required =
+        viewport.asset_projectile_drawn_count > 0;
+    projectile_material_plan_consumed =
+        projectile_material_plan_required &&
+        viewport.fallback_projectile_drawn_count == 0 &&
+        dm2_runtime_projectile_drawn_material_identity(
+            &viewport, &projectile_drawn_material_hash,
+            &projectile_drawn_material_count) &&
+        projectile_drawn_material_count ==
+            viewport.asset_projectile_drawn_count;
+    if (!projectile_material_plan_consumed) {
+        projectile_drawn_material_hash = 0u;
+        projectile_drawn_material_count = 0;
+    }
     if (viewport.asset_wall_drawn_count > 0 &&
         viewport.source_materials_required &&
         dm2_runtime_wall_drawn_material_identity(
@@ -3355,6 +3405,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         viewport.asset_carried_item_drawn_count;
     g_dm2_frame_ownership.projectile_gdat_blits =
         viewport.asset_projectile_drawn_count;
+    g_dm2_frame_ownership.projectile_gdat_material_evidence_count =
+        projectile_drawn_material_count;
+    g_dm2_frame_ownership.projectile_gdat_material_evidence_hash =
+        projectile_drawn_material_hash;
     g_dm2_frame_ownership.total_runtime_gdat_blits =
         g_dm2_frame_ownership.floor_ceiling_gdat_blits +
         g_dm2_frame_ownership.wall_gdat_blits +
@@ -3482,13 +3536,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &g_dm2_frame_ownership,
             g_dm2_last_item_render.gdat_index);
     }
-    if (viewport.asset_projectile_drawn_count > 0 &&
-        g_dm2_last_projectile_render.valid &&
-        g_dm2_last_projectile_render.asset_blit_ready &&
-        g_dm2_last_projectile_render.gdat_index != 0) {
-        dm2_runtime_add_viewport_asset_evidence(
-            &g_dm2_frame_ownership,
-            g_dm2_last_projectile_render.gdat_index);
+    if (projectile_material_plan_consumed) {
+        for (int i = 0; i < viewport.projectile_material_drawn_count; ++i) {
+            dm2_runtime_add_viewport_asset_evidence(
+                &g_dm2_frame_ownership,
+                viewport.projectile_material_gdat_indices[i]);
+        }
     }
     g_dm2_frame_ownership.real_gdat_evidence_valid =
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
@@ -3731,6 +3784,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         creature_material_plan_consumed ? creature_material_plan_count : 0;
     g_dm2_last_m11_frame.creature_material_plan_consumed =
         creature_material_plan_consumed;
+    g_dm2_last_m11_frame.projectile_material_plan_required =
+        projectile_material_plan_required;
+    g_dm2_last_m11_frame.projectile_material_plan_hash =
+        projectile_drawn_material_hash;
+    g_dm2_last_m11_frame.projectile_material_plan_command_count =
+        projectile_material_plan_consumed ? projectile_drawn_material_count : 0;
+    g_dm2_last_m11_frame.projectile_material_plan_consumed =
+        projectile_material_plan_consumed;
     g_dm2_last_m11_frame.teleporter_material_plan_required =
         teleporter_material_plan_required;
     g_dm2_last_m11_frame.teleporter_material_plan_hash =
@@ -3809,6 +3870,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          (g_dm2_last_m11_frame.creature_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.creature_material_plan_command_count > 0 &&
           g_dm2_last_m11_frame.creature_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.projectile_material_plan_required ||
+         (g_dm2_last_m11_frame.projectile_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.projectile_material_plan_command_count > 0 &&
+          g_dm2_last_m11_frame.projectile_material_plan_consumed)) &&
         (!g_dm2_last_m11_frame.teleporter_material_plan_required ||
          (g_dm2_last_m11_frame.teleporter_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.teleporter_material_plan_consumed)) &&

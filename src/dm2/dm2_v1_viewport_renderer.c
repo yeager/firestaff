@@ -5135,6 +5135,12 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_projectile_drawn_count;
+                    if (s->projectile_material_drawn_count <
+                        DM2_MAX_PROJECTILES) {
+                        s->projectile_material_gdat_indices[
+                            s->projectile_material_drawn_count++] =
+                            p->gdat_index;
+                    }
                     s->last_projectile_asset_blit_valid = 1;
                     s->last_projectile_asset_blit = blit;
                     s->last_projectile_asset_blit.draw_order = i;
@@ -5805,6 +5811,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     memset(&s->last_item_asset_blit, 0, sizeof(s->last_item_asset_blit));
     s->asset_projectile_drawn_count = 0;
     s->fallback_projectile_drawn_count = 0;
+    s->projectile_material_drawn_count = 0;
+    memset(s->projectile_material_gdat_indices, 0,
+           sizeof(s->projectile_material_gdat_indices));
     s->last_projectile_render_valid = 0;
     s->last_projectile_asset_blit_valid = 0;
     s->last_projectile_draw_order = -1;

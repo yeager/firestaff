@@ -962,6 +962,11 @@ typedef struct {
     DM2_V1_ItemAssetBlit last_item_asset_blit;
     int asset_projectile_drawn_count;
     int fallback_projectile_drawn_count;
+    /* Every successful DRAW_CHIP_OF_MAGIC_MAP source blit in presentation
+     * order. M11 must not reduce a mixed missile/cloud frame to its final
+     * GDAT key. */
+    int projectile_material_drawn_count;
+    int projectile_material_gdat_indices[DM2_MAX_PROJECTILES];
     int last_projectile_render_valid;
     int last_projectile_asset_blit_valid;
     int last_projectile_draw_order;

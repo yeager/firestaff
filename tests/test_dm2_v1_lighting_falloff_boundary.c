@@ -1698,6 +1698,35 @@ static void test_sprite_asset_provider(void)
     CHECK("projectile map-chip atlas draws only the selected frame",
           framebuffer[((70 - 3) * 320) + (120 - 3)] == 13 &&
               framebuffer[(70 * 320) + 120] == 13);
+    CHECK("projectile receipt keeps every real GDAT key in draw order",
+          viewport.projectile_material_drawn_count == 1 &&
+              viewport.projectile_material_gdat_indices[0] ==
+                  dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01));
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, 320);
+    viewport.projectile_count = 2;
+    viewport.projectiles[0].projectile_category = 0x0d;
+    viewport.projectiles[0].projectile_type = 0x02;
+    viewport.projectiles[0].frame_index = 0x01;
+    viewport.projectiles[0].screen_x = 100;
+    viewport.projectiles[0].screen_y = 70;
+    viewport.projectiles[1].projectile_category = 0x0d;
+    viewport.projectiles[1].projectile_type = 0x03;
+    viewport.projectiles[1].frame_index = 0x02;
+    viewport.projectiles[1].screen_x = 140;
+    viewport.projectiles[1].screen_y = 70;
+    dm2_v1_viewport_set_asset_provider(&viewport,
+                                       test_dm2_asset_fetch,
+                                       NULL);
+    dm2_v1_render_projectiles(&viewport);
+    CHECK("projectile receipt cannot collapse a multi-blit source frame",
+          viewport.asset_projectile_drawn_count == 2 &&
+              viewport.projectile_material_drawn_count == 2 &&
+              viewport.projectile_material_gdat_indices[0] ==
+                  dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) &&
+              viewport.projectile_material_gdat_indices[1] ==
+                  dm2_v1_viewport_projectile_graphic_index(0x0d, 0x03, 0x02));
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

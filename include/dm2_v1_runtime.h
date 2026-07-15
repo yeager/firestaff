@@ -66,6 +66,8 @@ typedef struct {
     int gdat_wall_material_plan_consumed;
     int item_gdat_blits;
     int projectile_gdat_blits;
+    int projectile_gdat_material_evidence_count;
+    uint32_t projectile_gdat_material_evidence_hash;
     int total_runtime_gdat_blits;
     int total_runtime_fallback_draws;
     int blocked_material_draws;
@@ -178,6 +180,10 @@ typedef struct {
     uint32_t creature_material_plan_hash;
     int creature_material_plan_command_count;
     int creature_material_plan_consumed;
+    int projectile_material_plan_required;
+    uint32_t projectile_material_plan_hash;
+    int projectile_material_plan_command_count;
+    int projectile_material_plan_consumed;
     int teleporter_material_plan_required;
     uint32_t teleporter_material_plan_hash;
     int teleporter_material_plan_consumed;
