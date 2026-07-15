@@ -6290,13 +6290,20 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
          * Retain that provenance at the DGN command boundary. */
         material->source_hash_verified = 1;
         material->packed_4bpp_valid = 1;
+        material->blocked_missing_vdp1_command_provenance = 1;
+        material->original_vdp1_capture_verified = 0;
         material->texel_order_proven = 0;
         material->draw_authorized = 0;
+        ++receipt.blocked_missing_vdp1_command_provenance_count;
     }
     receipt.source_hash_verified = receipt.command_material_count > 0;
+    receipt.original_vdp1_capture_verified_count = 0;
     receipt.complete = receipt.special_floor_binding_count > 0 &&
         receipt.source_cell_match_count == receipt.special_floor_binding_count &&
         receipt.command_material_count == receipt.special_floor_binding_count &&
+        receipt.blocked_missing_vdp1_command_provenance_count ==
+            receipt.command_material_count &&
+        receipt.original_vdp1_capture_verified_count == 0 &&
         receipt.blocked_invalid_binding_count == 0 &&
         receipt.blocked_invalid_command_count == 0 &&
         receipt.blocked_source_cell_mismatch_count == 0;

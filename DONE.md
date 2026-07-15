@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Nexus ITEM.IBS/DGN command VDP1 blocker receipt:
+  carried the missing original-VDP1-command provenance blocker through
+  `Nexus_V1_DgnCommandPacked4BppMaterial` and its receipt. Structure1Fa
+  descriptor-0008 ITEM.IBS material can now prove exact source bytes at the
+  DGN floor-command boundary while still reporting zero VDP1 captures, no
+  texel-order proof, no draw authorization, and no fallback visuals.
+  Verification: strict syntax checks for `src/nexus/nexus_v1_dungeon.c` and
+  `tests/test_nexus_v1_dgn_geometry_readiness.c`.
+
 - ✅ 2026-07-16 DM2 SKSave corpus first-importable provenance receipt:
   extended `DM2_SKSaveCorpusReceipt` with a bounded public source-kind enum
   and first-importable payload byte count. `dm2_v1_sksave_corpus_scan` now

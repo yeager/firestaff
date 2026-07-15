@@ -5288,6 +5288,8 @@ static void test_structure1f_item_ibs_material_binding(void) {
           material_receipt.special_floor_binding_count == 1 &&
           material_receipt.source_cell_match_count == 1 &&
           material_receipt.command_material_count == 1 &&
+          material_receipt.blocked_missing_vdp1_command_provenance_count == 1 &&
+          material_receipt.original_vdp1_capture_verified_count == 0 &&
           !material_receipt.fallback_visuals_permitted,
           "descriptor-0008 is consumed by its matching DGN floor command only");
     CHECK(materials[0].command_index == 1 && materials[0].source_entry_index == 1 &&
@@ -5298,8 +5300,10 @@ static void test_structure1f_item_ibs_material_binding(void) {
           materials[0].palette_bgr555[0] == 0x03e0U &&
           materials[0].packed_4bpp_texels[0] == 0x6cU &&
           materials[0].source_hash_verified && materials[0].packed_4bpp_valid &&
+          materials[0].blocked_missing_vdp1_command_provenance &&
+          !materials[0].original_vdp1_capture_verified &&
           !materials[0].texel_order_proven && !materials[0].draw_authorized,
-          "command material keeps exact authenticated 4bpp bytes no-draw");
+          "command material keeps exact authenticated 4bpp bytes no-draw until VDP1 proof binds");
     bindings[1].source_x = 4;
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
               bindings, 2, commands, 2, materials, 2, &material_receipt) == 0 &&
@@ -5375,11 +5379,15 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
               &binding, 1, &command, 1, &material, 1, &material_receipt) == 0 &&
           material_receipt.complete && material.source_hash_verified &&
+          material_receipt.blocked_missing_vdp1_command_provenance_count == 1 &&
+          material_receipt.original_vdp1_capture_verified_count == 0 &&
           material.image_id == bank.floor_images[43].image_id &&
           material.width == bank.floor_images[43].width &&
           material.height == bank.floor_images[43].height &&
           material.packed_4bpp_texels == bank.floor_images[43].packed_4bpp_texels &&
           material.palette_bgr555 == bank.floor_images[43].palette_bgr555 &&
+          material.blocked_missing_vdp1_command_provenance &&
+          !material.original_vdp1_capture_verified &&
           !material.draw_authorized,
           "real Saturn descriptor-0008 payload reaches a DGN command no-draw");
     CHECK(nexus_v1_item_ibs_decode_0008_vdp1_4bpp(

@@ -136,6 +136,13 @@
   command-plan readiness repair, Structure3 mesh draw admission, and Saturn
   capture comparison. Keep the startup/menu/DGN path fail-closed; do not
   promote fallback startup menu or synthetic dungeon visuals.
+  - 2026-07-16 update: Structure1Fa ITEM.IBS descriptor-0008 material now
+    reaches the exact DGN floor-command receipt as authenticated packed 4bpp
+    source bytes, while explicitly carrying
+    `blocked_missing_vdp1_command_provenance` and zero verified VDP1 captures.
+    Remaining work is an original Saturn VDP1 command/state/palette capture
+    that matches ITEM.IBS and the DGN command route before texel order,
+    palette semantics, or any draw can be authorized.
 
 - 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
   original-PC34 part reader now rejects overflowing cursor state before
