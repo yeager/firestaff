@@ -195,6 +195,9 @@ typedef struct {
     uint32_t global_bytes_hash;
     uint32_t global_words_hash;
     uint32_t spell_effects_hash;
+    uint32_t raw_timer_stream_offset;
+    uint32_t raw_timer_stream_byte_count;
+    uint32_t raw_timer_stream_hash;
     /* Raw SKSave candidates additionally retain only the complete parsed
      * dungeon-prefix identity. These are pool/span facts, not DB semantics
      * or permission to follow GenericRecord links. */

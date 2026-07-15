@@ -1097,14 +1097,19 @@
   hash revalidation before and after the source-bound envelope/raw parser. It
   reports an unset root as a non-promoting skip, performs no export or runtime
   restore, and rejects any incomplete original-candidate census. Remaining
-  work is byte-level ownership for the timer and rebuilt dungeon DB regions;
+  work is byte-level ownership for the rebuilt dungeon DB regions;
   do not infer either from a header-valid save.
   - 2026-07-14 update: recursive corpus discovery now also retains a renamed
     artifact only after its exact 42-byte SKSave header and full source-bound
     payload parser both succeed. Filename or extension alone cannot consume
     a scan slot or promote a candidate; runtime import still revalidates the
     complete-file hash. Remaining work is authentic corpus breadth plus
-    timer and rebuilt-dungeon byte ownership.
+    rebuilt-dungeon byte ownership.
+  - 2026-07-15 update: raw original candidates now retain the exact encoded
+    SUPPRESS timer byte window as offset, byte count, and hash after the
+    complete file hash and raw importer agree on the candidate. This is byte
+    ownership only; timer dispatch semantics and rebuilt dungeon DB graph
+    ownership remain separate.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 

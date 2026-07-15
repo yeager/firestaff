@@ -16878,6 +16878,16 @@ Verification: focused raw-SKSave restore test drives the accepted candidate
 through a first V1 frame, then proves malformed record-chain rejection remains
 atomic; syntax checks cover runtime, boot, and save/load test units.
 
+# ✅ 2026-07-15 DM2 raw SKSave encoded timer byte-span receipt
+
+The original-save corpus state receipt now preserves the source byte window
+for raw-SKSave SUPPRESS timer entries: exact payload offset, byte count, and
+hash are derived only after the file-hash gate, raw dungeon-prefix parser, and
+source importer agree on the same original candidate. The receipt does not
+dispatch timers or claim rebuilt DB graph ownership. Verification:
+`test_dm2_v1_save_load` covers a renamed raw corpus artifact with a real
+encoded timer span and keeps envelope candidates at zero raw-timer span.
+
 # ✅ 2026-07-15 DM2 raw SKSave DB0 Door receipt
 
 The corpus path can now decode `SKWIN/DME.h::Door` fields from raw DB0 `w2`
