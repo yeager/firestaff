@@ -908,7 +908,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
-    int *pending_sound_request_count, int *discard_text_requested)
+    int *pending_sound_request_count, int *discard_text_requested,
+    int *adjust_skills_parameters_requested,
+    uint32_t pending_adjust_skills_parameters[5])
 {
     uint32_t v;
     uint32_t w;
@@ -939,6 +941,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_poison_writes || !pending_poison_write_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
+        !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -1151,6 +1154,18 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         context->monster_move_inhibit[1] = (uint8_t)(v & 2u);
         context->monster_move_inhibit[2] = (uint8_t)(v & 4u);
         context->monster_move_inhibit[3] = (uint8_t)(v & 8u);
+        break;
+    case 92u: /* STKOP_SetAdjustSkillsParameters, DSA.cpp:3034-3043. */
+        if (!context->set_adjust_skills_parameters) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        for (sv = 4; sv >= 0; --sv) {
+            if (!csb_v1_csbwin_dsa_stack_pop(
+                    stack, depth, &pending_adjust_skills_parameters[sv])) {
+                goto underflow;
+            }
+        }
+        *adjust_skills_parameters_requested = 1;
         break;
     case 20u: /* STKOP_Shift */
     case 31u: /* STKOP_RShift */
@@ -2598,6 +2613,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
+    int adjust_skills_parameters_requested = 0;
+    uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
     int i;
@@ -2832,7 +2849,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 &pending_character_swap_count, pending_poison_writes,
                 &pending_poison_write_count, pending_actuator_copies,
                 &pending_actuator_copy_count, pending_sound_requests,
-                &pending_sound_request_count, &discard_text_requested);
+                &pending_sound_request_count, &discard_text_requested,
+                &adjust_skills_parameters_requested,
+                pending_adjust_skills_parameters);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -2947,6 +2966,12 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_sound_requests[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+    }
+    if (adjust_skills_parameters_requested &&
+        (!context->set_adjust_skills_parameters ||
+         !context->set_adjust_skills_parameters(
+             context->dungeon_user, pending_adjust_skills_parameters))) {
+        return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
     }
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -3121,6 +3146,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.commit_cause_poison = runner->commit_cause_poison;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
+    context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
