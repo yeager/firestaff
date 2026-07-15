@@ -5194,6 +5194,98 @@ int dm2_v1_runtime_import_sksave_receipted_candidate(
     return 1;
 }
 
+static int dm2_runtime_original_corpus_entry_matches(
+    const DM2_OriginalSaveStateCorpusEntry *expected,
+    const DM2_OriginalSaveStateCorpusEntry *actual)
+{
+    const DM2_SKSaveCandidateReceipt *left;
+    const DM2_SKSaveCandidateReceipt *right;
+
+    if (!expected || !actual) return 0;
+    left = &expected->candidate;
+    right = &actual->candidate;
+    return left->kind == right->kind &&
+           left->payload_size == right->payload_size &&
+           left->payload_hash == right->payload_hash &&
+           left->source_file_hash == right->source_file_hash &&
+           strcmp(left->path, right->path) == 0 &&
+           expected->state_hash == actual->state_hash;
+}
+
+int dm2_v1_runtime_import_original_sksave_state_entry(
+    const char *save_root,
+    const DM2_OriginalSaveStateCorpusEntry *selected_entry,
+    DM2_V1_RuntimeOriginalCorpusImportReceipt *out)
+{
+    DM2_OriginalSaveStateCorpusReceipt state_corpus;
+    const DM2_OriginalSaveStateCorpusEntry *admitted = NULL;
+    uint8_t i;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE;
+    if (!save_root || !selected_entry ||
+        (selected_entry->candidate.kind !=
+             DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+         selected_entry->candidate.kind !=
+             DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)) {
+        out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+
+    /* GAME_LOAD consumes the selected save stream, not a directory default.
+     * Rebuild the diagnostic census first so a stale row can never be used
+     * to select a different valid SKSave (including a Firestaff session). */
+    if (!dm2_v1_original_save_state_corpus_probe(save_root, &state_corpus)) {
+        return 0;
+    }
+    out->original_candidate_count = state_corpus.original_candidate_count;
+    out->parsed_candidate_count = state_corpus.parsed_candidate_count;
+    out->corpus_hash = state_corpus.corpus_hash;
+    out->corpus_complete = state_corpus.scan_complete &&
+        state_corpus.original_candidate_list_complete &&
+        state_corpus.original_candidate_count != 0u &&
+        state_corpus.parsed_candidate_count ==
+            state_corpus.original_candidate_count &&
+        state_corpus.rejected_candidate_count == 0u &&
+        state_corpus.entry_count == state_corpus.original_candidate_count;
+    if (!out->corpus_complete) {
+        out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+    for (i = 0u; i < state_corpus.entry_count; ++i) {
+        if (dm2_runtime_original_corpus_entry_matches(
+                selected_entry, &state_corpus.entries[i])) {
+            admitted = &state_corpus.entries[i];
+            break;
+        }
+    }
+    if (!admitted) {
+        out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+
+    out->selected_state_hash = admitted->state_hash;
+    if (!dm2_v1_runtime_import_sksave_receipted_candidate(
+            &admitted->candidate, &out->runtime_import)) {
+        return 0;
+    }
+    if (out->runtime_import.candidate_kind != admitted->candidate.kind ||
+        out->runtime_import.selected_payload_size !=
+            admitted->candidate.payload_size ||
+        out->runtime_import.selected_payload_hash !=
+            admitted->candidate.payload_hash ||
+        out->runtime_import.selected_source_file_hash !=
+            admitted->candidate.source_file_hash ||
+        strcmp(out->runtime_import.selected_path,
+               admitted->candidate.path) != 0) {
+        out->runtime_import.result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
+        return 0;
+    }
+    out->selected_state_admitted = 1;
+    return 1;
+}
+
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out)
 {

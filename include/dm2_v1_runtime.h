@@ -475,6 +475,20 @@ typedef struct {
     char selected_path[256];
 } DM2_V1_RuntimeCorpusImportReceipt;
 
+/* Original-save-only GAME_LOAD handoff.  The caller must select a row from
+ * dm2_v1_original_save_state_corpus_probe(); this receipt rescans the corpus
+ * and admits that exact decoded row only.  It deliberately has no
+ * first-importable or Firestaff-session fallback. */
+typedef struct {
+    DM2_V1_RuntimeCorpusImportReceipt runtime_import;
+    int corpus_complete;
+    int selected_state_admitted;
+    uint16_t original_candidate_count;
+    uint16_t parsed_candidate_count;
+    uint32_t corpus_hash;
+    uint32_t selected_state_hash;
+} DM2_V1_RuntimeOriginalCorpusImportReceipt;
+
 /* Source-owned raw-SKSave dungeon handoff carried from GAME_LOAD into the
  * first runtime frame. It exposes layout identity only, never record fields
  * or GenericRecord links. */
@@ -640,6 +654,15 @@ int dm2_v1_runtime_import_sksave_corpus(
 int dm2_v1_runtime_import_sksave_receipted_candidate(
     const DM2_SKSaveCandidateReceipt *candidate_receipt,
     DM2_V1_RuntimeCorpusImportReceipt *out);
+/* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME followed
+ * by DM2_GAME_LOAD. Revalidate a selected original-save census row against a
+ * fresh full corpus probe, then restore only that same original candidate.
+ * A missing, stale, non-original, or incompletely parsed row is rejected;
+ * this path never selects another candidate as a substitute. */
+int dm2_v1_runtime_import_original_sksave_state_entry(
+    const char *save_root,
+    const DM2_OriginalSaveStateCorpusEntry *selected_entry,
+    DM2_V1_RuntimeOriginalCorpusImportReceipt *out);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,

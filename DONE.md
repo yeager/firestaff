@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 original-save corpus selected-row handoff: added a
+  `DM2_SELECT_LOAD_GAME`-shaped import boundary that accepts only an exact
+  row from a fresh, fully parsed original envelope/raw census and revalidates
+  its file, payload, and decoded state identity before existing `GAME_LOAD`
+  restore. It never uses first-importable selection or falls back to a
+  Firestaff session. Focused `dm2_v1_save_load` coverage restores the chosen
+  original raw candidate and proves a stale selected file is rejected without
+  mutating runtime despite a valid Firestaff save in the same corpus.
+
 - ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
   legacy DB0-door wall-button material now resolves the real WALL_GFX
   `dtWordValue/0x0d` or `dtText/0x0d` sequence against the live game tick
