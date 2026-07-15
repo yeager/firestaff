@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSBWin Timer.cpp TT_60 pool mutation: the authenticated
+  party-square +5 successor now retires the due source receipt and requeues
+  through the original TIMER allocator, rather than rewriting its old slot.
+
 - ✅ 2026-07-15 CSBWin live TT_1 presentation transaction: the live
   `ProcessTT_1` animation path now stages its non-party door pixel state and
   commits it only after the source TIMER delete/set transaction succeeds.
