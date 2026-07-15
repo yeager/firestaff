@@ -254,7 +254,8 @@ int main(void)
         };
         for (size_t side = 0; side < sizeof(side_squares) / sizeof(side_squares[0]); ++side) {
             const DM2_V1_GdatWallM11Command *command = NULL;
-            const DM2_WallFrame *frame = dm2_v1_get_wall_frame(side_squares[side]);
+            int field = dm2_v1_viewport_wall_field_for_square(side_squares[side]);
+            int source_cell = field - 0x22;
             for (int i = 0; i < wall_plan.command_count; ++i) {
                 if (wall_plan.commands[i].view_square == side_squares[side]) {
                     command = &wall_plan.commands[i];
@@ -265,16 +266,15 @@ int main(void)
                     dm2_v1_viewport_wall_field_for_square(side_squares[side]) ||
                 !command->raw_hash || !command->decoded_hash ||
                 !command->palette_hash || !command->width || !command->height ||
-                !frame || !command->geometry_hash ||
-                command->source_x != frame->blit_x ||
-                command->source_y != frame->blit_y ||
-                command->source_width != frame->byte_width ||
-                command->source_height != frame->height ||
-                command->destination_x != frame->left_x ||
-                command->destination_y != frame->top_y ||
-                command->destination_width != frame->right_x - frame->left_x + 1 ||
-                command->destination_height != frame->bottom_y - frame->top_y + 1) {
-                fputs("FAIL: canonical side-wall command lacks G0163 geometry\n", stderr);
+                !command->geometry_hash || field < 0x22 ||
+                command->rect_number != (uint16_t)(0x2be + source_cell) ||
+                !command->rect_table_hash || !command->rect_row_hash ||
+                !command->metadata_hash || !command->source_width ||
+                !command->source_height || !command->destination_width ||
+                !command->destination_height ||
+                command->source_x + command->source_width > command->width ||
+                command->source_y + command->source_height > command->height) {
+                fputs("FAIL: canonical side-wall command lacks RAW4 geometry\n", stderr);
                 failures = 1;
                 goto done;
             }

@@ -2878,6 +2878,15 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   decoded plan. Source: skproject `c_gui_vp.cpp` `DM2_DRAW_WALL` /
   `QUERY_TEMP_PICST`.
 
+- ✅ 2026-07-15 DM2 `DRAW_WALL` RAW4 geometry and clipping: source-required
+  M11 walls now derive their viewport-cell `0x2be + cell` rectangle from the
+  original `INTERFACE_GENERAL/0/RAW4` program, including nested
+  `DM2_QUERY_BLIT_RECT` clipping, IMG3 query offsets, source crop, destination,
+  and right-side mirror. The old `G0163` panel rectangles remain only for
+  non-source test paths. A changed RAW4 row/table, metadata, or geometry hash
+  blocks the complete wall frame. Verification: canonical
+  `test_dm2_v1_gdat_wall_plan_viewport_real_data`.
+
 - ✅ 2026-07-14 DM2 GDAT door-overlay material plan: skproject
   `DM2_DRAW_DOOR`'s `Door::OrnateIndex()` and destroyed-door branches now
   decode their exact `DOOR_GFX` or `DOORS` IMG3 plus local palette before M11

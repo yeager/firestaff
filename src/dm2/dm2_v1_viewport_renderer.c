@@ -49,6 +49,54 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
                                                     int height,
                                                     int stride);
 
+static uint32_t dm2_v1_wall_hash_bytes(uint32_t hash, const uint8_t *bytes,
+                                        size_t size)
+{
+    for (size_t i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t dm2_v1_wall_command_geometry_hash(
+    const DM2_V1_GdatWallM11Command *command)
+{
+    uint32_t hash;
+
+    if (!command) return 0u;
+    hash = dm2_v1_wall_hash_bytes(2166136261u,
+                                  (const uint8_t *)&command->source_x,
+                                  sizeof(command->source_x) +
+                                  sizeof(command->source_y) +
+                                  sizeof(command->source_width) +
+                                  sizeof(command->source_height) +
+                                  sizeof(command->destination_x) +
+                                  sizeof(command->destination_y) +
+                                  sizeof(command->destination_width) +
+                                  sizeof(command->destination_height));
+    {
+        uint32_t rect_number = command->rect_number;
+        hash = dm2_v1_wall_hash_bytes(hash, (const uint8_t *)&rect_number,
+                                      sizeof(rect_number));
+    }
+    {
+        uint32_t mirror_flip = command->mirror_flip;
+        hash = dm2_v1_wall_hash_bytes(hash, (const uint8_t *)&mirror_flip,
+                                      sizeof(mirror_flip));
+    }
+    hash = dm2_v1_wall_hash_bytes(hash,
+                                  (const uint8_t *)&command->rect_table_hash,
+                                  sizeof(command->rect_table_hash));
+    hash = dm2_v1_wall_hash_bytes(hash,
+                                  (const uint8_t *)&command->rect_row_hash,
+                                  sizeof(command->rect_row_hash));
+    hash = dm2_v1_wall_hash_bytes(hash,
+                                  (const uint8_t *)&command->metadata_hash,
+                                  sizeof(command->metadata_hash));
+    return hash;
+}
+
 /* ── Lighting helper: DM2 object illumination decay ──────────────── */
 /* ReDMCSB DUNVIEW.C F0115:4960-5037 uses a per-view depth scale table for
  * object sprites; outside the valid depth window objects are not drawn. We
@@ -1360,9 +1408,8 @@ int dm2_v1_viewport_wall_field_for_square(int view_square)
     if (view_square == DM2_SQ_D3C) return -1;
     /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST
      * lines ~47373-47474 maps normal wall cells through
-     * `iViewportCell + 0x22`.  The PC English startup graphics set has
-     * real fields from 0x23 upward for this first visible-cell pass; D3C's
-     * enum-local 0x22 slot is absent and remains on the fallback backdrop. */
+     * `iViewportCell + 0x22`.  The admitted startup route retains the
+     * original ten drawable cells in command order. */
     return DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST + view_square;
 }
 
@@ -4048,6 +4095,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         uint8_t palette16[16];
         uint32_t palette_hash;
         DM2_V1_ViewportRect destination_rect;
+        DM2_V1_ViewportRect source_rect;
+        int mirror_flip;
         int ready;
     } DM2_V1_WallMaterial;
     if (!s || !s->framebuffer) return;
@@ -4129,15 +4178,10 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                         dm2_v1_viewport_wall_field_for_square(panel->view_square) ||
                     !command->pixels || !command->width || !command->height ||
                     !command->decoded_hash || !command->palette_hash ||
-                    !command->geometry_hash ||
-                    command->source_x != panel->src_rect.x ||
-                    command->source_y != panel->src_rect.y ||
-                    command->source_width != panel->src_rect.w ||
-                    command->source_height != panel->src_rect.h ||
-                    command->destination_x != panel->dst_rect.x ||
-                    command->destination_y != panel->dst_rect.y ||
-                    command->destination_width != panel->dst_rect.w ||
-                    command->destination_height != panel->dst_rect.h) {
+                    !command->rect_table_hash || !command->rect_row_hash ||
+                    !command->metadata_hash || !command->geometry_hash ||
+                    dm2_v1_wall_command_geometry_hash(command) !=
+                        command->geometry_hash) {
                     dm2_v1_block_source_material(s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
                     return;
                 }
@@ -4151,6 +4195,11 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                     command->destination_x, command->destination_y,
                     command->destination_width, command->destination_height
                 };
+                material->source_rect = (DM2_V1_ViewportRect){
+                    command->source_x, command->source_y,
+                    command->source_width, command->source_height
+                };
+                material->mirror_flip = command->mirror_flip;
                 material->ready = 1;
                 continue;
             }
@@ -4164,6 +4213,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
         int wall_h = 0;
         int wall_stride = 0;
         const DM2_V1_ViewportRect *destination_rect = &panel->dst_rect;
+        DM2_V1_ViewportRect source_rect = panel->src_rect;
+        int mirror_flip = 0;
 
         if (s->source_materials_required) {
             const DM2_V1_WallMaterial *material = &materials[i];
@@ -4172,6 +4223,8 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             wall_h = material->height;
             wall_stride = material->stride;
             destination_rect = &material->destination_rect;
+            source_rect = material->source_rect;
+            mirror_flip = material->mirror_flip;
             memcpy(s->active_asset_palette16, material->palette16,
                    sizeof(s->active_asset_palette16));
             s->active_asset_palette_hash = material->palette_hash;
@@ -4190,21 +4243,21 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
             continue;
         }
 
-        dm2_v1_blit_scaled_material_bitmap(s,
-                                  vp,
-                                  stride,
-                                  destination_rect->x,
-                                  destination_rect->y,
-                                  destination_rect->w,
-                                  destination_rect->h,
-                                  wall_pixels,
-                                  wall_w,
-                                  wall_h,
-                                  wall_stride > 0 ? wall_stride : wall_w,
-                                  s->gdat_scene_control_ready
-                                      ? (int)s->gdat_scene_colorkey
-                                      : DM2_COLOR_TRANSPARENT,
-                                  &s->gdat_material_palette_wall_consumed_count);
+        if (source_rect.x < 0 || source_rect.y < 0 || source_rect.w <= 0 ||
+            source_rect.h <= 0 || source_rect.x + source_rect.w > wall_w ||
+            source_rect.y + source_rect.h > wall_h) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+            continue;
+        }
+        dm2_v1_blit_scaled_material_bitmap_region_ex(
+            s, vp, stride, destination_rect->x, destination_rect->y,
+            destination_rect->w, destination_rect->h, wall_pixels,
+            source_rect.x, source_rect.y, source_rect.w, source_rect.h,
+            wall_stride > 0 ? wall_stride : wall_w,
+            s->gdat_scene_control_ready ? (int)s->gdat_scene_colorkey
+                                        : DM2_COLOR_TRANSPARENT,
+            mirror_flip, &s->gdat_material_palette_wall_consumed_count);
         if (s->gdat_scene_control_ready) {
             ++s->gdat_scene_control_consumed_count;
         }
