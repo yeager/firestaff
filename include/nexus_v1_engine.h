@@ -1263,6 +1263,30 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DmBinVdp1RegisterTableReceipt;
 
+/* Static SH-2 literal-load references into one retail DM.BIN VDP1 state map.
+ * The VDP1-VRAM literal is only a command-storage candidate. This does not
+ * establish execution, command emission, DGN ownership, palette, transform,
+ * or draw semantics. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int table_offset;
+    int table_occurrence_count;
+    int sh2_pc_relative_literal_load_count;
+    int vdp1_register_literal_load_count;
+    int vdp1_vram_literal_load_count;
+    int first_sh2_literal_load_offset;
+    int last_sh2_literal_load_offset;
+    int static_sh2_literal_loads_proven;
+    int vdp1_vram_command_storage_candidate_proven;
+    int vdp1_command_emission_proven;
+    int transform_semantics_proven;
+    int palette_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DmBinVdp1StateRouteReceipt;
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;
@@ -2135,6 +2159,12 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
 int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
     Nexus_V1_Engine *engine,
     Nexus_V1_DmBinVdp1RegisterTableReceipt *out_receipt);
+/* Bind the canonical executable's VDP1-state literals to its statically
+ * decoded SH-2 PC-relative loads. This remains capture evidence, not a live
+ * command or renderer route. */
+int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_DmBinVdp1StateRouteReceipt *out_receipt);
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);

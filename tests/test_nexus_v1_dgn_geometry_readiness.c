@@ -702,6 +702,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_Engine corpus_engine;
         Nexus_V1_DgnMaterialCorpusReceipt corpus;
         Nexus_V1_DmBinVdp1RegisterTableReceipt vdp1_table;
+        Nexus_V1_DmBinVdp1StateRouteReceipt vdp1_state_route;
         int corpus_level;
 
         memset(&corpus_engine, 0, sizeof(corpus_engine));
@@ -724,6 +725,27 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   vdp1_table.no_draw_only &&
                   !vdp1_table.fallback_visuals_permitted,
               "canonical DM.BIN has one static VDP1 register anchor without draw semantics");
+        memset(&vdp1_state_route, 0, sizeof(vdp1_state_route));
+        CHECK(nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
+                  &corpus_engine, &vdp1_state_route) == 1 &&
+                  vdp1_state_route.source.canonical_hash_verified &&
+                  vdp1_state_route.source_byte_count > 0 &&
+                  vdp1_state_route.source_bytes_fnv1a64 != 0U &&
+                  vdp1_state_route.table_offset == 0x7d498 &&
+                  vdp1_state_route.table_occurrence_count == 1 &&
+                  vdp1_state_route.sh2_pc_relative_literal_load_count == 21 &&
+                  vdp1_state_route.vdp1_register_literal_load_count == 6 &&
+                  vdp1_state_route.vdp1_vram_literal_load_count == 1 &&
+                  vdp1_state_route.first_sh2_literal_load_offset == 0x7d3b8 &&
+                  vdp1_state_route.last_sh2_literal_load_offset == 0x7d486 &&
+                  vdp1_state_route.static_sh2_literal_loads_proven &&
+                  vdp1_state_route.vdp1_vram_command_storage_candidate_proven &&
+                  !vdp1_state_route.vdp1_command_emission_proven &&
+                  !vdp1_state_route.transform_semantics_proven &&
+                  !vdp1_state_route.palette_semantics_proven &&
+                  vdp1_state_route.no_draw_only &&
+                  !vdp1_state_route.fallback_visuals_permitted,
+              "canonical DM.BIN statically loads the VDP1 state map without command or draw claims");
         memset(&corpus, 0, sizeof(corpus));
         CHECK(nexus_v1_inspect_dgn_material_corpus(&corpus_engine, &corpus) == 0 &&
                   corpus.parsed_level_count == 16 &&
