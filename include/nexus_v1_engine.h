@@ -525,6 +525,29 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure3PackageGeometryPacket;
 
+/* A renderer may traverse every static-textured package face through this
+ * receipt without taking ownership of pixels or inferring Saturn state. */
+typedef struct {
+    int valid;
+    int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int structure3_entry_count;
+    int candidate_face_count;
+    int static_material_face_count;
+    int consumed_face_count;
+    int complete;
+    int transform_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3PackageGeometrySceneReceipt;
+
+typedef int (*Nexus_V1_DgnStructure3PackageGeometryConsumer)(
+    void *context, const Nexus_V1_DgnStructure3PackageGeometryPacket *packet);
+
 /* A raw external capture can be bound to an exact retail Structure2
  * descriptor, but capture admission never asserts a pixel, palette, or VDP1
  * decoder. Provenance is supplied by the capture owner, not inferred from a
@@ -1232,6 +1255,13 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
     Nexus_V1_DgnStructure3PackageGeometryPacket *out_packet);
+/* Traverse every source-bound static-textured Structure3 face in the active
+ * canonical LEV. The consumer receives only no-draw package geometry packets;
+ * dynamic/unknown material faces remain outside this route. */
+int nexus_v1_current_level_visit_structure3_package_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3PackageGeometryConsumer consumer, void *context,
+    Nexus_V1_DgnStructure3PackageGeometrySceneReceipt *out_receipt);
 int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     const Nexus_V1_Engine *engine, int descriptor_index,
     const char *manifest_text, size_t manifest_size,

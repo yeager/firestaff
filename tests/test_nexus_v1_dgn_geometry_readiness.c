@@ -45,6 +45,26 @@ static int real_dgn_is_hash_verified(const char *path, int level) {
     } \
 } while (0)
 
+typedef struct {
+    int packet_count;
+    int invalid_packet_count;
+} PackageGeometryVisitCount;
+
+static int count_package_geometry_packet(
+    void *context, const Nexus_V1_DgnStructure3PackageGeometryPacket *packet)
+{
+    PackageGeometryVisitCount *count = (PackageGeometryVisitCount *)context;
+    if (!count || !packet) return -1;
+    ++count->packet_count;
+    if (!packet->valid || !packet->source_geometry_bound ||
+        !packet->material_descriptor_bound || !packet->no_draw_only ||
+        packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render) {
+        ++count->invalid_packet_count;
+    }
+    return 0;
+}
+
 static void wb16(uint8_t *p, uint16_t v) {
     p[0] = (uint8_t)(v >> 8);
     p[1] = (uint8_t)(v & 0xffU);
@@ -619,6 +639,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
         Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
+        Nexus_V1_DgnStructure3PackageGeometrySceneReceipt package_scene;
         Nexus_Viewport package_viewport;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
@@ -1132,6 +1153,36 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       !package_geometry.fallback_visuals_permitted &&
                       package_geometry.blocks_real_dgn_mesh_render,
                       "retail Structure3 package geometry joins exact source mesh rows to opaque Structure2 anchors no-draw");
+                {
+                    PackageGeometryVisitCount visit_count;
+                    memset(&visit_count, 0, sizeof(visit_count));
+                    memset(&package_scene, 0, sizeof(package_scene));
+                    CHECK(nexus_v1_current_level_visit_structure3_package_geometry(
+                              &active_engine, count_package_geometry_packet,
+                              &visit_count, &package_scene) == 1 &&
+                          package_scene.valid && package_scene.complete &&
+                          package_scene.level_index == level &&
+                          package_scene.source_byte_count == (int)size &&
+                          package_scene.source_bytes_fnv1a64 ==
+                              fnv1a64(data, (size_t)size) &&
+                          package_scene.structure3_entry_count ==
+                              loaded_level.structure3_directory.entry_count &&
+                          package_scene.candidate_face_count ==
+                              loaded_level.structure3_faces.face_count &&
+                          package_scene.static_material_face_count > 0 &&
+                          package_scene.static_material_face_count ==
+                              package_scene.consumed_face_count &&
+                          visit_count.packet_count ==
+                              package_scene.consumed_face_count &&
+                          visit_count.invalid_packet_count == 0 &&
+                          !package_scene.transform_semantics_proven &&
+                          !package_scene.pixel_palette_vdp1_semantics_proven &&
+                          !package_scene.decoder_permitted &&
+                          package_scene.no_draw_only &&
+                          !package_scene.fallback_visuals_permitted &&
+                          package_scene.blocks_real_dgn_mesh_render,
+                          "retail Structure3 traversal consumes every static package face no-draw");
+                }
                 nexus_viewport_init(&package_viewport);
                 nexus_viewport_render(&package_viewport, &active_engine);
                 CHECK(package_viewport.last_dgn_render_receipt.attempted &&
@@ -1144,6 +1195,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                           .structure3_package_geometry_bound &&
                       package_viewport.last_dgn_render_receipt
                           .structure3_package_geometry_no_draw &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_scene_consumed &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_scene.complete &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_scene.consumed_face_count ==
+                          package_scene.consumed_face_count &&
                       package_viewport.structure3_package_geometry.valid &&
                       package_viewport.structure3_package_geometry
                           .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
