@@ -57,7 +57,15 @@
   `UPDATE_GFXSET` scene transaction and reaches source-required dungeon-square
    metadata. A changed graphicsset/control hash clears it; no palette or pixel
    brightness is derived from the receipt. Focused coverage extends
-   `test_dm2_v1_c_light_receipt` with matching and mismatched scene routes.
+  `test_dm2_v1_c_light_receipt` with matching and mismatched scene routes.
+
+- ✅ 2026-07-15 DM2 `c_light` palette parameter: source
+  `c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT` stores `glbLightLevel * 10` before
+  local palette processing. The action-palette route now accepts only that
+  matching authenticated value, never `GRAPHICSSET`'s unrelated
+  `HIGHEST_LIGHT_LEVEL`. Without live `c_light` provenance it remains
+  unavailable. Focused coverage verifies the exact multiply and mismatch
+  rejection in `test_dm2_v1_c_light_receipt`.
 
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 C001 object move: the generic
   wall pass independently authenticates its PC3.4 wall byte and C03 chain,
