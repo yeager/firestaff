@@ -327,7 +327,7 @@ static int test_vp_render_dungeon(void) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 static int test_vp_render_ui_zones(void) {
-    TEST("Runtime: vp_render_ui — each zone fills its region");
+    TEST("Runtime: vp_render_ui leaves unbound chrome untouched");
 
     Theron_V1_Viewport vp;
     theron_vp_init(&vp);
@@ -341,57 +341,21 @@ static int test_vp_render_ui_zones(void) {
     world.levels[0][0].start_y = 3;
     world.levels[0][0].start_dir = 0;
 
-    /* TOPBAR zone: y = 0..23 (top bar height = 24) */
-    theron_vp_clear(&vp, 0);
-    theron_vp_render_ui(&vp, &world, TQR_UI_TOPBAR);
-    int topbar_ok = 0;
-    for (int y = 0; y < 24 && !topbar_ok; y++) {
-        for (int x = 0; x < vp.fb.w; x++) {
-            if (vp.fb.data[y * vp.fb.w + x] != 0) { topbar_ok = 1; break; }
-        }
-    }
-    ASSERT(topbar_ok, "TQR_UI_TOPBAR should fill top 24 rows");
-    int topbar_text_pixels = 0;
-    for (int y = 21; y < 26; y++) {
-        for (int x = 8; x < 140; x++) {
-            if (vp.fb.data[y * vp.fb.stride + x] == 15) topbar_text_pixels++;
-        }
-    }
-    ASSERT(topbar_text_pixels >= 12,
-           "TQR_UI_TOPBAR should render readable dungeon-name glyph pixels");
-
-    /* RIGHT_PANEL zone: x = 256-96=160..255, y = 16..176 */
-    theron_vp_clear(&vp, 0);
-    theron_vp_render_ui(&vp, &world, TQR_UI_RIGHT_PANEL);
-    int right_ok = 0;
-    for (int y = 16; y < 176 && !right_ok; y++) {
-        for (int x = 160; x < 256; x++) {
-            if (vp.fb.data[y * vp.fb.w + x] != 0) { right_ok = 1; break; }
-        }
-    }
-    ASSERT(right_ok, "TQR_UI_RIGHT_PANEL should fill right 96px column");
-
-    /* BOTTOM_PANEL zone: y = 184..223 */
-    theron_vp_clear(&vp, 0);
-    theron_vp_render_ui(&vp, &world, TQR_UI_BOTTOM_PANEL);
-    int bottom_ok = 0;
-    for (int y = 184; y < 224 && !bottom_ok; y++) {
-        for (int x = 0; x < 256; x++) {
-            if (vp.fb.data[y * vp.fb.w + x] != 0) { bottom_ok = 1; break; }
-        }
-    }
-    ASSERT(bottom_ok, "TQR_UI_BOTTOM_PANEL should fill bottom rows");
-
-    /* ALL zones combined */
-    theron_vp_clear(&vp, 0);
+    /* No authenticated runtime chrome bank exists in this fixture. Every
+     * requested zone must preserve a preceding source-owned frame. */
+    theron_vp_clear(&vp, 0xa5);
     theron_vp_render_ui(&vp, &world, TQR_UI_ALL);
-    int all_ok = 0;
-    for (int y = 0; y < vp.fb.h && !all_ok; y++) {
+    int changed = 0;
+    for (int y = 0; y < vp.fb.h && !changed; y++) {
         for (int x = 0; x < vp.fb.w; x++) {
-            if (vp.fb.data[y * vp.fb.w + x] != 0) { all_ok = 1; break; }
+            if (vp.fb.data[y * vp.fb.w + x] != 0xa5) {
+                changed = 1;
+                break;
+            }
         }
     }
-    ASSERT(all_ok, "TQR_UI_ALL should produce non-zero pixels somewhere");
+    ASSERT(!changed,
+           "Unbound Track 02 chrome must not replace the source-owned surface");
 
     theron_vp_free(&vp);
     PASS();

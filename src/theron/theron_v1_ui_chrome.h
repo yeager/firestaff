@@ -114,7 +114,9 @@ void tr_ui_render_right_panel(TQR_PlanarFramebuffer *fb,
  * Master UI renderer
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Render Theron-specific UI chrome over the planar viewport fb.
+/* Render Theron-specific UI chrome over the planar viewport fb only after an
+ * original Track 02 runtime-chrome bank is proven. Until then this is
+ * no-draw and preserves the existing surface.
  * Flags controls which zones are drawn (OR of TR_UI_* bits).
  *
  * Source: THQUEST.ASM T600 (UI overlay zones).

@@ -155,7 +155,9 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
  * UI chrome rendering
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Render Theron-specific UI chrome over the viewport fb.
+/* Render Theron-specific UI chrome over the viewport fb only when a future
+ * original Track 02 loader/CD receipt binds the runtime UI bank. Until then
+ * this is no-draw and preserves the prior source-owned surface.
  * Flags controls which zones are drawn (OR of TQR_UI_* bits).
  *
  * Top bar:     dungeon name + quest item count

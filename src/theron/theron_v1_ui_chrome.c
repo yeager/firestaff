@@ -339,6 +339,13 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
  * tr_ui_render — composite all enabled UI chrome zones onto the planar fb.
  * Source: THQUEST.ASM T600 (UI overlay zones).
  */
+static int tr_ui_source_bank_ready(const Theron_V1_World *world) {
+    (void)world;
+    /* The authenticated startup atlas is not a runtime chrome bank. Do not
+     * infer bars, glyphs, portraits, or compass pixels from its existence. */
+    return 0;
+}
+
 void tr_ui_render(TQR_PlanarFramebuffer *fb,
                    const Theron_V1_World *world,
                    uint32_t ui_flags) {
@@ -348,8 +355,7 @@ void tr_ui_render(TQR_PlanarFramebuffer *fb,
      * startup frame. This older chrome compositor has only generated bars,
      * blocks, and glyph stand-ins, so it must not alter an authenticated
      * original-media surface until a loader/CD capture binds its UI art. */
-    if (world->runtime_media.restored &&
-        world->runtime_media.identity.ready) {
+    if (!tr_ui_source_bank_ready(world)) {
         return;
     }
 

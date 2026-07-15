@@ -3443,6 +3443,7 @@ static void test_startup_session_facts_wrappers(void) {
         Theron_V1_World source_ui_world = world;
         TQR_PlanarFramebuffer source_ui_frame;
         uint8_t source_ui_pixels[320u * 224u];
+        int restored_untouched;
 
         memset(source_ui_pixels, 0xa5, sizeof(source_ui_pixels));
         memset(&source_ui_frame, 0, sizeof(source_ui_frame));
@@ -3455,10 +3456,20 @@ static void test_startup_session_facts_wrappers(void) {
         tr_ui_render(&source_ui_frame,
                      &source_ui_world,
                      TR_UI_TOPBAR | TR_UI_RIGHT_PANEL | TR_UI_BOTTOM_PANEL);
-        expect_true(source_ui_pixels[0] == 0xa5 &&
+        restored_untouched = source_ui_pixels[0] == 0xa5 &&
                         source_ui_pixels[319] == 0xa5 &&
-                        source_ui_pixels[223u * 320u + 319u] == 0xa5,
-                    "verified Track02 atlas blocks synthetic UI chrome compositor");
+                        source_ui_pixels[223u * 320u + 319u] == 0xa5;
+        memset(source_ui_pixels, 0x5a, sizeof(source_ui_pixels));
+        source_ui_world.runtime_media.restored = 0;
+        source_ui_world.runtime_media.identity.ready = 0;
+        tr_ui_render(&source_ui_frame,
+                     &source_ui_world,
+                     TR_UI_TOPBAR | TR_UI_RIGHT_PANEL | TR_UI_BOTTOM_PANEL);
+        expect_true(restored_untouched &&
+                        source_ui_pixels[0] == 0x5a &&
+                        source_ui_pixels[319] == 0x5a &&
+                        source_ui_pixels[223u * 320u + 319u] == 0x5a,
+                    "Track02 UI chrome compositor is no-draw with or without startup atlas");
     }
     memset(&raw_media_graphics_receipt, 0, sizeof(raw_media_graphics_receipt));
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
@@ -6096,15 +6107,15 @@ static void test_boot_runtime_render_frame_facade(void) {
                                                     framebuffer,
                                                     320,
                                                     240) == 1,
-                "boot render facade owns Theron dungeon/UI/present sequence");
+                "boot render facade completes source-only no-draw sequence");
     for (i = 0; i < sizeof(framebuffer); ++i) {
         if (framebuffer[i] != 0) {
             nonzero = 1;
             break;
         }
     }
-    expect_true(nonzero,
-                "boot render facade writes presented indexed framebuffer");
+    expect_true(!nonzero,
+                "boot render facade preserves an empty host frame without Track02 UI/tile evidence");
     theron_vp_free(&viewport);
 }
 
