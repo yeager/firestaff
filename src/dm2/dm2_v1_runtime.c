@@ -3972,6 +3972,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.scene_light_hash =
         rt->gdat_scene_light_receipt.valid
             ? rt->gdat_scene_light_receipt.receipt_hash : 0u;
+    g_dm2_last_m11_frame.scene_ambient_light =
+        rt->gdat_scene_light_receipt.valid
+            ? rt->gdat_scene_light_receipt.ambient_light : 0u;
     /* UPDATE_GFXSET owns these exact GRAPHICSSET IMG3 records; retain their
      * individual identities so M11 cannot combine a current control receipt
      * with floor, ceiling, or WALL_GFX pixels from another plan. */
@@ -4081,6 +4084,27 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.weather_material_plan_command_count =
         g_dm2_last_m11_frame.weather_material_plan_consumed
             ? (int)rt->gdat_weather_renderer_command_count : 0;
+    g_dm2_last_m11_frame.weather_graphicsset_bound =
+        g_dm2_last_m11_frame.weather_material_plan_consumed &&
+        rt->gdat_weather_receipt_ready && rt->gdat_weather_destination_ready;
+    g_dm2_last_m11_frame.weather_graphicsset =
+        g_dm2_last_m11_frame.weather_graphicsset_bound
+            ? (uint8_t)rt->map_graphics_style : 0u;
+    g_dm2_last_m11_frame.weather_source_receipt_hash =
+        g_dm2_last_m11_frame.weather_graphicsset_bound
+            ? rt->gdat_weather_receipt_hash : 0u;
+    g_dm2_last_m11_frame.weather_destination_receipt_hash =
+        g_dm2_last_m11_frame.weather_graphicsset_bound
+            ? rt->gdat_weather_destination_hash : 0u;
+    g_dm2_last_m11_frame.presentation_state_hash =
+        dm2_v1_runtime_frame_presentation_state_hash(
+            g_dm2_last_m11_frame.scene_light_hash,
+            g_dm2_last_m11_frame.scene_ambient_light,
+            g_dm2_last_m11_frame.weather_graphicsset_bound,
+            g_dm2_last_m11_frame.weather_graphicsset,
+            g_dm2_last_m11_frame.weather_source_receipt_hash,
+            g_dm2_last_m11_frame.weather_destination_receipt_hash,
+            g_dm2_last_m11_frame.weather_material_plan_hash);
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -4102,6 +4126,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.map_load_token != 0u &&
         g_dm2_last_m11_frame.scene_control_hash != 0u &&
         g_dm2_last_m11_frame.scene_light_hash != 0u &&
+        g_dm2_last_m11_frame.presentation_state_hash != 0u &&
         g_dm2_last_m11_frame.floor_material_hash != 0u &&
         g_dm2_last_m11_frame.ceiling_material_hash != 0u &&
         (rt->outdoor || g_dm2_last_m11_frame.wall_material_plan_hash != 0u) &&
@@ -4139,7 +4164,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.weather_material_plan_required ||
          (g_dm2_last_m11_frame.weather_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.weather_material_plan_command_count > 0 &&
-          g_dm2_last_m11_frame.weather_material_plan_consumed)) &&
+          g_dm2_last_m11_frame.weather_material_plan_consumed &&
+          g_dm2_last_m11_frame.weather_graphicsset_bound)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

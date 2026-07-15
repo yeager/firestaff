@@ -231,6 +231,11 @@
   party/spell/rain accumulation and palette selection, never a host-derived
   brightness value.
 
+- 2026-07-15 DM2 M10 presentation follow-up: active GRAPHICSSET ambient
+  light and fully consumed weather receipts now form one source-owned frame
+  identity. Remaining: skproject's dynamic light accumulation and its exact
+  palette selection; this receipt must not be treated as a blend instruction.
+
 - 2026-07-15 DM2 skproject scene follow-up: floor and ceiling commands now
   carry decoded-pixel and QUERY_BLIT_RECT geometry receipts, verified at the
   source-required M11 boundary. Remaining work is original light/weather

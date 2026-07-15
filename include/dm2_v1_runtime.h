@@ -163,6 +163,12 @@ typedef struct {
     uint32_t map_load_token;
     uint32_t scene_control_hash;
     uint32_t scene_light_hash;
+    uint16_t scene_ambient_light;
+    int weather_graphicsset_bound;
+    uint8_t weather_graphicsset;
+    uint32_t weather_source_receipt_hash;
+    uint32_t weather_destination_receipt_hash;
+    uint32_t presentation_state_hash;
     uint32_t floor_material_hash;
     uint32_t ceiling_material_hash;
     uint32_t wall_material_plan_hash;
@@ -345,6 +351,12 @@ int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
 int dm2_v1_runtime_last_m11_frame_receipt(
     DM2_V1_ViewportM11FrameReceipt *out_receipt);
+uint32_t dm2_v1_runtime_frame_presentation_state_hash(
+    uint32_t scene_light_hash, uint16_t ambient_light,
+    int weather_graphicsset_bound, uint8_t weather_graphicsset,
+    uint32_t weather_source_receipt_hash,
+    uint32_t weather_destination_receipt_hash,
+    uint32_t weather_material_hash);
 uint32_t dm2_v1_runtime_g1_scene_map_token(int level, int graphicsset,
                                             int outdoor);
 int dm2_v1_runtime_graphicsset_scene_receipt(
