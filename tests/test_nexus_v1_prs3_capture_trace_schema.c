@@ -368,6 +368,8 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.zero_outer_loop_target_offset == 85428U &&
                receipt.zero_side_linear_begin_offset == 85476U &&
                receipt.zero_side_linear_end_offset == 85540U &&
+               receipt.zero_side_linear_byte_count == 64U &&
+               receipt.zero_side_linear_fnv1a64 == UINT64_C(0xe0cc325e85a0e63f) &&
                receipt.zero_side_output_store_instruction_count == 0U &&
                receipt.control_test_instruction == 0x23b8U &&
                receipt.stream_byte_read_instruction == 0x62c4U &&
@@ -379,6 +381,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_control_refill_verified &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_repeat_control_verified &&
+               receipt.sh2_zero_side_linear_route_verified &&
                receipt.sh2_zero_side_has_no_direct_output_store &&
                !receipt.zero_side_copy_or_backreference_proven &&
                !receipt.menu_frame_binding_proven && !receipt.vdp1_command_proven &&
@@ -392,6 +395,20 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    damaged, dm_bin_size, 1, &receipt) &&
                    !receipt.sh2_output_store_verified && !receipt.decoder_promoted,
                "one changed SH-2 output-store instruction rejects the receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        /* This word is inside the observed zero-side corridor but is not one
+         * of the named read/merge instructions. The corridor fingerprint
+         * must still reject it before an external trace can bind. */
+        damaged[85506U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_zero_side_linear_route_verified &&
+                   !receipt.sh2_zero_side_has_no_direct_output_store,
+               "changed unnamed zero-side corridor instruction rejects the receipt");
         free(damaged);
     }
     free(dm_bin);

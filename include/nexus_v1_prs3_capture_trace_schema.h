@@ -127,6 +127,9 @@ typedef struct {
     int sh2_zero_side_repeat_control_verified;
     uint32_t zero_side_linear_begin_offset;
     uint32_t zero_side_linear_end_offset;
+    uint32_t zero_side_linear_byte_count;
+    uint64_t zero_side_linear_fnv1a64;
+    int sh2_zero_side_linear_route_verified;
     uint32_t zero_side_output_store_instruction_count;
     int sh2_zero_side_has_no_direct_output_store;
     int zero_side_copy_or_backreference_proven;
