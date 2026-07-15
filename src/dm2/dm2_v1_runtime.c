@@ -146,6 +146,7 @@ typedef struct {
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt g1_actuator_wall_gfx_runtime;
     DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
     DM2_V1_G1WeaponMapChipRuntimeReceipt g1_weapon_map_chip_runtime;
+    DM2_V1_G1RuntimeMapDoorReceipt g1_runtime_map_doors;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
@@ -382,6 +383,47 @@ static int dm2_runtime_resolve_g1_scene_gdat(
     return 0;
 }
 
+static int dm2_runtime_promote_direct_g1_front_door(
+    DM2_V1_RuntimeState *rt)
+{
+    const DM2_V1_G1DirectDoorRoot *door = NULL;
+
+    if (!rt || !rt->g1_scene_runtime_handoff.blocked ||
+        rt->g1_scene_runtime_handoff.scene.root_class !=
+            DM2_V1_G1_SCENE_ROOT_DOOR ||
+        !dm2_v1_g1_runtime_map_door_at(
+            &rt->g1_runtime_map_doors,
+            rt->g1_scene_runtime_handoff.scene.x,
+            rt->g1_scene_runtime_handoff.scene.y, &door) ||
+        !door || !rt->gdat_door_material_plan.valid) {
+        return 0;
+    }
+    /* c_gui_vp.cpp selects the direct DB0 Door before DRAW_DOOR builds the
+     * D0C panel.  The already-admitted M11 plan is the only acceptable GDAT
+     * material owner for this route; another visible door cannot satisfy it. */
+    for (int i = 0; i < rt->gdat_door_material_plan.command_count; ++i) {
+        const DM2_V1_GdatDoorOverlayM11Command *command =
+            &rt->gdat_door_material_plan.commands[i];
+        if (command->kind != DM2_V1_GDAT_DOOR_PANEL ||
+            command->view_square != DM2_SQ_D0C ||
+            command->gdat_index == 0 || command->width == 0u ||
+            command->height == 0u || command->palette_hash == 0u) {
+            continue;
+        }
+        rt->g1_scene_runtime_handoff.blocked = 0;
+        rt->g1_scene_runtime_handoff.valid = 1;
+        rt->g1_scene_runtime_handoff.gdat_index = command->gdat_index;
+        rt->g1_scene_runtime_handoff.creature_type = -1;
+        rt->g1_scene_runtime_handoff.material_width = command->width;
+        rt->g1_scene_runtime_handoff.material_height = command->height;
+        rt->g1_scene_runtime_handoff.material_stride = command->width;
+        rt->g1_scene_runtime_handoff.material_palette_hash =
+            command->palette_hash;
+        return 1;
+    }
+    return 0;
+}
+
 static void dm2_runtime_refresh_g1_scene_handoff(
     DM2_V1_RuntimeState *rt, int level, int x, int y)
 {
@@ -397,6 +439,7 @@ static void dm2_runtime_refresh_g1_scene_handoff(
         rt->viewport_asset_fetch, rt->viewport_asset_user,
         rt->viewport_asset_palette_fetch, rt->viewport_asset_palette_user,
         &rt->g1_scene_runtime_handoff);
+    (void)dm2_runtime_promote_direct_g1_front_door(rt);
 }
 
 #define DM2_RUNTIME_SAVE_MAGIC "FS2RT01"
@@ -691,8 +734,13 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     memset(rt->map_door_gfx_active, 0, sizeof(rt->map_door_gfx_active));
     memset(rt->map_door_ornate_list, 0, sizeof(rt->map_door_ornate_list));
     rt->map_door_ornate_count = 0;
+    memset(&rt->g1_runtime_map_doors, 0, sizeof(rt->g1_runtime_map_doors));
     if (!rt->boot || !rt->boot->dungeon_data) return;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (dd->square_bytes == 1) {
+        (void)dm2_v1_dungeon_materialize_g1_runtime_map_doors(
+            dd, rt->dungeon_level, &rt->g1_runtime_map_doors);
+    }
     if (rt->dungeon_level >= 0 && rt->dungeon_level < dd->level_count) {
         if (dd->map_use_door0[rt->dungeon_level]) {
             rt->map_door_gfx_list[0] =
@@ -723,6 +771,38 @@ static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
         dd, rt->dungeon_level, rt->map_door_ornate_list,
         (int)sizeof(rt->map_door_ornate_list));
     if (count > 0) rt->map_door_ornate_count = count;
+}
+
+static int dm2_runtime_apply_direct_g1_door_metadata(
+    const DM2_V1_RuntimeState *rt,
+    int x,
+    int y,
+    DM2_ViewSquare *door)
+{
+    const DM2_V1_G1DirectDoorRoot *source = NULL;
+
+    if (!rt || !door || !dm2_v1_g1_runtime_map_door_at(
+            &rt->g1_runtime_map_doors, x, y, &source) || !source) {
+        return 0;
+    }
+    /* DME.h::Door exposes only these w2 fields.  In particular, do not
+     * attempt the old generic next-link walk to find a wall-button owner. */
+    door->door_button = source->button;
+    door->door_button_state = source->button_state;
+    door->door_record_type = source->door_type;
+    door->door_opening_dir = source->opening_dir;
+    door->ornament_index = source->ornate_index;
+    if (source->door_type < 2u &&
+        rt->map_door_gfx_active[source->door_type]) {
+        door->door_gfx_index = rt->map_door_gfx_list[source->door_type];
+        door->door_gfx_admitted = 1u;
+    }
+    if (source->ornate_index > 0u &&
+        source->ornate_index <= (uint8_t)rt->map_door_ornate_count) {
+        door->door_ornate_gfx_index =
+            rt->map_door_ornate_list[source->ornate_index - 1u];
+    }
+    return 1;
 }
 
 static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
@@ -958,12 +1038,20 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                         door_state);
                 door->door_state = (uint8_t)door_state;
             }
-            dm2_runtime_apply_door_record_metadata(
-                dd, rt->dungeon_level, map_x, map_y, dir,
-                rt->map_wall_gfx_list, rt->map_wall_gfx_count,
-                rt->map_door_gfx_list, rt->map_door_gfx_active,
-                rt->map_door_ornate_list,
-                rt->map_door_ornate_count, door);
+            if (dd->square_bytes == 1) {
+                /* The canonical G1 runtime permits only the cached direct
+                 * DB0 root receipt.  A missing receipt leaves the source
+                 * material gate closed instead of following w0. */
+                (void)dm2_runtime_apply_direct_g1_door_metadata(
+                    rt, map_x, map_y, door);
+            } else {
+                dm2_runtime_apply_door_record_metadata(
+                    dd, rt->dungeon_level, map_x, map_y, dir,
+                    rt->map_wall_gfx_list, rt->map_wall_gfx_count,
+                    rt->map_door_gfx_list, rt->map_door_gfx_active,
+                    rt->map_door_ornate_list,
+                    rt->map_door_ornate_count, door);
+            }
         }
     }
 }
