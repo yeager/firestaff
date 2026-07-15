@@ -2,7 +2,8 @@
  * Source: Data.h DSAnoopCmd/DSAequalCmd; DSA.cpp EX_NOOP:574-591,
  * EX_EQUAL:1491-1515, STKOP_Loc2AbsCoord:3253-3268,
  * STKOP_BitCount:4832-4848 and STKOP_ParamFetch/ParamStore/VSET:
- * 2956-3044,4850-4887, plus STKOP_PartyDistance:4057-4072,
+ * 2956-3044,4850-4887, plus STKOP_GlobalFetch:3958-3973 and
+ * STKOP_PartyDistance:4057-4072,
  * STKOP_TimeFetch:2512-2518, STKOP_ThisDSAId:4822-4828,
  * STKOP_WhoHasTalent:4363-4380, STKOP_CountInjury:4798-4817, and
  * STKOP_TalentsFetch:4243-4283 and STKOP_DisableSaves:2946-2955. These
@@ -77,6 +78,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_level = 5;
     context.party_x = 10;
     context.party_y = 12;
+    context.party_direction = 3;
     context.game_time_valid = 1;
     context.game_time = 12345u;
     context.dsa_slave_thing_valid = 1;
@@ -136,6 +138,23 @@ static CSB_V1_CSBWinDSAStackResult run_save_policy(
     }
 }
 
+static CSB_V1_CSBWinDSAStackResult run_without_party_location(
+    CSB_V1_ChaosMagicState *state, CSB_V1_DSAImportedAction *action,
+    uint16_t *words, int word_count, uint32_t *parameters)
+{
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+
+    memset(&context, 0, sizeof(context));
+    memset(&execution, 0, sizeof(execution));
+    action->program_words = words;
+    action->program_word_count = word_count;
+    context.parameters = parameters;
+    context.parameter_count = 4;
+    return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+        state, 7, 1u, 0, &context, &execution);
+}
+
 int main(void)
 {
     uint16_t noop_relative[] = { 0xffc3u };
@@ -176,6 +195,12 @@ int main(void)
     };
     uint16_t party_distance_other_level[] = {
         0x0786u, 0x08f4u, 0u, 0x0055u, 0x000du
+    };
+    uint16_t global_fetch_party_location[] = {
+        0x0686u, 1u, 0x0ecbu, 0x000du
+    };
+    uint16_t global_fetch_unknown_selector[] = {
+        0x0686u, 2u, 0x0ecbu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -325,6 +350,31 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_MALFORMED &&
               parameters[0] == 77u,
           "BITCOUNT underflow rejects without parameter publication");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, global_fetch_party_location,
+              (int)(sizeof(global_fetch_party_location) /
+                    sizeof(global_fetch_party_location[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x3154cu && execution.stack_depth == 0u,
+          "GLOBAL@ returns the live CSBWin packed party LOCATIONREL");
+
+    parameters[0] = 77u;
+    check(run(&state, &action, global_fetch_unknown_selector,
+              (int)(sizeof(global_fetch_unknown_selector) /
+                    sizeof(global_fetch_unknown_selector[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0u && execution.stack_depth == 0u,
+          "GLOBAL@ preserves CSBWin zero for an unrecognized selector");
+
+    parameters[0] = 77u;
+    check(run_without_party_location(&state, &action,
+              global_fetch_party_location,
+              (int)(sizeof(global_fetch_party_location) /
+                    sizeof(global_fetch_party_location[0])),
+              parameters) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 77u,
+          "GLOBAL@ refuses selector one without a runtime-owned party pose");
 
     parameters[0] = 10u;
     parameters[1] = 20u;
