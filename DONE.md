@@ -17516,6 +17516,13 @@ The M11 wall plan now rejects a source-required frame until the live G1
 planner fallback before a `GRAPHICSSET` wall command can be materialized.
 Verification: `test_dm2_v1_graphicsset_wall_material_gate`.
 
+# ✅ 2026-07-15 DM2 atomic G1 scene-plan binding
+
+Floor and ceiling material plans are now bound atomically to the active G1
+`MapGraphicsStyle` and source command hash. A changed scene control or stale
+plan is detached before viewport rendering. Verification:
+`test_dm2_v1_gdat_scene_plan_viewport_real_data`.
+
 # ✅ 2026-07-15 Nexus complete animated DGN source gate
 
 The complete active Structure3 scene now includes the full `08xx`

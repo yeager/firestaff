@@ -325,6 +325,10 @@ int main(void)
         mismatched.scene_flags, 0u, mismatched.highest_light_level, 0u, 0u, 0u,
         0u, 0u, mismatched.ambient_darkness);
     dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &mismatched);
+    if (viewport.gdat_scene_material_plan != NULL) {
+        fputs("FAIL: mismatched MapGraphicsStyle plan remained attached\n", stderr);
+        failures = 1;
+    }
     dm2_v1_render_floor_ceiling(&viewport);
     if (unexpected_fetches != 0 || viewport.asset_floor_ceiling_drawn_count != 0 ||
         viewport.fallback_floor_ceiling_drawn_count != 0 ||
