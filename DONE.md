@@ -16668,6 +16668,15 @@ material, font, palette, version hash, or placement blocks the entire
 dialogue draw; no localized or fallback label is substituted. Verification:
 canonical-PC-G1 `dm2_v1_dialogue_box_viewport_real_data`.
 
+# ✅ 2026-07-15 DM2 DRAW_DOOR light-palette fail-closed gate
+
+The source door material preflight now carries `DRAW_DOOR`'s selected
+`iLightPalette` into viewport consumption. A nonzero value, including the
+source D3 field-zero retry's palette 3, blocks the draw until Firestaff has
+the original palette-transform implementation. The renderer therefore cannot
+mistake an IMG3 local palette for source lighting or substitute a visual.
+Verification: canonical-PC-G1 `dm2_v1_gdat_door_overlay_plan_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer

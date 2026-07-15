@@ -184,6 +184,20 @@ int main(void)
         viewport.last_door_panel_asset_blit.dst_rect.w != 76 ||
         viewport.last_door_panel_asset_blit.dst_rect.h != 51 ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
+    /* DRAW_DOOR's field-zero retry keeps the original distance light palette
+     * (three for D3). Its transform is not yet decoded, so the base IMG3
+     * palette must not become a substitute draw. */
+    d3_plan.commands[0].light_palette = 3u;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
+    dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
+    dm2_v1_render_doors(&viewport);
+    if (viewport.asset_door_panel_drawn_count != 0 ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     door_plan.doors[0].view_square = DM2_SQ_D0C;
     door_plan.doors[0].ornate_gdat_index =

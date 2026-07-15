@@ -4217,6 +4217,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         uint8_t palette16[16];
         uint32_t palette_hash;
         int transparent_color;
+        uint8_t light_palette;
         int required;
         int consumed;
     } DM2_V1_DoorMaterial;
@@ -4328,6 +4329,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         memcpy(material->palette16, command->palette16,
                                sizeof(material->palette16));
                         material->palette_hash = command->palette_hash;
+                        material->light_palette = command->light_palette;
                         /* SKProject DRAW_DOOR obtains DOORS/entry/
                          * GDAT_IMG_COLORKEY_1 before its panel blit. Only
                          * the selected panel owns that datum. */
@@ -4354,6 +4356,17 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                      door->button_source_kind == 2 &&
                      !dm2_v1_wall_button_receipt_matches(
                          s, door, material->width, material->height))) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                /* c_gui_vp.cpp::DM2_DRAW_DOOR may retry field zero with a
+                 * nonzero source light palette. The IMG3 local palette is
+                 * not that transform. Until the original light-palette
+                 * operation is decoded, drawing it as the base palette
+                 * would be a synthetic visual. */
+                if (kind == DM2_DOOR_MATERIAL_PANEL &&
+                    material->light_palette != 0u) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
                     return;
