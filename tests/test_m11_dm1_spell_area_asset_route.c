@@ -55,7 +55,9 @@ int main(void)
     }
 
     ok &= require_text(source,
-                       "if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled())");
+                       "if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled() &&");
+    ok &= require_text(source,
+                       "!m11_is_dm1_source_kind(state->sourceKind))");
     ok &= require_text(source,
                        "m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,");
     ok &= require_text(source,
@@ -63,14 +65,16 @@ int main(void)
     ok &= require_text(source,
                        "DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34");
     ok &= require_text(source, "!state || !state->assetsAvailable");
-    ok &= require_text(source, "!linesAsset || !g_activeOriginalFont ||");
+    ok &= require_text(source,
+                       "!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||");
     ok &= require_text(source, "M11_Font_IsLoaded(g_activeOriginalFont)");
     ok &= require_text(source, "224, 50");
     ok &= require_text(source, "224, 62");
 
     party_panel = strstr(source, "m11_draw_party_panel(state, framebuffer");
-    late_route = strstr(source,
-                        "m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,");
+    late_route = party_panel ? strstr(party_panel,
+                        "m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,")
+                             : NULL;
     if (party_panel == NULL || late_route == NULL || late_route <= party_panel) {
         fprintf(stderr, "spell asset route is not late in the V1 paint order\n");
         ok = 0;

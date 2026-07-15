@@ -8400,7 +8400,8 @@ static int m11_blit_spell_label_cell(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
-    if (!slot || (int)slot->width != M11_SPELL_LABEL_CELL_W ||
+    if (!slot || !slot->loaded || !slot->pixels ||
+        (int)slot->width != M11_SPELL_LABEL_CELL_W ||
         (int)slot->height != (M11_SPELL_LABEL_CELL_H * 3)) {
         return 0;
     }
@@ -35248,7 +35249,8 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     }
     linesAsset = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
-    if (!linesAsset || !g_activeOriginalFont ||
+    if (!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||
+        !g_activeOriginalFont ||
         !M11_Font_IsLoaded(g_activeOriginalFont)) {
         return;
     }
@@ -39510,7 +39512,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* The procedural workbench is not a DM1 spell renderer. Classic V1 uses
      * the late CASTER.C/MENUDRAW.C C009/C011/C013 route below, gated by real
      * GRAPHICS.DAT assets and the original font. */
-    if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled()) {
+    /* DM1 owns spell presentation through CASTER.C/MENUDRAW.C's late
+     * C009/C011 route. The older workbench below is a host UI for other
+     * sessions and is never a DM1 missing-asset fallback. */
+    if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled() &&
+        !m11_is_dm1_source_kind(state->sourceKind)) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
+  presentation accepts only C009/C011 pixels and the loaded original font via
+  CASTER.C/MENUDRAW.C. The old non-chrome workbench is not a DM1 fallback.
+  Remaining work is real PC34/Mac capture across caster changes, rune rows,
+  recant, and cast refresh; do not restore host labels, mana bars, or boxes.
+
 - 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
   surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates
   are source no-draw rather than pane-relative placement. Remaining work is

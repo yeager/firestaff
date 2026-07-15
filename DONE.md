@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB CASTER/MENUDRAW spell-HUD source gate: DM1 now
+  leaves the spell area source-cleared unless C009/C011 and the original font
+  are fully decoded. The legacy procedural workbench cannot become a DM1
+  missing-asset fallback. Focused coverage:
+  `m11_dm1_spell_area_asset_route` and
+  `m11_dm1_action_spell_asset_fail_closed`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 creature source-material/geometry gate:
   live C584+ creature presentation now requires a decoded loaded-pixel PC34
   surface selected through G0221/G0222. Blank C3200/G0224 anchors reject the
