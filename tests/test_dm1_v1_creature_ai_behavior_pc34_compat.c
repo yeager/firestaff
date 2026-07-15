@@ -1803,6 +1803,10 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
     struct F0199BlockGrid grid;
 
     memset(&square, 0, sizeof(square));
+    EXPECT_EQ(F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(2, 7, 5, 4),
+              6, "F0226 returns source Manhattan distance");
+    EXPECT_EQ(F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(-3, 4, -3, 4),
+              0, "F0226 returns zero for the same square");
     square.elementType = DUNGEON_ELEMENT_DOOR;
     square.doorState = 3;
     EXPECT_EQ(F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&square), 1,

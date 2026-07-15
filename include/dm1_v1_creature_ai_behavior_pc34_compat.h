@@ -233,6 +233,14 @@ int F0208_DM1_GROUP_BuildAddEventPlan_Compat(
     uint32_t requestedTime,
     struct DM1GroupAddEventPlan_Compat* out);
 
+/* ReDMCSB GROUP.C F0226 lines 13762-13770: source Manhattan distance used
+ * by F0199/F0200/F0209. The caller supplies real loaded-map coordinates. */
+int F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY);
+
 /* One destination-square snapshot for GROUP.C F0202. M10 owns tile/Thing
  * decoding and supplies these facts; DM1 owns the original branch order. */
 struct DM1GroupMovementFacts_Compat {

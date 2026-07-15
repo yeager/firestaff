@@ -7103,3 +7103,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   plan when M10 creates initial attack events, with the real F0179 aspect
   timestamp and F0238 timeline insertion; do not replace it with a fixed
   aspect delay.
+- 2026-07-15 DM1 GROUP F0226: the C29-C41 current-group distance now uses
+  the exact source Manhattan primitive. Remaining related work is F0227/F0228
+  directional visibility over loaded map facts, not an inferred route.

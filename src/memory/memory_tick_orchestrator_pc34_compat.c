@@ -9774,8 +9774,9 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.freezeLifeTicks = world->freezeLifeTicks;
     ctx.movementTicks = ctx.creatureInfo.movementTicks;
     ctx.currentGroupDistanceToParty =
-        abs(ctx.partyMapX - ctx.currentGroupMapX) +
-        abs(ctx.partyMapY - ctx.currentGroupMapY);
+        F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
+            ctx.currentGroupMapX, ctx.currentGroupMapY,
+            ctx.partyMapX, ctx.partyMapY);
     ctx.distanceToVisibleParty = F0890c_ORCH_GetGroupVisibleDistance_Compat(
         world, &ctx, group);
     if (ctx.partyMapX > ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 1;

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 GROUP F0226: added the exact `GROUP.C:13762-13770`
+  Manhattan-distance primitive and bound M10's C29-C41 group-to-party
+  distance to it. Focused coverage includes asymmetric and identical squares.
+
 - 2026-07-15 DM2 skproject weather host receipt: source-backed weather
   renderer hash/count now cross runtime, boot, and M11. M11 rejects a
   mismatched weather command list before presentation.
