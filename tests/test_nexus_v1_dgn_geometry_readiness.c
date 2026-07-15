@@ -1523,6 +1523,27 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.structure1c_source_packet.no_draw_only &&
                       untextured_viewport.structure1c_source_packet
                           .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene_consumed &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene.valid &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene.descriptor_count ==
+                          loaded_level.structure2_texture_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene.consumed_anchor_count ==
+                          untextured_viewport.last_dgn_render_receipt
+                              .structure2_payload_anchor_scene.anchor_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene.image_anchor_count ==
+                          loaded_level.structure2_texture_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure2_payload_anchor_scene.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      untextured_viewport.structure2_payload_anchor_packet.valid &&
+                      untextured_viewport.structure2_payload_anchor_packet.no_draw_only &&
+                      untextured_viewport.structure2_payload_anchor_packet
+                          .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&
