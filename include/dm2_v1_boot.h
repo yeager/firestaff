@@ -157,6 +157,19 @@ typedef struct {
     int selected_row;
 } DM2_V1_BootRuntimeStartupSnapshot;
 
+/* Immutable source identity carried from the selected G1 map into the first
+ * live M11 viewport frame.  skproject loads the dungeon before
+ * DISPLAY_VIEWPORT; a host frame may only present the matching GRAPHICSSET
+ * scene and interface palette. */
+typedef struct {
+    int valid;
+    int level;
+    int map_graphics_style;
+    uint32_t map_load_token;
+    uint32_t scene_control_hash;
+    uint32_t interface_palette_hash;
+} DM2_V1_BootRuntimeG1ContextReceipt;
+
 typedef struct {
     DM2_V1_BootProfile *profile;
     void *dm2_state;
@@ -167,6 +180,7 @@ typedef struct {
     int initialize_v2_runtime;
     int initialize_hud_runtime;
     int initialize_touch_runtime;
+    DM2_V1_BootRuntimeG1ContextReceipt g1_context;
 } DM2_V1_BootStartupRuntimeReceipt;
 
 typedef struct {
@@ -362,6 +376,8 @@ typedef struct {
     uint32_t runtime_m11_frame_palette_hash;
     uint32_t runtime_m11_frame_interface_action_palette_hash;
     int runtime_m11_frame_interface_action_palette_consumed;
+    DM2_V1_BootRuntimeG1ContextReceipt runtime_g1_context;
+    int runtime_g1_context_matches_frame;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {
@@ -1527,6 +1543,9 @@ int dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
 
 int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
                                 DM2_V1_BootRuntimeReceipt *out_receipt);
+int dm2_v1_boot_runtime_g1_context_receipt(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootRuntimeG1ContextReceipt *out_receipt);
 int dm2_v1_boot_runtime_tick(DM2_V1_BootProfile *profile,
                              DM2_V1_BootRuntimeReceipt *out_receipt);
 int dm2_v1_boot_runtime_turn(DM2_V1_BootProfile *profile,

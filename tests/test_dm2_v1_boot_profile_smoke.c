@@ -408,6 +408,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_BootRuntimeReceipt after;
     DM2_V1_BootRuntimeActionReceipt action;
     DM2_V1_BootRuntimeRenderReceipt render_receipt;
+    DM2_V1_BootRuntimeG1ContextReceipt g1_context;
     DM2_V1_BootRuntimeHudCaptureReceipt hud_capture;
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
@@ -519,6 +520,16 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               before.party_y == 15 &&
               before.party_dir == 0,
           "boot runtime capture owns initial DM2 party receipt");
+    memset(&g1_context, 0, sizeof(g1_context));
+    CHECK(dm2_v1_boot_runtime_g1_context_receipt(
+              launch.profile, &g1_context) == 1 &&
+              g1_context.valid == 1 &&
+              g1_context.level == before.current_level &&
+              g1_context.map_graphics_style >= 0 &&
+              g1_context.map_load_token != 0u &&
+              g1_context.scene_control_hash != 0u &&
+              g1_context.interface_palette_hash != 0u,
+          "boot selection carries a real G1/GDAT context into runtime");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 1 &&
               after.runtime_ready == 1 &&
@@ -577,6 +588,15 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns V2 callback, V1 fallback, and real GDAT frame/HUD receipt");
+    CHECK(render_receipt.runtime_g1_context.valid == 1 &&
+              render_receipt.runtime_g1_context_matches_frame == 1 &&
+              render_receipt.runtime_g1_context.map_load_token ==
+                  g1_context.map_load_token &&
+              render_receipt.runtime_g1_context.scene_control_hash ==
+                  g1_context.scene_control_hash &&
+              render_receipt.runtime_g1_context.interface_palette_hash ==
+                  g1_context.interface_palette_hash,
+          "first runtime frame retains the selected G1/GDAT identity");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
     CHECK(dm2_v1_runtime_last_frame_ownership(&frame_ownership) == 1 &&
               frame_ownership.valid == 1 &&
