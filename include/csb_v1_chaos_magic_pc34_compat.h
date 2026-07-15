@@ -251,6 +251,13 @@ typedef int (*CSB_V1_CSBWinDSAGetObjectPropertyFn)(
 typedef int (*CSB_V1_CSBWinDSASetObjectPropertyFn)(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t value);
+/* CSBWin DSA.cpp STKOP_Copy copies DB3 bytes two through seven between
+ * like-typed actuator records. The runtime owns both raw records and must
+ * reject a missing or malformed record rather than inventing a payload. */
+typedef int (*CSB_V1_CSBWinDSAGetActuatorPayloadFn)(
+    void *user, uint16_t thing, uint8_t out_payload[6]);
+typedef int (*CSB_V1_CSBWinDSASetActuatorPayloadFn)(
+    void *user, uint16_t thing, const uint8_t payload[6]);
 typedef int (*CSB_V1_CSBWinDSANormalizeObjectPropertyFn)(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t input_value, uint32_t *out_value);
@@ -395,6 +402,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
+    CSB_V1_CSBWinDSAGetActuatorPayloadFn get_actuator_payload;
+    CSB_V1_CSBWinDSASetActuatorPayloadFn set_actuator_payload;
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
@@ -674,6 +683,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetObjectPropertyFn get_object_property;
     CSB_V1_CSBWinDSASetObjectPropertyFn set_object_property;
     CSB_V1_CSBWinDSANormalizeObjectPropertyFn normalize_object_property;
+    CSB_V1_CSBWinDSAGetActuatorPayloadFn get_actuator_payload;
+    CSB_V1_CSBWinDSASetActuatorPayloadFn set_actuator_payload;
     CSB_V1_CSBWinDSAGetChampionPossessionFn get_champion_possession;
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;

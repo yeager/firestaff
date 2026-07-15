@@ -65,6 +65,9 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
     uint32_t record_id,
     const uint8_t *payload,
     size_t payload_size);
+static uint8_t *csb_v1_runtime_mutable_thing_record(
+    CSB_V1_DungeonData *dungeon, uint16_t thing, int *out_type,
+    int *out_size);
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
     CSB_V1_RuntimeProfile *candidate);
 static int csb_v1_runtime_stage_csbwin_global_variables(
@@ -346,6 +349,43 @@ static int csb_v1_runtime_copy_portrait_compat(
             (unsigned char)(((left & 0x0fu) << 4) | (right & 0x0fu));
     }
     dst->portraitBitmapValid = 1;
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_get_actuator_payload(
+    void *user, uint16_t thing, uint8_t out_payload[6])
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const uint8_t *record;
+    int type;
+    int size;
+
+    if (!profile || !profile->dungeon_handle || !out_payload) return -1;
+    record = csb_v1_dungeon_get_thing_record(profile->dungeon_handle, thing,
+                                              &type, NULL, &size);
+    if (!record) return -1;
+    if (type != CSB_V1_THING_TYPE_ACTUATOR) return 0;
+    if (size < 8) return -1;
+    memcpy(out_payload, record + 2, 6u);
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_set_actuator_payload(
+    void *user, uint16_t thing, const uint8_t payload[6])
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    uint8_t *record;
+    int type;
+    int size;
+
+    if (!profile || !profile->dungeon_handle || !payload) return -1;
+    record = csb_v1_runtime_mutable_thing_record(profile->dungeon_handle,
+                                                  thing, &type, &size);
+    if (!record) return -1;
+    if (type != CSB_V1_THING_TYPE_ACTUATOR) return 0;
+    if (size < 8) return -1;
+    memcpy(record + 2, payload, 6u);
     return 1;
 }
 
@@ -20798,6 +20838,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.set_object_property = csb_v1_runtime_dsa_set_object_property;
     candidate.normalize_object_property =
         csb_v1_runtime_dsa_normalize_object_property;
+    candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
+    candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -20943,6 +20985,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.set_object_property = csb_v1_runtime_dsa_set_object_property;
     candidate.normalize_object_property =
         csb_v1_runtime_dsa_normalize_object_property;
+    candidate.get_actuator_payload = csb_v1_runtime_dsa_get_actuator_payload;
+    candidate.set_actuator_payload = csb_v1_runtime_dsa_set_actuator_payload;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];

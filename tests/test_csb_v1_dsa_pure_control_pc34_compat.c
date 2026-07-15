@@ -73,6 +73,9 @@ static int32_t cause_poison_character;
 static int32_t cause_poison_value;
 static int discard_text_enabled;
 static int discard_text_count;
+static int actuator_copy_enabled;
+static int actuator_copy_store_count;
+static uint8_t actuator_copy_payloads[3][6];
 
 static int wing_talents_enabled;
 
@@ -94,6 +97,41 @@ static int has_wing_character(void *user, uint16_t fingerprint)
     (void)user;
     if (!wing_talents_enabled) return -1;
     return fingerprint == 1u ? 1 : 0;
+}
+
+static int actuator_copy_index(uint16_t thing)
+{
+    if (thing == 0x0123u) return 0;
+    if (thing == 0x0456u) return 1;
+    if (thing == 0x0789u) return 2;
+    return -1;
+}
+
+static int get_actuator_payload(void *user, uint16_t thing,
+                                uint8_t out_payload[6])
+{
+    int index;
+
+    (void)user;
+    if (!actuator_copy_enabled || !out_payload) return -1;
+    index = actuator_copy_index(thing);
+    if (index < 0) return 0;
+    memcpy(out_payload, actuator_copy_payloads[index], 6u);
+    return 1;
+}
+
+static int set_actuator_payload(void *user, uint16_t thing,
+                                const uint8_t payload[6])
+{
+    int index;
+
+    (void)user;
+    if (!actuator_copy_enabled || !payload) return -1;
+    index = actuator_copy_index(thing);
+    if (index < 0) return 0;
+    memcpy(actuator_copy_payloads[index], payload, 6u);
+    ++actuator_copy_store_count;
+    return 1;
 }
 
 static int get_dsa_info(void *user, uint16_t thing, int *out_selector,
@@ -589,6 +627,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
         context.set_object_property = set_object_property;
         context.normalize_object_property = normalize_object_property;
     }
+    if (actuator_copy_enabled) {
+        context.get_actuator_payload = get_actuator_payload;
+        context.set_actuator_payload = set_actuator_payload;
+    }
     if (champion_possession_enabled) {
         context.get_champion_possession = get_champion_possession;
     }
@@ -1056,6 +1098,16 @@ int main(void)
     uint16_t jitter_then_bad[] = {
         0x0686u, 10u, 0x0686u, 11u, 0x0686u, 12u, 0x0686u, 13u,
         0x0255u, 0x0000u
+    };
+    uint16_t actuator_copy_chain[] = {
+        0x0686u, 0x0123u, 0x0686u, 0x0456u, 0x130bu,
+        0x0686u, 0x0456u, 0x0686u, 0x0789u, 0x130bu
+    };
+    uint16_t actuator_copy_then_bad[] = {
+        0x0686u, 0x0123u, 0x0686u, 0x0456u, 0x130bu, 0x0000u
+    };
+    uint16_t actuator_copy_non_db3[] = {
+        0x0686u, 0x0aaau, 0x0686u, 0x0456u, 0x130bu
     };
     uint32_t parameters[4] = { 77u, 0u, 0u, 0u };
     CSB_V1_DSAImportedAction action;
@@ -1995,6 +2047,39 @@ int main(void)
               jitter_offsets[2] == 3 && jitter_offsets[3] == 4 &&
               jitter_changed == 0,
           "JITTER does not publish offsets or redraw state before a later rejected word");
+
+    memcpy(actuator_copy_payloads[0], "ABCDEF", 6u);
+    memcpy(actuator_copy_payloads[1], "ghijkl", 6u);
+    memcpy(actuator_copy_payloads[2], "mnopqr", 6u);
+    actuator_copy_enabled = 1;
+    actuator_copy_store_count = 0;
+    check(run(&state, &action, actuator_copy_chain,
+              (int)(sizeof(actuator_copy_chain) /
+                    sizeof(actuator_copy_chain[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              actuator_copy_store_count == 2 &&
+              memcmp(actuator_copy_payloads[1], "ABCDEF", 6u) == 0 &&
+              memcmp(actuator_copy_payloads[2], "ABCDEF", 6u) == 0,
+          "COPY stages CSBWin DB3 payloads and exposes chained source bytes");
+    memcpy(actuator_copy_payloads[0], "ABCDEF", 6u);
+    memcpy(actuator_copy_payloads[1], "ghijkl", 6u);
+    actuator_copy_store_count = 0;
+    check(run(&state, &action, actuator_copy_then_bad,
+              (int)(sizeof(actuator_copy_then_bad) /
+                    sizeof(actuator_copy_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              actuator_copy_store_count == 0 &&
+              memcmp(actuator_copy_payloads[1], "ghijkl", 6u) == 0,
+          "COPY does not publish a DB3 payload before a later rejected word");
+    actuator_copy_store_count = 0;
+    check(run(&state, &action, actuator_copy_non_db3,
+              (int)(sizeof(actuator_copy_non_db3) /
+                    sizeof(actuator_copy_non_db3[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              actuator_copy_store_count == 0 &&
+              memcmp(actuator_copy_payloads[1], "ghijkl", 6u) == 0,
+          "COPY retains CSBWin's non-DB3 source no-op");
+    actuator_copy_enabled = 0;
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
