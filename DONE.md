@@ -17485,3 +17485,14 @@ descriptor from the same canonical LEV bytes. This is no-draw source coverage
 only: no GOTO execution, frame selection, timing, texture payload, palette,
 VDP1, transform, decoder, or fallback has been introduced. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus owner/material DGN capture bundle
+
+`nexus_v1_engine_build_structure1a_structure3_material_capture_target()` now
+bundles an active canonical Structure1F/1A owner/face request with a bounded
+static Structure3/Structure2 material request from the same LEV. Both lanes
+remain independently source-bound: no model-index to Structure3-entry mapping
+is inferred. The bundle is capture-producer-only and remains no-draw until an
+authentic Saturn trace proves correlation, transforms, pixel/palette/VDP1
+semantics, and rendering behavior. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.

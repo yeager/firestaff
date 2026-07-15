@@ -7323,3 +7323,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   not assert source-read semantics, decompression, pixel order, palette
   format, VDP1 state, decoder behavior, or drawing; all remain blocked pending
   authentic Saturn observations.
+- 🔧 2026-07-15 Nexus owner/material capture correlation: a capture producer
+  can now receive one independently hash-bound Structure1F/1A owner/face
+  request together with one static Structure3/Structure2 material window.
+  The owner model-index to Structure3-entry relation is still unproved, so a
+  real trace must establish that correlation as well as pixel, palette, VDP1,
+  transform, and draw semantics before rendering can be enabled.
