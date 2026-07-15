@@ -2958,6 +2958,15 @@ static void test_structure3_entry_header_boundaries(void) {
     wl16(vdp1_command, 0U);      /* normal texture primitive */
     wl16(vdp1_command + 8, 0x20U);
     wl16(vdp1_command + 10, 0x0101U); /* 8x1 command-table extent */
+    wl16(vdp1_command + 12, (uint16_t)-12);
+    wl16(vdp1_command + 14, 34U);
+    wl16(vdp1_command + 16, 56U);
+    wl16(vdp1_command + 18, (uint16_t)-78);
+    wl16(vdp1_command + 20, 90U);
+    wl16(vdp1_command + 22, 123U);
+    wl16(vdp1_command + 24, (uint16_t)-145);
+    wl16(vdp1_command + 26, 167U);
+    wl16(vdp1_command + 28, 0x2468U);
     memset(vdp1_state, 0, sizeof(vdp1_state));
     memcpy(vdp1_state + 0x100U, texture_span, sizeof(texture_span));
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
@@ -3370,6 +3379,7 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_command_framing.texture_primitive_observed &&
               active_source.vdp1_command_framing.texture_format_framed &&
               active_source.vdp1_command_framing.texture_span_size_matches_command &&
+              active_source.vdp1_command_framing.coordinate_words_framed &&
               active_source.vdp1_command_framing.command.texture_bits_per_pixel == 4U &&
               active_source.vdp1_command_framing.command.texture_byte_count == 4U &&
               active_source.vdp1_command_framing.command.texture_source_byte_offset ==
@@ -3379,10 +3389,17 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_command_framing.command.texture_source_range_valid &&
               active_source.vdp1_command_framing.command.texture_width == 8U &&
               active_source.vdp1_command_framing.command.texture_height == 1U &&
+              active_source.vdp1_command_framing.command.xa == -12 &&
+              active_source.vdp1_command_framing.command.ya == 34 &&
+              active_source.vdp1_command_framing.command.xd == -145 &&
+              active_source.vdp1_command_framing.command.yd == 167 &&
+              active_source.vdp1_command_framing.command.gouraud_table_word ==
+                  0x2468U &&
               !active_source.vdp1_command_framing.pixel_format_proven &&
               !active_source.vdp1_command_framing.palette_format_proven &&
               !active_source.vdp1_command_framing.decoder_permitted &&
               active_source.vdp1_texture_format_framed &&
+              active_source.vdp1_coordinate_words_framed &&
               active_source.vdp1_vram_window_bound &&
               active_source.vdp1_vram_window.valid &&
               active_source.vdp1_vram_window.complete_vdp1_vram_snapshot &&
@@ -3410,6 +3427,8 @@ static void test_structure3_entry_header_boundaries(void) {
                   .structure3_runtime_vdp1_command_framed &&
               viewport.last_dgn_render_receipt
                   .structure3_runtime_vdp1_texture_format_framed &&
+              viewport.last_dgn_render_receipt
+                  .structure3_runtime_vdp1_coordinate_words_framed &&
               viewport.last_dgn_render_receipt
                   .structure3_runtime_vdp1_vram_window_bound &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_vram_window

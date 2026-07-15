@@ -31,6 +31,7 @@ typedef struct {
     int structure3_source_no_draw;
     int structure3_runtime_vdp1_command_framed;
     int structure3_runtime_vdp1_texture_format_framed;
+    int structure3_runtime_vdp1_coordinate_words_framed;
     int structure3_runtime_vdp1_vram_window_bound;
     Nexus_V1_DgnStructure3Vdp1VramWindowReceipt
         structure3_runtime_vdp1_vram_window;

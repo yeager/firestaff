@@ -1793,10 +1793,10 @@ typedef struct {
     int packed_4bpp_valid;
 } Nexus_V1_ItemIbsFloorImage;
 
-/* A captured VDP1 command is stored as sixteen little-endian words. Only the
- * documented command-table fields are retained here; command placement,
- * vertices, colour-control meaning, and draw ordering remain capture facts
- * outside this parser. */
+/* A captured VDP1 command is stored as sixteen little-endian words. The
+ * documented coordinate words are framed as signed screen-space values, but
+ * their relation to Structure3 transforms, camera state, clipping, and draw
+ * ordering remains unproven. */
 typedef struct {
     uint16_t control;
     uint16_t link_word;
@@ -1805,6 +1805,15 @@ typedef struct {
     uint16_t texture_source_word;
     uint16_t texture_width;
     uint16_t texture_height;
+    int16_t xa;
+    int16_t ya;
+    int16_t xb;
+    int16_t yb;
+    int16_t xc;
+    int16_t yc;
+    int16_t xd;
+    int16_t yd;
+    uint16_t gouraud_table_word;
     uint8_t command_type;
     uint8_t colour_mode;
     uint8_t texture_bits_per_pixel;
@@ -1816,6 +1825,7 @@ typedef struct {
     int colour_mode_documented;
     int texture_source_range_valid;
     int four_bpp_colour_bank;
+    int coordinate_words_framed;
 } Nexus_V1_Vdp1TextureCommand;
 
 /* VDP1's 16-colour fetch is high-nibble first, but ITEM.IBS descriptor 0008
