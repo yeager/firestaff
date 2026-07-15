@@ -1102,6 +1102,11 @@
   - 2026-07-15 update: ordered object GDAT receipts now cross boot/M11 with
     their exact count. A stale floor-object, possession, or leader-hand pass
     is rejected before presentation; no generic `MISC` image can fill it.
+  - 2026-07-15 update: the synthetic injected-provider leader-hand path now
+    proves its bounded item map-chip blit, receipt, and M11 material handoff
+    without a boot GDAT parser. Remaining `dm2_v1_runtime_handoff_smoke`
+    blockers are independent palette, wall-count, DB0 door/button/overlay,
+    destroyed-door mask, and wall-gfx button material gaps.
   - 2026-07-15 update: multi-creature GDAT receipts now cross boot/M11 with
     their exact count. A shortened creature list is rejected before frame
     presentation; no inferred type/frame sprite is admitted.
