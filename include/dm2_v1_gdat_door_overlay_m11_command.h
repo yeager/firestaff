@@ -45,6 +45,12 @@ typedef struct {
     int16_t rect_y;
     uint16_t rect_width;
     uint16_t rect_height;
+    /* DRAW_DOOR halves the source bitmap for horizontal opening states before
+     * submitting its left/right RAW4 destinations. */
+    uint16_t source_x;
+    uint16_t source_y;
+    uint16_t source_width;
+    uint16_t source_height;
     uint8_t palette16[16];
     uint32_t raw_hash;
     uint32_t decoded_hash;

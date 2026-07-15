@@ -218,7 +218,7 @@ static int door_panel_rect_number(int view_square, uint16_t *out_rect_number)
 
 static int bind_door_panel_geometry(
     const DM2_V1_AssetLoader *loader, const DM2_V1_DoorRender *door,
-    DM2_V1_GdatDoorOverlayM11Command *command)
+    DM2_V1_GdatDoorOverlayM11Command *command, int horizontal_part)
 {
     uint16_t rect_number;
 
@@ -230,13 +230,37 @@ static int bind_door_panel_geometry(
     if (!loader || !door || !command) return 0;
     if (door->door_state == 0u) return 1;
     if (!door_panel_rect_number(door->view_square, &rect_number)) return 0;
+    command->source_x = 0u;
+    command->source_y = 0u;
+    command->source_width = command->width;
+    command->source_height = command->height;
     /* SKWIN/SkWinCore.cpp::DRAW_DOOR adds the intermediate state (1..3)
      * to tlbRectnoDoorPosition for vertical openings. Horizontal openings
-     * split the source bitmap across two different rects and stay no-draw
-     * until that dual-blit transaction is carried by M11. */
+     * halve the source bitmap and draw right then left through distinct RAW4
+     * positions. Keep both commands in one source-owned transaction. */
     if (door->door_state < 4u) {
-        if (door->door_opening_dir == 0u) return 1;
-        rect_number = (uint16_t)(rect_number + door->door_state);
+        if (door->door_opening_dir == 0u) {
+            uint16_t half_width;
+            if (horizontal_part < 0 || horizontal_part > 1 ||
+                command->width < 2u || (command->width & 1u) != 0u) {
+                return 0;
+            }
+            half_width = (uint16_t)(command->width / 2u);
+            command->source_width = half_width;
+            if (horizontal_part == 0) {
+                /* source right half, rect base + state + 6 */
+                command->source_x = half_width;
+                rect_number = (uint16_t)(rect_number + door->door_state + 6u);
+            } else {
+                /* source left half, rect base + state + 3 */
+                rect_number = (uint16_t)(rect_number + door->door_state + 3u);
+            }
+        } else {
+            if (horizontal_part >= 0) return 0;
+            rect_number = (uint16_t)(rect_number + door->door_state);
+        }
+    } else if (horizontal_part >= 0) {
+        return 0;
     }
     command->rect_number = rect_number;
     table = dm2_v1_asset_load_typed_sized(
@@ -245,7 +269,8 @@ static int bind_door_panel_geometry(
     row = find_raw4_row(table, table_size, command->rect_number);
     if (!table || !table_size || !row ||
         !query_raw4_blit_rect(table, table_size, command->rect_number,
-                             command->width, command->height, &rect) ||
+                             command->source_width, command->source_height,
+                             &rect) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;
@@ -267,6 +292,14 @@ static int bind_door_panel_geometry(
                                       command->rect_width);
     command->geometry_hash = hash_u32(command->geometry_hash,
                                       command->rect_height);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->source_x);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->source_y);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->source_width);
+    command->geometry_hash = hash_u32(command->geometry_hash,
+                                      command->source_height);
     command->geometry_hash = hash_u32(command->geometry_hash,
                                       command->rect_table_hash);
     command->geometry_hash = hash_u32(command->geometry_hash,
@@ -378,7 +411,8 @@ static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
 
 static int add_material(const DM2_V1_AssetLoader *loader,
                         DM2_V1_GdatDoorOverlayM11CommandPlan *plan,
-                        const DM2_V1_DoorRender *door, int kind)
+                        const DM2_V1_DoorRender *door, int kind,
+                        int horizontal_part)
 {
     DM2_V1_GdatDoorOverlayM11Command *command;
     int gdat_index, category, index, field;
@@ -459,7 +493,8 @@ static int add_material(const DM2_V1_AssetLoader *loader,
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)field);
     if (kind == DM2_V1_GDAT_DOOR_PANEL) {
-        if (!bind_door_panel_geometry(loader, door, command)) return 0;
+        if (!bind_door_panel_geometry(loader, door, command,
+                                      horizontal_part)) return 0;
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_DOORS, index,
                 DM2_V1_DOOR_GDAT_COLORKEY_FIELD, &command->color_key)) {
@@ -485,6 +520,8 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                            command->light_palette);
         command->selection_hash = hash_u32(command->selection_hash,
                                            command->geometry_hash);
+        command->selection_hash = hash_u32(command->selection_hash,
+                                           (uint32_t)(horizontal_part + 1));
     }
     return command->raw_hash != 0u && command->decoded_hash != 0u &&
            command->selection_hash != 0u && ++plan->command_count;
@@ -502,14 +539,22 @@ int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     if (!loader || !door_plan || !dm2_v1_asset_loader_verify(loader)) return 0;
     for (int i = 0; i < door_plan->door_count; ++i) {
         int no_frames;
-        if (!add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_PANEL)) goto fail;
+        if (door_plan->doors[i].door_state > 0u &&
+            door_plan->doors[i].door_state < 4u &&
+            door_plan->doors[i].door_opening_dir == 0u) {
+            if (!add_material(loader, &candidate, &door_plan->doors[i],
+                              DM2_V1_GDAT_DOOR_PANEL, 0) ||
+                !add_material(loader, &candidate, &door_plan->doors[i],
+                              DM2_V1_GDAT_DOOR_PANEL, 1)) goto fail;
+        } else if (!add_material(loader, &candidate, &door_plan->doors[i],
+                                 DM2_V1_GDAT_DOOR_PANEL, -1)) goto fail;
         no_frames = candidate.commands[candidate.command_count - 1].no_frames != 0u;
         if (
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK)) goto fail;
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_ORNATE, -1) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK, -1)) goto fail;
         if ((!no_frames && door_plan->doors[i].frame_gdat_index != 0 &&
-             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME)) ||
-            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON)) goto fail;
+             !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_FRAME, -1)) ||
+            !add_material(loader, &candidate, &door_plan->doors[i], DM2_V1_GDAT_DOOR_BUTTON, -1)) goto fail;
     }
     if (!candidate.command_count) goto fail;
     for (int i = 0; i < candidate.command_count; ++i) {

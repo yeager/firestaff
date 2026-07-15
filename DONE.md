@@ -17553,6 +17553,17 @@ VDP1, transform, decoder, or fallback has been introduced. Verification:
 
 # ✅ 2026-07-15 Nexus owner/material DGN capture bundle
 
+# ✅ 2026-07-15 DM2 horizontal DRAW_DOOR GDAT transaction
+
+DM2 now consumes skproject `SkWinCore::DRAW_DOOR`'s horizontal intermediate
+door path as two atomic, source-owned panel commands: the right source half
+uses `tlbRectnoDoorPosition + state + 6`, followed by the left half at
+`+ state + 3`. Each command carries its real DOORS image crop, RAW4 geometry,
+decoded-pixel hash, local palette hash, colour key, and selection hash. The
+viewport draws neither half unless both are complete and valid. Verification:
+the canonical cached `GRAPHICS.DAT` gate exercises vertical and horizontal
+intermediate states and proves two source panel blits without fallback fetches.
+
 `nexus_v1_engine_build_structure1a_structure3_material_capture_target()` now
 bundles an active canonical Structure1F/1A owner/face request with a bounded
 static Structure3/Structure2 material request from the same LEV. Both lanes

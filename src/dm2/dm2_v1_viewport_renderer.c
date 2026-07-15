@@ -4079,6 +4079,8 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
         uint16_t rect_number;
         DM2_V1_ViewportRect source_rect;
         uint32_t geometry_hash;
+        const DM2_V1_GdatDoorOverlayM11Command *panel_commands[2];
+        int panel_command_count;
         int required;
         int consumed;
     } DM2_V1_DoorMaterial;
@@ -4198,8 +4200,12 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         if (candidate->gdat_index == gdat_indices[kind] &&
                             candidate->view_square == door->view_square &&
                             candidate->kind == wanted_kind) {
-                            command = candidate;
-                            break;
+                            if (!command) command = candidate;
+                            if (kind == DM2_DOOR_MATERIAL_PANEL &&
+                                material->panel_command_count < 2) {
+                                material->panel_commands[
+                                    material->panel_command_count++] = candidate;
+                            }
                         }
                     }
                     if (command) {
@@ -4225,6 +4231,17 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                                 ? (int)command->color_key
                                 : DM2_COLOR_TRANSPARENT;
                         ++s->gdat_door_overlay_material_plan_consumed_count;
+                    }
+                    if (kind == DM2_DOOR_MATERIAL_PANEL) {
+                        const int horizontal_split = door->door_state > 0u &&
+                            door->door_state < 4u &&
+                            door->door_opening_dir == 0u;
+                        if ((horizontal_split && material->panel_command_count != 2) ||
+                            (!horizontal_split && material->panel_command_count != 1)) {
+                            dm2_v1_block_source_material(
+                                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                            return;
+                        }
                     }
                 }
                 if (gdat_indices[kind] == 0 ||
@@ -4350,7 +4367,67 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int panel_h = 0;
             int panel_stride = 0;
             int panel_drawn_asset = 0;
-            if (s->source_materials_required) {
+            const DM2_V1_DoorMaterial *source_panel =
+                &materials[i][DM2_DOOR_MATERIAL_PANEL];
+            const int horizontal_split = s->source_materials_required &&
+                source_panel->panel_command_count == 2;
+            if (horizontal_split) {
+                int split_drawn = 0;
+                for (int part = 0; part < source_panel->panel_command_count;
+                     ++part) {
+                    const DM2_V1_GdatDoorOverlayM11Command *command =
+                        source_panel->panel_commands[part];
+                    if (!command || !command->pixels || !command->decoded_hash ||
+                        !command->palette_hash || command->light_palette != 0u ||
+                        command->source_width == 0u || command->source_height == 0u ||
+                        command->source_x + command->source_width > command->width ||
+                        command->source_y + command->source_height > command->height ||
+                        command->rect_width == 0u || command->rect_height == 0u ||
+                        dm2_v1_weather_pixels_hash(command->pixels,
+                                                   command->width,
+                                                   command->height,
+                                                   command->width) !=
+                            command->decoded_hash ||
+                        dm2_v1_weather_pixels_hash(command->palette16, 16, 1,
+                                                   16) != command->palette_hash) {
+                        dm2_v1_block_source_material(
+                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                        return;
+                    }
+                    memcpy(s->active_asset_palette16, command->palette16,
+                           sizeof(s->active_asset_palette16));
+                    s->active_asset_palette_hash = command->palette_hash;
+                    s->active_asset_palette_ready = 1;
+                    dm2_v1_blit_scaled_material_bitmap_region_ex(
+                        s, vp, stride, command->rect_x, command->rect_y,
+                        command->rect_width, command->rect_height,
+                        command->pixels, command->source_x, command->source_y,
+                        command->source_width, command->source_height,
+                        command->width, command->color_key, 0,
+                        &s->gdat_sprite_palette_consumed_count);
+                    ++split_drawn;
+                    ++door_panel_asset_count;
+                    s->last_door_panel_asset_blit_valid = 1;
+                    s->last_door_panel_asset_blit = (DM2_V1_DoorAssetBlit){
+                        command->gdat_index,
+                        { (int)command->source_x, (int)command->source_y,
+                          (int)command->source_width, (int)command->source_height },
+                        { command->rect_x, command->rect_y,
+                          command->rect_width, command->rect_height },
+                        command->width, command->color_key };
+                    s->last_door_panel_asset_src_w = command->width;
+                    s->last_door_panel_asset_src_h = command->height;
+                    s->last_door_panel_asset_src_stride = command->width;
+                }
+                if (split_drawn != 2) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR);
+                    return;
+                }
+                materials[i][DM2_DOOR_MATERIAL_PANEL].consumed = 1;
+                panel_drawn_asset = 1;
+            }
+            if (!horizontal_split && s->source_materials_required) {
                 const DM2_V1_DoorMaterial *material =
                     &materials[i][DM2_DOOR_MATERIAL_PANEL];
                 panel_pixels = material->pixels;
@@ -4362,7 +4439,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 s->active_asset_palette_hash = material->palette_hash;
                 s->active_asset_palette_ready = material->palette_hash != 0u;
             }
-            if (((s->source_materials_required && panel_pixels &&
+            if (!horizontal_split && ((s->source_materials_required && panel_pixels &&
                   panel_w > 0 && panel_h > 0) ||
                  (!s->source_materials_required && render_door->panel_gdat_index != 0 &&
                 dm2_v1_fetch_viewport_local_material(s,
