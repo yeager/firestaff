@@ -204,14 +204,15 @@ static void test_creature_melee_f0321_armor_defense_scale_fixture(void)
      * F0313 vitality term contributes non-trivially.
      *
      * Walk-through with seed 37:
-     *   rand1=9, rand2=0 -> dexFails (resting skipped; attack lands)
-     *   woundTest selects HEAD (slot 1) via prob table 0x8421
+     *   rand1=9, rand2=0 -> dexFails; F0308 then consumes rand2=0
+     *   and cannot save a zero-Luck defender.
+     *   woundTest selects FEET (slot 5) via prob table 0x8421
      *   staged attack roll: rnd16=10, atk stages -> atk=12
      *   reduceGate=0 -> no F0230 late reduction (atk stays 12)
-     *   F0313(HEAD, sharp=1, vit=80, baseline=4) consumes
+     *   F0313(FEET, sharp=1, vit=80, baseline=12) consumes
      *     RANDOM((80 >> 3) + 1), halves that random component because this
      *     is sharp damage, then applies the final half-scale.
-     *   F0321 scale yields 23 for Firestaff's deterministic RNG seed 37.
+     *   F0321 scale yields 22 for Firestaff's deterministic RNG seed 37.
      */
     memset(&attacker, 0, sizeof(attacker));
     attacker.creatureType = 7;
@@ -245,14 +246,14 @@ static void test_creature_melee_f0321_armor_defense_scale_fixture(void)
           "F0321 armor+defense scale fixture resolves");
     CHECK(result.outcome == COMBAT_OUTCOME_HIT_DAMAGE,
           "F0321 fixture lands damage");
-    CHECK(result.woundMaskAdded == COMBAT_WOUND_HEAD,
-          "F0321 fixture selects HEAD wound slot for F0313 lookup");
-    CHECK_EQ_INT(result.damageApplied, 23,
+    CHECK(result.woundMaskAdded == COMBAT_WOUND_FEET,
+          "F0230 F0308 order selects FEET wound slot for F0313 lookup");
+    CHECK_EQ_INT(result.damageApplied, 22,
                  "F0321 fixture applies exact (130 - defense) / 64 scale");
-    CHECK_EQ_INT(result.rngCallCount, 11,
-                 "F0321 fixture skips the F0230 late-reduction random term");
-    CHECK_EQ_U32(rng.seed, 0xd11cf620u,
-                 "F0321 fixture leaves exact rng seed");
+    CHECK_EQ_INT(result.rngCallCount, 12,
+                 "F0230 F0308 adds its exact zero-Luck RNG gate");
+    CHECK_EQ_U32(rng.seed, 0x5912bbd9u,
+                 "F0230 fixture leaves exact F0308-adjusted rng seed");
 }
 
 int main(void)

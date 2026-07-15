@@ -171,6 +171,7 @@ struct CombatantCreatureSnapshot_Compat {
     int woundProbabilities;
     int properties;
     int doubledMapDifficulty;
+    int creatureDifficulty; /* F0230 invisibility/night-vision/palette term */
     int creatureIndex;
     int healthBefore;
     int isCandidateInvulnerable; /* BUG-119: 1 when C040 panel is open
@@ -312,7 +313,7 @@ int F0735_COMBAT_ResolveChampionMelee_Compat(
 
 int F0736_COMBAT_ResolveCreatureMelee_Compat(
     const struct CombatantCreatureSnapshot_Compat* attacker,
-    const struct CombatantChampionSnapshot_Compat* defender,
+    struct CombatantChampionSnapshot_Compat* defender,
     struct RngState_Compat* rng,
     struct CombatResult_Compat* out);
 

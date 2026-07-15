@@ -2058,6 +2058,18 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
     in.profileWoundProbabilities = profile->woundProbabilities;
     in.profileProperties = profile->properties;
     in.doubledMapDifficulty = doubledMapDifficulty;
+    if (world->magic.event71CountInvisibility > 0 &&
+        !(profile->attributes & DM1_ATTR_SEE_INVISIBLE)) {
+        in.creatureDifficulty = 16;
+    } else if (profile->attributes & DM1_ATTR_NIGHT_VISION) {
+        in.creatureDifficulty = 0;
+    } else {
+        struct DungeonViewLight_Compat light;
+        if (!F0890b_ORCH_ComputeDungeonViewLight_Compat(world, &light)) {
+            return 0;
+        }
+        in.creatureDifficulty = light.paletteIndex << 1;
+    }
     in.candidateInvulnerableEnabled =
         world->candidateAttackInvulnerableEnabled;
     in.candidateInvulnerableGroupIndex =
