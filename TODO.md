@@ -7362,6 +7362,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     transport only: object placement, trigger behavior, transforms, meshes,
     texture/palette/VDP1 semantics, and drawing remain blocked pending an
     original Saturn capture.
+  - 2026-07-15 Structure3 face-campaign update:
+    `firestaff_nexus_v1_structure3_face_capture_campaign` now walks each
+    canonical LEV directly by MD5 and emits one no-draw request for every
+    bounded Structure3 face/mesh row. The all-level retail corpus yields
+    18,478 targets while requiring complete Structure1F/1A face-normal
+    attachment evidence. The requests deliberately retain
+    `structure1a_model_entry_mapping_proven=0`; original Saturn capture must
+    still establish that relation, texture/palette/VDP1 semantics, transforms,
+    culling, and any decoder or draw route.
   - 2026-07-15 update: the active canonical LEV route can now atomically emit
     its verified dual-source Structure1F/Structure1A and Structure3-face
     target for an external capture producer. The written request contains no

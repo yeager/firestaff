@@ -1352,6 +1352,10 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DmBinVdp1StateWriteReceipt;
 
+/* Canonical Track 1 identity for a Nexus file name, or NULL when no original
+ * identity is known. Discovery consumers must still hash the actual bytes. */
+const char *nexus_v1_known_file_md5(const char *name);
+
 typedef struct {
     int level_index;
     Nexus_V1_LevelAuxSourceReceipt slev;

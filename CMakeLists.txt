@@ -24947,6 +24947,23 @@ if(NOT MSVC)
     )
 endif()
 
+# Emits one source-bound no-draw capture request for every bounded Structure3
+# face. It keeps the unresolved Structure1A model-to-entry relation explicit.
+add_executable(firestaff_nexus_v1_structure3_face_capture_campaign
+    probes/nexus/firestaff_nexus_v1_structure3_face_capture_campaign.c
+)
+target_link_libraries(firestaff_nexus_v1_structure3_face_capture_campaign PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_structure3_face_capture_campaign PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_structure3_face_capture_campaign PRIVATE
+        -Wall -Wextra -O2
+    )
+endif()
+
 # Emits a visible Structure1F/Structure1A owner context beside one bounded
 # Structure3 face for an external original-Saturn capture. No mesh mapping or
 # draw semantics are inferred by this producer request.
