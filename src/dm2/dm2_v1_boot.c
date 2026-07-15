@@ -7332,6 +7332,24 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_scene_light_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.scene_light_hash : 0u;
+        out_receipt->runtime_m11_frame_presentation_state_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.presentation_state_hash : 0u;
+        out_receipt->runtime_m11_frame_scene_ambient_light =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.scene_ambient_light : 0u;
+        out_receipt->runtime_m11_frame_weather_graphicsset_bound =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_graphicsset_bound : 0;
+        out_receipt->runtime_m11_frame_weather_graphicsset =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_graphicsset : 0u;
+        out_receipt->runtime_m11_frame_weather_source_receipt_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_source_receipt_hash : 0u;
+        out_receipt->runtime_m11_frame_weather_destination_receipt_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.weather_destination_receipt_hash : 0u;
         out_receipt->runtime_m11_frame_floor_material_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.floor_material_hash : 0u;

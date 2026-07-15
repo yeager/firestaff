@@ -305,6 +305,12 @@ typedef struct {
     uint32_t runtime_m11_frame_map_load_token;
     uint32_t runtime_m11_frame_scene_control_hash;
     uint32_t runtime_m11_frame_scene_light_hash;
+    uint32_t runtime_m11_frame_presentation_state_hash;
+    uint32_t runtime_m11_frame_scene_ambient_light;
+    int runtime_m11_frame_weather_graphicsset_bound;
+    uint32_t runtime_m11_frame_weather_graphicsset;
+    uint32_t runtime_m11_frame_weather_source_receipt_hash;
+    uint32_t runtime_m11_frame_weather_destination_receipt_hash;
     uint32_t runtime_m11_frame_floor_material_hash;
     uint32_t runtime_m11_frame_ceiling_material_hash;
     uint32_t runtime_m11_frame_wall_material_plan_hash;
