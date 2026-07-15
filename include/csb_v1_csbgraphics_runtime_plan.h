@@ -123,7 +123,7 @@ typedef struct {
     CSB_V1_CSBGraphicsRuntimeCustomBackgroundLayer custom_background_layer;
 } CSB_V1_CSBGraphicsRuntimePlanEntry;
 
-typedef struct {
+typedef struct CSB_V1_CSBGraphicsRuntimePlan {
     int ready;
     int cache_loaded;
     uint32_t source_entry_count;

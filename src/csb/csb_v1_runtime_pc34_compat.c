@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
@@ -18380,6 +18381,24 @@ int csb_v1_runtime_get_csbwin_save_policy(
     *out_graphics_signature = profile->csbwin_graphics_signature_data;
     *out_version = profile->csbwin_version_data;
     return 0;
+}
+
+int csb_v1_runtime_admit_csbwin_csbgraphics_plan(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_CSBGraphicsRuntimePlan *plan,
+    CSB_V1_CSBWinGraphicsSignatureReceipt *out_receipt)
+{
+    if (!profile || !plan || !profile->csbwin_extended_features_valid ||
+        !plan->ready || !plan->cache_loaded || plan->source_md5[0] == '\0') {
+        return -1;
+    }
+    return csb_v1_csbwin_graphics_signature_gate_validate_md5(
+        plan->source_md5, CSB_V1_CSBWIN_GRAPHICS_SIGNATURE_CUSTOM,
+        profile->csbwin_extended_csbgraphics_signature1,
+        profile->csbwin_extended_csbgraphics_signature2,
+        profile->csbwin_csbgraphics_signature_data,
+        profile->csbwin_debugging_data, out_receipt) ==
+        CSB_V1_CSBWIN_GRAPHICS_SIGNATURE_GATE_OK ? 0 : -1;
 }
 
 int csb_v1_runtime_resolve_csbwin_dsa_filter_binding(
