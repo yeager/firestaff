@@ -350,15 +350,23 @@ int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
         view.width, view.height, 0, 0, "WARNING.BIN/DGT2#0");
 }
 
-/* GAMEOVER.BIN (101 KB) — simple indexed 320×200 */
+/* GAMEOVER.BIN is a verified RES* DGT2 PP container, not a raw 320x200
+ * bitmap. Consume only its documented pixel plane. */
 int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
+    Nexus_UI_Dgt2PpView view;
     (void)palette;
     if (!mgr) return -1;
+    if (!data || data_size <= 0 ||
+        nexus_ui_res_dgt2_pp_view(data, (size_t)data_size, 0U, &view) != 0) {
+        printf("Nexus UI: GAMEOVER.BIN requires a valid RES* container DGT2 PP image\n");
+        return -1;
+    }
     return nexus_ui_surface_load(mgr, NEXUS_SURFACE_GAMEOVER,
-        data, data_size, 320, 200, 128, 64, "GAMEOVER.BIN");
+        view.pixels, (int)view.pixel_bytes,
+        view.width, view.height, 0, 0, "GAMEOVER.BIN/DGT2#0");
 }
 
 /* STABG.BIN has verified source identity but no proven Saturn surface

@@ -53,6 +53,7 @@ int main(void)
     unsigned char opaque_title[64001];
     unsigned char opaque_warning[64001];
     unsigned char *local_warning;
+    unsigned char *local_gameover;
     unsigned char *local_title;
     size_t local_warning_size = 0U;
     Nexus_UI_Dgt2PpView warning_view;
@@ -79,6 +80,10 @@ int main(void)
                                       (int)sizeof(opaque_warning), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_WARNING].data == NULL,
                 "RES* WARNING.BIN bytes cannot become a startup raster");
+    expect_true(nexus_ui_load_gameover(&ui, opaque_warning,
+                                       (int)sizeof(opaque_warning), NULL) < 0 &&
+                    ui.surfaces[NEXUS_SURFACE_GAMEOVER].data == NULL,
+                "malformed GAMEOVER.BIN cannot become a guessed raster");
     nexus_ui_manager_free(&ui);
 
     local_warning = read_local_nexus_file("WARNING.BIN", &local_warning_size);
@@ -102,6 +107,23 @@ int main(void)
                     "WARNING.BIN loads its decoded Saturn DGT2 pixel plane");
         nexus_ui_manager_free(&ui);
         free(local_warning);
+    }
+
+    local_gameover = read_local_nexus_file("GAMEOVER.BIN", &local_warning_size);
+    if (!local_gameover) {
+        puts("SKIP: local Nexus GAMEOVER.BIN not present");
+    } else {
+        nexus_ui_manager_init(&ui);
+        expect_true(nexus_ui_res_dgt2_pp_view(local_gameover, local_warning_size,
+                                               0U, &warning_view) == 0 &&
+                        nexus_ui_load_gameover(&ui, local_gameover,
+                                               (int)local_warning_size, NULL) > 0 &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].w == warning_view.width &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].h == warning_view.height &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].data[0] == warning_view.pixels[0],
+                    "GAMEOVER.BIN loads its verified DGT2 PP pixel plane");
+        nexus_ui_manager_free(&ui);
+        free(local_gameover);
     }
 
     local_title = read_local_nexus_file("TITLE.CG", &local_warning_size);
