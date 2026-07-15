@@ -18479,6 +18479,16 @@ opaque, with no object-table, level, palette, bitmap, grid, or rendering
 claim. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
 
+# ✅ 2026-07-15 Theron Track 02 live TII capture intake
+
+`capture_theron_mednafen_live_trace.sh` now writes the provenance-marked
+main-RAM-loader trace beside the existing IRQ/CD/input traces. Its transition
+receipt reports all observed `TII` rows and the subset whose source is `$3c80`,
+the authenticated continuation boundary. Empty counts remain evidence of an
+unreached original route; the script manufactures no trace or candidate.
+Verification: `test_theron_v1_mednafen_live_capture_script.sh` passes; the
+patch-shape gate passes and skip-cleans without `MEDNAFEN_SOURCE`.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
