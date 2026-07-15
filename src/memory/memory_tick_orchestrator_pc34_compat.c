@@ -9730,14 +9730,15 @@ static int orch_handle_creature_reaction_event_compat(
         F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
             ctx.currentGroupMapX, ctx.currentGroupMapY,
             ctx.partyMapX, ctx.partyMapY);
+    if (!F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+            ctx.currentGroupMapX, ctx.currentGroupMapY,
+            ctx.partyMapX, ctx.partyMapY, &world->masterRng,
+            &ctx.currentGroupPrimaryDirToParty,
+            &ctx.currentGroupSecondaryDirToParty)) {
+        return 0;
+    }
     ctx.distanceToVisibleParty = F0890c_ORCH_GetGroupVisibleDistance_Compat(
         world, &ctx, group);
-    if (ctx.partyMapX > ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 1;
-    else if (ctx.partyMapX < ctx.currentGroupMapX) ctx.currentGroupPrimaryDirToParty = 3;
-    else if (ctx.partyMapY > ctx.currentGroupMapY) ctx.currentGroupPrimaryDirToParty = 2;
-    else ctx.currentGroupPrimaryDirToParty = 0;
-    ctx.currentGroupSecondaryDirToParty =
-        (ctx.currentGroupPrimaryDirToParty + 1) & 3;
     {
         static const int directionDeltaX[4] = { 0, 1, 0, -1 };
         static const int directionDeltaY[4] = { -1, 0, 1, 0 };
