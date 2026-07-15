@@ -113,7 +113,12 @@
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0276 C001 audible object route: a loaded
   C001 wall record reached by C49/F0267 emits the authentic prioritized switch
   request and its F0272/F0268 event. The same regression proves C000 emits
-  neither. Coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (26/0).
+  neither. Coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (31/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0272 C002 OnceOnly writeback: the live C49
+  wall-object route clears only the low C03 type bits before it publishes the
+  source F0268 event, retaining the packed object-data field. Coverage:
+  `csb_v1_f0276_wall_object_move_pc34_compat` (31/0).
 
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 live wall-object move: C49
   associated-object materialization now enters the source C001..C003 wall
