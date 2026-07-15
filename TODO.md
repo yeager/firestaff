@@ -7527,6 +7527,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     -> routine -> caller control-flow chain, but leaves the routine and every
     byte it may access opaque. Remaining: an authentic loader trace that
     binds one subsequent CD read or table span to this verified routine path.
+  - Update: after that caller resumption, admission now retains the first
+    subsequent main-RAM JSR observed in the same original trace. Its physical
+    call site and immediate target are tied through the complete prior Track
+    02 TII/copy/call/return chain. The target is still opaque; no routine ABI,
+    descriptor, CD read, table, level, object, or graphics meaning is claimed.
+    Remaining: capture a verified CD-read or descriptor-table access from one
+    of these bounded routine paths.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
