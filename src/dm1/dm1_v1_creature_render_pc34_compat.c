@@ -372,12 +372,17 @@ int dm1_creature_center_draw_placement(int creatureType,
         h = slotH * 3 / 4;
     }
     coordSet = dm1_creature_coordinate_set(creatureType);
-    if (dm1_viewport_3d_c3200_creature_zone_point(coordSet,
-                                                  depthIndex < 3 ? depthIndex : 2,
-                                                  visible,
-                                                  duplicateIndex,
-                                                  &zoneX,
-                                                  &zoneY)) {
+    if (!dm1_viewport_3d_c3200_creature_zone_point(coordSet,
+                                                   depthIndex < 3 ? depthIndex : 2,
+                                                   visible,
+                                                   duplicateIndex,
+                                                   &zoneX,
+                                                   &zoneY)) {
+        /* F0115 owns creature anchors through C3200. Do not invent a
+         * pane-relative replacement when the source row is blank. */
+        return 0;
+    }
+    {
         int localCenterX = (zoneX * faceW) / 224;
         int localBottomY = (zoneY * faceH) / 136;
         x = faceX + localCenterX - w / 2;
@@ -438,19 +443,20 @@ int dm1_creature_side_draw_placement(int creatureType,
         y += duplicateIndex * ofsY;
     }
     coordSet = dm1_creature_coordinate_set(creatureType);
-    if (dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
-                                                       depthIndex < 3 ? depthIndex : 2,
-                                                       side,
-                                                       visible,
-                                                       duplicateIndex,
-                                                       &zoneX,
-                                                       &zoneY)) {
-        x = DM1_VIEWPORT_SCREEN_X + zoneX - w / 2;
-        y = DM1_VIEWPORT_SCREEN_Y + zoneY - h;
-        outPlacement->side_hint = 0;
-    } else {
-        outPlacement->side_hint = side;
+    if (!dm1_viewport_3d_c3200_creature_side_zone_point(coordSet,
+                                                        depthIndex < 3 ? depthIndex : 2,
+                                                        side,
+                                                        visible,
+                                                        duplicateIndex,
+                                                        &zoneX,
+                                                        &zoneY)) {
+        /* A blank G0224 coordinate is a source no-draw. The former
+         * side_hint route was a synthetic pane-relative placement. */
+        return 0;
     }
+    x = DM1_VIEWPORT_SCREEN_X + zoneX - w / 2;
+    y = DM1_VIEWPORT_SCREEN_Y + zoneY - h;
+    outPlacement->side_hint = 0;
     outPlacement->x = x;
     outPlacement->y = y;
     outPlacement->w = w;

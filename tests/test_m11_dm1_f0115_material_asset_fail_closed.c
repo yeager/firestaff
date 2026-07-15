@@ -33,15 +33,24 @@ int main(void)
     char *source = read_source();
     char *thrown;
     char *item;
+    char *creature;
+    char *creatureEnd;
     int ok;
 
     if (!source) return 1;
     thrown = strstr(source, "static int m11_draw_thrown_object_projectile_sprite(");
     item = strstr(source, "static int m11_draw_item_sprite_material(");
-    ok = thrown && item &&
+    creature = strstr(source, "static int m11_draw_creature_sprite_ex_material(");
+    creatureEnd = creature ? strstr(creature, "\n}\n\n/* Draw the outer UI frame") : NULL;
+    if (creatureEnd) *creatureEnd = '\0';
+    ok = thrown && item && creature && creatureEnd &&
          strstr(thrown, "!slot || !slot->loaded || !slot->pixels") &&
          strstr(item, "F0115 floor-object material must be a decoded PC34") &&
-         strstr(item, "!slot || !slot->loaded || !slot->pixels");
+         strstr(item, "!slot || !slot->loaded || !slot->pixels") &&
+         strstr(creature, "F0115 draws the C584+ bitmap selected by G0221/G0222") &&
+         strstr(creature, "!slot || !slot->loaded || !slot->pixels") &&
+         strstr(creature, "sideHint != 0") &&
+         !strstr(creature, "maxW = maxW * 70 / 100");
     free(source);
     return ok ? 0 : 1;
 }

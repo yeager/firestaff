@@ -24600,42 +24600,21 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) return 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* F0115 draws the C584+ bitmap selected by G0221/G0222. A cached
+     * dimension record or a pane-relative side hint is not source material. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0 || sideHint != 0) return 0;
 
     spriteW = (int)slot->width;
     spriteH = (int)slot->height;
 
-    /* Mirror only when the original pose needs it.
-     * Side pose orientation comes from creature direction relative to the
-     * party, not from which pane the creature happens to occupy.
-     * When the pose fell back to FRONT because no dedicated bitmap
-     * exists, the GraphicInfo FLIP_NON_ATTACK/FLIP_ATTACK flags decide
-     * whether the front bitmap should be mirrored for this view. */
-    /* Scale to fit within the face rect while preserving aspect ratio.
-     * DM1 perspective fidelity: side-cell creatures are drawn smaller
-     * than center-cell creatures at the same depth.  In the original,
-     * side panes are narrower (roughly 60-70% of center width) and
-     * creatures shrink proportionally.  We apply a 70% scale factor
-     * for side cells to match the corridor perspective illusion.
-     * At depth 1+ the side panes are even narrower, so we apply an
-     * additional 80% reduction per extra depth step for side cells. */
+    /* Mirror only when the original pose needs it. Side placement has
+     * already been resolved by the C3200/G0224 source coordinate table. */
+    /* Scale the selected source bitmap within its source-owned C3200 lane,
+     * preserving its native aspect ratio. */
     {
         int maxW = w - 4;
         int maxH = h - 4;
-        if (sideHint != 0) {
-            /* DM1 side-cell perspective proportion: ~70% of center */
-            maxW = maxW * 70 / 100;
-            maxH = maxH * 70 / 100;
-            /* Further reduce at greater depth for side cells */
-            if (depthIndex >= 1) {
-                maxW = maxW * 80 / 100;
-                maxH = maxH * 80 / 100;
-            }
-            if (depthIndex >= 2) {
-                maxW = maxW * 80 / 100;
-                maxH = maxH * 80 / 100;
-            }
-        }
         drawW = maxW;
         drawH = (drawW * spriteH) / spriteW;
         if (drawH > maxH) {
@@ -24645,19 +24624,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     }
     if (drawW < 4 || drawH < 4) return 0;
 
-    /* DM1 side-cell positioning: offset toward the corridor center.
-     * Left-side creatures shift right, right-side shift left, so they
-     * appear at the inner edge of the side pane.  Center creatures
-     * remain centered. */
-    if (sideHint < 0) {
-        /* Left side: push toward right (inner) edge */
-        drawX = x + w - drawW - 2;
-    } else if (sideHint > 0) {
-        /* Right side: push toward left (inner) edge */
-        drawX = x + 2;
-    } else {
-        drawX = x + (w - drawW) / 2;
-    }
+    drawX = x + (w - drawW) / 2;
     drawY = y + (h - drawH) / 2;
 
     m11_blit_creature_pc34_palette(slot, framebuffer, fbW, fbH,
