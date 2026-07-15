@@ -242,6 +242,19 @@ typedef struct {
     uint32_t record_hash;
 } DM2_V1_OriginalRawDbRecordReceipt;
 
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint16_t attributes;
+    uint8_t button;
+    uint8_t door_type;
+    uint8_t button_state;
+    uint8_t opening_dir;
+    uint8_t ornate_index;
+    uint8_t destroyable_by_fireball;
+    uint8_t bashable_by_chopping;
+} DM2_V1_OriginalRawDoorReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -340,6 +353,11 @@ int dm2_v1_original_raw_sksave_db_record_receipt(
     int db_pool,
     int record_index,
     DM2_V1_OriginalRawDbRecordReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_door_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawDoorReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only

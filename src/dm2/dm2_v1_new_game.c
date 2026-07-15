@@ -1092,6 +1092,34 @@ int dm2_v1_original_raw_sksave_db_record_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_door_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawDoorReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawDoorReceipt candidate;
+    uint16_t attributes;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 0, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 4u ||
+        candidate.record.record_offset > buf_size - 4u) return 0;
+    /* DME.h Door: w0 remains opaque; w2 owns these exact fields. */
+    attributes = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    candidate.attributes = attributes;
+    candidate.button = (uint8_t)((attributes >> 6) & 1u);
+    candidate.door_type = (uint8_t)(attributes & 1u);
+    candidate.button_state = (uint8_t)((attributes >> 11) & 1u);
+    candidate.opening_dir = (uint8_t)((attributes >> 5) & 1u);
+    candidate.ornate_index = (uint8_t)((attributes >> 1) & 0x0fu);
+    candidate.destroyable_by_fireball = (uint8_t)((attributes >> 7) & 1u);
+    candidate.bashable_by_chopping = (uint8_t)((attributes >> 8) & 1u);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)

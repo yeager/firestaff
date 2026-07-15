@@ -15582,6 +15582,14 @@ zero-sized source pools, and out-of-prefix addresses. It exposes no decoded
 record fields and follows no links. Verification: focused save/load 26/26,
 including a source-sized DB0 record at byte 68.
 
+# ✅ 2026-07-15 DM2 raw SKSave DB0 Door receipt
+
+The corpus path can now decode `SKWIN/DME.h::Door` fields from raw DB0 `w2`
+after a hash-bound DB-record receipt validates its address. It returns only
+Button, DoorType, ButtonState, OpeningDir, ornate index, and fireball/chopping
+flags. `w0`, map attachment, and every record link remain opaque. Verification:
+focused save/load 26/26 with a source-sized DB0 record and invalid-index gate.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at
