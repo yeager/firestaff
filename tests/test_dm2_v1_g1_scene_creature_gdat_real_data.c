@@ -232,9 +232,9 @@ int main(void)
         goto done;
     }
     root = &scene.chain.nodes[0];
-    if (root->type != 4 || root->record_size < 5 || root->record_offset < 0 ||
+    if (root->type != 4 || root->record_size < 16 || root->record_offset < 0 ||
         root->record_offset + root->record_size > dungeon.raw_size) {
-        fputs("FAIL: canonical DB4 creature root has no b4 type byte\n", stderr);
+        fputs("FAIL: canonical DB4 creature root lacks b4/b15 fields\n", stderr);
         failures = 1;
         goto done;
     }
@@ -286,7 +286,7 @@ int main(void)
     material_receipt.materials[0].y = creature_y;
     material_receipt.materials[0].object_id = (uint16_t)root_object_id;
     material_receipt.materials[0].direction =
-        (uint8_t)((root_object_id >> 14) & 3);
+        (uint8_t)(dungeon.raw_data[root->record_offset + 15] & 3u);
     material_receipt.materials[0].creature_type = (uint8_t)trace.creature_type;
     material_receipt.materials[0].raw_hash =
         hash_bytes(raw_map_chip, raw_map_chip_size);

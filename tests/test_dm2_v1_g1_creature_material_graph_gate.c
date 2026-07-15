@@ -111,6 +111,7 @@ int main(void)
     put16le(raw + 2, 0x1000u);
     put16le(raw + 4, 0xfffeu);
     raw[8] = 7; /* DB4 Creature::CreatureType */
+    raw[19] = 2; /* DB4 Creature::b15_0_1 facing */
     raw[20] = 0x10; /* one thing-bearing source tile */
 
     memset(&calls, 0, sizeof(calls));
@@ -134,13 +135,14 @@ int main(void)
     CHECK(calls.raw_calls == 1 && calls.metadata_calls == 1 &&
               calls.palette_calls == 1 &&
               receipt.materials[0].creature_type == 7 &&
+              receipt.materials[0].direction == 2 &&
               receipt.materials[0].raw_byte_count == 1 &&
               receipt.materials[0].local_palette_hash == 0x47314d50u &&
               dm2_v1_g1_creature_map_chip_matches_decoded_material(
                   &receipt, 7, 1, 1, 0x47314d50u) &&
               !dm2_v1_g1_creature_map_chip_matches_decoded_material(
                   &receipt, 7, 1, 1, 0x12345678u),
-          "complete graph retains the exact F9 palette ownership receipt");
+          "complete graph retains the DB4 b15 facing and exact F9 palette ownership receipt");
 
     printf("%d passed, %d failed\n", passed, failed);
     return failed != 0;
