@@ -1084,6 +1084,16 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_excell_writes[*pending_excell_write_count].flags = w;
         ++*pending_excell_write_count;
         break;
+    case 100u: /* STKOP_GeneratorDelayFetch */
+        /* CSBWin DSA.cpp:4724-4735 queries the first type-six DB3 generator
+         * at this real dungeon location and pushes its disableTime, or -1. */
+        if (!context->get_generator_delay ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !context->get_generator_delay(context->dungeon_user, v, &sv) ||
+            !csb_v1_csbwin_dsa_stack_push(stack, depth, (uint32_t)sv)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
         if (!context->game_time_valid ||
@@ -1760,6 +1770,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_excell_flags = runner->get_excell_flags;
     context.set_excell_flags = runner->set_excell_flags;
     context.excell_user = runner->excell_user;
+    context.get_generator_delay = runner->get_generator_delay;
+    context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
             runner->action_ordinal, &context, &execution) !=

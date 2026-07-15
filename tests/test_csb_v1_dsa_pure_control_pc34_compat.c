@@ -19,6 +19,7 @@ static int failures;
 static uint32_t last_party_talents[4];
 static int dsa_info_enabled;
 static int excell_flags_enabled;
+static int generator_delay_enabled;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -78,6 +79,14 @@ static int set_excell_flags(void *user, uint32_t location, uint32_t flags)
     return 1;
 }
 
+static int get_generator_delay(void *user, uint32_t location, int *out_delay)
+{
+    (void)user;
+    if (!generator_delay_enabled || !out_delay) return 0;
+    *out_delay = location == 0x0c82u ? 37 : -1;
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -134,6 +143,9 @@ static CSB_V1_CSBWinDSAStackResult run(
     if (excell_flags_enabled) {
         context.get_excell_flags = get_excell_flags;
         context.set_excell_flags = set_excell_flags;
+    }
+    if (generator_delay_enabled) {
+        context.get_generator_delay = get_generator_delay;
     }
     {
         CSB_V1_CSBWinDSAStackResult result =
@@ -239,6 +251,12 @@ int main(void)
     };
     uint16_t excell_flags_store_then_bad[] = {
         0x0686u, 0x89u, 0x0686u, 0x0c82u, 0x0b4bu, 0x0000u
+    };
+    uint16_t generator_delay_fetch[] = {
+        0x0686u, 0x0c82u, 0x190bu, 0x000du
+    };
+    uint16_t generator_delay_absent[] = {
+        0x0686u, 0x0c83u, 0x190bu, 0x000du
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -422,6 +440,23 @@ int main(void)
               parameters[0] == 0x89u && execution.stack_depth == 0u,
           "ECF@ folds the selected source cell bit from all eight EXPOOL words");
     excell_flags_enabled = 0;
+
+    generator_delay_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, generator_delay_fetch,
+              (int)(sizeof(generator_delay_fetch) /
+                    sizeof(generator_delay_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 37u && execution.stack_depth == 0u,
+          "GeneratorDelay@ reads the first source type-six generator delay");
+    parameters[0] = 77u;
+    check(run(&state, &action, generator_delay_absent,
+              (int)(sizeof(generator_delay_absent) /
+                    sizeof(generator_delay_absent[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == UINT32_MAX && execution.stack_depth == 0u,
+          "GeneratorDelay@ preserves source minus one when no generator exists");
+    generator_delay_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),
