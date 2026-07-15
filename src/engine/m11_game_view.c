@@ -1553,6 +1553,9 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.group_sprite_drawer =
         m11_csb_viewport_group_sprite_drawer;
     drawer_binding.group_sprite_user = &runtime_sprite_context;
+    drawer_binding.real_graphics_session = 1;
+    drawer_binding.graphic_provider_callback = m11_csb_viewport_graphic_provider;
+    drawer_binding.graphic_provider_user_data = state;
 
     if (!csb_v1_boot_render_viewport_frame_pc34(
             state->csbBootProfile,

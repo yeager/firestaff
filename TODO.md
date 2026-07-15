@@ -8269,6 +8269,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   one terminal-session pair before either surface changes the page. Missing
   source receipts preserve the previously presented page; remaining work is
   real package/app capture breadth and original-save/DSA corpus evidence.
+  The F0098 PC3.4 baseline now receives the actual C079/C078 package aperture
+  through the same M11 session binding; remaining viewport work is real wall,
+  door, and object bitmap ownership rather than a floor/ceiling substitute.
 
 - 🔧 2026-07-15 CSB viewport/HUD lane separation: the F0128 boot viewport
   now applies only real CSBgraphics derived-viewport entries. C017/C040 stay

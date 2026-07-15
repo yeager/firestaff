@@ -6,6 +6,7 @@
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 typedef struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement
@@ -134,6 +135,12 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int real_graphics_session;
     int runtime_real_asset_blocked_count;
 
+    /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
+     * C079/C078 aperture.  CSB owns this bridge so a verified session never
+     * falls through to a host-generated floor or ceiling surface. */
+    DM1_ViewportGraphicProviderCallback graphic_provider_callback;
+    void *graphic_provider_user_data;
+
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a
      * cell/default skin, decode CSBWin room mask geometry, and still prefer
@@ -169,6 +176,8 @@ typedef struct {
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
     int real_graphics_session;
+    DM1_ViewportGraphicProviderCallback graphic_provider_callback;
+    void *graphic_provider_user_data;
 } CSB_V1_ViewportRuntimeDrawerBinding;
 
 typedef struct {

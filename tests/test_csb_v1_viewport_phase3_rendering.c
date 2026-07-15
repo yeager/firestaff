@@ -89,6 +89,40 @@ typedef struct {
     int last_group_direction;
 } TestRuntimeThingDrawCapture;
 
+typedef struct {
+    uint8_t ceiling[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_CEILING_H];
+    uint8_t floor[DM1_VIEWPORT_WIDTH * DM1_PC34_VIEWPORT_FLOOR_H];
+    int ceiling_calls;
+    int floor_calls;
+} TestPc34ApertureProvider;
+
+static int test_pc34_aperture_provider(void *user_data,
+                                       int graphic_index,
+                                       const uint8_t **out_pixels,
+                                       int *out_width,
+                                       int *out_height)
+{
+    TestPc34ApertureProvider *provider =
+        (TestPc34ApertureProvider *)user_data;
+
+    if (!provider || !out_pixels || !out_width || !out_height) return 0;
+    if (graphic_index == -2) {
+        ++provider->ceiling_calls;
+        *out_pixels = provider->ceiling;
+        *out_width = DM1_VIEWPORT_WIDTH;
+        *out_height = DM1_PC34_VIEWPORT_CEILING_H;
+        return 1;
+    }
+    if (graphic_index == -1) {
+        ++provider->floor_calls;
+        *out_pixels = provider->floor;
+        *out_width = DM1_VIEWPORT_WIDTH;
+        *out_height = DM1_PC34_VIEWPORT_FLOOR_H;
+        return 1;
+    }
+    return 0;
+}
+
 static int test_projectile_sprite_drawer(
     void *user,
     const CSB_V1_ViewportRuntimeProjectileSpriteBlit *blit,
@@ -334,6 +368,46 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
     csb_v1_viewport_apply_runtime_drawer_binding(NULL, &binding);
     csb_v1_viewport_runtime_draw_counts_reset(NULL);
     csb_v1_viewport_runtime_draw_counts_from_config(&cfg, NULL);
+}
+
+static void test_pc34_f0098_aperture_provider_binding(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    TestPc34ApertureProvider provider;
+    uint8_t screen[320 * 200];
+
+    memset(&binding, 0, sizeof(binding));
+    memset(&provider, 0, sizeof(provider));
+    memset(screen, 0x5Au, sizeof(screen));
+    memset(provider.ceiling, 0x21, sizeof(provider.ceiling));
+    memset(provider.floor, 0x42, sizeof(provider.floor));
+
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = screen;
+    cfg.viewport_stride = 320;
+    binding.real_graphics_session = 1;
+    binding.graphic_provider_callback = test_pc34_aperture_provider;
+    binding.graphic_provider_user_data = &provider;
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &binding);
+    csb_v1_viewport_render_frame(&cfg, 0, 0, 0);
+
+    check_int("f0098.pc34_provider.ceiling_calls", provider.ceiling_calls, 1);
+    check_int("f0098.pc34_provider.floor_calls", provider.floor_calls, 1);
+    check_int("f0098.pc34_provider.ceiling_first_pixel", screen[0], 0x21);
+    check_int("f0098.pc34_provider.ceiling_last_pixel",
+              screen[(DM1_PC34_VIEWPORT_CEILING_H - 1) * 320 +
+                     DM1_VIEWPORT_WIDTH - 1], 0x21);
+    check_int("f0098.pc34_provider.floor_first_pixel",
+              screen[DM1_PC34_VIEWPORT_FLOOR_Y * 320], 0x42);
+    check_int("f0098.pc34_provider.floor_last_pixel",
+              screen[(DM1_VIEWPORT_HEIGHT - 1) * 320 +
+                     DM1_VIEWPORT_WIDTH - 1], 0x42);
+
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, NULL);
+    check_true("f0098.pc34_provider.clear_callback",
+               cfg.graphic_provider_callback == NULL &&
+               cfg.graphic_provider_user_data == NULL);
 }
 
 static void test_null_framebuffer_render_is_noop(void)
@@ -3905,6 +3979,7 @@ int main(void)
 {
     test_config_defaults_and_setters();
     test_runtime_drawer_binding_and_count_helpers();
+    test_pc34_f0098_aperture_provider_binding();
     test_null_framebuffer_render_is_noop();
     test_runtime_projectile_and_explosion_overlays();
     test_csb_custom_background_slot_contracts();

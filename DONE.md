@@ -56,6 +56,13 @@
   only after CSB validates its real 224x136 indexed viewport pixels and draw
   counts against the terminal C001-C005/C017/C040 PC3.4 session. Missing
   session ownership fails closed before the candidate page can reach M11.
+- ✅ 2026-07-15 CSB F0098 PC3.4 aperture handoff: the live F0128 binding now
+  carries M11's hash-verified C079 ceiling and C078 floor assets into the
+  shared ReDMCSB F0098 callback. The PC3.4 224x39 + 224x97 aperture is copied
+  only from those expanded package bytes; the focused regression proves both
+  source graphic requests and rejects a cleared binding. Verification:
+  `test_csb_v1_viewport_phase3_rendering` 2651/0, M11 launcher 440/0, real
+  PC3.4 package probe 71/71.
 - ✅ 2026-07-15 DM1 ReDMCSB F0107 HoC C127 materialization: M11 now consumes
   the native PC34 C346 48x43 raster through F0791 into G0205's 64x43 D1C
   destination before C026, rather than treating the destination width as a
