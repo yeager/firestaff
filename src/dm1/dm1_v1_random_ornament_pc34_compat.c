@@ -2,22 +2,19 @@
 
 #include <limits.h>
 
-static int dm1_v1_dungeon_wall_ornament_is_alcove_pc34(
-    int ordinal,
+int dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(
+    int ornamentIndex,
     const int *alcoveOrnamentIndices,
     int alcoveOrnamentCount)
 {
-    int index;
     int i;
 
-    /* DUNGEON.C F0149 consumes an index, while F0171 passes its one-based
-     * aspect ordinal through M001_ORDINAL_TO_INDEX. */
-    if (ordinal <= 0 || !alcoveOrnamentIndices || alcoveOrnamentCount <= 0) {
+    /* DUNGEON.C F0149:1330-1348 has no default alcove table. */
+    if (ornamentIndex < 0 || !alcoveOrnamentIndices || alcoveOrnamentCount <= 0) {
         return 0;
     }
-    index = ordinal - 1;
     for (i = 0; i < alcoveOrnamentCount; ++i) {
-        if (alcoveOrnamentIndices[i] == index) {
+        if (alcoveOrnamentIndices[i] == ornamentIndex) {
             return 1;
         }
     }
@@ -138,8 +135,9 @@ int dm1_v1_dungeon_set_random_wall_ornament_ordinals_pc34(
         for (slot = DM1_V1_SQUARE_ASPECT_BACK_WALL_ORNAMENT_PC34;
              slot <= DM1_V1_SQUARE_ASPECT_LEFT_WALL_ORNAMENT_PC34;
              ++slot) {
-            if (dm1_v1_dungeon_wall_ornament_is_alcove_pc34(
-                    aspect[slot], alcoveOrnamentIndices, alcoveOrnamentCount)) {
+            if (dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(
+                    aspect[slot] - 1,
+                    alcoveOrnamentIndices, alcoveOrnamentCount)) {
                 aspect[slot] = 0;
             }
         }

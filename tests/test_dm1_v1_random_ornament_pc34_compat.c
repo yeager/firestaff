@@ -51,6 +51,24 @@ static void test_f0170_source_gate_and_ordinal(void)
                0);
 }
 
+static void test_f0149_uses_only_supplied_current_map_indices(void)
+{
+    const int mapAlcoves[] = {1, 7, 12};
+
+    expect_int("F0149 finds source map alcove",
+               dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(7, mapAlcoves, 3),
+               1);
+    expect_int("F0149 rejects non-alcove source ornament",
+               dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(6, mapAlcoves, 3),
+               0);
+    expect_int("F0149 rejects absent map list",
+               dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(7, NULL, 0),
+               0);
+    expect_int("F0149 rejects negative index",
+               dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(-1, mapAlcoves, 3),
+               0);
+}
+
 static void test_f0171_pc34_wall_aspect_order_and_out_of_bounds_alcove_gate(void)
 {
     int aspect[DM1_V1_SQUARE_ASPECT_COUNT_PC34] = {0};
@@ -84,6 +102,7 @@ int main(void)
 {
     test_f0169_source_formula();
     test_f0170_source_gate_and_ordinal();
+    test_f0149_uses_only_supplied_current_map_indices();
     test_f0171_pc34_wall_aspect_order_and_out_of_bounds_alcove_gate();
     if (!strstr(dm1_v1_random_ornament_source_evidence_pc34(), "F0169") ||
         !strstr(dm1_v1_random_ornament_source_evidence_pc34(), "F0170")) {
