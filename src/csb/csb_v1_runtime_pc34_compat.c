@@ -20811,6 +20811,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
     int guard;
     int defer = 0;
     struct DM1_Event_V1 next;
+    CSB_V1_CSBWin512TimerSummary successor;
     int event_index;
 
     /* CSBWin Timer.cpp ProcessTT_FALSEWALL:1343-1442 clears bit 0x04 only
@@ -20914,8 +20915,13 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
     next.c_effect = timer->ubyte9;
     event_index = csb_v1_runtime_add_timeline_event(profile, &next);
     if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
-    timer->time += 1u;
-    profile->csbwin_timeline_event_queue_slot[event_index] = queue_slot;
+    successor = *timer;
+    successor.time = timer->time + 1u;
+    if (!csb_v1_runtime_replace_dispatched_csbwin_timer(
+            profile, queue_slot, timer_index, &successor, event_index)) {
+        (void)dm1v1_event_delete(&profile->timeline_queue, event_index);
+        return 0;
+    }
     return 1;
 }
 

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSBWin Timer.cpp TT_7 pool mutation: deferred falsewall CLEAR
+  now stages its +1 successor through the source `DeleteTimer`/`SetTimer`
+  allocator transaction. An incomplete timer/event ownership change deletes
+  the staged timeline event and leaves the source cell untouched. Focused
+  coverage proves slot 1 is retired and the deferred clear resumes in slot 0.
+
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_1 pool mutation: collision-free door
   animation requeue now follows the same `DeleteTimer` then `SetTimer`
   transaction as the source. The consumed handle becomes TT_EMPTY, the
