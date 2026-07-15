@@ -488,7 +488,7 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     uint8_t *desc;
     uint16_t door_bits;
 
-    if (cap < raw_map_base + 4u) return 0;
+    if (cap < raw_map_base + 6u) return 0;
     memset(buf, 0, cap);
     buf[4] = 1;
     put16le(buf + 10, 1);
@@ -496,6 +496,7 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     put16le(buf + 16, 1);
     desc = buf + header_size;
     put16le(desc + 8, (uint16_t)((1u << 6) | (1u << 11)));
+    put16le(desc + 12, 2u);
     put16le(desc + 14, (uint16_t)((3u << 8) | (7u << 12)));
     put16le(buf + column_base, 0);
     put16le(buf + column_base + 2, 0);
@@ -510,7 +511,11 @@ static size_t build_skproject_door_fixture(uint8_t *buf, size_t cap)
     buf[raw_map_base + 1] = 0x20;
     buf[raw_map_base + 2] = 0x90;
     buf[raw_map_base + 3] = 0x20;
-    return raw_map_base + 4u;
+    /* DME.h DoorDecorationGraphics() is the map-local byte list consumed
+     * by DRAW_DOOR after its one-based DB0 OrnamentIndex. */
+    buf[raw_map_base + 4] = 0x01;
+    buf[raw_map_base + 5] = 0x0du;
+    return raw_map_base + 6u;
 }
 
 static size_t build_skproject_custom_wall_button_fixture(uint8_t *buf,
@@ -1489,6 +1494,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.door_gfx_index == 7 &&
                       door_receipt.door_opening_dir == 1 &&
                       door_receipt.ornament_index == 2 &&
+                      door_receipt.door_ornate_gfx_index == 0x0d &&
                       door_receipt.door_button == 1 &&
                       door_receipt.door_button_state == 1 &&
                       door_receipt.door_state == 4 &&
@@ -1497,7 +1503,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                           dm2_v1_viewport_door_panel_graphic_index_for_record(
                               DM2_SQ_D0C, 7, 1) &&
                       door_receipt.ornate_gdat_index ==
-                          dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+                          dm2_v1_viewport_door_ornate_graphic_index(0x0d, DM2_SQ_D0C) &&
                       door_receipt.destroyed_mask_gdat_index == 0 &&
                       door_receipt.frame_gdat_index ==
                           dm2_v1_viewport_door_frame_graphic_index_for_square(
@@ -1643,7 +1649,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       door_receipt.door_state == 5 &&
                       door_receipt.door_open_pct == 100 &&
                       door_receipt.ornate_gdat_index ==
-                          dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+                          dm2_v1_viewport_door_ornate_graphic_index(0x0d, DM2_SQ_D0C) &&
                       door_receipt.destroyed_mask_gdat_index ==
                           dm2_v1_viewport_door_destroyed_mask_graphic_index(
                               7, DM2_SQ_D0C) &&

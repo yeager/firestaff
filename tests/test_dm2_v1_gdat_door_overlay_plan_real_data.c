@@ -95,6 +95,7 @@ int main(void)
     door_plan.doors[0].door_state = 4;
     door_plan.doors[0].door_open_pct = 50;
     door_plan.doors[0].ornament_index = ornate;
+    door_plan.doors[0].door_ornate_gfx_index = ornate;
     door_plan.doors[0].ornate_gdat_index = dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
     door_plan.doors[0].panel_gdat_index = dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D0C);
     door_plan.doors[0].frame_gdat_index = dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
@@ -276,6 +277,7 @@ int main(void)
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
     viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].ornament_index = ornate;
+    viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = ornate;
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);

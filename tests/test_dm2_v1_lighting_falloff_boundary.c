@@ -678,6 +678,7 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
     viewport.squares[DM2_SQ_D0C].door_gfx_index = 7;
     viewport.squares[DM2_SQ_D0C].ornament_index = 2;
+    viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = 2;
     viewport.squares[DM2_SQ_D0C].door_record_type = 1;
     viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
     viewport.squares[DM2_SQ_D0C].door_state = 5;
@@ -1076,6 +1077,7 @@ static void test_sprite_asset_provider(void)
             &viewport, 1, 0x51a7c0deu, palette16);
         viewport.squares[DM2_SQ_D0C].flags |= DM2_SQF_HAS_DOOR;
         viewport.squares[DM2_SQ_D0C].ornament_index = 2;
+        viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = 2;
         /* Keep the synthetic opaque frame out of this focused overlay-palette
          * sample. The production frame is a separate material pass and would
          * otherwise cover this 2x2 fixture's ornament pixels. */

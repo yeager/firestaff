@@ -304,6 +304,7 @@ typedef struct {
     int door_gfx_index;
     int door_opening_dir;
     int ornament_index;
+    int door_ornate_gfx_index;
     int door_button;
     int door_button_state;
     int panel_gdat_index;
@@ -473,7 +474,8 @@ typedef struct {
     uint8_t  wall_gfx_index;  /* GDAT wall graphic index */
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
-    uint8_t  ornament_index;   /* GDAT ornament/ornate index */
+    uint8_t  ornament_index;   /* DB0 Door::OrnateIndex() ordinal */
+    uint8_t  door_ornate_gfx_index; /* map-local DOOR_GFX entry, or zero */
     uint8_t  creature_type;   /* creature type or 0 */
     uint8_t  item_type;       /* item type or 0 */
     uint8_t  light_level;     /* 0–15 per-tile illumination */

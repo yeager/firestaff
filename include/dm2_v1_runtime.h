@@ -346,6 +346,7 @@ typedef struct DM2_V1_RuntimeDoorRenderReceipt {
     int door_gfx_index;
     int door_opening_dir;
     int ornament_index;
+    int door_ornate_gfx_index;
     int door_button;
     int door_button_state;
     int door_state;
