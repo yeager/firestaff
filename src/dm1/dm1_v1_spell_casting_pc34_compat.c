@@ -5,6 +5,7 @@
  * See header for full source reference list.
  */
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "firestaff/dm1/v1/G0485_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include <string.h>
 
@@ -208,24 +209,18 @@ int dm1_spell_addSymbol(DM1_SpellCastingState* s, int champIdx,
      * rejects corrupted external state before indexing G0485. */
     if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
 
-    /* Compute mana cost (SYMBOL.C F0399 lines 20-25) */
-    unsigned int manaCost = dm1_symbolBaseManaCost[step][symbolIdx];
-    /* BUG-007 fix: validate power symbol index before multiplier lookup.
-     * ReDMCSB SYMBOL.C F0399: symbols[0] is encoded as 96 + symbolIdx (step 0).
-     * Contract: dm1_encodeSymbol(0, idx) MUST return 96..101. */
-    if (step > 0) {
-        /* Multiply by power symbol's multiplier, then >>3 */
-        int powerIdx = powerSymbolIndex(inp->symbols[0]);
-        if (powerIdx < 0) return 0; /* invalid encoding */
-        manaCost = (manaCost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
+    DM1_V1_G0485SymbolManaCostPc34 costReceipt;
+    if (!dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+            (int)step, symbolIdx, inp->symbols[0], &costReceipt)) {
+        return 0;
     }
 
-    if (manaCost > (unsigned int)stats->currentMana) {
+    if ((unsigned int)costReceipt.manaCost > (unsigned int)stats->currentMana) {
         return 0; /* Insufficient mana */
     }
 
     /* Deduct mana */
-    stats->currentMana -= (int16_t)manaCost;
+    stats->currentMana -= (int16_t)costReceipt.manaCost;
 
     /* Store symbol character (SYMBOL.C F0399 line 36) */
     inp->symbols[step] = dm1_encodeSymbol(step, symbolIdx);
@@ -319,15 +314,14 @@ int dm1_spell_symbolManaCost(const DM1_SpellCastingState* s, int champIdx, int s
     unsigned int step = inp->symbolStep;
     if (step >= DM1_SYMBOL_STEP_COUNT) return 0;
 
-    unsigned int cost = dm1_symbolBaseManaCost[step][symbolIdx];
-
-    if (step > 0) {
-        int powerIdx = powerSymbolIndex(inp->symbols[0]);
-        if (powerIdx < 0) return 0;
-        cost = (cost * dm1_symbolManaCostMultiplier[powerIdx]) >> 3;
+    {
+        DM1_V1_G0485SymbolManaCostPc34 receipt;
+        if (!dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+                (int)step, symbolIdx, inp->symbols[0], &receipt)) {
+            return 0;
+        }
+        return receipt.manaCost;
     }
-
-    return (int)cost;
 }
 
 const DM1_SpellFailureFeedback* dm1_spell_failureFeedback(int failureType) {
