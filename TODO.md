@@ -4027,11 +4027,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       redraw latch only when one differs. It retains the source pop order;
       malformed later words publish neither offsets nor latch. Host-surface
       consumption remains with the existing CSB renderer owner.
-    - 2026-07-15 blocked: `TEXT@`, `TEXTSAY`, `CHARNAME@`, and
-      `GLOBALTEXT!` remain closed pending the complete per-execution
-      `DSADBANK` text owner (exactly ten slots plus DB2 decode and UI
-      presentation). `MONL&D` remains closed pending the original live
-      monster-move filter parameters and activation lifetime.
+    - 2026-07-15 DSA text lifecycle update: `STKOP_DiscardText` now clears
+      only the runtime-owned TT_OPENROOM DB2/F0168 receipt, transactionally
+      after its authenticated DSA program succeeds. A rejected later opcode
+      retains the existing source text; host logs and queues are untouched.
+      `TEXT@`, `TEXTSAY`, `CHARNAME@`, and `GLOBALTEXT!` remain closed pending
+      the complete per-execution `DSADBANK` text owner (exactly ten slots plus
+      DB2 decode and UI presentation). `MONL&D` remains closed pending the
+      original live monster-move filter parameters and activation lifetime.
     - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
       restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
       before the existing live leader-hand publication. Only the original

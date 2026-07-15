@@ -3178,6 +3178,20 @@ static int csb_v1_runtime_stage_openroom_text_message(
     return 1;
 }
 
+static int csb_v1_runtime_dsa_discard_text(void *user)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+
+    if (!profile) return 0;
+    /* CSBWin DSA.cpp STKOP_DiscardText delegates to the current text owner.
+     * Firestaff has exactly one such owner: the authenticated TT_OPENROOM
+     * DB2/F0168 receipt.  Clearing an absent source receipt is the original
+     * no-op; it must never manufacture a generic host message surface. */
+    memset(&profile->csbwin_text_message_receipt, 0,
+           sizeof(profile->csbwin_text_message_receipt));
+    return 1;
+}
+
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
 {
     if (!p) return;
@@ -21125,6 +21139,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int party_talents_changed;
     int party_skill_experience_changed;
     int random_state_changed;
+    int text_message_changed;
     int dungeon_changed = 0;
     int i;
 
@@ -21243,6 +21258,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
+    candidate.discard_text = csb_v1_runtime_dsa_discard_text;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
@@ -21280,6 +21296,9 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     if (random_state_changed) {
         profile_candidate.csbwin_random_seed = candidate.random_state;
     }
+    text_message_changed = memcmp(&profile_candidate.csbwin_text_message_receipt,
+                                  &profile->csbwin_text_message_receipt,
+                                  sizeof(profile->csbwin_text_message_receipt)) != 0;
     party_talents_changed = 0;
     for (i = 0; i < candidate.party_champion_count; ++i) {
         if (candidate.party_champion_talents[i] !=
@@ -21332,6 +21351,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     }
     if (random_state_changed) {
         profile->csbwin_random_seed = profile_candidate.csbwin_random_seed;
+    }
+    if (text_message_changed) {
+        profile->csbwin_text_message_receipt =
+            profile_candidate.csbwin_text_message_receipt;
     }
     if (party_talents_changed) {
         for (i = 0; i < candidate.party_champion_count; ++i) {

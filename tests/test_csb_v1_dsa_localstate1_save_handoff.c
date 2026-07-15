@@ -157,6 +157,8 @@ int main(void)
     uint16_t policy_disable_words[] = { 0x0686u, 1u, 0x090bu };
     uint16_t policy_enable_words[] = { 0x0686u, 0u, 0x090bu };
     uint16_t policy_bad_words[] = { 0x0686u, 1u, 0x090bu, 0x0000u };
+    uint16_t policy_discard_text_words[] = { 0x1ccbu };
+    uint16_t policy_discard_text_bad_words[] = { 0x1ccbu, 0x0000u };
     uint32_t before_hash;
 
     make_real_shape(bytes);
@@ -325,6 +327,30 @@ int main(void)
               policy_profile.csbwin_saves_disabled == 0 &&
               policy_runner.saves_disabled == 0,
           "rejected DSA bytecode cannot alter the live CSBWin save gate");
+    policy_profile.csbwin_text_message_receipt.valid = 1;
+    policy_profile.csbwin_text_message_receipt.text_thing = 0x0800u;
+    strcpy(policy_profile.csbwin_text_message_receipt.text, "SOURCE TEXT");
+    policy_action.program_words = policy_discard_text_words;
+    policy_action.program_word_count = (int)(sizeof(policy_discard_text_words) /
+                                             sizeof(policy_discard_text_words[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &policy_profile, &policy_runner, &policy_action,
+              NULL, 0, NULL) == 1 &&
+              !policy_profile.csbwin_text_message_receipt.valid &&
+              policy_profile.csbwin_text_message_receipt.text[0] == '\0',
+          "authenticated STKOP_DiscardText clears only the source DB2 receipt");
+    policy_profile.csbwin_text_message_receipt.valid = 1;
+    strcpy(policy_profile.csbwin_text_message_receipt.text, "SOURCE TEXT");
+    policy_action.program_words = policy_discard_text_bad_words;
+    policy_action.program_word_count = (int)(sizeof(policy_discard_text_bad_words) /
+                                             sizeof(policy_discard_text_bad_words[0]));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &policy_profile, &policy_runner, &policy_action,
+              NULL, 0, NULL) == 0 &&
+              policy_profile.csbwin_text_message_receipt.valid &&
+              strcmp(policy_profile.csbwin_text_message_receipt.text,
+                     "SOURCE TEXT") == 0,
+          "rejected DSA text action preserves the source DB2 receipt");
     policy_profile.csbwin_extended_dsa_state.imported_actions = NULL;
     policy_profile.csbwin_extended_dsa_state.imported_action_count = 0;
     csb_v1_runtime_cleanup(&policy_profile);
