@@ -264,6 +264,14 @@ void M11_Render_RaiseWindow(void);
  * until the next present, resize, or shutdown. */
 const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight);
 
+/* Proves that the current renderer-owned RGBA buffer is the nearest-scaled
+ * result of one indexed source page under a source-owned special palette.
+ * Used by CSB's C001--C005 app-capture boundary after SDL presentation. */
+int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
+                                              int width,
+                                              int height,
+                                              int specialPalette);
+
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
 
