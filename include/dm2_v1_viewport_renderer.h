@@ -1035,6 +1035,24 @@ typedef struct {
     uint8_t g1_scene_creature_material_palette16[16];
     uint32_t g1_scene_creature_material_palette_hash;
     int g1_scene_creature_material_consumed_count;
+    /* One source-admitted DB5/DB9 DRAW_MAP_CHIP material can cross the M11
+     * frame directly.  It is intentionally separate from creature state:
+     * c_gui_vp.cpp chooses WEAPONS/CONTAINERS by the record class/type/F9. */
+    int g1_scene_item_material_ready;
+    int g1_scene_item_material_category;
+    int g1_scene_item_material_type;
+    int g1_scene_item_material_gdat_index;
+    uint16_t g1_scene_item_material_object_id;
+    int g1_scene_item_material_map_x;
+    int g1_scene_item_material_map_y;
+    int g1_scene_item_material_width;
+    int g1_scene_item_material_height;
+    int g1_scene_item_material_stride;
+    const uint8_t *g1_scene_item_material_pixels;
+    uint32_t g1_scene_item_material_pixel_hash;
+    uint8_t g1_scene_item_material_palette16[16];
+    uint32_t g1_scene_item_material_palette_hash;
+    int g1_scene_item_material_consumed_count;
     const DM2_V1_G1TextWallGfxRuntimeReceipt *g1_text_wall_gfx_materials;
     const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *g1_actuator_wall_gfx_materials;
     int asset_carried_item_drawn_count;
@@ -1208,6 +1226,12 @@ void dm2_v1_viewport_set_g1_scene_creature_material_direct(
     int creature_type, int gdat_index, const uint8_t *pixels,
     int width, int height, int stride, const uint8_t palette16[16],
     uint32_t palette_hash, uint32_t expected_pixel_hash);
+void dm2_v1_viewport_set_g1_scene_item_material_direct(
+    DM2_V1_ViewportState *s, int ready, int item_category, int item_type,
+    int gdat_index, uint16_t object_id, int map_x, int map_y,
+    const uint8_t *pixels, int width, int height, int stride,
+    const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash);
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,

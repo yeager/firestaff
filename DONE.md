@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 direct DB5/DB9 F9 M11 material handoff: a source-admitted
+  static-object cell now carries its already decoded WEAPONS/CONTAINERS F9
+  pixels, IMG3 local palette, ObjectID, coordinate, category/type and pixel
+  hash directly into the viewport. The renderer consumes that exact receipt
+  and does not re-query the mutable GDAT provider during the frame. A changed
+  material identity fails closed. Source: SKProject `c_gui_vp.cpp`
+  `DM2_DRAW_STATIC_OBJECT`/`DM2_DRAW_PUT_DOWN_ITEM` and
+  `c_map.cpp::QUERY_DUNGEON_MAP_CHIP_PICT`. Verification: DB5 gate 6/6,
+  DB9 gate 3/3, boot smoke 88/88, save/load 26/26.
+
 - ✅ 2026-07-15 DM2 source static-object cell gate: direct G1 DB5 weapon and
   DB9 container map-chip rows now carry a `DM2_DRAW_STATIC_OBJECT` cell and
   `DM2_DRAW_DUNGEON_TILES` pass only when their live coordinate is one of the

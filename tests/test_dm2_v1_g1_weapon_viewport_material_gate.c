@@ -112,9 +112,22 @@ int main(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     setup(&viewport, framebuffer, &receipt, &expected_index);
+    {
+        uint8_t palette[16];
+        for (int i = 0; i < 16; ++i) palette[i] = (uint8_t)(0x30 + i);
+        dm2_v1_viewport_set_g1_scene_item_material_direct(
+            &viewport, 1, 0x10, 0x22, expected_index, 0x1401u, 11, 13,
+            g_pixels, 4, 4, 4, palette, fnv1a(palette, sizeof(palette)),
+            fnv1a(g_pixels, sizeof(g_pixels)));
+        /* The direct M11 handoff owns the decoded F9 image. A second
+         * provider lookup would allow a changed asset cache to substitute it. */
+        dm2_v1_viewport_set_asset_provider(&viewport, NULL, NULL);
+        dm2_v1_viewport_set_asset_palette_provider(&viewport, NULL, NULL);
+    }
     dm2_v1_render_items(&viewport);
-    CHECK("G1 DB5 item selects exact WEAPONS/type/F9 material",
+    CHECK("G1 DB5 item consumes direct exact WEAPONS/type/F9 material",
           viewport.asset_item_drawn_count == 1 &&
+              viewport.g1_scene_item_material_consumed_count == 1 &&
               viewport.last_item_render.gdat_index == expected_index &&
               (viewport.blocked_material_mask &
                DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM) == 0u);
