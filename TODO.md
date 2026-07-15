@@ -3444,6 +3444,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     table bytes, selector-column fingerprint, Structure3 model/face, and raw
     owner selector. No authenticated transform trace is present locally, so
     matrix, coordinate, culling, and draw semantics remain blocked.
+  - The trace sidecars can now be ingested from three distinct files
+    atomically. File intake proves only that all supplied lanes reach the
+    existing source-bound admission gate; no local trace carries the external
+    Saturn attestation needed to promote it beyond opaque no-draw evidence.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.
