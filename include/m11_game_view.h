@@ -1083,6 +1083,11 @@ typedef struct {
         int runtime_projectile_marker_drawn_count;
         int runtime_explosion_sprite_drawn_count;
         int runtime_explosion_marker_drawn_count;
+        int runtime_viewport_source_session_ready;
+        uint32_t runtime_viewport_source_session_generation;
+        uint32_t runtime_viewport_source_tick;
+        uint32_t runtime_viewport_pixel_hash;
+        uint32_t runtime_viewport_draw_counts_hash;
         int startup_title_active;
         int startup_title_frame;
         int startup_title_source_step;

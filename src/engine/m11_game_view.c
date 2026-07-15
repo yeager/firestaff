@@ -1456,13 +1456,56 @@ static int m11_csb_viewport_group_sprite_drawer(
     }
 }
 
-static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
+/* CSB F0098 receives C079/C078 through the same M10-expanded, verified
+ * GRAPHICS.DAT loader as the rest of the CSB M11 session.  The current CSB
+ * loader has source proof only for the PC3.4 set-zero floor pair; unrelated
+ * graphic requests remain no-draw until their CSBWin ownership is bound. */
+static int m11_csb_viewport_graphic_provider(void *user_data,
+                                             int graphic_index,
+                                             const uint8_t **out_pixels,
+                                             int *out_width,
+                                             int *out_height)
+{
+    enum {
+        /* ReDMCSB DEFS.H M650/M651: set-zero C078/C079. */
+        M11_CSB_PC34_GRAPHIC_FLOOR_SET0 = 78,
+        M11_CSB_PC34_GRAPHIC_CEILING_SET0 = 79
+    };
+    const M11_GameViewState *state = (const M11_GameViewState *)user_data;
+    const M11_AssetSlot *slot;
+    unsigned int source_graphic;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->assetsAvailable || !out_pixels || !out_width ||
+        !out_height) {
+        return 0;
+    }
+    if (graphic_index == -1) {
+        source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0;
+    } else if (graphic_index == -2) {
+        source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0;
+    } else {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
+                                source_graphic);
+    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    *out_pixels = slot->pixels;
+    *out_width = (int)slot->width;
+    *out_height = (int)slot->height;
+    return 1;
+}
+
+static int m11_render_csb_boot_viewport(M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
                                         int framebufferHeight)
 {
     CSB_V1_ViewportRuntimeDrawerBinding drawer_binding;
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
+    CSB_V1_FirstLiveDungeonFrameReceipt_PC34 live_receipt;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
     size_t framebuffer_bytes;
     unsigned char *candidate_page;
@@ -1470,6 +1513,11 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
     }
+    state->csbState.runtime_viewport_source_session_ready = 0;
+    state->csbState.runtime_viewport_source_session_generation = 0u;
+    state->csbState.runtime_viewport_source_tick = 0u;
+    state->csbState.runtime_viewport_pixel_hash = 0u;
+    state->csbState.runtime_viewport_draw_counts_hash = 0u;
     if (framebufferWidth < 320 || framebufferHeight < 200) {
         return 0;
     }
@@ -1516,8 +1564,29 @@ static int m11_render_csb_boot_viewport(const M11_GameViewState *state,
         free(candidate_page);
         return 0;
     }
+    memset(&live_receipt, 0, sizeof(live_receipt));
+    if (!csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile,
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession,
+            &draw_counts, candidate_page, framebufferWidth, framebufferHeight,
+            &live_receipt) || !live_receipt.valid ||
+        !live_receipt.real_asset_matched ||
+        !live_receipt.terminal_session_owned ||
+        !live_receipt.viewport_frame_consumed ||
+        !live_receipt.no_synthetic_surface) {
+        free(candidate_page);
+        return 0;
+    }
     memcpy(framebuffer, candidate_page, framebuffer_bytes);
     free(candidate_page);
+    state->csbState.runtime_viewport_source_session_ready = 1;
+    state->csbState.runtime_viewport_source_session_generation =
+        live_receipt.session_generation;
+    state->csbState.runtime_viewport_source_tick = live_receipt.source_tick;
+    state->csbState.runtime_viewport_pixel_hash = live_receipt.viewport_pixel_hash;
+    state->csbState.runtime_viewport_draw_counts_hash =
+        live_receipt.draw_counts_hash;
     m11_csb_runtime_overlay_stats_reset(state);
     m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     return 1;
@@ -38732,7 +38801,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (!m11_csb_live_hud_session_ready(state) ||
             (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
              !m11_csb_consume_c040_clear_session(csb_state)) ||
-            !m11_render_csb_boot_viewport(state, framebuffer,
+            !m11_render_csb_boot_viewport(csb_state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
             /* A verified CSB launch must not exchange missing source
