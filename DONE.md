@@ -19395,6 +19395,21 @@ zero source-proven Structure1F-to-Structure2 static material links through the
 current owner/model/face relation, so the engine cannot turn a shared selector
 into a texture or VDP1 claim. The missing link remains an original-Saturn
 capture requirement; no material or renderer path was enabled.
+
+# Nexus Structure1F raw VDP1 capture host route (2026-07-15)
+
+`nexus_v1_launcher_dgn_direct_face_raw_capture_intake()` now routes an
+authenticated six-lane Structure3 capture through the initialized canonical
+LEV host only after the direct Structure1F manifest and the static DM.BIN VDP1
+capture prerequisite pass.
+`nexus_v1_engine_bind_structure1f_direct_face_raw_capture()` compares the full
+DGN/Structure3 face candidate (source, mesh corpus, entry, ordinal,
+face/vertex/normal rows, and selector) before retaining opaque capture bytes.
+Missing or altered lanes, attestations, source identity, binder receipts, or
+face fields fail closed. The route is explicitly no-draw and proves no VDP1
+command, texture, palette, transform, or raster semantics.
+Verification: `test_nexus_v1_direct_static_material_capture` against local
+canonical LEV00--15 and `test_nexus_v1_structure3_capture_manifest` pass.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually

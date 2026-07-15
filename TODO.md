@@ -8096,6 +8096,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     row hashes, parsed vertex indexes, and raw transform-table fingerprints.
     It is capture-producer input only; Saturn execution must still establish
     transform, culling, material, VDP1, palette, and draw semantics.
+  - 2026-07-15 raw-capture host update: the launcher now joins a direct
+    Structure1F manifest to a six-lane Structure3 capture only when every
+    original-Saturn attestation, lane hash/order, canonical DGN binder field,
+    and the full direct face candidate agree. Accepted bytes remain opaque and
+    no-draw. The remaining work is a genuine Saturn capture that proves VDP1
+    command fields, texture pixels, palette/CRAM relation, and transform
+    semantics for that exact face; do not promote an opaque lane or static
+    DM.BIN VDP1 state into a visual command.
   - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
     a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
     its contiguous output address range, sequence interval, and byte witness.

@@ -90,6 +90,27 @@ int nexus_v1_launcher_dgn_direct_face_capture_intake(
     int structure1f_entry_index, const char *manifest_text, size_t manifest_size,
     Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt *out_receipt);
 
+/* Launcher-owned join between a direct Structure1F request and a six-lane
+ * original-Saturn capture. All lanes remain opaque and the accepted route is
+ * no-draw; callers release raw_capture with the existing raw-capture helper. */
+typedef struct {
+    Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt direct_face;
+    Nexus_V1_DgnStructure3RawCaptureHostReceipt raw_capture;
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt joined_capture;
+    int engine_capture_consumed;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectFaceRawCaptureHostReceipt;
+
+int nexus_v1_launcher_dgn_direct_face_raw_capture_intake(
+    int structure1f_entry_index, const char *direct_manifest_text,
+    size_t direct_manifest_size, const char *capture_manifest_text,
+    size_t capture_manifest_size,
+    const Nexus_V1_DgnStructure3RawCapturePaths *paths,
+    const Nexus_V1_DgnStructure3RawCaptureAttestation *attestation,
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureHostReceipt *out_receipt);
+
 typedef struct {
     int title_surface_loaded;
     int warning_surface_loaded;

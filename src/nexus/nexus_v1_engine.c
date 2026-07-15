@@ -6349,6 +6349,106 @@ int nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
     return 1;
 }
 
+int nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt receipt;
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *expected;
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *observed;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_MISSING;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !direct_manifest_text || direct_manifest_size == 0U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
+        engine, structure1f_entry_index, direct_manifest_text,
+        direct_manifest_size, &receipt.direct_face);
+    if (receipt.direct_face.status !=
+        NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_ACCEPTED_NO_DRAW ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &target) != 1 || !target.valid ||
+        !target.geometry.direct_mesh.model_to_entry_proven ||
+        !target.geometry.direct_mesh.face_ordinal_proven) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_DIRECT_FACE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!raw_capture || !raw_capture->manifest_parsed ||
+        !raw_capture->raw_reader_invoked || !raw_capture->host_intake_invoked ||
+        !raw_capture->no_draw_only ||
+        !raw_capture->raw_reader.manifest_accepted ||
+        !raw_capture->raw_reader.all_spans_read ||
+        !raw_capture->raw_reader.raw_span_hashes_match ||
+        !raw_capture->raw_reader.attestation_session_matches ||
+        !raw_capture->raw_reader.attestation_bundle_matches ||
+        !raw_capture->raw_reader.attestation_trace_order_matches ||
+        !raw_capture->raw_reader.original_saturn_source_attested ||
+        !raw_capture->raw_reader.import_ready ||
+        !raw_capture->raw_reader.import_packet.original_saturn_capture_verified ||
+        !raw_capture->host.host_dgn_source_verified ||
+        !raw_capture->host.capture_source_verified ||
+        !raw_capture->host.manifest_parsed || !raw_capture->host.importer_invoked ||
+        !raw_capture->host.no_draw_only ||
+        !raw_capture->host.import_receipt.manifest_valid ||
+        !raw_capture->host.import_receipt.spans_match_manifest ||
+        !raw_capture->host.import_receipt.raw_span_hashes_match ||
+        !raw_capture->host.import_receipt.capture_session_matches ||
+        !raw_capture->host.import_receipt.capture_bundle_matches ||
+        !raw_capture->host.import_receipt.capture_trace_order_matches ||
+        !raw_capture->host.import_receipt.capture_bundle_hash_verified ||
+        !raw_capture->host.import_receipt.capture_trace_order_verified ||
+        !raw_capture->host.import_receipt.original_saturn_capture_verified ||
+        !raw_capture->host.import_receipt.dgn_source_hash_verified ||
+        !raw_capture->host.import_receipt.binder_invoked ||
+        !raw_capture->host.import_receipt.complete_source_binding ||
+        !raw_capture->host.import_receipt.blocks_real_dgn_mesh_render) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_CAPTURE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_capture_authenticated = 1;
+    receipt.raw_capture_source_bound = 1;
+    expected = &target.geometry.direct_mesh.face_target.candidate;
+    observed = &raw_capture->host.manifest.candidate;
+    if (observed->dgn_fnv1a64 != expected->dgn_fnv1a64 ||
+        observed->structure3_payload_fnv1a32 !=
+            expected->structure3_payload_fnv1a32 ||
+        observed->typed_mesh_corpus_fnv1a32 != expected->typed_mesh_corpus_fnv1a32 ||
+        observed->entry_index != expected->entry_index ||
+        observed->face_ordinal != expected->face_ordinal ||
+        observed->face_row_fnv1a32 != expected->face_row_fnv1a32 ||
+        observed->referenced_vertex_rows_fnv1a32 !=
+            expected->referenced_vertex_rows_fnv1a32 ||
+        observed->normal_row_fnv1a32 != expected->normal_row_fnv1a32 ||
+        observed->fill_selector != expected->fill_selector) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_FACE_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.direct_face_candidate_bound = 1;
+    receipt.texture_lane_bound = 1;
+    receipt.palette_lane_bound = 1;
+    receipt.vdp1_state_lane_bound = 1;
+    receipt.transform_lane_bound = 1;
+    receipt.normal_culling_lane_bound = 1;
+    receipt.vdp1_command_lane_bound = 1;
+    receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_ACCEPTED_OPAQUE;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,
