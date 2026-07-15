@@ -15,6 +15,84 @@ static int failures;
     } \
 } while (0)
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size)
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+    size_t index;
+    for (index = 0U; index < size; ++index) {
+        hash ^= data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
+static int count_canonical_direct_mesh_bindings(const char *data_dir)
+{
+    int level_index;
+    int binding_count = 0;
+    for (level_index = 0; level_index < 16; ++level_index) {
+        char name[16], path[1024];
+        FILE *file;
+        long file_size;
+        uint8_t *data = NULL;
+        Nexus_V1_Engine engine;
+        Nexus_V1_Level level;
+        int source_entry;
+
+        snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+        if (!nexus_v1_known_file_md5(name) ||
+            snprintf(path, sizeof(path), "%s/%s", data_dir, name) >=
+                (int)sizeof(path) ||
+            !asset_file_matches_md5(path, nexus_v1_known_file_md5(name)) ||
+            !(file = fopen(path, "rb"))) return -1;
+        if (fseek(file, 0L, SEEK_END) != 0 || (file_size = ftell(file)) <= 0L ||
+            fseek(file, 0L, SEEK_SET) != 0 ||
+            !(data = (uint8_t *)malloc((size_t)file_size)) ||
+            fread(data, 1U, (size_t)file_size, file) != (size_t)file_size) {
+            free(data);
+            fclose(file);
+            return -1;
+        }
+        fclose(file);
+        memset(&engine, 0, sizeof(engine));
+        memset(&level, 0, sizeof(level));
+        if (nexus_v1_level_load(&level, data, (int)file_size, level_index) != 0) {
+            free(data);
+            return -1;
+        }
+        engine.level_loaded = 1;
+        engine.game.current_level = level_index;
+        engine.current_level = level;
+        engine.current_level_dgn_data = data;
+        engine.current_level_dgn_size = (int)file_size;
+        engine.current_level_structure2_source.level_index = level_index;
+        engine.current_level_structure2_source.canonical_hash_verified = 1;
+        engine.current_level_structure2_source.materialization_bound = 1;
+        engine.current_level_structure2_source.loaded_bytes_bound = 1;
+        engine.current_level_structure2_source.loaded_dgn_size = (int)file_size;
+        engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+            fnv1a64(data, (size_t)file_size);
+        for (source_entry = 0;
+             source_entry < engine.current_level.structure1f_entry_count;
+             ++source_entry) {
+            Nexus_V1_DgnStructure1FDirectMeshGeometryPacket packet;
+            if (nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
+                    &engine, source_entry, &packet) == 1 && packet.valid &&
+                packet.source_geometry_bound && packet.vertex_slot_count >= 3 &&
+                packet.vertex_slot_count <= 4 && !packet.transform_semantics_proven &&
+                !packet.material_semantics_proven &&
+                !packet.pixel_palette_vdp1_semantics_proven &&
+                !packet.decoder_permitted && packet.no_draw_only &&
+                !packet.fallback_visuals_permitted &&
+                packet.blocks_real_dgn_mesh_render) {
+                ++binding_count;
+            }
+        }
+        free(data);
+    }
+    return binding_count;
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
@@ -81,6 +159,8 @@ int main(void)
         }
     }
     if (failures == 0) {
+        CHECK(count_canonical_direct_mesh_bindings(data_dir) > 0,
+              "retail LEV00-15 has source-bound Structure1F mesh-owner rows");
         for (source_entry = 0;
              source_entry < engine.current_level.structure1f_entry_count;
              ++source_entry) {

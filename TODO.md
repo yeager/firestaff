@@ -3395,6 +3395,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
   a substitute flat-material path.
 
+- 2026-07-15 Nexus direct Structure1F mesh geometry: the hash-verified
+  LEV00-LEV15 corpus now reaches exact Structure3 face, vertex, and normal
+  rows through the existing owner/model/face-ordinal relation. This is only
+  geometry ownership: owner placement, transforms, face culling, material
+  selection, palette, VDP1 commands, and rasterization remain blocked until
+  original Saturn execution evidence exists.
+
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.
   The four record bytes remain opaque and no-draw; collision semantics,

@@ -18557,7 +18557,6 @@ invalid geometry/palette receipt blocks the door pass; no wall-frame
 approximation is used. The source cell/field/RAW4 route remains locked by
 `test_dm2_v1_door_side_frame_source_route`; boot smoke covers the runtime
 source-material transaction.
-
 # ✅ 2026-07-15 DM2 G1 runtime material refresh
 
 G1-to-GDAT runtime receipts are now rebuilt atomically from the current raw
@@ -18568,3 +18567,9 @@ before re-materialization, so a changed raw G1 cannot reuse pixels, palette,
 or coordinates from a prior frame. Source: SKProject `GAME_LOAD`,
 `READ_DUNGEON_STRUCTURE`, `c_record.cpp`, and the corresponding GDAT query
 routes. Verification: DM2 boot smoke 88/88 and save/load 26/26.
+## Nexus Direct Structure1F Geometry (2026-07-15)
+
+The source-bound Structure1F owner relation now exposes the exact selected
+ Structure3 face, vertex rows, and paired normal from canonical LEV bytes.
+The LEV00-LEV15 corpus test verifies that this route remains no-draw and does
+not claim transforms, materials, palettes, VDP1, or decoder semantics.
