@@ -8,6 +8,12 @@
   now pass in the smoke fixture. Do not regress the now-passing DB0
   door-set/default-button/ornate/destroyed-mask/wall-gfx routes or the
   provider-backed wall-count route while fixing the palette blockers.
+  - 2026-07-16 update: both local-palette smoke blockers are fixed. The
+    source-required renderer now allows the explicit provider/palette fixture
+    route while live boot still requires the GDAT scene plan, and outdoor
+    sky/ground preserve their decoder-owned palette receipt hashes without
+    reinterpreting them as framebuffer hashes. Remaining DM2 work moves back
+    to broader real GDAT dungeon/HUD material coverage and real-save corpus.
 
 - 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
   now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped

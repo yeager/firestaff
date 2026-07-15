@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 scene local-palette smoke closure: the skproject
+  source-required renderer now admits the explicit asset+palette provider
+  route used by focused viewport tests while live boot-owned rendering still
+  requires a validated GDAT scene plan. Outdoor sky and ground now preserve
+  their decoder-owned local-palette receipt hashes instead of treating them
+  as hashes of already-decoded pixels. Verification: Ninja
+  `test_dm2_v1_runtime_handoff_smoke` and
+  `test_dm2_v1_gdat_wall_plan_viewport_real_data` pass.
+
 - ✅ 2026-07-16 Theron Track 02 raw-loader receipt variant binding: the
   `$0b52` initial-envelope loader intake now carries the authenticated JP/US
   raw-BIN media variant through the complete payload, level-envelope, and

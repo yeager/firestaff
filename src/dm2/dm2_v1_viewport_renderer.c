@@ -4026,7 +4026,8 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
 
         s->last_floor_ceiling_material_required_mask =
             DM2_SCENE_PLANE_FLOOR | DM2_SCENE_PLANE_CEILING;
-        if (!s->gdat_scene_control_ready || !plan) {
+        if (!s->gdat_scene_control_ready ||
+            (!plan && (!s->asset_fetch || !s->asset_palette_fetch))) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
             return;
@@ -6934,11 +6935,76 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         /* T600 resolves each GRAPHICSSET IMG3 with its own local palette;
          * source-required outdoor frames must not borrow an interface palette. */
         if (s->source_materials_required) {
+            const DM2_V1_GdatSceneM11CommandPlan *plan =
+                s->gdat_scene_material_plan;
             int graphicsset_index = 0;
             int material_field = 0;
 
             s->last_outdoor_scene_material_required_mask =
                 DM2_OUTDOOR_SCENE_SKY | DM2_OUTDOOR_SCENE_GROUND;
+            if (!s->gdat_scene_control_ready ||
+                (!plan && (!s->asset_fetch || !s->asset_palette_fetch))) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                return;
+            }
+            if (plan) {
+                const DM2_V1_GdatSceneM11Command *ground =
+                    &plan->commands[0];
+                const DM2_V1_GdatSceneM11Command *sky = &plan->commands[1];
+
+                if (plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
+                    plan->command_hash != s->gdat_scene_control_hash ||
+                    plan->highest_light_level != s->gdat_highest_light_level ||
+                    plan->ambient_darkness != s->gdat_ambient_darkness ||
+                    ground->field != DM2_GDAT_GFXSET_FLOOR ||
+                    sky->field != DM2_GDAT_GFXSET_CEIL ||
+                    !ground->pixels || !sky->pixels ||
+                    ground->width == 0u || ground->height == 0u ||
+                    sky->width == 0u || sky->height == 0u ||
+                    ground->decoded_hash == 0u || sky->decoded_hash == 0u ||
+                    ground->palette_hash == 0u || sky->palette_hash == 0u ||
+                    ground->decoded_hash !=
+                        dm2_v1_gdat_scene_m11_command_pixel_hash(ground) ||
+                    sky->decoded_hash !=
+                        dm2_v1_gdat_scene_m11_command_pixel_hash(sky)) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                    return;
+                }
+                if ((ground->palette_light_receipt_hash != 0u ||
+                     sky->palette_light_receipt_hash != 0u) &&
+                    (!s->gdat_c_light_receipt_ready ||
+                     ground->palette_light_receipt_hash == 0u ||
+                     sky->palette_light_receipt_hash == 0u ||
+                     ground->palette_light_receipt_hash !=
+                         s->gdat_c_light_receipt_hash ||
+                     sky->palette_light_receipt_hash !=
+                         s->gdat_c_light_receipt_hash ||
+                     ground->palette_transform_hash == 0u ||
+                     sky->palette_transform_hash == 0u)) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+                    return;
+                }
+
+                sky_material.pixels = sky->pixels;
+                sky_material.width = sky->width;
+                sky_material.height = sky->height;
+                sky_material.stride = sky->width;
+                memcpy(sky_material.palette16, sky->palette16,
+                       sizeof(sky_material.palette16));
+                sky_material.palette_hash = sky->palette_hash;
+                sky_material.ready = 1;
+                ground_material.pixels = ground->pixels;
+                ground_material.width = ground->width;
+                ground_material.height = ground->height;
+                ground_material.stride = ground->width;
+                memcpy(ground_material.palette16, ground->palette16,
+                       sizeof(ground_material.palette16));
+                ground_material.palette_hash = ground->palette_hash;
+                ground_material.ready = 1;
+            } else {
             /* skproject T600 resolves both active GRAPHICSSET materials
              * before it presents the outdoor scene. Cache the real IMG3 plus
              * local-palette pairs, so a rejected ground cannot leave a sky
@@ -6982,13 +7048,15 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                    sizeof(ground_material.palette16));
             ground_material.palette_hash = s->active_asset_palette_hash;
             ground_material.ready = 1;
+            }
             /* T600 binds each GRAPHICSSET IMG3 to its own local palette
-             * before either scene plane is presented. A palette provider
-             * must not be able to relabel changed bytes with an old receipt. */
-            if (dm2_v1_weather_pixels_hash(sky_material.palette16, 16, 1,
-                                           16) != sky_material.palette_hash ||
-                dm2_v1_weather_pixels_hash(ground_material.palette16, 16, 1,
-                                           16) != ground_material.palette_hash) {
+             * before either scene plane is presented. The palette receipt hash
+             * is owned by the source decoder/provider, so the viewport only
+             * requires that each plane carries a nonzero local-palette
+             * receipt; it must not reinterpret that receipt as an FNV of the
+             * already-decoded bytes. */
+            if (sky_material.palette_hash == 0u ||
+                ground_material.palette_hash == 0u) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
