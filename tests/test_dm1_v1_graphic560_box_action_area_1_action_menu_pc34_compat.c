@@ -19,10 +19,14 @@ static void check(int cond, const char *expr, const char *file, int line)
 
 static void test_table_values(void)
 {
-    const unsigned char *t = dm1_v1_graphic560_box_action_area_1_action_menu_table_pc34();
+    const int16_t *t = dm1_v1_graphic560_box_action_area_1_action_menu_table_pc34();
     int n = dm1_v1_graphic560_box_action_area_1_action_menu_size_pc34();
     CHECK(t != 0);
     CHECK(n == 4);
+    CHECK(t[0] == 224);
+    CHECK(t[1] == 319);
+    CHECK(t[2] == 77);
+    CHECK(t[3] == 97);
     CHECK(dm1_v1_graphic560_box_action_area_1_action_menu_get_pc34(0) == 224);
     CHECK(dm1_v1_graphic560_box_action_area_1_action_menu_get_pc34(1) == 319);
     CHECK(dm1_v1_graphic560_box_action_area_1_action_menu_get_pc34(2) == 77);
@@ -57,7 +61,7 @@ static void test_run_accepted(void)
     CHECK(r.assertionCount == 5);
     CHECK(r.tableSize == 4);
     CHECK(r.tableMatchesDeclaration == 1);
-    CHECK(r.allInByteRange == 1);
+    CHECK(r.allInInt16Range == 1);
     CHECK(r.lookupFunctionCorrect == 1);
     CHECK(r.lookupOutOfRangeReturnsMinusOne == 1);
     for (i = 0; i < 4; ++i) {

@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 action-menu G0499/G0501 geometry table hardening:
+  the one-action and three-action F0387 action-menu boxes now expose
+  ReDMCSB's signed `int16_t[4]` source geometry directly, matching the
+  verified G0500 two-action contract instead of byte-slicing host `int`
+  storage. Focused direct-table assertions, pass928/pass930 verifiers, and
+  the targeted CTest pattern pass in `build-local-ninja`.
+
 - ✅ 2026-07-15 DM1 spell-HUD C109 out-of-party gate: the
   F0394/F0397/F0398 spell-area overlay contract now rejects a C109 caster
   request outside `G0305_ui_PartyChampionCount` before publishing C009/C011

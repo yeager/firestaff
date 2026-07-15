@@ -20,14 +20,14 @@ enum {
     kOutOfRange = -1
 };
 
-static const int s_g0501[kTableSize] = {
+static const int16_t s_g0501[kTableSize] = {
     224, 319, 77, 97
 };
 
-const unsigned char *
+const int16_t *
 dm1_v1_graphic560_box_action_area_1_action_menu_table_pc34(void)
 {
-    return (const unsigned char *)s_g0501;
+    return s_g0501;
 }
 
 int
@@ -50,7 +50,7 @@ dm1_v1_graphic560_box_action_area_1_action_menu_run_pc34(
     DM1_V1_G0501ResultPc34 *out)
 {
     int table_matches_declaration = 1;
-    int all_in_byte_range = 1;
+    int all_in_int16_range = 1;
     int lookup_function_correct = 1;
     int lookup_out_of_range_returns_minus_one = 1;
     int i;
@@ -67,10 +67,10 @@ dm1_v1_graphic560_box_action_area_1_action_menu_run_pc34(
 
     for (i = 0; i < kTableSize; ++i) {
         if (s_g0501[i] < -32768 || s_g0501[i] > 32767) {
-            all_in_byte_range = 0;
+            all_in_int16_range = 0;
         }
     }
-    out->allInByteRange = all_in_byte_range;
+    out->allInInt16Range = all_in_int16_range;
 
     {
         static const int kExpected[kTableSize] = { 224, 319, 77, 97 };
@@ -102,7 +102,7 @@ dm1_v1_graphic560_box_action_area_1_action_menu_run_pc34(
 
     out->accepted =
         out->tableMatchesDeclaration &&
-        out->allInByteRange &&
+        out->allInInt16Range &&
         out->lookupFunctionCorrect &&
         out->lookupOutOfRangeReturnsMinusOne;
     out->assertionCount = 5;

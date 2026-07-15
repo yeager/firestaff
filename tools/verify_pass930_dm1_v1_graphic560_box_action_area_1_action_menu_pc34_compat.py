@@ -104,7 +104,9 @@ def run(cmd):
 
 
 def resolve_build_dir(binary_name=""):
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
+    candidates = [ROOT / "build", ROOT / "build-dm1-worker",
+                  ROOT / "build-local-ninja", ROOT / "build-verify",
+                  ROOT / "builds" / "nv1-build",
                   ROOT / "builds" / "n2-build"]
     for c in candidates:
         if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():
