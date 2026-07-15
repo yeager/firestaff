@@ -1033,7 +1033,10 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
     candidate.map_data_hash = dm2_v1_raw_sksave_hash(buf + cursor,
                                                      map_data_bytes);
     cursor += map_data_bytes;
-    if (cursor >= buf_size) return 0;
+    /* A receipt consumer may deliberately retain only the exact dungeon
+     * prefix.  Full raw-SKSave ingestion still requires the following
+     * SUPPRESS stream in dm2_v1_session_import_raw_sksave_payload(). */
+    if (cursor > buf_size) return 0;
 
     candidate.prefix_hash = dm2_v1_raw_sksave_hash(buf, cursor);
     candidate.suppress_state_offset = cursor;
@@ -1339,6 +1342,7 @@ int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
         candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW;
         candidate.dungeon_bytes = buf;
         candidate.dungeon_size = dungeon_receipt.suppress_state_offset;
+        candidate.dungeon_receipt = dungeon_receipt;
     }
 
     if (!dm2_v1_session_validate(&candidate.session)) return -1;

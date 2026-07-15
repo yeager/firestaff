@@ -1318,6 +1318,7 @@ static int test_raw_sksave_resume_import(void)
     DM2_V1_OriginalRawActuatorReceipt actuator_receipt;
     DM2_V1_OriginalRawCreatureReceipt creature_receipt;
     DM2_V1_OriginalRawWeaponReceipt weapon_receipt;
+    DM2_V1_SaveCandidate raw_candidate;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
@@ -1434,6 +1435,24 @@ static int test_raw_sksave_resume_import(void)
         dm2_v1_original_raw_sksave_weapon_receipt(
             payload, payload_size, 1, &weapon_receipt)) {
         printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+    /* Runtime receives only the dungeon prefix, so the candidate must retain
+     * the same source-owned boundary and that exact prefix must still admit
+     * DB record address receipts without reading the SUPPRESS tail. */
+    memset(&raw_candidate, 0, sizeof(raw_candidate));
+    if (dm2_v1_session_parse_save_candidate(&raw_candidate, payload,
+                                             payload_size) != 0 ||
+        raw_candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW ||
+        !raw_candidate.dungeon_receipt.valid ||
+        raw_candidate.dungeon_size != dungeon_receipt.suppress_state_offset ||
+        raw_candidate.dungeon_receipt.prefix_hash != dungeon_receipt.prefix_hash ||
+        !dm2_v1_original_raw_sksave_db_record_receipt(
+            raw_candidate.dungeon_bytes, raw_candidate.dungeon_size, 5, 0,
+            &db0_receipt) || db0_receipt.record_offset != 96u ||
+        db0_receipt.record_size != 4u) {
+        printf("    FAIL: raw SKSave candidate lost exact dungeon ownership\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
     }
