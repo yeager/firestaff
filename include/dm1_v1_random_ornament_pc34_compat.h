@@ -29,6 +29,13 @@ int dm1_v1_dungeon_get_random_ornament_ordinal_pc34(
     uint16_t ornamentRandomSeed,
     int modulo);
 
+/* ReDMCSB DUNGEON.C F0149. ornamentIndex and every list entry are zero-based
+ * map-global wall-ornament indices. */
+int dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34(
+    int ornamentIndex,
+    const int *alcoveOrnamentIndices,
+    int alcoveOrnamentCount);
+
 /* PC3.4 square-aspect slots from DEFS.H MEDIA720. */
 enum {
     DM1_V1_SQUARE_ASPECT_BACK_WALL_ORNAMENT_PC34 = 3,

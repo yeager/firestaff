@@ -89,17 +89,10 @@ int main(void)
     expect_int("flip.left_side",
                dm1_v1_wall_ornament_flip_horizontal_pc34(10), 0);
 
-    /* ReDMCSB DUNVIEW.C G0192 + DUNGEON.C F0149 alcove indices. */
-    expect_int("alcove.0",
-               dm1_v1_wall_ornament_is_alcove_global_pc34(0), 0);
-    expect_int("alcove.1",
-               dm1_v1_wall_ornament_is_alcove_global_pc34(1), 1);
-    expect_int("alcove.2",
-               dm1_v1_wall_ornament_is_alcove_global_pc34(2), 1);
-    expect_int("alcove.3",
-               dm1_v1_wall_ornament_is_alcove_global_pc34(3), 1);
-    expect_int("alcove.4",
-               dm1_v1_wall_ornament_is_alcove_global_pc34(4), 0);
+    /* The old global helper has no source F0174 map alcove list and must not
+     * substitute the former hard-coded 1/2/3 list. */
+    expect_int("alcove.global.no_map_metadata",
+               dm1_v1_wall_ornament_is_alcove_global_pc34(1), 0);
 
     /* DM1-owned F0107 projection list. */
     expect_int("view_spec.count",
@@ -168,7 +161,7 @@ int main(void)
     expect_int("plan.d3r_left.graphic", plan.graphicIndex, 261);
     expect_int("plan.d3r_left.flip", plan.flipHorizontal, 1);
     expect_int("plan.d3r_left.palette2", plan.paletteMap[2], 12);
-    expect_int("plan.d3r_left.alcove", plan.isAlcove, 1);
+    expect_int("plan.d3r_left.no_map_metadata", plan.isAlcove, 0);
 
     expect_int("material.d3r_left.ok",
                dm1_v1_wall_ornament_host_material_receipt_pc34(

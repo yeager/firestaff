@@ -198,10 +198,10 @@ int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
 }
 
 int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex) {
-    /* ReDMCSB DUNVIEW.C G0192_auc_Graphic558_AlcoveOrnamentIndices and
-     * DUNGEON.C F0149: current-map global wall ornaments 1, 2, and 3 are
-     * alcoves for wall-cell object visibility. */
-    return globalIndex == 1 || globalIndex == 2 || globalIndex == 3;
+    /* This legacy call site has no F0174 current-map alcove list.  F0149
+     * therefore cannot classify it without inventing source metadata. */
+    (void)globalIndex;
+    return 0;
 }
 
 int dm1_v1_wall_ornament_view_spec_count_pc34(void) {
