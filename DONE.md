@@ -17891,6 +17891,16 @@ can bind, so mutation of an otherwise unnamed intermediary instruction fails
 closed. It establishes no PRS3 token, copy/backreference, palette, pixel, or
 decoder semantics. Verification: `test_nexus_v1_prs3_capture_trace_schema`.
 
+# ✅ 2026-07-15 Nexus FACE PRS3 capture targets
+
+`nexus_ui_face_prs3_capture_target()` now exposes one exact canonical
+`FACE.BIN` PRS3 frame for an external capture producer only after a
+caller-owned source-hash gate. Prefix, PRS3 header, and compressed stream
+hashes remain separate, preserving the source lanes needed for a later Saturn
+loader trace without inventing palette, token, pixel, or portrait semantics.
+The target remains no-draw with fallback visuals disabled. Verification:
+`test_m11_nexus_startup_gate`.
+
 # ✅ 2026-07-15 DM2 c_dialog source panel viewport route
 
 `c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a

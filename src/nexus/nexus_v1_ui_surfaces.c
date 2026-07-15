@@ -622,6 +622,57 @@ int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
     return receipt.valid ? 1 : 0;
 }
 
+int nexus_ui_face_prs3_capture_target(const uint8_t *data,
+                                      int data_size,
+                                      int face_index,
+                                      int source_hash_verified,
+                                      Nexus_UI_FacePrs3CaptureTarget *out_target)
+{
+    Nexus_UI_FacePrs3CaptureTarget target;
+
+    if (!out_target) return -1;
+    memset(&target, 0, sizeof(target));
+    target.face_index = -1;
+    target.no_draw_only = 1;
+    if (!data || data_size <= 0 || !source_hash_verified ||
+        !nexus_ui_face_compact_record_descriptor(data, data_size, face_index,
+                                                 &target.descriptor) ||
+        !target.descriptor.valid ||
+        target.descriptor.prefix_offset > (size_t)data_size ||
+        target.descriptor.prefix_size >
+            (size_t)data_size - target.descriptor.prefix_offset ||
+        target.descriptor.prs3_offset > (size_t)data_size ||
+        target.descriptor.prs3_size >
+            (size_t)data_size - target.descriptor.prs3_offset ||
+        target.descriptor.stream_offset > (size_t)data_size ||
+        target.descriptor.stream_size >
+            (size_t)data_size - target.descriptor.stream_offset) {
+        *out_target = target;
+        return 0;
+    }
+    target.face_index = face_index;
+    target.source_byte_count = (size_t)data_size;
+    target.source_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037), data, target.source_byte_count);
+    target.prefix_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037),
+        data + target.descriptor.prefix_offset, target.descriptor.prefix_size);
+    target.prs3_header_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037),
+        data + target.descriptor.prs3_offset, NEXUS_UI_FACE_PRS3_HEADER_BYTES);
+    target.stream_bytes_fnv1a64 = nexus_ui_fnv1a64_append(
+        UINT64_C(14695981039346656037),
+        data + target.descriptor.stream_offset, target.descriptor.stream_size);
+    target.capture_producer_required = 1;
+    target.original_saturn_capture_required = 1;
+    target.valid = target.source_bytes_fnv1a64 != 0U &&
+        target.prefix_bytes_fnv1a64 != 0U &&
+        target.prs3_header_fnv1a64 != 0U &&
+        target.stream_bytes_fnv1a64 != 0U;
+    *out_target = target;
+    return target.valid ? 1 : 0;
+}
+
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,

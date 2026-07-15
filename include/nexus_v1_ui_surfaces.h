@@ -154,6 +154,27 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_UI_FacePrs3CorpusReceipt;
 
+/* One capture-producer request for a canonical FACE.BIN PRS3 frame. The
+ * caller must separately attest the original FACE.BIN source and any Saturn
+ * execution trace. Prefix, PRS3 header, and stream hashes deliberately stay
+ * separate: none establishes a palette, token grammar, decoded pixels, or a
+ * drawable portrait. */
+typedef struct {
+    int valid;
+    int face_index;
+    size_t source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    Nexus_UI_FaceCompactRecordDescriptor descriptor;
+    uint64_t prefix_bytes_fnv1a64;
+    uint64_t prs3_header_fnv1a64;
+    uint64_t stream_bytes_fnv1a64;
+    int capture_producer_required;
+    int original_saturn_capture_required;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_UI_FacePrs3CaptureTarget;
+
 typedef enum {
     NEXUS_UI_FACE_RECORD_NONE = 0,
     /* Canonical Saturn FACE.BIN frames are PRS3-compressed 56x56 records.
@@ -253,6 +274,15 @@ int nexus_ui_face_compact_record_descriptor(const uint8_t *data,
 int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
                                       int data_size,
                                       Nexus_UI_FacePrs3CorpusReceipt *out_receipt);
+
+/* Build a no-draw capture request for one exact canonical FACE.BIN frame.
+ * `source_hash_verified` must be owned by the retail asset scanner; a
+ * structurally valid arbitrary FACE container is not sufficient. */
+int nexus_ui_face_prs3_capture_target(const uint8_t *data,
+                                      int data_size,
+                                      int face_index,
+                                      int source_hash_verified,
+                                      Nexus_UI_FacePrs3CaptureTarget *out_target);
 int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     int record_size,
     uint8_t *out_pixels,

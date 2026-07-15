@@ -7617,6 +7617,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     blocks trace binding just like a changed named read/merge instruction.
     This is source identity only: copy/backreference, token, palette, pixel,
     and decoder semantics remain unproven and fail closed.
+  - 2026-07-15 FACE capture-target update: each canonical `FACE.BIN` PRS3
+    frame can now be requested with separately hashed prefix, PRS3-header,
+    and stream lanes under a caller-owned retail-source gate. The next needed
+    evidence is an authentic Saturn loader trace joining one target to input,
+    output, palette, and menu placement; the target itself proves none of
+    those semantics and cannot decode or draw a portrait.
   - 2026-07-15 Structure2 payload-anchor update: every active descriptor's
     image anchor and each nonzero palette anchor now reaches the hash-bound
     viewport boundary with the next observed anchor (or bounded payload end).
