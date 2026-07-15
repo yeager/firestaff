@@ -876,6 +876,7 @@ static int dm2_runtime_apply_direct_g1_door_metadata(
     }
     /* DME.h::Door exposes only these w2 fields.  In particular, do not
      * attempt the old generic next-link walk to find a wall-button owner. */
+    door->door_direct_g1_root = 1u;
     door->door_button = source->button;
     door->door_button_state = source->button_state;
     door->door_record_type = source->door_type;
@@ -892,6 +893,58 @@ static int dm2_runtime_apply_direct_g1_door_metadata(
             rt->map_door_ornate_list[source->ornate_index - 1u];
     }
     return 1;
+}
+
+static int dm2_runtime_apply_direct_g1_wall_button_metadata(
+    const DM2_V1_RuntimeState *rt,
+    int x,
+    int y,
+    DM2_ViewSquare *door)
+{
+    int i;
+
+    if (!rt || !door || door->door_button) {
+        return 0;
+    }
+    if (rt->g1_map5_text_wall_gfx_runtime.valid &&
+        rt->g1_map5_text_wall_gfx_runtime.map == rt->dungeon_level) {
+        const DM2_V1_G1TextWallGfxRuntimeReceipt *receipt =
+            &rt->g1_map5_text_wall_gfx_runtime;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1TextWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == x && material->y == y &&
+                material->front_image_ready && material->local_palette_hash) {
+                door->door_wall_button = 1;
+                door->door_wall_button_index = material->wall_gfx_index;
+                door->door_wall_button_field = 1u;
+                door->door_wall_button_x = (int16_t)x;
+                door->door_wall_button_y = (int16_t)y;
+                door->door_wall_button_object_id = material->object_id;
+                return 1;
+            }
+        }
+    }
+    if (rt->g1_actuator_wall_gfx_runtime.valid &&
+        rt->g1_actuator_wall_gfx_runtime.map == rt->dungeon_level) {
+        const DM2_V1_G1ActuatorWallGfxRuntimeReceipt *receipt =
+            &rt->g1_actuator_wall_gfx_runtime;
+        for (i = 0; i < receipt->material_count; ++i) {
+            const DM2_V1_G1ActuatorWallGfxMaterial *material =
+                &receipt->materials[i];
+            if (material->x == x && material->y == y &&
+                material->front_image_ready && material->local_palette_hash) {
+                door->door_wall_button = 1;
+                door->door_wall_button_index = material->wall_gfx_index;
+                door->door_wall_button_field = 1u;
+                door->door_wall_button_x = (int16_t)x;
+                door->door_wall_button_y = (int16_t)y;
+                door->door_wall_button_object_id = material->object_id;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
@@ -1159,9 +1212,23 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
             }
             if (dd->square_bytes == 1) {
                 /* The canonical G1 runtime permits only the cached direct
-                 * DB0 root receipt.  A missing receipt leaves the source
-                 * material gate closed instead of following w0. */
-                (void)dm2_runtime_apply_direct_g1_door_metadata(
+                 * DB0 root receipt first. Some bounded G1 fixtures expose
+                 * the same original DB0 through the square first-thing list;
+                 * use it only to complete the same real door record metadata,
+                 * never to synthesize a generic panel. */
+                int direct = dm2_runtime_apply_direct_g1_door_metadata(
+                    rt, map_x, map_y, door);
+                if (!direct || !door->door_gfx_admitted ||
+                    (!door->door_button && !door->door_wall_button)) {
+                    dm2_runtime_apply_door_record_metadata(
+                        rt->boot, dd, rt->dungeon_level, map_x, map_y, dir,
+                        rt->map_wall_gfx_list, rt->map_wall_gfx_count,
+                        rt->map_door_gfx_list, rt->map_door_gfx_active,
+                        rt->map_door_ornate_list,
+                        rt->map_door_ornate_count,
+                        (uint32_t)rt->tick_count, door);
+                }
+                (void)dm2_runtime_apply_direct_g1_wall_button_metadata(
                     rt, map_x, map_y, door);
             } else {
                 dm2_runtime_apply_door_record_metadata(

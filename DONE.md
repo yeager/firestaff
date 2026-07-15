@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject DB0 front-door and wall-gfx runtime draw:
+  source-required dungeon rendering now admits the D0C/front-player DB0 door
+  outside `table1d7029`, supplements G1 door metadata only from the same real
+  square first-thing DB0 owner, and binds custom wall buttons only from
+  decoded DB2/DB3 `WALL_GFX` receipts. Runtime smoke now passes the DB0
+  door-set panel, default button, ornate/destroyed overlays, and
+  text/actuator/map-list wall-gfx button checks.
+
 - ✅ 2026-07-15 DM1 F0292 status-bar geometry fix: the public champion-status
   layout now reports the ReDMCSB/F0287 PC34 bar container at y=2 instead of
   the status-box top edge y=0, matching the existing live bar-fill model and

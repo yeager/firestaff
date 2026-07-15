@@ -543,6 +543,7 @@ typedef struct {
     uint8_t  door_wall_button; /* 1=draw custom wall-gfx button when no default button */
     uint8_t  door_wall_button_index; /* skproject tblCellTilesRoom[cell].w6[2] low byte */
     uint8_t  door_wall_button_field; /* skproject tblCellTilesRoom[cell].w6[2] high byte + 1 */
+    uint8_t  door_direct_g1_root; /* 1=DB0 root metadata came from G1 map */
     uint8_t  door_record_type; /* skproject door->DoorType() */
     uint8_t  door_opening_dir; /* skproject door->OpeningDir() */
     uint8_t  door_state;       /* low 3 bits of tile door state */
