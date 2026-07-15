@@ -1027,6 +1027,18 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     }
 }
 
+/* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
+ * map together.  A level handoff cannot retain any material from the prior
+ * map: rebuild the map lists, bounded G1 record receipts and GDAT plans as
+ * one fail-closed transaction. */
+static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
+{
+    if (!rt) return;
+    dm2_runtime_refresh_map_wall_gfx_list(rt);
+    dm2_runtime_refresh_g1_runtime_materials(rt);
+    dm2_runtime_refresh_gdat_scene_control(rt);
+}
+
 static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                                                  DM2_V1_ViewportState *viewport,
                                                  int party_dir,
@@ -1485,6 +1497,14 @@ static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
             gs->party_x = event->target_x;
             gs->party_y = event->target_y;
             rt->dungeon_level = event->target_level;
+            if (rt->boot && rt->boot->dungeon_data) {
+                const DM2_V1_DungeonData *dungeon =
+                    (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+                gs->outdoor = dm2_v1_dungeon_is_outdoor(
+                    dungeon, event->target_level);
+                rt->outdoor = gs->outdoor;
+            }
+            dm2_runtime_refresh_map_transition_context(rt);
             break;
         case DM2_TRIGGER_TARGET_SPAWN_CREATURE:
             dm2_runtime_record_spawn(rt, event->arg_creature_id,
@@ -1730,6 +1750,7 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
             rt->dungeon_level = state->current_level;
             rt->view_dir = state->party_dir;
             rt->outdoor = state->outdoor;
+            dm2_runtime_refresh_map_transition_context(rt);
         }
         rt->g1_map0_teleporter_transition = candidate;
         return;
@@ -1803,9 +1824,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
     g_dm2_runtime.map_graphics_style = -1;
-    if (boot_profile->dungeon_data) {
-        dm2_runtime_refresh_g1_runtime_materials(&g_dm2_runtime);
-    }
+    dm2_runtime_refresh_map_transition_context(&g_dm2_runtime);
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
         dm2_runtime_refresh_g1_map0_teleporter_transition(
@@ -1986,9 +2005,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->time_of_day_minutes = gs->time_of_day;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
-    dm2_runtime_refresh_map_wall_gfx_list(rt);
-    dm2_runtime_refresh_g1_runtime_materials(rt);
-    dm2_runtime_refresh_gdat_scene_control(rt);
+    dm2_runtime_refresh_map_transition_context(rt);
     rt->leader_hand_object = session->original_leader_hand_object;
     memset(rt->champion_inventory_objects, 0,
            sizeof(rt->champion_inventory_objects));
@@ -4751,9 +4768,7 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     rt->dungeon_level = level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
-    dm2_runtime_refresh_map_wall_gfx_list(rt);
-    dm2_runtime_refresh_g1_runtime_materials(rt);
-    dm2_runtime_refresh_gdat_scene_control(rt);
+    dm2_runtime_refresh_map_transition_context(rt);
 }
 
 /* ── Party position accessors ─────────────────────────────────────── */
@@ -5081,9 +5096,7 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     if (dm2_v1_creature_restore_live_state(&creatures) != 0) return -1;
     cursor += sizeof(creatures);
     memcpy(dungeon->raw_data, cursor, (size_t)dungeon->raw_size);
-    dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
-    dm2_runtime_refresh_g1_runtime_materials(&g_dm2_runtime);
-    dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
+    dm2_runtime_refresh_map_transition_context(&g_dm2_runtime);
     memcpy(g_dm2_runtime.map_wall_gfx_list, header->map_wall_gfx_list,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     memcpy(g_dm2_runtime.map_floor_gfx_list, header->map_floor_gfx_list,
