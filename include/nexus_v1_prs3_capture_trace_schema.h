@@ -108,7 +108,13 @@ typedef struct {
     uint32_t control_zero_branch_target_offset;
     uint32_t control_sentinel_literal_offset;
     uint16_t control_sentinel_word;
+    uint16_t control_low_bit_mask;
     int sh2_control_refill_verified;
+    /* Exact SH-2 semantics for the nonzero low-bit fallthrough. This proves
+     * a guarded source-byte-to-output-byte path only, not a complete PRS3
+     * token grammar, output buffer ownership, or drawable pixels. */
+    int sh2_control_low_bit_semantics_proven;
+    int sh2_nonzero_direct_byte_path_proven;
     uint32_t zero_first_byte_read_offset;
     uint32_t zero_second_byte_read_offset;
     uint32_t zero_merge_or_offset;

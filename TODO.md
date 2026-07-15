@@ -3454,6 +3454,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     one real colour-word mismatch remains at index 130. This is still not a
     declaration that PALT is DGT2 or a license to use it for PRS3.
 
+  - The retail DM.BIN PRS3 V1 code now proves the bounded nonzero control-bit
+    path: `SHLR R11`, mask-1 `TST`, a `BT` into the zero side, then a guarded
+    `@R12+` input byte through the existing byte store. It proves neither the
+    zero-side grammar nor output ownership/termination, so MENU.BPK remains
+    unavailable for decode or drawing until an authenticated execution trace.
+
 - 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
   no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
   a substitute flat-material path.

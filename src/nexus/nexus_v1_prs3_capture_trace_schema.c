@@ -699,6 +699,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.control_refill_merge_offset = SH2_CONTROL_REFILL_MERGE_OFFSET;
     receipt.control_low_bit_test_offset = SH2_CONTROL_LOW_BIT_TEST_OFFSET;
     receipt.control_zero_branch_offset = SH2_CONTROL_ZERO_BRANCH_OFFSET;
+    receipt.control_low_bit_mask = 1U;
     receipt.sh2_control_refill_verified =
         sh2_bra_target(read_be16(dm_bin + SH2_LOOP_BRANCH_OFFSET),
                        SH2_LOOP_BRANCH_OFFSET, &receipt.control_reentry_offset) &&
@@ -724,6 +725,26 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             SH2_CONTROL_ZERO_BRANCH_OFFSET,
             &receipt.control_zero_branch_target_offset) &&
         receipt.control_zero_branch_target_offset == SH2_V1_CALLEE_OFFSET + 100U;
+    /* SH-2 `SHLR R11; TST R11,R3; BT zero-side` uses the immediately loaded
+     * R3=1 mask. When the shifted low bit is nonzero the branch is not taken.
+     * Its fallthrough has a remaining-input guard, reads one byte through
+     * @R12+, and writes R2 through the existing R13/R0 byte store. This is an
+     * exact static direct-byte path, not a claim about literal naming, output
+     * buffer ownership, token termination, or the zero-side copy grammar. */
+    receipt.sh2_control_low_bit_semantics_proven =
+        receipt.sh2_control_refill_verified &&
+        read_be16(dm_bin + SH2_CONTROL_REFILL_TEST_OFFSET) == 0x22b8U &&
+        read_be16(dm_bin + SH2_CONTROL_LOW_BIT_TEST_OFFSET) == 0x23b8U &&
+        read_be16(dm_bin + SH2_CONTROL_ZERO_BRANCH_OFFSET) == 0x890aU &&
+        receipt.control_low_bit_mask == 1U;
+    receipt.sh2_nonzero_direct_byte_path_proven =
+        receipt.sh2_control_low_bit_semantics_proven &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 78U) == 0x2ee8U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 80U) == 0x8929U &&
+        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 82U) == 0x7effU &&
+        read_be16(dm_bin + SH2_STREAM_BYTE_READ_OFFSET) == 0x62c4U &&
+        read_be16(dm_bin + SH2_OUTPUT_INDEX_COPY_OFFSET) == 0x6063U &&
+        read_be16(dm_bin + SH2_OUTPUT_BYTE_STORE_OFFSET) == 0x0d24U;
     receipt.zero_first_byte_read_offset = SH2_ZERO_FIRST_BYTE_READ_OFFSET;
     receipt.zero_second_byte_read_offset = SH2_ZERO_SECOND_BYTE_READ_OFFSET;
     receipt.zero_merge_or_offset = SH2_ZERO_MERGE_OR_OFFSET;
@@ -824,7 +845,12 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     *out_receipt = receipt;
     return receipt.sh2_control_path_verified && receipt.sh2_stream_read_verified &&
         receipt.sh2_output_store_verified && receipt.sh2_loop_back_target_verified &&
-        receipt.sh2_loop_body_bound;
+        receipt.sh2_loop_body_bound && receipt.sh2_control_low_bit_semantics_proven &&
+        receipt.sh2_nonzero_direct_byte_path_proven &&
+        receipt.sh2_zero_side_index_read_verified &&
+        receipt.sh2_zero_side_repeat_control_verified &&
+        receipt.sh2_zero_side_linear_route_verified &&
+        receipt.sh2_zero_side_has_no_direct_output_store;
 }
 
 int nexus_v1_prs3_vdp1_capture_schema_parse(
