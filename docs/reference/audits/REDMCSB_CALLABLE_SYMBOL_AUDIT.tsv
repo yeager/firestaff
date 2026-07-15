@@ -234,9 +234,9 @@ F	0161	F0161_DUNGEON_GetSquareFirstThing	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;C
 F	161	F161_szzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0162	F0162_DUNGEON_GetSquareFirstObject	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H;TIMELINE.C;ENDGAME.C;MOVESENS.C	implemented-narrow	implemented_narrow	CSB explicit real-PC34 owner starts at F0161 and uses F0159 to select the first C04-or-later Thing; bounded malformed cycles fail closed.
 F	162	F162_afzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0163	F0163_DUNGEON_LinkThingToList	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;PROJEXPL.C;MOVESENS.C;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0163	F0163_DUNGEON_LinkThingToList	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;ENDGAME.C;PROJEXPL.C;MOVESENS.C;CHEST.C	implemented	implemented	CSB loaded-PC34 owner follows square-first insertion and tail append, paired atomically with F0164 so a rejected target cannot lose a source Thing.
 F	163	F163_amzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0164	F0164_DUNGEON_UnlinkThingFromList	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;REVIVE.C;DEFS.H;TIMELINE.C;ENDGAME.C;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0164	F0164_DUNGEON_UnlinkThingFromList	ATARIST.H;FMTOWNS.H;DUNGEON.C;IIGS.H;REVIVE.C;DEFS.H;TIMELINE.C;ENDGAME.C;PROJEXPL.C;MOVESENS.C	implemented	implemented	CSB loaded-PC34 owner follows square-first removal and Generic.Next repair; complete raw arena rollback preserves the original when link admission fails.
 F	164	F164_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0165	F0165_DUNGEON_GetDiscardedThing	DUNGEON.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0166	F0166_DUNGEON_GetUnusedThing	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;ENDGAME.C;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
