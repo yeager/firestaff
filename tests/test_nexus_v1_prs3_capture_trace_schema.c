@@ -115,6 +115,43 @@ static void make_bpk(unsigned char data[68]) {
     put_be32(data + 64U, 4U);
 }
 
+static void test_sh2_transfer_trace_gate(void) {
+    unsigned char bpk[68];
+    unsigned char dm_bin[85400];
+    Nexus_V1_Prs3Sh2TransferTrace trace;
+    Nexus_V1_Prs3Sh2TransferReceipt receipt;
+    char text[1024];
+    unsigned long long bpk_hash;
+    unsigned long long dm_hash;
+
+    make_bpk(bpk);
+    memset(dm_bin, 0, sizeof(dm_bin));
+    /* The real loader's receipt is intentionally hash-gated; this synthetic
+     * fixture therefore proves syntax rejection rather than a decoder route. */
+    bpk_hash = fnv1a64(bpk, sizeof(bpk));
+    dm_hash = fnv1a64(dm_bin, sizeof(dm_bin));
+    snprintf(text, sizeof(text),
+             "NEXUS_PRS3_SH2_TRANSFER_TRACE_V1\n"
+             "menu_bpk_fnv1a64=%llx\ndm_bin_fnv1a64=%llx\n"
+             "entry_index=0\nstream_offset=34\nstream_size=10\n"
+             "expected_output_bytes=4\npayload_byte_offset=0\n"
+             "input_instruction_offset=0\noutput_instruction_offset=0\n"
+             "input_read_sequence=10\noutput_write_sequence=11\n"
+             "output_byte_offset=0\ninput_byte=50\noutput_byte=50\n",
+             bpk_hash, dm_hash);
+    expect(!nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               text, strlen(text), bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+               1, &trace, &receipt) && trace.valid && receipt.trace_valid &&
+               !receipt.observed_byte_transfer && !receipt.decoder_promoted &&
+               !receipt.fallback_visuals_permitted,
+           "unverified loader bytes cannot promote a PRS3 transfer observation");
+    text[strlen(text) - 2U] = 'g';
+    expect(!nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+               text, strlen(text), bpk, sizeof(bpk), dm_bin, sizeof(dm_bin),
+               1, &trace, &receipt) && !trace.valid && !receipt.trace_valid,
+           "malformed byte values fail closed before transfer binding");
+}
+
 static void test_dm_bin_prs3_catalog(void) {
     unsigned char fixture[48];
     Nexus_V1_Prs3DmBinCatalogReceipt receipt;
@@ -588,6 +625,7 @@ int main(void) {
     test_dm_bin_prs3_catalog();
     test_cross_asset_prs3_frame_receipt();
     test_dm_bin_sh2_v1_execution_receipt();
+    test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;
 }

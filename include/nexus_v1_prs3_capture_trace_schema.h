@@ -298,6 +298,45 @@ typedef struct {
     int decoder_promotion_eligible;
 } Nexus_V1_Prs3CaptureAssetBindingReceipt;
 
+/* A single, externally observed transfer through the hash-verified V1 SH-2
+ * loop.  This is deliberately smaller than a decoder command: it proves only
+ * that one MENU.BPK payload byte was read at the known load instruction and
+ * later stored at the known output instruction.  The trace must come from an
+ * original-Saturn capture tool; this parser does not authenticate a producer
+ * and never promotes a pixel, palette, or PRS3 grammar. */
+#define NEXUS_V1_PRS3_SH2_TRANSFER_TRACE_MAGIC \
+    "NEXUS_PRS3_SH2_TRANSFER_TRACE_V1"
+typedef struct {
+    int valid;
+    uint64_t menu_bpk_fnv1a64;
+    uint64_t dm_bin_fnv1a64;
+    uint32_t entry_index;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint32_t expected_output_bytes;
+    uint32_t payload_byte_offset;
+    uint32_t input_instruction_offset;
+    uint32_t output_instruction_offset;
+    uint64_t input_read_sequence;
+    uint64_t output_write_sequence;
+    uint32_t output_byte_offset;
+    uint32_t input_byte;
+    uint32_t output_byte;
+} Nexus_V1_Prs3Sh2TransferTrace;
+
+typedef struct {
+    int trace_valid;
+    int menu_bpk_matches;
+    int dm_bin_matches;
+    int entry_plan_matches;
+    int sh2_instruction_route_matches;
+    int source_byte_matches;
+    int observed_byte_transfer;
+    int original_saturn_provenance_verified;
+    int decoder_promoted;
+    int fallback_visuals_permitted;
+} Nexus_V1_Prs3Sh2TransferReceipt;
+
 int nexus_v1_prs3_capture_trace_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3CaptureTraceSchemaReceipt *out_receipt);
@@ -313,6 +352,18 @@ int nexus_v1_prs3_capture_trace_schema_bind_assets(
     const uint8_t *menu_bpk, size_t menu_bpk_size,
     const uint8_t *dm_bin, size_t dm_bin_size,
     Nexus_V1_Prs3CaptureAssetBindingReceipt *out_receipt);
+
+/* Parse and bind one original-capture byte-transfer observation. The source
+ * bytes, selected BPK span, exact SH-2 read/store instructions, byte value,
+ * and sequence ordering must all agree. A successful receipt remains a
+ * no-draw, non-decoder fact until a complete authenticated command grammar is
+ * independently established. */
+int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
+    const char *text, size_t text_size,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2TransferTrace *out_trace,
+    Nexus_V1_Prs3Sh2TransferReceipt *out_receipt);
 
 /* Catalogs only literal PRS3 framing markers in hash-verified original
  * DM.BIN bytes. Unknown executable occurrences and truncated records remain
