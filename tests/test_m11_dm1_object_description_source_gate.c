@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -139,6 +140,10 @@ int main(void)
     struct DungeonWeapon_Compat weapon;
     unsigned char framebuffer[320 * 200];
     const char* graphicsPath;
+    int handBoxX = 0;
+    int handBoxY = 0;
+    int handBoxW = 0;
+    int handBoxH = 0;
 
     seed_description_state(&state, &things, &weapon);
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -151,12 +156,20 @@ int main(void)
           "missing icon media emits no placeholder");
     CHECK(!framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
           "missing M653 keeps F0034 C017 leader-hand name clear");
+    CHECK(M11_GameView_GetV1StatusHandSlotBoxZone(
+              0, 0, &handBoxX, &handBoxY, &handBoxW, &handBoxH) &&
+              handBoxW == 18 && handBoxH == 18,
+          "F0291 ready-hand C211 source rectangle is available");
+    CHECK(framebuffer[(handBoxY + 1) * 320 + handBoxX + 1] ==
+              (unsigned char)dm1_v1_champion_status_box_fill_color_pc34(),
+          "missing C033 keeps F0292 status clear rather than a host hand box");
     M11_GameView_Shutdown(&state);
 
     graphicsPath = graphics_dat_path();
     if (graphicsPath) {
         const M11_AssetSlot* panel;
         const M11_AssetSlot* circle;
+        const M11_AssetSlot* handBox;
 
         seed_description_state(&state, &things, &weapon);
         CHECK(M11_AssetLoader_Init(&state.assetLoader, graphicsPath),
@@ -180,6 +193,14 @@ int main(void)
               "F0342 presents C029 source pixels at C504");
         CHECK(framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
               "F0034 presents the leader-hand name through PC34 M653");
+        handBox = M11_AssetLoader_Load(
+            &state.assetLoader,
+            (unsigned int)dm1_v1_champion_status_hand_slot_graphic_pc34(
+                0, 0, 0));
+        CHECK(framebuffer_has_source_pixel(framebuffer, handBox,
+                                           handBoxX, handBoxY, 0,
+                                           -1, -1, 0, 0),
+              "F0291 presents C033 source pixels at C211");
         M11_GameView_Shutdown(&state);
     }
 

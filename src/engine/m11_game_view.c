@@ -33708,8 +33708,8 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
                                         int dstX,
                                         int dstY) {
     int boxGfx;
-    int drewBox = 0;
     int iconIndex;
+    const M11_AssetSlot* box;
 
     if (!state || !champ || !framebuffer) return 0;
     boxGfx = dm1_v1_champion_status_hand_slot_graphic_pc34(
@@ -33719,48 +33719,42 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
          state->actingChampionOrdinal == (unsigned int)(championSlot + 1)));
     if (boxGfx <= 0) return 0;
 
-    if (state->assetsAvailable) {
-        const M11_AssetSlot* box = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, boxGfx);
-        if (box && box->width == 18 && box->height == 18) {
-            M11_AssetLoader_Blit(box, framebuffer, framebufferWidth,
-                                 framebufferHeight, dstX, dstY, 0);
-            drewBox = 1;
-        }
+    /* CSB owns a separately verified runtime surface contract. Preserve its
+     * existing source-clear behavior; this DM1-only change below must not
+     * alter the CSB handoff while it is maintained in a different task. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !state->assetsAvailable) {
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      dstX, dstY, 18, 18,
+                      (unsigned char)dm1_v1_champion_status_box_fill_color_pc34());
+        return 0;
     }
-    if (!drewBox) {
-        /* CHAMDRAW.C F0291 composes the hand box from C033/C034/C035 before
-         * it draws its C020 object cell.  CSB owns those bytes in the
-         * selected GRAPHICS.DAT; a host rectangle would be a new visual,
-         * not an original empty-hand surface. */
+
+    /* CHAMDRAW.C F0291 owns C033/C034/C035 before F0038 adds a C020 icon.
+     * These 18x18 source surfaces have no host equivalent: an invented
+     * border makes empty hands appear as objects and shifts the icon crop.
+     * Keep the F0292-cleared status background unchanged until the exact
+     * GRAPHICS.DAT surface is present. */
+    if (!state->assetsAvailable) return 0;
+    box = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                               (unsigned int)boxGfx);
+    if (!box ||
+        !DM1_ChampionPanel_AssetSurfaceAccepted(
+            boxGfx, boxGfx, box->loaded, box->pixels != NULL,
+            box->width, box->height, 18, 18)) {
         if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           dstX, dstY, 18, 18,
-                          (unsigned char)dm1_v1_champion_status_box_fill_color_pc34());
-            return 0;
+                          (unsigned char)
+                              dm1_v1_champion_status_box_fill_color_pc34());
         }
-        int boxX = dstX;
-        int boxY = dstY;
-        int boxW = 18;
-        int boxH = 18;
-        {
-            DM1_V1_ChampionStatusRectPc34 boxRect;
-            if (dm1_v1_champion_status_hand_slot_box_rect_pc34(
-                    championSlot, handIndex, &boxRect)) {
-                boxX = boxRect.x;
-                boxY = boxRect.y;
-                boxW = boxRect.w;
-                boxH = boxRect.h;
-            }
-        }
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      boxX, boxY, boxW, boxH, M11_COLOR_BLACK);
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      boxX, boxY, boxW, boxH, M11_COLOR_DARK_GRAY);
+        return 0;
     }
+    M11_AssetLoader_Blit(box, framebuffer, framebufferWidth,
+                         framebufferHeight, dstX, dstY, 0);
 
     iconIndex = m11_v1_status_hand_icon_index(state, championSlot, handIndex);
-    if (iconIndex < 0) return drewBox;
+    if (iconIndex < 0) return 1;
 
     {
         DM1_V1_ChampionStatusRectPc34 iconRect;

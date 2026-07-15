@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 status-hand HUD follow-up: F0291 now accepts only exact
+  loaded-pixel C033/C034/C035 at C211..C218 before it may draw a source icon.
+  Remaining work is real PC34/Mac capture for ready, wounded, and acting-hand
+  variants; absent or malformed material must preserve the F0292 status clear
+  instead of drawing a host border or item placeholder.
+
 - 2026-07-15 DM1 leader-hand HUD follow-up: F0034 now preserves the exact
   C017 black clear and prints its bounded 14-character name only through the
   loaded PC34 M653 font at the source zone geometry. Remaining work is a real
