@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 DUNGEON F0140 follow-up: the source-defined raw PC3.4
+  object-weight route now covers F0156 object rows and F0159 container
+  contents. Remaining work is separately-owned live inventory and champion
+  load consumers; do not substitute decoded object weights, a default weight,
+  or a truncated/cyclic container chain.
+
 - 2026-07-15 DM1 DUNGEON F0143 follow-up: raw PC3.4 `ARMOUR.Type` now
   resolves through the complete original G0239 table and exact sharp-defense
   scaling. Remaining work is separately-owned live champion inventory
