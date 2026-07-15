@@ -126,6 +126,7 @@ int main(void)
     Theron_V1RawLoaderTraceGamePayloadReceipt header_payloads[
         THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt envelope_byte;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt continuation_byte;
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
     size_t header_index;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
@@ -249,6 +250,36 @@ int main(void)
     }
     raw[boundary.level_first_raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES +
         envelope_payload.source_offset] = saved_envelope_byte;
+
+    envelope_payload.source_offset = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+        (unsigned int)boundary.object_boundary_user_data_offset_in_record;
+    envelope_payload.source_byte = raw[boundary.level_first_raw_sector *
+        THERON_TRACK02_RAW_SECTOR_BYTES + envelope_payload.source_offset];
+    if (!theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
+            &envelope_payload, raw, raw_size, md5, &continuation_byte) ||
+        !continuation_byte.valid ||
+        continuation_byte.track02_record != boundary.track02_record ||
+        continuation_byte.raw_sector != boundary.level_first_raw_sector ||
+        continuation_byte.continuation_offset != 0u ||
+        !continuation_byte.game_payload_chain_verified ||
+        !continuation_byte.source_continuation_overlap_verified ||
+        continuation_byte.object_table_semantics_proven) {
+        free(raw);
+        printf("FAIL: game-RAM payload did not remain an opaque continuation byte\n");
+        return 1;
+    }
+    --envelope_payload.source_offset;
+    if (theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
+            &envelope_payload, raw, raw_size, md5, &continuation_byte)) {
+        free(raw);
+        printf("FAIL: pre-continuation game-RAM byte reached the continuation receipt\n");
+        return 1;
+    }
+    ++envelope_payload.source_offset;
+    envelope_payload.source_offset = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+        (unsigned int)boundary.level_user_data_offset_in_record;
+    envelope_payload.source_byte = raw[boundary.level_first_raw_sector *
+        THERON_TRACK02_RAW_SECTOR_BYTES + envelope_payload.source_offset];
     for (header_index = 0u;
          header_index < THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES;
          ++header_index) {

@@ -235,6 +235,26 @@ typedef struct {
     int level_semantics_proven;
 } Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt;
 
+/* A byte-level join between an authenticated game-RAM payload receipt and
+ * the directly adjacent source-locked continuation in the same initial
+ * loader sector. Its placement establishes an observed consumer of the
+ * bounded continuation only. It neither calls that continuation an object
+ * table nor assigns record grammar, palette, bitmap, grid, or visual meaning
+ * to the byte. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t track02_record;
+    size_t raw_sector;
+    size_t raw_sector_offset;
+    size_t continuation_offset;
+    uint8_t source_byte;
+    int game_payload_chain_verified;
+    int source_continuation_overlap_verified;
+    int object_table_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -409,6 +429,16 @@ int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialEnvelopeByteReceipt *out);
+
+/* Correlates one admitted game-RAM payload byte with the bounded continuation
+ * immediately following the initial envelope. This is evidence of a source
+ * consumer, not object-table or level semantics. */
+int theron_v1_raw_loader_trace_correlate_game_payload_initial_post_envelope(
+    const Theron_V1RawLoaderTraceGamePayloadReceipt *payload,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeByteReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

@@ -8117,3 +8117,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Track 02 checksums before runtime admission. This proves byte ownership,
     not a level grid or object table. Remaining: a captured game consumer
     must establish either grammar before promotion.
+  - Update: runtime now retains the exact verified envelope and directly
+    adjacent continuation bytes after rehashing both spans and enforcing their
+    documented adjacency within the original `$0b52` record. The continuation
+    remains explicitly opaque, not an object table. Remaining: capture a
+    game-owned post-`$3800` consumer that identifies its level/object grammar
+    before any semantic publication or drawing.
+  - Update: capture intake can now bind one authenticated CD-to-game-RAM byte
+    specifically to the directly adjacent continuation and reject bytes before
+    or outside it. This proves an observed source-consumer overlap, not an
+    object table. Remaining: obtain a real post-`$3800` transcript with a
+    complete consumer sequence and independently identify record grammar.
