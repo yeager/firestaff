@@ -1350,7 +1350,6 @@ static int test_sksave_corpus_scan_receipt(void)
     uint8_t payload_c[4096];
     size_t payload_a_size = 0u;
     size_t payload_b_size = 0u;
-    size_t largest_payload_size = 0u;
     size_t enc_gs_size = 0u;
     size_t enc_champ_size = 0u;
     int payload_c_size;
@@ -1396,14 +1395,6 @@ static int test_sksave_corpus_scan_receipt(void)
         printf("    FAIL: could not build SKSave corpus importer fixtures\n");
         return 0;
     }
-    largest_payload_size = payload_a_size;
-    if (payload_b_size > largest_payload_size) {
-        largest_payload_size = payload_b_size;
-    }
-    if ((size_t)payload_c_size > largest_payload_size) {
-        largest_payload_size = (size_t)payload_c_size;
-    }
-
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_sksave_corpus_%d",
              FS_GETPID());
     FS_MKDIR(tmpdir);
@@ -1458,15 +1449,15 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.valid_slot_mask != (uint16_t)(1u << 3) ||
         receipt.invalid_candidate_count != 1 ||
         receipt.importable_candidate_count != 2 ||
-        receipt.import_rejected_candidate_count != 1 ||
+        receipt.import_rejected_candidate_count != 0 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
         receipt.total_importable_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
-        receipt.largest_payload_size != largest_payload_size ||
+        receipt.largest_payload_size != (size_t)payload_c_size ||
         receipt.total_payload_size !=
-            payload_a_size + payload_b_size + (size_t)payload_c_size ||
+            payload_b_size + (size_t)payload_c_size ||
         strstr(receipt.first_importable_path, "SKSave.dat") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.dat") == NULL) {
         printf("    FAIL: mixed corpus receipt did not match expected fields "
@@ -1480,7 +1471,7 @@ static int test_sksave_corpus_scan_receipt(void)
                receipt.firestaff_session_candidate_count,
                receipt.original_envelope_candidate_count,
                receipt.original_raw_candidate_count,
-               receipt.largest_payload_size, largest_payload_size,
+               receipt.largest_payload_size, (size_t)payload_c_size,
                receipt.total_payload_size,
                payload_a_size + payload_b_size + (size_t)payload_c_size,
                receipt.first_valid_path,
@@ -1514,8 +1505,8 @@ static int test_sksave_corpus_scan_receipt(void)
         return 0;
     }
 
-    printf("    PASS: corpus scan reports resume order, slot mask, importable "
-           "Firestaff/envelope saves, payload sizes and invalid saves\n");
+    printf("    PASS: corpus scan reports the source primary/backup relation, "
+           "slot mask, importable saves, payload sizes and invalid saves\n");
     cleanup_slot_dir(tmpdir);
     return 1;
 }

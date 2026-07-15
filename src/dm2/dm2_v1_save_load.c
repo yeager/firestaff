@@ -627,9 +627,14 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         out_receipt->has_last_session_backup = true;
         if (!out_receipt->has_last_session) {
             out_receipt->last_session_uses_backup = true;
+            /* GAME_LOAD admits the backup only after the primary fails the
+             * same 42-byte header gate. A present primary shadows this
+             * record; retain its availability fact above, but do not let a
+             * corpus receipt classify it as a second live import. */
+            dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+            dm2_sksave_corpus_classify_payload(out_receipt, path,
+                                               payload_size);
         }
-        dm2_sksave_corpus_accept(out_receipt, path, payload_size);
-        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
     } else if (status == DM2_SK_CORPUS_INVALID) {
         out_receipt->invalid_candidate_count++;
     }
@@ -700,7 +705,8 @@ const char *dm2_v1_save_source_evidence(void)
         "SKULL.ASM: WRITE_RECORD_CHECKCODE, WRITE_MINION_ASSOC\n"
         "SKULL.ASM: _2066_33e7 slot picker, GAME_SAVE/GAME_LOAD\n"
         "Firestaff: dm2_v1_sksave_corpus_scan validates real SKSave corpus "
-        "candidates before full session import\n";
+        "candidates before full session import; SKSave.dat shadows "
+        "SKSave.bak until its header gate fails\n";
 }
 
 /* ════════════════════════════════════════════════════════════════
