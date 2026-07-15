@@ -103,6 +103,7 @@ static void make_title_host(
     host->title_special_palette = special_palette;
     host->host_surface_hash = host_hash;
     host->frame.session_generation = session->generation;
+    host->frame.source_tick = session->source_tick;
     host->frame.special_palette = special_palette;
     host->frame.title_special_palette = special_palette;
     host->frame.stage = stage;
@@ -293,12 +294,15 @@ int main(void)
     make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS, 0xc001u,
                     &presents_host);
+    presents_host.frame.source_tick = session.source_tick - 3u;
     make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS, 0xc002u,
                     &chaos_host);
+    chaos_host.frame.source_tick = session.source_tick - 2u;
     make_title_host(&session, CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES, 0xc003u,
                     &strikes_host);
+    strikes_host.frame.source_tick = session.source_tick - 1u;
     make_opening_host(&session, &opening_host);
     set_opening_playback(&session);
     check(csb_v1_startup_session_opening_door_receipt_pc34(
@@ -360,6 +364,12 @@ int main(void)
               &strikes_host, &opening_host, &title_opening),
           "stale package tick cannot satisfy title/opening consumption");
     --package_receipt.source_tick;
+    presents_host.frame.source_tick -= 16u;
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "stale C001 PRESENTS host tick cannot satisfy title/opening consumption");
+    presents_host.frame.source_tick += 16u;
     set_terminal_playback(&session);
     check(!csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &opening_host, &opening_door),

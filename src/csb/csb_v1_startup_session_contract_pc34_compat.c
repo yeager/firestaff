@@ -179,6 +179,31 @@ static int csb_v1_startup_session_opening_playback_active_pc34(
         !session->playback.entrance_complete;
 }
 
+static int csb_v1_startup_session_title_opening_ticks_match_pc34(
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *presents_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *chaos_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *strikes_host,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host)
+{
+    uint32_t presents_tick;
+    uint32_t chaos_tick;
+    uint32_t strikes_tick;
+    uint32_t opening_tick;
+
+    if (!presents_host || !chaos_host || !strikes_host || !opening_host)
+        return 0;
+    presents_tick = presents_host->frame.source_tick;
+    chaos_tick = chaos_host->frame.source_tick;
+    strikes_tick = strikes_host->frame.source_tick;
+    opening_tick = opening_host->frame.source_tick;
+    return presents_tick != 0u && chaos_tick != 0u && strikes_tick != 0u &&
+        opening_tick != 0u && presents_tick < chaos_tick &&
+        chaos_tick < strikes_tick && strikes_tick < opening_tick &&
+        chaos_tick - presents_tick <= 2u &&
+        strikes_tick - chaos_tick <= 2u &&
+        opening_tick - strikes_tick <= 2u;
+}
+
 int csb_v1_startup_session_hud_surface_contract_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
 {
@@ -465,6 +490,8 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         opening_host->frame.session_generation != session->generation ||
         opening_host->frame.source_tick != session->source_tick ||
         package_receipt->source_tick != session->source_tick ||
+        !csb_v1_startup_session_title_opening_ticks_match_pc34(
+            presents_host, chaos_host, strikes_host, opening_host) ||
         !csb_v1_startup_session_title_host_phase_matches_pc34(
             presents_host, CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
             VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS) ||
