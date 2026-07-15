@@ -66,6 +66,29 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatSceneLightM11Receipt;
 
+/* Exact terminal inputs to SKProject c_light.cpp::DM2_RECALC_LIGHT_LEVEL.
+ * `base_light` is either the observed v1e0974 accumulator for a map whose
+ * descriptor admitted dynamic light, or the source's fixed non-dynamic base
+ * level. Callers must retain an authenticated raw-state hash; this API never
+ * substitutes GRAPHICSSET fields for dynamic c_light state. */
+typedef struct {
+    int valid;
+    uint8_t dynamic_map;
+    uint8_t base_light;
+    uint8_t darkness_offset;
+    uint32_t source_state_hash;
+} DM2_V1_CLightSourceState;
+
+typedef struct {
+    int valid;
+    uint8_t graphicsset;
+    uint8_t light_level;
+    uint8_t dynamic_map;
+    uint32_t scene_control_hash;
+    uint32_t source_state_hash;
+    uint32_t receipt_hash;
+} DM2_V1_CLightM11Receipt;
+
 /* SKProject QUERY_BLIT_RECT obtains the ceiling and floor destinations from
  * INTERFACE_GENERAL/0/dt04/0 in that order. */
 #define DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER   701u
@@ -80,6 +103,10 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
 int dm2_v1_gdat_scene_light_m11_receipt(
     const DM2_V1_GdatSceneM11CommandPlan *plan,
     DM2_V1_GdatSceneLightM11Receipt *out_receipt);
+int dm2_v1_c_light_m11_receipt_build(
+    const DM2_V1_GdatSceneLightM11Receipt *scene,
+    const DM2_V1_CLightSourceState *source,
+    DM2_V1_CLightM11Receipt *out_receipt);
 
 /* The receipt hashes records 700/701 only. Plan construction retains this
  * receipt and admits their exact x=11/14 -> x=1 -> x=9 grammar slice. */
