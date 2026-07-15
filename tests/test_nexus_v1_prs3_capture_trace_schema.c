@@ -354,6 +354,7 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.control_refill_merge_offset == 85446U &&
                receipt.control_sentinel_literal_offset == 85644U &&
                receipt.control_sentinel_word == 0x0100U &&
+               receipt.control_low_bit_mask == 1U &&
                receipt.control_zero_branch_target_offset == 85476U &&
                receipt.zero_first_byte_read_offset == 85484U &&
                receipt.zero_second_byte_read_offset == 85488U &&
@@ -379,6 +380,8 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
                receipt.sh2_output_store_predecessor_verified &&
                receipt.sh2_control_refill_verified &&
+               receipt.sh2_control_low_bit_semantics_proven &&
+               receipt.sh2_nonzero_direct_byte_path_proven &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_repeat_control_verified &&
                receipt.sh2_zero_side_linear_route_verified &&
@@ -395,6 +398,17 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    damaged, dm_bin_size, 1, &receipt) &&
                    !receipt.sh2_output_store_verified && !receipt.decoder_promoted,
                "one changed SH-2 output-store instruction rejects the receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85432U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_control_low_bit_semantics_proven &&
+                   !receipt.sh2_nonzero_direct_byte_path_proven,
+               "changed low-bit mask setup rejects the source byte-path receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);

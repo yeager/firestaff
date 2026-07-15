@@ -18846,3 +18846,12 @@ The documented DGT2 BGR555 reader's low-15-bit colour mask also matches 255 of
 256 indexed PALT words: 31 raw mismatches are bit-15-only, while index 130 is
 one actual colour-word difference. This strengthens the byte correlation but
 does not declare PALT to be DGT2 or promote any decoder/palette route.
+
+# Nexus PRS3 V1 nonzero control-byte path (2026-07-15)
+
+The canonical DM.BIN loader now has a source-locked SH-2 receipt for its
+nonzero low-bit fallthrough: shifted R11 is tested against mask 1, `BT` selects
+the separate zero-side corridor, and the nonzero path guards input, reads one
+byte through `@R12+`, then reaches the existing R2 byte store. This proves only
+a bounded direct-byte path. It does not establish the zero-side grammar, token
+names, buffer ownership, termination, palette use, PRS3 pixels, or rendering.
