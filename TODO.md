@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0623/F0320 damage-HUD follow-up: normal V1 damage feedback
+  now requires exact loaded-pixel C015/C016 and the original M653 source-font
+  route at C167/C179 geometry. Remaining work is a real PC34/Mac pending-damage
+  capture for normal and inventory champions. Missing or malformed material
+  must leave the status clear unchanged; do not restore generic M11 text or
+  default status-box coordinates.
+
 - 2026-07-15 DM1 status-hand HUD follow-up: F0291 now accepts only exact
   loaded-pixel C033/C034/C035 at C211..C218 before it may draw a source icon.
   Remaining work is real PC34/Mac capture for ready, wounded, and acting-hand
