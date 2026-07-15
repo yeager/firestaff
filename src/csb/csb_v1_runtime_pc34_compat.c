@@ -20824,6 +20824,12 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.random_state = profile->csbwin_random_seed;
     candidate.dsa_slave_thing_valid = binding->actuator_identity_valid;
     candidate.dsa_slave_thing = binding->location.actuator_thing;
+    /* Monster.cpp clears these four directions immediately before its
+     * movement filter. The prepared runner owns only this transient filter
+     * state; a later movement caller must consume it explicitly. */
+    candidate.monster_move_inhibit_valid = 1;
+    memset(candidate.monster_move_inhibit, 0,
+           sizeof(candidate.monster_move_inhibit));
     candidate.saves_disabled_valid = 1;
     candidate.saves_disabled = profile->csbwin_saves_disabled ? 1 : 0;
     candidate.party_leader_index = -1;
