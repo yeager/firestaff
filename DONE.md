@@ -13,6 +13,13 @@
   cell changes only after the full timer/event ownership transaction commits.
   Focused coverage proves a nonterminal door successor moves from slot 1 to
   slot 0 with its exact +1 source time.
+=======
+- ✅ 2026-07-15 DM1 ReDMCSB F0387 source action-menu gate: active V1
+  one/two/three action rows accept only decoded loaded-pixel PC34
+  C079/C077/C011 surfaces at their original geometry. A failed validation now
+   retains the source black clear instead of taking a second permissive blit.
+   The original M653 action-name route remains the sole text owner. Focused
+   coverage: `m11_dm1_action_spell_asset_fail_closed`.
 
 - ✅ 2026-07-15 DM1 F0292 auxiliary source-material gate: normal V1 shield
   borders accept only exact loaded-pixel C037/C038/C039 67x29 surfaces and
