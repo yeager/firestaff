@@ -16394,6 +16394,13 @@ identity receipt, not a level/object classification or a FIFO destination.
 Verification: `test_theron_v1_lba4165_track02_receipt` and the authentic US
 Track 02 capture.
 
+# ✅ 2026-07-15 Theron LBA 4165 FIFO origin receipt
+
+Added byte-origin tracking through Mednafen's SCSI data FIFO. Authentic capture
+proves Track 02 record `0x484` / LBA 4165 offsets `0..31` reach System Card
+CPU `0xea9c` through `$1808`, with exact byte comparison. No game-owned RAM,
+level, or object-record consumer is claimed.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
