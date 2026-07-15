@@ -1,0 +1,51 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -12,6 +12,7 @@
+ void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc, uint8 accumulator, uint8 x, uint8 y);
+ void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
++void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
+
+ class alignas(128) HuC6280
+ {
+@@ -441,6 +442,8 @@
+ 	                                          (writer_mpr << 13) | (writer_pc & 0x1FFF));
+ 	 TheronPCECDTraceDataWrite(address, physical_address, V, writer_pc,
+ 	                           (writer_mpr << 13) | (writer_pc & 0x1FFF));
++	 TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
++	                                   (writer_mpr << 13) | (writer_pc & 0x1FFF));
+
+ 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+ 	}
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -123,6 +123,7 @@
+ static bool TheronPCECDMainRAMLoaderE009Active;
+ static unsigned TheronPCECDMainRAMLoaderE009Sequence;
+ static unsigned TheronPCECDG4MainRAMReadCount;
++static unsigned TheronPCECDMainRAMLoaderWriteCount;
+
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -163,6 +164,21 @@
+  TheronPCECDTraceFifoReceipt("g4_main_ram_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n",
+                              TheronPCECDG4MainRAMReadCount++, logical_address,
+                              physical_address, value, reader_pc, reader_physical_pc);
++}
++
++void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination,
++                                        uint32 physical_destination, uint8 value,
++                                        uint16 writer_pc, uint32 writer_physical_pc)
++{
++ if(!TheronPCECDMainRAMLoaderE009Active ||
++    writer_physical_pc < 0x1f0000 || writer_physical_pc >= 0x1f8000 ||
++    TheronPCECDMainRAMLoaderWriteCount >= 128)
++  return;
++ TheronPCECDTraceFifoReceipt("main_ram_loader_write sequence=%u dispatch_sequence=%u logical_destination=%04x physical_destination=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++                             TheronPCECDMainRAMLoaderWriteCount++,
++                             TheronPCECDMainRAMLoaderE009Sequence,
++                             logical_destination, physical_destination, value,
++                             writer_pc, writer_physical_pc);
+ }
+
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
