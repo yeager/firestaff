@@ -8,6 +8,95 @@
 #define CSB_V1_CONTRACT_C040_WIDTH_PC34 144
 #define CSB_V1_CONTRACT_C040_HEIGHT_PC34 73
 #define CSB_V1_CONTRACT_C040_TRANSPARENT_PC34 6
+#define CSB_V1_CONTRACT_C001_WIDTH_PC34 320
+#define CSB_V1_CONTRACT_C001_HEIGHT_PC34 153
+#define CSB_V1_CONTRACT_PRESENTS_HEIGHT_PC34 16
+#define CSB_V1_CONTRACT_CHAOS_HEIGHT_PC34 80
+#define CSB_V1_CONTRACT_STRIKES_HEIGHT_PC34 57
+#define CSB_V1_CONTRACT_STRIKES_TRANSPARENT_PC34 0
+#define CSB_V1_CONTRACT_C002_WIDTH_PC34 105
+#define CSB_V1_CONTRACT_C003_WIDTH_PC34 128
+#define CSB_V1_CONTRACT_DOOR_HEIGHT_PC34 161
+#define CSB_V1_CONTRACT_C004_WIDTH_PC34 320
+#define CSB_V1_CONTRACT_C004_HEIGHT_PC34 200
+
+static int csb_v1_startup_session_surface_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int source_asset_id,
+    int source_x,
+    int source_y,
+    int width,
+    int height,
+    int transparent_color)
+{
+    return surface && surface->valid && surface->pixels &&
+        surface->source_asset_id == source_asset_id &&
+        surface->source_x == source_x && surface->source_y == source_y &&
+        surface->width == width && surface->height == height &&
+        surface->transparent_color == transparent_color;
+}
+
+static int csb_v1_startup_session_c001_title_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *title;
+    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
+    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
+    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
+
+    if (!session || !session->surfaces.valid ||
+        !session->surfaces.real_asset_matched ||
+        !session->surfaces.title_regions_ready) return 0;
+    title = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
+    presents = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
+    chaos = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
+    strikes = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+    return csb_v1_startup_session_surface_matches_pc34(
+            title, 1, 0, 0, CSB_V1_CONTRACT_C001_WIDTH_PC34,
+            CSB_V1_CONTRACT_C001_HEIGHT_PC34, -1) &&
+        csb_v1_startup_session_surface_matches_pc34(
+            presents, 1, 0, 137, CSB_V1_CONTRACT_C001_WIDTH_PC34,
+            CSB_V1_CONTRACT_PRESENTS_HEIGHT_PC34, -1) &&
+        csb_v1_startup_session_surface_matches_pc34(
+            chaos, 1, 0, 0, CSB_V1_CONTRACT_C001_WIDTH_PC34,
+            CSB_V1_CONTRACT_CHAOS_HEIGHT_PC34, -1) &&
+        csb_v1_startup_session_surface_matches_pc34(
+            strikes, 1, 0, 80, CSB_V1_CONTRACT_C001_WIDTH_PC34,
+            CSB_V1_CONTRACT_STRIKES_HEIGHT_PC34,
+            CSB_V1_CONTRACT_STRIKES_TRANSPARENT_PC34);
+}
+
+static int csb_v1_startup_session_opening_surface_contract_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    const CSB_V1_StartupRuntimeSurface_PC34 *entrance;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right;
+
+    if (!session || !session->surfaces.valid ||
+        !session->surfaces.real_asset_matched ||
+        !session->surfaces.opening_frame_ready ||
+        !session->surfaces.entrance_screen_ready) return 0;
+    entrance = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    left = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    return csb_v1_startup_session_surface_matches_pc34(
+            entrance, 4, 0, 0, CSB_V1_CONTRACT_C004_WIDTH_PC34,
+            CSB_V1_CONTRACT_C004_HEIGHT_PC34, -1) &&
+        csb_v1_startup_session_surface_matches_pc34(
+            left, 2, 0, 0, CSB_V1_CONTRACT_C002_WIDTH_PC34,
+            CSB_V1_CONTRACT_DOOR_HEIGHT_PC34, -1) &&
+        csb_v1_startup_session_surface_matches_pc34(
+            right, 3, 0, 0, CSB_V1_CONTRACT_C003_WIDTH_PC34,
+            CSB_V1_CONTRACT_DOOR_HEIGHT_PC34, -1);
+}
 
 int csb_v1_startup_session_hud_surface_contract_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
@@ -45,6 +134,8 @@ int csb_v1_startup_session_terminal_receipt_pc34(
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
         !session->hud_assets_bound || session->generation == 0u ||
+        !csb_v1_startup_session_c001_title_contract_pc34(session) ||
+        !csb_v1_startup_session_opening_surface_contract_pc34(session) ||
         !csb_v1_startup_session_hud_surface_contract_pc34(session)) return 0;
     out_receipt->valid = 1;
     out_receipt->c001_complete = 1;
@@ -110,10 +201,6 @@ int csb_v1_startup_session_package_title_receipt_pc34(
     CSB_V1_StartupSessionPackageTitleReceipt_PC34 *out_receipt)
 {
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
-    const CSB_V1_StartupRuntimeSurface_PC34 *title;
-    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
-    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
-    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
 
     /* ReDMCSB TITLE.C F0437 lines 424-463 draws C001 as three distinct
      * PRESENTS/CHAOS/STRIKES BACK regions. ENTRANCE.C F0806 lines 850-903
@@ -137,21 +224,8 @@ int csb_v1_startup_session_package_title_receipt_pc34(
         package_receipt->real_asset_receipt_hash == 0u ||
         package_receipt->consumed_surface_hash == 0u) return 0;
 
-    title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
-    presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
-    chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
-    strikes = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
-    if (!title->valid || !title->pixels || title->source_asset_id != 1 ||
-        !presents->valid || !presents->pixels || presents->source_asset_id != 1 ||
-        presents->source_x != 0 || presents->source_y != 137 ||
-        presents->width != 320 || presents->height != 16 ||
-        !chaos->valid || !chaos->pixels || chaos->source_asset_id != 1 ||
-        chaos->source_x != 0 || chaos->source_y != 0 ||
-        chaos->width != 320 || chaos->height != 80 ||
-        !strikes->valid || !strikes->pixels || strikes->source_asset_id != 1 ||
-        strikes->source_x != 0 || strikes->source_y != 80 ||
-        strikes->width != 320 || strikes->height != 57 ||
-        strikes->transparent_color != 0) return 0;
+    if (!csb_v1_startup_session_c001_title_contract_pc34(session))
+        return 0;
 
     out_receipt->real_package_matched = 1;
     out_receipt->c001_title_ready = 1;
@@ -211,9 +285,7 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
     right = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
-    if (!entrance->valid || !entrance->pixels || entrance->source_asset_id != 4 ||
-        !left->valid || !left->pixels || left->source_asset_id != 2 ||
-        !right->valid || !right->pixels || right->source_asset_id != 3 ||
+    if (!csb_v1_startup_session_opening_surface_contract_pc34(session) ||
         host_surface->frame.entrance_surface != entrance ||
         host_surface->frame.left_door_surface != left ||
         host_surface->frame.right_door_surface != right) return 0;
@@ -243,9 +315,6 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 *out_receipt)
 {
     const CSB_V1_StartupRuntimeSurface_PC34 *title;
-    const CSB_V1_StartupRuntimeSurface_PC34 *presents;
-    const CSB_V1_StartupRuntimeSurface_PC34 *chaos;
-    const CSB_V1_StartupRuntimeSurface_PC34 *strikes;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     /* ReDMCSB TITLE.C F0437 lines 424-463 emits three C001 phases before
@@ -267,17 +336,8 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
 
     title = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
-    presents = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
-    chaos = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
-    strikes = &session->surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
-    if (!title->valid || !title->pixels || title->source_asset_id != 1 ||
-        !presents->valid || !chaos->valid || !strikes->valid ||
-        !presents->pixels || !chaos->pixels || !strikes->pixels ||
-        presents->source_asset_id != 1 || chaos->source_asset_id != 1 ||
-        strikes->source_asset_id != 1 ||
+    if (!csb_v1_startup_session_c001_title_contract_pc34(session) ||
+        !csb_v1_startup_session_opening_surface_contract_pc34(session) ||
         !presents_host->valid || !chaos_host->valid || !strikes_host->valid ||
         !opening_host->valid || !presents_host->real_asset_matched ||
         !chaos_host->real_asset_matched || !strikes_host->real_asset_matched ||

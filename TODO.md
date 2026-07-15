@@ -211,6 +211,13 @@
     composition from the same package session. Remaining work is still external
     original-window capture and broader live app coverage, not host-wrapper or
     partial opening-surface admission.
+  - 2026-07-15 update: the startup session contract now requires the resident
+    decoded C001 title, PRESENTS/CHAOS/STRIKES crops, C004 entrance, and
+    C002/C003 door surfaces to retain their exact PC34 dimensions and source
+    asset ids before any terminal, title/opening, or opening-door receipt can
+    cross into HUD/runtime. Remaining work is still external original-window
+    capture and broader app-route parity, not one-byte or host-owned package
+    stand-ins.
     not synthetic title/entrance replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
