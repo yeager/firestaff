@@ -6447,6 +6447,130 @@ int nexus_v1_engine_write_menu_bpk_palt_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_admit_menu_bpk_palt_trace(
+    Nexus_V1_Engine *engine, const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *palt_memory, size_t palt_memory_size,
+    const uint8_t *palette_state, size_t palette_state_size,
+    const uint8_t *vdp1_command, size_t vdp1_command_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_MenuBpkPaltTraceAdmissionReceipt *out_receipt)
+{
+    Nexus_V1_MenuBpkPaltCaptureTargetReceipt target;
+    Nexus_V1_MenuBpkPaltTraceAdmissionReceipt receipt;
+    char value[96];
+    uint64_t expected_hash;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_MISSING;
+    receipt.no_draw_only = 1;
+    if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
+        raw_trace_size == 0 || !palt_memory || palt_memory_size == 0 ||
+        !palette_state || palette_state_size == 0 || !vdp1_command ||
+        vdp1_command_size == 0 ||
+        nexus_v1_engine_build_menu_bpk_palt_capture_target(engine, &target) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.capture_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size, "magic", value,
+                                    sizeof(value)) ||
+        strcmp(value, NEXUS_V1_MENU_BPK_PALT_TRACE_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "producer", value,
+                                    sizeof(value)) ||
+        strcmp(value, "mednafen-debugger") != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size, "trace_sha256",
+                                    value, sizeof(value)) ||
+        !nexus_v1_slev_trace_is_sha256(value)) {
+        receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.mednafen_debugger_provenance = 1;
+    receipt.trace_sha256_present = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "canonical_menu_bpk_md5", value,
+                                    sizeof(value)) ||
+        strcmp(value, target.canonical_menu_bpk_md5) != 0 ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_record_offset", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.palt_record_offset ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_record_bytes", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.palt_record_bytes ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_entry_count", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.palt_entry_count ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_entry_bytes", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.palt_entry_bytes ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_entry_bytes_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != target.palt_entry_bytes_fnv1a64) {
+        receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "raw_trace_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size) ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palt_memory_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != nexus_v1_slev_trace_fnv1a64(palt_memory, palt_memory_size) ||
+        expected_hash != target.palt_entry_bytes_fnv1a64 ||
+        palt_memory_size != target.palt_entry_bytes ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "palette_state_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != nexus_v1_slev_trace_fnv1a64(palette_state,
+                                                      palette_state_size) ||
+        !nexus_v1_slev_trace_value(manifest_text, manifest_size,
+                                    "vdp1_command_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &expected_hash) ||
+        expected_hash != nexus_v1_slev_trace_fnv1a64(vdp1_command,
+                                                      vdp1_command_size)) {
+        receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_OBSERVATIONS;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bytes_bound = 1;
+    receipt.raw_trace_byte_count = raw_trace_size;
+    receipt.raw_trace_fnv1a64 = nexus_v1_slev_trace_fnv1a64(raw_trace,
+                                                             raw_trace_size);
+    receipt.palt_memory_bytes_bound = 1;
+    receipt.palt_memory_byte_count = palt_memory_size;
+    receipt.palt_memory_fnv1a64 = target.palt_entry_bytes_fnv1a64;
+    receipt.palette_state_bytes_bound = 1;
+    receipt.palette_state_byte_count = palette_state_size;
+    receipt.palette_state_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        palette_state, palette_state_size);
+    receipt.vdp1_command_bytes_bound = 1;
+    receipt.vdp1_command_byte_count = vdp1_command_size;
+    receipt.vdp1_command_fnv1a64 = nexus_v1_slev_trace_fnv1a64(
+        vdp1_command, vdp1_command_size);
+    if (!original_saturn_capture_verified) {
+        receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_BLOCKED_PROVENANCE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.original_saturn_capture_verified = 1;
+    receipt.opaque_trace_admitted = 1;
+    receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE;
+    engine->menu_bpk_palt_trace_admission = receipt;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt) {
