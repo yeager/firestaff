@@ -27,6 +27,9 @@ static int monster_info_store_count;
 static uint32_t monster_info_stored[8];
 static uint8_t monster_info_store_mask;
 static int cell_info_enabled;
+static int cell_info_store_count;
+static uint32_t cell_info_stored[5];
+static uint8_t cell_info_store_mask;
 static uint32_t excell_flags_stored;
 static int excell_flags_store_count;
 
@@ -146,6 +149,25 @@ static int get_cell_info(void *user, uint32_t location,
     return 1;
 }
 
+static int resolve_cell_store(void *user, uint32_t location,
+                              uint32_t expected_room_type)
+{
+    (void)user;
+    if (!cell_info_enabled) return -1;
+    return location == 0x0c82u && expected_room_type == 4u ? 1 : 0;
+}
+
+static int set_cell_info(void *user, uint32_t location,
+                         const uint32_t values[5], uint8_t write_mask)
+{
+    (void)user;
+    if (!cell_info_enabled || location != 0x0c82u || !values) return 0;
+    memcpy(cell_info_stored, values, sizeof(cell_info_stored));
+    cell_info_store_mask = write_mask;
+    ++cell_info_store_count;
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -211,7 +233,11 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.get_monster_info = get_monster_info;
         context.set_monster_info = set_monster_info;
     }
-    if (cell_info_enabled) context.get_cell_info = get_cell_info;
+    if (cell_info_enabled) {
+        context.get_cell_info = get_cell_info;
+        context.resolve_cell_store = resolve_cell_store;
+        context.set_cell_info = set_cell_info;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -357,6 +383,22 @@ int main(void)
     uint16_t cell_fetch_bad_span[] = {
         0x0686u, 0x0c82u, 0x0686u, 99u, 0x0686u, 2u, 0x0e4bu,
         0x0686u, 99u, 0x098bu, 0x000du
+    };
+    uint16_t cell_store_then_fetch[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x09cbu,
+        0x0686u, 0x1eu, 0x0686u, 1u, 0x09cbu,
+        0x0686u, 5u, 0x0686u, 2u, 0x09cbu,
+        0x0686u, 1u, 0x0686u, 3u, 0x09cbu,
+        0x0686u, 12u, 0x0686u, 4u, 0x09cbu,
+        0x0686u, 0x0c82u, 0x0686u, 0u, 0x0686u, 5u, 0x0e8bu,
+        0x0686u, 0x0c82u, 0x0686u, 0u, 0x0686u, 5u, 0x0e4bu,
+        0x0686u, 2u, 0x098bu, 0x000du
+    };
+    uint16_t cell_store_then_bad[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x09cbu,
+        0x0686u, 0x1eu, 0x0686u, 1u, 0x09cbu,
+        0x0686u, 0x0c82u, 0x0686u, 0u, 0x0686u, 2u, 0x0e8bu,
+        0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -623,6 +665,26 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0u && execution.stack_depth == 0u,
           "Cell@ retains CSBWin's out-of-bank local span as an undefined zero");
+    cell_info_store_count = 0;
+    cell_info_store_mask = 0u;
+    memset(cell_info_stored, 0, sizeof(cell_info_stored));
+    parameters[0] = 77u;
+    check(run(&state, &action, cell_store_then_fetch,
+              (int)(sizeof(cell_store_then_fetch) /
+                    sizeof(cell_store_then_fetch[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 5u && cell_info_store_count == 1 &&
+              cell_info_stored[1] == 0x1fu && cell_info_stored[2] == 5u &&
+              cell_info_stored[3] == 1u && cell_info_stored[4] == 12u &&
+              cell_info_store_mask == 0x1eu,
+          "Cell! stages DB0 door fields, exposes them to same-action Cell@, and commits once");
+    cell_info_store_count = 0;
+    check(run(&state, &action, cell_store_then_bad,
+              (int)(sizeof(cell_store_then_bad) /
+                    sizeof(cell_store_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              cell_info_store_count == 0,
+          "Cell! rejects a later unsupported source word without cell or DB0 mutation");
     cell_info_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,

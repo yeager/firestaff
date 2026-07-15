@@ -224,6 +224,15 @@ typedef int (*CSB_V1_CSBWinDSASetMonsterInfoFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSAGetCellInfoFn)(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
+/* Returns 1 for a source-writable cell, 0 for CSBWin's silent source no-op,
+ * and -1 when the loaded original cell owner is unavailable or malformed. */
+typedef int (*CSB_V1_CSBWinDSAResolveCellStoreFn)(void *user,
+                                                  uint32_t location,
+                                                  uint32_t expected_room_type);
+typedef int (*CSB_V1_CSBWinDSASetCellInfoFn)(void *user,
+                                             uint32_t location,
+                                             const uint32_t values[5],
+                                             uint8_t write_mask);
 
 typedef struct {
     uint32_t master_location;
@@ -273,6 +282,8 @@ typedef struct {
     int monster_invisible_enabled;
     int monster_size4_enabled;
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
+    CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
+    CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -517,6 +528,8 @@ typedef struct {
     int monster_invisible_enabled;
     int monster_size4_enabled;
     CSB_V1_CSBWinDSAGetCellInfoFn get_cell_info;
+    CSB_V1_CSBWinDSAResolveCellStoreFn resolve_cell_store;
+    CSB_V1_CSBWinDSASetCellInfoFn set_cell_info;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;

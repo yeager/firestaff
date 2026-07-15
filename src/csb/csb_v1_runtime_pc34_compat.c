@@ -111,6 +111,13 @@ static int csb_v1_runtime_dsa_set_monster_info(void *user,
 static int csb_v1_runtime_dsa_get_cell_info(void *user,
                                              uint32_t location,
                                              uint32_t out_values[5]);
+static int csb_v1_runtime_dsa_resolve_cell_store(void *user,
+                                                  uint32_t location,
+                                                  uint32_t expected_room_type);
+static int csb_v1_runtime_dsa_set_cell_info(void *user,
+                                             uint32_t location,
+                                             const uint32_t values[5],
+                                             uint8_t write_mask);
 static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     const CSB_V1_RuntimeProfile *profile,
     int *out_weight);
@@ -17341,6 +17348,156 @@ static int csb_v1_runtime_dsa_get_cell_info(void *user,
     return 1;
 }
 
+static int csb_v1_runtime_dsa_resolve_cell_store(void *user,
+                                                  uint32_t location,
+                                                  uint32_t expected_room_type)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    int level = (int)((location >> 10) & 0x3fu);
+    int map_x = (int)((location >> 5) & 0x1fu);
+    int map_y = (int)(location & 0x1fu);
+    int raw_square;
+    int thing;
+    int type;
+    int index;
+    int size;
+
+    if (!profile || !profile->dungeon_handle) return -1;
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1) return -1;
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0 || ((uint32_t)(raw_square >> 5) & 0x07u) !=
+                              expected_room_type) {
+        return 0;
+    }
+    if (expected_room_type != 4u && expected_room_type != 5u) return 1;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    if (thing < 0) return 0;
+    record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                              &type, &index, &size);
+    (void)index;
+    if (!record || size < (expected_room_type == 4u ? 4 : 6) ||
+        type != (expected_room_type == 4u ? 0 : 1)) {
+        return 0;
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_set_cell_info(void *user,
+                                             uint32_t location,
+                                             const uint32_t values[5],
+                                             uint8_t write_mask)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *cell;
+    uint8_t *record = NULL;
+    int level = (int)((location >> 10) & 0x3fu);
+    int map_x = (int)((location >> 5) & 0x1fu);
+    int map_y = (int)(location & 0x1fu);
+    int raw_square;
+    int room_type;
+    int thing;
+    int type;
+    int size;
+    uint16_t word2;
+
+    if (!profile || !profile->dungeon_handle || !values || write_mask == 0u) {
+        return 0;
+    }
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1 ||
+        level < 0 || level >= dungeon->level_count || map_x < 0 ||
+        map_x >= dungeon->level_widths[level] || map_y < 0 ||
+        map_y >= dungeon->level_heights[level]) return 0;
+    cell = dungeon->raw_data + dungeon->level_offsets[level] +
+        map_x * dungeon->level_heights[level] + map_y;
+    raw_square = *cell;
+    room_type = (raw_square >> 5) & 0x07;
+    if ((uint32_t)room_type != values[0]) return 0;
+    if (room_type == 4 || room_type == 5) {
+        thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+        if (thing < 0) return 0;
+        record = csb_v1_runtime_mutable_thing_record(dungeon, (uint16_t)thing,
+                                                      &type, &size);
+        if (!record || type != (room_type == 4 ? 0 : 1) ||
+            size < (room_type == 4 ? 4 : 6)) return 0;
+    }
+    switch (room_type) {
+    case 0:
+        if ((write_mask & (1u << 1)) != 0u) {
+            raw_square &= 0xe0;
+            if ((values[1] & 0x01u) != 0u) raw_square |= 0x08;
+            if ((values[1] & 0x02u) != 0u) raw_square |= 0x04;
+            if ((values[1] & 0x04u) != 0u) raw_square |= 0x02;
+            if ((values[1] & 0x08u) != 0u) raw_square |= 0x01;
+        }
+        break;
+    case 1:
+        if ((write_mask & (1u << 1)) != 0u) {
+            raw_square = (raw_square & ~0x08) |
+                ((values[1] & 0x01u) != 0u ? 0x08 : 0);
+        }
+        break;
+    case 3:
+        if ((write_mask & (1u << 1)) != 0u) {
+            raw_square &= 0xf2;
+            if ((values[1] & 0x01u) != 0u) raw_square |= 0x01;
+            if ((values[1] & 0x04u) != 0u) raw_square |= 0x04;
+            if ((values[1] & 0x08u) != 0u) raw_square |= 0x08;
+        }
+        break;
+    case 6:
+        if ((write_mask & (1u << 1)) != 0u) {
+            raw_square &= 0xfa;
+            if ((values[1] & 0x01u) != 0u) raw_square |= 0x01;
+            if ((values[1] & 0x04u) != 0u) raw_square |= 0x04;
+        }
+        break;
+    case 5:
+        if ((write_mask & (1u << 1)) != 0u) {
+            raw_square = (raw_square & ~0x0c) | (int)(values[1] & 0x0cu);
+        }
+        word2 = csb_v1_runtime_read_u16(record + 2);
+        if ((write_mask & (1u << 2)) != 0u) {
+            word2 = (uint16_t)((word2 & ~(uint16_t)0x1c00u) |
+                (uint16_t)((values[2] & 0x03u) << 10) |
+                (uint16_t)((values[2] & 0x04u) << 10));
+        }
+        if ((write_mask & (1u << 3)) != 0u) {
+            word2 = (uint16_t)((word2 & ~(uint16_t)0x6000u) |
+                               (uint16_t)((values[3] & 0x03u) << 13));
+        }
+        csb_v1_runtime_write_u16(record + 2, word2);
+        break;
+    case 4:
+        word2 = csb_v1_runtime_read_u16(record + 2);
+        if ((write_mask & (1u << 1)) != 0u) {
+            word2 = (uint16_t)((word2 & ~(uint16_t)0x01e0u) |
+                               (uint16_t)((values[1] & 0x1eu) << 4));
+        }
+        if ((write_mask & (1u << 3)) != 0u) {
+            word2 = (uint16_t)((word2 & ~(uint16_t)0x0001u) |
+                               (uint16_t)(values[3] & 0x01u));
+        }
+        if ((write_mask & (1u << 4)) != 0u) {
+            word2 = (uint16_t)((word2 & ~(uint16_t)0x001eu) |
+                               (uint16_t)((values[4] & 0x0fu) << 1));
+        }
+        if ((write_mask & (1u << 2)) != 0u) {
+            raw_square = (raw_square & ~0x07) | (int)(values[2] & 0x07u);
+        }
+        csb_v1_runtime_write_u16(record + 2, word2);
+        break;
+    default:
+        break;
+    }
+    *cell = (uint8_t)raw_square;
+    return 1;
+}
+
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report)
@@ -19929,6 +20086,8 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.monster_size4_enabled =
         (profile->csbwin_extended_features_flags32 & 0x00000004u) != 0u;
     candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
+    candidate.resolve_cell_store = csb_v1_runtime_dsa_resolve_cell_store;
+    candidate.set_cell_info = csb_v1_runtime_dsa_set_cell_info;
     candidate.dungeon_user = (void *)profile;
     candidate.wing_user = (void *)profile;
     if (profile->csbwin_global_variables_valid) {
@@ -20040,6 +20199,8 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.monster_size4_enabled =
         (profile_candidate.csbwin_extended_features_flags32 & 0x00000004u) != 0u;
     candidate.get_cell_info = csb_v1_runtime_dsa_get_cell_info;
+    candidate.resolve_cell_store = csb_v1_runtime_dsa_resolve_cell_store;
+    candidate.set_cell_info = csb_v1_runtime_dsa_set_cell_info;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
         staged_parameters[i] = parameters[i];
