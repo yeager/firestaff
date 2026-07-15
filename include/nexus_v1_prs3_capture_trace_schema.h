@@ -125,6 +125,14 @@ typedef struct {
      * token grammar, output buffer ownership, or drawable pixels. */
     int sh2_control_low_bit_semantics_proven;
     int sh2_nonzero_direct_byte_path_proven;
+    uint32_t nonzero_source_counter_decrement_offset;
+    int32_t nonzero_source_counter_delta;
+    uint32_t zero_source_counter_decrement_offset;
+    int32_t zero_source_counter_delta;
+    /* The low-bit branches debit the source counter by different exact
+     * amounts before their direct reads. This proves source consumption only,
+     * never a PRS3 token class, byte field, or output/pixel behavior. */
+    int sh2_control_dependent_source_consumption_proven;
     uint32_t zero_first_byte_read_offset;
     uint32_t zero_second_byte_read_offset;
     uint32_t zero_sequential_input_byte_count;

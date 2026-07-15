@@ -408,6 +408,11 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_terminal_failure_path_proven &&
                receipt.sh2_control_low_bit_semantics_proven &&
                receipt.sh2_nonzero_direct_byte_path_proven &&
+               receipt.nonzero_source_counter_decrement_offset == 85458U &&
+               receipt.nonzero_source_counter_delta == -1 &&
+               receipt.zero_source_counter_decrement_offset == 85476U &&
+               receipt.zero_source_counter_delta == -2 &&
+               receipt.sh2_control_dependent_source_consumption_proven &&
                receipt.sh2_zero_side_index_read_verified &&
                receipt.sh2_zero_side_two_byte_input_span_proven &&
                receipt.sh2_zero_byte_merge_order_proven &&
@@ -439,6 +444,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    !receipt.sh2_control_low_bit_semantics_proven &&
                    !receipt.sh2_nonzero_direct_byte_path_proven,
                "changed low-bit mask setup rejects the source byte-path receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85458U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_control_dependent_source_consumption_proven,
+               "changed nonzero source debit rejects branch-local consumption receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);

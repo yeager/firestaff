@@ -771,6 +771,10 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + SH2_STREAM_BYTE_READ_OFFSET) == 0x62c4U &&
         read_be16(dm_bin + SH2_OUTPUT_INDEX_COPY_OFFSET) == 0x6063U &&
         read_be16(dm_bin + SH2_OUTPUT_BYTE_STORE_OFFSET) == 0x0d24U;
+    receipt.nonzero_source_counter_decrement_offset = SH2_V1_CALLEE_OFFSET + 82U;
+    receipt.nonzero_source_counter_delta = -1;
+    receipt.zero_source_counter_decrement_offset = SH2_V1_CALLEE_OFFSET + 100U;
+    receipt.zero_source_counter_delta = -2;
     receipt.zero_first_byte_read_offset = SH2_ZERO_FIRST_BYTE_READ_OFFSET;
     receipt.zero_second_byte_read_offset = SH2_ZERO_SECOND_BYTE_READ_OFFSET;
     receipt.zero_sequential_input_byte_count = 2U;
@@ -816,6 +820,22 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + receipt.zero_first_byte_read_offset) == 0x64c4U &&
         read_be16(dm_bin + receipt.zero_first_byte_read_offset + 2U) == 0x644cU &&
         read_be16(dm_bin + receipt.zero_second_byte_read_offset) == 0x67c4U;
+    /* The two low-bit corridors debit R14 before their direct source reads:
+     * `ADD #-1,R14` before one nonzero-side byte and `ADD #-2,R14` before
+     * two zero-side bytes. This is a branch-local consumption fact only;
+     * token semantics, output, palette, and pixels remain unproved. */
+    receipt.sh2_control_dependent_source_consumption_proven =
+        receipt.sh2_control_low_bit_semantics_proven &&
+        receipt.sh2_nonzero_direct_byte_path_proven &&
+        receipt.sh2_zero_side_two_byte_input_span_proven &&
+        receipt.nonzero_source_counter_decrement_offset ==
+            SH2_V1_CALLEE_OFFSET + 82U &&
+        receipt.nonzero_source_counter_delta == -1 &&
+        receipt.zero_source_counter_decrement_offset ==
+            SH2_V1_CALLEE_OFFSET + 100U &&
+        receipt.zero_source_counter_delta == -2 &&
+        read_be16(dm_bin + receipt.nonzero_source_counter_decrement_offset) == 0x7effU &&
+        read_be16(dm_bin + receipt.zero_source_counter_decrement_offset) == 0x7efeU;
     /* The source-owned SH-2 sequence is:
      *   R8 = PC-relative 0x0f00; R2 = 15;
      *   R3 = R7; SHLL2 R3; SHLL2 R3; AND R8,R3; OR R3,R4; AND R2,R7.
@@ -956,6 +976,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_loop_body_bound && receipt.sh2_control_low_bit_semantics_proven &&
         receipt.sh2_terminal_failure_path_proven &&
         receipt.sh2_nonzero_direct_byte_path_proven &&
+        receipt.sh2_control_dependent_source_consumption_proven &&
         receipt.sh2_zero_side_index_read_verified &&
         receipt.sh2_zero_side_two_byte_input_span_proven &&
         receipt.sh2_zero_byte_merge_order_proven &&

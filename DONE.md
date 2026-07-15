@@ -19042,3 +19042,13 @@ source-counter guards all branch to one shared epilogue. That path writes zero
 to R0 before the routine's RTS. It is intentionally recorded only as a static
 failure-shaped terminal path: it does not prove a PRS3 end marker, externally
 observed status, successful termination, decoder output, palette, or rendering.
+
+# Nexus PRS3 V1 branch-local source consumption (2026-07-15)
+
+The source-locked DM.BIN receipt now records the two exact SH-2 R14 counter
+debits that precede direct stream reads: the nonzero low-bit corridor executes
+`ADD #-1,R14` before its one-byte `@R12+` read, and the zero-side corridor
+executes `ADD #-2,R14` before its two adjacent `@R12+` reads. The receipt
+rejects either changed instruction. This establishes only static input-byte
+consumption by branch; it does not name PRS3 tokens, fields, output/history
+behavior, palette use, decoded pixels, or a renderable surface.
