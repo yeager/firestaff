@@ -81,8 +81,8 @@
   fragment; SPELDRAW F0393 consumes C009 pixels through the original inclusive
   caster-tab invert boxes. Remaining work is real PC34/Mac capture of
   action-menu transitions, spell refresh, tab inversion, and hit targets. Do
-   not restore a permissive bitmap blit, procedural panel, arbitrary font, or
-   host-font route.
+  not restore a permissive bitmap blit, procedural panel, arbitrary font, or
+  host-font route.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces

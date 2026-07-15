@@ -2976,6 +2976,48 @@ static void m11_draw_ra_overlay(const M11_GameViewState* state,
  * one primitive so F0387 and F0397/F0398 cannot slowly diverge. */
 enum { M11_DM1_M653_BASELINE_TO_TOP_PC34 = 4 };
 
+static int m11_draw_dm1_m653_cell_clipped_at_baseline(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int baselineX,
+    int baselineY,
+    unsigned char ch,
+    unsigned char foreground,
+    unsigned char background,
+    int clipX,
+    int clipY,
+    int clipW,
+    int clipH)
+{
+    const int fontX = ((int)ch * M11_FONT_CHAR_CELL_WIDTH) +
+                      M11_FONT_X_OFFSET;
+    const int topY = baselineY - M11_DM1_M653_BASELINE_TO_TOP_PC34;
+    int row;
+
+    if (!font || !M11_Font_IsLoaded(font) || !framebuffer ||
+        clipW <= 0 || clipH <= 0) {
+        return 0;
+    }
+    for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
+        int col;
+        for (col = 0; col < M11_FONT_CHAR_VISIBLE_W; ++col) {
+            const int dstX = baselineX + col;
+            const int dstY = topY + row;
+            if (dstX >= clipX && dstX < clipX + clipW &&
+                dstY >= clipY && dstY < clipY + clipH &&
+                dstX >= 0 && dstX < framebufferWidth &&
+                dstY >= 0 && dstY < framebufferHeight) {
+                framebuffer[dstY * framebufferWidth + dstX] =
+                    M11_Font_GetPixel(font, fontX + col, row)
+                        ? foreground : background;
+            }
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_dm1_m653_cell_at_baseline(
     const M11_FontState* font,
     unsigned char* framebuffer,
@@ -2987,28 +3029,10 @@ static int m11_draw_dm1_m653_cell_at_baseline(
     unsigned char foreground,
     unsigned char background)
 {
-    const int fontX = ((int)ch * M11_FONT_CHAR_CELL_WIDTH) +
-                      M11_FONT_X_OFFSET;
-    const int topY = baselineY - M11_DM1_M653_BASELINE_TO_TOP_PC34;
-    int row;
-
-    if (!font || !M11_Font_IsLoaded(font) || !framebuffer) {
-        return 0;
-    }
-    for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
-        int col;
-        for (col = 0; col < M11_FONT_CHAR_VISIBLE_W; ++col) {
-            const int dstX = baselineX + col;
-            const int dstY = topY + row;
-            if (dstX >= 0 && dstX < framebufferWidth &&
-                dstY >= 0 && dstY < framebufferHeight) {
-                framebuffer[dstY * framebufferWidth + dstX] =
-                    M11_Font_GetPixel(font, fontX + col, row)
-                        ? foreground : background;
-            }
-        }
-    }
-    return 1;
+    return m11_draw_dm1_m653_cell_clipped_at_baseline(
+        font, framebuffer, framebufferWidth, framebufferHeight,
+        baselineX, baselineY, ch, foreground, background,
+        0, 0, framebufferWidth, framebufferHeight);
 }
 
 static void m11_draw_dm1_ui_text_trailing_spaces(
@@ -3021,9 +3045,11 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
     const char* text,
     int maxChars,
     unsigned char fgColor,
-    unsigned char bgColor) {
+    unsigned char bgColor,
+    const DM1_V1_ActionAreaRectPc34* clipRect) {
     int i;
-    if (!framebuffer || maxChars <= 0) {
+    if (!framebuffer || maxChars <= 0 || !clipRect ||
+        clipRect->w <= 0 || clipRect->h <= 0) {
         return;
     }
     /* ACTIDRAW.C F0387 -> TEXT2.C writes the fixed native cell font into
@@ -3035,11 +3061,12 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
             if (text && text[i] != '\0') {
                 ch = (unsigned char)text[i];
             }
-            (void)m11_draw_dm1_m653_cell_at_baseline(
+            (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
                 g_activeOriginalFont, framebuffer, framebufferWidth,
                 framebufferHeight,
                 x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34), y,
-                ch, fgColor, bgColor);
+                ch, fgColor, bgColor,
+                clipRect->x, clipRect->y, clipRect->w, clipRect->h);
         }
         return;
     }
@@ -33117,7 +33144,8 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             renderPlan->header_text.y,
             nameBuf, DM1_V1_ACTION_MENU_HEADER_TEXT_LEN_PC34,
             (unsigned char)renderPlan->header_text_color,
-            (unsigned char)renderPlan->header_fill_color);
+            (unsigned char)renderPlan->header_fill_color,
+            &renderPlan->header_rect);
     }
 
     /* Action rows: pull the 3-tuple from the champion's action-hand
@@ -33137,7 +33165,8 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                 name ? name : "",
                 DM1_V1_ACTION_MENU_ROW_TEXT_LEN_PC34,
                 (unsigned char)renderPlan->row_text_color,
-                (unsigned char)renderPlan->row_fill_color);
+                (unsigned char)renderPlan->row_fill_color,
+                &renderPlan->row_rects[row]);
         }
     }
     return 1;
@@ -35013,6 +35042,75 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB SPELDRAW.C F0393 sends the current source panel pixels through
+ * IMAGE.C F0698_InvertBox.  The retained M11 surface is indexed 4bpp, so
+ * complementing its low nibble is the exact inverse operation; this never
+ * creates a color, border, or font outside C009/C011's loaded pixels. */
+static int m11_invert_dm1_pc34_indexed_box(
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int left,
+    int top,
+    int right,
+    int bottom)
+{
+    int x;
+    int y;
+
+    if (!framebuffer || left > right || top > bottom ||
+        right < 0 || bottom < 0 || left >= framebufferWidth ||
+        top >= framebufferHeight) {
+        return 0;
+    }
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    if (right >= framebufferWidth) right = framebufferWidth - 1;
+    if (bottom >= framebufferHeight) bottom = framebufferHeight - 1;
+    for (y = top; y <= bottom; ++y) {
+        for (x = left; x <= right; ++x) {
+            framebuffer[y * framebufferWidth + x] ^= 0x0fU;
+        }
+    }
+    return 1;
+}
+
+static int m11_build_dm1_spell_area_overlay_plan(
+    const M11_GameViewState* state,
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34* outPlan)
+{
+    DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 input;
+    int active;
+    int i;
+
+    if (!state || !outPlan) return 0;
+    active = state->world.party.activeChampionIndex;
+    if (active < 0 || active >= state->world.party.championCount ||
+        active >= DM1_V1_CPSAO_CHAMPION_COUNT_PC34) {
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.previous_caster_index = DM1_V1_CPSAO_CHAMPION_NONE_PC34;
+    input.requested_caster_index = active;
+    input.party_champion_count = state->world.party.championCount;
+    input.symbol_step = (unsigned int)state->spellRuneRow;
+    for (i = 0; i < input.party_champion_count; ++i) {
+        input.champions[i].index = i;
+        input.champions[i].current_health =
+            state->world.party.champions[i].present
+                ? (int)state->world.party.champions[i].hp.current : 0;
+    }
+    for (i = 0; i < state->spellBuffer.runeCount &&
+                i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
+        input.champions[active].symbols[i] =
+            (char)state->spellBuffer.runes[i];
+    }
+    return dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
+        &input, outPlan) && outPlan->valid &&
+        outPlan->drew_spell_area_controls &&
+        outPlan->drew_available_symbols && outPlan->drew_champion_symbols;
+}
+
 static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
@@ -35020,6 +35118,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     int spellX, spellY, spellW, spellH;
     int i;
     const M11_AssetSlot* linesAsset;
+    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
     if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
         m11_v2_vertical_slice_enabled()) {
         return;
@@ -35081,42 +35180,46 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         return;
     }
 
-    {
-        int row = state->spellRuneRow;
-        if (row < 0) row = 0;
-        if (row >= DM1_V1_SPELL_RUNE_ROW_COUNT_PC34) {
-            row = DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 - 1;
+    if (!m11_build_dm1_spell_area_overlay_plan(state, &plan)) {
+        return;
+    }
+    /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has
+     * materialized it. The plan supplies the original inclusive box, so the
+     * inverse cannot leak into another champion or rune line. */
+    for (i = 0; i < plan.tab_count; ++i) {
+        if (plan.line1[i].highlighted) {
+            (void)m11_invert_dm1_pc34_indexed_box(
+                framebuffer, framebufferWidth, framebufferHeight,
+                plan.line1[i].tab_x0, plan.line1[i].tab_y0,
+                plan.line1[i].tab_x1, plan.line1[i].tab_y1);
         }
-        /* MENUDRAW.C F0397 always repaints the six-symbol source window.
-         * A full four-rune buffer must not suppress this line. */
-        for (i = 0; i < DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34; ++i) {
-            unsigned char glyph = (unsigned char)(
-                DM1_V1_CPSAO_AVAILABLE_SYMBOL_BASE_PC34 +
-                DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34 * row + i);
-            (void)m11_draw_dm1_m653_cell_at_baseline(
-                g_activeOriginalFont, framebuffer, framebufferWidth,
-                framebufferHeight,
-                DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 +
-                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 * i,
-                DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34, glyph,
-                DM1_V1_CPSAO_COLOR_CYAN_PC34,
-                DM1_V1_CPSAO_COLOR_BLACK_PC34);
-        }
+    }
+    /* MENUDRAW.C F0397 always repaints the six-symbol source window. A full
+     * four-rune buffer must not suppress this line. */
+    for (i = 0; i < plan.available_symbol_count; ++i) {
+        (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
+            g_activeOriginalFont, framebuffer, framebufferWidth,
+            framebufferHeight, plan.line2[i].screen_x,
+            plan.line2[i].screen_y, (unsigned char)plan.line2[i].character,
+            (unsigned char)plan.line2[i].color_cyan,
+            (unsigned char)plan.line2[i].color_black,
+            DM1_V1_CPSAO_LINE2_X0_PC34, DM1_V1_CPSAO_LINE2_Y0_PC34,
+            DM1_V1_CPSAO_LINE2_X1_PC34 - DM1_V1_CPSAO_LINE2_X0_PC34 + 1,
+            DM1_V1_CPSAO_LINE2_Y1_PC34 - DM1_V1_CPSAO_LINE2_Y0_PC34 + 1);
     }
     /* MENUDRAW.C F0398 owns exactly four output cells, space-padding the
      * tail so recant/caster changes cannot retain stale source glyphs. */
-    for (i = 0; i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
-        unsigned char glyph = i < state->spellBuffer.runeCount
-            ? (unsigned char)state->spellBuffer.runes[i]
-            : (unsigned char)' ';
-        (void)m11_draw_dm1_m653_cell_at_baseline(
+    for (i = 0; i < plan.champion_symbol_count; ++i) {
+        (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
             g_activeOriginalFont, framebuffer, framebufferWidth,
-            framebufferHeight,
-            DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 +
-                DM1_V1_CPSAO_CHAMPION_SYMBOL_STEP_PC34 * i,
-            DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34, glyph,
+            framebufferHeight, plan.line3[i].screen_x,
+            plan.line3[i].screen_y,
+            (unsigned char)plan.line3[i].drawn_character,
             DM1_V1_CPSAO_COLOR_CYAN_PC34,
-            DM1_V1_CPSAO_COLOR_BLACK_PC34);
+            DM1_V1_CPSAO_COLOR_BLACK_PC34,
+            DM1_V1_CPSAO_LINE3_X0_PC34, DM1_V1_CPSAO_LINE3_Y0_PC34,
+            DM1_V1_CPSAO_LINE3_X1_PC34 - DM1_V1_CPSAO_LINE3_X0_PC34 + 1,
+            DM1_V1_CPSAO_LINE3_Y1_PC34 - DM1_V1_CPSAO_LINE3_Y0_PC34 + 1);
     }
 }
 
