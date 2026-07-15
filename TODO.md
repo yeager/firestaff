@@ -8021,6 +8021,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     must still bind palette/transform state and an active DGN face.
 
 - [ ] Nexus Structure3 real-dungeon geometry and texture decode capture:
+  - 2026-07-15 direct owner bridge update: a selected active Structure1F row
+    can now emit one atomic no-draw capture request containing its canonical
+    LEV hash, exact Structure1A/Structure3 owner fields, face/vertex/normal
+    row hashes, parsed vertex indexes, and raw transform-table fingerprints.
+    It is capture-producer input only; Saturn execution must still establish
+    transform, culling, material, VDP1, palette, and draw semantics.
   - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
     a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
     its contiguous output address range, sequence interval, and byte witness.

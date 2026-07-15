@@ -3787,6 +3787,7 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
 
     if (!out_target) return -1;
     memset(out_target, 0, sizeof(*out_target));
+    memset(&target, 0, sizeof(target));
     out_target->level_index = -1;
     out_target->no_draw_only = 1;
     if (!path || !path[0] ||
@@ -6108,6 +6109,86 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
     target.valid = 1;
     *out_target = target;
     return 1;
+}
+
+int nexus_v1_engine_write_structure1f_direct_face_capture_target(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *path, Nexus_V1_DgnStructure1FTransformCaptureTarget *out_target)
+{
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+    const Nexus_V1_DgnStructure3FaceCaptureCandidate *face_target;
+    char temporary_path[1024];
+    FILE *file;
+    int write_ok;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    memset(&target, 0, sizeof(target));
+    if (!path || !path[0] ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path) ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &target) != 1 || !target.valid ||
+        !target.geometry.valid || !target.geometry.source_geometry_bound ||
+        !target.geometry.direct_mesh.valid ||
+        !target.transform_table_source_bound ||
+        !target.owner_transform_selector_source_bound ||
+        !target.capture_producer_required ||
+        !target.original_saturn_capture_required || !target.no_draw_only ||
+        target.fallback_visuals_permitted || !target.blocks_real_dgn_mesh_render) {
+        *out_target = target;
+        return 0;
+    }
+    face_target = &target.geometry.direct_mesh.face_target.candidate;
+    file = fopen(temporary_path, "wb");
+    if (!file) {
+        *out_target = target;
+        return 0;
+    }
+    write_ok = fprintf(file,
+                       "%s\n"
+                       "level_index=%d\nsource_byte_count=%d\n"
+                       "source_bytes_fnv1a64=%016llx\n"
+                       "structure1f_entry_index=%d\nowner_x=%d\nowner_y=%d\n"
+                       "structure1a_index=%u\nstructure3_model_index=%u\n"
+                       "face_ordinal=%u\nz_rotation=%u\n"
+                       "face_row_fnv1a32=%08x\n"
+                       "referenced_vertex_rows_fnv1a32=%08x\n"
+                       "normal_row_fnv1a32=%08x\nfill_selector=%u\n"
+                       "vertex_indexes=%u,%u,%u,%u\n"
+                       "structure1a_table_offset=%d\nstructure1a_table_bytes=%d\n"
+                       "structure1a_table_fnv1a64=%016llx\n"
+                       "selector_column_fnv1a64=%016llx\n"
+                       "requested_observations=source-read,owner,face,vertices,normal,transform,culling,vdp1\n"
+                       "original_saturn_capture_required=1\nno_draw_only=1\n",
+                       NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_TARGET_MAGIC,
+                       target.geometry.direct_mesh.level_index,
+                       target.geometry.direct_mesh.source_byte_count,
+                       (unsigned long long)target.geometry.direct_mesh.source_bytes_fnv1a64,
+                       target.geometry.direct_mesh.structure1f_entry_index,
+                       target.geometry.direct_mesh.owner_x,
+                       target.geometry.direct_mesh.owner_y,
+                       target.geometry.direct_mesh.structure1a_index,
+                       target.geometry.direct_mesh.structure3_model_index,
+                       target.geometry.direct_mesh.face_ordinal,
+                       target.geometry.direct_mesh.z_rotation,
+                       face_target->face_row_fnv1a32,
+                       face_target->referenced_vertex_rows_fnv1a32,
+                       face_target->normal_row_fnv1a32,
+                       face_target->fill_selector,
+                       target.geometry.face.vertex_indexes[0],
+                       target.geometry.face.vertex_indexes[1],
+                       target.geometry.face.vertex_indexes[2],
+                       target.geometry.face.vertex_indexes[3],
+                       target.transform_table.table_byte_offset,
+                       target.transform_table.table_byte_count,
+                       (unsigned long long)target.transform_table.raw_table_fnv1a64,
+                       (unsigned long long)target.transform_table.selector_column_fnv1a64) > 0;
+    if (fclose(file) != 0) write_ok = 0;
+    if (write_ok && rename(temporary_path, path) != 0) write_ok = 0;
+    if (!write_ok) remove(temporary_path);
+    *out_target = target;
+    return write_ok ? 1 : 0;
 }
 
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(

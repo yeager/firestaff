@@ -19218,3 +19218,14 @@ remain inside the same TII destination span and match its corresponding
 original byte (`$3c89`). This extends the byte-to-execution chain without
 assigning instruction, record, dungeon, object, palette, bitmap, or rendering
 meaning.
+
+# Nexus Structure1F direct face capture bridge (2026-07-15)
+
+One active canonical Structure1F owner can now write an atomic capture-producer
+manifest containing its exact LEV identity, Structure1A owner/model/rotation,
+selected Structure3 face ordinal, face/vertex/normal row fingerprints, parsed
+vertex indexes, and raw Structure1A transform-table fingerprints. The writer
+requires the existing source-bound geometry and transform receipts and emits
+only `original_saturn_capture_required=1` and `no_draw_only=1`. It does not
+decode materials or establish transforms, culling, VDP1, palette, pixels, or
+rendering.
