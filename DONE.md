@@ -1,5 +1,7 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 G1 first-frame wall ownership: boot now consumes the real G1 packed start pose after projecting its 5-bit coordinates through map-0 `Map_definitions` origins and checking raw map bounds. The first M10 frame consequently consumes source GDAT wall panels rather than rendering from the synthetic `(15,15,N)` pose outside the 7x10 map. Source: skproject `DME.h` `File_header::StartPartyPosX/Y`, `Map_definitions::MapOffsetX/Y`, and `SkWinCore.cpp READ_DUNGEON_STRUCTURE`. Verification: canonical G1 runtime-map test plus boot smoke 86 pass / 2 remaining directional-capture failures.
+
 - 2026-07-15 DM2 real-profile MBCS HUD gate: high-bit champion text now follows skproject `DRAW_STRING`/`DRAW_MBCS_STR` when the real GDAT has no category-0x1c font records, consuming the unsupported MBCS bytes without painting an ASCII or synthetic substitute. This removes false HUD-material blocking while preserving a fail-closed visual outcome. Verification: real boot smoke.
 
 - 2026-07-15 DM2 verified HUD HeroType bootstrap: runtime boot now binds the

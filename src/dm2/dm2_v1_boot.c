@@ -1041,6 +1041,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     gs->party_dir = 0;  /* North */
     gs->current_level = 0;
     gs->outdoor = 0;
+    if (dd->initial_party_pose_valid) {
+        gs->party_x = dd->initial_party_x;
+        gs->party_y = dd->initial_party_y;
+        gs->party_dir = dd->initial_party_dir;
+    }
 
     profile->dm2_state = gs;
     profile->dungeon_data = dd;

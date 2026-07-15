@@ -814,6 +814,10 @@ typedef struct {
     int map_use_door0[DM2_V1_MAX_LEVELS];
     int map_use_door1[DM2_V1_MAX_LEVELS];
     int map_door_ornate_count[DM2_V1_MAX_LEVELS];
+    int initial_party_pose_valid;
+    int initial_party_x;
+    int initial_party_y;
+    int initial_party_dir;
     int square_bytes;
     int raw_map_data_base;
     int column_index_base;

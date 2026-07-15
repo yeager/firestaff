@@ -390,6 +390,22 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         total_columns += w;
     }
 
+    /* File_header stores the start pose in 5/5/2 bits; Map_definitions
+     * supplies the map origin.  Admit only the wrapped local coordinate
+     * when it is owned by map 0, never a fixed boot position. */
+    {
+        uint16_t start = RD16(dat + 10);
+        int x = ((int)(start & 0x1fu) - (out->map_offset_x[0] & 0x1f)) & 0x1f;
+        int y = ((int)((start >> 5) & 0x1fu) -
+                 (out->map_offset_y[0] & 0x1f)) & 0x1f;
+        if (x < out->level_widths[0] && y < out->level_heights[0]) {
+            out->initial_party_pose_valid = 1;
+            out->initial_party_x = x;
+            out->initial_party_y = y;
+            out->initial_party_dir = (int)((start >> 10) & 0x03u);
+        }
+    }
+
     /* The G1 file has an observed 256-byte extension directly after its map
      * definitions.  Its following table is the c_map.cpp column-prefix table:
      * 480 LE words, monotonically increasing from 0 to 1187 in the real DOS
