@@ -192,6 +192,36 @@ static void viewport_stage_structure3_animated_materials(
     vp->last_dgn_render_receipt.structure3_animated_material_scene = scene;
 }
 
+static int viewport_consume_structure3_untextured_face(
+    void *context, const Nexus_V1_DgnStructure3UntexturedFacePacket *packet)
+{
+    Nexus_Viewport *vp = (Nexus_Viewport *)context;
+
+    if (!vp || !packet || !packet->valid) return -1;
+    if (!vp->structure3_untextured_face.valid)
+        vp->structure3_untextured_face = *packet;
+    return 0;
+}
+
+static void viewport_stage_structure3_untextured_faces(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt scene;
+
+    if (!vp) return;
+    memset(&vp->structure3_untextured_face, 0,
+           sizeof(vp->structure3_untextured_face));
+    memset(&scene, 0, sizeof(scene));
+    if (!engine || nexus_v1_current_level_visit_structure3_untextured_faces(
+                       engine, viewport_consume_structure3_untextured_face,
+                       vp, &scene) != 1 || !scene.valid || !scene.complete ||
+        scene.untextured_face_count <= 0 ||
+        scene.untextured_face_count != scene.consumed_face_count ||
+        !vp->structure3_untextured_face.valid) return;
+    vp->last_dgn_render_receipt.structure3_untextured_face_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure3_untextured_face_scene = scene;
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -251,6 +281,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
          * Saturn pixel/palette/VDP1 evidence is available. */
         viewport_stage_structure3_package_geometry(vp, engine);
         viewport_stage_structure3_animated_materials(vp, engine);
+        viewport_stage_structure3_untextured_faces(vp, engine);
         /* The real runtime must not convert a decoded DMDF-only bank into
          * visible DGN material. FLOORS/WALLS need independently verified BPK
          * containers and completed host routes; missing Track 1 containers

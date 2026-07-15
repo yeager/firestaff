@@ -55,6 +55,11 @@ typedef struct {
     int invalid_packet_count;
 } AnimatedMaterialVisitCount;
 
+typedef struct {
+    int packet_count;
+    int invalid_packet_count;
+} UntexturedFaceVisitCount;
+
 static int count_package_geometry_packet(
     void *context, const Nexus_V1_DgnStructure3PackageGeometryPacket *packet)
 {
@@ -82,6 +87,22 @@ static int count_animated_material_packet(
         packet->pixel_palette_vdp1_semantics_proven || packet->decoder_permitted ||
         !packet->no_draw_only || packet->fallback_visuals_permitted ||
         !packet->blocks_real_dgn_mesh_render) {
+        ++count->invalid_packet_count;
+    }
+    return 0;
+}
+
+static int count_untextured_face_packet(
+    void *context, const Nexus_V1_DgnStructure3UntexturedFacePacket *packet)
+{
+    UntexturedFaceVisitCount *count = (UntexturedFaceVisitCount *)context;
+    if (!count || !packet) return -1;
+    ++count->packet_count;
+    if (!packet->valid || !packet->source_geometry_bound ||
+        !packet->raw_fill_bound || packet->flat_fill_semantics_proven ||
+        packet->pixel_palette_vdp1_semantics_proven || packet->decoder_permitted ||
+        !packet->no_draw_only || packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render || (packet->face.flags & 0x40U)) {
         ++count->invalid_packet_count;
     }
     return 0;
@@ -664,8 +685,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
         Nexus_V1_DgnStructure3PackageGeometrySceneReceipt package_scene;
         Nexus_V1_DgnStructure3AnimatedMaterialPacket animated_packet;
+        Nexus_V1_DgnStructure3UntexturedFacePacket untextured_packet;
         Nexus_Viewport package_viewport;
         Nexus_Viewport animated_viewport;
+        Nexus_Viewport untextured_viewport;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -1354,6 +1377,90 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       animated_packet.no_draw_only &&
                       !animated_packet.fallback_visuals_permitted,
                       "levels without Structure3 animated selectors cannot manufacture animation packets");
+            }
+        }
+        {
+            int entry_index;
+            int found_untextured_face_packet = 0;
+
+            memset(&untextured_packet, 0, sizeof(untextured_packet));
+            for (entry_index = 0;
+                 entry_index < loaded_level.structure3_directory.entry_count &&
+                 !found_untextured_face_packet;
+                 ++entry_index) {
+                int face_index;
+                for (face_index = 0;
+                     face_index < loaded_level.structure3_entry_face_counts[entry_index];
+                     ++face_index) {
+                    if (nexus_v1_current_level_structure3_untextured_face_packet(
+                            &active_engine, (uint32_t)entry_index,
+                            (uint32_t)face_index, &untextured_packet) == 1) {
+                        found_untextured_face_packet = 1;
+                        break;
+                    }
+                }
+            }
+            CHECK(found_untextured_face_packet && untextured_packet.valid &&
+                  untextured_packet.source_geometry_bound &&
+                  untextured_packet.raw_fill_bound &&
+                  untextured_packet.level_index == level &&
+                  untextured_packet.source_byte_count == (int)size &&
+                  untextured_packet.source_bytes_fnv1a64 ==
+                      fnv1a64(data, (size_t)size) &&
+                  (untextured_packet.face.flags & 0x40U) == 0U &&
+                  untextured_packet.raw_fill_selector ==
+                      untextured_packet.face.fill_selector &&
+                  !untextured_packet.flat_fill_semantics_proven &&
+                  !untextured_packet.transform_semantics_proven &&
+                  !untextured_packet.pixel_palette_vdp1_semantics_proven &&
+                  !untextured_packet.decoder_permitted &&
+                  untextured_packet.no_draw_only &&
+                  !untextured_packet.fallback_visuals_permitted &&
+                  untextured_packet.blocks_real_dgn_mesh_render,
+                  "retail non-textured Structure3 face binds exact geometry and opaque fill no-draw");
+            {
+                Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt scene;
+                UntexturedFaceVisitCount visit_count;
+                memset(&scene, 0, sizeof(scene));
+                memset(&visit_count, 0, sizeof(visit_count));
+                CHECK(nexus_v1_current_level_visit_structure3_untextured_faces(
+                          &active_engine, count_untextured_face_packet,
+                          &visit_count, &scene) == 1 && scene.valid &&
+                      scene.complete && scene.level_index == level &&
+                      scene.source_byte_count == (int)size &&
+                      scene.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      scene.candidate_face_count ==
+                          loaded_level.structure3_faces.face_count &&
+                      scene.untextured_face_count ==
+                          loaded_level.structure3_face_materials
+                              .non_textured_face_count &&
+                      scene.untextured_face_count == scene.consumed_face_count &&
+                      visit_count.packet_count == scene.consumed_face_count &&
+                      visit_count.invalid_packet_count == 0 &&
+                      !scene.flat_fill_semantics_proven &&
+                      !scene.pixel_palette_vdp1_semantics_proven &&
+                      !scene.decoder_permitted && scene.no_draw_only &&
+                      !scene.fallback_visuals_permitted &&
+                      scene.blocks_real_dgn_mesh_render,
+                      "retail Structure3 traversal consumes every non-textured face no-draw");
+                nexus_viewport_init(&untextured_viewport);
+                nexus_viewport_render(&untextured_viewport, &active_engine);
+                CHECK(untextured_viewport.last_dgn_render_receipt
+                          .structure3_untextured_face_scene_consumed &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure3_untextured_face_scene.complete &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure3_untextured_face_scene.consumed_face_count ==
+                          scene.consumed_face_count &&
+                      untextured_viewport.structure3_untextured_face.valid &&
+                      untextured_viewport.structure3_untextured_face
+                          .raw_fill_selector == untextured_packet.raw_fill_selector &&
+                      untextured_viewport.last_dgn_render_receipt.blocked &&
+                      !untextured_viewport.last_dgn_render_receipt.ready &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .rasterized_command_count == 0,
+                      "DGN viewport consumes complete non-textured source geometry without flat-fill drawing");
             }
         }
         if (level == 0) {
