@@ -695,7 +695,7 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     plan.title_source_step = 1;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 41u, &frame) == 1 && frame.valid &&
-              frame.title_surface->pixels == presents_pixels &&
+              frame.title_surface->pixels == title_pixels &&
               frame.left_door_surface->pixels == left_pixels &&
               frame.hud_inventory_surface->pixels == inventory_pixels &&
               frame.hud_resurrect_surface->pixels == resurrect_pixels &&
@@ -712,7 +712,7 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 42u, &frame) == 1 &&
-              frame.title_surface->pixels == chaos_pixels &&
+              frame.title_surface->pixels == title_pixels &&
               frame.title_phase_mask == 0x02 &&
               frame.frame_route_hash != 0u &&
               frame.left_door_surface->pixels == left_pixels,
@@ -720,7 +720,7 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     plan.title_stage = CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 43u, &frame) == 1 &&
-              frame.title_surface->pixels == strikes_pixels &&
+              frame.title_surface->pixels == title_pixels &&
               frame.title_phase_mask == 0x08 &&
               frame.frame_route_hash != 0u,
           "asset session selects STRIKES BACK from the original title session");
@@ -757,6 +757,10 @@ static void test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels
     frame.title_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
         title, 320, 80, 1, 1, 0, 0, -1};
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
+    plan.title_source_x = 0;
+    plan.title_source_y = 0;
+    plan.title_source_w = 320;
+    plan.title_source_h = 80;
     plan.title_dest_x = 136;
     plan.title_dest_y = 74;
     plan.title_dest_w = 48;
@@ -888,7 +892,7 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
           "PRESENTS keeps its original 60-vblank route");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 1u, &frame) == 1 &&
-              frame.title_surface->pixels == presents_pixels,
+              frame.title_surface->pixels == title_pixels,
           "PRESENTS render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 60, &plan, &audio_action) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
@@ -896,7 +900,7 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
           "CHAOS enters through the original first zoom step");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 2u, &frame) == 1 &&
-              frame.title_surface->pixels == chaos_pixels,
+              frame.title_surface->pixels == title_pixels,
           "CHAOS render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan, &audio_action) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
@@ -904,7 +908,7 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
           "completed CHAOS hold retains the verified title bitmap");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 3u, &frame) == 1 &&
-              frame.title_surface->pixels == chaos_pixels,
+              frame.title_surface->pixels == title_pixels,
           "completed CHAOS hold retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 100, &plan, &audio_action) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
@@ -912,7 +916,7 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
           "STRIKES BACK follows the completed CHAOS hold without a synthetic frame");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 4u, &frame) == 1 &&
-              frame.title_surface->pixels == strikes_pixels,
+              frame.title_surface->pixels == title_pixels,
           "STRIKES BACK render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, csb_v1_startup_title_total_ticks_pc34(), &plan,

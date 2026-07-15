@@ -418,11 +418,16 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
         surface = frame->title_surface;
         if (!surface || !surface->valid || !surface->pixels ||
+            plan->title_source_w <= 0 || plan->title_source_h <= 0 ||
             plan->title_dest_w <= 0 || plan->title_dest_h <= 0) goto done;
+        /* TITLE.C F0437 selects distinct C001 source rectangles for
+         * PRESENTS, CHAOS, and STRIKES BACK.  Scaling the complete 320x153
+         * asset here discards that contract and can present a black phase. */
         copied = csb_v1_startup_raster_blit_pc34(
             pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
-            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34, surface, 0, 0,
-            surface->width, surface->height, plan->title_dest_x,
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34, surface,
+            plan->title_source_x, plan->title_source_y,
+            plan->title_source_w, plan->title_source_h, plan->title_dest_x,
             plan->title_dest_y, plan->title_dest_w, plan->title_dest_h,
             plan->title_transparent_color);
         out_raster->title_composited = copied ? 1 : 0;
@@ -667,12 +672,11 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
         out_frame->title_phase_mask =
             csb_v1_startup_frame_title_phase_mask_pc34(out_frame->stage);
-        if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34)
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
-        else if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34)
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
-        else
-            out_frame->title_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34];
+        /* TITLE.C F0437's plan addresses the resident C001 bitmap.  The
+         * retained phase crops prove package geometry at load time, but are
+         * not a second coordinate system for M11 presentation. */
+        out_frame->title_surface = &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
     } else if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
         out_frame->entrance_surface = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34];
     } else if (plan->surface != CSB_V1_STARTUP_RENDER_NONE_PC34 &&
