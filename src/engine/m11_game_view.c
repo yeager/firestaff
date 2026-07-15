@@ -18572,30 +18572,6 @@ static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                            depthIndex);
 }
 
-/* Draw a pit visual effect: darkened floor area with depth gradient.
- * In DM1, pits appear as dark openings in the floor.  We darken the
- * lower portion of the cell face to simulate the pit opening. */
-static void m11_draw_pit_effect(unsigned char* framebuffer,
-                                int framebufferWidth,
-                                int framebufferHeight,
-                                int x, int y, int w, int h,
-                                int depthIndex) {
-    int pitY = y + h / 3;
-    int pitH = h - h / 3;
-    (void)depthIndex;
-    /* Draw dark pit opening on the floor area */
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x + 2, pitY, w - 4, pitH - 2, M11_COLOR_BLACK);
-    /* Outline for definition — dark gray border around the pit */
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  x + 1, pitY - 1, w - 2, pitH, M11_COLOR_DARK_GRAY);
-    /* Inner shadow lines for depth perception */
-    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                   x + 3, x + w - 4, pitY + 2, M11_COLOR_NAVY);
-    m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                   x + 4, x + w - 5, pitY + pitH - 4, M11_COLOR_NAVY);
-}
-
 /* ReDMCSB DUNVIEW.C F0115:6038-6074 handles the D0C explosion separately
  * from the F0114 scaled-sprite path: it selects one of M636's three
  * small/medium/large pattern bitmaps, then composites it through the D0C
@@ -18710,15 +18686,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
     /* Teleporter fields are source bitmap overlays, not procedural cue art.
      * Normal V1 draws them in m11_draw_dm1_teleporter_fields(), using
      * DUNVIEW.C F0113 + G0188/G2035 field-aspect rows. */
-    /* The source pit pass has already selected and blitted C049..C063 at
-     * this point (DUNVIEW.C F0128/F0104).  Keep the old cue only for
-     * asset-free fixtures; painting it in an authoritative session masks
-     * the verified original pit bitmap with invented geometry. */
-    if ((!g_drawState || !g_drawState->assetsAvailable) &&
-        cell->elementType == DUNGEON_ELEMENT_PIT && (cell->square & 0x08)) {
-        m11_draw_pit_effect(framebuffer, framebufferWidth, framebufferHeight,
-                            x, y, w, h, depthIndex);
-    }
+    /* The F0128/F0104 source pit pass owns C049..C063. Missing original
+     * material is intentionally no-draw; do not replace it with host geometry. */
     /* Explosions are intentionally not drawn here.  ReDMCSB F0115
      * finishes every packed object/creature/projectile cell first, then
      * restarts the thing list for a separate explosion pass
@@ -24958,32 +24927,13 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             for (pi = 0; pi < plan.count; ++pi) {
                 const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                 const DM1_CreatureDrawPlacement *placement = &entry->placement;
-                if (!g_drawState ||
-                    !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                 framebufferWidth, framebufferHeight,
-                                                 placement->x, placement->y,
-                                                 placement->w, placement->h,
-                                                 entry->creature_type, depthIndex,
-                                                 placement->side_hint,
-                                                 entry->creature_direction)) {
-                    if (!g_drawState || !g_drawState->assetsAvailable) {
-                        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                      paneX + paneW / 2 - 1,
-                                      placement->y + placement->h / 2 - 2,
-                                      3, 5, depthIndex == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
-                    }
-                }
-                if ((!g_drawState || !g_drawState->assetsAvailable) &&
-                    entry->first_in_group && entry->creature_count > 1 &&
-                    paneW >= 10 && placement->h >= 10) {
-                    char countStr[4];
-                    int badgeX = paneX + paneW - 9;
-                    int badgeY = placement->y + placement->h - 8;
-                    snprintf(countStr, sizeof(countStr), "%d", entry->creature_count);
-                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                  badgeX - 1, badgeY - 1, 9, 9, M11_COLOR_BLACK);
-                    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                  badgeX, badgeY, countStr, &g_text_small);
+                if (g_drawState && g_drawState->assetsAvailable) {
+                    (void)m11_draw_creature_sprite_ex(
+                        g_drawState, framebuffer, framebufferWidth,
+                        framebufferHeight, placement->x, placement->y,
+                        placement->w, placement->h, entry->creature_type,
+                        depthIndex, placement->side_hint,
+                        entry->creature_direction);
                 }
             }
         }
@@ -25125,20 +25075,13 @@ static void m11_draw_dm1_side_contents(const M11_GameViewState* state,
                 for (pi = 0; pi < plan.count; ++pi) {
                     const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                     const DM1_CreatureDrawPlacement *placement = &entry->placement;
-                    if (!g_drawState ||
-                        !m11_draw_creature_sprite_ex(g_drawState, framebuffer,
-                                                     framebufferWidth, framebufferHeight,
-                                                     placement->x, placement->y,
-                                                     placement->w, placement->h,
-                                                     entry->creature_type, depth,
-                                                     placement->side_hint,
-                                                     entry->creature_direction)) {
-                        if (!g_drawState || !g_drawState->assetsAvailable) {
-                            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                                          paneX + paneW / 2 - 1,
-                                          placement->y + placement->h / 2 - 2,
-                                          3, 5, depth == 0 ? M11_COLOR_LIGHT_GREEN : M11_COLOR_GREEN);
-                        }
+                    if (g_drawState && g_drawState->assetsAvailable) {
+                        (void)m11_draw_creature_sprite_ex(
+                            g_drawState, framebuffer, framebufferWidth,
+                            framebufferHeight, placement->x, placement->y,
+                            placement->w, placement->h, entry->creature_type,
+                            depth, placement->side_hint,
+                            entry->creature_direction);
                     }
                 }
             }

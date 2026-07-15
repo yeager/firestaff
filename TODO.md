@@ -6527,6 +6527,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ### DM1 V1
 
+- 🔧 DM1 F0115/F0128 viewport follow-up: ordinary objects, creatures,
+  projectiles, pits, and explosions now fail closed without original PC34
+  material. Remaining work is the complete per-square source scheduler and
+  real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
   ticks. This removes the prior every-tick food/water, starvation, F0325, and
