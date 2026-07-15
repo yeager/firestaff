@@ -3043,8 +3043,26 @@ static void test_structure3_entry_header_boundaries(void) {
               transform_state, (int)sizeof(transform_state),
               culling_state, (int)sizeof(culling_state),
               vdp1_command, (int)sizeof(vdp1_command), &capture) == 0 &&
+          capture.vdp1_command_format_matches &&
+          capture.vdp1_texture_span_size_matches &&
           capture.complete_source_binding,
           "the engine fixture produces one complete but no-draw Structure3 binding");
+    candidate.texture_span_fnv1a64 = fnv1a64(texture_span,
+                                              sizeof(texture_span) - 1U);
+    CHECK(nexus_v1_dgn_bind_structure3_face_capture_candidate(
+              &level, dgn, (int)sizeof(dgn), 1, 1, &candidate,
+              texture_span, (int)sizeof(texture_span) - 1,
+              palette_state, (int)sizeof(palette_state),
+              vdp1_state, (int)sizeof(vdp1_state),
+              transform_state, (int)sizeof(transform_state),
+              culling_state, (int)sizeof(culling_state),
+              vdp1_command, (int)sizeof(vdp1_command), &capture) != 0 &&
+          capture.vdp1_command_format_matches &&
+          !capture.vdp1_texture_span_size_matches &&
+          !capture.complete_source_binding,
+          "a hash-matched but undersized capture lane cannot bind a VDP1 texture command");
+    candidate.texture_span_fnv1a64 = fnv1a64(texture_span,
+                                              sizeof(texture_span));
     {
         Nexus_V1_Engine engine;
         Nexus_V1_DgnStructure3FaceCaptureBindingReceipt bound;
@@ -3251,6 +3269,8 @@ static void test_structure3_entry_header_boundaries(void) {
         bound.transform_state_matches = 1;
         bound.normal_culling_state_matches = 1;
         bound.vdp1_command_matches = 1;
+        bound.vdp1_command_format_matches = 1;
+        bound.vdp1_texture_span_size_matches = 1;
         bound.blocks_real_dgn_mesh_render = 1;
         import.original_saturn_capture_verified = 0;
         CHECK(!nexus_v1_engine_consume_structure3_capture(

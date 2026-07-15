@@ -1067,6 +1067,8 @@ typedef struct {
     int transform_state_matches;
     int normal_culling_state_matches;
     int vdp1_command_matches;
+    int vdp1_command_format_matches;
+    int vdp1_texture_span_size_matches;
     int complete_source_binding;
     /* A packet can be byte-bound without proving that an emulator captured
      * it from original Saturn execution. That provenance must be supplied by
