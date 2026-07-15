@@ -137,10 +137,10 @@ unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFron
 /*
  * Select the runtime source for the DM1 V1 TITLE animation.  The original
  * ReDMCSB PC path loads GRAPHICS.DAT C001_GRAPHIC_TITLE in TITLE.C F0437
- * before drawing PRESENTS / DUNGEON MASTER / STRIKES BACK.  Firestaff may use
- * the decoded TITLE.DAT bank only as a last-resort visible fallback when C001
- * is missing or too small for the source blits.  A usable C001 graphic always
- * wins, even if TITLE.DAT is also present.
+ * before drawing PRESENTS / DUNGEON MASTER / STRIKES BACK.  Firestaff records
+ * decoded TITLE.DAT availability only as rejected evidence; it is not a visible
+ * runtime substitute when C001 is missing or too small for the source blits.
+ * A usable C001 graphic is the only drawable DM1 PC34 title source.
  */
 V1_TitleFrontendRuntimeSourceDecision V1_TitleFrontend_SelectRuntimeSource(
     int graphicsC001CandidateAvailable,
