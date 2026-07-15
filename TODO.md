@@ -334,6 +334,11 @@
     documented Structure1A model byte remains only a source field: it does not
     prove Structure3 entry selection, mesh placement, texture, palette, VDP1,
     transform, decoder, or drawing semantics.
+  - 2026-07-15 static descriptor-face corpus update: all canonical `00xx`
+    Structure3 textured faces now revalidate their local Structure2 descriptor
+    and bounded raw anchor fields under one corpus fingerprint. The anchors
+    remain opaque: pixel codec, palette format, UVs, VDP1, transforms and draw
+    behavior still require original Saturn evidence.
 
 - 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
   Mednafen producer now has a concrete session protocol for its target,

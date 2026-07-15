@@ -35,6 +35,11 @@
   record and produces a stable raw-owner fingerprint. It explicitly keeps the
   Structure1A model-to-Structure3-entry relation unproven and no-draw.
 
+- 2026-07-15 Nexus Structure3 static descriptor corpus: canonical `00xx`
+  faces are rechecked against their exact local Structure2 descriptor and raw
+  bounded anchors across LEV00--LEV15. Payload decoder and rendering remain
+  explicitly disabled.
+
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
