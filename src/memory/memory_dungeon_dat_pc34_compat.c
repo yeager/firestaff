@@ -1997,3 +1997,50 @@ unsigned short F0516_DUNGEON_GetUnusedThing_Compat(
     if (!dungeon_set_thing_next_compat(things, thing, THING_ENDOFLIST)) return THING_NONE;
     return thing;
 }
+
+unsigned short F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+    struct DungeonThings_Compat* things,
+    unsigned short iconIndex,
+    DungeonDiscardThingFn_Compat discardThing,
+    void* discardContext)
+{
+    unsigned short thingType = THING_TYPE_WEAPON;
+    unsigned short objectType;
+    unsigned short thing;
+    unsigned char* raw;
+    int index;
+
+    /* DUNGEON.C F0167:2140-2142 normalizes every torch icon to C004. */
+    if (iconIndex >= 4 && iconIndex <= 7) iconIndex = 4;
+    switch (iconIndex) {
+    case 4: objectType = 2; break;       /* C02_WEAPON_TORCH */
+    case 32: objectType = 8; break;      /* C08_WEAPON_DAGGER */
+    case 51: objectType = 27; break;     /* C27_WEAPON_ARROW */
+    case 52: objectType = 28; break;     /* C28_WEAPON_SLAYER */
+    case 54: objectType = 30; break;     /* C30_WEAPON_ROCK */
+    case 55: objectType = 31; break;     /* C31_WEAPON_POISON_DART */
+    case 56: objectType = 32; break;     /* C32_WEAPON_THROWING_STAR */
+    case 128:
+        objectType = 25;                 /* C25_JUNK_BOULDER */
+        thingType = THING_TYPE_JUNK;
+        break;
+    default:
+        return THING_NONE;
+    }
+    thing = F0516_DUNGEON_GetUnusedThing_Compat(
+        things, thingType, discardThing, discardContext);
+    if (thing == THING_NONE || !dungeon_thing_record_compat(things, thing, &raw)) {
+        return THING_NONE;
+    }
+    /* Both PC34 WEAPON and JUNK store their seven-bit Type in byte two.
+     * F0166 already cleared the record, so this cannot preserve an invented
+     * charge, lit state, curse, or DoNotDiscard flag. */
+    raw[2] = (unsigned char)((raw[2] & 0x80u) | objectType);
+    index = THING_GET_INDEX(thing);
+    if (thingType == THING_TYPE_WEAPON && things->weapons && index < things->weaponCount) {
+        things->weapons[index].type = (unsigned char)objectType;
+    } else if (thingType == THING_TYPE_JUNK && things->junks && index < things->junkCount) {
+        things->junks[index].type = (unsigned char)objectType;
+    }
+    return thing;
+}

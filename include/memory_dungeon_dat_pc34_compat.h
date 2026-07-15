@@ -558,6 +558,15 @@ unsigned short F0516_DUNGEON_GetUnusedThing_Compat(
     DungeonDiscardThingFn_Compat discardThing,
     void* discardContext);
 
+/* ReDMCSB DUNGEON.C F0167. This is the only PC34 object factory for the
+ * C007/C009 sensor icon subset. It delegates storage acquisition to F0166
+ * and writes the source object type into the canonical raw record. */
+unsigned short F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+    struct DungeonThings_Compat* things,
+    unsigned short iconIndex,
+    DungeonDiscardThingFn_Compat discardThing,
+    void* discardContext);
+
 /* ---- Text data decoding (Phase 7 text-strings) ---- */
 
 /*
