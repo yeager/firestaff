@@ -39,6 +39,9 @@
 #include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <string.h>
+
+static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
+                                                        uint32_t value);
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -1039,6 +1042,90 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     profile->dungeon_data = dd;
 
     return 0;
+}
+
+int dm2_v1_boot_load_new_dungeon(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootNewDungeonReceipt *out_receipt)
+{
+    FILE *file;
+    long file_size;
+    uint8_t *bytes = NULL;
+    char current_md5[33];
+    DM2_V1_DungeonData candidate;
+    DM2_V1_DungeonData previous;
+    DM2_V1_BootNewDungeonReceipt receipt;
+    uint32_t hash = 2166136261u;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dm2_state ||
+        !profile->dungeon_data || profile->dungeon_path[0] == '\0') {
+        return 0;
+    }
+    /* The title scan admits an original DUNGEON.DAT by hash. GAME_LOAD must
+     * not silently consume a replacement that appeared after that scan. */
+    if (profile->dungeon_md5[0] != '\0' &&
+        (!path_md5_hex(profile->dungeon_path, current_md5) ||
+         !md5_matches(current_md5, profile->dungeon_md5))) {
+        return 0;
+    }
+    file = fopen(profile->dungeon_path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > 10 * 1024 * 1024 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    if (!bytes || fread(bytes, 1, (size_t)file_size, file) !=
+                      (size_t)file_size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    memset(&candidate, 0, sizeof(candidate));
+    if (dm2_v1_dungeon_load(&candidate, bytes, (int)file_size) != 0 ||
+        candidate.square_bytes != 1 || candidate.level_count <= 0) {
+        dm2_v1_dungeon_free(&candidate);
+        free(bytes);
+        return 0;
+    }
+    for (long i = 0; i < file_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, bytes[i]);
+    }
+    free(bytes);
+    if (hash == 0u) {
+        dm2_v1_dungeon_free(&candidate);
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_party_reset_required = 1;
+    receipt.source_leader_hand_reset_required = 1;
+    receipt.synthetic_party_created = 0;
+    receipt.map_count = candidate.level_count;
+    receipt.dungeon_seed = candidate.raw_data && candidate.raw_size >= 10
+        ? (int)dm2_rd16_le(candidate.raw_data + 8) : -1;
+    receipt.raw_byte_count = (uint32_t)candidate.raw_size;
+    receipt.raw_hash = hash;
+    if (receipt.raw_byte_count == 0u) {
+        dm2_v1_dungeon_free(&candidate);
+        return 0;
+    }
+
+    /* c_savegame.cpp reloads the structure before later GAME_LOAD party and
+     * timer work. Swap only a complete candidate; a failed parse leaves the
+     * active world untouched. */
+    previous = *(DM2_V1_DungeonData *)profile->dungeon_data;
+    *(DM2_V1_DungeonData *)profile->dungeon_data = candidate;
+    memset(&candidate, 0, sizeof(candidate));
+    dm2_v1_dungeon_free(&previous);
+    receipt.reloaded = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
 }
 
 const char *dm2_v1_boot_startup_prepare_result_name(
