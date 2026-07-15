@@ -5191,6 +5191,7 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
     Nexus_V1_Engine engine;
     Nexus_V1_LevelSoundCaptureTargetReceipt target;
     Nexus_V1_LevelSoundTraceAdmissionReceipt admission;
+    Nexus_V1_LevelSoundTraceHostReceipt host;
     char trace[2048];
 
     memset(&engine, 0, sizeof(engine));
@@ -5262,12 +5263,23 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           !admission.driver_dispatch_proven && !admission.sal_decode_proven &&
           !admission.playback_permitted && admission.blocks_real_sfx_playback,
           "SAL driver trace admission stays opaque and playback-blocked");
+    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 1 &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE &&
+          host.active_sal_target_revalidated && host.admitted_trace_bound &&
+          host.host_consumed && !host.driver_dispatch_proven &&
+          !host.sal_decode_proven && !host.playback_permitted &&
+          host.blocks_real_sfx_playback,
+          "SAL host consumes an admitted trace without dispatch or playback");
     engine.audio.map_source_fnv1a64 ^= UINT64_C(1);
     CHECK(nexus_v1_engine_admit_sal_driver_trace(&engine, trace, strlen(trace),
                                                  &admission) == 0 &&
           admission.status == NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH &&
           !admission.playback_permitted,
           "a changed active MAP identity rejects a stale SAL driver trace");
+    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_ACTIVE_ROUTE &&
+          !host.playback_permitted,
+          "a changed active MAP identity withdraws the host trace route");
     engine.audio.map_source_fnv1a64 = 0U;
     CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 0,
           "missing active MAP byte identity blocks SAL capture acquisition");

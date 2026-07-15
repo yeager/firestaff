@@ -1088,6 +1088,33 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelSoundTraceAdmissionReceipt;
 
+typedef enum {
+    NEXUS_V1_SAL_TRACE_HOST_MISSING = 0,
+    NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE = 1,
+    NEXUS_V1_SAL_TRACE_HOST_BLOCKED_ACTIVE_ROUTE = 2,
+    NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE = 3
+} Nexus_V1_LevelSoundTraceHostStatus;
+
+typedef struct {
+    Nexus_V1_LevelSoundTraceHostStatus status;
+    int level_index;
+    int active_sal_target_revalidated;
+    int admitted_trace_bound;
+    int raw_map_selector;
+    int map_attribute;
+    int sal_offset;
+    int sal_size;
+    uint32_t selector_dispatch_pc;
+    uint32_t sal_read_pc;
+    uint32_t driver_output_pc;
+    int host_consumed;
+    int driver_dispatch_proven;
+    int sal_decode_proven;
+    int playback_permitted;
+    int blocks_real_sfx_playback;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelSoundTraceHostReceipt;
+
 /* Active-level ownership for the corpus-verified SLEV SH-2 entry profile.
  * This binds only the observed entry framing and literal locations to the
  * engine's current level. It does not identify task-body opcodes, callback
@@ -1510,6 +1537,7 @@ struct Nexus_V1_Engine {
     Nexus_V1_LevelScriptTraceAdmissionReceipt script_trace_admission;
     Nexus_V1_LevelScriptTraceHostReceipt script_trace_host_receipt;
     Nexus_V1_LevelSoundTraceAdmissionReceipt sound_trace_admission;
+    Nexus_V1_LevelSoundTraceHostReceipt sound_trace_host_receipt;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
@@ -1755,6 +1783,12 @@ int nexus_v1_engine_admit_sal_driver_trace(
 int nexus_v1_current_level_sal_trace_admission_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelSoundTraceAdmissionReceipt *out_receipt);
+int nexus_v1_engine_consume_sal_driver_trace(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceHostReceipt *out_receipt);
+int nexus_v1_current_level_sal_trace_host_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelSoundTraceHostReceipt *out_receipt);
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt);
