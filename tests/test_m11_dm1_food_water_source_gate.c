@@ -135,6 +135,27 @@ int main(void)
                       viewport_rect.y + panel_rect.y + 50),
                   "F0658 presents C032 source pixels at C502");
         }
+
+        /* PANEL.C F0344 maps normal food/water values to C05/C14 through
+         * the real C103/C104 bar zones.  Its negative warning bands are
+         * C08 below -512 and C11 below zero. */
+        state.world.party.champions[0].food = 512;
+        state.world.party.champions[0].water = 512;
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        CHECK(frame[(viewport_rect.y + 69) * 320 + viewport_rect.x + 113] == 5,
+              "F0344 presents the source food C05 bar");
+        CHECK(frame[(viewport_rect.y + 92) * 320 + viewport_rect.x + 113] == 14,
+              "F0344 presents the source water C14 bar");
+
+        state.world.party.champions[0].food = -600;
+        state.world.party.champions[0].water = -1;
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(&state, frame, 320, 200);
+        CHECK(frame[(viewport_rect.y + 69) * 320 + viewport_rect.x + 113] == 8,
+              "F0344 presents the severe C08 food warning");
+        CHECK(frame[(viewport_rect.y + 92) * 320 + viewport_rect.x + 113] == 11,
+              "F0344 presents the C11 water warning");
         M11_GameView_Shutdown(&state);
     }
 
