@@ -124,7 +124,12 @@
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0272 C002 OnceOnly writeback: the live C49
   wall-object route clears only the low C03 type bits before it publishes the
   source F0268 event, retaining the packed object-data field. Coverage:
-  `csb_v1_f0276_wall_object_move_pc34_compat` (31/0).
+  `csb_v1_f0276_wall_object_move_pc34_compat` (36/0).
+
+- ✅ 2026-07-15 CSB-001 ReDMCSB F0272 C003 lifecycle: a real PC3.4 C49/F0267
+  arrival clears the OnceOnly type before publishing C003's exact three-tick
+  delayed F0268 event at map time four. Coverage:
+  `csb_v1_f0276_wall_object_move_pc34_compat` (36/0).
 
 - ✅ 2026-07-15 CSB-001 ReDMCSB F0267/F0276 live wall-object move: C49
   associated-object materialization now enters the source C001..C003 wall

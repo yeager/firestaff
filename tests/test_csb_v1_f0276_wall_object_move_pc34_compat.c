@@ -147,6 +147,20 @@ int main(void)
     CHECK(profile.timeline_queue.eventCount == 0,
           "C003 rejects the matching object type before Revert/HOLD handling");
 
+    make_loaded_chain(&dungeon, raw, 1, 3, 26);
+    put_le16(raw, 76, (unsigned short)((DM1_EFFECT_SET << 3) |
+                                        (1u << 2) | (3u << 7)));
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    run_object_move(&profile);
+    CHECK(profile.timeline_queue.eventCount == 1 &&
+              profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
+              profile.timeline_queue.events[0].map_time ==
+                  DM1_MAP_TIME_MAKE(0, 4u) &&
+              get_le16(raw, 74) == (unsigned short)(26u << 7),
+          "C003 OnceOnly writes before its three-tick F0272/F0268 delay");
+
     make_loaded_chain(&dungeon, raw, 1, 1, 0);
     put_le16(raw, 76, (unsigned short)((DM1_EFFECT_SET << 3) | (1u << 6)));
     csb_v1_runtime_init(&profile, NULL);
