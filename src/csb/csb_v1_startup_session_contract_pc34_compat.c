@@ -19,6 +19,14 @@
 #define CSB_V1_CONTRACT_DOOR_HEIGHT_PC34 161
 #define CSB_V1_CONTRACT_C004_WIDTH_PC34 320
 #define CSB_V1_CONTRACT_C004_HEIGHT_PC34 200
+#define CSB_V1_CONTRACT_TITLE_TOTAL_TICKS_PC34 102
+#define CSB_V1_CONTRACT_TITLE_PRESENTS_STEP_PC34 1
+#define CSB_V1_CONTRACT_TITLE_CHAOS_FIRST_STEP_PC34 2
+#define CSB_V1_CONTRACT_TITLE_CHAOS_LAST_STEP_PC34 21
+#define CSB_V1_CONTRACT_TITLE_STRIKES_STEP_PC34 22
+#define CSB_V1_CONTRACT_TITLE_PRESENTS_MASK_PC34 0x01
+#define CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34 0x02
+#define CSB_V1_CONTRACT_TITLE_STRIKES_MASK_PC34 0x08
 
 static int csb_v1_startup_session_surface_matches_pc34(
     const CSB_V1_StartupRuntimeSurface_PC34 *surface,
@@ -96,6 +104,54 @@ static int csb_v1_startup_session_opening_surface_contract_pc34(
         csb_v1_startup_session_surface_matches_pc34(
             right, 3, 0, 0, CSB_V1_CONTRACT_C003_WIDTH_PC34,
             CSB_V1_CONTRACT_DOOR_HEIGHT_PC34, -1);
+}
+
+static int csb_v1_startup_session_title_host_phase_matches_pc34(
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host,
+    CSB_V1_StartupStage_PC34 stage,
+    int special_palette)
+{
+    int expected_mask;
+    int expected_step_min;
+    int expected_step_max;
+
+    if (!host || host->host_surface !=
+                     CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+        host->frame.stage != stage ||
+        host->special_palette != special_palette ||
+        host->title_special_palette != special_palette ||
+        host->frame.special_palette != special_palette ||
+        host->frame.title_special_palette != special_palette ||
+        host->frame.title_phase_tick_count !=
+            CSB_V1_CONTRACT_TITLE_TOTAL_TICKS_PC34 ||
+        host->frame.frame_route_hash == 0u || host->raster.pixel_hash == 0u ||
+        host->raster.route_hash == 0u) {
+        return 0;
+    }
+
+    switch (stage) {
+        case CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34:
+            expected_mask = CSB_V1_CONTRACT_TITLE_PRESENTS_MASK_PC34;
+            expected_step_min = CSB_V1_CONTRACT_TITLE_PRESENTS_STEP_PC34;
+            expected_step_max = CSB_V1_CONTRACT_TITLE_PRESENTS_STEP_PC34;
+            break;
+        case CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34:
+            expected_mask = CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34;
+            expected_step_min = CSB_V1_CONTRACT_TITLE_CHAOS_FIRST_STEP_PC34;
+            expected_step_max = CSB_V1_CONTRACT_TITLE_CHAOS_LAST_STEP_PC34;
+            break;
+        case CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34:
+            expected_mask = CSB_V1_CONTRACT_TITLE_STRIKES_MASK_PC34;
+            expected_step_min = CSB_V1_CONTRACT_TITLE_STRIKES_STEP_PC34;
+            expected_step_max = CSB_V1_CONTRACT_TITLE_STRIKES_STEP_PC34;
+            break;
+        default:
+            return 0;
+    }
+
+    return host->frame.title_phase_mask == expected_mask &&
+        host->frame.title_phase_tick >= expected_step_min &&
+        host->frame.title_phase_tick <= expected_step_max;
 }
 
 int csb_v1_startup_session_hud_surface_contract_pc34(
@@ -364,21 +420,15 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         chaos_host->frame.session_generation != session->generation ||
         strikes_host->frame.session_generation != session->generation ||
         opening_host->frame.session_generation != session->generation ||
-        presents_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 ||
-        chaos_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 ||
-        strikes_host->frame.stage != CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 ||
-        presents_host->special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS ||
-        presents_host->title_special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS ||
-        chaos_host->special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS ||
-        chaos_host->title_special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS ||
-        strikes_host->special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES ||
-        strikes_host->title_special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES ||
+        !csb_v1_startup_session_title_host_phase_matches_pc34(
+            presents_host, CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS) ||
+        !csb_v1_startup_session_title_host_phase_matches_pc34(
+            chaos_host, CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS) ||
+        !csb_v1_startup_session_title_host_phase_matches_pc34(
+            strikes_host, CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES) ||
         opening_host->special_palette !=
             VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
         opening_host->title_special_palette != -1 ||
@@ -400,7 +450,10 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         strikes_host->raster.source_surface_count != 1 ||
         opening_host->raster.source_surface_count != 3 ||
         presents_host->host_surface_hash == 0u || chaos_host->host_surface_hash == 0u ||
-        strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u)
+        strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u ||
+        presents_host->raster.pixel_hash == chaos_host->raster.pixel_hash ||
+        presents_host->raster.pixel_hash == strikes_host->raster.pixel_hash ||
+        chaos_host->raster.pixel_hash == strikes_host->raster.pixel_hash)
         return 0;
 
     out_receipt->valid = 1;

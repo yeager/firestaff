@@ -229,6 +229,13 @@
     valid C017/C040 pair cannot bypass malformed C001/C004/C002/C003 startup
     media. Remaining work is still external original-window capture and
     app-route parity, not synthetic title/entrance replacement.
+  - 2026-07-15 update: the title/opening consumption receipt now also binds
+    each host C001 title capture to its F0437 source step, phase mask,
+    palette, nonzero route hash, and distinct indexed raster hash, so
+    PRESENTS cannot be relabeled as CHAOS/STRIKES and one stale title page
+    cannot satisfy the complete sequence. Remaining work is still external
+    original-window capture and app-route parity, not a host-wrapper,
+    duplicated-phase, or synthetic title replacement.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
