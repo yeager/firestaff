@@ -19298,3 +19298,11 @@ independent attestation. It consumes and validates the target first, so a
 changed or malformed package target blocks trace admission even when the other
 sidecars remain valid. An accepted trace remains opaque and no-draw; it does
 not establish transform, material, palette, pixels, culling, VDP1, or rendering.
+# ✅ 2026-07-15 Theron Track 02 copied-entry BRA receipt
+
+The Mednafen main-RAM loader trace now emits HuC6280 `BRA` control rows. The
+Track 02-derived entry admission requires opcode `0x80`, its exact copied
+displacement byte, and the emulator-computed target to agree. The receipt
+records only this bounded control transfer; it does not classify the target as
+loader code, a record selector, dungeon data, object data, palette, bitmap, or
+rendering behavior.

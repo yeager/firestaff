@@ -1663,6 +1663,72 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     return 0;
 }
 
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopyReceipt
+        entry_copy;
+    const Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt *parent;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t source_offset;
+    unsigned int branch_pc;
+    unsigned int branch_physical_pc;
+    unsigned int target_pc;
+    unsigned int displacement;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_copy(
+            handoff, capture, &entry_copy) || !entry_copy.valid ||
+        !entry_copy.copied_source_byte_proven || entry_copy.entry.entry_opcode != 0x80u ||
+        entry_copy.entry.call.transfer.byte_count < 2u) {
+        return 0;
+    }
+    parent = &entry_copy.entry.call.transfer.next.entry.call.termination.call.execution.transfer;
+    if (entry_copy.entry.call.transfer.source_address < parent->destination_address) {
+        return 0;
+    }
+    source_offset = entry_copy.entry.call.transfer.source_address -
+        parent->destination_address;
+    if (source_offset >= parent->byte_count || source_offset + 1u >= parent->byte_count ||
+        parent->source_address > UINT16_MAX - (source_offset + 1u)) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_bra logical_pc=%x physical_pc=%x target=%x displacement=%x%n",
+                   &branch_pc, &branch_physical_pc, &target_pc, &displacement,
+                   &consumed) != 4 || consumed != (int)length ||
+            branch_pc != entry_copy.entry.entry_pc ||
+            branch_physical_pc != entry_copy.entry.entry_physical_pc) {
+            continue;
+        }
+        if (target_pc > UINT16_MAX || displacement > UINT8_MAX ||
+            displacement != handoff->loader_post_envelope.bytes[source_offset + 1u] ||
+            target_pc != (uint16_t)(entry_copy.entry.entry_pc + 2u +
+                                    (int8_t)displacement)) {
+            return 0;
+        }
+        out->valid = 1;
+        out->entry_copy = entry_copy;
+        out->target_pc = (uint16_t)target_pc;
+        out->displacement = (uint8_t)displacement;
+        out->original_displacement_address = (uint16_t)(parent->source_address +
+                                                        source_offset + 1u);
+        out->copied_entry_branch_proven = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_raw_loader_trace_correlate_game_payload_initial_envelope_header(
     const Theron_V1RawLoaderTraceGamePayloadReceipt *payloads,
     size_t payload_count, const uint8_t *track02_data, size_t track02_size,
