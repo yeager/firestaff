@@ -5506,7 +5506,11 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
             command->pixels && command->width > 0 && command->height > 0 &&
             command->palette_hash != 0u && command->decoded_hash != 0u &&
             command->decoded_hash ==
-                dm2_v1_gdat_hud_m11_command_pixel_hash(command)) return command;
+                dm2_v1_gdat_hud_m11_command_pixel_hash(command) &&
+            command->palette_hash ==
+                dm2_v1_weather_pixels_hash(command->palette16, 16, 1, 16)) {
+            return command;
+        }
     }
     return NULL;
 }
