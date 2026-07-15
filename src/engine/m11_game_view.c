@@ -18227,7 +18227,7 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
         gfxIndex >= 486) return 0;
     (void)relativeDir;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
-    /* F0114 may scale only a decoded PC34 explosion surface. A cache entry
+    /* F0115 may scale only a decoded M613 projectile surface. A cache entry
      * with dimensions but no pixel payload is not source material. */
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0 || slot->height == 0) return 0;
@@ -18320,7 +18320,8 @@ static int m11_draw_thrown_object_projectile_sprite(
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)gfxIndex);
-    if (!slot || slot->width == 0 || slot->height == 0 ||
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0 ||
         !dm1_v1_thrown_object_projectile_blit_plan_pc34(
             &plan, gfxIndex, objectAspectIndex, depthIndex, relativeCell,
             viewLane, sourceZoneRow, M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W,
@@ -18468,7 +18469,10 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
     if (aspect < 0 || gfxIndex < 0) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)gfxIndex);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* F0114 may scale only a decoded PC34 explosion surface. A cache entry
+     * with dimensions but no pixel payload is not source material. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
 
     if (!dm1_v1_explosion_sprite_blit_plan(&plan,
                                            aspect,
@@ -23868,7 +23872,10 @@ static int m11_draw_door_frame_asset(const M11_GameViewState* state,
         default: return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, doorIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* F0115 floor-object material must be a decoded PC34 source surface,
+     * not a dimension-only cache placeholder. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
     /* Center the door frame graphic in the face rect */
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
                                rect->x + 2, rect->y + 2,
@@ -24000,7 +24007,10 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
 
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* F0115 floor-object material must be a decoded PC34 source surface,
+     * not a dimension-only cache placeholder. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
 
     effectiveSourceZoneRow =
         csb_v1_viewport_runtime_object_source_zone_row(sourceZone,

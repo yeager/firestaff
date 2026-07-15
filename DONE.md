@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0115 source projectile/object-material gate:
+  M613 projectiles, F0142/G0209 thrown objects, and C2500 floor objects now
+  require decoded loaded-pixel PC34 surfaces before their original placement
+  plans can publish pixels. This also corrects the D1–D3 F0114 gate to validate
+  its actual explosion consumer. Focused coverage:
+  `m11_dm1_f0115_material_asset_fail_closed` and
+  `m11_dm1_explosion_asset_fail_closed`.
+
 - ✅ 2026-07-15 CSBWin Timer.cpp TT_60 pool mutation: the authenticated
   party-square +5 successor now retires the due source receipt and requeues
   through the original TIMER allocator, rather than rewriting its old slot.
