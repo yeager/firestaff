@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 CSB opening-door playback-stage gate: opening-door and
+  title/opening consumption receipts now require the startup session to still
+  be in active ENTRANCE playback, after the complete C001 title phases and
+  before F0807 promotes the session to HUD. This blocks stale HUD-stage
+  C004/C002/C003 frames from being recorded as valid opening captures.
+  Focused startup-session contract and adjacent startup CTests pass.
+
 - ✅ 2026-07-15 DM1 action-menu G0499/G0501 geometry table hardening:
   the one-action and three-action F0387 action-menu boxes now expose
   ReDMCSB's signed `int16_t[4]` source geometry directly, matching the

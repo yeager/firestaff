@@ -157,6 +157,18 @@ static void make_opening_host(
     host->raster.source_surface_count = 3;
 }
 
+static void set_opening_playback(CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session->playback.entrance_complete = 0;
+}
+
+static void set_terminal_playback(CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34;
+    session->playback.entrance_complete = 1;
+}
+
 int main(void)
 {
     CSB_V1_StartupRenderState_PC34 state;
@@ -267,6 +279,7 @@ int main(void)
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES, 0xc003u,
                     &strikes_host);
     make_opening_host(&session, &opening_host);
+    set_opening_playback(&session);
     check(csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &opening_host, &opening_door) &&
               opening_door.valid && opening_door.c004_entrance_ready &&
@@ -283,6 +296,15 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    set_terminal_playback(&session);
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "HUD-stage playback cannot mint a stale opening-door receipt");
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "title/opening consumption rejects a stale HUD-stage opening frame");
+    set_opening_playback(&session);
     package_receipt.c004_entrance_consumed = 0;
     check(!csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &opening_host, &opening_door),
@@ -318,9 +340,11 @@ int main(void)
           "forged one-line C001 cannot authorize terminal C017/C040");
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 200;
+    set_terminal_playback(&session);
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.valid,
           "restored full C001 re-authorizes terminal C017/C040");
+    set_opening_playback(&session);
     opening_host.raster.door_composited = 0;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,
@@ -349,6 +373,7 @@ int main(void)
               &session, &package_receipt, &opening_host, &opening_door),
           "opening door receipt rejects frames past ReDMCSB's final step");
     opening_host.frame.opening_step = 1;
+    set_terminal_playback(&session);
     tick = receipt.source_tick;
     generation = receipt.session_generation;
     terminal = receipt;

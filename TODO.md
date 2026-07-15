@@ -262,6 +262,12 @@
     consumption receipts. Remaining work is still external original-window
     capture and broader app-route coverage, not a synthetic or cropped title
     replacement.
+  - 2026-07-15 update: opening-door and title/opening consumption receipts
+    now require playback to still be in the active ENTRANCE stage, after the
+    complete C001 title phases and before F0807 promotes the session to HUD.
+    A stale HUD-stage C004/C002/C003 host frame can no longer be recorded as
+    a valid opening capture. Remaining work is unchanged: external
+    original-window capture and broader app-route parity.
 
 - 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live;
   raw F0213 harm-explosion/C25 creation remains owned by the caller transaction.
