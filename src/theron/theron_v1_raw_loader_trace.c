@@ -10,6 +10,7 @@
 #include <string.h>
 
 #define THERON_V1_RAW_LOADER_TRACE_MAX_BYTES (1024u * 1024u)
+#define TQR_TRACE_TRACK02_LBA_BASE 3009u
 
 static uint32_t tqr_trace_fnv1a_u16(uint32_t hash, uint16_t value)
 {
@@ -30,6 +31,52 @@ static uint32_t tqr_trace_fnv1a_bytes(const uint8_t *bytes, size_t byte_count)
         hash *= 16777619u;
     }
     return hash;
+}
+
+int theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+    const uint8_t *track02_data, size_t track02_size, const char *track02_md5,
+    uint32_t source_lba, uint32_t source_offset,
+    uint32_t *out_track02_record, uint8_t *out_byte)
+{
+    uint32_t record;
+    size_t byte_offset;
+
+    if (out_track02_record) *out_track02_record = 0u;
+    if (out_byte) *out_byte = 0u;
+    if (!track02_data || !track02_md5 || !out_track02_record || !out_byte ||
+        source_lba < TQR_TRACE_TRACK02_LBA_BASE) {
+        return 0;
+    }
+    record = source_lba - TQR_TRACE_TRACK02_LBA_BASE;
+
+    if (strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) == 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+        if (track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+            source_offset < THERON_TRACK02_RAW_USER_DATA_OFFSET ||
+            source_offset >= THERON_TRACK02_RAW_USER_DATA_OFFSET +
+                THERON_TRACK02_RAW_USER_DATA_BYTES ||
+            (size_t)record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES) {
+            return 0;
+        }
+        byte_offset = (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES +
+            source_offset;
+    } else if (strcmp(track02_md5, THERON_TRACK02_MD5_US_ISO) == 0 ||
+               strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
+        if (track02_size % THERON_TRACK02_RAW_USER_DATA_BYTES != 0u ||
+            source_offset >= THERON_TRACK02_RAW_USER_DATA_BYTES ||
+            (size_t)record >= track02_size / THERON_TRACK02_RAW_USER_DATA_BYTES) {
+            return 0;
+        }
+        byte_offset = (size_t)record * THERON_TRACK02_RAW_USER_DATA_BYTES +
+            source_offset;
+    } else {
+        return 0;
+    }
+
+    if (byte_offset >= track02_size) return 0;
+    *out_track02_record = record;
+    *out_byte = track02_data[byte_offset];
+    return 1;
 }
 
 static int tqr_trace_next_line(const char **cursor,
@@ -1898,8 +1945,6 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
 
     if (out) memset(out, 0, sizeof(*out));
     if (!handoff || !capture || !track02_data || !track02_md5 || !out ||
-        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
-        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
         !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
             handoff, capture, &branch_target_jsr) || !branch_target_jsr.valid) {
         return 0;
@@ -1950,11 +1995,10 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
             origin_offset >= THERON_TRACK02_RAW_SECTOR_BYTES || value > UINT8_MAX) {
             continue;
         }
-        if ((size_t)(origin_lba - 3009u) >=
-                track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
-            track02_data[(size_t)(origin_lba - 3009u) *
-                             THERON_TRACK02_RAW_SECTOR_BYTES + origin_offset] !=
-                (uint8_t)value) {
+        if (!theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+                track02_data, track02_size, track02_md5, origin_lba,
+                origin_offset, &out->track02_record, &out->source_byte) ||
+            out->source_byte != (uint8_t)value) {
             return 0;
         }
         out->valid = 1;
@@ -1962,9 +2006,7 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
         out->cd_register_value = (uint8_t)data;
         out->scsi_generation = scsi_generation;
         out->scsi_lba = scsi_lba;
-        out->track02_record = origin_lba - 3009u;
         out->source_offset = (uint16_t)origin_offset;
-        out->source_byte = (uint8_t)value;
         out->jsr_cd_register_write_observed = 1;
         out->read6_record_source_verified = 1;
         out->level_or_object_semantics_proven = 0;

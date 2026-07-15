@@ -9006,3 +9006,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     provenance only; it does not name the record or promote level, object,
     palette, bitmap, or rendering semantics. Remaining: authenticate a real
     capture satisfying this strict join and then observe its loader consumer.
+  - Update: the control-to-media byte join now resolves the FIFO source byte
+    through the verified Track 02 media layout. Raw BIN receipts must point
+    inside MODE1 user data, while MODE1/2048 ISO receipts use direct user
+    offsets; unknown MD5s and sector header/tail bytes reject. Remaining:
+    capture the loader's later consumer reads/control decisions before any
+    dungeon, object, bitmap, palette, or audio semantics can be assigned.

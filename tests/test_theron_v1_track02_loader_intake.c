@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "theron_v1_raw_loader_trace.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_track02_loader_intake.h"
 
 static int failures;
@@ -40,12 +42,43 @@ int main(void) {
     Theron_V1Track02LoaderPayloadReceipt payload_receipt;
     Theron_V1Track02LoaderPostEnvelopeReceipt post_envelope_receipt;
     uint8_t payload[THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES];
+    uint8_t raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES * 2u];
+    uint8_t iso_track02[THERON_TRACK02_RAW_USER_DATA_BYTES * 2u];
+    uint32_t source_record = 0u;
+    uint8_t source_byte = 0u;
     size_t i;
 
     for (i = 0u; i < sizeof(payload); ++i) {
         payload[i] = (uint8_t)(i * 37u + 11u);
     }
     facts.complete_payload_checksum = fnv1a32(payload, sizeof(payload));
+
+    memset(raw_track02, 0, sizeof(raw_track02));
+    memset(iso_track02, 0, sizeof(iso_track02));
+    raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET + 7u] = 0x5au;
+    raw_track02[THERON_TRACK02_RAW_SECTOR_BYTES + 3u] = 0xa5u;
+    iso_track02[THERON_TRACK02_RAW_USER_DATA_BYTES + 7u] = 0x6bu;
+
+    CHECK(theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+        raw_track02, sizeof(raw_track02), THERON_TRACK02_MD5_US_BIN, 3010u,
+        THERON_TRACK02_RAW_USER_DATA_OFFSET + 7u, &source_record,
+        &source_byte));
+    CHECK(source_record == 1u && source_byte == 0x5au);
+    CHECK(!theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+        raw_track02, sizeof(raw_track02), THERON_TRACK02_MD5_US_BIN, 3010u,
+        3u, &source_record, &source_byte));
+    CHECK(theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+        iso_track02, sizeof(iso_track02), THERON_TRACK02_MD5_US_ISO, 3010u,
+        7u, &source_record, &source_byte));
+    CHECK(source_record == 1u && source_byte == 0x6bu);
+    CHECK(!theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+        iso_track02, sizeof(iso_track02), THERON_TRACK02_MD5_US_ISO, 3010u,
+        THERON_TRACK02_RAW_USER_DATA_BYTES, &source_record, &source_byte));
+    CHECK(!theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
+        raw_track02, sizeof(raw_track02), "00000000000000000000000000000000",
+        3010u, THERON_TRACK02_RAW_USER_DATA_OFFSET + 7u, &source_record,
+        &source_byte));
 
     CHECK(theron_v1_track02_loader_intake_observe(&facts, &receipt));
     CHECK(receipt.observed);
