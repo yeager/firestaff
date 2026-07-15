@@ -19,6 +19,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
@@ -1621,6 +1622,158 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                              framebufferHeight);
 }
 
+static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+
+    if (!state || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    /* ReDMCSB PANEL.C F0346/F0347 reaches C017 only after ENTRANCE.C F0806
+     * completes.  C017/C040 must remain the same verified session that
+     * carried C001-C005, never a late asset-loader substitute. */
+    if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !terminal.valid || !terminal.c017_ready || !terminal.c040_ready ||
+        !session->real_asset_matched || !session->full_startup_ready ||
+        !session->rejects_legacy_wrappers ||
+        !session->playback.no_fallback_routes ||
+        session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34) {
+        return 0;
+    }
+    c017 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    /* C017 stays owned by the verified startup session.  Loading graphic 17
+     * again through M11's shared cache would permit a different archive to
+     * replace the PC3.4 handoff after ENTRANCE.C F0806 has completed. */
+    return c017->valid && c017->pixels && c017->source_asset_id == 17;
+}
+
+static int m11_csb_consume_c040_clear_session(M11_GameViewState *state)
+{
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    CSB_V1_StartupSessionLiveHudReceipt_PC34 live_hud;
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
+    if (state->candidateMirrorPanelActive ||
+        !state->csbState.c040_panel_session_active) {
+        return 1;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    /* ReDMCSB PANEL.C F0346/F0347 returns from C040 to the neutral C017
+     * panel exactly once.  Do not let a later terminal session clear a
+     * candidate panel that was presented by an earlier session. */
+    if (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+        !csb_v1_startup_session_live_hud_receipt_pc34(
+            session, &terminal, 1u, state->csbState.c040_panel_source_tick,
+            state->csbState.c040_panel_session_generation, &live_hud) ||
+        !live_hud.valid || !live_hud.c040_cleared_once ||
+        !live_hud.c017_live_base_only) {
+        return 0;
+    }
+    state->csbState.c040_panel_session_active = 0;
+    state->csbState.c040_panel_source_tick = 0u;
+    state->csbState.c040_panel_session_generation = 0u;
+    state->csbState.c040_clear_live_hud_ready = 1;
+    state->csbState.c040_clear_source_tick = live_hud.source_tick;
+    state->csbState.c040_clear_session_generation =
+        live_hud.session_generation;
+    return 1;
+}
+
+static int m11_draw_csb_v1_inventory_surface(
+    M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    enum {
+        CSB_C017_VIEWPORT_X_PC34 = 48,
+        CSB_C017_VIEWPORT_Y_PC34 = 33,
+        CSB_C017_VIEWPORT_WIDTH_PC34 = 224,
+        CSB_C017_VIEWPORT_HEIGHT_PC34 = 136,
+        CSB_C040_PANEL_X_PC34 = 80,
+        CSB_C040_PANEL_Y_PC34 = 52,
+        CSB_C040_PANEL_WIDTH_PC34 = 144,
+        CSB_C040_PANEL_HEIGHT_PC34 = 73,
+        CSB_C040_TRANSPARENT_COLOR_PC34 = 6
+    };
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+    const CSB_V1_StartupRuntimeSurface_PC34 *c040;
+    int row;
+
+    if (!state || !framebuffer || !state->csbStartupRuntimeAssetSession ||
+        framebufferWidth < CSB_C017_VIEWPORT_X_PC34 +
+            CSB_C017_VIEWPORT_WIDTH_PC34 ||
+        framebufferHeight < CSB_C017_VIEWPORT_Y_PC34 +
+            CSB_C017_VIEWPORT_HEIGHT_PC34) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    c017 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+    /* ReDMCSB PANEL.C F0347 expands C017 directly into the viewport before
+     * it dispatches the active inventory panel.  This live CSB path consumes
+     * that terminal-session bitmap, never M11's generic inventory fallback. */
+    if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
+        c017->width != CSB_C017_VIEWPORT_WIDTH_PC34 ||
+        c017->height != CSB_C017_VIEWPORT_HEIGHT_PC34 ||
+        c017->transparent_color != -1) {
+        return 0;
+    }
+    for (row = 0; row < CSB_C017_VIEWPORT_HEIGHT_PC34; ++row) {
+        memcpy(framebuffer +
+                   (size_t)(CSB_C017_VIEWPORT_Y_PC34 + row) *
+                       (size_t)framebufferWidth +
+                   (size_t)CSB_C017_VIEWPORT_X_PC34,
+               c017->pixels + (size_t)row *
+                   (size_t)CSB_C017_VIEWPORT_WIDTH_PC34,
+               (size_t)CSB_C017_VIEWPORT_WIDTH_PC34);
+    }
+    if (!state->candidateMirrorPanelActive) {
+        return 1;
+    }
+    c040 = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+    /* ReDMCSB PANEL.C F0347 expands C017 first, then F0346 overlays C040
+     * at C101 with C06 transparency.  Keep both source bitmaps owned by the
+     * same terminal session so a generic M11 candidate panel cannot appear. */
+    if (!c040->valid || !c040->pixels || c040->source_asset_id != 40 ||
+        c040->width != CSB_C040_PANEL_WIDTH_PC34 ||
+        c040->height != CSB_C040_PANEL_HEIGHT_PC34 ||
+        c040->transparent_color != CSB_C040_TRANSPARENT_COLOR_PC34) {
+        return 0;
+    }
+    for (row = 0; row < CSB_C040_PANEL_HEIGHT_PC34; ++row) {
+        int column;
+        for (column = 0; column < CSB_C040_PANEL_WIDTH_PC34; ++column) {
+            unsigned char pixel = c040->pixels[
+                (size_t)row * (size_t)CSB_C040_PANEL_WIDTH_PC34 +
+                (size_t)column];
+            if (pixel != CSB_C040_TRANSPARENT_COLOR_PC34) {
+                framebuffer[(size_t)(CSB_C017_VIEWPORT_Y_PC34 +
+                                     CSB_C040_PANEL_Y_PC34 + row) *
+                                (size_t)framebufferWidth +
+                            (size_t)(CSB_C017_VIEWPORT_X_PC34 +
+                                     CSB_C040_PANEL_X_PC34 + column)] = pixel;
+            }
+        }
+    }
+    state->csbState.c040_panel_session_active = 1;
+    state->csbState.c040_panel_source_tick = session->source_tick;
+    state->csbState.c040_panel_session_generation = session->generation;
+    return 1;
+}
+
 static void m11_apply_csb_runtime_m11_mirror_receipt(
     M11_GameViewState *state,
     const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt)
@@ -3189,254 +3342,35 @@ static void m11_csb_boot_runtime_startup_snapshot(
     out_snapshot->runtime_tick_count = state->csbState.tick_count;
 }
 
-static int m11_csb_boot_runtime_startup_host_view_receipt(
-    const M11_GameViewState *state,
-    CSB_V1_BootStartupHostViewReceipt_PC34 *out_receipt);
-
-static void m11_csb_startup_runtime_session_release(M11_GameViewState *state)
+static int m11_csb_complete_door_runtime_handoff(M11_GameViewState *state)
 {
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupDoorRuntimeReceipt_PC34 handoff;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
 
-    if (!state || !state->csbStartupRuntimeSession) return;
-    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    csb_v1_boot_startup_runtime_asset_session_release_pc34(session);
-    free(session);
-    state->csbStartupRuntimeSession = NULL;
-    state->csbStartupLiveHudAuthorized = 0;
-    state->csbStartupTerminalSourceTick = 0u;
-    state->csbStartupTerminalGeneration = 0u;
-}
-
-static int m11_csb_startup_authorize_live_hud(M11_GameViewState *state)
-{
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupCompleteTimelineReceipt_PC34 receipt;
-    CSB_V1_StartupRenderPlan_PC34 plan;
-    CSB_V1_StartupAudioAction_PC34 audio_action;
-
-    if (!state || !state->csbStartupTimelineRequired) {
-        return state ? state->csbStartupLiveHudAuthorized : 0;
-    }
-    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    if (!session || !session->valid) return 0;
-    /* ReDMCSB TITLE.C F0437 reaches ENTRANCE.C only after C001's final
-     * source tick. F0807 may then publish C017/C040 to PANEL.C. */
-    if (session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34 &&
-        !csb_v1_boot_startup_playback_title_frame_pc34(
-            session, csb_v1_startup_title_total_ticks_pc34(), &plan,
-            &audio_action)) return 0;
-    if (!csb_v1_boot_startup_playback_complete_entrance_pc34(session)) return 0;
-    if (!csb_v1_boot_startup_playback_enter_hud_pc34(session) ||
-        !csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
-            session, &receipt)) return 0;
-    state->csbStartupTerminalSourceTick = receipt.source_tick;
-    state->csbStartupTerminalGeneration = receipt.session_generation;
-    state->csbStartupLiveHudAuthorized = 1;
-    return 1;
-}
-
-static int m11_csb_live_hud_terminal_receipt_current(
-    const M11_GameViewState *state)
-{
-    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupCompleteTimelineReceipt_PC34 receipt;
-
-    if (!state || !state->csbStartupLiveHudAuthorized) return 0;
-    /* LOADSAVE.C F0435 resumes into a live world and does not replay C001 or
-     * F0807. Fresh ENTRANCE.C starts, however, must carry the exact terminal
-     * receipt into every live M11 tick and raster dispatch. */
-    if (!state->csbStartupTimelineRequired) return 1;
-    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    if (!session || !session->valid ||
-        session->source_tick != state->csbStartupTerminalSourceTick ||
-        session->generation != state->csbStartupTerminalGeneration ||
-        !csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
-            session, &receipt) || !receipt.valid ||
-        receipt.source_tick != state->csbStartupTerminalSourceTick ||
-        receipt.session_generation != state->csbStartupTerminalGeneration) {
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile || !state->csbStartupRuntimeAssetSession) {
         return 0;
     }
-    return 1;
-}
-
-static int m11_csb_startup_record_frame(M11_GameViewState *state,
-                                        const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
-    CSB_V1_StartupRenderPlan_PC34 title_plan;
-    CSB_V1_StartupAudioAction_PC34 audio_action;
-    int title_frame;
-
-    if (!state || !plan || !state->csbStartupTimelineRequired ||
-        !state->csbStartupRuntimeSession) return 0;
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    if (!session->valid) return 0;
-    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-        if (session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34 &&
-            (!csb_v1_boot_startup_playback_begin_pc34(session, &audio_action) ||
-             !csb_v1_boot_startup_playback_complete_swoosh_pc34(
-                 session, &audio_action))) return 0;
-        title_frame = state->csbState.startup_title_frame;
-        while (session->playback.next_title_frame <= title_frame) {
-            if (!csb_v1_boot_startup_playback_title_frame_pc34(
-                    session, session->playback.next_title_frame,
-                    &title_plan, &audio_action)) return 0;
-        }
-    } else if (session->playback.stage ==
-               CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34) {
-        /* ReDMCSB TITLE.C F0437 releases C001 exactly once before
-         * ENTRANCE.C F0806 emits C004/C002/C003. The idle path may advance
-         * without an OS paint between those states, so the session (not an
-         * M11 wrapper) owns this boundary. */
-        if (!csb_v1_boot_startup_playback_title_frame_pc34(
-                session, csb_v1_startup_title_total_ticks_pc34(),
-                &title_plan, &audio_action)) return 0;
-    }
-    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-        plan->opening_door_step < session->playback.next_door_opening_step) {
-        return 1;
-    }
-    memset(&frame, 0, sizeof(frame));
-    return csb_v1_boot_startup_runtime_asset_session_frame_pc34(
-        session, plan, (uint32_t)(state->csbState.startup_entrance_frame + 1),
-        &frame);
-}
-
-static int m11_csb_startup_source_render_plan(
-    const M11_GameViewState *state,
-    CSB_V1_StartupRenderPlan_PC34 *out_plan)
-{
-    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
-
-    if (!state || !out_plan) return 0;
-    csb_v1_boot_startup_host_view_receipt_init_pc34(&host_view);
-    if (!m11_csb_boot_runtime_startup_host_view_receipt(state, &host_view) ||
-        !host_view.render_plan_valid) return 0;
-    /* The CSB-owned host receipt carries TITLE.C/ENTRANCE.C geometry even
-     * when its broad capture package is intentionally not drawable. M11
-     * combines only that source plan with the verified runtime session. */
-    *out_plan = host_view.render_plan;
-    return 1;
-}
-
-static int m11_csb_startup_record_current_frame(M11_GameViewState *state)
-{
-    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
-    CSB_V1_StartupRenderPlan_PC34 source_plan;
-
-    if (!state) return 0;
-    csb_v1_boot_startup_host_view_receipt_init_pc34(&host_view);
-    if (m11_csb_boot_runtime_startup_host_view_receipt(state, &host_view) &&
-        host_view.valid && host_view.render_draw_valid &&
-        host_view.render_draw.render_plan_valid) {
-        return m11_csb_startup_record_frame(
-            state, &host_view.render_draw.render_plan);
-    }
-    if (!m11_csb_startup_source_render_plan(state, &source_plan)) return 0;
-    return m11_csb_startup_record_frame(state, &source_plan);
-}
-
-static int m11_csb_startup_raster_source_session_frame(
-    M11_GameViewState *state,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
-    CSB_V1_StartupRuntimeRaster_PC34 raster;
-    CSB_V1_StartupRenderPlan_PC34 title_plan;
-    CSB_V1_StartupAudioAction_PC34 audio;
-    const CSB_V1_StartupRenderPlan_PC34 *source_plan = plan;
-    int title_frame;
-    int result;
-
-    if (!state || !plan || !framebuffer || framebuffer_width != 320 ||
-        framebuffer_height != 200 || !state->csbStartupRuntimeSession) return 0;
-    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    if (!session->valid) return 0;
-    if (plan->surface == CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-        if (session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34 &&
-            (!csb_v1_boot_startup_playback_begin_pc34(session, &audio) ||
-             !csb_v1_boot_startup_playback_complete_swoosh_pc34(session,
-                                                                  &audio))) return 0;
-        title_frame = state->csbState.startup_title_frame;
-        while (session->playback.next_title_frame <= title_frame) {
-            if (!csb_v1_boot_startup_playback_title_frame_pc34(
-                    session, session->playback.next_title_frame,
-                    &title_plan, &audio)) return 0;
-        }
-        source_plan = &title_plan;
-    }
-    memset(&frame, 0, sizeof(frame));
-    memset(&raster, 0, sizeof(raster));
-    result = csb_v1_boot_startup_runtime_asset_session_frame_pc34(
-                 session, source_plan,
-                 (uint32_t)(state->csbState.startup_entrance_frame + 1),
-                 &frame) &&
-             csb_v1_boot_startup_runtime_frame_rasterize_pc34(
-                 &frame, source_plan, &raster) && raster.valid && raster.pixels &&
-             raster.width == framebuffer_width && raster.height == framebuffer_height;
-    if (result) memcpy(framebuffer, raster.pixels,
-                       (size_t)framebuffer_width * (size_t)framebuffer_height);
-    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
-    return result;
-}
-
-static int m11_csb_startup_raster_title_session_frame(
-    M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebuffer_width,
-    int framebuffer_height)
-{
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupRenderPlan_PC34 plan;
-    CSB_V1_StartupRuntimeAssetFrame_PC34 frame;
-    CSB_V1_StartupRuntimeRaster_PC34 raster;
-    CSB_V1_StartupAudioAction_PC34 audio;
-    int title_frame;
-
-    if (!state || !framebuffer || framebuffer_width != 320 ||
-        framebuffer_height != 200 || !state->csbState.startup_title_active ||
-        !state->csbStartupRuntimeSession) return 0;
-    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeSession;
-    if (!session->valid) return 0;
-    if (session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34 &&
-        (!csb_v1_boot_startup_playback_begin_pc34(session, &audio) ||
-         !csb_v1_boot_startup_playback_complete_swoosh_pc34(session, &audio))) {
+        state->csbStartupRuntimeAssetSession;
+    m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
+    /* ReDMCSB ENTRANCE.C F0806 returns to the game only after the prison
+     * doors finish.  CSBWin CSBCode.cpp OpenPrisonDoors follows the same
+     * ownership boundary.  Use the package-verified receipt here rather
+     * than moving M11 directly into the HUD playback stage. */
+    if (!csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
+            &snapshot, session, &handoff) || !handoff.valid ||
+        !handoff.door_opening_finished || !handoff.runtime_view_ready ||
+        !handoff.hud_session_ready || handoff.route !=
+            CSB_V1_BOOT_STARTUP_DOOR_RUNTIME_ROUTE_HUD_READY_PC34) {
         return 0;
     }
-    title_frame = state->csbState.startup_title_frame;
-    while (session->playback.next_title_frame <= title_frame) {
-        if (!csb_v1_boot_startup_playback_title_frame_pc34(
-                session, session->playback.next_title_frame, &plan, &audio)) {
-            return 0;
-        }
+    m11_apply_csb_runtime_m11_mirror_receipt(state, &handoff.runtime_mirror);
+    if (handoff.status) {
+        m11_set_status(state, handoff.status_scope ? handoff.status_scope : "BOOT",
+                       handoff.status);
     }
-    if (!m11_csb_startup_source_render_plan(state, &plan) ||
-        plan.surface != CSB_V1_STARTUP_RENDER_TITLE_PC34) {
-        return 0;
-    }
-    memset(&frame, 0, sizeof(frame));
-    memset(&raster, 0, sizeof(raster));
-    if (!csb_v1_boot_startup_runtime_asset_session_frame_pc34(
-            session, &plan,
-            (uint32_t)(state->csbState.startup_entrance_frame + 1), &frame) ||
-        !csb_v1_boot_startup_runtime_frame_rasterize_pc34(&frame, &plan, &raster) ||
-        !raster.valid || !raster.pixels) {
-        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
-        return 0;
-    }
-    memcpy(framebuffer, raster.pixels, (size_t)framebuffer_width * framebuffer_height);
-    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
     return 1;
 }
 
@@ -4273,6 +4207,11 @@ static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
         m11_csb_startup_command_state_receipt_to_m11(
             state,
             &receipt->finish_receipt);
+        if (state->csbState.startup_entrance_dismissed) {
+            if (!m11_csb_complete_door_runtime_handoff(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+        }
     }
     return m11_csb_startup_apply_host_receipt(state, &receipt->host_receipt);
 }
@@ -37867,18 +37806,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        if (!m11_csb_live_hud_terminal_receipt_current(state)) {
-            /* ReDMCSB ENTRANCE.C F0807 releases the entrance loop only after
-             * the terminal door frame. Never raster live HUD pixels from an
-             * unverified M11 handoff. */
-            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
-                                framebufferHeight);
-            g_drawState = NULL;
-            g_activeOriginalFont = NULL;
-            g_m11_font_scale_override = 0;
-            return;
-        }
-        if (!m11_render_csb_boot_viewport(state, framebuffer,
+        if (!m11_csb_live_hud_session_ready(state) ||
+            !m11_render_csb_boot_viewport(state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
             /* A verified CSB launch must not exchange missing source
