@@ -7395,6 +7395,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     no row field is assigned a level, object, tile, palette, bitmap, or loader
     command meaning. Next evidence must show how a post-`$3800` consumer uses
     one non-self row before any record grammar can be considered.
+  - Update: descriptor-to-record aliasing is now part of the authenticated
+    handoff. The selected selector's complete occurrence count, first/last
+    ordinals, and hash over every matching raw row are re-derived from the
+    original Stage-3 table. This distinguishes one selected row from a changed
+    or ambiguous table relation without assigning aliases, row ordering, or
+    any word a gameplay meaning. Remaining: a real post-`$3800` execution
+    trace proving how a non-self descriptor record is consumed.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02

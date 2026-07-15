@@ -62,6 +62,14 @@ typedef struct {
     size_t user_data_offset;
     size_t user_data_bytes;
     uint32_t user_data_hash;
+    /* Full table relationship for this selector. Multiple raw descriptor rows
+     * can resolve to one physical record; these ordinal facts retain that
+     * aliasing without assigning a meaning to the selector or row words. */
+    size_t selector_occurrence_count;
+    size_t selector_first_ordinal;
+    size_t selector_last_ordinal;
+    uint32_t selector_row_hash;
+    int selector_aliases_proven;
     int record_coordinate_proven;
     int mode1_user_data_proven;
     int descriptor_semantics_proven;

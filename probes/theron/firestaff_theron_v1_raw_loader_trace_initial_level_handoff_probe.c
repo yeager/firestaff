@@ -7,6 +7,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_raw_loader_trace.h"
+#include "theron_v1_later_record_correlation.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_startup_runtime_entry.h"
 
@@ -54,6 +55,7 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02Stage2DynamicPayloadReceipt payload;
     Theron_V1Stage3ManifestEvidence manifest;
+    Theron_V1Stage3DescriptorRecordBoundary descriptor_boundary;
     size_t raw_offset;
 
     memset(out, 0, sizeof(*out));
@@ -63,6 +65,8 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
             raw, raw_size, md5, &payload) != THERON_TRACK02_SIGNAL_OK ||
         !theron_v1_stage3_manifest_evidence_from_payload(
             raw, raw_size, &payload, &manifest) ||
+        !theron_v1_stage3_descriptor_record_boundary_from_manifest(
+            raw, raw_size, &manifest, 0u, &descriptor_boundary) ||
         !boundary.valid || boundary.track02_record != 0x0b52u) {
         return;
     }
@@ -89,6 +93,15 @@ static void fixture_receipt(Theron_V1RawLoaderTraceCoalescedLaterReceipt *out,
         raw + raw_offset, THERON_TRACK02_RAW_USER_DATA_BYTES);
     out->descriptor_row_media_bound = 1;
     out->descriptor_semantics_proven = 0;
+    out->descriptor_selector_occurrence_count =
+        descriptor_boundary.selector_occurrence_count;
+    out->descriptor_selector_first_ordinal =
+        descriptor_boundary.selector_first_ordinal;
+    out->descriptor_selector_last_ordinal =
+        descriptor_boundary.selector_last_ordinal;
+    out->descriptor_selector_row_hash = descriptor_boundary.selector_row_hash;
+    out->descriptor_selector_aliases_proven =
+        descriptor_boundary.selector_aliases_proven;
     out->caller_pc = 0xea00u;
     out->return_pc = 0xea03u;
     out->later_caller_opcode = 0x20u;
@@ -464,6 +477,13 @@ int main(void)
         handoff.descriptor_semantics_proven ||
         handoff.descriptor_record_user_data_hash !=
             handoff.complete_payload_checksum ||
+        !handoff.descriptor_selector_aliases_proven ||
+        handoff.descriptor_selector_occurrence_count == 0u ||
+        handoff.descriptor_selector_first_ordinal >
+            handoff.descriptor_selector_ordinal ||
+        handoff.descriptor_selector_ordinal >
+            handoff.descriptor_selector_last_ordinal ||
+        handoff.descriptor_selector_row_hash == 0u ||
         !handoff.loader_intake.observed ||
         handoff.loader_intake.payload_intake_admitted ||
         handoff.loader_intake.record != handoff.observed_track02_record ||

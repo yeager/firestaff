@@ -15,6 +15,14 @@ static uint32_t theron_v1_later_record_fnv1a_u32(uint32_t hash,
     return hash;
 }
 
+static uint32_t theron_v1_later_record_fnv1a_u16(uint32_t hash,
+                                                  uint16_t value) {
+    hash ^= (uint8_t)value;
+    hash *= 16777619u;
+    hash ^= (uint8_t)(value >> 8u);
+    return hash * 16777619u;
+}
+
 static uint32_t theron_v1_later_record_fnv1a_bytes(const uint8_t *bytes,
                                                     size_t byte_count) {
     uint32_t hash = 2166136261u;
@@ -142,6 +150,7 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
     const Theron_V1Stage3ManifestWordTriple *descriptor;
     uint32_t resolved_record;
     size_t raw_offset;
+    size_t index;
     const uint8_t *sector;
 
     if (!out_boundary) return 0;
@@ -191,8 +200,35 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
         THERON_V1_MODE1_USER_DATA_BYTES);
     out_boundary->record_coordinate_proven = 1;
     out_boundary->mode1_user_data_proven = out_boundary->user_data_hash != 0u;
+    out_boundary->selector_first_ordinal = manifest->descriptor_count;
+    out_boundary->selector_row_hash = 2166136261u;
+    for (index = 0u; index < manifest->descriptor_count; ++index) {
+        const Theron_V1Stage3ManifestWordTriple *row =
+            &manifest->descriptors[index];
+
+        if (row->word2 != descriptor->word2) continue;
+        if (out_boundary->selector_first_ordinal == manifest->descriptor_count) {
+            out_boundary->selector_first_ordinal = index;
+        }
+        out_boundary->selector_last_ordinal = index;
+        ++out_boundary->selector_occurrence_count;
+        out_boundary->selector_row_hash = theron_v1_later_record_fnv1a_u32(
+            out_boundary->selector_row_hash, (uint32_t)index);
+        out_boundary->selector_row_hash = theron_v1_later_record_fnv1a_u16(
+            out_boundary->selector_row_hash, row->word0);
+        out_boundary->selector_row_hash = theron_v1_later_record_fnv1a_u16(
+            out_boundary->selector_row_hash, row->word1);
+        out_boundary->selector_row_hash = theron_v1_later_record_fnv1a_u16(
+            out_boundary->selector_row_hash, row->word2);
+    }
+    out_boundary->selector_aliases_proven =
+        out_boundary->selector_occurrence_count != 0u &&
+        out_boundary->selector_first_ordinal <= descriptor_ordinal &&
+        descriptor_ordinal <= out_boundary->selector_last_ordinal &&
+        out_boundary->selector_row_hash != 0u;
     out_boundary->descriptor_semantics_proven = 0;
-    if (!out_boundary->mode1_user_data_proven) {
+    if (!out_boundary->mode1_user_data_proven ||
+        !out_boundary->selector_aliases_proven) {
         memset(out_boundary, 0, sizeof(*out_boundary));
         return 0;
     }
