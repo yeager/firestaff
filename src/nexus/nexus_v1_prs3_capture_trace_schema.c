@@ -91,7 +91,10 @@ static int sh2_conditional_branch_target(uint16_t instruction,
                                          uint32_t *out_target) {
     int32_t displacement;
 
-    if (!out_target || (instruction & 0xff00U) != 0x8900U) return 0;
+    if (!out_target || ((instruction & 0xff00U) != 0x8900U &&
+                        (instruction & 0xff00U) != 0x8b00U &&
+                        (instruction & 0xff00U) != 0x8d00U &&
+                        (instruction & 0xff00U) != 0x8f00U)) return 0;
     displacement = (int32_t)(int8_t)(instruction & 0x00ffU);
     if (displacement < -((int32_t)instruction_offset + 4)) return 0;
     *out_target = (uint32_t)((int32_t)instruction_offset + 4 + displacement * 2);
@@ -506,7 +509,12 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_ZERO_MERGE_OR_OFFSET = SH2_V1_CALLEE_OFFSET + 124U,
         SH2_ZERO_INDEX_MASK_LITERAL_LOAD_OFFSET = SH2_V1_CALLEE_OFFSET + 50U,
         SH2_ZERO_INDEX_MASK_OFFSET = SH2_V1_CALLEE_OFFSET + 144U,
-        SH2_ZERO_INDEXED_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 148U
+        SH2_ZERO_INDEXED_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 148U,
+        SH2_ZERO_POST_READ_COMPARE_OFFSET = SH2_V1_CALLEE_OFFSET + 154U,
+        SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET = SH2_V1_CALLEE_OFFSET + 156U,
+        SH2_ZERO_REPEAT_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 158U,
+        SH2_ZERO_REPEAT_DELAY_MASK_OFFSET = SH2_V1_CALLEE_OFFSET + 160U,
+        SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 162U
     };
     Nexus_V1_Prs3Sh2V1ExecutionReceipt receipt;
 
@@ -605,6 +613,25 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
              dm_bin + receipt.zero_index_mask_literal_offset)) == 0x0fffU &&
         read_be16(dm_bin + SH2_ZERO_INDEX_MASK_OFFSET) == 0x2059U &&
         read_be16(dm_bin + SH2_ZERO_INDEXED_BYTE_READ_OFFSET) == 0x01dcU;
+    receipt.zero_post_read_compare_offset = SH2_ZERO_POST_READ_COMPARE_OFFSET;
+    receipt.zero_repeat_counter_increment_offset = SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET;
+    receipt.zero_repeat_branch_offset = SH2_ZERO_REPEAT_BRANCH_OFFSET;
+    receipt.zero_repeat_delay_mask_offset = SH2_ZERO_REPEAT_DELAY_MASK_OFFSET;
+    receipt.zero_outer_loop_branch_offset = SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET;
+    receipt.sh2_zero_side_repeat_control_verified =
+        read_be16(dm_bin + SH2_ZERO_POST_READ_COMPARE_OFFSET) == 0x2a10U &&
+        read_be16(dm_bin + SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET) == 0x7a01U &&
+        read_be16(dm_bin + SH2_ZERO_REPEAT_BRANCH_OFFSET) == 0x8ff3U &&
+        sh2_conditional_branch_target(
+            read_be16(dm_bin + SH2_ZERO_REPEAT_BRANCH_OFFSET),
+            SH2_ZERO_REPEAT_BRANCH_OFFSET,
+            &receipt.zero_repeat_branch_target_offset) &&
+        receipt.zero_repeat_branch_target_offset == SH2_V1_CALLEE_OFFSET + 136U &&
+        read_be16(dm_bin + SH2_ZERO_REPEAT_DELAY_MASK_OFFSET) == 0x2659U &&
+        sh2_bra_target(read_be16(dm_bin + SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET),
+                       SH2_ZERO_OUTER_LOOP_BRANCH_OFFSET,
+                       &receipt.zero_outer_loop_target_offset) &&
+        receipt.zero_outer_loop_target_offset == SH2_CONTROL_REENTRY_OFFSET;
     }
     receipt.sh2_control_path_verified =
         receipt.control_test_instruction == 0x23b8U &&
