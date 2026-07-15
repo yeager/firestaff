@@ -1465,6 +1465,48 @@ void dm2_v1_viewport_set_g1_scene_item_material_direct(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+    DM2_V1_ViewportState *s, int ready, int gdat_index,
+    int wall_gfx_index, int field, int map_x, int map_y,
+    uint16_t object_id, const uint8_t *pixels, int width, int height,
+    int stride, const uint8_t palette16[16], uint32_t palette_hash,
+    uint32_t expected_pixel_hash)
+{
+    if (!s) return;
+    s->g1_scene_wall_button_material_ready =
+        ready && gdat_index != 0 && wall_gfx_index >= 0 &&
+        wall_gfx_index <= 0xff && field == 1 && object_id != 0xfffeu &&
+        pixels && width > 0 && height > 0 && stride >= width && palette16 &&
+        palette_hash != 0u && expected_pixel_hash != 0u;
+    s->g1_scene_wall_button_material_gdat_index = gdat_index;
+    s->g1_scene_wall_button_material_wall_gfx_index = wall_gfx_index;
+    s->g1_scene_wall_button_material_field = field;
+    s->g1_scene_wall_button_material_map_x = map_x;
+    s->g1_scene_wall_button_material_map_y = map_y;
+    s->g1_scene_wall_button_material_object_id = object_id;
+    s->g1_scene_wall_button_material_width = width;
+    s->g1_scene_wall_button_material_height = height;
+    s->g1_scene_wall_button_material_stride = stride;
+    s->g1_scene_wall_button_material_pixels = NULL;
+    s->g1_scene_wall_button_material_pixel_hash = 0u;
+    memset(s->g1_scene_wall_button_material_palette16, 0,
+           sizeof(s->g1_scene_wall_button_material_palette16));
+    s->g1_scene_wall_button_material_palette_hash = 0u;
+    s->g1_scene_wall_button_material_consumed_count = 0;
+    if (!s->g1_scene_wall_button_material_ready) return;
+    s->g1_scene_wall_button_material_pixel_hash =
+        dm2_v1_viewport_indexed_pixel_hash(pixels, width, height, stride);
+    if (s->g1_scene_wall_button_material_pixel_hash != expected_pixel_hash) {
+        s->g1_scene_wall_button_material_ready = 0;
+        return;
+    }
+    s->g1_scene_wall_button_material_pixels = pixels;
+    memcpy(s->g1_scene_wall_button_material_palette16, palette16,
+           sizeof(s->g1_scene_wall_button_material_palette16));
+    s->g1_scene_wall_button_material_palette_hash = palette_hash;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_g1_wall_gfx_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TextWallGfxRuntimeReceipt *text_receipt,
@@ -5194,12 +5236,40 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
             int button_stride = 0;
             int wall_button_material_bound =
                 door->button_source_kind != 2;
+            const int direct_g1_wall_button_material =
+                door->button_source_kind == 2 &&
+                s->g1_scene_wall_button_material_ready &&
+                s->g1_scene_wall_button_material_pixels &&
+                s->g1_scene_wall_button_material_pixel_hash != 0u &&
+                door->button_gdat_index ==
+                    s->g1_scene_wall_button_material_gdat_index &&
+                door->wall_button_index ==
+                    s->g1_scene_wall_button_material_wall_gfx_index &&
+                door->wall_button_field ==
+                    s->g1_scene_wall_button_material_field &&
+                door->wall_button_x ==
+                    s->g1_scene_wall_button_material_map_x &&
+                door->wall_button_y ==
+                    s->g1_scene_wall_button_material_map_y &&
+                door->wall_button_object_id ==
+                    s->g1_scene_wall_button_material_object_id;
 
             /* skproject DRAW_DEFAULT_DOOR_BUTTON reaches the custom button
              * through the current WALL_GFX owner. Do not let the generic
              * view-square helper pick a same-numbered GDAT image unless the
              * direct DB2/DB3 receipt proves that ownership. */
-            if (s->source_materials_required) {
+            if (direct_g1_wall_button_material) {
+                button_pixels = s->g1_scene_wall_button_material_pixels;
+                button_w = s->g1_scene_wall_button_material_width;
+                button_h = s->g1_scene_wall_button_material_height;
+                button_stride = s->g1_scene_wall_button_material_stride;
+                memcpy(s->active_asset_palette16,
+                       s->g1_scene_wall_button_material_palette16,
+                       sizeof(s->active_asset_palette16));
+                s->active_asset_palette_hash =
+                    s->g1_scene_wall_button_material_palette_hash;
+                s->active_asset_palette_ready = 1;
+            } else if (s->source_materials_required) {
                 const DM2_V1_DoorMaterial *material =
                     &materials[i][DM2_DOOR_MATERIAL_BUTTON];
                 button_pixels = material->pixels;
@@ -5211,16 +5281,14 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                 s->active_asset_palette_hash = material->palette_hash;
                 s->active_asset_palette_ready = material->palette_hash != 0u;
             }
-            if (((s->source_materials_required && button_pixels && button_w > 0 &&
-                  button_h > 0) ||
-                 (!s->source_materials_required &&
-                  dm2_v1_fetch_viewport_local_material(s,
-                                                      door->button_gdat_index,
-                                                      &button_pixels,
-                                                      &button_w,
-                                                      &button_h,
-                                                      &button_stride) == 0 &&
-                  button_pixels && button_w > 0 && button_h > 0))) {
+            if (direct_g1_wall_button_material ||
+                (s->source_materials_required && button_pixels &&
+                 button_w > 0 && button_h > 0) ||
+                (!s->source_materials_required &&
+                 dm2_v1_fetch_viewport_local_material(
+                     s, door->button_gdat_index, &button_pixels, &button_w,
+                     &button_h, &button_stride) == 0 &&
+                 button_pixels && button_w > 0 && button_h > 0)) {
                 DM2_V1_DoorAssetBlit blit;
                 if (door->button_source_kind == 2) {
                     /* The palette query belongs to this exact image fetch,
@@ -5268,6 +5336,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                     button_drawn_asset = 1;
                     if (s->source_materials_required) {
                         materials[i][DM2_DOOR_MATERIAL_BUTTON].consumed = 1;
+                    }
+                    if (direct_g1_wall_button_material) {
+                        ++s->g1_scene_wall_button_material_consumed_count;
                     }
                 }
             }

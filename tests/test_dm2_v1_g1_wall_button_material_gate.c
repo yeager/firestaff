@@ -12,6 +12,19 @@ static int passed;
 static int custom_button_fetches;
 static int wrong_sized_custom_button;
 
+static uint32_t indexed_pixel_hash(const uint8_t *pixels, int width,
+                                   int height, int stride)
+{
+    uint32_t hash = 2166136261u;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash ? hash : 1u;
+}
+
 #define CHECK(label, condition) do { \
     ++checks; \
     if (condition) { ++passed; } \
@@ -152,6 +165,41 @@ int main(void)
     CHECK("verified text WALL_GFX receipt reaches the button asset consumer",
           custom_button_fetches == 1 &&
               viewport.asset_door_button_drawn_count == 1);
+
+    {
+        static const uint8_t direct_pixels[4] = { 1, 2, 3, 4 };
+        uint8_t palette16[16];
+        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0x90 + i);
+        dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+            &viewport, 1,
+            dm2_v1_viewport_wall_button_graphic_index(0x2a, 1),
+            0x2a, 1, 6, 7, 0x8abcu, direct_pixels, 2, 2, 2,
+            palette16, 0x47443150u,
+            indexed_pixel_hash(direct_pixels, 2, 2, 2));
+        CHECK("direct G1 WALL_GFX receipt retains exact M11 source bytes",
+              viewport.g1_scene_wall_button_material_ready &&
+                  viewport.g1_scene_wall_button_material_pixels == direct_pixels &&
+                  viewport.g1_scene_wall_button_material_pixel_hash ==
+                      indexed_pixel_hash(direct_pixels, 2, 2, 2));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        setup_custom_button(&viewport, framebuffer);
+        dm2_v1_viewport_set_level(&viewport, 5);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 0);
+        dm2_v1_viewport_set_g1_wall_gfx_materials(
+            &viewport, &text_receipt, NULL);
+        dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
+            &viewport, 1,
+            dm2_v1_viewport_wall_button_graphic_index(0x2a, 1),
+            0x2a, 1, 6, 7, 0x8abcu, direct_pixels, 2, 2, 2,
+            palette16, 0x47443150u,
+            indexed_pixel_hash(direct_pixels, 2, 2, 2));
+        custom_button_fetches = 0;
+        dm2_v1_render_doors(&viewport);
+        CHECK("direct G1 WALL_GFX bytes avoid a second provider lookup",
+              custom_button_fetches == 0 &&
+                  viewport.asset_door_button_drawn_count == 1 &&
+                  viewport.g1_scene_wall_button_material_consumed_count == 1);
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     setup_custom_button(&viewport, framebuffer);

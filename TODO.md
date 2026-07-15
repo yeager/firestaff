@@ -7155,6 +7155,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     M11 frame with ObjectID, coordinate, category/type, and pixel-hash proof.
     The renderer consumes that receipt directly and cannot re-query a changed
     GDAT provider. Remaining `DRAW_ITEM` geometry is still explicitly gated.
+  - 2026-07-15 update: an admitted DB2 Text or DB3 Actuator custom door
+    button now carries its exact `WALL_GFX/index/dtImage/1` pixels and local
+    palette directly into M11. The direct handoff retains map coordinate,
+    ObjectID, WALL_GFX index/field, packed GDAT key, and an indexed-pixel
+    hash; `DRAW_DEFAULT_DOOR_BUTTON` consumes it only after the existing
+    root receipt matches. Absent or changed bytes remain no-draw. This does
+    not treat `WALL_GFX/F9` or `DOORS/F9` map chips as visible door art: their
+    source placement semantics are still unproven.
   - 2026-07-15 update: HUD HP, stamina, and mana bars now use the same
     source-owned `glbChampionColor[player]` value, initialized by
     `SkWinCore::INIT` as `7,11,8,14`; the prior independent `2,11,12`

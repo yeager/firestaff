@@ -7,6 +7,18 @@
   sensor precedes C127 and never replaces it with a mirror/TextString scan.
   Focused coverage: `m11_dm1_hoc_no_fallback_panel` with a bounded, valid
   PC34 SFT chain.
+
+- ✅ 2026-07-15 DM2 direct G1 WALL_GFX door-button M11 handoff: a verified
+  DB2 Text or DB3 Actuator custom button now passes its exact
+  `WALL_GFX/index/dtImage/1` decoded pixels, IMG3 local palette, coordinate,
+  ObjectID, field, GDAT key, and pixel hash directly to M11. The renderer
+  consumes it only when the existing G1 root receipt matches, avoiding a
+  second mutable provider lookup; missing or altered data remains no-draw.
+  `WALL_GFX/F9` and `DOORS/F9` are deliberately not used as substitute door
+  art because SKProject has not yet proven their visible placement semantics.
+  Source: SKProject `c_gui_vp.cpp::DRAW_DEFAULT_DOOR_BUTTON`,
+  `DRAW_DOOR_FRAMES`, and DB2/DB3 wall-decoration routes.
+
 - ✅ 2026-07-15 DM2 direct DB5/DB9 F9 M11 material handoff: a source-admitted
   static-object cell now carries its already decoded WEAPONS/CONTAINERS F9
   pixels, IMG3 local palette, ObjectID, coordinate, category/type and pixel
