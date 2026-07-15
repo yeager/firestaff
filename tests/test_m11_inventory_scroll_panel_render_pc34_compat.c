@@ -258,7 +258,8 @@ static void seed_scroll_world(M11_GameViewState* state,
                               struct DungeonThings_Compat* things,
                               struct DungeonTextString_Compat* textStrings,
                               struct DungeonScroll_Compat* scrolls,
-                              unsigned short* textData) {
+                              unsigned short* textData,
+                              unsigned char* rawScroll) {
     int i;
     memset(things, 0, sizeof(*things));
 
@@ -280,6 +281,9 @@ static void seed_scroll_world(M11_GameViewState* state,
     things->textStringCount = 1;
     things->scrolls = scrolls;
     things->scrollCount = 1;
+    things->loaded = 1;
+    things->rawThingData[THING_TYPE_SCROLL] = rawScroll;
+    things->thingCounts[THING_TYPE_SCROLL] = 1;
 
     state->active = 1;
     state->inventoryPanelActive = 1;
@@ -302,7 +306,9 @@ static void seed_scroll_world(M11_GameViewState* state,
 static void seed_chest_world(M11_GameViewState* state,
                              struct DungeonThings_Compat* things,
                              struct DungeonContainer_Compat* containers,
-                             struct DungeonJunk_Compat* junks) {
+                             struct DungeonJunk_Compat* junks,
+                             unsigned char* rawContainers,
+                             unsigned char* rawJunks) {
     int i;
     memset(things, 0, sizeof(*things));
     memset(containers, 0, sizeof(containers[0]) * 2);
@@ -323,6 +329,11 @@ static void seed_chest_world(M11_GameViewState* state,
     things->containerCount = 2;
     things->junks = junks;
     things->junkCount = 2;
+    things->loaded = 1;
+    things->rawThingData[THING_TYPE_CONTAINER] = rawContainers;
+    things->rawThingData[THING_TYPE_JUNK] = rawJunks;
+    things->thingCounts[THING_TYPE_CONTAINER] = 2;
+    things->thingCounts[THING_TYPE_JUNK] = 2;
 
     state->active = 1;
     state->inventoryPanelActive = 1;
@@ -346,10 +357,12 @@ static void test_action_hand_scroll_decode_reaches_m11_panel_state(void) {
     struct DungeonTextString_Compat textStrings[1];
     struct DungeonScroll_Compat scrolls[1];
     unsigned short textData[3];
+    unsigned char rawScroll[4] = {0};
     char decoded[64];
 
     M11_GameView_Init(&state);
-    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData,
+                      rawScroll);
 
     ASSERT_EQ(M11_GameView_GetV1OpenScrollPanelGraphicId(), 23,
               "open-scroll panel graphic id");
@@ -365,12 +378,14 @@ static void test_inventory_draw_overlays_scroll_panel_region(void) {
     struct DungeonTextString_Compat textStrings[1];
     struct DungeonScroll_Compat scrolls[1];
     unsigned short textData[3];
+    unsigned char rawScroll[4] = {0};
     unsigned char framebuffer[320 * 200];
     int vx = 0, vy = 0, vw = 0, vh = 0;
     int zx = 0, zy = 0, zw = 0, zh = 0;
 
     M11_GameView_Init(&state);
-    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData,
+                      rawScroll);
     memset(framebuffer, 0, sizeof(framebuffer));
 
     M11_GameView_Draw(&state, framebuffer, 320, 200);
@@ -379,10 +394,10 @@ static void test_inventory_draw_overlays_scroll_panel_region(void) {
                 "viewport rect helper is available");
     ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
                 "C101 inventory panel zone helper is available");
-    ASSERT_TRUE(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)] != 0,
-                "scroll panel fallback fills C101 panel region");
-    ASSERT_TRUE(framebuffer[(vy + zy + zh - 2) * 320 + (vx + zx + zw - 2)] != 0,
-                "scroll panel render path reaches C101 lower interior");
+    ASSERT_EQ(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)], 0,
+              "missing C023 source surface leaves C101 panel blank");
+    ASSERT_EQ(framebuffer[(vy + zy + zh - 2) * 320 + (vx + zx + zw - 2)], 0,
+              "missing C023 source surface has no generated lower panel");
 }
 
 static void test_inventory_draw_blits_source_open_scroll_panel_pixels(void) {
@@ -391,10 +406,12 @@ static void test_inventory_draw_blits_source_open_scroll_panel_pixels(void) {
     struct DungeonTextString_Compat textStrings[1];
     struct DungeonScroll_Compat scrolls[1];
     unsigned short textData[3];
+    unsigned char rawScroll[4] = {0};
     unsigned char framebuffer[320 * 200];
 
     M11_GameView_Init(&state);
-    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData,
+                      rawScroll);
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
                 "GRAPHICS.DAT asset loader is available for source C023 scroll panel blit");
     state.assetsAvailable = 1;
@@ -414,12 +431,14 @@ static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
     struct DungeonTextString_Compat textStrings[1];
     struct DungeonScroll_Compat scrolls[1];
     unsigned short textData[3];
+    unsigned char rawScroll[4] = {0};
     unsigned char framebuffer[320 * 200];
     int vx = 0, vy = 0, vw = 0, vh = 0;
     int zx = 0, zy = 0, zw = 0, zh = 0;
 
     M11_GameView_Init(&state);
-    seed_scroll_world(&state, &things, textStrings, scrolls, textData);
+    seed_scroll_world(&state, &things, textStrings, scrolls, textData,
+                      rawScroll);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state,
               (unsigned short)(THING_TYPE_SCROLL << 10)), 1,
@@ -441,8 +460,8 @@ static void test_eye_click_scroll_routes_without_dialog_overlay(void) {
                 "viewport rect helper remains available after scroll eye click");
     ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&zx, &zy, &zw, &zh),
                 "C101 panel zone remains available after scroll eye click");
-    ASSERT_TRUE(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)] != 0,
-                "scroll eye click leaves C023 scroll panel renderable");
+    ASSERT_EQ(framebuffer[(vy + zy + 1) * 320 + (vx + zx + 1)], 0,
+              "scroll eye click has no generated C023 panel without source surface");
 }
 
 static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void) {
@@ -450,6 +469,8 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     struct DungeonThings_Compat things;
     struct DungeonContainer_Compat containers[2];
     struct DungeonJunk_Compat junks[2];
+    unsigned char rawContainers[12] = {0};
+    unsigned char rawJunks[8] = {0};
     const unsigned short leaderHandChest =
         (unsigned short)(THING_TYPE_CONTAINER << 10);
     const unsigned short actionHandChest =
@@ -461,7 +482,10 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     int zx = 0, zy = 0, zw = 0, zh = 0;
 
     M11_GameView_Init(&state);
-    seed_chest_world(&state, &things, containers, junks);
+    rawJunks[2] = 4;
+    rawJunks[6] = 5;
+    seed_chest_world(&state, &things, containers, junks, rawContainers,
+                     rawJunks);
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
                 "GRAPHICS.DAT asset loader is available for source C025 chest panel blit");
     state.assetsAvailable = 1;

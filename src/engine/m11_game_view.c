@@ -73,6 +73,7 @@
 #include "memory_combat_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
@@ -26505,19 +26506,6 @@ static int m11_csb_runtime_object_name_for_thing(
 static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
                                            const struct DungeonThings_Compat* things,
                                            unsigned short thingId) {
-    static const unsigned char kObjectInfoType[180] = {
-         30,144,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,
-        166,167,195, 16, 18,  4, 14, 20, 23, 25, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-         61, 62, 63, 64, 65, 66,135,143, 28, 80, 81, 82,112,114, 67, 83, 68, 84, 69, 70,
-         85, 86, 71, 87,119, 72, 88,113, 89, 73, 74, 90,103,104, 96, 97, 98,105,106,108,
-        107, 75, 91, 76, 92, 99,115,100, 77, 93,116,109,101, 78, 94,117,110,102, 79, 95,
-        118,111,140,141,142,194,196,  0,  8, 10, 12,146,147,125,126,127,176,177,178,179,
-        180,181,182,183,184,185,186,187,188,189,190,191,128,129,130,131,168,169,170,171,
-        172,173,174,175,120,121,122,123,124,132,133,134,136,137,138,139,192,193,197,198
-    };
-    int objectInfoIndex;
-    int iconIndex;
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* ReDMCSB OBJECT.C F0032/F0033 resolves object icons from the
          * active game's DUNGEON.DAT records.  CSB M11 must therefore use
@@ -26525,43 +26513,13 @@ static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
          * `world.things` arrays, which are absent or stale on CSB launch. */
         return m11_csb_runtime_object_icon_index_for_thing(state, thingId);
     }
-    objectInfoIndex = m11_object_info_index_for_thing(things, thingId);
-    if (objectInfoIndex < 0 || objectInfoIndex >= 180) return -1;
-    iconIndex = (int)kObjectInfoType[objectInfoIndex];
-    if (THING_GET_TYPE(thingId) == THING_TYPE_WEAPON) {
-        int thingIndex = THING_GET_INDEX(thingId);
-        if (things->weapons && thingIndex >= 0 && thingIndex < things->weaponCount) {
-            const struct DungeonWeapon_Compat* weapon = &things->weapons[thingIndex];
-            if (iconIndex == 4 && weapon->lit) {
-                static const unsigned char kChargeCountToTorchIconOffset[16] = {
-                    0,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3
-                };
-                iconIndex += kChargeCountToTorchIconOffset[weapon->chargeCount & 0x0F];
-            } else if (weapon->chargeCount &&
-                       (iconIndex == 14 || iconIndex == 16 || iconIndex == 18 ||
-                        iconIndex == 20 || iconIndex == 23 || iconIndex == 25)) {
-                iconIndex += 1;
-            }
-        }
-    } else if (THING_GET_TYPE(thingId) == THING_TYPE_SCROLL) {
-        int thingIndex = THING_GET_INDEX(thingId);
-        if (things->scrolls && thingIndex >= 0 && thingIndex < things->scrollCount &&
-            iconIndex == 30 && things->scrolls[thingIndex].closed) {
-            iconIndex += 1;
-        }
-    } else if (THING_GET_TYPE(thingId) == THING_TYPE_JUNK) {
-        int thingIndex = THING_GET_INDEX(thingId);
-        if (things->junks && thingIndex >= 0 && thingIndex < things->junkCount) {
-            const struct DungeonJunk_Compat* junk = &things->junks[thingIndex];
-            if (iconIndex == 0 && state) {
-                iconIndex += state->world.party.direction & 0x03;
-            } else if (junk->chargeCount &&
-                       (iconIndex == 8 || iconIndex == 10 || iconIndex == 12)) {
-                iconIndex += 1;
-            }
-        }
-    }
-    return iconIndex;
+    /* ReDMCSB OBJECT.C F0033 consumes F0141/F0156's loaded PC3.4 record.
+     * A decoded M11 object mirror can lag a save/import transaction, so it
+     * is not a valid substitute for either the G0237 row or the dynamic
+     * charge/closed-state bytes.  The DM1 owner therefore rejects missing
+     * raw records and M11 leaves the icon slot blank. */
+    return dm1_v1_dungeon_get_object_icon_index_pc34(
+        things, thingId, state ? state->world.party.direction : 0);
 }
 
 /* ---------------------------------------------------------------
