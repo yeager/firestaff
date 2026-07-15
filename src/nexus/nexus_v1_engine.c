@@ -7704,6 +7704,28 @@ const char *nexus_v1_menu_bpk_prs3_prerequisite_status_name(
     }
 }
 
+const char *nexus_v1_menu_bpk_prs3_prerequisite_message(
+    Nexus_V1_MenuBpkPrs3PrerequisiteStatus status) {
+    switch (status) {
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING:
+        return "MENU.BPK NOT FOUND";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED:
+        return "MENU.BPK SOURCE NOT VERIFIED";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_INVALID:
+        return "MENU.BPK ARCHIVE INVALID";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_FRAME_INCOMPLETE:
+        return "MENU.BPK PRS3 FRAME INVALID";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER:
+        return "MENU.BPK PRS3 TRACE REQUIRED";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION:
+        return "SATURN PRESENTATION TRACE REQUIRED";
+    case NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED:
+        return "MENU.BPK STORED SURFACE ROUTE";
+    default:
+        return "MENU.BPK STATUS UNKNOWN";
+    }
+}
+
 int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkPaltCaptureTargetReceipt *out_target)
