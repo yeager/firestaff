@@ -1633,6 +1633,7 @@ typedef struct {
     DM2_V1_InterfaceRect primary_button_rect;
     DM2_V1_InterfaceRect secondary_button_rect;
     DM2_V1_InterfaceRect save_list_rect;
+    DM2_V1_InterfaceRect version_text_rect;
     DM2_V1_InterfaceRect primary_text_rect;
     DM2_V1_InterfaceRect secondary_text_rect;
     uint32_t command_hash;

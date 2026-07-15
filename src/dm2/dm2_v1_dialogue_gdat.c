@@ -187,6 +187,18 @@ int dm2_v1_dialogue_open_panel_receipt(
     memset(out, 0, sizeof(*out));
     if (!dm2_v1_dialogue_box_gdat_receipt(loader, &out->material)) return 0;
 
+    /* c_dialog.cpp:408 draws dm2data.cpp::v1d10eb ("V1.0") at RECT_1C2.
+     * It is a compiled original constant, not a host-created menu label. */
+    memcpy(out->version_text, DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT,
+           DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE);
+    out->version_text_size = DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE;
+    out->version_text_hash = dm2_dialogue_hash_bytes(
+        2166136261u, out->version_text, out->version_text_size);
+    if (out->version_text_hash == 0u) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+
     /* ReDMCSB is not applicable: this is skproject/SKULLWIN/c_dialog.cpp
      * lines 352-415. QUERY_GDAT_TEXT(0x1a, 0x81, 0/1) supplies the two
      * button labels before the source panel is blitted at rect 4. */
@@ -213,6 +225,7 @@ int dm2_v1_dialogue_open_panel_receipt(
     out->save_slot_count = 10u;
     out->fade_when_dialog2 = 1;
     hash = dm2_dialogue_hash_step(hash, out->material.receipt_hash);
+    hash = dm2_dialogue_hash_step(hash, out->version_text_hash);
     for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i)
         hash = dm2_dialogue_hash_step(hash, out->text_hash[i]);
     hash = dm2_dialogue_hash_step(hash, out->panel_rect_index);

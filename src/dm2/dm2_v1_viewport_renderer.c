@@ -1125,11 +1125,18 @@ void dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
         !command->draw.material.valid ||
         command->draw.material.metadata.bits_per_pixel != 4u ||
         command->draw.material.palette_hash == 0u ||
+        command->draw.version_text_size !=
+            DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE ||
+        command->draw.version_text_hash == 0u ||
+        memcmp(command->draw.version_text,
+               DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT,
+               DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE) != 0 ||
         !command->draw.text[0] || !command->draw.text[1] ||
         command->draw.text_size[0] == 0u || command->draw.text_size[1] == 0u ||
         command->draw.text_hash[0] == 0u || command->draw.text_hash[1] == 0u ||
         command->draw.panel_rect_index != DM2_V1_DIALOGUE_OPEN_PANEL_RECT_INDEX ||
         command->panel_rect.w <= 0 || command->panel_rect.h <= 0 ||
+        command->version_text_rect.w <= 0 || command->version_text_rect.h <= 0 ||
         command->primary_text_rect.w <= 0 || command->primary_text_rect.h <= 0 ||
         command->secondary_text_rect.w <= 0 || command->secondary_text_rect.h <= 0 ||
         command->command_hash == 0u) return;
@@ -5955,15 +5962,14 @@ static DM2_V1_ViewportRect dm2_v1_dialogue_text_rect(
 }
 
 /* skproject/SKULLWIN/c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL loads the
- * exact DIALOG_BOXES image, then two GDAT text fields and their original
- * destination rectangles. The static version heading has no admitted source
- * string in Firestaff yet, so this route intentionally draws only the two
- * source-owned labels. */
+ * exact DIALOG_BOXES image, then its source-owned V1.0 heading and two GDAT
+ * text fields at their original destination rectangles. */
 void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
 {
     const DM2_V1_DialogueOpenPanelHostCommand *command;
     const uint8_t *pixels = NULL;
     DM2_V1_ViewportRect panel;
+    DM2_V1_ViewportRect version_text;
     DM2_V1_ViewportRect primary_text;
     DM2_V1_ViewportRect secondary_text;
     int width = 0;
@@ -5978,10 +5984,16 @@ void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
         command->draw.material.metadata.bits_per_pixel != 4u ||
         command->draw.material.palette_hash == 0u ||
         command->draw.panel_rect_index != DM2_V1_DIALOGUE_OPEN_PANEL_RECT_INDEX ||
-        command->command_hash == 0u || !command->draw.text[0] ||
+        command->command_hash == 0u || command->draw.version_text_size !=
+            DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE ||
+        command->draw.version_text_hash == 0u || !command->draw.text[0] ||
+        memcmp(command->draw.version_text,
+               DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT,
+               DM2_V1_DIALOGUE_OPEN_PANEL_VERSION_TEXT_SIZE) != 0 ||
         !command->draw.text[1] || command->draw.text_size[0] == 0u ||
         command->draw.text_size[1] == 0u || command->panel_rect.w <= 0 ||
-        command->panel_rect.h <= 0 || command->primary_text_rect.w <= 0 ||
+        command->panel_rect.h <= 0 || command->version_text_rect.w <= 0 ||
+        command->version_text_rect.h <= 0 || command->primary_text_rect.w <= 0 ||
         command->primary_text_rect.h <= 0 || command->secondary_text_rect.w <= 0 ||
         command->secondary_text_rect.h <= 0) {
         dm2_v1_block_source_material(
@@ -6000,9 +6012,11 @@ void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
     panel = (DM2_V1_ViewportRect){ command->panel_rect.x,
         command->panel_rect.y, command->panel_rect.w,
         command->panel_rect.h };
+    version_text = dm2_v1_dialogue_text_rect(&command->version_text_rect);
     primary_text = dm2_v1_dialogue_text_rect(&command->primary_text_rect);
     secondary_text = dm2_v1_dialogue_text_rect(&command->secondary_text_rect);
-    if (panel.w <= 0 || panel.h <= 0 || primary_text.w <= 0 ||
+    if (panel.w <= 0 || panel.h <= 0 || version_text.w <= 0 ||
+        primary_text.w <= 0 ||
         secondary_text.w <= 0 || !s->gdat_interface_font_rows ||
         s->gdat_interface_font_hash == 0u ||
         !s->gdat_interface_text_palette_ready ||
@@ -6011,12 +6025,15 @@ void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
         return;
     }
-    /* c_dialog draws the panel before either GDAT label. */
+    /* c_dialog draws the panel before its compiled heading and GDAT labels. */
     dm2_v1_blit_scaled_material_bitmap(
         s, s->framebuffer, s->fb_stride, panel.x, panel.y, panel.w, panel.h,
         pixels, width, height, stride, DM2_COLOR_TRANSPARENT,
         &s->gdat_interface_palette_consumed_count);
-    if (!dm2_v1_render_hud_source_font(s, &primary_text,
+    if (!dm2_v1_render_hud_source_font(s, &version_text,
+            (const char *)command->draw.version_text,
+            command->draw.version_palette_slot, 0u, 1) ||
+        !dm2_v1_render_hud_source_font(s, &primary_text,
             (const char *)command->draw.text[0],
             command->draw.button_palette_slot, 0u, 1) ||
         !dm2_v1_render_hud_source_font(s, &secondary_text,
@@ -6026,7 +6043,7 @@ void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
         return;
     }
-    s->gdat_dialogue_open_panel_consumed_count = 3;
+    s->gdat_dialogue_open_panel_consumed_count = 4;
     s->gdat_dialogue_open_panel_consumed_hash = command->command_hash;
 }
 
