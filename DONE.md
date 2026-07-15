@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 CSB HINTLOAD save-part wrappers: added CSB-owned
+  `F1910_LoadSavedGamePart`, `F1913_LoadAndDeobfuscateSavedGamePart`, and
+  `F1914_LoadAndDeobfuscateSavedGameHeader` entry points to the native CSB
+  save/load API. `csb_v1_load_game` now validates the 512-byte header through
+  F1914 before reading the bounded state prefix through F1910; F1913 covers
+  word-sized SAVEHEAD-key deobfuscating part loads. The ReDMCSB audit rows
+  are closed as `PC34_SOURCE_IMPLEMENTED`. Verification: focused CSB
+  save/export/import unit target and `git diff --check`.
+
 - ✅ 2026-07-16 DM1 ReDMCSB DUNGEON F0142 projectile-aspect mapping:
   added a DM1-owned helper for `F0142_DUNGEON_GetProjectileAspect`'s signed
   return contract. Spell/projectile slots now expose negative

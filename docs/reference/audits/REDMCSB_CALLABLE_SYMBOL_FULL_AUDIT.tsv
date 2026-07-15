@@ -1444,9 +1444,9 @@ F1902_Post_F1901_CopyProtectionRoutine_CPSX	F	Post	HINT004.C:177	-	MISSING	No ex
 F1904_ApplyPaletteChangesToScreenArea	F	ApplyPaletteChangesToScreenArea	HINT004.C:185	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1908_Checksum_CPSX	F	Checksum	HINTHINT.C:304	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1909_CopyStringUntilCharacter	F	CopyStringUntilCharacter	HINTHINT.C:179	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1910_LoadSavedGamePart	F	LoadSavedGamePart	HINTLOAD.C:135	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1913_LoadAndDeobfuscateSavedGamePart	F	LoadAndDeobfuscateSavedGamePart	HINTLOAD.C:184	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
-F1914_LoadAndDeobfuscateSavedGameHeader	F	LoadAndDeobfuscateSavedGameHeader	HINTLOAD.C:189	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
+F1910_LoadSavedGamePart	F	LoadSavedGamePart	HINTLOAD.C:135	src/csb/csb_v1_save_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned exact byte part reader sits on the native save load path and is covered by the focused save export/import unit.
+F1913_LoadAndDeobfuscateSavedGamePart	F	LoadAndDeobfuscateSavedGamePart	HINTLOAD.C:184	src/csb/csb_v1_save_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned word-sized part reader uses the SAVEHEAD key table to deobfuscate after F1910 and is covered by the focused save export/import unit.
+F1914_LoadAndDeobfuscateSavedGameHeader	F	LoadAndDeobfuscateSavedGameHeader	HINTLOAD.C:189	src/csb/csb_v1_save_load_pc34_compat.c	PC34_SOURCE_IMPLEMENTED	CSB-owned 512-byte header loader validates through the SAVEHEAD checksum relation before production load reads any state part.
 F1915_UnloadGame	F	UnloadGame	HINTHTC.C:468	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
 F1916_Pre_F1918_LoadGame_CPSX	F	Pre	HINTHTC.C:12	include/title_dat_loader_v1.h:11	UNCERTAIN_NUMBERED_EVIDENCE	Exact numeric token occurs in Firestaff source; this audit did not verify behavioral equivalence or implementation.
 F1918_LoadGame_CPSX	F	LoadGame	HINTHTC.C:149	-	MISSING	No exact numbered token found in Firestaff src/include; no implementation claim.
