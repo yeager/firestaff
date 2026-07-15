@@ -3400,6 +3400,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       acceptance. The live binding remains closed until one original skill
       owner supplies selected/base-skill XP, experience limits, mastery, and
       level-up side effects as one transaction.
+    - 2026-07-15 character-swap update: authenticated `STKOP_SwapCharacter`
+      now preserves the source `(index,fingerprint)` stack order and its
+      returned status through a staged roster candidate. The live binding
+      remains closed until one original owner supplies party deletion/addition/
+      replacement, Wings lookup, CHARDESC persistence, and all source result
+      codes as one save transaction.
     - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
       `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
       compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors

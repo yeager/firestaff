@@ -308,6 +308,14 @@ typedef int (*CSB_V1_CSBWinDSAPrepareExperiencePlusFn)(
 typedef int (*CSB_V1_CSBWinDSAAddExperiencePlusFn)(
     void *user, int32_t character_selector, int32_t skill_number,
     int32_t experience);
+/* STKOP_SwapCharacter owns party roster, CHARDESC, and Wings mutation. The
+ * prepare callback returns a source SwapCharacter status in out_result and
+ * reports whether an accepted action has a candidate roster mutation. */
+typedef int (*CSB_V1_CSBWinDSAPrepareCharacterSwapFn)(
+    void *user, int32_t party_index, int32_t fingerprint,
+    uint32_t *out_result);
+typedef int (*CSB_V1_CSBWinDSACommitCharacterSwapFn)(
+    void *user, int32_t party_index, int32_t fingerprint);
 
 typedef struct {
     uint32_t master_location;
@@ -380,6 +388,8 @@ typedef struct {
     CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
     CSB_V1_CSBWinDSAPrepareExperiencePlusFn prepare_experience_plus;
     CSB_V1_CSBWinDSAAddExperiencePlusFn add_experience_plus;
+    CSB_V1_CSBWinDSAPrepareCharacterSwapFn prepare_character_swap;
+    CSB_V1_CSBWinDSACommitCharacterSwapFn commit_character_swap;
     void *dungeon_user;
 } CSB_V1_CSBWinDSAStackContext;
 
@@ -646,6 +656,8 @@ typedef struct {
     CSB_V1_CSBWinDSASetCharacterInfoFn set_character_info;
     CSB_V1_CSBWinDSAPrepareExperiencePlusFn prepare_experience_plus;
     CSB_V1_CSBWinDSAAddExperiencePlusFn add_experience_plus;
+    CSB_V1_CSBWinDSAPrepareCharacterSwapFn prepare_character_swap;
+    CSB_V1_CSBWinDSACommitCharacterSwapFn commit_character_swap;
     void *dungeon_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
