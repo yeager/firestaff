@@ -140,6 +140,17 @@ static void make_opening_host(
     host->title_special_palette = -1;
     host->host_surface_hash = 0xd004u;
     host->frame.session_generation = session->generation;
+    host->frame.source_tick = session->source_tick;
+    host->frame.opening_step = 1;
+    host->frame.entrance_surface =
+        &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    host->frame.left_door_surface =
+        &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    host->frame.right_door_surface =
+        &session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
     host->raster.valid = host->raster.real_asset_matched = 1;
     host->raster.entrance_composited = 1;
     host->raster.door_composited = 1;
@@ -166,6 +177,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 strikes_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
     CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 title_opening;
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening_door;
     unsigned int tick;
     unsigned int generation;
 
@@ -195,7 +207,11 @@ int main(void)
     package_receipt.c001_chaos_zoom_consumed = 1;
     package_receipt.c001_chaos_hold_consumed = 1;
     package_receipt.c001_strikes_back_consumed = 1;
+    package_receipt.c002_left_door_consumed = 1;
+    package_receipt.c003_right_door_consumed = 1;
+    package_receipt.c004_entrance_consumed = 1;
     package_receipt.c017_hud_consumed = package_receipt.c040_hud_consumed = 1;
+    package_receipt.title_to_entrance_same_session = 1;
     package_receipt.title_to_hud_same_session = 1;
     package_receipt.no_legacy_wrappers = package_receipt.no_fallback_routes = 1;
     package_receipt.source_tick = session.source_tick;
@@ -251,6 +267,12 @@ int main(void)
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES, 0xc003u,
                     &strikes_host);
     make_opening_host(&session, &opening_host);
+    check(csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door) &&
+              opening_door.valid && opening_door.c004_entrance_ready &&
+              opening_door.c002_left_door_ready &&
+              opening_door.c003_right_door_ready,
+          "source-owned C004/C002/C003 opening raster reaches the door receipt");
     check(csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,
               &strikes_host, &opening_host, &title_opening) &&
@@ -261,6 +283,15 @@ int main(void)
               title_opening.opening_host_surface_hash ==
                   opening_host.host_surface_hash,
           "C001 title consumption reaches only a real C004/C002/C003 opening raster");
+    package_receipt.c004_entrance_consumed = 0;
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "opening door receipt requires package-owned C004 consumption");
+    check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening),
+          "title/opening consumption requires package-owned C004 consumption");
+    package_receipt.c004_entrance_consumed = 1;
     chaos_host.frame.title_phase_tick = 1;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,
@@ -297,11 +328,27 @@ int main(void)
           "opening host without door strips cannot satisfy title/opening consumption");
     opening_host.raster.door_composited = 1;
     opening_host.raster.source_surface_count = 2;
+    opening_host.frame.opening_step = 27;
+    check(csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door) &&
+              opening_door.valid,
+          "late clipped C002 frame still satisfies the source-owned opening receipt");
+    check(csb_v1_startup_session_title_opening_consumption_receipt_pc34(
+              &session, &package_receipt, &presents_host, &chaos_host,
+              &strikes_host, &opening_host, &title_opening) &&
+              title_opening.valid,
+          "late clipped C002 frame still satisfies title/opening consumption");
+    opening_host.raster.source_surface_count = 1;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,
               &strikes_host, &opening_host, &title_opening),
-          "partial opening source count cannot satisfy C004/C002/C003 consumption");
+          "opening raster without a visible door strip cannot satisfy C004/C002/C003 consumption");
     opening_host.raster.source_surface_count = 3;
+    opening_host.frame.opening_step = 32;
+    check(!csb_v1_startup_session_opening_door_receipt_pc34(
+              &session, &package_receipt, &opening_host, &opening_door),
+          "opening door receipt rejects frames past ReDMCSB's final step");
+    opening_host.frame.opening_step = 1;
     tick = receipt.source_tick;
     generation = receipt.session_generation;
     terminal = receipt;

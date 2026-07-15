@@ -27,6 +27,7 @@
 #define CSB_V1_CONTRACT_TITLE_PRESENTS_MASK_PC34 0x01
 #define CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34 0x02
 #define CSB_V1_CONTRACT_TITLE_STRIKES_MASK_PC34 0x08
+#define CSB_V1_CONTRACT_DOOR_STEP_COUNT_PC34 31
 
 static int csb_v1_startup_session_surface_matches_pc34(
     const CSB_V1_StartupRuntimeSurface_PC34 *surface,
@@ -152,6 +153,21 @@ static int csb_v1_startup_session_title_host_phase_matches_pc34(
     return host->frame.title_phase_mask == expected_mask &&
         host->frame.title_phase_tick >= expected_step_min &&
         host->frame.title_phase_tick <= expected_step_max;
+}
+
+static int csb_v1_startup_session_opening_host_raster_matches_pc34(
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host)
+{
+    if (!host || !host->raster.valid || !host->raster.real_asset_matched ||
+        !host->raster.entrance_composited || !host->raster.door_composited ||
+        host->frame.opening_step < 1 ||
+        host->frame.opening_step > CSB_V1_CONTRACT_DOOR_STEP_COUNT_PC34) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C F0438 clips C002 away during the final opening
+     * frames, so late source-owned pages contain C004 plus C003 only. */
+    return host->raster.source_surface_count == 2 ||
+        host->raster.source_surface_count == 3;
 }
 
 int csb_v1_startup_session_hud_surface_contract_pc34(
@@ -324,6 +340,10 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
     if (!session || !package_receipt || !host_surface || !out_receipt ||
         !session->valid || !package_receipt->valid ||
         !package_receipt->real_package_matched ||
+        !package_receipt->c002_left_door_consumed ||
+        !package_receipt->c003_right_door_consumed ||
+        !package_receipt->c004_entrance_consumed ||
+        !package_receipt->title_to_entrance_same_session ||
         !package_receipt->title_to_hud_same_session ||
         !package_receipt->no_legacy_wrappers ||
         !package_receipt->no_fallback_routes || !host_surface->valid ||
@@ -337,10 +357,7 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
         package_receipt->session_generation != session->generation ||
         package_receipt->real_asset_receipt_hash == 0u ||
         package_receipt->consumed_surface_hash == 0u ||
-        !host_surface->raster.valid || !host_surface->raster.real_asset_matched ||
-        !host_surface->raster.entrance_composited ||
-        !host_surface->raster.door_composited ||
-        host_surface->raster.source_surface_count != 3 ||
+        !csb_v1_startup_session_opening_host_raster_matches_pc34(host_surface) ||
         host_surface->host_surface_hash == 0u) return 0;
 
     entrance = &session->surfaces.surfaces[
@@ -392,6 +409,10 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         !package_receipt->c001_chaos_zoom_consumed ||
         !package_receipt->c001_chaos_hold_consumed ||
         !package_receipt->c001_strikes_back_consumed ||
+        !package_receipt->c002_left_door_consumed ||
+        !package_receipt->c003_right_door_consumed ||
+        !package_receipt->c004_entrance_consumed ||
+        !package_receipt->title_to_entrance_same_session ||
         !package_receipt->no_legacy_wrappers ||
         !package_receipt->no_fallback_routes ||
         package_receipt->session_generation != session->generation ||
@@ -443,12 +464,10 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
         !presents_host->raster.title_composited ||
         !chaos_host->raster.title_composited ||
         !strikes_host->raster.title_composited ||
-        !opening_host->raster.entrance_composited ||
-        !opening_host->raster.door_composited ||
+        !csb_v1_startup_session_opening_host_raster_matches_pc34(opening_host) ||
         presents_host->raster.source_surface_count != 1 ||
         chaos_host->raster.source_surface_count != 1 ||
         strikes_host->raster.source_surface_count != 1 ||
-        opening_host->raster.source_surface_count != 3 ||
         presents_host->host_surface_hash == 0u || chaos_host->host_surface_hash == 0u ||
         strikes_host->host_surface_hash == 0u || opening_host->host_surface_hash == 0u ||
         presents_host->raster.pixel_hash == chaos_host->raster.pixel_hash ||
