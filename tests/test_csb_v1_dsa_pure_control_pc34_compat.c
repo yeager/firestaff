@@ -19,6 +19,8 @@ static int failures;
 static uint32_t last_party_talents[4];
 static int dsa_info_enabled;
 static int excell_flags_enabled;
+static uint32_t excell_flags_stored;
+static int excell_flags_store_count;
 
 static int wing_talents_enabled;
 
@@ -64,6 +66,15 @@ static int get_excell_flags(void *user, uint32_t location,
     out_words[0] = 1u << 2;
     out_words[3] = 1u << 2;
     out_words[7] = 1u << 2;
+    return 1;
+}
+
+static int set_excell_flags(void *user, uint32_t location, uint32_t flags)
+{
+    (void)user;
+    if (!excell_flags_enabled || location != 0x0c82u) return -1;
+    excell_flags_stored = flags;
+    ++excell_flags_store_count;
     return 1;
 }
 
@@ -120,7 +131,10 @@ static CSB_V1_CSBWinDSAStackResult run(
         context.has_wing_character = has_wing_character;
     }
     if (dsa_info_enabled) context.get_dsa_info = get_dsa_info;
-    if (excell_flags_enabled) context.get_excell_flags = get_excell_flags;
+    if (excell_flags_enabled) {
+        context.get_excell_flags = get_excell_flags;
+        context.set_excell_flags = set_excell_flags;
+    }
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -219,6 +233,12 @@ int main(void)
     };
     uint16_t excell_flags_fetch[] = {
         0x0686u, 0x0c82u, 0x0b0bu, 0x000du
+    };
+    uint16_t excell_flags_store[] = {
+        0x0686u, 0x89u, 0x0686u, 0x0c82u, 0x0b4bu
+    };
+    uint16_t excell_flags_store_then_bad[] = {
+        0x0686u, 0x89u, 0x0686u, 0x0c82u, 0x0b4bu, 0x0000u
     };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
@@ -408,6 +428,24 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "ECF@ rejects without an authenticated EXPOOL owner");
+
+    excell_flags_enabled = 1;
+    excell_flags_stored = 0u;
+    excell_flags_store_count = 0;
+    check(run(&state, &action, excell_flags_store,
+              (int)(sizeof(excell_flags_store) / sizeof(excell_flags_store[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              excell_flags_store_count == 1 && excell_flags_stored == 0x89u,
+          "ECF! commits the source flag byte only after complete execution");
+    excell_flags_stored = 0u;
+    excell_flags_store_count = 0;
+    check(run(&state, &action, excell_flags_store_then_bad,
+              (int)(sizeof(excell_flags_store_then_bad) /
+                    sizeof(excell_flags_store_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              excell_flags_store_count == 0 && excell_flags_stored == 0u,
+          "ECF! rejects without publishing before a later bad opcode");
+    excell_flags_enabled = 0;
 
     parameters[0] = 10u;
     parameters[1] = 20u;

@@ -738,11 +738,17 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
  * this queue to a candidate EXPOOL profile, so publishing the queue remains
  * atomic with parameter/global commits. */
 #define CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES 100
 
 typedef struct {
     uint32_t location;
     uint8_t skin;
 } CSB_V1_CSBWinDSAPendingSkinWrite;
+
+typedef struct {
+    uint32_t location;
+    uint32_t flags;
+} CSB_V1_CSBWinDSAPendingExCellWrite;
 
 static int csb_v1_csbwin_dsa_pending_skin_lookup(
     const CSB_V1_CSBWinDSAPendingSkinWrite *writes,
@@ -768,7 +774,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     uint8_t *variable_state, uint32_t *parameters, int parameter_count,
     CSB_V1_CSBWinDSAStackContext *context,
     CSB_V1_CSBWinDSAPendingSkinWrite *pending_skin_writes,
-    int *pending_skin_write_count, int *staged_saves_disabled)
+    int *pending_skin_write_count,
+    CSB_V1_CSBWinDSAPendingExCellWrite *pending_excell_writes,
+    int *pending_excell_write_count, int *staged_saves_disabled)
 {
     uint32_t v;
     uint32_t w;
@@ -782,8 +790,10 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     if (!stack || !depth || !forced_state || !variables || !variable_state ||
         !parameters || !context ||
         !pending_skin_writes || !pending_skin_write_count ||
+        !pending_excell_writes || !pending_excell_write_count ||
         !staged_saves_disabled ||
-        *pending_skin_write_count < 0 || parameter_count < 0 ||
+        *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
+        parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
     case 1u: /* STKOP_Plus */
@@ -1028,8 +1038,24 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             uint32_t cell_words[8];
             uint32_t flags = 0u;
 
-            if (context->get_excell_flags(context->excell_user, v,
-                                           cell_words) <= 0) {
+            int pending = -1;
+            for (count = 0u; count < (uint32_t)*pending_excell_write_count;
+                 ++count) {
+                if (pending_excell_writes[count].location == v) {
+                    pending = (int)count;
+                }
+            }
+            if (pending >= 0) {
+                uint32_t staged_flags = pending_excell_writes[pending].flags;
+                memset(cell_words, 0, sizeof(cell_words));
+                for (count = 0u; count < 8u; ++count) {
+                    if ((staged_flags & 1u) != 0u) {
+                        cell_words[count] = 1u << (v & 31u);
+                    }
+                    staged_flags >>= 1;
+                }
+            } else if (context->get_excell_flags(context->excell_user, v,
+                                                  cell_words) <= 0) {
                 return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
             }
             for (count = 0u; count < 8u; ++count) {
@@ -1042,6 +1068,21 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                 goto underflow;
             }
         }
+        break;
+    case 45u: /* STKOP_StoreExCellFlg */
+        /* CSBWin DSA.cpp:3298-3328 pops the location then the eight-bit
+         * flag payload and delegates the DB11 transaction to EXPOOL::Write.
+         * The caller-owned runtime candidate performs that full write. */
+        if (!context->set_excell_flags ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            *pending_excell_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_excell_writes[*pending_excell_write_count].location = v;
+        pending_excell_writes[*pending_excell_write_count].flags = w;
+        ++*pending_excell_write_count;
         break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
@@ -1366,11 +1407,14 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     uint8_t variable_state[CSB_V1_CSBWIN_DSA_VARIABLE_COUNT] = { 0u };
     CSB_V1_CSBWinDSAPendingSkinWrite
         pending_skin_writes[CSB_V1_CSBWIN_DSA_PENDING_SKIN_WRITES];
+    CSB_V1_CSBWinDSAPendingExCellWrite
+        pending_excell_writes[CSB_V1_CSBWIN_DSA_PENDING_EXCELL_WRITES];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
     int depth = 0;
     int pending_skin_write_count = 0;
+    int pending_excell_write_count = 0;
     int staged_saves_disabled;
     int i;
 
@@ -1584,7 +1628,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 subcode, stack, &depth, &candidate.forced_state, variables,
                 variable_state, parameters,
                 context->parameter_count, &context_candidate, pending_skin_writes,
-                &pending_skin_write_count, &staged_saves_disabled);
+                &pending_skin_write_count, pending_excell_writes,
+                &pending_excell_write_count, &staged_saves_disabled);
             if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
@@ -1596,6 +1641,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         if (!context->set_skin(context->skin_user,
                                pending_skin_writes[i].location,
                                pending_skin_writes[i].skin)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_excell_write_count; ++i) {
+        if (!context->set_excell_flags(
+                context->excell_user, pending_excell_writes[i].location,
+                pending_excell_writes[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -1706,6 +1758,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_dsa_info = runner->get_dsa_info;
     context.wing_user = runner->wing_user;
     context.get_excell_flags = runner->get_excell_flags;
+    context.set_excell_flags = runner->set_excell_flags;
     context.excell_user = runner->excell_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,

@@ -161,6 +161,13 @@ int main(void)
               flags[0] == (1u << 2) && flags[3] == (1u << 2) &&
               flags[7] == (1u << 2),
           "CSBWin reads one real-shaped eight-word EDT_ExtendedCellFlags record");
+    check(csb_v1_runtime_set_csbwin_extended_cell_flags(
+              &profile, 0x0c82u, 0x52u) == 1 &&
+              csb_v1_runtime_read_csbwin_extended_cell_flags(
+                  &profile, 0x0c82u, flags) == 1 &&
+              flags[0] == 0u && flags[1] == (1u << 2) &&
+              flags[4] == (1u << 2) && flags[6] == (1u << 2),
+          "CSBWin ECF! rewrites all eight source words through DB11 free-list ownership");
     profile.csbwin_appended_tail_fnv1a ^= 1u;
     check(csb_v1_runtime_read_csbwin_extended_cell_flags(
               &profile, 0x0c82u, flags) == -1,

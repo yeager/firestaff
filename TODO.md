@@ -3231,8 +3231,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       `EDT_ExtendedCellFlags` record. It folds the selected Y bit from the
       eight original little-endian words in DSA.cpp order; absent or short
       records retain source zero, while a missing or altered tail rejects.
-      `StoreExCellFlg` remains unavailable until its full EXPOOL write route
-      can be exercised against an original DSA-bearing save corpus.
+      `StoreExCellFlg` now stages its eight-bit value until the action is
+      fully consumed, then uses the existing authenticated DB11 free-list
+      replacement transaction for all eight words. A missing exact free node
+      rejects rather than enlarging or fabricating a save tail; positive
+      original DSA-bearing save-corpus capture remains required.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
