@@ -667,6 +667,36 @@ int F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
     return 0;
 }
 
+/* ReDMCSB GROUP.C F0204. G0385 already records a first-step Fluxcage from
+ * F0202; only then does the source advance once and invoke F0202 again for
+ * the second square. */
+int F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int direction,
+    int firstStepHasFluxcage,
+    const struct DM1GroupMovementFacts_Compat* secondStepFacts,
+    int* outBlockedByWall,
+    int* outBlockedByDoor,
+    int* outBlockedByParty,
+    int* outBlockedByGroup)
+{
+    struct DM1GroupBehaviorContext_Compat secondStepContext;
+
+    if (!ctx || !secondStepFacts || direction < 0 || direction > 3 ||
+        firstStepHasFluxcage) {
+        if (outBlockedByWall) *outBlockedByWall = firstStepHasFluxcage ? 1 : 0;
+        if (outBlockedByDoor) *outBlockedByDoor = 0;
+        if (outBlockedByParty) *outBlockedByParty = 0;
+        if (outBlockedByGroup) *outBlockedByGroup = 0;
+        return 0;
+    }
+    secondStepContext = *ctx;
+    secondStepContext.groupMovementFacts[direction] = *secondStepFacts;
+    return F0811_DM1_GROUP_IsMovementPossible_Compat(
+        &secondStepContext, direction, 0, outBlockedByWall, outBlockedByDoor,
+        outBlockedByParty, outBlockedByGroup);
+}
+
 /* =========================================================================
  *  F0813: Single-square move direction picker
  *

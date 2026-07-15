@@ -7023,3 +7023,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source-tested directions before F0202. Remaining work is having M10 own and
   retain that G0384 state across the complete C29-C41 behavior event, without
   rebuilding it from guessed movement outcomes.
+- 2026-07-15 DM1 GROUP F0204 follow-up: source-defined archenemy double
+  movement now needs a first-step Fluxcage result plus real second-square
+  facts. Remaining work is connecting M10's two successive F0202 reads to
+  this helper; no unproved second square may allow an extra move.

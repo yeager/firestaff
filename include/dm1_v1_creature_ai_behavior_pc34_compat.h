@@ -486,6 +486,19 @@ int F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
     int allowImaginaryPitsAndFakeWalls,
     int* outDirection);
 
+/* GROUP.C F0204 tests the second square only after the first F0202 pass.
+ * `firstStepHasFluxcage` is the real G0385 result for the already-tested
+ * first square; `secondStepFacts` must describe the loaded square beyond it. */
+int F0812b_DM1_GROUP_IsArchenemyDoubleMovementPossible_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int direction,
+    int firstStepHasFluxcage,
+    const struct DM1GroupMovementFacts_Compat* secondStepFacts,
+    int* outBlockedByWall,
+    int* outBlockedByDoor,
+    int* outBlockedByParty,
+    int* outBlockedByGroup);
+
 /*
  * F0813: Pick single-square movement direction toward target.
  *
