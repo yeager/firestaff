@@ -320,7 +320,13 @@ int main(void) {
     if (FSP_JoinPath(dm_bin_src, sizeof(dm_bin_src), home, ".firestaff/data/nexus/DM.BIN") &&
         local_file_exists(dm_bin_src) &&
         FSP_JoinPath(dm_bin_dst, sizeof(dm_bin_dst), root, "renamed-saturn-data.payload") &&
-        copy_file_bytes(dm_bin_src, dm_bin_dst)) {
+        copy_file_bytes(dm_bin_src, dm_bin_dst) &&
+        FSP_JoinPath(level_src, sizeof(level_src), home,
+                     ".firestaff/data/nexus/LEV00.DGN") &&
+        local_file_exists(level_src) &&
+        FSP_JoinPath(level_dst, sizeof(level_dst), root,
+                     "renamed-level-zero.payload") &&
+        copy_file_bytes(level_src, level_dst)) {
         if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), home, ".firestaff/data/nexus/MENU.BPK") &&
             local_file_exists(menu_bpk_src) &&
             FSP_JoinPath(menu_bpk_dst, sizeof(menu_bpk_dst), root, "renamed-menu-bpk.payload") &&
@@ -439,7 +445,7 @@ int main(void) {
         check_int(strstr(diags[0].detail, "DM.BIN") == NULL,
                   "Nexus boot profile accepts renamed DM.BIN by hash");
     } else {
-        puts("SKIP: local Nexus DM.BIN not present for init hash test");
+        puts("SKIP: local Nexus DM.BIN/LEV00.DGN not present for init hash test");
     }
 
     if (FSP_JoinPath(level_src, sizeof(level_src), home, ".firestaff/data/nexus/LEV00.DGN") &&
