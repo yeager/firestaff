@@ -5558,6 +5558,197 @@ static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
     return 1;
 }
 
+/* skproject c_xrect.cpp::DM2_COMPRESS_RECTS and DM2_QUERY_RECT.  raw4 is
+ * not a flat rectangle table: it is compressed into c_rinfo nodes before
+ * QUERY_BLIT_RECT consumes it.  This immutable decoder reproduces that node
+ * view without inventing a second table or allocating source-derived state. */
+static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size,
+                                             uint16_t rect_id,
+                                             DM2_V1_InterfaceRect *out)
+{
+    uint16_t groups;
+    size_t pos;
+
+    if (!raw || !out || raw_size < 4u || dm2_v1_boot_le16(raw) != 0xfc0du ||
+        rect_id == 0u) return 0;
+    groups = dm2_v1_boot_le16(raw + 2u);
+    if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
+    pos = 4u + (size_t)groups * 4u;
+    for (uint16_t group = 0; group < groups; ++group) {
+        uint16_t first = dm2_v1_boot_le16(raw + 4u + (size_t)group * 4u);
+        uint16_t last = dm2_v1_boot_le16(raw + 6u + (size_t)group * 4u);
+        size_t count;
+        uint8_t mask = 0x1fu;
+        uint16_t x0;
+        uint16_t y0;
+        const uint8_t *row;
+
+        if (last < first) return 0;
+        count = (size_t)(last - first) + 1u;
+        if (count > (raw_size - pos) / 8u) return 0;
+        if (rect_id < first || rect_id > last) {
+            pos += count * 8u;
+            continue;
+        }
+        x0 = dm2_v1_boot_le16(raw + pos);
+        y0 = dm2_v1_boot_le16(raw + pos + 2u);
+        for (size_t i = 0u; i < count; ++i) {
+            const uint8_t *candidate = raw + pos + i * 8u;
+            int16_t width = (int16_t)dm2_v1_boot_le16(candidate + 4u);
+            int16_t height = (int16_t)dm2_v1_boot_le16(candidate + 6u);
+            if (dm2_v1_boot_le16(candidate) != x0) mask &= (uint8_t)~0x02u;
+            if (dm2_v1_boot_le16(candidate + 2u) != y0) mask &= (uint8_t)~0x01u;
+            if (dm2_v1_boot_le16(candidate + 2u) > 0xffu) mask &= (uint8_t)~0x04u;
+            if (width < 0 || width > 0xff || height < 0 || height > 0xff)
+                mask &= (uint8_t)~0x10u;
+            if (width < -128 || width > 127 || height < -128 || height > 127)
+                mask &= (uint8_t)~0x08u;
+        }
+        if (mask & 0x03u) mask &= (uint8_t)~0x04u;
+        row = raw + pos + (size_t)(rect_id - first) * 8u;
+        out->x = (mask & 0x04u) ? (int)row[0] :
+                 ((mask & 0x02u) ? (int)(uint8_t)x0 :
+                  (int)(int16_t)dm2_v1_boot_le16(row));
+        out->y = (mask & 0x04u) ? (int)row[2] :
+                 ((mask & 0x01u) ? (int)(int16_t)y0 :
+                  (int)(int16_t)dm2_v1_boot_le16(row + 2u));
+        if (mask & 0x08u) {
+            out->w = (int)(int8_t)row[4];
+            out->h = (int)(int8_t)row[6];
+        } else if (mask & 0x10u) {
+            out->w = (int)row[4];
+            out->h = (int)row[6];
+        } else {
+            out->w = (int)(int16_t)dm2_v1_boot_le16(row + 4u);
+            out->h = (int)(int16_t)dm2_v1_boot_le16(row + 6u);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static int dm2_v1_boot_blit_anchor(int mode, int x0, int y0, int width,
+                                   int height, DM2_V1_InterfaceRect *out)
+{
+    if (!out || width <= 0 || height <= 0 || mode < 0 || mode > 8) return 0;
+    switch (mode) {
+    case 0: out->x = x0 - (width + 1) / 2; out->y = y0 - (height + 1) / 2; break;
+    case 1: out->x = x0; out->y = y0; break;
+    case 2: out->x = x0 - width + 1; out->y = y0; break;
+    case 3: out->x = x0 - width + 1; out->y = y0 - height + 1; break;
+    case 4: out->x = x0; out->y = y0 - height + 1; break;
+    case 5: out->x = x0 - (width + 1) / 2; out->y = y0; break;
+    case 6: out->x = x0 - width + 1; out->y = y0 - (height + 1) / 2; break;
+    case 7: out->x = x0 - (width + 1) / 2; out->y = y0 - height + 1; break;
+    default: out->x = x0; out->y = y0 - (height + 1) / 2; break;
+    }
+    out->w = width;
+    out->h = height;
+    return 1;
+}
+
+/* Exact no-bitmap subset of c_xrect.cpp::DM2_QUERY_BLIT_RECT.  The dialog
+ * labels call it with source font metrics; clipping remains the source's
+ * unrestricted default rectangle. */
+static int dm2_v1_boot_query_blit_text_rect(
+    const uint8_t *raw, size_t raw_size, uint16_t rect_id,
+    int text_width, int text_height, DM2_V1_InterfaceRect *out)
+{
+    DM2_V1_InterfaceRect current, next, clip;
+    int mode, x0, y0, dx = 0, dy = 0;
+    int clip_x = -10000, clip_y = -10000, clip_w = 20000, clip_h = 20000;
+
+    if (!out || text_width <= 0 || text_height <= 0 ||
+        !dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id, &current)) return 0;
+    mode = current.x;
+    if (mode == 9 || mode < 0 || mode > 18) return 0;
+    if (mode > 8) { x0 = 0; y0 = 0; mode -= 10; }
+    else { x0 = current.w; y0 = current.h; }
+
+    for (int guard = 0; current.y != 0 && guard < 64; ++guard) {
+        if (current.x < 10 || current.x > 18) {
+            if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)current.y, &next)) return 0;
+            dx = next.w;
+            dy = next.h;
+            if (next.x != 1) {
+                if (next.x == 9) {
+                    if (current.x > 8 ||
+                        !dm2_v1_boot_blit_anchor(current.x, current.w, current.h,
+                                                   next.w, next.h, &clip)) return 0;
+                    dx = clip.x;
+                    dy = clip.y;
+                    if (dx > clip_x) clip_x = dx;
+                    if (clip_x + clip_w - 1 >= dx + next.w) clip_w = next.w - clip_x + dx;
+                    if (clip_y < dy) clip_y = dy;
+                    dy += next.h;
+                    if (clip_y + clip_h - 1 >= dy) clip_h = dy - clip_y;
+                } else if (next.x <= 8) {
+                    /* Source sets a deferred anchor flag here.  The dialog
+                     * labels only use the source-verified RECT_9 chain. */
+                    return 0;
+                } else return 0;
+            } else {
+                x0 += dx; y0 += dy; clip_x += dx; clip_y += dy;
+            }
+        } else {
+            DM2_V1_InterfaceRect link;
+            if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)current.y, &link)) return 0;
+            if (link.y == 0 || link.x < 0 || link.x > 8 ||
+                !dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                                    (uint16_t)link.y, &next)) return 0;
+            dx = link.w; dy = link.h;
+            switch (link.x) {
+            case 0: dy -= (next.h + 1) / 2; /* fall through */
+            case 5: dx -= (next.w + 1) / 2; break;
+            case 1: break;
+            case 3: dy -= next.h - 1; /* fall through */
+            case 2: dx -= next.w - 1; break;
+            case 6: dx -= next.w - 1; /* fall through */
+            case 8: dy -= (next.h + 1) / 2; break;
+            case 7: dx -= (next.w + 1) / 2; /* fall through */
+            default: dy -= next.h - 1; break;
+            }
+            clip_x += dx; if (dx > clip_x) clip_x = dx;
+            clip_w = (next.w + dx <= clip_x + clip_w - 1) ? next.w - clip_x + dx : next.w + dx;
+            clip_y += dy; if (clip_y < dy) clip_y = dy;
+            if (dy + next.h <= clip_y + clip_h - 1) clip_h = dy + next.h - clip_y;
+            switch (current.x - 10) {
+            case 0: dy += (next.h + 1) / 2; /* fall through */
+            case 5: dx += (next.w + 1) / 2; break;
+            case 1: break;
+            case 3: dy += next.h - 1; /* fall through */
+            case 2: dx += next.w - 1; break;
+            case 6: dx += next.w - 1; /* fall through */
+            case 8: dy += (next.h + 1) / 2; break;
+            case 7: dx += (next.w + 1) / 2; /* fall through */
+            default: dy += next.h - 1; break;
+            }
+            x0 += dx + current.w;
+            y0 += dy + current.h;
+        }
+        current = next;
+    }
+    if (current.y != 0 ||
+        !dm2_v1_boot_blit_anchor(mode, x0, y0, text_width, text_height, out)) return 0;
+    dx = clip_x - out->x;
+    if (dx > 0) { out->x = clip_x; out->w = text_width - dx < clip_w ? text_width - dx : clip_w; }
+    else out->w = text_width < dx + clip_w ? text_width : dx + clip_w;
+    dy = clip_y - out->y;
+    if (dy > 0) { out->y = clip_y; out->h = text_height - dy < clip_h ? text_height - dy : clip_h; }
+    else out->h = text_height < dy + clip_h ? text_height : dy + clip_h;
+    return out->w > 0 && out->h > 0;
+}
+
+static int dm2_v1_boot_dialogue_text_width(const uint8_t *text, size_t size)
+{
+    size_t count = 0u;
+    if (!text || size == 0u) return 0;
+    while (count < size && text[count] && count < 80u) ++count;
+    return count > 0u ? (int)count * 3 : 0;
+}
+
 int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
                                      DM2_V1_InterfaceHudLayout *out_layout)
 {
@@ -5669,7 +5860,7 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
 {
     DM2_V1_BootGraphicsDat *gfx;
     const uint8_t *raw;
-    const DM2_V1_InterfaceRect *rects[5];
+    const DM2_V1_InterfaceRect *rects[3];
     size_t raw_size = 0u;
     uint32_t hash = 2166136261u;
 
@@ -5685,17 +5876,16 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
     if (!raw || raw_size < 4u ||
         !dm2_v1_boot_expand_hud_rect(raw, raw_size,
             out_command->draw.panel_rect_index, &out_command->panel_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.version_rect_index, &out_command->version_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.primary_button_rect_index,
-            &out_command->primary_button_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.secondary_button_rect_index,
-            &out_command->secondary_button_rect) ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size,
-            out_command->draw.save_list_rect_index,
-            &out_command->save_list_rect)) {
+        !dm2_v1_boot_query_blit_text_rect(raw, raw_size,
+            DM2_V1_DIALOGUE_OPEN_PANEL_PRIMARY_TEXT_RECT,
+            dm2_v1_boot_dialogue_text_width(out_command->draw.text[0],
+                                             out_command->draw.text_size[0]),
+            6, &out_command->primary_text_rect) ||
+        !dm2_v1_boot_query_blit_text_rect(raw, raw_size,
+            DM2_V1_DIALOGUE_OPEN_PANEL_SECONDARY_TEXT_RECT,
+            dm2_v1_boot_dialogue_text_width(out_command->draw.text[1],
+                                             out_command->draw.text_size[1]),
+            6, &out_command->secondary_text_rect)) {
         memset(out_command, 0, sizeof(*out_command));
         return 0;
     }
@@ -5705,11 +5895,9 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_command->draw.receipt_hash);
     rects[0] = &out_command->panel_rect;
-    rects[1] = &out_command->version_rect;
-    rects[2] = &out_command->primary_button_rect;
-    rects[3] = &out_command->secondary_button_rect;
-    rects[4] = &out_command->save_list_rect;
-    for (unsigned int i = 0; i < 5u; ++i) {
+    rects[1] = &out_command->primary_text_rect;
+    rects[2] = &out_command->secondary_text_rect;
+    for (unsigned int i = 0; i < 3u; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(
             hash, (uint32_t)rects[i]->x);
         hash = dm2_v1_boot_packaged_capture_hash_step(
