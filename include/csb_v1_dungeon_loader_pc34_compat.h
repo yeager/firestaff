@@ -127,6 +127,19 @@ int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x
  */
 int csb_v1_dungeon_get_raw_square(const CSB_V1_DungeonData *d, int level, int x, int y);
 
+/* Source-owned current-map accessors for the real PC34 byte-map layout.
+ * These preserve ReDMCSB DUNGEON.C F0151--F0153's wall result at the four
+ * immediately adjacent map edges.  They reject legacy 16-bit fixtures and
+ * malformed maps rather than manufacturing a square. */
+int csb_v1_dungeon_f0151_get_square_pc34(
+    const CSB_V1_DungeonData *d, int level, int x, int y);
+int csb_v1_dungeon_f0152_get_relative_square_pc34(
+    const CSB_V1_DungeonData *d, int level, int direction,
+    int steps_forward, int steps_right, int map_x, int map_y);
+int csb_v1_dungeon_f0153_get_relative_square_type_pc34(
+    const CSB_V1_DungeonData *d, int level, int direction,
+    int steps_forward, int steps_right, int map_x, int map_y);
+
 /* Return a read-only pointer to a decoded dungeon thing record.
  * Returns NULL if the thing handle is invalid, the type has no records, or
  * the record would exceed raw_data bounds.  out_type/out_index/out_size are

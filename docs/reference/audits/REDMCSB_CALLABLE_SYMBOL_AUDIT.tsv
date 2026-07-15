@@ -212,10 +212,10 @@ F	0149	F0149_DUNGEON_IsWallOrnamentAnAlcove	PANEL.C;ATARIST.H;FMTOWNS.H;DUNGEON.
 F	149	F149_aawz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0150	F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement	PANEL.C;ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	150	F150_wzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0151	F0151_DUNGEON_GetSquare	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;PROJEXPL.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0151	F0151_DUNGEON_GetSquare	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;PROJEXPL.C	implemented-narrow	implemented_narrow	CSB real byte-map owner implements the defined F0151 body, including immediate corridor edge-wall ornament flags; malformed/non-PC34 layouts fail closed.
 F	151	F151_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0152	F0152_DUNGEON_GetRelativeSquare	FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0153	F0153_DUNGEON_GetRelativeSquareType	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0152	F0152_DUNGEON_GetRelativeSquare	FMTOWNS.H;DUNGEON.C;IIGS.H;DEFS.H;GAMELOOP.C	implemented-narrow	implemented_narrow	CSB real byte-map owner uses exact F0150 direction-vector order then F0151; invalid direction/layout fails closed.
+F	0153	F0153_DUNGEON_GetRelativeSquareType	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	CSB real byte-map owner derives M034 square type solely from its F0152 result.
 F	153	F153_yzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0154	F0154_DUNGEON_GetLocationAfterLevelChange	ATARIST.H;FMTOWNS.H;DUNGEON.C;DUNVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	154	F154_afzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

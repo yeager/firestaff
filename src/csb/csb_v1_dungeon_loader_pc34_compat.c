@@ -366,6 +366,138 @@ int csb_v1_dungeon_get_raw_square(const CSB_V1_DungeonData *d, int level, int x,
     return (int)rd16(d->raw_data + offset);
 }
 
+enum {
+    CSB_F0151_ELEMENT_CORRIDOR = 1,
+    CSB_F0151_ELEMENT_WALL = 0,
+    CSB_F0151_WALL_WEST_RANDOM_ORNAMENT_ALLOWED = 0x01,
+    CSB_F0151_WALL_SOUTH_RANDOM_ORNAMENT_ALLOWED = 0x02,
+    CSB_F0151_WALL_EAST_RANDOM_ORNAMENT_ALLOWED = 0x04,
+    CSB_F0151_WALL_NORTH_RANDOM_ORNAMENT_ALLOWED = 0x08
+};
+
+static int csb_v1_f0151_real_byte_map_valid(
+    const CSB_V1_DungeonData *d, int level)
+{
+    int width;
+    int height;
+    int offset;
+
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        level < 0 || level >= d->level_count) {
+        return 0;
+    }
+    width = d->level_widths[level];
+    height = d->level_heights[level];
+    offset = d->level_offsets[level];
+    if (width <= 0 || height <= 0 || offset < 0 || offset > d->raw_size) {
+        return 0;
+    }
+    return width <= (d->raw_size - offset) / height;
+}
+
+static int csb_v1_f0151_square_type(uint8_t square)
+{
+    return (int)(square >> 5);
+}
+
+static int csb_v1_f0151_raw_square(
+    const CSB_V1_DungeonData *d, int level, int x, int y)
+{
+    int offset;
+    int height;
+
+    if (!csb_v1_f0151_real_byte_map_valid(d, level)) return -1;
+    if (x < 0 || x >= d->level_widths[level] ||
+        y < 0 || y >= d->level_heights[level]) {
+        return -1;
+    }
+    height = d->level_heights[level];
+    offset = d->level_offsets[level] + x * height + y;
+    if (offset < 0 || offset >= d->raw_size) return -1;
+    return (int)d->raw_data[offset];
+}
+
+int csb_v1_dungeon_f0151_get_square_pc34(
+    const CSB_V1_DungeonData *d, int level, int x, int y)
+{
+    int width;
+    int height;
+    int adjacent_square;
+
+    if (!csb_v1_f0151_real_byte_map_valid(d, level)) return -1;
+    width = d->level_widths[level];
+    height = d->level_heights[level];
+
+    adjacent_square = csb_v1_f0151_raw_square(d, level, x, y);
+    if (adjacent_square >= 0) return adjacent_square;
+
+    /* ReDMCSB DUNGEON.C F0151 lines 1423-1478.  Its decompiled pit tests
+     * use an uninitialized temporary; the source notes they have no visible
+     * consequence.  Preserve only the defined adjacent-corridor edge cases. */
+    if (y >= 0 && y < height) {
+        if (x == -1 &&
+            csb_v1_f0151_square_type((uint8_t)csb_v1_f0151_raw_square(
+                d, level, 0, y)) == CSB_F0151_ELEMENT_CORRIDOR) {
+            return CSB_F0151_WALL_EAST_RANDOM_ORNAMENT_ALLOWED;
+        }
+        if (x == width &&
+            csb_v1_f0151_square_type((uint8_t)csb_v1_f0151_raw_square(
+                d, level, width - 1, y)) == CSB_F0151_ELEMENT_CORRIDOR) {
+            return CSB_F0151_WALL_WEST_RANDOM_ORNAMENT_ALLOWED;
+        }
+    } else if (x >= 0 && x < width) {
+        if (y == -1 &&
+            csb_v1_f0151_square_type((uint8_t)csb_v1_f0151_raw_square(
+                d, level, x, 0)) == CSB_F0151_ELEMENT_CORRIDOR) {
+            return CSB_F0151_WALL_SOUTH_RANDOM_ORNAMENT_ALLOWED;
+        }
+        if (y == height &&
+            csb_v1_f0151_square_type((uint8_t)csb_v1_f0151_raw_square(
+                d, level, x, height - 1)) == CSB_F0151_ELEMENT_CORRIDOR) {
+            return CSB_F0151_WALL_NORTH_RANDOM_ORNAMENT_ALLOWED;
+        }
+    }
+
+    return CSB_F0151_ELEMENT_WALL << 5;
+}
+
+static int csb_v1_f0150_update_relative_coordinates(
+    int direction, int steps_forward, int steps_right, int *map_x, int *map_y)
+{
+    static const int direction_to_east_count[4] = { 0, 1, 0, -1 };
+    static const int direction_to_north_count[4] = { -1, 0, 1, 0 };
+    int right_direction;
+
+    if (!map_x || !map_y || direction < 0 || direction > 3) return -1;
+    *map_x += direction_to_east_count[direction] * steps_forward;
+    *map_y += direction_to_north_count[direction] * steps_forward;
+    right_direction = (direction + 1) & 3;
+    *map_x += direction_to_east_count[right_direction] * steps_right;
+    *map_y += direction_to_north_count[right_direction] * steps_right;
+    return 0;
+}
+
+int csb_v1_dungeon_f0152_get_relative_square_pc34(
+    const CSB_V1_DungeonData *d, int level, int direction,
+    int steps_forward, int steps_right, int map_x, int map_y)
+{
+    if (csb_v1_f0150_update_relative_coordinates(
+            direction, steps_forward, steps_right, &map_x, &map_y) != 0) {
+        return -1;
+    }
+    return csb_v1_dungeon_f0151_get_square_pc34(d, level, map_x, map_y);
+}
+
+int csb_v1_dungeon_f0153_get_relative_square_type_pc34(
+    const CSB_V1_DungeonData *d, int level, int direction,
+    int steps_forward, int steps_right, int map_x, int map_y)
+{
+    int square = csb_v1_dungeon_f0152_get_relative_square_pc34(
+        d, level, direction, steps_forward, steps_right, map_x, map_y);
+    if (square < 0) return -1;
+    return csb_v1_f0151_square_type((uint8_t)square);
+}
+
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y) {
     int v = csb_v1_dungeon_get_raw_square(d, level, x, y);
     if (v < 0) return -1;
