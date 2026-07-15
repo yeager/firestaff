@@ -89,6 +89,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
@@ -18878,6 +18879,14 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     if (mapIndex >= (int)32) return;
     if (state->ornamentCacheLoaded[mapIndex]) return;
 
+    /* No raw DUNGEON.DAT table means no source-selected ornament material.
+     * Initialize every local ordinal to unavailable before any read failure. */
+    for (i = 0; i < 16; ++i) {
+        state->wallOrnamentIndices[mapIndex][i] = -1;
+        state->floorOrnamentIndices[mapIndex][i] = -1;
+        state->doorOrnamentIndices[mapIndex][i] = -1;
+    }
+
     m = &dun->maps[mapIndex];
     squareCount = (int)m->width * (int)m->height;
 
@@ -18953,7 +18962,7 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         } else if (i == (int)m->wallOrnamentCount) {
             state->wallOrnamentIndices[mapIndex][i] = 0; /* C0_WALL_ORNAMENT_INSCRIPTION */
         } else {
-            state->wallOrnamentIndices[mapIndex][i] = i; /* identity fallback */
+            state->wallOrnamentIndices[mapIndex][i] = -1;
         }
     }
     offset += (int)m->wallOrnamentCount;
@@ -18978,7 +18987,7 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         if (i < (int)m->doorOrnamentCount && (offset + i) < metaSize) {
             state->doorOrnamentIndices[mapIndex][i] = (int)metaBuf[offset + i];
         } else {
-            state->doorOrnamentIndices[mapIndex][i] = i; /* identity fallback */
+            state->doorOrnamentIndices[mapIndex][i] = -1;
         }
     }
 
@@ -21870,10 +21879,13 @@ static int m11_dm1_door_ornament_info(const M11_GameViewState* state,
     }
     mapIdx = state->world.party.mapIndex;
     m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+    if (mapIdx < 0 || mapIdx >= 32) {
+        return 0;
+    }
     if (!dm1_v1_door_ornament_info_for_ordinal_pc34(
             ornamentOrdinal,
-            (mapIdx >= 0 && mapIdx < 32 && state->ornamentCacheLoaded[mapIdx]) ? 1 : 0,
-            (mapIdx >= 0 && mapIdx < 32) ? state->doorOrnamentIndices[mapIdx] : NULL,
+            state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
+            state->doorOrnamentIndices[mapIdx],
             &info)) {
         return 0;
     }
@@ -22169,7 +22181,6 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         M11_ViewportCell cell;
         M11_DM1ZoneBlit blit;
         DM1_FloorOrnamentRenderPlanPc34 plan;
-        int localIdx;
         int mapIdx;
         int ornGlobalIdx = -1;
         if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, 0, &plan)) {
@@ -22187,16 +22198,12 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
             continue;
         }
         mapIdx = state->world.party.mapIndex;
-        localIdx = cell.floorOrnamentOrdinal - 1;
         m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
-        if (mapIdx >= 0 && mapIdx < 32 &&
-            state->ornamentCacheLoaded[mapIdx] &&
-            localIdx >= 0 && localIdx < 16) {
-            ornGlobalIdx = state->floorOrnamentIndices[mapIdx][localIdx];
-        } else {
-            ornGlobalIdx = localIdx;
-        }
-        if (ornGlobalIdx < 0) {
+        if (mapIdx < 0 || mapIdx >= 32 ||
+            !dm1_v1_ornament_cache_global_index_pc34(
+                state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
+                state->floorOrnamentIndices[mapIdx], 16,
+                cell.floorOrnamentOrdinal, &ornGlobalIdx)) {
             continue;
         }
         if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, ornGlobalIdx, &plan)) {
@@ -22897,7 +22904,6 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         DM1_WallOrnamentHostMaterialReceiptPc34 material;
         DM1_V1_WallInscriptionPresentationReceiptPc34 inscription;
         M11_DM1ZoneBlit alcoveBlit;
-        int localIdx;
         int mapIdx;
         int maxHeight = 0;
         int ornGlobalIdx = -1;
@@ -22929,15 +22935,12 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (cell.wallOrnamentOrdinal <= 0) {
             continue;
         }
-        localIdx = cell.wallOrnamentOrdinal - 1;
         m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
-        if (mapIdx >= 0 && mapIdx < 32 && state->ornamentCacheLoaded[mapIdx] &&
-            localIdx >= 0 && localIdx < 16) {
-            ornGlobalIdx = state->wallOrnamentIndices[mapIdx][localIdx];
-        } else {
-            ornGlobalIdx = localIdx;
-        }
-        if (ornGlobalIdx < 0) {
+        if (mapIdx < 0 || mapIdx >= 32 ||
+            !dm1_v1_ornament_cache_global_index_pc34(
+                state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
+                state->wallOrnamentIndices[mapIdx], 16,
+                cell.wallOrnamentOrdinal, &ornGlobalIdx)) {
             continue;
         }
         if (ornGlobalIdx == 0) {
