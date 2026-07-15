@@ -426,7 +426,9 @@ static void test_redmcsb_f0115_creature_c3200_geometry(void)
             &y);
         snprintf(id, sizeof(id), "F0115.creature.c3200.side.%s.present",
                  side_samples[i].id);
-        check_int(id, present, 1);
+        check_int(id, present,
+                  strcmp(side_samples[i].id, "set1.d1.right_slot1_empty") == 0 ? 0 : 1);
+        if (!present) continue;
         snprintf(id, sizeof(id), "F0115.creature.c3200.side.%s.x",
                  side_samples[i].id);
         check_int(id, x, side_samples[i].x);

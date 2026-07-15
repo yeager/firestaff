@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
+  surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates
+  are source no-draw rather than pane-relative placement. Remaining work is
+  real PC34/Mac capture across creature type, group count, depth, pose, and
+  palette replacement. Do not restore side-hint geometry or a dimension-only
+  cache admission.
+
 - 2026-07-15 DM1 F0115 projectile/object material follow-up: M613 projectile,
   F0142/G0209 thrown-object, and C2500 floor-object paths now require decoded
   PC34 pixel surfaces before their source placement plans run. Remaining work

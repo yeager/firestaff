@@ -816,8 +816,15 @@ int dm1_viewport_3d_c3200_creature_zone_point(int coord_set,
     point_index = dm1_viewport_3d_creature_front_point_index(coord_set,
                                                              visible_count,
                                                              slot_index);
-    if (out_x) *out_x = (int)k_c3200_center[coord_set][depth_index][point_index][0];
-    if (out_y) *out_y = (int)k_c3200_center[coord_set][depth_index][point_index][1];
+    {
+        int x = (int)k_c3200_center[coord_set][depth_index][point_index][0];
+        int y = (int)k_c3200_center[coord_set][depth_index][point_index][1];
+        /* A zero pair is an empty source coordinate. F0115 has no generic
+         * replacement placement for it. */
+        if (x == 0 && y == 0) return 0;
+        if (out_x) *out_x = x;
+        if (out_y) *out_y = y;
+    }
     return 1;
 }
 
@@ -868,8 +875,15 @@ int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
     point_index = dm1_viewport_3d_creature_front_point_index(coord_set,
                                                              visible_count,
                                                              slot_index);
-    if (out_x) *out_x = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][0];
-    if (out_y) *out_y = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][1];
+    {
+        int x = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][0];
+        int y = (int)k_c3200_side[coord_set][depth_index][side_index][point_index][1];
+        /* G0224's zero pair is deliberately blank, not a pane-relative
+         * fallback coordinate. */
+        if (x == 0 && y == 0) return 0;
+        if (out_x) *out_x = x;
+        if (out_y) *out_y = y;
+    }
     return 1;
 }
 

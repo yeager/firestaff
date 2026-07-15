@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0115 creature source-material/geometry gate:
+  live C584+ creature presentation now requires a decoded loaded-pixel PC34
+  surface selected through G0221/G0222. Blank C3200/G0224 anchors reject the
+  draw plan, and M11 rejects the old pane-relative side-hint geometry rather
+  than inventing a placement. Focused coverage:
+  `m11_dm1_f0115_material_asset_fail_closed` and
+  `test_dm1_v1_creature_render_pc34_compat_integration`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 source projectile/object-material gate:
   M613 projectiles, F0142/G0209 thrown objects, and C2500 floor objects now
   require decoded loaded-pixel PC34 surfaces before their original placement
