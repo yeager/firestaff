@@ -132,6 +132,7 @@
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
+#include "firestaff/dm1/v1/champion_panel/dm1_v1_champion_panel_spell_area_overlay_pc34_compat.h"
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 #include "firestaff/dm1/v1/G0179_pc34_compat.h"
 #include "firestaff/dm1/v1/G0181_pc34_compat.h"
@@ -2983,26 +2984,15 @@ static void m11_draw_dm1_ui_text_trailing_spaces(unsigned char* framebuffer,
         }
         return;
     }
+    /* TEXT2.C has no host-font alternative.  Missing authentic font data
+     * must leave an exact cleared native cell, never a substituted glyph. */
     for (i = 0; i < maxChars; ++i) {
-        char one[2];
-        M11_TextStyle style = g_text_small;
-        one[0] = (text && text[i] != '\0') ? text[i] : ' ';
-        one[1] = '\0';
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
                       y,
                       DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34,
                       DM1_V1_ACTION_MENU_TEXT_CELL_HEIGHT_PC34,
                       bgColor);
-        style.color = fgColor;
-        style.shadowDx = 0;
-        style.shadowDy = 0;
-        style.shadowColor = bgColor;
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      x + (i * DM1_V1_ACTION_MENU_TEXT_CELL_ADVANCE_PC34),
-                      y,
-                      one,
-                      &style);
     }
 }
 
@@ -35399,28 +35389,42 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         return;
     }
 
-    if (state->spellBuffer.runeCount < 4) {
-        int row = state->spellRuneRow < 4 ? state->spellRuneRow : 3;
-        for (i = 0; i < 6; ++i) {
-            char text[2];
-            text[0] = (char)m11_encode_rune(row, i);
-            text[1] = '\0';
+    {
+        int row = state->spellRuneRow;
+        if (row < 0) row = 0;
+        if (row >= DM1_V1_SPELL_RUNE_ROW_COUNT_PC34) {
+            row = DM1_V1_SPELL_RUNE_ROW_COUNT_PC34 - 1;
+        }
+        /* MENUDRAW.C F0397 always repaints the six-symbol source window.
+         * A full four-rune buffer must not suppress this line. */
+        for (i = 0; i < DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34; ++i) {
+            unsigned char glyph = (unsigned char)(
+                DM1_V1_CPSAO_AVAILABLE_SYMBOL_BASE_PC34 +
+                DM1_V1_CPSAO_AVAILABLE_SYMBOL_COUNT_PC34 * row + i);
             (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
                                     framebufferWidth, framebufferHeight,
-                                    239 + 14 * i, 58,
-                                    (unsigned char)text[0], M11_COLOR_CYAN,
-                                    M11_COLOR_BLACK, 1);
+                                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_X0_PC34 +
+                                        DM1_V1_CPSAO_AVAILABLE_SYMBOL_STEP_PC34 * i,
+                                    DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34,
+                                    glyph,
+                                    DM1_V1_CPSAO_COLOR_CYAN_PC34,
+                                    DM1_V1_CPSAO_COLOR_BLACK_PC34, 1);
         }
     }
-    for (i = 0; i < state->spellBuffer.runeCount && i < 4; ++i) {
-        char text[2];
-        text[0] = (char)state->spellBuffer.runes[i];
-        text[1] = '\0';
+    /* MENUDRAW.C F0398 owns exactly four output cells, space-padding the
+     * tail so recant/caster changes cannot retain stale source glyphs. */
+    for (i = 0; i < DM1_V1_CPSAO_CHAMPION_SYMBOL_MAX_PC34; ++i) {
+        unsigned char glyph = i < state->spellBuffer.runeCount
+            ? (unsigned char)state->spellBuffer.runes[i]
+            : (unsigned char)' ';
         (void)M11_Font_DrawChar(g_activeOriginalFont, framebuffer,
                                 framebufferWidth, framebufferHeight,
-                                241 + 9 * i, 70,
-                                (unsigned char)text[0], M11_COLOR_CYAN,
-                                M11_COLOR_BLACK, 1);
+                                DM1_V1_CPSAO_CHAMPION_SYMBOL_X0_PC34 +
+                                    DM1_V1_CPSAO_CHAMPION_SYMBOL_STEP_PC34 * i,
+                                DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34,
+                                glyph,
+                                DM1_V1_CPSAO_COLOR_CYAN_PC34,
+                                DM1_V1_CPSAO_COLOR_BLACK_PC34, 1);
     }
 }
 
