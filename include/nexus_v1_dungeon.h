@@ -1818,12 +1818,14 @@ typedef struct {
     uint8_t colour_mode;
     uint8_t texture_bits_per_pixel;
     uint32_t texture_byte_count;
+    uint32_t link_byte_offset;
     uint32_t texture_source_byte_offset;
     uint32_t texture_source_byte_end;
     int end_command;
     int texture_command;
     int colour_mode_documented;
     int texture_source_range_valid;
+    int link_target_range_valid;
     int four_bpp_colour_bank;
     int coordinate_words_framed;
 } Nexus_V1_Vdp1TextureCommand;

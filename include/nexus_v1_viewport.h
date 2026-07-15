@@ -35,6 +35,9 @@ typedef struct {
     int structure3_runtime_vdp1_vram_window_bound;
     Nexus_V1_DgnStructure3Vdp1VramWindowReceipt
         structure3_runtime_vdp1_vram_window;
+    int structure3_runtime_vdp1_command_vram_bound;
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt
+        structure3_runtime_vdp1_command_vram;
     Nexus_V1_DgnStructure3Vdp1CommandFramingReceipt
         structure3_runtime_vdp1_command;
     /* A package-owned Structure3 face/vertex/normal packet may be consumed

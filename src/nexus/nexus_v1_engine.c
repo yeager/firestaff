@@ -2570,6 +2570,62 @@ int nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
     return receipt.valid;
 }
 
+int nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt receipt;
+    Nexus_V1_DgnStructure3RenderPacket packet;
+    uint32_t offset;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    receipt.command_record_byte_offset = UINT32_MAX;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
+                       engine, &receipt.command_framing) != 1 ||
+        !receipt.command_framing.valid ||
+        !receipt.command_framing.complete_vdp1_command_record) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    memset(&packet, 0, sizeof(packet));
+    if (nexus_v1_current_level_structure3_render_packet(engine, &packet) != 1 ||
+        !packet.valid || !packet.vdp1_state ||
+        packet.vdp1_state_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        !packet.vdp1_command ||
+        packet.vdp1_command_size != NEXUS_V1_VDP1_COMMAND_BYTES) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.level_index = receipt.command_framing.level_index;
+    receipt.source_byte_count = receipt.command_framing.source_byte_count;
+    receipt.source_bytes_fnv1a64 = receipt.command_framing.source_bytes_fnv1a64;
+    receipt.original_saturn_capture_bound = 1;
+    receipt.complete_vdp1_vram_snapshot = 1;
+    for (offset = 0U;
+         offset <= NEXUS_V1_VDP1_VRAM_BYTES - NEXUS_V1_VDP1_COMMAND_BYTES;
+         offset += 8U) {
+        if (memcmp(packet.vdp1_state + offset, packet.vdp1_command,
+                   NEXUS_V1_VDP1_COMMAND_BYTES) != 0)
+            continue;
+        if (receipt.command_record_occurrence_count == 0)
+            receipt.command_record_byte_offset = offset;
+        ++receipt.command_record_occurrence_count;
+    }
+    receipt.command_record_unique_in_vram =
+        receipt.command_record_occurrence_count == 1;
+    receipt.command_link_byte_offset = receipt.command_framing.command.link_byte_offset;
+    receipt.command_link_target_bounded =
+        receipt.command_framing.command.link_target_range_valid;
+    receipt.valid = receipt.command_record_unique_in_vram &&
+        receipt.command_link_target_bounded;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_current_level_dgn_renderer_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveLevelRendererSourceReceipt *out_receipt)
@@ -2633,6 +2689,9 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
     out_receipt->vdp1_vram_window_bound =
         nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
             engine, &out_receipt->vdp1_vram_window) == 1;
+    out_receipt->vdp1_command_vram_bound =
+        nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
+            engine, &out_receipt->vdp1_command_vram) == 1;
 
     /* The opaque capture may be source-bound, but the Saturn codecs and VDP1
      * command meaning are not known. Keep every renderer consumer fail-closed. */

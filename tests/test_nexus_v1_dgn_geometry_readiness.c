@@ -2956,6 +2956,7 @@ static void test_structure3_entry_header_boundaries(void) {
     memset(&candidate, 0, sizeof(candidate));
     memset(vdp1_command, 0, sizeof(vdp1_command));
     wl16(vdp1_command, 0U);      /* normal texture primitive */
+    wl16(vdp1_command + 2, 0x42U); /* documented link address: 0x210 */
     wl16(vdp1_command + 8, 0x20U);
     wl16(vdp1_command + 10, 0x0101U); /* 8x1 command-table extent */
     wl16(vdp1_command + 12, (uint16_t)-12);
@@ -2969,6 +2970,7 @@ static void test_structure3_entry_header_boundaries(void) {
     wl16(vdp1_command + 28, 0x2468U);
     memset(vdp1_state, 0, sizeof(vdp1_state));
     memcpy(vdp1_state + 0x100U, texture_span, sizeof(texture_span));
+    memcpy(vdp1_state + 0x200U, vdp1_command, sizeof(vdp1_command));
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
     candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
     candidate.typed_mesh_corpus_fnv1a32 = NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
@@ -3387,6 +3389,9 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_command_framing.command.texture_source_byte_end ==
                   0x104U &&
               active_source.vdp1_command_framing.command.texture_source_range_valid &&
+              active_source.vdp1_command_framing.command.link_byte_offset ==
+                  0x210U &&
+              active_source.vdp1_command_framing.command.link_target_range_valid &&
               active_source.vdp1_command_framing.command.texture_width == 8U &&
               active_source.vdp1_command_framing.command.texture_height == 1U &&
               active_source.vdp1_command_framing.command.xa == -12 &&
@@ -3404,6 +3409,14 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.vdp1_vram_window.valid &&
               active_source.vdp1_vram_window.complete_vdp1_vram_snapshot &&
               active_source.vdp1_vram_window.texture_lane_matches_vram_window &&
+              active_source.vdp1_command_vram_bound &&
+              active_source.vdp1_command_vram.valid &&
+              active_source.vdp1_command_vram.complete_vdp1_vram_snapshot &&
+              active_source.vdp1_command_vram.command_record_occurrence_count == 1 &&
+              active_source.vdp1_command_vram.command_record_unique_in_vram &&
+              active_source.vdp1_command_vram.command_record_byte_offset == 0x200U &&
+              active_source.vdp1_command_vram.command_link_target_bounded &&
+              active_source.vdp1_command_vram.command_link_byte_offset == 0x210U &&
               !active_source.vdp1_vram_window.pixel_format_proven &&
               !active_source.vdp1_vram_window.palette_format_proven &&
               !active_source.vdp1_vram_window.decoder_permitted &&
@@ -3433,6 +3446,10 @@ static void test_structure3_entry_header_boundaries(void) {
                   .structure3_runtime_vdp1_vram_window_bound &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_vram_window
                   .texture_lane_matches_vram_window &&
+              viewport.last_dgn_render_receipt
+                  .structure3_runtime_vdp1_command_vram_bound &&
+              viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command_vram
+                  .command_record_unique_in_vram &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command.valid &&
               viewport.last_dgn_render_receipt.structure3_runtime_vdp1_command
                   .command_format_parsed &&

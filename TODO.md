@@ -6653,3 +6653,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     active renderer/viewport receipts. A real Saturn trace must still bind
     those words to Structure3 transforms, camera, clipping, Gouraud data, and
     command ordering before any geometry can draw.
+  - 2026-07-15 command-VRAM update: a full authenticated VDP1-VRAM snapshot
+    must now contain the exact captured command once at an eight-byte boundary
+    before its documented `CMDLINK * 8` address is retained. Command-flow
+    control bits, target-table identity, palette/CLUT behavior, texel format,
+    and raster output remain unproved and blocked pending a real trace.
