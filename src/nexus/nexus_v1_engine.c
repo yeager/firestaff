@@ -1582,21 +1582,17 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 /* Check if extracted files exist */
 static int has_extracted(const char *dir) {
     char path[512];
-    struct stat st;
     const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
     const char *lev00_md5 = nexus_known_boot_file_md5("LEV00.DGN");
-    if (dm_bin_md5 &&
-        asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
-        return 1;
+    if (!dir || !dm_bin_md5 || !lev00_md5) return 0;
+
+    /* An extracted root may be nested or archived, but it must contain both
+     * canonical boot program and first DGN bytes. Names alone are not enough
+     * to admit a source that will later own DGN runtime data. */
+    if (!asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
+        return 0;
     }
-    if (lev00_md5 &&
-        asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8)) {
-        return 1;
-    }
-    snprintf(path, sizeof(path), "%s/DM.BIN", dir);
-    if (stat(path, &st) == 0) return 1;
-    snprintf(path, sizeof(path), "%s/LEV00.DGN", dir);
-    return (stat(path, &st) == 0);
+    return asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8);
 }
 
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
@@ -2801,13 +2797,31 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         free(data);
         return -1;
     }
-    nexus_v1_load_item_ibs_runtime_source(engine);
-    (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
     engine->current_level_dgn_data = data;
     engine->current_level_dgn_size = size;
     (void)nexus_v1_structure2_source_receipt(
         engine, level, &engine->current_level, data, size,
         &engine->current_level_structure2_source);
+
+    /* Parsing establishes bounded DGN structure only. Do not promote parsed
+     * bytes into item, animation, mechanics, or viewport ownership unless
+     * the active source receipt proves that this exact loaded level is the
+     * canonical retail LEV entry. */
+    if (!engine->current_level_structure2_source.canonical_hash_verified ||
+        !engine->current_level_structure2_source.materialization_bound ||
+        !engine->current_level_structure2_source.loaded_bytes_bound) {
+        printf("Nexus: refusing unverified DGN source for %s\n", name);
+        free(data);
+        memset(&engine->current_level, 0, sizeof(engine->current_level));
+        engine->current_level_dgn_data = NULL;
+        engine->current_level_dgn_size = 0;
+        engine->level_loaded = 0;
+        return -1;
+    }
+
+    /* Only hash-bound canonical bytes may cross this point. */
+    nexus_v1_load_item_ibs_runtime_source(engine);
+    (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
 
     /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
      * fixes new game at LEV00 (11,29,N). Accept it only after the real
