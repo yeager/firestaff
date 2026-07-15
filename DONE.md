@@ -16276,6 +16276,16 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron `$e009` FIFO-to-main-RAM receipt
+
+Dispatch-bounded FIFO tracing now ties real `$e009` SCSI data reads to strict
+next-store RAM receipts. The USA Track 02 capture proves dispatch 0's
+generation-4 bytes reach physical `0x1f0256..0x1f0259`; other captured
+dispatches reach the System Card workspace. These are byte-transport facts
+only: no level/object grammar, game consumer, or visual fallback is admitted.
+
+Verification: Mednafen patch dry-run and real SDL2 USA Track 02 capture.
+
 # ✅ 2026-07-15 Theron main-RAM `$e009` to SCSI receipt
 
 The HuC6280 trace now emits every physical main-RAM `$e009` call into the
