@@ -12,6 +12,12 @@
   render-index source cell before its unscaled raw-index blit. Palette
   application remains with the final F0097 viewport pass. Focused coverage:
   `m11_dm1_front_mirror_asset_fail_closed`.
+- ✅ 2026-07-15 DM2 `DM2_DRAW_DUNGEON_TILES` wall scheduler: M11 now uses
+  SKProject's exact `table1d7029` viewport-cell order for every admitted
+  `DRAW_WALL` panel, replacing the old DM1-like depth loop. The focused
+  canonical-GDAT test verifies all ten source wall cells and rejects center
+  cells without a source wall geometry route. Object and tile-type branches remain
+  unavailable until their own raw cell evidence exists.
 
 - ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C346 source-rectangle gate: the D1C
   mirror backing now requires and samples exactly its G0205 64x43 source

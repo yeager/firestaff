@@ -49,6 +49,15 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
                                                     int height,
                                                     int stride);
 
+/* Exact SKProject dm2data.cpp::table1d7029, read by
+ * c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES. */
+static const uint8_t s_dm2_draw_dungeon_tiles_cells[20] = {
+    0x13u, 0x14u, 0x11u, 0x12u, 0x10u,
+    0x0eu, 0x0fu, 0x0cu, 0x0du, 0x0bu,
+    0x09u, 0x0au, 0x07u, 0x08u, 0x06u,
+    0x04u, 0x05u, 0x03u, 0x01u, 0x02u
+};
+
 static uint32_t dm2_v1_wall_hash_bytes(uint32_t hash, const uint8_t *bytes,
                                         size_t size)
 {
@@ -721,33 +730,6 @@ int dm2_v1_viewport_dialogue_box_graphic_index(void)
 {
     return DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX;
 }
-
-/* DM2 draw order — back-to-front, same 12 view squares as DM1.
- * Depth 3 (D3) → Depth 2 (D2) → Depth 1 (D1) → Depth 0 (D0).
- * Source: DUNGEON.C:1371-1421; DUNVIEW.C:8466-8542
- * ReDMCSB reference: s_draw_order[] in dm1_v1_viewport_3d_pc34_compat.c */
-typedef enum {
-    DM2_STEP_D3L = 0,
-    DM2_STEP_D3R,
-    DM2_STEP_D3C,
-    DM2_STEP_D2L,
-    DM2_STEP_D2R,
-    DM2_STEP_D2C,
-    DM2_STEP_D1L,
-    DM2_STEP_D1R,
-    DM2_STEP_D1C,
-    DM2_STEP_D0L,
-    DM2_STEP_D0R,
-    DM2_STEP_D0C,
-    DM2_STEP_COUNT
-} DM2_RenderStep;
-
-static const int __attribute__((unused)) s_step_to_square [DM2_STEP_COUNT] = {
-    DM2_SQ_D3L, DM2_SQ_D3R, DM2_SQ_D3C,
-    DM2_SQ_D2L, DM2_SQ_D2R, DM2_SQ_D2C,
-    DM2_SQ_D1L, DM2_SQ_D1R, DM2_SQ_D1C,
-    DM2_SQ_D0L, DM2_SQ_D0R, DM2_SQ_D0C,
-};
 
 static uint8_t dm2_v1_wall_fallback_color_for_step(int render_step)
 {
@@ -1457,6 +1439,24 @@ int dm2_v1_viewport_wall_field_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST + view_square;
 }
 
+int dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(int view_square)
+{
+    /* D3C has no DRAW_WALL GRAPHICSSET field.  The remaining fields use
+     * iViewportCell + 0x22, so their source cell is the square ordinal. */
+    if (dm2_v1_viewport_wall_field_for_square(view_square) <
+        DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
+        return -1;
+    }
+    for (int pass = 0; pass < (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
+                                    sizeof(s_dm2_draw_dungeon_tiles_cells[0]));
+         ++pass) {
+        if (s_dm2_draw_dungeon_tiles_cells[pass] == (uint8_t)view_square) {
+            return pass;
+        }
+    }
+    return -1;
+}
+
 int dm2_v1_viewport_wall_graphic_index_for_square(int view_square)
 {
     return dm2_v1_viewport_wall_graphic_index_for_graphicsset(
@@ -1525,12 +1525,13 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
         return 0;
     }
     out_plan->party_direction = s ? (s->party_dir & 3) : 0;
-    /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST routes each
-     * visible wall through the viewport-cell field before blitting.  Keep the
-     * Firestaff contract as explicit panel rows so the asset-backed renderer,
-     * local fallback, and future exact source clipping share one plan. */
-    for (int step = 0; step < DM2_STEP_COUNT; ++step) {
-        int square = s_step_to_square[step];
+    /* The source scheduler owns the wall traversal. Do not reuse the DM1
+     * depth ordering: DM2_DRAW_DUNGEON_TILES walks table1d7029 and invokes
+     * DRAW_WALL_TILE for a cell only at that pass. */
+    for (int step = 0; step < (int)(sizeof(s_dm2_draw_dungeon_tiles_cells) /
+                                    sizeof(s_dm2_draw_dungeon_tiles_cells[0]));
+         ++step) {
+        int square = s_dm2_draw_dungeon_tiles_cells[step];
         const DM2_WallFrame *frame = dm2_v1_get_wall_frame(square);
         int graphicsset_index = s && s->gdat_scene_control_ready
             ? s->gdat_scene_material_index
@@ -1543,8 +1544,10 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
          * view square for the current party direction.  In source-required
          * M10 mode, an absent wall fact is not permission to draw the generic
          * GRAPHICSSET panel. */
-        if (s && s->source_materials_required &&
-            (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u) {
+        if (square < 0 || square >= DM2_SQ_COUNT ||
+            dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(square) != step ||
+            (s && s->source_materials_required &&
+             (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u)) {
             continue;
         }
         if (!frame || frame->byte_width == 0 || frame->height == 0 ||
