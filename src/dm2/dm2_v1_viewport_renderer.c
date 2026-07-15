@@ -5099,23 +5099,10 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-            } else {
-                int sz = it->fallback_radius;
-                for (int dy = -sz; dy <= sz; dy++) {
-                    int sy = it->center_y + dy;
-                    if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-                    for (int dx = -sz; dx <= sz; dx++) {
-                        int sx = it->center_x + dx;
-                        if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
-                        if (abs(dx) + abs(dy) <= sz)
-                            vp[sy * stride + sx] = it->fallback_color;
-                    }
-                }
-                ++s->fallback_item_drawn_count;
-            }
+            /* DRAW_MAP_CHIP draws only the queried GDAT image. */
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
+            continue;
         }
     }
 }
@@ -5293,25 +5280,10 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
     }
 
     if (!drawn_asset) {
-        if (s->source_materials_required) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM);
-        } else {
-            int sz = it->fallback_radius;
-            uint8_t color = it->fallback_color;
-            for (int dy = -sz; dy <= sz; dy++) {
-                int sy = it->center_y + dy;
-                if ((unsigned)sy >= (unsigned)DM2_VP_HEIGHT) continue;
-                for (int dx = -sz; dx <= sz; dx++) {
-                    int sx = it->center_x + dx;
-                    if ((unsigned)sx >= (unsigned)DM2_VP_WIDTH) continue;
-                    if (abs(dx) + abs(dy) <= sz) {
-                        vp[sy * stride + sx] = color;
-                    }
-                }
-            }
-            ++s->fallback_carried_item_drawn_count;
-        }
+        /* DRAW_ITEM_IN_HAND uses the object's selected GDAT image. */
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CARRIED_ITEM);
+        return;
     }
 }
 
@@ -5397,23 +5369,10 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
             }
         }
         if (!drawn_asset) {
-            if (s->source_materials_required) {
-                dm2_v1_block_source_material(
-                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE);
-            } else {
-                if (p->fallback_dx != 0 || p->fallback_dy != 0) {
-                    for (int t = 0; t < p->fallback_len; t++) {
-                        int sx = p->center_x + p->fallback_dx * t;
-                        int sy = p->center_y + p->fallback_dy * t;
-                        if ((unsigned)sx < (unsigned)DM2_VP_WIDTH &&
-                            (unsigned)sy < (unsigned)DM2_VP_HEIGHT)
-                            vp[sy * stride + sx] = p->fallback_color;
-                    }
-                } else {
-                    vp[p->center_y * stride + p->center_x] = p->fallback_color;
-                }
-                ++s->fallback_projectile_drawn_count;
-            }
+            /* Missile/cloud map chips have no source-independent visual. */
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_PROJECTILE);
+            continue;
         }
     }
 }
