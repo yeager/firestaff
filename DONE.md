@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 CSB C028 champion-icon source gate: CSB party-position icons
+  now require the complete 76x14 C028 strip from the selected GRAPHICS.DAT.
+  Missing or malformed C028 clears C113..C116 rather than showing M11's
+  color-only fallback. The real-package launcher regression corrupts the
+  cached C028 dimensions and verifies the icon zone stays black.
+
 - ✅ 2026-07-15 DM2 M11 leader-hand name source gate: stopped drawing the
   active DM1 rectangle/host-font catalog label over DM2 runtime frames.
   SKProject `GET_ITEM_NAME` uses `QUERY_GDAT_ITEM_NAME` (`dtText/0x18`) plus

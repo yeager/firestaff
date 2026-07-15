@@ -197,6 +197,30 @@ static int frame_rect_matches(const unsigned char* first,
     return 1;
 }
 
+static int frame_rect_is_color(const unsigned char* pixels,
+                               int x,
+                               int y,
+                               int w,
+                               int h,
+                               unsigned char color) {
+    int row;
+
+    if (!pixels || x < 0 || y < 0 || w <= 0 || h <= 0 ||
+        x + w > 320 || y + h > 200) {
+        return 0;
+    }
+    for (row = 0; row < h; ++row) {
+        int column;
+        for (column = 0; column < w; ++column) {
+            if (pixels[(size_t)(y + row) * 320u +
+                       (size_t)(x + column)] != color) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 static int frame_matches_source_rect(const unsigned char* frame,
                                      const CSB_V1_StartupRuntimeSurface_PC34* source,
                                      int source_x,
@@ -670,6 +694,42 @@ static void run_real_launcher_handoff_if_available(void) {
                     "M11 CSB preserves source C013 without generic keyboard hatch overlay");
         view.v1MovementArrowVisualTicks = 0;
         view.v1MovementArrowVisualMask = 0;
+    }
+    {
+        M11_AssetSlot *c028 = (M11_AssetSlot *)M11_AssetLoader_Load(
+            &view.assetLoader, 28u);
+        DM1_V1_LayoutZoneRectPc34 iconRect;
+        struct ChampionState_Compat savedChampion = view.world.party.champions[0];
+        int savedChampionCount = view.world.party.championCount;
+        int savedPartyDirection = view.world.party.direction;
+        unsigned short savedWidth = c028 ? c028->width : 0u;
+
+        expect_true(c028 && c028->pixels && c028->loaded &&
+                        c028->width == 76u && c028->height == 14u,
+                    "M11 CSB exposes the authentic C028 icon strip");
+        expect_true(dm1_v1_champion_icon_rect_pc34(0, &iconRect) == 1,
+                    "M11 CSB resolves C028 champion icon geometry");
+        view.world.party.championCount = 1;
+        view.world.party.direction = 0;
+        memset(&view.world.party.champions[0], 0,
+               sizeof(view.world.party.champions[0]));
+        view.world.party.champions[0].present = 1;
+        view.world.party.champions[0].direction = 0;
+        if (c028) {
+            c028->width = 0u;
+        }
+        memset(framebuffer, 0xff, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(frame_rect_is_color(framebuffer,
+                                        iconRect.x, iconRect.y,
+                                        iconRect.w, iconRect.h, 0u),
+                    "M11 CSB clears C113 rather than rendering a C028-free host icon");
+        if (c028) {
+            c028->width = savedWidth;
+        }
+        view.world.party.champions[0] = savedChampion;
+        view.world.party.championCount = savedChampionCount;
+        view.world.party.direction = savedPartyDirection;
     }
     {
         CSB_V1_StartupRuntimeAssetSession_PC34 *session =
