@@ -143,6 +143,7 @@ if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x 
    ! grep -Fq 'main_ram_loader_entry_successor_next successor_logical_pc=%04x successor_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_bra logical_pc=%04x physical_pc=%06x target=%04x displacement=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_bra_target source_logical_pc=%04x source_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
+   ! grep -Fq 'main_ram_loader_bra_target_jsr branch_target=%04x branch_target_physical_pc=%06x logical_pc=%04x physical_pc=%06x target=%04x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_rts logical_pc=%04x physical_pc=%06x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_post_rts source_logical_pc=%04x source_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_block_transfer logical_pc=%04x physical_pc=%06x operation=%s source=%04x destination=%04x length=%04x' "$main_ram_loader_patch_file" ||

@@ -8677,3 +8677,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     opaque control evidence, with no asserted loader, record, level, object,
     palette, bitmap, or rendering meaning. Remaining: capture a source-bound
     data read, call, or CD state after this executed target.
+  - Update: the producer now binds the first observed `JSR` after that
+    executed target to the same main-RAM control chain. Its destination remains
+    opaque, not a loader name or a record, level, object, palette, bitmap, or
+    rendering claim. Remaining: observe a CD state or source-data transfer
+    from this control path before assigning record-selection semantics.

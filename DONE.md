@@ -19396,3 +19396,11 @@ Firestaff retains the target opcode solely as opaque control-flow evidence and
 requires the source PC, source physical PC, target and executed main-RAM PC to
 agree. This does not assert loader, CD-record, dungeon, object, palette,
 bitmap, or rendering semantics.
+
+# ✅ 2026-07-15 Theron Track 02 copied-entry BRA target JSR receipt
+
+The Mednafen trace now binds the first observed `JSR` after an executed
+copied-entry BRA target to that exact target's main-RAM control path. Admission
+requires the preceding target receipt and ordered trace rows. The JSR target
+is retained as opaque control evidence only, without any assertion about a CD
+record, loader routine, dungeon data, objects, palette, bitmap, or rendering.

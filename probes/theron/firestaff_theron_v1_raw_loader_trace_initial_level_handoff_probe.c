@@ -179,6 +179,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryCopySuccessorReceipt continuation_caller_next_transfer_call_entry_copy_successor;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchReceipt continuation_caller_next_transfer_call_entry_branch;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetReceipt continuation_caller_next_transfer_call_entry_branch_target;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -190,6 +191,8 @@ int main(void)
     uint8_t transfer_destination_entry_successor_opcode;
     uint8_t transfer_destination_branch_displacement;
     uint16_t transfer_destination_branch_target;
+    uint16_t transfer_destination_branch_target_jsr_pc;
+    uint16_t transfer_destination_branch_target_jsr_target;
 
     if (!raw_path) {
         printf("SKIP: set FIRESTAFF_THERON_TRACK02_US_BIN for raw-media handoff coverage\n");
@@ -553,6 +556,9 @@ int main(void)
     transfer_destination_branch_displacement = handoff.loader_post_envelope.bytes[9u];
     transfer_destination_branch_target = (uint16_t)(0x2402u +
         (int8_t)transfer_destination_branch_displacement);
+    transfer_destination_branch_target_jsr_pc =
+        (uint16_t)(transfer_destination_branch_target + 2u);
+    transfer_destination_branch_target_jsr_target = 0x2600u;
 
     {
         Theron_Track02InitialLevelLoaderSemanticReceipt direct_semantics;
@@ -1114,13 +1120,19 @@ int main(void)
              "main_ram_loader_jsr logical_pc=2204 physical_pc=1f2204 target=2400 a=00 x=00 y=00\n"
              "main_ram_loader_call_entry caller_logical_pc=2204 caller_physical_pc=1f2204 target=2400 logical_pc=2400 physical_pc=1f2400 opcode=%02x\n"
              "main_ram_loader_bra logical_pc=2400 physical_pc=1f2400 target=%04x displacement=%02x\n"
-             "main_ram_loader_bra_target source_logical_pc=2400 source_physical_pc=1f2400 target=%04x logical_pc=%04x physical_pc=%06x opcode=ea\n",
+             "main_ram_loader_bra_target source_logical_pc=2400 source_physical_pc=1f2400 target=%04x logical_pc=%04x physical_pc=%06x opcode=ea\n"
+             "main_ram_loader_bra_target_jsr branch_target=%04x branch_target_physical_pc=%06x logical_pc=%04x physical_pc=%06x target=%04x\n",
              transfer_destination_entry_opcode,
              transfer_destination_branch_target,
              transfer_destination_branch_displacement,
              transfer_destination_branch_target,
              transfer_destination_branch_target,
-             0x1f0000u + transfer_destination_branch_target);
+             0x1f0000u + transfer_destination_branch_target,
+             transfer_destination_branch_target,
+             0x1f0000u + transfer_destination_branch_target,
+             transfer_destination_branch_target_jsr_pc,
+             0x1f0000u + transfer_destination_branch_target_jsr_pc,
+             transfer_destination_branch_target_jsr_target);
     if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch(
             &handoff, game_payload_capture,
             &continuation_caller_next_transfer_call_entry_branch) ||
@@ -1143,6 +1155,31 @@ int main(void)
             &continuation_caller_next_transfer_call_entry_branch)) {
         free(raw);
         printf("FAIL: altered copied BRA displacement reached receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[9u];
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
+            &handoff, game_payload_capture,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr) ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr.valid ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr.copied_entry_branch_target_jsr_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr.control_pc !=
+            transfer_destination_branch_target_jsr_pc ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr.control_physical_pc !=
+            0x1f0000u + transfer_destination_branch_target_jsr_pc ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr.jsr_target !=
+            transfer_destination_branch_target_jsr_target) {
+        free(raw);
+        printf("FAIL: copied destination BRA target JSR was not source-bound\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[9u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
+            &handoff, game_payload_capture,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr)) {
+        free(raw);
+        printf("FAIL: altered copied BRA target reached JSR receipt\n");
         return 1;
     }
     --handoff.loader_post_envelope.bytes[9u];
