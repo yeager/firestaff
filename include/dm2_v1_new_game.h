@@ -230,6 +230,18 @@ typedef struct {
     size_t suppress_state_offset;
 } DM2_V1_OriginalRawDungeonReceipt;
 
+/* One source-addressed raw c_record from an admitted SKSave DB pool. The
+ * receipt intentionally exposes no decoded fields or record links. */
+typedef struct {
+    int valid;
+    uint8_t db_pool;
+    uint16_t record_index;
+    uint16_t record_size;
+    size_t record_offset;
+    uint32_t pool_hash;
+    uint32_t record_hash;
+} DM2_V1_OriginalRawDbRecordReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -322,6 +334,12 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
     const uint8_t *buf,
     size_t buf_size,
     DM2_V1_OriginalRawDungeonReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_db_record_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int db_pool,
+    int record_index,
+    DM2_V1_OriginalRawDbRecordReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only

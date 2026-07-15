@@ -15573,6 +15573,15 @@ offsets do not authorize unknown record or link decoding. The focused save/load
 fixture proves the empty-pool/map-data boundary at byte 68 and SUPPRESS starts
 at byte 88.
 
+# ✅ 2026-07-15 DM2 raw SKSave DB-record address receipt
+
+An admitted raw SKSave can now yield a hash-bound `(DB pool, record index)`
+receipt with the exact skproject record size and source offset. The boundary
+revalidates the complete prefix and rejects absent pools, invalid indices,
+zero-sized source pools, and out-of-prefix addresses. It exposes no decoded
+record fields and follows no links. Verification: focused save/load 26/26,
+including a source-sized DB0 record at byte 68.
+
 # ✅ 2026-07-13 DM2 G1 direct DB9 Container runtime receipt
 
 Runtime-admitted G1 map 9 now consumes the direct DB9 `Container` record at
