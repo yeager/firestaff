@@ -228,6 +228,8 @@ int nexus_v1_launcher_dgn_direct_face_capture_intake(
         !receipt.vdp1_state.vdp1_register_0x04_write_proven ||
         !receipt.vdp1_state.vdp1_vram_base_r14_store_proven ||
         !receipt.vdp1_state.vdp1_register_0x06_write_proven ||
+        !receipt.vdp1_state.vdp1_register_0x08_write_proven ||
+        !receipt.vdp1_state.vdp1_register_0x0a_write_proven ||
         receipt.vdp1_state.vdp1_command_emission_proven ||
         receipt.vdp1_state.palette_semantics_proven ||
         receipt.vdp1_state.transform_semantics_proven ||

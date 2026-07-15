@@ -185,6 +185,10 @@ int main(void)
               vdp1_state.vdp1_vram_base_r14_store_proven &&
               vdp1_state.vdp1_register_0x06_write_proven &&
               vdp1_state.vdp1_register_0x06_value == 0x8000U &&
+              vdp1_state.vdp1_register_0x08_write_proven &&
+              vdp1_state.vdp1_register_0x08_value == 0U &&
+              vdp1_state.vdp1_register_0x0a_write_proven &&
+              vdp1_state.vdp1_register_0x0a_value == 0xffffU &&
               !vdp1_state.vdp1_command_emission_proven &&
               !vdp1_state.palette_semantics_proven &&
               !vdp1_state.transform_semantics_proven &&

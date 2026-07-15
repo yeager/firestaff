@@ -3567,7 +3567,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     matrix, camera, culling, material, palette, pixel, or draw semantics.
   - 2026-07-15 VDP1 capture-prerequisite update: the launcher host route now
     retains the hash-verified `DM.BIN` SH-2 state-write corridor, including
-    the raw VDP1 `0x04=2` and `0x06=0x8000` fields, before it accepts a
+    the raw VDP1 `0x04=2`, `0x06=0x8000`, `0x08=0`, and `0x0a=0xffff`
+    fields before it accepts a
     direct-face capture request. These are executable source fields only;
     they do not identify a face command, transform, texture, palette, or
     output pixel. A real same-session Saturn trace must establish that link.

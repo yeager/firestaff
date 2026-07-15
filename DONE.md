@@ -19352,7 +19352,8 @@ palette, VDP1 command, pixel, or rendering claim is added.
 
 The direct-face launcher gate now also retains the canonical `DM.BIN` static
 SH-2 VDP1 state-write receipt. Its proven raw fields include the `0x04 = 2`
-control write, the VDP1-VRAM base handoff, and `0x06 = 0x8000`; a changed or
+control write, the VDP1-VRAM base handoff, and `0x06 = 0x8000`, `0x08 = 0`,
+and `0x0a = 0xffff`; a changed or
 unverified executable blocks capture intake. This is a capture prerequisite,
 not a claim that those registers select a Structure1F face or prove a command,
 transform, material, palette, pixel, or rendering result.
