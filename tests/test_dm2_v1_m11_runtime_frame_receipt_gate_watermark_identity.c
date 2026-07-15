@@ -33,6 +33,7 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot(uint32_t map,
     receipt.runtime_m11_frame_floor_material_hash = 0x464c4f52u;
     receipt.runtime_m11_frame_ceiling_material_hash = 0x4345494cu;
     receipt.runtime_m11_frame_wall_material_plan_hash = 0x57414c4cu;
+    receipt.runtime_m11_frame_wall_material_plan_command_count = 10;
     receipt.runtime_m11_frame_palette_hash = palette;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
@@ -56,6 +57,7 @@ static DM2_V1_ViewportM11FrameReceipt make_frame(uint32_t map,
     receipt.floor_material_hash = 0x464c4f52u;
     receipt.ceiling_material_hash = 0x4345494cu;
     receipt.wall_material_plan_hash = 0x57414c4cu;
+    receipt.wall_material_plan_command_count = 10;
     receipt.palette_hash = palette;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;

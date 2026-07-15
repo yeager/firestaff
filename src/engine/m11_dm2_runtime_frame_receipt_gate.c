@@ -4,6 +4,34 @@
  * fails; M11 must reject it before it presents any framebuffer surface. */
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 
+static int dm2_m11_wall_material_plan_matches(
+    const DM2_V1_BootRuntimeRenderReceipt *boot_receipt,
+    const DM2_V1_ViewportM11FrameReceipt *runtime_receipt)
+{
+    const int outdoor =
+        (boot_receipt->runtime_m11_frame_map_load_token &
+         UINT32_C(0x80000000)) != 0u;
+    const int no_indoor_plan =
+        boot_receipt->runtime_m11_frame_wall_material_plan_hash == 0u &&
+        boot_receipt->runtime_m11_frame_wall_material_plan_command_count == 0;
+
+    /* UPDATE_GFXSET has no WALL_GFX pass for an outdoor map.  Accept that
+     * absence only when both sides explicitly report it; otherwise an
+     * available source plan remains an exact source-owned transaction. */
+    if (outdoor && no_indoor_plan) {
+        return runtime_receipt->wall_material_plan_hash == 0u &&
+            runtime_receipt->wall_material_plan_command_count == 0;
+    }
+
+    return boot_receipt->runtime_m11_frame_wall_material_plan_hash != 0u &&
+        boot_receipt->runtime_m11_frame_wall_material_plan_command_count > 0 &&
+        runtime_receipt->wall_material_plan_hash ==
+            boot_receipt->runtime_m11_frame_wall_material_plan_hash &&
+        runtime_receipt->wall_material_plan_command_count > 0 &&
+        runtime_receipt->wall_material_plan_command_count ==
+            boot_receipt->runtime_m11_frame_wall_material_plan_command_count;
+}
+
 int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
     const DM2_V1_BootRuntimeRenderReceipt *boot_receipt,
     const DM2_V1_ViewportM11FrameReceipt *runtime_receipt)
@@ -85,11 +113,7 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_floor_material_hash &&
         runtime_receipt->ceiling_material_hash ==
             boot_receipt->runtime_m11_frame_ceiling_material_hash &&
-        runtime_receipt->wall_material_plan_hash ==
-            boot_receipt->runtime_m11_frame_wall_material_plan_hash &&
-        runtime_receipt->wall_material_plan_command_count > 0 &&
-        runtime_receipt->wall_material_plan_command_count ==
-            boot_receipt->runtime_m11_frame_wall_material_plan_command_count &&
+        dm2_m11_wall_material_plan_matches(boot_receipt, runtime_receipt) &&
         runtime_receipt->door_material_plan_required ==
             boot_receipt->runtime_m11_frame_door_material_plan_required &&
         (!runtime_receipt->door_material_plan_required ||

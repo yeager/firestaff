@@ -18602,3 +18602,12 @@ also selects outdoor mode. All previous receipts are cleared before this
 transaction, so a missing destination route fails closed rather than drawing
 the prior map's GDAT pixels. Verification: boot smoke 88/88 and save/load
 26/26.
+# ✅ 2026-07-15 DM2 M11 map-transition source receipt gate
+
+The public M11 transition gate now applies the same `UPDATE_GFXSET` WALL_GFX
+semantics to its runtime receipt as to its boot receipt. Indoor frames require
+one exact non-empty source wall plan. Outdoor maps may omit an indoor plan
+only when both receipts explicitly carry zero wall-plan identity and command
+count; a stale or invented plan is rejected. The map-transition and watermark
+fixtures now include the required source command-count evidence instead of
+implicitly accepting an incomplete indoor receipt.
