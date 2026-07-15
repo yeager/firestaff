@@ -308,6 +308,63 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     return receipt.observed_byte_transfer;
 }
 
+int nexus_v1_prs3_sh2_zero_side_trace_bind(
+    const Nexus_V1_Prs3Sh2ZeroSideTrace *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2ZeroSideReceipt *out_receipt) {
+    Nexus_V1_Prs3Sh2ZeroSideReceipt receipt;
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2;
+    uint32_t expected_merge;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_receipt) return 0;
+    *out_receipt = receipt;
+    if (!trace || !menu_bpk || !dm_bin || !source_hash_verified ||
+        trace->first_input_byte > UINT8_MAX || trace->second_input_byte > UINT8_MAX ||
+        trace->first_input_read_sequence >= trace->second_input_read_sequence ||
+        fnv1a64(menu_bpk, menu_bpk_size) != trace->menu_bpk_fnv1a64 ||
+        fnv1a64(dm_bin, dm_bin_size) != trace->dm_bin_fnv1a64 ||
+        nexus_v1_bpk_archive_prs3_stream_plan(menu_bpk, menu_bpk_size,
+                                               trace->entry_index, &plan) !=
+            NEXUS_V1_BPK_PRS3_STREAM_OK ||
+        !nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, dm_bin_size, 1, &sh2)) return 0;
+    receipt.menu_bpk_matches = receipt.dm_bin_matches = 1;
+    receipt.entry_plan_matches = plan.stream_offset == trace->stream_offset &&
+        plan.stream_size == trace->stream_size &&
+        plan.expected_output_bytes == trace->expected_output_bytes;
+    receipt.zero_side_instruction_route_matches =
+        trace->zero_branch_instruction_offset == sh2.control_zero_branch_offset &&
+        trace->zero_branch_target_offset == sh2.control_zero_branch_target_offset &&
+        trace->counter_decrement_offset == trace->zero_branch_target_offset &&
+        trace->first_input_instruction_offset == trace->zero_branch_target_offset + 8U &&
+        trace->second_input_instruction_offset == trace->zero_branch_target_offset + 12U &&
+        dm_bin[trace->counter_decrement_offset] == 0x7eU &&
+        dm_bin[trace->counter_decrement_offset + 1U] == 0xfeU &&
+        dm_bin[trace->first_input_instruction_offset] == 0x64U &&
+        dm_bin[trace->first_input_instruction_offset + 1U] == 0xc4U &&
+        dm_bin[trace->second_input_instruction_offset] == 0x67U &&
+        dm_bin[trace->second_input_instruction_offset + 1U] == 0xc4U;
+    receipt.source_bytes_match = receipt.entry_plan_matches &&
+        trace->first_payload_byte_offset + 1U == trace->second_payload_byte_offset &&
+        trace->second_payload_byte_offset < plan.stream_size &&
+        menu_bpk[(size_t)plan.stream_offset + trace->first_payload_byte_offset] ==
+            (uint8_t)trace->first_input_byte &&
+        menu_bpk[(size_t)plan.stream_offset + trace->second_payload_byte_offset] ==
+            (uint8_t)trace->second_input_byte;
+    expected_merge = trace->first_input_byte |
+        ((trace->second_input_byte << 4U) & 0x0f00U);
+    receipt.observed_zero_side_merge = receipt.zero_side_instruction_route_matches &&
+        receipt.source_bytes_match && trace->merged_control_value == expected_merge;
+    receipt.original_saturn_provenance_verified = 0;
+    receipt.decoder_promoted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    *out_receipt = receipt;
+    return receipt.observed_zero_side_merge;
+}
+
 int nexus_v1_prs3_dm_bin_catalog_verified(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3DmBinCatalogReceipt *out_receipt) {

@@ -404,6 +404,54 @@ static void test_real_nonzero_transfer_trace_contract(void) {
     free(dm_bin);
 }
 
+static void test_real_zero_side_trace_contract(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_V1_BpkPrs3StreamPlan plan;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2;
+    Nexus_V1_Prs3Sh2ZeroSideTrace trace;
+    Nexus_V1_Prs3Sh2ZeroSideReceipt receipt;
+    unsigned char *menu;
+    unsigned char *dm_bin;
+    size_t menu_size = 0U, dm_bin_size = 0U;
+    unsigned int index;
+
+    menu = read_asset(data_dir, "MENU.BPK", &menu_size);
+    dm_bin = read_asset(data_dir, "DM.BIN", &dm_bin_size);
+    if (!menu || !dm_bin) { free(menu); free(dm_bin); return; }
+    for (index = 0U; index < 163U; ++index)
+        if (nexus_v1_bpk_archive_prs3_stream_plan(menu, menu_size, index, &plan) ==
+            NEXUS_V1_BPK_PRS3_STREAM_OK) break;
+    if (index == 163U || !nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+            dm_bin, dm_bin_size, 1, &sh2)) { free(menu); free(dm_bin); return; }
+    memset(&trace, 0, sizeof(trace));
+    trace.menu_bpk_fnv1a64 = fnv1a64(menu, menu_size);
+    trace.dm_bin_fnv1a64 = fnv1a64(dm_bin, dm_bin_size);
+    trace.entry_index = index; trace.stream_offset = plan.stream_offset;
+    trace.stream_size = plan.stream_size; trace.expected_output_bytes = plan.expected_output_bytes;
+    trace.second_payload_byte_offset = 1U;
+    trace.first_input_byte = menu[plan.stream_offset];
+    trace.second_input_byte = menu[plan.stream_offset + 1U];
+    trace.merged_control_value = trace.first_input_byte |
+        ((trace.second_input_byte << 4U) & 0x0f00U);
+    trace.zero_branch_instruction_offset = sh2.control_zero_branch_offset;
+    trace.zero_branch_target_offset = sh2.control_zero_branch_target_offset;
+    trace.counter_decrement_offset = trace.zero_branch_target_offset;
+    trace.first_input_instruction_offset = trace.zero_branch_target_offset + 8U;
+    trace.second_input_instruction_offset = trace.zero_branch_target_offset + 12U;
+    trace.first_input_read_sequence = 10U; trace.second_input_read_sequence = 11U;
+    expect(nexus_v1_prs3_sh2_zero_side_trace_bind(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, 1, &receipt) &&
+               receipt.observed_zero_side_merge && !receipt.decoder_promoted &&
+               !receipt.fallback_visuals_permitted,
+           "real assets bind the zero-side merge without backreference semantics");
+    ++trace.merged_control_value;
+    expect(!nexus_v1_prs3_sh2_zero_side_trace_bind(
+               &trace, menu, menu_size, dm_bin, dm_bin_size, 1, &receipt) &&
+               !receipt.observed_zero_side_merge,
+           "changed zero-side merge value fails closed");
+    free(menu); free(dm_bin);
+}
+
 int main(void) {
     Nexus_V1_Prs3CaptureTraceSchemaReceipt receipt;
     Nexus_V1_Prs3CaptureAssetBindingReceipt binding;
@@ -693,6 +741,7 @@ int main(void) {
     test_cross_asset_prs3_frame_receipt();
     test_dm_bin_sh2_v1_execution_receipt();
     test_real_nonzero_transfer_trace_contract();
+    test_real_zero_side_trace_contract();
     test_sh2_transfer_trace_gate();
 
     return failures ? 1 : 0;

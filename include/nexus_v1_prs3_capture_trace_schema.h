@@ -357,6 +357,30 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_Prs3Sh2TransferReceipt;
 
+/* Captured zero-low-bit side observation. The two source bytes and their
+ * observed SH-2 merge value are retained as opaque control data. In
+ * particular, `merged_control_value` is not an offset, length, token, or
+ * output address. */
+typedef struct {
+    uint64_t menu_bpk_fnv1a64;
+    uint64_t dm_bin_fnv1a64;
+    uint32_t entry_index, stream_offset, stream_size, expected_output_bytes;
+    uint32_t first_payload_byte_offset, second_payload_byte_offset;
+    uint32_t zero_branch_instruction_offset, zero_branch_target_offset;
+    uint32_t counter_decrement_offset;
+    uint32_t first_input_instruction_offset, second_input_instruction_offset;
+    uint64_t first_input_read_sequence, second_input_read_sequence;
+    uint32_t first_input_byte, second_input_byte, merged_control_value;
+} Nexus_V1_Prs3Sh2ZeroSideTrace;
+
+typedef struct {
+    int menu_bpk_matches, dm_bin_matches, entry_plan_matches;
+    int zero_side_instruction_route_matches, source_bytes_match;
+    int observed_zero_side_merge;
+    int original_saturn_provenance_verified;
+    int decoder_promoted, fallback_visuals_permitted;
+} Nexus_V1_Prs3Sh2ZeroSideReceipt;
+
 int nexus_v1_prs3_capture_trace_schema_parse(
     const char *text, size_t text_size,
     Nexus_V1_Prs3CaptureTraceSchemaReceipt *out_receipt);
@@ -384,6 +408,15 @@ int nexus_v1_prs3_sh2_transfer_trace_parse_and_bind(
     const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
     Nexus_V1_Prs3Sh2TransferTrace *out_trace,
     Nexus_V1_Prs3Sh2TransferReceipt *out_receipt);
+
+/* Bind one external zero-low-bit observation to exact original bytes and the
+ * SH-2 two-byte path. This validates only the observed merge algebra already
+ * present in DM.BIN; it never gives that value PRS3 backreference semantics. */
+int nexus_v1_prs3_sh2_zero_side_trace_bind(
+    const Nexus_V1_Prs3Sh2ZeroSideTrace *trace,
+    const uint8_t *menu_bpk, size_t menu_bpk_size,
+    const uint8_t *dm_bin, size_t dm_bin_size, int source_hash_verified,
+    Nexus_V1_Prs3Sh2ZeroSideReceipt *out_receipt);
 
 /* Catalogs only literal PRS3 framing markers in hash-verified original
  * DM.BIN bytes. Unknown executable occurrences and truncated records remain
