@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0168/F0172 selected-inscription gate: the M11
+  F0107/M648 consumer now decodes only the current F0172-selected G0290 raw
+  TextString. A bad selected source record is no-draw rather than a fallback
+  scan to another visible TextString. Focused coverage:
+  `m11_dm1_inscription_selected_wall_gate`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 champion-HUD fallback gate: DM1 status
   boxes now stay source-owned even when V1 chrome is disabled. If a required
   C008/C007 surface cannot be consumed, DM1 leaves the existing source clear

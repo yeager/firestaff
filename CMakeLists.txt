@@ -5901,6 +5901,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_inscription_selected_wall_gate.c")
+        add_executable(test_m11_dm1_inscription_selected_wall_gate
+            tests/test_m11_dm1_inscription_selected_wall_gate.c)
+        target_compile_definitions(test_m11_dm1_inscription_selected_wall_gate PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_inscription_selected_wall_gate PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_inscription_selected_wall_gate
+            COMMAND test_m11_dm1_inscription_selected_wall_gate
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0094_f0096_m11_source_gate.c")
         add_executable(test_dm1_v1_f0094_f0096_m11_source_gate
             tests/test_dm1_v1_f0094_f0096_m11_source_gate.c)

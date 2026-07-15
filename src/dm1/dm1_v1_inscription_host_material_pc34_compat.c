@@ -72,25 +72,22 @@ static int dm1_v1_inscription_visible_text_index_pc34(
     return -1;
 }
 
-int dm1_v1_inscription_host_material_from_world_pc34(
+static int dm1_v1_inscription_host_material_from_selected_offset_pc34(
     const struct DungeonThings_Compat* things,
-    int preferredTextIndex,
-    unsigned short firstThing,
+    int textIndex,
+    int textDataWordOffset,
     DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt)
 {
     DM1_V1_InscriptionHostMaterialReceiptPc34 receipt;
-    int textIndex;
-    int textDataWordOffset;
     int cursor = 0;
     int line;
 
-    if (!outReceipt) {
+    if (!things || !things->textData || things->textDataWordCount <= 0 ||
+        !outReceipt || textIndex < 0 || textDataWordOffset < 0) {
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
-    textIndex = dm1_v1_inscription_visible_text_index_pc34(
-        things, preferredTextIndex, firstThing, &textDataWordOffset);
-    if (textIndex < 0 || !DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
+    if (!DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
             things->textData, things->textDataWordCount,
             textDataWordOffset,
             receipt.glyphBytes, (int)sizeof(receipt.glyphBytes))) {
@@ -132,4 +129,43 @@ int dm1_v1_inscription_host_material_from_world_pc34(
     receipt.transparentColor = DM1_V1_INSCRIPTION_TRANSPARENT_COLOR;
     *outReceipt = receipt;
     return 1;
+}
+
+int dm1_v1_inscription_host_material_from_selected_wall_pc34(
+    const struct DungeonThings_Compat* things,
+    int selectedTextIndex,
+    DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt)
+{
+    int textDataWordOffset;
+
+    /* ReDMCSB DUNGEON.C F0172 publishes one current G0290 TextString for
+     * the visible wall.  F0107 consumes that exact record; it must not scan
+     * an unrelated list member when the selected raw record is unavailable. */
+    if (!dm1_v1_inscription_get_visible_raw_text_offset_pc34(
+            things, selectedTextIndex, &textDataWordOffset)) {
+        return 0;
+    }
+    return dm1_v1_inscription_host_material_from_selected_offset_pc34(
+        things, selectedTextIndex, textDataWordOffset, outReceipt);
+}
+
+int dm1_v1_inscription_host_material_from_world_pc34(
+    const struct DungeonThings_Compat* things,
+    int preferredTextIndex,
+    unsigned short firstThing,
+    DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt)
+{
+    int textIndex;
+    int textDataWordOffset;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    textIndex = dm1_v1_inscription_visible_text_index_pc34(
+        things, preferredTextIndex, firstThing, &textDataWordOffset);
+    if (textIndex < 0) {
+        return 0;
+    }
+    return dm1_v1_inscription_host_material_from_selected_offset_pc34(
+        things, textIndex, textDataWordOffset, outReceipt);
 }
