@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM1 F0225: raw C04 Lord Chaos escape now counts the four C15
+  fluxcage neighbors, follows source RNG direction order, and moves the exact
+  Thing through F0164/F0163 or reports the Fuse-sequence terminal condition.
+
 - 2026-07-15 DM1 F0223: source walkability gate now accepts only corridor,
   teleporter, pit, and door target squares for Lord Chaos escape routing.
 

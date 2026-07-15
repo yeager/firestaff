@@ -35,6 +35,7 @@
 
 #include <stdint.h>
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_combat_pc34_compat.h"
 
 /* -- Endgame creature constants (DEFS.H) -- */
 #define DM1_CREATURE_LORD_CHAOS_ID          23  /* C23_CREATURE_LORD_CHAOS */
@@ -121,6 +122,11 @@ int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
 int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
     const struct DungeonDatState_Compat* dungeon,
     int mapIndex, int mapX, int mapY, int* outAllowed);
+
+int DM1_Endgame_F0225_MoveLordChaosEscapePc34Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY, struct RngState_Compat* rng,
+    int* outEscaped, int* outFuseSequence);
 
 /* -- Fuse action evaluation -- */
 typedef struct DM1EndgameFuseActionResult {
