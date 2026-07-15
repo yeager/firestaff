@@ -976,6 +976,14 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapDoorReceipt *out);
+/* Finds one previously materialized direct DB0 root.  This does not reopen
+ * the map or traverse GenericRecord::w0, so a runtime caller cannot turn an
+ * incomplete G1 record graph into a guessed door chain. */
+int dm2_v1_g1_runtime_map_door_at(
+    const DM2_V1_G1RuntimeMapDoorReceipt *receipt,
+    int x,
+    int y,
+    const DM2_V1_G1DirectDoorRoot **out_door);
 /* Consume only declared direct DB3 roots on a runtime-admitted G1 map. It
  * reads the source-defined Actuator w2/w4/w6 fields and never GenericRecord::
  * w0, an extension DB3 record, or an unvalidated map/record route. */

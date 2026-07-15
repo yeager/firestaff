@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 G1 direct door runtime handoff: connected the verified
+  `DME.h::Door::w2` DB0 receipt to the active runtime map and its matching
+  source-owned D0C GDAT panel command. Canonical G1 door metadata no longer
+  follows `GenericRecord::w0`; absent direct roots or panel material stay
+  blocked. The corpus test passes against both local canonical DUNGEON.DAT
+  copies and the DM2 runtime module passes strict syntax compilation.
+
 - 2026-07-15 DM1 F0225: raw C04 Lord Chaos escape now counts the four C15
   fluxcage neighbors, follows source RNG direction order, and moves the exact
   Thing through F0164/F0163 or reports the Fuse-sequence terminal condition.

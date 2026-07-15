@@ -35,6 +35,7 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RuntimeMapDoorReceipt doors;
     DM2_V1_G1RuntimeMapDoorReceipt sentinel;
+    const DM2_V1_G1DirectDoorRoot *front_door = NULL;
     uint8_t door_ornates[16];
     int door_ornate_count;
     int ornate_map = -1;
@@ -80,6 +81,17 @@ int main(int argc, char **argv)
         doors.doors[2].button != 0 || doors.doors[2].opening_dir != 1) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: direct DB0 Door receipt changed canonical source fields\n",
+              stderr);
+        return 1;
+    }
+    if (!dm2_v1_g1_runtime_map_door_at(&doors, 7, 3, &front_door) ||
+        !front_door || front_door != &doors.doors[1] ||
+        front_door->button != 1 || front_door->door_type != 0 ||
+        front_door->opening_dir != 1 ||
+        dm2_v1_g1_runtime_map_door_at(&doors, 0, 0, &front_door) != 0 ||
+        front_door != NULL) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: direct DB0 door lookup reopened or invented a record\n",
               stderr);
         return 1;
     }

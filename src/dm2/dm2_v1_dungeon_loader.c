@@ -1690,6 +1690,28 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
     return 1;
 }
 
+int dm2_v1_g1_runtime_map_door_at(
+    const DM2_V1_G1RuntimeMapDoorReceipt *receipt,
+    int x,
+    int y,
+    const DM2_V1_G1DirectDoorRoot **out_door)
+{
+    if (out_door) *out_door = NULL;
+    if (!receipt || !out_door || !receipt->committed ||
+        !receipt->incomplete_world || receipt->door_root_count < 0 ||
+        receipt->door_root_count > DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS) {
+        return 0;
+    }
+    for (int i = 0; i < receipt->door_root_count; ++i) {
+        const DM2_V1_G1DirectDoorRoot *door = &receipt->doors[i];
+        if (door->x == x && door->y == y) {
+            *out_door = door;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,
