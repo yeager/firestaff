@@ -2407,7 +2407,10 @@ int nexus_v1_current_level_structure3_render_packet(
         !binding->palette_state_matches || !binding->vdp1_state_matches ||
         !binding->transform_state_matches ||
         !binding->normal_culling_state_matches ||
-        !binding->vdp1_command_matches || !binding->complete_source_binding ||
+        !binding->vdp1_command_matches ||
+        !binding->vdp1_command_format_matches ||
+        !binding->vdp1_texture_span_size_matches ||
+        !binding->complete_source_binding ||
         binding->renderer_handoff_ready ||
         !binding->blocks_real_dgn_mesh_render ||
         source->vertex_slot_count < 3 || source->vertex_slot_count > 4 ||

@@ -6612,3 +6612,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     exactly match that count before the renderer marks it format-framed.
     Mode 6/7, palette/CLUT meaning, source-address interpretation, pixel
     ordering, and all decoding or drawing remain fail-closed.
+  - 2026-07-15 binding-admission update: Structure3 capture binding now
+    rejects a malformed/non-texture command, undocumented colour mode, or
+    hash-matched texture lane whose length disagrees with the documented VDP1
+    command requirement. This protects engine-owned storage as well as the
+    viewport; it still does not identify source bytes, palette data, or texels.

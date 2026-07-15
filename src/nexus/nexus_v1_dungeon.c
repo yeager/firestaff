@@ -4142,6 +4142,7 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt *out_receipt)
 {
     Nexus_V1_DgnStructure3FaceCaptureBindingReceipt receipt;
+    Nexus_V1_Vdp1TextureCommand vdp1_command;
     const Nexus_V1_DgnStructure3PayloadReceipt *payload;
     const uint8_t *header;
     const uint8_t *face;
@@ -4282,6 +4283,15 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
         candidate->normal_culling_state_fnv1a64;
     receipt.vdp1_command_matches = nexus_v1_fnv1a64(captured_vdp1_command,
         captured_vdp1_command_size) == candidate->vdp1_command_fnv1a64;
+    receipt.vdp1_command_format_matches =
+        nexus_v1_vdp1_texture_command_parse(captured_vdp1_command,
+            captured_vdp1_command_size, &vdp1_command) == 0 &&
+        vdp1_command.texture_command &&
+        vdp1_command.colour_mode_documented &&
+        vdp1_command.texture_byte_count > 0U;
+    receipt.vdp1_texture_span_size_matches =
+        receipt.vdp1_command_format_matches &&
+        captured_texture_span_size == (int)vdp1_command.texture_byte_count;
     receipt.complete_source_binding = receipt.dgn_source_hash_verified &&
         receipt.capture_source_verified &&
         receipt.dgn_source_matches &&
@@ -4291,7 +4301,8 @@ int nexus_v1_dgn_bind_structure3_face_capture_candidate(
         receipt.fill_selector_matches && receipt.texture_span_matches &&
         receipt.palette_state_matches && receipt.vdp1_state_matches &&
         receipt.transform_state_matches && receipt.normal_culling_state_matches &&
-        receipt.vdp1_command_matches;
+        receipt.vdp1_command_matches && receipt.vdp1_command_format_matches &&
+        receipt.vdp1_texture_span_size_matches;
     *out_receipt = receipt;
     return receipt.complete_source_binding ? 0 : -1;
 }
