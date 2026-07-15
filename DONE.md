@@ -6,6 +6,14 @@
   rows through G0074; absent or malformed source remains no-draw. Focused
   viewport assertions cover no-media rejection and both packed/provider paths.
 
+- 2026-07-15 CSB C015 message-area source gate: removed the active generic
+  M11 `messageLog` renderer from the CSB V1 runtime HUD. The CSB path keeps
+  ReDMCSB `TEXT.C F0049`'s C015 black clear but refuses to display host
+  telemetry as game text. The real-package launcher regression injects a
+  host-log entry after the C001-C004/C017 handoff and verifies all C015 rows
+  remain black. Authentic CSB TextString/runtime message ownership remains
+  required before text may render.
+
 - 2026-07-15 Nexus STABG synthetic-surface removal: the old file-size based
   320x170/320x200 guess is removed. Original STABG.BIN remains no-surface
   until its native framing is proven.
