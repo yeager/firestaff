@@ -7370,6 +7370,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     grammar nor level, object, tile, palette, bitmap, or command semantics.
     Next evidence remains a real post-`$3800` loader trace that connects a
     non-self descriptor-selected record to its executing consumer.
+  - Update: a later captured `$e009` record can now enter the handoff only
+    with its complete originating Stage-3 descriptor row: raw `word0`,
+    `word1`, selector `word2`, descriptor ordinal, and the selected MODE1
+    user-data hash are re-derived from the canonical Track 02 bytes. A changed
+    row or sector withdraws admission. This is still record identity only;
+    no row field is assigned a level, object, tile, palette, bitmap, or loader
+    command meaning. Next evidence must show how a post-`$3800` consumer uses
+    one non-self row before any record grammar can be considered.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
