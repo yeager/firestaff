@@ -17200,3 +17200,16 @@ capture target for PALT's exact record and raw-table fingerprint. It requests
 only PALT-memory-read, palette-state, and VDP1-command observations, leaving
 the PALT-to-palette relation unproved and all decoder/draw routes blocked.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus animated Structure3 image-source route
+
+`nexus_v1_current_level_visit_structure3_animated_material_images()` now
+walks every declared non-control `Structure1G` instruction associated with an
+active `08xx` Structure3 face and binds it to the exact local Structure2
+descriptor capture target. The viewport consumes this as a separate no-draw
+source lane. `FF FE` is not followed, no image is selected as a frame, and no
+animation timing, Saturn pixel/palette/VDP1 semantics, decoder, or fallback
+visual path is enabled. The focused DGN test covers one bounded 08xx face and
+its source descriptor, plus the existing hash-verified retail-corpus route
+when local data is available. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.

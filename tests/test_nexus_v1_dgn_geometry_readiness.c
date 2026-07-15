@@ -62,6 +62,11 @@ typedef struct {
 typedef struct {
     int packet_count;
     int invalid_packet_count;
+} AnimatedMaterialImageVisitCount;
+
+typedef struct {
+    int packet_count;
+    int invalid_packet_count;
 } UntexturedFaceVisitCount;
 
 static int count_package_geometry_packet(
@@ -87,6 +92,27 @@ static int count_animated_material_packet(
     ++count->packet_count;
     if (!packet->valid || !packet->source_geometry_bound ||
         !packet->animation_declaration_bound || !packet->first_descriptor_bound ||
+        packet->animation_execution_permitted ||
+        packet->pixel_palette_vdp1_semantics_proven || packet->decoder_permitted ||
+        !packet->no_draw_only || packet->fallback_visuals_permitted ||
+        !packet->blocks_real_dgn_mesh_render) {
+        ++count->invalid_packet_count;
+    }
+    return 0;
+}
+
+static int count_animated_material_image_packet(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *packet)
+{
+    AnimatedMaterialImageVisitCount *count =
+        (AnimatedMaterialImageVisitCount *)context;
+    if (!count || !packet) return -1;
+    ++count->packet_count;
+    if (!packet->valid || !packet->source_geometry_bound ||
+        !packet->animation_declaration_bound || !packet->descriptor_bound ||
+        !packet->descriptor_target.valid ||
+        packet->descriptor_target.descriptor.image_id !=
+            packet->structure2_image_id ||
         packet->animation_execution_permitted ||
         packet->pixel_palette_vdp1_semantics_proven || packet->decoder_permitted ||
         !packet->no_draw_only || packet->fallback_visuals_permitted ||
@@ -1333,7 +1359,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       "retail Structure3 animated face binds its real Structure1G declaration and first Structure2 descriptor no-draw");
                 {
                     Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt scene;
+                    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt
+                        image_scene;
                     AnimatedMaterialVisitCount visit_count;
+                    AnimatedMaterialImageVisitCount image_visit_count;
                     memset(&scene, 0, sizeof(scene));
                     memset(&visit_count, 0, sizeof(visit_count));
                     CHECK(nexus_v1_current_level_visit_structure3_animated_materials(
@@ -1357,6 +1386,28 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                           !scene.fallback_visuals_permitted &&
                           scene.blocks_real_dgn_mesh_render,
                           "retail Structure3 traversal consumes every animated 08xx face no-draw");
+                    memset(&image_scene, 0, sizeof(image_scene));
+                    memset(&image_visit_count, 0, sizeof(image_visit_count));
+                    CHECK(nexus_v1_current_level_visit_structure3_animated_material_images(
+                              &active_engine,
+                              count_animated_material_image_packet,
+                              &image_visit_count, &image_scene) == 1 &&
+                          image_scene.valid && image_scene.complete &&
+                          image_scene.level_index == level &&
+                          image_scene.animated_face_count ==
+                              scene.animated_face_count &&
+                          image_scene.declared_image_instruction_count > 0 &&
+                          image_scene.consumed_image_instruction_count ==
+                              image_scene.declared_image_instruction_count &&
+                          image_visit_count.packet_count ==
+                              image_scene.consumed_image_instruction_count &&
+                          image_visit_count.invalid_packet_count == 0 &&
+                          !image_scene.animation_execution_permitted &&
+                          !image_scene.pixel_palette_vdp1_semantics_proven &&
+                          !image_scene.decoder_permitted && image_scene.no_draw_only &&
+                          !image_scene.fallback_visuals_permitted &&
+                          image_scene.blocks_real_dgn_mesh_render,
+                          "retail Structure3 traversal exposes every declared animated image instruction no-draw");
                     nexus_viewport_init(&animated_viewport);
                     nexus_viewport_render(&animated_viewport, &active_engine);
                     CHECK(animated_viewport.last_dgn_render_receipt
@@ -1366,6 +1417,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                           animated_viewport.last_dgn_render_receipt
                               .structure3_animated_material_scene
                                   .consumed_face_count == scene.consumed_face_count &&
+                          animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_image_scene_consumed &&
+                          animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_image_scene.complete &&
+                          animated_viewport.last_dgn_render_receipt
+                              .structure3_animated_material_image_scene
+                                  .consumed_image_instruction_count ==
+                                  image_scene.consumed_image_instruction_count &&
+                          animated_viewport.structure3_animated_material_image.valid &&
                           animated_viewport.structure3_animated_material.valid &&
                           animated_viewport.structure3_animated_material
                               .face.fill_selector == animated_packet.face.fill_selector &&
@@ -2781,8 +2841,8 @@ static void test_structure1f_semantics_and_bounds(void) {
 }
 
 static void test_structure3_entry_header_boundaries(void) {
-    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 24];
-    uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 20;
+    uint8_t dgn[NEXUS_DGN_BLOCK_SIZE * 25];
+    uint8_t *payload = dgn + NEXUS_DGN_BLOCK_SIZE * 21;
     Nexus_V1_Level level;
     Nexus_V1_DgnStructure3EntryHeaderReceipt headers;
     Nexus_V1_DgnStructure3FaceReceipt faces;
@@ -2802,7 +2862,7 @@ static void test_structure3_entry_header_boundaries(void) {
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 19, 0x200, 512) == 0,
           "Structure3 entry-header fixture builds");
-    wb16(dgn + 0x1c, 20U);
+    wb16(dgn + 0x1c, 21U);
     wb16(dgn + 0x1e, 4U);
     wb32(payload, 2U);
     wb32(payload + 4, 16U);
@@ -3043,8 +3103,14 @@ static void test_structure3_entry_header_boundaries(void) {
     wb16(payload + 106, 1U);
     wb16(payload + 108, 2U);
     wb16(payload + 110, 2U);
+    /* Keep the engine fixture structurally separate from the initial
+     * unbound-material checks: it needs a real Structure1G/Structure2 join
+     * beside this bounded Structure3 payload, not a stand-in texture. */
+    build_structure1g_fixture(dgn + NEXUS_DGN_BLOCK_SIZE, 0x200);
+    build_structure2_fixture(dgn);
+    wb16(payload + 214, 0x0807U);
     CHECK(nexus_v1_level_load(&level, dgn, (int)sizeof(dgn), 0) == 0,
-          "the engine capture fixture reloads one bounded nondegenerate face");
+          "the engine capture fixture reloads bounded animated face inputs");
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
     candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
     candidate.entry_index = 0U;
@@ -3094,6 +3160,8 @@ static void test_structure3_entry_header_boundaries(void) {
         Nexus_V1_DgnActiveStructure3MeshSemanticReceipt active_mesh_semantics;
         Nexus_V1_DgnActiveStructure3FaceFramingReceipt active_face_framing;
         Nexus_V1_DgnActiveTransformCameraFramingReceipt active_camera_framing;
+        Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt animated_images;
+        AnimatedMaterialImageVisitCount animated_image_visits;
         Nexus_V1_DgnViewportHostRouteReceipt host_route;
         Nexus_V1_DgnStructure3RuntimeCaptureIntakeReceipt raw_runtime_intake;
         Nexus_V1_DgnStructure3CaptureTargetReceipt raw_capture_target;
@@ -3116,6 +3184,7 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.current_level_structure2_source.level_index = 0;
         engine.current_level_structure2_source.canonical_hash_verified = 1;
         engine.current_level_structure2_source.materialization_bound = 1;
+        engine.current_level_structure2_source.structure2_payload_envelope_valid = 1;
         engine.current_level_structure2_source.loaded_bytes_bound = 1;
         engine.current_level_structure2_source.loaded_dgn_size = (int)sizeof(dgn);
         engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
@@ -3123,6 +3192,28 @@ static void test_structure3_entry_header_boundaries(void) {
         engine.game.party_x = 0;
         engine.game.party_y = 0;
         engine.game.party_dir = 2;
+        memset(&animated_images, 0, sizeof(animated_images));
+        memset(&animated_image_visits, 0, sizeof(animated_image_visits));
+        CHECK(nexus_v1_current_level_visit_structure3_animated_material_images(
+                  &engine, count_animated_material_image_packet,
+                  &animated_image_visits, &animated_images) == 1 &&
+              animated_images.valid && animated_images.complete &&
+              animated_images.level_index == 0 &&
+              animated_images.animated_face_count == 1 &&
+              animated_images.declared_image_instruction_count == 1 &&
+              animated_images.consumed_image_instruction_count == 1 &&
+              animated_image_visits.packet_count == 1 &&
+              animated_image_visits.invalid_packet_count == 0 &&
+              !animated_images.animation_execution_permitted &&
+              !animated_images.pixel_palette_vdp1_semantics_proven &&
+              !animated_images.decoder_permitted && animated_images.no_draw_only &&
+              !animated_images.fallback_visuals_permitted &&
+              animated_images.blocks_real_dgn_mesh_render,
+              "a bounded 08xx face reaches each declared Structure1G image descriptor no-draw");
+        /* The following capture-route cases intentionally exercise the
+         * pre-Structure2 source state. Keep this focused animated route from
+         * widening those unrelated assertions. */
+        engine.current_level_structure2_source.structure2_payload_envelope_valid = 0;
         CHECK(nexus_v1_current_level_structure3_directory_receipt(
                   &engine, &active_directory) == 1 && active_directory.valid &&
               active_directory.level_index == 0 &&

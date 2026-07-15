@@ -192,6 +192,38 @@ static void viewport_stage_structure3_animated_materials(
     vp->last_dgn_render_receipt.structure3_animated_material_scene = scene;
 }
 
+static int viewport_consume_structure3_animated_material_image(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *packet)
+{
+    Nexus_Viewport *vp = (Nexus_Viewport *)context;
+
+    if (!vp || !packet || !packet->valid) return -1;
+    if (!vp->structure3_animated_material_image.valid)
+        vp->structure3_animated_material_image = *packet;
+    return 0;
+}
+
+static void viewport_stage_structure3_animated_material_images(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt scene;
+
+    if (!vp) return;
+    memset(&vp->structure3_animated_material_image, 0,
+           sizeof(vp->structure3_animated_material_image));
+    memset(&scene, 0, sizeof(scene));
+    if (!engine || nexus_v1_current_level_visit_structure3_animated_material_images(
+                       engine, viewport_consume_structure3_animated_material_image,
+                       vp, &scene) != 1 || !scene.valid || !scene.complete ||
+        scene.consumed_image_instruction_count <= 0 ||
+        scene.consumed_image_instruction_count !=
+            scene.declared_image_instruction_count ||
+        !vp->structure3_animated_material_image.valid) return;
+    vp->last_dgn_render_receipt
+        .structure3_animated_material_image_scene_consumed = 1;
+    vp->last_dgn_render_receipt.structure3_animated_material_image_scene = scene;
+}
+
 static int viewport_consume_structure3_untextured_face(
     void *context, const Nexus_V1_DgnStructure3UntexturedFacePacket *packet)
 {
@@ -430,6 +462,7 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
          * Saturn pixel/palette/VDP1 evidence is available. */
         viewport_stage_structure3_package_geometry(vp, engine);
         viewport_stage_structure3_animated_materials(vp, engine);
+        viewport_stage_structure3_animated_material_images(vp, engine);
         viewport_stage_structure3_untextured_faces(vp, engine);
         viewport_stage_structure3_complete_source_scene(vp, engine);
         viewport_stage_structure1f_source_scene(vp, engine);

@@ -718,6 +718,51 @@ typedef struct {
 typedef int (*Nexus_V1_DgnStructure3AnimatedMaterialConsumer)(
     void *context, const Nexus_V1_DgnStructure3AnimatedMaterialPacket *packet);
 
+/* One declared non-control instruction from a bounded Structure1G sequence,
+ * joined to its exact animated Structure3 face and local Structure2
+ * descriptor. The instruction is observed in source order only: it neither
+ * selects a frame nor executes the sequence. */
+typedef struct {
+    int valid;
+    int source_geometry_bound;
+    int animation_declaration_bound;
+    int descriptor_bound;
+    int level_index;
+    uint32_t structure3_entry_index;
+    uint32_t face_ordinal;
+    int structure1g_entry_index;
+    uint32_t image_instruction_ordinal;
+    int instruction_byte_offset;
+    uint64_t instruction_bytes_fnv1a64;
+    uint16_t global_image_index;
+    uint16_t structure2_image_id;
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+    int animation_execution_permitted;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3AnimatedMaterialImagePacket;
+
+typedef struct {
+    int valid;
+    int level_index;
+    int animated_face_count;
+    int declared_image_instruction_count;
+    int consumed_image_instruction_count;
+    int complete;
+    int animation_execution_permitted;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt;
+
+typedef int (*Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer)(
+    void *context, const Nexus_V1_DgnStructure3AnimatedMaterialImagePacket *packet);
+
 /* A non-texture-flagged Structure3 face with its exact typed geometry. The
  * raw fill selector stays opaque: no flat-colour, blend, palette, VDP1, or
  * raster meaning is assigned before original Saturn evidence exists. */
@@ -1780,6 +1825,14 @@ int nexus_v1_current_level_visit_structure3_animated_materials(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure3AnimatedMaterialConsumer consumer, void *context,
     Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt *out_receipt);
+/* Traverses every declared Structure1G image instruction for every active
+ * 08xx Structure3 face. GOTO words are retained by the face packet but never
+ * followed here, so this is source framing rather than animation playback. */
+int nexus_v1_current_level_visit_structure3_animated_material_images(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_DgnStructure3AnimatedMaterialImageConsumer consumer,
+    void *context,
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt *out_receipt);
 /* Build one source-bound non-textured Structure3 face packet. Raw fill bytes
  * are retained solely for later capture correlation and cannot draw a colour. */
 int nexus_v1_current_level_structure3_untextured_face_packet(
