@@ -49,6 +49,30 @@ int main(void)
         fputs("side-frame route did not reach door plan\n", stderr);
         return 1;
     }
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 1, 0x534b504au, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    viewport.squares[DM2_SQ_D3C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D2C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D1C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D0C].flags = DM2_SQF_HAS_DOOR;
+    viewport.squares[DM2_SQ_D3C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D2C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D1C].door_gfx_admitted = 1;
+    viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    if (!dm2_v1_viewport_build_door_render_plan(&viewport, &plan) ||
+        plan.door_count != 3 ||
+        plan.doors[0].view_square != DM2_SQ_D3C ||
+        plan.doors[0].source_pass != 9 ||
+        plan.doors[1].view_square != DM2_SQ_D2C ||
+        plan.doors[1].source_pass != 14 ||
+        plan.doors[2].view_square != DM2_SQ_D1C ||
+        plan.doors[2].source_pass != 17 ||
+        dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(0) >= 0) {
+        fputs("source door scheduler route mismatch\n", stderr);
+        return 1;
+    }
     puts("dm2 side-frame source route passed");
     return 0;
 }
