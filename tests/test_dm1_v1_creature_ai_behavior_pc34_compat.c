@@ -631,6 +631,34 @@ static void test_group_movement_facts(void) {
     EXPECT_EQ(wall, 1, "movement_facts: Fluxcage reports terrain blocker");
 }
 
+static void test_first_movement_direction_f0203_test_state(void) {
+    struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+    int testedDirections[4] = { 0, 0, 0, 0 };
+    int direction = -1;
+
+    ctx.groupMovementFacts[0].isWall = 1;
+    EXPECT_EQ(F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
+                  &ctx, testedDirections, 0, &direction), 1,
+              "F0203 finds the first source-open direction");
+    EXPECT_EQ(direction, 1, "F0203 tries north then selects east");
+    EXPECT_EQ(testedDirections[0], 1,
+              "F0203 preserves F0202 tested state for blocked north");
+    EXPECT_EQ(testedDirections[1], 1,
+              "F0203 preserves F0202 tested state for selected east");
+    EXPECT_EQ(testedDirections[2], 0,
+              "F0203 leaves later directions untouched");
+
+    ctx.groupMovementFacts[2].isWall = 1;
+    ctx.groupMovementFacts[3].isWall = 1;
+    EXPECT_EQ(F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
+                  &ctx, testedDirections, 0, &direction), 0,
+              "F0203 reports no direction after all remaining facts block");
+    EXPECT_EQ(testedDirections[2], 1,
+              "F0203 marks south before its source blocker result");
+    EXPECT_EQ(testedDirections[3], 1,
+              "F0203 marks west before its source blocker result");
+}
+
 /* =========================================================
  *  Test 12c: F0209 single-square move consumes F0202 facts
  * ========================================================= */
@@ -1754,6 +1782,7 @@ int main(void) {
     test_dispatch_projectile_payload();
     test_set_group_direction();
     test_group_movement_facts();
+    test_first_movement_direction_f0203_test_state();
     test_single_square_move_uses_typed_facts();
     test_smell_direction();
     test_visible_distance_requires_party_map();

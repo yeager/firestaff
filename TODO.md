@@ -7010,3 +7010,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   missing loaded M10 square/door/Thing snapshot rather than assuming a clear
   square. Remaining work is routing every M10 movement owner through typed
   destination facts and preserving source tested-direction state.
+- 2026-07-15 DM1 GROUP F0203 follow-up: the live direction scan now marks
+  source-tested directions before F0202. Remaining work is having M10 own and
+  retain that G0384 state across the complete C29-C41 behavior event, without
+  rebuilding it from guessed movement outcomes.

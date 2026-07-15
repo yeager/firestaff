@@ -636,6 +636,37 @@ int F0812_DM1_GROUP_GetFirstPossibleMovementDir_Compat(
     return 0;
 }
 
+/* ReDMCSB GROUP.C F0203 delegates to F0202 for each untested cardinal
+ * direction. F0202 writes G0384 before testing, so a blocked direction is
+ * still consumed for the current behavior event. */
+int F0812a_DM1_GROUP_GetFirstPossibleMovementDirWithTestState_Compat(
+    const struct DM1GroupBehaviorContext_Compat* ctx,
+    int testedDirections[4],
+    int allowImaginaryPitsAndFakeWalls,
+    int* outDirection)
+{
+    int direction;
+    int blockedByWall;
+    int blockedByDoor;
+    int blockedByParty;
+    int blockedByGroup;
+
+    if (!ctx || !testedDirections || !outDirection) return 0;
+    *outDirection = -1;
+    for (direction = 0; direction < 4; ++direction) {
+        if (testedDirections[direction]) continue;
+        testedDirections[direction] = 1;
+        if (F0811_DM1_GROUP_IsMovementPossible_Compat(
+                ctx, direction, allowImaginaryPitsAndFakeWalls,
+                &blockedByWall, &blockedByDoor, &blockedByParty,
+                &blockedByGroup)) {
+            *outDirection = direction;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* =========================================================================
  *  F0813: Single-square move direction picker
  *
