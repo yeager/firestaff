@@ -6,6 +6,11 @@
   regression compares the complete map, so a host palette cannot silently
   replace the source route. Focused coverage:
   `m11_dm1_unreadable_inscription_host_presentation_receipt`.
+- ✅ 2026-07-15 CSB PC3.4 title/entrance decode correction: restored the
+  source-owned ReDMCSB `F0490` archive/LZW then `F0488` IMAGE2 expansion for
+  C001-C005/C017/C040. The prior planar substitution did not match canonical
+  `GRAPHICS.DAT`; the real-package probe now verifies C001 PRESENTS, CHAOS,
+  STRIKES, C017/C040, and C004+C002+C003 raster hashes without a fallback.
 
 - ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C026 atlas gate: every D1C champion
   mirror draw now validates the native 256x87 atlas and the exact F0172

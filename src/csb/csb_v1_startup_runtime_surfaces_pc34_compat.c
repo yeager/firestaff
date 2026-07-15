@@ -1,7 +1,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 
-#include "csb_v1_startup_img3_decode_pc34_compat.h"
+#include "memory_frontend_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
@@ -12,8 +12,7 @@
 
 /* ReDMCSB TITLE.C F0437 lines 424-463 loads C001 once and uses C424-C426
  * zones. ENTRANCE.C F0806 lines 775-826 builds door opening frames from
- * C002/C003. On the PC package, CSBWin CSBCode.cpp ExpandGraphic owns the
- * C001--C005 big-endian planar stream after the archive/LZW boundary. */
+ * C002/C003. PC3.4's archive/LZW/IMAGE3 path is F0490 then F0488. */
 
 #define CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 (1024u * 1024u)
 
@@ -71,10 +70,15 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     struct MemoryGraphicsDatSelection_Compat selection;
     unsigned char *compressed = NULL;
     unsigned char *decompressed = NULL;
+    unsigned char *packed_storage = NULL;
     unsigned char *pixels = NULL;
+    size_t packed_stride;
+    size_t packed_size;
     size_t pixel_count;
     size_t decompressed_size = 0u;
     int ok = 0;
+    int x;
+    int y;
 
     if (out_pixels) *out_pixels = NULL;
     if (out_width) *out_width = 0;
@@ -97,19 +101,23 @@ static int csb_v1_startup_surface_load_graphic_pc34(
             &header, graphic_index, &selection) ||
         selection.widthHeight.Width == 0 || selection.widthHeight.Height == 0) goto done;
     pixel_count = (size_t)selection.widthHeight.Width * selection.widthHeight.Height;
+    packed_stride = (((size_t)selection.widthHeight.Width + 1u) & ~1u) / 2u;
+    packed_size = packed_stride * selection.widthHeight.Height;
     if (pixel_count == 0u || pixel_count > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
+        packed_size > CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 ||
         selection.compressedByteCount == 0u ||
         selection.decompressedByteCount == 0u) goto done;
     compressed = (unsigned char *)calloc((size_t)selection.compressedByteCount + 16u, 1u);
     decompressed = (unsigned char *)calloc((size_t)selection.decompressedByteCount, 1u);
+    packed_storage = (unsigned char *)calloc(packed_size + 4u + 4096u, 1u);
     pixels = (unsigned char *)malloc(pixel_count);
-    if (!compressed || !decompressed || !pixels ||
+    if (!compressed || !decompressed || !packed_storage || !pixels ||
         !F0474_MEMORY_LoadGraphic_CPSDF_Compat(selection.offset,
             selection.compressedByteCount, &file_state, compressed)) goto done;
 
-    /* CSBWin Code222ea.cpp ReadAndExpandGraphic runs the archive/LZW
-     * boundary before CSBCode.cpp ExpandGraphic. C001-C005 are planar, not
-     * IMG3: a malformed or incomplete owned stream is rejected here. */
+    /* ReDMCSB MEMORY.C F0490 runs F0497 LZW before F0488/IMAGE2 expands
+     * C001-C005. The archive payload is neither a raw host raster nor a
+     * CSBWin-owned planar stream; interpret it only through this PC3.4 path. */
     if (selection.compressedByteCount == selection.decompressedByteCount) {
         memcpy(decompressed, compressed, (size_t)selection.decompressedByteCount);
     } else if (csb_v1_graphics_lzw_decode_pc34_compat(
@@ -119,11 +127,16 @@ static int csb_v1_startup_surface_load_graphic_pc34(
                decompressed_size != (size_t)selection.decompressedByteCount) {
         goto done;
     }
-    if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-            decompressed, decompressed_size ? decompressed_size :
-                                               (size_t)selection.decompressedByteCount,
-            selection.widthHeight.Width, selection.widthHeight.Height,
-            pixels, pixel_count)) goto done;
+    F0488_MEMORY_ExpandGraphicToBitmap_Compat(
+        decompressed, packed_storage + 4u, &selection.widthHeight);
+    for (y = 0; y < (int)selection.widthHeight.Height; ++y) {
+        for (x = 0; x < (int)selection.widthHeight.Width; ++x) {
+            unsigned char packed = packed_storage[4u + (size_t)y * packed_stride +
+                                                   (size_t)x / 2u];
+            pixels[(size_t)y * selection.widthHeight.Width + (size_t)x] =
+                (x & 1) ? (packed & 0x0fu) : ((packed >> 4) & 0x0fu);
+        }
+    }
     *out_pixels = pixels;
     *out_width = selection.widthHeight.Width;
     *out_height = selection.widthHeight.Height;
@@ -131,6 +144,7 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     ok = 1;
 done:
     free(pixels);
+    free(packed_storage);
     free(decompressed);
     free(compressed);
     F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&file_state);
