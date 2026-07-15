@@ -3070,6 +3070,20 @@ static void test_d3l2_d3r2_far_wall_pixel_and_wall_return_gate(void)
     /* DOOR_FRONT uses the F0676/F0111 material route: F0108 floor ornament,
      * F0115 rear pass, F0111 C3700 door blit, then F0115 front pass. */
     {
+        memset(viewport, 0xee, sizeof(viewport));
+        state.door_front_d3[0] = 0x231;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_DOOR_FRONT;
+        state.dungeon_aspect_grid = grid;
+        dm1_viewport_3d_draw_csb_back_wall(&state, DM1_VIEW_SQUARE_D3L2, 0, 1, 1);
+        check_int("d3l2_d3r2_gate.d3l2_door_without_pc34_media_no_draw",
+                  viewport[25 * DM1_VIEWPORT_WIDTH + 1], 0xee);
+        check_int("d3l2_d3r2_gate.d3l2_door_without_pc34_media_no_fallback",
+                  state.last_d3_back_wall_receipt.door_front_used_bounded_fallback ? 1 : 0, 0);
+        state.dungeon_aspect_grid = NULL;
+        grid[1 * 4 + 1] = DM1_VP_ELEMENT_WALL;
+    }
+
+    {
         uint8_t packed_door[8 * 49];
         memset(viewport, 0xee, sizeof(viewport));
         memset(packed_door, 0xaa, sizeof(packed_door));

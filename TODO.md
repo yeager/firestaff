@@ -6,6 +6,12 @@
   door-ornament views, including F0107 alcove classification; do not restore
   identity graphics or generated ornament art.
 
+- 2026-07-15 DM1 F0111 D3 door-front follow-up: the F0676/F0677 C3700/C3710
+  panel route now requires an expanded GRAPHICS.DAT G0693 span or the verified
+  packed G0693-to-G0074 path. Remaining work is real PC34/Mac capture of door
+  opening variants; missing media must remain no-draw, never a host-colored
+  panel.
+
 - 2026-07-15 DM1 F0104/F0105 follow-up: the native and flipped C10 bitmap
   primitives now require original caller-selected media and F0128 scratch.
   Remaining work is verified per-square floor/pit/stairs graphic selection and

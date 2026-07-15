@@ -3027,10 +3027,9 @@ DM1_ViewportD3BackWallRuntimeReceipt dm1_viewport_3d_build_d3_back_wall_runtime_
             receipt.door_front_temp_bitmap_bound =
                 dm1_viewport_3d_d3_door_front_temp_ready(state, &plan)
                     ? true : false;
-            receipt.door_front_used_bounded_fallback =
-                !receipt.door_front_graphics_dat_bound &&
-                !receipt.door_front_graphics_dat_packed_bound &&
-                !receipt.door_front_temp_bitmap_bound;
+            /* F0111 has no indexed-color fallback: G0693 must be supplied
+             * by F0489/GRAPHICS.DAT (directly or through G0074). */
+            receipt.door_front_used_bounded_fallback = false;
             if (receipt.door_front_graphics_dat_packed_bound) {
                 receipt.door_front_packed_stride_bytes =
                     state->door_front_d3_packed_stride_bytes[slot];
@@ -3318,7 +3317,6 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
     DM1_V1_D3L2D3R2F0111DoorFrontMaterialPlanPc34 plan;
     int side;
     int slot;
-    int color;
 
     if (!state || !state->viewport_pixels) return 0;
     if (door_front_index <= 0) return 0;
@@ -3345,9 +3343,6 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
         plan.width <= 0 || plan.height <= 0) {
         return 0;
     }
-
-    color = door_front_index & 0x3f;
-    if (color == 0 || color == COLOR_TRANSPARENT) color = 12;
 
     /* ReDMCSB F0676/F0677 call F0111 between the two F0115 passes
      * (DUNVIEW.C:6272,6339). F0111:4257-4334 copies G0693 to temporary
@@ -3398,6 +3393,13 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
         }
     }
 
+    if (!dm1_viewport_3d_d3_door_front_temp_ready(state, &plan) &&
+        !dm1_viewport_3d_d3_door_front_packed_source_ready(state, slot, &plan)) {
+        /* F0111's C3700/C3710 blit consumes G0693/G0074 source pixels.
+         * Missing PC34 media is unavailable, not a host-colored door. */
+        return 0;
+    }
+
     for (int y = 0; y < plan.height; ++y) {
         uint8_t expanded[DM1_V1_D3L2_D3R2_F0111_DOOR_FRONT_VIEWPORT_WIDTH_PC34];
         const uint8_t *src = NULL;
@@ -3421,8 +3423,11 @@ static int dm1_viewport_3d_draw_d3_door_front_plan(
                     expanded, sizeof(expanded)) ? 1 : 0;
         }
 
+        if (!have_expanded) {
+            return 0;
+        }
         for (int x = 0; x < plan.width; ++x) {
-            uint8_t pixel = have_expanded ? expanded[x] : (uint8_t)color;
+            uint8_t pixel = expanded[x];
             if (pixel != COLOR_TRANSPARENT) {
                 dst[x] = pixel;
             }
