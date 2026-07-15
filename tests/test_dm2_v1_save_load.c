@@ -2444,13 +2444,16 @@ static int test_original_save_candidate_live_restore(void)
     DM2_V1_GameState game;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_handoff;
+    DM2_TimerEntry rejected_timer[1];
     uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
     uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
     uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
     uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
     uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
     uint8_t first_frame[320 * 200];
+    uint8_t rejected_payload[2048];
     uint8_t *expected_dungeon = NULL;
+    size_t rejected_payload_size = 0u;
     int creature_id;
     int result = 0;
 
@@ -2514,6 +2517,28 @@ static int test_original_save_candidate_live_restore(void)
         memcmp(dungeon.raw_data, expected_dungeon, candidate.dungeon_size) != 0) {
         goto done;
     }
+    /* A raw save can decode but still fail SKProject's post-load timer-owner
+     * reconstruction. That failure must retain the live world and CCM rather
+     * than clearing creatures before the session is rejected. */
+    creature_id = dm2_v1_creature_spawn(2, 0, 0, 0, 1, 5);
+    memset(rejected_timer, 0, sizeof(rejected_timer));
+    ((uint8_t *)&rejected_timer[0])[4] = 0x0cu; /* tty0C champion timer */
+    ((uint8_t *)&rejected_timer[0])[5] = 1u;    /* actor one; only zero exists */
+    gs->wTimersCount = 1u;
+    if (creature_id < 0 || !build_raw_sksave_payload(
+            gs, &champion, global_flags, global_bytes, global_words,
+            spell_effects, rejected_timer, 1, inventory,
+            dm2_db_make_handle(7, 0x2a), rejected_payload,
+            sizeof(rejected_payload), &rejected_payload_size) ||
+        dm2_v1_runtime_restore_save_candidate(rejected_payload,
+                                              rejected_payload_size) == 0 ||
+        game.party_x != 3 || game.party_y != 4 ||
+        dm2_v1_creature_count() != 1 ||
+        memcmp(dungeon.raw_data, expected_dungeon,
+               candidate.dungeon_size) != 0) {
+        goto done;
+    }
+    gs->wTimersCount = 0u;
     memset(&raw_handoff, 0, sizeof(raw_handoff));
     if (!dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
         !raw_handoff.valid || raw_handoff.first_frame_consumed ||

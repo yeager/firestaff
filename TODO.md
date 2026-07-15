@@ -6719,6 +6719,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     A wire-valid session whose SKProject timer-owner reconstruction rejects is
     covered as a non-mutating failure: live CCM and dungeon bytes remain
     unchanged. This changes no original raw corpus bytes or provenance.
+  - 2026-07-15 update: original raw-SKSave restore now runs the same
+    `GAME_LOAD` session/timer-owner preflight before it swaps parsed G1 or
+    clears the Firestaff-only CCM cache. A decoded `tty0C` timer whose actor
+    is outside the saved squad rejects without changing the live party,
+    dungeon, or creature pool. Remaining work is still corpus-verified full
+    DB/timer materialisation and source-complete post-load rebuild order.
   - 2026-07-15 update: each DB pool and the `warr_00[1]` map span now retain
     their exact source-order byte offsets. This is address evidence only;
     unknown records, links, timer payloads, and rebuild semantics stay blocked.

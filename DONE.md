@@ -262,6 +262,12 @@
   the live creature and dungeon state intact. The save/load executable passes
   26/26 tests; no raw-corpus byte path or synthetic runtime state was added.
 
+- 2026-07-15 DM2 raw-SKSave transactional preflight: original `GAME_LOAD`
+  candidates now run the shared session and timer-owner validation before G1
+  publication or the source-required CCM clear. A decoded SKProject `tty0C`
+  timer with an out-of-squad actor rejects while retaining the live party,
+  dungeon, and creature pool. Verification: `test_dm2_v1_save_load` 26/26.
+
 - 2026-07-15 DM1 GROUP F0229: added exact `GROUP.C:13860-13876`
   F0228/G0023 ordered-cell selection. M10 CMD_ATTACK now supplies real group
   and party coordinates, preserves the source RNG step, and rejects no-cell
