@@ -16927,6 +16927,8 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
 {
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
+    int fbX;
+    int fbY;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
@@ -16939,7 +16941,16 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
             y,
             &execution,
             &action_receipt)) {
-        return M11_GAME_INPUT_IGNORED;
+        if (!M11_Render_MapWindowToFramebuffer(x, y, &fbX, &fbY) ||
+            (fbX == x && fbY == y) ||
+            !m11_dm2_boot_runtime_startup_pointer(
+                state,
+                fbX,
+                fbY,
+                &execution,
+                &action_receipt)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
     return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
 }
