@@ -7669,6 +7669,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     an unbound dungeon tile bank. Both now preserve the existing surface and
     draw only supplied tile bytes. The remaining gap is a positive original
     Track 02 loader/CD capture that binds level records to tile/palette banks.
+  - 2026-07-15 runtime UI correction: both active V1 chrome compositors now
+    reject their generated bars, glyphs, portraits, compass, and stat panels.
+    The known startup atlas is not promoted as a runtime UI bank; a positive
+    loader/CD capture must bind that bank before any UI pixel is emitted.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and

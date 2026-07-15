@@ -132,6 +132,12 @@
   palette-7 gray tile replacement are removed; only supplied atlas bytes can
   alter a dungeon region.
 
+- 2026-07-15 Theron unbound runtime-chrome removal: the two active V1 UI
+  compositors no longer fabricate top bars, text, portraits, compass markers,
+  or champion/stat panels. The startup atlas is deliberately not treated as a
+  runtime UI bank, so the host surface remains untouched pending a loader/CD
+  receipt for those original bytes.
+
 - 2026-07-15 Theron startup receipt contract correction: all five remaining
   full-start, raw-media, snapshot, and host receipt assertions now require an
   executed authenticated atlas with nonzero source pixels and zero generated

@@ -764,10 +764,23 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
     }
 }
 
+static int theron_vp_source_ui_bank_ready(const Theron_V1_World *world) {
+    (void)world;
+    /* Track 02 currently supplies title/stage/Soul Room/forcefield atlas
+     * routes only. No loader/CD receipt has bound the runtime HUD, font,
+     * champion, or compass bank, so there is intentionally no promotion. */
+    return 0;
+}
+
 void theron_vp_render_ui(Theron_V1_Viewport *vp,
                           const Theron_V1_World *world,
                           uint32_t ui_flags) {
     if (!vp || !vp->initialized || !world) return;
+
+    /* The legacy compositor below constructs bars, text, icons, and frames
+     * from state. Keep the previously presented source-owned surface intact
+     * until an original Track 02 UI-bank route is independently captured. */
+    if (!theron_vp_source_ui_bank_ready(world)) return;
 
     int x_margin = 32;   /* (256-192)/2 */
     int y_margin = 16;   /* (224-192)/2 */
