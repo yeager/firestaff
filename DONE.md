@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject creature host receipt: ordered creature GDAT plan
+  hash/count now cross runtime, boot, and M11. M11 rejects a mismatched
+  multi-creature pass before presentation.
+
 - 2026-07-15 DM2 skproject object host receipt: ordered floor-object,
   possession, and leader-hand GDAT plan hash/count now cross runtime, boot,
   and M11. M11 rejects a mismatched object pass before presentation.

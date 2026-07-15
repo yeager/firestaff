@@ -537,6 +537,9 @@
   - 2026-07-15 update: ordered object GDAT receipts now cross boot/M11 with
     their exact count. A stale floor-object, possession, or leader-hand pass
     is rejected before presentation; no generic `MISC` image can fill it.
+  - 2026-07-15 update: multi-creature GDAT receipts now cross boot/M11 with
+    their exact count. A shortened creature list is rejected before frame
+    presentation; no inferred type/frame sprite is admitted.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented
