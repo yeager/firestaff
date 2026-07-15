@@ -55,6 +55,8 @@ typedef struct {
     int warning_width;
     int warning_height;
     int warning_loaded;
+    uint32_t warning_palette_rgba[256];
+    int warning_palette_loaded;
 } Nexus_TitleScreen;
 
 int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine);

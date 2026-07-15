@@ -55,6 +55,17 @@ static int nexus_title_copy_surface(uint8_t **out_pixels,
     return 0;
 }
 
+static void nexus_title_copy_warning_palette(Nexus_TitleScreen *title,
+                                             const Nexus_UI_Surface *surface)
+{
+    if (!title || !surface || !surface->dgt2_palette_loaded) {
+        return;
+    }
+    memcpy(title->warning_palette_rgba, surface->dgt2_palette_rgba,
+           sizeof(title->warning_palette_rgba));
+    title->warning_palette_loaded = 1;
+}
+
 static void nexus_title_load_warning_if_available(Nexus_TitleScreen *title,
                                                   Nexus_V1_Engine *engine)
 {
@@ -80,6 +91,7 @@ static void nexus_title_load_warning_if_available(Nexus_TitleScreen *title,
                                      &title->warning_height,
                                      surface) == 0) {
             title->warning_loaded = 1;
+            nexus_title_copy_warning_palette(title, surface);
         }
     }
     nexus_ui_manager_free(&mgr);
@@ -102,6 +114,7 @@ static void nexus_title_copy_cached_warning_if_available(
                                  &title->warning_height,
                                  surface) == 0) {
         title->warning_loaded = 1;
+        nexus_title_copy_warning_palette(title, surface);
     }
 }
 
@@ -378,6 +391,9 @@ static void nexus_render_title_plan(const Nexus_TitleScreen *title,
         }
     } else if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART) {
         if (title && title->warning_pixels && title->warning_width > 0) {
+            if (title->warning_palette_loaded) {
+                nexus_fb_set_palette(fb, title->warning_palette_rgba);
+            }
             for (y = 0; y < plan->copy_height && y < NEXUS_FB_H; ++y) {
                 memcpy(&fb->color_buffer[y * NEXUS_FB_W],
                        &title->warning_pixels[y * title->warning_width],
