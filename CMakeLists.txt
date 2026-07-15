@@ -9270,6 +9270,22 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical DB9 Container -> CONTAINERS/F9 receipt; original media is
+    # required, so CI builds the executable while local runs supply both paths.
+    add_executable(test_dm2_v1_g1_container_map_chip_real_data
+        tests/test_dm2_v1_g1_container_map_chip_real_data.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_container_map_chip_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_container_map_chip_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     # Canonical G1 direct-root census is build-only because it requires user
     # media and deliberately reads no record payload or GenericRecord::w0.
     add_executable(test_dm2_v1_g1_direct_root_family_census_real_data
@@ -9605,6 +9621,23 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_g1_weapon_viewport_material_gate
         COMMAND test_dm2_v1_g1_weapon_viewport_material_gate
+    )
+
+    add_executable(test_dm2_v1_g1_container_viewport_material_gate
+        tests/test_dm2_v1_g1_container_viewport_material_gate.c
+    )
+    target_include_directories(test_dm2_v1_g1_container_viewport_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_g1_container_viewport_material_gate PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_container_viewport_material_gate PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_g1_container_viewport_material_gate
+        COMMAND test_dm2_v1_g1_container_viewport_material_gate
     )
 
     add_executable(test_dm2_v1_projectile_local_palette_gate

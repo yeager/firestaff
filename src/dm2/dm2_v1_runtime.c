@@ -147,6 +147,7 @@ typedef struct {
     DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
     DM2_V1_G1WeaponMapChipRuntimeReceipt g1_weapon_map_chip_runtime;
     DM2_V1_G1RuntimeMapDoorReceipt g1_runtime_map_doors;
+    DM2_V1_G1ContainerMapChipRuntimeReceipt g1_container_map_chip_runtime;
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
@@ -1755,6 +1756,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         (void)dm2_v1_boot_g1_weapon_map_chip_materials(
             boot_profile, g_dm2_runtime.dungeon_level,
             &g_dm2_runtime.g1_weapon_map_chip_runtime);
+        (void)dm2_v1_boot_g1_container_map_chip_materials(
+            boot_profile, g_dm2_runtime.dungeon_level,
+            &g_dm2_runtime.g1_container_map_chip_runtime);
     }
     if (boot_profile->dm2_state) {
         DM2_V1_GameState *gs = (DM2_V1_GameState *)boot_profile->dm2_state;
@@ -2780,6 +2784,50 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
     }
 }
 
+static void dm2_runtime_populate_g1_container_map_chip_items(
+    const DM2_V1_RuntimeState *rt,
+    DM2_V1_ViewportState *viewport,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    const DM2_V1_G1ContainerMapChipRuntimeReceipt *receipt;
+
+    if (!rt || !viewport || rt->outdoor) return;
+    receipt = &rt->g1_container_map_chip_runtime;
+    if (!receipt->valid || receipt->map != rt->dungeon_level) return;
+
+    /* skproject DRAW_MAP_CHIP reaches DB9 Container through the direct G1
+     * map root. ContainerType is the only admitted class-2 selector; its
+     * contained-object link is deliberately not traversed. */
+    for (int i = 0; i < receipt->material_count &&
+                    viewport->item_count < DM2_MAX_ITEMS_PER_SQ; ++i) {
+        const DM2_V1_G1ContainerMapChipMaterial *material =
+            &receipt->materials[i];
+        DM2_V1_ViewportSpritePlacement placement;
+        DM2_ItemSprite *dst;
+
+        if (!dm2_v1_viewport_project_map_to_sprite(
+                material->x, material->y, party_dir, party_x, party_y,
+                &placement)) {
+            continue;
+        }
+        dst = &viewport->items[viewport->item_count++];
+        memset(dst, 0, sizeof(*dst));
+        dst->item_category = 0x14; /* skproject dbContainer -> CONTAINERS */
+        dst->item_type = material->container_type;
+        dst->depth = (int16_t)placement.depth;
+        dst->screen_x = (int16_t)placement.screen_x;
+        dst->screen_y = (int16_t)placement.screen_y;
+        dst->direction = material->direction;
+        dst->object_id = material->object_id;
+        dst->map_x = (int16_t)material->x;
+        dst->map_y = (int16_t)material->y;
+        dst->source_gdat_field = 0xf9;
+        dst->source_g1_container = 1;
+    }
+}
+
 static void dm2_runtime_append_creature_possession_item(
     DM2_V1_ViewportState *viewport,
     uint16_t thing,
@@ -3241,6 +3289,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_populate_creatures(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_g1_weapon_map_chip_items(
         rt, &viewport, party_dir, party_x, party_y);
+    dm2_runtime_populate_g1_container_map_chip_items(
+        rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_creature_possession_items(
         rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_carried_item(rt, &viewport);
@@ -3293,6 +3343,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         &viewport, &rt->g1_creature_map_chip_runtime);
     dm2_v1_viewport_set_g1_weapon_map_chip_materials(
         &viewport, &rt->g1_weapon_map_chip_runtime);
+    dm2_v1_viewport_set_g1_container_map_chip_materials(
+        &viewport, &rt->g1_container_map_chip_runtime);
     dm2_v1_viewport_set_g1_wall_gfx_materials(
         &viewport,
         &rt->g1_map5_text_wall_gfx_runtime,
@@ -4641,6 +4693,8 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
         rt->boot, level, &rt->g1_creature_map_chip_runtime);
     (void)dm2_v1_boot_g1_weapon_map_chip_materials(
         rt->boot, level, &rt->g1_weapon_map_chip_runtime);
+    (void)dm2_v1_boot_g1_container_map_chip_materials(
+        rt->boot, level, &rt->g1_container_map_chip_runtime);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
 }

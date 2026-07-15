@@ -5508,6 +5508,23 @@ int dm2_v1_boot_g1_weapon_map_chip_materials(
         dm2_v1_boot_g1_image_local_palette_read, gfx, out);
 }
 
+int dm2_v1_boot_g1_container_map_chip_materials(
+    DM2_V1_BootProfile *profile,
+    int map,
+    DM2_V1_G1ContainerMapChipRuntimeReceipt *out)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_dungeon_materialize_g1_container_map_chip_runtime(
+        (const DM2_V1_DungeonData *)profile->dungeon_data, map,
+        dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read,
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+}
+
 static uint16_t dm2_v1_boot_le16(const uint8_t *p)
 {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
