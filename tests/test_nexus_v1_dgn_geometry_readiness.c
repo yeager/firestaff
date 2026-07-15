@@ -1217,29 +1217,38 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       "retail Structure3 static face binds its exact Structure2 capture descriptor only");
                 {
                     int owner_candidate_index;
+                    int owner_candidate_count;
                     int found_owner_material_target = 0;
 
                     memset(&owner_material_target, 0,
                            sizeof(owner_material_target));
                     memset(&owner_material_route, 0,
                            sizeof(owner_material_route));
-                    for (owner_candidate_index = 0;
-                         owner_candidate_index <
-                             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS &&
-                         !found_owner_material_target;
-                         ++owner_candidate_index) {
-                        if (nexus_v1_engine_build_structure1a_structure3_material_capture_target(
-                                &active_engine, owner_candidate_index,
-                                material_target.structure3_entry_index,
-                                material_target.face_ordinal,
-                                &owner_material_target,
-                                &owner_material_route) == 1) {
-                            found_owner_material_target = 1;
-                        } else if (owner_candidate_index >=
-                                   active_engine.dgn_material_plan
-                                       .structure1a_structure3_topology_candidate_receipt
-                                       .topology_candidate_count) {
-                            break;
+                    /* The first build prepares the bounded candidate list.
+                     * Never scan the viewport capacity when a real LEV has
+                     * no owner that can pair with this independent face. */
+                    (void)nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+                        &active_engine, 0, material_target.structure3_entry_index,
+                        material_target.face_ordinal, &owner_material_target,
+                        &owner_material_route);
+                    found_owner_material_target = owner_material_target.valid;
+                    owner_candidate_index = 0;
+                    owner_candidate_count = active_engine.dgn_material_plan
+                        .structure1a_structure3_topology_candidate_receipt
+                        .topology_candidate_count;
+                    if (!found_owner_material_target) {
+                        for (owner_candidate_index = 1;
+                             owner_candidate_index < owner_candidate_count &&
+                             !found_owner_material_target;
+                             ++owner_candidate_index) {
+                            if (nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+                                    &active_engine, owner_candidate_index,
+                                    material_target.structure3_entry_index,
+                                    material_target.face_ordinal,
+                                    &owner_material_target,
+                                    &owner_material_route) == 1) {
+                                found_owner_material_target = 1;
+                            }
                         }
                     }
                     if (active_engine.dgn_material_plan
