@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 complete-support original-save gate: the
+  complete-support receipt now remains observable for a valid real-profile
+  boot even when unrelated runtime GDAT checks are incomplete, carries the
+  original-save state candidate count, and refuses `complete-support-ready`
+  until at least one original SKSave candidate parses into source-owned state
+  with no rejected original candidates. Verification: focused Ninja build
+  passes; CTests `dm2_v1_save_load` and `dm2_v1_runtime_handoff_smoke` pass.
+  `dm2_v1_boot_profile_smoke` verifies this save-corpus block but remains
+  blocked by seven broader real-profile runtime GDAT checks.
+
 - ✅ 2026-07-16 Theron ISO first-sector source handoff gate: the Track 02
   loader-intake boundary now has a separate MODE1/2048 ISO route for the
   first `$0b52` sector. It accepts only authenticated US ISO capture facts,

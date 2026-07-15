@@ -8788,10 +8788,16 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     const char *save_corpus_root = NULL;
     DM2_SKSaveCorpusReceipt save_corpus;
     DM2_OriginalSaveStateCorpusReceipt original_save_state_corpus;
+    int startup_visual_ready;
+    int runtime_hud_ready;
+    int creature_atlas_ready;
 
     dm2_v1_boot_complete_support_receipt_init(out_receipt);
-    if (!profile || !out_receipt ||
-        !dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+    if (!profile || !out_receipt) {
+        return 0;
+    }
+    startup_visual_ready =
+        dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
             profile,
             startup_menu_active,
             startup_save_root,
@@ -8799,15 +8805,15 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
             slot_mask,
             selected_row,
             title_animation_tick,
-            &out_receipt->startup_visual) ||
-        !dm2_v1_boot_runtime_hud_capture_receipt(
+            &out_receipt->startup_visual);
+    runtime_hud_ready =
+        dm2_v1_boot_runtime_hud_capture_receipt(
             profile,
-            &out_receipt->runtime_hud) ||
-        !dm2_v1_boot_creature_atlas_capture_receipt(
+            &out_receipt->runtime_hud);
+    creature_atlas_ready =
+        dm2_v1_boot_creature_atlas_capture_receipt(
             profile,
-            &out_receipt->creature_atlas)) {
-        return 0;
-    }
+            &out_receipt->creature_atlas);
     memset(&save_corpus, 0, sizeof(save_corpus));
     memset(&original_save_state_corpus, 0, sizeof(original_save_state_corpus));
     save_corpus_root = (startup_save_root && startup_save_root[0])
@@ -8853,6 +8859,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
             save_corpus_root, &original_save_state_corpus) ? 1 : 0;
     out_receipt->save_corpus_original_state_list_complete =
         original_save_state_corpus.original_candidate_list_complete;
+    out_receipt->save_corpus_original_state_candidate_count =
+        original_save_state_corpus.original_candidate_count;
     out_receipt->save_corpus_original_state_parsed_candidate_count =
         original_save_state_corpus.parsed_candidate_count;
     out_receipt->save_corpus_original_state_rejected_candidate_count =
@@ -8864,6 +8872,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->startup_visual.skproject_title_query_ready &&
         out_receipt->startup_visual.skproject_menu_query_ready;
     out_receipt->startup_title_menu_complete =
+        startup_visual_ready &&
         out_receipt->startup_visual.valid &&
         out_receipt->startup_visual.title_menu_hud_visual_proof_ready &&
         out_receipt->startup_visual.full_title_frame_capture_ready &&
@@ -8876,6 +8885,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->startup_visual.suppress_game_hud &&
         !out_receipt->startup_visual.present_first_hud_frame;
     out_receipt->runtime_gdat_hud_complete =
+        runtime_hud_ready &&
         out_receipt->runtime_hud.valid &&
         out_receipt->runtime_hud.first_runtime_hud_ready &&
         out_receipt->runtime_hud.real_gdat_portrait_ready &&
@@ -8947,6 +8957,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.interface_palette_irgb_color_count > 0u &&
         out_receipt->runtime_hud.interface_palette_pal16_color_count > 0u;
     out_receipt->runtime_creature_atlas_complete =
+        creature_atlas_ready &&
         out_receipt->creature_atlas.valid &&
         out_receipt->creature_atlas.materialized_creature_index_count >= 4 &&
         out_receipt->creature_atlas.frame_parity_matrix_count >=
@@ -9044,6 +9055,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->save_corpus_original_state_list_complete);
     hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_state_candidate_count);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->save_corpus_original_state_parsed_candidate_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, (uint32_t)out_receipt->save_corpus_original_state_rejected_candidate_count);
@@ -9053,8 +9066,9 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
      * draw paths as one runtime contract. Firestaff only reports complete
-     * DM2 support when both startup and live dungeon rendering are backed by
-     * real GDAT material and no legacy visual fallback remains. */
+     * DM2 support when startup and live dungeon rendering are backed by real
+     * GDAT material, no legacy visual fallback remains, and at least one
+     * original SKSave candidate has been parsed into source-owned state. */
     out_receipt->complete_support_ready =
         out_receipt->skproject_gdat_queries_ready &&
         out_receipt->startup_title_menu_complete &&
@@ -9070,11 +9084,29 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->decoded_gdat_capture_complete &&
         out_receipt->save_corpus_scan_complete &&
         out_receipt->save_corpus_original_state_scan_complete &&
+        out_receipt->save_corpus_original_state_list_complete &&
+        out_receipt->save_corpus_original_state_candidate_count > 0 &&
+        out_receipt->save_corpus_original_state_parsed_candidate_count > 0 &&
+        out_receipt->save_corpus_original_state_rejected_candidate_count == 0 &&
+        out_receipt->save_corpus_original_state_hash != 0u &&
         out_receipt->complete_support_hash != 0u;
     out_receipt->valid = out_receipt->complete_support_ready;
     out_receipt->status_scope = "DM2";
     out_receipt->status = out_receipt->complete_support_ready
         ? "complete-support-ready"
+        : (out_receipt->skproject_gdat_queries_ready &&
+           out_receipt->startup_title_menu_complete &&
+           out_receipt->startup_hud_handoff_complete &&
+           out_receipt->runtime_gdat_hud_complete &&
+           out_receipt->runtime_gdat_dungeon_complete &&
+           out_receipt->runtime_gdat_map_chip_categories_complete &&
+           out_receipt->runtime_gdat_interface_placement_complete &&
+           out_receipt->runtime_creature_atlas_complete &&
+           out_receipt->runtime_gdat_direction_breadth_complete &&
+           out_receipt->no_fallback_title_or_runtime_visuals &&
+           out_receipt->raw_gdat_capture_complete &&
+           out_receipt->decoded_gdat_capture_complete)
+        ? "incomplete-save-corpus"
         : out_receipt->runtime_gdat_dungeon_complete
         ? "incomplete-startup-gdat"
         : "incomplete-runtime-gdat";

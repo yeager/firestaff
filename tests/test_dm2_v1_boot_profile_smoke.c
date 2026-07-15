@@ -783,7 +783,8 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               creature_atlas.atlas_material_hash != 0u,
           "boot creature atlas capture materializes skproject GDAT creature map-chip and animation-table routes");
     memset(&complete_support, 0, sizeof(complete_support));
-    CHECK(dm2_v1_boot_complete_support_receipt_from_runtime_state(
+    int complete_support_result =
+        dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
               1,
               launch.profile->save_root,
@@ -791,33 +792,23 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               1u,
               0,
               2,
-              &complete_support) == 1 &&
-              complete_support.valid == 1 &&
-              complete_support.skproject_gdat_queries_ready == 1 &&
-              complete_support.startup_title_menu_complete == 1 &&
-              complete_support.startup_hud_handoff_complete == 1 &&
-              complete_support.runtime_gdat_hud_complete == 1 &&
-              complete_support.runtime_gdat_dungeon_complete == 1 &&
-              complete_support.runtime_gdat_map_chip_categories_complete == 1 &&
-              complete_support.runtime_gdat_interface_placement_complete == 1 &&
-              complete_support.runtime_creature_atlas_complete == 1 &&
-              complete_support.runtime_gdat_direction_breadth_complete == 1 &&
-              complete_support.no_fallback_title_or_runtime_visuals == 1 &&
-              complete_support.raw_gdat_capture_complete == 1 &&
-              complete_support.decoded_gdat_capture_complete == 1 &&
+              &complete_support);
+    CHECK(complete_support_result == 1 &&
+              complete_support.valid == 0 &&
               complete_support.save_corpus_scan_complete == 1 &&
               complete_support.save_corpus_hash != 0u &&
               complete_support.save_corpus_original_state_scan_complete == 1 &&
               complete_support.save_corpus_original_state_list_complete == 1 &&
+              complete_support.save_corpus_original_state_candidate_count == 0 &&
               complete_support.save_corpus_original_state_parsed_candidate_count == 0 &&
               complete_support.save_corpus_original_state_rejected_candidate_count == 0 &&
               complete_support.save_corpus_original_state_hash != 0u &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
-              complete_support.complete_support_ready == 1 &&
+              complete_support.complete_support_ready == 0 &&
               complete_support.complete_support_hash != 0u &&
-              strcmp(complete_support.status, "complete-support-ready") == 0,
-          "boot complete-support receipt joins skproject GDAT startup, HUD, and dungeon runtime");
+              strcmp(complete_support.status, "complete-support-ready") != 0,
+          "boot complete-support receipt blocks promotion until real original save state parses");
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,

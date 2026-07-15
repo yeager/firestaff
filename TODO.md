@@ -1239,6 +1239,13 @@
     complete file hash and raw importer agree on the candidate. This is byte
     ownership only; timer dispatch semantics and rebuilt dungeon DB graph
     ownership remain separate.
+  - 2026-07-16 update: DM2 complete-support publication now also requires
+    the original-save state corpus probe to find and parse at least one
+    source-owned original SKSave candidate with no rejected original
+    candidates. A scan with zero parsed original states remains observable
+    as incomplete evidence and cannot promote `complete-support-ready`.
+    Remaining work is an operator-staged real original-save corpus plus the
+    rebuilt dungeon DB/timer semantics needed to consume that parsed state.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 
