@@ -8652,6 +8652,10 @@ static int csb_v1_runtime_queue_remote_square_event(
         : (raw_square & 0x1F);
     event_type = csb_v1_runtime_square_event_type_for_sensor_target(square_type);
     if (event_type == DM1_EVENT_NONE) return 0;
+    /* ReDMCSB MOVESENS.C F0272:1201-1207 preserves Remote.TargetCell only
+     * for a wall target. F0268 receives CELL_NORTHWEST for every other
+     * square type, including fakewalls, teleporters, pits, and doors. */
+    if (square_type != DM1_SQUARE_WALL) target_cell = 0;
 
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
@@ -9220,6 +9224,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     uint16_t *leader_hand_thing)
 {
     CSB_V1_DungeonData *dungeon;
+    int raw_square;
     int first_thing;
     int thing;
     int previous_thing;
@@ -9232,11 +9237,15 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
     if (!profile->dungeon_handle) return 0;
     dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
     if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1) return 0;
-    if (csb_v1_dungeon_get_raw_square(
-            dungeon,
-            profile->current_level,
-            map_x,
-            map_y) < 0) {
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon,
+        profile->current_level,
+        map_x,
+        map_y);
+    /* MOVESENS.C F0276:1737-1760 selects this cell-scoped C001..C003
+     * path only after F0267 has supplied an actual wall square.  A loaded
+     * sensor list on a corridor/floor is not interchangeable wall data. */
+    if (raw_square < 0 || ((raw_square >> 5) & 0x07) != DM1_SQUARE_WALL) {
         return 0;
     }
 
