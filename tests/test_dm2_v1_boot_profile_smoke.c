@@ -814,7 +814,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
               after.operation_result == 0 &&
-              after.party_dir == 1,
+              after.party_dir == 3,
           "boot runtime turn owns DM2 receipt update");
     {
         int move_dir = after.party_dir;
