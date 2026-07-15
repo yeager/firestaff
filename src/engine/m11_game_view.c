@@ -22285,39 +22285,50 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_G
 }
 
 static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
+                                               const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
+                                               int lineIndex,
                                                unsigned char* framebuffer,
                                                int fbW,
                                                int fbH,
                                                int x,
-                                               int y,
-                                               const unsigned char* glyphs,
-                                               int glyphCount) {
+                                               int y) {
     const M11_AssetSlot* fontSlot;
+    const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* line;
     int i;
-    if (!framebuffer) {
+    if (!framebuffer || !material || lineIndex < 0 ||
+        lineIndex >= DM1_V1_INSCRIPTION_MAX_LINES) {
+        return 0;
+    }
+    line = &material->lines[lineIndex];
+    if (line->glyphCount <= 0) {
         return 0;
     }
     fontSlot = m11_dm1_inscription_font_slot_for_glyphs(state,
-                                                        glyphs,
-                                                        glyphCount);
+        material->glyphBytes + line->glyphStart, line->glyphCount);
     if (!fontSlot) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit each decoded
      * inscription byte from M648 at source_x = byte << 3. */
-    for (i = 0; i < glyphCount; ++i) {
-        int glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(glyphs[i]);
+    for (i = 0; i < line->glyphCount; ++i) {
+        DM1_V1_InscriptionRasterCellBindingPc34 binding;
+        if (!DM1_V1_InscriptionBuildRasterCellBindingPc34(
+                material, lineIndex, i, &binding) ||
+            binding.fontGraphicIndex != (int)fontSlot->graphicIndex ||
+            binding.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
+            binding.sourceWidth != DM1_V1_INSCRIPTION_GLYPH_WIDTH ||
+            binding.sourceHeight != DM1_V1_INSCRIPTION_GLYPH_HEIGHT) {
+            return 0;
+        }
         M11_AssetLoader_BlitRegion(fontSlot,
-                                   glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   0,
-                                   DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   DM1_V1_INSCRIPTION_GLYPH_HEIGHT,
+                                   binding.sourceX, binding.sourceY,
+                                   binding.sourceWidth, binding.sourceHeight,
                                    framebuffer,
                                    fbW,
                                    fbH,
-                                   x + i * DM1_V1_INSCRIPTION_GLYPH_WIDTH,
-                                   y,
-                                   DM1_V1_INSCRIPTION_TRANSPARENT_COLOR);
+                                   x + binding.destinationX,
+                                   y + binding.destinationY,
+                                   binding.transparentColor);
     }
     return 1;
 }
@@ -22352,17 +22363,14 @@ static void m11_draw_dm1_front_wall_inscription_material(
         const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
             &material.lines[line];
         if (drawPlan->glyphCount > 0) {
-            int textX = M11_VIEWPORT_X + drawPlan->textX;
-            int textY = M11_VIEWPORT_Y + drawPlan->textY;
             /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
              * negative D1C bitmap before M648.  This M11 path already
              * skipped the unreadable-inscription ornament, leaving the
              * original wall pixels intact.  Drawing a made-up patch here
              * would overwrite them with the wrong source coordinates. */
             if (!m11_draw_dm1_inscription_glyph_line(
-                    state, framebuffer, fbW, fbH, textX, textY,
-                    material.glyphBytes + drawPlan->glyphStart,
-                    drawPlan->glyphCount)) {
+                    state, &material, line, framebuffer, fbW, fbH,
+                    M11_VIEWPORT_X, M11_VIEWPORT_Y)) {
                 return;
             }
         }

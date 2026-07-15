@@ -23,6 +23,59 @@ typedef struct DM1_V1_InscriptionHostMaterialReceiptPc34 {
         lines[DM1_V1_INSCRIPTION_MAX_LINES];
 } DM1_V1_InscriptionHostMaterialReceiptPc34;
 
+/* One unscaled F0107 M648 source cell.  ReDMCSB selects each glyph at
+ * `decodedByte << 3` and copies its native 8x8 indexed pixels directly to
+ * the front-wall line.  Keeping this derivable binding explicit lets every
+ * caller prove that neither a host font nor a scaled replacement entered the
+ * wall route. */
+typedef struct DM1_V1_InscriptionRasterCellBindingPc34 {
+    int fontGraphicIndex;
+    int transparentColor;
+    int sourceX;
+    int sourceY;
+    int sourceWidth;
+    int sourceHeight;
+    int destinationX;
+    int destinationY;
+} DM1_V1_InscriptionRasterCellBindingPc34;
+
+static inline int DM1_V1_InscriptionBuildRasterCellBindingPc34(
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
+    int lineIndex,
+    int glyphOffset,
+    DM1_V1_InscriptionRasterCellBindingPc34* outBinding)
+{
+    const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* line;
+    int glyph;
+
+    if (!material || !outBinding || lineIndex < 0 ||
+        lineIndex >= DM1_V1_INSCRIPTION_MAX_LINES || glyphOffset < 0) {
+        return 0;
+    }
+    line = &material->lines[lineIndex];
+    if (line->glyphCount <= 0 || glyphOffset >= line->glyphCount ||
+        line->glyphStart < 0 ||
+        line->glyphStart + glyphOffset >= material->glyphByteCount) {
+        return 0;
+    }
+    glyph = DM1_V1_InscriptionGlyphIndexFromSourceByte(
+        material->glyphBytes[line->glyphStart + glyphOffset]);
+    if (glyph < 0 || (glyph + 1) * DM1_V1_INSCRIPTION_GLYPH_WIDTH >
+                         DM1_V1_INSCRIPTION_FONT_WIDTH_PC34) {
+        return 0;
+    }
+    outBinding->fontGraphicIndex = material->fontGraphicIndex;
+    outBinding->transparentColor = material->transparentColor;
+    outBinding->sourceX = glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    outBinding->sourceY = 0;
+    outBinding->sourceWidth = DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    outBinding->sourceHeight = DM1_V1_INSCRIPTION_GLYPH_HEIGHT;
+    outBinding->destinationX = line->textX +
+        glyphOffset * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    outBinding->destinationY = line->textY;
+    return 1;
+}
+
 /* ReDMCSB DUNGEON.C F0168 reads TEXTSTRING from G0284 before checking
  * Visible and TextDataWordOffset. Keep the HoC renderer on that raw PC3.4
  * record: the decoded DungeonTextString mirror is not an authority here. */
@@ -62,6 +115,8 @@ static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
         material->transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
         material->glyphByteCount <= 0 ||
         material->glyphByteCount >= DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34 ||
+        fontWidth != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontHeight != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34 ||
         material->glyphBytes[material->glyphByteCount] != 0x81U) {
         return 0;
     }
@@ -78,10 +133,26 @@ static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
             return 0;
         }
         if (actual->glyphCount > 0) {
+            int glyphOffset;
             if (!DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
                     material->glyphBytes + actual->glyphStart,
                     actual->glyphCount, fontWidth, fontHeight)) {
                 return 0;
+            }
+            for (glyphOffset = 0; glyphOffset < actual->glyphCount;
+                 ++glyphOffset) {
+                DM1_V1_InscriptionRasterCellBindingPc34 binding;
+                if (!DM1_V1_InscriptionBuildRasterCellBindingPc34(
+                        material, line, glyphOffset, &binding) ||
+                    binding.fontGraphicIndex != material->fontGraphicIndex ||
+                    binding.transparentColor != material->transparentColor ||
+                    binding.sourceWidth != DM1_V1_INSCRIPTION_GLYPH_WIDTH ||
+                    binding.sourceHeight != DM1_V1_INSCRIPTION_GLYPH_HEIGHT ||
+                    binding.destinationY != actual->textY ||
+                    binding.destinationX != actual->textX +
+                        glyphOffset * DM1_V1_INSCRIPTION_GLYPH_WIDTH) {
+                    return 0;
+                }
             }
             ++lineCount;
         }
