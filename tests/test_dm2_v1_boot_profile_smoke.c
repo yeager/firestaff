@@ -576,6 +576,25 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               render_receipt.runtime_render_blocked_material_mask == 0u &&
               render_receipt.runtime_render_no_core_fallbacks == 1,
           "boot runtime render owns source GDAT frame/HUD receipt without invented portraits");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(&render_receipt, 0, sizeof(render_receipt));
+    CHECK(dm2_v1_boot_runtime_render_frame(
+              launch.profile,
+              framebuffer,
+              320,
+              320,
+              200,
+              NULL,
+              NULL,
+              &render_receipt) == 1 &&
+              render_receipt.v2_attempted == 0 &&
+              render_receipt.v2_succeeded == 0 &&
+              render_receipt.v1_attempted == 1 &&
+              render_receipt.v1_succeeded == 1 &&
+              render_receipt.render_result == 0 &&
+              render_receipt.runtime_render_real_asset_ready == 1 &&
+              render_receipt.runtime_render_no_core_fallbacks == 1,
+          "direct boot render consumes source G1/GDAT without a procedural V2 viewport");
     memset(&frame_ownership, 0, sizeof(frame_ownership));
     CHECK(dm2_v1_runtime_last_frame_ownership(&frame_ownership) == 1 &&
               frame_ownership.valid == 1 &&

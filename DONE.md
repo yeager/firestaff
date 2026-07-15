@@ -18197,3 +18197,12 @@ Room to the existing ISO semantic dungeon route. That route stays fail-closed
 until original ISO bytes prove a first level/object handoff. Verification:
 `theron_v1_m11_launcher_handoff_boundary` checks installed real media and
 preserves the selected Track 02 identity through startup.
+- ✅ 2026-07-15 DM2 M11 source render handoff: the live
+  `m11_game_view` DM2 runtime route now calls
+  `dm2_v1_boot_runtime_render_frame()` with no V2 callback after verified
+  boot, so its dungeon frame consumes the source-owned G1 pose and GDAT
+  materials instead of `dm2_v2_runtime_render_frame()`'s procedural viewport.
+  The optional V2 HUD remains a decoded original-GDAT compositor and missing
+  source data draws nothing. `test_dm2_v1_boot_profile_smoke` now locks the
+  direct route: no V2 attempt, successful V1 render, real-material receipt,
+  and zero core fallbacks.
