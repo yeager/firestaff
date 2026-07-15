@@ -27,6 +27,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include "nexus_v1_structure3_capture_manifest.h"
+#include <stddef.h>
 #include <stdint.h>
 
 /* ── Constants ─────────────────────────────────────────────────────── */
@@ -435,6 +436,38 @@ typedef struct {
     int no_draw_only;
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure2DescriptorCaptureTarget;
+
+/* A raw external capture can be bound to an exact retail Structure2
+ * descriptor, but capture admission never asserts a pixel, palette, or VDP1
+ * decoder. Provenance is supplied by the capture owner, not inferred from a
+ * manifest string. */
+#define NEXUS_V1_STRUCTURE2_SATURN_RAW_TRACE_MAGIC \
+    "FIRESTAFF_NEXUS_STRUCTURE2_SATURN_RAW_TRACE_V1"
+typedef enum {
+    NEXUS_V1_STRUCTURE2_TRACE_MISSING = 0,
+    NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_MALFORMED = 1,
+    NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_TARGET_MISMATCH = 2,
+    NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_RAW_TRACE = 3,
+    NEXUS_V1_STRUCTURE2_TRACE_BLOCKED_PROVENANCE = 4,
+    NEXUS_V1_STRUCTURE2_TRACE_ADMITTED_OPAQUE = 5
+} Nexus_V1_DgnStructure2TraceStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure2TraceStatus status;
+    int level_index;
+    int descriptor_index;
+    int capture_target_bound;
+    int manifest_target_bound;
+    int raw_trace_bytes_bound;
+    size_t raw_trace_byte_count;
+    uint64_t raw_trace_fnv1a64;
+    int original_saturn_capture_verified;
+    int opaque_trace_admitted;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure2TraceAdmissionReceipt;
 
 /* Active party pose bound to the canonical LEV source and the bounded raw
  * Structure1A transform-selector evidence. This is camera input provenance,
@@ -1096,6 +1129,12 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
 int nexus_v1_engine_write_structure2_descriptor_capture_target(
     const Nexus_V1_Engine *engine, int descriptor_index, const char *path,
     Nexus_V1_DgnStructure2DescriptorCaptureTarget *out_target);
+int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
+    const Nexus_V1_Engine *engine, int descriptor_index,
+    const char *manifest_text, size_t manifest_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    int original_saturn_capture_verified,
+    Nexus_V1_DgnStructure2TraceAdmissionReceipt *out_receipt);
 int nexus_v1_current_level_transform_camera_framing_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnActiveTransformCameraFramingReceipt *out_receipt);

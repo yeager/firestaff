@@ -16649,3 +16649,14 @@ retail corpus verifies the receipt for every admitted level. It contains no
 transform, material, texture, palette, VDP1, or draw semantics and therefore
 remains no-draw with fallback visuals disabled. Verification:
 `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus Structure2 raw Saturn trace admission gate
+
+`nexus_v1_engine_admit_structure2_descriptor_capture_trace()` now binds an
+external raw capture manifest to the active hash-verified LEV source, one
+exact Structure2 descriptor, its opaque post-FFFF payload, and the supplied
+raw-trace bytes. The caller must independently attest original Saturn
+provenance; unverified input remains blocked even after every hash matches.
+Opaque admission authorizes neither a decoder nor draw, keeping the renderer
+fail-closed until pixel, palette, and VDP1 semantics are actually captured.
+Verification: `test_nexus_v1_dgn_geometry_readiness`.

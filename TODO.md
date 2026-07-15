@@ -6324,3 +6324,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   descriptor and its opaque post-FFFF payload span. The remaining work is an
   authentic Saturn trace/frame that binds those bytes to a real decoder and
   palette/VDP route; the target itself is never a decoder or runtime fallback.
+
+- 🔧 2026-07-15 Nexus Structure2 Saturn trace import: a raw external trace can
+  now be bound to the active LEV, exact descriptor, and opaque payload hashes,
+  but local corpus contains no authentic Saturn trace. An independent capture
+  owner must verify its provenance before opaque admission; pixel/palette/VDP1
+  semantics, decoder selection, and all drawing remain blocked.
