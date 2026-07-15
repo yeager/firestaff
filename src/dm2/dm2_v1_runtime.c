@@ -101,6 +101,7 @@ typedef struct {
     int map_graphics_style;
     DM2_V1_GdatSceneM11CommandPlan gdat_scene_material_plan;
     DM2_V1_GdatSceneLightM11Receipt gdat_scene_light_receipt;
+    DM2_V1_CLightM11Receipt c_light_receipt;
     DM2_V1_GdatWallM11CommandPlan gdat_wall_material_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan gdat_door_material_plan;
     int gdat_scene_control_ready;
@@ -902,6 +903,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
     memset(&rt->gdat_scene_light_receipt, 0,
            sizeof(rt->gdat_scene_light_receipt));
+    memset(&rt->c_light_receipt, 0, sizeof(rt->c_light_receipt));
     dm2_v1_gdat_wall_m11_command_plan_free(&rt->gdat_wall_material_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&rt->gdat_door_material_plan);
     rt->map_graphics_style = -1;
@@ -3450,6 +3452,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_misty_map,
         rt->gdat_thunder_position,
         rt->gdat_ambient_darkness);
+    /* A raw PC runtime/save bridge may publish this only after it has
+     * authenticated the `c_light.cpp` inputs. Passing the zero receipt here
+     * explicitly clears any stale viewport result across a frame handoff. */
+    dm2_v1_viewport_set_c_light_receipt(&viewport, &rt->c_light_receipt);
     dm2_v1_viewport_set_gdat_scene_material_plan(
         &viewport, &rt->gdat_scene_material_plan);
     dm2_v1_viewport_set_gdat_scene_movement_active(
@@ -3966,6 +3972,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_thunder_position;
     g_dm2_frame_ownership.gdat_ambient_darkness =
         rt->gdat_ambient_darkness;
+    g_dm2_frame_ownership.gdat_c_light_receipt_ready =
+        viewport.gdat_c_light_receipt_ready;
+    g_dm2_frame_ownership.gdat_c_light_level =
+        viewport.gdat_c_light_level;
+    g_dm2_frame_ownership.gdat_c_light_receipt_hash =
+        viewport.gdat_c_light_receipt_hash;
+    g_dm2_frame_ownership.gdat_c_light_source_state_hash =
+        viewport.gdat_c_light_source_state_hash;
+    g_dm2_frame_ownership.gdat_c_light_consumed =
+        viewport.gdat_c_light_consumed_count;
     g_dm2_frame_ownership.gdat_weather_receipt_ready =
         rt->gdat_weather_receipt_ready;
     g_dm2_frame_ownership.gdat_weather_receipt_hash =
@@ -4131,6 +4147,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.scene_ambient_light =
         rt->gdat_scene_light_receipt.valid
             ? rt->gdat_scene_light_receipt.ambient_light : 0u;
+    g_dm2_last_m11_frame.c_light_receipt_hash =
+        viewport.gdat_c_light_receipt_hash;
+    g_dm2_last_m11_frame.c_light_source_state_hash =
+        viewport.gdat_c_light_source_state_hash;
+    g_dm2_last_m11_frame.c_light_level =
+        viewport.gdat_c_light_level;
     /* UPDATE_GFXSET owns these exact GRAPHICSSET IMG3 records; retain their
      * individual identities so M11 cannot combine a current control receipt
      * with floor, ceiling, or WALL_GFX pixels from another plan. */

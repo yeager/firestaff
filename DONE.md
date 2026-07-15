@@ -46,6 +46,13 @@
   runs before Revert/HOLD, then authentic PC3.4 C03 data alone may schedule
   F0272/F0268; non-wall chains and matching C003 objects stay inert. Focused
   coverage: `csb_v1_f0276_wall_object_move_pc34_compat` (15/0).
+=======
+- ✅ 2026-07-15 DM2 `c_light` M11 dungeon consumer: the terminal
+  `DM2_RECALC_LIGHT_LEVEL` receipt now binds only to the identical
+  `UPDATE_GFXSET` scene transaction and reaches source-required dungeon-square
+   metadata. A changed graphicsset/control hash clears it; no palette or pixel
+   brightness is derived from the receipt. Focused coverage extends
+   `test_dm2_v1_c_light_receipt` with matching and mismatched scene routes.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 source projectile/object-material gate:
   M613 projectiles, F0142/G0209 thrown objects, and C2500 floor objects now

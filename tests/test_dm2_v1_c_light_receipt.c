@@ -1,4 +1,5 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,8 @@ int main(void)
     DM2_V1_GdatSceneLightM11Receipt scene;
     DM2_V1_CLightSourceState source;
     DM2_V1_CLightM11Receipt receipt;
+    DM2_V1_ViewportState viewport;
+    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
 
     memset(&scene, 0, sizeof(scene));
     memset(&source, 0, sizeof(source));
@@ -46,6 +49,34 @@ int main(void)
     CHECK("c_light clamps a dark dynamic result to zero",
           dm2_v1_c_light_m11_receipt_build(&scene, &source, &receipt) &&
               receipt.light_level == 0u);
+
+    source.darkness_offset = 2u;
+    CHECK("authenticated c_light binds only its matching scene transaction",
+          dm2_v1_c_light_m11_receipt_build(&scene, &source, &receipt));
+    memset(&viewport, 0, sizeof(viewport));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, scene.graphicsset, scene.scene_control_hash,
+        0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u);
+    dm2_v1_viewport_set_c_light_receipt(&viewport, &receipt);
+    CHECK("c_light reaches source-required dungeon-square metadata",
+          viewport.gdat_c_light_receipt_ready &&
+              viewport.gdat_c_light_level == 3u &&
+              viewport.squares[DM2_SQ_D0C].light_level == 3u);
+    dm2_v1_viewport_render(&viewport);
+    CHECK("M11 frame consumes authenticated c_light metadata without pixels",
+          viewport.gdat_c_light_consumed_count == 1 &&
+              viewport.gdat_c_light_receipt_hash == receipt.receipt_hash);
+    ++scene.scene_control_hash;
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, scene.graphicsset, scene.scene_control_hash,
+        0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u);
+    dm2_v1_viewport_set_c_light_receipt(&viewport, &receipt);
+    CHECK("mismatched scene transaction clears c_light instead of reusing it",
+          !viewport.gdat_c_light_receipt_ready &&
+              viewport.squares[DM2_SQ_D0C].light_level == 0u);
 
     source.source_state_hash = 0u;
     CHECK("missing raw c_light state cannot borrow scene controls",
