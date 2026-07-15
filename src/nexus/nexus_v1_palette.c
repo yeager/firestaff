@@ -171,8 +171,6 @@ static const uint16_t g_npal_default[NEXUS_PALETTE_SIZE]
     0xFFFFU, 0xFFFFU, 0xFFFFU, 0xFFFFU,
 };
 
-const uint16_t *nexus_palette_default_bgr555(void) { return g_npal_default; }
-
 /* ── Public API ────────────────────────────────────────────────────── */
 
 void nexus_palette_init_defaults(Nexus_PaletteState *pal) {
@@ -255,13 +253,13 @@ int nexus_texture_load_from_surface(Nexus_PaletteState *pal,
     }
     if (w <= 0 || h <= 0) {
         printf("Nexus texture: ERROR invalid %dx%d for '%s' "
-               "[source=%s] — flat-color fallback\n",
+               "[source=%s] — source surface blocked\n",
                w, h, label ? label : "?", source_file ? source_file : "?");
         return -1;
     }
     if (pal->texture_count >= NEXUS_MAX_TEXTURES) {
         printf("Nexus texture: ERROR atlas full (%d) loading '%s' "
-               "[source=%s] — flat-color fallback\n",
+               "[source=%s] — source surface blocked\n",
                NEXUS_MAX_TEXTURES, label ? label : "?",
                source_file ? source_file : "?");
         return -1;
