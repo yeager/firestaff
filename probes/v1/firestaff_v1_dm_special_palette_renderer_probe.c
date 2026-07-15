@@ -122,6 +122,7 @@ int main(void) {
         unsigned char sample[4] = {0, 0, 0, 0};
         char id[96];
         char note[192];
+        int indexed_rgba_match;
         int ok;
 
         memset(framebuffer, M11_FB_ENCODE(kCases[i].colorIndex, 0u), framebuffer_size);
@@ -140,17 +141,21 @@ int main(void) {
 
         expected = F9011_VGA_GetSpecialColorRgb_Compat(
                 kCases[i].colorIndex, (unsigned)kCases[i].specialPalette);
+        indexed_rgba_match = M11_Render_PresentedIndexedSpecialMatches(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+            kCases[i].specialPalette);
         ok = expected
              && sample[0] == expected[0]
              && sample[1] == expected[1]
-             && sample[2] == expected[2];
+             && sample[2] == expected[2]
+             && indexed_rgba_match;
         snprintf(id, sizeof(id), "DM1_SPECIAL_PALETTE_%s", kCases[i].name);
         snprintf(note, sizeof(note),
-                 "readback=(%u,%u,%u,%u) expected=(%u,%u,%u)",
+                 "readback=(%u,%u,%u,%u) expected=(%u,%u,%u) indexed-rgba=%s",
                  sample[0], sample[1], sample[2], sample[3],
                  expected ? expected[0] : 0u,
-                 expected ? expected[1] : 0u,
-                 expected ? expected[2] : 0u);
+                 expected ? expected[1] : 0u, expected ? expected[2] : 0u,
+                 indexed_rgba_match ? "match" : "mismatch");
         probe_record(&stats, id, ok, note);
     }
 

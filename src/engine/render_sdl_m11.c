@@ -2587,6 +2587,38 @@ const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) 
     return g_state.presentBuffer;
 }
 
+int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
+                                              int width,
+                                              int height,
+                                              int specialPalette) {
+    int x;
+    int y;
+
+    if (!g_state.initialised || !g_state.presentBuffer || !indexed ||
+        width <= 0 || height <= 0 || g_state.presentedW <= 0 ||
+        g_state.presentedH <= 0 || specialPalette < 0 ||
+        specialPalette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
+        return 0;
+    }
+    for (y = 0; y < g_state.presentedH; ++y) {
+        const int source_y = (y * height) / g_state.presentedH;
+        for (x = 0; x < g_state.presentedW; ++x) {
+            const int source_x = (x * width) / g_state.presentedW;
+            const unsigned char* rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+                indexed[(size_t)source_y * (size_t)width + (size_t)source_x],
+                specialPalette);
+            const unsigned char* actual = g_state.presentBuffer +
+                ((size_t)y * (size_t)g_state.presentedW + (size_t)x) * 4u;
+
+            if (!rgb || actual[0] != rgb[0] || actual[1] != rgb[1] ||
+                actual[2] != rgb[2] || actual[3] != 0xffu) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int M11_Render_GetSdlMajorVersion(void) {
     return M11_SDL_MAJOR;
 }

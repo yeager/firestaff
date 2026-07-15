@@ -147,6 +147,15 @@
   visible app/window capture over the complete sequence remains a separate
   external-capture task.
 
+- ✅ 2026-07-15 CSB screen-output capture gate: C001--C005 app capture now
+  verifies the renderer-owned RGBA page pixel-for-pixel against the exact
+  nearest-scaled indexed source page and the active ReDMCSB special palette.
+  The C001 title and C004/C002/C003 entrance receipt is therefore withheld
+  for stale planes, strips, palette state, or post-presentation RGB mismatch.
+  The source page remains package-owned; this adds no generated visual path.
+  The SDL dummy special-palette renderer probe covers the shared comparator
+  across all six palette cases (6/6).
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
   a host transparency key, so source-black pixels erase prior bars and hands

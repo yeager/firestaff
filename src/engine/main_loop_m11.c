@@ -458,6 +458,7 @@ static int m11_present_game_frame_and_publish_startup_capture(
     int presented_width = 0;
     int presented_height = 0;
     int mac_window_capture_ready = 0;
+    int csb_source_output_matches = 0;
 
     if (!m11_present_game_frame(gameView, &presented_frame)) {
         return 0;
@@ -473,8 +474,17 @@ static int m11_present_game_frame_and_publish_startup_capture(
         presented_width > 0 && presented_height > 0;
 #endif
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        presented_frame) {
+        const int special_palette =
+            M11_GameView_GetPresentationSpecialPalette(gameView);
+        csb_source_output_matches = special_palette >= 0 &&
+            M11_Render_PresentedIndexedSpecialMatches(
+                presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                special_palette);
+    }
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         presented_frame && presented_rgba && presented_width > 0 &&
-        presented_height > 0) {
+        presented_height > 0 && csb_source_output_matches) {
         M11_GameView_RecordCSBPresentedIndexedFrame(
             (M11_GameViewState *)gameView,
             presented_frame,
