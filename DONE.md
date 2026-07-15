@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 leader-hand name source-font gate: normal V1 F0034 now
+  retains the original C017 black clear and draws only the bounded source
+  name through loaded M653 glyphs at the C017 geometry. The generic host-font
+  fallback is removed; missing font data leaves the narrow HUD field clear.
+
 - 2026-07-15 Nexus FACE.BIN PRS3 corpus receipt: all 20 retail frame headers
   and streams now have exact bounds, aggregate byte witnesses, and declared
   output totals. This is decoder evidence only; portrait decoding and drawing

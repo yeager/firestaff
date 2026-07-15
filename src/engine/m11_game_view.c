@@ -33785,9 +33785,6 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     int nameX, nameY, nameW, nameH;
     char objectName[16];
     DM1_V1_LayoutZoneRectPc34 nameRect;
-    static const M11_TextStyle leaderHandNameStyle = {
-        1, 1, M11_COLOR_CYAN, 0, 0, M11_COLOR_BLACK
-    };
     if (!state || !framebuffer || state->showDebugHUD ||
         !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
         return;
@@ -33809,13 +33806,23 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     nameH = nameRect.h;
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   nameX, nameY, nameW, nameH, M11_COLOR_BLACK);
-    if (DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(state, objectName, sizeof(objectName))) {
+    /* OBJECT.C F0034 owns C017's cleared source field and its M653 text
+     * geometry.  A generic host font changes the name's advance and makes
+     * this narrow HUD lane overlap the action surface, so absent PC34 font
+     * data deliberately leaves the original black clear intact. */
+    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        return;
+    }
+    if (DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
+            state, objectName, sizeof(objectName))) {
         /* F0034 prints at most C014_OBJECT_NAME_MAXIMUM_LENGTH (14)
          * source characters into C017.  Keep the runtime readout in
          * that same bounded field. */
         objectName[14] = '\0';
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      nameX, nameY, objectName, &leaderHandNameStyle);
+        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
+                            framebufferWidth, framebufferHeight,
+                            nameX, nameY, objectName,
+                            M11_COLOR_CYAN, -1, 1);
     }
 }
 

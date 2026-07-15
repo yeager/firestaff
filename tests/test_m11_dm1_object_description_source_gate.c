@@ -109,6 +109,29 @@ static int framebuffer_has_source_pixel(const unsigned char* framebuffer,
     return 0;
 }
 
+static int framebuffer_rect_has_nonblack_pixel(const unsigned char* framebuffer,
+                                               int x,
+                                               int y,
+                                               int width,
+                                               int height)
+{
+    int row;
+    int column;
+
+    if (!framebuffer || x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x + width > 320 || y + height > 200) {
+        return 0;
+    }
+    for (row = 0; row < height; ++row) {
+        for (column = 0; column < width; ++column) {
+            if (framebuffer[(y + row) * 320 + x + column] != 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     M11_GameViewState state;
@@ -126,6 +149,8 @@ int main(void)
           "missing C029 emits no procedural circle");
     CHECK(framebuffer[(33 + 59) * 320 + 111] == 0,
           "missing icon media emits no placeholder");
+    CHECK(!framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
+          "missing M653 keeps F0034 C017 leader-hand name clear");
     M11_GameView_Shutdown(&state);
 
     graphicsPath = graphics_dat_path();
@@ -153,6 +178,8 @@ int main(void)
         CHECK(framebuffer_has_source_pixel(framebuffer, circle, 103, 33 + 53, 1,
                                            8, 6, 16, 16),
               "F0342 presents C029 source pixels at C504");
+        CHECK(framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
+              "F0034 presents the leader-hand name through PC34 M653");
         M11_GameView_Shutdown(&state);
     }
 
