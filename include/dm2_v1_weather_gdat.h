@@ -165,6 +165,13 @@ typedef struct {
     int16_t source_top;
     int16_t source_right;
     int16_t source_bottom;
+    /* QUERY_TEMP_PICST must consume the exact decoded ENVIRONMENT plane and
+     * QUERY_GDAT_IMAGE_LOCALPAL result admitted with the command.  Retain
+     * both identities so the final viewport fetch cannot substitute another
+     * same-sized image or palette. */
+    uint32_t decoded_pixels_hash;
+    uint32_t decoded_pixel_count;
+    uint32_t local_palette_hash;
     uint32_t material_hash;
 } DM2_V1_WeatherDrawPlan;
 

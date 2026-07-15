@@ -2282,6 +2282,23 @@ static int dm2_v1_fetch_viewport_local_material(
     return 0;
 }
 
+static uint32_t dm2_v1_weather_pixels_hash(const uint8_t *pixels, int width,
+                                           int height, int stride)
+{
+    uint32_t hash = 2166136261u;
+    int y;
+
+    if (!pixels || width <= 0 || height <= 0 || stride < width) return 0u;
+    for (y = 0; y < height; ++y) {
+        int x;
+        for (x = 0; x < width; ++x) {
+            hash ^= pixels[y * stride + x];
+            hash *= 16777619u;
+        }
+    }
+    return hash;
+}
+
 static void __attribute__((unused)) dm2_v1_blit_tiled_bitmap(uint8_t *dst,
                                      int dst_stride,
                                      int dst_x,
@@ -5225,7 +5242,13 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
                 &strides[i]) != 0 || !pixels[i] ||
             widths[i] != draw->source_right - draw->source_left ||
             heights[i] != draw->source_bottom - draw->source_top ||
-            strides[i] < widths[i]) {
+            strides[i] < widths[i] ||
+            draw->decoded_pixel_count !=
+                (uint32_t)((size_t)widths[i] * (size_t)heights[i]) ||
+            dm2_v1_weather_pixels_hash(pixels[i], widths[i], heights[i],
+                                       strides[i]) !=
+                draw->decoded_pixels_hash ||
+            s->active_asset_palette_hash != draw->local_palette_hash) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER);
             return;
