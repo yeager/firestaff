@@ -4859,6 +4859,9 @@ static void test_strings(void)
                  "F0418") != NULL,
           "source evidence mentions F0418");
     CHECK(strstr(dm1_v1_original_save_pc34_handoff_source_evidence(),
+                 "F0421") != NULL,
+          "source evidence mentions F0421");
+    CHECK(strstr(dm1_v1_original_save_pc34_handoff_source_evidence(),
                  "CHAMPION_EXCLUDING_PORTRAIT") != NULL,
           "source evidence mentions champion layout");
     CHECK(strstr(dm1_v1_original_save_pc34_handoff_source_evidence(),
@@ -6230,8 +6233,37 @@ static void test_original_door_destruction_event_materializes_on_door(void)
           "M10 cannot emit a door destruction for a non-door square");
 }
 
+static void test_f0421_tail_read_checksum_gate(void)
+{
+    const uint8_t source[] = { 1u, 2u, 250u, 4u };
+    uint8_t destination[4] = { 0u, 0u, 0u, 0u };
+    size_t cursor = 0u;
+    uint16_t checksum = 0xfff0u;
+
+    CHECK(dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+              source, sizeof(source), &cursor, destination, 2u, &checksum),
+          "F0421 reads first dungeon-tail section");
+    CHECK(cursor == 2u && checksum == 0xfff3u &&
+          destination[0] == 1u && destination[1] == 2u,
+          "F0421 adds first source bytes to running checksum");
+    CHECK(dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+              source, sizeof(source), &cursor, destination + 2u, 2u,
+              &checksum),
+          "F0421 reads second dungeon-tail section");
+    CHECK(cursor == sizeof(source) && checksum == 0x00f1u &&
+          destination[2] == 250u && destination[3] == 4u,
+          "F0421 retains 16-bit wrapping checksum across sections");
+    CHECK(!dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
+               source, sizeof(source), &cursor, destination, 1u,
+               &checksum),
+          "F0421 rejects truncated source section");
+    CHECK(cursor == sizeof(source) && checksum == 0x00f1u,
+          "F0421 leaves cursor and checksum unchanged on read failure");
+}
+
 int main(void)
 {
+    test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
     test_pc34_timeline_rebuild_ignores_raw_tombstone_link();
     test_pc34_timeline_rebuild_ignores_chained_tombstone_links();

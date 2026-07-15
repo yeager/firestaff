@@ -11,6 +11,12 @@
   separately owned message and scroll consumers; do not route those through a
   host-text or decoded-TextString fallback.
 
+- 2026-07-15 DM1 original-save F0421 follow-up: saved dungeon-tail sections
+  now pass the original running byte-checksum gate before F0435 materializes
+  them. Remaining save work is authentic external corpus breadth and
+  launcher/UI consumption; do not admit a tail on a header-only or aggregate
+  checksum substitute.
+
 - 2026-07-15 DM1 DUNGEON F0156 follow-up: the source-defined raw Thing-data
   accessor now owns the live door-button read path. Remaining work is to
   route other DM1 raw Thing consumers through this accessor while preserving
