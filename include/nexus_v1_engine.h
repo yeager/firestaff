@@ -1022,6 +1022,31 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelSoundRouteReceipt;
 
+/* A request for an authentic Saturn sound-driver capture of one bounded SAL
+ * window. It is derived from the active, hash-verified SAL/MAP/driver route;
+ * it never assigns the raw selector an event meaning or enables decoding. */
+#define NEXUS_V1_SAL_CAPTURE_TARGET_MAGIC \
+    "FIRESTAFF_NEXUS_SAL_SATURN_CAPTURE_TARGET_V1"
+typedef struct {
+    int valid;
+    int level_index;
+    char canonical_sal_name[16];
+    char canonical_sal_md5[33];
+    char canonical_map_name[16];
+    char canonical_map_md5[33];
+    char canonical_driver_name[16];
+    char canonical_driver_md5[33];
+    int raw_map_selector;
+    int map_attribute;
+    int sal_offset;
+    int sal_size;
+    int original_saturn_driver_capture_required;
+    int sal_decode_proven;
+    int playback_permitted;
+    int no_playback_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_LevelSoundCaptureTargetReceipt;
+
 /* Active-level ownership for the corpus-verified SLEV SH-2 entry profile.
  * This binds only the observed entry framing and literal locations to the
  * engine's current level. It does not identify task-body opcodes, callback
@@ -1673,6 +1698,12 @@ int nexus_v1_current_level_aux_runtime_receipt(
 int nexus_v1_current_level_sound_route_receipt(
     const Nexus_V1_Engine *engine, int raw_map_selector,
     Nexus_V1_LevelSoundRouteReceipt *out_receipt);
+int nexus_v1_engine_build_sal_capture_target(
+    const Nexus_V1_Engine *engine, int raw_map_selector,
+    Nexus_V1_LevelSoundCaptureTargetReceipt *out_target);
+int nexus_v1_engine_write_sal_capture_target(
+    const Nexus_V1_Engine *engine, int raw_map_selector, const char *path,
+    Nexus_V1_LevelSoundCaptureTargetReceipt *out_target);
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt);

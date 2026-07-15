@@ -4678,6 +4678,103 @@ int nexus_v1_current_level_sound_route_receipt(
     return 1;
 }
 
+int nexus_v1_engine_build_sal_capture_target(
+    const Nexus_V1_Engine *engine, int raw_map_selector,
+    Nexus_V1_LevelSoundCaptureTargetReceipt *out_target) {
+    Nexus_V1_LevelSoundRouteReceipt route;
+    const Nexus_V1_LevelAuxRuntimeReceipt *sources;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->original_saturn_driver_capture_required = 1;
+    out_target->no_playback_only = 1;
+    if (nexus_v1_current_level_sound_route_receipt(engine, raw_map_selector,
+                                                   &route) != 1 ||
+        route.status != NEXUS_V1_LEVEL_SOUND_ROUTE_BOUND_OPAQUE ||
+        !route.canonical_sal_source_verified ||
+        !route.canonical_map_source_verified ||
+        !route.canonical_sound_driver_source_verified ||
+        route.saturn_event_dispatch_proven || route.sal_decode_proven ||
+        route.playback_permitted || !engine) {
+        return 0;
+    }
+    sources = &engine->level_aux_runtime_receipt;
+    if (sources->level_index != route.level_index ||
+        !sources->sal.canonical_name[0] || !sources->sal.canonical_md5[0] ||
+        !sources->map.canonical_name[0] || !sources->map.canonical_md5[0] ||
+        !sources->sound_driver.canonical_name[0] ||
+        !sources->sound_driver.canonical_md5[0]) {
+        return 0;
+    }
+    out_target->level_index = route.level_index;
+    snprintf(out_target->canonical_sal_name, sizeof(out_target->canonical_sal_name),
+             "%s", sources->sal.canonical_name);
+    snprintf(out_target->canonical_sal_md5, sizeof(out_target->canonical_sal_md5),
+             "%s", sources->sal.canonical_md5);
+    snprintf(out_target->canonical_map_name, sizeof(out_target->canonical_map_name),
+             "%s", sources->map.canonical_name);
+    snprintf(out_target->canonical_map_md5, sizeof(out_target->canonical_map_md5),
+             "%s", sources->map.canonical_md5);
+    snprintf(out_target->canonical_driver_name,
+             sizeof(out_target->canonical_driver_name), "%s",
+             sources->sound_driver.canonical_name);
+    snprintf(out_target->canonical_driver_md5,
+             sizeof(out_target->canonical_driver_md5), "%s",
+             sources->sound_driver.canonical_md5);
+    out_target->raw_map_selector = route.raw_map_selector;
+    out_target->map_attribute = route.map_attribute;
+    out_target->sal_offset = route.sal_offset;
+    out_target->sal_size = route.sal_size;
+    out_target->valid = 1;
+    return 1;
+}
+
+int nexus_v1_engine_write_sal_capture_target(
+    const Nexus_V1_Engine *engine, int raw_map_selector, const char *path,
+    Nexus_V1_LevelSoundCaptureTargetReceipt *out_target) {
+    char temporary_path[1024];
+    Nexus_V1_LevelSoundCaptureTargetReceipt target;
+    FILE *file;
+
+    if (!path || !out_target ||
+        nexus_v1_engine_build_sal_capture_target(engine, raw_map_selector,
+                                                 &target) != 1 ||
+        !target.valid || !target.original_saturn_driver_capture_required ||
+        target.sal_decode_proven || target.playback_permitted ||
+        !target.no_playback_only || target.fallback_visuals_permitted ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path)) {
+        return 0;
+    }
+    file = fopen(temporary_path, "wb");
+    if (!file) return 0;
+    if (fprintf(file,
+                NEXUS_V1_SAL_CAPTURE_TARGET_MAGIC "\n"
+                "level_index=%x\ncanonical_sal_name=%s\ncanonical_sal_md5=%s\n"
+                "canonical_map_name=%s\ncanonical_map_md5=%s\n"
+                "canonical_driver_name=%s\ncanonical_driver_md5=%s\n"
+                "raw_map_selector=%x\nmap_attribute=%x\nsal_offset=%x\n"
+                "sal_size=%x\ncapture_kind=original_saturn_sound_driver\n"
+                "required_observations=selector_dispatch,sal_read,driver_output\n"
+                "sal_decode_proven=0\nplayback_permitted=0\nno_playback_only=1\n",
+                target.level_index, target.canonical_sal_name,
+                target.canonical_sal_md5, target.canonical_map_name,
+                target.canonical_map_md5, target.canonical_driver_name,
+                target.canonical_driver_md5, target.raw_map_selector,
+                target.map_attribute, target.sal_offset, target.sal_size) < 0) {
+        fclose(file);
+        remove(temporary_path);
+        return 0;
+    }
+    if (fclose(file) != 0 || rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        return 0;
+    }
+    *out_target = target;
+    return 1;
+}
+
 int nexus_v1_current_level_script_route_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelScriptRouteReceipt *out_receipt) {
