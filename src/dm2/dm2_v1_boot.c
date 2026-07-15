@@ -6959,6 +6959,15 @@ int dm2_v1_boot_runtime_g1_context_receipt(
         return 0;
     }
     memset(&scene, 0, sizeof(scene));
+    /* The startup receipt is requested before the first viewport frame in
+     * the normal boot path. Bind the verified profile exactly once when the
+     * runtime has not yet published its GDAT scene owner. */
+    if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) || !scene.ready) {
+        if (!dm2_v1_runtime_bind_boot_profile(profile)) {
+            return 0;
+        }
+        memset(&scene, 0, sizeof(scene));
+    }
     if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) ||
         !scene.ready || scene.map_graphics_style < 0 ||
         scene.map_graphics_style != dm2_v1_dungeon_get_map_graphics_style(
