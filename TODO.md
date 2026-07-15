@@ -7347,3 +7347,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The owner model-index to Structure3-entry relation is still unproved, so a
   real trace must establish that correlation as well as pixel, palette, VDP1,
   transform, and draw semantics before rendering can be enabled.
+  - 2026-07-15 update: the producer now receives one atomic target containing
+    the hash-bound Structure1F/1A owner, exact typed Structure3 face, and the
+    selected Structure2 image/palette candidate windows. It requests source
+    reads, palette state, VDP1 VRAM/command, transform, and culling lanes from
+    one original Saturn session. The target still cannot claim a model-entry
+    match, pixel span/order, palette format, VDP1 mode, or drawing.

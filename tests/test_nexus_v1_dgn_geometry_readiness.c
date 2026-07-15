@@ -1267,6 +1267,38 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                                   material_target.image_payload_byte_offset &&
                               owner_material_route.target_built,
                               "retail LEV binds independent owner and material source lanes into one no-draw capture request");
+                        if (level == 0 && found_owner_material_target) {
+                            const char *target_path =
+                                "/private/tmp/firestaff_nexus_owner_material_capture_target.txt";
+                            char target_line[160];
+                            FILE *target_file;
+                            Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget
+                                written_target;
+                            Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt
+                                written_route;
+
+                            memset(&written_target, 0, sizeof(written_target));
+                            memset(&written_route, 0, sizeof(written_route));
+                            CHECK(nexus_v1_engine_write_structure1a_structure3_material_capture_target(
+                                      &active_engine, owner_candidate_index,
+                                      material_target.structure3_entry_index,
+                                      material_target.face_ordinal, target_path,
+                                      &written_target, &written_route) == 1 &&
+                                  written_target.valid &&
+                                  written_target.no_draw_only &&
+                                  written_target.blocks_real_dgn_mesh_render &&
+                                  written_route.target_written,
+                                  "retail LEV writes one owner/material Saturn capture request");
+                            target_file = fopen(target_path, "rb");
+                            CHECK(target_file &&
+                                  fgets(target_line, sizeof(target_line), target_file) &&
+                                  strcmp(target_line,
+                                         NEXUS_V1_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_MAGIC
+                                         "\n") == 0,
+                                  "owner/material capture request has a non-runtime target magic");
+                            if (target_file) fclose(target_file);
+                            remove(target_path);
+                        }
                     }
                 }
                 memset(&package_geometry, 0, sizeof(package_geometry));

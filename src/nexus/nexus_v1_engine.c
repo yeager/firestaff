@@ -3889,6 +3889,114 @@ int nexus_v1_engine_build_structure1a_structure3_material_capture_target(
     return 1;
 }
 
+int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
+    Nexus_V1_Engine *engine, int topology_candidate_index,
+    uint32_t structure3_entry_index, uint32_t structure3_face_ordinal,
+    const char *path,
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget *out_target,
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
+    Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt receipt;
+    char temporary_path[1024];
+    FILE *file;
+    int write_ok;
+
+    if (!out_target || !out_receipt) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->no_draw_only = 1;
+    out_target->blocks_real_dgn_mesh_render = 1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!path || !path[0] ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
+            (int)sizeof(temporary_path) ||
+        nexus_v1_engine_build_structure1a_structure3_material_capture_target(
+            engine, topology_candidate_index, structure3_entry_index,
+            structure3_face_ordinal, &target, &receipt) != 1) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    file = fopen(temporary_path, "wb");
+    if (!file) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    write_ok = fprintf(file,
+                       "%s\n"
+                       "level=%d\nsource_bytes=%d\nsource_fnv1a64=%016llx\n"
+                       "owner_x=%d\nowner_y=%d\nstructure1f_entry_index=%d\n"
+                       "structure1f_family=%d\nstructure1f_tag=%u\n"
+                       "structure1f_face_selector=%u\nstructure1a_index=%u\n"
+                       "structure1a_kind=%u\nstructure3_model_index=%u\n"
+                       "z_rotation=%u\nstructure3_payload_fnv1a32=%08x\n"
+                       "structure3_entry_index=%u\nface_ordinal=%u\n"
+                       "face_row_fnv1a32=%08x\nreferenced_vertex_rows_fnv1a32=%08x\n"
+                       "normal_row_fnv1a32=%08x\nfill_selector=%u\n"
+                       "descriptor_index=%d\ndescriptor_fnv1a64=%016llx\n"
+                       "image_anchor_offset=%u\nimage_next_anchor_offset=%u\n"
+                       "image_candidate_byte_count=%u\nimage_candidate_fnv1a64=%016llx\n"
+                       "palette_candidate_present=%d\npalette_anchor_offset=%u\n"
+                       "palette_next_anchor_offset=%u\npalette_candidate_byte_count=%u\n"
+                       "palette_candidate_fnv1a64=%016llx\n"
+                       "requested_observations=source-read,structure1a-owner,structure3-face,palette-state,vdp1-vram,vdp1-command,transform,culling\n"
+                       "original_saturn_capture_required=1\nno_draw_only=1\n",
+                       NEXUS_V1_STRUCTURE1A_STRUCTURE3_MATERIAL_CAPTURE_TARGET_MAGIC,
+                       target.level_index,
+                       target.material_target.source_byte_count,
+                       (unsigned long long)target.material_target.source_bytes_fnv1a64,
+                       target.owner_face_target.owner_x,
+                       target.owner_face_target.owner_y,
+                       target.owner_face_target.structure1f_entry_index,
+                       (int)target.owner_face_target.structure1f_family,
+                       target.owner_face_target.structure1f_tag,
+                       target.owner_face_target.structure1f_face_selector,
+                       target.owner_face_target.structure1a_index,
+                       target.owner_face_target.structure1a_kind,
+                       target.owner_face_target.structure3_model_index,
+                       target.owner_face_target.z_rotation,
+                       target.owner_face_target.structure3_payload_fnv1a32,
+                       target.owner_face_target.face_target.candidate.entry_index,
+                       target.owner_face_target.face_target.candidate.face_ordinal,
+                       target.owner_face_target.face_target.candidate.face_row_fnv1a32,
+                       target.owner_face_target.face_target.candidate
+                           .referenced_vertex_rows_fnv1a32,
+                       target.owner_face_target.face_target.candidate.normal_row_fnv1a32,
+                       target.owner_face_target.face_target.candidate.fill_selector,
+                       target.material_target.descriptor_target.descriptor_index,
+                       (unsigned long long)target.material_target.descriptor_target
+                           .descriptor_bytes_fnv1a64,
+                       target.material_target.descriptor_target
+                           .image_payload_anchor_offset,
+                       target.material_target.descriptor_target
+                           .image_payload_next_anchor_offset,
+                       target.material_target.descriptor_target
+                           .image_payload_candidate_byte_count,
+                       (unsigned long long)target.material_target.descriptor_target
+                           .image_payload_candidate_fnv1a64,
+                       target.material_target.descriptor_target
+                           .palette_payload_candidate_bound,
+                       target.material_target.descriptor_target
+                           .palette_payload_anchor_offset,
+                       target.material_target.descriptor_target
+                           .palette_payload_next_anchor_offset,
+                       target.material_target.descriptor_target
+                           .palette_payload_candidate_byte_count,
+                       (unsigned long long)target.material_target.descriptor_target
+                           .palette_payload_candidate_fnv1a64) > 0;
+    if (fclose(file) != 0) write_ok = 0;
+    if (!write_ok || rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.target_written = 1;
+    *out_target = target;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_current_level_structure3_package_geometry_packet(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,
