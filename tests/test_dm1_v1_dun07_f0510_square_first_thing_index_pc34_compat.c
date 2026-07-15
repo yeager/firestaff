@@ -38,17 +38,19 @@ int main(void)
     struct DungeonThings_Compat things;
     unsigned char map0Squares[9];
     unsigned char map1Squares[4];
-    unsigned short squareFirstThings[5];
+    unsigned short squareFirstThings[6];
     unsigned short columnSftBases[5] = { 0, 2, 2, 3, 3 };
     unsigned char rawDoor[4];
     unsigned char rawText[4];
     unsigned char rawSensor[8];
     unsigned char rawGroup[16];
+    unsigned char rawWeapon[4];
     unsigned short staticDoor;
     unsigned short staticText;
     unsigned short staticSensor;
     unsigned short firstGroup;
     unsigned short firstObject;
+    unsigned short linkedWeapon;
     int ok = 1;
 
     printf("probe=dm1_v1_dun07_f0510_square_first_thing_index_pc34_compat\n");
@@ -64,6 +66,7 @@ int main(void)
     memset(rawText, 0, sizeof(rawText));
     memset(rawSensor, 0, sizeof(rawSensor));
     memset(rawGroup, 0, sizeof(rawGroup));
+    memset(rawWeapon, 0, sizeof(rawWeapon));
 
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
@@ -106,7 +109,8 @@ int main(void)
     squareFirstThings[4] = MAKE_THING(THING_TYPE_ARMOUR, 14, 0);
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 5;
+    squareFirstThings[5] = THING_NONE;
+    things.squareFirstThingCount = 6;
 
     staticDoor = MAKE_THING(THING_TYPE_DOOR, 0, 0);
     staticText = MAKE_THING(THING_TYPE_TEXTSTRING, 0, 0);
@@ -125,10 +129,12 @@ int main(void)
     things.rawThingData[THING_TYPE_TEXTSTRING] = rawText;
     things.rawThingData[THING_TYPE_SENSOR] = rawSensor;
     things.rawThingData[THING_TYPE_GROUP] = rawGroup;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
     things.thingCounts[THING_TYPE_DOOR] = 1;
     things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
     things.thingCounts[THING_TYPE_SENSOR] = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
 
     ok &= expect_int("map0 first flagged square index",
         F0510_DUNGEON_GetSquareFirstThingIndex_Compat(&dungeon, 0, 0, 0), 0);
@@ -168,6 +174,39 @@ int main(void)
     ok &= expect_thing("F0162 does not fabricate an object after static records",
         F0513_DUNGEON_GetSquareFirstObject_Compat(&dungeon, &things, 0, 0, 0),
         THING_ENDOFLIST);
+
+    /* F0163/F0164 preserve the compact G0280 bases and the raw Generic.Next
+     * chain. The spare original SFT slot is the only admissible new head. */
+    linkedWeapon = MAKE_THING(THING_TYPE_WEAPON, 0, 3);
+    squareFirstThings[0] = staticDoor;
+    rawSensor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawSensor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    ok &= expect_int("F0163 inserts an original-backed empty square head",
+        F0514_DUNGEON_LinkThingToList_Compat(&dungeon, &things, linkedWeapon,
+            THING_ENDOFLIST, 0, 1, 1), 1);
+    ok &= expect_int("F0163 increments later compact column base", columnSftBases[2], 3);
+    ok &= expect_thing("F0163 stores new SFT head", squareFirstThings[2], linkedWeapon);
+    ok &= expect_thing("F0163 terminates new raw thing", F0512_DUNGEON_GetThingNext_Compat(&things, linkedWeapon), THING_ENDOFLIST);
+    ok &= expect_int("F0163 marks square list present",
+        (map0Squares[1 * 3 + 1] & DUNGEON_SQUARE_MASK_THING_LIST) != 0, 1);
+    ok &= expect_int("F0164 removes final compact square head",
+        F0515_DUNGEON_UnlinkThingFromList_Compat(&dungeon, &things, linkedWeapon,
+            THING_ENDOFLIST, 0, 1, 1), 1);
+    ok &= expect_int("F0164 restores later compact column base", columnSftBases[2], 2);
+    ok &= expect_thing("F0164 restores SFT tail sentinel", squareFirstThings[5], THING_NONE);
+    ok &= expect_int("F0164 clears square list present",
+        (map0Squares[1 * 3 + 1] & DUNGEON_SQUARE_MASK_THING_LIST) != 0, 0);
+
+    rawGroup[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawGroup[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    ok &= expect_int("F0163 appends after an existing raw tail",
+        F0514_DUNGEON_LinkThingToList_Compat(&dungeon, &things, linkedWeapon,
+            firstGroup, 0, -1, 0), 1);
+    ok &= expect_thing("F0163 writes predecessor raw next", F0512_DUNGEON_GetThingNext_Compat(&things, firstGroup), linkedWeapon);
+    ok &= expect_int("F0164 removes a non-square tail",
+        F0515_DUNGEON_UnlinkThingFromList_Compat(&dungeon, &things, linkedWeapon,
+            firstGroup, 0, -1, 0), 1);
+    ok &= expect_thing("F0164 restores predecessor raw next", F0512_DUNGEON_GetThingNext_Compat(&things, firstGroup), THING_ENDOFLIST);
 
     if (!ok) {
         return 1;
