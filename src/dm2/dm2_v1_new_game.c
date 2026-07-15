@@ -1173,6 +1173,27 @@ int dm2_v1_original_raw_sksave_creature_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_weapon_receipt(
+    const uint8_t *buf, size_t buf_size, int record_index,
+    DM2_V1_OriginalRawWeaponReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawWeaponReceipt candidate;
+    uint16_t w2;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!dm2_v1_original_raw_sksave_db_record_receipt(
+            buf, buf_size, 5, record_index, &candidate.record) ||
+        !candidate.record.valid || candidate.record.record_size != 4u ||
+        candidate.record.record_offset > buf_size - 4u) return 0;
+    w2 = dm2_v1_read_u16_le_at(buf, candidate.record.record_offset + 2u);
+    candidate.item_type = (uint8_t)(w2 & 0x007fu);
+    candidate.important = (uint8_t)((w2 >> 7) & 1u);
+    candidate.charges = (uint8_t)((w2 >> 10) & 0x0fu);
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)

@@ -281,6 +281,14 @@ typedef struct {
     uint16_t hp1;
 } DM2_V1_OriginalRawCreatureReceipt;
 
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDbRecordReceipt record;
+    uint8_t item_type;
+    uint8_t important;
+    uint8_t charges;
+} DM2_V1_OriginalRawWeaponReceipt;
+
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
@@ -394,6 +402,11 @@ int dm2_v1_original_raw_sksave_creature_receipt(
     size_t buf_size,
     int record_index,
     DM2_V1_OriginalRawCreatureReceipt *out_receipt);
+int dm2_v1_original_raw_sksave_weapon_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    int record_index,
+    DM2_V1_OriginalRawWeaponReceipt *out_receipt);
 
 /* Parse one payload after the 42-byte SKSave slot header. The function never
  * changes live runtime state; callers must apply the returned candidate only
