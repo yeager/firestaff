@@ -210,6 +210,8 @@ typedef struct {
     int creatureHealth[4];
     int championCell;
     int targetDirection;
+    int hasOrderedCells;
+    int orderedCells[4];
 } DM1_MeleeF0177TargetCreatureInputPc34;
 
 typedef struct {

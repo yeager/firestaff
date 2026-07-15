@@ -207,6 +207,42 @@ int F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
     return 0;
 }
 
+int F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+    int outOrderedCells[4],
+    int targetMapX,
+    int targetMapY,
+    int attackerMapX,
+    int attackerMapY,
+    unsigned int cellSource,
+    struct RngState_Compat* rng)
+{
+    static const unsigned char orderedCellsToAttack[8][4] = {
+        { 0, 1, 3, 2 }, { 1, 0, 2, 3 },
+        { 1, 2, 0, 3 }, { 2, 1, 3, 0 },
+        { 3, 2, 0, 1 }, { 2, 3, 1, 0 },
+        { 0, 3, 1, 2 }, { 3, 0, 2, 1 }
+    };
+    int primaryDirection;
+    int secondaryDirection;
+    int index;
+    int i;
+
+    if (!outOrderedCells ||
+        !F0228_DM1_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource_Compat(
+            targetMapX, targetMapY, attackerMapX, attackerMapY, rng,
+            &primaryDirection, &secondaryDirection)) {
+        return 0;
+    }
+    (void)secondaryDirection;
+    index = primaryDirection << 1;
+    if (!(index & 0x0002)) cellSource++;
+    index += (int)((cellSource >> 1) & 0x0001);
+    for (i = 0; i < 4; ++i) {
+        outOrderedCells[i] = orderedCellsToAttack[index][i];
+    }
+    return 1;
+}
+
 static int packed_group_cell(int cells, int creatureIndex) {
     return (cells >> (creatureIndex * 2)) & 0x03;
 }

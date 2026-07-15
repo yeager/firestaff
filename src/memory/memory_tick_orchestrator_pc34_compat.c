@@ -2965,10 +2965,11 @@ static int orch_cmd_attack_first_living_creature_compat(
 }
 
 static int orch_cmd_attack_f0177_creature_slot_compat(
-    const struct GameWorld_Compat* world,
+    struct GameWorld_Compat* world,
     int championIndex,
     int groupIndex,
-    int targetDirection)
+    int groupMapX,
+    int groupMapY)
 {
     const struct DungeonGroup_Compat* group;
     DM1_MeleeF0177TargetCreatureInputPc34 in;
@@ -2997,7 +2998,13 @@ static int orch_cmd_attack_f0177_creature_slot_compat(
         in.creatureHealth[i] = (int)group->health[i];
     }
     in.championCell = (int)(world->party.champions[championIndex].cell & 3);
-    in.targetDirection = targetDirection;
+    if (!F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat(
+            in.orderedCells, groupMapX, groupMapY,
+            world->party.mapX, world->party.mapY,
+            (unsigned int)in.championCell, &world->masterRng)) {
+        return -1;
+    }
+    in.hasOrderedCells = 1;
 
     if (!dm1_v1_melee_target_creature_plan_f0177_pc34(&in, &plan) ||
         !plan.valid) {
@@ -3063,7 +3070,7 @@ static int orch_cmd_attack_disrupt_material_blocked_f0407_compat(
 }
 
 static int orch_cmd_attack_resolve_target_compat(
-    const struct GameWorld_Compat* world,
+    struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
     const DM1_MeleeF0402CommandDecodePlanPc34* decodePlan,
     int* outGroupIndex,
@@ -3093,11 +3100,10 @@ static int orch_cmd_attack_resolve_target_compat(
     if (decodePlan->requestedAutoCreature) {
         creatureIndex = orch_cmd_attack_f0177_creature_slot_compat(
             world, (int)input->commandArg1, groupIndex,
-            decodePlan->targetDirection);
+            decodePlan->targetMapX, decodePlan->targetMapY);
         if (creatureIndex < 0 ||
             creatureIndex > (int)world->things->groups[groupIndex].count) {
-            creatureIndex = orch_cmd_attack_first_living_creature_compat(
-                &world->things->groups[groupIndex]);
+            return 0;
         }
     } else if (
         creatureIndex < 0 || creatureIndex > (int)world->things->groups[groupIndex].count) {
