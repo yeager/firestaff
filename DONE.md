@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 HoC C026 direct mirror atlas gate: the low-level
+  `dm1_v1_front_mirror_render_plan_pc34()` path now rejects portrait indices
+  outside ReDMCSB's 8x3 C026 atlas before computing source coordinates, so
+  damaged C127 data cannot bypass the runtime receipt and sample past the
+  real champion portrait strip. Focused champion-mirror and real HoC C127
+  material CTests pass.
+
 - ✅ 2026-07-15 CSB startup real-surface receipt hardening: terminal,
   title/opening, and opening-door session receipts now require the resident
   decoded C001 title surface, PRESENTS/CHAOS/STRIKES crops, C004 entrance,

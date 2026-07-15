@@ -16,6 +16,10 @@ enum {
     DM1_FRONT_MIRROR_VIEW_WALL_INDEX_PC34 = 12,
     DM1_PORTRAIT_WIDTH_PC34 = 32,
     DM1_PORTRAIT_HEIGHT_PC34 = 29,
+    DM1_PORTRAIT_ATLAS_COLS_PC34 = 8,
+    DM1_PORTRAIT_ATLAS_ROWS_PC34 = 3,
+    DM1_PORTRAIT_ATLAS_COUNT_PC34 =
+        DM1_PORTRAIT_ATLAS_COLS_PC34 * DM1_PORTRAIT_ATLAS_ROWS_PC34,
     DM1_PORTRAIT_DST_X_PC34 = 96,
     DM1_PORTRAIT_DST_Y_PC34 = 35,
     DM1_PORTRAIT_TRANSPARENT_COLOR_PC34 = 1,
@@ -297,7 +301,8 @@ int dm1_v1_wall_ornament_host_material_receipt_pc34(
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan) {
-    if (!outPlan || portraitOrdinal < 0) {
+    if (!outPlan || portraitOrdinal < 0 ||
+        portraitOrdinal >= DM1_PORTRAIT_ATLAS_COUNT_PC34) {
         return 0;
     }
     if (!dm1_v1_wall_ornament_render_plan_pc34(
@@ -313,9 +318,11 @@ int dm1_v1_front_mirror_render_plan_pc34(
      * raster goes into G0205's 64x43 D1C zone before C026 at G0109. */
     outPlan->portraitGraphicIndex = DM1_GFX_CHAMPION_PORTRAITS_PC34;
     outPlan->portraitSrcX =
-        (portraitOrdinal & 7) * DM1_PORTRAIT_WIDTH_PC34;
+        (portraitOrdinal % DM1_PORTRAIT_ATLAS_COLS_PC34) *
+        DM1_PORTRAIT_WIDTH_PC34;
     outPlan->portraitSrcY =
-        (portraitOrdinal >> 3) * DM1_PORTRAIT_HEIGHT_PC34;
+        (portraitOrdinal / DM1_PORTRAIT_ATLAS_COLS_PC34) *
+        DM1_PORTRAIT_HEIGHT_PC34;
     outPlan->portraitDstX = DM1_PORTRAIT_DST_X_PC34;
     outPlan->portraitDstY = DM1_PORTRAIT_DST_Y_PC34;
     outPlan->portraitWidth = DM1_PORTRAIT_WIDTH_PC34;

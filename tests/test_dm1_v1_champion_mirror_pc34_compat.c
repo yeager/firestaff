@@ -1,4 +1,5 @@
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 
 /*
  * pass796 - DM1 V1 champion mirror contract test
@@ -230,6 +231,7 @@ static void test_f0172_front_wall_sensor_receipt(void)
     DM1_V1_ChampionMirrorRenderReceiptPc34 render;
     DM1_V1_ChampionMirrorThingLayerBoundaryReceiptPc34 boundary;
     DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 consumer;
+    DM1_FrontMirrorRenderPlanPc34 directPlan;
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 floorThing;
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 projectileThing;
     const DM1V1D1LD1RF0115LanePc34Data *lane;
@@ -308,6 +310,20 @@ static void test_f0172_front_wall_sensor_receipt(void)
             render.suppressMaterializedItemPayload &&
             render.clearStaleChampionPortraitOrdinal,
         "out-of-range C127 source data clears the C026 route without fallback",
+        "DUNVIEW.C:3913-3928 C026 8x3 atlas boundary");
+
+    CHECK_ANCHOR(
+        dm1_v1_front_mirror_render_plan_pc34(
+            DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT - 1,
+            &directPlan) == 1 &&
+            directPlan.portraitGraphicIndex ==
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_GRAPHIC_PC34_COMPAT &&
+            directPlan.portraitSrcX == 224 &&
+            directPlan.portraitSrcY == 58 &&
+            dm1_v1_front_mirror_render_plan_pc34(
+                DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT,
+                &directPlan) == 0,
+        "direct front mirror plan rejects C026 coordinates outside the 8x3 atlas",
         "DUNVIEW.C:3913-3928 C026 8x3 atlas boundary");
 
     CHECK_ANCHOR(

@@ -52,6 +52,12 @@
     wall cells, and records the number of sensors and distinct source
     portraits. Remaining work is an operator-captured Mac/release frame for
     these genuine routes, not a host portrait substitute.
+  - 2026-07-15 direct-plan atlas update: the lower C346/C026 front-mirror
+    render plan now rejects any portrait index outside ReDMCSB's 24-cell C026
+    atlas before computing source coordinates, matching the runtime receipt's
+    fail-closed route. Remaining work is still the operator-captured
+    Mac/release frame for these genuine routes, not a host portrait
+    substitute.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and verified PC34 M653 font
