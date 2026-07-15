@@ -4560,6 +4560,18 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
         out_plan, portrait_destinations, table_hash);
 }
 
+int dm2_v1_boot_gdat_hud_static_m11_command_plan(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_GdatHudM11CommandPlan *out_plan)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!profile || !profile->graphics_dat || !out_plan) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return dm2_v1_gdat_hud_m11_command_plan_build(&gfx->loader, out_plan);
+}
+
 int dm2_v1_boot_weather_gdat_receipt(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,
@@ -6774,7 +6786,10 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->runtime_hud_direction_mask == 0x0f &&
         out_receipt->runtime_hud_sample_count == 4 &&
         out_receipt->runtime_hud_unique_frame_hash_count > 0 &&
-        out_receipt->runtime_hud_min_asset_portrait_count >= 4 &&
+        /* No source squad exists before GAME_LOAD/new-game handoff. The
+         * four original portrait assets are still captured below, but none
+         * may be painted into this initial static-HUD frame. */
+        out_receipt->runtime_hud_min_asset_portrait_count == 0 &&
         out_receipt->runtime_hud_total_fallback_portrait_count == 0 &&
         out_receipt->runtime_hud_min_asset_floor_ceiling_count >= 2 &&
         out_receipt->runtime_hud_total_fallback_floor_ceiling_count == 0 &&
@@ -7250,8 +7265,10 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_hud_portrait_count();
         out_receipt->runtime_hud_fallback_portrait_count =
             dm2_v1_runtime_last_fallback_hud_portrait_count();
+        /* An empty original squad owns no portrait draw.  The viewport
+         * blocks any occupied slot without a source HeroType, so zero
+         * fallback draws is the correct no-invention receipt here. */
         out_receipt->runtime_hud_no_fallback_portraits =
-            out_receipt->runtime_hud_asset_portrait_count > 0 &&
             out_receipt->runtime_hud_fallback_portrait_count == 0;
         out_receipt->runtime_hud_raw_gdat_capture_ready =
             dm2_v1_boot_runtime_raw_gdat_hud_probe(
@@ -7728,8 +7745,9 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     }
     out_receipt->unique_frame_hash_count = frame_hash_count;
     out_receipt->combined_frame_hash = combined_hash;
+    /* A raw G1 boot has no original squad record yet.  Its static HUD must
+     * therefore prove zero portrait fallback rather than inventing one. */
     out_receipt->no_fallback_portraits =
-        out_receipt->total_asset_portrait_count > 0 &&
         out_receipt->total_fallback_portrait_count == 0;
     out_receipt->no_core_render_fallbacks =
         out_receipt->total_asset_floor_ceiling_count > 0 &&
@@ -7742,10 +7760,6 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
         out_receipt->total_fallback_projectile_count == 0;
     out_receipt->first_runtime_hud_ready =
         out_receipt->first_frame.runtime_hud_capture_ready;
-    out_receipt->real_gdat_portrait_ready =
-        out_receipt->graphics_dat_ready &&
-        out_receipt->min_asset_portrait_count >= 4 &&
-        out_receipt->no_fallback_portraits;
     out_receipt->real_gdat_core_render_ready =
         out_receipt->graphics_dat_ready &&
         out_receipt->min_asset_floor_ceiling_count >= 2 &&
@@ -7769,6 +7783,11 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
             &out_receipt->decoded_gdat_runtime_core_hash,
             &out_receipt->decoded_gdat_runtime_core_pixel_count,
             &out_receipt->decoded_gdat_runtime_interface_count);
+    out_receipt->real_gdat_portrait_ready =
+        out_receipt->graphics_dat_ready &&
+        out_receipt->no_fallback_portraits &&
+        out_receipt->raw_gdat_runtime_portrait_count >= 4 &&
+        out_receipt->decoded_gdat_runtime_portrait_count >= 4;
     /* skproject/SKWIN/SkWinCore.cpp DRAW_MAP_CHIP calls
      * QUERY_DUNGEON_MAP_CHIP_PICT(GDAT_CATEGORY_TELEPORTERS, 0, ...)
      * for teleporter dungeon tiles.  This receipt proves the runtime
@@ -8401,7 +8420,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->runtime_hud.first_runtime_hud_ready &&
         out_receipt->runtime_hud.real_gdat_portrait_ready &&
         out_receipt->runtime_hud.no_fallback_portraits &&
-        out_receipt->runtime_hud.min_asset_portrait_count >= 4;
+        out_receipt->runtime_hud.raw_gdat_runtime_portrait_count >= 4 &&
+        out_receipt->runtime_hud.decoded_gdat_runtime_portrait_count >= 4;
     out_receipt->runtime_gdat_dungeon_complete =
         out_receipt->runtime_hud.real_gdat_core_render_ready &&
         out_receipt->runtime_hud.no_core_render_fallbacks &&

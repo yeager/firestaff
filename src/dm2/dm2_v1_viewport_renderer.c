@@ -5668,7 +5668,10 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
     const DM2_V1_GdatHudM11CommandPlan *plan;
 
     if (!s || !rect || !(plan = s->gdat_hud_material_plan) ||
-        !plan->valid || plan->command_count != DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        !plan->valid ||
+        plan->command_count < DM2_V1_GDAT_HUD_M11_COMMAND_MAX -
+                                  DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
+        plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         plan->command_hash == 0u) return NULL;
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];

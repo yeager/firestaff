@@ -1690,8 +1690,14 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.leader_hand_object = 0u;
     memset(g_dm2_runtime.champion_inventory_objects, 0,
            sizeof(g_dm2_runtime.champion_inventory_objects));
-    dm2_v1_session_new(&g_dm2_runtime.session_snapshot);
-    g_dm2_runtime.session_snapshot_valid = 1;
+    /* GAME_LOAD supplies the squad state.  DUNGEON.DAT supplies the map
+     * start, but not Champion::HeroType records; creating a starter party
+     * here would make the first HUD frame select portraits by invention.
+     * Keep the party absent until an original save or verified new-game
+     * handoff publishes source-owned champion records. */
+    memset(&g_dm2_runtime.session_snapshot, 0,
+           sizeof(g_dm2_runtime.session_snapshot));
+    g_dm2_runtime.session_snapshot_valid = 0;
     memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
@@ -3432,9 +3438,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (viewport.hud_party_valid) {
         (void)dm2_v1_boot_gdat_hud_m11_command_plan(
             rt->boot, &viewport.hud_party, &hud_material_plan);
-        dm2_v1_viewport_set_gdat_hud_material_plan(
-            &viewport, &hud_material_plan);
+    } else if (rt->boot && rt->boot->graphics_dat) {
+        /* The static chrome is a complete source-owned nine-command plan.
+         * Portrait commands are deliberately absent until GAME_LOAD or the
+         * new-game route binds Champion::HeroType. */
+        (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
+            rt->boot, &hud_material_plan);
     }
+    dm2_v1_viewport_set_gdat_hud_material_plan(
+        &viewport, &hud_material_plan);
     if (dm2_v1_boot_interface_hud_layout(rt->boot, &hud_layout)) {
         dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &hud_layout);
     }
