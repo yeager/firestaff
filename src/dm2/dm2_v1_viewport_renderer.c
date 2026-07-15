@@ -1324,6 +1324,12 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
         return 0;
     }
     memset(out_plan, 0, sizeof(*out_plan));
+    /* DRAW_WALL reads glbMapGraphicsSet. The planner is also consumed by
+     * M11 before viewport drawing, so it must reject an absent G1 owner here
+     * rather than encode the former renderer-default graphics set. */
+    if (s && s->source_materials_required && !s->gdat_scene_control_ready) {
+        return 0;
+    }
     /* skproject SKWIN/SkWinCore.cpp DRAW_WALL/QUERY_TEMP_PICST routes each
      * visible wall through the viewport-cell field before blitting.  Keep the
      * Firestaff contract as explicit panel rows so the asset-backed renderer,
