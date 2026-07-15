@@ -2,7 +2,9 @@
 
 - 2026-07-15 CSB PC3.4 palette/capture gate: C001 now reaches M11 through
   TITLE.C F0437's original source rectangles and verified package rasters;
-  C002/C003/C004 and C017/C040 use the same session. Exact CSBWin
+  C002/C003/C004 and C017/C040 use the same session. M11's C017/C040 route
+  now uses ReDMCSB's `(0,33)` viewport and C101 panel coordinates directly,
+  without the generic C017 cache. Exact CSBWin
   `Palette360` program-data bytes and an external original visual capture are
   still absent locally. Do not replace the ReDMCSB palette with guessed RGB
   values or promote the current package hashes to pixel-parity evidence.
