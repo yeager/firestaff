@@ -347,31 +347,6 @@ static void blt_tile_16x16(TQR_PlanarFramebuffer *fb,
     }
 }
 
-/* ── Fallback flat-color fill ─────────────────────────────────────── */
-/*
- * Fill a 16×16 screen-space square with a flat palette color.
- * Used when tile index is TILE_FALLBACK (-1) or tile not loaded.
- * Source: deterministic fallback rule (Phase 4 mandate).
- */
-static void fill_square_flat(TQR_PlanarFramebuffer *fb,
-                              int fb_x, int fb_y,
-                              uint8_t pal_index) {
-    if (!fb || !fb->data) return;
-    /* Clamp to framebuffer bounds */
-    if (fb_x < 0) fb_x = 0;
-    if (fb_y < 0) fb_y = 0;
-    if (fb_x + 16 > fb->w) fb_x = fb->w - 16;
-    if (fb_y + 16 > fb->h) fb_y = fb->h - 16;
-    if (fb_x < 0 || fb_y < 0) return;
-
-    for (int y = 0; y < 16; y++) {
-        uint8_t *row_ptr = fb->data + (fb_y + y) * fb->stride;
-        for (int x = 0; x < 16; x++) {
-            row_ptr[fb_x + x] = pal_index;
-        }
-    }
-}
-
 /* ── Get tile data from palette state ─────────────────────────────── */
 /*
  * Returns decoded 64-byte linear tile data, or NULL if not loaded.
@@ -446,8 +421,10 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                                const Theron_V1_World *world) {
     if (!vp || !vp->initialized || !world) return;
 
-    /* Clear planar framebuffer with black (palette index 0) */
-    theron_vp_clear(vp, 0);
+    /* The level-to-tile bank mapping has not yet been observed in an
+     * original Track 02 execution. Preserve the preceding source-owned
+     * surface outside the tiles we can actually decode; a generated black
+     * clear would turn an incomplete map into invented presentation. */
 
     /* Get party position and direction */
     const Theron_V1_Champion *theron = theron_v1_party_leader_c(&world->party);
@@ -537,17 +514,11 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             /* Look up tile for this square at this depth */
             int tile_idx = g_tile_table[sq_type & 0xF][d][is_wall];
 
-            if (tile_idx == TILE_FALLBACK || tile_idx < 0) {
-                /* Deterministic fallback: flat mid-gray (palette entry 7) */
-                fill_square_flat(&vp->fb, screen_x, band_y, TQR_TILE_FALLBACK_COLOR_INDEX);
-            } else {
+            if (tile_idx != TILE_FALLBACK && tile_idx >= 0) {
                 /* Try to decode and blt the tile */
                 const uint8_t *tile_data = get_tile_data(&vp->palette, tile_idx);
                 if (tile_data) {
                     blt_tile_16x16(&vp->fb, tile_data, screen_x, band_y);
-                } else {
-                    /* Tile not in atlas: fallback flat color */
-                    fill_square_flat(&vp->fb, screen_x, band_y, TQR_TILE_FALLBACK_COLOR_INDEX);
                 }
             }
 

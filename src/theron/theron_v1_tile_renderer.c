@@ -52,7 +52,7 @@ static const int8_t g_left_dy[4] = {  0, -1,  0,  1 };
  * Index: tile_index = g_tile_table[square_type][depth][is_wall]
  *
  * tile_index >= 0:   tile index into TQR_PaletteState tile atlas
- * tile_index == -1:  flat-color fallback (palette entry 7 mid-gray)
+ * tile_index == -1:  no draw until an original tile-bank route is proven
  *
  * Source: THQUEST.ASM T520 — tile bank loading uses dungeon_seed to
  * select which tile sub-bank to use.  Deterministic mapping:
@@ -333,28 +333,10 @@ static void blt_tile_16x16(TQR_PlanarFramebuffer *fb,
 }
 
 /*
- * fill_square_flat — fill a 16×16 screen region with a solid palette color.
- * Used when tile index is TILE_FALLBACK (-1) or tile not loaded.
- * Source: deterministic fallback rule (Phase 4 mandate).
+ * Missing tile-bank ownership is a no-draw condition. There is no verified
+ * Track 02 mapping for the legacy flat-color replacement, so it cannot
+ * contribute pixels to a source-owned dungeon frame.
  */
-static void fill_square_flat(TQR_PlanarFramebuffer *fb,
-                              int fb_x, int fb_y,
-                              uint8_t pal_index) {
-    if (!fb || !fb->data) return;
-    if (fb_x < 0) fb_x = 0;
-    if (fb_y < 0) fb_y = 0;
-    if (fb_x + 16 > fb->w) fb_x = fb->w - 16;
-    if (fb_y + 16 > fb->h) fb_y = fb->h - 16;
-    if (fb_x < 0 || fb_y < 0) return;
-
-    for (int y = 0; y < 16; y++) {
-        uint8_t *row_ptr = fb->data + (fb_y + y) * fb->stride;
-        for (int x = 0; x < 16; x++) {
-            row_ptr[fb_x + x] = pal_index;
-        }
-    }
-}
-
 /* ══════════════════════════════════════════════════════════════════════
  * Public tile-renderer API
  * ══════════════════════════════════════════════════════════════════════ */
@@ -404,8 +386,8 @@ void tr_render_dungeon(TQR_PlanarFramebuffer *fb,
     if (!fb || !fb->data || !world) return;
     if (!palette) return;
 
-    /* Clear with black (palette index 0) */
-    tr_clear_fb(fb, 0);
+    /* Keep an existing source-owned surface intact outside tiles that have
+     * actual atlas bytes. A generated black clear would be another fallback. */
 
     /* Get party position and direction from world state.
      * Theron: position stored in world->levels[dungeon-1][level].start_x/y
@@ -462,16 +444,10 @@ void tr_render_dungeon(TQR_PlanarFramebuffer *fb,
             /* Tile lookup */
             int tile_idx = tr_tile_for_square(sq_type, d, is_wall);
 
-            if (tile_idx == TR_TILE_FALLBACK || tile_idx < 0) {
-                /* Deterministic fallback: flat mid-gray palette entry 7 */
-                fill_square_flat(fb, screen_x, band_y, TQR_TILE_FALLBACK_COLOR_INDEX);
-            } else {
+            if (tile_idx != TR_TILE_FALLBACK && tile_idx >= 0) {
                 const uint8_t *tile_data = tr_get_tile_data(palette, tile_idx);
                 if (tile_data) {
                     blt_tile_16x16(fb, tile_data, screen_x, band_y);
-                } else {
-                    /* Tile not in atlas: fallback flat color */
-                    fill_square_flat(fb, screen_x, band_y, TQR_TILE_FALLBACK_COLOR_INDEX);
                 }
             }
 

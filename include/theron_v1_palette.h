@@ -40,10 +40,9 @@ extern "C" {
  *   bits [ 3:0] = B (4 bits, values 0-15)
  *   Expanded to RGBA8: r=(R<<4)|R, g=(G<<4)|G, b=(B<<4)|B, a=0xFF
  *
- * Deterministic fallback (Phase 4 mandate):
- *   Any tile/texture that cannot be loaded from Track 02 data is
- *   rendered as a solid color using palette entry 7 (mid-gray),
- *   never as a crash or uninitialized buffer.
+ * Source-only gate:
+ *   Any tile/texture that cannot be loaded from verified Track 02 data is
+ *   a no-draw region. It must not be replaced by a solid colour.
  *
  * Source references:
  *   THQUEST.ASM T400   — tile bank loading
@@ -72,7 +71,7 @@ extern "C" {
 #define TQR_PAL_GROUP_UI         3  /* HUD, menus, text               */
 #define TQR_PAL_GROUP_TITLE      14  /* title screen graphics          */
 #define TQR_PAL_GROUP_FONT        4  /* 8×8 font tile palette          */
-#define TQR_PAL_FLAT_COLOR        7  /* deterministic fallback color   */
+#define TQR_PAL_FLAT_COLOR        7  /* reserved original palette slot */
 
 /* ── Tile descriptor ───────────────────────────────────────────────── */
 typedef struct {
@@ -201,14 +200,6 @@ int tqr_tile_get_info(const TQR_PaletteState *pal,
                       int tile_index,
                       int *out_bpp,
                       int *out_pal_group);
-
-/* ── Deterministic fallback rules ─────────────────────────────────── */
-
-/* Flat-color tile used when a tile slot cannot be loaded.
- * Uses palette entry TQR_PAL_FLAT_COLOR (index 7), which is mid-gray
- * in the default palette. This ensures identical output on all
- * platforms even when Track 02 data is missing or malformed. */
-#define TQR_TILE_FALLBACK_COLOR_INDEX  TQR_PAL_FLAT_COLOR  /* = 7 */
 
 #ifdef __cplusplus
 }

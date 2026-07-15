@@ -30,7 +30,8 @@
  * Asset wiring:
  *   TQR_PaletteState carries the loaded tile atlas from Track 02.
  *   Viewport queries tiles via tile index + palette group.
- *   Deterministic fallback: any unloaded tile → palette entry 7 (mid-gray).
+ *   Source-only gate: unloaded or unbound tiles leave the existing surface
+ *   untouched until an original Track 02 tile-bank mapping is proven.
  *
  * Source references:
  *   THQUEST.ASM T400   — tile bank loading
@@ -143,7 +144,7 @@ void theron_vp_set_palette(Theron_V1_Viewport *vp, const TQR_PaletteState *palet
  *   - wall tile at each solid square or side wall
  *   - object/creature overlay tiles at D0/D1
  *
- * Deterministic fallback: any missing tile → palette entry 7 (mid-gray).
+ * Missing or unbound tiles are no-draw and preserve the existing surface.
  *
  * Source: THQUEST.ASM T520 (tile selection), T400 (tile bank loading).
  */

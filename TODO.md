@@ -7642,6 +7642,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     destination rectangle with a generated zero-colour fill before copying
     authentic pixels. The clear is removed; atlas presentation now has only
     authenticated `plot_pixel` output and leaves any unbound area untouched.
+  - 2026-07-15 runtime tile correction: the old viewport and standalone tile
+    renderer also used generated black clears and palette-7 gray squares for
+    an unbound dungeon tile bank. Both now preserve the existing surface and
+    draw only supplied tile bytes. The remaining gap is a positive original
+    Track 02 loader/CD capture that binds level records to tile/palette banks.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and
