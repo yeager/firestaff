@@ -142,6 +142,12 @@ static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
     return hash;
 }
 
+static uint32_t nexus_v1_dgn_read_be32(const uint8_t *data)
+{
+    return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
+        ((uint32_t)data[2] << 8) | (uint32_t)data[3];
+}
+
 static int nexus_v1_dgn_source_bytes_match(
     const Nexus_V1_DgnStructure2SourceReceipt *source,
     const uint8_t *data, int size)
@@ -3030,6 +3036,117 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
         return 0;
     }
     *out_target = target;
+    return 1;
+}
+
+int nexus_v1_engine_build_structure3_static_material_capture_target(
+    const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
+    uint32_t face_ordinal,
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *out_target)
+{
+    Nexus_V1_DgnActiveStructure3FaceMaterialReceipt material_receipt;
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+    const Nexus_V1_Level *level;
+    const uint8_t *data;
+    uint32_t entry_relative_offset;
+    uint32_t face_relative_offset;
+    uint16_t face_count;
+    int descriptor_index;
+    int face_byte_offset;
+
+    if (!out_target) return -1;
+    memset(out_target, 0, sizeof(*out_target));
+    out_target->level_index = -1;
+    out_target->no_draw_only = 1;
+    if (!engine ||
+        nexus_v1_current_level_structure3_face_material_receipt(
+            engine, &material_receipt) != 1 ||
+        structure3_entry_index >=
+            (uint32_t)engine->current_level.structure3_directory.entry_count) {
+        return 0;
+    }
+    level = &engine->current_level;
+    data = engine->current_level_dgn_data;
+    if (!data || level->structure3_payload.byte_offset < 0 ||
+        level->structure3_payload.byte_size < 4 ||
+        level->structure3_payload.byte_offset > engine->current_level_dgn_size ||
+        level->structure3_payload.byte_size >
+            engine->current_level_dgn_size - level->structure3_payload.byte_offset) {
+        return 0;
+    }
+    entry_relative_offset = nexus_v1_dgn_read_be32(
+        data + level->structure3_payload.byte_offset + 4 +
+        structure3_entry_index * 4U);
+    if (entry_relative_offset > (uint32_t)level->structure3_payload.byte_size ||
+        (uint32_t)level->structure3_payload.byte_size - entry_relative_offset < 40U) {
+        return 0;
+    }
+    face_count = (uint16_t)((unsigned int)
+        data[level->structure3_payload.byte_offset + entry_relative_offset + 6] << 8 |
+        data[level->structure3_payload.byte_offset + entry_relative_offset + 7]);
+    face_relative_offset = nexus_v1_dgn_read_be32(
+        data + level->structure3_payload.byte_offset + entry_relative_offset + 16);
+    if (face_ordinal >= face_count ||
+        face_relative_offset > (uint32_t)level->structure3_payload.byte_size ||
+        (uint32_t)level->structure3_payload.byte_size - face_relative_offset < 12U ||
+        face_ordinal > ((uint32_t)level->structure3_payload.byte_size -
+                        face_relative_offset - 12U) / 12U) {
+        return 0;
+    }
+    face_byte_offset = level->structure3_payload.byte_offset +
+        (int)face_relative_offset + (int)face_ordinal * 12;
+    if (face_byte_offset < level->structure3_payload.byte_offset ||
+        face_byte_offset > engine->current_level_dgn_size - 12) {
+        return 0;
+    }
+    if ((data[face_byte_offset + 8] & 0x40U) == 0U ||
+        data[face_byte_offset + 10] != 0U) {
+        return 0;
+    }
+    for (descriptor_index = 0;
+         descriptor_index < level->structure2_texture_count;
+         ++descriptor_index) {
+        if (level->structure2_textures[descriptor_index].image_id ==
+            data[face_byte_offset + 11]) break;
+    }
+    if (descriptor_index == level->structure2_texture_count ||
+        nexus_v1_engine_build_structure2_descriptor_capture_target(
+            engine, descriptor_index, &descriptor_target) != 1) {
+        return 0;
+    }
+    out_target->valid = 1;
+    out_target->level_index = engine->game.current_level;
+    out_target->source_byte_count = engine->current_level_dgn_size;
+    out_target->source_bytes_fnv1a64 = material_receipt.source_bytes_fnv1a64;
+    out_target->structure3_entry_index = structure3_entry_index;
+    out_target->face_ordinal = face_ordinal;
+    out_target->face_byte_offset = face_byte_offset;
+    out_target->face_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        data + face_byte_offset, 12);
+    out_target->face.vertex_indexes[0] =
+        (uint16_t)(((unsigned int)data[face_byte_offset] << 8) |
+                   data[face_byte_offset + 1]);
+    out_target->face.vertex_indexes[1] =
+        (uint16_t)(((unsigned int)data[face_byte_offset + 2] << 8) |
+                   data[face_byte_offset + 3]);
+    out_target->face.vertex_indexes[2] =
+        (uint16_t)(((unsigned int)data[face_byte_offset + 4] << 8) |
+                   data[face_byte_offset + 5]);
+    out_target->face.vertex_indexes[3] =
+        (uint16_t)(((unsigned int)data[face_byte_offset + 6] << 8) |
+                   data[face_byte_offset + 7]);
+    out_target->face.flags = data[face_byte_offset + 8];
+    out_target->face.raw_byte_9 = data[face_byte_offset + 9];
+    out_target->face.fill_selector =
+        (uint16_t)(((unsigned int)data[face_byte_offset + 10] << 8) |
+                   data[face_byte_offset + 11]);
+    out_target->face.triangle =
+        out_target->face.vertex_indexes[2] == out_target->face.vertex_indexes[3];
+    out_target->static_texture_selector = data[face_byte_offset + 11];
+    out_target->descriptor_target = descriptor_target;
+    out_target->static_selector_descriptor_bound = 1;
+    out_target->capture_producer_required = 1;
+    out_target->original_saturn_capture_required = 1;
     return 1;
 }
 
