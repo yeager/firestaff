@@ -1296,6 +1296,26 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure1FDirectMeshBindingReceipt;
 
+/* Exact package geometry selected by a source-bound Structure1F owner. The
+ * model and face ordinal are proven source relations; transform, material,
+ * palette, VDP1, and drawing semantics remain unavailable. */
+typedef struct {
+    int valid;
+    Nexus_V1_DgnStructure1FDirectMeshBindingReceipt direct_mesh;
+    Nexus_V1_DgnStructure3Face face;
+    Nexus_V1_DgnStructure3Vector vertices[4];
+    Nexus_V1_DgnStructure3Vector normal;
+    int vertex_slot_count;
+    int source_geometry_bound;
+    int transform_semantics_proven;
+    int material_semantics_proven;
+    int pixel_palette_vdp1_semantics_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FDirectMeshGeometryPacket;
+
 /* One direct Structure1F owner joined to the exact static Structure3 face
  * material target selected by the same documented Structure1A model/face
  * fields. This is capture provenance only: the Structure2 payload remains
@@ -2301,6 +2321,9 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
 int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectMeshBindingReceipt *out_receipt);
+int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectMeshGeometryPacket *out_packet);
 /* Bind one direct Structure1F source owner to its exact static Structure2
  * material target. Non-static, untextured, or unresolved faces remain
  * unavailable rather than selecting a substitute material. */

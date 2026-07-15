@@ -6006,6 +6006,65 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     return 1;
 }
 
+int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    Nexus_V1_DgnStructure1FDirectMeshGeometryPacket *out_packet)
+{
+    Nexus_V1_DgnStructure1FDirectMeshGeometryPacket packet;
+    Nexus_V1_DgnStructure3MeshEntryReceipt receipt;
+    Nexus_V1_DgnStructure3Vector *vertices = NULL, *normals = NULL;
+    Nexus_V1_DgnStructure3Face *faces = NULL;
+    const Nexus_V1_DgnStructure3Face *face;
+    int slots, result = 0;
+
+    if (!out_packet) return -1;
+    memset(&packet, 0, sizeof(packet));
+    packet.no_draw_only = 1;
+    packet.blocks_real_dgn_mesh_render = 1;
+    if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+            engine, structure1f_entry_index, &packet.direct_mesh) != 1 ||
+        !packet.direct_mesh.valid || !packet.direct_mesh.model_to_entry_proven ||
+        !packet.direct_mesh.face_ordinal_proven ||
+        packet.direct_mesh.fallback_visuals_permitted) goto done;
+    memset(&receipt, 0, sizeof(receipt));
+    if (nexus_v1_current_level_extract_structure3_mesh_entry(
+            engine, packet.direct_mesh.structure3_model_index, NULL, 0, NULL, 0,
+            NULL, 0, &receipt) != -1 || !receipt.source_identity_valid ||
+        receipt.vertex_count <= 0 ||
+        receipt.normal_count < receipt.face_count ||
+        packet.direct_mesh.face_ordinal >= receipt.face_count) goto done;
+    vertices = malloc((size_t)receipt.vertex_count * sizeof(*vertices));
+    faces = malloc((size_t)receipt.face_count * sizeof(*faces));
+    normals = malloc((size_t)receipt.normal_count * sizeof(*normals));
+    if (!vertices || !faces || !normals ||
+        nexus_v1_current_level_extract_structure3_mesh_entry(
+            engine, packet.direct_mesh.structure3_model_index, vertices,
+            receipt.vertex_count, faces, receipt.face_count, normals,
+            receipt.normal_count, &receipt) != 0 || !receipt.valid ||
+        !receipt.source_identity_valid) goto done;
+    face = &faces[packet.direct_mesh.face_ordinal];
+    slots = face->triangle ? 3 : 4;
+    if (slots < 3 || slots > 4 ||
+        face->vertex_indexes[0] >= receipt.vertex_count ||
+        face->vertex_indexes[1] >= receipt.vertex_count ||
+        face->vertex_indexes[2] >= receipt.vertex_count ||
+        (slots == 4 && face->vertex_indexes[3] >= receipt.vertex_count)) goto done;
+    packet.valid = 1;
+    packet.source_geometry_bound = 1;
+    packet.face = *face;
+    packet.vertex_slot_count = slots;
+    packet.vertices[0] = vertices[face->vertex_indexes[0]];
+    packet.vertices[1] = vertices[face->vertex_indexes[1]];
+    packet.vertices[2] = vertices[face->vertex_indexes[2]];
+    if (slots == 4) packet.vertices[3] = vertices[face->vertex_indexes[3]];
+    packet.normal = normals[packet.direct_mesh.face_ordinal];
+    result = 1;
+done:
+    free(normals); free(faces); free(vertices);
+    *out_packet = packet;
+    return result;
+}
+
 int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget *out_target)
