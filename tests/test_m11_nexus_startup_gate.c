@@ -428,6 +428,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
     Nexus_UI_FaceRecordDecodeInfo decode_info;
     Nexus_UI_FaceCompactRecordDescriptor compact_last;
     Nexus_UI_FacePrs3CorpusReceipt corpus;
+    Nexus_UI_FacePrs3CaptureTarget capture_target;
     unsigned char expanded_face[48 * 48];
     int compact_size;
     int compact_cursor;
@@ -498,6 +499,22 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     !corpus.decoder_permitted && corpus.no_draw_only &&
                     !corpus.fallback_visuals_permitted,
                 "Nexus FACE PRS3 corpus retains all authenticated frame boundaries without decoding");
+    expect_true(nexus_ui_face_prs3_capture_target(
+                    compact_face, compact_size, 19, 1, &capture_target) == 1 &&
+                    capture_target.valid && capture_target.face_index == 19 &&
+                    capture_target.descriptor.prs3_offset == compact_last.prs3_offset &&
+                    capture_target.prefix_bytes_fnv1a64 != 0U &&
+                    capture_target.prs3_header_fnv1a64 != 0U &&
+                    capture_target.stream_bytes_fnv1a64 != 0U &&
+                    capture_target.capture_producer_required &&
+                    capture_target.original_saturn_capture_required &&
+                    !capture_target.decoder_permitted && capture_target.no_draw_only &&
+                    !capture_target.fallback_visuals_permitted,
+                "Nexus FACE frame target retains separate source lanes without decoding");
+    expect_true(nexus_ui_face_prs3_capture_target(
+                    compact_face, compact_size, 19, 0, &capture_target) == 0 &&
+                    !capture_target.valid && capture_target.no_draw_only,
+                "Nexus FACE frame target requires a caller-owned source hash gate");
     memset(&decode_info, 0, sizeof(decode_info));
     memset(expanded_face, 0xaa, sizeof(expanded_face));
     expect_true(nexus_ui_expand_face_record_48x48(compact_face + compact_last.prs3_offset,
@@ -699,6 +716,7 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
     Nexus_UI_FaceRecordDecodeInfo decode_info;
     Nexus_UI_FaceCompactRecordDescriptor descriptor;
     Nexus_UI_FacePrs3CorpusReceipt corpus;
+    Nexus_UI_FacePrs3CaptureTarget capture_target;
     FILE* file;
 
     snprintf(path, sizeof(path), "%s%sFACE.BIN", data_dir, TEST_PATH_SEP);
@@ -747,6 +765,19 @@ static void expect_canonical_face_media_is_blocked(const char* data_dir) {
                     !corpus.decoder_permitted && corpus.no_draw_only &&
                     !corpus.fallback_visuals_permitted,
                 "real Nexus FACE.BIN yields a complete no-draw PRS3 corpus receipt");
+    expect_true(nexus_ui_face_prs3_capture_target(
+                    bytes, (int)sizeof(bytes), 19, 1, &capture_target) == 1 &&
+                    capture_target.valid && capture_target.face_index == 19 &&
+                    capture_target.descriptor.stream_offset == descriptor.stream_offset &&
+                    capture_target.descriptor.stream_size == descriptor.stream_size &&
+                    capture_target.prefix_bytes_fnv1a64 != 0U &&
+                    capture_target.prs3_header_fnv1a64 != 0U &&
+                    capture_target.stream_bytes_fnv1a64 != 0U &&
+                    capture_target.capture_producer_required &&
+                    capture_target.original_saturn_capture_required &&
+                    !capture_target.decoder_permitted && capture_target.no_draw_only &&
+                    !capture_target.fallback_visuals_permitted,
+                "real Nexus FACE.BIN yields one source-bound no-draw capture target");
 }
 
 int main(void) {
