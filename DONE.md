@@ -16428,6 +16428,14 @@ Generation 4 is CDB `080010891100`: LBA `4233..4249` / Track 02 records
 `0x1f0256..0x1f0259` stores are written by System Card `0x000a52`. This route
 is excluded from game-data semantics.
 
+# ✅ 2026-07-15 Theron generation-7 FIFO/game-RAM ordering
+
+Authentic capture proves byte-exact FIFO origin for LBA `4847..4851` / Track
+02 records `0x72e..0x732`: each of the 10,240 bytes reaches the System Card
+`$eb33` FIFO loop and is acknowledged through `$1802/$1803`. The complete
+generation-7 FIFO window precedes game-owned `0x1f11xx..0x1f18xx` writes.
+That is ordering only, not a byte destination or record semantic.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
