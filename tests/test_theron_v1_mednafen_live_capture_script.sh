@@ -33,8 +33,8 @@ if [[ ! -f "$quartz_helper" ]] ||
    ! grep -Fq 'CGEvent(keyboardEventSource: source' "$quartz_helper" ||
    ! grep -Fq 'CGPreflightPostEventAccess()' "$quartz_helper" ||
    ! grep -Fq 'NSWorkspace.shared.frontmostApplication?.processIdentifier' "$quartz_helper" ||
-   ! grep -Fq 'targetApplication.activate()' "$quartz_helper" ||
-   ! grep -Fq 'quartz_target_not_frontmost expected=' "$quartz_helper" ||
+   ! grep -Fq 'let activationAccepted = targetApplication.activate()' "$quartz_helper" ||
+   ! grep -Fq 'quartz_target_not_frontmost activation=' "$quartz_helper" ||
    ! grep -Fq 'down.postToPid(targetPid)' "$quartz_helper" ||
    ! grep -Fq 'up.postToPid(targetPid)' "$quartz_helper" ||
    ! grep -Fq 'down.post(tap: .cghidEventTap)' "$quartz_helper" ||
@@ -42,7 +42,10 @@ if [[ ! -f "$quartz_helper" ]] ||
    printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
    exit 1
 fi
-if ! grep -Fq 'quartz_frontmost_pid=$mednafen_ui_pid' "$script" ||
+if ! grep -Fq 'quartz_activation=accepted' "$script" ||
+   ! grep -Fq 'quartz_frontmost_pid=$mednafen_ui_pid' "$script" ||
+   ! grep -Fq 'quartz_target_not_frontmost activation=' "$quartz_helper" ||
+   ! grep -Fq 'quartz_activation=\(activationAccepted ? "accepted" : "rejected")' "$quartz_helper" ||
    ! grep -Fq 'quartz_frontmost_pid=\(observedPid)' "$quartz_helper"; then
     printf 'FAIL: capture must attest that the target owns the foreground\n' >&2
     exit 1

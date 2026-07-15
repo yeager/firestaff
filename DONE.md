@@ -16727,6 +16727,18 @@ Verification: `swiftc -typecheck`,
 `test_theron_v1_mednafen_live_capture_script`, and the direct live negative
 foreground receipt.
 
+# ✅ 2026-07-15 Theron foreground activation receipt refinement
+
+The Quartz helper now records the result of macOS activation independently of
+foreground ownership, and the capture wrapper requires `quartz_activation`
+plus the exact foreground PID before it accepts a key-post attestation. A live
+probe returned `activate=true` for Mednafen while `NSWorkspace` still reported
+`loginwindow` PID `622`; activation success alone is therefore not promoted to
+focus, SDL delivery, controller state, CD traffic, or a Track02 handoff.
+
+Verification: Swift typecheck and
+`test_theron_v1_mednafen_live_capture_script`.
+
 # ✅ 2026-07-14 Nexus active LEV Structure3 face framing receipt
 
 The engine now binds Structure3 entry-header boundaries and face-row local
