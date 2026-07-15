@@ -122,6 +122,34 @@ int main(void)
             fprintf(stderr, "FAIL: F0622 champion icon model accepts invalid input\n");
             failures++;
         }
+
+        if (!DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_CHAMPION_ICONS, DM1_GFX_CHAMPION_ICONS,
+                1, 1, DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT,
+                DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT) ||
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_CHAMPION_ICONS, DM1_GFX_CHAMPION_ICONS,
+                1, 0, DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT,
+                DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT) ||
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_CHAMPION_ICONS, DM1_GFX_CHAMPION_ICONS,
+                1, 1, DM1_CHAMPION_ICON_WIDTH * 4 - 1,
+                DM1_CHAMPION_ICON_HEIGHT,
+                DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT) ||
+            DM1_ChampionPanel_AssetSurfaceAccepted(
+                DM1_GFX_SLOT_NORMAL, DM1_GFX_CHAMPION_ICONS,
+                1, 1, DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT,
+                DM1_CHAMPION_ICON_WIDTH * 4,
+                DM1_CHAMPION_ICON_HEIGHT)) {
+            fprintf(stderr, "FAIL: CHAMDRAW exact GRAPHICS.DAT surface admission\n");
+            failures++;
+        }
     }
 
     /*

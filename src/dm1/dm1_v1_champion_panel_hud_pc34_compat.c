@@ -243,6 +243,21 @@ int DM1_ChampionPanel_BuildIconBitmapModel(
     return 1;
 }
 
+int DM1_ChampionPanel_AssetSurfaceAccepted(
+    int graphicIndex,
+    int expectedGraphicIndex,
+    int loaded,
+    int hasPixels,
+    int width,
+    int height,
+    int expectedWidth,
+    int expectedHeight)
+{
+    return graphicIndex == expectedGraphicIndex &&
+           loaded && hasPixels &&
+           width == expectedWidth && height == expectedHeight;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Slot box graphic — CHAMDRAW.C F0291_CHAMPION_DrawSlot
  *
