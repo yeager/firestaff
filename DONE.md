@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2: added a source-bound `DM2_LOAD_NEW_DUNGEON` boot
+  transaction. It atomically reparses the verified G1 dungeon and carries
+  raw identity/seed/map-count evidence while explicitly refusing to create a
+  synthetic starter party before the original party-reset records are bound.
+
 - 2026-07-15 DM2: formalized skproject title-menu pointer ownership for both
   `INTERFACE_GENERAL/0/dt04/0` event surfaces. `0xD7` remains the only
   executable original NEW path; `0xD9` now yields a hash-bound,

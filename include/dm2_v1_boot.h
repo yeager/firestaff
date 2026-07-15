@@ -180,6 +180,22 @@ typedef struct {
     int operation_result;
 } DM2_V1_BootRuntimeReceipt;
 
+/* skproject c_savegame.cpp::DM2_LOAD_NEW_DUNGEON opens the selected original
+ * dungeon, resets the party/leader ownership, then calls
+ * DM2_READ_DUNGEON_STRUCTURE(1). Firestaff may atomically reload the proven
+ * G1 structure, but must not manufacture the still-unmodeled party reset. */
+typedef struct {
+    int valid;
+    int reloaded;
+    int source_party_reset_required;
+    int source_leader_hand_reset_required;
+    int synthetic_party_created;
+    int map_count;
+    int dungeon_seed;
+    uint32_t raw_byte_count;
+    uint32_t raw_hash;
+} DM2_V1_BootNewDungeonReceipt;
+
 typedef enum {
     DM2_V1_BOOT_ACTION_NO_TARGET = 0,
     DM2_V1_BOOT_ACTION_SHOP,
@@ -1161,6 +1177,15 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  * Sets profile->dm2_state and profile->dungeon_data.
  * Returns 0 on success. */
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
+
+/* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
+ * It rechecks the selected asset hash when one was verified at boot and swaps
+ * the parsed G1 data only after a complete candidate parse succeeds.
+ * Party/leader reset remains unavailable until its original record owner is
+ * modeled, and this function never creates a Firestaff starter party. */
+int dm2_v1_boot_load_new_dungeon(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_BootNewDungeonReceipt *out_receipt);
 
 /* Allocate and prepare a DM2 boot profile through the verified game-entry
  * boundary. The caller still owns M11 startup menu/session receipts, but DM2

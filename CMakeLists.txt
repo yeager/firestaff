@@ -8898,6 +8898,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_m11_startup_profile_gate
     )
 
+    add_executable(test_dm2_v1_load_new_dungeon_contract
+        tests/test_dm2_v1_load_new_dungeon_contract.c
+    )
+    target_include_directories(test_dm2_v1_load_new_dungeon_contract PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_load_new_dungeon_contract
+        PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_load_new_dungeon_contract PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_load_new_dungeon_contract
+        COMMAND test_dm2_v1_load_new_dungeon_contract
+    )
+
     add_executable(test_dm2_v1_startup_pointer_hit_contract
         tests/test_dm2_v1_startup_pointer_hit_contract.c
     )
