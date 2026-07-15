@@ -38,6 +38,7 @@ int theron_v1_track02_loader_intake_observe(
     }
 
     receipt.observed = 1;
+    receipt.track02_variant = facts->track02_variant;
     receipt.record = facts->track02_record;
     receipt.record_user_data_offset = facts->record_user_data_offset;
     receipt.observed_destination = facts->destination;
@@ -59,6 +60,8 @@ int theron_v1_track02_loader_intake_handoff_complete_payload(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!intake || !payload || !out_receipt || !intake->observed ||
         intake->payload_intake_admitted ||
+        (intake->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         intake->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
         intake->record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
         intake->record_user_data_offset !=
             THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
@@ -73,6 +76,7 @@ int theron_v1_track02_loader_intake_handoff_complete_payload(
 
     receipt.handed_off = 1;
     receipt.no_fallback = 1;
+    receipt.track02_variant = intake->track02_variant;
     receipt.record = intake->record;
     receipt.record_user_data_offset = intake->record_user_data_offset;
     receipt.destination = intake->observed_destination;
@@ -95,6 +99,8 @@ int theron_v1_track02_loader_intake_handoff_level_envelope(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!payload || !out_receipt || !payload->handed_off ||
         !payload->no_fallback ||
+        (payload->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         payload->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
         payload->record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
         payload->payload_bytes != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
         record_user_data_offset != THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET ||
@@ -110,6 +116,7 @@ int theron_v1_track02_loader_intake_handoff_level_envelope(
 
     receipt.handed_off = 1;
     receipt.no_fallback = 1;
+    receipt.track02_variant = payload->track02_variant;
     receipt.record = payload->record;
     receipt.record_user_data_offset = record_user_data_offset;
     receipt.envelope_bytes = envelope_bytes;
@@ -130,6 +137,8 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!payload || !out_receipt || !payload->handed_off ||
         !payload->no_fallback ||
+        (payload->track02_variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         payload->track02_variant != THERON_TRACK02_VARIANT_US_BIN) ||
         payload->record != THERON_V1_INITIAL_ENVELOPE_RECORD ||
         payload->payload_bytes != THERON_V1_INITIAL_ENVELOPE_PAYLOAD_BYTES ||
         post_envelope_checksum == 0u ||
@@ -142,6 +151,7 @@ int theron_v1_track02_loader_intake_handoff_initial_level_post_envelope(
 
     receipt.handed_off = 1;
     receipt.no_fallback = 1;
+    receipt.track02_variant = payload->track02_variant;
     receipt.record = payload->record;
     receipt.record_user_data_offset =
         THERON_V1_INITIAL_LEVEL_POST_ENVELOPE_OFFSET;

@@ -39,6 +39,7 @@ typedef struct {
 typedef struct {
     int observed;
     int payload_intake_admitted;
+    Theron_Track02Variant track02_variant;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t observed_destination;
@@ -55,6 +56,7 @@ typedef struct {
 typedef struct {
     int handed_off;
     int no_fallback;
+    Theron_Track02Variant track02_variant;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t destination;
@@ -71,6 +73,7 @@ typedef struct {
 typedef struct {
     int handed_off;
     int no_fallback;
+    Theron_Track02Variant track02_variant;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t envelope_bytes;
@@ -86,6 +89,7 @@ typedef struct {
 typedef struct {
     int handed_off;
     int no_fallback;
+    Theron_Track02Variant track02_variant;
     uint32_t record;
     uint32_t record_user_data_offset;
     uint32_t byte_count;

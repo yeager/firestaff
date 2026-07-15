@@ -784,6 +784,9 @@
   payload can hand off. ISO byte inspection remains available, but an ISO
   CUE/2048 payload cannot borrow the raw-BIN loader/object route or promote a
   synthetic dungeon.
+  2026-07-16 update: that JP/US raw-BIN variant is now retained through the
+  complete payload, initial level-envelope, and post-envelope receipts, folded
+  into the raw handoff hash, and rechecked by boot/startup runtime consumers.
   Remaining: bind a real ISO capture that proves the first level/object
   record; no raw-BIN trace, sector conversion, or synthetic dungeon may
   authorize it.

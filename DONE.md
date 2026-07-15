@@ -1,5 +1,18 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 Theron Track 02 raw-loader receipt variant binding: the
+  `$0b52` initial-envelope loader intake now carries the authenticated JP/US
+  raw-BIN media variant through the complete payload, level-envelope, and
+  post-envelope handoff receipts. The raw handoff hash includes that variant,
+  and boot/startup runtime consumers reject stripped or ISO-mutated receipt
+  chains before any level/object bytes can cross the handoff. Verification:
+  focused Ninja build plus CTests `theron_v1_track02_loader_intake`,
+  `theron_v1_m11_launcher_handoff_boundary`, and
+  `theron_v1_raw_loader_trace_initial_level_handoff` pass in `build-verify`.
+  Remaining blocker: real ISO capture proving the first level/object record;
+  no sector conversion, raw-BIN trace borrowing, or synthetic dungeon route is
+  admitted.
+
 - ✅ 2026-07-16 DM1 legacy title C001 helper hardening: the
   `DM1_V1_Title_*` compatibility state now loads only exact 320x200
   C001-sized title data, refuses cropped title sources before allocating

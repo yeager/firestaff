@@ -2925,6 +2925,8 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_intake.payload_intake_admitted ? 1u : 0u;
     hash *= 16777619u;
+    hash ^= (uint32_t)receipt->loader_intake.track02_variant;
+    hash *= 16777619u;
     hash ^= receipt->loader_intake.record;
     hash *= 16777619u;
     hash ^= receipt->loader_intake.record_user_data_offset;
@@ -2939,6 +2941,8 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_payload.no_fallback ? 1u : 0u;
     hash *= 16777619u;
+    hash ^= (uint32_t)receipt->loader_payload.track02_variant;
+    hash *= 16777619u;
     hash ^= receipt->loader_payload.record;
     hash *= 16777619u;
     hash ^= receipt->loader_payload.record_user_data_offset;
@@ -2949,6 +2953,8 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash *= 16777619u;
     hash ^= receipt->loader_payload.payload_checksum;
     hash *= 16777619u;
+    hash ^= (uint32_t)receipt->loader_level_envelope.track02_variant;
+    hash *= 16777619u;
     hash ^= receipt->loader_level_envelope.record_user_data_offset;
     hash *= 16777619u;
     hash ^= receipt->loader_level_envelope.envelope_bytes;
@@ -2958,6 +2964,8 @@ static uint32_t tqr_trace_initial_level_handoff_hash(
     hash ^= receipt->loader_post_envelope.handed_off ? 1u : 0u;
     hash *= 16777619u;
     hash ^= receipt->loader_post_envelope.no_fallback ? 1u : 0u;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt->loader_post_envelope.track02_variant;
     hash *= 16777619u;
     hash ^= receipt->loader_post_envelope.record;
     hash *= 16777619u;
@@ -3022,6 +3030,9 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
            receipt->complete_payload_checksum != 0u &&
            receipt->loader_intake.observed &&
            !receipt->loader_intake.payload_intake_admitted &&
+           receipt->loader_intake.track02_variant == receipt->variant &&
+           (receipt->loader_intake.track02_variant == THERON_TRACK02_VARIANT_JP_BIN ||
+            receipt->loader_intake.track02_variant == THERON_TRACK02_VARIANT_US_BIN) &&
            receipt->loader_intake.record == receipt->observed_track02_record &&
            receipt->loader_intake.record_user_data_offset ==
                THERON_V1_INITIAL_ENVELOPE_RECORD_USER_DATA_OFFSET &&
@@ -3033,6 +3044,7 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                receipt->complete_payload_checksum &&
            receipt->loader_payload.handed_off &&
            receipt->loader_payload.no_fallback &&
+           receipt->loader_payload.track02_variant == receipt->loader_intake.track02_variant &&
            receipt->loader_payload.record == receipt->loader_intake.record &&
            receipt->loader_payload.record_user_data_offset ==
                receipt->loader_intake.record_user_data_offset &&
@@ -3043,6 +3055,8 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                receipt->complete_payload_checksum &&
            receipt->loader_level_envelope.handed_off &&
            receipt->loader_level_envelope.no_fallback &&
+           receipt->loader_level_envelope.track02_variant ==
+               receipt->loader_payload.track02_variant &&
            receipt->loader_level_envelope.record == receipt->loader_payload.record &&
            receipt->loader_level_envelope.record_user_data_offset ==
                receipt->initial_level_boundary.level_user_data_offset_in_record &&
@@ -3052,6 +3066,8 @@ int theron_v1_raw_loader_trace_initial_level_handoff_is_complete(
                receipt->initial_level_boundary.level_payload_hash &&
            receipt->loader_post_envelope.handed_off &&
            receipt->loader_post_envelope.no_fallback &&
+           receipt->loader_post_envelope.track02_variant ==
+               receipt->loader_payload.track02_variant &&
            receipt->loader_post_envelope.record == receipt->loader_payload.record &&
            receipt->loader_post_envelope.record_user_data_offset ==
                receipt->initial_level_boundary.object_boundary_user_data_offset_in_record &&
