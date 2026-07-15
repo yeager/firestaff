@@ -5868,8 +5868,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - 🔧 2026-07-15 Theron later Track 02 loader-consumer blocker: the full
   generation-7 receipt now binds records `0x72e..0x735` byte-for-byte to the
-  System Card `$eb33` FIFO loop and proves every value only acknowledges CD
-  registers `$1802/$1803`, not RAM. A fresh 60-second real-SDL2 capture also
+  System Card `$eb33` FIFO loop. Strict next-store tracing proves 16,381
+  values reach CD registers `$1802/$1803`; three mismatched main-RAM stores
+  are rejected rather than back-matched to stale FIFO values. No raw payload
+  copy to RAM is admitted. A fresh 60-second real-SDL2 capture also
   authenticates the later non-linear record sequence `0x73a`, `0x736..0x738`,
   `0x739` through SCSI generations 8, 9, and 10 plus raw-sector hashes, but
   observes no FIFO or destination consumer for any of them. Therefore none of

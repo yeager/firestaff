@@ -70,8 +70,9 @@ fi
 if ! grep -Fq 'scsi_read_command generation=%u start_lba=%u sector_count=%u' "$transfer_patch_file" ||
    ! grep -Fq 'scsi_read_sector_binding generation=%u start_lba=%u sector_count=%u lba=%d sector_index=%u' "$transfer_patch_file" ||
    ! grep -Fq 'pce_cd_data_read cpu_pc=%04x data=%02x' "$transfer_patch_file" ||
-   ! grep -Fq 'pce_cd_data_destination_candidate reader_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x' "$transfer_patch_file" ||
+   ! grep -Fq 'pce_cd_data_destination_candidate reader_pc=%04x writer_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x' "$transfer_patch_file" ||
    ! grep -Fq 'if(read_value != stored_value)' "$transfer_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite' "$transfer_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceTakeDataRead' "$transfer_patch_file"; then
     printf 'FAIL: Mednafen transfer patch no longer retains bounded SCSI/FIFO/RAM receipts\n' >&2
     exit 1
@@ -109,6 +110,8 @@ fi
 if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x value=%02x' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceDataWrite(address, physical_address, V);' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(physical_address);' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'pce_cd_fifo_store_mismatch generation=%u fifo_sequence=%llu' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronPCECDTracePostGeneration7RAMWrite(address, physical_address, V, writer_pc,' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'generation7_fifo_window_complete fifo_sequence=%llu' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'post_generation7_main_ram_write writer_pc=%04x writer_physical_pc=%06x' "$generation7_receipt_patch_file" ||

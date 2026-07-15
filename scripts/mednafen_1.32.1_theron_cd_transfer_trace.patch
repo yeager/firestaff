@@ -70,7 +70,7 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 --- a/src/pce/pce.cpp
 +++ b/src/pce/pce.cpp
-@@ -111,8 +111,40 @@ static DECLFR(BaseRAMReadSGX)
+@@ -111,8 +111,42 @@ static DECLFR(BaseRAMReadSGX)
   return(BaseRAM[A & 0x7FFF]);
  }
 
@@ -81,12 +81,14 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 + static FILE *trace = NULL;
 + static unsigned trace_count = 0;
 + uint16 reader_pc;
++ uint16 writer_pc;
 + uint8 read_value;
 +
 + if(!TheronPCECDTraceTakeDataRead(&reader_pc, &read_value) || trace_count >= 256)
 +  return;
 +if(read_value != stored_value)
 + return;
++ writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
 + if(!trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
@@ -98,8 +100,8 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 +  fputs("source=mednafen-pce-instrumented-cd-transfer\n", trace);
 + }
 + fprintf(trace,
-+         "pce_cd_data_destination_candidate reader_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
-+         reader_pc, HuCPU.GetLastLogicalWriteAddr(), physical, read_value,
++         "pce_cd_data_destination_candidate reader_pc=%04x writer_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
++         reader_pc, writer_pc, HuCPU.GetLastLogicalWriteAddr(), physical, read_value,
 +         stored_value);
 + fflush(trace);
 + trace_count++;
@@ -111,7 +113,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
   BaseRAM[A & 0x7FFF] = V;
  }
 
-@@ -123,6 +151,7 @@ static DECLFR(BaseRAMRead)
+@@ -123,6 +153,7 @@ static DECLFR(BaseRAMRead)
 
  static DECLFW(BaseRAMWrite)
  {
@@ -132,7 +134,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 
  static void TheronTracePCECDState(const char *format, ...)
  {
-@@ -121,6 +124,16 @@ static void TheronTracePCECDState(const char *format, ...)
+@@ -121,6 +124,22 @@ static void TheronTracePCECDState(const char *format, ...)
   fflush(TheronPCECDStateTrace);
   TheronPCECDStateTraceCount++;
  }
@@ -146,10 +148,16 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 + *value = TheronPCECDDataReadValue;
 + return true;
 +}
++
++void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination)
++{
++ if(physical_destination < 0x1f0000 || physical_destination >= 0x1f8000)
++  TheronPCECDDataReadPending = false;
++}
  // Settings:
  static double CDDABaseVolume;
  static double ADPCMBaseVolume;
-@@ -578,8 +591,17 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
+@@ -578,8 +597,17 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
      ret |= SCSICD_GetIO() ? 0x08 : 0x00;
      break;
 
