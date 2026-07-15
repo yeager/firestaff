@@ -43,6 +43,13 @@
   `DRAW_DOOR_FRAMES`, and broader door-type routing still need direct
   skproject bindings. No generic panel/frame fallback.
 
+- 2026-07-15 DM2 `DRAW_DOOR` follow-up: DB0 `OrnateIndex` now resolves
+  through the source-owned map-local `glbMapDoorOrnatesList`. Remaining door
+  work is the conflicting horizontal split-panel crop sequence, source
+  distance/light-palette execution, and `DRAW_DOOR_FRAMES` pixels when the
+  active corpus supplies the selected graphicsset fields. Do not treat an
+  ornament ordinal as a direct `DOOR_GFX` entry.
+
 - 2026-07-15 DM2 skproject wall follow-up: D2/D3 side-wall M11 commands now
   own G0163 source and destination geometry and fail closed on a mismatch.
   Remaining work is source-proven panel compositing/light behavior, not a

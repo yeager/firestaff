@@ -35,6 +35,9 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RuntimeMapDoorReceipt doors;
     DM2_V1_G1RuntimeMapDoorReceipt sentinel;
+    uint8_t door_ornates[16];
+    int door_ornate_count;
+    int ornate_map = -1;
 
     if (argc != 2 || !(bytes = read_file(argv[1], &size)) ||
         bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
@@ -44,6 +47,22 @@ int main(int argc, char **argv)
         return 1;
     }
     free(bytes);
+    for (int map = 0; map < dungeon.level_count; ++map) {
+        door_ornate_count = dm2_v1_dungeon_get_map_door_ornate_list(
+            &dungeon, map, door_ornates, (int)sizeof(door_ornates));
+        if (door_ornate_count > 0) {
+            ornate_map = map;
+            break;
+        }
+    }
+    if (door_ornate_count <= 0 || door_ornate_count > (int)sizeof(door_ornates) ||
+        ornate_map < 0 || dungeon.map_door_ornate_count[ornate_map] != door_ornate_count ||
+        door_ornates[0] == 0) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: canonical G1 map door-ornate list was not source-owned\n",
+              stderr);
+        return 1;
+    }
     if (!dm2_v1_dungeon_materialize_g1_runtime_map_doors(
             &dungeon, 9, &doors) ||
         doors.committed != 1 || doors.incomplete_world != 1 || doors.map != 9 ||
@@ -72,6 +91,6 @@ int main(int argc, char **argv)
         return 1;
     }
     dm2_v1_dungeon_free(&dungeon);
-    puts("PASS: direct DB0 Door roots use only source-proven w2 fields");
+    puts("PASS: direct DB0 Door roots and map-local ornate list use source fields");
     return 0;
 }

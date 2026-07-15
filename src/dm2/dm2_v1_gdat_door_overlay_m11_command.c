@@ -341,7 +341,7 @@ static int resolve_material_address(const DM2_V1_DoorRender *door, int kind,
     case DM2_V1_GDAT_DOOR_OVERLAY_ORNATE:
         gdat_index = door->ornate_gdat_index;
         *out_category = DM2_GDAT_CATEGORY_DOOR_GFX;
-        *out_index = door->ornament_index;
+        *out_index = door->door_ornate_gfx_index;
         *out_field = dm2_v1_viewport_door_panel_field_for_square(door->view_square);
         break;
     case DM2_V1_GDAT_DOOR_OVERLAY_DESTROYED_MASK:
@@ -452,6 +452,10 @@ static int add_material(const DM2_V1_AssetLoader *loader,
                                        (uint32_t)door->door_state);
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)door->door_open_pct);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->ornament_index);
+    command->selection_hash = hash_u32(command->selection_hash,
+                                       (uint32_t)door->door_ornate_gfx_index);
     command->selection_hash = hash_u32(command->selection_hash,
                                        (uint32_t)field);
     if (kind == DM2_V1_GDAT_DOOR_PANEL) {

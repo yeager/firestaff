@@ -2034,6 +2034,7 @@ int dm2_v1_viewport_build_door_render_plan(
         row->door_gfx_index = vs->door_gfx_index;
         row->door_opening_dir = vs->door_opening_dir;
         row->ornament_index = vs->ornament_index;
+        row->door_ornate_gfx_index = vs->door_ornate_gfx_index;
         row->door_button = vs->door_button;
         row->door_button_state = vs->door_button_state;
         if (vs->door_gfx_index != 0 ||
@@ -2056,7 +2057,7 @@ int dm2_v1_viewport_build_door_render_plan(
         row->door_open_pct = vs->door_open_pct;
         row->door_state = vs->door_state;
         row->ornate_gdat_index =
-            dm2_v1_viewport_door_ornate_graphic_index(vs->ornament_index,
+            dm2_v1_viewport_door_ornate_graphic_index(vs->door_ornate_gfx_index,
                                                       square);
         if (vs->door_state == 5) {
             row->destroyed_mask_gdat_index =

@@ -749,6 +749,7 @@ typedef struct {
     int map_door_set1[DM2_V1_MAX_LEVELS];
     int map_use_door0[DM2_V1_MAX_LEVELS];
     int map_use_door1[DM2_V1_MAX_LEVELS];
+    int map_door_ornate_count[DM2_V1_MAX_LEVELS];
     int square_bytes;
     int raw_map_data_base;
     int column_index_base;
@@ -843,6 +844,11 @@ int dm2_v1_dungeon_get_map_floor_gfx_list(
     const DM2_V1_DungeonData *d,
     int level,
     uint8_t *out_floor_gfx_list,
+    int out_capacity);
+int dm2_v1_dungeon_get_map_door_ornate_list(
+    const DM2_V1_DungeonData *d,
+    int level,
+    uint8_t *out_door_ornate_list,
     int out_capacity);
 int dm2_v1_dungeon_get_map_graphics_style(
     const DM2_V1_DungeonData *d,
