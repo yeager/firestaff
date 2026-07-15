@@ -24,6 +24,7 @@ typedef struct Nexus_V1_Engine Nexus_V1_Engine;
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include "nexus_v1_structure3_capture_manifest.h"
@@ -1213,6 +1214,22 @@ typedef struct {
     int canonical_hash_verified;
 } Nexus_V1_LevelAuxSourceReceipt;
 
+/* Exact, source-owned PRS3 loader evidence available during boot. This joins
+ * canonical DM.BIN code and MENU.BPK framing, but deliberately carries no
+ * decoded pixels and never authorizes a draw. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt dm_bin_source;
+    int menu_bpk_source_hash_verified;
+    int cross_asset_framing_verified;
+    int sh2_loader_route_verified;
+    int valid;
+    int decoder_promoted;
+    int runtime_decode_permitted;
+    int fallback_visuals_permitted;
+    Nexus_V1_Prs3CrossAssetFrameReceipt cross_asset;
+    Nexus_V1_Prs3Sh2V1ExecutionReceipt sh2_loader;
+} Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt;
+
 /* ITEM.IBS is a package-level source for direct Structure1Fa item records.
  * A verified bank can provide command provenance, never a drawable icon or
  * floor texture without separate original VDP1 evidence. */
@@ -1909,6 +1926,9 @@ struct Nexus_V1_Engine {
     int ui_faces_expected;
     int ui_faces_fallback;
     Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
+    int menu_bpk_prs3_execution_evidence_valid;
+    Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt
+        menu_bpk_prs3_execution_evidence;
     int menu_bpk_decode_receipt_valid;
     int menu_bpk_decode_receipt_attempted;
     Nexus_V1_BpkRuntimeDecodeReceipt menu_bpk_decode_receipt;
@@ -2327,6 +2347,11 @@ int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt);
+/* Returns a source-bound DM.BIN/MENU.BPK loader receipt only. It never
+ * supplies decoded pixels or opens a MENU.BPK render route. */
+int nexus_v1_menu_bpk_prs3_execution_evidence_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt *out_receipt);
 int nexus_v1_menu_bpk_decode_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
