@@ -2956,8 +2956,8 @@ static void test_structure3_entry_header_boundaries(void) {
     memset(&candidate, 0, sizeof(candidate));
     memset(vdp1_command, 0, sizeof(vdp1_command));
     wl16(vdp1_command, 0U);      /* normal texture primitive */
-    wl16(vdp1_command + 4, 0x20U);
-    wl16(vdp1_command + 6, 0x0101U); /* 8x1 command-table extent */
+    wl16(vdp1_command + 8, 0x20U);
+    wl16(vdp1_command + 10, 0x0101U); /* 8x1 command-table extent */
     candidate.dgn_fnv1a64 = fnv1a64(dgn, sizeof(dgn));
     candidate.structure3_payload_fnv1a32 = level.structure3_payload.raw_payload_hash;
     candidate.typed_mesh_corpus_fnv1a32 = NEXUS_DGN_RETAIL_TYPED_MESH_CORPUS_FNV1A32;
@@ -4620,9 +4620,9 @@ static void test_structure1f_item_ibs_material_binding(void) {
     candidate.vdp1_state_fnv1a64 = fnv1a64((const uint8_t *)"state", 5U);
     memset(vdp1_command, 0, sizeof(vdp1_command));
     wl16(vdp1_command, 0U);       /* normal sprite */
-    wl16(vdp1_command + 2, 0U);   /* 4bpp colour-bank mode */
-    wl16(vdp1_command + 4, 0x1234U);
-    wl16(vdp1_command + 6, 2U | (16U << 8));
+    wl16(vdp1_command + 4, 0U);   /* 4bpp colour-bank mode */
+    wl16(vdp1_command + 8, 0x1234U);
+    wl16(vdp1_command + 10, 2U | (16U << 8));
     candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
                                               sizeof(vdp1_command));
     candidate.texture_first_sequence = 10U;
@@ -4640,7 +4640,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
           capture.vdp1_command_format_matches && capture.decode_authorized &&
           !capture.fallback_visuals_permitted,
           "descriptor-0008 requires a complete matching VDP1 texture command");
-    wl16(vdp1_command + 4, 0x1235U);
+    wl16(vdp1_command + 8, 0x1235U);
     candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
                                               sizeof(vdp1_command));
     CHECK(nexus_v1_item_ibs_bind_0008_vdp1_capture(
@@ -4652,7 +4652,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
           !capture.vdp1_command_format_matches &&
           !capture.original_vdp1_capture_verified && !capture.decode_authorized,
           "a hash-matched VDP1 command with another texture source stays blocked");
-    wl16(vdp1_command + 4, 0x1234U);
+    wl16(vdp1_command + 8, 0x1234U);
     candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
                                               sizeof(vdp1_command));
     candidate.vdp1_command_fnv1a64 ^= UINT64_C(1);
@@ -4866,9 +4866,11 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
 
     /* Unit framing only: production admission still requires canonical asset
      * hashes and an independently authenticated original-Saturn producer. */
-    command[4] = 0x10U;
-    command[6] = 0x01U;
-    command[7] = 0x01U;
+    wl16(command + 2, 0xbeefU);  /* CMDLINK: retained, not followed here */
+    wl16(command + 6, 0x4567U);  /* CMDCOLR: retained, not interpreted */
+    command[8] = 0x10U;
+    command[10] = 0x01U;
+    command[11] = 0x01U;
     memset(&raw, 0, sizeof(raw));
     raw.raw_sidecars_bound = 1;
     raw.vdp1_command_sidecar_bound = 1;
@@ -4886,6 +4888,9 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
           inspection.command_sidecar_hash_bound &&
           inspection.complete_vdp1_command_record &&
           inspection.command_format_parsed && inspection.command.texture_command &&
+          inspection.command.link_word == 0xbeefU &&
+          inspection.command.colour_control == 0x4567U &&
+          inspection.command.texture_source_word == 0x0010U &&
           inspection.command.texture_width == 8U &&
           inspection.command.texture_height == 1U &&
           !inspection.original_saturn_capture_verified &&

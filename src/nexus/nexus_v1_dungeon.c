@@ -6264,17 +6264,22 @@ int nexus_v1_vdp1_texture_command_parse(
         *out_command = parsed;
         return -1;
     }
-    /* Sega Saturn VDP1 User Manual: CMDCTRL/CMDPMOD/CMDSRCA/CMDSIZE are the
-     * first four words of each 32-byte command. SH-2 command-table memory is
-     * little-endian; CMDSIZE stores width in eight-pixel units. */
+    /* Sega Saturn VDP1 User Manual, command-table Figure 8.3: CMDCTRL,
+     * CMDLINK, CMDPMOD, CMDCOLR, CMDSRCA and CMDSIZE are at +00,+02,+04,
+     * +06,+08,+0A. SH-2 command-table memory is little-endian; CMDSIZE
+     * stores width in eight-pixel units. CMDCOLR remains an opaque field:
+     * parsing its position does not prove a palette or CLUT relation. */
     parsed.control = rl16(command);
-    parsed.draw_mode = rl16(command + 2);
-    parsed.texture_source_word = rl16(command + 4);
+    parsed.link_word = rl16(command + 2);
+    parsed.draw_mode = rl16(command + 4);
+    parsed.colour_control = rl16(command + 6);
+    parsed.texture_source_word = rl16(command + 8);
     parsed.command_type = (uint8_t)(parsed.control & 0x000fU);
     parsed.colour_mode = (uint8_t)((parsed.draw_mode >> 3) & 0x0007U);
-    parsed.texture_width = (uint16_t)((rl16(command + 6) & 0x003fU) * 8U);
-    parsed.texture_height = (uint16_t)(rl16(command + 6) >> 8);
-    parsed.texture_command = parsed.command_type <= 2U;
+    parsed.texture_width = (uint16_t)((rl16(command + 10) & 0x003fU) * 8U);
+    parsed.texture_height = (uint16_t)(rl16(command + 10) >> 8);
+    parsed.end_command = (parsed.control & 0x8000U) != 0U;
+    parsed.texture_command = !parsed.end_command && parsed.command_type <= 2U;
     parsed.four_bpp_colour_bank = parsed.texture_command &&
         parsed.colour_mode == 0U;
     *out_command = parsed;
