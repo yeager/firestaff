@@ -405,6 +405,18 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallEntryReceipt;
 
+/* The next observed main-RAM instruction after the authenticated caller-next
+ * entry. It is a control-flow observation, not a decoder or data receipt. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallEntryReceipt entry;
+    uint16_t next_pc;
+    uint32_t next_physical_pc;
+    uint8_t next_opcode;
+    int caller_next_entry_next_instruction_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextEntryNextReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -665,6 +677,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_call_entry
     const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
     const char *capture,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextCallEntryReceipt *out);
+
+/* Requires the next observed original main-RAM instruction after the bound
+ * caller-next routine entry. No opcode or data semantics are promoted. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_entry_next(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextEntryNextReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

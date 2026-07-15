@@ -11,7 +11,7 @@
 -
 +
  #ifdef WANT_DEBUGGER
-@@ -39,6 +41,100 @@
+@@ -39,6 +41,120 @@
  namespace MDFN_IEN_PCE
  {
 -
@@ -26,6 +26,9 @@
 +static uint16 TheronMainRAMLoaderCallInstructionPC;
 +static uint32 TheronMainRAMLoaderCallInstructionPhysicalPC;
 +static uint16 TheronMainRAMLoaderCallTarget;
++static bool TheronMainRAMLoaderEntryPending;
++static uint16 TheronMainRAMLoaderEntryInstructionPC;
++static uint32 TheronMainRAMLoaderEntryInstructionPhysicalPC;
 +
 +static void TheronTraceMainRAMLoaderOperation(uint16 logical_pc, uint32 physical_pc, uint8 opcode,
 +                                              uint16 first, uint16 second, uint16 third,
@@ -61,10 +64,27 @@
 +   return;
 +  }
 + }
++ if(TheronMainRAMLoaderEntryPending)
++ {
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_entry_next entry_logical_pc=%04x entry_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x\n",
++          TheronMainRAMLoaderEntryInstructionPC,
++          TheronMainRAMLoaderEntryInstructionPhysicalPC,
++          logical_pc, physical_pc, opcode);
++  TheronMainRAMLoaderEntryPending = false;
++  TheronMainRAMLoaderTraceCount++;
++  if(TheronMainRAMLoaderTraceCount >= 96)
++  {
++   fflush(TheronMainRAMLoaderTrace);
++   return;
++  }
++ }
 + if(TheronMainRAMLoaderCallPending)
 + {
 +  if(logical_pc == TheronMainRAMLoaderCallTarget)
 +  {
++   TheronMainRAMLoaderEntryInstructionPC = logical_pc;
++   TheronMainRAMLoaderEntryInstructionPhysicalPC = physical_pc;
++   TheronMainRAMLoaderEntryPending = true;
 +   fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_call_entry caller_logical_pc=%04x caller_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x\n",
 +           TheronMainRAMLoaderCallInstructionPC,
 +           TheronMainRAMLoaderCallInstructionPhysicalPC,
@@ -113,7 +133,7 @@
  INLINE void HuC6280::LastCycle(void)
  {
   /*assert(((P & I_FLAG) ? 0 : (uint32)~0) == PIMaskCache);*/
-@@ -573,6 +669,10 @@ template<bool DebugMode>
+@@ -573,6 +689,10 @@ template<bool DebugMode>
  NO_INLINE void HuC6280::RunSub(void)
  {
   uint32 old_PC;
@@ -125,7 +145,7 @@
 +
   if(in_block_move)
   {
-@@ -678,11 +778,16 @@ NO_INLINE void HuC6280::RunSub(void)
+@@ -678,11 +798,16 @@ NO_INLINE void HuC6280::RunSub(void)
  	  }
  	 }
           PC &= 0xFFFF;     // Our cpu core can only handle PC going about 8192 bytes over, so make sure it never gets that far...

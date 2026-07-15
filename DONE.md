@@ -18883,6 +18883,21 @@ dry-run, Ninja focused targets, `test_theron_rendering` 18/18,
 (skip-safe without the authentic corpus), and the capture-script contract test
 passes.
 
+# ✅ 2026-07-15 Theron Track 02 caller-entry successor receipt
+
+The Mednafen producer now records the next observed main-RAM instruction
+after an authenticated caller-next routine entry. Firestaff requires the
+exact entry logical/physical PC plus the successor logical/physical PC and
+raw opcode, retaining the full source-bound Track 02 chain. A target that does
+not continue through observed main RAM produces no receipt. This is execution
+ordering only: no opcode, ABI, loader, descriptor, CD read, table, record,
+level, object, tile, palette, bitmap, command, or visual semantics are
+promoted. Verification: genuine Mednafen 1.32.1 patch dry-run, Ninja focused
+targets, `test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), and the capture-script contract test
+passes.
+
 # ✅ 2026-07-15 Theron Track 02 caller-next-call entry receipt
 
 The instrumented original Mednafen trace now writes a call-entry row only
