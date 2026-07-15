@@ -7745,6 +7745,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     untextured, or unresolved faces remain unavailable. A genuine Saturn
     trace must still establish the payload format, palette, transform, VDP1,
     and draw behavior; no material is decoded or rendered here.
+  - 2026-07-15 direct owner/raw-fill update: a direct Structure1F owner can
+    now retain its exact non-textured Structure3 face, vertices, normal, and
+    raw fill selector when that is what the source row selects. The selector
+    remains opaque: an authentic Saturn trace must still prove flat-fill,
+    palette, transform, VDP1, and draw semantics. Textured faces cannot enter
+    this route and no substitute colour or texture is allowed.
+  - 2026-07-15 direct owner/08xx update: direct Structure1F owner rows can
+    now retain their exact Structure1G-backed 08xx material declaration when
+    selected by the referenced Structure3 face. Sequence execution, image
+    decoding, palette/VDP1 semantics, transforms, and drawing still require
+    an authentic Saturn trace; static and raw-fill faces cannot cross this
+    animated route or gain a fallback.
   establish one original Saturn execution-to-VDP1 receipt for a named
   `(LEVxx.DGN, Structure3 entry, face ordinal)` from the hash-verified retail
   corpus. The receipt must bind the exact typed mesh-row corpus identity

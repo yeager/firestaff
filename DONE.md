@@ -17990,6 +17990,24 @@ the resulting target is capture-only and cannot assign texture, palette,
 transform, VDP1, or draw semantics. Verification:
 `test_nexus_v1_dgn_geometry_readiness` against LEV00--LEV15.
 
+# ✅ 2026-07-15 Nexus direct Structure1F raw-fill face route
+
+`nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target()`
+conditionally joins a direct owner with its exact non-textured Structure3
+face, vertices, normal, and opaque fill-selector bytes. It cannot assign a
+flat colour, palette, transform, VDP1 command, or draw behavior, and textured
+faces remain unavailable through this route. Verification:
+`nexus_v1_direct_static_material_capture` against canonical LEV01.
+
+# ✅ 2026-07-15 Nexus direct Structure1F 08xx material route
+
+`nexus_v1_engine_build_structure1f_direct_animated_material_capture_target()`
+conditionally joins a direct owner with its exact Structure3 08xx /
+Structure1G material declaration. The route is source-only: it does not
+execute the image sequence, decode a payload, assign palette or VDP1
+semantics, or draw. Verification:
+`nexus_v1_direct_static_material_capture` against canonical LEV01.
+
 # ✅ 2026-07-15 DM2 c_dialog source panel viewport route
 
 `c_dialog.cpp::DM2_dialog_2066_3820` now reaches the DM2 viewport through a
