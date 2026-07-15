@@ -130,6 +130,11 @@
   ReDMCSB's real `int16_t[4]` data and its focused verifier is re-pinned to
   `MENU.C:36/496`; remaining work is still the real transition capture above,
   not a synthetic table or bitmap fallback.
+  2026-07-15 update: pass928/G0499 and pass930/G0501 now expose the
+  three-action and one-action menu boxes as ReDMCSB `int16_t[4]` source
+  geometry too, with direct-table assertions covering the host pointer
+  surface. Remaining work is unchanged: real PC34/Mac capture of action-menu
+  transitions, spell refresh, tab inversion, and caster symbol transitions.
 
 - 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
   C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
