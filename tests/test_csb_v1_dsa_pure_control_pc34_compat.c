@@ -42,6 +42,7 @@ static int champion_possession_enabled;
 static int monster_possession_enabled;
 static int inspect_cells_enabled;
 static int thing_type_enabled;
+static int is_carried_enabled;
 
 static int wing_talents_enabled;
 
@@ -256,6 +257,13 @@ static int get_thing_type(void *user, int32_t thing_index, int32_t *out_type)
     *out_type = thing_index == 0x0456 ? 50023 : -1;
     return 1;
 }
+static int is_carried(void *user, int32_t character, int32_t object, int32_t *out)
+{
+    (void)user;
+    if (!is_carried_enabled || !out) return -1;
+    *out = character == 4 && object == 0x0456 ? 767 : -1;
+    return 1;
+}
 
 static int normalize_object_property(void *user, uint16_t thing,
                                      CSB_V1_CSBWinDSAObjectProperty property,
@@ -366,6 +374,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     }
     if (inspect_cells_enabled) context.inspect_cells = inspect_cells;
     if (thing_type_enabled) context.get_thing_type = get_thing_type;
+    if (is_carried_enabled) context.is_carried = is_carried;
     {
         CSB_V1_CSBWinDSAStackResult result =
             csb_v1_csbwin_dsa_execute_authenticated_stack_action(
@@ -557,6 +566,9 @@ int main(void)
         0x0686u, 0x0456u, 0x020bu, 0x000du
     };
     uint16_t num_param[] = { 0x02d5u, 0x000du };
+    uint16_t is_carried_query[] = {
+        0x0686u, 4u, 0x0686u, 0x0456u, 0x1c8bu, 0x000du
+    };
     uint16_t time_fetch[] = { 0x184bu, 0x000du };
     uint16_t this_dsa_id[] = { 0x0155u, 0x000du };
     uint16_t local_fetch_store[] = {
@@ -923,6 +935,14 @@ int main(void)
               &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 4u && execution.stack_depth == 0u,
           "NUMPARAM returns the caller-owned source parameter count");
+    is_carried_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, is_carried_query,
+              (int)(sizeof(is_carried_query) / sizeof(is_carried_query[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 767u,
+          "ISCARRIED preserves source character and object stack order");
+    is_carried_enabled = 0;
     parameters[0] = 77u;
     check(run(&state, &action, excell_flags_fetch,
               (int)(sizeof(excell_flags_fetch) / sizeof(excell_flags_fetch[0])),

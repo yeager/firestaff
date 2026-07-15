@@ -3381,6 +3381,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     - 2026-07-15 parameter-count update: `STKOP_NumParam` now returns only
       the authenticated caller's CSBWin parameter count. It has no inferred
       argument vector, filter state, or world route.
+    - 2026-07-15 carried-query update: `STKOP_IsCarried` now follows only
+      loaded champion slots, cursor hand, and recursive DB9 child/next links.
+      Exact Thing searches retain source slot/cursor result encoding; negative
+      basic-type searches retain source counts. Short or cyclic chains reject.
     - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
       profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
       slave Thing integer only from a resolved, verified type-47 binding.
