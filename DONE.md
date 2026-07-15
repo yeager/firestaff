@@ -17118,3 +17118,7 @@ Verification: `test_nexus_v1_dgn_geometry_readiness`.
   Thing without consuming RNG, and the unproven Trolin spell palette is gone.
   Verified original projectile types remain unchanged. Source: ReDMCSB
   `GROUP.C` F0207 BUG0_13.
+- 2026-07-15 DM2 skproject weather material integrity: final
+  `QUERY_TEMP_PICST` consumption now verifies the receipt's decoded
+  ENVIRONMENT pixels and `QUERY_GDAT_IMAGE_LOCALPAL` hash. A substituted
+  same-sized image or palette blocks the entire weather transaction.

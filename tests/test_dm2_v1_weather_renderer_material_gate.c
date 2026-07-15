@@ -8,12 +8,25 @@
 #include <string.h>
 
 static int omit_rain;
+static int corrupt_rain;
+
+static uint32_t hash_pixels(const uint8_t *pixels, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < count; ++i) {
+        hash ^= pixels[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static int fetch_asset(void *user, int gdat_index, const uint8_t **pixels,
                        int *width, int *height, int *stride)
 {
     static const uint8_t cloud[2] = { 1, 2 };
     static const uint8_t rain[2] = { 3, 4 };
+    static const uint8_t corrupt_rain_pixels[2] = { 3, 5 };
     int graphicsset;
     int field;
     (void)user;
@@ -22,7 +35,8 @@ static int fetch_asset(void *user, int gdat_index, const uint8_t **pixels,
         (field != DM2_V1_WEATHER_CLOUD_HEAVY_CMD &&
          field != DM2_V1_WEATHER_RAIN_HEAVY_CMD) ||
         (omit_rain && field == DM2_V1_WEATHER_RAIN_HEAVY_CMD)) return -1;
-    *pixels = field == DM2_V1_WEATHER_CLOUD_HEAVY_CMD ? cloud : rain;
+    *pixels = field == DM2_V1_WEATHER_CLOUD_HEAVY_CMD ? cloud :
+        (corrupt_rain ? corrupt_rain_pixels : rain);
     *width = 2;
     *height = 1;
     *stride = 2;
@@ -58,6 +72,10 @@ static void setup_receipt(DM2_V1_WeatherRendererReceipt *receipt)
     receipt->draws[0].source_bottom = 1;
     receipt->draws[0].scale_x = 0x40u;
     receipt->draws[0].scale_y = 0x40u;
+    receipt->draws[0].decoded_pixels_hash = hash_pixels(
+        (const uint8_t[]){ 1, 2 }, 2u);
+    receipt->draws[0].decoded_pixel_count = 2u;
+    receipt->draws[0].local_palette_hash = 0xc10du;
     receipt->draws[0].material_hash = 0x6801u;
     receipt->clips[0].valid = 1;
     receipt->clips[0].x = 10;
@@ -70,6 +88,10 @@ static void setup_receipt(DM2_V1_WeatherRendererReceipt *receipt)
     receipt->draws[1].source_bottom = 1;
     receipt->draws[1].scale_x = 0x40u;
     receipt->draws[1].scale_y = 0x40u;
+    receipt->draws[1].decoded_pixels_hash = hash_pixels(
+        (const uint8_t[]){ 3, 4 }, 2u);
+    receipt->draws[1].decoded_pixel_count = 2u;
+    receipt->draws[1].local_palette_hash = 0xa11eu;
     receipt->draws[1].material_hash = 0x6b01u;
     receipt->clips[1].valid = 1;
     receipt->clips[1].x = 10;
@@ -93,6 +115,7 @@ int main(void)
     dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_palette, NULL);
     dm2_v1_viewport_set_gdat_weather_renderer_receipt(&viewport, 3u, &receipt);
     omit_rain = 0;
+    corrupt_rain = 0;
     dm2_v1_render_weather_overlay(&viewport);
     if (viewport.asset_weather_drawn_count != 2 ||
         viewport.gdat_weather_renderer_consumed_hash != receipt.renderer_hash ||
@@ -139,6 +162,7 @@ int main(void)
     dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_palette, NULL);
     dm2_v1_viewport_set_gdat_weather_renderer_receipt(&viewport, 3u, &receipt);
     omit_rain = 1;
+    corrupt_rain = 0;
     dm2_v1_render_weather_overlay(&viewport);
     if (viewport.asset_weather_drawn_count != 0 ||
         viewport.gdat_weather_renderer_consumed_hash != 0u ||
@@ -147,6 +171,26 @@ int main(void)
         framebuffer[31 * DM2_VP_WIDTH + 10] != 0x5a ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER) == 0u) {
         fputs("FAIL: incomplete weather receipt leaked a partial source layer\n", stderr);
+        return 1;
+    }
+
+    setup_receipt(&receipt);
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_asset, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_palette, NULL);
+    dm2_v1_viewport_set_gdat_weather_renderer_receipt(&viewport, 3u, &receipt);
+    omit_rain = 0;
+    corrupt_rain = 1;
+    dm2_v1_render_weather_overlay(&viewport);
+    if (viewport.asset_weather_drawn_count != 0 ||
+        viewport.gdat_weather_renderer_consumed_hash != 0u ||
+        framebuffer[30 * DM2_VP_WIDTH + 10] != 0x5a ||
+        framebuffer[31 * DM2_VP_WIDTH + 10] != 0x5a ||
+        (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER) == 0u) {
+        fputs("FAIL: altered GDAT weather pixels leaked a source layer\n", stderr);
         return 1;
     }
 

@@ -488,6 +488,14 @@ int dm2_v1_weather_gdat_draw_plan(
     out->draw_offset_x = offset_x;
     out->draw_offset_y = offset_y;
     out->source_bounds_valid = 1;
+    out->decoded_pixels_hash = command->decoded_pixels_hash;
+    out->decoded_pixel_count = command->decoded_pixel_count;
+    out->local_palette_hash = command->local_palette_hash;
+    if (out->decoded_pixels_hash == 0u || out->decoded_pixel_count == 0u ||
+        out->local_palette_hash == 0u) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     out->material_hash = command->material_hash;
     out->valid = 1;
     return 1;
