@@ -30,6 +30,13 @@ static int get_wing_talents(void *user, uint16_t fingerprint,
     return 0;
 }
 
+static int has_wing_character(void *user, uint16_t fingerprint)
+{
+    (void)user;
+    if (!wing_talents_enabled) return -1;
+    return fingerprint == 1u ? 1 : 0;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -65,6 +72,10 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_champion_talents[0] = 0x3u;
     context.party_champion_talents[1] = 0x1u;
     context.party_champion_talents[2] = 0x7u;
+    context.party_champion_fingerprints[0] = 0x1010u;
+    context.party_champion_fingerprints[1] = 0x2020u;
+    context.party_champion_fingerprints[2] = 0x2020u;
+    context.party_champion_fingerprints[3] = 0x4040u;
     context.party_champion_wounds[0] = 0x0003u;
     context.party_champion_wounds[1] = 0x000fu;
     context.party_champion_wounds[2] = 0x0006u;
@@ -75,6 +86,7 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_champion_health[3] = 30;
     if (wing_talents_enabled) {
         context.get_wing_talents = get_wing_talents;
+        context.has_wing_character = has_wing_character;
     }
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
@@ -152,6 +164,15 @@ int main(void)
     };
     uint16_t local_fetch_bad_index[] = { 0x0686u, 100u, 0x098bu };
     uint16_t who_has_talent[] = { 0x0686u, 1u, 0x1d4bu, 0x000du };
+    uint16_t where_is_party_character[] = {
+        0x0686u, 0x2020u, 0x1d0bu, 0x000du
+    };
+    uint16_t where_is_wing_character[] = {
+        0x0686u, 1u, 0x1d0bu, 0x000du
+    };
+    uint16_t where_is_absent_character[] = {
+        0x0686u, 0x3030u, 0x1d0bu, 0x000du
+    };
     uint16_t count_injury[] = {
         0x0686u, 15u, 0x0686u, 7u, 0x1a8bu, 0x000du
     };
@@ -366,6 +387,14 @@ int main(void)
           "WHO_HAS_TALENT returns the source party talent mask");
 
     parameters[0] = 77u;
+    check(run(&state, &action, where_is_party_character,
+              (int)(sizeof(where_is_party_character) /
+                    sizeof(where_is_party_character[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 2u && execution.stack_depth == 0u,
+          "WHEREISCHAR retains CSBWin's final matching party index");
+
+    parameters[0] = 77u;
     check(run(&state, &action, count_injury,
               (int)(sizeof(count_injury) / sizeof(count_injury[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
@@ -404,6 +433,20 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
               parameters[0] == 0x5au && execution.stack_depth == 0u,
           "TALENTS@ reads a runtime-authenticated CSBWin wing record");
+    parameters[0] = 77u;
+    check(run(&state, &action, where_is_wing_character,
+              (int)(sizeof(where_is_wing_character) /
+                    sizeof(where_is_wing_character[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 5u && execution.stack_depth == 0u,
+          "WHEREISCHAR reports a source-owned CSBWin wing character");
+    parameters[0] = 77u;
+    check(run(&state, &action, where_is_absent_character,
+              (int)(sizeof(where_is_absent_character) /
+                    sizeof(where_is_absent_character[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 4u && execution.stack_depth == 0u,
+          "WHEREISCHAR retains source absent-character status");
     wing_talents_enabled = 0;
 
     check(run_save_policy(&state, &action, disable_saves,

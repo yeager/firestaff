@@ -660,6 +660,12 @@ int csb_v1_runtime_read_csbwin_wing_talents(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t fingerprint,
     uint32_t *out_talents);
+/* CSBWin DSA.cpp STKOP_WhereIsChar tests the first 25-word EDT_Character
+ * EXPOOL record only. Return one when that original record is present, zero
+ * when absent, and minus one when its saved-tail owner is unavailable. */
+int csb_v1_runtime_has_csbwin_wing_character(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint);
 int csb_v1_runtime_get_csbwin_dsa_tracing(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinDSATracingReport *out_report);
