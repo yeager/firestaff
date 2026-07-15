@@ -7615,6 +7615,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     require an executed Track 02 atlas, a nonzero source-pixel receipt, and
     zero generated fill/border calls. This proves the presentation boundary
     remains complete while unbound UI art is fail-closed.
+  - 2026-07-15 correction: source-atlas execution previously cleared each
+    destination rectangle with a generated zero-colour fill before copying
+    authentic pixels. The clear is removed; atlas presentation now has only
+    authenticated `plot_pixel` output and leaves any unbound area untouched.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and

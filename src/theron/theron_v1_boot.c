@@ -3495,14 +3495,6 @@ static void theron_v1_boot_startup_draw_atlas_route(
         route->width == 0u || route->height == 0u) {
         return;
     }
-    if (executor->fill_rect) {
-        executor->fill_rect(executor->userdata,
-                            command->x,
-                            command->y,
-                            command->w,
-                            command->h,
-                            0);
-    }
     for (dy = 0; dy < command->h; ++dy) {
         size_t sy = ((size_t)dy * (size_t)route->height) /
                     (size_t)command->h;

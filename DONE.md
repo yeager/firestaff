@@ -85,6 +85,11 @@
   fill/border calls. The runtime receipt chain remains complete while the
   old UI chrome stays fail-closed.
 
+- 2026-07-15 Theron atlas clear correction: source-owned Track 02 bitmap
+  routes no longer issue the generated black `fill_rect` that used to precede
+  every original pixel copy. Complete startup receipts now represent only
+  authenticated pixel output; no source-less panel clear or border remains.
+
 - 2026-07-15 DM1 F0108 real floor-ornament presentation: removed the live
   host-colored fallback. F0108 now draws only callback-provided original
   expanded GRAPHICS.DAT pixels in the source C10 zone, preserving the
