@@ -3454,6 +3454,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     atomically. File intake proves only that all supplied lanes reach the
     existing source-bound admission gate; no local trace carries the external
     Saturn attestation needed to promote it beyond opaque no-draw evidence.
+  - The intake now requires a fourth, independently produced attestation
+    sidecar. Its parser binds the exact owner, Structure1A table/selector
+    fingerprints, raw execution lane, and transform-state lane before it may
+    assert original-Saturn provenance. No real attestation is present in the
+    local corpus, and an admitted trace still has no matrix, camera, culling,
+    material, palette, pixel, or draw semantics.
 
 - 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
   record now carries exact Structure1B occurrence and cell-extents provenance.

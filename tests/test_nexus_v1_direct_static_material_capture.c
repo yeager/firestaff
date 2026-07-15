@@ -270,11 +270,12 @@ int main(void)
                   "source-bound transform trace remains blocked without Saturn provenance");
             {
                 Nexus_V1_DgnStructure1FTransformTracePaths paths;
-                Nexus_V1_DgnStructure1FTransformTraceAttestation attestation;
                 Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt intake;
                 char manifest_path[128];
                 char raw_trace_path[128];
                 char transform_state_path[128];
+                char attestation_path[128];
+                char attestation_text[2048];
                 FILE *sidecar;
 
                 snprintf(manifest_path, sizeof(manifest_path),
@@ -286,6 +287,32 @@ int main(void)
                 snprintf(transform_state_path, sizeof(transform_state_path),
                          "/tmp/firestaff-nexus-transform-state-%ld.bin",
                          (long)getpid());
+                snprintf(attestation_path, sizeof(attestation_path),
+                         "/tmp/firestaff-nexus-transform-attestation-%ld.txt",
+                         (long)getpid());
+                snprintf(attestation_text, sizeof(attestation_text),
+                         "magic=%s\nreviewer=independent-saturn-review\n"
+                         "attestation_sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\n"
+                         "level_index=%x\nstructure1f_entry_index=%x\n"
+                         "structure1a_index=%x\nstructure3_model_index=%x\n"
+                         "face_ordinal=%x\nz_rotation=%x\n"
+                         "structure1a_table_fnv1a64=%016llx\n"
+                         "selector_column_fnv1a64=%016llx\n"
+                         "raw_trace_fnv1a64=%016llx\n"
+                         "transform_state_fnv1a64=%016llx\n"
+                         "original_saturn_source_attested=1\n",
+                         NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MAGIC,
+                         target.geometry.direct_mesh.level_index,
+                         target.geometry.direct_mesh.structure1f_entry_index,
+                         target.geometry.direct_mesh.structure1a_index,
+                         target.geometry.direct_mesh.structure3_model_index,
+                         target.geometry.direct_mesh.face_ordinal,
+                         target.geometry.direct_mesh.z_rotation,
+                         (unsigned long long)target.transform_table.raw_table_fnv1a64,
+                         (unsigned long long)target.transform_table.selector_column_fnv1a64,
+                         (unsigned long long)fnv1a64(raw_trace, sizeof(raw_trace)),
+                         (unsigned long long)fnv1a64(transform_state,
+                                                     sizeof(transform_state)));
                 sidecar = fopen(manifest_path, "wb");
                 CHECK(sidecar != NULL &&
                       fwrite(manifest, 1U, strlen(manifest), sidecar) ==
@@ -304,29 +331,44 @@ int main(void)
                           sizeof(transform_state),
                       "transform-state sidecar writes");
                 if (sidecar) fclose(sidecar);
+                sidecar = fopen(attestation_path, "wb");
+                CHECK(sidecar != NULL &&
+                      fwrite(attestation_text, 1U, strlen(attestation_text),
+                             sidecar) == strlen(attestation_text),
+                      "transform attestation sidecar writes");
+                if (sidecar) fclose(sidecar);
                 memset(&paths, 0, sizeof(paths));
                 paths.manifest_path = manifest_path;
                 paths.raw_trace_path = raw_trace_path;
                 paths.transform_state_path = transform_state_path;
-                memset(&attestation, 0, sizeof(attestation));
+                paths.attestation_path = attestation_path;
                 memset(&intake, 0, sizeof(intake));
                 CHECK(nexus_v1_engine_ingest_structure1f_transform_capture_trace(
-                          &engine, source_entry, &paths, &attestation,
-                          &intake) == 0 && intake.sidecar_paths_distinct &&
+                          &engine, source_entry, &paths, &intake) == 1 &&
+                      intake.sidecar_paths_distinct &&
                       intake.manifest_bytes_read && intake.raw_trace_bytes_read &&
-                      intake.transform_state_bytes_read &&
+                      intake.transform_state_bytes_read && intake.attestation_bytes_read &&
+                      intake.attestation.status ==
+                          NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_ADMITTED_OPAQUE &&
+                      intake.attestation.capture_target_bound &&
+                      intake.attestation.manifest_target_bound &&
+                      intake.attestation.raw_trace_bound &&
+                      intake.attestation.transform_state_bound &&
+                      intake.attestation.original_saturn_source_attested &&
                       intake.admission.status ==
-                          NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_BLOCKED_PROVENANCE &&
+                          NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_ADMITTED_OPAQUE &&
                       intake.admission.capture_target_bound &&
                       intake.admission.manifest_target_bound &&
                       intake.admission.raw_trace_bytes_bound &&
                       intake.admission.transform_state_bytes_bound &&
+                      !intake.admission.transform_semantics_proven &&
                       intake.no_draw_only && !intake.fallback_visuals_permitted &&
                       intake.blocks_real_dgn_mesh_render,
-                      "file intake preserves source-bound transform lanes without a draw claim");
+                      "attested transform sidecars remain opaque and no-draw");
                 remove(manifest_path);
                 remove(raw_trace_path);
                 remove(transform_state_path);
+                remove(attestation_path);
             }
             break;
         }

@@ -6262,16 +6262,124 @@ static uint8_t *nexus_v1_read_transform_trace_sidecar(const char *path,
     return bytes;
 }
 
+int nexus_v1_engine_parse_structure1f_transform_trace_attestation(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *attestation_text, size_t attestation_size,
+    const uint8_t *raw_trace, size_t raw_trace_size,
+    const uint8_t *transform_state, size_t transform_state_size,
+    Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure1FTransformCaptureTarget target;
+    Nexus_V1_DgnStructure1FTransformTraceAttestationReceipt receipt;
+    char value[96];
+    uint32_t parsed_u32;
+    uint64_t parsed_u64;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MISSING;
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
+    if (!engine || !attestation_text || attestation_size == 0U || !raw_trace ||
+        raw_trace_size == 0U || !transform_state || transform_state_size == 0U ||
+        nexus_v1_engine_build_structure1f_transform_capture_target(
+            engine, structure1f_entry_index, &target) != 1 || !target.valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.capture_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(attestation_text, attestation_size, "magic",
+                                    value, sizeof(value)) ||
+        strcmp(value, NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MAGIC) != 0 ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size, "reviewer",
+                                    value, sizeof(value)) ||
+        strcmp(value, "independent-saturn-review") != 0 ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "attestation_sha256", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_is_sha256(value)) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_MALFORMED;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.attestation_sha256_present = 1;
+    receipt.independent_saturn_review_declared = 1;
+    if (!nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "level_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.level_index ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "structure1f_entry_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1f_entry_index ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "structure1a_index", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure1a_index ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "structure3_model_index", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.structure3_model_index ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "face_ordinal", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.face_ordinal ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "z_rotation", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u32(value, &parsed_u32) ||
+        parsed_u32 != (uint32_t)target.geometry.direct_mesh.z_rotation ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "structure1a_table_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.raw_table_fnv1a64 ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "selector_column_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != target.transform_table.selector_column_fnv1a64) {
+        receipt.status =
+            NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_TARGET_MISMATCH;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.manifest_target_bound = 1;
+    if (!nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "raw_trace_fnv1a64", value, sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != nexus_v1_slev_trace_fnv1a64(raw_trace, raw_trace_size) ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "transform_state_fnv1a64", value,
+                                    sizeof(value)) ||
+        !nexus_v1_slev_trace_hex_u64(value, &parsed_u64) ||
+        parsed_u64 != nexus_v1_slev_trace_fnv1a64(transform_state,
+                                                   transform_state_size) ||
+        !nexus_v1_slev_trace_value(attestation_text, attestation_size,
+                                    "original_saturn_source_attested", value,
+                                    sizeof(value)) || strcmp(value, "1") != 0) {
+        receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_BLOCKED_SIDECARS;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_trace_bound = 1;
+    receipt.transform_state_bound = 1;
+    receipt.original_saturn_source_attested = 1;
+    receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_ADMITTED_OPAQUE;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const Nexus_V1_DgnStructure1FTransformTracePaths *paths,
-    const Nexus_V1_DgnStructure1FTransformTraceAttestation *attestation,
     Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt *out_receipt)
 {
     Nexus_V1_DgnStructure1FTransformTraceFileIntakeReceipt receipt;
     uint8_t *manifest = NULL;
     uint8_t *raw_trace = NULL;
     uint8_t *transform_state = NULL;
+    uint8_t *attestation = NULL;
     size_t manifest_size = 0U;
     size_t raw_trace_size = 0U;
     size_t transform_state_size = 0U;
@@ -6280,13 +6388,17 @@ int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
     memset(&receipt, 0, sizeof(receipt));
     receipt.no_draw_only = 1;
     receipt.blocks_real_dgn_mesh_render = 1;
-    if (!engine || !paths || !attestation || !paths->manifest_path ||
+    if (!engine || !paths || !paths->manifest_path ||
         !paths->raw_trace_path || !paths->transform_state_path ||
+        !paths->attestation_path ||
         !paths->manifest_path[0] || !paths->raw_trace_path[0] ||
-        !paths->transform_state_path[0] ||
+        !paths->transform_state_path[0] || !paths->attestation_path[0] ||
         strcmp(paths->manifest_path, paths->raw_trace_path) == 0 ||
         strcmp(paths->manifest_path, paths->transform_state_path) == 0 ||
-        strcmp(paths->raw_trace_path, paths->transform_state_path) == 0) {
+        strcmp(paths->manifest_path, paths->attestation_path) == 0 ||
+        strcmp(paths->raw_trace_path, paths->transform_state_path) == 0 ||
+        strcmp(paths->raw_trace_path, paths->attestation_path) == 0 ||
+        strcmp(paths->transform_state_path, paths->attestation_path) == 0) {
         *out_receipt = receipt;
         return 0;
     }
@@ -6297,17 +6409,31 @@ int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
                                                        &raw_trace_size);
     transform_state = nexus_v1_read_transform_trace_sidecar(
         paths->transform_state_path, &transform_state_size);
+    {
+        size_t attestation_size = 0U;
+        attestation = nexus_v1_read_transform_trace_sidecar(paths->attestation_path,
+                                                             &attestation_size);
+        if (attestation) {
+            receipt.attestation_bytes_read = 1;
+            (void)nexus_v1_engine_parse_structure1f_transform_trace_attestation(
+                engine, structure1f_entry_index, (const char *)attestation,
+                attestation_size, raw_trace, raw_trace_size, transform_state,
+                transform_state_size, &receipt.attestation);
+        }
+    }
     receipt.manifest_bytes_read = manifest != NULL;
     receipt.raw_trace_bytes_read = raw_trace != NULL;
     receipt.transform_state_bytes_read = transform_state != NULL;
-    if (manifest && raw_trace && transform_state) {
+    if (manifest && raw_trace && transform_state &&
+        receipt.attestation.original_saturn_source_attested) {
         (void)nexus_v1_engine_admit_structure1f_transform_capture_trace(
             engine, structure1f_entry_index, (const char *)manifest,
             manifest_size, raw_trace, raw_trace_size, transform_state,
             transform_state_size,
-            attestation->original_saturn_source_attested,
+            receipt.attestation.original_saturn_source_attested,
             &receipt.admission);
     }
+    free(attestation);
     free(transform_state);
     free(raw_trace);
     free(manifest);

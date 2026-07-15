@@ -18737,3 +18737,9 @@ An external capture can now enter through separate manifest, raw-execution,
 and transform-state sidecars. The file reader requires distinct paths and
 passes all bytes through the same source gate, but cannot manufacture Saturn
 attestation or make the retained state drawable.
+
+The sidecar path now also consumes a separate independent-review attestation.
+It must match the direct owner, raw Structure1A table and selector column,
+plus both sidecar hashes before it can assert original-Saturn provenance. The
+result remains opaque and no-draw; Firestaff does not assign transform or
+graphics meaning to the captured bytes.
