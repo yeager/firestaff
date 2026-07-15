@@ -524,6 +524,10 @@
     the existing source-plan hash; partial panel/frame/overlay/button plans
     fail closed. Remaining work is original light-palette and split-panel
     behavior, not a generic door surface.
+  - 2026-07-15 update: the complete door-plan command count now crosses the
+    boot/M11 host boundary with its hash. Host presentation rejects stale or
+    mismatched counts; it cannot reduce a multi-command door transaction to
+    a boolean consumed bit.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

@@ -32,6 +32,7 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_wall_material_plan_hash = 0x57414c4cu;
     receipt.runtime_m11_frame_door_material_plan_required = 1;
     receipt.runtime_m11_frame_door_material_plan_hash = 0x444f4f52u;
+    receipt.runtime_m11_frame_door_material_plan_command_count = 4;
     receipt.runtime_m11_frame_door_material_plan_consumed = 1;
     receipt.runtime_m11_frame_hud_material_plan_required = 1;
     receipt.runtime_m11_frame_hud_material_plan_hash = 0x48554431u;
@@ -79,6 +80,7 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.wall_material_plan_hash = 0x57414c4cu;
     receipt.door_material_plan_required = 1;
     receipt.door_material_plan_hash = 0x444f4f52u;
+    receipt.door_material_plan_command_count = 4;
     receipt.door_material_plan_consumed = 1;
     receipt.hud_material_plan_required = 1;
     receipt.hud_material_plan_hash = 0x48554431u;
@@ -175,6 +177,10 @@ int main(void)
     runtime.door_material_plan_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects an unconsumed GDAT door material plan");
+    runtime = make_runtime_receipt();
+    runtime.door_material_plan_command_count++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a GDAT door command-count mismatch");
     runtime = make_runtime_receipt();
 
     runtime.hud_material_plan_hash++;
