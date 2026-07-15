@@ -609,6 +609,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int structure3_static_face_selector_total = 0;
     int structure3_animated_face_selector_total = 0;
     int structure3_static_material_capture_target_level_count = 0;
+    int structure3_animated_material_packet_level_count = 0;
     uint64_t structure3_maximum_normal_length_error = 0;
     int structure3_complete_block_total = 0;
     int structure3_zero_block_total = 0;
@@ -640,6 +641,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
         Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
         Nexus_V1_DgnStructure3PackageGeometrySceneReceipt package_scene;
+        Nexus_V1_DgnStructure3AnimatedMaterialPacket animated_packet;
         Nexus_Viewport package_viewport;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
@@ -1221,6 +1223,72 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       "a level without static Structure3 selectors cannot manufacture a material capture target");
             }
         }
+        {
+            int entry_index;
+            int found_animated_material_packet = 0;
+
+            memset(&animated_packet, 0, sizeof(animated_packet));
+            for (entry_index = 0;
+                 entry_index < loaded_level.structure3_directory.entry_count &&
+                 !found_animated_material_packet;
+                 ++entry_index) {
+                int face_index;
+                for (face_index = 0;
+                     face_index < loaded_level.structure3_entry_face_counts[entry_index];
+                     ++face_index) {
+                    if (nexus_v1_current_level_structure3_animated_material_packet(
+                            &active_engine, (uint32_t)entry_index,
+                            (uint32_t)face_index, &animated_packet) == 1) {
+                        found_animated_material_packet = 1;
+                        break;
+                    }
+                }
+            }
+            if (loaded_level.structure3_face_materials
+                    .animated_texture_selector_count > 0) {
+                CHECK(found_animated_material_packet && animated_packet.valid &&
+                      animated_packet.source_geometry_bound &&
+                      animated_packet.animation_declaration_bound &&
+                      animated_packet.first_descriptor_bound &&
+                      animated_packet.level_index == level &&
+                      animated_packet.source_byte_count == (int)size &&
+                      animated_packet.source_bytes_fnv1a64 ==
+                          fnv1a64(data, (size_t)size) &&
+                      (animated_packet.face.flags & 0x40U) != 0U &&
+                      (animated_packet.face.fill_selector & 0xff00U) == 0x0800U &&
+                      (animated_packet.face.fill_selector & 0xffU) ==
+                          animated_packet.animation_id &&
+                      animated_packet.structure1g_entry_index >= 0 &&
+                      animated_packet.structure1g_entry_index <
+                          loaded_level.structure1g_entry_count &&
+                      animated_packet.first_image_index ==
+                          loaded_level.structure1g_entries[
+                              animated_packet.structure1g_entry_index]
+                                  .first_image_index &&
+                      animated_packet.first_structure2_image_id ==
+                          loaded_level.structure1g_entries[
+                              animated_packet.structure1g_entry_index]
+                                  .first_structure2_image_id &&
+                      animated_packet.first_descriptor_target.valid &&
+                      animated_packet.first_descriptor_target.descriptor.image_id ==
+                          animated_packet.first_structure2_image_id &&
+                      animated_packet.sequence_instruction_count > 0 &&
+                      !animated_packet.animation_execution_permitted &&
+                      !animated_packet.transform_semantics_proven &&
+                      !animated_packet.pixel_palette_vdp1_semantics_proven &&
+                      !animated_packet.decoder_permitted &&
+                      animated_packet.no_draw_only &&
+                      !animated_packet.fallback_visuals_permitted &&
+                      animated_packet.blocks_real_dgn_mesh_render,
+                      "retail Structure3 animated face binds its real Structure1G declaration and first Structure2 descriptor no-draw");
+                ++structure3_animated_material_packet_level_count;
+            } else {
+                CHECK(!found_animated_material_packet && !animated_packet.valid &&
+                      animated_packet.no_draw_only &&
+                      !animated_packet.fallback_visuals_permitted,
+                      "levels without Structure3 animated selectors cannot manufacture animation packets");
+            }
+        }
         if (level == 0) {
             const char *target_path =
                 "/private/tmp/firestaff_nexus_structure2_descriptor_target.txt";
@@ -1517,6 +1585,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
           "retail Structure2 corpus locks its observed descriptor-class and palette-anchor split");
     CHECK(structure3_static_material_capture_target_level_count > 0,
           "real DGN corpus yields source-bound static face/material capture targets");
+    CHECK(structure3_animated_material_packet_level_count > 0,
+          "real DGN corpus yields source-bound animated Structure3 packets");
     CHECK(structure2_descriptor_total == 1678 &&
           structure2_nonzero_target_total == 2944 &&
           structure2_in_span_target_total == 2944 &&

@@ -6413,6 +6413,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source-only: it cannot infer transforms, texels, palettes, UVs, VDP1 state,
   culling, or a host draw from the package bytes.
 
+  Texture-flaggade `08xx` Structure3-ansikten kan nu bindas till sin verkliga
+  Structure1G-deklaration, dess fullständigt begränsade instruktionssekvens och
+  första lokala Structure2-descriptor. Detta ger inte rätt att välja eller
+  avancera en animationsframe och bevisar inte pixelspan, palett, VDP1, UV,
+  transform eller draw. En autentisk Saturn-trace måste visa dessa steg innan
+  animationen får exekveras eller synas.
+
 - 🔧 2026-07-15 Nexus Structure2 pixel/palette format gate: the real retail
   corpus has only raw descriptor classes `0x0008` (1,553 rows) and `0x0028`
   (125 rows). Every image target is an in-payload anchor; `0x0028` has no
