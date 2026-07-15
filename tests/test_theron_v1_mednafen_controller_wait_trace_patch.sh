@@ -108,7 +108,10 @@ if ! grep -Fq 'pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u' "$late
 fi
 if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x value=%02x' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'pce_cd_fifo_destination_receipt generation=%u fifo_sequence=%llu reader_pc=%04x logical_destination=%04x physical_destination=%06x value=%02x' "$generation7_receipt_patch_file" ||
-   ! grep -Fq 'TheronPCECDTraceDataWrite(address, (wmpr << 13) | (address & 0x1FFF), V);' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceDataWrite(address, physical_address, V);' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'TheronPCECDTracePostGeneration7RAMWrite(address, physical_address, V, writer_pc,' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'generation7_fifo_window_complete fifo_sequence=%llu' "$generation7_receipt_patch_file" ||
+   ! grep -Fq 'post_generation7_main_ram_write writer_pc=%04x writer_physical_pc=%06x' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronPCECDFifoReceiptCapacity = 65536' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronSCSITraceCurrentReadGeneration() >= 7' "$generation7_receipt_patch_file" ||
    ! grep -Fq 'TheronSCSITraceCurrentReadGeneration() <= 10' "$generation7_receipt_patch_file"; then
