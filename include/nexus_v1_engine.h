@@ -47,7 +47,10 @@ typedef enum {
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 = 2,
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED = 3,
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES = 4,
-    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID = 5
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID = 5,
+    /* A parseable archive is not a retail menu route until it is bound to
+     * the exact Track 1 MENU.BPK identity. */
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE = 6
 } Nexus_V1_MenuBpkRendererHandoffStatus;
 
 typedef struct {
@@ -55,6 +58,7 @@ typedef struct {
     Nexus_V1_BpkRuntimeDecodeRoute decode_route;
     int attempted;
     int receipt_valid;
+    int canonical_source_hash_verified;
     int can_render_stored_surfaces;
     int blocks_real_menu_surface_render;
     int fallback_visuals_permitted;
@@ -1450,6 +1454,7 @@ struct Nexus_V1_Engine {
     int ui_faces_loaded;
     int ui_faces_expected;
     int ui_faces_fallback;
+    Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
     int menu_bpk_decode_receipt_valid;
     int menu_bpk_decode_receipt_attempted;
     Nexus_V1_BpkRuntimeDecodeReceipt menu_bpk_decode_receipt;
@@ -1777,6 +1782,11 @@ int nexus_v1_startup_surfaces_expected_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
+/* Source identity for MENU.BPK. A parseable archive is not eligible for the
+ * retail menu route until this receipt is hash-verified. */
+int nexus_v1_menu_bpk_source_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt);
 int nexus_v1_menu_bpk_decode_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
