@@ -249,6 +249,23 @@
   host-font route. Focused coverage: `m11_dm1_action_spell_asset_fail_closed`
   and `m11_dm1_spell_area_asset_route`.
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0387/F0393/F0397/F0398 panel consumption: the
+  active action header/rows are clipped to their C080/C085..C087 source boxes,
+  while the live spell path consumes the source-owned overlay plan for every
+  six-rune and four-rune label. The living caster tab now applies F0698's
+  indexed inversion only to F0393's exact inclusive C009 rectangle; no host
+  highlight, text, or color is introduced. Focused coverage:
+  `m11_dm1_action_spell_asset_fail_closed` and
+  `m11_dm1_spell_area_asset_route`.
+
+- ✅ 2026-07-15 DM1 ReDMCSB MENUDRAW.C F0396/F0392 C011 row material: the
+  live caster path now validates C011 as its original 96x36 three-row bitmap
+  and copies the complete 96x12 available and selected rows to y=50/y=62.
+  The former 14x39 fragment could leave real panel controls missing or stale;
+  it is no longer accepted by the DM1 route. Focused coverage:
+  `dm1_v1_box_spell_area_pc34_compat` and
+  `m11_dm1_spell_area_asset_route`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB F0115 creature source-material/geometry gate:
   live C584+ creature presentation now requires a decoded loaded-pixel PC34
   surface selected through G0221/G0222. Blank C3200/G0224 anchors reject the

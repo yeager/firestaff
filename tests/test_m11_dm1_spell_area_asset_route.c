@@ -68,6 +68,10 @@ int main(void)
     ok &= require_text(source,
                        "!linesAsset || !linesAsset->loaded || !linesAsset->pixels ||");
     ok &= require_text(source, "M11_Font_IsLoaded(g_activeOriginalFont)");
+    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_WIDTH_PC34");
+    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34");
+    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34");
+    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34");
     ok &= require_text(source, "224, 50");
     ok &= require_text(source, "224, 62");
 
