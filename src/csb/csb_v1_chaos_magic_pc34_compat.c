@@ -1164,8 +1164,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         break;
     case 134u: /* STKOP_TalentsFetch, reached via AMPERSAND2 + 128 */
         /* CSBWin DSA.cpp:4243-4283 maps index four to d.HandChar and
-         * returns the selected CHARDESC talents. Wing records are EXPOOL
-         * owned and are not part of this party receipt, so they stay closed. */
+         * returns the selected CHARDESC talents.  High-bit indices name a
+         * CHARDESC restored from the runtime-owned EDT_Character wing bank. */
         if (!context->party_champions_valid ||
             context->party_champion_count < 0 ||
             context->party_champion_count > 4 ||
@@ -1175,9 +1175,12 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         sv = (int32_t)v;
         if (sv == 4) sv = context->party_leader_index;
         if (((uint32_t)sv & 0x10000u) != 0u) {
-            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
-        }
-        if (sv < 0 || sv >= context->party_champion_count) {
+            if (!context->get_wing_talents ||
+                context->get_wing_talents(context->wing_user,
+                                          (uint16_t)sv, &v) < 0) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+        } else if (sv < 0 || sv >= context->party_champion_count) {
             v = 0u;
         } else {
             v = context->party_champion_talents[sv];
@@ -1560,6 +1563,8 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_skin = runner->get_skin;
     context.set_skin = runner->set_skin;
     context.skin_user = runner->skin_user;
+    context.get_wing_talents = runner->get_wing_talents;
+    context.wing_user = runner->wing_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
             runner->action_ordinal, &context, &execution) !=

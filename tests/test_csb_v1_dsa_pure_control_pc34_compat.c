@@ -15,6 +15,21 @@
 
 static int failures;
 
+static int wing_talents_enabled;
+
+static int get_wing_talents(void *user, uint16_t fingerprint,
+                            uint32_t *out_talents)
+{
+    (void)user;
+    if (!out_talents || !wing_talents_enabled) return -1;
+    if (fingerprint == 1u) {
+        *out_talents = 0x5au;
+        return 1;
+    }
+    *out_talents = 0u;
+    return 0;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -58,6 +73,9 @@ static CSB_V1_CSBWinDSAStackResult run(
     context.party_champion_health[1] = 0;
     context.party_champion_health[2] = 20;
     context.party_champion_health[3] = 30;
+    if (wing_talents_enabled) {
+        context.get_wing_talents = get_wing_talents;
+    }
     return csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         state, 7, 1u, 0, &context, out_execution);
 }
@@ -144,7 +162,7 @@ int main(void)
         0x0686u, 7u, 0x0195u, 0x000du
     };
     uint16_t talents_fetch_wing[] = {
-        0x0786u, 0u, 1u, 0x0195u, 0x000du
+        0x0786u, 1u, 1u, 0x0195u, 0x000du
     };
     uint16_t disable_saves[] = { 0x0686u, 1u, 0x090bu };
     uint16_t enable_saves[] = { 0x0686u, 0u, 0x090bu };
@@ -377,6 +395,16 @@ int main(void)
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
               parameters[0] == 77u,
           "TALENTS@ keeps unbound CSBWin wing records unavailable");
+
+    wing_talents_enabled = 1;
+    parameters[0] = 77u;
+    check(run(&state, &action, talents_fetch_wing,
+              (int)(sizeof(talents_fetch_wing) /
+                    sizeof(talents_fetch_wing[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              parameters[0] == 0x5au && execution.stack_depth == 0u,
+          "TALENTS@ reads a runtime-authenticated CSBWin wing record");
+    wing_talents_enabled = 0;
 
     check(run_save_policy(&state, &action, disable_saves,
                           (int)(sizeof(disable_saves) /

@@ -180,6 +180,12 @@ typedef int (*CSB_V1_CSBWinDSAGetSkinFn)(void *user,
 typedef int (*CSB_V1_CSBWinDSASetSkinFn)(void *user,
                                          uint32_t location,
                                          uint8_t skin);
+/* CSBWin CHARDESC::GetFromWings reads eight exact EDT_Character EXPOOL
+ * records.  The bytecode executor owns neither EXPOOL nor a character
+ * layout, so the runtime provides this read-only, fail-closed bridge. */
+typedef int (*CSB_V1_CSBWinDSAGetWingTalentsFn)(void *user,
+                                                uint16_t fingerprint,
+                                                uint32_t *out_talents);
 
 typedef struct {
     uint32_t master_location;
@@ -212,6 +218,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
     CSB_V1_CSBWinDSASetSkinFn set_skin;
     void *skin_user;
+    CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
+    void *wing_user;
 } CSB_V1_CSBWinDSAStackContext;
 
 typedef struct {
@@ -438,6 +446,8 @@ typedef struct {
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
     CSB_V1_CSBWinDSASetSkinFn set_skin;
     void *skin_user;
+    CSB_V1_CSBWinDSAGetWingTalentsFn get_wing_talents;
+    void *wing_user;
     CSB_V1_CSBWinDSAStackExecution last_execution;
     CSB_V1_CSBWinDSAExecuteReceipt last_transfer;
     int execution_count;

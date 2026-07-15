@@ -11584,6 +11584,21 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_dsa_pure_control_pc34_compat
     )
 
+    add_executable(test_csb_v1_wing_expool_runtime
+        tests/test_csb_v1_wing_expool_runtime.c
+    )
+    target_include_directories(test_csb_v1_wing_expool_runtime PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_wing_expool_runtime PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_wing_expool_runtime PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_wing_expool_runtime
+        COMMAND test_csb_v1_wing_expool_runtime
+    )
+
     add_executable(test_csb_v1_csbwin_inventory_ownership_save_handoff
         tests/test_csb_v1_csbwin_inventory_ownership_save_handoff.c
     )
