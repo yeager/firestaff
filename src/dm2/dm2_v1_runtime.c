@@ -3629,6 +3629,26 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         door_map_chip_material_plan_hash;
     g_dm2_last_m11_frame.door_map_chip_material_plan_consumed =
         door_map_chip_material_plan_consumed;
+    /* c_weather.cpp emits the DistantEnvironment transaction before its
+     * QUERY_TEMP_PICST image calls. Carry the exact renderer receipt only
+     * when this frame consumed every selected source layer. */
+    g_dm2_last_m11_frame.weather_material_plan_required =
+        rt->gdat_weather_renderer_ready &&
+        rt->gdat_weather_renderer_command_count > 0u;
+    g_dm2_last_m11_frame.weather_material_plan_consumed =
+        g_dm2_last_m11_frame.weather_material_plan_required &&
+        viewport.gdat_weather_renderer_consumed_hash ==
+            rt->gdat_weather_renderer_hash &&
+        viewport.gdat_weather_renderer_consumed_command_count ==
+            rt->gdat_weather_renderer_command_count &&
+        viewport.asset_weather_drawn_count ==
+            (int)rt->gdat_weather_renderer_command_count;
+    g_dm2_last_m11_frame.weather_material_plan_hash =
+        g_dm2_last_m11_frame.weather_material_plan_consumed
+            ? rt->gdat_weather_renderer_hash : 0u;
+    g_dm2_last_m11_frame.weather_material_plan_command_count =
+        g_dm2_last_m11_frame.weather_material_plan_consumed
+            ? (int)rt->gdat_weather_renderer_command_count : 0;
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_hash =
@@ -3674,6 +3694,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (!g_dm2_last_m11_frame.door_map_chip_material_plan_required ||
          (g_dm2_last_m11_frame.door_map_chip_material_plan_hash != 0u &&
           g_dm2_last_m11_frame.door_map_chip_material_plan_consumed)) &&
+        (!g_dm2_last_m11_frame.weather_material_plan_required ||
+         (g_dm2_last_m11_frame.weather_material_plan_hash != 0u &&
+          g_dm2_last_m11_frame.weather_material_plan_command_count > 0 &&
+          g_dm2_last_m11_frame.weather_material_plan_consumed)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&

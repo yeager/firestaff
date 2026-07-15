@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject weather M11 receipt: a source-backed
+  `DistantEnvironment` weather transaction now reaches M11 only when every
+  selected GDAT layer was consumed. The renderer records the exact receipt
+  hash and command count; partial or unavailable layers remain no-draw and
+  cannot produce a presentable source frame.
+
 - 2026-07-15 DM2 skproject HUD-core no-draw gate: `DM2_DRAW_INTERFACE` no
   longer replaces unavailable `INTERFACE_GENERAL` chrome with generated bars,
   dividers, coin discs, icon frames, portrait surrounds, or name markers.

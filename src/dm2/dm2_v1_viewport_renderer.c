@@ -1109,6 +1109,8 @@ void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
         ? receipt : NULL;
     s->gdat_weather_renderer_graphicsset =
         s->gdat_weather_renderer_receipt ? graphicsset_index : 0u;
+    s->gdat_weather_renderer_consumed_hash = 0u;
+    s->gdat_weather_renderer_consumed_command_count = 0u;
     s->asset_weather_drawn_count = 0;
     s->dirty = 1;
 }
@@ -5211,7 +5213,10 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
     int strides[2] = { 0, 0 };
     unsigned int i;
 
-    if (!s || !s->is_outdoor || !s->gdat_weather_renderer_receipt) return;
+    if (!s) return;
+    s->gdat_weather_renderer_consumed_hash = 0u;
+    s->gdat_weather_renderer_consumed_command_count = 0u;
+    if (!s->is_outdoor || !s->gdat_weather_renderer_receipt) return;
     receipt = s->gdat_weather_renderer_receipt;
     if (receipt->command_count == 0u) return;
 
@@ -5272,6 +5277,8 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
             &s->gdat_scene_weather_consumed_count);
         ++s->asset_weather_drawn_count;
     }
+    s->gdat_weather_renderer_consumed_hash = receipt->renderer_hash;
+    s->gdat_weather_renderer_consumed_command_count = receipt->command_count;
 }
 
 /* ── UI Chrome ────────────────────────────────────────────────────── */

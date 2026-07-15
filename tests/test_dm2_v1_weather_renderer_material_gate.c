@@ -95,6 +95,8 @@ int main(void)
     omit_rain = 0;
     dm2_v1_render_weather_overlay(&viewport);
     if (viewport.asset_weather_drawn_count != 2 ||
+        viewport.gdat_weather_renderer_consumed_hash != receipt.renderer_hash ||
+        viewport.gdat_weather_renderer_consumed_command_count != 2u ||
         viewport.gdat_scene_weather_consumed_count != 4 ||
         framebuffer[30 * DM2_VP_WIDTH + 10] != 0x41u ||
         framebuffer[30 * DM2_VP_WIDTH + 11] != 0x42u ||
@@ -139,6 +141,8 @@ int main(void)
     omit_rain = 1;
     dm2_v1_render_weather_overlay(&viewport);
     if (viewport.asset_weather_drawn_count != 0 ||
+        viewport.gdat_weather_renderer_consumed_hash != 0u ||
+        viewport.gdat_weather_renderer_consumed_command_count != 0u ||
         framebuffer[30 * DM2_VP_WIDTH + 10] != 0x5a ||
         framebuffer[31 * DM2_VP_WIDTH + 10] != 0x5a ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER) == 0u) {

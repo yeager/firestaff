@@ -184,6 +184,10 @@ typedef struct {
     int door_map_chip_material_plan_required;
     uint32_t door_map_chip_material_plan_hash;
     int door_map_chip_material_plan_consumed;
+    int weather_material_plan_required;
+    uint32_t weather_material_plan_hash;
+    int weather_material_plan_command_count;
+    int weather_material_plan_consumed;
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;
