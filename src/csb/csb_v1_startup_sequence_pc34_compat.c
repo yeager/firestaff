@@ -1374,13 +1374,12 @@ int csb_v1_startup_advance_tick_pc34(
     }
     if (state->title_active) {
         state->title_frame++;
-        /* ReDMCSB TITLE.C F0437 advances the PC title through source
-         * animation steps after the current PRESENTS frame has been drawn.
-         * Keep the runtime state on the drawn source step for this tick; the
-         * render plan computes the next blit rectangle from title_frame. */
+        /* ReDMCSB TITLE.C F0437 keeps the title frame and source blit step
+         * in lockstep at the host receipt boundary; otherwise the CHAOS zoom
+         * frame that starts after PRESENTS fails source-coherence validation. */
         state->title_source_step =
             (int)csb_v1_startup_title_source_step_for_frame_pc34(
-                state->title_frame - 1);
+                state->title_frame);
         if (state->title_frame >= csb_v1_startup_title_total_ticks_pc34()) {
             state->title_active = 0;
             state->title_source_step = 0;
@@ -2028,7 +2027,7 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
         *out_plan = plan;
         return 1;
     }
-    if (!plan.waiting_for_input && state->entrance_source_step == 2) {
+    if (!plan.waiting_for_input && state->entrance_source_step > 0) {
         /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to black
          * before C004/C002/C003 are redrawn. */
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
