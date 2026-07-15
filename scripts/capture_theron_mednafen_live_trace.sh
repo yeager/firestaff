@@ -337,7 +337,8 @@ APPLESCRIPT
         fi
         if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
               "$quartz_receipt" != *"$expected_quartz_route"* ||
-              "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ]]; then
+              "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
+              "$quartz_receipt" != *"quartz_frontmost_pid=$mednafen_ui_pid"* ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2
