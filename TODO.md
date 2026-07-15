@@ -6373,7 +6373,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   are System Card-owned. The full 17-sector raw span is now ordered and
   CPU-bounded through System Card `$ea50/$ea52`, with subsequent System Card
   main-RAM reads. It is explicitly not a game-owned consumer. No game-RAM or
-  level/object consumer is admitted.
+  level/object consumer is admitted. The trace now also carries raw
+  LBA/offset through each FIFO-to-main-RAM receipt, but the new MD5-pinned
+  headless capture stayed at the System Card wait and emitted no such row.
+  A later authentic runtime capture must produce the receipt before it can
+  establish a game-owned consumer.
   Generation 7 now has byte-exact FIFO provenance for LBA `4847..4851` /
   records `0x72e..0x732`, followed by game-owned `0x1f11xx..0x1f18xx` writes.
   There is no byte-exact game-RAM destination, so semantics remain blocked.
