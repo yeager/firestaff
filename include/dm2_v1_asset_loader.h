@@ -246,6 +246,14 @@ int dm2_v1_asset_load_word_value(
     int field,
     uint16_t *out_value);
 
+/* SKProject QUERY_ORNATE_ANIM_FRAME. Resolves only the original
+ * dtWordValue/dtText field 0x0d sequence; malformed or unsupported bytes
+ * fail closed rather than selecting a substitute animation frame. */
+int dm2_v1_asset_query_ornate_animation_frame(
+    const DM2_V1_AssetLoader *loader, int category, int index,
+    uint32_t tick, uint32_t delta, uint16_t *out_frame,
+    uint32_t *out_receipt_hash);
+
 /* Read a skproject dtImageOffset field by exact category/index/field.
  * Returns 1 on success and 0 when the typed entry is absent. */
 int dm2_v1_asset_load_image_offset(

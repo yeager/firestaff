@@ -649,7 +649,7 @@ static int dm2_runtime_creature_read_door(void *user,
 }
 
 static void dm2_runtime_apply_door_record_metadata(
-    DM2_V1_DungeonData *dd,
+    DM2_V1_BootProfile *boot, DM2_V1_DungeonData *dd,
     int level,
     int x,
     int y,
@@ -659,7 +659,7 @@ static void dm2_runtime_apply_door_record_metadata(
     const uint8_t *door_gfx_list,
     const uint8_t *door_gfx_active,
     const uint8_t *door_ornate_list,
-    int door_ornate_count,
+    int door_ornate_count, uint32_t tick,
     DM2_ViewSquare *door) {
     int thing;
     int door_thing;
@@ -671,6 +671,8 @@ static void dm2_runtime_apply_door_record_metadata(
     uint16_t wall_button_object_id = 0xffffu;
     int wall_gfx_index = -1;
     int wall_gfx_field = -1;
+    uint8_t animated_field = 0u;
+    uint32_t animated_receipt = 0u;
 
     if (!dd || !door) return;
     thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
@@ -726,6 +728,14 @@ static void dm2_runtime_apply_door_record_metadata(
         door->door_wall_button_x = (int16_t)x;
         door->door_wall_button_y = (int16_t)y;
         door->door_wall_button_object_id = wall_button_object_id;
+    }
+    if (door->door_wall_button && boot &&
+        dm2_v1_boot_wall_gfx_ornate_animation_field(
+            boot, door->door_wall_button_index, tick, 0u,
+            &animated_field, &animated_receipt)) {
+        /* QUERY_ORNATE_ANIM_FRAME is the sole source of a non-static field.
+         * If its selected frame cannot later decode, M11 blocks the command. */
+        door->door_wall_button_field = animated_field;
     }
 }
 
@@ -1155,11 +1165,11 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                     rt, map_x, map_y, door);
             } else {
                 dm2_runtime_apply_door_record_metadata(
-                    dd, rt->dungeon_level, map_x, map_y, dir,
+                    rt->boot, dd, rt->dungeon_level, map_x, map_y, dir,
                     rt->map_wall_gfx_list, rt->map_wall_gfx_count,
                     rt->map_door_gfx_list, rt->map_door_gfx_active,
                     rt->map_door_ornate_list,
-                    rt->map_door_ornate_count, door);
+                    rt->map_door_ornate_count, (uint32_t)rt->tick_count, door);
             }
         }
     }

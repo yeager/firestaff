@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 SKProject `QUERY_ORNATE_ANIM_FRAME` viewport binding:
+  legacy DB0-door wall-button material now resolves the real WALL_GFX
+  `dtWordValue/0x0d` or `dtText/0x0d` sequence against the live game tick
+  before M11 selects its image field. Invalid sequences and unavailable
+  source frames fail closed. Focused coverage: `dm2_v1_gdat_word_values`,
+  `dm2_v1_boot_profile_smoke`, and `dm2_v1_save_load`.
+
 - ✅ 2026-07-15 DM2 SKProject D3 `DRAW_DOOR` light-palette handoff:
   field-zero retry panels now consume `_32cb_0804`'s original stationary
   distance-darkness table and the decoded `INTERFACE_GENERAL/0/dt07/2`

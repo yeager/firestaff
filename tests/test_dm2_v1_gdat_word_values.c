@@ -359,6 +359,49 @@ static void test_door_light_palette_darkness(void)
           "door light palette rejects out-of-range source values");
 }
 
+static void test_ornate_animation_frame(void)
+{
+    DM2_V1_AssetLoader loader;
+    DM2_V1_GdatEntry entries[1];
+    uint32_t offsets[1] = { 0u };
+    uint32_t sizes[1] = { 3u };
+    uint8_t text[] = { '2', 'A', 0u };
+    uint16_t frame = 0u;
+    uint32_t receipt = 0u;
+
+    memset(&loader, 0, sizeof(loader));
+    memset(entries, 0, sizeof(entries));
+    loader.data = text;
+    loader.data_size = sizeof(text);
+    loader.loaded = 1;
+    loader.raw_data_count = 1u;
+    loader.raw_offsets = offsets;
+    loader.raw_sizes = sizes;
+    loader.entries = entries;
+    loader.entry_count = 1u;
+    entries[0].cls1 = DM2_GDAT_CATEGORY_WALL_GFX;
+    entries[0].cls2 = 7u;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[0].cls4 = 0x0du;
+    entries[0].data_index = 0x8003u;
+    CHECK(dm2_v1_asset_query_ornate_animation_frame(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 0u,
+              &frame, &receipt) && frame == 2u && receipt != 0u,
+          "ornate word animation uses source length and high-bit frame base");
+
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+    entries[0].data_index = 0u;
+    CHECK(dm2_v1_asset_query_ornate_animation_frame(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 1u, 0u,
+              &frame, &receipt) && frame == 10u && receipt != 0u,
+          "ornate text animation decodes SKProject base-36 frame bytes");
+    text[1] = '!';
+    CHECK(!dm2_v1_asset_query_ornate_animation_frame(
+              &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 1u, 0u,
+              &frame, &receipt),
+          "ornate animation rejects unsupported source sequence bytes");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 GDAT Word-Value Test ===\n");
@@ -366,6 +409,7 @@ int main(void)
     test_interface_palette_decoder_fixture();
     test_img3_local_palette_fixture();
     test_door_light_palette_darkness();
+    test_ornate_animation_frame();
     test_interface_palette_real_data();
     test_item_word_values_real_data();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
