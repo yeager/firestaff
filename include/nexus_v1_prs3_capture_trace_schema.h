@@ -125,6 +125,17 @@ typedef struct {
      * token grammar, output buffer ownership, or drawable pixels. */
     int sh2_control_low_bit_semantics_proven;
     int sh2_nonzero_direct_byte_path_proven;
+    uint32_t nonzero_post_store_r6_increment_offset;
+    int32_t nonzero_post_store_r6_increment;
+    uint32_t nonzero_post_store_r6_mask_offset;
+    uint32_t nonzero_post_store_r6_mask_source_register;
+    uint32_t nonzero_post_store_r6_mask_destination_register;
+    uint32_t nonzero_control_reentry_branch_offset;
+    uint32_t nonzero_control_reentry_target_offset;
+    /* The nonzero store has a fixed post-store R6 update/mask corridor and
+     * returns to the shared control block. This is not a literal-token or
+     * output-buffer semantic claim. */
+    int sh2_nonzero_output_commit_reentry_proven;
     uint32_t nonzero_source_counter_decrement_offset;
     int32_t nonzero_source_counter_delta;
     uint32_t zero_source_counter_decrement_offset;

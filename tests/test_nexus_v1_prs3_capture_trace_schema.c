@@ -416,6 +416,14 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                receipt.sh2_terminal_failure_path_proven &&
                receipt.sh2_control_low_bit_semantics_proven &&
                receipt.sh2_nonzero_direct_byte_path_proven &&
+               receipt.nonzero_post_store_r6_increment_offset == 85466U &&
+               receipt.nonzero_post_store_r6_increment == 1 &&
+               receipt.nonzero_post_store_r6_mask_offset == 85470U &&
+               receipt.nonzero_post_store_r6_mask_source_register == 5U &&
+               receipt.nonzero_post_store_r6_mask_destination_register == 6U &&
+               receipt.nonzero_control_reentry_branch_offset == 85472U &&
+               receipt.nonzero_control_reentry_target_offset == 85428U &&
+               receipt.sh2_nonzero_output_commit_reentry_proven &&
                receipt.nonzero_source_counter_decrement_offset == 85458U &&
                receipt.nonzero_source_counter_delta == -1 &&
                receipt.zero_source_counter_decrement_offset == 85476U &&
@@ -463,6 +471,16 @@ static void test_dm_bin_sh2_v1_execution_receipt(void) {
                    damaged, dm_bin_size, 1, &receipt) &&
                    !receipt.sh2_control_dependent_source_consumption_proven,
                "changed nonzero source debit rejects branch-local consumption receipt");
+        free(damaged);
+    }
+    damaged = (unsigned char *)malloc(dm_bin_size);
+    if (damaged) {
+        memcpy(damaged, dm_bin, dm_bin_size);
+        damaged[85466U] ^= 1U;
+        expect(!nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
+                   damaged, dm_bin_size, 1, &receipt) &&
+                   !receipt.sh2_nonzero_output_commit_reentry_proven,
+               "changed post-store R6 update rejects nonzero commit receipt");
         free(damaged);
     }
     damaged = (unsigned char *)malloc(dm_bin_size);
