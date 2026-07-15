@@ -27,6 +27,7 @@ game_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_game_window
 parameter_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_parameter_window_trace.patch
 fifo_origin_main_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_receipt.patch
 fifo_origin_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer.patch
+main_ram_e009_return_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_return_trace.patch
 fifo_origin_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch
 later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
@@ -192,6 +193,12 @@ if ! grep -Fq 'pce_cd_fifo_origin_main_ram_consumer sequence=%u generation=%u so
    ! grep -Fq 'reader_physical_pc < 0x1f0000 || reader_physical_pc >= 0x1f8000' "$fifo_origin_main_ram_consumer_patch_file" ||
    ! grep -Fq 'origin->valid = false' "$fifo_origin_main_ram_consumer_patch_file"; then
     printf 'FAIL: FIFO-origin consumer patch no longer requires a fresh game-owned reader\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'main_ram_loader_e009_return sequence=%u logical_pc=%04x physical_pc=%06x' "$main_ram_e009_return_patch_file" ||
+   ! grep -Fq 'TheronPCECDMainRAMLoaderE009ReturnLogicalPC = logical_pc + 3' "$main_ram_e009_return_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMLoaderE009Return(PC, physical_pc)' "$main_ram_e009_return_patch_file"; then
+    printf 'FAIL: main-RAM e009 return patch no longer retains exact CPU continuity\n' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_cd_data_origin sequence=%u cpu_pc=%04x port=%04x source_generation=%u source_lba=%u source_offset=%u data=%02x' "$fifo_origin_patch_file" ||

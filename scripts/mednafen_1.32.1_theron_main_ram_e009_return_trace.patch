@@ -1,0 +1,56 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -11,6 +11,7 @@
+ void TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite(uint32 physical_destination);
+ void TheronPCECDTracePostGeneration7RAMWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc, uint8 accumulator, uint8 x, uint8 y);
++void TheronPCECDTraceMainRAMLoaderE009Return(uint16 logical_pc, uint32 physical_pc);
+ void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceControlWindowRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -732,6 +732,7 @@
+	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third, A, X, Y);
+	  if(lastop == 0x20 && first == 0xe009)
+	   TheronPCECDTraceMainRAMLoaderE009Call(PC, physical_pc, A, X, Y);
++	  TheronPCECDTraceMainRAMLoaderE009Return(PC, physical_pc);
+	 }
+ 
+	 PC++;
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -136,6 +136,10 @@
+ static unsigned TheronPCECDMainRAMLoaderE009CallCount;
+ static bool TheronPCECDMainRAMLoaderE009Active;
+ static unsigned TheronPCECDMainRAMLoaderE009Sequence;
++static bool TheronPCECDMainRAMLoaderE009ReturnPending;
++static uint16 TheronPCECDMainRAMLoaderE009ReturnLogicalPC;
++static uint32 TheronPCECDMainRAMLoaderE009ReturnPhysicalPC;
++static unsigned TheronPCECDMainRAMLoaderE009ReturnSequence;
+ static unsigned TheronPCECDG4MainRAMReadCount;
+ static unsigned TheronPCECDMainRAMLoaderWriteCount;
+ static unsigned TheronPCECDControlWindowReadCount;
+@@ -201,6 +205,22 @@
+                             physical_pc, accumulator, x, y);
+  TheronPCECDMainRAMLoaderE009Sequence = TheronPCECDMainRAMLoaderE009CallCount - 1;
+  TheronPCECDMainRAMLoaderE009Active = true;
++ TheronPCECDMainRAMLoaderE009ReturnPending = true;
++ TheronPCECDMainRAMLoaderE009ReturnLogicalPC = logical_pc + 3;
++ TheronPCECDMainRAMLoaderE009ReturnPhysicalPC = physical_pc + 3;
++ TheronPCECDMainRAMLoaderE009ReturnSequence = TheronPCECDMainRAMLoaderE009Sequence;
++}
++
++void TheronPCECDTraceMainRAMLoaderE009Return(uint16 logical_pc, uint32 physical_pc)
++{
++ if(!TheronPCECDMainRAMLoaderE009ReturnPending ||
++    logical_pc != TheronPCECDMainRAMLoaderE009ReturnLogicalPC ||
++    physical_pc != TheronPCECDMainRAMLoaderE009ReturnPhysicalPC)
++  return;
++ TheronPCECDTraceFifoReceipt("main_ram_loader_e009_return sequence=%u logical_pc=%04x physical_pc=%06x\n",
++                             TheronPCECDMainRAMLoaderE009ReturnSequence,
++                             logical_pc, physical_pc);
++ TheronPCECDMainRAMLoaderE009ReturnPending = false;
+ }
+ 
+ void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address,

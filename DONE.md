@@ -16803,6 +16803,18 @@ handoff. No authentic consumer row has been observed yet.
 Verification: `test_theron_v1_fifo_origin_main_ram_consumer` and the Mednafen
 patch application/compile probe.
 
+# ✅ 2026-07-15 Theron main-RAM `$e009` return receipt
+
+Each traced game-RAM `JSR $e009` now records an exact pending continuation at
+the observed logical and physical `JSR+3` addresses. A return receipt is
+emitted only when the HuC6280 executes precisely that continuation; unrelated
+game instructions and an unmatched return are ignored. This extends the
+loader route from call/CDB evidence to CPU continuity without assigning any
+data or rendering semantics. No new authentic return capture is claimed.
+
+Verification: `test_theron_v1_main_ram_e009_return_receipt` and the Mednafen
+patch application/compile probe.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
