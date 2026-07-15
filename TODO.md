@@ -512,6 +512,12 @@
     diagnostic can no longer stand in for a mixed overlay frame. Remaining
     work is original dynamic projectile/AI ownership and timing, not a
     generic spell-image fallback.
+  - 2026-07-15 update: every successful source-owned floor-object,
+    creature-possession, and leader-hand map-chip blit now carries its GDAT
+    key and source pass in presentation order to frame ownership and M11.
+    A count/hash mismatch fails closed, so a final object diagnostic cannot
+    represent a partial mixed object pass. Remaining work is original mutable
+    object-chain ownership and timing, not a generic `MISC` image fallback.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

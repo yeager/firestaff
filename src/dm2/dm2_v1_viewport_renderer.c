@@ -4799,6 +4799,20 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
 
 /* ── Items ─────────────────────────────────────────────────────────── */
 
+static void dm2_v1_viewport_note_item_material(DM2_V1_ViewportState *s,
+                                                int source_kind,
+                                                int gdat_index)
+{
+    int i;
+
+    if (!s || gdat_index == 0 || source_kind < 1 || source_kind > 3) return;
+    i = s->item_material_drawn_count;
+    if (i < 0 || i >= DM2_MAX_PRESENTED_ITEM_MATERIALS) return;
+    s->item_material_gdat_indices[i] = gdat_index;
+    s->item_material_source_kinds[i] = (uint8_t)source_kind;
+    s->item_material_drawn_count = i + 1;
+}
+
 void dm2_v1_render_items(DM2_V1_ViewportState *s)
 {
     if (!s || !s->framebuffer) return;
@@ -4865,6 +4879,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_item_drawn_count;
+                    dm2_v1_viewport_note_item_material(s, 1, it->gdat_index);
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
                     s->last_item_asset_blit.draw_order = i;
@@ -4954,6 +4969,7 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_possession_item_drawn_count;
+                    dm2_v1_viewport_note_item_material(s, 2, it->gdat_index);
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
                     s->last_item_asset_blit.draw_order = i;
@@ -5045,6 +5061,7 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                     blit.flip_mirror,
                     &s->gdat_sprite_palette_consumed_count);
                 ++s->asset_carried_item_drawn_count;
+                dm2_v1_viewport_note_item_material(s, 3, it->gdat_index);
                 s->last_item_asset_blit_valid = 1;
                 s->last_item_asset_blit = blit;
                 s->last_item_asset_blit.draw_order = 0;
@@ -5800,6 +5817,11 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->fallback_creature_possession_item_drawn_count = 0;
     s->asset_carried_item_drawn_count = 0;
     s->fallback_carried_item_drawn_count = 0;
+    s->item_material_drawn_count = 0;
+    memset(s->item_material_gdat_indices, 0,
+           sizeof(s->item_material_gdat_indices));
+    memset(s->item_material_source_kinds, 0,
+           sizeof(s->item_material_source_kinds));
     s->last_item_render_valid = 0;
     s->last_item_asset_blit_valid = 0;
     s->last_item_source_kind = 0;

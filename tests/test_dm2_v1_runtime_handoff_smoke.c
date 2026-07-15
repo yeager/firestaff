@@ -1098,6 +1098,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
         DM2_V1_RuntimeItemRenderReceipt item_receipt;
+        DM2_V1_ViewportM11FrameReceipt m11_receipt;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
         memset(s_wall_pixels, 9, sizeof(s_wall_pixels));
@@ -1140,6 +1141,13 @@ static void test_first_tick_after_boot_profile_handoff(void)
               item_receipt.asset_dst_rect.w == 8 &&
               item_receipt.asset_dst_rect.h == 8,
               "runtime carried-item receipt exposes GDAT item map-chip blit");
+        memset(&m11_receipt, 0, sizeof(m11_receipt));
+        (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt);
+        CHECK(m11_receipt.item_material_plan_required == 1 &&
+                  m11_receipt.item_material_plan_consumed == 1 &&
+                  m11_receipt.item_material_plan_command_count == 1 &&
+                  m11_receipt.item_material_plan_hash != 0u,
+              "runtime carries the real leader-hand GDAT receipt into M11");
         dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }
@@ -2057,6 +2065,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   m11_receipt.projectile_material_plan_command_count == 1 &&
                   m11_receipt.projectile_material_plan_hash != 0u,
               "runtime carries the real projectile GDAT receipt into M11");
+        CHECK(m11_receipt.item_material_plan_required == 0 &&
+                  m11_receipt.item_material_plan_consumed == 0 &&
+                  m11_receipt.item_material_plan_command_count == 0 &&
+                  m11_receipt.item_material_plan_hash == 0u,
+              "projectile-only frame does not invent an item GDAT receipt");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
         dm2_v1_projectile_test_reset_list();
 
