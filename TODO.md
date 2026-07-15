@@ -7067,6 +7067,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     control. The grammar remains blocked until an authentic Saturn trace
     provides R13 ownership, read/write addresses, branch outcomes, and a
     complete output range for one MENU.BPK stream.
+  - 2026-07-15 complete-stream capture update: the canonical PRS3 campaign
+    now locks the nonzero output predecessor (`@R12+ -> R2`, `R6 -> R0`,
+    `R2 -> @(R13,R0)`) and requests one complete source span/output range per
+    MENU.BPK stream, plus control outcomes, palette state, and VDP1 command
+    consumption. Targets remain no-decode: an authentic trace must prove that
+    the complete output range has the declared size and reaches the observed
+    Saturn presentation route before any decoder can be enabled.
   - 2026-07-15 startup diagnostic update: canonical `MENU.BPK` was correctly
     found and parsed but Firestaff's generic M11 text said `REAL SATURN
     DECODER REQUIRED`, which looked like a missing emulator/decoder error.

@@ -489,6 +489,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         SH2_V1_CALLEE_OFFSET = 85376U,
         SH2_CONTROL_TEST_OFFSET = SH2_V1_CALLEE_OFFSET + 74U,
         SH2_STREAM_BYTE_READ_OFFSET = SH2_V1_CALLEE_OFFSET + 84U,
+        SH2_OUTPUT_INDEX_COPY_OFFSET = SH2_V1_CALLEE_OFFSET + 86U,
         SH2_OUTPUT_BYTE_STORE_OFFSET = SH2_V1_CALLEE_OFFSET + 88U,
         SH2_LOOP_BRANCH_OFFSET = SH2_V1_CALLEE_OFFSET + 96U,
         SH2_LOOP_BODY_START_OFFSET = SH2_V1_CALLEE_OFFSET + 52U,
@@ -537,6 +538,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
     receipt.v1_callee_offset = SH2_V1_CALLEE_OFFSET;
     receipt.control_test_offset = SH2_CONTROL_TEST_OFFSET;
     receipt.stream_byte_read_offset = SH2_STREAM_BYTE_READ_OFFSET;
+    receipt.output_index_copy_offset = SH2_OUTPUT_INDEX_COPY_OFFSET;
     receipt.output_byte_store_offset = SH2_OUTPUT_BYTE_STORE_OFFSET;
     receipt.loop_branch_offset = SH2_LOOP_BRANCH_OFFSET;
     receipt.loop_body_start_offset = SH2_LOOP_BODY_START_OFFSET;
@@ -660,8 +662,15 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 82U) == 0x7effU;
     receipt.sh2_output_store_verified =
         receipt.output_byte_store_instruction == 0x0d24U &&
-        read_be16(dm_bin + SH2_V1_CALLEE_OFFSET + 86U) == 0x6063U &&
+        read_be16(dm_bin + SH2_OUTPUT_INDEX_COPY_OFFSET) == 0x6063U &&
         receipt.loop_branch_instruction == 0xafe8U;
+    /* Nonzero control fallthrough's exact output predecessor: R6 is copied
+     * into R0 immediately before the R2 byte store through R13/R0. This
+     * source fact still does not bind R13 to a final decoded surface. */
+    receipt.sh2_output_store_predecessor_verified =
+        receipt.sh2_stream_read_verified && receipt.sh2_output_store_verified &&
+        receipt.output_index_copy_offset + 2U == receipt.output_byte_store_offset &&
+        read_be16(dm_bin + receipt.output_index_copy_offset) == 0x6063U;
     /* No original execution capture establishes these three bindings yet. */
     receipt.menu_frame_binding_proven = 0;
     receipt.vdp1_command_proven = 0;

@@ -11,7 +11,7 @@
 
 #define RETAIL_MENU_BPK_MD5 "c2776768ff25287c79013a1452253ca0"
 #define RETAIL_DM_BIN_MD5 "e88d60859f65f08fa622e1992b02280f"
-#define PRS3_CAPTURE_TARGET_MAGIC "FIRESTAFF_NEXUS_PRS3_CAPTURE_TARGET_V1"
+#define PRS3_CAPTURE_TARGET_MAGIC "FIRESTAFF_NEXUS_PRS3_CAPTURE_TARGET_V2"
 
 static uint8_t *read_file(const char *path, size_t *out_size)
 {
@@ -70,10 +70,24 @@ int main(int argc, char **argv)
         fprintf(stderr, "usage: %s <nexus-data-dir> <output-directory>\n", argv[0]);
         return 2;
     }
-    if (!asset_find_by_md5(argv[1], RETAIL_MENU_BPK_MD5, menu_path,
-                           sizeof(menu_path), 4) ||
-        !asset_find_by_md5(argv[1], RETAIL_DM_BIN_MD5, dm_path,
-                           sizeof(dm_path), 4) ||
+    /* Prefer direct canonical filenames after hashing them. This avoids a
+     * needless recursive scan of a mounted/linked data root, while retaining
+     * hash discovery for renamed extracted media. */
+    if (snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", argv[1]) >=
+            (int)sizeof(menu_path) ||
+        !asset_file_matches_md5(menu_path, RETAIL_MENU_BPK_MD5)) {
+        menu_path[0] = '\0';
+        (void)asset_find_by_md5(argv[1], RETAIL_MENU_BPK_MD5, menu_path,
+                                sizeof(menu_path), 4);
+    }
+    if (snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", argv[1]) >=
+            (int)sizeof(dm_path) ||
+        !asset_file_matches_md5(dm_path, RETAIL_DM_BIN_MD5)) {
+        dm_path[0] = '\0';
+        (void)asset_find_by_md5(argv[1], RETAIL_DM_BIN_MD5, dm_path,
+                                sizeof(dm_path), 4);
+    }
+    if (!menu_path[0] || !dm_path[0] ||
         strstr(menu_path, "::") || strstr(dm_path, "::")) {
         fprintf(stderr, "could not find extracted canonical MENU.BPK and DM.BIN\n");
         return 1;
@@ -89,6 +103,7 @@ int main(int argc, char **argv)
         nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
             dm_bin, dm_size, 1, &sh2) != 1 || !sh2.sh2_control_path_verified ||
         !sh2.sh2_stream_read_verified || !sh2.sh2_output_store_verified ||
+        !sh2.sh2_output_store_predecessor_verified ||
         !sh2.sh2_loop_back_target_verified || !sh2.sh2_loop_body_bound ||
         sh2.decoder_promoted) {
         fprintf(stderr, "retail PRS3 source framing is incomplete\n");
@@ -125,9 +140,14 @@ int main(int argc, char **argv)
                     "expected_output_bytes=%x\nmode=%x\nwidth=%x\nheight=%x\n"
                     "sh2_loop_body_start_offset=%x\nsh2_loop_body_byte_count=%x\n"
                     "sh2_loop_back_target_offset=%x\nsh2_loop_body_fnv1a64=%016llx\n"
+                    "sh2_nonzero_input_read_offset=%x\n"
+                    "sh2_nonzero_output_index_copy_offset=%x\n"
+                    "sh2_nonzero_output_store_offset=%x\n"
                     "capture_kind=original_saturn_sh2_prs3\n"
-                    "required_observations=input_reads,output_writes,vdp1_command,palette_state\n"
+                    "required_observations=complete_stream_input_range,control_branch_outcomes,complete_stream_output_range,output_store_predecessor,vdp1_command,palette_state\n"
+                    "complete_stream_output_bytes_required=%x\n"
                     "dm_bin_v1_sh2_route_verified=1\n"
+                    "sh2_nonzero_output_predecessor_verified=1\n"
                     "decoder_promoted=0\nmenu_handoff_authorized=0\n"
                     "no_decode_or_render=1\n",
                     RETAIL_MENU_BPK_MD5, RETAIL_DM_BIN_MD5,
@@ -136,7 +156,9 @@ int main(int argc, char **argv)
                     plan.expected_output_bytes, plan.mode, plan.width,
                     plan.height, sh2.loop_body_start_offset,
                     sh2.loop_body_byte_count, sh2.loop_back_target_offset,
-                    (unsigned long long)sh2.loop_body_fnv1a64) < 0) {
+                    (unsigned long long)sh2.loop_body_fnv1a64,
+                    sh2.stream_byte_read_offset, sh2.output_index_copy_offset,
+                    sh2.output_byte_store_offset, plan.expected_output_bytes) < 0) {
             fclose(file);
             remove(path);
             fprintf(stderr, "could not write PRS3 target %u\n", index);
