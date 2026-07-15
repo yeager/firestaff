@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject raw-SKSave prefix receipt: raw original saves now
+  validate `c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE`'s saved
+  `warr_00[1]` map-data span rather than inferring its size from descriptors.
+  The importer exposes bounded hashes for descriptors, columns, ground
+  stacks, text, each DB pool, map data, and the prefix; undersized/corrupt
+  prefixes reject atomically before SUPPRESS state is read.
+
 - 2026-07-15 DM1 GROUP F0229: added exact `GROUP.C:13860-13876`
   F0228/G0023 ordered-cell selection. M10 CMD_ATTACK now supplies real group
   and party coordinates, preserves the source RNG step, and rejects no-cell

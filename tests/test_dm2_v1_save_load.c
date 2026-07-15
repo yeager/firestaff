@@ -947,6 +947,7 @@ static int build_raw_sksave_payload(
      * descriptor, four column indexes, and a 4x5 byte map.  The live raw-save
      * restore must reparse this exact G1 structure before accepting pose 3,4. */
     payload[4] = 1u;
+    write_u16_le_at(payload, 2u, 20u);
     write_u16_le_at(payload, 44u, 0u);
     write_u16_le_at(payload, 44u + 8u,
                     (uint16_t)((3u << 6) | (4u << 11)));
@@ -1292,6 +1293,7 @@ static int test_raw_sksave_resume_import(void)
     uint32_t tail_inventory[DM2_CHAMPION_INVENTORY_SLOTS];
     uint32_t leader_hand_object;
     DM2_V1_SessionState imported_session;
+    DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
     int r;
 
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_rawsave_%d",
@@ -1345,6 +1347,21 @@ static int test_raw_sksave_resume_import(void)
                                   tail_inventory, leader_hand_object,
                                   payload, sizeof(payload), &payload_size)) {
         printf("    FAIL: could not build raw SKSave fixture\n");
+        cleanup_one_slot_dir(tmpdir, 5);
+        return 0;
+    }
+    memset(&dungeon_receipt, 0, sizeof(dungeon_receipt));
+    if (!dm2_v1_original_raw_sksave_dungeon_receipt(
+            payload, payload_size, &dungeon_receipt) ||
+        !dungeon_receipt.valid || dungeon_receipt.map_count != 1u ||
+        dungeon_receipt.map_data_byte_count != 20u ||
+        dungeon_receipt.column_index_count != 4u ||
+        dungeon_receipt.ground_stack_count != 0u ||
+        dungeon_receipt.text_word_count != 0u ||
+        dungeon_receipt.prefix_hash == 0u ||
+        dungeon_receipt.map_data_hash == 0u ||
+        dungeon_receipt.suppress_state_offset != 88u) {
+        printf("    FAIL: raw SKSave dungeon receipt lost source-owned spans\n");
         cleanup_one_slot_dir(tmpdir, 5);
         return 0;
     }
@@ -1443,6 +1460,13 @@ static int test_raw_sksave_import_is_transactional(void)
                                                  payload_size - 2u) == 0 ||
         memcmp(&session, &before, sizeof(session)) != 0) {
         printf("    FAIL: malformed raw SKSave partially changed session\n");
+        return 0;
+    }
+    write_u16_le_at(payload, 2u, 19u);
+    if (dm2_v1_session_import_raw_sksave_payload(&session, payload,
+                                                 payload_size) == 0 ||
+        memcmp(&session, &before, sizeof(session)) != 0) {
+        printf("    FAIL: undersized source map-data span was accepted\n");
         return 0;
     }
     printf("    PASS: malformed raw SKSave had no partial session publish\n");

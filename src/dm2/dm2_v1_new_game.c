@@ -923,23 +923,41 @@ static int dm2_v1_decode_original_champions(DM2_V1_SessionState *session,
     return 0;
 }
 
-static int dm2_v1_locate_raw_sksave_state_offset(const uint8_t *buf,
-                                                 size_t buf_size,
-                                                 size_t *out_offset)
+static uint32_t dm2_v1_raw_sksave_hash(const uint8_t *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!data || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static int dm2_v1_parse_raw_sksave_dungeon_prefix(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawDungeonReceipt *out_receipt)
 {
     int map_count;
     size_t column_index_base;
     size_t total_columns = 0u;
-    size_t raw_map_bytes = 0u;
+    size_t minimum_map_data_bytes = 0u;
+    size_t map_data_bytes;
     size_t sft_count;
     size_t text_words;
     size_t cursor;
+    DM2_V1_OriginalRawDungeonReceipt candidate;
 
-    if (!buf || !out_offset ||
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!buf || !out_receipt ||
         buf_size < (size_t)(DM2_RAW_DUNGEON_HEADER_SIZE +
                             DM2_RAW_MAP_DESC_SIZE)) {
         return 0;
     }
+    memset(&candidate, 0, sizeof(candidate));
 
     /* docs/dm2_save_format.md: original SKSave bodies start with a 44-byte
      * dungeon header and 16-byte map descriptors. This bounded locator mirrors
@@ -965,17 +983,38 @@ static int dm2_v1_locate_raw_sksave_state_offset(const uint8_t *buf,
         }
         end = rel + width * height;
         if (end < rel) return 0;
-        if (end > raw_map_bytes) raw_map_bytes = end;
+        if (end > minimum_map_data_bytes) minimum_map_data_bytes = end;
         total_columns += width;
         if (total_columns > 4096u) return 0;
     }
-    if (raw_map_bytes == 0u) return 0;
+    if (minimum_map_data_bytes == 0u) return 0;
 
     sft_count = dm2_v1_read_u16_le_at(buf, 10u);
     text_words = dm2_v1_read_u16_le_at(buf, 6u);
+    map_data_bytes = dm2_v1_read_u16_le_at(buf, 2u);
+    /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE reads warr_00[1] bytes
+     * into v1e03e0. Descriptor geometry proves only a lower bound; it must
+     * never replace this source-owned saved length. */
+    if (map_data_bytes < minimum_map_data_bytes) return 0;
     cursor = column_index_base + total_columns * 2u +
              sft_count * 2u + text_words * 2u;
     if (cursor < column_index_base || cursor > buf_size) return 0;
+
+    candidate.map_count = (uint8_t)map_count;
+    candidate.map_data_byte_count = (uint16_t)map_data_bytes;
+    candidate.column_index_count = (uint16_t)total_columns;
+    candidate.ground_stack_count = (uint16_t)sft_count;
+    candidate.text_word_count = (uint16_t)text_words;
+    candidate.descriptor_hash = dm2_v1_raw_sksave_hash(
+        buf + DM2_RAW_DUNGEON_HEADER_SIZE,
+        (size_t)map_count * DM2_RAW_MAP_DESC_SIZE);
+    candidate.column_index_hash = dm2_v1_raw_sksave_hash(
+        buf + column_index_base, total_columns * 2u);
+    candidate.ground_stack_hash = dm2_v1_raw_sksave_hash(
+        buf + column_index_base + total_columns * 2u, sft_count * 2u);
+    candidate.text_hash = dm2_v1_raw_sksave_hash(
+        buf + column_index_base + total_columns * 2u + sft_count * 2u,
+        text_words * 2u);
 
     for (int i = 0; i < DM2_RAW_THING_TYPE_COUNT; i++) {
         const size_t count = dm2_v1_read_u16_le_at(buf, 12u + (size_t)i * 2u);
@@ -983,14 +1022,34 @@ static int dm2_v1_locate_raw_sksave_state_offset(const uint8_t *buf,
         const size_t pool_bytes = count * bytes;
         if (bytes != 0u && pool_bytes / bytes != count) return 0;
         if (pool_bytes > buf_size - cursor) return 0;
+        candidate.db_record_counts[i] = (uint16_t)count;
+        candidate.db_pool_hashes[i] = dm2_v1_raw_sksave_hash(
+            buf + cursor, pool_bytes);
         cursor += pool_bytes;
     }
-    if (raw_map_bytes > buf_size - cursor) return 0;
-    cursor += raw_map_bytes;
+    if (map_data_bytes > buf_size - cursor) return 0;
+    candidate.map_data_hash = dm2_v1_raw_sksave_hash(buf + cursor,
+                                                     map_data_bytes);
+    cursor += map_data_bytes;
     if (cursor >= buf_size) return 0;
 
-    *out_offset = cursor;
+    candidate.prefix_hash = dm2_v1_raw_sksave_hash(buf, cursor);
+    candidate.suppress_state_offset = cursor;
+    candidate.valid = candidate.descriptor_hash != 0u &&
+                      candidate.column_index_hash != 0u &&
+                      candidate.map_data_hash != 0u;
+    if (!candidate.valid) return 0;
+    *out_receipt = candidate;
     return 1;
+}
+
+int dm2_v1_original_raw_sksave_dungeon_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawDungeonReceipt *out_receipt)
+{
+    return dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
+                                                   out_receipt);
 }
 
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
@@ -999,13 +1058,16 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
 {
     DM2_V1_SessionState candidate;
     DM2_GameStateBlock gs;
+    DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
     size_t pos = 0u;
     int decoded;
 
     if (!session || !buf) return -1;
-    if (!dm2_v1_locate_raw_sksave_state_offset(buf, buf_size, &pos)) {
+    if (!dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
+                                                &dungeon_receipt)) {
         return -1;
     }
+    pos = dungeon_receipt.suppress_state_offset;
 
     memset(&gs, 0, sizeof(gs));
     decoded = dm2_suppress_decode_gamestate(buf + pos, buf_size - pos,
@@ -1110,7 +1172,6 @@ int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
                                          size_t buf_size)
 {
     DM2_V1_SaveCandidate candidate;
-    size_t dungeon_size = 0u;
 
     if (!out_candidate || !buf || buf_size == 0u) return -1;
     memset(&candidate, 0, sizeof(candidate));
@@ -1125,16 +1186,17 @@ int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
          * before applying global/party state. The raw SKSave prefix is kept
          * as caller-owned bytes here so runtime can enforce that same order
          * without accepting a partial or differently-sized dungeon. */
-        if (!dm2_v1_locate_raw_sksave_state_offset(buf, buf_size,
-                                                   &dungeon_size) ||
-            dungeon_size == 0u ||
+        DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
+        if (!dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
+                                                    &dungeon_receipt) ||
+            dungeon_receipt.suppress_state_offset == 0u ||
             dm2_v1_session_import_raw_sksave_payload(&candidate.session,
                                                       buf, buf_size) != 0) {
             return -1;
         }
         candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW;
         candidate.dungeon_bytes = buf;
-        candidate.dungeon_size = dungeon_size;
+        candidate.dungeon_size = dungeon_receipt.suppress_state_offset;
     }
 
     if (!dm2_v1_session_validate(&candidate.session)) return -1;
