@@ -22499,6 +22499,24 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_archive
     )
 
+    # CUE sheets may list audio before the ISO data payload. The reader must
+    # select the declared file whose ISO tree is actually a Nexus disc.
+    add_executable(test_nexus_v1_iso_cue_data_track_gate
+        tests/test_nexus_v1_iso_cue_data_track_gate.c
+        src/nexus/nexus_v1_iso_reader.c
+    )
+    target_include_directories(test_nexus_v1_iso_cue_data_track_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_iso_cue_data_track_gate PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_iso_cue_data_track_gate
+        COMMAND test_nexus_v1_iso_cue_data_track_gate
+    )
+
     # ── Nexus V1 BPK/BPX surface-class + directory-trailer contract ──
     # pass1083 follow-up: exercises the new nexus_v1_bpk_mode_to_surface_class
     # / _to_bpp lookup APIs, the per-entry surface_estimate walker, and the
