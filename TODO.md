@@ -10,6 +10,17 @@
   promote Structure2 opaque spans into decoded pixels or palette semantics
   without authentic Saturn capture evidence.
 
+- 2026-07-16 DM1 original-save corpus follow-up: the public PC34 corpus
+  roundtrip receipt now exposes scan rejection/truncation, Firestaff-export
+  rejection, malformed-envelope rejection, first-failure, and provenance
+  fingerprint fields. Remaining verification is the full
+  `test_dm1_v1_original_save_pc34_handoff` executable once the pre-existing
+  DM1 handoff-test/header drift is repaired: the test references external
+  portrait byte-count/import counters and thieves-eye route fields/APIs that
+  are absent from the current public headers. Keep corpus promotion limited to
+  external F0435-qualified PC34 files; Firestaff-manifest exports remain
+  rejected as corpus evidence.
+
 - 2026-07-16 CSB startup terminal capture follow-up: the terminal C017/C040
   HUD receipt gate is now code-owned and rejects stale source ticks,
   generation changes, wrappers, fallback routes, incomplete title phase masks,

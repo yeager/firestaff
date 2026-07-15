@@ -5852,6 +5852,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     if (report.roundtrip_succeeded_count == 0) {
         report.roundtrip_hash = 0u;
     }
+    report.provenance_fingerprint = report.roundtrip_hash;
     *out_report = report;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
