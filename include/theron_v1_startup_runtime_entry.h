@@ -72,6 +72,10 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
 typedef struct {
     int received;
     int no_fallback;
+    int loader_record_received;
+    uint32_t loader_record;
+    uint64_t loader_record_raw_user_data_offset;
+    uint32_t loader_record_payload_checksum;
     int dungeon_id;
     int sub_level_index;
     uint32_t route_hash;

@@ -466,6 +466,25 @@ int main(void)
         printf("FAIL: loader-executed sector reached runtime as an unproven level\n");
         return 1;
     }
+    if (!route_receipt.loader_record_received ||
+        route_receipt.loader_record != handoff.observed_track02_record ||
+        route_receipt.loader_record_raw_user_data_offset !=
+            payload_receipt.raw_track02_offset ||
+        route_receipt.loader_record_payload_checksum !=
+            payload_receipt.payload_checksum ||
+        !world.runtime_media.loader_record.ready ||
+        !world.runtime_media.loader_record.raw_source_verified ||
+        !world.runtime_media.loader_record.no_semantic_promotion ||
+        strcmp(world.runtime_media.loader_record.track02_md5, md5) != 0 ||
+        world.runtime_media.loader_record.record != handoff.observed_track02_record ||
+        world.runtime_media.loader_record.payload_checksum !=
+            handoff.complete_payload_checksum ||
+        world.runtime_media.loader_record.post_envelope_checksum !=
+            handoff.loader_post_envelope.checksum) {
+        free(raw);
+        printf("FAIL: authenticated loader record was not retained as opaque runtime provenance\n");
+        return 1;
+    }
     ++profile.track02_initial_level_handoff.initial_level_route.route_hash;
     if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,

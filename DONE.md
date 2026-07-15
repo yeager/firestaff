@@ -18288,3 +18288,16 @@ rejects unknown/mismatched variants and incomplete spans. It still performs
 no palette binding, RGB conversion, layout inference, object-table decoding,
 or drawing. Verification: Ninja `test_theron_rendering` 18/18 and
 `test_theron_v1_startup_save_resume_pc34` 258/258.
+
+# ✅ 2026-07-15 Theron authenticated CD-read runtime record
+
+The independently authenticated Track 02 `$0b52` CD-read payload now enters
+the runtime world as an opaque source receipt: canonical Track 02 MD5, raw
+user-data offset, destination, whole-payload checksum, and the exact
+post-envelope byte range/checksum. The receipt is published even while the
+level route remains rejected, allowing a later captured game-owned consumer
+to bind it without reopening media or treating copied bytes as unowned. It is
+explicitly marked no-semantic-promotion: no level, object, palette, bitmap,
+or visual behavior is inferred and no fallback is enabled. Verification:
+Ninja `test_theron_rendering` 18/18 and
+`test_theron_v1_startup_save_resume_pc34` 258/258.

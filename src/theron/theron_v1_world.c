@@ -614,6 +614,46 @@ int theron_v1_world_runtime_media_set_identity(
     return 1;
 }
 
+int theron_v1_world_runtime_media_set_loader_record(
+    Theron_V1_World *world,
+    const char *track02_md5,
+    uint32_t record,
+    uint32_t destination,
+    size_t raw_user_data_offset,
+    size_t payload_bytes,
+    uint32_t payload_checksum,
+    size_t post_envelope_offset,
+    size_t post_envelope_bytes,
+    uint32_t post_envelope_checksum) {
+
+    Theron_RuntimeTrack02LoaderRecord *loader_record;
+
+    if (!world || !track02_md5 || strlen(track02_md5) != 32u ||
+        record == 0u || destination == 0u || raw_user_data_offset == 0u ||
+        payload_bytes == 0u || payload_checksum == 0u ||
+        post_envelope_offset >= payload_bytes || post_envelope_bytes == 0u ||
+        post_envelope_bytes > payload_bytes - post_envelope_offset ||
+        post_envelope_checksum == 0u) {
+        return 0;
+    }
+    loader_record = &world->runtime_media.loader_record;
+    memset(loader_record, 0, sizeof(*loader_record));
+    loader_record->ready = 1;
+    loader_record->raw_source_verified = 1;
+    loader_record->no_semantic_promotion = 1;
+    snprintf(loader_record->track02_md5,
+             sizeof(loader_record->track02_md5), "%s", track02_md5);
+    loader_record->record = record;
+    loader_record->destination = destination;
+    loader_record->raw_user_data_offset = raw_user_data_offset;
+    loader_record->payload_bytes = payload_bytes;
+    loader_record->payload_checksum = payload_checksum;
+    loader_record->post_envelope_offset = post_envelope_offset;
+    loader_record->post_envelope_bytes = post_envelope_bytes;
+    loader_record->post_envelope_checksum = post_envelope_checksum;
+    return 1;
+}
+
 int theron_v1_world_runtime_media_select_level_bank(
     Theron_V1_World *world,
     Theron_RuntimeLevelBankKind kind,
