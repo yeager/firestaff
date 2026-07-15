@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-15 DM1 GROUP F0175 follow-up: loaded PC3.4 square chains now
+  resolve their first C04 group through F0161/F0159. Remaining work is
+  routing separately-owned M10/M11 live group consumers through this raw
+  accessor; do not use a decoded group list, synthetic group, or default
+  target when no C04 record exists.
+
 - 2026-07-15 DM1 GROUP F0178 follow-up: packed C04 creature cells and
   directions now use the exact source replacement primitive in the live F0262
   teleporter route. Remaining work is routing separately-owned group AI and

@@ -103,6 +103,25 @@ int dm1_v1_dungeon_get_creature_attributes_f0144_pc34(
     return 1;
 }
 
+unsigned short dm1_v1_group_get_thing_f0175_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned short thing;
+
+    /* GROUP.C F0175: F0161 establishes the real square-list head, then
+     * F0159 advances until the first C04 GROUP or ENDOFLIST. */
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        dungeon, things, mapIndex, mapX, mapY);
+    while (thing != THING_ENDOFLIST && THING_GET_TYPE(thing) != THING_TYPE_GROUP) {
+        thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+    }
+    return thing;
+}
+
 int dm1_v1_dungeon_get_object_subtype_pc34(
     const struct DungeonThings_Compat *things,
     unsigned short thing)
