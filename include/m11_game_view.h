@@ -2241,6 +2241,8 @@ typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
     int width;
     int height;
     int transparentColor;
+    int paletteMapValid;
+    unsigned char paletteMap[16];
 } M11_Dm1UnreadableInscriptionHostPresentationReceipt;
 
 void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(

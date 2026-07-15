@@ -1,10 +1,12 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-15 DM1 F0168/F0172 inscription-owner follow-up: M11 now consumes
-  only the F0172-selected raw G0290 TextString for its F0107/M648 wall pass;
-  a malformed selected record cannot borrow another visible TextString from a
-  broader Thing list. Remaining work is real PC34/Mac capture across every
-  front-facing HoC and non-HoC inscription; no host text or substitute font.
+  only the F0172-selected raw G0290 TextString for F0107/M648 front, side,
+  and depth wall passes; a malformed selected record cannot borrow another
+  visible TextString from a broader Thing list. The unreadable side/depth
+  receipt retains exact F0107 geometry, C10 key, and palette map. Remaining
+  work is real PC34/Mac capture across every HoC and non-HoC projection; no
+  host text, font, or palette substitute.
 
 - 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
   route no longer uses the generic cyan host frame when C008 or another

@@ -79,7 +79,11 @@ static int verify_original_ornament_asset(
                                 (unsigned int)plan->graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||
         receipt->graphicIndex != (int)slot->graphicIndex ||
-        receipt->transparentColor != plan->transparentColor) {
+        receipt->transparentColor != plan->transparentColor ||
+        receipt->paletteMapValid != plan->paletteMapValid ||
+        (plan->paletteMapValid &&
+         memcmp(receipt->paletteMap, plan->paletteMap,
+                sizeof(receipt->paletteMap)) != 0)) {
         return 0;
     }
     pixelCount = (int)slot->width * (int)slot->height;

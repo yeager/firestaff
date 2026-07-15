@@ -1,5 +1,12 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM1 ReDMCSB F0107 unreadable-inscription palette receipt:
+  side/depth M648 substitutes now publish the exact source plan's C10 key and
+  16-entry palette map together with their G0205 geometry. The real-PC34
+  regression compares the complete map, so a host palette cannot silently
+  replace the source route. Focused coverage:
+  `m11_dm1_unreadable_inscription_host_presentation_receipt`.
+
 - ✅ 2026-07-15 DM1 ReDMCSB DUNVIEW C026 atlas gate: every D1C champion
   mirror draw now validates the native 256x87 atlas and the exact F0172
   render-index source cell before its unscaled raw-index blit. Palette
