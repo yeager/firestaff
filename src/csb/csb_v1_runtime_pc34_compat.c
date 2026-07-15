@@ -167,6 +167,12 @@ static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     int *out_weight);
 static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile);
+static int csb_v1_runtime_replace_dispatched_csbwin_timer(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t consumed_queue_slot,
+    uint16_t consumed_timer_index,
+    const CSB_V1_CSBWin512TimerSummary *successor,
+    int successor_event_index);
 static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_dy);
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
@@ -13119,14 +13125,15 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     uint16_t timer_index,
     uint16_t queue_slot)
 {
-    struct CombatAction_Compat party_damage;
     struct DM1_Event_V1 next;
     uint8_t *square;
     int square_type;
     int door_state;
     int effect;
     int next_state;
+    uint8_t staged_square;
     int event_index;
+    CSB_V1_CSBWin512TimerSummary successor;
 
     /* CSBWin Timer.cpp ProcessTT_DOOR changes the saved TIMER to TT_1, then
      * TIMELINE.C F0241 owns every subsequent door-animation step. Retain the
@@ -13157,25 +13164,18 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     if (effect == DM1_EFFECT_CLEAR && timer->level == profile->current_level &&
         timer->ubyte6 == profile->party_x && timer->ubyte7 == profile->party_y &&
         profile->party_state_valid && profile->party_state.ChampionCount > 0) {
-        memset(&party_damage, 0, sizeof(party_damage));
-        party_damage.kind = COMBAT_ACTION_APPLY_DAMAGE_CHAMPION;
-        party_damage.attackTypeCode = COMBAT_ATTACK_SELF;
-        party_damage.rawAttackValue = 5;
-        party_damage.allowedWounds = COMBAT_WOUND_TORSO |
-                                    COMBAT_WOUND_HEAD;
-        *square = (uint8_t)(*square & (uint8_t)~0x07u);
-        (void)csb_v1_runtime_apply_explosion_party_action(
-            profile, &party_damage, &(struct RngState_Compat){
-                0xC5B1241u ^ profile->game_time ^
-                ((uint32_t)timer->ubyte6 << 8) ^ timer->ubyte7 });
+        /* The source damage + sound transaction cannot yet roll back with
+         * the TIMER pool. Do not publish a partial door/timer successor. */
+        return 0;
     } else {
         next_state = door_state + (effect == DM1_EFFECT_SET ? -1 : 1);
-        *square = (uint8_t)((*square & (uint8_t)~0x07u) |
-                            (uint8_t)next_state);
+        staged_square = (uint8_t)((*square & (uint8_t)~0x07u) |
+                                  (uint8_t)next_state);
     }
 
-    if ((effect == DM1_EFFECT_SET && (*square & 0x07u) == 0u) ||
-        (effect == DM1_EFFECT_CLEAR && (*square & 0x07u) == 4u)) {
+    if ((effect == DM1_EFFECT_SET && (staged_square & 0x07u) == 0u) ||
+        (effect == DM1_EFFECT_CLEAR && (staged_square & 0x07u) == 4u)) {
+        *square = staged_square;
         return 1;
     }
     memset(&next, 0, sizeof(next));
@@ -13188,8 +13188,14 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     next.c_effect = timer->ubyte9;
     event_index = csb_v1_runtime_add_timeline_event(profile, &next);
     if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
-    timer->time = profile->game_time + 1u;
-    profile->csbwin_timeline_event_queue_slot[event_index] = queue_slot;
+    successor = *timer;
+    successor.time = profile->game_time + 1u;
+    if (!csb_v1_runtime_replace_dispatched_csbwin_timer(
+            profile, queue_slot, timer_index, &successor, event_index)) {
+        (void)dm1v1_event_delete(&profile->timeline_queue, event_index);
+        return 0;
+    }
+    *square = staged_square;
     return 1;
 }
 
