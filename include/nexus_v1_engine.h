@@ -1450,6 +1450,17 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FVdp1MaterialReceipt;
 
+typedef struct {
+    Nexus_V1_DgnStructure1FVdp1MaterialReceipt material;
+    Nexus_V1_Vdp1LookupDecodeReceipt lookup;
+    int direct_face_capture_bound;
+    int lookup_colour_codes_bound;
+    int pixel_output_witness_verified;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FVdp1LookupDecodeReceipt;
+
 /* Admission for a future original-Saturn transform observation of one direct
  * Structure1F owner. It binds source bytes and captured state identity only;
  * it never interprets transform words or authorizes a draw. */
@@ -2569,6 +2580,16 @@ int nexus_v1_engine_bind_structure1f_vdp1_material_capture(
     const char *direct_manifest_text, size_t direct_manifest_size,
     const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
     Nexus_V1_DgnStructure1FVdp1MaterialReceipt *out_receipt);
+/* Decode one authenticated direct-face mode-1 lookup texture into raw VDP1
+ * colour codes. The caller may compare a separately captured witness, but no
+ * palette/CRAM conversion or draw is enabled by this routine. */
+int nexus_v1_engine_decode_structure1f_vdp1_lookup_texture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    uint16_t *out_colour_codes, size_t out_colour_code_count,
+    const uint16_t *expected_colour_codes, size_t expected_colour_code_count,
+    Nexus_V1_DgnStructure1FVdp1LookupDecodeReceipt *out_receipt);
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

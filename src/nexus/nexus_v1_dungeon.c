@@ -6408,6 +6408,79 @@ int nexus_v1_vdp1_texture_command_parse(
     return 0;
 }
 
+int nexus_v1_vdp1_lookup_colour_codes_match(
+    const uint16_t *decoded, size_t decoded_count,
+    const uint16_t *expected, size_t expected_count)
+{
+    if (!decoded || !expected || decoded_count == 0U ||
+        decoded_count != expected_count) return 0;
+    return memcmp(decoded, expected, decoded_count * sizeof(*decoded)) == 0;
+}
+
+int nexus_v1_vdp1_decode_mode1_lookup_texture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *texture_span, int texture_span_size,
+    uint16_t *out_colour_codes, size_t out_colour_code_count,
+    Nexus_V1_Vdp1LookupDecodeReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1LookupDecodeReceipt receipt;
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint32_t lookup_offset;
+    uint32_t pixel_count;
+    uint32_t pixel;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    if (!command || !vdp1_vram || !texture_span || !out_colour_codes ||
+        command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.colour_mode != 1U ||
+        !parsed.colour_mode_documented || !parsed.texture_source_range_valid ||
+        !parsed.texture_byte_count ||
+        texture_span_size != (int)parsed.texture_byte_count ||
+        parsed.texture_byte_count > (uint32_t)INT_MAX ||
+        (parsed.colour_control & 0x0003U) != 0U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    lookup_offset = (uint32_t)parsed.colour_control * 8U;
+    pixel_count = (uint32_t)parsed.texture_width *
+        (uint32_t)parsed.texture_height;
+    if (lookup_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U ||
+        parsed.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES ||
+        pixel_count == 0U || pixel_count > out_colour_code_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.command_mode1_lookup = 1;
+    receipt.complete_vdp1_vram_snapshot = 1;
+    receipt.lookup_table_byte_offset = lookup_offset;
+    receipt.lookup_table_in_vram = 1;
+    receipt.texture_high_nibble_first = 1;
+    receipt.output_pixel_count = pixel_count;
+    receipt.output_byte_count = (int)(pixel_count * sizeof(*out_colour_codes));
+    receipt.texture_lane_matches_vram = memcmp(texture_span,
+        vdp1_vram + parsed.texture_source_byte_offset,
+        (size_t)texture_span_size) == 0;
+    if (!receipt.texture_lane_matches_vram) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    for (pixel = 0U; pixel < pixel_count; ++pixel) {
+        uint8_t packed = texture_span[pixel >> 1U];
+        uint8_t index = (pixel & 1U) == 0U ? (uint8_t)(packed >> 4U) :
+            (uint8_t)(packed & 0x0fU);
+        out_colour_codes[pixel] = rl16(vdp1_vram + lookup_offset +
+                                        (uint32_t)index * 2U);
+    }
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_v1_item_ibs_bind_0008_vdp1_capture(
     const Nexus_V1_ItemIbsFloorImage *floor,
     const uint8_t *item_ibs, int item_ibs_size, int item_ibs_hash_verified,

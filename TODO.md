@@ -8117,6 +8117,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or decode any texel. The remaining work is a real Saturn capture proving
     that command's palette addressing/format and pixel order for this exact
     Structure1F face; all drawing remains blocked.
+  - 2026-07-15 mode-1 lookup decoder update: the Sega VDP1 manual proves one
+    bounded source path: 4bpp mode-1 texture bytes are high-nibble first and
+    `CMDCOLR * 8` selects a 32-byte, 16-entry lookup table in VDP1 VRAM.
+    Firestaff now decodes only those raw 16-bit VDP1 colour codes after the
+    direct capture, full VRAM, and exact CMDSRCA window gates pass. The
+    remaining requirement is a real Nexus capture whose command is mode 1 and
+    whose independently observed colour-code output proves the game-specific
+    VDP2/CRAM handling; raw codes are not RGBA pixels and cannot be drawn.
   - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
     a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
     its contiguous output address range, sequence interval, and byte witness.
