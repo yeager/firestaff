@@ -2274,6 +2274,35 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         context->timer_type_modifiers[1] = (uint8_t)(w > 3u ? 3u : w);
         context->timer_type_modifiers[2] = (uint8_t)(count > 3u ? 3u : count);
         break;
+    case 137u: /* STKOP_Jitter, reached via AMPERSAND2 + 128 */
+        /* CSBWin DSA.cpp:4898-4929 pops overlay-Y, overlay-X, graphic-Y,
+         * then graphic-X. Each changed source value raises jitterChanged;
+         * retain the whole render-context mutation until the authenticated
+         * action is complete. */
+        if (!context->jitter_state_valid ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &result)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (context->y_overlay_jitter != (int32_t)v) {
+            context->y_overlay_jitter = (int32_t)v;
+            context->jitter_changed = 1;
+        }
+        if (context->x_overlay_jitter != (int32_t)w) {
+            context->x_overlay_jitter = (int32_t)w;
+            context->jitter_changed = 1;
+        }
+        if (context->y_graphic_jitter != (int32_t)count) {
+            context->y_graphic_jitter = (int32_t)count;
+            context->jitter_changed = 1;
+        }
+        if (context->x_graphic_jitter != (int32_t)result) {
+            context->x_graphic_jitter = (int32_t)result;
+            context->jitter_changed = 1;
+        }
+        break;
     case 117u: /* STKOP_WhoHasTalent */
         /* DSA.cpp:4363-4380 evaluates every source party CHARDESC and
          * returns its bitmask when all requested talent bits are present. */
@@ -2814,6 +2843,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                context_candidate.timer_type_modifiers,
                sizeof(context->timer_type_modifiers));
     }
+    if (context->jitter_state_valid) {
+        context->x_graphic_jitter = context_candidate.x_graphic_jitter;
+        context->y_graphic_jitter = context_candidate.y_graphic_jitter;
+        context->x_overlay_jitter = context_candidate.x_overlay_jitter;
+        context->y_overlay_jitter = context_candidate.y_overlay_jitter;
+        context->jitter_changed = context_candidate.jitter_changed;
+    }
     memcpy(context->party_champion_talents,
            context_candidate.party_champion_talents,
            sizeof(context->party_champion_talents));
@@ -2908,6 +2944,12 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.timer_type_modifiers_valid = runner->timer_type_modifiers_valid;
     memcpy(context.timer_type_modifiers, runner->timer_type_modifiers,
            sizeof(context.timer_type_modifiers));
+    context.jitter_state_valid = runner->jitter_state_valid;
+    context.x_graphic_jitter = runner->x_graphic_jitter;
+    context.y_graphic_jitter = runner->y_graphic_jitter;
+    context.x_overlay_jitter = runner->x_overlay_jitter;
+    context.y_overlay_jitter = runner->y_overlay_jitter;
+    context.jitter_changed = runner->jitter_changed;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;
@@ -2964,6 +3006,13 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     if (runner->timer_type_modifiers_valid) {
         memcpy(runner->timer_type_modifiers, context.timer_type_modifiers,
                sizeof(runner->timer_type_modifiers));
+    }
+    if (runner->jitter_state_valid) {
+        runner->x_graphic_jitter = context.x_graphic_jitter;
+        runner->y_graphic_jitter = context.y_graphic_jitter;
+        runner->x_overlay_jitter = context.x_overlay_jitter;
+        runner->y_overlay_jitter = context.y_overlay_jitter;
+        runner->jitter_changed = context.jitter_changed;
     }
     for (i = 0; i < parameter_count; ++i) {
         parameters[i] = (int)parameter_words[i];
