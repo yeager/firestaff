@@ -1,0 +1,48 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -14,6 +14,7 @@ void TheronPCECDTraceMainRAMLoaderE009Call(uint16 logical_pc, uint32 physical_pc
+ void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceControlWindowRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
++void TheronPCECDTraceGameWindowRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
+ 
+ class alignas(128) HuC6280
+ {
+@@ -426,6 +427,13 @@ class alignas(128) HuC6280
+	  TheronPCECDTraceControlWindowRead(address, physical_address, ret, reader_pc,
+	                                    (reader_mpr << 13) | (reader_pc & 0x1FFF));
+	 }
++	 if(physical_address >= 0x1f1000 && physical_address <= 0x1f1007)
++	 {
++	  const uint16 reader_pc = GetRegister(GSREG_PC);
++	  const uint8 reader_mpr = MPR[reader_pc >> 13];
++	  TheronPCECDTraceGameWindowRead(address, physical_address, ret, reader_pc,
++	                                 (reader_mpr << 13) | (reader_pc & 0x1FFF));
++	 }
+	 return ret;
+	}
+ 
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -125,6 +125,7 @@ static unsigned TheronPCECDMainRAMLoaderE009Sequence;
+ static unsigned TheronPCECDG4MainRAMReadCount;
+ static unsigned TheronPCECDMainRAMLoaderWriteCount;
+ static unsigned TheronPCECDControlWindowReadCount;
++static unsigned TheronPCECDGameWindowReadCount;
+ 
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -190,6 +191,14 @@ void TheronPCECDTraceControlWindowRead(uint16 logical_address, uint32 physical_a
+  TheronPCECDTraceFifoReceipt("main_ram_control_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n", TheronPCECDControlWindowReadCount++, logical_address, physical_address, value, reader_pc, reader_physical_pc);
+ }
+ 
++void TheronPCECDTraceGameWindowRead(uint16 logical_address, uint32 physical_address,
++                                    uint8 value, uint16 reader_pc, uint32 reader_physical_pc)
++{
++ if(TheronPCECDGameWindowReadCount >= 64)
++  return;
++ TheronPCECDTraceFifoReceipt("main_ram_game_window_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n", TheronPCECDGameWindowReadCount++, logical_address, physical_address, value, reader_pc, reader_physical_pc);
++}
++
+ static void TheronPCECDQueueFifoReceipt(uint16 reader_pc, uint8 value, unsigned generation)
+ {
