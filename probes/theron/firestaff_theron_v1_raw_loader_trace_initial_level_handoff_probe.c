@@ -166,6 +166,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopePrefixReceipt continuation_prefix;
     Theron_V1RawLoaderTraceInitialPostEnvelopeTransferReceipt continuation_transfer;
     Theron_V1RawLoaderTraceInitialPostEnvelopeExecutionReceipt continuation_execution;
+    Theron_V1RawLoaderTraceInitialPostEnvelopePostReturnCallReceipt continuation_post_return_call;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -654,6 +655,36 @@ int main(void)
             &handoff, game_payload_capture, &continuation_execution)) {
         free(raw);
         printf("FAIL: changed post-RTS target reached execution receipt\n");
+        return 1;
+    }
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-main-ram-loader\n"
+             "main_ram_loader_block_transfer logical_pc=3840 physical_pc=1f1840 operation=tii source=3c80 destination=2000 length=0020\n"
+             "main_ram_loader_jsr logical_pc=3850 physical_pc=1f1850 target=2000 a=00 x=00 y=00\n"
+             "main_ram_loader_rts logical_pc=2010 physical_pc=1f2010\n"
+             "main_ram_loader_post_rts source_logical_pc=2010 source_physical_pc=1f2010 logical_pc=3853 physical_pc=1f1853 opcode=20\n"
+             "main_ram_loader_jsr logical_pc=3853 physical_pc=1f1853 target=2100 a=00 x=00 y=00\n");
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
+            &handoff, game_payload_capture, &continuation_post_return_call) ||
+        !continuation_post_return_call.valid ||
+        !continuation_post_return_call.post_return_call_proven ||
+        continuation_post_return_call.level_or_object_semantics_proven ||
+        continuation_post_return_call.call_pc != 0x3853u ||
+        continuation_post_return_call.call_physical_pc != 0x1f1853u ||
+        continuation_post_return_call.call_target != 0x2100u ||
+        continuation_post_return_call.execution.transfer.source_checksum !=
+            continuation_transfer.source_checksum) {
+        free(raw);
+        printf("FAIL: post-RTS routine call was not source-bound\n");
+        return 1;
+    }
+    *(strstr(game_payload_capture,
+             "main_ram_loader_jsr logical_pc=3853") +
+      strlen("main_ram_loader_jsr logical_pc=385")) = '4';
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_post_return_call(
+            &handoff, game_payload_capture, &continuation_post_return_call)) {
+        free(raw);
+        printf("FAIL: altered post-RTS routine call site reached receipt\n");
         return 1;
     }
     ++manifest.trace_md5[0];

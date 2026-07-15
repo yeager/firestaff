@@ -18698,6 +18698,21 @@ raw-loader probe (skip-safe without the authentic corpus),
 skip-cleans without `MEDNAFEN_SOURCE`, and the capture-script contract test
 passes.
 
+# ✅ 2026-07-15 Theron Track 02 post-return routine-call receipt
+
+When the authenticated post-RTS instruction is a HuC6280 `JSR`, Firestaff now
+requires the immediately adjacent original main-RAM-loader trace row to agree
+on its logical PC, physical PC, and immediate target. The new receipt carries
+the earlier source-bound Track 02 TII/execution chain, so the call is tied to
+copied original bytes without inventing a called-routine ABI or data format.
+Missing, reordered, or changed call-site rows reject. This proves only a
+control-flow target, not a descriptor, record, level, object, tile, palette,
+bitmap, command, or visual route. Verification: Ninja focused targets,
+`test_theron_rendering` 18/18,
+`test_theron_v1_startup_save_resume_pc34` 258/258, focused raw-loader probe
+(skip-safe without the authentic corpus), patch-shape test skip-cleans without
+`MEDNAFEN_SOURCE`, and the capture-script contract test passes.
+
 # ✅ 2026-07-15 DM2 DRAW_DOOR_FRAMES source side-jamb execution
 
 `DRAW_DOOR_FRAMES` now reaches the real M11 dungeon renderer for D0--D3
