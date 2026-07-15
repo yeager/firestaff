@@ -1,5 +1,15 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-16 DM2 skproject weather timer receipts: added source-mapped
+  receipts for `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
+  `DM2_weather_3df7_0037`. Runtime weather now records the outdoor-only
+  182-tick scheduling boundary and the exact seed/weather transaction; indoor
+  and not-due ticks fail closed and do not mutate weather. The skproject audit
+  rows are closed as `VERIFIED_SOURCE_MAPPING`. Verification: strict direct
+  C11 build/run of `tests/test_dm2_v1_weather_timer_receipts.c`, strict
+  `-fsyntax-only` for the weather/runtime sources and weather tests, plus
+  `git diff --check`.
+
 - ✅ 2026-07-16 source-symbol backlog queue tooling: added
   `tools/symbol_backlog.py`, which reads the ReDMCSB callable-symbol and
   skproject DM2 named-symbol TSV audits, keeps MISSING/UNCERTAIN rows open,

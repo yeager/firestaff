@@ -160,6 +160,73 @@ int dm2_v1_weather_restored_state_receipt(
     return 1;
 }
 
+int dm2_v1_weather_set_timer_weather_receipt(
+    int is_outdoor,
+    uint32_t current_tick,
+    DM2_V1_SetTimerWeatherReceipt *out)
+{
+    uint32_t hash = 2166136261u;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->outdoor = is_outdoor ? 1 : 0;
+    out->current_tick = current_tick;
+    out->due_now = out->outdoor && current_tick != 0u &&
+        current_tick % 182u == 0u;
+    out->scheduled = out->outdoor ? 1 : 0;
+    out->next_tick = out->outdoor
+        ? current_tick + (out->due_now ? 182u : 182u - current_tick % 182u)
+        : 0u;
+    hash = dm2_weather_state_hash_step(hash, 0x53545745u);
+    hash = dm2_weather_state_hash_step(hash, (uint32_t)out->outdoor);
+    hash = dm2_weather_state_hash_step(hash, current_tick);
+    hash = dm2_weather_state_hash_step(hash, out->next_tick);
+    hash = dm2_weather_state_hash_step(hash, (uint32_t)out->due_now);
+    out->receipt_hash = hash;
+    out->valid = hash != 0u;
+    return out->valid;
+}
+
+int dm2_v1_weather_3df7_0037_receipt(
+    DM2_V1_WeatherState *state,
+    const DM2_V1_SetTimerWeatherReceipt *timer,
+    DM2_V1_Weather3df70037Receipt *out)
+{
+    uint32_t hash = 2166136261u;
+    uint32_t next_seed;
+    int next_weather;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!state || !timer || !timer->valid || !timer->outdoor ||
+        !timer->due_now || timer->receipt_hash == 0u ||
+        state->weather < DM2_WEATHER_CLEAR ||
+        state->weather >= DM2_WEATHER_COUNT) {
+        return 0;
+    }
+    out->previous_weather = (uint8_t)state->weather;
+    out->previous_seed = state->weather_seed;
+    next_seed = dm2_v1_weather_advance_seed(state->weather_seed);
+    next_weather = (int)((next_seed >> 8) & 0x3u);
+    dm2_v1_weather_set_seed(state, next_seed);
+    dm2_v1_weather_set(state, next_weather);
+    out->next_weather = (uint8_t)state->weather;
+    out->next_intensity = (uint8_t)state->weather_intensity;
+    out->next_seed = state->weather_seed;
+    out->source_receipt_hash = timer->receipt_hash;
+    out->transitioned = 1;
+    hash = dm2_weather_state_hash_step(hash, 0x57334446u);
+    hash = dm2_weather_state_hash_step(hash, timer->receipt_hash);
+    hash = dm2_weather_state_hash_step(hash, out->previous_weather);
+    hash = dm2_weather_state_hash_step(hash, out->previous_seed);
+    hash = dm2_weather_state_hash_step(hash, out->next_weather);
+    hash = dm2_weather_state_hash_step(hash, out->next_intensity);
+    hash = dm2_weather_state_hash_step(hash, out->next_seed);
+    out->receipt_hash = hash;
+    out->valid = hash != 0u;
+    return out->valid;
+}
+
 const char *dm2_v1_weather_name(int weather) {
     if (weather < 0 || weather >= DM2_WEATHER_COUNT) return "?";
     return g_weather_names[weather];

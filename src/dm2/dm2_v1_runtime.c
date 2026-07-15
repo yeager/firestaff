@@ -49,6 +49,8 @@ typedef struct {
     int move_cooldown_ticks;
     /* Weather state (outdoor) */
     DM2_V1_WeatherState weather;
+    DM2_V1_SetTimerWeatherReceipt set_timer_weather;
+    DM2_V1_Weather3df70037Receipt weather_3df7_0037;
     int time_of_day_minutes;  /* 0-1439 */
     /* Dungeon state */
     int dungeon_level;
@@ -1729,10 +1731,11 @@ static void dm2_runtime_process_time_triggers(DM2_V1_RuntimeState *rt,
 }
 
 static void dm2_runtime_process_timeline(DM2_V1_RuntimeState *rt, int now_ms) {
-    int before[DM2_TIMELINE_NUM_BUILTIN];
+    int before[DM2_TIMELINE_NUM_BUILTIN > 0 ? DM2_TIMELINE_NUM_BUILTIN : 1];
     int fired;
 
     if (!rt) return;
+    if (DM2_TIMELINE_NUM_BUILTIN <= 0) return;
     for (int i = 1; i <= DM2_TIMELINE_NUM_BUILTIN; ++i) {
         before[i - 1] = dm2_v1_timeline_get_fire_count(i);
     }
@@ -3364,8 +3367,15 @@ void dm2_v1_runtime_tick(void) {
     }
 
     /* Outdoor weather tick */
-    if (rt->outdoor && rt->tick_count % 182 == 0) {  /* ~10 sec */
-        dm2_v1_weather_next_state(&rt->weather);
+    memset(&rt->set_timer_weather, 0, sizeof(rt->set_timer_weather));
+    memset(&rt->weather_3df7_0037, 0, sizeof(rt->weather_3df7_0037));
+    if (dm2_v1_weather_set_timer_weather_receipt(
+            rt->outdoor, (uint32_t)rt->tick_count,
+            &rt->set_timer_weather) &&
+        rt->set_timer_weather.due_now) {
+        (void)dm2_v1_weather_3df7_0037_receipt(
+            &rt->weather, &rt->set_timer_weather,
+            &rt->weather_3df7_0037);
     }
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
@@ -6130,6 +6140,22 @@ uint32_t dm2_v1_runtime_get_weather_seed(void) {
 
 void dm2_v1_runtime_set_weather_seed(uint32_t seed) {
     dm2_v1_weather_set_seed(&g_dm2_runtime.weather, seed);
+}
+
+int dm2_v1_runtime_last_set_timer_weather_receipt(
+    DM2_V1_SetTimerWeatherReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.set_timer_weather;
+    return out_receipt->valid;
+}
+
+int dm2_v1_runtime_last_weather_3df7_0037_receipt(
+    DM2_V1_Weather3df70037Receipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.weather_3df7_0037;
+    return out_receipt->valid;
 }
 
 int dm2_v1_runtime_bind_weather_distant_environment(

@@ -3,7 +3,7 @@
 - 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
   now derives reproducible work queues from the ReDMCSB and skproject TSV
   audits. Current open queue from `python3 tools/symbol_backlog.py --limit 0`:
-  DM1 118, CSB 1, shared DM1/CSB 1614, DM2 1682; 3415 total open rows
+  DM1 118, CSB 1, shared DM1/CSB 1614, DM2 1680; 3413 total open rows
   across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
   is actual source-backed implementation or explicit non-applicability
   decisions per row; the backlog tool is queue evidence only, not completion.
@@ -1792,8 +1792,12 @@
   layout or save offset. Risk: Firestaff could bind a random SKSave region as
   weather state. A per-file original-save timer-format receipt now preserves
   only verified candidate type/path/size/hash and explicitly rejects each
-  unowned envelope/raw payload. Required: original timer/save trace and corpus
-  with known weather transitions that identify record owner and byte layout.
+  unowned envelope/raw payload. `DM2_SET_TIMER_WEATHER` and
+  `DM2_weather_3df7_0037` now have source-mapped runtime receipts for the
+  outdoor 182-tick scheduling and reseed/weather transaction, but the saved
+  timer-record owner/byte layout is still not proven. Required: original
+  timer/save trace and corpus with known weather transitions that identify
+  record owner and byte layout.
 - SKPROJECT-GAP-002 — `SKWIN/DME.h::DistantEnvironment` fixes the ten-byte
   in-memory shape but not allocation owner, persistence location, or save
   encoding. Risk: ENVIRONMENT material could pair with stale slot bytes.
@@ -7834,7 +7838,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     palette, and direction-derived expanded rect. A changed field, palette,
     pixels, rect, or transparency mode produces no backdrop; no generic panel
     tile or replacement image is available.
-- DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_SET_TIMER_WEATHER`, `DM2_UPDATE_WEATHER`, `DM2_weather_3df7_0037`, `c_light.cpp`, and `c_cloud.cpp`: `src/dm2/dm2_v1_weather.c`, `dm2_v1_outdoor_renderer.c`, and `dm2_v1_runtime.c` lack the source timer/reseed/light/cloud interaction chain. The runtime now forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: source timer dispatcher, reseed/light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, and real-data capture. Do not add a procedural visual substitute.
+- DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_UPDATE_WEATHER`, `c_light.cpp`, and `c_cloud.cpp`: `DM2_SET_TIMER_WEATHER` and `DM2_weather_3df7_0037` are now mapped as source receipts for outdoor 182-tick scheduling and reseed/weather transition. The runtime forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: `DM2_UPDATE_WEATHER` light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, saved timer owner proof, and real-data capture. Do not add a procedural visual substitute.
   - 2026-07-15 update: presented weather now consumes the live ten-byte
     `DistantEnvironment` register image rather than reinitializing it at the
     renderer. `cmFW`, `cmCD`, `w4/w6`, and `b8/b9` are hash-validated against

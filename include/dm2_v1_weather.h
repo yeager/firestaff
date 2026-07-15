@@ -65,6 +65,33 @@ typedef struct {
     uint32_t state_hash;
 } DM2_V1_WeatherRestoredStateReceipt;
 
+/* skproject/SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER boundary.  It is a
+ * scheduling receipt only: indoor frames and non-182 tick positions must not
+ * mutate weather state or fabricate cloud/light material. */
+typedef struct {
+    int valid;
+    int outdoor;
+    uint32_t current_tick;
+    uint32_t next_tick;
+    int due_now;
+    int scheduled;
+    uint32_t receipt_hash;
+} DM2_V1_SetTimerWeatherReceipt;
+
+/* skproject/SKULLWIN/c_weather.cpp::DM2_weather_3df7_0037 boundary.  It owns
+ * the live weather reseed/transition once DM2_SET_TIMER_WEATHER is due. */
+typedef struct {
+    int valid;
+    int transitioned;
+    uint8_t previous_weather;
+    uint8_t next_weather;
+    uint8_t next_intensity;
+    uint32_t previous_seed;
+    uint32_t next_seed;
+    uint32_t source_receipt_hash;
+    uint32_t receipt_hash;
+} DM2_V1_Weather3df70037Receipt;
+
 /* ── Timer IDs ─────────────────────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_tim_proc.cpp
  * DM2 has layered timers per-champion and per-world-state */
@@ -97,6 +124,14 @@ int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
 int dm2_v1_weather_restored_state_receipt(
     const DM2_V1_WeatherState *state,
     DM2_V1_WeatherRestoredStateReceipt *out);
+int dm2_v1_weather_set_timer_weather_receipt(
+    int is_outdoor,
+    uint32_t current_tick,
+    DM2_V1_SetTimerWeatherReceipt *out);
+int dm2_v1_weather_3df7_0037_receipt(
+    DM2_V1_WeatherState *state,
+    const DM2_V1_SetTimerWeatherReceipt *timer,
+    DM2_V1_Weather3df70037Receipt *out);
 const char *dm2_v1_weather_name(int weather);
 const char *dm2_v1_weather_source_evidence(void);
 

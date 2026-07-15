@@ -32,6 +32,7 @@
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_g1_scene_runtime_bridge.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
+#include "dm2_v1_weather.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -722,6 +723,10 @@ uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
 void dm2_v1_runtime_set_weather_seed(uint32_t seed);
+int dm2_v1_runtime_last_set_timer_weather_receipt(
+    DM2_V1_SetTimerWeatherReceipt *out_receipt);
+int dm2_v1_runtime_last_weather_3df7_0037_receipt(
+    DM2_V1_Weather3df70037Receipt *out_receipt);
 /* Accepts only c_weather DistantEnvironment receipts that can be rebuilt
  * against the current source-owned MapGraphicsStyle/GDAT weather receipt.
  * A level or scene refresh clears them; no bound slot is no-draw. */
