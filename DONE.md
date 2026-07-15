@@ -16309,6 +16309,12 @@ level or any byte mutation. It remains explicitly no-draw: no original capture,
 texture, palette, transform, VDP1, or renderer handoff semantics are claimed.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
 
+# ✅ 2026-07-15 Theron main-RAM control-window read instrumentation
+
+Added bounded CPU-read provenance for `0x1f01f7..0x1f01fb`, retaining logical
+and physical reader addresses. The instrument does not classify the bytes or
+infer any CDB, sector, level, or object semantics.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader
