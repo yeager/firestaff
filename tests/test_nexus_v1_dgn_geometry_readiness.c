@@ -619,6 +619,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
         Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
         Nexus_V1_DgnStructure3PackageGeometryPacket package_geometry;
+        Nexus_Viewport package_viewport;
         int byte3_above_wall_bank = 0;
         int byte4_above_wall_bank = 0;
         int cell;
@@ -1131,6 +1132,29 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       !package_geometry.fallback_visuals_permitted &&
                       package_geometry.blocks_real_dgn_mesh_render,
                       "retail Structure3 package geometry joins exact source mesh rows to opaque Structure2 anchors no-draw");
+                nexus_viewport_init(&package_viewport);
+                nexus_viewport_render(&package_viewport, &active_engine);
+                CHECK(package_viewport.last_dgn_render_receipt.attempted &&
+                      package_viewport.last_dgn_render_receipt.used_real_dgn_route &&
+                      package_viewport.last_dgn_render_receipt
+                          .active_level_source_consumed &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_consumed &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_bound &&
+                      package_viewport.last_dgn_render_receipt
+                          .structure3_package_geometry_no_draw &&
+                      package_viewport.structure3_package_geometry.valid &&
+                      package_viewport.structure3_package_geometry
+                          .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
+                      package_viewport.structure3_package_geometry
+                          .material_target.face_bytes_fnv1a64 ==
+                          material_target.face_bytes_fnv1a64 &&
+                      package_viewport.last_dgn_render_receipt.blocked &&
+                      !package_viewport.last_dgn_render_receipt.ready &&
+                      package_viewport.last_dgn_render_receipt
+                          .rasterized_command_count == 0,
+                      "DGN viewport consumes real package geometry without a Saturn draw path");
                 ++structure3_static_material_capture_target_level_count;
             } else {
                 CHECK(!found_static_material_target && !material_target.valid &&

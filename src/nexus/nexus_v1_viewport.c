@@ -120,6 +120,43 @@ static int viewport_sync_dgn_material_palette(
     return 1;
 }
 
+/* Stage one real static-textured Structure3 face from the active package for
+ * a later Saturn-backed renderer. This intentionally has no fallback when a
+ * level has no such source row, and it never turns package bytes into pixels. */
+static void viewport_stage_structure3_package_geometry(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    int entry_index;
+
+    if (!vp) return;
+    memset(&vp->structure3_package_geometry, 0,
+           sizeof(vp->structure3_package_geometry));
+    if (!engine) return;
+    for (entry_index = 0;
+         entry_index < engine->current_level.structure3_directory.entry_count;
+         ++entry_index) {
+        int face_ordinal;
+        for (face_ordinal = 0;
+             face_ordinal <
+                 engine->current_level.structure3_entry_face_counts[entry_index];
+             ++face_ordinal) {
+            if (nexus_v1_current_level_structure3_package_geometry_packet(
+                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
+                    &vp->structure3_package_geometry) == 1) {
+                vp->last_dgn_render_receipt.structure3_package_geometry_consumed =
+                    1;
+                vp->last_dgn_render_receipt.structure3_package_geometry_bound =
+                    vp->structure3_package_geometry.source_geometry_bound &&
+                    vp->structure3_package_geometry.material_descriptor_bound;
+                vp->last_dgn_render_receipt.structure3_package_geometry_no_draw =
+                    vp->structure3_package_geometry.no_draw_only &&
+                    vp->structure3_package_geometry.blocks_real_dgn_mesh_render;
+                return;
+            }
+        }
+    }
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -174,6 +211,10 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
                 structure3_packet.no_draw_only &&
                 structure3_packet.blocks_real_dgn_mesh_render;
         }
+        /* This is intentionally independent of the external capture packet.
+         * A real package face may be staged, but never rasterized, before
+         * Saturn pixel/palette/VDP1 evidence is available. */
+        viewport_stage_structure3_package_geometry(vp, engine);
         /* The real runtime must not convert a decoded DMDF-only bank into
          * visible DGN material. FLOORS/WALLS need independently verified BPK
          * containers and completed host routes; missing Track 1 containers
