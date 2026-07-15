@@ -17,7 +17,6 @@
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include <string.h>
-#include <stdlib.h>
 
 int dm1_viewport_3d_wall_host_material_receipt_pc34(
     int map_wall_set,
@@ -1548,31 +1547,18 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
     int bw = frame->byte_width;
     int bh = frame->height;
     size_t needed = (size_t)bw * (size_t)bh;
-    uint8_t *scratch = NULL;
-    bool scratch_owned = false;
 
-    /* ReDMCSB F0128 allocates G0074_puc_Bitmap_Temporary before the draw walk,
-     * and F0105/F0103 use that scratch bitmap for horizontal flips.  Some
-     * Firestaff probes and bridge calls exercise the helper directly, so use
-     * a short-lived fallback scratch buffer instead of silently dropping the
-     * parity-flipped wall when state->temp_bitmap has not been wired yet.
-     * Source: DUNVIEW.C:8318-8335,3096-3108,3185-3204. */
-    if (state->temp_bitmap && state->temp_bitmap_size >= (int)needed) {
-        scratch = state->temp_bitmap;
-    } else {
-        scratch = (uint8_t *)malloc(needed);
-        scratch_owned = true;
-    }
-    if (!scratch) return;
+    /* F0128 allocates and owns G0074_puc_Bitmap_Temporary before dispatching
+     * F0103/F0105.  A host allocation here can make an unadmitted viewport
+     * look valid, so a missing or undersized source scratch span is a strict
+     * no-draw. Source: DUNVIEW.C:8318-8335, 3096-3108, 3185-3204. */
+    if (!state->temp_bitmap || state->temp_bitmap_size < (int)needed) return;
 
     /* Copy and flip into temp buffer */
-    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, scratch, bw, bh);
+    dm1_viewport_3d_copy_and_flip_h(frame_bitmap, state->temp_bitmap, bw, bh);
 
     /* Draw with transparency */
-    dm1_viewport_3d_draw_wall(state, scratch, frame);
-    if (scratch_owned) {
-        free(scratch);
-    }
+    dm1_viewport_3d_draw_wall(state, state->temp_bitmap, frame);
 }
 
 int dm1_v1_viewport_draw_door_button_pc34(uint8_t *dst,
