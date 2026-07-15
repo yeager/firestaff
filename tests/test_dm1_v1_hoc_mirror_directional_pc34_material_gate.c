@@ -55,50 +55,6 @@ static int data_path(char *out, size_t outSize, const char *directory,
     return written > 0 && (size_t)written < outSize;
 }
 
-static int find_hoc_c127_sensor(const struct DungeonDatState_Compat *dungeon,
-                                const struct DungeonThings_Compat *things,
-                                HocMirrorSensorPc34 *outSensor)
-{
-    const struct DungeonMapDesc_Compat *map;
-    int x;
-
-    if (!dungeon || !things || !outSensor || dungeon->header.mapCount < 1 ||
-        !things->sensors) {
-        return 0;
-    }
-    map = &dungeon->maps[0];
-    for (x = 0; x < (int)map->width; ++x) {
-        int y;
-        for (y = 0; y < (int)map->height; ++y) {
-            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-                dungeon, things, 0, x, y);
-            int safety = 0;
-
-            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
-                   safety++ < 64) {
-                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
-                    int sensorIndex = (int)THING_GET_INDEX(thing);
-                    if (sensorIndex < things->sensorCount &&
-                        things->sensors[sensorIndex].sensorType ==
-                            SENSOR_WALL_TYPE_PORTRAIT) {
-                        outSensor->mapIndex = 0;
-                        outSensor->mapX = x;
-                        outSensor->mapY = y;
-                        outSensor->thingCell = (int)THING_GET_CELL(thing);
-                        outSensor->sensorData =
-                            (int)things->sensors[sensorIndex].sensorData;
-                        outSensor->ornamentOrdinal =
-                            (int)things->sensors[sensorIndex].ornamentOrdinal;
-                        return 1;
-                    }
-                }
-                thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
-            }
-        }
-    }
-    return 0;
-}
-
 static int verify_directional_gate(const HocMirrorSensorPc34 *sensor)
 {
     int visibleCell;
@@ -160,6 +116,73 @@ static int verify_directional_gate(const HocMirrorSensorPc34 *sensor)
     return 1;
 }
 
+static int verify_all_hoc_c127_sensors(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things, HocMirrorSensorPc34 *outFirst,
+    int *outSensorCount, int *outDistinctPortraitCount)
+{
+    const struct DungeonMapDesc_Compat *map;
+    unsigned int portrait_mask = 0U;
+    int sensor_count = 0;
+    int x;
+
+    if (!dungeon || !things || !outFirst || !outSensorCount ||
+        !outDistinctPortraitCount || dungeon->header.mapCount < 1 ||
+        !things->sensors) return 0;
+    map = &dungeon->maps[0];
+    memset(outFirst, 0, sizeof(*outFirst));
+    for (x = 0; x < (int)map->width; ++x) {
+        int y;
+        for (y = 0; y < (int)map->height; ++y) {
+            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                dungeon, things, 0, x, y);
+            int safety = 0;
+
+            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                   safety++ < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                    int sensor_index = (int)THING_GET_INDEX(thing);
+                    if (sensor_index >= 0 && sensor_index < things->sensorCount &&
+                        things->sensors[sensor_index].sensorType ==
+                            SENSOR_WALL_TYPE_PORTRAIT) {
+                        HocMirrorSensorPc34 sensor;
+
+                        memset(&sensor, 0, sizeof(sensor));
+                        sensor.mapIndex = 0;
+                        sensor.mapX = x;
+                        sensor.mapY = y;
+                        sensor.thingCell = (int)THING_GET_CELL(thing);
+                        sensor.sensorData =
+                            (int)things->sensors[sensor_index].sensorData;
+                        sensor.ornamentOrdinal =
+                            (int)things->sensors[sensor_index].ornamentOrdinal;
+                        if (sensor.sensorData < 0 || sensor.sensorData >=
+                            DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) {
+                            fprintf(stderr,
+                                    "FAIL C127 at %d,%d has C026 atlas index %d outside 0..%d\n",
+                                    x, y, sensor.sensorData,
+                                    DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT - 1);
+                            return 0;
+                        }
+                        if (!verify_directional_gate(&sensor)) return 0;
+                        if (sensor_count == 0) *outFirst = sensor;
+                        portrait_mask |= 1U << sensor.sensorData;
+                        ++sensor_count;
+                    }
+                }
+                thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+            }
+        }
+    }
+    *outSensorCount = sensor_count;
+    *outDistinctPortraitCount = 0;
+    while (portrait_mask) {
+        *outDistinctPortraitCount += (int)(portrait_mask & 1U);
+        portrait_mask >>= 1;
+    }
+    return sensor_count > 0;
+}
+
 int main(void)
 {
     const char *explicitDirectory = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -171,6 +194,8 @@ int main(void)
     struct DungeonDatState_Compat dungeon;
     struct DungeonThings_Compat things;
     HocMirrorSensorPc34 sensor;
+    int sensorCount = 0;
+    int distinctPortraitCount = 0;
     int result = 1;
 
     if (!directory && home) {
@@ -203,10 +228,10 @@ int main(void)
         !F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things)) {
         fprintf(stderr, "FAIL could not decode real PC34 HoC dungeon\n");
         result = 0;
-    } else if (!find_hoc_c127_sensor(&dungeon, &things, &sensor)) {
+    } else if (!verify_all_hoc_c127_sensors(&dungeon, &things, &sensor,
+                                              &sensorCount,
+                                              &distinctPortraitCount)) {
         fprintf(stderr, "FAIL real PC34 HoC has no C127 mirror sensor\n");
-        result = 0;
-    } else if (!verify_directional_gate(&sensor)) {
         result = 0;
     }
 
@@ -215,8 +240,9 @@ int main(void)
     if (result) {
         printf("probe=dm1_v1_hoc_mirror_directional_pc34_material_gate\n");
         printf("sourceEvidence=ReDMCSB DUNGEON.C F0172/F0174; DUNVIEW.C F0107:3913-3928; REVIVE.C F0280\n");
-        printf("hocMirror=%d,%d cell=%d portrait=%d\n", sensor.mapX,
-               sensor.mapY, sensor.thingCell, sensor.sensorData);
+        printf("hocMirrorSensors=%d distinctPortraits=%d first=%d,%d cell=%d portrait=%d\n",
+               sensorCount, distinctPortraitCount, sensor.mapX, sensor.mapY,
+               sensor.thingCell, sensor.sensorData);
     }
     return result ? 0 : 1;
 }
