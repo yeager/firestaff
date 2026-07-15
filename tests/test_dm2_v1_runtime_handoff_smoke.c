@@ -48,7 +48,7 @@ static int passed;
 static int failed;
 static uint8_t s_ceiling_pixels[16 * 8];
 static uint8_t s_floor_pixels[16 * 8];
-static uint8_t s_wall_pixels[16 * 8];
+static uint8_t s_wall_pixels[320 * 200];
 static uint8_t s_door_panel_pixels[16 * 8];
 static uint8_t s_door_overlay_pixels[16 * 8];
 static uint8_t s_door_frame_pixels[16 * 8];
@@ -159,9 +159,9 @@ static int synthetic_viewport_asset_fetch(void *user,
     if (dm2_v1_viewport_wall_graphic_address(
             gdat_index, &wall_graphicsset_index, &wall_field)) {
         if (out_pixels) *out_pixels = s_wall_pixels;
-        if (out_w) *out_w = 16;
-        if (out_h) *out_h = 8;
-        if (out_stride) *out_stride = 16;
+        if (out_w) *out_w = 320;
+        if (out_h) *out_h = 200;
+        if (out_stride) *out_stride = 320;
         return 0;
     }
     if (gdat_index <=

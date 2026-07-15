@@ -2,11 +2,12 @@
 
 - 2026-07-16 DM2 runtime smoke remaining blockers: after the skproject DB0
   door/wall-gfx runtime draw fix, `dm2_v1_runtime_handoff_smoke` still fails
-  on four independent gates: indoor floor/ceiling local-palette consumption,
-  outdoor sky/ground local-palette binding, provider-backed viewport-cell wall
-  draw counts, and the matching wall-plan consumption split. Do not regress
-  the now-passing DB0 door-set/default-button/ornate/destroyed-mask/wall-gfx
-  routes while fixing those.
+  on two independent palette gates: indoor floor/ceiling local-palette
+  consumption and outdoor sky/ground local-palette binding. Provider-backed
+  viewport-cell wall draw counts and the matching wall-plan consumption split
+  now pass in the smoke fixture. Do not regress the now-passing DB0
+  door-set/default-button/ornate/destroyed-mask/wall-gfx routes or the
+  provider-backed wall-count route while fixing the palette blockers.
 
 - 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
   now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped

@@ -19930,6 +19930,18 @@ an operator-captured Mac/release frame is still required for app-level visual
 evidence. Verification: `dm1_v1_champion_mirror_pc34_compat`,
 `dm1_v1_hoc_mirror_pc34_material_gate`, and
  `dm1_v1_hoc_mirror_directional_pc34_material_gate` pass.
+# ✅ 2026-07-16 DM2 runtime smoke provider wall-count fixture
+
+The DM2 runtime smoke fixture's injected viewport provider now exposes a
+`320x200` wall atlas, large enough for the skproject wall-frame source windows
+used by the renderer's rectangle validation. This restores the provider-backed
+ten-wall draw count while keeping `gdat_wall_material_plan_consumed == 0`, so
+synthetic provider fetches remain distinct from a boot-owned GDAT wall-plan
+receipt. Verification: `build-local-ninja/test_dm2_v1_gdat_wall_plan_viewport_real_data`
+passes, and `dm2_v1_runtime_handoff_smoke` now passes its wall-count and
+wall-plan split assertions. Remaining smoke blockers are the independent
+indoor floor/ceiling and outdoor sky/ground local-palette gates.
+
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually
