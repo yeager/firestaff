@@ -102,27 +102,41 @@ static void th_copy(char* out, size_t out_size, const char* text) {
     snprintf(out, out_size, "%s", text ? text : "");
 }
 
-static int th_copy_quoted(const char* src, char* out, size_t out_size) {
-    const char* q1;
-    const char* q2;
+static int th_parse_cue_file_line(const char* src, char* out, size_t out_size,
+                                  int* out_binary) {
+    const char* p;
+    const char* end;
+    const char* type;
     size_t n;
-    if (!src || !out || out_size == 0U) {
+    if (!src || !out || out_size == 0U || !out_binary ||
+        !th_starts_with_i(src, "FILE ")) {
         return 0;
     }
-    q1 = strchr(src, '"');
-    if (!q1) {
+    *out_binary = 0;
+    p = th_ltrim(src + 5);
+    if (*p == '"') {
+        ++p;
+        end = strchr(p, '"');
+        if (!end || end == p) return 0;
+        type = th_ltrim(end + 1);
+    } else {
+        end = p;
+        while (*end && *end != ' ' && *end != '\t' &&
+               *end != '\r' && *end != '\n') {
+            ++end;
+        }
+        if (end == p) return 0;
+        type = th_ltrim(end);
+    }
+    if (*type == '\0') {
         return 0;
     }
-    q2 = strchr(q1 + 1, '"');
-    if (!q2) {
-        return 0;
-    }
-    n = (size_t)(q2 - q1 - 1);
-    if (n >= out_size) {
-        n = out_size - 1U;
-    }
-    memcpy(out, q1 + 1, n);
+    n = (size_t)(end - p);
+    if (n >= out_size) return 0;
+    memcpy(out, p, n);
     out[n] = '\0';
+    *out_binary = th_starts_with_i(type, "BINARY") &&
+        (type[6] == '\0' || type[6] == ' ' || type[6] == '\t');
     return 1;
 }
 
@@ -190,7 +204,8 @@ static void th_finalize(FirestaffTheronMediaStatus* status) {
     if (!status) {
         return;
     }
-    status->launch_candidate = status->has_track02_data ? 1 : 0;
+    status->launch_candidate = status->has_cue
+        ? status->has_valid_track02_mode1 : status->has_track02_data;
     if (status->has_cue) {
         if (status->iso_file_count > 0 && status->ogg_file_count > 0) {
             status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE;
@@ -218,6 +233,7 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
                                   FirestaffTheronMediaStatus* status) {
     char line[1024];
     char current_file[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    int current_file_binary = 0;
     int current_track = 0;
     int saw_track = 0;
     int track01_audio_count = 0;
@@ -260,7 +276,8 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             continue;
         }
         if (th_starts_with_i(p, "FILE ")) {
-            if (!th_copy_quoted(p, current_file, sizeof(current_file))) {
+            if (!th_parse_cue_file_line(p, current_file, sizeof(current_file),
+                                        &current_file_binary)) {
                 return -1;
             }
             if (status->candidate_path[0] == '\0') {
@@ -297,6 +314,9 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             } else if (th_starts_with_i(q, "MODE1/") ||
                        th_starts_with_i(q, "MODE2/")) {
                 if (track == 2) {
+                    if (!current_file_binary) {
+                        return -1;
+                    }
                     status->has_track02_data = 1;
                     status->data_track_number = track;
                     th_copy(status->candidate_path,
@@ -340,6 +360,8 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
         track01_index_count == 1;
     status->track02_mode1_sector_bytes =
         track02_mode1_count == 1 ? track02_mode1_sector_bytes : 0;
+    status->has_valid_track02_mode1 =
+        track02_mode1_count == 1 && track02_index_count == 1;
     status->paired_track01_track02 = status->has_track01_audio &&
         track02_mode1_count == 1 && track02_index_count == 1;
     th_finalize(status);
@@ -407,17 +429,52 @@ static int th_resolve_cue_member_path(const char* cue_path,
     return 1;
 }
 
+/* MyAbandonware's original TQ cue sheets retain `TQ??02.iso` while the
+ * distributed data extent is named `TQ??02End.iso`. This is an exact member
+ * alias, not a directory search or a reconstructed image. */
+static int th_resolve_track02_member_path(
+    const char* cue_path,
+    char path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY]) {
+    static const struct {
+        const char* declared_name;
+        const char* materialized_name;
+    } aliases[] = {
+        { "TQJP02.iso", "TQJP02End.iso" },
+        { "TQUS02.iso", "TQUS02End.iso" }
+    };
+    char declared[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    char parent[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    size_t i;
+
+    if (!cue_path || !path || path[0] == '\0') return 0;
+    th_copy(declared, sizeof(declared), path);
+    if (!th_resolve_cue_member_path(cue_path, path)) return 0;
+    if (th_path_is_readable(path)) return 1;
+    for (i = 0U; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
+        char resolved[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        if (!th_ieq(declared, aliases[i].declared_name) ||
+            !FSP_ParentDir(parent, sizeof(parent), cue_path) ||
+            !FSP_JoinPath(resolved, sizeof(resolved), parent,
+                          aliases[i].materialized_name) ||
+            !th_path_is_readable(resolved)) {
+            continue;
+        }
+        th_copy(path, FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, resolved);
+        return 1;
+    }
+    return 0;
+}
+
 static int th_resolve_cue_candidate_path(const char* cue_path,
                                          FirestaffTheronMediaStatus* status) {
-    if (!cue_path || !status || status->candidate_path[0] == '\0') {
+    if (!cue_path || !status || status->track02_path[0] == '\0') {
         return 0;
     }
-    if (!th_resolve_cue_member_path(cue_path, status->candidate_path)) {
+    if (!th_resolve_track02_member_path(cue_path, status->track02_path)) {
         return 0;
     }
-    if (status->track02_path[0] != '\0') {
-        (void)th_resolve_cue_member_path(cue_path, status->track02_path);
-    }
+    th_copy(status->candidate_path, sizeof(status->candidate_path),
+            status->track02_path);
     if (status->track01_path[0] != '\0') {
         (void)th_resolve_cue_member_path(cue_path, status->track01_path);
     }
@@ -426,8 +483,7 @@ static int th_resolve_cue_candidate_path(const char* cue_path,
         status->layout == FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE) {
         status->has_iso9660_pvd = th_file_has_iso9660_pvd(status->candidate_path);
     }
-    if (!th_path_is_readable(status->track01_path) ||
-        !th_path_is_readable(status->track02_path)) {
+    if (!th_path_is_readable(status->track01_path)) {
         status->paired_track01_track02 = 0;
     }
     return 1;
@@ -744,6 +800,20 @@ int FirestaffTheronMedia_SelfTest(void) {
         "FILE \"Track01.ogg\" OGG\n"
         "  TRACK 01 AUDIO\n"
         "    INDEX 01 00:00:00\n";
+    const char* unquoted_iso_cue =
+        "FILE TQUS01.wav WAVE\n"
+        "  TRACK 01 AUDIO\n"
+        "    INDEX 01 00:00:00\n"
+        "FILE TQUS02.iso BINARY\n"
+        "  TRACK 02 MODE1/2048\n"
+        "    INDEX 01 00:00:00\n";
+    const char* nonbinary_track02_cue =
+        "FILE track01.wav WAVE\n"
+        "  TRACK 01 AUDIO\n"
+        "    INDEX 01 00:00:00\n"
+        "FILE track02.iso WAVE\n"
+        "  TRACK 02 MODE1/2048\n"
+        "    INDEX 01 00:00:00\n";
 
     th_check(FirestaffTheronMedia_ParseCue(bin_cue, strlen(bin_cue), &s) == 0, &failures);
     th_check(s.layout == FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE, &failures);
@@ -759,6 +829,16 @@ int FirestaffTheronMedia_SelfTest(void) {
     th_check(strcmp(s.candidate_path, "TQUS02.iso") == 0, &failures);
     th_check(s.paired_track01_track02 == 1 &&
              s.track02_mode1_sector_bytes == 2048,
+             &failures);
+
+    th_check(FirestaffTheronMedia_ParseCue(unquoted_iso_cue,
+                                           strlen(unquoted_iso_cue), &s) == 0,
+             &failures);
+    th_check(s.has_valid_track02_mode1 == 1 &&
+             strcmp(s.track02_path, "TQUS02.iso") == 0,
+             &failures);
+    th_check(FirestaffTheronMedia_ParseCue(nonbinary_track02_cue,
+                                           strlen(nonbinary_track02_cue), &s) != 0,
              &failures);
 
     th_check(FirestaffTheronMedia_ParseCue(ogg_only, strlen(ogg_only), &s) == 0, &failures);

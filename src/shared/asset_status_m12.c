@@ -1777,7 +1777,9 @@ static int m12_try_match_direct_theron_request(
         const char* payloadPath = requestedDataDir;
         FirestaffTheronMediaStatus cueMedia;
         if (FirestaffTheronMedia_ClassifyPath(requestedDataDir, &cueMedia) == 0 &&
-            cueMedia.paired_track01_track02) {
+            cueMedia.has_valid_track02_mode1 &&
+            cueMedia.track02_path[0] != '\0' &&
+            FSP_FileExists(cueMedia.track02_path)) {
             payloadPath = cueMedia.track02_path;
         }
         if (!m12_file_md5_hex(payloadPath, md5)) {
