@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include "memory_creature_ai_pc34_compat.h"
 
+struct DungeonGroup_Compat;
+
 /* ==========================================================
  *  DM1 V1 Behavior Constants (source: DEFS.H lines 1372-1378)
  *
@@ -561,6 +563,16 @@ int F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
     int creatureSize,
     int creatureCount,
     struct RngState_Compat* rng);
+
+/* ReDMCSB GROUP.C F0194 calls F0184 for every live active group before a
+ * map/runtime handoff. The supplied group array must be decoded original
+ * C04 data; malformed active references are rejected before any write. */
+int F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
+    struct DM1ActiveGroup_Compat* activeGroups,
+    int activeGroupCapacity,
+    int* currentActiveGroupCount,
+    struct DungeonGroup_Compat* groups,
+    int groupCount);
 
 /*
  * F0818: Get distance to visible party considering sight/LoS.

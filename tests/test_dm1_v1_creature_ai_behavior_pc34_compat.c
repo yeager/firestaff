@@ -11,6 +11,7 @@
 #include <assert.h>
 
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -1506,6 +1507,53 @@ static void test_reaction_schedule_plan_owns_c30_insert_fields(void) {
               "reaction_schedule_no_delay: zero delay suppresses schedule");
 }
 
+/* ReDMCSB GROUP.C F0194: every active slot passes through F0184 before
+ * map handoff, including raw C04 cells/direction writeback. */
+static void test_remove_all_active_groups_f0194(void) {
+    struct DM1ActiveGroup_Compat active[3];
+    struct DungeonGroup_Compat groups[2];
+    int currentActiveGroupCount = 2;
+    int removed;
+
+    memset(active, 0, sizeof(active));
+    memset(groups, 0, sizeof(groups));
+    active[0].groupThingIndex = 1;
+    active[0].cells = 0xA5;
+    active[0].directions = 0x06;
+    active[1].groupThingIndex = -1;
+    active[2].groupThingIndex = 0;
+    active[2].cells = 0xFF;
+    active[2].directions = 0x09;
+    groups[0].behavior = DM1_BEHAVIOR_USELESS3;
+    groups[1].behavior = DM1_BEHAVIOR_USELESS4;
+
+    removed = F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
+        active, 3, &currentActiveGroupCount, groups, 2);
+    EXPECT_EQ(removed, 2, "F0194 removes every active group");
+    EXPECT_EQ(currentActiveGroupCount, 0, "F0194 clears active count");
+    EXPECT_EQ(active[0].groupThingIndex, -1, "F0194 retires first slot");
+    EXPECT_EQ(active[2].groupThingIndex, -1, "F0194 retires sparse slot");
+    EXPECT_EQ(groups[1].cells, 0xA5, "F0184 restores raw C04 cells");
+    EXPECT_EQ(groups[1].direction, 2, "F0184 restores low packed direction");
+    EXPECT_EQ(groups[1].behavior, DM1_BEHAVIOR_WANDER,
+              "F0184 resets unusable behavior to wander");
+    EXPECT_EQ(groups[0].direction, 1, "F0184 preserves only creature-zero direction");
+    EXPECT_EQ(groups[0].behavior, DM1_BEHAVIOR_USELESS3,
+              "F0184 retains behavior below the source C4 threshold");
+
+    active[0].groupThingIndex = 2;
+    active[0].cells = 0x12;
+    currentActiveGroupCount = 1;
+    groups[0].cells = 0x77;
+    removed = F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
+        active, 1, &currentActiveGroupCount, groups, 2);
+    EXPECT_EQ(removed, 0, "F0194 rejects an out-of-range raw C04 reference");
+    EXPECT_EQ(currentActiveGroupCount, 1,
+              "F0194 rejects before mutating active count");
+    EXPECT_EQ(groups[0].cells, 0x77,
+              "F0194 rejects before mutating raw C04 data");
+}
+
 int main(void) {
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
@@ -1555,6 +1603,7 @@ int main(void) {
     test_reaction_apply_plan_schedules_next_event();
     test_reaction_apply_plan_no_event_and_wander_default();
     test_reaction_schedule_plan_owns_c30_insert_fields();
+    test_remove_all_active_groups_f0194();
 
     printf("\n--- Results: %d PASS, %d FAIL ---\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
