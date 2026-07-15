@@ -8104,6 +8104,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     command fields, texture pixels, palette/CRAM relation, and transform
     semantics for that exact face; do not promote an opaque lane or static
     DM.BIN VDP1 state into a visual command.
+  - 2026-07-15 VDP1 material-link update: the direct-face route now rechecks
+    its engine-owned texture, palette, VDP1 state, and command copies against
+    the authenticated capture before accepting a unique VDP1 command and its
+    exact CMDSRCA texture window. It retains the raw `CMDCOLR` word beside the
+    hash-bound palette lane, but does not interpret it as a CRAM/CLUT address
+    or decode any texel. The remaining work is a real Saturn capture proving
+    that command's palette addressing/format and pixel order for this exact
+    Structure1F face; all drawing remains blocked.
   - 2026-07-15 PRS3 V4 capture-intake update: complete-stream traces now have
     a strict schema for the nonzero `R6 -> R0`, `R2 -> @(R13,R0)` store lane,
     its contiguous output address range, sequence interval, and byte witness.

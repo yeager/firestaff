@@ -1418,6 +1418,38 @@ typedef struct {
     int blocks_real_dgn_mesh_render;
 } Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt;
 
+/* Exact no-draw join for one direct Structure1F face and its authenticated
+ * VDP1 command, texture-VRAM window, and palette lane. CMDCOLR is retained as
+ * an opaque source word: this receipt does not select a CRAM entry, unpack a
+ * texel, or authorize a renderer. */
+typedef enum {
+    NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_MISSING = 0,
+    NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_DIRECT_CAPTURE = 1,
+    NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_RUNTIME_CAPTURE = 2,
+    NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_VDP1_LINK = 3,
+    NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_ACCEPTED_OPAQUE = 4
+} Nexus_V1_DgnStructure1FVdp1MaterialStatus;
+
+typedef struct {
+    Nexus_V1_DgnStructure1FVdp1MaterialStatus status;
+    Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt direct_capture;
+    Nexus_V1_DgnStructure3Vdp1VramWindowReceipt texture_vram;
+    Nexus_V1_DgnStructure3Vdp1CommandVramReceipt command_vram;
+    uint16_t command_colour_control;
+    uint64_t texture_lane_fnv1a64;
+    uint64_t palette_lane_fnv1a64;
+    int runtime_lanes_match_authenticated_capture;
+    int texture_command_vram_bound;
+    int palette_lane_bound;
+    int command_colour_control_bound;
+    int pixel_decode_proven;
+    int palette_decode_proven;
+    int decoder_permitted;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+    int blocks_real_dgn_mesh_render;
+} Nexus_V1_DgnStructure1FVdp1MaterialReceipt;
+
 /* Admission for a future original-Saturn transform observation of one direct
  * Structure1F owner. It binds source bytes and captured state identity only;
  * it never interprets transform words or authorizes a draw. */
@@ -2529,6 +2561,14 @@ int nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
     const char *direct_manifest_text, size_t direct_manifest_size,
     const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
     Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt *out_receipt);
+/* Revalidate the active runtime copy of an accepted direct-face capture
+ * against its command, full VRAM texture window, and palette lane. This is an
+ * opaque material linkage only; pixel and palette decoding remain blocked. */
+int nexus_v1_engine_bind_structure1f_vdp1_material_capture(
+    const Nexus_V1_Engine *engine, int structure1f_entry_index,
+    const char *direct_manifest_text, size_t direct_manifest_size,
+    const Nexus_V1_DgnStructure3RawCaptureHostReceipt *raw_capture,
+    Nexus_V1_DgnStructure1FVdp1MaterialReceipt *out_receipt);
 int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     const Nexus_V1_Engine *engine, int structure1f_entry_index,
     const char *manifest_text, size_t manifest_size,

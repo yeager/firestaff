@@ -278,6 +278,7 @@ int main(void)
             size_t capture_size;
             Nexus_V1_DgnStructure1FDirectFaceCaptureManifestReceipt manifest_receipt;
             Nexus_V1_DgnStructure1FDirectFaceRawCaptureReceipt raw_receipt;
+            Nexus_V1_DgnStructure1FVdp1MaterialReceipt material_receipt;
             Nexus_V1_DgnStructure3RawCaptureHostReceipt absent_raw_capture;
             char *level_value;
 
@@ -362,6 +363,24 @@ int main(void)
                   !raw_receipt.fallback_visuals_permitted &&
                   raw_receipt.blocks_real_dgn_mesh_render,
                   "direct face refuses absent Saturn capture lanes without drawing");
+            memset(&material_receipt, 0, sizeof(material_receipt));
+            CHECK(nexus_v1_engine_bind_structure1f_vdp1_material_capture(
+                      &engine, source_entry, capture_text, capture_size,
+                      &absent_raw_capture, &material_receipt) == 0 &&
+                  material_receipt.status ==
+                      NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_BLOCKED_DIRECT_CAPTURE &&
+                  material_receipt.direct_capture.status ==
+                      NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_BLOCKED_CAPTURE &&
+                  !material_receipt.runtime_lanes_match_authenticated_capture &&
+                  !material_receipt.texture_command_vram_bound &&
+                  !material_receipt.palette_lane_bound &&
+                  !material_receipt.pixel_decode_proven &&
+                  !material_receipt.palette_decode_proven &&
+                  !material_receipt.decoder_permitted &&
+                  material_receipt.no_draw_only &&
+                  !material_receipt.fallback_visuals_permitted &&
+                  material_receipt.blocks_real_dgn_mesh_render,
+                  "direct face material route blocks without authentic capture lanes");
             level_value = strstr(capture_text, "level_index=");
             CHECK(level_value != NULL, "direct face manifest retains its level identity");
             if (level_value) {

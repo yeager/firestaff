@@ -19418,6 +19418,20 @@ face fields fail closed. The route is explicitly no-draw and proves no VDP1
 command, texture, palette, transform, or raster semantics.
 Verification: `test_nexus_v1_direct_static_material_capture` against local
 canonical LEV00--15 and `test_nexus_v1_structure3_capture_manifest` pass.
+
+# Nexus Structure1F VDP1 texture/palette material link (2026-07-15)
+
+`nexus_v1_engine_bind_structure1f_vdp1_material_capture()` now requires the
+runtime-owned direct-face capture lanes to be byte-identical to their
+authenticated six-lane source. It additionally requires a documented texture
+command, a complete VDP1-VRAM snapshot with the exact CMDSRCA texture window,
+and a unique copy of that 32-byte command in VDP1 VRAM. The receipt retains
+the command's raw `CMDCOLR` word and the exact palette-lane hash together, but
+does not interpret either as CRAM/CLUT addressing, colour format, texel order,
+or pixels. The launcher consumes this receipt after the opaque capture handoff
+and remains fail-closed/no-draw. Verification:
+`test_nexus_v1_direct_static_material_capture` and
+`test_nexus_v1_dgn_geometry_readiness` pass.
 # ✅ 2026-07-15 Theron Track 02 copied-entry BRA target execution receipt
 
 The raw loader trace now records a target row only when Mednafen actually
