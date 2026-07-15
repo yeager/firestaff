@@ -67,10 +67,18 @@ int main(void) {
     }
     if (!strstr(s, "M11_DM1_M653_BASELINE_TO_TOP_PC34 = 4") ||
         !strstr(s, "m11_draw_dm1_m653_cell_at_baseline") ||
+        !strstr(s, "m11_draw_dm1_m653_cell_clipped_at_baseline") ||
+        !strstr(s, "clipRect->x, clipRect->y, clipRect->w, clipRect->h") ||
+        !strstr(s, "m11_build_dm1_spell_area_overlay_plan") ||
+        !strstr(s, "m11_invert_dm1_pc34_indexed_box") ||
+        !strstr(s, "framebuffer[y * framebufferWidth + x] ^= 0x0fU") ||
+        !strstr(s, "plan.line1[i].highlighted") ||
+        !strstr(s, "DM1_V1_CPSAO_LINE2_X0_PC34") ||
+        !strstr(s, "DM1_V1_CPSAO_LINE3_X0_PC34") ||
         !contains_between(action_menu, action_menu_end,
                           "m11_draw_dm1_ui_text_trailing_spaces") ||
-        !strstr(s, "DM1_V1_CPSAO_AVAILABLE_SYMBOL_Y_PC34, glyph") ||
-        !strstr(s, "DM1_V1_CPSAO_CHAMPION_SYMBOL_Y_PC34, glyph") ||
+        !strstr(s, "plan.line2[i].screen_y") ||
+        !strstr(s, "plan.line3[i].screen_y") ||
         !strstr(s, "const int topY = baselineY - M11_DM1_M653_BASELINE_TO_TOP_PC34") ||
         !strstr(s, "x += 6;")) {
         ok = 0;
