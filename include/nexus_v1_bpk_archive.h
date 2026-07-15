@@ -192,6 +192,8 @@ typedef struct {
     int all_stored_surface_payloads_fit;
     int requires_prs3_decoder;
     int fallback_visuals_permitted;
+    int palette_trailer_observed;
+    Nexus_V1_BpkPaletteTrailerReceipt palette_trailer;
     Nexus_V1_BpkRuntimeRenderRoute route;
 } Nexus_V1_BpkRuntimeRenderReceipt;
 
@@ -731,6 +733,8 @@ typedef struct {
     uint64_t extractable_upload_bytes;
     int blocks_real_menu_surface_render;
     int fallback_visuals_permitted;
+    int palette_trailer_observed;
+    Nexus_V1_BpkPaletteTrailerReceipt palette_trailer;
 } Nexus_V1_BpkRuntimeUploadReceipt;
 
 /* Walk every entry whose 20-byte prefix is complete AND whose prefix

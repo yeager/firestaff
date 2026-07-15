@@ -3324,7 +3324,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     retains that bounded source framing and entry-byte fingerprint, but does
     not infer BGR555/CLUT semantics, ownership by a PRS3 surface, colour
     expansion, or a menu draw route. Those still require original Saturn
-    VDP1/palette evidence.
+    VDP1/palette evidence. The BPK upload/render receipts carry this opaque
+    tail framing for the active package, but it remains non-surface data and
+    cannot relax the `blocked-prs3` route.
 - 🔧 2026-07-11 Nexus PRS3 loader-media follow-up: the MD5-verified Japanese
   `DM.BIN` has exactly two `PRS3` markers: one in executable-code territory
   and one embedded record (`PRS3`, version 1, target 4096, first word 997).
