@@ -266,6 +266,25 @@ typedef struct {
     int transform_semantics_proven;
 } Nexus_V1_DgnStructure1ATransformSelectorReceipt;
 
+/* Exact raw Structure1A table identity for a future Saturn transform trace.
+ * The 24-byte rows and byte-2 selector column are source provenance only;
+ * neither receives a rotation unit, matrix, coordinate, or draw meaning. */
+typedef struct {
+    int valid;
+    int table_byte_offset;
+    int entry_count;
+    int table_byte_count;
+    uint64_t raw_table_fnv1a64;
+    uint64_t selector_column_fnv1a64;
+    int parsed_model_rows_match;
+    Nexus_V1_DgnStructure1ARelationReceipt relation;
+    Nexus_V1_DgnStructure1ATransformSelectorReceipt selectors;
+    int source_table_bound;
+    int transform_semantics_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_DgnStructure1ATransformTableReceipt;
+
 /* Structure1F's Structure1A-bound families retain a raw face-selector byte.
  * This receipt measures that source field only after the owner relation is
  * complete. A selector is not a direction, a Structure3 face, or a draw
@@ -2153,6 +2172,9 @@ int nexus_v1_level_structure3_model_reference_receipt(
 int nexus_v1_level_structure1a_transform_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1ATransformSelectorReceipt *out_receipt);
+int nexus_v1_level_structure1a_transform_table_receipt(
+    const Nexus_V1_Level *level, const uint8_t *dgn_data, int dgn_size,
+    Nexus_V1_DgnStructure1ATransformTableReceipt *out_receipt);
 int nexus_v1_level_structure1f_face_selector_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure1FFaceSelectorReceipt *out_receipt);

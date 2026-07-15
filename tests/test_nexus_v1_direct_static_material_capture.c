@@ -82,6 +82,18 @@ static int count_canonical_transform_capture_targets(const char *data_dir)
                 target.geometry.source_geometry_bound &&
                 target.geometry.vertex_slot_count >= 3 &&
                 target.geometry.vertex_slot_count <= 4 &&
+                target.transform_table.valid &&
+                target.transform_table.source_table_bound &&
+                target.transform_table.parsed_model_rows_match &&
+                target.transform_table.entry_count > 0 &&
+                target.transform_table.table_byte_count ==
+                    target.transform_table.entry_count *
+                        NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES &&
+                target.transform_table.raw_table_fnv1a64 != 0U &&
+                target.transform_table.selector_column_fnv1a64 != 0U &&
+                target.transform_table.selectors.complete &&
+                !target.transform_table.transform_semantics_proven &&
+                target.transform_table_source_bound &&
                 target.owner_transform_selector_source_bound &&
                 target.transform_selectors.resolved_selector_count > 0 &&
                 !target.transform_semantics_proven &&
@@ -179,6 +191,18 @@ int main(void)
             transform_found = 1;
             CHECK(target.valid && target.geometry.source_geometry_bound &&
                   target.geometry.direct_mesh.structure1f_entry_index == source_entry &&
+                  target.transform_table.valid &&
+                  target.transform_table.source_table_bound &&
+                  target.transform_table.parsed_model_rows_match &&
+                  target.transform_table.entry_count > 0 &&
+                  target.transform_table.table_byte_count ==
+                      target.transform_table.entry_count *
+                          NEXUS_DGN_STRUCTURE1A_ENTRY_BYTES &&
+                  target.transform_table.raw_table_fnv1a64 != 0U &&
+                  target.transform_table.selector_column_fnv1a64 != 0U &&
+                  target.transform_table.selectors.complete &&
+                  !target.transform_table.transform_semantics_proven &&
+                  target.transform_table_source_bound &&
                   target.owner_transform_selector_source_bound &&
                   target.transform_selectors.resolved_selector_count > 0 &&
                   !target.transform_semantics_proven &&
