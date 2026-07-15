@@ -4,6 +4,11 @@
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
   C04/ACTIVE_GROUP paths and focused tests already present in the tree.
 
+- 2026-07-15 DM1 F0115 source-material correction: viewport items, creatures,
+  projectiles, pits, and explosions no longer receive host-colored stand-ins.
+  Missing `GRAPHICS.DAT` material is no-draw; the newer source-owned F0115 and
+  F0128 routes remain intact. The focused fail-closed source gate is wired.
+
 - 2026-07-15 CSB PC3.4 real startup handoff: production playback now consumes
   the single ReDMCSB `TITLE.C F0437` state-to-plan contract for C001 PRESENTS,
   CHAOS, and STRIKES BACK. M11 validates the terminal C040-to-C017 transaction
