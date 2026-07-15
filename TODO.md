@@ -6460,6 +6460,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-15 update: the evidence receipt now also requires byte-order entry → task-body → callback/write within one raw trace, with each offset retained for audit. This is observation ordering, not execution semantics.
   - 2026-07-15 update: the same raw trace must now contain both corpus-proven PC-relative SLEV literal addresses. This verifies that both entry operands occur in capture, not what either literal owns or dispatches.
   - 2026-07-15 update: trace admission now additionally binds canonical SLEV name, task-header size, and both literal values to the active target. Any cross-level or partial-header manifest is rejected before raw evidence can be consumed.
+  - 2026-07-15 host-route update: SLEV host intake now also requires the
+    bound raw trace's ordered entry/task-body/callback observation and both
+    literal observations. This validates capture occurrence only; the task
+    body remains opaque and dispatch/callback execution stays blocked.
+    Evidence retains the exact raw-trace FNV and byte count, so an older
+    same-level observation cannot satisfy a changed active trace.
   - 2026-07-11 update: Nexus `runtime_screenshot_readiness` and `track1_real_screen_capture_readiness` now pass locally. The runtime gate avoids the old M12 screenshot-gallery startup timeout by using a boot-probe app receipt for Nexus launch metadata and the Nexus-owned Track 1 BMP probe for the real-data image receipt. The Track 1 probe is self-contained, no longer links `firestaff_m11`, writes deterministic 24-bit BMP receipts, and stamps a real `FONT256.S2D` glyph into the indexed framebuffer before BMP export. Remaining capture work is reviewed Saturn capture comparison and eventual public screenshot promotion, not the readiness plumbing.
 - 🔧 Runtime handoff/playability proof: V1 phases 0-7 are implemented/source-locked; remaining work is launcher/game-loop handoff and real Saturn asset-path proof.
 - 🔧 2026-07-14 update: DGN face/material admission now requires the exact
