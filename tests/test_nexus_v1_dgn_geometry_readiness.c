@@ -1508,6 +1508,20 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                         untextured_viewport.structure1f_source_packet.no_draw_only &&
                         untextured_viewport.structure1f_source_packet
                             .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size))) &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1c_source_scene_consumed &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1c_source_scene.valid &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1c_source_scene.record_count ==
+                          loaded_level.geometry_info.structure1c_record_count &&
+                      untextured_viewport.last_dgn_render_receipt
+                          .structure1c_source_scene.consumed_record_count ==
+                          loaded_level.geometry_info.structure1c_indexed_record_count &&
+                      untextured_viewport.structure1c_source_packet.valid &&
+                      untextured_viewport.structure1c_source_packet.no_draw_only &&
+                      untextured_viewport.structure1c_source_packet
+                          .source_bytes_fnv1a64 == fnv1a64(data, (size_t)size) &&
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&
