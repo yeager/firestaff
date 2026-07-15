@@ -490,6 +490,11 @@
     direction, and atlas placement identity through runtime, boot, and M11.
     Mixed dynamic-creature frames stay no-draw at M11 until their original
     GDAT owner route is equally proven; no type-index substitute is accepted.
+  - 2026-07-15 update: an unowned local creature candidate cannot derive a
+    drawable GDAT key from its type/frame, and Rect14 cannot promote that
+    candidate into a sprite. Only a proven live `QUERY_CREATURE_PICST` field
+    or an exact G1/DB4 material receipt may draw. Remaining work is binding
+    dynamic AI/animation ownership to an equally source-backed live route.
   - 2026-07-14 update: `DM2_DRAW_DOOR`/`DRAW_DOOR_FRAMES` now transfers the
     exact consumed multi-category door-material plan hash through runtime,
     boot, and the M11 gate. Doorless frames deliberately carry no invented

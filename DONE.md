@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject creature ownership no-draw gate: unknown local
+  creature candidates can no longer derive a GDAT image from type/frame, and
+  Rect14 cannot upgrade them into a drawable sprite. Only a proven live
+  `QUERY_CREATURE_PICST` image field or the existing exact G1/DB4 receipt is
+  admitted; all other creature material stays blank and blocked.
+
 - 2026-07-15 DM2 skproject creature no-overlay gate: scene creatures now draw
   only their selected `DRAW_MAP_CHIP`/Rect14 GDAT bitmap. Generated fallback
   rectangles, colours, and health bars have been removed; unavailable material

@@ -2723,11 +2723,13 @@ int dm2_v1_viewport_build_creature_render_plan(
                     src->creature_type, src->gdat_image_field);
                 row->material_frame_index = 0;
             }
-        } else {
+        } else if (src->source_kind == 2) {
             row->gdat_index = dm2_v1_viewport_creature_graphic_index(
                 src->creature_type, src->frame_index);
         }
-        if (s->gdat_interface_rect14_rows &&
+        if (src->source_kind != 0 &&
+            (src->source_kind != 1 || src->source_material_proven) &&
+            s->gdat_interface_rect14_rows &&
             src->frame_index < s->gdat_interface_rect14_row_count) {
             const uint8_t *rect14 = s->gdat_interface_rect14_rows +
                 ((size_t)src->frame_index * 14u);
