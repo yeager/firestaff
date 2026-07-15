@@ -49,11 +49,14 @@
 - 2026-07-16 Nexus startup/DGN follow-up: the runtime-handoff declaration drift
   below the startup title route is repaired, and
   `tests/test_nexus_v1_startup_title_route_asset_gate.c` now passes against
-  the real launcher object. Remaining Nexus work is still real MENU.BPK PRS3
-  decode, original Structure2/ITEM.IBS/VDP1 texture-palette binding, broad DGN
-  command-plan readiness repair, and Saturn capture comparison. Keep the
-  startup/menu/DGN path fail-closed; do not promote fallback startup menu or
-  synthetic dungeon visuals.
+  the real launcher object. The MENU.BPK renderer handoff is now fail-closed
+  for missing, invalid, no-surface, PRS3-blocked, and truncated routes, and
+  the launcher no longer treats a missing renderer receipt as a real-menu
+  asset handoff. Remaining Nexus work is still real MENU.BPK PRS3 decode,
+  original Structure2/ITEM.IBS/VDP1 texture-palette binding, broad DGN
+  command-plan readiness repair, Structure3 mesh draw admission, and Saturn
+  capture comparison. Keep the startup/menu/DGN path fail-closed; do not
+  promote fallback startup menu or synthetic dungeon visuals.
 
 - 2026-07-15 DM1 F0399/G0485/G0486 symbol mana-cost follow-up: spell symbol
   input now consumes a DM1-owned receipt for the real PC34 base-cost and

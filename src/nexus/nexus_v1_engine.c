@@ -2395,7 +2395,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->status = NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_MISSING;
     out_receipt->decode_route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->blocks_real_menu_surface_render = 1;
+    out_receipt->fallback_visuals_permitted = 0;
 
     if (!engine) return -1;
     out_receipt->attempted = engine->menu_bpk_decode_receipt_attempted;
@@ -2429,10 +2430,8 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
         (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED ||
          decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED);
     out_receipt->blocks_real_menu_surface_render =
-        (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
-         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED);
-    out_receipt->fallback_visuals_permitted =
-        out_receipt->blocks_real_menu_surface_render ? 0 : 1;
+        out_receipt->can_render_stored_surfaces ? 0 : 1;
+    out_receipt->fallback_visuals_permitted = 0;
     return 0;
 }
 
