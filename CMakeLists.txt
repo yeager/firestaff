@@ -32430,7 +32430,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0691_draw_compressed_
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_img3_decode_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_startup_img3_decode_pc34_compat.c")
-    add_executable(test_csb_v1_startup_img3_decode_pc34_compat tests/test_csb_v1_startup_img3_decode_pc34_compat.c src/csb/csb_v1_startup_img3_decode_pc34_compat.c src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
+    add_executable(test_csb_v1_startup_img3_decode_pc34_compat tests/test_csb_v1_startup_img3_decode_pc34_compat.c src/csb/csb_v1_startup_img3_decode_pc34_compat.c)
     target_include_directories(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)

@@ -3756,6 +3756,44 @@ static int m11_execute_csb_entrance_opening_composite(
     return m11_draw_csb_entrance_opening_frame_asset(&context, &composite);
 }
 
+/* TITLE.C and ENTRANCE.C own the indexed 320x200 page.  M11 owns only the
+ * final presentation scale, so a maximized host surface cannot turn a valid
+ * package raster into a black startup frame. */
+static void m11_csb_present_startup_raster(const unsigned char *source,
+                                           unsigned char *destination,
+                                           int destination_width,
+                                           int destination_height)
+{
+    int x;
+    int y;
+
+    if (!source || !destination || destination_width <= 0 ||
+        destination_height <= 0) {
+        return;
+    }
+    if (destination_width == CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 &&
+        destination_height == CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
+        memcpy(destination, source,
+               (size_t)CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 *
+                   (size_t)CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34);
+        return;
+    }
+    for (y = 0; y < destination_height; ++y) {
+        const int source_y =
+            (y * CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) /
+            destination_height;
+        for (x = 0; x < destination_width; ++x) {
+            const int source_x =
+                (x * CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34) /
+                destination_width;
+            destination[(size_t)y * (size_t)destination_width + (size_t)x] =
+                source[(size_t)source_y *
+                           CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 +
+                       (size_t)source_x];
+        }
+    }
+}
+
 static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -3832,9 +3870,16 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
      * The owning session turns C001-C005/C017/C040 into one verified host
      * surface. M11 consumes that terminal page atomically; it must not
      * derive a replacement frame or clear the page when source media fails. */
+    /* ReDMCSB ENTRANCE.C F0441 has one deliberate black transfer page. It
+     * is not a missing title/entrance surface and must not wait on a raster
+     * receipt that only exists for package graphics. */
+    if (host_view.render_draw.render_plan.surface ==
+        CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
+        memset(framebuffer, 0,
+               (size_t)framebufferWidth * (size_t)framebufferHeight);
+        return;
+    }
     if (!session ||
-        framebufferWidth != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
-        framebufferHeight != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34 ||
         !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             session,
             &host_view.render_draw.render_plan,
@@ -3854,8 +3899,10 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
             &host_surface);
         return;
     }
-    memcpy(framebuffer, host_surface.raster.pixels,
-           (size_t)framebufferWidth * (size_t)framebufferHeight);
+    m11_csb_present_startup_raster(host_surface.raster.pixels,
+                                   framebuffer,
+                                   framebufferWidth,
+                                   framebufferHeight);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
         &host_surface);
 }

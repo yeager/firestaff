@@ -12,8 +12,8 @@
 
 /* ReDMCSB TITLE.C F0437 lines 424-463 loads C001 once and uses C424-C426
  * zones. ENTRANCE.C F0806 lines 775-826 builds door opening frames from
- * C002/C003. CSBWin Graphics.cpp ReadGraphic is the matching PC archive
- * boundary. */
+ * C002/C003. On the PC package, CSBWin CSBCode.cpp ExpandGraphic owns the
+ * C001--C005 big-endian planar stream after the archive/LZW boundary. */
 
 #define CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34 (1024u * 1024u)
 
@@ -107,9 +107,9 @@ static int csb_v1_startup_surface_load_graphic_pc34(
         !F0474_MEMORY_LoadGraphic_CPSDF_Compat(selection.offset,
             selection.compressedByteCount, &file_state, compressed)) goto done;
 
-    /* ReDMCSB MEMORY.C F0490 runs F0497 LZW before F0466/IMAGE3 expands
-     * C001-C005. Passing the archive bytes straight to IMAGE3 makes the
-     * title and entrance look like random nibbles despite a valid archive. */
+    /* CSBWin Code222ea.cpp ReadAndExpandGraphic runs the archive/LZW
+     * boundary before CSBCode.cpp ExpandGraphic. C001-C005 are planar, not
+     * IMG3: a malformed or incomplete owned stream is rejected here. */
     if (selection.compressedByteCount == selection.decompressedByteCount) {
         memcpy(decompressed, compressed, (size_t)selection.decompressedByteCount);
     } else if (csb_v1_graphics_lzw_decode_pc34_compat(

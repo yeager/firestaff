@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 /*
- * Converts one real, already-decompressed PC 3.4 IMG3 record into indexed
- * pixels for the CSB startup surface. The GRAPHICS.DAT header owns the
- * expected dimensions. A non-IMG3 or malformed record is rejected; no visual
- * substitute is produced.
+ * Converts one real, already-decompressed CSB PC 3.4 C001--C005 planar
+ * stream into indexed pixels. This is the CSBWin ExpandGraphic format:
+ * big-endian width/height followed by its four-plane command stream. The
+ * legacy function name is retained at the startup compatibility boundary.
  */
 int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
     const uint8_t *graphic,

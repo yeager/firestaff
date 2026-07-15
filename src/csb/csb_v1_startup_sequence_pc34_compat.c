@@ -9,11 +9,11 @@ enum {
     CSB_V1_TITLE_PRESENTS_TICKS_PC34 = 60,
     /* ReDMCSB TITLE.C F0437:438-450 allocates 20 CHAOS rasters, from
      * 320x80 down to 16x4, before F0437:455-459 presents them in reverse. */
-    /* PC34 TITLE.C F0437 consumes the 18 usable CHAOS rasters: 48x12
-     * through 320x80. The 16x4 and 32x8 allocations are not presented. */
-    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 18,
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
-    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
+    /* TITLE.C F0437 presents all 20 reverse-order rasters, holds the full
+     * CHAOS image for 20 vblanks, then presents STRIKES BACK for two. */
+    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 2,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 =
         CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
         CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
@@ -217,8 +217,8 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     /* ReDMCSB: TITLE.C F0437 lines 425-463 uses the CSB title path:
      * CM58 PRESENTS is blitted, then TITLE.C waits until
      * G0317_i_WaitForInputVerticalBlankCount + 60. The PC path builds 20
-     * shrinked CHAOS bitmaps, blits them in reverse order, waits two
-     * vertical blanks, then draws STRIKES BACK for one visible vblank. */
+     * shrinked CHAOS bitmaps, blits them in reverse order, holds the full
+     * bitmap for 20 vertical blanks, then draws STRIKES BACK for two. */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }
@@ -1146,7 +1146,7 @@ static void csb_v1_startup_set_title_rect_pc34(
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
         plan->title_source_step >= 2 &&
-        plan->title_source_step <= 19) {
+        plan->title_source_step <= 21) {
         /* ReDMCSB TITLE.C F0437:190-199 applies C425's CSB-only gold and
          * dark-blue slots before the source-ordered zoom raster. */
         plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
@@ -1154,9 +1154,9 @@ static void csb_v1_startup_set_title_rect_pc34(
         /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
          * bitmaps from the full 320x80 title source, and lines 385-387
          * blit those bitmaps centered on the screen.  Do not crop the
-         * source: the animation grows the full CHAOS image from 48x12 to
+         * source: the animation grows the full CHAOS image from 16x4 to
          * 320x80. */
-        zoom_index = 19 - plan->title_source_step;
+        zoom_index = 21 - plan->title_source_step;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
         plan->title_source_x = 0;
