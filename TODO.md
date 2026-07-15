@@ -6348,6 +6348,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   System Card lookup, game-owned reader, loader-table address, or record-table
   interpretation is yet admitted. The next capture must reach G8--G10 and
   yield this reader receipt before any table binding.
+  2026-07-15 update: the authenticated G8 corpus now has a strict CPU-control
+  receipt for the next game-owned parameter step. Physical `0x1f184d` writes
+  `1e` to executable `0x1f1837`, then `0x1f1852` writes `20` to `0x1f1838`;
+  execution at `0x1f1837` subsequently stages `04/20/ff` into
+  `0x1f01e7..0x1f01e5` before `0x1f1840` dispatches G8. This is a dynamic
+  code/control edge only. The trace has no CD-origin receipt to
+  `0x1f1837..0x1f1838`, no parameter-window reader, and no record-table
+  interpretation, so the next required evidence remains an actual reader or
+  a source-backed write into the thunk.
   Generation 4 is separate: CDB `080010891100` reads LBA `4233..4249` / Track
   02 records `0x4c8..0x4d8`; its observed FIFO and `0x1f0256..0x1f0259` stores
   are System Card-owned. No game-RAM or level/object consumer is admitted.

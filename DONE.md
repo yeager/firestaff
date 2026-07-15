@@ -16722,6 +16722,21 @@ game-owned consumer, record-table, or semantic binding yet.
 Verification: full `test_theron_v1_mednafen_controller_wait_trace_patch`
 dry-run against Mednafen 1.32.1 source.
 
+# ✅ 2026-07-15 Theron post-G7 parameter-thunk CPU receipt
+
+The authenticated G8 trace now fixes the next game-owned control edge after
+the indirect `$e009` ABI. Physical `0x1f184d` writes byte `1e` to executable
+`0x1f1837`, then `0x1f1852` writes `20` to `0x1f1838`. Execution from
+physical `0x1f1837` subsequently stages `04/20/ff` into the parameter window
+before `0x1f1840` dispatches `$e009` and G8 reads LBA 4859. The verifier
+rejects changed patch bytes, parameter-store ordering, and CDB ordering. No
+CD-origin row writes the thunk bytes, no parameter-window reader was observed,
+and no opcode, loader-table, record-table, level, object, palette, or visual
+meaning is inferred from the two patched bytes.
+
+Verification: `test_theron_v1_post_g7_parameter_thunk_receipt` and the
+authentic `/tmp/theron-g4-origin-live/trace.cd` capture.
+
 # ✅ 2026-07-15 Theron post-dispatch game-owned main-RAM write receipt
 
 After authentic `$e009` dispatch, bounded tracing distinguishes writer
