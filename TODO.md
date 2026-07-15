@@ -441,9 +441,11 @@
   the verified terminal surface. M11 now discards the released C004/C002/C003
   opening page before the first F0128 live dungeon pass, and consumes the
   CSB-owned C017/C040 host receipt only after the full C001-to-door-to-HUD
-  session validates. The old direct asset-loader startup wrappers are removed.
-  Do not reopen substitute presentation paths or retain a startup page as
-  runtime backing storage.
+  session validates. The real M11 package regression now captures every
+  C002/C003 opening step with exact PC3.4 strip geometry. The old direct
+  asset-loader startup wrappers are removed. Remaining work is external
+  Mac/app capture; do not reopen substitute presentation paths or retain a
+  startup page as runtime backing storage.
 
 - 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
   bound, including vertical and D0/D1/D2 horizontal intermediate states.

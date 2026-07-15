@@ -250,30 +250,68 @@ static int frame_matches_source_rect(const unsigned char* frame,
     return 1;
 }
 
-static void drive_csb_entrance_opening(M11_GameViewState *view,
-                                       const char *message) {
-    unsigned int guard =
-        csb_v1_startup_entrance_pre_open_delay_ticks_pc34() +
-        ENTRANCE_Compat_GetDoorAnimationStepCount() + 8u;
+static void capture_csb_opening_sequence(M11_GameViewState *view) {
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_StartupRuntimeSurface_PC34 *left;
+    const CSB_V1_StartupRuntimeSurface_PC34 *right;
+    unsigned char frame[320 * 200];
+    unsigned int step_count;
+    unsigned int step;
     int tick_before;
-    if (!view) {
-        expect_true(0, message);
+
+    if (!view || !view->csbStartupRuntimeAssetSession) {
+        expect_true(0, "M11 CSB opening capture has a source session");
         return;
     }
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        view->csbStartupRuntimeAssetSession;
+    left = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    right = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    step_count = ENTRANCE_Compat_GetDoorAnimationStepCount();
     tick_before = view->csbState.tick_count;
-    expect_true(view->csbState.startup_entrance_active == 1 &&
-                    view->csbState.startup_entrance_opening_active == 1,
-                "M11 CSB launcher entrance starts door-opening phase");
-    while (guard-- > 0 && view->csbState.startup_entrance_active) {
-        expect_true(M11_GameView_AdvanceIdleTick(view) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 CSB launcher entrance door-opening tick redraws");
+
+    for (step = 1u; step <= step_count; ++step) {
+        const int left_right = 100 - 4 * ((int)step - 1);
+        const int right_left = 109 + 4 * ((int)step - 1);
+        const int left_w = left_right >= 0 ? left_right + 1 : 0;
+        const int right_w = right_left <= 231 ? 232 - right_left : 0;
+        const int left_source_x = ((int)step & 0x00fc) << 2;
+        const int right_source_x = ((int)step & 0x0003) << 2;
+
+        memset(frame, 0, sizeof(frame));
+        M11_GameView_Draw(view, frame, 320, 200);
+        expect_true(view->csbState.startup_entrance_active == 1 &&
+                        view->csbState.startup_entrance_opening_active == 1 &&
+                        view->csbState.startup_entrance_opening_step == (int)step,
+                    "M11 CSB opening capture retains the source animation step");
+        expect_true(left_w <= 0 ||
+                        frame_matches_source_rect(frame, left,
+                                                  left_source_x, 0,
+                                                  0, 30, left_w, 161),
+                    "M11 CSB opening capture consumes the exact C002 strip");
+        expect_true(right_w <= 0 ||
+                        frame_matches_source_rect(frame, right,
+                                                  right_source_x, 0,
+                                                  right_left, 30, right_w, 161),
+                    "M11 CSB opening capture consumes the exact C003 strip");
+        record_presented_real_package_frame(
+            view, frame,
+            "M11 CSB opening capture records a real C002/C003 package frame");
+
+        if (step < step_count) {
+            expect_true(M11_GameView_AdvanceIdleTick(view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB opening capture advances to the next source door step");
+        }
     }
-    expect_true(view->csbState.tick_count == tick_before,
-                "M11 CSB launcher entrance door-opening blocks runtime ticks");
-    expect_true(view->csbState.startup_entrance_active == 0 &&
+    expect_true(M11_GameView_AdvanceIdleTick(view) == M11_GAME_INPUT_REDRAW &&
+                    view->csbState.startup_entrance_active == 0 &&
                     view->csbState.startup_entrance_dismissed == 1,
-                message);
+                "M11 CSB opening capture hands C002/C003 directly to the live HUD session");
+    expect_true(view->csbState.tick_count == tick_before,
+                "M11 CSB opening capture blocks gameplay ticks until F0806 completes");
 }
 
 static void drive_csb_entrance_to_wait(M11_GameViewState *view,
@@ -655,9 +693,7 @@ static void run_real_launcher_handoff_if_available(void) {
                                                   161),
                     "M11 CSB opening capture consumes C003 first-step bytes at PC34 geometry");
     }
-    drive_csb_entrance_opening(
-        &view,
-        "M11 CSB launcher entrance clears after explicit command");
+    capture_csb_opening_sequence(&view);
     expect_true(view.csbState.startup_entrance_last_command ==
                     ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB launcher handoff records source enter-dungeon command");

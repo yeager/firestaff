@@ -50,6 +50,10 @@
   receipt before it can draw the first F0128 page. The remaining unused M11
   startup asset-command wrappers were removed. A real-launch regression
   rejects the live frame when the authenticated source surface set is absent.
+- ✅ 2026-07-15 CSB opening-door package capture: the M12/M11 real-PC3.4
+  regression now presents all 31 F0806/F0807 C002/C003 opening steps, checks
+  each moving source strip at its exact native geometry, and records every
+  indexed package frame before the terminal C017/C040 HUD handoff.
 
 - ✅ 2026-07-15 DM1 ReDMCSB F0292 C008 opaque status-box route: dead
   champions now blit the complete original C008 67x29 source surface without
