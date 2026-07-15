@@ -12,6 +12,12 @@
   consumer: D3L/D3R/D3C, D2L/D2R/D2C, D1L/D1R/D1C. The current F0107/C127
   mirror route remains before F0115 exactly as owned by main. No material,
   geometry, or fallback route was changed.
+- 2026-07-15 Nexus Structure3 capture campaign ledger: the all-level
+  source-only face campaign now emits an ordered, source-fingerprinted ledger
+  beside its individual target files. It rejects fallback-enabled target input
+   and records no decoder or renderer authorization. Verification:
+   `test_nexus_v1_structure3_capture_manifest` plus a direct canonical
+   LEV00--LEV15 campaign run.
 
 - 2026-07-15 ReDMCSB inventory reconciliation: corrected stale DM1 and CSB
   F0145 audit rows to `IMPLEMENTED_NARROW`; both now name the source-owned
