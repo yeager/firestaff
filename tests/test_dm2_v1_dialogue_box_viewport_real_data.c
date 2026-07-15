@@ -15,8 +15,16 @@ int main(void)
     char graphics_path[1024];
     DM2_V1_BootProfile boot;
     DM2_V1_DialogueBoxHostCommand command;
+    DM2_V1_DialogueOpenPanelHostCommand open_panel;
+    DM2_V1_InterfacePalette interface_palette;
+    DM2_V1_InterfaceActionTable action_table;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    uint8_t action_palette[16];
+    const uint8_t *font_rows = NULL;
+    uint32_t font_hash = 0u;
+    int box_ok;
+    int open_ok;
     int failures = 0;
 
     if (root && root[0]) {
@@ -40,13 +48,31 @@ int main(void)
     }
     dm2_v1_boot_profile_init(&boot);
     memset(&command, 0, sizeof(command));
+    memset(&open_panel, 0, sizeof(open_panel));
+    memset(&interface_palette, 0, sizeof(interface_palette));
+    memset(&action_table, 0, sizeof(action_table));
     if (dm2_v1_boot_scan_assets(&boot, data_root) != 0 ||
-        dm2_v1_boot_enter_game(&boot) != 0 ||
-        !dm2_v1_boot_dialogue_box_host_command(&boot, &command)) {
-        fputs("FAIL: canonical save/load dialogue command was not admitted\n",
-              stderr);
+        dm2_v1_boot_enter_game(&boot) != 0) {
+        fputs("FAIL: canonical DM2 boot profile was not admitted\n", stderr);
         dm2_v1_boot_cleanup(&boot);
         return 1;
+    }
+    box_ok = dm2_v1_boot_dialogue_box_host_command(&boot, &command);
+    open_ok = dm2_v1_boot_dialogue_open_panel_host_command(&boot, &open_panel);
+    if (!box_ok || !open_ok ||
+        !dm2_v1_boot_interface_palette(&boot, &interface_palette) ||
+        !dm2_v1_boot_interface_action_table(&boot, &action_table) ||
+        !dm2_v1_boot_interface_font_table(&boot, &font_rows, &font_hash)) {
+        fprintf(stderr, "FAIL: canonical save/load dialogue command was not admitted (box=%d open=%d)\n",
+                box_ok, open_ok);
+        dm2_v1_boot_cleanup(&boot);
+        return 1;
+    }
+    memcpy(action_palette, interface_palette.palette16, sizeof(action_palette));
+    if (!dm2_v1_interface_action_table_remap_palette(
+            &action_table, action_palette, 16u, 0u, -1, -1)) {
+        fputs("FAIL: canonical dialogue text palette was not admitted\n", stderr);
+        ++failures;
     }
     if (!command.valid || !command.draw.valid ||
         command.draw.gdat_category != DM2_GDAT_CATEGORY_DIALOG_BOXES ||
@@ -67,6 +93,9 @@ int main(void)
     dm2_v1_viewport_set_asset_palette_provider(
         &viewport, dm2_v1_boot_viewport_asset_palette_fetch, &boot);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_interface_font(&viewport, font_rows, font_hash);
+    dm2_v1_viewport_set_gdat_interface_text_palette(
+        &viewport, 1, interface_palette.hash, action_palette);
     dm2_v1_viewport_set_gdat_dialogue_box_host_command(
         &viewport, &command, 1);
     dm2_v1_render_dialogue_box(&viewport);
@@ -76,6 +105,32 @@ int main(void)
         viewport.gdat_interface_palette_consumed_count == 0) {
         fputs("FAIL: canonical dialogue panel did not consume its source pixels\n",
               stderr);
+        ++failures;
+    }
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_asset_provider(
+        &viewport, dm2_v1_boot_viewport_asset_fetch, &boot);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, dm2_v1_boot_viewport_asset_palette_fetch, &boot);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_interface_font(&viewport, font_rows, font_hash);
+    dm2_v1_viewport_set_gdat_interface_text_palette(
+        &viewport, 1, interface_palette.hash, action_palette);
+    dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
+        &viewport, &open_panel, 1);
+    dm2_v1_render_dialogue_open_panel(&viewport);
+    if (!open_panel.valid || !open_panel.draw.valid ||
+        strcmp((const char *)open_panel.draw.text[0], "SAVE") != 0 ||
+        strcmp((const char *)open_panel.draw.text[1], "CANCEL") != 0 ||
+        open_panel.primary_text_rect.w <= 0 ||
+        open_panel.secondary_text_rect.w <= 0 ||
+        viewport.gdat_dialogue_open_panel_consumed_count != 3 ||
+        viewport.gdat_dialogue_open_panel_consumed_hash != open_panel.command_hash ||
+        viewport.blocked_material_draw_count != 0) {
+        fprintf(stderr, "FAIL: canonical open dialogue panel did not consume its GDAT labels (%s/%s)\n",
+                open_panel.draw.text[0], open_panel.draw.text[1]);
         ++failures;
     }
 
@@ -97,6 +152,6 @@ int main(void)
 
     dm2_v1_boot_cleanup(&boot);
     if (failures) return 1;
-    puts("PASS: canonical DIALOG_BOXES/0x81/0 reaches viewport only through active RECT_453 command");
+    puts("PASS: canonical DIALOG_BOXES/0x81/0 dialogue routes reach viewport only through active source commands");
     return 0;
 }

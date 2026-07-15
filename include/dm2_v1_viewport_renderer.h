@@ -975,6 +975,10 @@ typedef struct {
     int gdat_dialogue_box_active;
     int gdat_dialogue_box_consumed_count;
     uint32_t gdat_dialogue_box_consumed_hash;
+    DM2_V1_DialogueOpenPanelHostCommand gdat_dialogue_open_panel_command;
+    int gdat_dialogue_open_panel_active;
+    int gdat_dialogue_open_panel_consumed_count;
+    uint32_t gdat_dialogue_open_panel_consumed_hash;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -1041,6 +1045,10 @@ void dm2_v1_viewport_set_gdat_hud_material_plan(
 void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
     DM2_V1_ViewportState *s,
     const DM2_V1_DialogueBoxHostCommand *command,
+    int active);
+void dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_DialogueOpenPanelHostCommand *command,
     int active);
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
@@ -1182,6 +1190,7 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s);
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s);
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s);
 void dm2_v1_render_dialogue_box(DM2_V1_ViewportState *s);
+void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s);
 
 /* ── GDAT-backed graphic fetch ─────────────────────────────────── */
 /* Fetches a GDAT graphic as a decompressed 8-bit bitmap.

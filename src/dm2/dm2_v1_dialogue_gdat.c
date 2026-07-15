@@ -16,6 +16,51 @@ static uint32_t dm2_dialogue_hash_bytes(uint32_t hash, const uint8_t *data,
     return hash;
 }
 
+/* c_gdatfile.cpp records GDAT 0/0/dtWordValue/0 in ddat.v1e0ad0; startup
+ * enables QUERY_GDAT_TEXT's bytewise ~value - ordinal transform from bit 8.
+ * DM2_FORMAT_SKSTR is deliberately admitted here only for literal strings:
+ * the two OPEN_DIALOG_PANEL labels have no .Z or byte-1 substitutions. */
+static int dm2_dialogue_open_panel_text_decode(
+    const DM2_V1_AssetLoader *loader, int index, uint8_t field,
+    uint8_t out_text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY],
+    size_t *out_size)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint16_t gdat_flags;
+    int encrypted;
+    size_t terminator = DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY;
+
+    if (out_size) *out_size = 0u;
+    if (!loader || !out_text || !out_size ||
+        !dm2_v1_asset_load_word_value(loader, 0, 0, 0, &gdat_flags)) {
+        return 0;
+    }
+    raw = dm2_v1_asset_load_text_sized(loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
+                                        index, field, &raw_size);
+    if (!raw || raw_size == 0u ||
+        raw_size > DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY) return 0;
+    encrypted = (gdat_flags & 0x08u) != 0u;
+    for (size_t i = 0u; i < raw_size; ++i) {
+        uint8_t value = raw[i];
+        if (encrypted) value = (uint8_t)((uint8_t)~value - (uint8_t)i);
+        out_text[i] = value;
+        if (value == 0u) {
+            terminator = i;
+            break;
+        }
+    }
+    if (terminator == DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY) return 0;
+    for (size_t i = 0u; i < terminator; ++i) {
+        if (out_text[i] == 1u ||
+            (out_text[i] == '.' && i + 1u < terminator && out_text[i + 1u] == 'Z')) {
+            return 0;
+        }
+    }
+    *out_size = terminator + 1u;
+    return 1;
+}
+
 int dm2_v1_dialogue_gdat_receipt(const DM2_V1_AssetLoader *loader,
                                  uint8_t graphicsset,
                                  uint8_t shell_field,
@@ -146,14 +191,13 @@ int dm2_v1_dialogue_open_panel_receipt(
      * lines 352-415. QUERY_GDAT_TEXT(0x1a, 0x81, 0/1) supplies the two
      * button labels before the source panel is blitted at rect 4. */
     for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i) {
-        out->text[i] = dm2_v1_asset_load_text_sized(
-            loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
-            DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i, &out->text_size[i]);
-        if (!out->text[i] || out->text_size[i] == 0u ||
-            out->text[i][0] == '\0') {
+        if (!dm2_dialogue_open_panel_text_decode(
+                loader, DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i,
+                out->decoded_text[i], &out->text_size[i])) {
             memset(out, 0, sizeof(*out));
             return 0;
         }
+        out->text[i] = out->decoded_text[i];
         out->text_hash[i] = dm2_dialogue_hash_bytes(
             2166136261u, out->text[i], out->text_size[i]);
         if (out->text_hash[i] == 0u) out->text_hash[i] = 1u;

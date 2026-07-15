@@ -16634,6 +16634,18 @@ dialogue state. Missing pixels, palette, command identity, or rectangle fail
 closed; normal dungeon frames cannot display an admitted dialogue asset.
 Verification: `dm2_v1_dialogue_box_viewport_real_data`.
 
+# ✅ 2026-07-15 DM2 OPEN_DIALOG_PANEL source labels and placement
+
+`DM2_dialog_OPEN_DIALOG_PANEL` now carries the real `DIALOG_BOXES/0x81`
+text fields 0 and 1 through the exact skproject text transform selected by
+`GDAT 0/0/dtWordValue/0` bit `0x08`. The boot path decodes the original bytes,
+rejects unimplemented `DM2_FORMAT_SKSTR` substitutions, and resolves
+`RECT_1D2`/`RECT_1D3` by reproducing `DM2_COMPRESS_RECTS`, `DM2_QUERY_RECT`,
+and the relevant `DM2_QUERY_BLIT_RECT` grammar directly from raw4. The M11
+viewport draws the original panel and both decoded labels at native 320x200
+coordinates only while the source dialogue command is active. Verification:
+canonical-PC-G1 `dm2_v1_dialogue_box_viewport_real_data`.
+
 The Nexus engine now revalidates a dual-source Structure1F/Structure1A
 capture target against the active canonical LEV before binding it to an
 already externally attested, engine-owned Structure3 capture. The renderer

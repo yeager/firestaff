@@ -1110,6 +1110,38 @@ void dm2_v1_viewport_set_gdat_dialogue_box_host_command(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_DialogueOpenPanelHostCommand *command,
+    int active)
+{
+    if (!s) return;
+    memset(&s->gdat_dialogue_open_panel_command, 0,
+           sizeof(s->gdat_dialogue_open_panel_command));
+    s->gdat_dialogue_open_panel_active = 0;
+    s->gdat_dialogue_open_panel_consumed_count = 0;
+    s->gdat_dialogue_open_panel_consumed_hash = 0u;
+    if (!active || !command || !command->valid || !command->draw.valid ||
+        !command->draw.material.valid ||
+        command->draw.material.metadata.bits_per_pixel != 4u ||
+        command->draw.material.palette_hash == 0u ||
+        !command->draw.text[0] || !command->draw.text[1] ||
+        command->draw.text_size[0] == 0u || command->draw.text_size[1] == 0u ||
+        command->draw.text_hash[0] == 0u || command->draw.text_hash[1] == 0u ||
+        command->draw.panel_rect_index != DM2_V1_DIALOGUE_OPEN_PANEL_RECT_INDEX ||
+        command->panel_rect.w <= 0 || command->panel_rect.h <= 0 ||
+        command->primary_text_rect.w <= 0 || command->primary_text_rect.h <= 0 ||
+        command->secondary_text_rect.w <= 0 || command->secondary_text_rect.h <= 0 ||
+        command->command_hash == 0u) return;
+    s->gdat_dialogue_open_panel_command = *command;
+    for (unsigned int i = 0u; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i) {
+        s->gdat_dialogue_open_panel_command.draw.text[i] =
+            s->gdat_dialogue_open_panel_command.draw.decoded_text[i];
+    }
+    s->gdat_dialogue_open_panel_active = 1;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,
@@ -5447,7 +5479,8 @@ static int dm2_v1_render_hud_source_font(
     const DM2_V1_ViewportRect *rect,
     const char *text,
     uint8_t foreground,
-    uint8_t background)
+    uint8_t background,
+    int transparent_background)
 {
     int glyph_count = 0;
 
@@ -5457,8 +5490,7 @@ static int dm2_v1_render_hud_source_font(
     }
     /* skproject/SKWIN/SkWinCore.cpp QUERY_FONT expands each dt07/0 byte
      * into three pixels in the order 0x10, 0x04, 0x01 for six rows. */
-    for (int glyph = 0; text[glyph] && glyph < DM2_V1_HUD_CHAMPION_NAME_MAX;
-         ++glyph) {
+    for (int glyph = 0; text[glyph] && glyph < 80; ++glyph) {
         unsigned char character = (unsigned char)text[glyph];
         if (character >= 128u || rect->x + glyph * 3 >= rect->x + rect->w) {
             break;
@@ -5469,10 +5501,13 @@ static int dm2_v1_render_hud_source_font(
                 DM2_V1_ViewportRect pixel = {
                     rect->x + glyph * 3 + column, rect->y + row, 1, 1
                 };
-                uint8_t color = (bits & (0x10u >> (column * 2)))
-                    ? dm2_v1_hud_text_palette_color(s, foreground)
-                    : dm2_v1_hud_text_palette_color(s, background);
-                dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel, color);
+                if (bits & (0x10u >> (column * 2))) {
+                    dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel,
+                        dm2_v1_hud_text_palette_color(s, foreground));
+                } else if (!transparent_background) {
+                    dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel,
+                        dm2_v1_hud_text_palette_color(s, background));
+                }
             }
         }
         ++glyph_count;
@@ -5814,7 +5849,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 if (!dm2_v1_render_hud_source_font(
                         s, &plan.champion_slots[slot].name_marker_rect,
                         plan.champion_slots[slot].name,
-                        DM2_COL_WHITE, DM2_COL_BLACK)) {
+                        DM2_COL_WHITE, DM2_COL_BLACK, 0)) {
                     if (s->source_materials_required) {
                         dm2_v1_block_source_material(
                             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
@@ -5900,6 +5935,99 @@ void dm2_v1_render_dialogue_box(DM2_V1_ViewportState *s)
         &s->gdat_interface_palette_consumed_count);
     s->gdat_dialogue_box_consumed_count = 1;
     s->gdat_dialogue_box_consumed_hash = command->command_hash;
+}
+
+static DM2_V1_ViewportRect dm2_v1_dialogue_text_rect(
+    const DM2_V1_InterfaceRect *source_rect)
+{
+    DM2_V1_ViewportRect rect = { 0, 0, 0, 0 };
+
+    if (!source_rect) return rect;
+    rect.x = source_rect->x;
+    rect.y = source_rect->y;
+    rect.w = source_rect->w;
+    rect.h = source_rect->h;
+    if (rect.w <= 0 || rect.h < 6) {
+        rect.w = 0;
+        rect.h = 0;
+    }
+    return rect;
+}
+
+/* skproject/SKULLWIN/c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL loads the
+ * exact DIALOG_BOXES image, then two GDAT text fields and their original
+ * destination rectangles. The static version heading has no admitted source
+ * string in Firestaff yet, so this route intentionally draws only the two
+ * source-owned labels. */
+void dm2_v1_render_dialogue_open_panel(DM2_V1_ViewportState *s)
+{
+    const DM2_V1_DialogueOpenPanelHostCommand *command;
+    const uint8_t *pixels = NULL;
+    DM2_V1_ViewportRect panel;
+    DM2_V1_ViewportRect primary_text;
+    DM2_V1_ViewportRect secondary_text;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int gdat_index;
+
+    if (!s || !s->framebuffer || !s->gdat_dialogue_open_panel_active) return;
+    command = &s->gdat_dialogue_open_panel_command;
+    if (!command->valid || !command->draw.valid ||
+        !command->draw.material.valid ||
+        command->draw.material.metadata.bits_per_pixel != 4u ||
+        command->draw.material.palette_hash == 0u ||
+        command->draw.panel_rect_index != DM2_V1_DIALOGUE_OPEN_PANEL_RECT_INDEX ||
+        command->command_hash == 0u || !command->draw.text[0] ||
+        !command->draw.text[1] || command->draw.text_size[0] == 0u ||
+        command->draw.text_size[1] == 0u || command->panel_rect.w <= 0 ||
+        command->panel_rect.h <= 0 || command->primary_text_rect.w <= 0 ||
+        command->primary_text_rect.h <= 0 || command->secondary_text_rect.w <= 0 ||
+        command->secondary_text_rect.h <= 0) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    gdat_index = dm2_v1_viewport_dialogue_box_graphic_index();
+    if (dm2_v1_fetch_viewport_local_material(s, gdat_index, &pixels, &width,
+                                             &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width ||
+        !s->active_asset_palette_ready || s->active_asset_palette_hash == 0u) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    panel = (DM2_V1_ViewportRect){ command->panel_rect.x,
+        command->panel_rect.y, command->panel_rect.w,
+        command->panel_rect.h };
+    primary_text = dm2_v1_dialogue_text_rect(&command->primary_text_rect);
+    secondary_text = dm2_v1_dialogue_text_rect(&command->secondary_text_rect);
+    if (panel.w <= 0 || panel.h <= 0 || primary_text.w <= 0 ||
+        secondary_text.w <= 0 || !s->gdat_interface_font_rows ||
+        s->gdat_interface_font_hash == 0u ||
+        !s->gdat_interface_text_palette_ready ||
+        s->gdat_interface_text_palette_hash == 0u) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    /* c_dialog draws the panel before either GDAT label. */
+    dm2_v1_blit_scaled_material_bitmap(
+        s, s->framebuffer, s->fb_stride, panel.x, panel.y, panel.w, panel.h,
+        pixels, width, height, stride, DM2_COLOR_TRANSPARENT,
+        &s->gdat_interface_palette_consumed_count);
+    if (!dm2_v1_render_hud_source_font(s, &primary_text,
+            (const char *)command->draw.text[0],
+            command->draw.button_palette_slot, 0u, 1) ||
+        !dm2_v1_render_hud_source_font(s, &secondary_text,
+            (const char *)command->draw.text[1],
+            command->draw.button_palette_slot, 0u, 1)) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        return;
+    }
+    s->gdat_dialogue_open_panel_consumed_count = 3;
+    s->gdat_dialogue_open_panel_consumed_hash = command->command_hash;
 }
 
 /* ── Main render entry ─────────────────────────────────────────────── */
@@ -6195,7 +6323,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     /* 11. UI chrome (always on top) */
     dm2_v1_render_ui_chrome(s);
 
-    /* 12. An original M11-owned dialogue, when its source state is active. */
+    /* 12. Original M11-owned dialogue surfaces, when source state is active. */
+    dm2_v1_render_dialogue_open_panel(s);
     dm2_v1_render_dialogue_box(s);
 
     s->dirty = 0;
