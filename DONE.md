@@ -19434,3 +19434,11 @@ copied-entry BRA target to that exact target's main-RAM control path. Admission
 requires the preceding target receipt and ordered trace rows. The JSR target
 is retained as opaque control evidence only, without any assertion about a CD
 record, loader routine, dungeon data, objects, palette, bitmap, or rendering.
+
+# ✅ 2026-07-15 Theron Track 02 post-BRA JSR CD-record receipt
+
+Firestaff can now admit a strict control-to-media join: an executed post-BRA
+JSR must write the CD data register, then a canonical READ(6) and FIFO-origin
+row must select a byte matching the hash-verified Track 02 sector at the
+observed LBA. The resulting record coordinate remains opaque provenance, not
+a loader name, level, object table, palette, bitmap, or rendering claim.

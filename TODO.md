@@ -8690,3 +8690,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     opaque, not a loader name or a record, level, object, palette, bitmap, or
     rendering claim. Remaining: observe a CD state or source-data transfer
     from this control path before assigning record-selection semantics.
+  - Update: a post-BRA JSR receipt now requires an observed CD data-register
+    write at the JSR target, followed by one matching READ(6)/FIFO byte whose
+    LBA maps to a hash-verified Track 02 record. This is control-to-media
+    provenance only; it does not name the record or promote level, object,
+    palette, bitmap, or rendering semantics. Remaining: authenticate a real
+    capture satisfying this strict join and then observe its loader consumer.
