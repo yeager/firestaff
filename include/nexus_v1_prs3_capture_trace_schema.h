@@ -117,12 +117,17 @@ typedef struct {
     int sh2_nonzero_direct_byte_path_proven;
     uint32_t zero_first_byte_read_offset;
     uint32_t zero_second_byte_read_offset;
+    uint32_t zero_sequential_input_byte_count;
     uint32_t zero_merge_or_offset;
     uint32_t zero_index_mask_literal_offset;
     uint32_t zero_index_mask_word;
     uint32_t zero_index_mask_offset;
     uint32_t zero_indexed_byte_read_offset;
     int sh2_zero_side_index_read_verified;
+    /* Two adjacent `MOV.B @R12+` instructions consume a bounded sequential
+     * source span before the zero-side merge. This assigns no field meaning
+     * to either byte and does not make the span a decoder input contract. */
+    int sh2_zero_side_two_byte_input_span_proven;
     uint32_t zero_post_read_compare_offset;
     uint32_t zero_repeat_counter_increment_offset;
     uint32_t zero_repeat_branch_offset;

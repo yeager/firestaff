@@ -747,6 +747,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         read_be16(dm_bin + SH2_OUTPUT_BYTE_STORE_OFFSET) == 0x0d24U;
     receipt.zero_first_byte_read_offset = SH2_ZERO_FIRST_BYTE_READ_OFFSET;
     receipt.zero_second_byte_read_offset = SH2_ZERO_SECOND_BYTE_READ_OFFSET;
+    receipt.zero_sequential_input_byte_count = 2U;
     receipt.zero_merge_or_offset = SH2_ZERO_MERGE_OR_OFFSET;
     receipt.zero_index_mask_offset = SH2_ZERO_INDEX_MASK_OFFSET;
     receipt.zero_indexed_byte_read_offset = SH2_ZERO_INDEXED_BYTE_READ_OFFSET;
@@ -764,6 +765,18 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
              dm_bin + receipt.zero_index_mask_literal_offset)) == 0x0fffU &&
         read_be16(dm_bin + SH2_ZERO_INDEX_MASK_OFFSET) == 0x2059U &&
         read_be16(dm_bin + SH2_ZERO_INDEXED_BYTE_READ_OFFSET) == 0x01dcU;
+    /* The two input reads are one `@R12+`, a sign extension of that byte,
+     * then another `@R12+`. No R12 mutation or branch lies between them, so
+     * the static path consumes exactly two adjacent source bytes. Their field
+     * layout and relation to the later zero-side history access stay unknown. */
+    receipt.sh2_zero_side_two_byte_input_span_proven =
+        receipt.sh2_zero_side_index_read_verified &&
+        receipt.zero_sequential_input_byte_count == 2U &&
+        receipt.zero_second_byte_read_offset ==
+            receipt.zero_first_byte_read_offset + 4U &&
+        read_be16(dm_bin + receipt.zero_first_byte_read_offset) == 0x64c4U &&
+        read_be16(dm_bin + receipt.zero_first_byte_read_offset + 2U) == 0x644cU &&
+        read_be16(dm_bin + receipt.zero_second_byte_read_offset) == 0x67c4U;
     receipt.zero_post_read_compare_offset = SH2_ZERO_POST_READ_COMPARE_OFFSET;
     receipt.zero_repeat_counter_increment_offset = SH2_ZERO_REPEAT_COUNTER_INCREMENT_OFFSET;
     receipt.zero_repeat_branch_offset = SH2_ZERO_REPEAT_BRANCH_OFFSET;
@@ -864,6 +877,7 @@ int nexus_v1_prs3_dm_bin_sh2_v1_execution_receipt_verified(
         receipt.sh2_loop_body_bound && receipt.sh2_control_low_bit_semantics_proven &&
         receipt.sh2_nonzero_direct_byte_path_proven &&
         receipt.sh2_zero_side_index_read_verified &&
+        receipt.sh2_zero_side_two_byte_input_span_proven &&
         receipt.sh2_zero_side_repeat_control_verified &&
         receipt.sh2_zero_repeat_termination_proven &&
         receipt.sh2_zero_side_linear_route_verified &&
