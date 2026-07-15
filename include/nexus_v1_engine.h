@@ -789,6 +789,8 @@ typedef struct {
 typedef struct {
     int valid;
     int level_index;
+    int source_byte_count;
+    uint64_t source_bytes_fnv1a64;
     int animated_face_count;
     int declared_image_instruction_count;
     int consumed_image_instruction_count;
@@ -864,9 +866,14 @@ typedef struct {
     uint64_t source_bytes_fnv1a64;
     Nexus_V1_DgnStructure3PackageGeometrySceneReceipt static_scene;
     Nexus_V1_DgnStructure3AnimatedMaterialSceneReceipt animated_scene;
+    /* An 08xx category is complete only after every declared Structure1G
+     * image instruction is source-bound to its local Structure2 descriptor. */
+    Nexus_V1_DgnStructure3AnimatedMaterialImageSceneReceipt
+        animated_image_scene;
     Nexus_V1_DgnStructure3UntexturedFaceSceneReceipt untextured_scene;
     int face_count;
     int traversed_face_count;
+    int animated_image_coverage_complete;
     int category_coverage_complete;
     int transform_semantics_proven;
     int pixel_palette_vdp1_semantics_proven;

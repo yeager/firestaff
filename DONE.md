@@ -17278,3 +17278,13 @@ bytes, and VDP1-command bytes. The engine retains the result solely as an
 opaque no-draw receipt. It does not infer that PALT produced the palette, nor
 any palette format, PRS3 relationship, CLUT behavior, decoder, or drawing.
 Verification: `test_nexus_v1_dgn_geometry_readiness`.
+
+# ✅ 2026-07-15 Nexus complete animated DGN source gate
+
+The complete active Structure3 scene now includes the full `08xx`
+Structure1G image-instruction route. A scene cannot be complete until every
+declared image instruction resolves to an exact bounded Structure2 source
+descriptor from the same canonical LEV bytes. This is no-draw source coverage
+only: no GOTO execution, frame selection, timing, texture payload, palette,
+VDP1, transform, decoder, or fallback has been introduced. Verification:
+`test_nexus_v1_dgn_geometry_readiness`.
