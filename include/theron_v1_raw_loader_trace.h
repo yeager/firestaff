@@ -190,6 +190,33 @@ typedef struct {
     int selector_sector_bytes_verified;
 } Theron_V1RawLoaderTraceCoalescedLaterReceipt;
 
+/* One game-owned post-Stage-3 loader dispatch can be admitted only when an
+ * instrumented original capture preserves the complete chain from its READ(6)
+ * command through a FIFO-origin main-RAM byte and a later game-owned read of
+ * that exact cell. The byte is intentionally opaque: this is not a level,
+ * object, bitmap, palette, grid, or transition decoder. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int dispatch_sequence;
+    uint16_t dispatch_logical_pc;
+    uint32_t dispatch_physical_pc;
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint32_t raw_track02_record;
+    unsigned int source_offset;
+    unsigned long long fifo_sequence;
+    uint32_t physical_destination;
+    uint32_t reader_physical_pc;
+    uint8_t source_byte;
+    int cdb_read6_verified;
+    int fifo_to_game_ram_verified;
+    int game_ram_consumer_verified;
+    int payload_semantics_proven;
+} Theron_V1RawLoaderTraceGamePayloadReceipt;
+
 /* Narrow composition of two independently source-locked facts: an ordered,
  * complete-sector later $e009 receipt and the one authenticated initial-level
  * envelope. It accepts only an observed one-sector read of record 0x0b52,
@@ -319,6 +346,18 @@ int theron_v1_raw_loader_trace_bind_coalesced_later_e009_raw_sector(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceCoalescedLaterReceipt *out);
+
+/* Accepts exactly one source-marked Mednafen CD transcript containing the
+ * bounded game-owned `$3840` -> `$e009` call, its seven-byte READ(6) CDB,
+ * an original FIFO-to-main-RAM observation, and a game-owned read of the same
+ * RAM cell. The known US CUE coordinate is verified as `raw = LBA - 3009`.
+ * No record grammar is inferred. */
+int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+    const char *capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGamePayloadReceipt *out);
 
 /* Promotes the existing source-locked initial-level loader route only after
  * a coalesced original loader/CD receipt selects its exact one-sector record.

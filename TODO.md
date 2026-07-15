@@ -6446,6 +6446,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   receipt now binds each observed main-RAM `$e009` call through its complete
   seven CDB writes to a concrete SCSI record range. The remaining blocker is
   a game-owned RAM destination plus proven level/object consumption.
+  2026-07-15 update: the runtime-side receipt can now consume one complete
+  original-CD transcript only when its game-owned `$3840 -> $e009` call,
+  byte-consistent READ(6), FIFO-origin main-RAM write, and game-owned read of
+  the same cell all bind to the hash-verified US Track 02 byte at
+  `raw_record = LBA - 3009`. The receipt is deliberately opaque and cannot
+  promote dungeon, grid, level, object, bitmap, palette, or transition
+  semantics. A positive original capture with this complete chain is still
+  required before investigating the selected record grammar.
   2026-07-15 update: dispatch-bounded FIFO tracing proves dispatch 0 / SCSI
   generation 4 materializes bytes at physical `0x1f0256..0x1f0259`; later
   dispatches also show System Card workspace writes. Neither destination has

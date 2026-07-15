@@ -236,6 +236,277 @@ static int tqr_trace_parse_raw_sector_span(const char *line, size_t length,
            *out_span_checksum != 0u && *out_sector_checksum != 0u;
 }
 
+static int tqr_trace_hex_byte(const char *text, uint8_t *out)
+{
+    unsigned int value = 0u;
+    char pair[3];
+
+    if (!text || !out) return 0;
+    pair[0] = text[0];
+    pair[1] = text[1];
+    pair[2] = '\0';
+    if (sscanf(pair, "%2x", &value) != 1 || value > 0xffu) return 0;
+    *out = (uint8_t)value;
+    return 1;
+}
+
+static int tqr_trace_parse_scsi_read6(const char *line, size_t length,
+                                       unsigned int *out_generation,
+                                       unsigned int *out_lba,
+                                       unsigned int *out_sector_count,
+                                       uint8_t out_cdb[6])
+{
+    int consumed = 0;
+    unsigned int opcode = 0u;
+    unsigned int lba = 0u;
+    unsigned int sector_count = 0u;
+    char cdb[13] = {0};
+    uint8_t bytes[6];
+    size_t index;
+    unsigned int decoded_lba;
+    unsigned int decoded_count;
+
+    if (!line || !out_generation || !out_lba || !out_sector_count ||
+        !out_cdb) return 0;
+    if (sscanf(line,
+               "scsi_read_command generation=%u opcode=%x cdb=%12[0-9a-f] start_lba=%u sector_count=%u%n",
+               out_generation, &opcode, cdb, &lba, &sector_count,
+               &consumed) != 5 || consumed != (int)length || opcode != 0x08u ||
+        !sector_count) return 0;
+    for (index = 0u; index < 6u; ++index) {
+        if (!tqr_trace_hex_byte(cdb + index * 2u, &bytes[index])) return 0;
+    }
+    decoded_lba = ((unsigned int)(bytes[1] & 0x1fu) << 16) |
+        ((unsigned int)bytes[2] << 8) | bytes[3];
+    decoded_count = bytes[4] ? bytes[4] : 256u;
+    if (bytes[0] != 0x08u || bytes[5] != 0u || decoded_lba != lba ||
+        decoded_count != sector_count) return 0;
+    memcpy(out_cdb, bytes, sizeof(bytes));
+    *out_lba = lba;
+    *out_sector_count = sector_count;
+    return 1;
+}
+
+static int tqr_trace_parse_fifo_origin_main_ram(
+    const char *line, size_t length, unsigned int *out_generation,
+    unsigned int *out_lba, unsigned int *out_offset,
+    unsigned long long *out_fifo_sequence, unsigned int *out_destination,
+    unsigned int *out_value, unsigned int *out_writer_physical_pc)
+{
+    int consumed = 0;
+    unsigned int reader_pc = 0u;
+    unsigned int logical_destination = 0u;
+    unsigned int writer_pc = 0u;
+
+    if (!line || !out_generation || !out_lba || !out_offset ||
+        !out_fifo_sequence || !out_destination || !out_value ||
+        !out_writer_physical_pc) return 0;
+    return sscanf(line,
+                  "pce_cd_fifo_origin_main_ram_receipt generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%x logical_destination=%x physical_destination=%x writer_pc=%x writer_physical_pc=%x value=%x%n",
+                  out_generation, out_lba, out_offset, out_fifo_sequence,
+                  &reader_pc, &logical_destination, out_destination,
+                  &writer_pc, out_writer_physical_pc, out_value,
+                  &consumed) == 10 && consumed == (int)length &&
+           *out_offset < THERON_TRACK02_RAW_SECTOR_BYTES &&
+           *out_destination >= 0x1f0000u && *out_destination < 0x1f8000u &&
+           *out_value <= 0xffu && *out_writer_physical_pc >= 0x1f0000u &&
+           *out_writer_physical_pc < 0x1f8000u;
+}
+
+static int tqr_trace_parse_fifo_origin_main_ram_consumer(
+    const char *line, size_t length, unsigned int *out_generation,
+    unsigned int *out_lba, unsigned int *out_offset,
+    unsigned long long *out_fifo_sequence, unsigned int *out_physical,
+    unsigned int *out_value, unsigned int *out_reader_physical_pc)
+{
+    int consumed = 0;
+    unsigned int sequence = 0u;
+    unsigned int logical_address = 0u;
+    unsigned int reader_pc = 0u;
+
+    if (!line || !out_generation || !out_lba || !out_offset ||
+        !out_fifo_sequence || !out_physical || !out_value ||
+        !out_reader_physical_pc) return 0;
+    return sscanf(line,
+                  "pce_cd_fifo_origin_main_ram_consumer sequence=%u generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x%n",
+                  &sequence, out_generation, out_lba, out_offset,
+                  out_fifo_sequence, &logical_address, out_physical,
+                  out_value, &reader_pc, out_reader_physical_pc,
+                  &consumed) == 10 && consumed == (int)length &&
+           *out_offset < THERON_TRACK02_RAW_SECTOR_BYTES &&
+           *out_physical >= 0x1f0000u && *out_physical < 0x1f8000u &&
+           *out_value <= 0xffu && *out_reader_physical_pc >= 0x1f0000u &&
+           *out_reader_physical_pc < 0x1f8000u;
+}
+
+int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5, Theron_V1RawLoaderTraceGamePayloadReceipt *out)
+{
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t line_number = 0u;
+    size_t source_line = 0u;
+    size_t dispatch_line = 0u;
+    size_t first_cdb_line = 0u;
+    size_t scsi_line = 0u;
+    size_t origin_line = 0u;
+    size_t consumer_line = 0u;
+    unsigned int source_count = 0u;
+    unsigned int dispatch_count = 0u;
+    unsigned int cdb_count = 0u;
+    unsigned int scsi_count = 0u;
+    unsigned int origin_count = 0u;
+    unsigned int consumer_count = 0u;
+    unsigned int dispatch_sequence = 0u;
+    unsigned int dispatch_logical_pc = 0u;
+    unsigned int dispatch_physical_pc = 0u;
+    unsigned int dispatch_a = 0u;
+    unsigned int dispatch_x = 0u;
+    unsigned int dispatch_y = 0u;
+    unsigned int scsi_generation = 0u;
+    unsigned int scsi_lba = 0u;
+    unsigned int scsi_sector_count = 0u;
+    unsigned int origin_generation = 0u;
+    unsigned int origin_lba = 0u;
+    unsigned int origin_offset = 0u;
+    unsigned long long origin_fifo_sequence = 0u;
+    unsigned int origin_destination = 0u;
+    unsigned int origin_value = 0u;
+    unsigned int origin_writer_physical_pc = 0u;
+    unsigned int consumer_generation = 0u;
+    unsigned int consumer_lba = 0u;
+    unsigned int consumer_offset = 0u;
+    unsigned long long consumer_fifo_sequence = 0u;
+    unsigned int consumer_physical = 0u;
+    unsigned int consumer_value = 0u;
+    unsigned int consumer_reader_physical_pc = 0u;
+    uint8_t observed_cdb[7] = {0};
+    uint8_t decoded_cdb[6] = {0};
+    uint32_t raw_record;
+    Theron_Track02Variant variant;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!capture || !track02_data || !track02_md5 || !out ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        (variant = theron_v1_track02_variant_for_md5(track02_md5)) !=
+            THERON_TRACK02_VARIANT_US_BIN) return 0;
+
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        ++line_number;
+        if (length == strlen("source=mednafen-pce-instrumented-cd") &&
+            memcmp(line, "source=mednafen-pce-instrumented-cd", length) == 0) {
+            ++source_count;
+            source_line = line_number;
+        } else if (length >= strlen("main_ram_loader_e009_dispatch ") &&
+                   memcmp(line, "main_ram_loader_e009_dispatch ",
+                          strlen("main_ram_loader_e009_dispatch ")) == 0) {
+            if (++dispatch_count != 1u ||
+                sscanf(line,
+                       "main_ram_loader_e009_dispatch sequence=%u logical_pc=%x physical_pc=%x a=%x x=%x y=%x%n",
+                       &dispatch_sequence, &dispatch_logical_pc,
+                       &dispatch_physical_pc, &dispatch_a, &dispatch_x,
+                       &dispatch_y, &consumed) != 6 ||
+                consumed != (int)length) return 0;
+            dispatch_line = line_number;
+        } else if (length >= strlen("pce_cd_register_write ") &&
+                   memcmp(line, "pce_cd_register_write ",
+                          strlen("pce_cd_register_write ")) == 0) {
+            unsigned int cpu_pc = 0u;
+            unsigned int physical = 0u;
+            unsigned int data = 0u;
+            if (sscanf(line,
+                       "pce_cd_register_write cpu_pc=%x physical=%x data=%x%n",
+                       &cpu_pc, &physical, &data, &consumed) != 3 ||
+                consumed != (int)length || physical != 0x1801u ||
+                data > 0xffu) return 0;
+            if (dispatch_count == 1u && !scsi_count) {
+                if (!first_cdb_line) first_cdb_line = line_number;
+                if (cdb_count >= sizeof(observed_cdb) ||
+                    (cdb_count == 0u && cpu_pc != 0xe90du) ||
+                    (cdb_count > 0u && cpu_pc != 0xe981u)) return 0;
+                observed_cdb[cdb_count] = (uint8_t)data;
+                ++cdb_count;
+            }
+        } else if (length >= strlen("scsi_read_command ") &&
+                   memcmp(line, "scsi_read_command ",
+                          strlen("scsi_read_command ")) == 0) {
+            if (++scsi_count != 1u || !tqr_trace_parse_scsi_read6(
+                    line, length, &scsi_generation, &scsi_lba,
+                    &scsi_sector_count, decoded_cdb)) return 0;
+            scsi_line = line_number;
+        } else if (length >= strlen("pce_cd_fifo_origin_main_ram_receipt ") &&
+                   memcmp(line, "pce_cd_fifo_origin_main_ram_receipt ",
+                          strlen("pce_cd_fifo_origin_main_ram_receipt ")) == 0) {
+            if (++origin_count != 1u || !tqr_trace_parse_fifo_origin_main_ram(
+                    line, length, &origin_generation, &origin_lba,
+                    &origin_offset, &origin_fifo_sequence, &origin_destination,
+                    &origin_value, &origin_writer_physical_pc)) return 0;
+            origin_line = line_number;
+        } else if (length >= strlen("pce_cd_fifo_origin_main_ram_consumer ") &&
+                   memcmp(line, "pce_cd_fifo_origin_main_ram_consumer ",
+                          strlen("pce_cd_fifo_origin_main_ram_consumer ")) == 0) {
+            if (++consumer_count != 1u ||
+                !tqr_trace_parse_fifo_origin_main_ram_consumer(
+                    line, length, &consumer_generation, &consumer_lba,
+                    &consumer_offset, &consumer_fifo_sequence,
+                    &consumer_physical, &consumer_value,
+                    &consumer_reader_physical_pc)) return 0;
+            consumer_line = line_number;
+        }
+    }
+
+    if (source_count != 1u || dispatch_count != 1u || cdb_count != 7u ||
+        scsi_count != 1u || origin_count != 1u || consumer_count != 1u ||
+        !(source_line < dispatch_line && dispatch_line < first_cdb_line &&
+          first_cdb_line < scsi_line && scsi_line < origin_line &&
+          origin_line < consumer_line) || dispatch_logical_pc != 0x3840u ||
+        dispatch_physical_pc != 0x1f1840u || dispatch_a != 0x20u ||
+        dispatch_x > 0xffu || dispatch_y > 0xffu ||
+        observed_cdb[0] != 0x81u ||
+        memcmp(observed_cdb + 1u, decoded_cdb, sizeof(decoded_cdb)) != 0 ||
+        origin_generation != scsi_generation || origin_lba != scsi_lba ||
+        origin_lba < 3009u || origin_lba >= scsi_lba + scsi_sector_count ||
+        consumer_generation != origin_generation || consumer_lba != origin_lba ||
+        consumer_offset != origin_offset ||
+        consumer_fifo_sequence != origin_fifo_sequence ||
+        consumer_physical != origin_destination || consumer_value != origin_value ||
+        origin_writer_physical_pc < 0x1f0000u ||
+        origin_writer_physical_pc >= 0x1f8000u ||
+        consumer_reader_physical_pc < 0x1f0000u ||
+        consumer_reader_physical_pc >= 0x1f8000u) return 0;
+
+    raw_record = origin_lba - 3009u;
+    if ((size_t)raw_record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        track02_data[(size_t)raw_record * THERON_TRACK02_RAW_SECTOR_BYTES +
+                     origin_offset] != (uint8_t)origin_value) return 0;
+
+    out->valid = 1;
+    out->variant = variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->dispatch_sequence = dispatch_sequence;
+    out->dispatch_logical_pc = (uint16_t)dispatch_logical_pc;
+    out->dispatch_physical_pc = dispatch_physical_pc;
+    out->scsi_generation = scsi_generation;
+    out->scsi_lba = scsi_lba;
+    out->scsi_sector_count = scsi_sector_count;
+    out->raw_track02_record = raw_record;
+    out->source_offset = origin_offset;
+    out->fifo_sequence = origin_fifo_sequence;
+    out->physical_destination = origin_destination;
+    out->reader_physical_pc = consumer_reader_physical_pc;
+    out->source_byte = (uint8_t)origin_value;
+    out->cdb_read6_verified = 1;
+    out->fifo_to_game_ram_verified = 1;
+    out->game_ram_consumer_verified = 1;
+    out->payload_semantics_proven = 0;
+    return 1;
+}
+
 static uint32_t tqr_trace_fnv1a_user_data_range(const uint8_t *track02_data,
                                                  size_t first_raw_sector,
                                                  size_t sector_count)
