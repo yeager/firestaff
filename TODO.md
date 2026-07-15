@@ -616,9 +616,12 @@
   only `MODE1/2352` enters the raw IPL receipt. M11 consumes raw receipts only
   when they are valid, so a 2048 ISO CUE reaches normal Track 02 startup.
   Boot now carries an ISO identity through the Soul Room forcefield boundary
-  into the existing source-bound ISO dungeon route. Remaining: bind a real
-  ISO capture that proves the first level/object record; no raw-BIN trace,
-  sector conversion, or synthetic dungeon may authorize it.
+  into the existing source-bound ISO dungeon route. The launch resolver now
+  matches the menu classifier's CUE contract by accepting case-insensitive
+  real CUE keywords and rejecting missing or duplicate Track 02 `INDEX 01`.
+  Remaining: bind a real ISO capture that proves the first level/object
+  record; no raw-BIN trace, sector conversion, or synthetic dungeon may
+  authorize it.
 
 - 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
   receipt inspection is deliberately separate from the live Soul Room

@@ -68,6 +68,37 @@ int main(void)
     }
 
     if (!write_file(cue_path,
+                    "file \"Track 02.iso\" binary\n"
+                    "  track 02 mode1/2048\n"
+                    "    index 01 00:00:00\n") ||
+        theron_v1_track02_resolve_media_path(cue_path, resolved) !=
+            THERON_TRACK02_SIGNAL_OK || strcmp(resolved, iso_path) != 0) {
+        fputs("FAIL: lowercase MODE1/2048 CUE did not resolve\n", stderr);
+        return 1;
+    }
+
+    if (!write_file(cue_path,
+                    "FILE \"Track 02.iso\" BINARY\n"
+                    "  TRACK 02 MODE1/2048\n") ||
+        theron_v1_track02_resolve_media_path(cue_path, resolved) !=
+            THERON_TRACK02_SIGNAL_NOT_FOUND) {
+        fputs("FAIL: Track 02 CUE without INDEX 01 was accepted\n", stderr);
+        return 1;
+    }
+
+    if (!write_file(cue_path,
+                    "FILE \"Track 02.iso\" BINARY\n"
+                    "  TRACK 02 MODE1/2048\n"
+                    "    INDEX 01 00:00:00\n"
+                    "    INDEX 01 00:01:00\n") ||
+        theron_v1_track02_resolve_media_path(cue_path, resolved) !=
+            THERON_TRACK02_SIGNAL_NOT_FOUND) {
+        fputs("FAIL: Track 02 CUE with duplicate INDEX 01 was accepted\n",
+              stderr);
+        return 1;
+    }
+
+    if (!write_file(cue_path,
                     "FILE \"Track 02.bin\" BINARY\n"
                     "  TRACK 02 MODE1/2352\n"
                     "    INDEX 01 00:00:00\n"

@@ -230,6 +230,20 @@ static int tqr_ascii_equal_ci(const char *a, const char *b) {
     return 1;
 }
 
+static int tqr_ascii_starts_ci(const char *text, const char *prefix) {
+    unsigned char ct;
+    unsigned char cp;
+    if (!text || !prefix) return 0;
+    while (*prefix) {
+        ct = (unsigned char)*text++;
+        cp = (unsigned char)*prefix++;
+        if (ct >= 'A' && ct <= 'Z') ct = (unsigned char)(ct + ('a' - 'A'));
+        if (cp >= 'A' && cp <= 'Z') cp = (unsigned char)(cp + ('a' - 'A'));
+        if (ct != cp) return 0;
+    }
+    return 1;
+}
+
 static int tqr_path_is_cue(const char *path) {
     const char *dot;
     if (!path) return 0;
@@ -248,7 +262,8 @@ static int tqr_cue_file_line(const char *line, char *out_name, size_t out_cap) {
     const char *p = tqr_skip_space(line);
     const char *end;
     size_t len;
-    if (!p || strncmp(p, "FILE", 4u) != 0 || (p[4] != ' ' && p[4] != '\t')) return 0;
+    if (!p || !tqr_ascii_starts_ci(p, "FILE") ||
+        (p[4] != ' ' && p[4] != '\t')) return 0;
     p = tqr_skip_space(p + 4u);
     if (*p != '"') return 0;
     ++p;
@@ -259,21 +274,22 @@ static int tqr_cue_file_line(const char *line, char *out_name, size_t out_cap) {
     memcpy(out_name, p, len);
     out_name[len] = '\0';
     p = tqr_skip_space(end + 1u);
-    return strncmp(p, "BINARY", 6u) == 0 &&
+    return tqr_ascii_starts_ci(p, "BINARY") &&
            (p[6] == '\0' || p[6] == ' ' || p[6] == '\t' || p[6] == '\r' || p[6] == '\n');
 }
 
 static int tqr_cue_is_track02_mode1(const char *line) {
     const char *p = tqr_skip_space(line);
-    if (!p || strncmp(p, "TRACK", 5u) != 0 || (p[5] != ' ' && p[5] != '\t')) return 0;
+    if (!p || !tqr_ascii_starts_ci(p, "TRACK") ||
+        (p[5] != ' ' && p[5] != '\t')) return 0;
     p = tqr_skip_space(p + 5u);
     if (strncmp(p, "02", 2u) != 0 || (p[2] != ' ' && p[2] != '\t')) return 0;
     p = tqr_skip_space(p + 2u);
     return tqr_ascii_equal_ci(p, "MODE1/2352") ||
            tqr_ascii_equal_ci(p, "MODE1/2048") ||
-           (strncmp(p, "MODE1/2352", 10u) == 0 &&
+           (tqr_ascii_starts_ci(p, "MODE1/2352") &&
             (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')) ||
-           (strncmp(p, "MODE1/2048", 10u) == 0 &&
+           (tqr_ascii_starts_ci(p, "MODE1/2048") &&
             (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n'));
 }
 
@@ -316,7 +332,7 @@ static int tqr_cue_track_number_and_mode(const char *line,
                                          int *out_track02_mode1) {
     const char *p = tqr_skip_space(line);
     unsigned int track = 0u;
-    if (!p || strncmp(p, "TRACK", 5u) != 0 ||
+    if (!p || !tqr_ascii_starts_ci(p, "TRACK") ||
         (p[5] != ' ' && p[5] != '\t')) return 0;
     p = tqr_skip_space(p + 5u);
     if (p[0] < '0' || p[0] > '9' || p[1] < '0' || p[1] > '9') return 0;
@@ -325,7 +341,7 @@ static int tqr_cue_track_number_and_mode(const char *line,
     p = tqr_skip_space(p + 2u);
     if (out_track) *out_track = track;
     if (out_audio) {
-        *out_audio = strncmp(p, "AUDIO", 5u) == 0 &&
+        *out_audio = tqr_ascii_starts_ci(p, "AUDIO") &&
             (p[5] == '\0' || p[5] == ' ' || p[5] == '\t' ||
              p[5] == '\r' || p[5] == '\n');
     }
@@ -333,9 +349,9 @@ static int tqr_cue_track_number_and_mode(const char *line,
         *out_track02_mode1 = track == 2u &&
             (tqr_ascii_equal_ci(p, "MODE1/2352") ||
              tqr_ascii_equal_ci(p, "MODE1/2048") ||
-             (strncmp(p, "MODE1/2352", 10u) == 0 &&
+             (tqr_ascii_starts_ci(p, "MODE1/2352") &&
               (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')) ||
-             (strncmp(p, "MODE1/2048", 10u) == 0 &&
+             (tqr_ascii_starts_ci(p, "MODE1/2048") &&
               (p[10] == ' ' || p[10] == '\t' || p[10] == '\r' || p[10] == '\n')));
     }
     return 1;
@@ -345,7 +361,7 @@ static int tqr_cue_index01(const char *line, unsigned int *out_m,
                            unsigned int *out_s, unsigned int *out_f) {
     const char *p = tqr_skip_space(line);
     unsigned int m, s, f;
-    if (!p || strncmp(p, "INDEX", 5u) != 0 ||
+    if (!p || !tqr_ascii_starts_ci(p, "INDEX") ||
         (p[5] != ' ' && p[5] != '\t')) return 0;
     p = tqr_skip_space(p + 5u);
     if (strncmp(p, "01", 2u) != 0 || (p[2] != ' ' && p[2] != '\t')) return 0;
@@ -502,6 +518,8 @@ Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
     const char *slash;
     size_t parent_len;
     size_t selected_count = 0u;
+    size_t selected_index01_count = 0u;
+    int current_track02_selected = 0;
 
     if (!out_payload_path) return THERON_TRACK02_SIGNAL_BAD_INPUT;
     out_payload_path[0] = '\0';
@@ -521,15 +539,24 @@ Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
         char parsed[THERON_TRACK02_MOUNT_PATH_CAPACITY];
         if (tqr_cue_file_line(line, parsed, sizeof(parsed))) {
             memcpy(current_file, parsed, strlen(parsed) + 1u);
+            current_track02_selected = 0;
         } else if (tqr_cue_is_track02_mode1(line) && current_file[0]) {
             ++selected_count;
+            current_track02_selected = 1;
             if (selected_count == 1u) {
                 memcpy(selected_file, current_file, strlen(current_file) + 1u);
             }
+        } else if (tqr_cue_index01(line, NULL, NULL, NULL)) {
+            if (current_track02_selected) {
+                ++selected_index01_count;
+            }
+        } else if (tqr_ascii_starts_ci(tqr_skip_space(line), "TRACK")) {
+            current_track02_selected = 0;
         }
     }
     fclose(cue);
-    if (selected_count != 1u || !selected_file[0]) return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    if (selected_count != 1u || selected_index01_count != 1u ||
+        !selected_file[0]) return THERON_TRACK02_SIGNAL_NOT_FOUND;
     slash = strrchr(media_path, '/');
     if (!slash) slash = strrchr(media_path, '\\');
     parent_len = slash ? (size_t)(slash - media_path + 1u) : 0u;

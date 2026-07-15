@@ -19759,3 +19759,15 @@ c_light and draw-order hashes before the viewport blits the decoded IMG3
 planes. Verification: `dm2_v1_c_light_receipt`,
 `dm2_v1_boot_profile_smoke`, `test_dm2_v1_gdat_graphicsset_real_data`, and
 `dm2_v1_save_load` pass.
+
+# ✅ 2026-07-15 Theron Track 02 CUE startup contract
+
+The Track 02 launch resolver now follows the same CUE shape that the Theron
+media classifier exposes to startup/menu code: `FILE`, `TRACK`, `MODE1`, and
+`INDEX` keywords are accepted case-insensitively, and a CUE must contain
+exactly one Track 02 `INDEX 01` before its BIN/ISO payload can be mounted.
+This keeps real `MODE1/2048` ISO CUE media launchable while rejecting partial
+or ambiguous CUE metadata. No dungeon, object, bitmap, palette, or fallback
+semantics are inferred. Verification: `test_theron_v1_track02_cue_layout`,
+`test_firestaff_theron_media_classify`, and
+`test_m12_theron_missing_track02_popup_gate` pass.
