@@ -189,20 +189,11 @@ typedef struct DM2_V1_SessionState {
     uint8_t  reserved[256];
 } DM2_V1_SessionState;
 
-/* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
- * is populated only for an original raw SKSave body. */
 typedef enum DM2_V1_SaveCandidateKind {
     DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION = 0,
     DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE,
     DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW
 } DM2_V1_SaveCandidateKind;
-
-typedef struct DM2_V1_SaveCandidate {
-    DM2_V1_SaveCandidateKind kind;
-    DM2_V1_SessionState session;
-    const uint8_t *dungeon_bytes;
-    size_t dungeon_size;
-} DM2_V1_SaveCandidate;
 
 /* Read-only receipt for the uncompressed dungeon prefix of an original raw
  * SKSave body. skproject c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE reads
@@ -229,6 +220,18 @@ typedef struct {
     uint32_t prefix_hash;
     size_t suppress_state_offset;
 } DM2_V1_OriginalRawDungeonReceipt;
+
+/* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
+ * is populated only for an original raw SKSave body. Its receipt is the
+ * source-owned byte-layout proof that runtime must match before publishing
+ * the reconstructed dungeon. */
+typedef struct DM2_V1_SaveCandidate {
+    DM2_V1_SaveCandidateKind kind;
+    DM2_V1_SessionState session;
+    const uint8_t *dungeon_bytes;
+    size_t dungeon_size;
+    DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
+} DM2_V1_SaveCandidate;
 
 /* One source-addressed raw c_record from an admitted SKSave DB pool. The
  * receipt intentionally exposes no decoded fields or record links. */

@@ -433,7 +433,11 @@
   index). It retains `tty1D`/`tty1E` RecordE timer owners as unavailable
   until the saved DB graph has an exact address owner. Remaining:
   corpus-verified original read/write across those full DB/timer sections and
-  the rest of SKProject's post-load rebuild order.
+  the rest of SKProject's post-load rebuild order. The raw-load handoff now
+  rejects before publication unless the parsed dungeon has the exact saved
+  map/column/ground-stack/text/pool/map-tail boundaries and the first/last
+  source record address in each nonempty DB pool; record links, object graph,
+  checkcodes, minion associations, and post-load effects remain unowned.
 
 - 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict
   single-face manifest intake now preserves one DGN/Structure3 face's opaque

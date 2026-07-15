@@ -15648,6 +15648,18 @@ zero-sized source pools, and out-of-prefix addresses. It exposes no decoded
 record fields and follows no links. Verification: focused save/load 26/26,
 including a source-sized DB0 record at byte 68.
 
+# ✅ 2026-07-15 DM2 raw SKSave runtime layout handoff
+
+`dm2_v1_runtime_restore_save_candidate()` now retains the authenticated raw
+dungeon receipt on its save candidate and rejects before its atomic dungeon
+swap unless the reparsed layout exactly reproduces SKProject
+`DM2_READ_DUNGEON_STRUCTURE`'s map, column, ground-stack, text, DB-pool, and
+map-data boundaries. Every nonempty DB pool also proves its first and final
+source record address against the retained prefix; empty pools must have no
+span. This consumes no record links or object fields. Verification: focused
+raw-SKSave candidate test plus syntax checks for the DM2 parser, runtime, and
+save/load test translation units.
+
 # ✅ 2026-07-15 DM2 raw SKSave DB0 Door receipt
 
 The corpus path can now decode `SKWIN/DME.h::Door` fields from raw DB0 `w2`

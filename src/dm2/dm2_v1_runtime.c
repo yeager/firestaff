@@ -4810,6 +4810,87 @@ int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size) {
     return 0;
 }
 
+static int dm2_v1_runtime_raw_sksave_dungeon_matches_receipt(
+    const DM2_V1_DungeonData *dungeon,
+    const DM2_V1_SaveCandidate *candidate)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *receipt;
+    size_t expected_column_base;
+    size_t expected_sft_base;
+    size_t expected_text_base;
+    int type;
+
+    if (!dungeon || !candidate || !candidate->dungeon_bytes ||
+        candidate->dungeon_size == 0u) {
+        return 0;
+    }
+    receipt = &candidate->dungeon_receipt;
+    if (!receipt->valid || receipt->suppress_state_offset !=
+                               candidate->dungeon_size ||
+        dungeon->raw_size < 0 || (size_t)dungeon->raw_size !=
+                                       candidate->dungeon_size ||
+        !dungeon->raw_data ||
+        memcmp(dungeon->raw_data, candidate->dungeon_bytes,
+               candidate->dungeon_size) != 0) {
+        return 0;
+    }
+
+    expected_column_base = 44u + (size_t)receipt->map_count * 16u;
+    expected_sft_base = expected_column_base +
+                        (size_t)receipt->column_index_count * 2u;
+    expected_text_base = expected_sft_base +
+                         (size_t)receipt->ground_stack_count * 2u;
+    if (receipt->map_count == 0u ||
+        dungeon->level_count != (int)receipt->map_count ||
+        dungeon->column_index_base != (int)expected_column_base ||
+        dungeon->square_first_thing_base != (int)expected_sft_base ||
+        dungeon->text_data_base != (int)expected_text_base ||
+        dungeon->square_first_thing_count !=
+            (int)receipt->ground_stack_count ||
+        dungeon->text_word_count != (int)receipt->text_word_count ||
+        dungeon->raw_map_data_base != (int)receipt->map_data_offset ||
+        (size_t)dungeon->raw_size - (size_t)dungeon->raw_map_data_base !=
+            (size_t)receipt->map_data_byte_count) {
+        return 0;
+    }
+
+    /* SKProject's READ_DUNGEON_STRUCTURE assigns recordptr[type] in source
+     * DB order directly after text.  Check every admitted pool base/count;
+     * this is an address gate only and never follows GenericRecord::w0. */
+    for (type = 0; type < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++type) {
+        size_t next_pool_offset = type + 1 < DM2_RAW_SKSAVE_DB_POOL_COUNT
+            ? receipt->db_pool_offsets[type + 1]
+            : receipt->map_data_offset;
+        if (dungeon->thing_type_counts[type] !=
+                (int)receipt->db_record_counts[type] ||
+            dungeon->thing_data_bases[type] !=
+                (int)receipt->db_pool_offsets[type]) {
+            return 0;
+        }
+        if (receipt->db_record_counts[type] != 0u) {
+            DM2_V1_OriginalRawDbRecordReceipt first_record;
+            DM2_V1_OriginalRawDbRecordReceipt last_record;
+            const int last_index =
+                (int)receipt->db_record_counts[type] - 1;
+
+            if (!dm2_v1_original_raw_sksave_db_record_receipt(
+                    candidate->dungeon_bytes, candidate->dungeon_size,
+                    type, 0, &first_record) ||
+                !dm2_v1_original_raw_sksave_db_record_receipt(
+                    candidate->dungeon_bytes, candidate->dungeon_size,
+                    type, last_index, &last_record) ||
+                first_record.record_offset != receipt->db_pool_offsets[type] ||
+                last_record.record_offset + last_record.record_size !=
+                    next_pool_offset) {
+                return 0;
+            }
+        } else if (receipt->db_pool_offsets[type] != next_pool_offset) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size)
 {
@@ -4842,6 +4923,8 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
          * saved prefix first, then publish it in one swap below. */
         if (dm2_v1_dungeon_load(&parsed_dungeon, candidate.dungeon_bytes,
                                 (int)candidate.dungeon_size) != 0 ||
+            !dm2_v1_runtime_raw_sksave_dungeon_matches_receipt(
+                &parsed_dungeon, &candidate) ||
             candidate.session.party_level >= parsed_dungeon.level_count ||
             candidate.session.party_x >=
                 (uint16_t)parsed_dungeon.level_widths[
