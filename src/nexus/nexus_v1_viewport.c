@@ -265,6 +265,11 @@ static void viewport_stage_structure3_complete_source_scene(
         nexus_v1_current_level_structure3_complete_source_scene_receipt(
             engine, &scene) != 1 || !scene.valid ||
         !scene.category_coverage_complete ||
+        !scene.structure2_payload_coverage_complete ||
+        scene.structure2_descriptor_count <= 0 ||
+        scene.structure2_image_anchor_count != scene.structure2_descriptor_count ||
+        scene.structure2_payload_anchors_consumed !=
+            scene.structure2_payload_anchor_count ||
         scene.traversed_face_count != scene.face_count ||
         !scene.no_draw_only || scene.decoder_permitted ||
         scene.fallback_visuals_permitted ||
