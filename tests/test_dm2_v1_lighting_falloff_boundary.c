@@ -1271,21 +1271,13 @@ static void test_sprite_asset_provider(void)
     viewport.creatures[0].screen_y = 50;
     viewport.creatures[0].health_pct = 75;
     memset(&creature_plan, 0, sizeof(creature_plan));
-    CHECK("DM2 creature render plan owns sprite identity and fallback bounds",
+    CHECK("DM2 creature render plan owns source sprite identity",
           dm2_v1_viewport_build_creature_render_plan(&viewport,
                                                      &creature_plan) == 1 &&
               creature_plan.creature_count == 1 &&
               creature_plan.creatures[0].creature_index == 0 &&
               creature_plan.creatures[0].gdat_index ==
-                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01) &&
-              rect_equals(&creature_plan.creatures[0].fallback_rect,
-                          36, 46, 8, 8) &&
-              creature_plan.creatures[0].fallback_color ==
-                  (uint8_t)(11 + (0x12 & 7)) &&
-              rect_equals(&creature_plan.creatures[0].health_bg_rect,
-                          32, 42, 16, 1) &&
-              rect_equals(&creature_plan.creatures[0].health_fill_rect,
-                          32, 42, 12, 1));
+                  dm2_v1_viewport_creature_graphic_index(0x12, 0x01));
     dm2_v1_render_creatures(&viewport);
     CHECK("creature without source material blocks instead of drawing fallback pixels",
           viewport.asset_creature_drawn_count == 0 &&
@@ -1303,7 +1295,7 @@ static void test_sprite_asset_provider(void)
     viewport.creatures[0].frame_index = 0x01;
     viewport.creatures[0].screen_x = 40;
     viewport.creatures[0].screen_y = 50;
-    viewport.creatures[0].health_pct = 100;
+    viewport.creatures[0].health_pct = 75;
     s_asset_fetch_calls = 0;
     s_last_asset_index = 0;
     dm2_v1_viewport_set_asset_provider(&viewport,
@@ -1319,6 +1311,9 @@ static void test_sprite_asset_provider(void)
     CHECK("creature map-chip atlas draws only the selected frame",
           framebuffer[((50 - 4) * 320) + (40 - 4)] == 12 &&
               framebuffer[(50 * 320) + 40] == 12);
+    CHECK("creature health state does not generate a scene health bar",
+          framebuffer[(42 * 320) + 32] == 0 &&
+              framebuffer[(42 * 320) + 40] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);

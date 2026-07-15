@@ -519,7 +519,7 @@ typedef struct {
     int16_t  depth;            /* depth sort key */
     int16_t  screen_x;         /* viewport X position */
     int16_t  screen_y;         /* viewport Y position */
-    uint8_t  health_pct;       /* 0–100 for health bar */
+    uint8_t  health_pct;       /* runtime state; no synthetic scene overlay */
     uint8_t  light_radius;     /* light emitted by creature */
     uint8_t  direction;        /* 0=N, 1=E, 2=S, 3=W */
     uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
@@ -549,10 +549,6 @@ typedef struct {
     int rect14_scale64;
     int rect14_lateral_offset;
     int rect14_flip_mirror;
-    DM2_V1_ViewportRect fallback_rect;
-    uint8_t fallback_color;
-    DM2_V1_ViewportRect health_bg_rect;
-    DM2_V1_ViewportRect health_fill_rect;
 } DM2_V1_CreatureRender;
 
 typedef struct {

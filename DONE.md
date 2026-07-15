@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject creature no-overlay gate: scene creatures now draw
+  only their selected `DRAW_MAP_CHIP`/Rect14 GDAT bitmap. Generated fallback
+  rectangles, colours, and health bars have been removed; unavailable material
+  remains blocked and blank.
+
 - 2026-07-15 DM2 skproject projectile-category no-draw gate: missile and
   cloud map-chip draws require their source-owned GDAT category. An absent
   category no longer becomes the generic spell-missile image; source profiles
