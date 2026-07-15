@@ -29,6 +29,12 @@ typedef struct DM1_V1_ViewportInscriptionReceiptPc34 {
     DM1_V1_InscriptionHostMaterialReceiptPc34 frontMaterial;
 } DM1_V1_ViewportInscriptionReceiptPc34;
 
+typedef enum DM1_V1_ViewportInscriptionProjectionPc34 {
+    DM1_V1_INSCRIPTION_PROJECTION_CLEAR_ONLY_PC34 = 0,
+    DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34 = 1,
+    DM1_V1_INSCRIPTION_PROJECTION_SIDE_OR_DEPTH_PC34 = 2
+} DM1_V1_ViewportInscriptionProjectionPc34;
+
 int dm1_v1_wall_inscription_presentation_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
@@ -38,7 +44,7 @@ int dm1_v1_viewport_inscription_receipt_from_world_pc34(
     const struct DungeonThings_Compat* things,
     int preferredTextIndex,
     unsigned short firstThing,
-    int d1cWallLike,
+    DM1_V1_ViewportInscriptionProjectionPc34 projection,
     int championMirror,
     DM1_V1_ViewportInscriptionReceiptPc34* outReceipt);
 

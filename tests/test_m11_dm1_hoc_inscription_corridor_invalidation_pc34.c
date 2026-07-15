@@ -205,8 +205,8 @@ static int is_current_viewport_receipt(const M11_GameViewState *state,
     firstThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
         state->world.dungeon, state->world.things, 0, pose->wallX, pose->wallY);
     if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
-            state->world.things, pose->textStringIndex, firstThing, 1, 0,
-            &receipt)) {
+            state->world.things, pose->textStringIndex, firstThing,
+            DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34, 0, &receipt)) {
         return 0;
     }
     return receipt.valid && receipt.clearPreviousMaterial &&
@@ -223,7 +223,8 @@ static int is_clear_only_viewport_receipt(const M11_GameViewState *state)
     DM1_V1_ViewportInscriptionReceiptPc34 receipt;
 
     return state && dm1_v1_viewport_inscription_receipt_from_world_pc34(
-        state->world.things, -1, THING_NONE, 0, 0, &receipt) &&
+        state->world.things, -1, THING_NONE,
+        DM1_V1_INSCRIPTION_PROJECTION_CLEAR_ONLY_PC34, 0, &receipt) &&
         receipt.valid && receipt.clearPreviousMaterial &&
         !receipt.drawFrontMaterial && !receipt.frontMaterial.valid;
 }

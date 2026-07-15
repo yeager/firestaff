@@ -35557,7 +35557,9 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
     /* The clear action belongs to the DM1 F0128/F0107 receipt even when no
      * current world cell is available. M11 only performs that action. */
     if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
-            NULL, -1, THING_NONE, 0, 0, &viewportReceipt) ||
+            NULL, -1, THING_NONE,
+            DM1_V1_INSCRIPTION_PROJECTION_CLEAR_ONLY_PC34,
+            0, &viewportReceipt) ||
         !viewportReceipt.clearPreviousMaterial) {
         return;
     }
@@ -35571,7 +35573,8 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
     }
     if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
             state->world.things, frontCell.inscriptionTextIndex,
-            frontCell.firstThing, 1,
+            frontCell.firstThing,
+            DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
             frontCell.championPortraitOrdinal >= 0, &viewportReceipt)) {
         return;
     }

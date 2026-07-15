@@ -9,6 +9,7 @@
  */
 
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
+#include "dm1_v1_wall_inscription_presentation_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -201,6 +202,40 @@ int main(void)
         fprintf(stderr, "F0168/F0172 M648 raster/palette routes diverged\n");
         result = 0;
         goto cleanup;
+    }
+
+    {
+        DM1_V1_ViewportInscriptionReceiptPc34 frontReceipt;
+        DM1_V1_ViewportInscriptionReceiptPc34 sideReceipt;
+        DM1_V1_ViewportInscriptionReceiptPc34 mirrorReceipt;
+
+        memset(&frontReceipt, 0, sizeof(frontReceipt));
+        memset(&sideReceipt, 0, sizeof(sideReceipt));
+        memset(&mirrorReceipt, 0, sizeof(mirrorReceipt));
+        if (!dm1_v1_viewport_inscription_receipt_from_world_pc34(
+                &things, textIndex, firstThing,
+                DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
+                0, &frontReceipt) ||
+            !frontReceipt.valid || !frontReceipt.clearPreviousMaterial ||
+            !frontReceipt.drawFrontMaterial ||
+            memcmp(&frontReceipt.frontMaterial, &receipt, sizeof(receipt)) != 0 ||
+            !dm1_v1_viewport_inscription_receipt_from_world_pc34(
+                &things, textIndex, firstThing,
+                DM1_V1_INSCRIPTION_PROJECTION_SIDE_OR_DEPTH_PC34,
+                0, &sideReceipt) ||
+            !sideReceipt.valid || !sideReceipt.clearPreviousMaterial ||
+            sideReceipt.drawFrontMaterial || sideReceipt.frontMaterial.valid ||
+            !dm1_v1_viewport_inscription_receipt_from_world_pc34(
+                &things, textIndex, firstThing,
+                DM1_V1_INSCRIPTION_PROJECTION_D1C_FRONT_PC34,
+                1, &mirrorReceipt) ||
+            !mirrorReceipt.valid || !mirrorReceipt.clearPreviousMaterial ||
+            mirrorReceipt.drawFrontMaterial || mirrorReceipt.frontMaterial.valid) {
+            fprintf(stderr,
+                    "F0107 projection gate exposed readable M648 outside D1C front\n");
+            result = 0;
+            goto cleanup;
+        }
     }
 
     decodedCount = DM1_V1_InscriptionDecodeRawGlyphsFromWordsPc34(
