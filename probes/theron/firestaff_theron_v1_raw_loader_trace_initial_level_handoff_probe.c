@@ -101,6 +101,7 @@ int main(void)
     const char *raw_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
     const char *trace_path = getenv("FIRESTAFF_THERON_COALESCED_LOADER_TRACE");
     char md5[33];
+    char game_payload_capture[2048];
     uint8_t *raw;
     size_t raw_size;
     Theron_V1RawLoaderTraceCoalescedLaterReceipt coalesced;
@@ -118,6 +119,8 @@ int main(void)
     size_t complete_iso_projection_size;
     size_t projection_sector;
     uint8_t saved_tail_byte;
+    uint8_t saved_game_payload_byte;
+    Theron_V1RawLoaderTraceGamePayloadReceipt game_payload;
     const char *system_card_md5 = "ff1a674273fe3540ccef576376407d1d";
     const char *trace_md5 = "0123456789abcdef0123456789abcdef";
 
@@ -130,6 +133,57 @@ int main(void)
         strcmp(md5, THERON_TRACK02_MD5_US_BIN) != 0) {
         free(raw);
         printf("FAIL: supplied US Track 02 is not the source-locked raw corpus\n");
+        return 1;
+    }
+
+    /* Parser-only fixture: its byte value is taken from the hash-verified
+     * US raw sector, while a real runtime receipt still requires an original
+     * Mednafen transcript with these exact rows. */
+    saved_game_payload_byte = raw[0x484u * THERON_TRACK02_RAW_SECTOR_BYTES +
+                                  17u];
+    snprintf(game_payload_capture, sizeof(game_payload_capture),
+             "source=mednafen-pce-instrumented-cd\n"
+             "main_ram_loader_e009_dispatch sequence=1 logical_pc=3840 physical_pc=1f1840 a=20 x=00 y=04\n"
+             "pce_cd_register_write cpu_pc=e90d physical=00001801 data=81\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=08\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=00\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=10\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=45\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=01\n"
+             "pce_cd_register_write cpu_pc=e981 physical=00001801 data=00\n"
+             "scsi_read_command generation=5 opcode=08 cdb=080010450100 start_lba=4165 sector_count=1\n"
+             "pce_cd_fifo_origin_main_ram_receipt generation=5 source_lba=4165 source_offset=17 fifo_sequence=7 reader_pc=ea9c logical_destination=3000 physical_destination=1f1000 writer_pc=1840 writer_physical_pc=1f1840 value=%02x\n"
+             "pce_cd_fifo_origin_main_ram_consumer sequence=0 generation=5 source_lba=4165 source_offset=17 fifo_sequence=7 logical_address=3000 physical_address=1f1000 value=%02x reader_pc=1840 reader_physical_pc=1f1840\n",
+             saved_game_payload_byte, saved_game_payload_byte);
+    if (!theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+            game_payload_capture, raw, raw_size, md5, &game_payload) ||
+        !game_payload.valid || game_payload.raw_track02_record != 0x484u ||
+        game_payload.source_offset != 17u ||
+        !game_payload.cdb_read6_verified ||
+        !game_payload.fifo_to_game_ram_verified ||
+        !game_payload.game_ram_consumer_verified ||
+        game_payload.payload_semantics_proven) {
+        free(raw);
+        printf("FAIL: game-owned FIFO receipt did not remain source-bound and opaque\n");
+        return 1;
+    }
+    raw[0x484u * THERON_TRACK02_RAW_SECTOR_BYTES + 17u] ^= 0x01u;
+    if (theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+            game_payload_capture, raw, raw_size, md5, &game_payload)) {
+        free(raw);
+        printf("FAIL: altered FIFO source byte reached the game-owned receipt\n");
+        return 1;
+    }
+    raw[0x484u * THERON_TRACK02_RAW_SECTOR_BYTES + 17u] =
+        saved_game_payload_byte;
+    memcpy(game_payload_capture +
+               (strstr(game_payload_capture, "start_lba=4165") -
+                game_payload_capture),
+           "start_lba=4166", strlen("start_lba=4166"));
+    if (theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
+            game_payload_capture, raw, raw_size, md5, &game_payload)) {
+        free(raw);
+        printf("FAIL: CDB/LBA mismatch reached the game-owned receipt\n");
         return 1;
     }
 

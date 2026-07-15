@@ -16814,6 +16814,18 @@ assigned.
 Verification: `test_theron_v1_main_ram_game_window_scsi_receipt`, Mednafen
 patch dry-run, and the authentic capture verifier.
 
+# ✅ 2026-07-15 Theron game-owned FIFO-to-RAM-to-reader intake gate
+
+The Track 02 loader receipt now has a strict live-capture intake for a single
+game-owned `$3840 -> $e009` dispatch: seven observed CDB writes must decode to
+the following READ(6); its FIFO-origin byte must reach game-owned main RAM and
+be read later by game-owned code from the identical physical cell. For the
+verified US CUE coordinate, Firestaff rechecks the captured byte against
+`raw_record = LBA - 3009` in the hash-verified Track 02 BIN. The result remains
+an opaque byte-flow receipt, not a dungeon, grid, level, object, bitmap,
+palette, or transition decoder. Verification: the focused raw-loader probe
+rejects a mutated source byte and a CDB/LBA mismatch.
+
 # ✅ 2026-07-15 Theron LBA 4165 raw Track 02 binding
 
 Bound the four sectors requested by the game-owned window path, LBA
