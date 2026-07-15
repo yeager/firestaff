@@ -88,7 +88,9 @@ int main(void)
     door_plan.doors[0].view_square = DM2_SQ_D0C;
     door_plan.doors[0].door_gfx_index = 0;
     door_plan.doors[0].door_opening_dir = 1;
-    door_plan.doors[0].door_state = 2;
+    /* The only currently admitted source geometry is SKProject DRAW_DOOR's
+     * closed-panel QUERY_BLIT_RECT route. Partial split panels fail closed. */
+    door_plan.doors[0].door_state = 4;
     door_plan.doors[0].door_open_pct = 50;
     door_plan.doors[0].ornament_index = ornate;
     door_plan.doors[0].ornate_gdat_index = dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
@@ -114,11 +116,17 @@ int main(void)
         material_plan.commands[2].kind != DM2_V1_GDAT_DOOR_FRAME ||
         material_plan.commands[3].kind != DM2_V1_GDAT_DOOR_BUTTON ||
         material_plan.commands[0].door_opening_dir != 1 ||
-        material_plan.commands[0].door_state != 2 ||
+        material_plan.commands[0].door_state != 4 ||
         material_plan.commands[0].door_open_pct != 50 ||
         material_plan.commands[0].draw_distance != 0u ||
         material_plan.commands[0].stretch_dual != 0x40u ||
         material_plan.commands[0].light_palette != 0u ||
+        !material_plan.commands[0].rect_number ||
+        !material_plan.commands[0].rect_width ||
+        !material_plan.commands[0].rect_height ||
+        !material_plan.commands[0].rect_table_hash ||
+        !material_plan.commands[0].rect_row_hash ||
+        !material_plan.commands[0].geometry_hash ||
         !material_plan.commands[0].decoded_hash ||
         !material_plan.commands[0].selection_hash ||
         !dm2_v1_asset_load_word_value(
@@ -138,7 +146,7 @@ int main(void)
     door_plan.doors[0].door_open_pct = 50;
     /* D3 is skproject cell 11 (Y distance 3). It has no admitted frame
      * route, so this source-only M11 transaction must contain panel pixels
-     * only; geometry remains unavailable until raw4 expansion is proven. */
+     * only. Its panel destination is the actual RAW4 rect transaction. */
     door_plan.doors[0].view_square = DM2_SQ_D3C;
     door_plan.doors[0].panel_gdat_index =
         dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D3C);
@@ -161,7 +169,9 @@ int main(void)
            d3_panel->light_palette == 0u) ||
           (d3_panel->field == 0u && d3_panel->stretch_dual == 0x1cu &&
            d3_panel->light_palette == 3u)) || !d3_panel->raw_hash ||
-        !d3_panel->decoded_hash || !d3_panel->palette_hash) goto fail;
+        !d3_panel->decoded_hash || !d3_panel->palette_hash ||
+        !d3_panel->rect_number || !d3_panel->rect_width ||
+        !d3_panel->rect_height || !d3_panel->geometry_hash) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
@@ -179,10 +189,10 @@ int main(void)
     if (fallback_fetches || viewport.gdat_door_overlay_material_plan_consumed_count != 1 ||
         viewport.asset_door_panel_drawn_count != 1 ||
         viewport.asset_door_frame_drawn_count != 0 ||
-        viewport.last_door_panel_asset_blit.dst_rect.x != 74 ||
-        viewport.last_door_panel_asset_blit.dst_rect.y != 25 ||
-        viewport.last_door_panel_asset_blit.dst_rect.w != 76 ||
-        viewport.last_door_panel_asset_blit.dst_rect.h != 51 ||
+        viewport.last_door_panel_asset_blit.dst_rect.x != d3_panel->rect_x ||
+        viewport.last_door_panel_asset_blit.dst_rect.y != d3_panel->rect_y ||
+        viewport.last_door_panel_asset_blit.dst_rect.w != d3_panel->rect_width ||
+        viewport.last_door_panel_asset_blit.dst_rect.h != d3_panel->rect_height ||
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR)) goto fail;
     /* DRAW_DOOR's field-zero retry keeps the original distance light palette
      * (three for D3). Its transform is not yet decoded, so the base IMG3

@@ -12,9 +12,11 @@
   the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
   original Mac/app capture, not a fallback texture path.
 
-- 2026-07-15 DM2 DRAW_DOOR remaining: D3 panel evidence, split-panel
-  geometry, distance stretch/light palette selection, and broader door-type
-  coverage need direct skproject bindings. No generic panel/frame fallback.
+- 2026-07-15 DM2 DRAW_DOOR remaining: closed D0-D3 panels now consume their
+  exact `tlbRectnoDoorPosition` -> RAW4 `QUERY_BLIT_RECT` destinations.
+  Split-panel opening, distance stretch/light-palette execution,
+  `DRAW_DOOR_FRAMES`, and broader door-type routing still need direct
+  skproject bindings. No generic panel/frame fallback.
 
 - 2026-07-15 DM2 skproject wall follow-up: D2/D3 side-wall M11 commands now
   own G0163 source and destination geometry and fail closed on a mismatch.
@@ -32,9 +34,10 @@
 - 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
   the verified terminal surface. Do not reopen substitute presentation paths.
 
-- 2026-07-15 DM2 DRAW_DOOR follow-up: D3 panel evidence, source split-panel
-  geometry, DRAW_DOOR_FRAMES timing, and complete map door-type routing still
-  need direct skproject bindings. Do not substitute a generic panel or frame.
+- 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
+  bound. Source split-panel geometry, `DRAW_DOOR_FRAMES` timing, and complete
+  map door-type routing still need direct skproject bindings. Do not
+  substitute a generic panel or frame.
 
 - 2026-07-15 DM1 F0098 follow-up: bind the packaged M11 DM1 asset loader to
   the viewport provider with verified map-floor-set graphic identities. Do not

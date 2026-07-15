@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-15 DM2 skproject closed-door geometry: D0-D3 `DRAW_DOOR` panels
+  now carry their `tlbRectnoDoorPosition` RAW4 `QUERY_BLIT_RECT` destination,
+  row/table hashes, and geometry hash through the GDAT M11 command. The
+  source-required viewport consumes that exact rectangle; unproved opening
+  and split-panel routes remain no-draw rather than using old bounded boxes.
+
 - 2026-07-15 DM2: bound source-owned `DistantEnvironment` weather slots to
   the GDAT viewport route. The runtime consumes decoded weather material only
   for stationary frames with complete slot, palette, IMG3, and dt04 receipts;

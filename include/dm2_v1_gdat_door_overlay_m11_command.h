@@ -37,10 +37,21 @@ typedef struct {
     uint8_t light_palette;
     uint16_t color_key;
     uint16_t no_frames;
+    /* skproject DRAW_DOOR passes tlbRectnoDoorPosition[cell] through
+     * QUERY_BLIT_RECT.  These are the resolved RAW4 destination coordinates
+     * for the closed-panel route, never viewport approximations. */
+    uint16_t rect_number;
+    int16_t rect_x;
+    int16_t rect_y;
+    uint16_t rect_width;
+    uint16_t rect_height;
     uint8_t palette16[16];
     uint32_t raw_hash;
     uint32_t decoded_hash;
     uint32_t palette_hash;
+    uint32_t rect_table_hash;
+    uint32_t rect_row_hash;
+    uint32_t geometry_hash;
     uint32_t selection_hash;
 } DM2_V1_GdatDoorOverlayM11Command;
 
