@@ -104,6 +104,28 @@ int DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
     return 1;
 }
 
+int DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex, int mapX, int mapY, int* outAllowed)
+{
+    int squareIndex;
+    int type;
+    if (outAllowed) *outAllowed = 0;
+    if (!dungeon || !outAllowed || !dungeon->tilesLoaded || !dungeon->maps ||
+        !dungeon->tiles || mapIndex < 0 ||
+        mapIndex >= (int)dungeon->header.mapCount || mapX < 0 || mapY < 0 ||
+        mapX >= (int)dungeon->maps[mapIndex].width ||
+        mapY >= (int)dungeon->maps[mapIndex].height ||
+        !dungeon->tiles[mapIndex].squareData) return 0;
+    squareIndex = mapX * (int)dungeon->maps[mapIndex].height + mapY;
+    if (squareIndex < 0 || squareIndex >= dungeon->tiles[mapIndex].squareCount) return 0;
+    type = (dungeon->tiles[mapIndex].squareData[squareIndex] >> 5) & 7;
+    *outAllowed = type == DUNGEON_ELEMENT_CORRIDOR ||
+                  type == DUNGEON_ELEMENT_TELEPORTER ||
+                  type == DUNGEON_ELEMENT_PIT || type == DUNGEON_ELEMENT_DOOR;
+    return 1;
+}
+
 /* ===================================================================
  * Fuse Action Evaluation
  * Source: PROJEXPL.C F0225_GROUP_FuseAction:

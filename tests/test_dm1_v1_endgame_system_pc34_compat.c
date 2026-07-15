@@ -155,6 +155,7 @@ static void test_f0222_raw_lord_chaos_thing(void)
     unsigned char square = DUNGEON_ELEMENT_CORRIDOR << 5;
     unsigned short firstThing = (unsigned short)(THING_TYPE_GROUP << 10);
     unsigned short base = 0, found = 0;
+    int allowed = 0;
     memset(&dungeon, 0, sizeof(dungeon)); memset(&map, 0, sizeof(map));
     memset(&tiles, 0, sizeof(tiles)); memset(&things, 0, sizeof(things));
     memset(&group, 0, sizeof(group));
@@ -170,6 +171,14 @@ static void test_f0222_raw_lord_chaos_thing(void)
     ASSERT_EQ(DM1_Endgame_F0222_GetLordChaosThingPc34Compat(
                   &dungeon, &things, 0, 0, 0, &found), 1, "F0222 query succeeds");
     ASSERT_EQ(found, firstThing, "F0222 returns raw Lord Chaos Thing");
+    square = DUNGEON_ELEMENT_DOOR << 5;
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 0, 0, &allowed), 1, "F0223 query succeeds");
+    ASSERT_EQ(allowed, 1, "F0223 accepts doors");
+    square = DUNGEON_ELEMENT_WALL << 5;
+    ASSERT_EQ(DM1_Endgame_F0223_IsLordChaosAllowedPc34Compat(
+                  &dungeon, 0, 0, 0, &allowed), 1, "F0223 wall query succeeds");
+    ASSERT_EQ(allowed, 0, "F0223 rejects walls");
 }
 
 /* ── Test: Fuse action — Lord Chaos not present ──────────────────── */
