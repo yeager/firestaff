@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-15 DM2 runtime save/input route: DM2 runtime `SAVE_GAME`
+  now writes the real `SKSave.dat` through `M11_GameView_QuickSave` instead
+  of opening a blocked placeholder save panel. M11 direct save/resume and
+  turn/action checks now pass in the DM2 startup profile gate.
+
 - ✅ 2026-07-15 DM2 NEW GAME boot-pose routing: archive-backed DM2 launches
   now keep the decoded `DUNGEON.DAT` header pose as corpus evidence only and
   start runtime at skproject/T520's Hall-of-Champions pose `(15,15,N)`. This

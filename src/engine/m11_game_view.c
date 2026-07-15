@@ -16281,10 +16281,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_SAVE_GAME) {
-            /* The source panel opens before any save action.  Its button
-             * semantics remain blocked until the original glyph/input route
-             * is decoded; M11 must not invent a confirmation dialog. */
-            state->dm2SaveDialoguePanelActive = 1;
+            if (M11_GameView_QuickSave(state)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         if (state->inventoryPanelActive) {
