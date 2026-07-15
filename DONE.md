@@ -17772,3 +17772,12 @@ The media classifier now records CUE Track 02's declared `MODE1/2048` or
 extraction, wrapper or fallback was added. Verification:
 `firestaff_theron_media_classify_unit` and
 `theron_v1_track02_cue_layout`.
+
+# ✅ 2026-07-15 Theron 2048 ISO CUE startup handoff
+
+M11 now validates and retains a Track 02 loader receipt only when the scanner
+actually issued a valid raw `MODE1/2352` IPL receipt. A verified CUE-declared
+`MODE1/2048` ISO therefore follows the normal Track 02 startup handoff and is
+not reported as an invalid raw BIN. Verification:
+`theron_v1_launcher_scan_reuse` and
+`theron_v1_m11_launcher_handoff_boundary`.

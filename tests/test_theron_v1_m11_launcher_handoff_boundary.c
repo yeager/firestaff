@@ -172,6 +172,7 @@ static void run_track02_startup_overlay_regression(void) {
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
     Theron_Track02StartupLoaderReceipt bad_loader_receipt;
+    Theron_Track02StartupLoaderReceipt iso_loader_receipt;
 
     theron_v1_boot_startup_host_render_receipt_init(&receipt);
     receipt.track02_startup_graphics_executed = 1;
@@ -208,6 +209,19 @@ static void run_track02_startup_overlay_regression(void) {
                     strcmp(view.lastOutcome,
                            "TRACK02 CUE LOADER RECEIPT INVALID") == 0,
                 "M11 rejects an invalid scanner Track02 CUE loader receipt before boot");
+    M11_GameView_Shutdown(&view);
+
+    /* MODE1/2048 CUE media has an authenticated payload path but no raw
+     * MODE1/2352 IPL receipt. It must get past this receipt gate and fail
+     * only at its later verified-media startup stage when the fixture is not
+     * a real Track 02 image. */
+    memset(&iso_loader_receipt, 0, sizeof(iso_loader_receipt));
+    spec.theronTrack02LoaderReceipt = &iso_loader_receipt;
+    M11_GameView_Init(&view);
+    expect_true(!M11_GameView_Start(&view, &spec) &&
+                    strcmp(view.lastOutcome,
+                           "TRACK02 CUE LOADER RECEIPT INVALID") != 0,
+                "M11 does not misdiagnose valid MODE1/2048 CUE media as invalid raw Track02");
     M11_GameView_Shutdown(&view);
 }
 

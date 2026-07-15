@@ -13611,12 +13611,16 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     M11_GameView_Init(state);
     state->showDebugHUD = savedDebugHUD;
 
-    if (loaderReceipt && !theron_v1_boot_validate_track02_loader_receipt(
-                             loaderReceipt, verifiedMd5)) {
+    /* A scanner receipt exists only for raw MODE1/2352 IPL media. A
+     * hash-verified MODE1/2048 ISO from a valid CUE pair deliberately has
+     * no raw receipt and must remain on the normal Track 02 startup path. */
+    if (loaderReceipt && loaderReceipt->valid &&
+        !theron_v1_boot_validate_track02_loader_receipt(loaderReceipt,
+                                                         verifiedMd5)) {
         m11_set_status(state, "STARTUP", "TRACK02 CUE LOADER RECEIPT INVALID");
         goto fail;
     }
-    if (loaderReceipt) {
+    if (loaderReceipt && loaderReceipt->valid) {
         state->theronTrack02LoaderReceipt = *loaderReceipt;
     }
 
