@@ -16462,6 +16462,14 @@ and rejects a mismatch between its LBA/count bytes and the emitted SCSI
 command. This binds the game-owned dispatch route to the observed raw record
 ranges without inventing a FIFO destination or record semantics.
 
+# ✅ 2026-07-15 Theron later-generation FIFO capture filter
+
+The reproducible Mednafen trace build accepts
+`FIRESTAFF_THERON_FIFO_MIN_GENERATION=N`. It filters only provenance output
+below `N`; emulated CD reads and RAM writes are unchanged. The authenticated
+`N=8` capture omits the already-proved generation-7 FIFO traffic, but still
+does not reach a later FIFO byte before timeout. No handoff is claimed.
+
 # ✅ 2026-07-15 Theron main-RAM loader initialization exclusion
 
 The post-`$e009` `0x1f10xx` write window is now fail-closed as loader

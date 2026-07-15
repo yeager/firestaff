@@ -1,0 +1,39 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -127,6 +127,20 @@
+ static unsigned TheronPCECDControlWindowReadCount;
+ static unsigned TheronPCECDGameWindowReadCount;
+ static unsigned TheronPCECDDataOriginCount;
++
++static bool TheronPCECDTraceSelectedGeneration(unsigned generation)
++{
++ static bool initialized;
++ static unsigned minimum_generation;
++ if(!initialized)
++ {
++  const char *value = getenv("FIRESTAFF_THERON_FIFO_MIN_GENERATION");
++  if(value && value[0] >= '0' && value[0] <= '9' && value[1] == '\0')
++   minimum_generation = value[0] - '0';
++  initialized = true;
++ }
++ return generation >= minimum_generation;
++}
+ 
+ static void TheronPCECDTraceFifoReceipt(const char *format, ...)
+ {
+@@ -791,10 +805,12 @@
+      uint16 source_offset;
+      unsigned source_generation;
+      if(Mednafen::TheronSCSITraceCurrentDataOrigin(&source_lba, &source_offset,
+-                                                   &source_generation))
++                                                   &source_generation) &&
++        TheronPCECDTraceSelectedGeneration(source_generation))
+       TheronPCECDTraceDataOrigin(TheronPCECDDataReadPC, 0x1801,
+                                   source_generation, source_lba, source_offset, ret);
+-     if(TheronPCECDMainRAMLoaderE009Active)
++     if(TheronPCECDMainRAMLoaderE009Active &&
++        TheronPCECDTraceSelectedGeneration(Mednafen::TheronSCSITraceCurrentReadGeneration()))
+       TheronPCECDQueueFifoReceipt(TheronPCECDDataReadPC, ret,
+                                   Mednafen::TheronSCSITraceCurrentReadGeneration());
+     }
