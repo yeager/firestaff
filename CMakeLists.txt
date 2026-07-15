@@ -8261,7 +8261,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_csb_v1_f0276_wall_object_move_pc34_compat
-        PRIVATE firestaff_m10)
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0276_wall_object_move_pc34_compat
             PRIVATE -Wall -Wextra -O2)
